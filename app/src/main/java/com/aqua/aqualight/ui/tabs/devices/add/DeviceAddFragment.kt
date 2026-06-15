@@ -9,16 +9,15 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.devices.DeviceStoreWriter
-import com.aqua.aqualight.data.devices.DevicesDataStoreManager
-import com.aqua.aqualight.data.devices.add.DeviceAddCandidate
-import com.aqua.aqualight.data.devices.add.DeviceAddCandidateLoader
-import com.aqua.aqualight.data.devices.add.DeviceAddSource
+import com.aqua.aqualight.data.devices.add.DeviceAddSetupTarget
 import com.aqua.aqualight.databinding.FragmentDeviceAddBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderFilledIconAction
@@ -28,23 +27,20 @@ import kotlinx.coroutines.launch
 
 class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
 
+    private val viewModel: DeviceAddViewModel by viewModels()
+
     private var _binding: FragmentDeviceAddBinding? = null
     private val binding get() = _binding!!
 
     private lateinit var adapter: DeviceAddAdapter
-    private lateinit var candidateLoader: DeviceAddCandidateLoader
-    private lateinit var deviceStoreWriter: DeviceStoreWriter
-
-    private var isLoading = false
-    private var isSaving = false
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
         if (hasRequiredPermissionsFromResult(result)) {
-            loadCandidates()
+            viewModel.loadCandidates()
         } else {
-            showPermissionRequiredState()
+            viewModel.onPermissionDenied()
         }
     }
 
@@ -59,27 +55,18 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
 
         _binding = FragmentDeviceAddBinding.bind(view)
 
-        val devicesStore = DevicesDataStoreManager.create(
-            requireContext()
+        setupHeader(
+            title = getString(R.string.device_add_title),
+            retryEnabled = true
         )
-
-        candidateLoader = DeviceAddCandidateLoader(
-            context = requireContext(),
-            devicesStore = devicesStore
-        )
-
-        deviceStoreWriter = DeviceStoreWriter(
-            devicesStore = devicesStore
-        )
-
-        setupHeader()
         setupRecycler()
+        observeViewModel()
         requestPermissionsAndLoad()
     }
 
     private fun setupHeader(
-        title: String = getString(R.string.device_add_title),
-        retryEnabled: Boolean = true
+        title: String,
+        retryEnabled: Boolean
     ) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
@@ -99,7 +86,7 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
 
     private fun setupRecycler() {
         adapter = DeviceAddAdapter { candidate ->
-            handleCandidateClick(
+            viewModel.onCandidateClicked(
                 candidate = candidate
             )
         }
@@ -111,9 +98,33 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         binding.rvCandidates.adapter = adapter
     }
 
+    private fun observeViewModel() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+                launch {
+                    viewModel.uiState.collect { state ->
+                        renderState(
+                            state = state
+                        )
+                    }
+                }
+
+                launch {
+                    viewModel.events.collect { event ->
+                        handleEvent(
+                            event = event
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     private fun requestPermissionsAndLoad() {
         if (hasRequiredPermissions()) {
-            loadCandidates()
+            viewModel.loadCandidates()
             return
         }
 
@@ -177,197 +188,134 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         ) == PackageManager.PERMISSION_GRANTED
     }
 
-    private fun loadCandidates() {
-        if (isLoading) {
+    private fun renderState(
+        state: DeviceAddUiState
+    ) {
+        if (_binding == null) {
             return
         }
 
-        isLoading = true
+        setupHeader(
+            title = getString(state.headerTitleRes),
+            retryEnabled = state.retryEnabled
+        )
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            showLoadingState()
-
-            val candidates = runCatching {
-                candidateLoader.loadCandidates()
-            }.getOrDefault(
-                emptyList()
+        binding.tvSubtitle.isVisible = state.subtitleRes != null
+        state.subtitleRes?.let { subtitleRes ->
+            binding.tvSubtitle.text = getString(
+                subtitleRes
             )
+        }
 
-            if (_binding == null) {
-                return@launch
+        when (state.contentMode) {
+            DeviceAddContentMode.IDLE -> {
+                binding.scanAnimation.cancelAnimation()
+                binding.searchingContainer.isVisible = false
+                binding.rvCandidates.isVisible = false
+                binding.emptyContainer.isVisible = false
+                adapter.submitCandidates(
+                    candidates = emptyList()
+                )
             }
 
-            isLoading = false
+            DeviceAddContentMode.LOADING -> {
+                binding.searchingContainer.isVisible = true
+                binding.scanAnimation.isVisible = true
+                binding.scanAnimation.playAnimation()
 
-            if (candidates.isEmpty()) {
-                showEmptyState()
-            } else {
-                showCandidates(
-                    candidates = candidates
+                binding.rvCandidates.isVisible = false
+                binding.emptyContainer.isVisible = false
+
+                adapter.submitCandidates(
+                    candidates = emptyList()
+                )
+            }
+
+            DeviceAddContentMode.CANDIDATES -> {
+                binding.scanAnimation.cancelAnimation()
+                binding.searchingContainer.isVisible = false
+
+                binding.rvCandidates.isVisible = true
+                binding.emptyContainer.isVisible = false
+
+                adapter.submitCandidates(
+                    candidates = state.candidates
+                )
+            }
+
+            DeviceAddContentMode.EMPTY,
+            DeviceAddContentMode.PERMISSION_REQUIRED -> {
+                binding.scanAnimation.cancelAnimation()
+                binding.searchingContainer.isVisible = false
+
+                binding.rvCandidates.isVisible = false
+                binding.emptyContainer.isVisible = true
+
+                adapter.submitCandidates(
+                    candidates = emptyList()
                 )
             }
         }
     }
 
-    private fun showLoadingState() {
-        binding.tvSubtitle.isVisible = true
-
-        binding.searchingContainer.isVisible = true
-        binding.scanAnimation.isVisible = true
-        binding.scanAnimation.playAnimation()
-
-        binding.rvCandidates.isVisible = false
-        binding.emptyContainer.isVisible = false
-
-        setupHeader(
-            title = getString(R.string.device_add_searching_title),
-            retryEnabled = false
-        )
-
-        binding.tvSubtitle.text = getString(
-            R.string.device_add_searching_subtitle
-        )
-    }
-
-    private fun showCandidates(
-        candidates: List<DeviceAddCandidate>
+    private fun handleEvent(
+        event: DeviceAddEvent
     ) {
-        binding.scanAnimation.cancelAnimation()
-        binding.searchingContainer.isVisible = false
+        if (!isAdded || _binding == null) {
+            return
+        }
 
-        binding.tvSubtitle.isVisible = false
+        when (event) {
+            is DeviceAddEvent.ShowMessage -> {
+                showSnackBar(
+                    message = getString(event.messageRes),
+                    level = event.level
+                )
+            }
 
-        binding.rvCandidates.isVisible = true
-        binding.emptyContainer.isVisible = false
+            is DeviceAddEvent.OpenDevice -> {
+                openDeviceMenu(
+                    deviceId = event.deviceId,
+                    deviceTitle = event.deviceTitle
+                )
+            }
 
-        setupHeader(
-            title = getString(R.string.device_add_title),
-            retryEnabled = true
-        )
-
-        adapter.submitCandidates(
-            candidates = candidates
-        )
+            is DeviceAddEvent.OpenSetupFlow -> {
+                openSetupFlow(
+                    setupTarget = event.setupTarget
+                )
+            }
+        }
     }
 
-    private fun showEmptyState() {
-        binding.tvSubtitle.isVisible = true
-
-        binding.scanAnimation.cancelAnimation()
-        binding.searchingContainer.isVisible = false
-
-        binding.rvCandidates.isVisible = false
-        binding.emptyContainer.isVisible = true
-
-        setupHeader(
-            title = getString(R.string.device_add_title),
-            retryEnabled = true
-        )
-
-        binding.tvSubtitle.text = getString(
-            R.string.device_add_empty_subtitle
-        )
-
-        adapter.submitCandidates(
-            candidates = emptyList()
-        )
-    }
-
-    private fun showPermissionRequiredState() {
-        isLoading = false
-
-        binding.tvSubtitle.isVisible = true
-
-        binding.scanAnimation.cancelAnimation()
-        binding.searchingContainer.isVisible = false
-
-        binding.rvCandidates.isVisible = false
-        binding.emptyContainer.isVisible = true
-
-        setupHeader(
-            title = getString(R.string.device_add_title),
-            retryEnabled = true
-        )
-
-        binding.tvSubtitle.text = getString(
-            R.string.device_add_permission_required
-        )
-
-        adapter.submitCandidates(
-            candidates = emptyList()
-        )
+    private fun showSnackBar(
+        message: String,
+        level: DeviceAddMessageLevel
+    ) {
+        val snackType = when (level) {
+            DeviceAddMessageLevel.WARNING -> BaseActivity.SnackType.WARNING
+            DeviceAddMessageLevel.ERROR -> BaseActivity.SnackType.ERROR
+        }
 
         (activity as? BaseActivity)?.showSnackBar(
-            message = getString(R.string.device_add_permission_message),
-            type = BaseActivity.SnackType.WARNING
+            message = message,
+            type = snackType
         )
-    }
-
-    private fun handleCandidateClick(
-        candidate: DeviceAddCandidate
-    ) {
-        when (candidate.source) {
-            DeviceAddSource.LOCAL_NETWORK -> {
-                saveLocalNetworkDevice(
-                    candidate = candidate
-                )
-            }
-
-            DeviceAddSource.SETUP_AP -> {
-                openSetupFlow(
-                    candidate = candidate
-                )
-            }
-        }
-    }
-
-    private fun saveLocalNetworkDevice(
-        candidate: DeviceAddCandidate
-    ) {
-        val device = candidate.localDevice ?: return
-
-        if (isSaving) {
-            return
-        }
-
-        isSaving = true
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                val deviceId = deviceStoreWriter.saveDiscoveredDevice(
-                    device = device
-                )
-
-                openDeviceMenu(
-                    deviceId = deviceId,
-                    deviceTitle = candidate.displayName
-                )
-            } catch (exception: Exception) {
-                exception.printStackTrace()
-
-                (activity as? BaseActivity)?.showSnackBar(
-                    message = getString(R.string.device_add_save_error),
-                    type = BaseActivity.SnackType.ERROR
-                )
-            } finally {
-                isSaving = false
-            }
-        }
     }
 
     private fun openSetupFlow(
-        candidate: DeviceAddCandidate
+        setupTarget: DeviceAddSetupTarget
     ) {
         findNavController().navigate(
             DeviceAddFragmentDirections.actionDeviceAddFragmentToDeviceSetupFragment(
-                setupSsid = candidate.setupSsid.orEmpty(),
-                displayName = candidate.displayName,
-                familyName = candidate.familyName,
-                productId = candidate.productId,
-                productKey = candidate.productKey.storageKey,
-                category = candidate.category.storageKey,
-                setupCode = candidate.setupCode,
-                setupShortId = candidate.setupShortId.orEmpty()
+                setupSsid = setupTarget.setupSsid,
+                displayName = setupTarget.displayName,
+                familyName = setupTarget.familyName,
+                productId = setupTarget.productId,
+                productKey = setupTarget.productKey,
+                category = setupTarget.category,
+                setupCode = setupTarget.setupCode,
+                setupShortId = setupTarget.setupShortId
             )
         )
     }

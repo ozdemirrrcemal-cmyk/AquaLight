@@ -5,7 +5,6 @@ import com.aqua.aqualight.data.devices.api.legacy.LegacyEndpoint
 import com.aqua.aqualight.data.devices.api.legacy.LegacyHttpClient
 import com.aqua.aqualight.data.devices.api.model.ApiErrorCode
 import com.aqua.aqualight.data.devices.api.model.ApiResult
-import org.json.JSONArray
 import org.json.JSONObject
 
 class LegacyLightApi(
@@ -50,50 +49,9 @@ class LegacyLightApi(
         connection: AquaDeviceConnection,
         program: LightProgram
     ): ApiResult<Unit> {
-        val points = program.points
-            .filter { point -> point.minuteOfDay in 0 until MINUTES_PER_DAY }
-            .distinctBy { point -> point.minuteOfDay }
-            .sortedBy { point -> point.minuteOfDay }
-
-        if (points.isEmpty()) {
-            return ApiResult.failure(
-                code = ApiErrorCode.INVALID_REQUEST,
-                message = "Light program has no schedule points"
-            )
-        }
-
-        val json = JSONObject().apply {
-            put(
-                KEY_LIGHT_PROGRAM,
-                JSONObject().apply {
-                    put(
-                        "Data",
-                        JSONObject().apply {
-                            put(
-                                LEGACY_WHITE_INDEX.toString(),
-                                legacyProgramChannelObject(points) { point -> point.white }
-                            )
-                            put(
-                                LEGACY_RED_INDEX.toString(),
-                                legacyProgramChannelObject(points) { point -> point.red }
-                            )
-                            put(
-                                LEGACY_GREEN_INDEX.toString(),
-                                legacyProgramChannelObject(points) { point -> point.green }
-                            )
-                            put(
-                                LEGACY_BLUE_INDEX.toString(),
-                                legacyProgramChannelObject(points) { point -> point.blue }
-                            )
-                        }
-                    )
-                }
-            )
-        }
-
-        return sendLegacySet(
-            connection = connection,
-            json = json
+        return ApiResult.failure(
+            code = ApiErrorCode.UNSUPPORTED_FIRMWARE,
+            message = "Legacy light program write is intentionally not enabled in the data layer yet"
         )
     }
 
@@ -427,39 +385,6 @@ class LegacyLightApi(
         }
     }
 
-    private fun legacyProgramChannelObject(
-        points: List<LightProgramPoint>,
-        valueSelector: (LightProgramPoint) -> Int
-    ): JSONObject {
-        return JSONObject().apply {
-            put(
-                "LP",
-                JSONArray().apply {
-                    points.forEach { point ->
-                        put(
-                            JSONArray().apply {
-                                put(point.minuteOfDay.toLegacyTimeText())
-                                put(
-                                    LightApiMath.percentToDeviceValue(
-                                        valueSelector(point).coerceIn(MIN_PERCENT, MAX_PERCENT)
-                                    )
-                                )
-                            }
-                        )
-                    }
-                }
-            )
-        }
-    }
-
-    private fun Int.toLegacyTimeText(): String {
-        val safeMinute = coerceIn(0, MINUTES_PER_DAY - 1)
-        val hour = safeMinute / 60
-        val minute = safeMinute % 60
-        return "%02d:%02d:00".format(hour, minute)
-    }
-
-
     private fun buildLegacyProgramSummary(
         state: LightDeviceState
     ): List<LightProgram> {
@@ -522,7 +447,6 @@ class LegacyLightApi(
         const val LEGACY_BLUE_INDEX = 3
         const val MIN_PERCENT = 0
         const val MAX_PERCENT = 100
-        const val MINUTES_PER_DAY = 24 * 60
         const val MIN_TEMPERATURE_CELSIUS = 0
         const val MAX_TEMPERATURE_CELSIUS = 100
         const val MIN_RECOVERY_SECONDS = 1

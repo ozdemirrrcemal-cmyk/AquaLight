@@ -18,7 +18,6 @@ import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceFeedbackType
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceLoading
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceSnack
 import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurvePoint
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveTransitionMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.core.programs.model.LightProgramTimeMath
@@ -26,11 +25,10 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.core.programs.model.Repea
 import com.aqua.aqualight.ui.tabs.devices.detail.light.common.sheet.LightCurveTimePickerSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightCustomDaysSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightPreviewDaySheet
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightTransitionVariantSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.sheet.LightProgramNameSheet
 import com.google.android.material.slider.Slider
-import androidx.navigation.fragment.navArgs
 import kotlinx.coroutines.launch
+import androidx.navigation.fragment.navArgs
 
 class DeviceLightProgramEditorFragment :
     Fragment(R.layout.fragment_device_light_program_editor) {
@@ -74,13 +72,13 @@ class DeviceLightProgramEditorFragment :
     }
 
     private fun setupHeader() {
-        binding.appHeader.setupAquaHeader(
-            fragment = this,
-            config = AquaHeaderConfig(
-                titleOverride = "Program Editor"
-            )
+    binding.appHeader.setupAquaHeader(
+        fragment = this,
+        config = AquaHeaderConfig(
+            titleOverride = "Program Editor"
         )
-    }
+    )
+}
 
     private fun setupProgramSettingsRows() {
         bindActionRow(
@@ -209,7 +207,6 @@ class DeviceLightProgramEditorFragment :
 
             renderRepeatMode(state)
             renderTransitionSummary(state)
-            renderSaveBarState(state)
         } finally {
             isRendering = false
         }
@@ -298,10 +295,6 @@ class DeviceLightProgramEditorFragment :
 
         binding.repeatCustom.setOnClickListener {
             val state = viewModel.uiState.value
-            if (!state.repeatFeatureEnabled) {
-                viewModel.updateCustomDays(state.selectedDays)
-                return@setOnClickListener
-            }
 
             LightCustomDaysSheet
                 .create(requireContext())
@@ -312,50 +305,45 @@ class DeviceLightProgramEditorFragment :
                 }
         }
 
-        binding.actionTransitionSmoothing.root.setOnClickListener {
-            val state = viewModel.uiState.value
-            if (!state.transitionFeatureEnabled || state.isBusy) {
-                return@setOnClickListener
-            }
-
-            LightTransitionVariantSheet
-                .create(requireContext())
-                .show(
-                    initialMode = state.transitionMode
-                ) { mode ->
-                    viewModel.updateTransitionMode(mode)
-                }
-        }
+        binding.actionTransitionSmoothing.root.setOnClickListener(null)
 
         binding.btnLoadToDevice.setOnClickListener {
-            if (viewModel.isEditingExistingProgram()) {
-                viewModel.saveProgram(
-                    name = viewModel.currentProgramName(),
-                    activateOnDevice = true
-                )
-                return@setOnClickListener
-            }
+            val isEditing = viewModel.isEditingExistingProgram()
 
             showProgramNameSheet(
-                title = "Load to Device",
-                subtitle = "Name this program before loading it to the device.",
-                primaryButtonText = "Load",
+                title = if (isEditing) {
+                    "Update Device"
+                } else {
+                    "Load to Device"
+                },
+                subtitle = if (isEditing) {
+                    "Save changes and update the active device schedule."
+                } else {
+                    "Name this program before loading it to the device."
+                },
+                primaryButtonText = if (isEditing) {
+                    "Update"
+                } else {
+                    "Load"
+                },
                 activateOnDevice = true
             )
         }
 
         binding.btnSaveAs.setOnClickListener {
-            if (viewModel.isEditingExistingProgram()) {
-                viewModel.saveProgram(
-                    name = viewModel.currentProgramName(),
-                    activateOnDevice = false
-                )
-                return@setOnClickListener
-            }
+            val isEditing = viewModel.isEditingExistingProgram()
 
             showProgramNameSheet(
-                title = "Save Program",
-                subtitle = "Save this program without loading it to the device.",
+                title = if (isEditing) {
+                    "Save Changes"
+                } else {
+                    "Save Program"
+                },
+                subtitle = if (isEditing) {
+                    "Update this program. Active programs will sync to the device."
+                } else {
+                    "Save this program without loading it to the device."
+                },
                 primaryButtonText = "Save",
                 activateOnDevice = false
             )
@@ -516,81 +504,14 @@ class DeviceLightProgramEditorFragment :
         binding.repeatCustom.setTextColor(
             if (state.repeatMode == RepeatMode.CUSTOM) selectedText else normalText
         )
-
-        binding.repeatEvery.isEnabled = !state.isBusy
-        binding.repeatWeekdays.isEnabled = !state.isBusy
-        binding.repeatWeekend.isEnabled = !state.isBusy
-        binding.repeatCustom.isEnabled = !state.isBusy
-
-        binding.repeatEvery.alpha = if (state.isBusy) 0.55f else 1f
-        val lockedRepeatAlpha = if (state.repeatFeatureEnabled) 1f else 0.42f
-        binding.repeatWeekdays.alpha = if (state.isBusy) 0.35f else lockedRepeatAlpha
-        binding.repeatWeekend.alpha = if (state.isBusy) 0.35f else lockedRepeatAlpha
-        binding.repeatCustom.alpha = if (state.isBusy) 0.35f else lockedRepeatAlpha
     }
 
     private fun renderTransitionSummary(
         state: DeviceLightProgramEditorUiState
     ) {
-        val (title, subtitle) = when (state.transitionMode) {
-            LightCurveTransitionMode.LINEAR -> {
-                "Linear Transition" to "Even ramp, predictable channel changes"
-            }
-
-            LightCurveTransitionMode.SMOOTH -> {
-                "Smooth Transition" to "Soft start and stop between light levels"
-            }
-
-            LightCurveTransitionMode.NATURAL -> {
-                "Natural Transition" to "Sunrise-like natural ramp"
-            }
-        }
-
-        bindActionRow(
-            row = binding.actionTransitionSmoothing.root,
-            iconRes = R.drawable.ic_light_waves_24,
-            title = title,
-            subtitle = subtitle
-        )
-
-        binding.actionTransitionSmoothing.root.isEnabled =
-            state.transitionFeatureEnabled && !state.isBusy
-
-        binding.actionTransitionSmoothing.root.alpha = if (state.transitionFeatureEnabled) {
-            1f
-        } else {
-            0.45f
-        }
-    }
-
-    private fun renderSaveBarState(
-        state: DeviceLightProgramEditorUiState
-    ) {
-        binding.btnSaveAs.text = if (state.isEditingExistingProgram) {
-            "Save Changes"
-        } else {
-            "Save As"
-        }
-
-        binding.btnLoadToDevice.text = if (state.isEditingExistingProgram) {
-            "Load to Device"
-        } else {
-            "Load to Device"
-        }
-
-        binding.btnSaveAs.isEnabled = !state.isBusy
-        binding.btnLoadToDevice.isEnabled = !state.isBusy
-        binding.btnPreviewProgram.isEnabled = !state.isBusy
-        binding.sliderRed.isEnabled = !state.isBusy
-        binding.sliderGreen.isEnabled = !state.isBusy
-        binding.sliderBlue.isEnabled = !state.isBusy
-        binding.sliderWhite.isEnabled = !state.isBusy
-
-        binding.editorContentContainer.alpha = if (state.isBusy) {
-            0.55f
-        } else {
-            1f
-        }
+        binding.actionTransitionSmoothing.root
+            .findViewById<TextView>(R.id.tvActionSubtitle)
+            ?.text = "Sunrise-like natural ramp"
     }
 
     override fun onDestroyView() {

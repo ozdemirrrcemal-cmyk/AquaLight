@@ -6,75 +6,37 @@ import android.view.View
 import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.devices.DeviceIdentityMatcher
-import com.aqua.aqualight.data.devices.DeviceSerialFormatter
-import com.aqua.aqualight.data.devices.DeviceStoreWriter
-import com.aqua.aqualight.data.devices.DevicesDataStoreManager
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
-import com.aqua.aqualight.data.devices.catalog.AquaProductKey
-import com.aqua.aqualight.data.devices.catalog.AquaSetupSsid
-import com.aqua.aqualight.data.devices.discovery.DeviceDiscoveryService
-import com.aqua.aqualight.data.devices.discovery.DeviceScanReason
-import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
-import com.aqua.aqualight.data.devices.setup.DeviceSetupWifiConnector
-import com.aqua.aqualight.data.devices.setup.HomeWifiConnectionWaiter
-import com.aqua.aqualight.data.devices.setup.AquaDeviceSetupClient
+import com.aqua.aqualight.data.devices.setup.DeviceSetupEntryArgs
 import com.aqua.aqualight.databinding.FragmentDeviceSetupBinding
 import com.aqua.aqualight.ui.common.bottomsheet.HomeWifiNetworksBottomSheetFragment
-import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
-import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import com.aqua.aqualight.ui.common.devicecard.DeviceCardIconMapper
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardBinder
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardUi
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import com.google.android.material.card.MaterialCardView
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import androidx.navigation.fragment.navArgs
 
 class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
 
     private val args: DeviceSetupFragmentArgs by navArgs()
 
+    private val viewModel: DeviceSetupViewModel by viewModels()
+
     private var _binding: FragmentDeviceSetupBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var wifiConnector: DeviceSetupWifiConnector
-    private lateinit var setupClient: AquaDeviceSetupClient
-    private lateinit var homeWifiWaiter: HomeWifiConnectionWaiter
-    private lateinit var deviceStoreWriter: DeviceStoreWriter
-
-    private var setupConnection: DeviceSetupWifiConnector.SetupConnection? = null
-
-    private var setupSsid: String = ""
-    private var displayName: String = "Device"
-    private var familyName: String = "Aqua device"
-    private var expectedProductId: String = ""
-    private var expectedProductKey: AquaProductKey = AquaProductKey.UNKNOWN
-    private var expectedCategory: AquaDeviceCategory = AquaDeviceCategory.UNKNOWN
-    private var expectedSetupCode: String = ""
-    private var setupShortId: String = ""
-    private var setupContractValid: Boolean = false
-    private var selectedHomeSsid: String = ""
-
-    private var isSettingUp = false
-    private var isScanningNetworks = false
-
-    private data class HomeWifiInput(
-        val ssid: String,
-        val password: String
-    )
-
-    private enum class SetupUiStep {
-        WIFI,
-        CONNECT,
-        DONE
-    }
+    private var currentUiState =
+        DeviceSetupUiState()
 
     override fun onViewCreated(
         view: View,
@@ -87,164 +49,66 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
 
         _binding = FragmentDeviceSetupBinding.bind(view)
 
-        val devicesStore = DevicesDataStoreManager.create(
-            requireContext()
+        setupHeader(
+            state = currentUiState
         )
-
-        wifiConnector = DeviceSetupWifiConnector(requireContext())
-        setupClient = AquaDeviceSetupClient()
-        homeWifiWaiter = HomeWifiConnectionWaiter(requireContext())
-        deviceStoreWriter = DeviceStoreWriter(devicesStore)
-
-        readArgs()
-        setupHeader()
-        renderInitialState()
         setupClickListeners()
         setupHomeWifiBottomSheetResultListener()
+        observeViewModel()
+
+        viewModel.initialize(
+            args = DeviceSetupEntryArgs(
+                setupSsid = args.setupSsid,
+                displayName = args.displayName,
+                familyName = args.familyName,
+                productId = args.productId,
+                productKey = args.productKey,
+                category = args.category,
+                setupCode = args.setupCode,
+                setupShortId = args.setupShortId
+            )
+        )
     }
 
-    private fun setupHeader() {
+    private fun setupHeader(
+        state: DeviceSetupUiState
+    ) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = displayName,
+                titleOverride = state.displayName,
                 onBackClick = {
-                    if (!isSettingUp && !isScanningNetworks) {
+                    if (state.backEnabled) {
                         findNavController().popBackStack()
                     }
                 }
             )
         )
-    }
 
-    private fun readArgs() {
-        displayName = args.displayName
-
-        familyName = args.familyName
-
-        val rawSetupSsid = args.setupSsid.trim()
-
-        val parsedSetupSsid = AquaSetupSsid.parse(
-            ssid = rawSetupSsid
-        )
-
-        setupSsid = parsedSetupSsid?.rawSsid ?: rawSetupSsid
-
-        expectedProductId = args.productId
-
-        expectedProductKey = AquaProductKey.fromStorageKey(
-            value = args.productKey
-        )
-
-        expectedCategory = AquaDeviceCategory.fromStorageKey(
-            value = args.category
-        )
-
-        expectedSetupCode = args.setupCode.ifBlank {
-            parsedSetupSsid?.setupCode.orEmpty()
-        }.trim()
-
-        setupShortId = args.setupShortId.ifBlank {
-            parsedSetupSsid?.shortId.orEmpty()
-        }.trim()
-
-        val definition = AquaDeviceCatalog.findDefinition(
-            productId = expectedProductId,
-            productKey = expectedProductKey,
-            category = expectedCategory
-        ) ?: AquaDeviceCatalog.findBySetupCode(
-            setupCode = expectedSetupCode
-        )
-
-        if (definition != null) {
-            expectedProductId = definition.productId
-            expectedProductKey = definition.productKey
-            expectedCategory = definition.category
-            expectedSetupCode = definition.setupCode
-
-            if (displayName.isBlank() || displayName == DEFAULT_DEVICE_NAME) {
-                displayName = definition.displayName
-            }
-
-            if (familyName.isBlank() || familyName == DEFAULT_FAMILY_NAME) {
-                familyName = definition.productFamily
-            }
-        }
-
-        setupContractValid = parsedSetupSsid != null &&
-            definition != null &&
-            expectedSetupCode.equals(
-                other = parsedSetupSsid.setupCode,
-                ignoreCase = true
-            ) &&
-            setupShortId.equals(
-                other = parsedSetupSsid.shortId,
-                ignoreCase = true
-            )
-    }
-
-    private fun renderInitialState() {
-        DeviceCompactCardBinder.bind(
-            binding = binding.deviceHeroCompactCard,
-            item = DeviceCompactCardUi(
-                deviceId = 0L,
-                displayName = displayName,
-                serialText = setupSerialText(),
-                supportingText = getString(
-                    R.string.device_setup_ready_chip
-                ),
-                showSupportingText = true,
-                iconRes = DeviceCardIconMapper.iconFor(
-                    expectedCategory
-                ),
-                isOnline = false,
-                showConnectionStatus = false
-            )
-        )
-
-        binding.deviceHeroCompactCard.root.isClickable = false
-        binding.deviceHeroCompactCard.root.isFocusable = false
-
-        binding.tvSetupSsid.text = setupSsid
-        binding.tvSetupNetworkMeta.text = getString(
-            R.string.device_setup_network_meta,
-            expectedSetupCode.ifBlank { "—" },
-            setupShortId.ifBlank { "—" }
-        )
-        binding.tvStatus.text = if (setupContractValid) {
-            getString(R.string.device_setup_choose_home_wifi)
-        } else {
-            getString(R.string.device_setup_invalid_setup_network)
-        }
-        binding.etHomeWifiSsid.setText("")
-
-        renderSetupProgress(
-            activeStep = SetupUiStep.WIFI
-        )
-
-        if (!setupContractValid) {
-            setSetupInputControlsEnabled(false)
-        }
-    }
-
-    private fun setupSerialText(): String {
-        return DeviceSerialFormatter.buildCommercialIdentifier(
-            setupCode = expectedSetupCode,
-            shortId = setupShortId
+        setHeaderBackEnabled(
+            enabled = state.backEnabled
         )
     }
 
     private fun setupClickListeners() {
         binding.inputHomeWifiSsid.setEndIconOnClickListener {
-            scanHomeNetworks()
+            viewModel.scanHomeNetworks()
         }
 
         binding.etHomeWifiSsid.setOnClickListener {
-            scanHomeNetworks()
+            viewModel.scanHomeNetworks()
         }
 
         binding.btnStartSetup.setOnClickListener {
-            startSetup()
+            viewModel.startSetup(
+                enteredHomeSsid = binding.etHomeWifiSsid.text
+                    ?.toString()
+                    ?.trim()
+                    .orEmpty(),
+                enteredHomePassword = binding.etHomeWifiPassword.text
+                    ?.toString()
+                    .orEmpty()
+            )
         }
     }
 
@@ -257,496 +121,136 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
                 HomeWifiNetworksBottomSheetFragment.RESULT_SSID
             ).orEmpty()
 
-            if (ssid.isBlank()) {
-                return@setFragmentResultListener
-            }
-
-            selectedHomeSsid = ssid
-
-            binding.etHomeWifiSsid.setText(ssid)
-            binding.inputHomeWifiSsid.error = null
-
-            binding.tvStatus.text = getString(
-                R.string.device_setup_selected_network,
-                ssid
-            )
-
-            renderSetupProgress(
-                activeStep = SetupUiStep.WIFI
+            viewModel.onHomeWifiSelected(
+                ssid = ssid
             )
         }
     }
 
-    private fun scanHomeNetworks() {
-        if (isScanningNetworks || isSettingUp) {
+    private fun observeViewModel() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+                launch {
+                    viewModel.uiState.collect { state ->
+                        renderState(
+                            state = state
+                        )
+                    }
+                }
+
+                launch {
+                    viewModel.events.collect { event ->
+                        handleEvent(
+                            event = event
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun renderState(
+        state: DeviceSetupUiState
+    ) {
+        if (_binding == null) {
             return
         }
 
-        if (!ensureSetupContractReady()) {
-            return
-        }
+        currentUiState = state
 
-        isScanningNetworks = true
-
-        renderSetupProgress(
-            activeStep = SetupUiStep.WIFI
+        setupHeader(
+            state = state
         )
 
-        setBusy(
-            busy = true,
-            status = getString(
-                R.string.device_setup_connecting_to_setup,
-                setupSsid
+        DeviceCompactCardBinder.bind(
+            binding = binding.deviceHeroCompactCard,
+            item = DeviceCompactCardUi(
+                deviceId = 0L,
+                displayName = state.displayName,
+                serialText = state.serialText,
+                supportingText = getString(
+                    R.string.device_setup_ready_chip
+                ),
+                showSupportingText = true,
+                iconRes = DeviceCardIconMapper.iconFor(
+                    state.expectedCategory
+                ),
+                isOnline = false,
+                showConnectionStatus = false
             )
         )
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                val connection = getOrCreateSetupConnection()
+        binding.deviceHeroCompactCard.root.isClickable = false
+        binding.deviceHeroCompactCard.root.isFocusable = false
 
-                if (!isViewReady()) {
-                    return@launch
-                }
+        binding.tvSetupSsid.text = state.setupSsid
+        binding.tvSetupNetworkMeta.text = getString(
+            R.string.device_setup_network_meta,
+            state.expectedSetupCode.ifBlank { "—" },
+            state.setupShortId.ifBlank { "—" }
+        )
 
-                setBusy(
-                    busy = true,
-                    status = getString(R.string.device_setup_scanning_home_networks)
+        if (
+            state.homeWifiSsidText.isNotBlank() &&
+            binding.etHomeWifiSsid.text?.toString() != state.homeWifiSsidText
+        ) {
+            binding.etHomeWifiSsid.setText(
+                state.homeWifiSsidText
+            )
+        }
+
+        binding.inputHomeWifiSsid.error = state.homeWifiSsidError
+        binding.inputHomeWifiPassword.error = state.homeWifiPasswordError
+
+        binding.progressSetup.isVisible = state.isBusy
+        binding.tvStatus.text = state.statusText
+
+        setSetupInputControlsEnabled(
+            enabled = state.setupInputEnabled
+        )
+
+        setHeaderBackEnabled(
+            enabled = state.backEnabled
+        )
+
+        renderSetupProgress(
+            activeStep = state.activeStep
+        )
+    }
+
+    private fun handleEvent(
+        event: DeviceSetupEvent
+    ) {
+        if (!isAdded || _binding == null) {
+            return
+        }
+
+        when (event) {
+            is DeviceSetupEvent.ShowError -> {
+                showError(
+                    message = event.message
                 )
+            }
 
-                val networks = setupClient.scanHomeWifiNetworks(
-                    network = connection.network
-                )
-
-                if (!isViewReady()) {
-                    return@launch
-                }
-
-                if (networks.isEmpty()) {
-                    showError(
-                        getString(R.string.device_setup_no_networks_found)
-                    )
-
-                    setBusy(
-                        busy = false,
-                        status = getString(R.string.device_setup_no_networks_status)
-                    )
-
-                    return@launch
-                }
-
+            is DeviceSetupEvent.ShowHomeWifiNetworks -> {
                 showWifiNetworksBottomSheet(
-                    networks = networks
-                )
-
-                setBusy(
-                    busy = false,
-                    status = getString(R.string.device_setup_select_home_wifi_status)
-                )
-            } catch (exception: Exception) {
-                exception.printStackTrace()
-
-                if (isViewReady()) {
-                    showError(
-                        exception.message
-                            ?: getString(R.string.device_setup_scan_error)
-                    )
-
-                    setBusy(
-                        busy = false,
-                        status = getString(R.string.device_setup_scan_failed)
-                    )
-                }
-            } finally {
-                isScanningNetworks = false
-
-                if (isViewReady() && !isSettingUp) {
-                    setBusyControlsEnabled(true)
-                }
-            }
-        }
-    }
-
-    private suspend fun getOrCreateSetupConnection(): DeviceSetupWifiConnector.SetupConnection {
-        setupConnection?.let { connection ->
-            return connection
-        }
-
-        val connection = wifiConnector.connectToSetupNetwork(
-            ssid = setupSsid,
-            password = SETUP_AP_PASSWORD,
-            timeoutMs = 30_000L
-        )
-
-        setupConnection = connection
-        return connection
-    }
-
-    private fun startSetup() {
-        if (isSettingUp) {
-            return
-        }
-
-        if (!ensureSetupContractReady()) {
-            return
-        }
-
-        val input = readAndValidateHomeWifiInput()
-            ?: return
-
-        isSettingUp = true
-
-        renderSetupProgress(
-            activeStep = SetupUiStep.CONNECT
-        )
-
-        setBusy(
-            busy = true,
-            status = getString(R.string.device_setup_preparing)
-        )
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                runSetupFlow(
-                    input = input
-                )
-            } catch (exception: Exception) {
-                exception.printStackTrace()
-
-                if (isViewReady()) {
-                    showError(
-                        exception.message
-                            ?: getString(R.string.device_setup_generic_failed)
-                    )
-
-                    setBusy(
-                        busy = false,
-                        status = getString(R.string.device_setup_failed)
-                    )
-                }
-            } finally {
-                isSettingUp = false
-
-                if (isViewReady()) {
-                    setBusyControlsEnabled(true)
-                }
-            }
-        }
-    }
-
-    private fun readAndValidateHomeWifiInput(): HomeWifiInput? {
-        val homeSsid = selectedHomeSsid.ifBlank {
-            binding.etHomeWifiSsid.text
-                ?.toString()
-                ?.trim()
-                .orEmpty()
-        }
-
-        val homePassword = binding.etHomeWifiPassword.text
-            ?.toString()
-            .orEmpty()
-
-        if (!setupContractValid) {
-            showError(
-                getString(R.string.device_setup_invalid_setup_network)
-            )
-            return null
-        }
-
-        if (homeSsid.isBlank()) {
-            binding.inputHomeWifiSsid.error = getString(
-                R.string.device_setup_validation_select_wifi
-            )
-            return null
-        }
-
-        binding.inputHomeWifiSsid.error = null
-
-        if (homePassword.isBlank()) {
-            binding.inputHomeWifiPassword.error = getString(
-                R.string.device_setup_validation_password
-            )
-            return null
-        }
-
-        binding.inputHomeWifiPassword.error = null
-
-        return HomeWifiInput(
-            ssid = homeSsid,
-            password = homePassword
-        )
-    }
-
-    private suspend fun runSetupFlow(
-        input: HomeWifiInput
-    ) {
-        val connection = getOrCreateSetupConnection()
-
-        if (!isViewReady()) {
-            return
-        }
-
-        renderSetupProgress(
-            activeStep = SetupUiStep.CONNECT
-        )
-
-        setBusy(
-            busy = true,
-            status = getString(R.string.device_setup_sending_credentials)
-        )
-
-        val setupResult = setupClient.sendHomeWifiCredentials(
-            network = connection.network,
-            setupSsid = setupSsid,
-            setupPassword = SETUP_AP_PASSWORD,
-            homeSsid = input.ssid,
-            homePassword = input.password,
-            disableSetupAccessPoint = false
-        )
-
-        if (!setupResult.success) {
-            throw IllegalStateException(
-                setupResult.errorMessage
-                    ?: getString(R.string.device_setup_not_accepted)
-            )
-        }
-
-        if (!waitForDeviceClientConnection(connection, setupResult.responseBody)) {
-            throw IllegalStateException(
-                getString(R.string.device_setup_connection_failed)
-            )
-        }
-
-        if (!isViewReady()) {
-            return
-        }
-
-        setBusy(
-            busy = true,
-            status = getString(R.string.device_setup_closing_setup_network)
-        )
-
-        closeSetupAccessPoint(
-            connection = connection,
-            input = input
-        )
-
-        closeSetupConnection()
-
-        if (!isViewReady()) {
-            return
-        }
-
-        setBusy(
-            busy = true,
-            status = getString(R.string.device_setup_waiting_phone_home_wifi)
-        )
-
-        val phoneReturnedToHomeWifi = homeWifiWaiter.waitUntilHomeWifiReady(
-            expectedSsid = input.ssid,
-            setupSsid = setupSsid,
-            timeoutMs = 75_000L
-        )
-
-        if (!phoneReturnedToHomeWifi) {
-            throw IllegalStateException(
-                getString(
-                    R.string.device_setup_phone_not_home_wifi,
-                    input.ssid
-                )
-            )
-        }
-
-        if (!isViewReady()) {
-            return
-        }
-
-        setBusy(
-            busy = true,
-            status = getString(R.string.device_setup_finding_device)
-        )
-
-        delay(7_000L)
-
-        val discoveredDevice = waitForDeviceOnHomeNetwork()
-            ?: throw IllegalStateException(
-                getString(R.string.device_setup_device_not_found)
-            )
-
-        val savedDeviceId = deviceStoreWriter.saveDiscoveredDevice(
-            device = discoveredDevice
-        )
-
-        if (!isViewReady()) {
-            return
-        }
-
-        renderSetupProgress(
-            activeStep = SetupUiStep.DONE
-        )
-
-        setBusy(
-            busy = true,
-            status = getString(R.string.device_setup_success)
-        )
-
-        delay(700L)
-
-        openDeviceMenu(
-            deviceId = savedDeviceId
-        )
-    }
-
-    private suspend fun waitForDeviceClientConnection(
-        connection: DeviceSetupWifiConnector.SetupConnection,
-        firstResponseBody: String?
-    ): Boolean {
-        val firstStatus = setupClient.parseDeviceWifiStatus(
-            responseText = firstResponseBody
-        )
-
-        if (firstStatus.connected) {
-            return true
-        }
-
-        if (!isViewReady()) {
-            return false
-        }
-
-        setBusy(
-            busy = true,
-            status = getString(R.string.device_setup_checking_connection)
-        )
-
-        repeat(15) {
-            val status = runCatching {
-                setupClient.readDeviceWifiStatus(
-                    network = connection.network
-                )
-            }.getOrNull()
-
-            if (status?.connected == true) {
-                return true
-            }
-
-            if (isViewReady()) {
-                binding.tvStatus.text = getString(
-                    R.string.device_setup_joining_home_wifi
+                    networks = event.networks
                 )
             }
 
-            delay(3_000L)
-        }
-
-        return false
-    }
-
-    private suspend fun closeSetupAccessPoint(
-        connection: DeviceSetupWifiConnector.SetupConnection,
-        input: HomeWifiInput
-    ) {
-        val closeApResult = setupClient.sendHomeWifiCredentials(
-            network = connection.network,
-            setupSsid = setupSsid,
-            setupPassword = SETUP_AP_PASSWORD,
-            homeSsid = input.ssid,
-            homePassword = input.password,
-            disableSetupAccessPoint = true
-        )
-
-        if (!closeApResult.success) {
-            throw IllegalStateException(
-                closeApResult.errorMessage
-                    ?: getString(R.string.device_setup_close_ap_failed)
-            )
-        }
-    }
-
-    private suspend fun waitForDeviceOnHomeNetwork(): DiscoveredAquaDevice? {
-        repeat(20) {
-            val result = DeviceDiscoveryService.scan(
-                context = requireContext(),
-                timeoutMs = 3_000L,
-                reason = DeviceScanReason.MANUAL_SCAN
-            )
-
-            val match = result.devices.firstOrNull { device ->
-                isExpectedDevice(
-                    device = device,
-                    setupShortId = setupShortId
+            is DeviceSetupEvent.OpenDevice -> {
+                openDeviceMenu(
+                    deviceId = event.deviceId,
+                    deviceTitle = event.deviceTitle
                 )
             }
-
-            if (match != null) {
-                return match
-            }
-
-            delay(3_000L)
         }
-
-        return null
-    }
-
-    private fun isExpectedDevice(
-        device: DiscoveredAquaDevice,
-        setupShortId: String
-    ): Boolean {
-        val productMatches = expectedProductId.isBlank() ||
-            device.productId.equals(
-                other = expectedProductId,
-                ignoreCase = true
-            )
-
-        if (!productMatches) {
-            return false
-        }
-
-        val categoryMatches = expectedCategory == AquaDeviceCategory.UNKNOWN ||
-            device.category == expectedCategory
-
-        if (!categoryMatches) {
-            return false
-        }
-
-        val setupCodeMatches = expectedSetupCode.isBlank() ||
-            device.setupCode.equals(
-                other = expectedSetupCode,
-                ignoreCase = true
-            )
-
-        if (!setupCodeMatches) {
-            return false
-        }
-
-        if (setupShortId.isBlank()) {
-            return true
-        }
-
-        return DeviceIdentityMatcher.matchesSetupShortId(
-            discoveredDevice = device,
-            setupShortId = setupShortId
-        )
-    }
-
-    private fun ensureSetupContractReady(): Boolean {
-        if (setupSsid.isBlank()) {
-            showError(
-                getString(R.string.device_setup_missing_setup_network)
-            )
-            return false
-        }
-
-        if (!setupContractValid) {
-            showError(
-                getString(R.string.device_setup_invalid_setup_network)
-            )
-            return false
-        }
-
-        return true
     }
 
     private fun showWifiNetworksBottomSheet(
-        networks: List<AquaDeviceSetupClient.HomeWifiNetwork>
+        networks: List<HomeWifiNetworkUi>
     ) {
         HomeWifiNetworksBottomSheetFragment.show(
             fragmentManager = parentFragmentManager,
@@ -760,7 +264,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
     }
 
     private fun renderSetupProgress(
-        activeStep: SetupUiStep
+        activeStep: DeviceSetupStep
     ) {
         styleStep(
             card = binding.cardStepDevice,
@@ -774,28 +278,28 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
             card = binding.cardStepWifi,
             number = binding.tvStepWifiNumber,
             label = binding.tvStepWifiLabel,
-            completed = activeStep == SetupUiStep.CONNECT ||
-                activeStep == SetupUiStep.DONE,
-            active = activeStep == SetupUiStep.WIFI
+            completed = activeStep == DeviceSetupStep.CONNECT ||
+                activeStep == DeviceSetupStep.DONE,
+            active = activeStep == DeviceSetupStep.WIFI
         )
 
         styleStep(
             card = binding.cardStepConnect,
             number = binding.tvStepConnectNumber,
             label = binding.tvStepConnectLabel,
-            completed = activeStep == SetupUiStep.DONE,
-            active = activeStep == SetupUiStep.CONNECT
+            completed = activeStep == DeviceSetupStep.DONE,
+            active = activeStep == DeviceSetupStep.CONNECT
         )
 
         styleStep(
             card = binding.cardStepDone,
             number = binding.tvStepDoneNumber,
             label = binding.tvStepDoneLabel,
-            completed = activeStep == SetupUiStep.DONE,
-            active = activeStep == SetupUiStep.DONE
+            completed = activeStep == DeviceSetupStep.DONE,
+            active = activeStep == DeviceSetupStep.DONE
         )
 
-        if (activeStep == SetupUiStep.DONE) {
+        if (activeStep == DeviceSetupStep.DONE) {
             binding.statusDot.setBackgroundResource(R.drawable.bg_status_dot_green)
         } else {
             binding.statusDot.setBackgroundResource(R.drawable.bg_setup_dot_blue)
@@ -840,32 +344,20 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
     }
 
     private fun openDeviceMenu(
-        deviceId: Long
+        deviceId: Long,
+        deviceTitle: String
     ) {
         AppRouteNavigator.openDevice(
             navController = findNavController(),
             deviceId = deviceId,
-            deviceTitle = displayName,
+            deviceTitle = deviceTitle,
             clearSetupFlow = true
         )
     }
 
-    private fun setBusy(
-        busy: Boolean,
-        status: String
-    ) {
-        binding.progressSetup.isVisible = busy
-        binding.tvStatus.text = status
-        setBusyControlsEnabled(!busy)
-    }
-
-    private fun setBusyControlsEnabled(
+    private fun setHeaderBackEnabled(
         enabled: Boolean
     ) {
-        setSetupInputControlsEnabled(
-            enabled = enabled
-        )
-
         binding.appHeader.btnBack.isEnabled = enabled
         binding.appHeader.btnBack.alpha = if (enabled) {
             1f
@@ -888,15 +380,6 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         }
     }
 
-    private fun closeSetupConnection() {
-        setupConnection?.close()
-        setupConnection = null
-    }
-
-    private fun isViewReady(): Boolean {
-        return _binding != null
-    }
-
     private fun showError(
         message: String
     ) {
@@ -907,15 +390,8 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
     }
 
     override fun onDestroyView() {
-        closeSetupConnection()
         _binding = null
 
         super.onDestroyView()
-    }
-
-    private companion object {
-        const val SETUP_AP_PASSWORD = "adminadmin"
-        const val DEFAULT_DEVICE_NAME = "Device"
-        const val DEFAULT_FAMILY_NAME = "Aqua device"
     }
 }

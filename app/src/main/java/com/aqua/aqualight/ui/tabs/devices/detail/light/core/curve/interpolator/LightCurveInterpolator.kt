@@ -14,7 +14,7 @@ object LightCurveInterpolator {
         endMinute: Int,
         peakPercent: Int,
         transitionMode: LightCurveTransitionMode,
-        samplesPerRamp: Int = 12
+        samplesPerRamp: Int = 24
     ): List<PointF> {
         val safePeak = peakPercent.coerceIn(0, 100)
 

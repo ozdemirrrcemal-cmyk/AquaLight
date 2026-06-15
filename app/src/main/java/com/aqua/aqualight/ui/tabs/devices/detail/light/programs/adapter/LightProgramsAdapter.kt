@@ -72,7 +72,11 @@ class LightProgramsAdapter(
             binding.tvProgramPoints.text = item.pointText
             binding.tvProgramPeak.text = item.peakText
 
-            binding.tvProgramState.text = item.stateText.uppercase()
+            binding.tvProgramState.text = if (item.isActive) {
+                "ACTIVE"
+            } else {
+                "DISABLED"
+            }
 
             binding.tvProgramRed.text = "R${item.red}"
             binding.tvProgramGreen.text = "G${item.green}"

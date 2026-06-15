@@ -9,7 +9,6 @@ import com.aqua.aqualight.data.devices.api.DeviceApiMode
 import com.aqua.aqualight.data.devices.api.light.LightChannelValues
 import com.aqua.aqualight.data.devices.api.light.LightCoolingControllerRequest
 import com.aqua.aqualight.data.devices.api.light.LightManualRequest
-import com.aqua.aqualight.data.devices.api.light.LightProgram
 import com.aqua.aqualight.data.devices.api.light.LightThermalProtectionRequest
 import com.aqua.aqualight.data.devices.api.light.LightTimeSyncRequest
 import com.aqua.aqualight.data.devices.api.model.ApiErrorCode
@@ -206,33 +205,6 @@ class LightRuntimeDeviceAccessor(
 
                         is ApiResult.Error -> result
                     }
-                }
-
-                is ApiResult.Error -> deviceApi
-            }
-        }
-    }
-
-    suspend fun writeProgram(
-        deviceId: Long,
-        program: LightProgram
-    ): ApiResult<Unit> {
-        if (deviceId <= 0L) {
-            return ApiResult.failure(
-                code = ApiErrorCode.INVALID_REQUEST,
-                message = "Light device id is missing"
-            )
-        }
-
-        return commandGateway.execute(
-            deviceId = deviceId
-        ) { device, connection ->
-            when (val deviceApi = createLightDeviceApi(device, connection)) {
-                is ApiResult.Success -> {
-                    deviceApi.value.lightApi.writeProgram(
-                        connection = deviceApi.value.connection,
-                        program = program
-                    )
                 }
 
                 is ApiResult.Error -> deviceApi
