@@ -1,4 +1,6 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model
+package com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model
+
+import com.aqua.aqualight.data.devices.light.programs.model.LightCurvePoint
 
 data class TodayLightPlanGraphState(
     val currentTime: LightCurvePoint,

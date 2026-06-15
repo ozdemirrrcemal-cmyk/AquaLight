@@ -1,6 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.model
 
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveChannelValues
+import com.aqua.aqualight.data.devices.light.programs.model.LightCurveChannelValues
 
 data class QuickSetupLightProfile(
     val title: String,

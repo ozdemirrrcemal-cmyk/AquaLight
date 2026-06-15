@@ -1,7 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.model
 
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurvePoint
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.TodayLightPlanGraphState
+import com.aqua.aqualight.data.devices.light.programs.model.LightCurvePoint
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.TodayLightPlanGraphState
 
 data class DeviceLightDashboardUiState(
     val activeProgramName: String = "No active program",

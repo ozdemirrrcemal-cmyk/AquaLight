@@ -1,11 +1,14 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model
 
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveChannelValues
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveGraphState
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurvePoint
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveTransitionMode
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.programs.model.LightProgramDraft
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.programs.model.RepeatMode
+import com.aqua.aqualight.data.devices.light.programs.compiler.CompiledLightProgramSchedule
+import com.aqua.aqualight.data.devices.light.programs.compiler.LightProgramCompileResult
+import com.aqua.aqualight.data.devices.light.programs.compiler.LightProgramScheduleCompiler
+import com.aqua.aqualight.data.devices.light.programs.model.LightCurveChannelValues
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveGraphState
+import com.aqua.aqualight.data.devices.light.programs.model.LightCurvePoint
+import com.aqua.aqualight.data.devices.light.programs.model.LightCurveTransitionMode
+import com.aqua.aqualight.data.devices.light.programs.model.LightProgramDraft
+import com.aqua.aqualight.data.devices.light.programs.model.RepeatMode
 
 data class DeviceLightProgramEditorUiState(
     val start: LightCurvePoint,
@@ -23,10 +26,34 @@ data class DeviceLightProgramEditorUiState(
     val previewProgressPercent: Int = 0
 ) {
     val draft: LightProgramDraft
-        get() = LightProgramDraft(start, peakStart, peakEnd, end, channelValues.normalized(), repeatMode, selectedDays, LightCurveTransitionMode.NATURAL)
+        get() = LightProgramDraft(
+            start = start,
+            peakStart = peakStart,
+            peakEnd = peakEnd,
+            end = end,
+            channelValues = channelValues.normalized(),
+            repeatMode = repeatMode,
+            selectedDays = selectedDays,
+            transitionMode = transitionMode
+        )
+
+    val compiledSchedule: CompiledLightProgramSchedule?
+        get() = when (val result = LightProgramScheduleCompiler.compile(draft)) {
+            is LightProgramCompileResult.Valid -> result.schedule
+            is LightProgramCompileResult.Invalid -> null
+        }
 
     val graphState: LightCurveGraphState
-        get() = LightCurveGraphState(start, peakStart, peakEnd, end, channelValues.normalized(), previewSimulationTime ?: currentDeviceTime, LightCurveTransitionMode.NATURAL)
+        get() = LightCurveGraphState(
+            start = start,
+            peakStart = peakStart,
+            peakEnd = peakEnd,
+            end = end,
+            channelValues = channelValues.normalized(),
+            currentTime = previewSimulationTime ?: currentDeviceTime,
+            transitionMode = transitionMode,
+            compiledPoints = compiledSchedule?.points.orEmpty()
+        )
 
     companion object {
         fun default(): DeviceLightProgramEditorUiState {
