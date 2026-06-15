@@ -1,6 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model
 
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.color.LightRgbwChannels
+import com.aqua.aqualight.data.devices.light.model.LightRgbwChannels
 import com.aqua.aqualight.data.devices.light.math.LightRgbwPreviewColorMath
 import com.aqua.aqualight.data.devices.light.math.LightOutputMath
 
