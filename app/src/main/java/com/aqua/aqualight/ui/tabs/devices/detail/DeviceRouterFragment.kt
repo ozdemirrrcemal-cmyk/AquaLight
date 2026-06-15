@@ -3,27 +3,21 @@ package com.aqua.aqualight.ui.tabs.devices.detail
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.devices.DevicesDataStoreManager
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceControllerRoute
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceDefinition
-import com.aqua.aqualight.data.devices.catalog.toControllerRoute
-import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
-import kotlinx.coroutines.flow.first
+import com.aqua.aqualight.data.devices.routing.DeviceRouterController
+import com.aqua.aqualight.data.devices.routing.DeviceRouterDestination
 import kotlinx.coroutines.launch
 
 class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
 
     private val args: DeviceRouterFragmentArgs by navArgs()
-
-    private lateinit var devicesStore: DevicesDataStoreManager
-    private lateinit var tankStore: AquariumTankDataStoreManager
-
-    private var hasRouted = false
+    private val viewModel: DeviceRouterViewModel by viewModels()
 
     override fun onViewCreated(
         view: View,
@@ -34,169 +28,104 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
             savedInstanceState
         )
 
-        devicesStore =
-            DevicesDataStoreManager.create(
-                requireContext()
-            )
+        observeViewModel()
 
-        tankStore =
-            AquariumTankDataStoreManager(
-                requireContext().applicationContext
-            )
-
-        if (hasRouted) {
-            return
-        }
-
-        val deviceId =
-            args.deviceId
-
-        if (deviceId <= 0L) {
-            openUnsupportedDevice(
-                title = DEFAULT_DEVICE_TITLE,
-                message = "Device information could not be found."
-            )
-            return
-        }
-
-        routeDevice(
-            deviceId = deviceId
+        viewModel.resolveRoute(
+            deviceId = args.deviceId,
+            deviceTitle = args.deviceTitle
         )
     }
 
-    private fun routeDevice(
-        deviceId: Long
-    ) {
-        hasRouted = true
-
+    private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
-            val device =
-                devicesStore.devicesFlow
-                    .first()
-                    .firstOrNull { savedDevice ->
-                        savedDevice.id == deviceId
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+                launch {
+                    viewModel.events.collect { event ->
+                        handleEvent(
+                            event = event
+                        )
                     }
-
-            if (!isAdded) {
-                return@launch
-            }
-
-            if (device == null) {
-                openUnsupportedDevice(
-                    title = "Device Not Found",
-                    message = "This device is no longer available."
-                )
-                return@launch
-            }
-
-            val definition =
-                AquaDeviceCatalog.findDefinition(
-                    productId = device.productId,
-                    productKey = device.productKey,
-                    category = device.category
-                )
-
-            if (definition == null) {
-                openUnsupportedDevice(
-                    title = device.productModel.ifBlank {
-                        "Unsupported Device"
-                    },
-                    message = "This device is not supported by this app version."
-                )
-                return@launch
-            }
-
-            val routerTitle =
-                resolveRouterTitle(
-                    productModel = device.productModel,
-                    definition = definition
-                )
-
-            val controllerTitle =
-                args.deviceTitle.ifBlank {
-                    resolveControllerTitleFromDevice(
-                        device = device,
-                        fallbackDeviceTitle = routerTitle
-                    )
                 }
-
-            routeToController(
-                deviceId = device.id,
-                routerTitle = routerTitle,
-                controllerTitle = controllerTitle,
-                definition = definition
-            )
+            }
         }
     }
 
-    private suspend fun resolveControllerTitleFromDevice(
-        device: DevicesDataStoreManager.DeviceInfo,
-        fallbackDeviceTitle: String
-    ): String {
-        val tanks =
-            tankStore.tanksFlow.first()
+    private fun handleEvent(
+        event: DeviceRouterEvent
+    ) {
+        when (event) {
+            is DeviceRouterEvent.OpenDestination -> {
+                openDestination(
+                    destination = event.destination
+                )
+            }
+        }
+    }
 
-        val assignedTankName =
-            device.tankId?.let { tankId ->
-                tanks.firstOrNull { tank ->
-                    tank.id == tankId
-                }?.name
-            }.orEmpty()
+    private fun openDestination(
+        destination: DeviceRouterDestination
+    ) {
+        if (!isAdded) {
+            return
+        }
 
-        return resolveControllerTitle(
-            assignedTankName = assignedTankName,
-            userDeviceName = device.name,
-            fallbackDeviceTitle = fallbackDeviceTitle
-        )
+        when (destination) {
+            is DeviceRouterDestination.Controller -> {
+                routeToController(
+                    destination = destination
+                )
+            }
+
+            is DeviceRouterDestination.Unsupported -> {
+                openUnsupportedDevice(
+                    title = destination.title,
+                    message = destination.message
+                )
+            }
+        }
     }
 
     private fun routeToController(
-        deviceId: Long,
-        routerTitle: String,
-        controllerTitle: String,
-        definition: AquaDeviceDefinition
+        destination: DeviceRouterDestination.Controller
     ) {
-        when (definition.category.toControllerRoute()) {
-            AquaDeviceControllerRoute.LIGHT -> {
-                findNavController().navigate(
+        val navController = findNavController()
+
+        when (destination.controller) {
+            DeviceRouterController.LIGHT -> {
+                navController.navigate(
                     DeviceRouterFragmentDirections.actionDeviceRouterFragmentToDeviceLightFragment(
-                        deviceId = deviceId,
-                        deviceTitle = controllerTitle
+                        deviceId = destination.deviceId,
+                        deviceTitle = destination.deviceTitle
                     )
                 )
             }
 
-            AquaDeviceControllerRoute.DOSING -> {
-                findNavController().navigate(
+            DeviceRouterController.DOSING -> {
+                navController.navigate(
                     DeviceRouterFragmentDirections.actionDeviceRouterFragmentToDeviceDosingFragment(
-                        deviceId = deviceId,
-                        deviceTitle = controllerTitle
+                        deviceId = destination.deviceId,
+                        deviceTitle = destination.deviceTitle
                     )
                 )
             }
 
-            AquaDeviceControllerRoute.TIMER -> {
-                findNavController().navigate(
+            DeviceRouterController.TIMER -> {
+                navController.navigate(
                     DeviceRouterFragmentDirections.actionDeviceRouterFragmentToDeviceTimerFragment(
-                        deviceId = deviceId,
-                        deviceTitle = controllerTitle
+                        deviceId = destination.deviceId,
+                        deviceTitle = destination.deviceTitle
                     )
                 )
             }
 
-            AquaDeviceControllerRoute.COOLING -> {
-                findNavController().navigate(
+            DeviceRouterController.COOLING -> {
+                navController.navigate(
                     DeviceRouterFragmentDirections.actionDeviceRouterFragmentToDeviceCoolingFragment(
-                        deviceId = deviceId,
-                        deviceTitle = controllerTitle
+                        deviceId = destination.deviceId,
+                        deviceTitle = destination.deviceTitle
                     )
-                )
-            }
-
-            AquaDeviceControllerRoute.UNSUPPORTED -> {
-                openUnsupportedDevice(
-                    title = routerTitle,
-                    message = "This device controller is not supported by this app version."
                 )
             }
         }
@@ -214,29 +143,6 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
         )
     }
 
-    private fun resolveRouterTitle(
-        productModel: String,
-        definition: AquaDeviceDefinition
-    ): String {
-        return productModel.ifBlank {
-            definition.displayName.ifBlank {
-                DEFAULT_DEVICE_TITLE
-            }
-        }
-    }
-
-    private fun resolveControllerTitle(
-        assignedTankName: String,
-        userDeviceName: String,
-        fallbackDeviceTitle: String
-    ): String {
-        return assignedTankName.ifBlank {
-            userDeviceName.ifBlank {
-                fallbackDeviceTitle
-            }
-        }
-    }
-
     companion object {
         const val ARG_DEVICE_ID = "deviceId"
         const val ARG_DEVICE_TITLE = "deviceTitle"
@@ -244,7 +150,5 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
         const val ARG_USER_DEVICE_NAME = "userDeviceName"
         const val ARG_DEFAULT_DEVICE_TITLE = "defaultDeviceTitle"
         const val ARG_MESSAGE = "message"
-
-        private const val DEFAULT_DEVICE_TITLE = "Device"
     }
 }
