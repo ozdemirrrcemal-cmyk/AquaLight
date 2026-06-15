@@ -1,7 +1,7 @@
-package com.aqua.aqualight.data.devices.light.programs.validation
+package com.aqua.aqualight.ui.tabs.devices.detail.light.core.programs.validation
 
-import com.aqua.aqualight.data.devices.light.programs.model.LightProgramDraft
-import com.aqua.aqualight.data.devices.light.programs.model.LightProgramTimeMath
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.programs.model.LightProgramDraft
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.programs.model.LightProgramTimeMath
 
 object LightProgramDraftValidator {
 

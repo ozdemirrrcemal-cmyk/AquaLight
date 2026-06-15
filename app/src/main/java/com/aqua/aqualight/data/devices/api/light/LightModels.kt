@@ -67,8 +67,21 @@ data class LightProgram(
     val peakEndMinute: Int,
     val endMinute: Int,
     val channelValues: LightChannelValues,
-    val repeatDays: Set<Int> = emptySet()
+    val repeatDays: Set<Int> = emptySet(),
+    val points: List<LightProgramPoint> = emptyList()
 )
+
+data class LightProgramPoint(
+    val minuteOfDay: Int,
+    val red: Int,
+    val green: Int,
+    val blue: Int,
+    val white: Int
+) {
+    companion object {
+        const val MINUTES_PER_DAY = 24 * 60
+    }
+}
 
 data class LightManualRequest(
     val powerOn: Boolean,

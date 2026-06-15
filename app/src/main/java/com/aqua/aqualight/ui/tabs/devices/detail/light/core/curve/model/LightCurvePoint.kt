@@ -1,4 +1,4 @@
-package com.aqua.aqualight.data.devices.light.programs.model
+package com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model
 
 data class LightCurvePoint(
     val hour: Int,
@@ -14,17 +14,6 @@ data class LightCurvePoint(
     companion object {
         fun of(hour: Int, minute: Int = 0): LightCurvePoint {
             return LightCurvePoint(hour = hour, minute = minute)
-        }
-
-        fun fromTotalMinutes(totalMinutes: Int): LightCurvePoint {
-            val safeMinutes = totalMinutes.coerceIn(0, 24 * 60)
-            if (safeMinutes == 24 * 60) {
-                return LightCurvePoint(hour = 0, minute = 0)
-            }
-            return LightCurvePoint(
-                hour = safeMinutes / 60,
-                minute = safeMinutes % 60
-            )
         }
     }
 }

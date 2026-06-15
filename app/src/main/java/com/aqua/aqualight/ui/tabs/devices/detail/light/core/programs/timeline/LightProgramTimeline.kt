@@ -1,4 +1,4 @@
-package com.aqua.aqualight.data.devices.light.programs.timeline
+package com.aqua.aqualight.ui.tabs.devices.detail.light.core.programs.timeline
 
 data class LightProgramTimeline(
     val phases: List<LightProgramTimelinePhase>

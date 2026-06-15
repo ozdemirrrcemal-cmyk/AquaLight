@@ -3,9 +3,9 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.programs
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.data.devices.light.programs.LightProgramDataStoreManager
-import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
-import com.aqua.aqualight.data.devices.light.programs.model.LightProgramTimeMath
+import com.aqua.aqualight.data.devices.light.programs.LightProgramsRepository
+import com.aqua.aqualight.data.devices.light.programs.LoadLightProgramResult
+import com.aqua.aqualight.data.devices.light.programs.SaveLightProgramResult
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramListItem
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramListUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramsEvent
@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -25,7 +24,9 @@ class DeviceLightProgramsViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
-    private val programStore = LightProgramDataStoreManager.create(application)
+    private val repository = LightProgramsRepository.get(
+        context = application.applicationContext
+    )
 
     private val _uiState = MutableStateFlow(
         LightProgramListUiState()
@@ -43,22 +44,28 @@ class DeviceLightProgramsViewModel(
     fun initialize(
         deviceId: Long
     ) {
+        if (this.deviceId == deviceId && programsJob != null) {
+            return
+        }
+
         this.deviceId = deviceId
         programsJob?.cancel()
+
+        if (deviceId <= 0L) {
+            _uiState.value = LightProgramListUiState()
+            return
+        }
+
         programsJob = viewModelScope.launch {
-            programStore.programsForDeviceFlow(deviceId)
-                .collectLatest { programs ->
-                    _uiState.update { state ->
-                        val items = programs.map { program -> program.toListItem() }
-                        state.copy(
-                            allPrograms = items,
-                            visiblePrograms = filterPrograms(
-                                programs = items,
-                                filter = state.selectedFilter
-                            )
-                        )
-                    }
+            repository.observePrograms(deviceId).collect { programs ->
+                val mapped = LightProgramListItemMapper.map(programs)
+                _uiState.update { state ->
+                    state.copy(
+                        allPrograms = mapped,
+                        visiblePrograms = mapped.filteredBy(state.selectedFilter)
+                    )
                 }
+            }
         }
     }
 
@@ -68,10 +75,7 @@ class DeviceLightProgramsViewModel(
         _uiState.update { state ->
             state.copy(
                 selectedFilter = filter,
-                visiblePrograms = filterPrograms(
-                    programs = state.allPrograms,
-                    filter = filter
-                )
+                visiblePrograms = state.allPrograms.filteredBy(filter)
             )
         }
     }
@@ -80,45 +84,65 @@ class DeviceLightProgramsViewModel(
         programId: String,
         isActive: Boolean
     ) {
+        if (deviceId <= 0L || programId.isBlank()) return
+
         viewModelScope.launch {
-            val updated = programStore.setProgramActive(
+            _events.emit(LightProgramsEvent.SetLoading(true))
+
+            when (val result = repository.setProgramActive(
                 deviceId = deviceId,
                 programId = programId,
-                active = isActive
-            )
-            if (updated) {
-                _events.emit(
-                    LightProgramsEvent.ShowMessage(
-                        if (isActive) {
-                            "Program marked active locally. Device schedule sync is ready for firmware connection."
-                        } else {
-                            "Program disabled locally."
-                        }
+                isActive = isActive
+            )) {
+                is LoadLightProgramResult.Loaded -> {
+                    _events.emit(
+                        LightProgramsEvent.ShowMessage(
+                            "Program loaded to device"
+                        )
                     )
-                )
-            } else {
-                _events.emit(
-                    LightProgramsEvent.ShowError("Program could not be updated.")
-                )
+                }
+
+                is LoadLightProgramResult.LocalOnly -> {
+                    _events.emit(
+                        LightProgramsEvent.ShowMessage(result.message)
+                    )
+                }
+
+                is LoadLightProgramResult.Error -> {
+                    _events.emit(
+                        LightProgramsEvent.ShowError(result.message)
+                    )
+                }
             }
+
+            _events.emit(LightProgramsEvent.SetLoading(false))
         }
     }
 
     fun duplicateProgram(
         programId: String
     ) {
+        if (deviceId <= 0L || programId.isBlank()) return
+
         viewModelScope.launch {
-            val duplicated = programStore.duplicateProgram(
+            when (val result = repository.duplicateProgram(
                 deviceId = deviceId,
                 programId = programId
-            )
-            _events.emit(
-                if (duplicated != null) {
-                    LightProgramsEvent.ShowMessage("Program duplicated.")
-                } else {
-                    LightProgramsEvent.ShowError("Program could not be duplicated.")
+            )) {
+                is SaveLightProgramResult.Success -> {
+                    _events.emit(
+                        LightProgramsEvent.ShowMessage(
+                            "Program duplicated"
+                        )
+                    )
                 }
-            )
+
+                is SaveLightProgramResult.Error -> {
+                    _events.emit(
+                        LightProgramsEvent.ShowError(result.message)
+                    )
+                }
+            }
         }
     }
 
@@ -126,73 +150,64 @@ class DeviceLightProgramsViewModel(
         programId: String,
         newName: String
     ) {
+        if (deviceId <= 0L || programId.isBlank()) return
+
         viewModelScope.launch {
-            val renamed = programStore.renameProgram(
+            when (val result = repository.renameProgram(
                 deviceId = deviceId,
                 programId = programId,
                 newName = newName
-            )
-            _events.emit(
-                if (renamed) {
-                    LightProgramsEvent.ShowMessage("Program renamed.")
-                } else {
-                    LightProgramsEvent.ShowError("Program could not be renamed.")
+            )) {
+                is SaveLightProgramResult.Success -> {
+                    _events.emit(
+                        LightProgramsEvent.ShowMessage(
+                            "Program renamed"
+                        )
+                    )
                 }
-            )
+
+                is SaveLightProgramResult.Error -> {
+                    _events.emit(
+                        LightProgramsEvent.ShowError(result.message)
+                    )
+                }
+            }
         }
     }
 
     fun deleteProgram(
         programId: String
     ) {
+        if (deviceId <= 0L || programId.isBlank()) return
+
         viewModelScope.launch {
-            val deleted = programStore.deleteProgram(
+            val deleted = repository.deleteProgram(
                 deviceId = deviceId,
                 programId = programId
             )
+
             _events.emit(
                 if (deleted) {
-                    LightProgramsEvent.ShowMessage("Program deleted.")
+                    LightProgramsEvent.ShowMessage("Program deleted")
                 } else {
-                    LightProgramsEvent.ShowError("Program could not be deleted.")
+                    LightProgramsEvent.ShowError("Program could not be found")
                 }
             )
         }
     }
 
-    private fun filterPrograms(
-        programs: List<LightProgramListItem>,
+    override fun onCleared() {
+        programsJob?.cancel()
+        super.onCleared()
+    }
+
+    private fun List<LightProgramListItem>.filteredBy(
         filter: ProgramFilter
     ): List<LightProgramListItem> {
         return when (filter) {
-            ProgramFilter.ALL -> programs
-            ProgramFilter.ACTIVE -> programs.filter { program -> program.isActive }
-            ProgramFilter.DISABLED -> programs.filter { program -> !program.isActive }
+            ProgramFilter.ALL -> this
+            ProgramFilter.ACTIVE -> filter { item -> item.isActive }
+            ProgramFilter.DISABLED -> filter { item -> !item.isActive }
         }
-    }
-
-    private fun SavedLightProgram.toListItem(): LightProgramListItem {
-        val draft = toDraft()
-        val start = draft.start.label
-        val end = LightProgramTimeMath.endLabel(draft.end)
-        val rampUp = ((peakStartMinute - startMinute).coerceAtLeast(0) / 60.0)
-        val rampDown = ((endMinute - peakEndMinute).coerceAtLeast(0) / 60.0)
-        val pointCount = 2 + 24 + 1 + 24 + 1
-
-        return LightProgramListItem(
-            id = id,
-            name = name,
-            subtitle = if (active) "Active local schedule" else "Saved local copy",
-            isActive = active,
-            startTime = start,
-            endTime = end,
-            rampText = "Ramp %.1fh / %.1fh".format(rampUp, rampDown),
-            pointText = "$pointCount LP points ready",
-            peakText = "Peak ${draft.channelValues.red}/${draft.channelValues.green}/${draft.channelValues.blue}/${draft.channelValues.white}%",
-            red = red,
-            green = green,
-            blue = blue,
-            white = white
-        )
     }
 }

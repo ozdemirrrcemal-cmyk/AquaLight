@@ -1,7 +1,7 @@
-package com.aqua.aqualight.data.devices.light.programs.timeline
+package com.aqua.aqualight.ui.tabs.devices.detail.light.core.programs.timeline
 
-import com.aqua.aqualight.data.devices.light.programs.model.LightProgramDraft
-import com.aqua.aqualight.data.devices.light.programs.model.LightProgramTimeMath
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.programs.model.LightProgramDraft
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.programs.model.LightProgramTimeMath
 
 object LightProgramTimelineBuilder {
     fun build(draft: LightProgramDraft): LightProgramTimeline {

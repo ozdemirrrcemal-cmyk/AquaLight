@@ -1,5 +1,6 @@
-package com.aqua.aqualight.data.devices.light.programs.model
+package com.aqua.aqualight.ui.tabs.devices.detail.light.core.programs.model
 
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurvePoint
 
 object LightProgramTimeMath {
 

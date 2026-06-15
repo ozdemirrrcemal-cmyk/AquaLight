@@ -7,11 +7,10 @@ import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.Serializer
 import androidx.datastore.dataStoreFile
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
-import com.aqua.aqualight.data.devices.light.programs.compiler.LightProgramCompileResult
-import com.aqua.aqualight.data.devices.light.programs.compiler.LightProgramScheduleCompiler
-import com.aqua.aqualight.data.devices.light.programs.model.LightCurveTransitionMode
 import com.aqua.aqualight.data.devices.light.programs.model.LightProgramDraft
-import com.aqua.aqualight.data.devices.light.programs.model.RepeatMode
+import com.aqua.aqualight.data.devices.light.programs.model.LightProgramRepeatMode
+import com.aqua.aqualight.data.devices.light.programs.model.LightProgramSyncState
+import com.aqua.aqualight.data.devices.light.programs.model.LightProgramTransitionMode
 import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
 import com.aqua.aqualight.data.devices.light.programs.store.LightProgramsStore
 import com.aqua.aqualight.data.devices.light.programs.store.StoredLightProgram
@@ -81,12 +80,18 @@ class LightProgramDataStoreManager private constructor(
             }
             .map { store ->
                 store.programsList
-                    .filter { program -> program.belongsToCurrentUser() }
-                    .map { program -> program.toSavedLightProgram() }
+                    .filter { program ->
+                        program.belongsToCurrentUser()
+                    }
+                    .map { program ->
+                        program.toSavedLightProgram()
+                    }
                     .sortedWith(
-                        compareByDescending<SavedLightProgram> { program -> if (program.active) 1 else 0 }
-                            .thenByDescending { program -> program.updatedAt }
-                            .thenBy { program -> program.name.lowercase() }
+                        compareByDescending<SavedLightProgram> { program ->
+                            program.updatedAtMillis
+                        }.thenBy { program ->
+                            program.name.lowercase()
+                        }
                     )
             }
 
@@ -94,11 +99,13 @@ class LightProgramDataStoreManager private constructor(
         deviceId: Long
     ): Flow<List<SavedLightProgram>> {
         return programsFlow.map { programs ->
-            programs.filter { program -> program.deviceId == deviceId }
+            programs.filter { program ->
+                program.deviceId == deviceId
+            }
         }
     }
 
-    suspend fun findProgram(
+    suspend fun getProgram(
         deviceId: Long,
         programId: String
     ): SavedLightProgram? {
@@ -108,12 +115,15 @@ class LightProgramDataStoreManager private constructor(
         }
     }
 
-    suspend fun saveProgram(
+    suspend fun saveDraft(
         deviceId: Long,
         programId: String?,
         name: String,
         draft: LightProgramDraft,
-        activate: Boolean,
+        syncState: LightProgramSyncState? = null,
+        active: Boolean? = null,
+        lastLoadedAtMillis: Long? = null,
+        lastLoadedHash: String? = null,
         nowMillis: Long = System.currentTimeMillis()
     ): SavedLightProgram {
         val safeName = name.trim()
@@ -124,116 +134,109 @@ class LightProgramDataStoreManager private constructor(
             "Light device id is missing"
         }
 
-        val compiled = when (val result = LightProgramScheduleCompiler.compile(
-            draft = draft,
-            programId = programId.orEmpty(),
-            programName = safeName
-        )) {
-            is LightProgramCompileResult.Valid -> result.schedule
-            is LightProgramCompileResult.Invalid -> throw IllegalArgumentException(result.message)
-        }
-
+        val currentUid = UserDataScope.currentUid()
         val device = devicesStore.devicesFlow.first()
-            .firstOrNull { storedDevice -> storedDevice.id == deviceId }
+            .firstOrNull { storedDevice ->
+                storedDevice.id == deviceId
+            }
 
-        val ownerUid = UserDataScope.currentUid()
-        val existing = programId
+        val safeProgramId = programId
             ?.takeIf { id -> id.isNotBlank() }
-            ?.let { id -> findProgram(deviceId, id) }
-
-        val savedProgram = SavedLightProgram(
-            id = existing?.id ?: buildProgramId(
+            ?: buildProgramId(
                 deviceId = deviceId,
                 nowMillis = nowMillis
-            ),
-            ownerUid = ownerUid,
-            deviceId = deviceId,
-            deviceUid = device?.deviceUid.orEmpty(),
-            productId = device?.productId.orEmpty(),
-            name = safeName,
-            active = activate,
-            startMinute = compiled.startMinute,
-            peakStartMinute = compiled.peakStartMinute,
-            peakEndMinute = compiled.peakEndMinute,
-            endMinute = compiled.endMinute,
-            red = compiled.peakChannels.red,
-            green = compiled.peakChannels.green,
-            blue = compiled.peakChannels.blue,
-            white = compiled.peakChannels.white,
-            repeatMode = compiled.repeatMode,
-            repeatDays = compiled.repeatDays,
-            transitionMode = compiled.transitionMode,
-            createdAt = existing?.createdAt ?: nowMillis,
-            updatedAt = nowMillis
+            )
+
+        var savedProgram: SavedLightProgram? = null
+
+        dataStore.updateData { store ->
+            val existing = store.programsList.firstOrNull { program ->
+                program.id == safeProgramId &&
+                    program.deviceId == deviceId &&
+                    program.belongsToCurrentUser()
+            }
+
+            val wasActive = existing?.isActive ?: false
+            val resolvedSyncState = syncState ?: when {
+                wasActive -> LightProgramSyncState.ACTIVE_DIRTY
+                else -> LightProgramSyncState.LOCAL_ONLY
+            }
+
+            val resolvedActive = active ?: wasActive
+            val program = SavedLightProgram(
+                id = safeProgramId,
+                ownerUid = existing?.ownerUid?.takeIf { it.isNotBlank() } ?: currentUid,
+                deviceId = deviceId,
+                deviceUid = device?.deviceUid.orEmpty(),
+                productId = device?.productId.orEmpty(),
+                name = safeName,
+                isActive = resolvedActive,
+                startMinute = draft.startMinute.coerceIn(0, 24 * 60 - 1),
+                peakStartMinute = draft.peakStartMinute.coerceIn(0, 24 * 60 - 1),
+                peakEndMinute = draft.peakEndMinute.coerceIn(0, 24 * 60 - 1),
+                endMinute = draft.endMinute.coerceIn(1, 24 * 60),
+                red = draft.red.coerceIn(0, 100),
+                green = draft.green.coerceIn(0, 100),
+                blue = draft.blue.coerceIn(0, 100),
+                white = draft.white.coerceIn(0, 100),
+                repeatMode = draft.repeatMode,
+                selectedDays = draft.selectedDays.filter { day -> day in 1..7 }.toSet().ifEmpty { SavedLightProgram.ALL_DAYS },
+                transitionMode = draft.transitionMode,
+                syncState = resolvedSyncState,
+                createdAtMillis = existing?.createdAtMillis ?: nowMillis,
+                updatedAtMillis = nowMillis,
+                lastLoadedAtMillis = lastLoadedAtMillis ?: existing?.lastLoadedAtMillis ?: 0L,
+                lastLoadedHash = lastLoadedHash ?: existing?.lastLoadedHash.orEmpty()
+            )
+
+            savedProgram = program
+
+            val builder = store.toBuilder()
+                .clearPrograms()
+
+            store.programsList.forEach { stored ->
+                if (stored.id != safeProgramId || stored.deviceId != deviceId || !stored.belongsToCurrentUser()) {
+                    builder.addPrograms(stored)
+                }
+            }
+
+            builder.addPrograms(program.toStoredLightProgram())
+                .build()
+        }
+
+        return requireNotNull(savedProgram)
+    }
+
+    suspend fun replaceAfterSuccessfulLoad(
+        loadedProgram: SavedLightProgram,
+        compiledHash: String,
+        nowMillis: Long = System.currentTimeMillis()
+    ): SavedLightProgram {
+        val syncedProgram = loadedProgram.copy(
+            isActive = true,
+            syncState = LightProgramSyncState.ACTIVE_SYNCED,
+            updatedAtMillis = nowMillis,
+            lastLoadedAtMillis = nowMillis,
+            lastLoadedHash = compiledHash
         )
 
         dataStore.updateData { store ->
             val builder = store.toBuilder()
                 .clearPrograms()
 
-            var replaced = false
             store.programsList.forEach { stored ->
-                val sameProgram = stored.id == savedProgram.id &&
-                    stored.deviceId == deviceId &&
-                    stored.belongsToCurrentUser()
+                val sameDevice = stored.deviceId == syncedProgram.deviceId
+                val currentUserProgram = stored.belongsToCurrentUser()
 
-                when {
-                    sameProgram -> {
-                        builder.addPrograms(savedProgram.toStoredLightProgram())
-                        replaced = true
+                val nextStored = when {
+                    stored.id == syncedProgram.id && sameDevice && currentUserProgram -> {
+                        syncedProgram.toStoredLightProgram()
                     }
 
-                    activate && stored.deviceId == deviceId && stored.belongsToCurrentUser() -> {
-                        builder.addPrograms(
-                            stored.toBuilder()
-                                .setActive(false)
-                                .build()
-                        )
-                    }
-
-                    else -> builder.addPrograms(stored)
-                }
-            }
-
-            if (!replaced) {
-                builder.addPrograms(savedProgram.toStoredLightProgram())
-            }
-
-            builder.build()
-        }
-
-        return savedProgram
-    }
-
-    suspend fun setProgramActive(
-        deviceId: Long,
-        programId: String,
-        active: Boolean,
-        nowMillis: Long = System.currentTimeMillis()
-    ): Boolean {
-        if (deviceId <= 0L || programId.isBlank()) return false
-
-        var found = false
-        dataStore.updateData { store ->
-            val builder = store.toBuilder()
-                .clearPrograms()
-
-            store.programsList.forEach { stored ->
-                val isSameDevice = stored.deviceId == deviceId && stored.belongsToCurrentUser()
-                val isTarget = isSameDevice && stored.id == programId
-
-                val updated = when {
-                    isTarget -> {
-                        found = true
+                    sameDevice && currentUserProgram -> {
                         stored.toBuilder()
-                            .setActive(active)
-                            .setUpdatedAtMillis(nowMillis)
-                            .build()
-                    }
-
-                    active && isSameDevice -> {
-                        stored.toBuilder()
-                            .setActive(false)
+                            .setIsActive(false)
+                            .setSyncState(LightProgramSyncState.LOCAL_ONLY.name)
                             .setUpdatedAtMillis(nowMillis)
                             .build()
                     }
@@ -241,7 +244,101 @@ class LightProgramDataStoreManager private constructor(
                     else -> stored
                 }
 
-                builder.addPrograms(updated)
+                builder.addPrograms(nextStored)
+            }
+
+            if (store.programsList.none { stored ->
+                    stored.id == syncedProgram.id &&
+                        stored.deviceId == syncedProgram.deviceId &&
+                        stored.belongsToCurrentUser()
+                }) {
+                builder.addPrograms(syncedProgram.toStoredLightProgram())
+            }
+
+            builder.build()
+        }
+
+        return syncedProgram
+    }
+
+    suspend fun markSyncFailed(
+        deviceId: Long,
+        programId: String,
+        nowMillis: Long = System.currentTimeMillis()
+    ) {
+        if (deviceId <= 0L || programId.isBlank()) return
+
+        dataStore.updateData { store ->
+            val builder = store.toBuilder()
+                .clearPrograms()
+
+            store.programsList.forEach { stored ->
+                val shouldUpdate = stored.id == programId &&
+                    stored.deviceId == deviceId &&
+                    stored.belongsToCurrentUser()
+
+                builder.addPrograms(
+                    if (shouldUpdate) {
+                        stored.toBuilder()
+                            .setSyncState(LightProgramSyncState.SYNC_FAILED.name)
+                            .setUpdatedAtMillis(nowMillis)
+                            .build()
+                    } else {
+                        stored
+                    }
+                )
+            }
+
+            builder.build()
+        }
+    }
+
+    suspend fun setProgramActiveLocal(
+        deviceId: Long,
+        programId: String,
+        isActive: Boolean,
+        nowMillis: Long = System.currentTimeMillis()
+    ): Boolean {
+        if (deviceId <= 0L || programId.isBlank()) return false
+        var found = false
+
+        dataStore.updateData { store ->
+            val builder = store.toBuilder()
+                .clearPrograms()
+
+            store.programsList.forEach { stored ->
+                val currentUserProgram = stored.belongsToCurrentUser()
+                val sameDevice = stored.deviceId == deviceId
+                val sameProgram = stored.id == programId
+
+                val nextStored = when {
+                    sameDevice && currentUserProgram && sameProgram -> {
+                        found = true
+                        stored.toBuilder()
+                            .setIsActive(isActive)
+                            .setSyncState(
+                                if (isActive) {
+                                    LightProgramSyncState.ACTIVE_DIRTY.name
+                                } else {
+                                    LightProgramSyncState.LOCAL_ONLY.name
+                                }
+                            )
+                            .setUpdatedAtMillis(nowMillis)
+                            .build()
+                    }
+
+                    sameDevice && currentUserProgram && isActive -> {
+                        stored.toBuilder()
+                            .setIsActive(false)
+                            .setSyncState(LightProgramSyncState.LOCAL_ONLY.name)
+                            .setUpdatedAtMillis(nowMillis)
+                            .build()
+                    }
+
+                    else -> stored
+                }
+
+                builder.addPrograms(nextStored)
             }
 
             builder.build()
@@ -258,28 +355,37 @@ class LightProgramDataStoreManager private constructor(
     ): Boolean {
         val safeName = newName.trim()
         if (deviceId <= 0L || programId.isBlank() || safeName.isBlank()) return false
-
         var renamed = false
+
         dataStore.updateData { store ->
             val builder = store.toBuilder()
                 .clearPrograms()
 
             store.programsList.forEach { stored ->
-                val shouldRename = stored.deviceId == deviceId &&
-                    stored.id == programId &&
+                val shouldRename = stored.id == programId &&
+                    stored.deviceId == deviceId &&
                     stored.belongsToCurrentUser()
 
-                if (shouldRename) {
-                    renamed = true
-                    builder.addPrograms(
+                builder.addPrograms(
+                    if (shouldRename) {
+                        renamed = true
                         stored.toBuilder()
                             .setName(safeName)
+                            .setSyncState(
+                                if (stored.isActive) {
+                                    LightProgramSyncState.ACTIVE_DIRTY.name
+                                } else {
+                                    stored.syncState.ifBlank {
+                                        LightProgramSyncState.LOCAL_ONLY.name
+                                    }
+                                }
+                            )
                             .setUpdatedAtMillis(nowMillis)
                             .build()
-                    )
-                } else {
-                    builder.addPrograms(stored)
-                }
+                    } else {
+                        stored
+                    }
+                )
             }
 
             builder.build()
@@ -293,15 +399,42 @@ class LightProgramDataStoreManager private constructor(
         programId: String,
         nowMillis: Long = System.currentTimeMillis()
     ): SavedLightProgram? {
-        val original = findProgram(deviceId, programId) ?: return null
-        return saveProgram(
-            deviceId = deviceId,
-            programId = null,
-            name = "${original.name} Copy",
-            draft = original.toDraft(),
-            activate = false,
-            nowMillis = nowMillis
-        )
+        if (deviceId <= 0L || programId.isBlank()) return null
+        var duplicate: SavedLightProgram? = null
+
+        dataStore.updateData { store ->
+            val source = store.programsList.firstOrNull { stored ->
+                stored.id == programId &&
+                    stored.deviceId == deviceId &&
+                    stored.belongsToCurrentUser()
+            }
+
+            if (source == null) {
+                return@updateData store
+            }
+
+            val copy = source.toSavedLightProgram().copy(
+                id = buildProgramId(
+                    deviceId = deviceId,
+                    nowMillis = nowMillis
+                ),
+                name = "${source.name} Copy",
+                isActive = false,
+                syncState = LightProgramSyncState.LOCAL_ONLY,
+                createdAtMillis = nowMillis,
+                updatedAtMillis = nowMillis,
+                lastLoadedAtMillis = 0L,
+                lastLoadedHash = ""
+            )
+
+            duplicate = copy
+
+            store.toBuilder()
+                .addPrograms(copy.toStoredLightProgram())
+                .build()
+        }
+
+        return duplicate
     }
 
     suspend fun deleteProgram(
@@ -309,15 +442,15 @@ class LightProgramDataStoreManager private constructor(
         programId: String
     ): Boolean {
         if (deviceId <= 0L || programId.isBlank()) return false
-
         var deleted = false
+
         dataStore.updateData { store ->
             val builder = store.toBuilder()
                 .clearPrograms()
 
             store.programsList.forEach { stored ->
-                val shouldDelete = stored.deviceId == deviceId &&
-                    stored.id == programId &&
+                val shouldDelete = stored.id == programId &&
+                    stored.deviceId == deviceId &&
                     stored.belongsToCurrentUser()
 
                 if (shouldDelete) {
@@ -354,69 +487,57 @@ class LightProgramDataStoreManager private constructor(
             deviceUid = deviceUid,
             productId = productId,
             name = name,
-            active = active,
-            startMinute = startMinute.coerceIn(0, MINUTES_PER_DAY),
-            peakStartMinute = peakStartMinute.coerceIn(0, MINUTES_PER_DAY),
-            peakEndMinute = peakEndMinute.coerceIn(0, MINUTES_PER_DAY),
-            endMinute = endMinute.coerceIn(0, MINUTES_PER_DAY),
+            isActive = isActive,
+            startMinute = startMinute.coerceIn(0, 24 * 60 - 1),
+            peakStartMinute = peakStartMinute.coerceIn(0, 24 * 60 - 1),
+            peakEndMinute = peakEndMinute.coerceIn(0, 24 * 60 - 1),
+            endMinute = endMinute.coerceIn(1, 24 * 60),
             red = red.coerceIn(0, 100),
             green = green.coerceIn(0, 100),
             blue = blue.coerceIn(0, 100),
             white = white.coerceIn(0, 100),
-            repeatMode = parseRepeatMode(repeatMode),
-            repeatDays = repeatDaysList
+            repeatMode = LightProgramRepeatMode.fromStorage(repeatMode),
+            selectedDays = selectedDaysList
                 .filter { day -> day in 1..7 }
                 .toSet()
-                .ifEmpty { ALL_DAYS },
-            transitionMode = parseTransitionMode(transitionMode),
-            createdAt = createdAtMillis,
-            updatedAt = updatedAtMillis
+                .ifEmpty { SavedLightProgram.ALL_DAYS },
+            transitionMode = LightProgramTransitionMode.fromStorage(transitionMode),
+            syncState = LightProgramSyncState.fromStorage(syncState),
+            createdAtMillis = createdAtMillis,
+            updatedAtMillis = updatedAtMillis,
+            lastLoadedAtMillis = lastLoadedAtMillis,
+            lastLoadedHash = lastLoadedHash
         )
     }
 
     private fun SavedLightProgram.toStoredLightProgram(): StoredLightProgram {
-        val builder = StoredLightProgram.newBuilder()
+        return StoredLightProgram.newBuilder()
             .setId(id)
             .setOwnerUid(ownerUid)
             .setDeviceId(deviceId)
             .setDeviceUid(deviceUid)
             .setProductId(productId)
             .setName(name)
-            .setActive(active)
-            .setStartMinute(startMinute.coerceIn(0, MINUTES_PER_DAY))
-            .setPeakStartMinute(peakStartMinute.coerceIn(0, MINUTES_PER_DAY))
-            .setPeakEndMinute(peakEndMinute.coerceIn(0, MINUTES_PER_DAY))
-            .setEndMinute(endMinute.coerceIn(0, MINUTES_PER_DAY))
+            .setIsActive(isActive)
+            .setStartMinute(startMinute.coerceIn(0, 24 * 60 - 1))
+            .setPeakStartMinute(peakStartMinute.coerceIn(0, 24 * 60 - 1))
+            .setPeakEndMinute(peakEndMinute.coerceIn(0, 24 * 60 - 1))
+            .setEndMinute(endMinute.coerceIn(1, 24 * 60))
             .setRed(red.coerceIn(0, 100))
             .setGreen(green.coerceIn(0, 100))
             .setBlue(blue.coerceIn(0, 100))
             .setWhite(white.coerceIn(0, 100))
             .setRepeatMode(repeatMode.name)
+            .addAllSelectedDays(
+                selectedDays.filter { day -> day in 1..7 }.sorted()
+            )
             .setTransitionMode(transitionMode.name)
-            .setCreatedAtMillis(createdAt)
-            .setUpdatedAtMillis(updatedAt)
-            .clearRepeatDays()
-
-        repeatDays
-            .filter { day -> day in 1..7 }
-            .sorted()
-            .forEach { day -> builder.addRepeatDays(day) }
-
-        return builder.build()
-    }
-
-    private fun parseRepeatMode(
-        value: String
-    ): RepeatMode {
-        return runCatching { RepeatMode.valueOf(value) }
-            .getOrDefault(RepeatMode.EVERY)
-    }
-
-    private fun parseTransitionMode(
-        value: String
-    ): LightCurveTransitionMode {
-        return runCatching { LightCurveTransitionMode.valueOf(value) }
-            .getOrDefault(LightCurveTransitionMode.NATURAL)
+            .setSyncState(syncState.name)
+            .setCreatedAtMillis(createdAtMillis)
+            .setUpdatedAtMillis(updatedAtMillis)
+            .setLastLoadedAtMillis(lastLoadedAtMillis)
+            .setLastLoadedHash(lastLoadedHash)
+            .build()
     }
 
     private fun buildProgramId(
@@ -424,11 +545,6 @@ class LightProgramDataStoreManager private constructor(
         nowMillis: Long
     ): String {
         return "program_${deviceId}_${nowMillis}_${UUID.randomUUID()}"
-    }
-
-    private companion object {
-        const val MINUTES_PER_DAY = 24 * 60
-        val ALL_DAYS = setOf(1, 2, 3, 4, 5, 6, 7)
     }
 }
 

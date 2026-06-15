@@ -10,7 +10,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightProgramEditorBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -18,23 +17,26 @@ import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceFeedbackType
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceLoading
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceSnack
-import com.aqua.aqualight.data.devices.light.programs.model.LightCurvePoint
-import com.aqua.aqualight.data.devices.light.programs.model.LightCurveTransitionMode
-import com.aqua.aqualight.data.devices.light.programs.model.LightProgramTimeMath
-import com.aqua.aqualight.data.devices.light.programs.model.RepeatMode
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurvePoint
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveTransitionMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.programs.model.LightProgramTimeMath
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.programs.model.RepeatMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.common.sheet.LightCurveTimePickerSheet
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightCustomDaysSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightPreviewDaySheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightTransitionVariantSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.sheet.LightProgramNameSheet
 import com.google.android.material.slider.Slider
+import androidx.navigation.fragment.navArgs
 import kotlinx.coroutines.launch
 
 class DeviceLightProgramEditorFragment :
     Fragment(R.layout.fragment_device_light_program_editor) {
 
     private val args: DeviceLightProgramEditorFragmentArgs by navArgs()
+
 
     private var _binding: FragmentDeviceLightProgramEditorBinding? = null
     private val binding get() = _binding!!
@@ -207,6 +209,7 @@ class DeviceLightProgramEditorFragment :
 
             renderRepeatMode(state)
             renderTransitionSummary(state)
+            renderSaveBarState(state)
         } finally {
             isRendering = false
         }
@@ -285,15 +288,36 @@ class DeviceLightProgramEditorFragment :
             viewModel.updateRepeatEvery()
         }
 
-        binding.repeatWeekdays.isEnabled = false
-        binding.repeatWeekend.isEnabled = false
-        binding.repeatCustom.isEnabled = false
-        binding.repeatWeekdays.alpha = 0.45f
-        binding.repeatWeekend.alpha = 0.45f
-        binding.repeatCustom.alpha = 0.45f
+        binding.repeatWeekdays.setOnClickListener {
+            viewModel.updateRepeatWeekdays()
+        }
+
+        binding.repeatWeekend.setOnClickListener {
+            viewModel.updateRepeatWeekend()
+        }
+
+        binding.repeatCustom.setOnClickListener {
+            val state = viewModel.uiState.value
+            if (!state.repeatFeatureEnabled) {
+                viewModel.updateCustomDays(state.selectedDays)
+                return@setOnClickListener
+            }
+
+            LightCustomDaysSheet
+                .create(requireContext())
+                .show(
+                    selectedDays = state.selectedDays
+                ) { days ->
+                    viewModel.updateCustomDays(days)
+                }
+        }
 
         binding.actionTransitionSmoothing.root.setOnClickListener {
             val state = viewModel.uiState.value
+            if (!state.transitionFeatureEnabled || state.isBusy) {
+                return@setOnClickListener
+            }
+
             LightTransitionVariantSheet
                 .create(requireContext())
                 .show(
@@ -304,29 +328,35 @@ class DeviceLightProgramEditorFragment :
         }
 
         binding.btnLoadToDevice.setOnClickListener {
-            val isEditing = viewModel.isEditingExistingProgram()
+            if (viewModel.isEditingExistingProgram()) {
+                viewModel.saveProgram(
+                    name = viewModel.currentProgramName(),
+                    activateOnDevice = true
+                )
+                return@setOnClickListener
+            }
 
             showProgramNameSheet(
                 title = "Load to Device",
-                subtitle = if (isEditing) {
-                    "Update this local program and mark it as the active device schedule."
-                } else {
-                    "Save this program locally and mark it as the active device schedule."
-                },
-                primaryButtonText = if (isEditing) {
-                    "Update Active"
-                } else {
-                    "Load"
-                },
+                subtitle = "Name this program before loading it to the device.",
+                primaryButtonText = "Load",
                 activateOnDevice = true
             )
         }
 
         binding.btnSaveAs.setOnClickListener {
+            if (viewModel.isEditingExistingProgram()) {
+                viewModel.saveProgram(
+                    name = viewModel.currentProgramName(),
+                    activateOnDevice = false
+                )
+                return@setOnClickListener
+            }
+
             showProgramNameSheet(
-                title = "Save As",
-                subtitle = "Save a local copy only. It will not become the active device schedule.",
-                primaryButtonText = "Save Copy",
+                title = "Save Program",
+                subtitle = "Save this program without loading it to the device.",
+                primaryButtonText = "Save",
                 activateOnDevice = false
             )
         }
@@ -486,30 +516,81 @@ class DeviceLightProgramEditorFragment :
         binding.repeatCustom.setTextColor(
             if (state.repeatMode == RepeatMode.CUSTOM) selectedText else normalText
         )
+
+        binding.repeatEvery.isEnabled = !state.isBusy
+        binding.repeatWeekdays.isEnabled = !state.isBusy
+        binding.repeatWeekend.isEnabled = !state.isBusy
+        binding.repeatCustom.isEnabled = !state.isBusy
+
+        binding.repeatEvery.alpha = if (state.isBusy) 0.55f else 1f
+        val lockedRepeatAlpha = if (state.repeatFeatureEnabled) 1f else 0.42f
+        binding.repeatWeekdays.alpha = if (state.isBusy) 0.35f else lockedRepeatAlpha
+        binding.repeatWeekend.alpha = if (state.isBusy) 0.35f else lockedRepeatAlpha
+        binding.repeatCustom.alpha = if (state.isBusy) 0.35f else lockedRepeatAlpha
     }
 
     private fun renderTransitionSummary(
         state: DeviceLightProgramEditorUiState
     ) {
-        val title = when (state.transitionMode) {
-            LightCurveTransitionMode.LINEAR -> "Linear Transition"
-            LightCurveTransitionMode.SMOOTH -> "Smooth Transition"
-            LightCurveTransitionMode.NATURAL -> "Natural Transition"
+        val (title, subtitle) = when (state.transitionMode) {
+            LightCurveTransitionMode.LINEAR -> {
+                "Linear Transition" to "Even ramp, predictable channel changes"
+            }
+
+            LightCurveTransitionMode.SMOOTH -> {
+                "Smooth Transition" to "Soft start and stop between light levels"
+            }
+
+            LightCurveTransitionMode.NATURAL -> {
+                "Natural Transition" to "Sunrise-like natural ramp"
+            }
         }
 
-        val subtitle = when (state.transitionMode) {
-            LightCurveTransitionMode.LINEAR -> "Straight LP sample ramp"
-            LightCurveTransitionMode.SMOOTH -> "Soft start and soft end LP samples"
-            LightCurveTransitionMode.NATURAL -> "Sunrise-like natural LP sample ramp"
+        bindActionRow(
+            row = binding.actionTransitionSmoothing.root,
+            iconRes = R.drawable.ic_light_waves_24,
+            title = title,
+            subtitle = subtitle
+        )
+
+        binding.actionTransitionSmoothing.root.isEnabled =
+            state.transitionFeatureEnabled && !state.isBusy
+
+        binding.actionTransitionSmoothing.root.alpha = if (state.transitionFeatureEnabled) {
+            1f
+        } else {
+            0.45f
+        }
+    }
+
+    private fun renderSaveBarState(
+        state: DeviceLightProgramEditorUiState
+    ) {
+        binding.btnSaveAs.text = if (state.isEditingExistingProgram) {
+            "Save Changes"
+        } else {
+            "Save As"
         }
 
-        binding.actionTransitionSmoothing.root
-            .findViewById<TextView>(R.id.tvActionTitle)
-            ?.text = title
+        binding.btnLoadToDevice.text = if (state.isEditingExistingProgram) {
+            "Load to Device"
+        } else {
+            "Load to Device"
+        }
 
-        binding.actionTransitionSmoothing.root
-            .findViewById<TextView>(R.id.tvActionSubtitle)
-            ?.text = subtitle
+        binding.btnSaveAs.isEnabled = !state.isBusy
+        binding.btnLoadToDevice.isEnabled = !state.isBusy
+        binding.btnPreviewProgram.isEnabled = !state.isBusy
+        binding.sliderRed.isEnabled = !state.isBusy
+        binding.sliderGreen.isEnabled = !state.isBusy
+        binding.sliderBlue.isEnabled = !state.isBusy
+        binding.sliderWhite.isEnabled = !state.isBusy
+
+        binding.editorContentContainer.alpha = if (state.isBusy) {
+            0.55f
+        } else {
+            1f
+        }
     }
 
     override fun onDestroyView() {

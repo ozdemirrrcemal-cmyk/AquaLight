@@ -1,9 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model
-
-import com.aqua.aqualight.data.devices.light.programs.model.LightCurvePoint
-import com.aqua.aqualight.data.devices.light.programs.model.LightCurveChannelValues
-import com.aqua.aqualight.data.devices.light.programs.model.LightCurveTransitionMode
-import com.aqua.aqualight.data.devices.light.programs.compiler.CompiledLightProgramPoint
+package com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model
 
 data class LightCurveGraphState(
     val start: LightCurvePoint,
@@ -13,7 +8,6 @@ data class LightCurveGraphState(
     val channelValues: LightCurveChannelValues,
     val currentTime: LightCurvePoint,
     val transitionMode: LightCurveTransitionMode = LightCurveTransitionMode.LINEAR,
-    val compiledPoints: List<CompiledLightProgramPoint> = emptyList(),
     val moonlightSegments: List<LightCurveMoonlightGraphSegment> = emptyList()
 ) {
     companion object {

@@ -10,11 +10,11 @@ import android.util.AttributeSet
 import android.view.View
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.devices.light.programs.compiler.LightCurveInterpolator
-import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveGraphState
-import com.aqua.aqualight.data.devices.light.programs.model.LightCurvePoint
-import com.aqua.aqualight.data.devices.light.programs.model.LightCurveTransitionMode
-import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveMoonlightGraphSegment
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.interpolator.LightCurveInterpolator
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveGraphState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurvePoint
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveTransitionMode
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveMoonlightGraphSegment
 
 class LightCurveGraphView @JvmOverloads constructor(
     context: Context,
@@ -268,31 +268,6 @@ class LightCurveGraphView @JvmOverloads constructor(
     private fun drawChannelCurves(
         canvas: Canvas
     ) {
-        if (state.compiledPoints.isNotEmpty()) {
-            drawCompiledCurve(
-                canvas = canvas,
-                paint = redPaint,
-                channelValue = { point -> point.channels.red }
-            )
-            drawCompiledCurve(
-                canvas = canvas,
-                paint = greenPaint,
-                channelValue = { point -> point.channels.green }
-            )
-            drawCompiledCurve(
-                canvas = canvas,
-                paint = bluePaint,
-                channelValue = { point -> point.channels.blue }
-            )
-            drawCompiledCurve(
-                canvas = canvas,
-                paint = whitePaint,
-                channelValue = { point -> point.channels.white }
-            )
-            drawCompiledAnchorPoints(canvas)
-            return
-        }
-
         val channels = state.channelValues.normalized()
 
         drawCurve(
@@ -337,40 +312,6 @@ class LightCurveGraphView @JvmOverloads constructor(
             peakPercent = channels.white,
             transitionMode = state.transitionMode,
             paint = whitePaint
-        )
-    }
-
-    private fun drawCompiledCurve(
-        canvas: Canvas,
-        paint: Paint,
-        channelValue: (com.aqua.aqualight.data.devices.light.programs.compiler.CompiledLightProgramPoint) -> Int
-    ) {
-        val path = Path()
-        state.compiledPoints.forEachIndexed { index, point ->
-            val x = xForMinute(point.minuteOfDay)
-            val y = yForPercent(channelValue(point))
-
-            if (index == 0) {
-                path.moveTo(x, y)
-            } else {
-                path.lineTo(x, y)
-            }
-        }
-        canvas.drawPath(path, paint)
-    }
-
-    private fun drawCompiledAnchorPoints(
-        canvas: Canvas
-    ) {
-        val channels = state.channelValues.normalized()
-        drawCurvePoints(
-            canvas = canvas,
-            start = state.start,
-            peakStart = state.peakStart,
-            peakEnd = state.peakEnd,
-            end = state.end,
-            peakPercent = maxOf(channels.red, channels.green, channels.blue, channels.white),
-            paint = bluePaint
         )
     }
 

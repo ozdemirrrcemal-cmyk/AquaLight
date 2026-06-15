@@ -1,7 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model
-
-import com.aqua.aqualight.data.devices.light.programs.model.LightCurvePoint
-import com.aqua.aqualight.data.devices.light.programs.model.LightCurveTransitionMode
+package com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model
 
 data class TodayLightPlanGraphSegment(
     val id: String,

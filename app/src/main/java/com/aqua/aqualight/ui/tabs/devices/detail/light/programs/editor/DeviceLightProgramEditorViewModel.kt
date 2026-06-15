@@ -3,14 +3,16 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.data.devices.light.programs.LightProgramDataStoreManager
-import com.aqua.aqualight.data.devices.light.programs.compiler.LightProgramCompileResult
-import com.aqua.aqualight.data.devices.light.programs.compiler.LightProgramScheduleCompiler
-import com.aqua.aqualight.data.devices.light.programs.model.LightCurveChannelValues
-import com.aqua.aqualight.data.devices.light.programs.model.LightCurvePoint
-import com.aqua.aqualight.data.devices.light.programs.model.LightCurveTransitionMode
-import com.aqua.aqualight.data.devices.light.programs.model.RepeatMode
-import com.aqua.aqualight.data.devices.light.programs.preview.LightProgramPreviewEngine
+import com.aqua.aqualight.data.devices.light.programs.LightProgramsRepository
+import com.aqua.aqualight.data.devices.light.programs.LoadLightProgramResult
+import com.aqua.aqualight.data.devices.light.programs.SaveLightProgramResult
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.toUiTransitionMode
+import com.aqua.aqualight.data.devices.light.programs.model.LightProgramSyncState
+import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveChannelValues
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurvePoint
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveTransitionMode
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.programs.model.RepeatMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.PreviewSpeed
@@ -24,12 +26,15 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 class DeviceLightProgramEditorViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
-    private val programStore = LightProgramDataStoreManager.create(application)
+    private val repository = LightProgramsRepository.get(
+        application.applicationContext
+    )
 
     private val _uiState = MutableStateFlow(
         DeviceLightProgramEditorUiState.default()
@@ -42,8 +47,6 @@ class DeviceLightProgramEditorViewModel(
         _events.asSharedFlow()
 
     private var deviceId: Long = 0L
-    private var programId: String? = null
-    private var programName: String = "New Program"
     private var previewJob: Job? = null
 
     fun initialize(
@@ -51,77 +54,78 @@ class DeviceLightProgramEditorViewModel(
         programId: String?
     ) {
         this.deviceId = deviceId
-        this.programId = programId
-        this.programName = if (programId.isNullOrBlank()) {
-            "New Program"
-        } else {
-            "Program"
+        previewJob?.cancel()
+
+        val safeProgramId = programId?.takeIf { id -> id.isNotBlank() }
+        if (safeProgramId == null) {
+            _uiState.value = DeviceLightProgramEditorUiState.default()
+            return
         }
 
-        previewJob?.cancel()
-        _uiState.value = DeviceLightProgramEditorUiState.default()
-
-        if (!programId.isNullOrBlank()) {
-            viewModelScope.launch {
-                programStore.findProgram(
-                    deviceId = deviceId,
-                    programId = programId
-                )?.let { savedProgram ->
-                    programName = savedProgram.name
-                    val draft = savedProgram.toDraft()
-                    _uiState.update { state ->
-                        state.copy(
-                            start = draft.start,
-                            peakStart = draft.peakStart,
-                            peakEnd = draft.peakEnd,
-                            end = draft.end,
-                            channelValues = draft.channelValues,
-                            repeatMode = draft.repeatMode,
-                            selectedDays = draft.selectedDays,
-                            transitionMode = draft.transitionMode,
-                            currentDeviceTime = state.currentDeviceTime,
-                            isPreviewRunning = false,
-                            previewProgressPercent = 0,
-                            previewSimulationTime = null
-                        )
-                    }
-                }
+        viewModelScope.launch {
+            _uiState.update { state ->
+                state.copy(
+                    programId = safeProgramId,
+                    isLoading = true,
+                    isEditingExistingProgram = true
+                )
             }
+            _events.emit(DeviceLightProgramEditorEvent.SetLoading(true))
+
+            val savedProgram = repository.getProgram(
+                deviceId = deviceId,
+                programId = safeProgramId
+            )
+
+            if (savedProgram == null) {
+                _uiState.value = DeviceLightProgramEditorUiState.default().copy(
+                    isLoading = false
+                )
+                _events.emit(DeviceLightProgramEditorEvent.ShowError("Program could not be found"))
+            } else {
+                _uiState.value = savedProgram.toEditorState()
+            }
+
+            _events.emit(DeviceLightProgramEditorEvent.SetLoading(false))
         }
     }
 
     fun updateStartTime(
         point: LightCurvePoint
     ) {
-        stopPreview()
-        _uiState.update { state -> state.copy(start = point) }
+        editState { state ->
+            state.copy(start = point)
+        }
     }
 
     fun updatePeakStartTime(
         point: LightCurvePoint
     ) {
-        stopPreview()
-        _uiState.update { state -> state.copy(peakStart = point) }
+        editState { state ->
+            state.copy(peakStart = point)
+        }
     }
 
     fun updatePeakEndTime(
         point: LightCurvePoint
     ) {
-        stopPreview()
-        _uiState.update { state -> state.copy(peakEnd = point) }
+        editState { state ->
+            state.copy(peakEnd = point)
+        }
     }
 
     fun updateEndTime(
         point: LightCurvePoint
     ) {
-        stopPreview()
-        _uiState.update { state -> state.copy(end = point) }
+        editState { state ->
+            state.copy(end = point)
+        }
     }
 
     fun updateChannelValues(
         values: LightCurveChannelValues
     ) {
-        _uiState.update { state ->
+        editState { state ->
             state.copy(channelValues = values.normalized())
         }
     }
@@ -129,52 +133,52 @@ class DeviceLightProgramEditorViewModel(
     fun updateTransitionMode(
         mode: LightCurveTransitionMode
     ) {
-        stopPreview()
-        _uiState.update { state ->
+        editState { state ->
             state.copy(transitionMode = mode)
         }
     }
 
     fun updateRepeatEvery() {
-        _uiState.update { state ->
+        editState { state ->
             state.copy(
                 repeatMode = RepeatMode.EVERY,
-                selectedDays = LEGACY_ALL_DAYS
+                selectedDays = DeviceLightProgramEditorUiState.ALL_DAYS
             )
         }
     }
 
     fun updateRepeatWeekdays() {
-        keepLegacyRepeatLocked()
+        emitRepeatLockedMessage()
     }
 
     fun updateRepeatWeekend() {
-        keepLegacyRepeatLocked()
+        emitRepeatLockedMessage()
     }
 
     fun updateCustomDays(
         days: Set<Int>
     ) {
-        keepLegacyRepeatLocked()
+        if (!_uiState.value.repeatFeatureEnabled) {
+            emitRepeatLockedMessage()
+            return
+        }
+
+        editState { state ->
+            state.copy(
+                repeatMode = RepeatMode.CUSTOM,
+                selectedDays = days.ifEmpty {
+                    DeviceLightProgramEditorUiState.ALL_DAYS
+                }
+            )
+        }
     }
 
     fun startPreview(
         speed: PreviewSpeed
     ) {
-        val state = _uiState.value
-        val schedule = when (val result = LightProgramScheduleCompiler.compile(state.draft)) {
-            is LightProgramCompileResult.Valid -> result.schedule
-            is LightProgramCompileResult.Invalid -> {
-                viewModelScope.launch {
-                    _events.emit(DeviceLightProgramEditorEvent.ShowError(result.message))
-                }
-                return
-            }
-        }
-
         previewJob?.cancel()
-        _uiState.update { current ->
-            current.copy(
+        _uiState.update { state ->
+            state.copy(
                 previewSpeed = speed,
                 isPreviewRunning = true,
                 previewProgressPercent = 0,
@@ -182,109 +186,84 @@ class DeviceLightProgramEditorViewModel(
             )
         }
 
-        previewJob = viewModelScope.launch {
-            val durationMillis = speed.durationMinutes * 60_000L
-            val startedAt = System.currentTimeMillis()
+        val durationMillis = speed.durationMinutes * 60_000L
+        val startedAt = System.currentTimeMillis()
 
+        previewJob = viewModelScope.launch {
             while (true) {
                 val elapsed = System.currentTimeMillis() - startedAt
-                val frame = LightProgramPreviewEngine.frameAt(
-                    schedule = schedule,
-                    elapsedMillis = elapsed,
-                    durationMillis = durationMillis
-                )
+                val fraction = (elapsed.toDouble() / durationMillis.toDouble())
+                    .coerceIn(0.0, 1.0)
+                val progress = (fraction * 100.0).roundToInt()
+                    .coerceIn(0, 100)
+                val minuteOfDay = (fraction * (MINUTES_PER_DAY - 1)).roundToInt()
+                    .coerceIn(0, MINUTES_PER_DAY - 1)
 
-                _uiState.update { current ->
-                    current.copy(
-                        previewSimulationTime = frame.time,
-                        previewProgressPercent = frame.progressPercent,
-                        isPreviewRunning = !frame.isFinished
+                _uiState.update { state ->
+                    state.copy(
+                        isPreviewRunning = fraction < 1.0,
+                        previewProgressPercent = progress,
+                        previewSimulationTime = minuteOfDay.toPoint()
                     )
                 }
 
-                if (frame.isFinished) {
-                    _events.emit(DeviceLightProgramEditorEvent.ShowMessage("Preview finished."))
+                if (fraction >= 1.0) {
+                    previewJob = null
                     break
                 }
 
-                delay(PREVIEW_FRAME_INTERVAL_MILLIS)
+                delay(PREVIEW_TICK_MILLIS)
             }
         }
     }
 
     fun stopPreview() {
-        previewJob?.cancel()
-        previewJob = null
-        _uiState.update { state ->
-            state.copy(
-                isPreviewRunning = false,
-                previewProgressPercent = 0,
-                previewSimulationTime = null
-            )
-        }
+        stopPreviewInternal(resetProgress = true)
     }
 
     fun currentProgramName(): String {
-        return programName
+        return _uiState.value.programName
     }
 
     fun isEditingExistingProgram(): Boolean {
-        return !programId.isNullOrBlank()
+        return _uiState.value.isEditingExistingProgram
     }
 
     fun saveProgram(
         name: String,
         activateOnDevice: Boolean
     ) {
-        val safeName = name.ifBlank { programName }
+        if (deviceId <= 0L) {
+            emitError("Light device information is missing")
+            return
+        }
+
         val state = _uiState.value
+        val safeName = name.trim().ifBlank {
+            state.programName
+        }
+
         viewModelScope.launch {
-            runCatching {
-                programStore.saveProgram(
-                    deviceId = deviceId,
-                    programId = if (activateOnDevice) programId else null,
-                    name = safeName,
-                    draft = state.draft.copy(
-                        repeatMode = RepeatMode.EVERY,
-                        selectedDays = LEGACY_ALL_DAYS
-                    ),
-                    activate = activateOnDevice
+            setSavingState(
+                activateOnDevice = activateOnDevice,
+                isLoading = true
+            )
+
+            if (activateOnDevice) {
+                handleLoadToDevice(
+                    state = state,
+                    safeName = safeName
                 )
-            }.onSuccess { savedProgram ->
-                programId = savedProgram.id
-                programName = savedProgram.name
-                _events.emit(
-                    DeviceLightProgramEditorEvent.ShowMessage(
-                        if (activateOnDevice) {
-                            "Program saved and marked active locally. Device schedule write is ready for firmware connection."
-                        } else {
-                            "Program saved as local copy."
-                        }
-                    )
-                )
-                _events.emit(DeviceLightProgramEditorEvent.NavigateBack)
-            }.onFailure { error ->
-                _events.emit(
-                    DeviceLightProgramEditorEvent.ShowError(
-                        error.message ?: "Program could not be saved."
-                    )
+            } else {
+                handleLocalSave(
+                    state = state,
+                    safeName = safeName
                 )
             }
-        }
-    }
 
-    private fun keepLegacyRepeatLocked() {
-        _uiState.update { state ->
-            state.copy(
-                repeatMode = RepeatMode.EVERY,
-                selectedDays = LEGACY_ALL_DAYS
-            )
-        }
-        viewModelScope.launch {
-            _events.emit(
-                DeviceLightProgramEditorEvent.ShowMessage(
-                    "Repeat is locked to Every day for legacy firmware."
-                )
+            setSavingState(
+                activateOnDevice = activateOnDevice,
+                isLoading = false
             )
         }
     }
@@ -294,8 +273,184 @@ class DeviceLightProgramEditorViewModel(
         super.onCleared()
     }
 
-    private companion object {
-        const val PREVIEW_FRAME_INTERVAL_MILLIS = 250L
-        val LEGACY_ALL_DAYS = setOf(1, 2, 3, 4, 5, 6, 7)
+    private suspend fun handleLocalSave(
+        state: DeviceLightProgramEditorUiState,
+        safeName: String
+    ) {
+        when (val result = repository.saveDraft(
+            deviceId = deviceId,
+            programId = state.programId,
+            name = safeName,
+            draft = state.copy(
+                programName = safeName
+            ).draft
+        )) {
+            is SaveLightProgramResult.Success -> {
+                _uiState.value = result.program.toEditorState().copy(
+                    hasUnsavedChanges = false
+                )
+                _events.emit(DeviceLightProgramEditorEvent.ShowMessage("Program saved"))
+            }
+
+            is SaveLightProgramResult.Error -> {
+                _events.emit(DeviceLightProgramEditorEvent.ShowError(result.message))
+            }
+        }
+    }
+
+    private suspend fun handleLoadToDevice(
+        state: DeviceLightProgramEditorUiState,
+        safeName: String
+    ) {
+        when (val result = repository.loadDraftToDevice(
+            deviceId = deviceId,
+            programId = state.programId,
+            name = safeName,
+            draft = state.copy(
+                programName = safeName
+            ).draft
+        )) {
+            is LoadLightProgramResult.Loaded -> {
+                _uiState.value = result.program.toEditorState().copy(
+                    hasUnsavedChanges = false
+                )
+                _events.emit(DeviceLightProgramEditorEvent.ShowMessage("Program loaded to device"))
+            }
+
+            is LoadLightProgramResult.LocalOnly -> {
+                _events.emit(DeviceLightProgramEditorEvent.ShowMessage(result.message))
+            }
+
+            is LoadLightProgramResult.Error -> {
+                _events.emit(DeviceLightProgramEditorEvent.ShowError(result.message))
+            }
+        }
+    }
+
+    private fun editState(
+        reducer: (DeviceLightProgramEditorUiState) -> DeviceLightProgramEditorUiState
+    ) {
+        previewJob?.cancel()
+        previewJob = null
+
+        _uiState.update { current ->
+            val edited = reducer(
+                current.copy(
+                    isPreviewRunning = false,
+                    previewProgressPercent = 0,
+                    previewSimulationTime = null
+                )
+            )
+
+            edited.copy(
+                hasUnsavedChanges = true,
+                repeatMode = RepeatMode.EVERY,
+                selectedDays = DeviceLightProgramEditorUiState.ALL_DAYS,
+                syncState = when (edited.syncState) {
+                    LightProgramSyncState.ACTIVE_SYNCED -> LightProgramSyncState.ACTIVE_DIRTY
+                    else -> edited.syncState
+                }
+            )
+        }
+    }
+
+    private fun stopPreviewInternal(
+        resetProgress: Boolean
+    ) {
+        previewJob?.cancel()
+        previewJob = null
+
+        _uiState.update { state ->
+            state.copy(
+                isPreviewRunning = false,
+                previewProgressPercent = if (resetProgress) 0 else state.previewProgressPercent,
+                previewSimulationTime = null
+            )
+        }
+    }
+
+    private fun setSavingState(
+        activateOnDevice: Boolean,
+        isLoading: Boolean
+    ) {
+        _uiState.update { current ->
+            if (activateOnDevice) {
+                current.copy(isLoadingToDevice = isLoading)
+            } else {
+                current.copy(isSaving = isLoading)
+            }
+        }
+
+        viewModelScope.launch {
+            _events.emit(DeviceLightProgramEditorEvent.SetLoading(isLoading))
+        }
+    }
+
+    private fun emitRepeatLockedMessage() {
+        viewModelScope.launch {
+            _events.emit(
+                DeviceLightProgramEditorEvent.ShowMessage(
+                    "Runs every day. Custom days will be available with a firmware update."
+                )
+            )
+        }
+    }
+
+    private fun emitError(
+        message: String
+    ) {
+        viewModelScope.launch {
+            _events.emit(DeviceLightProgramEditorEvent.ShowError(message))
+        }
+    }
+
+    private fun SavedLightProgram.toEditorState(): DeviceLightProgramEditorUiState {
+        return DeviceLightProgramEditorUiState.default().copy(
+            programId = id,
+            programName = name,
+            isEditingExistingProgram = true,
+            isLoading = false,
+            isSaving = false,
+            isLoadingToDevice = false,
+            hasUnsavedChanges = false,
+            syncState = syncState,
+            start = startMinute.toPoint(),
+            peakStart = peakStartMinute.toPoint(),
+            peakEnd = peakEndMinute.toPoint(),
+            end = endMinute.toEditorEndPoint(),
+            channelValues = LightCurveChannelValues(
+                red = red,
+                green = green,
+                blue = blue,
+                white = white
+            ).normalized(),
+            repeatMode = RepeatMode.EVERY,
+            selectedDays = DeviceLightProgramEditorUiState.ALL_DAYS,
+            transitionMode = transitionMode.toUiTransitionMode(),
+            previewSimulationTime = null,
+            isPreviewRunning = false,
+            previewProgressPercent = 0
+        )
+    }
+
+    private fun Int.toEditorEndPoint(): LightCurvePoint {
+        return if (this >= MINUTES_PER_DAY) {
+            LightCurvePoint.of(0, 0)
+        } else {
+            this.toPoint()
+        }
+    }
+
+    private fun Int.toPoint(): LightCurvePoint {
+        val safeMinute = coerceIn(0, MINUTES_PER_DAY - 1)
+        return LightCurvePoint.of(
+            hour = safeMinute / 60,
+            minute = safeMinute % 60
+        )
+    }
+
+    companion object {
+        private const val MINUTES_PER_DAY = 24 * 60
+        private const val PREVIEW_TICK_MILLIS = 250L
     }
 }

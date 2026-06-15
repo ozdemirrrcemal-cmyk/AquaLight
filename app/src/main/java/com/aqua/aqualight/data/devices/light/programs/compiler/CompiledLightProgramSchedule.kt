@@ -1,102 +1,31 @@
 package com.aqua.aqualight.data.devices.light.programs.compiler
 
-import com.aqua.aqualight.data.devices.api.light.LightChannelValues
-import com.aqua.aqualight.data.devices.api.light.LightProgram
-import com.aqua.aqualight.data.devices.light.programs.model.LightCurveChannelValues
-import com.aqua.aqualight.data.devices.light.programs.model.LightCurveTransitionMode
-import com.aqua.aqualight.data.devices.light.programs.model.RepeatMode
+import com.aqua.aqualight.data.devices.light.programs.model.LightProgramTransitionMode
 
 data class CompiledLightProgramSchedule(
     val programId: String,
     val programName: String,
-    val startMinute: Int,
-    val peakStartMinute: Int,
-    val peakEndMinute: Int,
-    val endMinute: Int,
-    val peakChannels: LightCurveChannelValues,
-    val repeatMode: RepeatMode,
-    val repeatDays: Set<Int>,
-    val transitionMode: LightCurveTransitionMode,
-    val points: List<CompiledLightProgramPoint>
+    val transitionMode: LightProgramTransitionMode,
+    val points: List<CompiledLightProgramPoint>,
+    val hash: String
+)
+
+data class CompiledLightProgramPoint(
+    val minuteOfDay: Int,
+    val red: Int,
+    val green: Int,
+    val blue: Int,
+    val white: Int
 ) {
-    val durationMinutes: Int
-        get() = (endMinute - startMinute).coerceAtLeast(0)
-
-    val peakOutputPercent: Int
-        get() = maxOf(
-            peakChannels.red,
-            peakChannels.green,
-            peakChannels.blue,
-            peakChannels.white
-        ).coerceIn(0, 100)
-
-    fun outputAtMinute(
-        minute: Int
-    ): LightCurveChannelValues {
-        if (points.isEmpty()) {
-            return LightCurveChannelValues(red = 0, green = 0, blue = 0, white = 0)
+    val timeText: String
+        get() {
+            val safeMinute = minuteOfDay.coerceIn(0, MINUTES_PER_DAY - 1)
+            val hour = safeMinute / 60
+            val minute = safeMinute % 60
+            return "%02d:%02d:00".format(hour, minute)
         }
 
-        val safeMinute = minute.coerceIn(0, LightCurveInterpolator.MINUTES_PER_DAY)
-        val previous = points.lastOrNull { point -> point.minuteOfDay <= safeMinute }
-        val next = points.firstOrNull { point -> point.minuteOfDay >= safeMinute }
-
-        return when {
-            previous == null -> points.first().channels
-            next == null -> points.last().channels
-            previous.minuteOfDay == next.minuteOfDay -> previous.channels
-            else -> interpolate(
-                previous = previous,
-                next = next,
-                minute = safeMinute
-            )
-        }.normalized()
-    }
-
-    fun toApiProgram(
-        isActive: Boolean
-    ): LightProgram {
-        return LightProgram(
-            id = programId,
-            name = programName,
-            isActive = isActive,
-            startMinute = startMinute,
-            peakStartMinute = peakStartMinute,
-            peakEndMinute = peakEndMinute,
-            endMinute = endMinute,
-            channelValues = LightChannelValues(
-                red = peakChannels.red,
-                green = peakChannels.green,
-                blue = peakChannels.blue,
-                white = peakChannels.white
-            ).normalized(),
-            repeatDays = repeatDays
-        )
-    }
-
-    private fun interpolate(
-        previous: CompiledLightProgramPoint,
-        next: CompiledLightProgramPoint,
-        minute: Int
-    ): LightCurveChannelValues {
-        val progress = (minute - previous.minuteOfDay).toDouble() /
-            (next.minuteOfDay - previous.minuteOfDay).toDouble()
-
-        return LightCurveChannelValues(
-            red = interpolateChannel(previous.channels.red, next.channels.red, progress),
-            green = interpolateChannel(previous.channels.green, next.channels.green, progress),
-            blue = interpolateChannel(previous.channels.blue, next.channels.blue, progress),
-            white = interpolateChannel(previous.channels.white, next.channels.white, progress)
-        )
-    }
-
-    private fun interpolateChannel(
-        previous: Int,
-        next: Int,
-        progress: Double
-    ): Int {
-        return (previous + (next - previous) * progress)
-            .toInt()
-            .coerceIn(0, 100)
+    companion object {
+        const val MINUTES_PER_DAY = 24 * 60
     }
 }

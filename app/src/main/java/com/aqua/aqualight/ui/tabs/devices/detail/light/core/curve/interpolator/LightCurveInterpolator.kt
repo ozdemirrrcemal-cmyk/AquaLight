@@ -1,15 +1,11 @@
-package com.aqua.aqualight.data.devices.light.programs.compiler
+package com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.interpolator
 
-import com.aqua.aqualight.data.devices.light.programs.model.LightCurveTransitionMode
-import kotlin.math.PI
+import android.graphics.PointF
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveTransitionMode
 import kotlin.math.cos
 import kotlin.math.pow
-import kotlin.math.roundToInt
 
 object LightCurveInterpolator {
-
-    const val MINUTES_PER_DAY = 24 * 60
-    const val DEFAULT_SAMPLES_PER_RAMP = 24
 
     fun buildCurvePoints(
         startMinute: Int,
@@ -18,19 +14,19 @@ object LightCurveInterpolator {
         endMinute: Int,
         peakPercent: Int,
         transitionMode: LightCurveTransitionMode,
-        samplesPerRamp: Int = DEFAULT_SAMPLES_PER_RAMP
-    ): List<LightCurveSample> {
+        samplesPerRamp: Int = 12
+    ): List<PointF> {
         val safePeak = peakPercent.coerceIn(0, 100)
 
-        val start = startMinute.coerceIn(0, MINUTES_PER_DAY)
-        val peakStart = peakStartMinute.coerceIn(start, MINUTES_PER_DAY)
-        val peakEnd = peakEndMinute.coerceIn(peakStart, MINUTES_PER_DAY)
-        val end = endMinute.coerceIn(peakEnd, MINUTES_PER_DAY)
+        val start = startMinute.coerceIn(0, 1440)
+        val peakStart = peakStartMinute.coerceIn(start, 1440)
+        val peakEnd = peakEndMinute.coerceIn(peakStart, 1440)
+        val end = endMinute.coerceIn(peakEnd, 1440)
 
-        val points = mutableListOf<LightCurveSample>()
+        val points = mutableListOf<PointF>()
 
-        points.add(LightCurveSample(0, 0))
-        points.add(LightCurveSample(start, 0))
+        points.add(PointF(0f, 0f))
+        points.add(PointF(start.toFloat(), 0f))
 
         points.addAll(
             buildRamp(
@@ -43,7 +39,7 @@ object LightCurveInterpolator {
             )
         )
 
-        points.add(LightCurveSample(peakEnd, safePeak))
+        points.add(PointF(peakEnd.toFloat(), safePeak.toFloat()))
 
         points.addAll(
             buildRamp(
@@ -56,14 +52,11 @@ object LightCurveInterpolator {
             )
         )
 
-        points.add(LightCurveSample(MINUTES_PER_DAY, 0))
+        points.add(PointF(1440f, 0f))
 
         return points
-            .groupBy { sample -> sample.x }
-            .map { (_, sameMinute) ->
-                sameMinute.maxBy { sample -> sample.y }
-            }
-            .sortedBy { sample -> sample.x }
+            .distinctBy { "${it.x}:${it.y}" }
+            .sortedBy { it.x }
     }
 
     private fun buildRamp(
@@ -73,14 +66,9 @@ object LightCurveInterpolator {
         toPercent: Int,
         transitionMode: LightCurveTransitionMode,
         samples: Int
-    ): List<LightCurveSample> {
+    ): List<PointF> {
         if (toMinute <= fromMinute) {
-            return listOf(
-                LightCurveSample(
-                    x = toMinute,
-                    y = toPercent.coerceIn(0, 100)
-                )
-            )
+            return listOf(PointF(toMinute.toFloat(), toPercent.toFloat()))
         }
 
         val safeSamples = samples.coerceAtLeast(2)
@@ -92,10 +80,7 @@ object LightCurveInterpolator {
             val minute = fromMinute + (toMinute - fromMinute) * t
             val percent = fromPercent + (toPercent - fromPercent) * eased
 
-            LightCurveSample(
-                x = minute.roundToInt().coerceIn(0, MINUTES_PER_DAY),
-                y = percent.roundToInt().coerceIn(0, 100)
-            )
+            PointF(minute, percent)
         }
     }
 
@@ -109,11 +94,13 @@ object LightCurveInterpolator {
             LightCurveTransitionMode.LINEAR -> clamped
 
             LightCurveTransitionMode.SMOOTH -> {
+                // Smoothstep: softer start and softer end.
                 clamped * clamped * (3f - 2f * clamped)
             }
 
             LightCurveTransitionMode.NATURAL -> {
-                val cosineEase = ((1f - cos(clamped * PI)) / 2f).toFloat()
+                // More sunrise-like curve: very soft at the start, then catches up naturally.
+                val cosineEase = ((1f - cos(clamped * Math.PI)) / 2f).toFloat()
                 cosineEase.pow(1.15f)
             }
         }

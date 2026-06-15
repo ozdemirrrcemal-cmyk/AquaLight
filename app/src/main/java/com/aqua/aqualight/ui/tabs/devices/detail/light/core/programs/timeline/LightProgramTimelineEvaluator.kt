@@ -1,7 +1,7 @@
-package com.aqua.aqualight.data.devices.light.programs.timeline
+package com.aqua.aqualight.ui.tabs.devices.detail.light.core.programs.timeline
 
-import com.aqua.aqualight.data.devices.light.programs.compiler.LightCurveInterpolator
-import com.aqua.aqualight.data.devices.light.programs.model.LightCurveChannelValues
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.interpolator.LightCurveInterpolator
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveChannelValues
 import kotlin.math.roundToInt
 
 object LightProgramTimelineEvaluator {

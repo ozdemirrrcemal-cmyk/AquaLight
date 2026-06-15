@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.devices.runtime.light
 import com.aqua.aqualight.data.devices.api.light.LightChannelValues
 import com.aqua.aqualight.data.devices.api.light.LightCoolingControllerRequest
 import com.aqua.aqualight.data.devices.api.light.LightMode
+import com.aqua.aqualight.data.devices.api.light.LightProgram
 import com.aqua.aqualight.data.devices.api.light.LightThermalProtectionRequest
 import com.aqua.aqualight.data.devices.api.light.LightTimeSyncRequest
 import com.aqua.aqualight.data.devices.api.model.ApiErrorCode
@@ -278,6 +279,61 @@ class LightRuntimeSession internal constructor(
                         )
                     }
                     result
+                }
+            }
+        }
+    }
+
+    suspend fun loadProgram(
+        program: LightProgram
+    ): ApiResult<Unit> {
+        if (deviceId <= 0L) {
+            setInvalidDeviceState()
+            return invalidDeviceResult()
+        }
+
+        val previousSnapshot = _state.value.snapshot
+        _state.update { state ->
+            state.copy(
+                isRefreshing = true,
+                errorMessage = null
+            )
+        }
+
+        return withContext(ioDispatcher) {
+            when (val writeResult = accessor.writeProgram(
+                deviceId = deviceId,
+                program = program
+            )) {
+                is ApiResult.Success -> {
+                    when (val resumeResult = accessor.resumeAuto(deviceId)) {
+                        is ApiResult.Success -> {
+                            clearLocalOverrideState()
+                            refreshAsync(
+                                readProfile = LightRuntimeReadProfile.STANDARD
+                            )
+                            ApiResult.success(Unit)
+                        }
+
+                        is ApiResult.Error -> {
+                            _state.update { state ->
+                                state.copy(
+                                    isRefreshing = false,
+                                    errorMessage = resumeResult.error.message,
+                                    isDeviceOnline = state.snapshot != null
+                                )
+                            }
+                            resumeResult
+                        }
+                    }
+                }
+
+                is ApiResult.Error -> {
+                    restoreAfterCommandError(
+                        previousSnapshot = previousSnapshot,
+                        message = writeResult.error.message
+                    )
+                    writeResult
                 }
             }
         }

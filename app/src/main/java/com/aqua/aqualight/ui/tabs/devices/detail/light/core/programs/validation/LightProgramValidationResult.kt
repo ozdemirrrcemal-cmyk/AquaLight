@@ -1,4 +1,4 @@
-package com.aqua.aqualight.data.devices.light.programs.validation
+package com.aqua.aqualight.ui.tabs.devices.detail.light.core.programs.validation
 
 sealed interface LightProgramValidationResult {
 
