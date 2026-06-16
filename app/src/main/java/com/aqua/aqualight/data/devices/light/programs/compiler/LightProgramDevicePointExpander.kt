@@ -4,7 +4,6 @@ import com.aqua.aqualight.data.devices.light.curve.interpolator.LightCurveInterp
 import com.aqua.aqualight.data.devices.light.curve.model.LightCurveTransitionMode
 import com.aqua.aqualight.data.devices.light.programs.model.LightProgramDraft
 import com.aqua.aqualight.data.devices.light.programs.model.LightProgramTimeMath
-import kotlin.math.ceil
 import kotlin.math.roundToInt
 
 /**
@@ -152,10 +151,12 @@ object LightProgramDevicePointExpander {
 
         val rampUpDesired = calculateDesiredIntermediatePointCount(
             durationMinutes = rampUpDuration,
+            transitionMode = transitionMode,
             options = options
         )
         val rampDownDesired = calculateDesiredIntermediatePointCount(
             durationMinutes = rampDownDuration,
+            transitionMode = transitionMode,
             options = options
         )
 
@@ -249,24 +250,38 @@ object LightProgramDevicePointExpander {
 
     private fun calculateDesiredIntermediatePointCount(
         durationMinutes: Int,
+        transitionMode: LightCurveTransitionMode,
         options: LightProgramPointExpansionOptions
     ): Int {
         if (durationMinutes <= 1) {
             return 0
         }
 
-        val byStep = ceil(durationMinutes / options.rampStepMinutes.toDouble())
-            .toInt()
-            .coerceAtLeast(1) - 1
+        val spacingMinutes = when (transitionMode) {
+            LightCurveTransitionMode.LINEAR -> return 0
+            LightCurveTransitionMode.SMOOTH -> options.smoothPointSpacingMinutes
+            LightCurveTransitionMode.NATURAL -> options.naturalPointSpacingMinutes
+        }
 
-        val requested = byStep.coerceAtLeast(
-            options.minimumIntermediatePointsPerRamp
-        )
+        val maxPerRamp = when (transitionMode) {
+            LightCurveTransitionMode.LINEAR -> 0
+            LightCurveTransitionMode.SMOOTH -> options.maximumSmoothIntermediatePointsPerRamp
+            LightCurveTransitionMode.NATURAL -> options.maximumNaturalIntermediatePointsPerRamp
+        }
 
-        // Integer-minute device points cannot contain more unique intermediate
-        // samples than the minutes inside the ramp. Endpoints are uploaded as
-        // explicit user anchors, so they are intentionally excluded here.
-        return requested.coerceAtMost(durationMinutes - 1)
+        if (maxPerRamp <= 0) {
+            return 0
+        }
+
+        // The catalog limit is a safety ceiling, not a target. Choose a small
+        // visual/device sample count based on ramp length so short programs stay
+        // clean and Smooth/Natural remain noticeably different. Endpoints are
+        // uploaded as explicit user anchors, so only interior samples are counted.
+        val requested = durationMinutes / spacingMinutes
+
+        return requested
+            .coerceAtMost(maxPerRamp)
+            .coerceAtMost(durationMinutes - 1)
     }
 
     private fun allocateIntermediatePointBudget(

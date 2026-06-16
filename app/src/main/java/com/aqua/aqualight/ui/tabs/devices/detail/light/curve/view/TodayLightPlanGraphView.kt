@@ -147,11 +147,6 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
         alpha = 140
     }
 
-    private val segmentBoundaryTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = color(R.color.light_text_secondary)
-        textSize = sp(9.5f)
-        textAlign = Paint.Align.CENTER
-    }
 
     private val segmentDotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
@@ -798,41 +793,9 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
             dotPaint
         )
 
-        val availableWidth = endX - startX
-
-        if (availableWidth < dp(52f)) {
-            return
-        }
-
-        val labelY = graphRect.bottom - dp(7f)
-
-        val startLabelX = (startX + dp(18f))
-        .coerceAtMost(endX - dp(18f))
-
-        val endLabelX = (endX - dp(18f))
-        .coerceAtLeast(startX + dp(18f))
-
-        val textPaint = Paint(segmentBoundaryTextPaint).apply {
-            alpha = if (segment.isCurrent) {
-                230
-            } else {
-                170
-            }
-        }
-
-        canvas.drawText(
-            segment.start.label,
-            startLabelX,
-            labelY,
-            textPaint
-        )
-
-        canvas.drawText(
-            endLabelForSegment(segment),
-            endLabelX,
-            labelY,
-            textPaint
-        )
+        // Keep only subtle boundary dots inside the graph. The bottom axis
+        // already owns time labels, so repeating 00:00 / 24:00 inside the plot
+        // makes the dashboard feel crowded on compact screens.
     }
 
     private fun drawSegmentLabel(
@@ -1180,34 +1143,6 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
         .coerceIn(0, TodayLightPlanGraphSegment.MINUTES_PER_DAY)
     }
 
-    private fun endLabelForSegment(
-        segment: TodayLightPlanGraphSegment
-    ): String {
-        return labelForMinute(
-            minute = segment.endMinute
-        )
-    }
-
-    private fun labelForMinute(
-        minute: Int
-    ): String {
-        if (minute == TodayLightPlanGraphSegment.MINUTES_PER_DAY) {
-            return "24:00"
-        }
-
-        val normalizedMinute =
-        ((minute % TodayLightPlanGraphSegment.MINUTES_PER_DAY) +
-            TodayLightPlanGraphSegment.MINUTES_PER_DAY) %
-        TodayLightPlanGraphSegment.MINUTES_PER_DAY
-
-        val hour = normalizedMinute / 60
-        val minutePart = normalizedMinute % 60
-
-        return "%02d:%02d".format(
-            hour,
-            minutePart
-        )
-    }
 
     private fun xForMinute(
         minute: Int
