@@ -5,6 +5,18 @@ import com.aqua.aqualight.data.devices.light.programs.model.LightProgramTimeMath
 
 object LightProgramDraftValidator {
 
+    fun validateName(
+        name: String
+    ): LightProgramValidationResult {
+        return if (name.trim().isBlank()) {
+            LightProgramValidationResult.Invalid(
+                "Program name is required."
+            )
+        } else {
+            LightProgramValidationResult.Valid
+        }
+    }
+
     fun validate(
         draft: LightProgramDraft
     ): LightProgramValidationResult {
@@ -15,7 +27,7 @@ object LightProgramDraftValidator {
 
         if (!(start < peakStart && peakStart < peakEnd && peakEnd < end)) {
             return LightProgramValidationResult.Invalid(
-                "Program times must be in order."
+                "Times must follow Start → Peak Start → Peak End → End."
             )
         }
 

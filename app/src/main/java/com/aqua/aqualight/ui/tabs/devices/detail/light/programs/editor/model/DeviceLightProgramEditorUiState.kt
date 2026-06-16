@@ -106,24 +106,43 @@ data class DeviceLightProgramEditorUiState(
             capabilities: LightProgramFirmwareCapabilities =
                 LightProgramFirmwareCapabilities.CURRENT_ESP32_LP_POINTS_ONLY
         ): DeviceLightProgramEditorUiState {
-            val draft = LightProgramDraft.default()
+            return fromDraft(
+                draft = LightProgramDraft.default(),
+                capabilities = capabilities
+            )
+        }
+
+        fun fromDraft(
+            draft: LightProgramDraft,
+            capabilities: LightProgramFirmwareCapabilities =
+                LightProgramFirmwareCapabilities.CURRENT_ESP32_LP_POINTS_ONLY,
+            currentDeviceTime: LightCurvePoint = LightCurvePoint.of(0, 0),
+            previewSpeed: PreviewSpeed = PreviewSpeed.ONE_MINUTE
+        ): DeviceLightProgramEditorUiState {
+            val safeDraft = draft.copy(
+                channelValues = draft.channelValues.normalized(),
+                selectedDays = draft.selectedDays.ifEmpty {
+                    EVERY_DAY_SELECTION
+                }
+            )
+
             return DeviceLightProgramEditorUiState(
-                start = draft.start,
-                peakStart = draft.peakStart,
-                peakEnd = draft.peakEnd,
-                end = draft.end,
-                channelValues = draft.channelValues,
-                repeatMode = RepeatMode.EVERY,
-                selectedDays = EVERY_DAY_SELECTION,
+                start = safeDraft.start,
+                peakStart = safeDraft.peakStart,
+                peakEnd = safeDraft.peakEnd,
+                end = safeDraft.end,
+                channelValues = safeDraft.channelValues,
+                repeatMode = safeDraft.repeatMode,
+                selectedDays = safeDraft.selectedDays,
                 repeatSelectionEnabled = capabilities.supportsWeeklySchedule,
                 repeatUnavailableReason = if (capabilities.supportsWeeklySchedule) {
                     null
                 } else {
                     WEEKLY_SCHEDULE_FIRMWARE_UNAVAILABLE
                 },
-                transitionMode = draft.transitionMode,
-                previewSpeed = PreviewSpeed.ONE_MINUTE,
-                currentDeviceTime = LightCurvePoint.of(0, 0)
+                transitionMode = safeDraft.transitionMode,
+                previewSpeed = previewSpeed,
+                currentDeviceTime = currentDeviceTime
             )
         }
         val EVERY_DAY_SELECTION: Set<Int> = setOf(1, 2, 3, 4, 5, 6, 7)

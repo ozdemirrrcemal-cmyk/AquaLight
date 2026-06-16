@@ -4,12 +4,13 @@ import android.app.Application
 import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.data.devices.api.model.ApiResult
 import com.aqua.aqualight.data.devices.light.curve.model.LightCurveChannelValues
 import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
 import com.aqua.aqualight.data.devices.light.curve.model.LightCurveTransitionMode
+import com.aqua.aqualight.data.devices.light.programs.LightProgramRepository
 import com.aqua.aqualight.data.devices.light.programs.capability.LightProgramFirmwareCapabilities
 import com.aqua.aqualight.data.devices.light.programs.model.RepeatMode
-import com.aqua.aqualight.data.devices.api.model.ApiResult
 import com.aqua.aqualight.data.devices.light.programs.preview.LightProgramPreviewEngine
 import com.aqua.aqualight.data.devices.light.programs.preview.LightProgramPreviewFrame
 import com.aqua.aqualight.data.devices.light.programs.preview.LightProgramPreviewUseCase
@@ -17,7 +18,6 @@ import com.aqua.aqualight.data.devices.light.programs.preview.LightProgramTempor
 import com.aqua.aqualight.data.devices.light.programs.validation.LightProgramDraftValidator
 import com.aqua.aqualight.data.devices.light.programs.validation.LightProgramValidationResult
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeRepository
-import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DATA_LAYER_NOT_CONNECTED
 import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DEVICE_INFORMATION_MISSING
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorUiState
@@ -33,13 +33,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * Temporary UI shell for the program editor.
- *
- * It keeps local form editing alive without loading from or saving to any
- * external Light source. Preview is intentionally compiled through the same
- * controller-ready point schedule that the repository will later upload.
- */
 class DeviceLightProgramEditorViewModel(
     application: Application
 ) : AndroidViewModel(application) {
@@ -47,6 +40,10 @@ class DeviceLightProgramEditorViewModel(
     private val appContext = application.applicationContext
 
     private val runtimeRepository = LightRuntimeRepository.get(
+        context = appContext
+    )
+
+    private val programRepository = LightProgramRepository.get(
         context = appContext
     )
 
@@ -66,6 +63,7 @@ class DeviceLightProgramEditorViewModel(
         _events.asSharedFlow()
 
     private var previewJob: Job? = null
+    private var loadProgramJob: Job? = null
     private var previewUseCase: LightProgramPreviewUseCase? = null
     private var hasReportedLivePreviewError: Boolean = false
 
@@ -88,6 +86,7 @@ class DeviceLightProgramEditorViewModel(
         }
 
         stopPreviewInternal(resetProgress = true)
+        loadProgramJob?.cancel()
 
         this.deviceId = deviceId
         this.programId = normalizedProgramId
@@ -109,6 +108,18 @@ class DeviceLightProgramEditorViewModel(
             capabilities = firmwareCapabilities
         )
         isInitialized = true
+
+        if (deviceId <= 0L) {
+            emitPreviewDeviceMissing()
+            return
+        }
+
+        if (normalizedProgramId != null) {
+            loadExistingProgram(
+                deviceId = deviceId,
+                programId = normalizedProgramId
+            )
+        }
     }
 
     fun updateStartTime(
@@ -232,7 +243,7 @@ class DeviceLightProgramEditorViewModel(
         }
 
         if (!firmwareCapabilities.supportsTemporaryLivePreview) {
-            emitUnavailable()
+            emitUnavailablePreview()
             return
         }
 
@@ -338,17 +349,96 @@ class DeviceLightProgramEditorViewModel(
             return
         }
 
-        programName = cleanedName
+        if (deviceId <= 0L) {
+            emitPreviewDeviceMissing()
+            return
+        }
+
+        val draft = _uiState.value.draft
         stopPreviewInternal(resetProgress = true)
-        emitUnavailable()
+
+        viewModelScope.launch {
+            _events.emit(DeviceLightProgramEditorEvent.SetLoading(true))
+            try {
+                val savedProgram = programRepository.saveProgram(
+                    deviceId = deviceId,
+                    programId = programId,
+                    name = cleanedName,
+                    draft = draft,
+                    makeActiveLocally = activateOnDevice
+                )
+
+                programId = savedProgram.id
+                programName = savedProgram.name
+
+                _events.emit(
+                    DeviceLightProgramEditorEvent.ShowMessage(
+                        if (activateOnDevice) {
+                            "Program saved as the local active schedule. Device upload will be connected next."
+                        } else {
+                            "Program saved."
+                        }
+                    )
+                )
+                _events.emit(DeviceLightProgramEditorEvent.NavigateBack)
+            } catch (exception: Exception) {
+                _events.emit(
+                    DeviceLightProgramEditorEvent.ShowError(
+                        exception.message ?: "Program could not be saved."
+                    )
+                )
+            } finally {
+                _events.emit(DeviceLightProgramEditorEvent.SetLoading(false))
+            }
+        }
     }
 
     override fun onCleared() {
         previewJob?.cancel()
         previewJob = null
+        loadProgramJob?.cancel()
+        loadProgramJob = null
         super.onCleared()
     }
 
+    private fun loadExistingProgram(
+        deviceId: Long,
+        programId: String
+    ) {
+        loadProgramJob = viewModelScope.launch {
+            _events.emit(DeviceLightProgramEditorEvent.SetLoading(true))
+            try {
+                val savedProgram = programRepository.getProgram(
+                    deviceId = deviceId,
+                    programId = programId
+                )
+
+                if (savedProgram == null) {
+                    _events.emit(
+                        DeviceLightProgramEditorEvent.ShowError(
+                            "Program not found."
+                        )
+                    )
+                    return@launch
+                }
+
+                programName = savedProgram.name
+                _uiState.value = DeviceLightProgramEditorUiState.fromDraft(
+                    draft = savedProgram.draft,
+                    capabilities = firmwareCapabilities,
+                    previewSpeed = _uiState.value.previewSpeed
+                )
+            } catch (exception: Exception) {
+                _events.emit(
+                    DeviceLightProgramEditorEvent.ShowError(
+                        exception.message ?: "Program could not be loaded."
+                    )
+                )
+            } finally {
+                _events.emit(DeviceLightProgramEditorEvent.SetLoading(false))
+            }
+        }
+    }
 
     private fun canUpdateWeeklyRepeatSelection(): Boolean {
         return _uiState.value.repeatSelectionEnabled
@@ -496,11 +586,11 @@ class DeviceLightProgramEditorViewModel(
         }
     }
 
-    private fun emitUnavailable() {
+    private fun emitUnavailablePreview() {
         viewModelScope.launch {
             _events.emit(
                 DeviceLightProgramEditorEvent.ShowError(
-                    LIGHT_DATA_LAYER_NOT_CONNECTED
+                    "Live preview is not supported by this firmware."
                 )
             )
         }

@@ -60,17 +60,17 @@ class DeviceLightProgramEditorFragment :
 
         _binding = FragmentDeviceLightProgramEditorBinding.bind(view)
 
-        viewModel.initialize(
-            deviceId = deviceId,
-            programId = programId
-        )
-
         setupHeader()
         setupProgramSettingsRows()
         setupClicks()
         setupSliders()
         observeUiState()
         observeEvents()
+
+        viewModel.initialize(
+            deviceId = deviceId,
+            programId = programId
+        )
     }
 
     private fun setupHeader() {

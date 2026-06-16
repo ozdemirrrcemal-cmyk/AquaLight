@@ -5,6 +5,8 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.core.view.children
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemLightProgramCardBinding
@@ -13,17 +15,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgr
 class LightProgramsAdapter(
     private val onProgramClick: (LightProgramListItem) -> Unit,
     private val onProgramOptionsClick: (LightProgramListItem) -> Unit
-) : RecyclerView.Adapter<LightProgramsAdapter.ProgramViewHolder>() {
-
-    private val items = mutableListOf<LightProgramListItem>()
-
-    fun submitList(
-        newItems: List<LightProgramListItem>
-    ) {
-        items.clear()
-        items.addAll(newItems)
-        notifyDataSetChanged()
-    }
+) : ListAdapter<LightProgramListItem, LightProgramsAdapter.ProgramViewHolder>(DiffCallback) {
 
     override fun onCreateViewHolder(
         parent: ViewGroup,
@@ -42,11 +34,7 @@ class LightProgramsAdapter(
         holder: ProgramViewHolder,
         position: Int
     ) {
-        holder.bind(items[position])
-    }
-
-    override fun getItemCount(): Int {
-        return items.size
+        holder.bind(getItem(position))
     }
 
     inner class ProgramViewHolder(
@@ -168,6 +156,22 @@ class LightProgramsAdapter(
             binding.btnProgramMore.setOnClickListener {
                 onProgramOptionsClick(item)
             }
+        }
+    }
+
+    private object DiffCallback : DiffUtil.ItemCallback<LightProgramListItem>() {
+        override fun areItemsTheSame(
+            oldItem: LightProgramListItem,
+            newItem: LightProgramListItem
+        ): Boolean {
+            return oldItem.id == newItem.id
+        }
+
+        override fun areContentsTheSame(
+            oldItem: LightProgramListItem,
+            newItem: LightProgramListItem
+        ): Boolean {
+            return oldItem == newItem
         }
     }
 }

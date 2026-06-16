@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+option java_package = "com.aqua.aqualight.data.devices.light.programs.store";
+option java_multiple_files = true;
+
+message LightProgramsStore {
+  repeated StoredLightProgram programs = 1;
+}
+
+message StoredLightProgram {
+  string id = 1;
+  string owner_uid = 2;
+
+  int64 device_id = 3;
+  string device_uid = 4;
+  string product_id = 5;
+
+  string name = 6;
+
+  int32 start_minute = 7;
+  int32 peak_start_minute = 8;
+  int32 peak_end_minute = 9;
+  int32 end_minute = 10;
+
+  int32 red = 11;
+  int32 green = 12;
+  int32 blue = 13;
+  int32 white = 14;
+
+  string repeat_mode = 15;
+  repeated int32 selected_days = 16;
+  string transition_mode = 17;
+
+  bool active = 18;
+  string sync_status = 19;
+  string source = 20;
+  string compiled_checksum = 21;
+
+  bool firmware_supports_weekly_schedule = 22;
+  bool firmware_supports_native_transition = 23;
+  bool firmware_supports_temporary_live_preview = 24;
+
+  int64 created_at_millis = 25;
+  int64 updated_at_millis = 26;
+  int64 activated_at_millis = 27;
+  int64 last_synced_at_millis = 28;
+  string last_error = 29;
+
+  int32 schema_version = 30;
+}
