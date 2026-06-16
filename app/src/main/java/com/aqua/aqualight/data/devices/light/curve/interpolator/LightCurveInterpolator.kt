@@ -102,7 +102,7 @@ object LightCurveInterpolator {
         }
     }
 
-    private fun ease(
+    fun ease(
         t: Float,
         mode: LightCurveTransitionMode
     ): Float {

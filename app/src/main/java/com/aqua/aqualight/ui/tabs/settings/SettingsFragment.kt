@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -17,12 +18,8 @@ import coil3.request.error
 import coil3.request.placeholder
 import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.user.UserPreferencesManager
-import com.aqua.aqualight.data.devices.DevicesDataStoreManager
-import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
 import com.aqua.aqualight.databinding.FragmentSettingsBinding
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class SettingsFragment : Fragment(R.layout.fragment_settings) {
@@ -30,13 +27,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
 
-    private val userPrefs by lazy {
-        UserPreferencesManager.create(requireContext())
-    }
-
-    private val devicesStore by lazy {
-        DevicesDataStoreManager.create(requireContext())
-    }
+    private val viewModel: SettingsViewModel by viewModels()
 
     override fun onViewCreated(
         view: View,
@@ -49,72 +40,53 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
         _binding = FragmentSettingsBinding.bind(view)
 
-        DevicePresenceMonitor.start(
-            context = requireContext()
-        )
-
-        observeUserInfo()
-        observeActiveDevices()
+        observeUiState()
         setupClickListeners()
         setupSocialLinks()
         setupFooterVersion()
     }
 
-    private fun observeUserInfo() {
+    private fun observeUiState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                userPrefs.userPrefsFlow.collectLatest { prefs ->
-                    val username = prefs.username.ifBlank {
-                        getString(R.string.settings_default_username)
-                    }
+                viewModel.uiState.collectLatest { state ->
+                    renderUserInfo(
+                        state = state
+                    )
 
-                    val email = prefs.email.ifBlank {
-                        getString(R.string.settings_default_email)
-                    }
-
-                    binding.tvUsername.text = username
-                    binding.tvEmail.text = email
-
-                    if (prefs.profilePhotoUrl.isNotBlank()) {
-                        binding.ivProfilePhoto.load(prefs.profilePhotoUrl) {
-                            placeholder(R.drawable.ic_profile_placeholder)
-                            error(R.drawable.ic_profile_placeholder)
-                            crossfade(true)
-                        }
-                    } else {
-                        binding.ivProfilePhoto.setImageResource(
-                            R.drawable.ic_profile_placeholder
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    private fun observeActiveDevices() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                combine(
-                    devicesStore.devicesFlow,
-                    DevicePresenceMonitor.statuses
-                ) { devices, statuses ->
-                    devices to statuses
-                }.collectLatest { pair ->
-                    val devices = pair.first
-                    val statuses = pair.second
-                    val activeDeviceCount = devices.count { device ->
-                        statuses[device.id]?.isOnline == true
-                    }
-
-                    updateActiveDevices(
-                        activeDevices = activeDeviceCount
+                    renderActiveDevices(
+                        activeDevices = state.activeDeviceCount
                     )
                 }
             }
         }
     }
 
-    private fun updateActiveDevices(
+    private fun renderUserInfo(
+        state: SettingsUiState
+    ) {
+        binding.tvUsername.text = state.username.ifBlank {
+            getString(R.string.settings_default_username)
+        }
+
+        binding.tvEmail.text = state.email.ifBlank {
+            getString(R.string.settings_default_email)
+        }
+
+        if (state.profilePhotoUrl.isNotBlank()) {
+            binding.ivProfilePhoto.load(state.profilePhotoUrl) {
+                placeholder(R.drawable.ic_profile_placeholder)
+                error(R.drawable.ic_profile_placeholder)
+                crossfade(true)
+            }
+        } else {
+            binding.ivProfilePhoto.setImageResource(
+                R.drawable.ic_profile_placeholder
+            )
+        }
+    }
+
+    private fun renderActiveDevices(
         activeDevices: Int
     ) {
         if (activeDevices > 0) {
@@ -138,60 +110,60 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     }
 
     private fun setupClickListeners() = with(binding) {
-    ivProfilePhoto.setOnClickListener {
-        findNavController().navigate(
-            SettingsFragmentDirections.actionSettingsFragmentToEditProfileFragment()
-        )
-    }
+        ivProfilePhoto.setOnClickListener {
+            findNavController().navigate(
+                SettingsFragmentDirections.actionSettingsFragmentToEditProfileFragment()
+            )
+        }
 
-    rowUserInfo.setOnClickListener {
-        findNavController().navigate(
-            SettingsFragmentDirections.actionSettingsFragmentToUserInfoFragment()
-        )
-    }
+        rowUserInfo.setOnClickListener {
+            findNavController().navigate(
+                SettingsFragmentDirections.actionSettingsFragmentToUserInfoFragment()
+            )
+        }
 
-    rowDeviceStatus.setOnClickListener {
-        findNavController().navigate(
-            SettingsFragmentDirections.actionSettingsFragmentToDeviceStatusFragment()
-        )
-    }
+        rowDeviceStatus.setOnClickListener {
+            findNavController().navigate(
+                SettingsFragmentDirections.actionSettingsFragmentToDeviceStatusFragment()
+            )
+        }
 
-    rowNetwork.setOnClickListener {
-        findNavController().navigate(
-            SettingsFragmentDirections.actionSettingsFragmentToNetworkFragment()
-        )
-    }
+        rowNetwork.setOnClickListener {
+            findNavController().navigate(
+                SettingsFragmentDirections.actionSettingsFragmentToNetworkFragment()
+            )
+        }
 
-    rowSettings.setOnClickListener {
-        findNavController().navigate(
-            SettingsFragmentDirections.actionSettingsFragmentToAppSettingsFragment()
-        )
-    }
+        rowSettings.setOnClickListener {
+            findNavController().navigate(
+                SettingsFragmentDirections.actionSettingsFragmentToAppSettingsFragment()
+            )
+        }
 
-    rowUsage.setOnClickListener {
-        findNavController().navigate(
-            SettingsFragmentDirections.actionSettingsFragmentToUsageFragment()
-        )
-    }
+        rowUsage.setOnClickListener {
+            findNavController().navigate(
+                SettingsFragmentDirections.actionSettingsFragmentToUsageFragment()
+            )
+        }
 
-    rowPrivacy.setOnClickListener {
-        findNavController().navigate(
-            SettingsFragmentDirections.actionSettingsFragmentToPrivacyFragment()
-        )
-    }
+        rowPrivacy.setOnClickListener {
+            findNavController().navigate(
+                SettingsFragmentDirections.actionSettingsFragmentToPrivacyFragment()
+            )
+        }
 
-    rowFeedback.setOnClickListener {
-        findNavController().navigate(
-            SettingsFragmentDirections.actionSettingsFragmentToFeedbackFragment()
-        )
-    }
+        rowFeedback.setOnClickListener {
+            findNavController().navigate(
+                SettingsFragmentDirections.actionSettingsFragmentToFeedbackFragment()
+            )
+        }
 
-    rowLogout.setOnClickListener {
-        findNavController().navigate(
-            SettingsFragmentDirections.actionSettingsFragmentToLogoutFragment()
-        )
+        rowLogout.setOnClickListener {
+            findNavController().navigate(
+                SettingsFragmentDirections.actionSettingsFragmentToLogoutFragment()
+            )
+        }
     }
-}
 
     private fun setupSocialLinks() = with(binding) {
         ivSocialWebsite.visibility = if (URL_WEBSITE.isBlank()) {

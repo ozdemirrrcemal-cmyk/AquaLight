@@ -28,6 +28,7 @@
     <string name="light_time_picker_description">Set the schedule point time.</string>
     <string name="light_custom_days_title">Custom Days</string>
     <string name="light_custom_days_description">Choose the days this program should run.</string>
+    <string name="light_program_repeat_future_firmware">Weekly scheduling will be available with a future firmware update.</string>
 
     <!-- Moonlight -->
     <string name="light_moonlight_title">Moonlight</string>
@@ -63,6 +64,7 @@
     <string name="light_preview_day_speed_five_minutes">5 min</string>
     <string name="light_preview_day_override_warning">During preview, live program will be temporarily overridden.</string>
     <string name="light_preview_day_progress_format">%1$d%%</string>
+    <string name="light_preview_day_simulated_time_format">Simulated time: %1$s</string>
     <string name="light_preview_day_start_button">Start Preview</string>
     <string name="light_preview_day_stop_button">Stop Preview</string>
     <string name="light_preview_day_start_again_button">Start Again</string>

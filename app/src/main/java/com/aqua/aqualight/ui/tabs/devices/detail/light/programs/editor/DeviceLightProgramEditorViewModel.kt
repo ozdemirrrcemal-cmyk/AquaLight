@@ -1,15 +1,22 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor
 
 import android.app.Application
+import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DATA_LAYER_NOT_CONNECTED
 import com.aqua.aqualight.data.devices.light.curve.model.LightCurveChannelValues
 import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurveTransitionMode
+import com.aqua.aqualight.data.devices.light.programs.capability.LightProgramFirmwareCapabilities
 import com.aqua.aqualight.data.devices.light.programs.model.RepeatMode
+import com.aqua.aqualight.data.devices.light.programs.preview.LightProgramPreviewEngine
+import com.aqua.aqualight.data.devices.light.programs.preview.LightProgramPreviewFrame
+import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DATA_LAYER_NOT_CONNECTED
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.PreviewSpeed
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -23,14 +30,20 @@ import kotlinx.coroutines.launch
  * Temporary UI shell for the program editor.
  *
  * It keeps local form editing alive without loading from or saving to any
- * external Light source.
+ * external Light source. Preview is intentionally compiled through the same
+ * controller-ready point schedule that the repository will later upload.
  */
 class DeviceLightProgramEditorViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
+    private val firmwareCapabilities =
+        LightProgramFirmwareCapabilities.CURRENT_ESP32_LP_POINTS_ONLY
+
     private val _uiState = MutableStateFlow(
-        DeviceLightProgramEditorUiState.default()
+        DeviceLightProgramEditorUiState.default(
+            capabilities = firmwareCapabilities
+        )
     )
     val uiState: StateFlow<DeviceLightProgramEditorUiState> =
         _uiState.asStateFlow()
@@ -38,6 +51,8 @@ class DeviceLightProgramEditorViewModel(
     private val _events = MutableSharedFlow<DeviceLightProgramEditorEvent>()
     val events: SharedFlow<DeviceLightProgramEditorEvent> =
         _events.asSharedFlow()
+
+    private var previewJob: Job? = null
 
     private var deviceId: Long = 0L
     private var programId: String? = null
@@ -54,12 +69,16 @@ class DeviceLightProgramEditorViewModel(
         } else {
             "Program"
         }
-        _uiState.value = DeviceLightProgramEditorUiState.default()
+        stopPreviewInternal(resetProgress = true)
+        _uiState.value = DeviceLightProgramEditorUiState.default(
+            capabilities = firmwareCapabilities
+        )
     }
 
     fun updateStartTime(
         point: LightCurvePoint
     ) {
+        stopPreviewForEdit()
         _uiState.update { state ->
             state.copy(start = point)
         }
@@ -68,6 +87,7 @@ class DeviceLightProgramEditorViewModel(
     fun updatePeakStartTime(
         point: LightCurvePoint
     ) {
+        stopPreviewForEdit()
         _uiState.update { state ->
             state.copy(peakStart = point)
         }
@@ -76,6 +96,7 @@ class DeviceLightProgramEditorViewModel(
     fun updatePeakEndTime(
         point: LightCurvePoint
     ) {
+        stopPreviewForEdit()
         _uiState.update { state ->
             state.copy(peakEnd = point)
         }
@@ -84,6 +105,7 @@ class DeviceLightProgramEditorViewModel(
     fun updateEndTime(
         point: LightCurvePoint
     ) {
+        stopPreviewForEdit()
         _uiState.update { state ->
             state.copy(end = point)
         }
@@ -92,21 +114,37 @@ class DeviceLightProgramEditorViewModel(
     fun updateChannelValues(
         values: LightCurveChannelValues
     ) {
+        stopPreviewForEdit()
         _uiState.update { state ->
             state.copy(channelValues = values.normalized())
         }
     }
 
+    fun updateTransitionMode(
+        mode: LightCurveTransitionMode
+    ) {
+        stopPreviewForEdit()
+        _uiState.update { state ->
+            state.copy(transitionMode = mode)
+        }
+    }
+
     fun updateRepeatEvery() {
+        stopPreviewForEdit()
         _uiState.update { state ->
             state.copy(
                 repeatMode = RepeatMode.EVERY,
-                selectedDays = setOf(1, 2, 3, 4, 5, 6, 7)
+                selectedDays = DeviceLightProgramEditorUiState.EVERY_DAY_SELECTION
             )
         }
     }
 
     fun updateRepeatWeekdays() {
+        if (!canUpdateWeeklyRepeatSelection()) {
+            return
+        }
+
+        stopPreviewForEdit()
         _uiState.update { state ->
             state.copy(
                 repeatMode = RepeatMode.WEEK,
@@ -116,6 +154,11 @@ class DeviceLightProgramEditorViewModel(
     }
 
     fun updateRepeatWeekend() {
+        if (!canUpdateWeeklyRepeatSelection()) {
+            return
+        }
+
+        stopPreviewForEdit()
         _uiState.update { state ->
             state.copy(
                 repeatMode = RepeatMode.WEEKEND,
@@ -127,6 +170,11 @@ class DeviceLightProgramEditorViewModel(
     fun updateCustomDays(
         days: Set<Int>
     ) {
+        if (!canUpdateWeeklyRepeatSelection()) {
+            return
+        }
+
+        stopPreviewForEdit()
         _uiState.update { state ->
             state.copy(
                 repeatMode = RepeatMode.CUSTOM,
@@ -135,26 +183,59 @@ class DeviceLightProgramEditorViewModel(
         }
     }
 
+
     fun startPreview(
         speed: PreviewSpeed
     ) {
+        previewJob?.cancel()
+
+        val draft = _uiState.value.draft
+        val schedule = LightProgramPreviewEngine.compileSchedule(draft)
+        val durationMillis = speed.durationMillis
+        val initialFrame = LightProgramPreviewEngine.frameAt(
+            schedule = schedule,
+            elapsedMillis = 0L,
+            previewDurationMillis = durationMillis
+        )
+
         _uiState.update { state ->
             state.copy(
                 previewSpeed = speed,
                 isPreviewRunning = true,
-                previewProgressPercent = 0
+                previewProgressPercent = initialFrame.progressPercent,
+                previewSimulationTime = initialFrame.simulatedTime,
+                previewOutputValues = initialFrame.outputValues
             )
+        }
+
+        previewJob = viewModelScope.launch {
+            val startMillis = SystemClock.elapsedRealtime()
+
+            while (true) {
+                val elapsedMillis = SystemClock.elapsedRealtime() - startMillis
+                val frame = LightProgramPreviewEngine.frameAt(
+                    schedule = schedule,
+                    elapsedMillis = elapsedMillis,
+                    previewDurationMillis = durationMillis
+                )
+
+                applyPreviewFrame(
+                    frame = frame,
+                    isRunning = elapsedMillis < durationMillis
+                )
+
+                if (elapsedMillis >= durationMillis) {
+                    previewJob = null
+                    break
+                }
+
+                delay(LightProgramPreviewEngine.DEFAULT_FRAME_INTERVAL_MILLIS)
+            }
         }
     }
 
     fun stopPreview() {
-        _uiState.update { state ->
-            state.copy(
-                isPreviewRunning = false,
-                previewProgressPercent = 0,
-                previewSimulationTime = null
-            )
-        }
+        stopPreviewInternal(resetProgress = true)
     }
 
     fun currentProgramName(): String {
@@ -170,7 +251,65 @@ class DeviceLightProgramEditorViewModel(
         activateOnDevice: Boolean
     ) {
         programName = name.ifBlank { programName }
+        stopPreviewInternal(resetProgress = true)
         emitUnavailable()
+    }
+
+    override fun onCleared() {
+        previewJob?.cancel()
+        previewJob = null
+        super.onCleared()
+    }
+
+
+    private fun canUpdateWeeklyRepeatSelection(): Boolean {
+        return _uiState.value.repeatSelectionEnabled
+    }
+
+    private fun applyPreviewFrame(
+        frame: LightProgramPreviewFrame,
+        isRunning: Boolean
+    ) {
+        _uiState.update { state ->
+            state.copy(
+                isPreviewRunning = isRunning,
+                previewProgressPercent = frame.progressPercent,
+                previewSimulationTime = frame.simulatedTime,
+                previewOutputValues = frame.outputValues
+            )
+        }
+    }
+
+    private fun stopPreviewForEdit() {
+        val state = _uiState.value
+        if (!state.isPreviewRunning &&
+            state.previewProgressPercent == 0 &&
+            state.previewSimulationTime == null
+        ) {
+            return
+        }
+
+        stopPreviewInternal(resetProgress = true)
+    }
+
+    private fun stopPreviewInternal(
+        resetProgress: Boolean
+    ) {
+        previewJob?.cancel()
+        previewJob = null
+
+        _uiState.update { state ->
+            state.copy(
+                isPreviewRunning = false,
+                previewProgressPercent = if (resetProgress) {
+                    0
+                } else {
+                    state.previewProgressPercent
+                },
+                previewSimulationTime = null,
+                previewOutputValues = null
+            )
+        }
     }
 
     private fun emitUnavailable() {

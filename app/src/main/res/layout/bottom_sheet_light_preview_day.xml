@@ -87,6 +87,15 @@
         android:layout_marginTop="18dp"
         android:text="@string/light_preview_day_override_warning" />
 
+    <TextView
+        android:id="@+id/tvPreviewSimulatedTime"
+        style="@style/TextAppearance.Aqua.Light.Caption"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:text="@string/light_preview_day_simulated_time_format"
+        tools:text="Simulated time: 09:45" />
+
     <ProgressBar
         android:id="@+id/previewProgressBar"
         style="?android:attr/progressBarStyleHorizontal"

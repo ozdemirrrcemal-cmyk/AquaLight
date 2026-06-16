@@ -4,22 +4,15 @@ import android.os.Bundle
 import android.view.View
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.devices.DevicesDataStoreManager
-import com.aqua.aqualight.data.devices.card.DeviceCardStateMapper
-import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
-import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.databinding.FragmentDeviceStatusBinding
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
-import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
@@ -27,17 +20,9 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
     private var _binding: FragmentDeviceStatusBinding? = null
     private val binding get() = _binding!!
 
-    private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
+    private val viewModel: DeviceStatusViewModel by viewModels()
 
-    private lateinit var devicesStore: DevicesDataStoreManager
     private lateinit var adapter: DeviceStatusAdapter
-
-    private val deviceCardStateMapper =
-        DeviceCardStateMapper()
-
-    private var latestDevices: List<DevicesDataStoreManager.DeviceInfo> = emptyList()
-    private var latestTanks: List<SavedAquariumTank> = emptyList()
-    private var latestStatuses: Map<Long, DeviceStatusState> = emptyMap()
 
     override fun onViewCreated(
         view: View,
@@ -51,19 +36,9 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
         _binding =
             FragmentDeviceStatusBinding.bind(view)
 
-        devicesStore =
-            DevicesDataStoreManager.create(
-                requireContext()
-            )
-
-        DevicePresenceMonitor.start(
-            context = requireContext()
-        )
-
         setupHeader()
         setupRecycler()
-        observeTanks()
-        observeDevices()
+        observeUiState()
     }
 
     private fun setupHeader() {
@@ -85,98 +60,28 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
             adapter
     }
 
-    private fun observeTanks() {
-        aquariumTankViewModel.tanks.observe(
-            viewLifecycleOwner
-        ) { tanks ->
-            latestTanks =
-                tanks
-
-            renderDevices()
-        }
-    }
-
-    private fun observeDevices() {
+    private fun observeUiState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(
                 Lifecycle.State.STARTED
             ) {
-                combine(
-                    devicesStore.devicesFlow,
-                    DevicePresenceMonitor.statuses
-                ) { devices, statuses ->
-                    devices to statuses
-                }.collect { pair ->
-                    latestDevices =
-                        pair.first
-
-                    latestStatuses =
-                        pair.second
-
-                    renderDevices()
+                viewModel.uiState.collectLatest { state ->
+                    renderState(
+                        state = state
+                    )
                 }
             }
         }
     }
 
-    private fun renderDevices() {
-        if (_binding == null) {
-            return
-        }
-
+    private fun renderState(
+        state: DeviceStatusUiState
+    ) {
         binding.rvDevices.isVisible =
-            latestDevices.isNotEmpty()
-
-        if (latestDevices.isEmpty()) {
-            adapter.submitList(
-                emptyList()
-            )
-
-            return
-        }
-
-        val uiList =
-            deviceCardStateMapper.mapAll(
-                devices = latestDevices,
-                statuses = latestStatuses,
-                tanks = latestTanks,
-                unassignedTankText = "Not connected",
-                unknownTankText = "Unknown aquarium",
-                includeLastSeenText = true
-            ).map { cardState ->
-                DeviceCardUi(
-                    id = cardState.deviceId,
-                    displayName = cardState.title,
-                    familyName = cardState.familyName,
-                    tankName = cardState.tankName,
-                    ip = cardState.ip,
-                    serial = cardState.serial,
-                    firmwareBuild = cardState.firmwareBuild,
-                    isOnline = cardState.isOnline,
-                    lastSeenText = cardState.lastSeenText,
-                    productId = cardState.productId,
-                    productKey = cardState.productKey,
-                    category = cardState.category,
-                    productLine = cardState.productLine,
-                    productModel = cardState.productModel,
-                    skuCode = cardState.skuCode,
-                    setupCode = cardState.setupCode,
-                    deviceUid = cardState.deviceUid,
-                    macAddress = cardState.macAddress,
-                    serialNumber = cardState.serialNumber,
-                    shortId = cardState.shortId,
-                    hardwareRevision = cardState.hardwareRevision,
-                    firmwareVersion = cardState.firmwareVersion,
-                    protocolVersion = cardState.protocolVersion,
-                    productMetaText = cardState.productMetaText,
-                    identityText = cardState.identityText,
-                    networkText = cardState.networkText,
-                    statusText = cardState.statusText
-                )
-            }
+            state.isEmpty.not()
 
         adapter.submitList(
-            uiList
+            state.devices
         )
     }
 

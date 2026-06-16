@@ -20,11 +20,13 @@ import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceSnack
 import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightTransitionModeUiText
 import com.aqua.aqualight.data.devices.light.programs.model.LightProgramTimeMath
 import com.aqua.aqualight.data.devices.light.programs.model.RepeatMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.common.sheet.LightCurveTimePickerSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightCustomDaysSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightPreviewDaySheet
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightTransitionVariantSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.sheet.LightProgramNameSheet
 import com.google.android.material.slider.Slider
 import kotlinx.coroutines.launch
@@ -81,11 +83,12 @@ class DeviceLightProgramEditorFragment :
 }
 
     private fun setupProgramSettingsRows() {
+        val initialTransitionMode = viewModel.uiState.value.transitionMode
         bindActionRow(
             row = binding.actionTransitionSmoothing.root,
             iconRes = R.drawable.ic_light_waves_24,
-            title = "Natural Transition",
-            subtitle = "Sunrise-like natural ramp"
+            title = LightTransitionModeUiText.title(initialTransitionMode),
+            subtitle = LightTransitionModeUiText.subtitle(initialTransitionMode)
         )
     }
 
@@ -202,7 +205,8 @@ class DeviceLightProgramEditorFragment :
 
             previewDaySheet?.renderPreviewState(
                 isPreviewRunning = state.isPreviewRunning,
-                progressPercent = state.previewProgressPercent
+                progressPercent = state.previewProgressPercent,
+                simulatedTimeLabel = state.previewSimulationTime?.label
             )
 
             renderRepeatMode(state)
@@ -286,15 +290,23 @@ class DeviceLightProgramEditorFragment :
         }
 
         binding.repeatWeekdays.setOnClickListener {
-            viewModel.updateRepeatWeekdays()
+            if (viewModel.uiState.value.repeatSelectionEnabled) {
+                viewModel.updateRepeatWeekdays()
+            }
         }
 
         binding.repeatWeekend.setOnClickListener {
-            viewModel.updateRepeatWeekend()
+            if (viewModel.uiState.value.repeatSelectionEnabled) {
+                viewModel.updateRepeatWeekend()
+            }
         }
 
         binding.repeatCustom.setOnClickListener {
             val state = viewModel.uiState.value
+
+            if (!state.repeatSelectionEnabled) {
+                return@setOnClickListener
+            }
 
             LightCustomDaysSheet
                 .create(requireContext())
@@ -305,7 +317,9 @@ class DeviceLightProgramEditorFragment :
                 }
         }
 
-        binding.actionTransitionSmoothing.root.setOnClickListener(null)
+        binding.actionTransitionSmoothing.root.setOnClickListener {
+            showTransitionModeSheet()
+        }
 
         binding.btnLoadToDevice.setOnClickListener {
             val isEditing = viewModel.isEditingExistingProgram()
@@ -362,6 +376,7 @@ class DeviceLightProgramEditorFragment :
         sheet.show(
             initialSpeed = state.previewSpeed,
             initialProgressPercent = state.previewProgressPercent,
+            initialSimulatedTimeLabel = state.previewSimulationTime?.label,
             isPreviewRunning = state.isPreviewRunning,
             onStartPreview = { speed ->
                 viewModel.startPreview(speed)
@@ -440,6 +455,18 @@ class DeviceLightProgramEditorFragment :
             }
     }
 
+    private fun showTransitionModeSheet() {
+        val state = viewModel.uiState.value
+
+        LightTransitionVariantSheet
+            .create(requireContext())
+            .show(
+                initialMode = state.transitionMode
+            ) { selectedMode ->
+                viewModel.updateTransitionMode(selectedMode)
+            }
+    }
+
     private fun showProgramNameSheet(
         title: String,
         subtitle: String,
@@ -473,45 +500,103 @@ class DeviceLightProgramEditorFragment :
         val normalText =
             requireContext().getColor(R.color.light_text_secondary)
 
-        binding.repeatEvery.setBackgroundResource(
-            if (state.repeatMode == RepeatMode.EVERY) selectedBg else transparentBg
+        val disabledText =
+            requireContext().getColor(R.color.light_text_disabled)
+
+        setRepeatOptionState(
+            view = binding.repeatEvery,
+            selected = state.repeatMode == RepeatMode.EVERY,
+            enabled = true,
+            selectedBg = selectedBg,
+            transparentBg = transparentBg,
+            selectedText = selectedText,
+            normalText = normalText,
+            disabledText = disabledText
         )
 
-        binding.repeatWeekdays.setBackgroundResource(
-            if (state.repeatMode == RepeatMode.WEEK) selectedBg else transparentBg
+        setRepeatOptionState(
+            view = binding.repeatWeekdays,
+            selected = state.repeatMode == RepeatMode.WEEK,
+            enabled = state.repeatSelectionEnabled,
+            selectedBg = selectedBg,
+            transparentBg = transparentBg,
+            selectedText = selectedText,
+            normalText = normalText,
+            disabledText = disabledText
         )
 
-        binding.repeatWeekend.setBackgroundResource(
-            if (state.repeatMode == RepeatMode.WEEKEND) selectedBg else transparentBg
+        setRepeatOptionState(
+            view = binding.repeatWeekend,
+            selected = state.repeatMode == RepeatMode.WEEKEND,
+            enabled = state.repeatSelectionEnabled,
+            selectedBg = selectedBg,
+            transparentBg = transparentBg,
+            selectedText = selectedText,
+            normalText = normalText,
+            disabledText = disabledText
         )
 
-        binding.repeatCustom.setBackgroundResource(
-            if (state.repeatMode == RepeatMode.CUSTOM) selectedBg else transparentBg
+        setRepeatOptionState(
+            view = binding.repeatCustom,
+            selected = state.repeatMode == RepeatMode.CUSTOM,
+            enabled = state.repeatSelectionEnabled,
+            selectedBg = selectedBg,
+            transparentBg = transparentBg,
+            selectedText = selectedText,
+            normalText = normalText,
+            disabledText = disabledText
         )
 
-        binding.repeatEvery.setTextColor(
-            if (state.repeatMode == RepeatMode.EVERY) selectedText else normalText
+        binding.tvRepeatFirmwareHint.visibility = if (state.repeatUnavailableReason.isNullOrBlank()) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
+
+        binding.tvRepeatFirmwareHint.text = state.repeatUnavailableReason.orEmpty()
+    }
+
+    private fun setRepeatOptionState(
+        view: TextView,
+        selected: Boolean,
+        enabled: Boolean,
+        selectedBg: Int,
+        transparentBg: Int,
+        selectedText: Int,
+        normalText: Int,
+        disabledText: Int
+    ) {
+        view.setBackgroundResource(
+            if (selected) selectedBg else transparentBg
         )
 
-        binding.repeatWeekdays.setTextColor(
-            if (state.repeatMode == RepeatMode.WEEK) selectedText else normalText
+        view.setTextColor(
+            when {
+                selected -> selectedText
+                enabled -> normalText
+                else -> disabledText
+            }
         )
 
-        binding.repeatWeekend.setTextColor(
-            if (state.repeatMode == RepeatMode.WEEKEND) selectedText else normalText
-        )
-
-        binding.repeatCustom.setTextColor(
-            if (state.repeatMode == RepeatMode.CUSTOM) selectedText else normalText
-        )
+        view.isEnabled = enabled
+        view.isClickable = enabled
+        view.alpha = if (enabled || selected) {
+            1f
+        } else {
+            REPEAT_OPTION_DISABLED_ALPHA
+        }
     }
 
     private fun renderTransitionSummary(
         state: DeviceLightProgramEditorUiState
     ) {
         binding.actionTransitionSmoothing.root
+            .findViewById<TextView>(R.id.tvActionTitle)
+            ?.text = LightTransitionModeUiText.title(state.transitionMode)
+
+        binding.actionTransitionSmoothing.root
             .findViewById<TextView>(R.id.tvActionSubtitle)
-            ?.text = "Sunrise-like natural ramp"
+            ?.text = LightTransitionModeUiText.subtitle(state.transitionMode)
     }
 
     override fun onDestroyView() {
@@ -527,5 +612,7 @@ class DeviceLightProgramEditorFragment :
     companion object {
         const val ARG_DEVICE_ID = "deviceId"
         const val ARG_PROGRAM_ID = "programId"
+
+        private const val REPEAT_OPTION_DISABLED_ALPHA = 0.46f
     }
 }
