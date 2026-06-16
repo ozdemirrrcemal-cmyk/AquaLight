@@ -5,6 +5,7 @@ import com.aqua.aqualight.data.devices.api.legacy.LegacyEndpoint
 import com.aqua.aqualight.data.devices.api.legacy.LegacyHttpClient
 import com.aqua.aqualight.data.devices.api.model.ApiErrorCode
 import com.aqua.aqualight.data.devices.api.model.ApiResult
+import org.json.JSONArray
 import org.json.JSONObject
 
 class LegacyLightApi(
@@ -51,7 +52,24 @@ class LegacyLightApi(
     ): ApiResult<Unit> {
         return ApiResult.failure(
             code = ApiErrorCode.UNSUPPORTED_FIRMWARE,
-            message = "Legacy light program write is intentionally not enabled in the data layer yet"
+            message = "Use writeProgramSchedule for concrete LP schedule uploads."
+        )
+    }
+
+    override suspend fun writeProgramSchedule(
+        connection: AquaDeviceConnection,
+        request: LightProgramWriteRequest
+    ): ApiResult<Unit> {
+        if (request.channels.isEmpty()) {
+            return ApiResult.failure(
+                code = ApiErrorCode.INVALID_REQUEST,
+                message = "Light program schedule is empty"
+            )
+        }
+
+        return sendLegacySet(
+            connection = connection,
+            json = buildProgramScheduleJson(request)
         )
     }
 
@@ -349,6 +367,62 @@ class LegacyLightApi(
         }
     }
 
+    private fun buildProgramScheduleJson(
+        request: LightProgramWriteRequest
+    ): JSONObject {
+        val data = JSONObject()
+
+        request.channels
+            .filter { channel -> channel.firmwareChannelIndex >= 0 }
+            .sortedBy { channel -> channel.firmwareChannelIndex }
+            .forEach { channel ->
+                val points = JSONArray()
+                channel.points
+                    .sortedBy { point -> point.minuteOfDay }
+                    .forEach { point ->
+                        points.put(
+                            JSONArray().apply {
+                                put(formatMinuteOfDay(point.minuteOfDay))
+                                put(LightApiMath.percentToDeviceValue(point.percent))
+                            }
+                        )
+                    }
+
+                data.put(
+                    channel.firmwareChannelIndex.toString(),
+                    JSONObject().apply {
+                        put("LP", points)
+                    }
+                )
+            }
+
+        return JSONObject().apply {
+            put(
+                KEY_LIGHT_PROGRAM,
+                JSONObject().apply {
+                    put("Data", data)
+                    if (request.resumeAutoAfterWrite) {
+                        put("LightEdit", 0)
+                    }
+                }
+            )
+        }
+    }
+
+    private fun formatMinuteOfDay(
+        minuteOfDay: Int
+    ): String {
+        val safeMinute = minuteOfDay.coerceIn(0, MINUTES_PER_DAY)
+        if (safeMinute == MINUTES_PER_DAY) {
+            return "24:00:00"
+        }
+
+        return "%02d:%02d:00".format(
+            safeMinute / 60,
+            safeMinute % 60
+        )
+    }
+
     private fun buildSetCommand(
         json: JSONObject
     ): String {
@@ -455,6 +529,7 @@ class LegacyLightApi(
         const val LEGACY_BLUE_INDEX = 3
         const val MIN_PERCENT = 0
         const val MAX_PERCENT = 100
+        const val MINUTES_PER_DAY = 24 * 60
         const val MIN_TEMPERATURE_CELSIUS = 0
         const val MAX_TEMPERATURE_CELSIUS = 100
         const val MIN_RECOVERY_SECONDS = 1

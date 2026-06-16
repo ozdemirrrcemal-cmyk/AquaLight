@@ -73,6 +73,16 @@ class DeviceLightProgramEditorFragment :
         )
     }
 
+    override fun onStart() {
+        super.onStart()
+        viewModel.onEditorVisible()
+    }
+
+    override fun onStop() {
+        viewModel.onEditorHidden()
+        super.onStop()
+    }
+
     private fun setupHeader() {
     binding.appHeader.setupAquaHeader(
         fragment = this,

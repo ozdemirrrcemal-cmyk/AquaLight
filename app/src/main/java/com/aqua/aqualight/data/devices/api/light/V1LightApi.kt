@@ -33,6 +33,13 @@ class V1LightApi(
         return ApiResult.notConnected()
     }
 
+    override suspend fun writeProgramSchedule(
+        connection: AquaDeviceConnection,
+        request: LightProgramWriteRequest
+    ): ApiResult<Unit> {
+        return ApiResult.notConnected()
+    }
+
     override suspend fun setManual(
         connection: AquaDeviceConnection,
         request: LightManualRequest

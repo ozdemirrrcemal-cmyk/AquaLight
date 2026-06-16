@@ -18,6 +18,8 @@ import com.aqua.aqualight.data.devices.light.programs.preview.LightProgramTempor
 import com.aqua.aqualight.data.devices.light.programs.validation.LightProgramDraftValidator
 import com.aqua.aqualight.data.devices.light.programs.validation.LightProgramValidationResult
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeRepository
+import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeSession
+import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DEVICE_INFORMATION_MISSING
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorUiState
@@ -30,6 +32,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -64,6 +67,8 @@ class DeviceLightProgramEditorViewModel(
 
     private var previewJob: Job? = null
     private var loadProgramJob: Job? = null
+    private var runtimeCollectorJob: Job? = null
+    private var runtimeSession: LightRuntimeSession? = null
     private var previewUseCase: LightProgramPreviewUseCase? = null
     private var hasReportedLivePreviewError: Boolean = false
 
@@ -87,6 +92,9 @@ class DeviceLightProgramEditorViewModel(
 
         stopPreviewInternal(resetProgress = true)
         loadProgramJob?.cancel()
+        runtimeCollectorJob?.cancel()
+        runtimeSession?.release(CONSUMER_KEY)
+        runtimeSession = null
 
         this.deviceId = deviceId
         this.programId = normalizedProgramId
@@ -95,14 +103,25 @@ class DeviceLightProgramEditorViewModel(
         } else {
             "Program"
         }
-        previewUseCase = if (deviceId > 0L) {
-            LightProgramPreviewUseCase(
-                temporaryManualSender = LightProgramTemporaryManualSender(
-                    runtimeSession = runtimeRepository.session(deviceId)
-                )
-            )
+        val session = if (deviceId > 0L) {
+            runtimeRepository.session(deviceId)
         } else {
             null
+        }
+        runtimeSession = session
+        previewUseCase = session?.let { runtimeSession ->
+            LightProgramPreviewUseCase(
+                temporaryManualSender = LightProgramTemporaryManualSender(
+                    runtimeSession = runtimeSession
+                )
+            )
+        }
+        runtimeCollectorJob = session?.let { runtimeSession ->
+            viewModelScope.launch {
+                runtimeSession.state.collectLatest { runtimeState ->
+                    applyRuntimeDeviceTime(runtimeState)
+                }
+            }
         }
         _uiState.value = DeviceLightProgramEditorUiState.default(
             capabilities = firmwareCapabilities
@@ -120,6 +139,14 @@ class DeviceLightProgramEditorViewModel(
                 programId = normalizedProgramId
             )
         }
+    }
+
+    fun onEditorVisible() {
+        runtimeSession?.acquire(CONSUMER_KEY)
+    }
+
+    fun onEditorHidden() {
+        runtimeSession?.release(CONSUMER_KEY)
     }
 
     fun updateStartTime(
@@ -359,22 +386,33 @@ class DeviceLightProgramEditorViewModel(
 
         viewModelScope.launch {
             _events.emit(DeviceLightProgramEditorEvent.SetLoading(true))
+            var savedLocally = false
             try {
                 val savedProgram = programRepository.saveProgram(
                     deviceId = deviceId,
                     programId = programId,
                     name = cleanedName,
                     draft = draft,
-                    makeActiveLocally = activateOnDevice
+                    makeActiveLocally = false
                 )
+                savedLocally = true
 
-                programId = savedProgram.id
-                programName = savedProgram.name
+                val finalProgram = if (activateOnDevice) {
+                    programRepository.activateProgram(
+                        deviceId = deviceId,
+                        programId = savedProgram.id
+                    ).program
+                } else {
+                    savedProgram
+                }
+
+                programId = finalProgram.id
+                programName = finalProgram.name
 
                 _events.emit(
                     DeviceLightProgramEditorEvent.ShowMessage(
                         if (activateOnDevice) {
-                            "Program saved as the local active schedule. Device upload will be connected next."
+                            "Program saved, uploaded to the device and activated."
                         } else {
                             "Program saved."
                         }
@@ -382,9 +420,14 @@ class DeviceLightProgramEditorViewModel(
                 )
                 _events.emit(DeviceLightProgramEditorEvent.NavigateBack)
             } catch (exception: Exception) {
+                val fallbackMessage = if (savedLocally && activateOnDevice) {
+                    "Program was saved, but device upload failed."
+                } else {
+                    "Program could not be saved."
+                }
                 _events.emit(
                     DeviceLightProgramEditorEvent.ShowError(
-                        exception.message ?: "Program could not be saved."
+                        exception.message ?: fallbackMessage
                     )
                 )
             } finally {
@@ -398,6 +441,10 @@ class DeviceLightProgramEditorViewModel(
         previewJob = null
         loadProgramJob?.cancel()
         loadProgramJob = null
+        runtimeCollectorJob?.cancel()
+        runtimeCollectorJob = null
+        runtimeSession?.release(CONSUMER_KEY)
+        runtimeSession = null
         super.onCleared()
     }
 
@@ -426,6 +473,7 @@ class DeviceLightProgramEditorViewModel(
                 _uiState.value = DeviceLightProgramEditorUiState.fromDraft(
                     draft = savedProgram.draft,
                     capabilities = firmwareCapabilities,
+                    currentDeviceTime = _uiState.value.currentDeviceTime,
                     previewSpeed = _uiState.value.previewSpeed
                 )
             } catch (exception: Exception) {
@@ -437,6 +485,27 @@ class DeviceLightProgramEditorViewModel(
             } finally {
                 _events.emit(DeviceLightProgramEditorEvent.SetLoading(false))
             }
+        }
+    }
+
+    private fun applyRuntimeDeviceTime(
+        runtimeState: LightRuntimeState
+    ) {
+        val minuteOfDay = runtimeState.snapshot
+            ?.deviceTime
+            ?.currentMinuteOfDay
+            ?: return
+
+        val safeMinute = minuteOfDay.coerceIn(0, MINUTES_PER_DAY)
+        val point = LightCurvePoint.of(
+            hour = safeMinute / 60,
+            minute = safeMinute % 60
+        )
+
+        _uiState.update { state ->
+            state.copy(
+                currentDeviceTime = point
+            )
         }
     }
 
@@ -594,5 +663,10 @@ class DeviceLightProgramEditorViewModel(
                 )
             )
         }
+    }
+
+    private companion object {
+        const val CONSUMER_KEY = "light-program-editor"
+        const val MINUTES_PER_DAY = 24 * 60
     }
 }

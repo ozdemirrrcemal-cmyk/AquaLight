@@ -106,16 +106,23 @@ class DeviceLightProgramsViewModel(
     ) {
         runProgramAction(
             successMessage = if (isActive) {
-                "Program selected as the local active schedule. Device upload will be connected next."
+                "Program uploaded to the device and activated."
             } else {
                 "Program disabled locally."
             }
         ) {
-            repository.setProgramActive(
-                deviceId = requireDeviceId(),
-                programId = programId,
-                isActive = isActive
-            )
+            if (isActive) {
+                repository.activateProgram(
+                    deviceId = requireDeviceId(),
+                    programId = programId
+                )
+            } else {
+                repository.setProgramActive(
+                    deviceId = requireDeviceId(),
+                    programId = programId,
+                    isActive = false
+                )
+            }
         }
     }
 

@@ -1,19 +1,23 @@
 package com.aqua.aqualight.data.devices.light.programs
 
 import android.content.Context
+import com.aqua.aqualight.data.devices.light.programs.activation.ActivateLightProgramUseCase
+import com.aqua.aqualight.data.devices.light.programs.activation.LightProgramActivationResult
 import com.aqua.aqualight.data.devices.light.programs.model.LightProgramDraft
 import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
+import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeRepository
 import kotlinx.coroutines.flow.Flow
 
 /**
  * Repository boundary for saved light programs.
  *
  * UI talks to this class, not to Proto/DataStore or device APIs directly.
- * Device upload will later be added behind use-cases without changing the
- * editor/list screen contracts.
+ * Device upload is hidden behind use-cases so editor/list screens never talk
+ * directly to firmware APIs or protocol payloads.
  */
 class LightProgramRepository private constructor(
-    private val store: LightProgramDataStoreManager
+    private val store: LightProgramDataStoreManager,
+    private val activateProgramUseCase: ActivateLightProgramUseCase
 ) {
 
     companion object {
@@ -24,8 +28,14 @@ class LightProgramRepository private constructor(
             context: Context
         ): LightProgramRepository {
             return INSTANCE ?: synchronized(this) {
+                val appContext = context.applicationContext
+                val store = LightProgramDataStoreManager.create(appContext)
                 INSTANCE ?: LightProgramRepository(
-                    store = LightProgramDataStoreManager.create(context.applicationContext)
+                    store = store,
+                    activateProgramUseCase = ActivateLightProgramUseCase(
+                        store = store,
+                        runtimeRepository = LightRuntimeRepository.get(appContext)
+                    )
                 ).also { repository ->
                     INSTANCE = repository
                 }
@@ -120,6 +130,16 @@ class LightProgramRepository private constructor(
         if (!deleted) {
             error("Program not found.")
         }
+    }
+
+    suspend fun activateProgram(
+        deviceId: Long,
+        programId: String
+    ): LightProgramActivationResult {
+        return activateProgramUseCase.activate(
+            deviceId = deviceId,
+            programId = programId
+        )
     }
 
     suspend fun setProgramActive(

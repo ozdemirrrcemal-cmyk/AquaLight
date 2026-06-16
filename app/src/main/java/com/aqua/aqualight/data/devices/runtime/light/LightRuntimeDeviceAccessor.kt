@@ -9,6 +9,7 @@ import com.aqua.aqualight.data.devices.api.DeviceApiMode
 import com.aqua.aqualight.data.devices.api.light.LightChannelValues
 import com.aqua.aqualight.data.devices.api.light.LightCoolingControllerRequest
 import com.aqua.aqualight.data.devices.api.light.LightManualRequest
+import com.aqua.aqualight.data.devices.api.light.LightProgramWriteRequest
 import com.aqua.aqualight.data.devices.api.light.LightThermalProtectionRequest
 import com.aqua.aqualight.data.devices.api.light.LightTimeSyncRequest
 import com.aqua.aqualight.data.devices.api.model.ApiErrorCode
@@ -211,6 +212,40 @@ class LightRuntimeDeviceAccessor(
 
                         is ApiResult.Error -> result
                     }
+                }
+
+                is ApiResult.Error -> deviceApi
+            }
+        }
+    }
+
+    suspend fun writeProgramSchedule(
+        deviceId: Long,
+        request: LightProgramWriteRequest
+    ): ApiResult<Unit> {
+        if (deviceId <= 0L) {
+            return ApiResult.failure(
+                code = ApiErrorCode.INVALID_REQUEST,
+                message = "Light device id is missing"
+            )
+        }
+
+        if (request.channels.isEmpty()) {
+            return ApiResult.failure(
+                code = ApiErrorCode.INVALID_REQUEST,
+                message = "Light program schedule is empty"
+            )
+        }
+
+        return commandGateway.execute(
+            deviceId = deviceId
+        ) { device, connection ->
+            when (val deviceApi = createLightDeviceApi(device, connection)) {
+                is ApiResult.Success -> {
+                    deviceApi.value.lightApi.writeProgramSchedule(
+                        connection = deviceApi.value.connection,
+                        request = request
+                    )
                 }
 
                 is ApiResult.Error -> deviceApi
