@@ -67,6 +67,7 @@ class DeviceLightProgramEditorViewModel(
     private var previewUseCase: LightProgramPreviewUseCase? = null
     private var hasReportedLivePreviewError: Boolean = false
 
+    private var isInitialized: Boolean = false
     private var deviceId: Long = 0L
     private var programId: String? = null
     private var programName: String = "New Program"
@@ -75,14 +76,24 @@ class DeviceLightProgramEditorViewModel(
         deviceId: Long,
         programId: String?
     ) {
+        val normalizedProgramId = programId?.takeIf { it.isNotBlank() }
+        val isSameEditorTarget = isInitialized &&
+            this.deviceId == deviceId &&
+            this.programId == normalizedProgramId
+
+        if (isSameEditorTarget) {
+            return
+        }
+
+        stopPreviewInternal(resetProgress = true)
+
         this.deviceId = deviceId
-        this.programId = programId
-        this.programName = if (programId.isNullOrBlank()) {
+        this.programId = normalizedProgramId
+        this.programName = if (normalizedProgramId == null) {
             "New Program"
         } else {
             "Program"
         }
-        stopPreviewInternal(resetProgress = true)
         previewUseCase = if (deviceId > 0L) {
             LightProgramPreviewUseCase(
                 temporaryManualSender = LightProgramTemporaryManualSender(
@@ -95,6 +106,7 @@ class DeviceLightProgramEditorViewModel(
         _uiState.value = DeviceLightProgramEditorUiState.default(
             capabilities = firmwareCapabilities
         )
+        isInitialized = true
     }
 
     fun updateStartTime(
