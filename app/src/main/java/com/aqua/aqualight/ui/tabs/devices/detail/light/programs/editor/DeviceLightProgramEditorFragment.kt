@@ -203,6 +203,8 @@ class DeviceLightProgramEditorFragment :
                     "Preview program"
                 }
 
+            renderValidationAndActions(state)
+
             previewDaySheet?.renderPreviewState(
                 isPreviewRunning = state.isPreviewRunning,
                 progressPercent = state.previewProgressPercent,
@@ -213,6 +215,50 @@ class DeviceLightProgramEditorFragment :
             renderTransitionSummary(state)
         } finally {
             isRendering = false
+        }
+    }
+
+    private fun renderValidationAndActions(
+        state: DeviceLightProgramEditorUiState
+    ) {
+        val validationMessage = state.validationMessage
+        val hasValidationMessage = !validationMessage.isNullOrBlank()
+
+        binding.validationBanner.visibility = if (hasValidationMessage) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
+        binding.tvValidationMessage.text = validationMessage.orEmpty()
+
+        val previewEnabled = state.isPreviewRunning || state.canStartPreview
+        binding.btnPreviewProgram.isEnabled = previewEnabled
+        binding.btnPreviewProgram.alpha = if (previewEnabled) {
+            1f
+        } else {
+            ACTION_DISABLED_ALPHA
+        }
+
+        renderActionButtonState(
+            button = binding.btnLoadToDevice,
+            enabled = state.canLoadToDevice
+        )
+
+        renderActionButtonState(
+            button = binding.btnSaveAs,
+            enabled = state.canSave
+        )
+    }
+
+    private fun renderActionButtonState(
+        button: View,
+        enabled: Boolean
+    ) {
+        button.isEnabled = enabled
+        button.alpha = if (enabled) {
+            1f
+        } else {
+            ACTION_DISABLED_ALPHA
         }
     }
 
@@ -235,6 +281,11 @@ class DeviceLightProgramEditorFragment :
 
             if (state.isPreviewRunning) {
                 viewModel.stopPreview()
+                return@setOnClickListener
+            }
+
+            if (!state.canStartPreview) {
+                viewModel.validateBeforeProgramAction()
                 return@setOnClickListener
             }
 
@@ -322,6 +373,10 @@ class DeviceLightProgramEditorFragment :
         }
 
         binding.btnLoadToDevice.setOnClickListener {
+            if (!viewModel.validateBeforeProgramAction()) {
+                return@setOnClickListener
+            }
+
             val isEditing = viewModel.isEditingExistingProgram()
 
             showProgramNameSheet(
@@ -345,6 +400,10 @@ class DeviceLightProgramEditorFragment :
         }
 
         binding.btnSaveAs.setOnClickListener {
+            if (!viewModel.validateBeforeProgramAction()) {
+                return@setOnClickListener
+            }
+
             val isEditing = viewModel.isEditingExistingProgram()
 
             showProgramNameSheet(
@@ -619,5 +678,6 @@ class DeviceLightProgramEditorFragment :
         const val ARG_PROGRAM_ID = "programId"
 
         private const val REPEAT_OPTION_DISABLED_ALPHA = 0.46f
+        private const val ACTION_DISABLED_ALPHA = 0.46f
     }
 }

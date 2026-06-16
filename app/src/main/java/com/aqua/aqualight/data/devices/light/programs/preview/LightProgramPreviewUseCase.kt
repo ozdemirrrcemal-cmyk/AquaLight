@@ -39,6 +39,10 @@ class LightProgramPreviewUseCase(
         )
     }
 
+    suspend fun beginLivePreview(): ApiResult<Unit> {
+        return temporaryManualSender.begin()
+    }
+
     suspend fun sendLivePreviewFrame(
         frame: LightProgramPreviewFrame
     ): ApiResult<Unit> {

@@ -14,6 +14,8 @@ import com.aqua.aqualight.data.devices.light.programs.preview.LightProgramPrevie
 import com.aqua.aqualight.data.devices.light.programs.preview.LightProgramPreviewFrame
 import com.aqua.aqualight.data.devices.light.programs.preview.LightProgramPreviewUseCase
 import com.aqua.aqualight.data.devices.light.programs.preview.LightProgramTemporaryManualSender
+import com.aqua.aqualight.data.devices.light.programs.validation.LightProgramDraftValidator
+import com.aqua.aqualight.data.devices.light.programs.validation.LightProgramValidationResult
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeRepository
 import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DATA_LAYER_NOT_CONNECTED
 import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DEVICE_INFORMATION_MISSING
@@ -218,9 +220,17 @@ class DeviceLightProgramEditorViewModel(
     }
 
 
+    fun validateBeforeProgramAction(): Boolean {
+        return requireValidDraft()
+    }
+
     fun startPreview(
         speed: PreviewSpeed
     ) {
+        if (!requireValidDraft()) {
+            return
+        }
+
         if (!firmwareCapabilities.supportsTemporaryLivePreview) {
             emitUnavailable()
             return
@@ -255,6 +265,23 @@ class DeviceLightProgramEditorViewModel(
         }
 
         previewJob = viewModelScope.launch {
+            when (val result = useCase.beginLivePreview()) {
+                is ApiResult.Success -> Unit
+                is ApiResult.Error -> {
+                    hasReportedLivePreviewError = true
+                    _events.emit(
+                        DeviceLightProgramEditorEvent.ShowError(
+                            result.error.message
+                        )
+                    )
+                    stopPreviewInternal(
+                        resetProgress = true,
+                        resumeDevice = false
+                    )
+                    return@launch
+                }
+            }
+
             val startMillis = SystemClock.elapsedRealtime()
 
             while (true) {
@@ -298,7 +325,20 @@ class DeviceLightProgramEditorViewModel(
         name: String,
         activateOnDevice: Boolean
     ) {
-        programName = name.ifBlank { programName }
+        val cleanedName = name.trim()
+        when (val result = LightProgramDraftValidator.validateName(cleanedName)) {
+            LightProgramValidationResult.Valid -> Unit
+            is LightProgramValidationResult.Invalid -> {
+                emitValidationError(result.message)
+                return
+            }
+        }
+
+        if (!requireValidDraft()) {
+            return
+        }
+
+        programName = cleanedName
         stopPreviewInternal(resetProgress = true)
         emitUnavailable()
     }
@@ -312,6 +352,28 @@ class DeviceLightProgramEditorViewModel(
 
     private fun canUpdateWeeklyRepeatSelection(): Boolean {
         return _uiState.value.repeatSelectionEnabled
+    }
+
+    private fun requireValidDraft(): Boolean {
+        return when (val result = LightProgramDraftValidator.validate(_uiState.value.draft)) {
+            LightProgramValidationResult.Valid -> true
+            is LightProgramValidationResult.Invalid -> {
+                emitValidationError(result.message)
+                false
+            }
+        }
+    }
+
+    private fun emitValidationError(
+        message: String
+    ) {
+        viewModelScope.launch {
+            _events.emit(
+                DeviceLightProgramEditorEvent.ShowError(
+                    message
+                )
+            )
+        }
     }
 
     private fun applyPreviewFrame(

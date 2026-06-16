@@ -13,6 +13,8 @@ import com.aqua.aqualight.data.devices.light.programs.compiler.LightProgramDevic
 import com.aqua.aqualight.data.devices.light.programs.compiler.LightProgramDeviceSchedule
 import com.aqua.aqualight.data.devices.light.programs.model.LightProgramDraft
 import com.aqua.aqualight.data.devices.light.programs.model.RepeatMode
+import com.aqua.aqualight.data.devices.light.programs.validation.LightProgramDraftValidator
+import com.aqua.aqualight.data.devices.light.programs.validation.LightProgramValidationResult
 
 data class DeviceLightProgramEditorUiState(
     val start: LightCurvePoint,
@@ -32,6 +34,27 @@ data class DeviceLightProgramEditorUiState(
     val isPreviewRunning: Boolean = false,
     val previewProgressPercent: Int = 0
 ) {
+    val validationResult: LightProgramValidationResult
+        get() = LightProgramDraftValidator.validate(draft)
+
+    val validationMessage: String?
+        get() = when (val result = validationResult) {
+            LightProgramValidationResult.Valid -> null
+            is LightProgramValidationResult.Invalid -> result.message
+        }
+
+    val isProgramValid: Boolean
+        get() = validationResult == LightProgramValidationResult.Valid
+
+    val canStartPreview: Boolean
+        get() = isProgramValid
+
+    val canSave: Boolean
+        get() = isProgramValid
+
+    val canLoadToDevice: Boolean
+        get() = isProgramValid
+
     val draft: LightProgramDraft
         get() = LightProgramDraft(
             start = start,

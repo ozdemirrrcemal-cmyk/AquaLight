@@ -2,6 +2,8 @@ package com.aqua.aqualight.data.devices.light.programs.preview
 
 import com.aqua.aqualight.data.devices.api.light.LightChannelValues
 import com.aqua.aqualight.data.devices.api.model.ApiResult
+import com.aqua.aqualight.data.devices.runtime.light.LightLocalOverrideStore
+import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeReadProfile
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeSession
 
 /**
@@ -14,6 +16,16 @@ class LightProgramTemporaryManualSender(
     private val timeoutMillis: Long = DEFAULT_PREVIEW_MANUAL_TIMEOUT_MILLIS
 ) {
 
+    private var restoreTarget: LightProgramPreviewRestoreTarget? = null
+
+    suspend fun begin(): ApiResult<Unit> {
+        if (restoreTarget == null) {
+            restoreTarget = captureRestoreTarget()
+        }
+
+        return ApiResult.success(Unit)
+    }
+
     suspend fun send(
         frame: LightProgramPreviewFrame
     ): ApiResult<Unit> {
@@ -24,7 +36,51 @@ class LightProgramTemporaryManualSender(
     }
 
     suspend fun stop(): ApiResult<Unit> {
-        return runtimeSession.resumeAuto()
+        val target = restoreTarget ?: LightProgramPreviewRestoreTarget.Unknown
+        restoreTarget = null
+
+        return when (target) {
+            LightProgramPreviewRestoreTarget.ControllerManaged -> {
+                runtimeSession.resumeAuto()
+            }
+
+            is LightProgramPreviewRestoreTarget.Manual -> {
+                runtimeSession.setManualOutput(
+                    channelValues = target.channels.normalized()
+                )
+            }
+
+            is LightProgramPreviewRestoreTarget.Scene -> {
+                runtimeSession.setSceneOutput(
+                    channelValues = target.channels.normalized(),
+                    sceneName = target.sceneName,
+                    sceneSource = target.sceneSource
+                )
+            }
+
+            LightProgramPreviewRestoreTarget.Unknown -> {
+                ApiResult.success(Unit)
+            }
+        }
+    }
+
+    private suspend fun captureRestoreTarget(): LightProgramPreviewRestoreTarget {
+        runtimeSession.state.value.snapshot?.let { snapshot ->
+            return LightProgramPreviewRestoreTarget.fromSnapshot(snapshot)
+        }
+
+        return when (val result = runtimeSession.refreshNow(
+            readProfile = LightRuntimeReadProfile.LIVE
+        )) {
+            is ApiResult.Success -> LightProgramPreviewRestoreTarget.fromSnapshot(result.value)
+            is ApiResult.Error -> {
+                LightLocalOverrideStore.current(
+                    deviceId = runtimeSession.deviceId
+                )?.let { localOverride ->
+                    LightProgramPreviewRestoreTarget.fromLocalOverride(localOverride)
+                } ?: LightProgramPreviewRestoreTarget.Unknown
+            }
+        }
     }
 
     private fun com.aqua.aqualight.data.devices.light.curve.model.LightCurveChannelValues.toApiChannelValues(): LightChannelValues {

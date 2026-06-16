@@ -110,6 +110,41 @@
 
             </com.google.android.material.card.MaterialCardView>
 
+
+            <LinearLayout
+                android:id="@+id/validationBanner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_light_program_validation_warning"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingTop="12dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="12dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_warning"
+                    app:tint="@color/light_status_warning" />
+
+                <TextView
+                    android:id="@+id/tvValidationMessage"
+                    style="@style/TextAppearance.Aqua.Light.Caption"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:textColor="@color/light_status_warning"
+                    tools:text="At least one channel must be above 0%." />
+
+            </LinearLayout>
+
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardChannelOutput"
                 style="@style/Widget.Aqua.Light.Card"
