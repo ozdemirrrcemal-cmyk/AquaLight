@@ -48,12 +48,12 @@
     <string name="light_channel_white">White</string>
     <string name="light_channel_blue_white">Blue + White</string>
     <string name="light_transition_variant_title">Transition Variant</string>
-    <string name="light_transition_variant_description">Choose how sunrise and sunset ramps should feel.</string>
+    <string name="light_transition_variant_description">Choose how Android should generate device-safe ramp points.</string>
     <string name="light_transition_variant_linear">Linear</string>
     <string name="light_transition_variant_smooth">Smooth</string>
-    <string name="light_transition_variant_smooth_description">Soft start and soft finish</string>
+    <string name="light_transition_variant_smooth_description">App adds soft device points</string>
     <string name="light_transition_variant_natural">Natural</string>
-    <string name="light_transition_variant_natural_description">Sunrise-like ramp curve</string>
+    <string name="light_transition_variant_natural_description">App adds sunrise/sunset points</string>
 
     <!-- Preview and presets -->
     <string name="light_preview_day_title">Preview Day</string>

@@ -8,6 +8,7 @@ data class LightCurveGraphState(
     val channelValues: LightCurveChannelValues,
     val currentTime: LightCurvePoint,
     val transitionMode: LightCurveTransitionMode = LightCurveTransitionMode.LINEAR,
+    val controllerPointChannels: List<LightCurveGraphControllerChannel> = emptyList(),
     val moonlightSegments: List<LightCurveMoonlightGraphSegment> = emptyList()
 ) {
     companion object {
@@ -25,10 +26,28 @@ data class LightCurveGraphState(
                 ),
                 currentTime = LightCurvePoint.of(13, 28),
                 transitionMode = LightCurveTransitionMode.LINEAR,
+                controllerPointChannels = emptyList(),
                 moonlightSegments = emptyList()
             )
         }
     }
+}
+
+data class LightCurveGraphControllerChannel(
+    val channel: LightCurveGraphChannel,
+    val points: List<LightCurveGraphControllerPoint>
+)
+
+data class LightCurveGraphControllerPoint(
+    val minuteOfDay: Int,
+    val percent: Int
+)
+
+enum class LightCurveGraphChannel {
+    WHITE,
+    RED,
+    GREEN,
+    BLUE
 }
 
 data class LightCurveMoonlightGraphSegment(

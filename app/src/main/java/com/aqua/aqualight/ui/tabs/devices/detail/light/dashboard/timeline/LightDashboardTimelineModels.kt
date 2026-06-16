@@ -29,7 +29,19 @@ data class LightDashboardTimelineSegment(
     val peakEndMinute: Int = peakStartMinute,
     val endMinute: Int,
     val outputPercent: Int,
+
+    /**
+     * Device/controller LP points for this segment. Dashboard uses these points
+     * as the graph source of truth. They are passive display points and are not
+     * editable dashboard handles.
+     */
+    val runtimePoints: List<LightDashboardTimelinePoint> = emptyList(),
     val transitionMode: LightCurveTransitionMode = LightCurveTransitionMode.LINEAR
+)
+
+data class LightDashboardTimelinePoint(
+    val minute: Int,
+    val percent: Int
 )
 
 data class LightDashboardTimelineOverride(

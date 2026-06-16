@@ -76,7 +76,7 @@ class LightProgramDevicePointExpanderTest {
     }
 
     @Test
-    fun naturalExpandsWithBoundedTenMinuteRampSampling() {
+    fun naturalExpandsWithCatalogBoundedControllerPoints() {
         val draft = draft(
             transitionMode = LightCurveTransitionMode.NATURAL,
             channelValues = LightCurveChannelValues(
@@ -90,8 +90,9 @@ class LightProgramDevicePointExpanderTest {
         val schedule = LightProgramDevicePointExpander.expand(draft)
         val red = schedule.channels.first { it.channel == LightProgramDeviceChannel.RED }
 
-        // 08:00 start anchor + 12 ramp-up points + 16:00 plateau end + 12 ramp-down points.
-        assertEquals(26, red.points.size)
+        // Four user anchors plus bounded generated samples. The catalog limit is
+        // 24 points per channel, so Smooth/Natural never exceed firmware-safe output.
+        assertEquals(24, red.points.size)
         assertEquals(480, red.points.first().minuteOfDay)
         assertEquals(1080, red.points.last().minuteOfDay)
         assertTrue(red.points.any { point -> point.minuteOfDay in 481 until 600 && point.percent in 1 until 100 })

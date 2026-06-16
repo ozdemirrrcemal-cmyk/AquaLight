@@ -1,10 +1,16 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model
 
 import com.aqua.aqualight.data.devices.light.curve.model.LightCurveChannelValues
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurveGraphChannel
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurveGraphControllerChannel
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurveGraphControllerPoint
 import com.aqua.aqualight.data.devices.light.curve.model.LightCurveGraphState
 import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
 import com.aqua.aqualight.data.devices.light.curve.model.LightCurveTransitionMode
 import com.aqua.aqualight.data.devices.light.programs.capability.LightProgramFirmwareCapabilities
+import com.aqua.aqualight.data.devices.light.programs.compiler.LightProgramDeviceChannel
+import com.aqua.aqualight.data.devices.light.programs.compiler.LightProgramDevicePointExpander
+import com.aqua.aqualight.data.devices.light.programs.compiler.LightProgramDeviceSchedule
 import com.aqua.aqualight.data.devices.light.programs.model.LightProgramDraft
 import com.aqua.aqualight.data.devices.light.programs.model.RepeatMode
 
@@ -39,15 +45,38 @@ data class DeviceLightProgramEditorUiState(
         )
 
     val graphState: LightCurveGraphState
-        get() = LightCurveGraphState(
-            start = start,
-            peakStart = peakStart,
-            peakEnd = peakEnd,
-            end = end,
-            channelValues = channelValues.normalized(),
-            currentTime = previewSimulationTime ?: currentDeviceTime,
-            transitionMode = transitionMode
-        )
+        get() {
+            val compiledSchedule = compiledDeviceSchedule()
+            return LightCurveGraphState(
+                start = start,
+                peakStart = peakStart,
+                peakEnd = peakEnd,
+                end = end,
+                channelValues = channelValues.normalized(),
+                currentTime = previewSimulationTime ?: currentDeviceTime,
+                transitionMode = transitionMode,
+                controllerPointChannels = compiledSchedule.channels.map { channel ->
+                    LightCurveGraphControllerChannel(
+                        channel = when (channel.channel) {
+                            LightProgramDeviceChannel.WHITE -> LightCurveGraphChannel.WHITE
+                            LightProgramDeviceChannel.RED -> LightCurveGraphChannel.RED
+                            LightProgramDeviceChannel.GREEN -> LightCurveGraphChannel.GREEN
+                            LightProgramDeviceChannel.BLUE -> LightCurveGraphChannel.BLUE
+                        },
+                        points = channel.points.map { point ->
+                            LightCurveGraphControllerPoint(
+                                minuteOfDay = point.minuteOfDay,
+                                percent = point.percent
+                            )
+                        }
+                    )
+                }
+            )
+        }
+
+    private fun compiledDeviceSchedule(): LightProgramDeviceSchedule {
+        return LightProgramDevicePointExpander.expand(draft)
+    }
 
     companion object {
         fun default(

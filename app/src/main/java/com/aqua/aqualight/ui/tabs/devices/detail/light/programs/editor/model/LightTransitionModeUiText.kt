@@ -18,9 +18,9 @@ object LightTransitionModeUiText {
         mode: LightCurveTransitionMode
     ): String {
         return when (mode) {
-            LightCurveTransitionMode.LINEAR -> "Normal mode · four time anchors only"
-            LightCurveTransitionMode.SMOOTH -> "Soft start and soft end ramp"
-            LightCurveTransitionMode.NATURAL -> "Sunrise-like natural ramp"
+            LightCurveTransitionMode.LINEAR -> "Direct ramp between selected times"
+            LightCurveTransitionMode.SMOOTH -> "App generates soft device points"
+            LightCurveTransitionMode.NATURAL -> "App generates sunrise/sunset device points"
         }
     }
 }

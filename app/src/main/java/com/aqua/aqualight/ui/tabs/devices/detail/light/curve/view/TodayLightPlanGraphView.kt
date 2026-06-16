@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.light.curve.interpolator.LightCurveInterpolator
 import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
+import com.aqua.aqualight.data.devices.light.curve.model.TodayLightPlanGraphRuntimePoint
 import com.aqua.aqualight.data.devices.light.curve.model.TodayLightPlanGraphSegment
 import com.aqua.aqualight.data.devices.light.curve.model.TodayLightPlanGraphState
 import com.aqua.aqualight.data.devices.light.curve.model.TodayLightPlanGraphSegmentType
@@ -155,6 +156,19 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
     private val segmentDotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
         color = color(R.color.light_accent)
+        alpha = 190
+    }
+
+    private val runtimePointPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = color(R.color.light_accent)
+        alpha = 150
+    }
+
+    private val runtimePointStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = dp(0.8f)
+        color = color(R.color.light_bg_deep)
         alpha = 190
     }
 
@@ -426,6 +440,73 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
         canvas: Canvas,
         segment: TodayLightPlanGraphSegment
     ) {
+        val runtimePoints = segment.visibleRuntimePoints()
+
+        if (runtimePoints.size >= MIN_RUNTIME_POINTS_FOR_PATH) {
+            drawMainProgramRuntimeCurve(
+                canvas = canvas,
+                segment = segment,
+                points = runtimePoints
+            )
+            return
+        }
+
+        drawMainProgramInterpolatedCurve(
+            canvas = canvas,
+            segment = segment
+        )
+    }
+
+    private fun drawMainProgramRuntimeCurve(
+        canvas: Canvas,
+        segment: TodayLightPlanGraphSegment,
+        points: List<TodayLightPlanGraphRuntimePoint>
+    ) {
+        val linePath = Path()
+        val fillPath = Path()
+
+        points.forEachIndexed {
+            index, point ->
+            val x = xForMinute(point.minute)
+            val y = yForPercent(point.percent)
+
+            if (index == 0) {
+                linePath.moveTo(x, y)
+                fillPath.moveTo(x, yForPercent(0))
+                fillPath.lineTo(x, y)
+            } else {
+                linePath.lineTo(x, y)
+                fillPath.lineTo(x, y)
+            }
+        }
+
+        val lastPoint = points.last()
+        fillPath.lineTo(
+            xForMinute(lastPoint.minute),
+            yForPercent(0)
+        )
+        fillPath.close()
+
+        if (segment.isCurrent) {
+            canvas.drawPath(fillPath, fillPaint)
+        }
+
+        canvas.drawPath(
+            linePath,
+            mainProgramPaintFor(segment)
+        )
+
+        drawMainProgramRuntimePointMarkers(
+            canvas = canvas,
+            segment = segment,
+            points = points
+        )
+    }
+
+    private fun drawMainProgramInterpolatedCurve(
+        canvas: Canvas,
+        segment: TodayLightPlanGraphSegment
+    ) {
         val safeOutput = segment.outputPercent.coerceIn(0, 100)
 
         val points = LightCurveInterpolator.buildCurvePoints(
@@ -466,14 +547,62 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
             canvas.drawPath(fillPath, fillPaint)
         }
 
-        val paint = when {
+        canvas.drawPath(
+            linePath,
+            mainProgramPaintFor(segment)
+        )
+    }
+
+    private fun drawMainProgramRuntimePointMarkers(
+        canvas: Canvas,
+        segment: TodayLightPlanGraphSegment,
+        points: List<TodayLightPlanGraphRuntimePoint>
+    ) {
+        val dotPaint = Paint(runtimePointPaint).apply {
+            alpha = when {
+                state.showPausedOverlay -> 72
+                segment.isCurrent -> 180
+                segment.isNext -> 135
+                else -> 118
+            }
+        }
+        val strokePaint = Paint(runtimePointStrokePaint).apply {
+            alpha = when {
+                state.showPausedOverlay -> 85
+                segment.isCurrent -> 210
+                else -> 165
+            }
+        }
+        val radius = dp(1.85f)
+
+        points.forEach { point ->
+            val x = xForMinute(point.minute)
+            val y = yForPercent(point.percent)
+
+            canvas.drawCircle(
+                x,
+                y,
+                radius + dp(0.65f),
+                strokePaint
+            )
+            canvas.drawCircle(
+                x,
+                y,
+                radius,
+                dotPaint
+            )
+        }
+    }
+
+    private fun mainProgramPaintFor(
+        segment: TodayLightPlanGraphSegment
+    ): Paint {
+        return when {
             state.showPausedOverlay -> outputSoftPaint.copyWithAlpha(80)
             segment.isCurrent -> outputPaint
             segment.isNext -> outputSoftPaint.copyWithAlpha(165)
             else -> outputSoftPaint
         }
-
-        canvas.drawPath(linePath, paint)
     }
 
     private fun drawMoonlightSegmentCurve(
@@ -1021,6 +1150,29 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
         )
     }
 
+
+    private fun TodayLightPlanGraphSegment.visibleRuntimePoints(): List<TodayLightPlanGraphRuntimePoint> {
+        if (runtimePoints.isEmpty()) {
+            return emptyList()
+        }
+
+        val startMinute = this.startMinute.coerceIn(0, TodayLightPlanGraphSegment.MINUTES_PER_DAY)
+        val endMinute = endMinutesForSegment(this)
+
+        return runtimePoints
+            .asSequence()
+            .map { point ->
+                TodayLightPlanGraphRuntimePoint(
+                    minute = point.minute.coerceIn(0, TodayLightPlanGraphSegment.MINUTES_PER_DAY),
+                    percent = point.percent.coerceIn(0, 100)
+                )
+            }
+            .filter { point -> point.minute in startMinute..endMinute }
+            .distinctBy { point -> point.minute }
+            .sortedBy { point -> point.minute }
+            .toList()
+    }
+
     private fun endMinutesForSegment(
         segment: TodayLightPlanGraphSegment
     ): Int {
@@ -1123,5 +1275,9 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
         value: Float
     ): Float {
         return value * resources.displayMetrics.scaledDensity
+    }
+
+    private companion object {
+        const val MIN_RUNTIME_POINTS_FOR_PATH = 2
     }
 }

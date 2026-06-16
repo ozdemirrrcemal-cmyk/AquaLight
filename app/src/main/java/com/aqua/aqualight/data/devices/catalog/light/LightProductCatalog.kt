@@ -126,7 +126,7 @@ object LightProductCatalog {
             )
         ),
 
-        defaultSchedulePointCount = 5,
+        defaultSchedulePointCount = 4,
         maxSchedulePointCount = 24,
         supportsIndependentChannelSchedule = true
     )

@@ -3,10 +3,10 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard
 import android.content.Context
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.api.light.LightMode
-import com.aqua.aqualight.data.devices.api.light.LightScheduleChannelState
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeSnapshot
 import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.model.DeviceLightDashboardUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.model.LightDashboardMode
+import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.timeline.LightDashboardSchedulePointMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.timeline.LightDashboardTimelineMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.timeline.LightDashboardTimelineRenderResult
 import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.timeline.LightDashboardTimelineSegment
@@ -106,7 +106,9 @@ object LightDashboardRuntimeUiMapper {
         snapshot: LightRuntimeSnapshot
     ): LightDashboardTimelineRenderResult {
         val currentMinute = snapshot.deviceTime.currentMinuteOfDay
-        val mainSegments = buildMainProgramSegments(snapshot.scheduleChannels)
+        val mainSegments = LightDashboardSchedulePointMapper.mainProgramSegments(
+            snapshot.scheduleChannels
+        )
         val nextEvent = snapshot.nextEvent?.label
             ?.trim()
             ?.takeIf { it.isNotEmpty() }
@@ -222,56 +224,6 @@ object LightDashboardRuntimeUiMapper {
                 }
             }
         }
-    }
-
-    private fun buildMainProgramSegments(
-        scheduleChannels: List<LightScheduleChannelState>
-    ): List<LightDashboardTimelineSegment> {
-        val pointsByMinute = linkedMapOf<Int, Int>()
-
-        scheduleChannels.forEach { channel ->
-            channel.points.forEach { point ->
-                val minute = point.minuteOfDay.coerceIn(0, MINUTES_PER_DAY)
-                val current = pointsByMinute[minute] ?: 0
-                pointsByMinute[minute] = maxOf(
-                    current,
-                    point.percent.coerceIn(0, 100)
-                )
-            }
-        }
-
-        val activePoints = pointsByMinute.entries
-            .sortedBy { entry -> entry.key }
-            .filter { entry -> entry.value > 0 }
-
-        if (activePoints.isEmpty()) {
-            return emptyList()
-        }
-
-        val startMinute = activePoints.first().key
-        val endMinute = activePoints.last().key
-        if (endMinute <= startMinute) {
-            return emptyList()
-        }
-
-        val maxOutput = activePoints.maxOf { entry -> entry.value }
-        val peakMinutes = activePoints
-            .filter { entry -> entry.value == maxOutput }
-            .map { entry -> entry.key }
-        val peakStart = peakMinutes.firstOrNull() ?: startMinute
-        val peakEnd = peakMinutes.lastOrNull() ?: peakStart
-
-        return listOf(
-            LightDashboardTimelineSegment(
-                id = "device-main-schedule",
-                name = "Auto",
-                startMinute = startMinute,
-                peakStartMinute = peakStart,
-                peakEndMinute = peakEnd,
-                endMinute = endMinute,
-                outputPercent = maxOutput
-            )
-        )
     }
 
     private fun buildOverrideOutputSegments(

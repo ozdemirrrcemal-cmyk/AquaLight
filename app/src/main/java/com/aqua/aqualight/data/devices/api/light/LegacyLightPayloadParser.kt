@@ -401,7 +401,15 @@ class LegacyLightPayloadParser {
         val hour = match.groupValues.getOrNull(1)?.toIntOrNull() ?: return null
         val minute = match.groupValues.getOrNull(2)?.toIntOrNull() ?: return null
 
-        if (hour !in 0..23 || minute !in 0..59) {
+        if (minute !in 0..59) {
+            return null
+        }
+
+        if (hour == 24 && minute == 0) {
+            return MINUTES_PER_DAY
+        }
+
+        if (hour !in 0..23) {
             return null
         }
 
