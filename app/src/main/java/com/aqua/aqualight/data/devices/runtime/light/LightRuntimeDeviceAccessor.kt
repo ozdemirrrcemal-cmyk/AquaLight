@@ -135,6 +135,44 @@ class LightRuntimeDeviceAccessor(
         }
     }
 
+    suspend fun setTemporaryManualOutput(
+        deviceId: Long,
+        channelValues: LightChannelValues,
+        timeoutMillis: Long
+    ): ApiResult<Unit> {
+        if (deviceId <= 0L) {
+            return ApiResult.failure(
+                code = ApiErrorCode.INVALID_REQUEST,
+                message = "Light device id is missing"
+            )
+        }
+
+        val normalizedChannels = channelValues.normalized()
+        val safeTimeoutMillis = timeoutMillis.coerceIn(
+            MIN_TEMPORARY_MANUAL_TIMEOUT_MILLIS,
+            MAX_TEMPORARY_MANUAL_TIMEOUT_MILLIS
+        )
+
+        return commandGateway.execute(
+            deviceId = deviceId
+        ) { device, connection ->
+            when (val deviceApi = createLightDeviceApi(device, connection)) {
+                is ApiResult.Success -> {
+                    deviceApi.value.lightApi.setManual(
+                        connection = deviceApi.value.connection,
+                        request = LightManualRequest(
+                            powerOn = true,
+                            channelValues = normalizedChannels,
+                            overrideTimeoutMillis = safeTimeoutMillis
+                        )
+                    )
+                }
+
+                is ApiResult.Error -> deviceApi
+            }
+        }
+    }
+
     suspend fun setSceneOutput(
         deviceId: Long,
         channelValues: LightChannelValues,
@@ -372,5 +410,7 @@ class LightRuntimeDeviceAccessor(
 
     private companion object {
         const val LIVE_READ_TIMEOUT_MILLIS = 1_500
+        const val MIN_TEMPORARY_MANUAL_TIMEOUT_MILLIS = 500L
+        const val MAX_TEMPORARY_MANUAL_TIMEOUT_MILLIS = 10_000L
     }
 }

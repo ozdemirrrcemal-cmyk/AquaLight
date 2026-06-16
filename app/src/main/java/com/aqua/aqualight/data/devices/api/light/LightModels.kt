@@ -72,7 +72,8 @@ data class LightProgram(
 
 data class LightManualRequest(
     val powerOn: Boolean,
-    val channelValues: LightChannelValues
+    val channelValues: LightChannelValues,
+    val overrideTimeoutMillis: Long? = null
 )
 
 data class LightAutomationRequest(

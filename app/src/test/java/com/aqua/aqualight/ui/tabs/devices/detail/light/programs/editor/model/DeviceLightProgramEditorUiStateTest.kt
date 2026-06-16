@@ -26,7 +26,8 @@ class DeviceLightProgramEditorUiStateTest {
         val state = DeviceLightProgramEditorUiState.default(
             capabilities = LightProgramFirmwareCapabilities(
                 supportsWeeklySchedule = true,
-                supportsNativeTransition = false
+                supportsNativeTransition = false,
+                supportsTemporaryLivePreview = true
             )
         )
 

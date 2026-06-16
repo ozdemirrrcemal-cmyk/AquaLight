@@ -29,6 +29,41 @@ class LightProgramPreviewEngineTest {
         assertEquals(80, frame.outputValues.white)
     }
 
+
+    @Test
+    fun threeMinutePreviewMapsHalfDurationToNoon() {
+        val schedule = LightProgramPreviewEngine.compileSchedule(
+            draft = draft(LightCurveTransitionMode.LINEAR)
+        )
+
+        val frame = LightProgramPreviewEngine.frameAt(
+            schedule = schedule,
+            elapsedMillis = 90_000L,
+            previewDurationMillis = 180_000L
+        )
+
+        assertEquals(50, frame.progressPercent)
+        assertEquals(12 * 60, frame.simulatedMinuteOfDay)
+        assertEquals(LightCurvePoint.of(12, 0), frame.simulatedTime)
+    }
+
+    @Test
+    fun fiveMinutePreviewMapsHalfDurationToNoon() {
+        val schedule = LightProgramPreviewEngine.compileSchedule(
+            draft = draft(LightCurveTransitionMode.LINEAR)
+        )
+
+        val frame = LightProgramPreviewEngine.frameAt(
+            schedule = schedule,
+            elapsedMillis = 150_000L,
+            previewDurationMillis = 300_000L
+        )
+
+        assertEquals(50, frame.progressPercent)
+        assertEquals(12 * 60, frame.simulatedMinuteOfDay)
+        assertEquals(LightCurvePoint.of(12, 0), frame.simulatedTime)
+    }
+
     @Test
     fun completedPreviewEndsAtTwentyFourHundredAndZeroOutput() {
         val schedule = LightProgramPreviewEngine.compileSchedule(

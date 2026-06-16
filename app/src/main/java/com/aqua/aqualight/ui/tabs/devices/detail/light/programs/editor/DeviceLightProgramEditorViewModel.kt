@@ -9,9 +9,14 @@ import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
 import com.aqua.aqualight.data.devices.light.curve.model.LightCurveTransitionMode
 import com.aqua.aqualight.data.devices.light.programs.capability.LightProgramFirmwareCapabilities
 import com.aqua.aqualight.data.devices.light.programs.model.RepeatMode
+import com.aqua.aqualight.data.devices.api.model.ApiResult
 import com.aqua.aqualight.data.devices.light.programs.preview.LightProgramPreviewEngine
 import com.aqua.aqualight.data.devices.light.programs.preview.LightProgramPreviewFrame
+import com.aqua.aqualight.data.devices.light.programs.preview.LightProgramPreviewUseCase
+import com.aqua.aqualight.data.devices.light.programs.preview.LightProgramTemporaryManualSender
+import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeRepository
 import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DATA_LAYER_NOT_CONNECTED
+import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DEVICE_INFORMATION_MISSING
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.PreviewSpeed
@@ -37,6 +42,12 @@ class DeviceLightProgramEditorViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
+    private val appContext = application.applicationContext
+
+    private val runtimeRepository = LightRuntimeRepository.get(
+        context = appContext
+    )
+
     private val firmwareCapabilities =
         LightProgramFirmwareCapabilities.CURRENT_ESP32_LP_POINTS_ONLY
 
@@ -53,6 +64,8 @@ class DeviceLightProgramEditorViewModel(
         _events.asSharedFlow()
 
     private var previewJob: Job? = null
+    private var previewUseCase: LightProgramPreviewUseCase? = null
+    private var hasReportedLivePreviewError: Boolean = false
 
     private var deviceId: Long = 0L
     private var programId: String? = null
@@ -70,6 +83,15 @@ class DeviceLightProgramEditorViewModel(
             "Program"
         }
         stopPreviewInternal(resetProgress = true)
+        previewUseCase = if (deviceId > 0L) {
+            LightProgramPreviewUseCase(
+                temporaryManualSender = LightProgramTemporaryManualSender(
+                    runtimeSession = runtimeRepository.session(deviceId)
+                )
+            )
+        } else {
+            null
+        }
         _uiState.value = DeviceLightProgramEditorUiState.default(
             capabilities = firmwareCapabilities
         )
@@ -187,12 +209,24 @@ class DeviceLightProgramEditorViewModel(
     fun startPreview(
         speed: PreviewSpeed
     ) {
+        if (!firmwareCapabilities.supportsTemporaryLivePreview) {
+            emitUnavailable()
+            return
+        }
+
+        val useCase = previewUseCase
+        if (useCase == null) {
+            emitPreviewDeviceMissing()
+            return
+        }
+
         previewJob?.cancel()
+        hasReportedLivePreviewError = false
 
         val draft = _uiState.value.draft
-        val schedule = LightProgramPreviewEngine.compileSchedule(draft)
+        val schedule = useCase.compileSchedule(draft)
         val durationMillis = speed.durationMillis
-        val initialFrame = LightProgramPreviewEngine.frameAt(
+        val initialFrame = useCase.frameAt(
             schedule = schedule,
             elapsedMillis = 0L,
             previewDurationMillis = durationMillis
@@ -213,7 +247,7 @@ class DeviceLightProgramEditorViewModel(
 
             while (true) {
                 val elapsedMillis = SystemClock.elapsedRealtime() - startMillis
-                val frame = LightProgramPreviewEngine.frameAt(
+                val frame = useCase.frameAt(
                     schedule = schedule,
                     elapsedMillis = elapsedMillis,
                     previewDurationMillis = durationMillis
@@ -223,9 +257,11 @@ class DeviceLightProgramEditorViewModel(
                     frame = frame,
                     isRunning = elapsedMillis < durationMillis
                 )
+                sendLivePreviewFrame(frame)
 
                 if (elapsedMillis >= durationMillis) {
                     previewJob = null
+                    stopLivePreviewOnDeviceNow()
                     break
                 }
 
@@ -293,8 +329,15 @@ class DeviceLightProgramEditorViewModel(
     }
 
     private fun stopPreviewInternal(
-        resetProgress: Boolean
+        resetProgress: Boolean,
+        resumeDevice: Boolean = true
     ) {
+        val shouldResumeDevice = resumeDevice && (
+            previewJob != null ||
+                _uiState.value.isPreviewRunning ||
+                _uiState.value.previewOutputValues != null
+            )
+
         previewJob?.cancel()
         previewJob = null
 
@@ -308,6 +351,73 @@ class DeviceLightProgramEditorViewModel(
                 },
                 previewSimulationTime = null,
                 previewOutputValues = null
+            )
+        }
+
+        if (shouldResumeDevice) {
+            stopLivePreviewOnDeviceAsync()
+        }
+    }
+
+    private suspend fun sendLivePreviewFrame(
+        frame: LightProgramPreviewFrame
+    ) {
+        val useCase = previewUseCase ?: return
+        when (val result = useCase.sendLivePreviewFrame(frame)) {
+            is ApiResult.Success -> Unit
+            is ApiResult.Error -> {
+                if (!hasReportedLivePreviewError) {
+                    hasReportedLivePreviewError = true
+                    _events.emit(
+                        DeviceLightProgramEditorEvent.ShowError(
+                            result.error.message
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    private fun stopLivePreviewOnDeviceAsync() {
+        val useCase = previewUseCase ?: return
+        viewModelScope.launch {
+            stopLivePreviewOnDevice(
+                useCase = useCase
+            )
+        }
+    }
+
+    private suspend fun stopLivePreviewOnDeviceNow() {
+        val useCase = previewUseCase ?: return
+        stopLivePreviewOnDevice(
+            useCase = useCase
+        )
+    }
+
+    private suspend fun stopLivePreviewOnDevice(
+        useCase: LightProgramPreviewUseCase
+    ) {
+        when (val result = useCase.stopLivePreview()) {
+            is ApiResult.Success -> Unit
+            is ApiResult.Error -> {
+                if (!hasReportedLivePreviewError) {
+                    hasReportedLivePreviewError = true
+                    _events.emit(
+                        DeviceLightProgramEditorEvent.ShowError(
+                            result.error.message
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    private fun emitPreviewDeviceMissing() {
+        viewModelScope.launch {
+            _events.emit(
+                DeviceLightProgramEditorEvent.ShowError(
+                    LIGHT_DEVICE_INFORMATION_MISSING
+                )
             )
         }
     }

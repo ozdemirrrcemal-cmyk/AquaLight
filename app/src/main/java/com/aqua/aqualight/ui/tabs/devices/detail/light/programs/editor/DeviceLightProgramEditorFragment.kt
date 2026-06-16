@@ -602,6 +602,11 @@ class DeviceLightProgramEditorFragment :
     override fun onDestroyView() {
         showDeviceLoading(false)
 
+        val previewState = viewModel.uiState.value
+        if (previewState.isPreviewRunning || previewState.previewOutputValues != null) {
+            viewModel.stopPreview()
+        }
+
         previewDaySheet?.dismiss()
         previewDaySheet = null
 

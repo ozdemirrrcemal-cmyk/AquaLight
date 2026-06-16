@@ -196,6 +196,24 @@ class LightRuntimeSession internal constructor(
         }
     }
 
+    suspend fun setTemporaryManualOutput(
+        channelValues: LightChannelValues,
+        timeoutMillis: Long
+    ): ApiResult<Unit> {
+        if (deviceId <= 0L) {
+            setInvalidDeviceState()
+            return invalidDeviceResult()
+        }
+
+        return withContext(ioDispatcher) {
+            accessor.setTemporaryManualOutput(
+                deviceId = deviceId,
+                channelValues = channelValues.normalized(),
+                timeoutMillis = timeoutMillis
+            )
+        }
+    }
+
     suspend fun setSceneOutput(
         channelValues: LightChannelValues,
         sceneName: String,

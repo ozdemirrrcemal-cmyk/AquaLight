@@ -7,11 +7,12 @@ package com.aqua.aqualight.data.devices.light.programs.capability
  * The Program Editor reads these capabilities through the ViewModel state.
  * It must not hardcode protocol assumptions in the Fragment, so the screen
  * can stay stable when a future ESP32/API firmware adds native weekly repeat
- * scheduling or native transition support.
+ * scheduling, native transition support or live preview transport changes.
  */
 data class LightProgramFirmwareCapabilities(
     val supportsWeeklySchedule: Boolean,
-    val supportsNativeTransition: Boolean
+    val supportsNativeTransition: Boolean,
+    val supportsTemporaryLivePreview: Boolean
 ) {
     companion object {
         /**
@@ -21,7 +22,8 @@ data class LightProgramFirmwareCapabilities(
          */
         val CURRENT_ESP32_LP_POINTS_ONLY = LightProgramFirmwareCapabilities(
             supportsWeeklySchedule = false,
-            supportsNativeTransition = false
+            supportsNativeTransition = false,
+            supportsTemporaryLivePreview = true
         )
     }
 }

@@ -287,25 +287,29 @@ class LegacyLightApi(
             put(
                 LEGACY_WHITE_INDEX.toString(),
                 manualChannelObject(
-                    percent = if (request.powerOn) values.white else 0
+                    percent = if (request.powerOn) values.white else 0,
+                    timeoutMillis = request.overrideTimeoutMillis
                 )
             )
             put(
                 LEGACY_RED_INDEX.toString(),
                 manualChannelObject(
-                    percent = if (request.powerOn) values.red else 0
+                    percent = if (request.powerOn) values.red else 0,
+                    timeoutMillis = request.overrideTimeoutMillis
                 )
             )
             put(
                 LEGACY_GREEN_INDEX.toString(),
                 manualChannelObject(
-                    percent = if (request.powerOn) values.green else 0
+                    percent = if (request.powerOn) values.green else 0,
+                    timeoutMillis = request.overrideTimeoutMillis
                 )
             )
             put(
                 LEGACY_BLUE_INDEX.toString(),
                 manualChannelObject(
-                    percent = if (request.powerOn) values.blue else 0
+                    percent = if (request.powerOn) values.blue else 0,
+                    timeoutMillis = request.overrideTimeoutMillis
                 )
             )
         }
@@ -360,14 +364,18 @@ class LegacyLightApi(
     }
 
     private fun manualChannelObject(
-        percent: Int
+        percent: Int,
+        timeoutMillis: Long? = null
     ): JSONObject {
+        val safeTimeoutMillis = (timeoutMillis ?: MANUAL_OVERRIDE_TIMEOUT_MILLIS.toLong())
+            .coerceIn(0L, Int.MAX_VALUE.toLong())
+
         return JSONObject().apply {
             put(
                 "VManual",
                 JSONObject().apply {
                     put("V", LightApiMath.percentToDeviceValue(percent))
-                    put("TOffMs", MANUAL_OVERRIDE_TIMEOUT_MILLIS)
+                    put("TOffMs", safeTimeoutMillis)
                 }
             )
         }
