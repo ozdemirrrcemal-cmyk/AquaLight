@@ -60,11 +60,7 @@ class LightProgramsAdapter(
             binding.tvProgramPoints.text = item.pointText
             binding.tvProgramPeak.text = item.peakText
 
-            binding.tvProgramState.text = if (item.isActive) {
-                "ACTIVE"
-            } else {
-                "DISABLED"
-            }
+            binding.tvProgramState.text = item.stateText
 
             binding.tvProgramRed.text = "R${item.red}"
             binding.tvProgramGreen.text = "G${item.green}"
@@ -77,36 +73,35 @@ class LightProgramsAdapter(
         ) {
             val context = binding.root.context
 
-            val contentAlpha = if (item.isActive) {
+            val isEmphasized = item.isActive || item.isOnDevice
+
+            val contentAlpha = if (isEmphasized) {
                 1f
             } else {
                 0.68f
             }
 
-            val chipAlpha = if (item.isActive) {
+            val chipAlpha = if (isEmphasized) {
                 1f
             } else {
                 0.58f
             }
 
-            val stateTextColor = if (item.isActive) {
-                ContextCompat.getColor(
-                    context,
-                    R.color.light_accent
-                )
-            } else {
-                ContextCompat.getColor(
-                    context,
-                    R.color.light_text_tertiary
-                )
-            }
+            val stateTextColor = ContextCompat.getColor(
+                context,
+                when {
+                    item.hasSyncWarning -> R.color.light_status_warning
+                    item.isOnDevice || item.isActive -> R.color.light_accent
+                    else -> R.color.light_text_tertiary
+                }
+            )
 
             binding.programCardRoot.alpha = 1f
 
-            binding.viewProgramAccent.alpha = if (item.isActive) {
-                1f
-            } else {
-                0.22f
+            binding.viewProgramAccent.alpha = when {
+                item.isOnDevice -> 1f
+                item.isActive -> 0.82f
+                else -> 0.22f
             }
 
             binding.tvProgramName.alpha = contentAlpha
@@ -117,7 +112,7 @@ class LightProgramsAdapter(
             binding.tvProgramPoints.alpha = contentAlpha
             binding.tvProgramPeak.alpha = contentAlpha
 
-            binding.tvProgramState.alpha = if (item.isActive) {
+            binding.tvProgramState.alpha = if (isEmphasized || item.hasSyncWarning) {
                 1f
             } else {
                 0.72f
@@ -128,7 +123,7 @@ class LightProgramsAdapter(
             binding.tvProgramState.backgroundTintList = ColorStateList.valueOf(
                 ContextCompat.getColor(
                     context,
-                    if (item.isActive) {
+                    if (item.isOnDevice || item.isActive || item.hasSyncWarning) {
                         R.color.light_accent_soft
                     } else {
                         R.color.light_surface_soft

@@ -5,8 +5,13 @@ import com.aqua.aqualight.data.devices.light.programs.activation.ActivateLightPr
 import com.aqua.aqualight.data.devices.light.programs.activation.LightProgramActivationResult
 import com.aqua.aqualight.data.devices.light.programs.model.LightProgramDraft
 import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
+import com.aqua.aqualight.data.devices.light.programs.recovery.AutoRecoverActiveLightProgramUseCase
+import com.aqua.aqualight.data.devices.light.programs.sync.LightProgramDeviceProgramsSnapshot
+import com.aqua.aqualight.data.devices.light.programs.sync.LightProgramDeviceSyncMatcher
+import com.aqua.aqualight.data.devices.light.programs.sync.LightProgramDeviceSyncState
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 
 /**
  * Repository boundary for saved light programs.
@@ -17,7 +22,9 @@ import kotlinx.coroutines.flow.Flow
  */
 class LightProgramRepository private constructor(
     private val store: LightProgramDataStoreManager,
-    private val activateProgramUseCase: ActivateLightProgramUseCase
+    private val runtimeRepository: LightRuntimeRepository,
+    private val activateProgramUseCase: ActivateLightProgramUseCase,
+    private val autoRecoverActiveLightProgramUseCase: AutoRecoverActiveLightProgramUseCase
 ) {
 
     companion object {
@@ -30,11 +37,16 @@ class LightProgramRepository private constructor(
             return INSTANCE ?: synchronized(this) {
                 val appContext = context.applicationContext
                 val store = LightProgramDataStoreManager.create(appContext)
+                val runtimeRepository = LightRuntimeRepository.get(appContext)
                 INSTANCE ?: LightProgramRepository(
                     store = store,
+                    runtimeRepository = runtimeRepository,
                     activateProgramUseCase = ActivateLightProgramUseCase(
                         store = store,
-                        runtimeRepository = LightRuntimeRepository.get(appContext)
+                        runtimeRepository = runtimeRepository
+                    ),
+                    autoRecoverActiveLightProgramUseCase = AutoRecoverActiveLightProgramUseCase(
+                        store = store
                     )
                 ).also { repository ->
                     INSTANCE = repository
@@ -47,6 +59,55 @@ class LightProgramRepository private constructor(
         deviceId: Long
     ): Flow<List<SavedLightProgram>> {
         return store.programsForDeviceFlow(deviceId)
+    }
+
+    fun observeDeviceProgramSyncState(
+        deviceId: Long
+    ): Flow<LightProgramDeviceSyncState> {
+        val session = runtimeRepository.session(deviceId)
+        return combine(
+            store.programsForDeviceFlow(deviceId),
+            session.state
+        ) { programs, runtimeState ->
+            LightProgramDeviceSyncMatcher.match(
+                programs = programs,
+                runtimeState = runtimeState
+            )
+        }
+    }
+
+    fun observeProgramsWithDeviceSync(
+        deviceId: Long
+    ): Flow<LightProgramDeviceProgramsSnapshot> {
+        val session = runtimeRepository.session(deviceId)
+        return combine(
+            store.programsForDeviceFlow(deviceId),
+            session.state
+        ) { programs, runtimeState ->
+            LightProgramDeviceProgramsSnapshot(
+                programs = programs,
+                syncState = LightProgramDeviceSyncMatcher.match(
+                    programs = programs,
+                    runtimeState = runtimeState
+                )
+            )
+        }
+    }
+
+    fun acquireDeviceRuntimeSync(
+        deviceId: Long,
+        consumerKey: String
+    ) {
+        if (deviceId <= 0L || consumerKey.isBlank()) return
+        runtimeRepository.session(deviceId).acquire(consumerKey)
+    }
+
+    fun releaseDeviceRuntimeSync(
+        deviceId: Long,
+        consumerKey: String
+    ) {
+        if (deviceId <= 0L || consumerKey.isBlank()) return
+        runtimeRepository.session(deviceId).release(consumerKey)
     }
 
     suspend fun getProgram(
@@ -139,6 +200,22 @@ class LightProgramRepository private constructor(
         return activateProgramUseCase.activate(
             deviceId = deviceId,
             programId = programId
+        )
+    }
+
+    suspend fun autoRecoverActiveDeviceProgram(
+        deviceId: Long
+    ): SavedLightProgram? {
+        if (deviceId <= 0L) return null
+
+        val snapshot = runtimeRepository.session(deviceId)
+            .state
+            .value
+            .snapshot
+
+        return autoRecoverActiveLightProgramUseCase.recoverIfNeeded(
+            deviceId = deviceId,
+            snapshot = snapshot
         )
     }
 

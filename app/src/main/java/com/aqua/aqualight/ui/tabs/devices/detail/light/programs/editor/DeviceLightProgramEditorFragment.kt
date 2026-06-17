@@ -423,7 +423,7 @@ class DeviceLightProgramEditorFragment :
                     "Save Program"
                 },
                 subtitle = if (isEditing) {
-                    "Update this program. Active programs will sync to the device."
+                    "Save locally. Use Load to Device to update the controller."
                 } else {
                     "Save this program without loading it to the device."
                 },

@@ -62,6 +62,17 @@ class DeviceLightProgramsFragment :
         viewModel.initialize(deviceId)
     }
 
+
+    override fun onStart() {
+        super.onStart()
+        viewModel.onProgramsVisible()
+    }
+
+    override fun onStop() {
+        viewModel.onProgramsHidden()
+        super.onStop()
+    }
+
     private fun setupHeader() {
     binding.appHeader.setupAquaHeader(
         fragment = this,
@@ -288,7 +299,7 @@ class DeviceLightProgramsFragment :
         program: LightProgramListItem
     ) {
         val message = if (program.isActive) {
-            "This program is active. Deleting it will also remove it from the device schedule."
+            "Delete this saved active program? The controller schedule will stay unchanged until you upload another program."
         } else {
             "Delete this program from your saved programs?"
         }

@@ -3,6 +3,8 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard
 import android.content.Context
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.api.light.LightMode
+import com.aqua.aqualight.data.devices.light.programs.sync.LightProgramDeviceSyncState
+import com.aqua.aqualight.data.devices.light.programs.sync.LightProgramDeviceSyncStatus
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeSnapshot
 import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.model.DeviceLightDashboardUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.model.LightDashboardMode
@@ -24,7 +26,8 @@ object LightDashboardRuntimeUiMapper {
 
     fun map(
         context: Context,
-        snapshot: LightRuntimeSnapshot
+        snapshot: LightRuntimeSnapshot,
+        programSyncState: LightProgramDeviceSyncState? = null
     ): DeviceLightDashboardUiState {
         val hasLedRuntime = snapshot.ledPwmChannels.isNotEmpty() ||
             snapshot.localOverride != null ||
@@ -40,7 +43,8 @@ object LightDashboardRuntimeUiMapper {
         val fanPercent = snapshot.fanOutputPercent
         val titleAndStatus = modeTitleAndStatus(
             snapshot = snapshot,
-            hasTimeline = timeline.graphState.segments.isNotEmpty()
+            hasTimeline = timeline.graphState.segments.isNotEmpty(),
+            programSyncState = programSyncState
         )
 
         return DeviceLightDashboardUiState(
@@ -254,16 +258,14 @@ object LightDashboardRuntimeUiMapper {
 
     private fun modeTitleAndStatus(
         snapshot: LightRuntimeSnapshot,
-        hasTimeline: Boolean
+        hasTimeline: Boolean,
+        programSyncState: LightProgramDeviceSyncState?
     ): Pair<String, String> {
         return when (snapshot.mode) {
-            LightMode.AUTO -> {
-                "Auto Schedule" to if (hasTimeline) {
-                    "Running from controller schedule"
-                } else {
-                    "No active plan today"
-                }
-            }
+            LightMode.AUTO -> autoModeTitleAndStatus(
+                hasTimeline = hasTimeline,
+                programSyncState = programSyncState
+            )
 
             LightMode.MANUAL -> "Manual Override" to "Auto schedule is paused"
             LightMode.SCENE -> {
@@ -280,6 +282,49 @@ object LightDashboardRuntimeUiMapper {
             LightMode.MOONLIGHT -> "Moonlight" to "Night output is active"
             LightMode.IDLE -> "Idle" to "Output is currently off"
             LightMode.UNKNOWN -> "Runtime Synced" to "Controller state received"
+        }
+    }
+
+
+    private fun autoModeTitleAndStatus(
+        hasTimeline: Boolean,
+        programSyncState: LightProgramDeviceSyncState?
+    ): Pair<String, String> {
+        if (!hasTimeline) {
+            return "Auto Schedule" to "No active plan today"
+        }
+
+        return when (programSyncState?.status) {
+            LightProgramDeviceSyncStatus.LOCAL_ACTIVE_MATCHED -> {
+                (programSyncState.matchedProgramName ?: "Auto Schedule") to
+                    "Running saved program on controller"
+            }
+
+            LightProgramDeviceSyncStatus.SAVED_PROGRAM_MATCHED -> {
+                (programSyncState.matchedProgramName ?: "Saved Program") to
+                    "Controller schedule matches a saved program"
+            }
+
+            LightProgramDeviceSyncStatus.LOCAL_ACTIVE_OUT_OF_SYNC -> {
+                "Auto Schedule" to if (programSyncState.localActiveProgramName.isNullOrBlank()) {
+                    "Device schedule differs from local active program"
+                } else {
+                    "Device differs from ${programSyncState.localActiveProgramName}"
+                }
+            }
+
+            LightProgramDeviceSyncStatus.DEVICE_PROGRAM_UNKNOWN -> {
+                "Auto Schedule" to "Saving device program"
+            }
+
+            LightProgramDeviceSyncStatus.NO_DEVICE_PROGRAM -> {
+                "Auto Schedule" to "No active plan today"
+            }
+
+            LightProgramDeviceSyncStatus.NO_RUNTIME,
+            null -> {
+                "Auto Schedule" to "Running from controller schedule"
+            }
         }
     }
 

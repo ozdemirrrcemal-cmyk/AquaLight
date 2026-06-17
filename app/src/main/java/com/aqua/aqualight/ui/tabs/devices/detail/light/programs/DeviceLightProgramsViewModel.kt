@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.light.programs.LightProgramRepository
 import com.aqua.aqualight.data.devices.light.programs.validation.LightProgramDraftValidator
 import com.aqua.aqualight.data.devices.light.programs.validation.LightProgramValidationResult
+import com.aqua.aqualight.data.devices.light.programs.sync.LightProgramDeviceSyncState
+import com.aqua.aqualight.data.devices.light.programs.sync.LightProgramDeviceSyncStatus
 import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DEVICE_INFORMATION_MISSING
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramListItem
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramListItemMapper
@@ -43,11 +45,15 @@ class DeviceLightProgramsViewModel(
 
     private var deviceId: Long = 0L
     private var observeJob: Job? = null
+    private val pendingAutoRecoverChecksums = mutableSetOf<String>()
+    private val runtimeConsumerKey = "light_programs_${System.identityHashCode(this)}"
 
     fun initialize(
         deviceId: Long
     ) {
         if (deviceId <= 0L) {
+            releaseRuntimeSyncIfNeeded()
+            observeJob?.cancel()
             this.deviceId = 0L
             _uiState.value = LightProgramListUiState()
             emitError(LIGHT_DEVICE_INFORMATION_MISSING)
@@ -58,10 +64,15 @@ class DeviceLightProgramsViewModel(
             return
         }
 
+        releaseRuntimeSyncIfNeeded()
         this.deviceId = deviceId
+        repository.acquireDeviceRuntimeSync(
+            deviceId = deviceId,
+            consumerKey = runtimeConsumerKey
+        )
         observeJob?.cancel()
         observeJob = viewModelScope.launch {
-            repository.observePrograms(deviceId)
+            repository.observeProgramsWithDeviceSync(deviceId)
                 .catch { exception ->
                     _events.emit(
                         LightProgramsEvent.ShowError(
@@ -69,9 +80,14 @@ class DeviceLightProgramsViewModel(
                         )
                     )
                 }
-                .collect { programs ->
-                    val items = programs.map { program ->
-                        LightProgramListItemMapper.map(program)
+                .collect { snapshot ->
+                    maybeAutoRecoverDeviceProgram(snapshot.syncState)
+
+                    val items = snapshot.programs.map { program ->
+                        LightProgramListItemMapper.map(
+                            program = program,
+                            deviceSyncState = snapshot.syncState
+                        )
                     }
                     val selectedFilter = _uiState.value.selectedFilter
                     _uiState.value = LightProgramListUiState(
@@ -84,6 +100,21 @@ class DeviceLightProgramsViewModel(
                     )
                 }
         }
+    }
+
+
+    fun onProgramsVisible() {
+        val currentDeviceId = deviceId
+        if (currentDeviceId > 0L) {
+            repository.acquireDeviceRuntimeSync(
+                deviceId = currentDeviceId,
+                consumerKey = runtimeConsumerKey
+            )
+        }
+    }
+
+    fun onProgramsHidden() {
+        releaseRuntimeSyncIfNeeded()
     }
 
     fun applyFilter(
@@ -199,6 +230,33 @@ class DeviceLightProgramsViewModel(
         }
     }
 
+    private fun maybeAutoRecoverDeviceProgram(
+        syncState: LightProgramDeviceSyncState
+    ) {
+        val checksum = syncState.deviceChecksum
+        val canRecover = syncState.status == LightProgramDeviceSyncStatus.DEVICE_PROGRAM_UNKNOWN ||
+            syncState.status == LightProgramDeviceSyncStatus.LOCAL_ACTIVE_OUT_OF_SYNC ||
+            syncState.status == LightProgramDeviceSyncStatus.SAVED_PROGRAM_MATCHED
+
+        if (!canRecover ||
+            checksum.isBlank() ||
+            checksum in pendingAutoRecoverChecksums
+        ) {
+            return
+        }
+
+        pendingAutoRecoverChecksums.add(checksum)
+        viewModelScope.launch {
+            try {
+                repository.autoRecoverActiveDeviceProgram(
+                    deviceId = requireDeviceId()
+                )
+            } finally {
+                pendingAutoRecoverChecksums.remove(checksum)
+            }
+        }
+    }
+
     private fun filterPrograms(
         programs: List<LightProgramListItem>,
         filter: ProgramFilter
@@ -223,5 +281,20 @@ class DeviceLightProgramsViewModel(
                 LightProgramsEvent.ShowError(message)
             )
         }
+    }
+
+    private fun releaseRuntimeSyncIfNeeded() {
+        val currentDeviceId = deviceId
+        if (currentDeviceId > 0L) {
+            repository.releaseDeviceRuntimeSync(
+                deviceId = currentDeviceId,
+                consumerKey = runtimeConsumerKey
+            )
+        }
+    }
+
+    override fun onCleared() {
+        releaseRuntimeSyncIfNeeded()
+        super.onCleared()
     }
 }

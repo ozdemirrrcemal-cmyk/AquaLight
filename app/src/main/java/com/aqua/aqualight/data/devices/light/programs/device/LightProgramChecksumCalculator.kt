@@ -4,11 +4,13 @@ import com.aqua.aqualight.data.devices.api.light.LightProgramWriteRequest
 import java.util.zip.CRC32
 
 /**
- * Stable checksum over the exact active schedule payload.
+ * Stable checksum over the active schedule payload.
  *
  * This deliberately avoids JSON string checksuming because object key ordering
  * can change. The canonical form is deterministic: sorted channels, sorted
- * points and normalized percent/minute values.
+ * points and normalized percent/minute values. Command flags such as
+ * resumeAutoAfterWrite are intentionally excluded because they are write-time
+ * behavior, not persisted schedule content that can be read back from runtime.
  */
 object LightProgramChecksumCalculator {
 
@@ -25,10 +27,6 @@ object LightProgramChecksumCalculator {
         request: LightProgramWriteRequest
     ): String {
         return buildString {
-            append("resumeAuto=")
-            append(request.resumeAutoAfterWrite)
-            append(';')
-
             request.channels
                 .sortedBy { channel -> channel.firmwareChannelIndex }
                 .forEach { channel ->

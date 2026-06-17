@@ -194,6 +194,89 @@ class LightProgramDataStoreManager private constructor(
         return program
     }
 
+    suspend fun createRecoveredProgramFromDevice(
+        deviceId: Long,
+        draft: LightProgramDraft,
+        checksum: String,
+        nowMillis: Long = System.currentTimeMillis()
+    ): SavedLightProgram? {
+        val safeChecksum = checksum.trim()
+        if (deviceId <= 0L || safeChecksum.isBlank()) return null
+
+        val device = devicesStore.devicesFlow.first()
+            .firstOrNull { storedDevice ->
+                storedDevice.id == deviceId
+            }
+
+        var recoveredProgram: SavedLightProgram? = null
+
+        dataStore.updateData { store ->
+            val existingMatch = store.programsList.firstOrNull { stored ->
+                stored.deviceId == deviceId &&
+                    stored.belongsToCurrentUser() &&
+                    stored.compiledChecksum == safeChecksum
+            }
+
+            if (existingMatch != null) {
+                recoveredProgram = existingMatch.toSavedLightProgram()
+                return@updateData store
+            }
+
+            val existingNames = store.programsList
+                .filter { stored ->
+                    stored.deviceId == deviceId && stored.belongsToCurrentUser()
+                }
+                .map { stored -> stored.name }
+                .toSet()
+
+            val program = SavedLightProgram(
+                id = buildProgramId(
+                    deviceId = deviceId,
+                    nowMillis = nowMillis
+                ),
+                ownerUid = UserDataScope.currentUid(),
+                deviceId = deviceId,
+                deviceUid = device?.deviceUid.orEmpty(),
+                productId = device?.productId.orEmpty(),
+                name = recoveredName(existingNames),
+                draft = draft.sanitized(),
+                isActive = true,
+                syncStatus = LightProgramSyncStatus.READ_FROM_DEVICE,
+                source = LightProgramSource.RECOVERED_FROM_DEVICE,
+                compiledChecksum = safeChecksum,
+                createdAt = nowMillis,
+                updatedAt = nowMillis,
+                activatedAt = nowMillis,
+                lastSyncedAt = nowMillis,
+                lastError = ""
+            )
+
+            recoveredProgram = program
+
+            val builder = store.toBuilder()
+                .clearPrograms()
+
+            store.programsList.forEach { existing ->
+                builder.addPrograms(
+                    if (existing.deviceId == deviceId && existing.belongsToCurrentUser()) {
+                        existing.toBuilder()
+                            .setActive(false)
+                            .setUpdatedAtMillis(nowMillis)
+                            .setActivatedAtMillis(0L)
+                            .build()
+                    } else {
+                        existing
+                    }
+                )
+            }
+
+            builder.addPrograms(program.toStoredLightProgram())
+                .build()
+        }
+
+        return recoveredProgram
+    }
+
     suspend fun updateProgram(
         deviceId: Long,
         programId: String,
@@ -383,6 +466,70 @@ class LightProgramDataStoreManager private constructor(
         }
 
         return activeProgram
+    }
+
+    suspend fun markProgramActiveFromDevice(
+        deviceId: Long,
+        programId: String,
+        checksum: String,
+        nowMillis: Long = System.currentTimeMillis()
+    ): SavedLightProgram? {
+        val safeChecksum = checksum.trim()
+        if (deviceId <= 0L || programId.isBlank() || safeChecksum.isBlank()) return null
+
+        var syncedProgram: SavedLightProgram? = null
+
+        dataStore.updateData { store ->
+            val builder = store.toBuilder()
+                .clearPrograms()
+
+            store.programsList.forEach { stored ->
+                val belongsToSameDevice = stored.deviceId == deviceId && stored.belongsToCurrentUser()
+                val isTarget = belongsToSameDevice && stored.id == programId
+
+                val updatedStored = when {
+                    isTarget -> {
+                        val current = stored.toSavedLightProgram()
+                        val syncedStatus = if (current.source == LightProgramSource.RECOVERED_FROM_DEVICE) {
+                            LightProgramSyncStatus.READ_FROM_DEVICE
+                        } else {
+                            LightProgramSyncStatus.SYNCED_TO_DEVICE
+                        }
+                        val updated = current.copy(
+                            isActive = true,
+                            syncStatus = syncedStatus,
+                            compiledChecksum = safeChecksum,
+                            updatedAt = nowMillis,
+                            activatedAt = nowMillis,
+                            lastSyncedAt = nowMillis,
+                            lastError = ""
+                        )
+                        syncedProgram = updated
+                        updated.toStoredLightProgram()
+                    }
+
+                    belongsToSameDevice -> {
+                        if (stored.active) {
+                            stored.toBuilder()
+                                .setActive(false)
+                                .setUpdatedAtMillis(nowMillis)
+                                .setActivatedAtMillis(0L)
+                                .build()
+                        } else {
+                            stored
+                        }
+                    }
+
+                    else -> stored
+                }
+
+                builder.addPrograms(updatedStored)
+            }
+
+            builder.build()
+        }
+
+        return syncedProgram
     }
 
     suspend fun markProgramSynced(
@@ -604,6 +751,28 @@ class LightProgramDataStoreManager private constructor(
         name: String
     ): String {
         return "${name.trim().ifBlank { "Program" }} Copy"
+    }
+
+    private fun recoveredName(
+        existingNames: Set<String>
+    ): String {
+        val baseName = "Device Program"
+        val normalizedNames = existingNames
+            .map { name -> name.trim().lowercase() }
+            .toSet()
+
+        if (baseName.lowercase() !in normalizedNames) {
+            return baseName
+        }
+
+        for (index in 2..99) {
+            val candidate = "$baseName $index"
+            if (candidate.lowercase() !in normalizedNames) {
+                return candidate
+            }
+        }
+
+        return "$baseName ${System.currentTimeMillis()}"
     }
 
     private fun buildProgramId(

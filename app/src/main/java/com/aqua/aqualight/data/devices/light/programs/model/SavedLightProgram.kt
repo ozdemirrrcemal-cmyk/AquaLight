@@ -44,6 +44,7 @@ enum class LightProgramSyncStatus {
 enum class LightProgramSource {
     USER_CREATED,
     IMPORTED_FROM_DEVICE,
+    RECOVERED_FROM_DEVICE,
     QUICK_SETUP,
     DUPLICATED,
     PRESET_CONVERTED
