@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.devices.light.programs.device
 import com.aqua.aqualight.data.devices.api.light.LightProgramWriteChannel
 import com.aqua.aqualight.data.devices.api.light.LightProgramWritePoint
 import com.aqua.aqualight.data.devices.api.light.LightProgramWriteRequest
+import com.aqua.aqualight.data.devices.light.programs.compiler.LightProgramDeviceChannel
 import com.aqua.aqualight.data.devices.light.programs.compiler.LightProgramDeviceSchedule
 
 /**
@@ -28,6 +29,27 @@ object LightProgramDevicePayloadMapper {
                                     percent = point.percent.coerceIn(0, 100)
                                 )
                             }
+                    )
+                },
+            resumeAutoAfterWrite = resumeAutoAfterWrite
+        )
+
+        return LightProgramDevicePayload(
+            request = request,
+            checksum = LightProgramChecksumCalculator.checksum(request)
+        )
+    }
+
+    fun emptySchedulePayload(
+        resumeAutoAfterWrite: Boolean = true
+    ): LightProgramDevicePayload {
+        val request = LightProgramWriteRequest(
+            channels = LightProgramDeviceChannel.values()
+                .sortedBy { channel -> channel.firmwareChannelIndex }
+                .map { channel ->
+                    LightProgramWriteChannel(
+                        firmwareChannelIndex = channel.firmwareChannelIndex,
+                        points = emptyList()
                     )
                 },
             resumeAutoAfterWrite = resumeAutoAfterWrite

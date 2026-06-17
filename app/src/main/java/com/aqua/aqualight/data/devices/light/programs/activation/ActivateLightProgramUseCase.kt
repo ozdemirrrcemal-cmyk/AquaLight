@@ -27,6 +27,30 @@ class ActivateLightProgramUseCase(
     private val payloadMapper: LightProgramDevicePayloadMapper = LightProgramDevicePayloadMapper
 ) {
 
+
+    suspend fun clearDeviceSchedule(
+        deviceId: Long
+    ) {
+        require(deviceId > 0L) {
+            "Light device id is missing"
+        }
+
+        val payload = payloadMapper.emptySchedulePayload()
+        val session = runtimeRepository.session(deviceId)
+
+        when (val clearResult = session.writeProgramSchedule(payload.request)) {
+            is ApiResult.Success -> {
+                session.refreshNow(
+                    readProfile = LightRuntimeReadProfile.STANDARD
+                )
+            }
+
+            is ApiResult.Error -> {
+                error(clearResult.error.message)
+            }
+        }
+    }
+
     suspend fun activate(
         deviceId: Long,
         programId: String

@@ -9,6 +9,7 @@ import com.aqua.aqualight.data.devices.light.programs.recovery.AutoRecoverActive
 import com.aqua.aqualight.data.devices.light.programs.sync.LightProgramDeviceProgramsSnapshot
 import com.aqua.aqualight.data.devices.light.programs.sync.LightProgramDeviceSyncMatcher
 import com.aqua.aqualight.data.devices.light.programs.sync.LightProgramDeviceSyncState
+import com.aqua.aqualight.data.devices.light.programs.sync.LightProgramDeviceSyncStatus
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -183,6 +184,15 @@ class LightProgramRepository private constructor(
         deviceId: Long,
         programId: String
     ) {
+        val program = store.getProgram(
+            deviceId = deviceId,
+            programId = programId
+        ) ?: error("Program not found.")
+
+        if (shouldClearDeviceScheduleOnDelete(deviceId, program)) {
+            activateProgramUseCase.clearDeviceSchedule(deviceId)
+        }
+
         val deleted = store.deleteProgram(
             deviceId = deviceId,
             programId = programId
@@ -191,6 +201,23 @@ class LightProgramRepository private constructor(
         if (!deleted) {
             error("Program not found.")
         }
+    }
+
+    private fun shouldClearDeviceScheduleOnDelete(
+        deviceId: Long,
+        program: SavedLightProgram
+    ): Boolean {
+        val syncState = LightProgramDeviceSyncMatcher.match(
+            programs = listOf(program),
+            runtimeState = runtimeRepository.session(deviceId).state.value
+        )
+
+        if (syncState.matchedProgramId == program.id) {
+            return true
+        }
+
+        return program.isActive &&
+            syncState.status == LightProgramDeviceSyncStatus.NO_RUNTIME
     }
 
     suspend fun activateProgram(

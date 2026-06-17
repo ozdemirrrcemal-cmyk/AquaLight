@@ -298,8 +298,8 @@ class DeviceLightProgramsFragment :
     private fun confirmDeleteProgram(
         program: LightProgramListItem
     ) {
-        val message = if (program.isActive) {
-            "Delete this saved active program? The controller schedule will stay unchanged until you upload another program."
+        val message = if (program.isActive || program.isOnDevice) {
+            "Delete this program? If it is running on the controller, all device schedule channels will be cleared."
         } else {
             "Delete this program from your saved programs?"
         }
