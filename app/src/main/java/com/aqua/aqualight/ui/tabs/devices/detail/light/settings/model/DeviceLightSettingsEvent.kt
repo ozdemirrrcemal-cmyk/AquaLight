@@ -17,4 +17,10 @@ sealed interface DeviceLightSettingsEvent {
     data class SetLoading(
         val isLoading: Boolean
     ) : DeviceLightSettingsEvent
+
+    data class ShowFirmwareUpdateAvailable(
+        val currentVersion: String,
+        val targetVersion: String,
+        val sizeText: String
+    ) : DeviceLightSettingsEvent
 }
