@@ -117,9 +117,9 @@ object LightCurveInterpolator {
             }
 
             LightCurveTransitionMode.NATURAL -> {
-                // More sunrise-like curve: slower at the edges and more distinct from Smooth.
+                // More sunrise-like curve: very soft at the start, then catches up naturally.
                 val cosineEase = ((1f - cos(clamped * Math.PI)) / 2f).toFloat()
-                cosineEase.pow(1.35f)
+                cosineEase.pow(1.15f)
             }
         }
     }

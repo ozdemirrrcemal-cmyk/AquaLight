@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
  *
  * Built-in presets stay in the UI catalog. User presets are stored locally in
  * Proto DataStore. Applying either built-in or custom preset sends a scene
- * output through the shared Light runtime gateway. Legacy firmware receives the
+ * output through the shared Light runtime gateway. AquaLight V1 firmware receives the
  * scene as a normal manual RGBW command; newer firmware can replace the API
  * adapter without changing this screen.
  */

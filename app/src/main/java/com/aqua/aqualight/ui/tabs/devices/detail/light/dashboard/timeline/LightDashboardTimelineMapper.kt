@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.timeline
 
 import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
-import com.aqua.aqualight.data.devices.light.curve.model.TodayLightPlanGraphRuntimePoint
 import com.aqua.aqualight.data.devices.light.curve.model.TodayLightPlanGraphSegment
 import com.aqua.aqualight.data.devices.light.curve.model.TodayLightPlanGraphSegmentType
 import com.aqua.aqualight.data.devices.light.curve.model.TodayLightPlanGraphState
@@ -276,10 +275,6 @@ object LightDashboardTimelineMapper {
             peakEnd = pointForMinute(boundedPeakEnd),
             end = pointForMinute(visibleEndMinute),
             outputPercent = outputPercent.coerceIn(0, 100),
-            runtimePoints = runtimePoints.toVisibleRuntimePoints(
-                visibleStartMinute = visibleStartMinute,
-                visibleEndMinute = visibleEndMinute
-            ),
             transitionMode = transitionMode,
             type = type,
             startMinute = visibleStartMinute,
@@ -287,29 +282,6 @@ object LightDashboardTimelineMapper {
             peakEndMinute = boundedPeakEnd,
             endMinute = visibleEndMinute
         )
-    }
-
-    private fun List<LightDashboardTimelinePoint>.toVisibleRuntimePoints(
-        visibleStartMinute: Int,
-        visibleEndMinute: Int
-    ): List<TodayLightPlanGraphRuntimePoint> {
-        if (isEmpty()) {
-            return emptyList()
-        }
-
-        return asSequence()
-            .map { point ->
-                TodayLightPlanGraphRuntimePoint(
-                    minute = point.minute.coerceIn(0, MINUTES_PER_DAY),
-                    percent = point.percent.coerceIn(0, 100)
-                )
-            }
-            .filter { point ->
-                point.minute in visibleStartMinute..visibleEndMinute
-            }
-            .distinctBy { point -> point.minute }
-            .sortedBy { point -> point.minute }
-            .toList()
     }
 
     private fun normalizeMinute(

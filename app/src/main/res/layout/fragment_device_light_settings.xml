@@ -256,7 +256,7 @@
                                 android:gravity="end"
                                 android:maxLines="1"
                                 android:text="—"
-                                tools:text="com.aqua.light.wrgb_pro_elite" />
+                                tools:text="com.aqualight.light.wrgb_pro_elite" />
 
                         </LinearLayout>
 
@@ -469,28 +469,6 @@
                         app:icon="@drawable/ic_light_settings_update_24"
                         app:iconGravity="textStart"
                         app:iconPadding="8dp" />
-
-                    <TextView
-                        android:id="@+id/tvFirmwareUpdateStatus"
-                        style="@style/TextAppearance.Aqua.Light.SettingsDescription"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:visibility="gone"
-                        tools:text="Firmware is downloading... %42"
-                        tools:visibility="visible" />
-
-                    <ProgressBar
-                        android:id="@+id/progressFirmwareUpdate"
-                        style="?android:attr/progressBarStyleHorizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="6dp"
-                        android:layout_marginTop="8dp"
-                        android:max="100"
-                        android:progress="0"
-                        android:visibility="gone"
-                        tools:progress="42"
-                        tools:visibility="visible" />
 
                 </LinearLayout>
 

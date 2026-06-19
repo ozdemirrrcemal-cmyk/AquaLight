@@ -4,7 +4,7 @@ import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
 import java.util.Locale
 
 /**
- * Centralized physical-device identity rules.
+ * Centralized physical-device identity rules for the AquaLight V1 firmware.
  *
  * IP is intentionally not part of the identity check. IP is only a mutable
  * network address. A physical device is matched by its stable commercial
@@ -21,10 +21,6 @@ object DeviceIdentityMatcher {
             return false
         }
 
-        if (legacyMigrationIdMatches(savedDevice, discoveredDevice)) {
-            return true
-        }
-
         return identifiersMatch(savedDevice.deviceUid, discoveredDevice.deviceUid) ||
             identifiersMatch(savedDevice.macAddress, discoveredDevice.macAddress) ||
             identifiersMatch(savedDevice.serialNumber, discoveredDevice.serialNumber) ||
@@ -39,10 +35,6 @@ object DeviceIdentityMatcher {
     ): Boolean {
         if (productMismatch(savedDevice.productId, update.productId)) {
             return false
-        }
-
-        if (legacyMigrationIdMatches(savedDevice, update)) {
-            return true
         }
 
         return identifiersMatch(savedDevice.deviceUid, update.deviceUid) ||
@@ -65,16 +57,6 @@ object DeviceIdentityMatcher {
     ): Boolean {
         if (productMismatch(savedDevice.productId, productId)) {
             return false
-        }
-
-        if (
-            stableNumericIdMatches(savedDevice.id, id) &&
-            (
-                savedDevice.isLegacyCompatDevice() ||
-                    isLegacyCompatIdentity(deviceUid = deviceUid)
-                )
-        ) {
-            return true
         }
 
         return identifiersMatch(savedDevice.deviceUid, deviceUid) ||
@@ -115,51 +97,6 @@ object DeviceIdentityMatcher {
                 discoveredDevice.firmwareSerial.orEmpty()
             )
         )
-    }
-
-
-    private fun legacyMigrationIdMatches(
-        savedDevice: DevicesDataStoreManager.DeviceInfo,
-        discoveredDevice: DiscoveredAquaDevice
-    ): Boolean {
-        return stableNumericIdMatches(savedDevice.id, discoveredDevice.id) &&
-            (
-                savedDevice.isLegacyCompatDevice() ||
-                    discoveredDevice.isLegacyCompatDevice()
-                )
-    }
-
-    private fun legacyMigrationIdMatches(
-        savedDevice: DevicesDataStoreManager.DeviceInfo,
-        update: DevicesDataStoreManager.DeviceLastSeenUpdate
-    ): Boolean {
-        return stableNumericIdMatches(savedDevice.id, update.id) &&
-            (
-                savedDevice.isLegacyCompatDevice() ||
-                    update.isLegacyCompatDevice()
-                )
-    }
-
-    private fun DevicesDataStoreManager.DeviceInfo.isLegacyCompatDevice(): Boolean {
-        return isLegacyCompatIdentity(deviceUid = deviceUid) ||
-            (protocolVersion ?: 0) <= 0
-    }
-
-    private fun DiscoveredAquaDevice.isLegacyCompatDevice(): Boolean {
-        return isLegacyCompatIdentity(deviceUid = deviceUid) ||
-            (protocolVersion ?: 0) <= 0
-    }
-
-    private fun DevicesDataStoreManager.DeviceLastSeenUpdate.isLegacyCompatDevice(): Boolean {
-        return isLegacyCompatIdentity(deviceUid = deviceUid) ||
-            (protocolVersion ?: 0) <= 0
-    }
-
-    private fun isLegacyCompatIdentity(
-        deviceUid: String?
-    ): Boolean {
-        return normalizeIdentity(deviceUid.orEmpty())
-            .startsWith("aqllegacy")
     }
 
     private fun stableNumericIdMatches(

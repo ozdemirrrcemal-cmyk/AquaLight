@@ -8,7 +8,7 @@ import com.aqua.aqualight.data.devices.light.curve.model.LightCurveTransitionMod
  * The dashboard graph must be fed by the controller runtime/schedule data,
  * not by editor drafts or local DataStore programs. Device/firmware layers
  * can map their Time + schedule + automation state into this small contract
- * without the graph knowing whether the source is legacy /get or the future API.
+ * without the graph knowing whether the source is a cached snapshot or the live V1 API.
  */
 data class LightDashboardTimelineSnapshot(
     val currentTimeMinute: Int? = null,
@@ -29,19 +29,7 @@ data class LightDashboardTimelineSegment(
     val peakEndMinute: Int = peakStartMinute,
     val endMinute: Int,
     val outputPercent: Int,
-
-    /**
-     * Device/controller LP points for this segment. Dashboard uses these points
-     * as the graph source of truth. They are passive display points and are not
-     * editable dashboard handles.
-     */
-    val runtimePoints: List<LightDashboardTimelinePoint> = emptyList(),
     val transitionMode: LightCurveTransitionMode = LightCurveTransitionMode.LINEAR
-)
-
-data class LightDashboardTimelinePoint(
-    val minute: Int,
-    val percent: Int
 )
 
 data class LightDashboardTimelineOverride(

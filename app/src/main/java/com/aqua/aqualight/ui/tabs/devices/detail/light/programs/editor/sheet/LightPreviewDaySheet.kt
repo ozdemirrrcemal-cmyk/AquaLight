@@ -23,7 +23,6 @@ class LightPreviewDaySheet private constructor(
     fun show(
         initialSpeed: PreviewSpeed = PreviewSpeed.ONE_MINUTE,
         initialProgressPercent: Int = 0,
-        initialSimulatedTimeLabel: String? = null,
         isPreviewRunning: Boolean = false,
         onStartPreview: (PreviewSpeed) -> Unit,
         onStopPreview: () -> Unit,
@@ -94,8 +93,7 @@ class LightPreviewDaySheet private constructor(
 
             renderPreviewState(
                 isPreviewRunning = true,
-                progressPercent = 0,
-                simulatedTimeLabel = "00:00"
+                progressPercent = 0
             )
 
             onStartPreview(selectedSpeed)
@@ -112,8 +110,7 @@ class LightPreviewDaySheet private constructor(
 
         renderPreviewState(
             isPreviewRunning = isPreviewRunning,
-            progressPercent = initialProgressPercent,
-            simulatedTimeLabel = initialSimulatedTimeLabel
+            progressPercent = initialProgressPercent
         )
 
         dialog.show()
@@ -121,8 +118,7 @@ class LightPreviewDaySheet private constructor(
 
     fun renderPreviewState(
         isPreviewRunning: Boolean,
-        progressPercent: Int,
-        simulatedTimeLabel: String? = null
+        progressPercent: Int
     ) {
         val binding = binding ?: return
 
@@ -136,11 +132,6 @@ class LightPreviewDaySheet private constructor(
                 R.string.light_preview_day_progress_format,
                 safeProgress
             )
-
-        binding.tvPreviewSimulatedTime.text = context.getString(
-            R.string.light_preview_day_simulated_time_format,
-            simulatedTimeLabel ?: "00:00"
-        )
 
         binding.btnStartPreview.text = when {
             isPreviewRunning -> {

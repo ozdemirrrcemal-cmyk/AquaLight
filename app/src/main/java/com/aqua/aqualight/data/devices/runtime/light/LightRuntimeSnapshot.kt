@@ -94,7 +94,6 @@ private fun List<LightPwmChannelState>.toRgbwPowerCalibration(): LightRgbwPowerC
 }
 
 enum class LightRuntimeSource {
-    LEGACY,
     V1,
     NONE
 }

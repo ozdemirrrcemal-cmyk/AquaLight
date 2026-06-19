@@ -4,6 +4,7 @@ import com.aqua.aqualight.data.devices.light.curve.interpolator.LightCurveInterp
 import com.aqua.aqualight.data.devices.light.curve.model.LightCurveTransitionMode
 import com.aqua.aqualight.data.devices.light.programs.model.LightProgramDraft
 import com.aqua.aqualight.data.devices.light.programs.model.LightProgramTimeMath
+import kotlin.math.ceil
 import kotlin.math.roundToInt
 
 /**
@@ -146,31 +147,6 @@ object LightProgramDevicePointExpander {
         transitionMode: LightCurveTransitionMode,
         options: LightProgramPointExpansionOptions
     ): List<LightProgramDevicePoint> {
-        val rampUpDuration = anchors.peakStartMinute - anchors.startMinute
-        val rampDownDuration = anchors.endMinute - anchors.peakEndMinute
-
-        val rampUpDesired = calculateDesiredIntermediatePointCount(
-            durationMinutes = rampUpDuration,
-            transitionMode = transitionMode,
-            options = options
-        )
-        val rampDownDesired = calculateDesiredIntermediatePointCount(
-            durationMinutes = rampDownDuration,
-            transitionMode = transitionMode,
-            options = options
-        )
-
-        val availableIntermediatePoints = (
-            options.maximumPointsPerChannel -
-                LightProgramPointExpansionOptions.MINIMUM_ANCHOR_POINTS_PER_CHANNEL
-            ).coerceAtLeast(0)
-
-        val allocation = allocateIntermediatePointBudget(
-            firstDesired = rampUpDesired,
-            secondDesired = rampDownDesired,
-            maximumTotal = availableIntermediatePoints
-        )
-
         val points = mutableListOf<LightProgramDevicePoint>()
 
         points += LightProgramDevicePoint(
@@ -178,18 +154,13 @@ object LightProgramDevicePointExpander {
             percent = 0
         )
 
-        points += buildRampIntermediatePoints(
+        points += buildRampPoints(
             fromMinute = anchors.startMinute,
             toMinute = anchors.peakStartMinute,
             fromPercent = 0,
             toPercent = peakPercent,
             transitionMode = transitionMode,
-            intermediatePointCount = allocation.first
-        )
-
-        points += LightProgramDevicePoint(
-            minuteOfDay = anchors.peakStartMinute,
-            percent = peakPercent
+            options = options
         )
 
         points += LightProgramDevicePoint(
@@ -197,18 +168,13 @@ object LightProgramDevicePointExpander {
             percent = peakPercent
         )
 
-        points += buildRampIntermediatePoints(
+        points += buildRampPoints(
             fromMinute = anchors.peakEndMinute,
             toMinute = anchors.endMinute,
             fromPercent = peakPercent,
             toPercent = 0,
             transitionMode = transitionMode,
-            intermediatePointCount = allocation.second
-        )
-
-        points += LightProgramDevicePoint(
-            minuteOfDay = anchors.endMinute,
-            percent = 0
+            options = options
         )
 
         return points
@@ -216,21 +182,31 @@ object LightProgramDevicePointExpander {
             .dedupeSameMinuteKeepingLast()
     }
 
-    private fun buildRampIntermediatePoints(
+    private fun buildRampPoints(
         fromMinute: Int,
         toMinute: Int,
         fromPercent: Int,
         toPercent: Int,
         transitionMode: LightCurveTransitionMode,
-        intermediatePointCount: Int
+        options: LightProgramPointExpansionOptions
     ): List<LightProgramDevicePoint> {
         val duration = toMinute - fromMinute
-        if (duration <= 1 || intermediatePointCount <= 0) {
-            return emptyList()
+        if (duration <= 0) {
+            return listOf(
+                LightProgramDevicePoint(
+                    minuteOfDay = toMinute.coerceIn(0, MINUTES_PER_DAY),
+                    percent = toPercent.coerceIn(0, 100)
+                )
+            )
         }
 
-        return (1..intermediatePointCount).map { index ->
-            val t = index / (intermediatePointCount + 1).toFloat()
+        val steps = calculateStepCount(
+            durationMinutes = duration,
+            options = options
+        )
+
+        return (1..steps).map { index ->
+            val t = index / steps.toFloat()
             val eased = LightCurveInterpolator.ease(
                 t = t,
                 mode = transitionMode
@@ -244,96 +220,20 @@ object LightProgramDevicePointExpander {
                 percent = percent.coerceIn(0, 100)
             )
         }
-            .filter { point -> point.minuteOfDay in (fromMinute + 1) until toMinute }
-            .dedupeSameMinuteKeepingLast()
     }
 
-    private fun calculateDesiredIntermediatePointCount(
+    private fun calculateStepCount(
         durationMinutes: Int,
-        transitionMode: LightCurveTransitionMode,
         options: LightProgramPointExpansionOptions
     ): Int {
-        if (durationMinutes <= 1) {
-            return 0
-        }
+        val byStep = ceil(durationMinutes / options.rampStepMinutes.toDouble()).toInt()
+        val requested = byStep
+            .coerceAtLeast(options.minimumRampPoints)
+            .coerceAtMost(options.maximumRampPoints)
 
-        val spacingMinutes = when (transitionMode) {
-            LightCurveTransitionMode.LINEAR -> return 0
-            LightCurveTransitionMode.SMOOTH -> options.smoothPointSpacingMinutes
-            LightCurveTransitionMode.NATURAL -> options.naturalPointSpacingMinutes
-        }
-
-        val maxPerRamp = when (transitionMode) {
-            LightCurveTransitionMode.LINEAR -> 0
-            LightCurveTransitionMode.SMOOTH -> options.maximumSmoothIntermediatePointsPerRamp
-            LightCurveTransitionMode.NATURAL -> options.maximumNaturalIntermediatePointsPerRamp
-        }
-
-        if (maxPerRamp <= 0) {
-            return 0
-        }
-
-        // The catalog limit is a safety ceiling, not a target. Choose a small
-        // visual/device sample count based on ramp length so short programs stay
-        // clean and Smooth/Natural remain noticeably different. Endpoints are
-        // uploaded as explicit user anchors, so only interior samples are counted.
-        val requested = durationMinutes / spacingMinutes
-
-        return requested
-            .coerceAtMost(maxPerRamp)
-            .coerceAtMost(durationMinutes - 1)
-    }
-
-    private fun allocateIntermediatePointBudget(
-        firstDesired: Int,
-        secondDesired: Int,
-        maximumTotal: Int
-    ): Pair<Int, Int> {
-        val firstSafe = firstDesired.coerceAtLeast(0)
-        val secondSafe = secondDesired.coerceAtLeast(0)
-        val maxSafe = maximumTotal.coerceAtLeast(0)
-        val desiredTotal = firstSafe + secondSafe
-
-        if (desiredTotal <= maxSafe) {
-            return firstSafe to secondSafe
-        }
-        if (maxSafe == 0 || desiredTotal == 0) {
-            return 0 to 0
-        }
-
-        var first = ((maxSafe * firstSafe) / desiredTotal.toFloat())
-            .roundToInt()
-            .coerceIn(
-                if (firstSafe > 0) 1 else 0,
-                firstSafe
-            )
-        var second = (maxSafe - first).coerceIn(
-            if (secondSafe > 0) 1 else 0,
-            secondSafe
-        )
-
-        while (first + second > maxSafe) {
-            if (first >= second && first > 0) {
-                first--
-            } else if (second > 0) {
-                second--
-            } else {
-                break
-            }
-        }
-
-        while (first + second < maxSafe) {
-            val firstRemaining = firstSafe - first
-            val secondRemaining = secondSafe - second
-            when {
-                firstRemaining <= 0 && secondRemaining <= 0 -> break
-                firstRemaining >= secondRemaining && firstRemaining > 0 -> first++
-                secondRemaining > 0 -> second++
-                else -> break
-            }
-        }
-
-        return first to second
+        // Integer-minute device points cannot contain more unique samples than
+        // the number of minutes in the ramp. This protects very short ramps.
+        return requested.coerceAtMost(durationMinutes.coerceAtLeast(1))
     }
 
     private fun List<LightProgramDevicePoint>.dedupeSameMinuteKeepingLast(): List<LightProgramDevicePoint> {

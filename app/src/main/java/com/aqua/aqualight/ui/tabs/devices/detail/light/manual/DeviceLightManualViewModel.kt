@@ -45,7 +45,7 @@ import kotlin.math.roundToInt
  *                    reports. Touching a slider starts manual override.
  * MANUAL_OVERRIDE -> slider changes are previewed instantly and flushed through
  *                    a throttled low-latency command path.
- * SCENE_OVERRIDE  -> legacy firmware receives the scene as a normal manual
+ * SCENE_OVERRIDE  -> V1 firmware receives the scene as a normal manual
  *                    RGBW output command. Future firmware can expose a real
  *                    scene mode without changing this screen.
  *

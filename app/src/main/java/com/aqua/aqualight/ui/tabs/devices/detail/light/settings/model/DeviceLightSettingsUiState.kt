@@ -36,9 +36,5 @@ data class DeviceLightSettingsUiState(
 
     val isDeviceOnline: Boolean = false,
     val controlsEnabled: Boolean = false,
-    val connectionStatusText: String = "Checking device connection",
-
-    val firmwareUpdateStatusText: String = "",
-    val firmwareUpdateProgressPercent: Int = -1,
-    val firmwareUpdateInProgress: Boolean = false
+    val connectionStatusText: String = "Checking device connection"
 )

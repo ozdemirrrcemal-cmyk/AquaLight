@@ -7,7 +7,7 @@ data class LightDeviceDefinition(
     val channels: List<LightChannelDefinition>,
     val lightFeatures: Set<LightFeature>,
 
-    val defaultSchedulePointCount: Int = 4,
+    val defaultSchedulePointCount: Int = 5,
     val maxSchedulePointCount: Int = 24,
 
     /**

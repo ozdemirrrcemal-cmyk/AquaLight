@@ -22,11 +22,6 @@ interface LightApi {
         program: LightProgram
     ): ApiResult<Unit>
 
-    suspend fun writeProgramSchedule(
-        connection: AquaDeviceConnection,
-        request: LightProgramWriteRequest
-    ): ApiResult<Unit>
-
     suspend fun setManual(
         connection: AquaDeviceConnection,
         request: LightManualRequest

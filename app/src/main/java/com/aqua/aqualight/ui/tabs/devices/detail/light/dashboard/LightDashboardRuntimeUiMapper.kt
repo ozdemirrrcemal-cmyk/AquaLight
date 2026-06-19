@@ -3,12 +3,10 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard
 import android.content.Context
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.api.light.LightMode
-import com.aqua.aqualight.data.devices.light.programs.sync.LightProgramDeviceSyncState
-import com.aqua.aqualight.data.devices.light.programs.sync.LightProgramDeviceSyncStatus
+import com.aqua.aqualight.data.devices.api.light.LightScheduleChannelState
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeSnapshot
 import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.model.DeviceLightDashboardUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.model.LightDashboardMode
-import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.timeline.LightDashboardSchedulePointMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.timeline.LightDashboardTimelineMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.timeline.LightDashboardTimelineRenderResult
 import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.timeline.LightDashboardTimelineSegment
@@ -20,14 +18,13 @@ import kotlin.math.roundToInt
  * Maps the common LightRuntimeSnapshot into the dashboard UI contract.
  *
  * This mapper is the only place where live Light runtime fields are formatted
- * for the dashboard. The Fragment never reads ESP32/legacy/V1 objects directly.
+ * for the dashboard. The Fragment never reads ESP32/V1 objects directly.
  */
 object LightDashboardRuntimeUiMapper {
 
     fun map(
         context: Context,
-        snapshot: LightRuntimeSnapshot,
-        programSyncState: LightProgramDeviceSyncState? = null
+        snapshot: LightRuntimeSnapshot
     ): DeviceLightDashboardUiState {
         val hasLedRuntime = snapshot.ledPwmChannels.isNotEmpty() ||
             snapshot.localOverride != null ||
@@ -43,8 +40,7 @@ object LightDashboardRuntimeUiMapper {
         val fanPercent = snapshot.fanOutputPercent
         val titleAndStatus = modeTitleAndStatus(
             snapshot = snapshot,
-            hasTimeline = timeline.graphState.segments.isNotEmpty(),
-            programSyncState = programSyncState
+            hasTimeline = timeline.graphState.segments.isNotEmpty()
         )
 
         return DeviceLightDashboardUiState(
@@ -110,9 +106,7 @@ object LightDashboardRuntimeUiMapper {
         snapshot: LightRuntimeSnapshot
     ): LightDashboardTimelineRenderResult {
         val currentMinute = snapshot.deviceTime.currentMinuteOfDay
-        val mainSegments = LightDashboardSchedulePointMapper.mainProgramSegments(
-            snapshot.scheduleChannels
-        )
+        val mainSegments = buildMainProgramSegments(snapshot.scheduleChannels)
         val nextEvent = snapshot.nextEvent?.label
             ?.trim()
             ?.takeIf { it.isNotEmpty() }
@@ -230,6 +224,56 @@ object LightDashboardRuntimeUiMapper {
         }
     }
 
+    private fun buildMainProgramSegments(
+        scheduleChannels: List<LightScheduleChannelState>
+    ): List<LightDashboardTimelineSegment> {
+        val pointsByMinute = linkedMapOf<Int, Int>()
+
+        scheduleChannels.forEach { channel ->
+            channel.points.forEach { point ->
+                val minute = point.minuteOfDay.coerceIn(0, MINUTES_PER_DAY)
+                val current = pointsByMinute[minute] ?: 0
+                pointsByMinute[minute] = maxOf(
+                    current,
+                    point.percent.coerceIn(0, 100)
+                )
+            }
+        }
+
+        val activePoints = pointsByMinute.entries
+            .sortedBy { entry -> entry.key }
+            .filter { entry -> entry.value > 0 }
+
+        if (activePoints.isEmpty()) {
+            return emptyList()
+        }
+
+        val startMinute = activePoints.first().key
+        val endMinute = activePoints.last().key
+        if (endMinute <= startMinute) {
+            return emptyList()
+        }
+
+        val maxOutput = activePoints.maxOf { entry -> entry.value }
+        val peakMinutes = activePoints
+            .filter { entry -> entry.value == maxOutput }
+            .map { entry -> entry.key }
+        val peakStart = peakMinutes.firstOrNull() ?: startMinute
+        val peakEnd = peakMinutes.lastOrNull() ?: peakStart
+
+        return listOf(
+            LightDashboardTimelineSegment(
+                id = "device-main-schedule",
+                name = "Auto",
+                startMinute = startMinute,
+                peakStartMinute = peakStart,
+                peakEndMinute = peakEnd,
+                endMinute = endMinute,
+                outputPercent = maxOutput
+            )
+        )
+    }
+
     private fun buildOverrideOutputSegments(
         snapshot: LightRuntimeSnapshot,
         name: String
@@ -258,14 +302,16 @@ object LightDashboardRuntimeUiMapper {
 
     private fun modeTitleAndStatus(
         snapshot: LightRuntimeSnapshot,
-        hasTimeline: Boolean,
-        programSyncState: LightProgramDeviceSyncState?
+        hasTimeline: Boolean
     ): Pair<String, String> {
         return when (snapshot.mode) {
-            LightMode.AUTO -> autoModeTitleAndStatus(
-                hasTimeline = hasTimeline,
-                programSyncState = programSyncState
-            )
+            LightMode.AUTO -> {
+                "Auto Schedule" to if (hasTimeline) {
+                    "Running from controller schedule"
+                } else {
+                    "No active plan today"
+                }
+            }
 
             LightMode.MANUAL -> "Manual Override" to "Auto schedule is paused"
             LightMode.SCENE -> {
@@ -282,49 +328,6 @@ object LightDashboardRuntimeUiMapper {
             LightMode.MOONLIGHT -> "Moonlight" to "Night output is active"
             LightMode.IDLE -> "Idle" to "Output is currently off"
             LightMode.UNKNOWN -> "Runtime Synced" to "Controller state received"
-        }
-    }
-
-
-    private fun autoModeTitleAndStatus(
-        hasTimeline: Boolean,
-        programSyncState: LightProgramDeviceSyncState?
-    ): Pair<String, String> {
-        if (!hasTimeline) {
-            return "Auto Schedule" to "No active plan today"
-        }
-
-        return when (programSyncState?.status) {
-            LightProgramDeviceSyncStatus.LOCAL_ACTIVE_MATCHED -> {
-                (programSyncState.matchedProgramName ?: "Auto Schedule") to
-                    "Running saved program on controller"
-            }
-
-            LightProgramDeviceSyncStatus.SAVED_PROGRAM_MATCHED -> {
-                (programSyncState.matchedProgramName ?: "Saved Program") to
-                    "Controller schedule matches a saved program"
-            }
-
-            LightProgramDeviceSyncStatus.LOCAL_ACTIVE_OUT_OF_SYNC -> {
-                "Auto Schedule" to if (programSyncState.localActiveProgramName.isNullOrBlank()) {
-                    "Device schedule differs from local active program"
-                } else {
-                    "Device differs from ${programSyncState.localActiveProgramName}"
-                }
-            }
-
-            LightProgramDeviceSyncStatus.DEVICE_PROGRAM_UNKNOWN -> {
-                "Auto Schedule" to "Saving device program"
-            }
-
-            LightProgramDeviceSyncStatus.NO_DEVICE_PROGRAM -> {
-                "Auto Schedule" to "No active plan today"
-            }
-
-            LightProgramDeviceSyncStatus.NO_RUNTIME,
-            null -> {
-                "Auto Schedule" to "Running from controller schedule"
-            }
         }
     }
 

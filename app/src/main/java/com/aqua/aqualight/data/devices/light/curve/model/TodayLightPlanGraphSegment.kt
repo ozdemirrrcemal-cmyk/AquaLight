@@ -8,14 +8,6 @@ data class TodayLightPlanGraphSegment(
     val peakEnd: LightCurvePoint,
     val end: LightCurvePoint,
     val outputPercent: Int,
-
-    /**
-     * Optional controller/runtime LP points already received from the device.
-     * Dashboard graph rendering uses these points directly instead of rebuilding
-     * a local editor curve. This keeps Linear/Smooth/Natural programs visually
-     * identical to what is stored on the controller.
-     */
-    val runtimePoints: List<TodayLightPlanGraphRuntimePoint> = emptyList(),
     val transitionMode: LightCurveTransitionMode = LightCurveTransitionMode.LINEAR,
     val isCurrent: Boolean = false,
     val isNext: Boolean = false,
@@ -39,11 +31,6 @@ data class TodayLightPlanGraphSegment(
         const val MINUTES_PER_DAY = 24 * 60
     }
 }
-
-data class TodayLightPlanGraphRuntimePoint(
-    val minute: Int,
-    val percent: Int
-)
 
 enum class TodayLightPlanGraphSegmentType {
     MAIN_PROGRAM,

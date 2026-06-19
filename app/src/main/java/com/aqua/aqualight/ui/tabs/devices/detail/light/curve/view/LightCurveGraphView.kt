@@ -11,8 +11,6 @@ import android.view.View
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.light.curve.interpolator.LightCurveInterpolator
-import com.aqua.aqualight.data.devices.light.curve.model.LightCurveGraphChannel
-import com.aqua.aqualight.data.devices.light.curve.model.LightCurveGraphControllerPoint
 import com.aqua.aqualight.data.devices.light.curve.model.LightCurveGraphState
 import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
 import com.aqua.aqualight.data.devices.light.curve.model.LightCurveTransitionMode
@@ -169,17 +167,6 @@ class LightCurveGraphView @JvmOverloads constructor(
         alpha = 230
     }
 
-    private val controllerSamplePointPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.FILL
-    }
-
-    private val controllerSamplePointStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        strokeWidth = dp(0.65f)
-        color = color(R.color.light_bg_deep)
-        alpha = 155
-    }
-
     fun setState(
         newState: LightCurveGraphState
     ) {
@@ -283,37 +270,6 @@ class LightCurveGraphView @JvmOverloads constructor(
     ) {
         val channels = state.channelValues.normalized()
 
-        if (state.controllerPointChannels.isNotEmpty()) {
-            drawControllerCurve(
-                canvas = canvas,
-                channel = LightCurveGraphChannel.RED,
-                peakPercent = channels.red,
-                paint = redPaint
-            )
-
-            drawControllerCurve(
-                canvas = canvas,
-                channel = LightCurveGraphChannel.GREEN,
-                peakPercent = channels.green,
-                paint = greenPaint
-            )
-
-            drawControllerCurve(
-                canvas = canvas,
-                channel = LightCurveGraphChannel.BLUE,
-                peakPercent = channels.blue,
-                paint = bluePaint
-            )
-
-            drawControllerCurve(
-                canvas = canvas,
-                channel = LightCurveGraphChannel.WHITE,
-                peakPercent = channels.white,
-                paint = whitePaint
-            )
-            return
-        }
-
         drawCurve(
             canvas = canvas,
             start = state.start,
@@ -357,149 +313,6 @@ class LightCurveGraphView @JvmOverloads constructor(
             transitionMode = state.transitionMode,
             paint = whitePaint
         )
-    }
-
-    private fun drawControllerCurve(
-        canvas: Canvas,
-        channel: LightCurveGraphChannel,
-        peakPercent: Int,
-        paint: Paint
-    ) {
-        val controllerPoints = state.controllerPointChannels
-            .firstOrNull { controllerChannel -> controllerChannel.channel == channel }
-            ?.points
-            .orEmpty()
-
-        if (controllerPoints.isEmpty()) {
-            drawCurve(
-                canvas = canvas,
-                start = state.start,
-                peakStart = state.peakStart,
-                peakEnd = state.peakEnd,
-                end = state.end,
-                peakPercent = peakPercent,
-                transitionMode = state.transitionMode,
-                paint = paint
-            )
-            return
-        }
-
-        val graphPoints = controllerPoints
-            .withDailyZeroBaseline()
-            .sortedBy { point -> point.minuteOfDay }
-            .dedupeGraphPointsKeepingLast()
-
-        val path = Path()
-        graphPoints.forEachIndexed { index, point ->
-            val x = xForMinute(point.minuteOfDay)
-            val y = yForPercent(point.percent)
-
-            if (index == 0) {
-                path.moveTo(x, y)
-            } else {
-                path.lineTo(x, y)
-            }
-        }
-
-        canvas.drawPath(path, paint)
-
-        drawControllerSamplePoints(
-            canvas = canvas,
-            graphPoints = graphPoints,
-            paint = paint
-        )
-
-        drawCurvePoints(
-            canvas = canvas,
-            start = state.start,
-            peakStart = state.peakStart,
-            peakEnd = state.peakEnd,
-            end = state.end,
-            peakPercent = peakPercent.coerceIn(0, 100),
-            paint = paint
-        )
-    }
-
-    private fun drawControllerSamplePoints(
-        canvas: Canvas,
-        graphPoints: List<LightCurveGraphControllerPoint>,
-        paint: Paint
-    ) {
-        if (state.transitionMode == LightCurveTransitionMode.LINEAR) {
-            return
-        }
-
-        val anchorMinutes = editorAnchorMinutes()
-        val generatedPoints = graphPoints.filterNot { point ->
-            point.minuteOfDay in anchorMinutes ||
-                point.minuteOfDay == 0 ||
-                point.minuteOfDay == LightCurveMoonlightGraphSegment.MINUTES_PER_DAY
-        }
-
-        if (generatedPoints.isEmpty()) {
-            return
-        }
-
-        controllerSamplePointPaint.color = paint.color
-        controllerSamplePointPaint.alpha = 120
-
-        generatedPoints.forEach { point ->
-            val x = xForMinute(point.minuteOfDay)
-            val y = yForPercent(point.percent)
-
-            canvas.drawCircle(
-                x,
-                y,
-                dp(2.1f),
-                controllerSamplePointStrokePaint
-            )
-
-            canvas.drawCircle(
-                x,
-                y,
-                dp(1.45f),
-                controllerSamplePointPaint
-            )
-        }
-    }
-
-    private fun editorAnchorMinutes(): Set<Int> {
-        return setOf(
-            state.start.totalMinutes,
-            state.peakStart.totalMinutes,
-            state.peakEnd.totalMinutes,
-            endMinutesForGraph(state.end)
-        )
-    }
-
-    private fun List<LightCurveGraphControllerPoint>.withDailyZeroBaseline(): List<LightCurveGraphControllerPoint> {
-        return buildList {
-            add(
-                LightCurveGraphControllerPoint(
-                    minuteOfDay = 0,
-                    percent = 0
-                )
-            )
-            addAll(this@withDailyZeroBaseline)
-            add(
-                LightCurveGraphControllerPoint(
-                    minuteOfDay = LightCurveMoonlightGraphSegment.MINUTES_PER_DAY,
-                    percent = 0
-                )
-            )
-        }
-    }
-
-    private fun List<LightCurveGraphControllerPoint>.dedupeGraphPointsKeepingLast(): List<LightCurveGraphControllerPoint> {
-        val byMinute = linkedMapOf<Int, LightCurveGraphControllerPoint>()
-        forEach { point ->
-            val minute = point.minuteOfDay.coerceIn(0, LightCurveMoonlightGraphSegment.MINUTES_PER_DAY)
-            byMinute[minute] = LightCurveGraphControllerPoint(
-                minuteOfDay = minute,
-                percent = point.percent.coerceIn(0, 100)
-            )
-        }
-        return byMinute.values.toList()
     }
 
     private fun drawMoonlightSegments(

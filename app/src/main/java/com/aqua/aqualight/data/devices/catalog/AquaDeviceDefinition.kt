@@ -104,8 +104,7 @@ data class AquaDeviceDefinition(
         get() = category.routeKey
 
     val supportsCommercialIdentity: Boolean
-        get() = firmwareProtocol == FirmwareProtocol.AQUA_V1 ||
-            firmwareProtocol == FirmwareProtocol.NATIVE_V1
+        get() = firmwareProtocol == FirmwareProtocol.AQUA_V1
 
     fun visibilityOf(
         module: AquaDeviceModule
@@ -155,6 +154,6 @@ data class AquaDeviceDefinition(
     ): Boolean {
         return isProtocolVersionSupported(
             protocolVersion = apiVersion
-        ) || firmwareProtocol == FirmwareProtocol.LEGACY_GET_SET
+        )
     }
 }

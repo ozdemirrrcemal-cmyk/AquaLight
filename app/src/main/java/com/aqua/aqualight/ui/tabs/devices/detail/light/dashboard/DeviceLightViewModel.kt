@@ -4,10 +4,6 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.devices.light.programs.LightProgramRepository
-import com.aqua.aqualight.data.devices.light.programs.sync.LightProgramDeviceSyncMatcher
-import com.aqua.aqualight.data.devices.light.programs.sync.LightProgramDeviceSyncState
-import com.aqua.aqualight.data.devices.light.programs.sync.LightProgramDeviceSyncStatus
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeSession
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeState
@@ -17,7 +13,6 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.model.LightDash
 import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.timeline.LightDashboardTimelineMapper
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class DeviceLightViewModel(
@@ -27,10 +22,6 @@ class DeviceLightViewModel(
     private val consumerKey = "light_dashboard_${System.identityHashCode(this)}"
 
     private val runtimeRepository = LightRuntimeRepository.get(
-        context = application.applicationContext
-    )
-
-    private val programRepository = LightProgramRepository.get(
         context = application.applicationContext
     )
 
@@ -48,7 +39,6 @@ class DeviceLightViewModel(
     private var deviceId: Long = 0L
     private var runtimeSession: LightRuntimeSession? = null
     private var runtimeCollectorJob: Job? = null
-    private val pendingAutoRecoverChecksums = mutableSetOf<String>()
 
     fun initialize(
         deviceId: Long
@@ -72,20 +62,8 @@ class DeviceLightViewModel(
         val session = runtimeRepository.session(deviceId)
         runtimeSession = session
         runtimeCollectorJob = viewModelScope.launch {
-            combine(
-                session.state,
-                programRepository.observePrograms(deviceId)
-            ) { runtimeState, programs ->
-                runtimeState to LightProgramDeviceSyncMatcher.match(
-                    programs = programs,
-                    runtimeState = runtimeState
-                )
-            }.collectLatest { (runtimeState, programSyncState) ->
-                maybeAutoRecoverDeviceProgram(programSyncState)
-                renderRuntimeState(
-                    runtimeState = runtimeState,
-                    programSyncState = programSyncState
-                )
+            session.state.collectLatest { runtimeState ->
+                renderRuntimeState(runtimeState)
             }
         }
     }
@@ -109,36 +87,8 @@ class DeviceLightViewModel(
         runtimeSession?.refreshAsync()
     }
 
-    private fun maybeAutoRecoverDeviceProgram(
-        syncState: LightProgramDeviceSyncState
-    ) {
-        val checksum = syncState.deviceChecksum
-        val canRecover = syncState.status == LightProgramDeviceSyncStatus.DEVICE_PROGRAM_UNKNOWN ||
-            syncState.status == LightProgramDeviceSyncStatus.LOCAL_ACTIVE_OUT_OF_SYNC ||
-            syncState.status == LightProgramDeviceSyncStatus.SAVED_PROGRAM_MATCHED
-
-        if (!canRecover ||
-            checksum.isBlank() ||
-            checksum in pendingAutoRecoverChecksums
-        ) {
-            return
-        }
-
-        pendingAutoRecoverChecksums.add(checksum)
-        viewModelScope.launch {
-            try {
-                programRepository.autoRecoverActiveDeviceProgram(
-                    deviceId = deviceId
-                )
-            } finally {
-                pendingAutoRecoverChecksums.remove(checksum)
-            }
-        }
-    }
-
     private fun renderRuntimeState(
-        runtimeState: LightRuntimeState,
-        programSyncState: LightProgramDeviceSyncState
+        runtimeState: LightRuntimeState
     ) {
         val snapshot = runtimeState.snapshot
         if (snapshot == null) {
@@ -159,8 +109,7 @@ class DeviceLightViewModel(
 
         _uiState.value = LightDashboardRuntimeUiMapper.map(
             context = getApplication<Application>(),
-            snapshot = snapshot,
-            programSyncState = programSyncState
+            snapshot = snapshot
         ).copy(
             isDeviceOnline = runtimeState.isDeviceOnline,
             controlsEnabled = runtimeState.isDeviceOnline,

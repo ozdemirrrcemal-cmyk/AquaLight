@@ -23,7 +23,7 @@ data class LightProgramDraft(
             channelValues = LightCurveChannelValues(red = 0, green = 0, blue = 0, white = 0),
             repeatMode = RepeatMode.EVERY,
             selectedDays = setOf(1, 2, 3, 4, 5, 6, 7),
-            transitionMode = LightCurveTransitionMode.LINEAR
+            transitionMode = LightCurveTransitionMode.NATURAL
         )
     }
 }

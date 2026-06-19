@@ -1,10 +1,11 @@
 package com.aqua.aqualight.data.devices.catalog
 
 /**
- * Uygulama içindeki sabit ürün anahtarı.
+ * AquaLight commercial firmware product keys.
  *
- * ProductId firmware/app sözleşmesi için kullanılır; ProductKey ise uygulama
- * kodunda enum güvenliği sağlar.
+ * This enum intentionally mirrors src/product/AqlProductCatalog.hpp from the
+ * new firmware. Only com.aqualight.* product ids from the final commercial
+ * contract are accepted by the app.
  */
 enum class AquaProductKey(
     val storageKey: String,
@@ -14,84 +15,84 @@ enum class AquaProductKey(
 ) {
     LIGHT_WRGB_PRO_ELITE(
         storageKey = "LIGHT_WRGB_PRO_ELITE",
-        productId = "com.aqua.light.wrgb_pro_elite",
+        productId = "com.aqualight.light.wrgb_pro_elite",
         setupCode = "WPE",
         category = AquaDeviceCategory.LIGHT
     ),
-    TIMER_TIMER_PRO(
-        storageKey = "TIMER_TIMER_PRO",
-        productId = "com.aqua.timer.timer_pro",
-        setupCode = "TPR",
+    LIGHT_RGB_PRO_SLIM(
+        storageKey = "LIGHT_RGB_PRO_SLIM",
+        productId = "com.aqualight.light.rgb_pro_slim",
+        setupCode = "RPS",
+        category = AquaDeviceCategory.LIGHT
+    ),
+    TIMER_RELAY_PRO_2(
+        storageKey = "TIMER_RELAY_PRO_2",
+        productId = "com.aqualight.timer.relay_pro_2",
+        setupCode = "RP2",
         category = AquaDeviceCategory.TIMER
     ),
-    TIMER_MULTI_CONTROL(
-        storageKey = "TIMER_MULTI_CONTROL",
-        productId = "com.aqua.timer.multi_control",
-        setupCode = "TMC",
+    TIMER_RELAY_PRO_4(
+        storageKey = "TIMER_RELAY_PRO_4",
+        productId = "com.aqualight.timer.relay_pro_4",
+        setupCode = "RP4",
         category = AquaDeviceCategory.TIMER
     ),
-    COOLING_COOL_PRO(
-        storageKey = "COOLING_COOL_PRO",
-        productId = "com.aqua.cooling.cool_pro",
-        setupCode = "CPR",
-        category = AquaDeviceCategory.COOLING
+    DOSING_DOSE_PRO_2(
+        storageKey = "DOSING_DOSE_PRO_2",
+        productId = "com.aqualight.dosing.dose_pro_2",
+        setupCode = "DP2",
+        category = AquaDeviceCategory.DOSING
     ),
     DOSING_DOSE_PRO_4(
         storageKey = "DOSING_DOSE_PRO_4",
-        productId = "com.aqua.dosing.dose_pro_4",
+        productId = "com.aqualight.dosing.dose_pro_4",
         setupCode = "DP4",
         category = AquaDeviceCategory.DOSING
     ),
+    COOLING_COOL_PRO_1F(
+        storageKey = "COOLING_COOL_PRO_1F",
+        productId = "com.aqualight.cooling.cool_pro_1f",
+        setupCode = "CP1",
+        category = AquaDeviceCategory.COOLING
+    ),
+    COOLING_COOL_PRO_2F(
+        storageKey = "COOLING_COOL_PRO_2F",
+        productId = "com.aqualight.cooling.cool_pro_2f",
+        setupCode = "CP2",
+        category = AquaDeviceCategory.COOLING
+    ),
+    COOLING_COOL_PRO_3F(
+        storageKey = "COOLING_COOL_PRO_3F",
+        productId = "com.aqualight.cooling.cool_pro_3f",
+        setupCode = "CP3",
+        category = AquaDeviceCategory.COOLING
+    ),
     UNKNOWN(
         storageKey = "UNKNOWN",
-        productId = "com.aqua.unknown",
+        productId = "com.aqualight.unknown",
         setupCode = "UNK",
         category = AquaDeviceCategory.UNKNOWN
     );
 
     companion object {
-        fun fromStorageKey(
-            value: String?
-        ): AquaProductKey {
-            if (value.isNullOrBlank()) {
-                return UNKNOWN
-            }
-
-            return values().firstOrNull { key ->
-                key.storageKey.equals(
-                    other = value.trim(),
-                    ignoreCase = true
-                )
+        fun fromStorageKey(value: String?): AquaProductKey {
+            if (value.isNullOrBlank()) return UNKNOWN
+            return entries.firstOrNull { key ->
+                key.storageKey.equals(value.trim(), ignoreCase = true)
             } ?: UNKNOWN
         }
 
-        fun fromProductId(
-            value: String?
-        ): AquaProductKey {
-            if (value.isNullOrBlank()) {
-                return UNKNOWN
-            }
-
-            return values().firstOrNull { key ->
-                key.productId.equals(
-                    other = value.trim(),
-                    ignoreCase = true
-                )
+        fun fromProductId(value: String?): AquaProductKey {
+            if (value.isNullOrBlank()) return UNKNOWN
+            return entries.firstOrNull { key ->
+                key.productId.equals(value.trim(), ignoreCase = true)
             } ?: UNKNOWN
         }
 
-        fun fromSetupCode(
-            value: String?
-        ): AquaProductKey {
-            if (value.isNullOrBlank()) {
-                return UNKNOWN
-            }
-
-            return values().firstOrNull { key ->
-                key.setupCode.equals(
-                    other = value.trim(),
-                    ignoreCase = true
-                )
+        fun fromSetupCode(value: String?): AquaProductKey {
+            if (value.isNullOrBlank()) return UNKNOWN
+            return entries.firstOrNull { key ->
+                key.setupCode.equals(value.trim(), ignoreCase = true)
             } ?: UNKNOWN
         }
     }

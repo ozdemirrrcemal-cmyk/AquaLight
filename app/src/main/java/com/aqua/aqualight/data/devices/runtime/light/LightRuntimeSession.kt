@@ -3,7 +3,6 @@ package com.aqua.aqualight.data.devices.runtime.light
 import com.aqua.aqualight.data.devices.api.light.LightChannelValues
 import com.aqua.aqualight.data.devices.api.light.LightCoolingControllerRequest
 import com.aqua.aqualight.data.devices.api.light.LightMode
-import com.aqua.aqualight.data.devices.api.light.LightProgramWriteRequest
 import com.aqua.aqualight.data.devices.api.light.LightThermalProtectionRequest
 import com.aqua.aqualight.data.devices.api.light.LightTimeSyncRequest
 import com.aqua.aqualight.data.devices.api.model.ApiErrorCode
@@ -197,24 +196,6 @@ class LightRuntimeSession internal constructor(
         }
     }
 
-    suspend fun setTemporaryManualOutput(
-        channelValues: LightChannelValues,
-        timeoutMillis: Long
-    ): ApiResult<Unit> {
-        if (deviceId <= 0L) {
-            setInvalidDeviceState()
-            return invalidDeviceResult()
-        }
-
-        return withContext(ioDispatcher) {
-            accessor.setTemporaryManualOutput(
-                deviceId = deviceId,
-                channelValues = channelValues.normalized(),
-                timeoutMillis = timeoutMillis
-            )
-        }
-    }
-
     suspend fun setSceneOutput(
         channelValues: LightChannelValues,
         sceneName: String,
@@ -259,48 +240,6 @@ class LightRuntimeSession internal constructor(
                         previousSnapshot = previousSnapshot,
                         message = result.error.message
                     )
-                    result
-                }
-            }
-        }
-    }
-
-    suspend fun writeProgramSchedule(
-        request: LightProgramWriteRequest
-    ): ApiResult<Unit> {
-        if (deviceId <= 0L) {
-            setInvalidDeviceState()
-            return invalidDeviceResult()
-        }
-
-        _state.update { state ->
-            state.copy(
-                isRefreshing = true,
-                errorMessage = null
-            )
-        }
-
-        return withContext(ioDispatcher) {
-            when (val result = accessor.writeProgramSchedule(
-                deviceId = deviceId,
-                request = request
-            )) {
-                is ApiResult.Success -> {
-                    clearLocalOverrideState()
-                    refreshAsync(
-                        readProfile = LightRuntimeReadProfile.STANDARD
-                    )
-                    result
-                }
-
-                is ApiResult.Error -> {
-                    _state.update { state ->
-                        state.copy(
-                            isRefreshing = false,
-                            errorMessage = result.error.message,
-                            isDeviceOnline = state.snapshot != null
-                        )
-                    }
                     result
                 }
             }

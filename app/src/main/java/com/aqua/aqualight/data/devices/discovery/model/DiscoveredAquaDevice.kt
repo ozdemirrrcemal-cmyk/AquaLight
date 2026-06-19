@@ -40,7 +40,7 @@ data class DiscoveredAquaDevice(
 
     val udpVersion: Int?,
 
-    /** Legacy ESP32 tab fields. Not used as commercial routing source. */
+    /** Firmware tab hint fields. Not used as commercial routing source. */
     val tabLight: Boolean,
     val tabTimer: Boolean,
     val tabTemperature: Boolean,

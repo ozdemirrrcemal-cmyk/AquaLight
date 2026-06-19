@@ -16,20 +16,20 @@ interface V1HttpClient {
         body: String
     ): ApiResult<String>
 
-    object NotConnected : V1HttpClient {
-        override suspend fun get(
-            connection: AquaDeviceConnection,
-            endpoint: V1Endpoint
-        ): ApiResult<String> {
-            return ApiResult.notConnected()
-        }
+    suspend fun put(
+        connection: AquaDeviceConnection,
+        endpoint: V1Endpoint,
+        body: String
+    ): ApiResult<String>
 
-        override suspend fun post(
-            connection: AquaDeviceConnection,
-            endpoint: V1Endpoint,
-            body: String
-        ): ApiResult<String> {
-            return ApiResult.notConnected()
-        }
+    object NotConnected : V1HttpClient {
+        override suspend fun get(connection: AquaDeviceConnection, endpoint: V1Endpoint): ApiResult<String> =
+            ApiResult.notConnected()
+
+        override suspend fun post(connection: AquaDeviceConnection, endpoint: V1Endpoint, body: String): ApiResult<String> =
+            ApiResult.notConnected()
+
+        override suspend fun put(connection: AquaDeviceConnection, endpoint: V1Endpoint, body: String): ApiResult<String> =
+            ApiResult.notConnected()
     }
 }

@@ -9,7 +9,7 @@ object DeviceSetupSsidParser {
      * Commercial setup SSID format:
      * AQL-<setupCode>-<shortId>
      *
-     * Legacy product-name based SSID formats are intentionally not accepted.
+     * Product-name based SSID aliases are intentionally not accepted.
      * The app is not released yet, so setup discovery only follows this final
      * commercial contract.
      */

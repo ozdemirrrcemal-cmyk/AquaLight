@@ -5,8 +5,6 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.core.view.children
-import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemLightProgramCardBinding
@@ -15,7 +13,17 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgr
 class LightProgramsAdapter(
     private val onProgramClick: (LightProgramListItem) -> Unit,
     private val onProgramOptionsClick: (LightProgramListItem) -> Unit
-) : ListAdapter<LightProgramListItem, LightProgramsAdapter.ProgramViewHolder>(DiffCallback) {
+) : RecyclerView.Adapter<LightProgramsAdapter.ProgramViewHolder>() {
+
+    private val items = mutableListOf<LightProgramListItem>()
+
+    fun submitList(
+        newItems: List<LightProgramListItem>
+    ) {
+        items.clear()
+        items.addAll(newItems)
+        notifyDataSetChanged()
+    }
 
     override fun onCreateViewHolder(
         parent: ViewGroup,
@@ -34,7 +42,11 @@ class LightProgramsAdapter(
         holder: ProgramViewHolder,
         position: Int
     ) {
-        holder.bind(getItem(position))
+        holder.bind(items[position])
+    }
+
+    override fun getItemCount(): Int {
+        return items.size
     }
 
     inner class ProgramViewHolder(
@@ -60,7 +72,11 @@ class LightProgramsAdapter(
             binding.tvProgramPoints.text = item.pointText
             binding.tvProgramPeak.text = item.peakText
 
-            binding.tvProgramState.text = item.stateText
+            binding.tvProgramState.text = if (item.isActive) {
+                "ACTIVE"
+            } else {
+                "DISABLED"
+            }
 
             binding.tvProgramRed.text = "R${item.red}"
             binding.tvProgramGreen.text = "G${item.green}"
@@ -73,35 +89,36 @@ class LightProgramsAdapter(
         ) {
             val context = binding.root.context
 
-            val isEmphasized = item.isActive || item.isOnDevice
-
-            val contentAlpha = if (isEmphasized) {
+            val contentAlpha = if (item.isActive) {
                 1f
             } else {
                 0.68f
             }
 
-            val chipAlpha = if (isEmphasized) {
+            val chipAlpha = if (item.isActive) {
                 1f
             } else {
                 0.58f
             }
 
-            val stateTextColor = ContextCompat.getColor(
-                context,
-                when {
-                    item.hasSyncWarning -> R.color.light_status_warning
-                    item.isOnDevice || item.isActive -> R.color.light_accent
-                    else -> R.color.light_text_tertiary
-                }
-            )
+            val stateTextColor = if (item.isActive) {
+                ContextCompat.getColor(
+                    context,
+                    R.color.light_accent
+                )
+            } else {
+                ContextCompat.getColor(
+                    context,
+                    R.color.light_text_tertiary
+                )
+            }
 
             binding.programCardRoot.alpha = 1f
 
-            binding.viewProgramAccent.alpha = when {
-                item.isOnDevice -> 1f
-                item.isActive -> 0.82f
-                else -> 0.22f
+            binding.viewProgramAccent.alpha = if (item.isActive) {
+                1f
+            } else {
+                0.22f
             }
 
             binding.tvProgramName.alpha = contentAlpha
@@ -112,7 +129,7 @@ class LightProgramsAdapter(
             binding.tvProgramPoints.alpha = contentAlpha
             binding.tvProgramPeak.alpha = contentAlpha
 
-            binding.tvProgramState.alpha = if (isEmphasized || item.hasSyncWarning) {
+            binding.tvProgramState.alpha = if (item.isActive) {
                 1f
             } else {
                 0.72f
@@ -123,7 +140,7 @@ class LightProgramsAdapter(
             binding.tvProgramState.backgroundTintList = ColorStateList.valueOf(
                 ContextCompat.getColor(
                     context,
-                    if (item.isOnDevice || item.isActive || item.hasSyncWarning) {
+                    if (item.isActive) {
                         R.color.light_accent_soft
                     } else {
                         R.color.light_surface_soft
@@ -151,22 +168,6 @@ class LightProgramsAdapter(
             binding.btnProgramMore.setOnClickListener {
                 onProgramOptionsClick(item)
             }
-        }
-    }
-
-    private object DiffCallback : DiffUtil.ItemCallback<LightProgramListItem>() {
-        override fun areItemsTheSame(
-            oldItem: LightProgramListItem,
-            newItem: LightProgramListItem
-        ): Boolean {
-            return oldItem.id == newItem.id
-        }
-
-        override fun areContentsTheSame(
-            oldItem: LightProgramListItem,
-            newItem: LightProgramListItem
-        ): Boolean {
-            return oldItem == newItem
         }
     }
 }

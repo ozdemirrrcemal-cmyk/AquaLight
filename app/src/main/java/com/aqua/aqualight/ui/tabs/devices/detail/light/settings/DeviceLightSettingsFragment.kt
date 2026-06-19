@@ -76,7 +76,7 @@ class DeviceLightSettingsFragment :
 
     private fun setupClicks() {
         binding.btnUpdateFirmware.setOnClickListener {
-            viewModel.checkFirmwareUpdate()
+            viewModel.updateFirmware()
         }
 
         binding.btnSyncTime.setOnClickListener {
@@ -172,35 +172,6 @@ class DeviceLightSettingsFragment :
         }
     }
 
-    private fun showFirmwareUpdateConfirm(
-        currentVersion: String,
-        targetVersion: String,
-        sizeText: String
-    ) {
-        val state = viewModel.uiState.value
-
-        if (!state.isDeviceOnline) {
-            showDeviceSnack(
-                message = "Device must be online for firmware update",
-                type = DeviceFeedbackType.ERROR
-            )
-            return
-        }
-
-        DeviceConfirmBottomSheet
-            .create(requireContext())
-            .show(
-                title = "New firmware found: $targetVersion",
-                message = "AquaLight firmware will be updated.\n\nCurrent version: $currentVersion\nNew version: $targetVersion\nSize: $sizeText\n\nThe device will pause outputs safely and restart during the update. Keep the device powered on.",
-                confirmText = "Update",
-                cancelText = "Cancel",
-                tone = DeviceConfirmTone.WARNING,
-                onConfirm = {
-                    viewModel.updateFirmware()
-                }
-            )
-    }
-
     private fun showCoolingModeConfirm() {
         val state = viewModel.uiState.value
         val enableCooling = !state.coolingModeEnabled
@@ -283,14 +254,6 @@ class DeviceLightSettingsFragment :
 
                         is DeviceLightSettingsEvent.SetLoading -> {
                             showDeviceLoading(event.isLoading)
-                        }
-
-                        is DeviceLightSettingsEvent.ShowFirmwareUpdateAvailable -> {
-                            showFirmwareUpdateConfirm(
-                                currentVersion = event.currentVersion,
-                                targetVersion = event.targetVersion,
-                                sizeText = event.sizeText
-                            )
                         }
                     }
                 }
@@ -430,26 +393,9 @@ class DeviceLightSettingsFragment :
         binding.tvFanFullSpeedValue.text =
             formatCelsius(state.fanFullSpeedTemperatureCelsius)
 
-        renderFirmwareUpdateStatus(
-            state
-        )
-
         renderControlAvailability(
             state
         )
-    }
-
-    private fun renderFirmwareUpdateStatus(
-        state: DeviceLightSettingsUiState
-    ) {
-        val statusText = state.firmwareUpdateStatusText.trim()
-        binding.tvFirmwareUpdateStatus.isVisible = statusText.isNotBlank()
-        binding.tvFirmwareUpdateStatus.text = statusText
-
-        val progress = state.firmwareUpdateProgressPercent
-        val showProgress = state.firmwareUpdateInProgress || progress in 0..99
-        binding.progressFirmwareUpdate.isVisible = showProgress
-        binding.progressFirmwareUpdate.progress = progress.coerceIn(0, 100)
     }
 
     private fun renderIdentityRow(

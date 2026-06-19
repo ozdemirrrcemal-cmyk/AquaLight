@@ -72,8 +72,7 @@ data class LightProgram(
 
 data class LightManualRequest(
     val powerOn: Boolean,
-    val channelValues: LightChannelValues,
-    val overrideTimeoutMillis: Long? = null
+    val channelValues: LightChannelValues
 )
 
 data class LightAutomationRequest(
@@ -115,9 +114,7 @@ data class LightDeviceState(
     val coolingControllers: List<LightCoolingControllerState> = emptyList(),
     val time: LightTimeState = LightTimeState(),
     val thermalProtection: LightThermalProtectionState = LightThermalProtectionState(),
-    val nextEvent: LightNextEvent? = null,
-    val legacyIp: String = "",
-    val legacyRawPayload: String = ""
+    val nextEvent: LightNextEvent? = null
 )
 
 data class LightPwmChannelState(

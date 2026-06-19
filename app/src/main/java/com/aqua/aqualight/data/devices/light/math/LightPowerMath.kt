@@ -47,7 +47,7 @@ object LightPowerMath {
 
     /**
      * Runtime max watt is the sum of the actual LED channel max watt values the
-     * device reports. The group WMax field is only a fallback for legacy payloads
+     * device reports. The group WMax field is only a fallback for incomplete payloads
      * that do not expose channel watt values.
      */
     fun calculateMaxWatt(

@@ -60,27 +60,17 @@ class DeviceLightProgramEditorFragment :
 
         _binding = FragmentDeviceLightProgramEditorBinding.bind(view)
 
+        viewModel.initialize(
+            deviceId = deviceId,
+            programId = programId
+        )
+
         setupHeader()
         setupProgramSettingsRows()
         setupClicks()
         setupSliders()
         observeUiState()
         observeEvents()
-
-        viewModel.initialize(
-            deviceId = deviceId,
-            programId = programId
-        )
-    }
-
-    override fun onStart() {
-        super.onStart()
-        viewModel.onEditorVisible()
-    }
-
-    override fun onStop() {
-        viewModel.onEditorHidden()
-        super.onStop()
     }
 
     private fun setupHeader() {
@@ -213,62 +203,15 @@ class DeviceLightProgramEditorFragment :
                     "Preview program"
                 }
 
-            renderValidationAndActions(state)
-
             previewDaySheet?.renderPreviewState(
                 isPreviewRunning = state.isPreviewRunning,
-                progressPercent = state.previewProgressPercent,
-                simulatedTimeLabel = state.previewSimulationTime?.label
+                progressPercent = state.previewProgressPercent
             )
 
             renderRepeatMode(state)
             renderTransitionSummary(state)
         } finally {
             isRendering = false
-        }
-    }
-
-    private fun renderValidationAndActions(
-        state: DeviceLightProgramEditorUiState
-    ) {
-        val validationMessage = state.validationMessage
-        val hasValidationMessage = !validationMessage.isNullOrBlank()
-
-        binding.validationBanner.visibility = if (hasValidationMessage) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
-        binding.tvValidationMessage.text = validationMessage.orEmpty()
-
-        val previewEnabled = state.isPreviewRunning || state.canStartPreview
-        binding.btnPreviewProgram.isEnabled = previewEnabled
-        binding.btnPreviewProgram.alpha = if (previewEnabled) {
-            1f
-        } else {
-            ACTION_DISABLED_ALPHA
-        }
-
-        renderActionButtonState(
-            button = binding.btnLoadToDevice,
-            enabled = state.canLoadToDevice
-        )
-
-        renderActionButtonState(
-            button = binding.btnSaveAs,
-            enabled = state.canSave
-        )
-    }
-
-    private fun renderActionButtonState(
-        button: View,
-        enabled: Boolean
-    ) {
-        button.isEnabled = enabled
-        button.alpha = if (enabled) {
-            1f
-        } else {
-            ACTION_DISABLED_ALPHA
         }
     }
 
@@ -291,11 +234,6 @@ class DeviceLightProgramEditorFragment :
 
             if (state.isPreviewRunning) {
                 viewModel.stopPreview()
-                return@setOnClickListener
-            }
-
-            if (!state.canStartPreview) {
-                viewModel.validateBeforeProgramAction()
                 return@setOnClickListener
             }
 
@@ -351,23 +289,15 @@ class DeviceLightProgramEditorFragment :
         }
 
         binding.repeatWeekdays.setOnClickListener {
-            if (viewModel.uiState.value.repeatSelectionEnabled) {
-                viewModel.updateRepeatWeekdays()
-            }
+            viewModel.updateRepeatWeekdays()
         }
 
         binding.repeatWeekend.setOnClickListener {
-            if (viewModel.uiState.value.repeatSelectionEnabled) {
-                viewModel.updateRepeatWeekend()
-            }
+            viewModel.updateRepeatWeekend()
         }
 
         binding.repeatCustom.setOnClickListener {
             val state = viewModel.uiState.value
-
-            if (!state.repeatSelectionEnabled) {
-                return@setOnClickListener
-            }
 
             LightCustomDaysSheet
                 .create(requireContext())
@@ -383,10 +313,6 @@ class DeviceLightProgramEditorFragment :
         }
 
         binding.btnLoadToDevice.setOnClickListener {
-            if (!viewModel.validateBeforeProgramAction()) {
-                return@setOnClickListener
-            }
-
             val isEditing = viewModel.isEditingExistingProgram()
 
             showProgramNameSheet(
@@ -410,10 +336,6 @@ class DeviceLightProgramEditorFragment :
         }
 
         binding.btnSaveAs.setOnClickListener {
-            if (!viewModel.validateBeforeProgramAction()) {
-                return@setOnClickListener
-            }
-
             val isEditing = viewModel.isEditingExistingProgram()
 
             showProgramNameSheet(
@@ -423,7 +345,7 @@ class DeviceLightProgramEditorFragment :
                     "Save Program"
                 },
                 subtitle = if (isEditing) {
-                    "Save locally. Use Load to Device to update the controller."
+                    "Update this program. Active programs will sync to the device."
                 } else {
                     "Save this program without loading it to the device."
                 },
@@ -445,7 +367,6 @@ class DeviceLightProgramEditorFragment :
         sheet.show(
             initialSpeed = state.previewSpeed,
             initialProgressPercent = state.previewProgressPercent,
-            initialSimulatedTimeLabel = state.previewSimulationTime?.label,
             isPreviewRunning = state.isPreviewRunning,
             onStartPreview = { speed ->
                 viewModel.startPreview(speed)
@@ -569,91 +490,37 @@ class DeviceLightProgramEditorFragment :
         val normalText =
             requireContext().getColor(R.color.light_text_secondary)
 
-        val disabledText =
-            requireContext().getColor(R.color.light_text_disabled)
-
-        setRepeatOptionState(
-            view = binding.repeatEvery,
-            selected = state.repeatMode == RepeatMode.EVERY,
-            enabled = true,
-            selectedBg = selectedBg,
-            transparentBg = transparentBg,
-            selectedText = selectedText,
-            normalText = normalText,
-            disabledText = disabledText
+        binding.repeatEvery.setBackgroundResource(
+            if (state.repeatMode == RepeatMode.EVERY) selectedBg else transparentBg
         )
 
-        setRepeatOptionState(
-            view = binding.repeatWeekdays,
-            selected = state.repeatMode == RepeatMode.WEEK,
-            enabled = state.repeatSelectionEnabled,
-            selectedBg = selectedBg,
-            transparentBg = transparentBg,
-            selectedText = selectedText,
-            normalText = normalText,
-            disabledText = disabledText
+        binding.repeatWeekdays.setBackgroundResource(
+            if (state.repeatMode == RepeatMode.WEEK) selectedBg else transparentBg
         )
 
-        setRepeatOptionState(
-            view = binding.repeatWeekend,
-            selected = state.repeatMode == RepeatMode.WEEKEND,
-            enabled = state.repeatSelectionEnabled,
-            selectedBg = selectedBg,
-            transparentBg = transparentBg,
-            selectedText = selectedText,
-            normalText = normalText,
-            disabledText = disabledText
+        binding.repeatWeekend.setBackgroundResource(
+            if (state.repeatMode == RepeatMode.WEEKEND) selectedBg else transparentBg
         )
 
-        setRepeatOptionState(
-            view = binding.repeatCustom,
-            selected = state.repeatMode == RepeatMode.CUSTOM,
-            enabled = state.repeatSelectionEnabled,
-            selectedBg = selectedBg,
-            transparentBg = transparentBg,
-            selectedText = selectedText,
-            normalText = normalText,
-            disabledText = disabledText
+        binding.repeatCustom.setBackgroundResource(
+            if (state.repeatMode == RepeatMode.CUSTOM) selectedBg else transparentBg
         )
 
-        binding.tvRepeatFirmwareHint.visibility = if (state.repeatUnavailableReason.isNullOrBlank()) {
-            View.GONE
-        } else {
-            View.VISIBLE
-        }
-
-        binding.tvRepeatFirmwareHint.text = state.repeatUnavailableReason.orEmpty()
-    }
-
-    private fun setRepeatOptionState(
-        view: TextView,
-        selected: Boolean,
-        enabled: Boolean,
-        selectedBg: Int,
-        transparentBg: Int,
-        selectedText: Int,
-        normalText: Int,
-        disabledText: Int
-    ) {
-        view.setBackgroundResource(
-            if (selected) selectedBg else transparentBg
+        binding.repeatEvery.setTextColor(
+            if (state.repeatMode == RepeatMode.EVERY) selectedText else normalText
         )
 
-        view.setTextColor(
-            when {
-                selected -> selectedText
-                enabled -> normalText
-                else -> disabledText
-            }
+        binding.repeatWeekdays.setTextColor(
+            if (state.repeatMode == RepeatMode.WEEK) selectedText else normalText
         )
 
-        view.isEnabled = enabled
-        view.isClickable = enabled
-        view.alpha = if (enabled || selected) {
-            1f
-        } else {
-            REPEAT_OPTION_DISABLED_ALPHA
-        }
+        binding.repeatWeekend.setTextColor(
+            if (state.repeatMode == RepeatMode.WEEKEND) selectedText else normalText
+        )
+
+        binding.repeatCustom.setTextColor(
+            if (state.repeatMode == RepeatMode.CUSTOM) selectedText else normalText
+        )
     }
 
     private fun renderTransitionSummary(
@@ -671,11 +538,6 @@ class DeviceLightProgramEditorFragment :
     override fun onDestroyView() {
         showDeviceLoading(false)
 
-        val previewState = viewModel.uiState.value
-        if (previewState.isPreviewRunning || previewState.previewOutputValues != null) {
-            viewModel.stopPreview()
-        }
-
         previewDaySheet?.dismiss()
         previewDaySheet = null
 
@@ -686,8 +548,5 @@ class DeviceLightProgramEditorFragment :
     companion object {
         const val ARG_DEVICE_ID = "deviceId"
         const val ARG_PROGRAM_ID = "programId"
-
-        private const val REPEAT_OPTION_DISABLED_ALPHA = 0.46f
-        private const val ACTION_DISABLED_ALPHA = 0.46f
     }
 }

@@ -65,7 +65,6 @@ class DevicesDataStoreManager private constructor(
     data class DeviceInfo(
         val id: Long,
         val ownerUid: String = "",
-        val apiToken: String = "",
 
         val deviceUid: String = "",
         val macAddress: String = "",
@@ -457,29 +456,6 @@ class DevicesDataStoreManager private constructor(
         }
     }
 
-    suspend fun updateDeviceApiToken(
-        id: Long,
-        apiToken: String
-    ) {
-        val normalizedToken = apiToken.trim()
-        dataStore.updateData { prefs ->
-            val updatedDevices = prefs.devicesList.map { device ->
-                if (device.id != id || !device.belongsToCurrentUser()) {
-                    return@map device
-                }
-
-                device.toBuilder()
-                    .setApiToken(normalizedToken)
-                    .build()
-            }
-
-            prefs.toBuilder()
-                .clearDevices()
-                .addAllDevices(updatedDevices)
-                .build()
-        }
-    }
-
     suspend fun assignDeviceToTank(
         deviceId: Long,
         tankId: Long
@@ -830,7 +806,6 @@ class DevicesDataStoreManager private constructor(
         return DeviceInfo(
             id = id,
             ownerUid = ownerUid,
-            apiToken = apiToken,
 
             deviceUid = deviceUid,
             macAddress = macAddress,

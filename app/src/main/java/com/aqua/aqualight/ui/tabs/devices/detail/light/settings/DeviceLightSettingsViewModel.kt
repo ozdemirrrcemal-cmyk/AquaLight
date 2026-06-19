@@ -8,7 +8,6 @@ import com.aqua.aqualight.data.devices.api.light.LightCoolingControllerRequest
 import com.aqua.aqualight.data.devices.api.light.LightThermalProtectionRequest
 import com.aqua.aqualight.data.devices.api.light.LightTimeSyncRequest
 import com.aqua.aqualight.data.devices.api.model.ApiResult
-import com.aqua.aqualight.data.devices.firmware.AquaLightFirmwareUpdateManager
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeReadProfile
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeSession
@@ -43,10 +42,6 @@ class DeviceLightSettingsViewModel(
         context = application.applicationContext
     )
 
-    private val firmwareUpdateManager = AquaLightFirmwareUpdateManager(
-        context = application.applicationContext
-    )
-
     private val _uiState = MutableStateFlow(
         unavailableState(
             reason = "Waiting for live settings data"
@@ -62,7 +57,6 @@ class DeviceLightSettingsViewModel(
     private var deviceId: Long = 0L
     private var runtimeSession: LightRuntimeSession? = null
     private var runtimeCollectorJob: Job? = null
-    private var pendingFirmwareUpdate: AquaLightFirmwareUpdateManager.FirmwareUpdateCheckResult? = null
 
     fun initialize(
         deviceId: Long
@@ -162,171 +156,8 @@ class DeviceLightSettingsViewModel(
         }
     }
 
-    fun checkFirmwareUpdate() {
-        val runtimeState = runtimeSession?.state?.value
-        val device = runtimeState?.device ?: run {
-            emitSettingsError(
-                "Device information is not ready yet"
-            )
-            return
-        }
-
-        if (!runtimeState.isDeviceOnline) {
-            emitSettingsError(
-                "Device must be online for firmware update"
-            )
-            return
-        }
-
-        viewModelScope.launch {
-            pendingFirmwareUpdate = null
-            setFirmwareUpdateStatus(
-                text = "Checking firmware update...",
-                progressPercent = 0,
-                inProgress = true
-            )
-            _events.emit(
-                DeviceLightSettingsEvent.SetLoading(true)
-            )
-            _events.emit(
-                DeviceLightSettingsEvent.ShowMessage(
-                    "Checking firmware update..."
-                )
-            )
-
-            setFirmwareUpdateStatus(
-                text = "Reading device firmware version...",
-                progressPercent = 5,
-                inProgress = true
-            )
-
-            when (val result = firmwareUpdateManager.checkFirmwareUpdate(device)) {
-                is ApiResult.Success -> {
-                    val check = result.value
-                    if (check.alreadyUpToDate) {
-                        setFirmwareUpdateStatus(
-                            text = "Device is up to date. Current version: ${check.currentVersion.ifBlank { check.version }}",
-                            progressPercent = 100,
-                            inProgress = false
-                        )
-                        _events.emit(
-                            DeviceLightSettingsEvent.ShowMessage(
-                                "Device is up to date. Current version: ${check.currentVersion.ifBlank { check.version }}"
-                            )
-                        )
-                    } else {
-                        pendingFirmwareUpdate = check
-                        setFirmwareUpdateStatus(
-                            text = "New firmware found: ${check.version}",
-                            progressPercent = 10,
-                            inProgress = false
-                        )
-                        _events.emit(
-                            DeviceLightSettingsEvent.ShowFirmwareUpdateAvailable(
-                                currentVersion = check.currentVersion.ifBlank { "Unknown" },
-                                targetVersion = check.version,
-                                sizeText = formatFirmwareSize(check.size)
-                            )
-                        )
-                    }
-                }
-
-                is ApiResult.Error -> {
-                    setFirmwareUpdateStatus(
-                        text = result.error.message,
-                        progressPercent = -1,
-                        inProgress = false
-                    )
-                    _events.emit(
-                        DeviceLightSettingsEvent.ShowError(
-                            result.error.message
-                        )
-                    )
-                }
-            }
-
-            _events.emit(
-                DeviceLightSettingsEvent.SetLoading(false)
-            )
-        }
-    }
-
     fun updateFirmware() {
-        val runtimeState = runtimeSession?.state?.value
-        val device = runtimeState?.device ?: run {
-            emitSettingsError(
-                "Device information is not ready yet"
-            )
-            return
-        }
-
-        if (!runtimeState.isDeviceOnline) {
-            emitSettingsError(
-                "Device must be online for firmware update"
-            )
-            return
-        }
-
-        val check = pendingFirmwareUpdate ?: run {
-            checkFirmwareUpdate()
-            return
-        }
-
-        viewModelScope.launch {
-            _events.emit(
-                DeviceLightSettingsEvent.SetLoading(true)
-            )
-            setFirmwareUpdateStatus(
-                text = "Firmware download is starting...",
-                progressPercent = 0,
-                inProgress = true
-            )
-
-            when (val result = firmwareUpdateManager.startFirmwareUpdate(
-                device = device,
-                check = check,
-                onProgress = { progress ->
-                    setFirmwareUpdateStatus(
-                        text = progress.message,
-                        progressPercent = progress.progressPercent ?: _uiState.value.firmwareUpdateProgressPercent,
-                        inProgress = progress.stage != AquaLightFirmwareUpdateManager.FirmwareUpdateStage.COMPLETED &&
-                            progress.stage != AquaLightFirmwareUpdateManager.FirmwareUpdateStage.FAILED
-                    )
-                }
-            )) {
-                is ApiResult.Success -> {
-                    val outcome = result.value
-                    pendingFirmwareUpdate = null
-                    setFirmwareUpdateStatus(
-                        text = outcome.message,
-                        progressPercent = 100,
-                        inProgress = false
-                    )
-                    _events.emit(
-                        DeviceLightSettingsEvent.ShowMessage(
-                            outcome.message
-                        )
-                    )
-                }
-
-                is ApiResult.Error -> {
-                    setFirmwareUpdateStatus(
-                        text = result.error.message,
-                        progressPercent = -1,
-                        inProgress = false
-                    )
-                    _events.emit(
-                        DeviceLightSettingsEvent.ShowError(
-                            result.error.message
-                        )
-                    )
-                }
-            }
-
-            _events.emit(
-                DeviceLightSettingsEvent.SetLoading(false)
-            )
-        }
+        emitFirmwareUpdateUnavailable()
     }
 
     fun updateLimitTemperature(
@@ -468,16 +299,10 @@ class DeviceLightSettingsViewModel(
         val snapshot = runtimeState.snapshot
         val device = runtimeState.device
 
-        val previousFirmwareStatus = _uiState.value
-
         if (snapshot == null) {
             _uiState.value = unavailableState(
                 reason = runtimeState.errorMessage ?: "Syncing live settings data",
                 device = device
-            ).copy(
-                firmwareUpdateStatusText = previousFirmwareStatus.firmwareUpdateStatusText,
-                firmwareUpdateProgressPercent = previousFirmwareStatus.firmwareUpdateProgressPercent,
-                firmwareUpdateInProgress = previousFirmwareStatus.firmwareUpdateInProgress
             )
             return
         }
@@ -486,10 +311,6 @@ class DeviceLightSettingsViewModel(
             device = device,
             snapshot = snapshot,
             runtimeState = runtimeState
-        ).copy(
-            firmwareUpdateStatusText = previousFirmwareStatus.firmwareUpdateStatusText,
-            firmwareUpdateProgressPercent = previousFirmwareStatus.firmwareUpdateProgressPercent,
-            firmwareUpdateInProgress = previousFirmwareStatus.firmwareUpdateInProgress
         )
     }
 
@@ -689,35 +510,6 @@ class DeviceLightSettingsViewModel(
         ).format(Date(millis))
     }
 
-    private fun setFirmwareUpdateStatus(
-        text: String,
-        progressPercent: Int,
-        inProgress: Boolean
-    ) {
-        _uiState.update { state ->
-            state.copy(
-                firmwareUpdateStatusText = text,
-                firmwareUpdateProgressPercent = progressPercent.coerceIn(-1, 100),
-                firmwareUpdateInProgress = inProgress
-            )
-        }
-    }
-
-    private fun formatFirmwareSize(
-        bytes: Long
-    ): String {
-        if (bytes <= 0L) {
-            return "Unknown size"
-        }
-
-        val megabytes = bytes / (1024.0 * 1024.0)
-        return String.format(
-            Locale.US,
-            "%.1f MB",
-            megabytes
-        )
-    }
-
     private fun runSettingsCommand(
         successMessage: String,
         command: suspend (LightRuntimeSession) -> ApiResult<Unit>
@@ -793,6 +585,15 @@ class DeviceLightSettingsViewModel(
         )
     }
 
+    private fun emitFirmwareUpdateUnavailable() {
+        viewModelScope.launch {
+            _events.emit(
+                DeviceLightSettingsEvent.ShowWarning(
+                    "Firmware update requires a dedicated upload flow and is not wired to Light settings yet."
+                )
+            )
+        }
+    }
 
     private fun emitSettingsError(
         message: String

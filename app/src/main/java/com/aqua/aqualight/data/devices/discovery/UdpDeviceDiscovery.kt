@@ -8,8 +8,6 @@ import android.net.wifi.WifiManager
 import android.os.SystemClock
 import android.util.Log
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceDefinition
-import com.aqua.aqualight.data.devices.catalog.AquaProductKey
 import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -25,7 +23,7 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.SocketTimeoutException
 import java.nio.charset.StandardCharsets
-import java.util.Locale
+import java.util.zip.CRC32
 import kotlin.coroutines.coroutineContext
 
 object UdpDeviceDiscovery {
@@ -33,19 +31,12 @@ object UdpDeviceDiscovery {
     private const val TAG_DISCOVERY = "UDP_DISCOVERY"
     private const val TAG_RECEIVED = "UDP_RECEIVED"
 
-    private const val VER_UDP = 20240813
+    private const val DISCOVERY_SCHEMA = "aql.discovery.v1"
+    private const val MESSAGE_DEVICE_ANNOUNCE = "device_announce"
     private const val UDP_PORT = 10888
     private const val SOCKET_TIMEOUT_MS = 300
-    private const val BUFFER_SIZE = 4096
+    private const val BUFFER_SIZE = 1536
 
-    /**
-     * Eski firmware desteği sadece burada normalize edilir.
-     *
-     * Firmware hazır olduğunda yapılacak tek temizlik:
-     * ProductId/DeviceUid/ProtocolVersion zorunlu yapılır ve
-     * resolveLegacyDefinition(...) fallback bloğu kaldırılır.
-     * Uygulamanın geri kalanı eski/yeni firmware ayrımı bilmez.
-     */
     suspend fun discover(
         context: Context,
         timeoutMs: Long = 3_000L,
@@ -55,13 +46,9 @@ object UdpDeviceDiscovery {
         val appContext = context.applicationContext
         val resultMap = linkedMapOf<String, DiscoveredAquaDevice>()
         val buffer = ByteArray(BUFFER_SIZE)
-
         val targets = getBroadcastTargets(appContext)
 
-        Log.d(
-            TAG_DISCOVERY,
-            "Broadcast targets: ${targets.joinToString { it.hostAddress.orEmpty() }}:$UDP_PORT"
-        )
+        Log.d(TAG_DISCOVERY, "Broadcast targets: ${targets.joinToString { it.hostAddress.orEmpty() }}:$UDP_PORT")
 
         val socket = DatagramSocket(null).apply {
             reuseAddress = true
@@ -72,885 +59,277 @@ object UdpDeviceDiscovery {
 
         try {
             coroutineContext.ensureActive()
-
-            sendDiscoveryPackets(
-                socket = socket,
-                targets = targets
-            )
+            sendDiscoveryPackets(socket, targets)
 
             val startTime = SystemClock.elapsedRealtime()
-
             while (
                 coroutineContext.isActive &&
                 SystemClock.elapsedRealtime() - startTime < timeoutMs &&
                 shouldStopEarly?.invoke() != true
             ) {
                 coroutineContext.ensureActive()
-
                 try {
-                    val packet = DatagramPacket(
-                        buffer,
-                        buffer.size
-                    )
-
+                    val packet = DatagramPacket(buffer, buffer.size)
                     socket.receive(packet)
 
-                    val jsonString = String(
-                        packet.data,
-                        0,
-                        packet.length,
-                        StandardCharsets.UTF_8
-                    )
-
+                    val jsonString = String(packet.data, 0, packet.length, StandardCharsets.UTF_8)
                     val sourceIp = packet.address.hostAddress ?: continue
 
-                    Log.d(
-                        TAG_RECEIVED,
-                        "from $sourceIp: $jsonString"
-                    )
+                    Log.d(TAG_RECEIVED, "from $sourceIp: $jsonString")
 
-                    val discoveredDevice = parseDiscoveredDevice(
-                        jsonString = jsonString,
-                        sourceIp = sourceIp
-                    ) ?: continue
-
+                    val discoveredDevice = parseDiscoveredDevice(jsonString, sourceIp) ?: continue
                     resultMap[discoveredDevice.identityKey()] = discoveredDevice
 
                     if (stopWhen?.invoke(discoveredDevice) == true) {
                         break
                     }
                 } catch (_: SocketTimeoutException) {
-                    // Normal.
+                    // Normal receive window tick.
                 } catch (exception: Exception) {
-                    Log.e(
-                        TAG_RECEIVED,
-                        "Packet parse error",
-                        exception
-                    )
+                    Log.e(TAG_RECEIVED, "Packet parse error", exception)
                 }
             }
         } finally {
             socket.close()
         }
 
-        return@withContext resultMap.values.toList()
+        resultMap.values.toList()
     }
 
-    private suspend fun sendDiscoveryPackets(
-        socket: DatagramSocket,
-        targets: List<InetAddress>
-    ) {
-        val requestJson = """{"Command":"RefreshUDP","VerUdp":$VER_UDP}"""
+    private suspend fun sendDiscoveryPackets(socket: DatagramSocket, targets: List<InetAddress>) {
+        val requestJson = """{"schema":"$DISCOVERY_SCHEMA","command":"refresh"}"""
         val sendData = requestJson.toByteArray(StandardCharsets.UTF_8)
 
         repeat(3) {
             coroutineContext.ensureActive()
-
             targets.forEach { target ->
                 runCatching {
-                    val sendPacket = DatagramPacket(
-                        sendData,
-                        sendData.size,
-                        target,
-                        UDP_PORT
-                    )
-
-                    socket.send(sendPacket)
+                    socket.send(DatagramPacket(sendData, sendData.size, target, UDP_PORT))
                 }
             }
-
             delay(120L)
         }
     }
 
-    private fun parseDiscoveredDevice(
-        jsonString: String,
-        sourceIp: String
-    ): DiscoveredAquaDevice? {
-        val root = try {
-            JSONObject(jsonString)
-        } catch (_: Exception) {
+    private fun parseDiscoveredDevice(jsonString: String, sourceIp: String): DiscoveredAquaDevice? {
+        val root = runCatching { JSONObject(jsonString) }.getOrNull() ?: return null
+
+        if (root.optString("schema") != DISCOVERY_SCHEMA) {
             return null
         }
 
-        if (isSelfRefreshPacket(root)) {
+        if (root.optString("command").equals("refresh", ignoreCase = true)) {
             return null
         }
 
-        val deviceJson = extractDeviceJson(root) ?: return null
-
-        /**
-         * TICARI DISCOVERY CONTRACT
-         *
-         * Firmware düzeldiğinde UDP cihaz bilgisinde şu alanlar zorunlu olmalı:
-         *
-         * ProductId:
-         *   com.aqua.light.wrgb_pro_elite
-         *
-         * ProtocolVersion veya ApiVersion:
-         *   1
-         *
-         * Stable identity alanlarından en az biri:
-         *   DeviceUid / ShortId / MacAddress / FirmwareSerial / SerialNumber / ID / ESPChipID
-         *
-         * ProductId cihazın modelini çözer.
-         * ProtocolVersion uygulamanın bu protokolü destekleyip desteklemediğini kontrol eder.
-         * Stable identity ise aynı fiziksel cihazı IP değişse bile takip etmeyi sağlar.
-         */
-        val productId = deviceJson.firstNonBlankString(
-            "ProductId",
-            "productId",
-            "product_id"
-        )
-
-        val definitionFromProductId = productId?.let { value ->
-            AquaDeviceCatalog.findByProductId(
-                productId = value
-            )
-        }
-
-        /**
-         * Firmware ProductId gönderiyor ama uygulama katalogunda yoksa bu cihaz desteklenmez.
-         *
-         * Bu kontrol ticari seviye için doğru.
-         * Çünkü yanlış ProductId gönderen cihazı AquaName/Name ile tahmin edip kabul etmek istemeyiz.
-         */
-        if (
-            !productId.isNullOrBlank() &&
-            definitionFromProductId == null
-        ) {
-            Log.w(
-                TAG_RECEIVED,
-                "Unsupported ProductId=$productId from $sourceIp"
-            )
+        if (root.optString("messageType") != MESSAGE_DEVICE_ANNOUNCE) {
             return null
         }
 
-        /**
-         * LEGACY_DISCOVERY_START
-         *
-         * Eski firmware ProductId vermediği için geçici olarak
-         * AquaName / Name / TabLight / TabTimer / TabTemperature alanlarını okuyoruz.
-         *
-         * FIRMWARE_READY:
-         * Firmware ProductId gönderdiğinde bu legacy alanlar cihaz modelini çözmek için kullanılmayacak.
-         */
-        val legacyAquaName = deviceJson.firstNonBlankString(
-            "AquaName"
-        )
+        val deviceJson = root.optJSONObject("device") ?: return null
+        val productJson = root.optJSONObject("product") ?: return null
+        val firmwareJson = root.optJSONObject("firmware") ?: JSONObject()
+        val networkJson = root.optJSONObject("network") ?: JSONObject()
+        val capabilitiesJson = root.optJSONObject("capabilities") ?: JSONObject()
+        val limitsJson = root.optJSONObject("limits") ?: JSONObject()
+        val modulesJson = root.optJSONArray("modules") ?: JSONArray()
 
-        val legacyName = deviceJson.firstNonBlankString(
-            "Name"
-        )
-
-        val legacyTabLight = deviceJson.optFlexibleBoolean(
-            key = "TabLight"
-        )
-
-        val legacyTabTimer = deviceJson.optFlexibleBoolean(
-            key = "TabTimer"
-        )
-
-        val legacyTabTemperature = deviceJson.optFlexibleBoolean(
-            key = "TabTemperature"
-        )
-        /**
-         * LEGACY_DISCOVERY_END
-         */
-
-        val definition = definitionFromProductId
-            ?: resolveLegacyDefinition(
-                aquaName = legacyAquaName,
-                name = legacyName,
-                tabLight = legacyTabLight,
-                tabTimer = legacyTabTimer,
-                tabTemperature = legacyTabTemperature
-            )
-            ?: return null
-
-        val isLegacyDiscovery = definitionFromProductId == null
-
-        val protocolVersion = deviceJson.optNullableInt("ProtocolVersion")
-            ?: deviceJson.optNullableInt("ApiVersion")
-            ?: if (isLegacyDiscovery) {
-                0
-            } else {
-                null
-            }
-
-        if (!isLegacyDiscovery && !definition.isProtocolVersionSupported(protocolVersion)) {
-            Log.w(
-                TAG_RECEIVED,
-                "Unsupported protocolVersion=$protocolVersion productId=${definition.productId} from $sourceIp"
-            )
+        val productId = productJson.firstNonBlankString("productId") ?: return null
+        val definition = AquaDeviceCatalog.findByProductId(productId) ?: run {
+            Log.w(TAG_RECEIVED, "Unsupported productId=$productId from $sourceIp")
             return null
         }
 
-        val idRaw = deviceJson.optLong(
-            "ID",
-            0L
-        )
-
-        val espChipId = deviceJson.optLong(
-            "ESPChipID",
-            0L
-        )
-
-        val ip = sourceIp
-
-        if (ip.isBlank()) {
+        val protocolVersion = firmwareJson.optNullableInt("protocolVersion")
+        if (!definition.isProtocolVersionSupported(protocolVersion)) {
+            Log.w(TAG_RECEIVED, "Unsupported protocolVersion=$protocolVersion productId=$productId from $sourceIp")
             return null
         }
 
-        val rawDeviceUid = deviceJson.firstNonBlankString(
-            "DeviceUid",
-            "DeviceUID",
-            "UID",
-            "deviceUid",
-            "device_uid"
-        )
+        val networkIp = networkJson.firstNonBlankString("ip")
+        val ip = networkIp?.takeIf { isUsableIp(it) } ?: sourceIp.takeIf { isUsableIp(it) } ?: return null
 
-        val macAddress = deviceJson.firstNonBlankString(
-            "MacAddress",
-            "MAC",
-            "macAddress",
-            "mac_address"
-        )
+        val deviceUid = deviceJson.firstNonBlankString("uid", "deviceUid") ?: return null
+        val shortId = deviceJson.firstNonBlankString("shortId") ?: deviceUid.substringAfterLast('-', "")
+        val macAddress = deviceJson.firstNonBlankString("macAddress")
+        val serialNumber = deviceJson.firstNonBlankString("serialNumber") ?: deviceUid
+        val firmwareSerial = deviceJson.firstNonBlankString("firmwareSerial") ?: serialNumber
+        val chipId = deviceJson.optNullableLong("chipId")
+            ?: deviceJson.optNullableLong("espChipId")
+        val finalId = chipId?.takeIf { it > 0L }
+            ?: stablePositiveId(deviceUid)
 
-        val numericIdentity = idRaw.takeIf { value -> value > 0L }
-            ?: espChipId.takeIf { value -> value > 0L }
+        val firmwareVersion = firmwareJson.firstNonBlankString("version")
+        val firmwareBuild = firmwareJson.firstNonBlankString("build").orEmpty()
+        val apiVersion = firmwareJson.optNullableInt("apiVersion")
+        val udpVersion = root.optNullableInt("udpVersion")
 
-        val deviceUid = rawDeviceUid
-            ?: buildDeviceUidFromMac(
-                macAddress = macAddress
-            )
-            ?: numericIdentity?.let { value ->
-                "AQL-LEGACY-ESP32-$value"
-            }
+        val displayName = deviceJson.firstNonBlankString("displayName", "customName")
+            ?: productJson.firstNonBlankString("displayName")
+            ?: definition.displayName
 
-        val serialNumber = deviceJson.firstNonBlankString(
-            "SerialNumber",
-            "Serial",
-            "serialNumber",
-            "serial_number"
-        )
+        val customName = deviceJson.firstNonBlankString("customName")
+        val resolvedDisplayName = customName?.ifBlank { null } ?: displayName
 
-        val firmwareSerial = deviceJson.firstNonBlankString(
-            "FirmwareSerial",
-            "firmwareSerial"
-        ) ?: serialNumber
-
-        val shortId = deviceJson.firstNonBlankString(
-            "ShortId",
-            "ShortID",
-            "DeviceCode",
-            "shortId",
-            "short_id"
-        ) ?: deriveShortId(
-            deviceUid = deviceUid,
-            macAddress = macAddress,
-            serialNumber = serialNumber,
-            firmwareSerial = firmwareSerial,
-            fallbackNumericId = numericIdentity
-        )
-
-        if (
-            !hasStableDiscoveryIdentity(
-                deviceUid = deviceUid,
-                macAddress = macAddress,
-                serialNumber = serialNumber,
-                firmwareSerial = firmwareSerial,
-                shortId = shortId,
-                numericId = numericIdentity
-            )
-        ) {
-            Log.w(
-                TAG_RECEIVED,
-                "Missing stable identity for productId=${definition.productId} from $sourceIp"
-            )
-            return null
-        }
-
-        val finalId = when {
-            idRaw > 0L -> {
-                idRaw
-            }
-
-            espChipId > 0L -> {
-                espChipId
-            }
-
-            !deviceUid.isNullOrBlank() -> {
-                createStableIdFromString(deviceUid)
-            }
-
-            !serialNumber.isNullOrBlank() -> {
-                createStableIdFromString(serialNumber)
-            }
-
-            !firmwareSerial.isNullOrBlank() -> {
-                createStableIdFromString(firmwareSerial)
-            }
-
-            !macAddress.isNullOrBlank() -> {
-                createStableIdFromString(macAddress)
-            }
-
-            !shortId.isNullOrBlank() -> {
-                createStableIdFromString(shortId)
-            }
-
-            else -> {
-                return null
-            }
-        }
-
-        if (finalId <= 0L) {
-            return null
-        }
-
-        val firmwareBuild = deviceJson
-            .optString("FirmwareBuild", "")
-            .ifBlank {
-                ""
-            }
-
-        val udpVersion = root
-            .optNullableInt("VerUdp")
-            ?: deviceJson.optNullableInt("VerUdp")
-
-        val productFamily = deviceJson.firstNonBlankString(
-            "ProductFamily",
-            "AquaName"
-        ) ?: definition.productFamily
-
-        val productLine = deviceJson.firstNonBlankString(
-            "ProductLine"
-        ) ?: definition.productLine
-
-        val productModel = deviceJson.firstNonBlankString(
-            "ProductModel",
-            "Name"
-        ) ?: definition.productModel
-
-        val displayName = deviceJson.firstNonBlankString(
-            "DisplayName",
-            "UserName",
-            "CustomName"
-        ) ?: definition.displayName
-
-        val defaultVariant = definition.variants.firstOrNull()
-
-        val skuId = deviceJson.firstNonBlankString(
-            "SkuId",
-            "SKUId",
-            "skuId",
-            "sku_id"
-        ) ?: defaultVariant?.skuId
-
-        val skuCode = deviceJson.firstNonBlankString(
-            "SkuCode",
-            "SKU",
-            "skuCode",
-            "sku_code"
-        ) ?: defaultVariant?.skuCode
-
-        val hardwareRevision = deviceJson.firstNonBlankString(
-            "HardwareRevision"
-        )
-
-        val firmwareVersion = deviceJson.firstNonBlankString(
-            "FirmwareVersion"
-        )
-
-        val supportedFeatures = deviceJson.readStringSet(
-            key = "SupportedFeatures"
-        )
-
-        val supportedScreens = deviceJson.readStringSet(
-            key = "SupportedScreens"
-        )
-
-        val channelCount = deviceJson.optNullableInt(
-            key = "ChannelCount"
-        )
-
-        val sensorCount = deviceJson.optNullableInt(
-            key = "SensorCount"
-        )
+        val supportedFeatures = buildFeatureSet(capabilitiesJson, modulesJson)
+        val supportedScreens = definition.screens.map { screen -> screen.name }.toSet()
 
         return DiscoveredAquaDevice(
             id = finalId,
             ip = ip,
-
             productId = definition.productId,
             productKey = definition.productKey,
             category = definition.category,
-            setupCode = definition.setupCode,
-
-            productFamily = productFamily,
-            productLine = productLine,
-            productModel = productModel,
-            displayName = displayName,
-            skuId = skuId,
-            skuCode = skuCode,
-
+            setupCode = productJson.firstNonBlankString("setupCode") ?: deviceJson.firstNonBlankString("setupCode") ?: definition.setupCode,
+            productFamily = productJson.firstNonBlankString("family") ?: definition.productFamily,
+            productLine = productJson.firstNonBlankString("line") ?: definition.productLine,
+            productModel = productJson.firstNonBlankString("model") ?: definition.productModel,
+            displayName = resolvedDisplayName,
+            skuId = productJson.firstNonBlankString("skuId") ?: definition.variants.firstOrNull()?.skuId,
+            skuCode = productJson.firstNonBlankString("skuCode") ?: definition.variants.firstOrNull()?.skuCode,
             deviceUid = deviceUid,
             macAddress = macAddress,
             serialNumber = serialNumber,
             shortId = shortId,
             firmwareSerial = firmwareSerial,
-
-            hardwareRevision = hardwareRevision,
+            hardwareRevision = productJson.firstNonBlankString("hardwareRevision"),
             firmwareVersion = firmwareVersion,
             protocolVersion = protocolVersion,
-
             firmwareBuild = firmwareBuild,
             udpVersion = udpVersion,
-
-            tabLight = legacyTabLight,
-            tabTimer = legacyTabTimer,
-            tabTemperature = legacyTabTemperature,
-
+            tabLight = false,
+            tabTimer = false,
+            tabTemperature = false,
             supportedFeatures = supportedFeatures,
             supportedScreens = supportedScreens,
-
-            channelCount = channelCount,
-            sensorCount = sensorCount,
-
-            aquaName = productFamily,
-            name = productModel
+            channelCount = firstPositive(
+                limitsJson.optNullableInt("lightChannelCount"),
+                limitsJson.optNullableInt("timerChannelCount"),
+                limitsJson.optNullableInt("dosingChannelCount"),
+                limitsJson.optNullableInt("fanChannelCount"),
+                limitsJson.optNullableInt("fanOutputCount")
+            ),
+            sensorCount = limitsJson.optNullableInt("temperatureSensorCount"),
+            aquaName = productJson.firstNonBlankString("brand") ?: "AquaLight",
+            name = productJson.firstNonBlankString("displayName") ?: resolvedDisplayName
         )
     }
 
-    /**
-     * LEGACY_DISCOVERY_START
-     *
-     * Geçici eski firmware destek fonksiyonu.
-     *
-     * Eski firmware UDP'de ProductId göndermediği için:
-     * AquaName + Name + TabLight + TabTimer + TabTemperature
-     * alanlarından en yakın katalog ürününü bulur.
-     *
-     * WRGB test cihazı için:
-     *
-     * AquaName = AquaLight
-     * Name = WRGB Pro Elite
-     * TabLight = 1
-     *
-     * FIRMWARE_READY:
-     * Firmware UDP tarafı şu alanları verdiğinde bu fonksiyonu tamamen sil:
-     *
-     * ProductId = com.aqua.light.wrgb_pro_elite
-     * ProtocolVersion = 1
-     * DeviceUid veya ShortId veya MacAddress veya FirmwareSerial
-     *
-     * Bu fonksiyon silinince şu importlar da başka yerde kullanılmıyorsa silinir:
-     *
-     * import com.aqua.aqualight.data.devices.catalog.AquaDeviceDefinition
-     * import com.aqua.aqualight.data.devices.catalog.AquaProductKey
-     */
-    private fun resolveLegacyDefinition(
-        aquaName: String?,
-        name: String?,
-        tabLight: Boolean,
-        tabTimer: Boolean,
-        tabTemperature: Boolean
-    ): AquaDeviceDefinition? {
-        val identity = "${aquaName.orEmpty()} ${name.orEmpty()}"
-            .lowercase(Locale.US)
-
-        val productKey = when {
-            identity.contains("dose") ||
-                identity.contains("dosing") -> {
-                AquaProductKey.DOSING_DOSE_PRO_4
-            }
-
-            identity.contains("cool") ||
-                identity.contains("cooling") -> {
-                AquaProductKey.COOLING_COOL_PRO
-            }
-
-            identity.contains("multi") -> {
-                AquaProductKey.TIMER_MULTI_CONTROL
-            }
-
-            identity.contains("timer") -> {
-                AquaProductKey.TIMER_TIMER_PRO
-            }
-
-            identity.contains("wrgb") ||
-                identity.contains("light") ||
-                identity.contains("aqualight") -> {
-                AquaProductKey.LIGHT_WRGB_PRO_ELITE
-            }
-
-            tabLight -> {
-                AquaProductKey.LIGHT_WRGB_PRO_ELITE
-            }
-
-            tabTimer -> {
-                AquaProductKey.TIMER_TIMER_PRO
-            }
-
-            tabTemperature -> {
-                AquaProductKey.COOLING_COOL_PRO
-            }
-
-            else -> {
-                null
+    private fun buildFeatureSet(capabilities: JSONObject, modules: JSONArray): Set<String> {
+        val output = linkedSetOf<String>()
+        val keys = capabilities.keys()
+        while (keys.hasNext()) {
+            val key = keys.next()
+            if (capabilities.optBoolean(key, false)) {
+                output.add(key)
             }
         }
-
-        return productKey?.let { value ->
-            AquaDeviceCatalog.findByProductKey(
-                productKey = value
-            )
+        for (i in 0 until modules.length()) {
+            modules.optString(i).takeIf { it.isNotBlank() }?.let { output.add("module:$it") }
         }
-    }
-    // LEGACY_DISCOVERY_END
-
-    private fun isSelfRefreshPacket(
-        root: JSONObject
-    ): Boolean {
-        return root.optString("Command", "") == "RefreshUDP" &&
-            !root.has("Data") &&
-            !root.has("NetUdp")
+        return output
     }
 
-    private fun extractDeviceJson(
-        root: JSONObject
-    ): JSONObject? {
-        root.optJSONObject("Data")
-            ?.optJSONObject("0")
-            ?.let {
-                return it
-            }
+    private fun firstPositive(vararg values: Int?): Int? = values.firstOrNull { value -> value != null && value > 0 }
 
-        root.optJSONObject("NetUdp")
-            ?.optJSONObject("Data")
-            ?.optJSONObject("0")
-            ?.let {
-                return it
-            }
+    private fun isUsableIp(value: String): Boolean =
+        value.isNotBlank() && value != "0.0.0.0"
 
-        return null
+    private fun stablePositiveId(value: String): Long {
+        val crc = CRC32()
+        crc.update(value.toByteArray(StandardCharsets.UTF_8))
+        return crc.value.toLong().and(0x7FFFFFFF).coerceAtLeast(1L)
     }
 
-    private fun getBroadcastTargets(
-        context: Context
-    ): List<InetAddress> {
+    private fun getBroadcastTargets(context: Context): List<InetAddress> {
         val targets = linkedSetOf<InetAddress>()
-
-        getConnectivityBroadcastAddresses(context).forEach { address ->
-            targets.add(address)
-        }
-
-        runCatching {
-            targets.add(getDhcpBroadcastAddress(context))
-        }
-
-        runCatching {
-            targets.add(InetAddress.getByName("255.255.255.255"))
-        }
-
+        getConnectivityBroadcastAddresses(context).forEach { targets.add(it) }
+        runCatching { targets.add(getDhcpBroadcastAddress(context)) }
+        runCatching { targets.add(InetAddress.getByName("255.255.255.255")) }
         return targets.toList()
     }
 
-    private fun getConnectivityBroadcastAddresses(
-        context: Context
-    ): List<InetAddress> {
-        val connectivityManager = context.getSystemService(
-            Context.CONNECTIVITY_SERVICE
-        ) as ConnectivityManager
-
+    private fun getConnectivityBroadcastAddresses(context: Context): List<InetAddress> {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         return connectivityManager.allNetworks
             .filter { network ->
-                val capabilities = connectivityManager.getNetworkCapabilities(network)
-                capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
+                connectivityManager.getNetworkCapabilities(network)
+                    ?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
             }
             .flatMap { network ->
-                val linkProperties = connectivityManager.getLinkProperties(network)
-                    ?: return@flatMap emptyList()
-
-                linkProperties.linkAddresses
-                    .mapNotNull { linkAddress ->
-                        linkAddress.toBroadcastAddress()
-                    }
+                val linkProperties = connectivityManager.getLinkProperties(network) ?: return@flatMap emptyList()
+                linkProperties.linkAddresses.mapNotNull { linkAddress -> linkAddress.toBroadcastAddress() }
             }
     }
 
     private fun LinkAddress.toBroadcastAddress(): InetAddress? {
-        val address = address
-
-        if (address !is Inet4Address) {
-            return null
-        }
-
+        val inetAddress = address
+        if (inetAddress !is Inet4Address) return null
         val prefix = prefixLength
+        if (prefix !in 1..32) return null
 
-        if (prefix !in 1..32) {
-            return null
-        }
-
-        val addressBytes = address.address
-        val ip = bytesToInt(addressBytes)
-        val mask = if (prefix == 32) {
-            -1
-        } else {
-            -1 shl (32 - prefix)
-        }
-
+        val ip = bytesToInt(inetAddress.address)
+        val mask = if (prefix == 32) -1 else (-0x1 shl (32 - prefix))
         val broadcast = ip or mask.inv()
-
-        return InetAddress.getByAddress(
-            byteArrayOf(
-                ((broadcast shr 24) and 0xFF).toByte(),
-                ((broadcast shr 16) and 0xFF).toByte(),
-                ((broadcast shr 8) and 0xFF).toByte(),
-                (broadcast and 0xFF).toByte()
-            )
-        )
+        return InetAddress.getByAddress(intToBytes(broadcast))
     }
 
-    private fun bytesToInt(
-        bytes: ByteArray
-    ): Int {
-        return ((bytes[0].toInt() and 0xFF) shl 24) or
+    @Suppress("DEPRECATION")
+    private fun getDhcpBroadcastAddress(context: Context): InetAddress {
+        val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+        val dhcp = wifiManager.dhcpInfo
+        val broadcast = dhcp.ipAddress or dhcp.netmask.inv()
+        return InetAddress.getByAddress(intToBytesLittleEndian(broadcast))
+    }
+
+    private fun bytesToInt(bytes: ByteArray): Int =
+        ((bytes[0].toInt() and 0xFF) shl 24) or
             ((bytes[1].toInt() and 0xFF) shl 16) or
             ((bytes[2].toInt() and 0xFF) shl 8) or
             (bytes[3].toInt() and 0xFF)
-    }
 
-    private fun getDhcpBroadcastAddress(
-        context: Context
-    ): InetAddress {
-        val wifiManager = context.applicationContext
-            .getSystemService(Context.WIFI_SERVICE) as WifiManager
+    private fun intToBytes(value: Int): ByteArray = byteArrayOf(
+        (value ushr 24).toByte(),
+        (value ushr 16).toByte(),
+        (value ushr 8).toByte(),
+        value.toByte()
+    )
 
-        val dhcp = wifiManager.dhcpInfo
+    private fun intToBytesLittleEndian(value: Int): ByteArray = byteArrayOf(
+        (value and 0xFF).toByte(),
+        (value shr 8 and 0xFF).toByte(),
+        (value shr 16 and 0xFF).toByte(),
+        (value shr 24 and 0xFF).toByte()
+    )
 
-        if (
-            dhcp == null ||
-            dhcp.ipAddress == 0 ||
-            dhcp.netmask == 0
-        ) {
-            return InetAddress.getByName("255.255.255.255")
-        }
-
-        val ipBytes = dhcp.ipAddress.toLittleEndianBytes()
-        val maskBytes = dhcp.netmask.toLittleEndianBytes()
-
-        val broadcastBytes = ByteArray(4) { index ->
-            val ip = ipBytes[index].toInt() and 0xFF
-            val mask = maskBytes[index].toInt() and 0xFF
-            val inverseMask = mask.inv() and 0xFF
-
-            ((ip and mask) or inverseMask).toByte()
-        }
-
-        return InetAddress.getByAddress(broadcastBytes)
-    }
-
-    private fun Int.toLittleEndianBytes(): ByteArray {
-        return byteArrayOf(
-            (this and 0xFF).toByte(),
-            ((this shr 8) and 0xFF).toByte(),
-            ((this shr 16) and 0xFF).toByte(),
-            ((this shr 24) and 0xFF).toByte()
-        )
-    }
-
-    private fun hasStableDiscoveryIdentity(
-        deviceUid: String?,
-        macAddress: String?,
-        serialNumber: String?,
-        firmwareSerial: String?,
-        shortId: String?,
-        numericId: Long?
-    ): Boolean {
-        return !deviceUid.isNullOrBlank() ||
-            !macAddress.isNullOrBlank() ||
-            !serialNumber.isNullOrBlank() ||
-            !firmwareSerial.isNullOrBlank() ||
-            !shortId.isNullOrBlank() ||
-            numericId != null
-    }
-
-    private fun buildDeviceUidFromMac(
-        macAddress: String?
-    ): String? {
-        val normalizedMac = normalizeHardwareToken(
-            value = macAddress
-        )
-
-        if (normalizedMac.length < 12) {
-            return null
-        }
-
-        return "AQL-ESP32-${normalizedMac.takeLast(12)}"
-    }
-
-    private fun normalizeHardwareToken(
-        value: String?
-    ): String {
-        return value
-            ?.filter { char ->
-                char.isLetterOrDigit()
-            }
-            ?.uppercase(Locale.US)
-            .orEmpty()
-    }
-
-    private fun createStableIdFromString(
-        value: String
-    ): Long {
-        return value.trim()
-            .lowercase(Locale.US)
-            .hashCode()
-            .toLong() and 0x00000000FFFFFFFFL
-    }
-
-    private fun deriveShortId(
-        deviceUid: String?,
-        macAddress: String?,
-        serialNumber: String?,
-        firmwareSerial: String?,
-        fallbackNumericId: Long?
-    ): String? {
-        val source = deviceUid
-            ?.ifBlank { null }
-            ?: macAddress
-                ?.ifBlank { null }
-            ?: serialNumber
-                ?.ifBlank { null }
-            ?: firmwareSerial
-                ?.ifBlank { null }
-            ?: fallbackNumericId
-                ?.takeIf { value -> value > 0L }
-                ?.toString()
-            ?: return null
-
-        return source
-            .filter { char ->
-                char.isLetterOrDigit()
-            }
-            .uppercase(Locale.US)
-            .takeLast(6)
-            .ifBlank {
-                null
-            }
-    }
-
-    private fun DiscoveredAquaDevice.identityKey(): String {
-        return deviceUid
-            ?.ifBlank { null }
-            ?: macAddress
-                ?.ifBlank { null }
-            ?: serialNumber
-                ?.ifBlank { null }
-            ?: firmwareSerial
-                ?.ifBlank { null }
-            ?: shortId
-                ?.ifBlank { null }
-            ?: id.toString()
-    }
-
-    private fun JSONObject.firstNonBlankString(
-        vararg keys: String
-    ): String? {
+    private fun JSONObject.firstNonBlankString(vararg keys: String): String? {
         keys.forEach { key ->
-            val value = optString(key, "")
-                .trim()
-
-            if (value.isNotBlank()) {
-                return value
+            if (has(key) && !isNull(key)) {
+                val value = optString(key, "").trim()
+                if (value.isNotBlank()) return value
             }
         }
-
         return null
     }
 
-    private fun JSONObject.optNullableInt(
-        key: String
-    ): Int? {
-        if (!has(key) || isNull(key)) {
-            return null
-        }
-
-        return try {
-            when (val value = get(key)) {
-                is Number -> value.toInt()
-                is String -> value.trim().toIntOrNull()
-                else -> null
-            }
-        } catch (_: Exception) {
-            null
-        }
+    private fun JSONObject.optNullableInt(key: String): Int? {
+        if (!has(key) || isNull(key)) return null
+        return runCatching { getInt(key) }.getOrNull()
+            ?: optString(key, "").trim().toIntOrNull()
     }
 
-    private fun JSONObject.optFlexibleBoolean(
-        key: String
-    ): Boolean {
-        if (!has(key) || isNull(key)) {
-            return false
-        }
-
-        return try {
-            when (val value = get(key)) {
-                is Boolean -> value
-                is Number -> value.toInt() != 0
-                is String -> {
-                    when (value.trim().lowercase(Locale.US)) {
-                        "1", "true", "yes", "on" -> true
-                        else -> false
-                    }
-                }
-
-                else -> false
-            }
-        } catch (_: Exception) {
-            false
-        }
+    private fun JSONObject.optNullableLong(key: String): Long? {
+        if (!has(key) || isNull(key)) return null
+        return runCatching { getLong(key) }.getOrNull()
+            ?: optString(key, "").trim().toLongOrNull()
     }
 
-    private fun JSONObject.readStringSet(
-        key: String
-    ): Set<String> {
-        if (!has(key) || isNull(key)) {
-            return emptySet()
-        }
-
-        return try {
-            when (val value = get(key)) {
-                is JSONArray -> {
-                    buildSet {
-                        for (index in 0 until value.length()) {
-                            val item = value.optString(index, "")
-                                .trim()
-
-                            if (item.isNotBlank()) {
-                                add(item)
-                            }
-                        }
-                    }
-                }
-
-                is String -> {
-                    value.split(",")
-                        .map { item ->
-                            item.trim()
-                        }
-                        .filter { item ->
-                            item.isNotBlank()
-                        }
-                        .toSet()
-                }
-
-                else -> emptySet()
-            }
-        } catch (_: Exception) {
-            emptySet()
-        }
+    private fun DiscoveredAquaDevice.identityKey(): String {
+        return deviceUid?.takeIf { it.isNotBlank() }
+            ?: serialNumber?.takeIf { it.isNotBlank() }
+            ?: firmwareSerial?.takeIf { it.isNotBlank() }
+            ?: macAddress?.takeIf { it.isNotBlank() }
+            ?: shortId?.takeIf { it.isNotBlank() }
+            ?: id.toString()
     }
 }

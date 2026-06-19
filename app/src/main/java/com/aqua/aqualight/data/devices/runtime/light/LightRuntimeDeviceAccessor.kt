@@ -5,11 +5,9 @@ import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.api.AquaDeviceApiFactory
 import com.aqua.aqualight.data.devices.api.AquaDeviceConnection
 import com.aqua.aqualight.data.devices.api.AquaLightDeviceApi
-import com.aqua.aqualight.data.devices.api.DeviceApiMode
 import com.aqua.aqualight.data.devices.api.light.LightChannelValues
 import com.aqua.aqualight.data.devices.api.light.LightCoolingControllerRequest
 import com.aqua.aqualight.data.devices.api.light.LightManualRequest
-import com.aqua.aqualight.data.devices.api.light.LightProgramWriteRequest
 import com.aqua.aqualight.data.devices.api.light.LightThermalProtectionRequest
 import com.aqua.aqualight.data.devices.api.light.LightTimeSyncRequest
 import com.aqua.aqualight.data.devices.api.model.ApiErrorCode
@@ -136,44 +134,6 @@ class LightRuntimeDeviceAccessor(
         }
     }
 
-    suspend fun setTemporaryManualOutput(
-        deviceId: Long,
-        channelValues: LightChannelValues,
-        timeoutMillis: Long
-    ): ApiResult<Unit> {
-        if (deviceId <= 0L) {
-            return ApiResult.failure(
-                code = ApiErrorCode.INVALID_REQUEST,
-                message = "Light device id is missing"
-            )
-        }
-
-        val normalizedChannels = channelValues.normalized()
-        val safeTimeoutMillis = timeoutMillis.coerceIn(
-            MIN_TEMPORARY_MANUAL_TIMEOUT_MILLIS,
-            MAX_TEMPORARY_MANUAL_TIMEOUT_MILLIS
-        )
-
-        return commandGateway.execute(
-            deviceId = deviceId
-        ) { device, connection ->
-            when (val deviceApi = createLightDeviceApi(device, connection)) {
-                is ApiResult.Success -> {
-                    deviceApi.value.lightApi.setManual(
-                        connection = deviceApi.value.connection,
-                        request = LightManualRequest(
-                            powerOn = true,
-                            channelValues = normalizedChannels,
-                            overrideTimeoutMillis = safeTimeoutMillis
-                        )
-                    )
-                }
-
-                is ApiResult.Error -> deviceApi
-            }
-        }
-    }
-
     suspend fun setSceneOutput(
         deviceId: Long,
         channelValues: LightChannelValues,
@@ -212,40 +172,6 @@ class LightRuntimeDeviceAccessor(
 
                         is ApiResult.Error -> result
                     }
-                }
-
-                is ApiResult.Error -> deviceApi
-            }
-        }
-    }
-
-    suspend fun writeProgramSchedule(
-        deviceId: Long,
-        request: LightProgramWriteRequest
-    ): ApiResult<Unit> {
-        if (deviceId <= 0L) {
-            return ApiResult.failure(
-                code = ApiErrorCode.INVALID_REQUEST,
-                message = "Light device id is missing"
-            )
-        }
-
-        if (request.channels.isEmpty()) {
-            return ApiResult.failure(
-                code = ApiErrorCode.INVALID_REQUEST,
-                message = "Light program schedule is empty"
-            )
-        }
-
-        return commandGateway.execute(
-            deviceId = deviceId
-        ) { device, connection ->
-            when (val deviceApi = createLightDeviceApi(device, connection)) {
-                is ApiResult.Success -> {
-                    deviceApi.value.lightApi.writeProgramSchedule(
-                        connection = deviceApi.value.connection,
-                        request = request
-                    )
                 }
 
                 is ApiResult.Error -> deviceApi
@@ -369,10 +295,7 @@ class LightRuntimeDeviceAccessor(
     private fun createRuntimeDataSource(
         deviceApi: AquaLightDeviceApi
     ): LightRuntimeDataSource {
-        return when (deviceApi.mode) {
-            DeviceApiMode.LEGACY -> LegacyLightRuntimeDataSource(deviceApi.lightApi)
-            DeviceApiMode.V1 -> V1LightRuntimeDataSource(deviceApi.lightApi)
-        }
+        return V1LightRuntimeDataSource(deviceApi.lightApi)
     }
 
     private fun AquaDeviceConnection.forReadProfile(
@@ -445,7 +368,5 @@ class LightRuntimeDeviceAccessor(
 
     private companion object {
         const val LIVE_READ_TIMEOUT_MILLIS = 1_500
-        const val MIN_TEMPORARY_MANUAL_TIMEOUT_MILLIS = 500L
-        const val MAX_TEMPORARY_MANUAL_TIMEOUT_MILLIS = 10_000L
     }
 }

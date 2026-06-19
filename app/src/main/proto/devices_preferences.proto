@@ -55,10 +55,4 @@ message SavedDeviceInfo {
   string setup_code = 37;
 
   string owner_uid = 100;
-
-  // Local API token returned by /api/v1/security/pair.
-  // Stored in the existing encrypted devices DataStore and sent only to the
-  // local AquaLight device over LAN endpoints that require mutation auth.
-  string api_token = 101;
 }
-

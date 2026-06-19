@@ -10,14 +10,14 @@ import kotlin.math.abs
 import org.json.JSONObject
 
 /**
- * Persistent fallback state for legacy light firmware that accepts manual
- * output commands but does not report MANUAL / SCENE mode back in /get.
+ * Persistent fallback state for short transition windows where a manual command
+ * has been sent but the live runtime snapshot has not caught up yet.
  *
- * New firmware remains the source of truth: when the runtime reports a concrete
- * MANUAL / SCENE / MOONLIGHT mode from a non-legacy source, the dashboard and
- * manual screen use that controller state. This store is only applied to
- * legacy/unknown runtime snapshots so older controllers can still show the
- * override that the app sent, including after process death / app restart.
+ * AquaLight V1 firmware remains the source of truth: when the runtime reports a
+ * concrete MANUAL / SCENE / MOONLIGHT mode, the dashboard and manual screen use
+ * the controller state. This store is only applied to temporarily incomplete
+ * snapshots so the app can keep the last user action visible after process death
+ * or app restart.
  */
 object LightLocalOverrideStore {
 
@@ -136,7 +136,7 @@ object LightLocalOverrideStore {
             LightMode.AUTO,
             LightMode.IDLE,
             LightMode.UNKNOWN -> {
-                if (snapshot.source != LightRuntimeSource.LEGACY && snapshot.mode != LightMode.UNKNOWN) {
+                if (snapshot.source == LightRuntimeSource.V1 && snapshot.mode != LightMode.UNKNOWN) {
                     return snapshot
                 }
 

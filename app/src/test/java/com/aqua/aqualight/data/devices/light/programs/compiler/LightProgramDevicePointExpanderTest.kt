@@ -76,7 +76,7 @@ class LightProgramDevicePointExpanderTest {
     }
 
     @Test
-    fun naturalUsesAdaptiveSparseControllerPointsBelowCatalogLimit() {
+    fun naturalExpandsWithBoundedTenMinuteRampSampling() {
         val draft = draft(
             transitionMode = LightCurveTransitionMode.NATURAL,
             channelValues = LightCurveChannelValues(
@@ -90,10 +90,8 @@ class LightProgramDevicePointExpanderTest {
         val schedule = LightProgramDevicePointExpander.expand(draft)
         val red = schedule.channels.first { it.channel == LightProgramDeviceChannel.RED }
 
-        // Four user anchors plus a small adaptive set of generated samples.
-        // The 24-point catalog limit is a hard ceiling, not a target to fill.
-        assertEquals(12, red.points.size)
-        assertTrue(red.points.size < LightProgramPointExpansionOptions.DEFAULT_MAXIMUM_POINTS_PER_CHANNEL)
+        // 08:00 start anchor + 12 ramp-up points + 16:00 plateau end + 12 ramp-down points.
+        assertEquals(26, red.points.size)
         assertEquals(480, red.points.first().minuteOfDay)
         assertEquals(1080, red.points.last().minuteOfDay)
         assertTrue(red.points.any { point -> point.minuteOfDay in 481 until 600 && point.percent in 1 until 100 })
