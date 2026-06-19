@@ -83,11 +83,11 @@ class DeviceIdentityMatcherTest {
         )
 
         val discoveredDevice = discoveredDevice(
-            id = 1001L,
-            ip = "192.168.1.30",
-            productKey = AquaProductKey.COOLING_COOL_PRO,
-            deviceUid = "AQL-ESP32-AABBCCDDEEFF"
-        )
+    id = 1001L,
+    ip = "192.168.1.30",
+    productKey = AquaProductKey.COOLING_COOL_PRO_1F,
+    deviceUid = "AQL-ESP32-AABBCCDDEEFF"
+)
 
         assertFalse(
             DeviceIdentityMatcher.samePhysicalDevice(
