@@ -9,7 +9,7 @@ class DeviceStoreWriter(
 
     suspend fun saveDiscoveredDevice(
         device: DiscoveredAquaDevice,
-        apiToken: String = ""
+        deviceApiToken: String = ""
     ): Long {
         val existingDeviceId = devicesStore.findStoredDeviceIdForIdentity(
             id = device.id,
@@ -25,15 +25,16 @@ class DeviceStoreWriter(
             devicesStore.updateDevicesLastSeen(
                 discovered = listOf(
                     device.toLastSeenUpdate(
-                        storedDeviceId = existingDeviceId
+                        storedDeviceId = existingDeviceId,
+                        deviceApiToken = deviceApiToken
                     )
                 )
             )
 
-            if (apiToken.isNotBlank()) {
+            if (deviceApiToken.isNotBlank()) {
                 devicesStore.updateDeviceApiToken(
-                    deviceId = existingDeviceId,
-                    apiToken = apiToken
+                    id = existingDeviceId,
+                    deviceApiToken = deviceApiToken
                 )
             }
 
@@ -85,7 +86,6 @@ class DeviceStoreWriter(
             ip = device.ip,
             serial = identifier,
             firmwareBuild = device.firmwareBuild,
-            apiToken = apiToken,
             deviceUid = device.deviceUid.orEmpty(),
             macAddress = device.macAddress.orEmpty(),
             firmwareSerial = device.firmwareSerial.orEmpty(),
@@ -118,12 +118,15 @@ class DeviceStoreWriter(
             sensorCount = device.sensorCount,
 
             supportedFeatures = device.supportedFeatures,
-            supportedScreens = device.supportedScreens
+            supportedScreens = device.supportedScreens,
+            deviceApiToken = deviceApiToken
         )
 
         devicesStore.updateDevicesLastSeen(
             discovered = listOf(
-                device.toLastSeenUpdate()
+                device.toLastSeenUpdate(
+                    deviceApiToken = deviceApiToken
+                )
             )
         )
 
@@ -131,7 +134,8 @@ class DeviceStoreWriter(
     }
 
     private fun DiscoveredAquaDevice.toLastSeenUpdate(
-        storedDeviceId: Long = id
+        storedDeviceId: Long = id,
+        deviceApiToken: String = ""
     ): DevicesDataStoreManager.DeviceLastSeenUpdate {
         return DevicesDataStoreManager.DeviceLastSeenUpdate(
             id = storedDeviceId,
@@ -169,7 +173,8 @@ class DeviceStoreWriter(
             sensorCount = sensorCount,
 
             supportedFeatures = supportedFeatures,
-            supportedScreens = supportedScreens
+            supportedScreens = supportedScreens,
+            deviceApiToken = deviceApiToken
         )
     }
 }

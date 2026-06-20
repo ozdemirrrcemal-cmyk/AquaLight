@@ -65,7 +65,6 @@ class DevicesDataStoreManager private constructor(
     data class DeviceInfo(
         val id: Long,
         val ownerUid: String = "",
-        val apiToken: String = "",
 
         val deviceUid: String = "",
         val macAddress: String = "",
@@ -109,7 +108,9 @@ class DevicesDataStoreManager private constructor(
         val sensorCount: Int? = null,
 
         val supportedFeatures: Set<String> = emptySet(),
-        val supportedScreens: Set<String> = emptySet()
+        val supportedScreens: Set<String> = emptySet(),
+
+        val deviceApiToken: String = ""
     ) {
         val resolvedTitle: String
             get() = customName.ifBlank {
@@ -160,7 +161,9 @@ class DevicesDataStoreManager private constructor(
         val sensorCount: Int? = null,
 
         val supportedFeatures: Set<String>? = null,
-        val supportedScreens: Set<String>? = null
+        val supportedScreens: Set<String>? = null,
+
+        val deviceApiToken: String? = null
     )
 
     private val devicesPrefsFlow: Flow<DevicesPreferences> = dataStore.data
@@ -247,7 +250,6 @@ class DevicesDataStoreManager private constructor(
         ip: String,
         serial: String,
         firmwareBuild: String,
-        apiToken: String = "",
         deviceUid: String = "",
         macAddress: String = "",
         firmwareSerial: String = "",
@@ -281,7 +283,8 @@ class DevicesDataStoreManager private constructor(
         sensorCount: Int? = null,
 
         supportedFeatures: Set<String> = emptySet(),
-        supportedScreens: Set<String> = emptySet()
+        supportedScreens: Set<String> = emptySet(),
+        deviceApiToken: String = ""
     ) {
         val ownerUid = UserDataScope.requireCurrentUid()
 
@@ -359,7 +362,6 @@ class DevicesDataStoreManager private constructor(
                 .setIp(ip)
                 .setSerial(serial)
                 .setFirmwareBuild(firmwareBuild)
-                .setApiToken(apiToken)
                 .setDeviceUid(deviceUid)
                 .setMacAddress(macAddress)
                 .setFirmwareSerial(firmwareSerial)
@@ -385,6 +387,7 @@ class DevicesDataStoreManager private constructor(
                 .setTabTemperature(tabTemperature)
                 .addAllSupportedFeatures(supportedFeatures)
                 .addAllSupportedScreens(supportedScreens)
+                .setDeviceApiToken(deviceApiToken)
                 .apply {
                     udpVersion?.let { value ->
                         setUdpVersion(value)
@@ -410,6 +413,33 @@ class DevicesDataStoreManager private constructor(
 
             prefs.toBuilder()
                 .addDevices(device)
+                .build()
+        }
+    }
+
+    suspend fun updateDeviceApiToken(
+        id: Long,
+        deviceApiToken: String
+    ) {
+        val token = deviceApiToken.trim()
+        if (id <= 0L || token.isBlank()) {
+            return
+        }
+
+        dataStore.updateData { prefs ->
+            val updatedDevices = prefs.devicesList.map { device ->
+                if (device.id == id && device.belongsToCurrentUser()) {
+                    device.toBuilder()
+                        .setDeviceApiToken(token)
+                        .build()
+                } else {
+                    device
+                }
+            }
+
+            prefs.toBuilder()
+                .clearDevices()
+                .addAllDevices(updatedDevices)
                 .build()
         }
     }
@@ -450,33 +480,6 @@ class DevicesDataStoreManager private constructor(
                     }
 
                 }.build()
-            }
-
-            prefs.toBuilder()
-                .clearDevices()
-                .addAllDevices(updatedDevices)
-                .build()
-        }
-    }
-
-    suspend fun updateDeviceApiToken(
-        deviceId: Long,
-        apiToken: String
-    ) {
-        val normalizedToken = apiToken.trim()
-        if (deviceId <= 0L || normalizedToken.isBlank()) {
-            return
-        }
-
-        dataStore.updateData { prefs ->
-            val updatedDevices = prefs.devicesList.map { device ->
-                if (device.id == deviceId && device.belongsToCurrentUser()) {
-                    device.toBuilder()
-                        .setApiToken(normalizedToken)
-                        .build()
-                } else {
-                    device
-                }
             }
 
             prefs.toBuilder()
@@ -759,6 +762,10 @@ class DevicesDataStoreManager private constructor(
                             clearSupportedScreens()
                             addAllSupportedScreens(values)
                         }
+
+                        match.deviceApiToken?.takeIf { value -> value.isNotBlank() }?.let { value ->
+                            setDeviceApiToken(value)
+                        }
                     }.build()
                 } else {
                     device
@@ -836,7 +843,6 @@ class DevicesDataStoreManager private constructor(
         return DeviceInfo(
             id = id,
             ownerUid = ownerUid,
-            apiToken = apiToken,
 
             deviceUid = deviceUid,
             macAddress = macAddress,
@@ -887,7 +893,8 @@ class DevicesDataStoreManager private constructor(
             },
 
             supportedFeatures = supportedFeaturesList.toSet(),
-            supportedScreens = supportedScreensList.toSet()
+            supportedScreens = supportedScreensList.toSet(),
+            deviceApiToken = deviceApiToken
         )
     }
 

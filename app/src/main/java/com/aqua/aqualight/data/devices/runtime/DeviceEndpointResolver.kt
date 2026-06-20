@@ -42,7 +42,7 @@ class DeviceEndpointResolver(
                     device = storedDevice,
                     connection = AquaDeviceConnection(
                         host = cachedHost,
-                        apiToken = storedDevice.apiToken
+                        apiToken = storedDevice.deviceApiToken
                     )
                 )
             )
@@ -85,7 +85,7 @@ class DeviceEndpointResolver(
                 ),
                 connection = AquaDeviceConnection(
                     host = resolvedHost,
-                    apiToken = updatedDevice.apiToken
+                    apiToken = updatedDevice.deviceApiToken
                 )
             )
         )

@@ -26,14 +26,6 @@ class AquaDeviceSetupClient {
         val errorMessage: String?
     )
 
-    data class PairingResult(
-        val success: Boolean,
-        val token: String,
-        val responseCode: Int?,
-        val responseBody: String?,
-        val errorMessage: String?
-    )
-
     data class HomeWifiNetwork(
         val ssid: String,
         val rssi: Int
@@ -41,22 +33,123 @@ class AquaDeviceSetupClient {
 
     data class DeviceWifiStatus(
         val connected: Boolean,
-        val clientIp: String,
-        val configuredClientEnabled: Boolean = false,
-        val clientSsid: String = "",
-        val clientPasswordSet: Boolean = false,
-        val wifiStatusCode: Int? = null,
-        val lastClientWifiStatus: Int? = null,
-        val lastClientConnectMessage: String = ""
+        val clientIp: String
+    )
+
+    data class DeviceApiToken(
+        val token: String,
+        val deviceUid: String,
+        val shortId: String,
+        val serialNumber: String,
+        val tokenVersion: Int? = null
     ) {
-        fun hasAcceptedCredentials(expectedSsid: String): Boolean {
-            return configuredClientEnabled &&
-                clientSsid.equals(expectedSsid.trim(), ignoreCase = false) &&
-                clientPasswordSet
-        }
+        val isTokenGateEnabled: Boolean
+            get() = token.isNotBlank()
     }
 
-    suspend fun scanHomeWifiNetworks(network: Network): List<HomeWifiNetwork> = withContext(Dispatchers.IO) {
+    private data class SecurityStatus(
+        val tokenGateEnabled: Boolean,
+        val dynamicPairingEnabled: Boolean,
+        val paired: Boolean,
+        val deviceUid: String,
+        val shortId: String,
+        val serialNumber: String,
+        val tokenVersion: Int?
+    )
+
+    class DeviceSecurityException(
+        message: String
+    ) : Exception(message)
+
+    suspend fun pairForSetup(
+        network: Network,
+        existingToken: String? = null
+    ): DeviceApiToken = withContext(Dispatchers.IO) {
+        val token = existingToken.orEmpty().trim()
+        val status = readSecurityStatus(
+            network = network,
+            deviceApiToken = token
+        )
+
+        if (!status.tokenGateEnabled) {
+            return@withContext DeviceApiToken(
+                token = "",
+                deviceUid = status.deviceUid,
+                shortId = status.shortId,
+                serialNumber = status.serialNumber,
+                tokenVersion = status.tokenVersion
+            )
+        }
+
+        if (status.paired && token.isBlank()) {
+            throw DeviceSecurityException(
+                "Cihaz daha önce eşleştirilmiş. Güvenli firmware token istediği için uygulama bu cihazı mevcut token olmadan yeniden eşleyemez. Cihazı fabrika ayarlarına alın veya mevcut token ile tekrar deneyin."
+            )
+        }
+
+        val identity = JSONObject().apply {
+            if (status.deviceUid.isNotBlank()) {
+                put("deviceUid", status.deviceUid)
+            }
+            if (status.shortId.isNotBlank()) {
+                put("shortId", status.shortId)
+            }
+            if (status.serialNumber.isNotBlank()) {
+                put("serialNumber", status.serialNumber)
+            }
+        }
+
+        val body = JSONObject().put(
+            "data",
+            identity
+        )
+
+        val result = performJsonRequest(
+            network = network,
+            method = "POST",
+            path = "/api/v1/security/pair",
+            body = body,
+            connectTimeoutMs = 8_000,
+            readTimeoutMs = 12_000,
+            deviceApiToken = token
+        )
+
+        if (!result.success) {
+            throw DeviceSecurityException(
+                result.errorMessage ?: "Cihaz eşleştirme isteğini kabul etmedi."
+            )
+        }
+
+        val data = result.responseBody
+            ?.takeIf { it.isNotBlank() }
+            ?.let { text -> runCatching { JSONObject(text) }.getOrNull() }
+            ?.optJSONObject("data")
+            ?: throw DeviceSecurityException("Cihaz eşleştirme yanıtı okunamadı.")
+
+        val returnedToken = data.optString("token", "").trim()
+        val paired = data.optBoolean("paired", false)
+        val alreadyPaired = data.optBoolean("alreadyPaired", false)
+        val resolvedToken = returnedToken.ifBlank {
+            token.takeIf { existing -> existing.isNotBlank() && (paired || alreadyPaired) }.orEmpty()
+        }
+
+        if (resolvedToken.isBlank()) {
+            throw DeviceSecurityException("Cihaz eşleşti ancak API token döndürmedi.")
+        }
+
+        DeviceApiToken(
+            token = resolvedToken,
+            deviceUid = data.optString("deviceUid", status.deviceUid).trim(),
+            shortId = data.optString("shortId", status.shortId).trim(),
+            serialNumber = data.optString("serialNumber", status.serialNumber).trim(),
+            tokenVersion = data.optIntOrNull("tokenVersion") ?: status.tokenVersion
+        )
+    }
+
+    suspend fun scanHomeWifiNetworks(
+        network: Network,
+        deviceApiToken: String = ""
+    ): List<HomeWifiNetwork> = withContext(Dispatchers.IO) {
         val response = performJsonRequest(
             network = network,
             method = "POST",
@@ -66,60 +159,28 @@ class AquaDeviceSetupClient {
                 JSONObject().put("maxResults", 30)
             ),
             connectTimeoutMs = 12_000,
-            readTimeoutMs = 20_000
+            readTimeoutMs = 20_000,
+            deviceApiToken = deviceApiToken
         ).responseBody
 
         parseWifiScanResponse(response.orEmpty())
     }
 
-    suspend fun readDeviceWifiStatus(network: Network): DeviceWifiStatus = withContext(Dispatchers.IO) {
+    suspend fun readDeviceWifiStatus(
+        network: Network,
+        deviceApiToken: String = ""
+    ): DeviceWifiStatus = withContext(Dispatchers.IO) {
         val result = performJsonRequest(
             network = network,
             method = "GET",
             path = "/api/v1/network/status",
             body = null,
             connectTimeoutMs = 8_000,
-            readTimeoutMs = 8_000
+            readTimeoutMs = 8_000,
+            deviceApiToken = deviceApiToken
         )
 
         parseDeviceWifiStatus(result.responseBody)
-    }
-
-    suspend fun pairDevice(
-        network: Network,
-        deviceUid: String,
-        serialNumber: String,
-        shortId: String,
-        currentToken: String = ""
-    ): PairingResult = withContext(Dispatchers.IO) {
-        val body = JSONObject().put(
-            "data",
-            JSONObject()
-                .put("deviceUid", deviceUid)
-                .put("serialNumber", serialNumber)
-                .put("shortId", shortId)
-                .put("rotateToken", false)
-        )
-
-        val result = performJsonRequest(
-            network = network,
-            method = "POST",
-            path = "/api/v1/security/pair",
-            body = body,
-            connectTimeoutMs = 10_000,
-            readTimeoutMs = 15_000,
-            apiToken = currentToken
-        )
-
-        val token = parsePairingToken(result.responseBody)
-
-        PairingResult(
-            success = result.success && token.isNotBlank(),
-            token = token,
-            responseCode = result.responseCode,
-            responseBody = result.responseBody,
-            errorMessage = result.errorMessage
-        )
     }
 
     fun parseDeviceWifiStatus(responseText: String?): DeviceWifiStatus {
@@ -132,21 +193,10 @@ class AquaDeviceSetupClient {
         val clientIp = data.optString("ipAddress", "").trim()
             .ifBlank { data.optString("currentIpAddress", "").trim() }
         val connected = data.optBoolean("connected", false)
-        val configuredClientEnabled = if (data.has("configuredClientEnabled")) {
-            data.optBoolean("configuredClientEnabled", false)
-        } else {
-            data.optBoolean("clientEnabled", false)
-        }
 
         return DeviceWifiStatus(
             connected = connected && isValidHomeNetworkIp(clientIp),
-            clientIp = clientIp,
-            configuredClientEnabled = configuredClientEnabled,
-            clientSsid = data.optString("clientSsid", "").trim(),
-            clientPasswordSet = data.optBoolean("clientPasswordSet", false),
-            wifiStatusCode = data.optInt("wifiStatusCode").takeIf { data.has("wifiStatusCode") },
-            lastClientWifiStatus = data.optInt("lastClientWifiStatus").takeIf { data.has("lastClientWifiStatus") },
-            lastClientConnectMessage = data.optString("lastClientConnectMessage", "").trim()
+            clientIp = clientIp
         )
     }
 
@@ -157,7 +207,7 @@ class AquaDeviceSetupClient {
         homeSsid: String,
         homePassword: String,
         disableSetupAccessPoint: Boolean,
-        apiToken: String = ""
+        deviceApiToken: String = ""
     ): SetupResult = withContext(Dispatchers.IO) {
         val body = JSONObject().put(
             "data",
@@ -176,9 +226,46 @@ class AquaDeviceSetupClient {
             path = "/api/v1/network/wifi",
             body = body,
             connectTimeoutMs = 10_000,
-            readTimeoutMs = if (disableSetupAccessPoint) 15_000 else 20_000,
-            acceptNetworkTransition = disableSetupAccessPoint,
-            apiToken = apiToken
+            readTimeoutMs = if (disableSetupAccessPoint) 15_000 else 75_000,
+            acceptNetworkTransition = true,
+            deviceApiToken = deviceApiToken
+        )
+    }
+
+    private fun readSecurityStatus(
+        network: Network,
+        deviceApiToken: String = ""
+    ): SecurityStatus {
+        val result = performJsonRequest(
+            network = network,
+            method = "GET",
+            path = "/api/v1/security/status",
+            body = null,
+            connectTimeoutMs = 8_000,
+            readTimeoutMs = 8_000,
+            deviceApiToken = deviceApiToken
+        )
+
+        if (!result.success) {
+            throw DeviceSecurityException(
+                result.errorMessage ?: "Cihaz güvenlik durumu okunamadı."
+            )
+        }
+
+        val data = result.responseBody
+            ?.takeIf { it.isNotBlank() }
+            ?.let { text -> runCatching { JSONObject(text) }.getOrNull() }
+            ?.optJSONObject("data")
+            ?: throw DeviceSecurityException("Cihaz güvenlik yanıtı okunamadı.")
+
+        return SecurityStatus(
+            tokenGateEnabled = data.optBoolean("tokenGateEnabled", false),
+            dynamicPairingEnabled = data.optBoolean("dynamicPairingEnabled", false),
+            paired = data.optBoolean("paired", false),
+            deviceUid = data.optString("deviceUid", "").trim(),
+            shortId = data.optString("shortId", "").trim(),
+            serialNumber = data.optString("serialNumber", "").trim(),
+            tokenVersion = data.optIntOrNull("tokenVersion")
         )
     }
 
@@ -190,7 +277,7 @@ class AquaDeviceSetupClient {
         connectTimeoutMs: Int,
         readTimeoutMs: Int,
         acceptNetworkTransition: Boolean = false,
-        apiToken: String = ""
+        deviceApiToken: String = ""
     ): SetupResult {
         var connection: HttpURLConnection? = null
         var bodySent = false
@@ -204,7 +291,7 @@ class AquaDeviceSetupClient {
             connection.useCaches = false
             connection.setRequestProperty("Accept", "application/json")
             connection.setRequestProperty("Connection", "close")
-            apiToken.trim().takeIf { token -> token.isNotBlank() }?.let { token ->
+            deviceApiToken.trim().takeIf { token -> token.isNotBlank() }?.let { token ->
                 connection.setRequestProperty("X-AquaLight-Device-Token", token)
                 connection.setRequestProperty("Authorization", "Bearer $token")
             }
@@ -268,16 +355,6 @@ class AquaDeviceSetupClient {
         return root.optJSONObject("error")?.optString("message")?.takeIf { it.isNotBlank() }
     }
 
-    private fun parsePairingToken(responseBody: String?): String {
-        val data = responseBody
-            ?.takeIf { it.isNotBlank() }
-            ?.let { text -> runCatching { JSONObject(text) }.getOrNull() }
-            ?.optJSONObject("data")
-            ?: return ""
-
-        return data.optString("token", "").trim()
-    }
-
     private fun parseWifiScanResponse(responseText: String): List<HomeWifiNetwork> {
         val data = runCatching { JSONObject(responseText) }.getOrNull()
             ?.optJSONObject("data")
@@ -311,6 +388,14 @@ class AquaDeviceSetupClient {
             message.contains("closed", ignoreCase = true) ||
             message.contains("unreachable", ignoreCase = true) ||
             message.contains("failed to connect", ignoreCase = true)
+    }
+
+    private fun JSONObject.optIntOrNull(name: String): Int? {
+        return if (has(name) && !isNull(name)) {
+            optInt(name)
+        } else {
+            null
+        }
     }
 
     private companion object {

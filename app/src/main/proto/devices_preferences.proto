@@ -54,7 +54,9 @@ message SavedDeviceInfo {
   int32 protocol_version = 36;
   string setup_code = 37;
 
-  string owner_uid = 100;
+  // Per-device API token returned by /api/v1/security/pair.
+  // Stored inside encrypted DataStore; never display in UI/logs.
+  string device_api_token = 38;
 
-  string api_token = 101;
+  string owner_uid = 100;
 }

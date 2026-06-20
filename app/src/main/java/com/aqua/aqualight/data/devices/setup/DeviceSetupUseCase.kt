@@ -24,6 +24,7 @@ class DeviceSetupUseCase(
     private val appContext = context.applicationContext
 
     private var setupConnection: DeviceSetupWifiConnector.SetupConnection? = null
+    private var setupPairingToken: AquaDeviceSetupClient.DeviceApiToken? = null
 
     suspend fun scanHomeWifiNetworks(
         target: DeviceSetupTarget,
@@ -35,10 +36,15 @@ class DeviceSetupUseCase(
             setupSsid = target.setupSsid
         )
 
+        val apiToken = pairSetupDevice(
+            connection = connection
+        )
+
         onProgress(DeviceSetupProgress.SCANNING_HOME_NETWORKS)
 
         return setupClient.scanHomeWifiNetworks(
-            network = connection.network
+            network = connection.network,
+            deviceApiToken = apiToken.token
         )
     }
 
@@ -51,14 +57,10 @@ class DeviceSetupUseCase(
             setupSsid = target.setupSsid
         )
 
-        // Important onboarding order:
-        // Do NOT pair before the home Wi-Fi credentials are accepted.
-        // If pairing succeeds and any later Wi-Fi step fails, the device becomes
-        // paired while the app has not saved the token yet. Every retry is then
-        // blocked by the token gate and the UI can misleadingly show scan/password
-        // errors. The firmware intentionally allows /api/v1/network/wifi while the
-        // device is in setup/onboarding mode, so credentials go first, pairing goes
-        // after the device has proven it can join the home network.
+        val apiToken = pairSetupDevice(
+            connection = connection
+        )
+
         onProgress(DeviceSetupProgress.SENDING_HOME_WIFI_CREDENTIALS)
 
         val setupResult = setupClient.sendHomeWifiCredentials(
@@ -68,7 +70,7 @@ class DeviceSetupUseCase(
             homeSsid = credentials.ssid,
             homePassword = credentials.password,
             disableSetupAccessPoint = false,
-            apiToken = ""
+            deviceApiToken = apiToken.token
         )
 
         if (!setupResult.success) {
@@ -81,8 +83,8 @@ class DeviceSetupUseCase(
         if (
             !waitForDeviceClientConnection(
                 connection = connection,
-                expectedSsid = credentials.ssid,
                 firstResponseBody = setupResult.responseBody,
+                deviceApiToken = apiToken.token,
                 onProgress = onProgress
             )
         ) {
@@ -91,29 +93,13 @@ class DeviceSetupUseCase(
             )
         }
 
-        val pairingResult = setupClient.pairDevice(
-            network = connection.network,
-            deviceUid = target.setupSsid,
-            serialNumber = target.setupSsid,
-            shortId = target.setupShortId
-        )
-
-        if (!pairingResult.success) {
-            throw DeviceSetupFlowException(
-                error = DeviceSetupFlowError.PAIRING_FAILED,
-                detailMessage = pairingResult.errorMessage
-            )
-        }
-
-        val apiToken = pairingResult.token
-
         onProgress(DeviceSetupProgress.CLOSING_SETUP_NETWORK)
 
         closeSetupAccessPoint(
             target = target,
             connection = connection,
             credentials = credentials,
-            apiToken = apiToken
+            deviceApiToken = apiToken.token
         )
 
         closeSetupConnection()
@@ -145,7 +131,7 @@ class DeviceSetupUseCase(
 
         val savedDeviceId = deviceStoreWriter.saveDiscoveredDevice(
             device = discoveredDevice,
-            apiToken = apiToken
+            deviceApiToken = apiToken.token
         )
 
         onProgress(DeviceSetupProgress.SUCCESS)
@@ -157,6 +143,28 @@ class DeviceSetupUseCase(
 
     fun close() {
         closeSetupConnection()
+        setupPairingToken = null
+    }
+
+    private suspend fun pairSetupDevice(
+        connection: DeviceSetupWifiConnector.SetupConnection
+    ): AquaDeviceSetupClient.DeviceApiToken {
+        setupPairingToken?.let { token ->
+            return token
+        }
+
+        return try {
+            setupClient.pairForSetup(
+                network = connection.network
+            ).also { token ->
+                setupPairingToken = token
+            }
+        } catch (exception: AquaDeviceSetupClient.DeviceSecurityException) {
+            throw DeviceSetupFlowException(
+                error = DeviceSetupFlowError.NOT_ACCEPTED,
+                detailMessage = exception.message
+            )
+        }
     }
 
     private suspend fun getOrCreateSetupConnection(
@@ -178,19 +186,13 @@ class DeviceSetupUseCase(
 
     private suspend fun waitForDeviceClientConnection(
         connection: DeviceSetupWifiConnector.SetupConnection,
-        expectedSsid: String,
         firstResponseBody: String?,
+        deviceApiToken: String,
         onProgress: (DeviceSetupProgress) -> Unit
     ): Boolean {
-        var credentialsAccepted = false
-
         val firstStatus = setupClient.parseDeviceWifiStatus(
             responseText = firstResponseBody
         )
-
-        if (firstStatus.hasAcceptedCredentials(expectedSsid)) {
-            credentialsAccepted = true
-        }
 
         if (firstStatus.connected) {
             return true
@@ -198,19 +200,16 @@ class DeviceSetupUseCase(
 
         onProgress(DeviceSetupProgress.CHECKING_DEVICE_CONNECTION)
 
-        repeat(35) {
+        repeat(15) {
             val status = try {
                 setupClient.readDeviceWifiStatus(
-                    network = connection.network
+                    network = connection.network,
+                    deviceApiToken = deviceApiToken
                 )
             } catch (exception: CancellationException) {
                 throw exception
             } catch (_: Exception) {
                 null
-            }
-
-            if (status?.hasAcceptedCredentials(expectedSsid) == true) {
-                credentialsAccepted = true
             }
 
             if (status?.connected == true) {
@@ -222,13 +221,6 @@ class DeviceSetupUseCase(
             delay(3_000L)
         }
 
-        if (!credentialsAccepted) {
-            throw DeviceSetupFlowException(
-                error = DeviceSetupFlowError.NOT_ACCEPTED,
-                detailMessage = "Device did not persist the home Wi-Fi SSID/password. The setup request did not reach firmware or was rejected."
-            )
-        }
-
         return false
     }
 
@@ -236,7 +228,7 @@ class DeviceSetupUseCase(
         target: DeviceSetupTarget,
         connection: DeviceSetupWifiConnector.SetupConnection,
         credentials: HomeWifiCredentials,
-        apiToken: String
+        deviceApiToken: String
     ) {
         val closeApResult = setupClient.sendHomeWifiCredentials(
             network = connection.network,
@@ -245,7 +237,7 @@ class DeviceSetupUseCase(
             homeSsid = credentials.ssid,
             homePassword = credentials.password,
             disableSetupAccessPoint = true,
-            apiToken = apiToken
+            deviceApiToken = deviceApiToken
         )
 
         if (!closeApResult.success) {
@@ -355,7 +347,6 @@ enum class DeviceSetupFlowError {
     NOT_ACCEPTED,
     CONNECTION_FAILED,
     CLOSE_SETUP_AP_FAILED,
-    PAIRING_FAILED,
     PHONE_NOT_HOME_WIFI,
     DEVICE_NOT_FOUND
 }
