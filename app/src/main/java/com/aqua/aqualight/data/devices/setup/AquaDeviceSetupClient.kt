@@ -26,6 +26,14 @@ class AquaDeviceSetupClient {
         val errorMessage: String?
     )
 
+    data class PairingResult(
+        val success: Boolean,
+        val token: String,
+        val responseCode: Int?,
+        val responseBody: String?,
+        val errorMessage: String?
+    )
+
     data class HomeWifiNetwork(
         val ssid: String,
         val rssi: Int
@@ -65,6 +73,43 @@ class AquaDeviceSetupClient {
         parseDeviceWifiStatus(result.responseBody)
     }
 
+    suspend fun pairDevice(
+        network: Network,
+        deviceUid: String,
+        serialNumber: String,
+        shortId: String,
+        currentToken: String = ""
+    ): PairingResult = withContext(Dispatchers.IO) {
+        val body = JSONObject().put(
+            "data",
+            JSONObject()
+                .put("deviceUid", deviceUid)
+                .put("serialNumber", serialNumber)
+                .put("shortId", shortId)
+                .put("rotateToken", false)
+        )
+
+        val result = performJsonRequest(
+            network = network,
+            method = "POST",
+            path = "/api/v1/security/pair",
+            body = body,
+            connectTimeoutMs = 10_000,
+            readTimeoutMs = 15_000,
+            apiToken = currentToken
+        )
+
+        val token = parsePairingToken(result.responseBody)
+
+        PairingResult(
+            success = result.success && token.isNotBlank(),
+            token = token,
+            responseCode = result.responseCode,
+            responseBody = result.responseBody,
+            errorMessage = result.errorMessage
+        )
+    }
+
     fun parseDeviceWifiStatus(responseText: String?): DeviceWifiStatus {
         val data = responseText
             ?.takeIf { it.isNotBlank() }
@@ -88,7 +133,8 @@ class AquaDeviceSetupClient {
         setupPassword: String,
         homeSsid: String,
         homePassword: String,
-        disableSetupAccessPoint: Boolean
+        disableSetupAccessPoint: Boolean,
+        apiToken: String = ""
     ): SetupResult = withContext(Dispatchers.IO) {
         val body = JSONObject().put(
             "data",
@@ -101,23 +147,15 @@ class AquaDeviceSetupClient {
                 .put("applyNow", true)
         )
 
-        val result = performJsonRequest(
+        performJsonRequest(
             network = network,
             method = "PUT",
             path = "/api/v1/network/wifi",
             body = body,
             connectTimeoutMs = 10_000,
-            readTimeoutMs = if (disableSetupAccessPoint) 15_000 else 20_000,
-            acceptNetworkTransition = disableSetupAccessPoint
-        )
-
-        if (!result.success || disableSetupAccessPoint) {
-            return@withContext result
-        }
-
-        validateHomeWifiCredentialResponse(
-            result = result,
-            expectedHomeSsid = homeSsid
+            readTimeoutMs = if (disableSetupAccessPoint) 15_000 else 75_000,
+            acceptNetworkTransition = true,
+            apiToken = apiToken
         )
     }
 
@@ -128,7 +166,8 @@ class AquaDeviceSetupClient {
         body: JSONObject?,
         connectTimeoutMs: Int,
         readTimeoutMs: Int,
-        acceptNetworkTransition: Boolean = false
+        acceptNetworkTransition: Boolean = false,
+        apiToken: String = ""
     ): SetupResult {
         var connection: HttpURLConnection? = null
         var bodySent = false
@@ -142,6 +181,10 @@ class AquaDeviceSetupClient {
             connection.useCaches = false
             connection.setRequestProperty("Accept", "application/json")
             connection.setRequestProperty("Connection", "close")
+            apiToken.trim().takeIf { token -> token.isNotBlank() }?.let { token ->
+                connection.setRequestProperty("X-AquaLight-Device-Token", token)
+                connection.setRequestProperty("Authorization", "Bearer $token")
+            }
 
             if (body != null) {
                 connection.doOutput = true
@@ -172,69 +215,11 @@ class AquaDeviceSetupClient {
                     success = false,
                     responseCode = null,
                     responseBody = null,
-                    errorMessage = buildString {
-                        append(method).append(' ').append(path).append(" failed")
-                        val message = exception.message ?: exception.toString()
-                        if (message.isNotBlank()) {
-                            append(": ").append(message)
-                        }
-                    }
+                    errorMessage = exception.message ?: exception.toString()
                 )
             }
         } finally {
             connection?.disconnect()
-        }
-    }
-
-    private fun validateHomeWifiCredentialResponse(
-        result: SetupResult,
-        expectedHomeSsid: String
-    ): SetupResult {
-        val body = result.responseBody
-        val root = body
-            ?.takeIf { it.isNotBlank() }
-            ?.let { runCatching { JSONObject(it) }.getOrNull() }
-
-        val data = root?.optJSONObject("data")
-        val clientEnabled = data?.optBoolean("clientEnabled", false) == true
-        val returnedSsid = data?.optString("clientSsid", "")?.trim().orEmpty()
-        val passwordSet = data?.optBoolean("clientPasswordSet", false) == true
-        val saved = data?.optBoolean("saved", false) == true
-        val ssidAccepted = returnedSsid == expectedHomeSsid.trim()
-
-        if (clientEnabled && ssidAccepted && passwordSet && saved) {
-            return result
-        }
-
-        return result.copy(
-            success = false,
-            errorMessage = buildString {
-                append("Device did not confirm Wi-Fi settings")
-                result.responseCode?.let { code -> append(". HTTP ").append(code) }
-                append(". confirmed={")
-                append("clientEnabled=").append(clientEnabled)
-                append(", clientSsid='").append(returnedSsid).append("'")
-                append(", expectedSsid='").append(expectedHomeSsid.trim()).append("'")
-                append(", clientPasswordSet=").append(passwordSet)
-                append(", saved=").append(saved)
-                append("}")
-                appendBodyPreview(body)
-            }
-        )
-    }
-
-    private fun StringBuilder.appendBodyPreview(
-        responseBody: String?
-    ) {
-        val preview = responseBody
-            ?.replace("\n", " ")
-            ?.replace("\r", " ")
-            ?.take(700)
-            ?.trim()
-            .orEmpty()
-
-        if (preview.isNotBlank()) {
-            append(". body=").append(preview)
         }
     }
 
@@ -258,6 +243,16 @@ class AquaDeviceSetupClient {
             ?.let { runCatching { JSONObject(it) }.getOrNull() }
             ?: return null
         return root.optJSONObject("error")?.optString("message")?.takeIf { it.isNotBlank() }
+    }
+
+    private fun parsePairingToken(responseBody: String?): String {
+        val data = responseBody
+            ?.takeIf { it.isNotBlank() }
+            ?.let { text -> runCatching { JSONObject(text) }.getOrNull() }
+            ?.optJSONObject("data")
+            ?: return ""
+
+        return data.optString("token", "").trim()
     }
 
     private fun parseWifiScanResponse(responseText: String): List<HomeWifiNetwork> {

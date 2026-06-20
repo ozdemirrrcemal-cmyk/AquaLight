@@ -67,6 +67,10 @@ class V1UrlConnectionClient : V1HttpClient {
             http.useCaches = false
             http.setRequestProperty("Accept", "application/json")
             http.setRequestProperty("Connection", "close")
+            connection.apiToken.trim().takeIf { token -> token.isNotBlank() }?.let { token ->
+                http.setRequestProperty("X-AquaLight-Device-Token", token)
+                http.setRequestProperty("Authorization", "Bearer $token")
+            }
 
             if (body != null) {
                 http.doOutput = true

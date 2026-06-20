@@ -8,7 +8,8 @@ class DeviceStoreWriter(
 ) {
 
     suspend fun saveDiscoveredDevice(
-        device: DiscoveredAquaDevice
+        device: DiscoveredAquaDevice,
+        apiToken: String = ""
     ): Long {
         val existingDeviceId = devicesStore.findStoredDeviceIdForIdentity(
             id = device.id,
@@ -28,6 +29,13 @@ class DeviceStoreWriter(
                     )
                 )
             )
+
+            if (apiToken.isNotBlank()) {
+                devicesStore.updateDeviceApiToken(
+                    deviceId = existingDeviceId,
+                    apiToken = apiToken
+                )
+            }
 
             return existingDeviceId
         }
@@ -77,6 +85,7 @@ class DeviceStoreWriter(
             ip = device.ip,
             serial = identifier,
             firmwareBuild = device.firmwareBuild,
+            apiToken = apiToken,
             deviceUid = device.deviceUid.orEmpty(),
             macAddress = device.macAddress.orEmpty(),
             firmwareSerial = device.firmwareSerial.orEmpty(),

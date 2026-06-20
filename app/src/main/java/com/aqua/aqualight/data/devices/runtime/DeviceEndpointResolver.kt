@@ -40,7 +40,10 @@ class DeviceEndpointResolver(
             return ApiResult.success(
                 ResolvedDeviceEndpoint(
                     device = storedDevice,
-                    connection = AquaDeviceConnection(host = cachedHost)
+                    connection = AquaDeviceConnection(
+                        host = cachedHost,
+                        apiToken = storedDevice.apiToken
+                    )
                 )
             )
         }
@@ -80,7 +83,10 @@ class DeviceEndpointResolver(
                 device = updatedDevice.copy(
                     ip = resolvedHost
                 ),
-                connection = AquaDeviceConnection(host = resolvedHost)
+                connection = AquaDeviceConnection(
+                    host = resolvedHost,
+                    apiToken = updatedDevice.apiToken
+                )
             )
         )
     }

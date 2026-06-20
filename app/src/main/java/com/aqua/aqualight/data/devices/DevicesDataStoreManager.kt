@@ -65,6 +65,7 @@ class DevicesDataStoreManager private constructor(
     data class DeviceInfo(
         val id: Long,
         val ownerUid: String = "",
+        val apiToken: String = "",
 
         val deviceUid: String = "",
         val macAddress: String = "",
@@ -246,6 +247,7 @@ class DevicesDataStoreManager private constructor(
         ip: String,
         serial: String,
         firmwareBuild: String,
+        apiToken: String = "",
         deviceUid: String = "",
         macAddress: String = "",
         firmwareSerial: String = "",
@@ -357,6 +359,7 @@ class DevicesDataStoreManager private constructor(
                 .setIp(ip)
                 .setSerial(serial)
                 .setFirmwareBuild(firmwareBuild)
+                .setApiToken(apiToken)
                 .setDeviceUid(deviceUid)
                 .setMacAddress(macAddress)
                 .setFirmwareSerial(firmwareSerial)
@@ -447,6 +450,33 @@ class DevicesDataStoreManager private constructor(
                     }
 
                 }.build()
+            }
+
+            prefs.toBuilder()
+                .clearDevices()
+                .addAllDevices(updatedDevices)
+                .build()
+        }
+    }
+
+    suspend fun updateDeviceApiToken(
+        deviceId: Long,
+        apiToken: String
+    ) {
+        val normalizedToken = apiToken.trim()
+        if (deviceId <= 0L || normalizedToken.isBlank()) {
+            return
+        }
+
+        dataStore.updateData { prefs ->
+            val updatedDevices = prefs.devicesList.map { device ->
+                if (device.id == deviceId && device.belongsToCurrentUser()) {
+                    device.toBuilder()
+                        .setApiToken(normalizedToken)
+                        .build()
+                } else {
+                    device
+                }
             }
 
             prefs.toBuilder()
@@ -806,6 +836,7 @@ class DevicesDataStoreManager private constructor(
         return DeviceInfo(
             id = id,
             ownerUid = ownerUid,
+            apiToken = apiToken,
 
             deviceUid = deviceUid,
             macAddress = macAddress,

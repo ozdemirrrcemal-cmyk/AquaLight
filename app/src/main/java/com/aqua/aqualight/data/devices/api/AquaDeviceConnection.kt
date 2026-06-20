@@ -4,6 +4,7 @@ data class AquaDeviceConnection(
     val host: String,
     val port: Int = DEFAULT_HTTP_PORT,
     val useHttps: Boolean = false,
+    val apiToken: String = "",
     val connectTimeoutMillis: Int = DEFAULT_TIMEOUT_MILLIS,
     val readTimeoutMillis: Int = DEFAULT_TIMEOUT_MILLIS
 ) {

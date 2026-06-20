@@ -574,6 +574,7 @@
     <string name="device_setup_connection_failed">Device could not connect to the selected Wi-Fi network. Check the Wi-Fi password and make sure the network is 2.4 GHz.</string>
     <string name="device_setup_closing_setup_network">Device connected. Closing setup network...</string>
     <string name="device_setup_close_ap_failed">Device connected, but setup network could not be closed.</string>
+    <string name="device_setup_pairing_failed">Device connected to Wi-Fi, but secure pairing failed. Reset the setup network and try again.</string>
     <string name="device_setup_waiting_phone_home_wifi">Waiting for your phone to return to home Wi-Fi...</string>
     <string name="device_setup_phone_not_home_wifi">Your phone did not return to %1$s. Connect to your home Wi-Fi and try again.</string>
     <string name="device_setup_finding_device">Finding device on your home network...</string>

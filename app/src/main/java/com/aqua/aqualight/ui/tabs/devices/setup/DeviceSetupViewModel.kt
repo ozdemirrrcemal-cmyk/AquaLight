@@ -427,6 +427,11 @@ class DeviceSetupViewModel(
                         ?: text(R.string.device_setup_close_ap_failed)
                 }
 
+                DeviceSetupFlowError.PAIRING_FAILED -> {
+                    exception.message
+                        ?: text(R.string.device_setup_pairing_failed)
+                }
+
                 DeviceSetupFlowError.PHONE_NOT_HOME_WIFI -> {
                     text(
                         resId = R.string.device_setup_phone_not_home_wifi,

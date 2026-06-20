@@ -81,12 +81,29 @@ class DeviceSetupUseCase(
             )
         }
 
+        val pairingResult = setupClient.pairDevice(
+            network = connection.network,
+            deviceUid = target.setupSsid,
+            serialNumber = target.setupSsid,
+            shortId = target.setupShortId
+        )
+
+        if (!pairingResult.success) {
+            throw DeviceSetupFlowException(
+                error = DeviceSetupFlowError.PAIRING_FAILED,
+                detailMessage = pairingResult.errorMessage
+            )
+        }
+
+        val apiToken = pairingResult.token
+
         onProgress(DeviceSetupProgress.CLOSING_SETUP_NETWORK)
 
         closeSetupAccessPoint(
             target = target,
             connection = connection,
-            credentials = credentials
+            credentials = credentials,
+            apiToken = apiToken
         )
 
         closeSetupConnection()
@@ -117,7 +134,8 @@ class DeviceSetupUseCase(
         )
 
         val savedDeviceId = deviceStoreWriter.saveDiscoveredDevice(
-            device = discoveredDevice
+            device = discoveredDevice,
+            apiToken = apiToken
         )
 
         onProgress(DeviceSetupProgress.SUCCESS)
@@ -163,7 +181,7 @@ class DeviceSetupUseCase(
 
         onProgress(DeviceSetupProgress.CHECKING_DEVICE_CONNECTION)
 
-        repeat(15) {
+        repeat(25) {
             val status = try {
                 setupClient.readDeviceWifiStatus(
                     network = connection.network
@@ -189,7 +207,8 @@ class DeviceSetupUseCase(
     private suspend fun closeSetupAccessPoint(
         target: DeviceSetupTarget,
         connection: DeviceSetupWifiConnector.SetupConnection,
-        credentials: HomeWifiCredentials
+        credentials: HomeWifiCredentials,
+        apiToken: String
     ) {
         val closeApResult = setupClient.sendHomeWifiCredentials(
             network = connection.network,
@@ -197,7 +216,8 @@ class DeviceSetupUseCase(
             setupPassword = SETUP_AP_PASSWORD,
             homeSsid = credentials.ssid,
             homePassword = credentials.password,
-            disableSetupAccessPoint = true
+            disableSetupAccessPoint = true,
+            apiToken = apiToken
         )
 
         if (!closeApResult.success) {
@@ -307,6 +327,7 @@ enum class DeviceSetupFlowError {
     NOT_ACCEPTED,
     CONNECTION_FAILED,
     CLOSE_SETUP_AP_FAILED,
+    PAIRING_FAILED,
     PHONE_NOT_HOME_WIFI,
     DEVICE_NOT_FOUND
 }
