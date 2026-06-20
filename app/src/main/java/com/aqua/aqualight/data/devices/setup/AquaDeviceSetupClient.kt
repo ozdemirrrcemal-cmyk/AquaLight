@@ -41,8 +41,20 @@ class AquaDeviceSetupClient {
 
     data class DeviceWifiStatus(
         val connected: Boolean,
-        val clientIp: String
-    )
+        val clientIp: String,
+        val configuredClientEnabled: Boolean = false,
+        val clientSsid: String = "",
+        val clientPasswordSet: Boolean = false,
+        val wifiStatusCode: Int? = null,
+        val lastClientWifiStatus: Int? = null,
+        val lastClientConnectMessage: String = ""
+    ) {
+        fun hasAcceptedCredentials(expectedSsid: String): Boolean {
+            return configuredClientEnabled &&
+                clientSsid.equals(expectedSsid.trim(), ignoreCase = false) &&
+                clientPasswordSet
+        }
+    }
 
     suspend fun scanHomeWifiNetworks(network: Network): List<HomeWifiNetwork> = withContext(Dispatchers.IO) {
         val response = performJsonRequest(
@@ -120,10 +132,21 @@ class AquaDeviceSetupClient {
         val clientIp = data.optString("ipAddress", "").trim()
             .ifBlank { data.optString("currentIpAddress", "").trim() }
         val connected = data.optBoolean("connected", false)
+        val configuredClientEnabled = if (data.has("configuredClientEnabled")) {
+            data.optBoolean("configuredClientEnabled", false)
+        } else {
+            data.optBoolean("clientEnabled", false)
+        }
 
         return DeviceWifiStatus(
             connected = connected && isValidHomeNetworkIp(clientIp),
-            clientIp = clientIp
+            clientIp = clientIp,
+            configuredClientEnabled = configuredClientEnabled,
+            clientSsid = data.optString("clientSsid", "").trim(),
+            clientPasswordSet = data.optBoolean("clientPasswordSet", false),
+            wifiStatusCode = data.optInt("wifiStatusCode").takeIf { data.has("wifiStatusCode") },
+            lastClientWifiStatus = data.optInt("lastClientWifiStatus").takeIf { data.has("lastClientWifiStatus") },
+            lastClientConnectMessage = data.optString("lastClientConnectMessage", "").trim()
         )
     }
 
@@ -153,8 +176,8 @@ class AquaDeviceSetupClient {
             path = "/api/v1/network/wifi",
             body = body,
             connectTimeoutMs = 10_000,
-            readTimeoutMs = if (disableSetupAccessPoint) 15_000 else 75_000,
-            acceptNetworkTransition = true,
+            readTimeoutMs = if (disableSetupAccessPoint) 15_000 else 20_000,
+            acceptNetworkTransition = disableSetupAccessPoint,
             apiToken = apiToken
         )
     }

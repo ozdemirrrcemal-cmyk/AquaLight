@@ -56,6 +56,5 @@ message SavedDeviceInfo {
 
   string owner_uid = 100;
 
-  // Per-device local API token returned once by /api/v1/security/pair.
   string api_token = 101;
 }

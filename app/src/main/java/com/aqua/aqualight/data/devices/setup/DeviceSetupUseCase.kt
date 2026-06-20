@@ -51,6 +51,46 @@ class DeviceSetupUseCase(
             setupSsid = target.setupSsid
         )
 
+        // Important onboarding order:
+        // Do NOT pair before the home Wi-Fi credentials are accepted.
+        // If pairing succeeds and any later Wi-Fi step fails, the device becomes
+        // paired while the app has not saved the token yet. Every retry is then
+        // blocked by the token gate and the UI can misleadingly show scan/password
+        // errors. The firmware intentionally allows /api/v1/network/wifi while the
+        // device is in setup/onboarding mode, so credentials go first, pairing goes
+        // after the device has proven it can join the home network.
+        onProgress(DeviceSetupProgress.SENDING_HOME_WIFI_CREDENTIALS)
+
+        val setupResult = setupClient.sendHomeWifiCredentials(
+            network = connection.network,
+            setupSsid = target.setupSsid,
+            setupPassword = SETUP_AP_PASSWORD,
+            homeSsid = credentials.ssid,
+            homePassword = credentials.password,
+            disableSetupAccessPoint = false,
+            apiToken = ""
+        )
+
+        if (!setupResult.success) {
+            throw DeviceSetupFlowException(
+                error = DeviceSetupFlowError.NOT_ACCEPTED,
+                detailMessage = setupResult.errorMessage
+            )
+        }
+
+        if (
+            !waitForDeviceClientConnection(
+                connection = connection,
+                expectedSsid = credentials.ssid,
+                firstResponseBody = setupResult.responseBody,
+                onProgress = onProgress
+            )
+        ) {
+            throw DeviceSetupFlowException(
+                error = DeviceSetupFlowError.CONNECTION_FAILED
+            )
+        }
+
         val pairingResult = setupClient.pairDevice(
             network = connection.network,
             deviceUid = target.setupSsid,
@@ -66,37 +106,6 @@ class DeviceSetupUseCase(
         }
 
         val apiToken = pairingResult.token
-
-        onProgress(DeviceSetupProgress.SENDING_HOME_WIFI_CREDENTIALS)
-
-        val setupResult = setupClient.sendHomeWifiCredentials(
-            network = connection.network,
-            setupSsid = target.setupSsid,
-            setupPassword = SETUP_AP_PASSWORD,
-            homeSsid = credentials.ssid,
-            homePassword = credentials.password,
-            disableSetupAccessPoint = false,
-            apiToken = apiToken
-        )
-
-        if (!setupResult.success) {
-            throw DeviceSetupFlowException(
-                error = DeviceSetupFlowError.NOT_ACCEPTED,
-                detailMessage = setupResult.errorMessage
-            )
-        }
-
-        if (
-            !waitForDeviceClientConnection(
-                connection = connection,
-                firstResponseBody = setupResult.responseBody,
-                onProgress = onProgress
-            )
-        ) {
-            throw DeviceSetupFlowException(
-                error = DeviceSetupFlowError.CONNECTION_FAILED
-            )
-        }
 
         onProgress(DeviceSetupProgress.CLOSING_SETUP_NETWORK)
 
@@ -169,12 +178,19 @@ class DeviceSetupUseCase(
 
     private suspend fun waitForDeviceClientConnection(
         connection: DeviceSetupWifiConnector.SetupConnection,
+        expectedSsid: String,
         firstResponseBody: String?,
         onProgress: (DeviceSetupProgress) -> Unit
     ): Boolean {
+        var credentialsAccepted = false
+
         val firstStatus = setupClient.parseDeviceWifiStatus(
             responseText = firstResponseBody
         )
+
+        if (firstStatus.hasAcceptedCredentials(expectedSsid)) {
+            credentialsAccepted = true
+        }
 
         if (firstStatus.connected) {
             return true
@@ -182,7 +198,7 @@ class DeviceSetupUseCase(
 
         onProgress(DeviceSetupProgress.CHECKING_DEVICE_CONNECTION)
 
-        repeat(25) {
+        repeat(35) {
             val status = try {
                 setupClient.readDeviceWifiStatus(
                     network = connection.network
@@ -193,6 +209,10 @@ class DeviceSetupUseCase(
                 null
             }
 
+            if (status?.hasAcceptedCredentials(expectedSsid) == true) {
+                credentialsAccepted = true
+            }
+
             if (status?.connected == true) {
                 return true
             }
@@ -200,6 +220,13 @@ class DeviceSetupUseCase(
             onProgress(DeviceSetupProgress.JOINING_HOME_WIFI)
 
             delay(3_000L)
+        }
+
+        if (!credentialsAccepted) {
+            throw DeviceSetupFlowException(
+                error = DeviceSetupFlowError.NOT_ACCEPTED,
+                detailMessage = "Device did not persist the home Wi-Fi SSID/password. The setup request did not reach firmware or was rejected."
+            )
         }
 
         return false

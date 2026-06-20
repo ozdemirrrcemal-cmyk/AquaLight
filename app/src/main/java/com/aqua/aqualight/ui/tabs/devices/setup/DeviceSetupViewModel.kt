@@ -429,7 +429,7 @@ class DeviceSetupViewModel(
 
                 DeviceSetupFlowError.PAIRING_FAILED -> {
                     exception.message
-                        ?: text(R.string.device_setup_pairing_failed)
+                        ?: text(R.string.device_setup_not_accepted)
                 }
 
                 DeviceSetupFlowError.PHONE_NOT_HOME_WIFI -> {

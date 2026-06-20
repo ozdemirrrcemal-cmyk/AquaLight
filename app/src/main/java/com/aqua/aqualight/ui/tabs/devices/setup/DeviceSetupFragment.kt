@@ -95,9 +95,6 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
             viewModel.scanHomeNetworks()
         }
 
-        binding.etHomeWifiSsid.setOnClickListener {
-            viewModel.scanHomeNetworks()
-        }
 
         binding.btnStartSetup.setOnClickListener {
             viewModel.startSetup(
