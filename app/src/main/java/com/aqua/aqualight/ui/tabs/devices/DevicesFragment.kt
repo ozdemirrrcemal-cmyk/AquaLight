@@ -57,6 +57,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
+                titleOverride = getString(R.string.screen_title_devices),
                 showBackButton = false,
                 primaryAction = AquaHeaderPrimaryAction(
                     text = if (currentUiState.selectionMode) {

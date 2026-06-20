@@ -1,11 +1,21 @@
 package com.aqua.aqualight.ui.main
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
+import android.view.View
 import androidx.activity.OnBackPressedCallback
+import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.isVisible
+import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.aqua.aqualight.R
@@ -43,8 +53,11 @@ class MainActivity : BaseActivity() {
     ) {
         super.onCreate(savedInstanceState)
 
+        configureSystemBars()
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        applySystemBarInsets()
 
         val navHost = supportFragmentManager.findFragmentById(
             R.id.nav_host
@@ -233,23 +246,94 @@ class MainActivity : BaseActivity() {
         )
 
         navController.addOnDestinationChangedListener { _, destination, _ ->
-            val isTopLevelDestination =
-                AppDestinationContract.isTopLevelDestination(destination.id)
+            syncBottomBarState(
+                destination = destination,
+                exitFromTopLevelBackCallback = exitFromTopLevelBackCallback
+            )
+        }
 
-            val isInsideAppGraph =
-                AppDestinationContract.isInsideAppGraph(destination)
-
-            binding.bottomNav.isVisible =
-                isTopLevelDestination
-
-            exitFromTopLevelBackCallback.isEnabled =
-                isInsideAppGraph && isTopLevelDestination
-
-            if (isInsideAppGraph) {
-                isAuthenticated = authSessionManager.isAuthenticated()
-                startSessionBoundServicesIfNeeded()
-                consumePendingCareTaskIfPossible()
-            }
+        binding.root.post {
+            syncBottomBarState(
+                destination = navController.currentDestination,
+                exitFromTopLevelBackCallback = exitFromTopLevelBackCallback
+            )
         }
     }
+
+    private fun syncBottomBarState(
+        destination: NavDestination?,
+        exitFromTopLevelBackCallback: OnBackPressedCallback
+    ) {
+        val isInsideAppGraph =
+            AppDestinationContract.isInsideAppGraph(destination)
+
+        val isTopLevelDestination =
+            AppDestinationContract.isTopLevelDestination(destination)
+
+        binding.bottomNav.isVisible =
+            isInsideAppGraph && isTopLevelDestination
+
+        exitFromTopLevelBackCallback.isEnabled =
+            isInsideAppGraph && isTopLevelDestination
+
+        if (isInsideAppGraph) {
+            isAuthenticated = authSessionManager.isAuthenticated()
+            startSessionBoundServicesIfNeeded()
+            consumePendingCareTaskIfPossible()
+        }
+    }
+
+    private fun configureSystemBars() {
+        WindowCompat.setDecorFitsSystemWindows(
+            window,
+            false
+        )
+
+        window.statusBarColor =
+            Color.TRANSPARENT
+
+        window.navigationBarColor =
+            Color.BLACK
+
+        val controller = WindowInsetsControllerCompat(
+            window,
+            window.decorView
+        )
+
+        controller.isAppearanceLightStatusBars =
+            false
+
+        controller.isAppearanceLightNavigationBars =
+            false
+    }
+
+    private fun applySystemBarInsets() {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+            val statusBars = insets.getInsets(
+                WindowInsetsCompat.Type.statusBars()
+            )
+
+            val navigationBars = insets.getInsets(
+                WindowInsetsCompat.Type.navigationBars()
+            )
+
+            binding.navHost.updatePadding(
+                top = statusBars.top
+            )
+
+            binding.bottomNav.updateLayoutParams<CoordinatorLayout.LayoutParams> {
+                bottomMargin = navigationBars.bottom
+            }
+
+            insets
+        }
+
+        binding.root.systemUiVisibility =
+            binding.root.systemUiVisibility and
+                View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv() and
+                View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.inv()
+
+        ViewCompat.requestApplyInsets(binding.root)
+    }
+
 }
