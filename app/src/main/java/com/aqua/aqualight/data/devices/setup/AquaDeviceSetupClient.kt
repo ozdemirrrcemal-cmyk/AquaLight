@@ -101,14 +101,23 @@ class AquaDeviceSetupClient {
                 .put("applyNow", true)
         )
 
-        performJsonRequest(
+        val result = performJsonRequest(
             network = network,
             method = "PUT",
             path = "/api/v1/network/wifi",
             body = body,
             connectTimeoutMs = 10_000,
-            readTimeoutMs = if (disableSetupAccessPoint) 15_000 else 75_000,
-            acceptNetworkTransition = true
+            readTimeoutMs = if (disableSetupAccessPoint) 15_000 else 20_000,
+            acceptNetworkTransition = disableSetupAccessPoint
+        )
+
+        if (!result.success || disableSetupAccessPoint) {
+            return@withContext result
+        }
+
+        validateHomeWifiCredentialResponse(
+            result = result,
+            expectedHomeSsid = homeSsid
         )
     }
 
@@ -163,11 +172,69 @@ class AquaDeviceSetupClient {
                     success = false,
                     responseCode = null,
                     responseBody = null,
-                    errorMessage = exception.message ?: exception.toString()
+                    errorMessage = buildString {
+                        append(method).append(' ').append(path).append(" failed")
+                        val message = exception.message ?: exception.toString()
+                        if (message.isNotBlank()) {
+                            append(": ").append(message)
+                        }
+                    }
                 )
             }
         } finally {
             connection?.disconnect()
+        }
+    }
+
+    private fun validateHomeWifiCredentialResponse(
+        result: SetupResult,
+        expectedHomeSsid: String
+    ): SetupResult {
+        val body = result.responseBody
+        val root = body
+            ?.takeIf { it.isNotBlank() }
+            ?.let { runCatching { JSONObject(it) }.getOrNull() }
+
+        val data = root?.optJSONObject("data")
+        val clientEnabled = data?.optBoolean("clientEnabled", false) == true
+        val returnedSsid = data?.optString("clientSsid", "")?.trim().orEmpty()
+        val passwordSet = data?.optBoolean("clientPasswordSet", false) == true
+        val saved = data?.optBoolean("saved", false) == true
+        val ssidAccepted = returnedSsid == expectedHomeSsid.trim()
+
+        if (clientEnabled && ssidAccepted && passwordSet && saved) {
+            return result
+        }
+
+        return result.copy(
+            success = false,
+            errorMessage = buildString {
+                append("Device did not confirm Wi-Fi settings")
+                result.responseCode?.let { code -> append(". HTTP ").append(code) }
+                append(". confirmed={")
+                append("clientEnabled=").append(clientEnabled)
+                append(", clientSsid='").append(returnedSsid).append("'")
+                append(", expectedSsid='").append(expectedHomeSsid.trim()).append("'")
+                append(", clientPasswordSet=").append(passwordSet)
+                append(", saved=").append(saved)
+                append("}")
+                appendBodyPreview(body)
+            }
+        )
+    }
+
+    private fun StringBuilder.appendBodyPreview(
+        responseBody: String?
+    ) {
+        val preview = responseBody
+            ?.replace("\n", " ")
+            ?.replace("\r", " ")
+            ?.take(700)
+            ?.trim()
+            .orEmpty()
+
+        if (preview.isNotBlank()) {
+            append(". body=").append(preview)
         }
     }
 
