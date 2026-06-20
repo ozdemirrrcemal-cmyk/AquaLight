@@ -51,6 +51,22 @@ class DeviceSetupUseCase(
             setupSsid = target.setupSsid
         )
 
+        val pairingResult = setupClient.pairDevice(
+            network = connection.network,
+            deviceUid = target.setupSsid,
+            serialNumber = target.setupSsid,
+            shortId = target.setupShortId
+        )
+
+        if (!pairingResult.success) {
+            throw DeviceSetupFlowException(
+                error = DeviceSetupFlowError.PAIRING_FAILED,
+                detailMessage = pairingResult.errorMessage
+            )
+        }
+
+        val apiToken = pairingResult.token
+
         onProgress(DeviceSetupProgress.SENDING_HOME_WIFI_CREDENTIALS)
 
         val setupResult = setupClient.sendHomeWifiCredentials(
@@ -59,7 +75,8 @@ class DeviceSetupUseCase(
             setupPassword = SETUP_AP_PASSWORD,
             homeSsid = credentials.ssid,
             homePassword = credentials.password,
-            disableSetupAccessPoint = false
+            disableSetupAccessPoint = false,
+            apiToken = apiToken
         )
 
         if (!setupResult.success) {
@@ -80,22 +97,6 @@ class DeviceSetupUseCase(
                 error = DeviceSetupFlowError.CONNECTION_FAILED
             )
         }
-
-        val pairingResult = setupClient.pairDevice(
-            network = connection.network,
-            deviceUid = target.setupSsid,
-            serialNumber = target.setupSsid,
-            shortId = target.setupShortId
-        )
-
-        if (!pairingResult.success) {
-            throw DeviceSetupFlowException(
-                error = DeviceSetupFlowError.PAIRING_FAILED,
-                detailMessage = pairingResult.errorMessage
-            )
-        }
-
-        val apiToken = pairingResult.token
 
         onProgress(DeviceSetupProgress.CLOSING_SETUP_NETWORK)
 
