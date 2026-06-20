@@ -1,18 +1,9 @@
 package com.aqua.aqualight.ui.main
 
 import android.content.Intent
-import android.graphics.Color
 import android.os.Bundle
-import android.view.View
 import androidx.activity.OnBackPressedCallback
-import androidx.coordinatorlayout.widget.CoordinatorLayout
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.isVisible
-import androidx.core.view.updateLayoutParams
-import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
@@ -47,17 +38,15 @@ class MainActivity : BaseActivity() {
     private var pendingCareTaskId: Long = -1L
     private var pendingCareTaskOwnerUid: String = ""
     private var bottomBarSetup: Boolean = false
+    private var exitFromTopLevelBackCallback: OnBackPressedCallback? = null
 
     override fun onCreate(
         savedInstanceState: Bundle?
     ) {
         super.onCreate(savedInstanceState)
 
-        configureSystemBars()
-
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        applySystemBarInsets()
 
         val navHost = supportFragmentManager.findFragmentById(
             R.id.nav_host
@@ -232,7 +221,7 @@ class MainActivity : BaseActivity() {
 
         binding.bottomNav.setupWithNavController(navController)
 
-        val exitFromTopLevelBackCallback =
+        exitFromTopLevelBackCallback =
             object : OnBackPressedCallback(false) {
 
                 override fun handleOnBackPressed() {
@@ -242,98 +231,54 @@ class MainActivity : BaseActivity() {
 
         onBackPressedDispatcher.addCallback(
             this,
-            exitFromTopLevelBackCallback
+            requireNotNull(exitFromTopLevelBackCallback)
         )
 
         navController.addOnDestinationChangedListener { _, destination, _ ->
-            syncBottomBarState(
-                destination = destination,
-                exitFromTopLevelBackCallback = exitFromTopLevelBackCallback
-            )
+            syncBottomBarState(destination)
         }
+
+        syncBottomBarState(
+            navController.currentDestination
+        )
 
         binding.root.post {
             syncBottomBarState(
-                destination = navController.currentDestination,
-                exitFromTopLevelBackCallback = exitFromTopLevelBackCallback
+                navController.currentDestination
             )
         }
     }
 
     private fun syncBottomBarState(
-        destination: NavDestination?,
-        exitFromTopLevelBackCallback: OnBackPressedCallback
+        destination: NavDestination?
     ) {
+        val destinationId =
+            destination?.id
+
         val isInsideAppGraph =
-            AppDestinationContract.isInsideAppGraph(destination)
+            destinationId == R.id.nav_app ||
+                AppDestinationContract.isInsideAppGraph(destination)
 
         val isTopLevelDestination =
-            AppDestinationContract.isTopLevelDestination(destination)
+            destinationId == R.id.nav_app ||
+                destinationId?.let(
+                    AppDestinationContract::isTopLevelDestination
+                ) == true
+
+        val shouldShowBottomBar =
+            isInsideAppGraph && isTopLevelDestination
 
         binding.bottomNav.isVisible =
-            isInsideAppGraph && isTopLevelDestination
+            shouldShowBottomBar
 
-        exitFromTopLevelBackCallback.isEnabled =
-            isInsideAppGraph && isTopLevelDestination
+        exitFromTopLevelBackCallback?.isEnabled =
+            shouldShowBottomBar
 
         if (isInsideAppGraph) {
             isAuthenticated = authSessionManager.isAuthenticated()
             startSessionBoundServicesIfNeeded()
             consumePendingCareTaskIfPossible()
         }
-    }
-
-    private fun configureSystemBars() {
-        WindowCompat.setDecorFitsSystemWindows(
-            window,
-            false
-        )
-
-        window.statusBarColor =
-            Color.TRANSPARENT
-
-        window.navigationBarColor =
-            Color.BLACK
-
-        val controller = WindowInsetsControllerCompat(
-            window,
-            window.decorView
-        )
-
-        controller.isAppearanceLightStatusBars =
-            false
-
-        controller.isAppearanceLightNavigationBars =
-            false
-    }
-
-    private fun applySystemBarInsets() {
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
-            val statusBars = insets.getInsets(
-                WindowInsetsCompat.Type.statusBars()
-            )
-
-            val navigationBars = insets.getInsets(
-                WindowInsetsCompat.Type.navigationBars()
-            )
-
-            binding.navHost.updatePadding(
-                top = statusBars.top
-            )
-
-            binding.bottomNav.updateLayoutParams<CoordinatorLayout.LayoutParams> {
-                bottomMargin = navigationBars.bottom
-            }
-
-            insets
-        }
-
-        binding.root.systemUiVisibility =
-            binding.root.systemUiVisibility and
-                View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv() and
-                View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.inv()
-
-        ViewCompat.requestApplyInsets(binding.root)
     }
 
 }

@@ -24,16 +24,7 @@ object AppDestinationContract {
         destinationId: Int
     ): Boolean {
         return destinationId in topLevelDestinationIds ||
-            destinationId in topLevelGraphIds ||
-            destinationId == R.id.nav_app
-    }
-
-    fun isTopLevelDestination(
-        destination: NavDestination?
-    ): Boolean {
-        return destination?.id?.let { destinationId ->
-            isTopLevelDestination(destinationId)
-        } ?: false
+            destinationId in topLevelGraphIds
     }
 
     fun isInsideAppGraph(

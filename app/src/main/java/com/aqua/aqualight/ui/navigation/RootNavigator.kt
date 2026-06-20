@@ -13,7 +13,7 @@ object RootNavigator {
         fragment: Fragment
     ) {
         rootNavController(fragment).navigate(
-            R.id.nav_aquarium,
+            R.id.nav_app,
             null,
             navOptions {
                 popUpTo(R.id.authContainerFragment) {
