@@ -93,10 +93,15 @@ class DeviceSetupUseCase(
             )
         }
 
-        // Commercial onboarding: keep the device setup AP alive until the phone/app
-        // has received the final Wi-Fi result and can move back to the home network.
-        // The firmware continues to advertise itself over UDP/HTTP while STA joins
-        // the router, so the app must not send setupApEnabled=false here.
+        onProgress(DeviceSetupProgress.CLOSING_SETUP_NETWORK)
+
+        closeSetupAccessPoint(
+            target = target,
+            connection = connection,
+            credentials = credentials,
+            deviceApiToken = apiToken.token
+        )
+
         closeSetupConnection()
 
         onProgress(DeviceSetupProgress.WAITING_PHONE_HOME_WIFI)
@@ -125,7 +130,8 @@ class DeviceSetupUseCase(
         )
 
         val savedDeviceId = deviceStoreWriter.saveDiscoveredDevice(
-            device = discoveredDevice
+            device = discoveredDevice,
+            deviceApiToken = apiToken.token
         )
 
         onProgress(DeviceSetupProgress.SUCCESS)
@@ -218,6 +224,29 @@ class DeviceSetupUseCase(
         return false
     }
 
+    private suspend fun closeSetupAccessPoint(
+        target: DeviceSetupTarget,
+        connection: DeviceSetupWifiConnector.SetupConnection,
+        credentials: HomeWifiCredentials,
+        deviceApiToken: String
+    ) {
+        val closeApResult = setupClient.sendHomeWifiCredentials(
+            network = connection.network,
+            setupSsid = target.setupSsid,
+            setupPassword = SETUP_AP_PASSWORD,
+            homeSsid = credentials.ssid,
+            homePassword = credentials.password,
+            disableSetupAccessPoint = true,
+            deviceApiToken = deviceApiToken
+        )
+
+        if (!closeApResult.success) {
+            throw DeviceSetupFlowException(
+                error = DeviceSetupFlowError.CLOSE_SETUP_AP_FAILED,
+                detailMessage = closeApResult.errorMessage
+            )
+        }
+    }
 
     private suspend fun waitForDeviceOnHomeNetwork(
         target: DeviceSetupTarget
@@ -308,6 +337,7 @@ enum class DeviceSetupProgress {
     SENDING_HOME_WIFI_CREDENTIALS,
     CHECKING_DEVICE_CONNECTION,
     JOINING_HOME_WIFI,
+    CLOSING_SETUP_NETWORK,
     WAITING_PHONE_HOME_WIFI,
     FINDING_DEVICE_ON_HOME_NETWORK,
     SUCCESS
@@ -316,6 +346,7 @@ enum class DeviceSetupProgress {
 enum class DeviceSetupFlowError {
     NOT_ACCEPTED,
     CONNECTION_FAILED,
+    CLOSE_SETUP_AP_FAILED,
     PHONE_NOT_HOME_WIFI,
     DEVICE_NOT_FOUND
 }

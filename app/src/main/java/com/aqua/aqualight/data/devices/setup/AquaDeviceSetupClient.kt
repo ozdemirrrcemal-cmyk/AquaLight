@@ -206,6 +206,7 @@ class AquaDeviceSetupClient {
         setupPassword: String,
         homeSsid: String,
         homePassword: String,
+        disableSetupAccessPoint: Boolean,
         deviceApiToken: String = ""
     ): SetupResult = withContext(Dispatchers.IO) {
         val body = JSONObject().put(
@@ -214,10 +215,7 @@ class AquaDeviceSetupClient {
                 .put("clientEnabled", true)
                 .put("clientSsid", homeSsid)
                 .put("clientPassword", homePassword)
-                // Commercial onboarding rule: do not close the setup AP as part of
-                // credential submission. Firmware keeps AP+STA alive so the phone can
-                // receive the final response and then discover the device on home Wi-Fi.
-                .put("setupApEnabled", true)
+                .put("setupApEnabled", !disableSetupAccessPoint)
                 .put("setupApPassword", setupPassword)
                 .put("applyNow", true)
         )
@@ -228,7 +226,7 @@ class AquaDeviceSetupClient {
             path = "/api/v1/network/wifi",
             body = body,
             connectTimeoutMs = 10_000,
-            readTimeoutMs = 75_000,
+            readTimeoutMs = if (disableSetupAccessPoint) 15_000 else 75_000,
             acceptNetworkTransition = true,
             deviceApiToken = deviceApiToken
         )
