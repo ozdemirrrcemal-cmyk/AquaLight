@@ -31,17 +31,34 @@ class AquaDeviceSetupClient {
 
     data class HomeWifiNetwork(
         val ssid: String,
-        val rssi: Int
+        val rssi: Int,
+        val bssid: String = "",
+        val channel: Int = 0,
+        val security: String = ""
     )
 
     data class DeviceWifiStatus(
         val connected: Boolean,
         val clientIp: String,
         val apEnabled: Boolean = false,
-        val configuredApEnabled: Boolean? = null
+        val configuredApEnabled: Boolean? = null,
+        val connectionState: String = "",
+        val lastDisconnectReason: String = "",
+        val lastDisconnectReasonCode: Int = 0,
+        val nextRetryRemainingMs: Long = 0L
     ) {
         val setupAccessPointClosed: Boolean
             get() = !apEnabled && configuredApEnabled != true
+
+        val diagnosticText: String
+            get() = buildList {
+                if (connectionState.isNotBlank()) add("state=$connectionState")
+                if (lastDisconnectReason.isNotBlank() && lastDisconnectReason != "none") {
+                    add("reason=$lastDisconnectReason")
+                }
+                if (lastDisconnectReasonCode != 0) add("code=$lastDisconnectReasonCode")
+                if (nextRetryRemainingMs > 0) add("retryInMs=$nextRetryRemainingMs")
+            }.joinToString(", ")
     }
 
     data class DeviceApiToken(
@@ -269,7 +286,11 @@ class AquaDeviceSetupClient {
             connected = connected && isValidHomeNetworkIp(clientIp),
             clientIp = clientIp,
             apEnabled = apEnabled,
-            configuredApEnabled = configuredApEnabled
+            configuredApEnabled = configuredApEnabled,
+            connectionState = data.optString("connectionState", "").trim(),
+            lastDisconnectReason = data.optString("lastDisconnectReason", "").trim(),
+            lastDisconnectReasonCode = data.optInt("lastDisconnectReasonCode", 0),
+            nextRetryRemainingMs = data.optLong("nextRetryRemainingMs", 0L)
         )
     }
 
@@ -302,19 +323,28 @@ class AquaDeviceSetupClient {
         setupPassword: String,
         homeSsid: String,
         homePassword: String,
+        homeBssid: String = "",
+        homeChannel: Int = 0,
         disableSetupAccessPoint: Boolean,
         deviceApiToken: String = ""
     ): SetupResult = withContext(Dispatchers.IO) {
-        val body = JSONObject().put(
-            "data",
-            JSONObject()
-                .put("clientEnabled", true)
-                .put("clientSsid", homeSsid)
-                .put("clientPassword", homePassword)
-                .put("setupApEnabled", !disableSetupAccessPoint)
-                .put("setupApPassword", setupPassword)
-                .put("applyNow", true)
-        )
+        val wifiData = JSONObject()
+            .put("clientEnabled", true)
+            .put("clientSsid", homeSsid)
+            .put("clientPassword", homePassword)
+            .put("setupApEnabled", !disableSetupAccessPoint)
+            .put("setupApPassword", setupPassword)
+            .put("applyNow", true)
+
+        if (homeBssid.isNotBlank()) {
+            wifiData.put("clientBssid", homeBssid)
+        }
+
+        if (homeChannel in 1..14) {
+            wifiData.put("clientChannel", homeChannel)
+        }
+
+        val body = JSONObject().put("data", wifiData)
 
         performJsonRequest(
             network = network,
@@ -541,11 +571,19 @@ class AquaDeviceSetupClient {
                 val item = networks.optJSONObject(i) ?: continue
                 val ssid = item.optString("ssid", "").trim()
                 if (ssid.isBlank()) continue
-                add(HomeWifiNetwork(ssid = ssid, rssi = item.optInt("rssi", -100)))
+                add(
+                    HomeWifiNetwork(
+                        ssid = ssid,
+                        rssi = item.optInt("rssi", -100),
+                        bssid = item.optString("bssid", "").trim(),
+                        channel = item.optInt("channel", 0),
+                        security = item.optString("security", "").trim()
+                    )
+                )
             }
         }
-            .distinctBy { network -> network.ssid }
-            .sortedByDescending { network -> network.rssi }
+            .distinctBy { network -> "${network.ssid}|${network.bssid.ifBlank { network.channel.toString() }}" }
+            .sortedWith(compareByDescending<HomeWifiNetwork> { network -> network.rssi }.thenBy { network -> network.ssid })
     }
 
     private fun isValidHomeNetworkIp(ip: String): Boolean {

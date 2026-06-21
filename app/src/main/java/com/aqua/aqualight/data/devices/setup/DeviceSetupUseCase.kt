@@ -69,6 +69,8 @@ class DeviceSetupUseCase(
             setupPassword = SETUP_AP_PASSWORD,
             homeSsid = credentials.ssid,
             homePassword = credentials.password,
+            homeBssid = credentials.bssid,
+            homeChannel = credentials.channel,
             disableSetupAccessPoint = false,
             deviceApiToken = apiToken.token
         )
@@ -80,13 +82,16 @@ class DeviceSetupUseCase(
             )
         }
 
-        val homeJoinStatus = waitForDeviceClientConnection(
+        val homeJoinResult = waitForDeviceClientConnection(
             connection = connection,
             firstResponseBody = setupResult.responseBody,
             deviceApiToken = apiToken.token,
             onProgress = onProgress
-        ) ?: throw DeviceSetupFlowException(
-            error = DeviceSetupFlowError.CONNECTION_FAILED
+        )
+
+        val homeJoinStatus = homeJoinResult.status ?: throw DeviceSetupFlowException(
+            error = DeviceSetupFlowError.CONNECTION_FAILED,
+            detailMessage = homeJoinResult.failureMessage
         )
 
         onProgress(DeviceSetupProgress.CLOSING_SETUP_NETWORK)
@@ -199,14 +204,16 @@ class DeviceSetupUseCase(
         firstResponseBody: String?,
         deviceApiToken: String,
         onProgress: (DeviceSetupProgress) -> Unit
-    ): AquaDeviceSetupClient.DeviceWifiStatus? {
+    ): DeviceHomeJoinResult {
         val firstStatus = setupClient.parseDeviceWifiStatus(
             responseText = firstResponseBody
         )
 
         if (firstStatus.connected) {
-            return firstStatus
+            return DeviceHomeJoinResult(status = firstStatus)
         }
+
+        var lastStatus: AquaDeviceSetupClient.DeviceWifiStatus? = firstStatus
 
         onProgress(DeviceSetupProgress.CHECKING_DEVICE_CONNECTION)
 
@@ -222,8 +229,12 @@ class DeviceSetupUseCase(
                 null
             }
 
+            if (status != null) {
+                lastStatus = status
+            }
+
             if (status?.connected == true) {
-                return status
+                return DeviceHomeJoinResult(status = status)
             }
 
             onProgress(DeviceSetupProgress.JOINING_HOME_WIFI)
@@ -231,7 +242,15 @@ class DeviceSetupUseCase(
             delay(3_000L)
         }
 
-        return null
+        val diagnostic = lastStatus?.diagnosticText.orEmpty()
+        return DeviceHomeJoinResult(
+            status = null,
+            failureMessage = if (diagnostic.isBlank()) {
+                "Device did not join the home Wi-Fi network."
+            } else {
+                "Device did not join the home Wi-Fi network ($diagnostic)."
+            }
+        )
     }
 
     private suspend fun closeSetupAccessPoint(
@@ -394,7 +413,14 @@ class DeviceSetupUseCase(
 
 data class HomeWifiCredentials(
     val ssid: String,
-    val password: String
+    val password: String,
+    val bssid: String = "",
+    val channel: Int = 0
+)
+
+private data class DeviceHomeJoinResult(
+    val status: AquaDeviceSetupClient.DeviceWifiStatus?,
+    val failureMessage: String = ""
 )
 
 enum class DeviceSetupProgress {

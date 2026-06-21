@@ -21,18 +21,27 @@ class HomeWifiNetworksBottomSheetFragment : BottomSheetDialogFragment(
 
     data class HomeWifiNetworkItem(
         val ssid: String,
-        val rssi: Int
+        val rssi: Int,
+        val bssid: String = "",
+        val channel: Int = 0,
+        val security: String = ""
     )
 
     private val networks: List<HomeWifiNetworkItem>
         get() {
             val ssids = arguments?.getStringArray(ARG_SSIDS).orEmpty()
             val rssis = arguments?.getIntArray(ARG_RSSIS) ?: intArrayOf()
+            val bssids = arguments?.getStringArray(ARG_BSSIDS).orEmpty()
+            val channels = arguments?.getIntArray(ARG_CHANNELS) ?: intArrayOf()
+            val securities = arguments?.getStringArray(ARG_SECURITIES).orEmpty()
 
             return ssids.mapIndexed { index, ssid ->
                 HomeWifiNetworkItem(
                     ssid = ssid,
-                    rssi = rssis.getOrNull(index) ?: DEFAULT_RSSI
+                    rssi = rssis.getOrNull(index) ?: DEFAULT_RSSI,
+                    bssid = bssids.getOrNull(index).orEmpty(),
+                    channel = channels.getOrNull(index) ?: 0,
+                    security = securities.getOrNull(index).orEmpty()
                 )
             }
         }
@@ -125,7 +134,9 @@ class HomeWifiNetworksBottomSheetFragment : BottomSheetDialogFragment(
             parentFragmentManager.setFragmentResult(
                 REQUEST_KEY,
                 bundleOf(
-                    RESULT_SSID to network.ssid
+                    RESULT_SSID to network.ssid,
+                    RESULT_BSSID to network.bssid,
+                    RESULT_CHANNEL to network.channel
                 )
             )
 
@@ -168,6 +179,9 @@ class HomeWifiNetworksBottomSheetFragment : BottomSheetDialogFragment(
 
         private const val ARG_SSIDS = "ssids"
         private const val ARG_RSSIS = "rssis"
+        private const val ARG_BSSIDS = "bssids"
+        private const val ARG_CHANNELS = "channels"
+        private const val ARG_SECURITIES = "securities"
 
         private const val DEFAULT_RSSI = -100
 
@@ -179,6 +193,8 @@ class HomeWifiNetworksBottomSheetFragment : BottomSheetDialogFragment(
 
         const val REQUEST_KEY = "home_wifi_network_result"
         const val RESULT_SSID = "ssid"
+        const val RESULT_BSSID = "bssid"
+        const val RESULT_CHANNEL = "channel"
 
         fun show(
             fragmentManager: FragmentManager,
@@ -195,7 +211,16 @@ class HomeWifiNetworksBottomSheetFragment : BottomSheetDialogFragment(
                     }.toTypedArray(),
                     ARG_RSSIS to networks.map { network ->
                         network.rssi
-                    }.toIntArray()
+                    }.toIntArray(),
+                    ARG_BSSIDS to networks.map { network ->
+                        network.bssid
+                    }.toTypedArray(),
+                    ARG_CHANNELS to networks.map { network ->
+                        network.channel
+                    }.toIntArray(),
+                    ARG_SECURITIES to networks.map { network ->
+                        network.security
+                    }.toTypedArray()
                 )
             }.show(
                 fragmentManager,

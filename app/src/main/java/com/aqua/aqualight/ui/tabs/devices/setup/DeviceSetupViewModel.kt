@@ -36,6 +36,7 @@ class DeviceSetupViewModel(
         )
 
     private var setupTarget: DeviceSetupTarget? = null
+    private var scannedHomeNetworks: List<HomeWifiNetworkUi> = emptyList()
 
     private val _uiState =
         MutableStateFlow(
@@ -134,14 +135,21 @@ class DeviceSetupViewModel(
                     return@launch
                 }
 
+                val networkItems = networks.map { network ->
+                    HomeWifiNetworkUi(
+                        ssid = network.ssid,
+                        rssi = network.rssi,
+                        bssid = network.bssid,
+                        channel = network.channel,
+                        security = network.security
+                    )
+                }
+
+                scannedHomeNetworks = networkItems
+
                 _events.send(
                     DeviceSetupEvent.ShowHomeWifiNetworks(
-                        networks = networks.map { network ->
-                            HomeWifiNetworkUi(
-                                ssid = network.ssid,
-                                rssi = network.rssi
-                            )
-                        }
+                        networks = networkItems
                     )
                 )
 
@@ -185,15 +193,25 @@ class DeviceSetupViewModel(
     }
 
     fun onHomeWifiSelected(
-        ssid: String
+        ssid: String,
+        bssid: String = "",
+        channel: Int = 0
     ) {
         if (ssid.isBlank()) {
             return
         }
 
+        val selectedNetwork = scannedHomeNetworks.firstOrNull { network ->
+            network.ssid == ssid &&
+                (bssid.isBlank() || network.bssid.equals(bssid, ignoreCase = true)) &&
+                (channel <= 0 || network.channel == channel)
+        }
+
         _uiState.update {
             it.copy(
                 selectedHomeSsid = ssid,
+                selectedHomeBssid = selectedNetwork?.bssid ?: bssid,
+                selectedHomeChannel = selectedNetwork?.channel ?: channel,
                 homeWifiSsidText = ssid,
                 homeWifiSsidError = null,
                 statusText = text(
@@ -226,6 +244,21 @@ class DeviceSetupViewModel(
         }
 
         val homePassword = enteredHomePassword
+        val selectedBssid = if (currentState.selectedHomeSsid == homeSsid) {
+            currentState.selectedHomeBssid
+        } else {
+            ""
+        }
+        val selectedChannel = if (currentState.selectedHomeSsid == homeSsid) {
+            currentState.selectedHomeChannel
+        } else {
+            0
+        }
+        val selectedNetwork = scannedHomeNetworks.firstOrNull { network ->
+            network.ssid == homeSsid &&
+                (selectedBssid.isBlank() || network.bssid.equals(selectedBssid, ignoreCase = true)) &&
+                (selectedChannel <= 0 || network.channel == selectedChannel)
+        }
 
         if (homeSsid.isBlank()) {
             _uiState.update {
@@ -264,7 +297,9 @@ class DeviceSetupViewModel(
                     target = target,
                     credentials = HomeWifiCredentials(
                         ssid = homeSsid,
-                        password = homePassword
+                        password = homePassword,
+                        bssid = selectedNetwork?.bssid ?: selectedBssid,
+                        channel = selectedNetwork?.channel ?: selectedChannel
                     ),
                     onProgress = ::applyProgress
                 )
@@ -427,7 +462,8 @@ class DeviceSetupViewModel(
                 }
 
                 DeviceSetupFlowError.CONNECTION_FAILED -> {
-                    text(R.string.device_setup_connection_failed)
+                    exception.message
+                        ?: text(R.string.device_setup_connection_failed)
                 }
 
                 DeviceSetupFlowError.CLOSE_SETUP_AP_FAILED -> {
@@ -537,5 +573,8 @@ sealed interface DeviceSetupEvent {
 
 data class HomeWifiNetworkUi(
     val ssid: String,
-    val rssi: Int
+    val rssi: Int,
+    val bssid: String = "",
+    val channel: Int = 0,
+    val security: String = ""
 )

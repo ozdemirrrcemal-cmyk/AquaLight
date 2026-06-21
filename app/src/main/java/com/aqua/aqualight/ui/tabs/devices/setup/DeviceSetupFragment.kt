@@ -121,8 +121,19 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
                 HomeWifiNetworksBottomSheetFragment.RESULT_SSID
             ).orEmpty()
 
+            val bssid = result.getString(
+                HomeWifiNetworksBottomSheetFragment.RESULT_BSSID
+            ).orEmpty()
+
+            val channel = result.getInt(
+                HomeWifiNetworksBottomSheetFragment.RESULT_CHANNEL,
+                0
+            )
+
             viewModel.onHomeWifiSelected(
-                ssid = ssid
+                ssid = ssid,
+                bssid = bssid,
+                channel = channel
             )
         }
     }
@@ -257,7 +268,10 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
             networks = networks.map { network ->
                 HomeWifiNetworksBottomSheetFragment.HomeWifiNetworkItem(
                     ssid = network.ssid,
-                    rssi = network.rssi
+                    rssi = network.rssi,
+                    bssid = network.bssid,
+                    channel = network.channel,
+                    security = network.security
                 )
             }
         )
