@@ -377,6 +377,14 @@ class DeviceSetupViewModel(
                     )
                 }
 
+                DeviceSetupProgress.VERIFYING_HOME_NETWORK_DEVICE -> {
+                    state.copy(
+                        isBusy = true,
+                        activeStep = DeviceSetupStep.CONNECT,
+                        statusText = text(R.string.device_setup_verifying_home_network_device)
+                    )
+                }
+
                 DeviceSetupProgress.SUCCESS -> {
                     state.copy(
                         isBusy = true,
@@ -436,6 +444,10 @@ class DeviceSetupViewModel(
 
                 DeviceSetupFlowError.DEVICE_NOT_FOUND -> {
                     text(R.string.device_setup_device_not_found)
+                }
+
+                DeviceSetupFlowError.FINAL_VERIFICATION_FAILED -> {
+                    text(R.string.device_setup_final_verification_failed)
                 }
             }
         }

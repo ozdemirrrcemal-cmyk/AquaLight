@@ -4,6 +4,8 @@ import com.aqua.aqualight.data.devices.api.cooling.CoolingApi
 import com.aqua.aqualight.data.devices.api.cooling.V1CoolingApi
 import com.aqua.aqualight.data.devices.api.dosing.DosingApi
 import com.aqua.aqualight.data.devices.api.dosing.V1DosingApi
+import com.aqua.aqualight.data.devices.api.firmware.FirmwareApi
+import com.aqua.aqualight.data.devices.api.firmware.V1FirmwareApi
 import com.aqua.aqualight.data.devices.api.light.LightApi
 import com.aqua.aqualight.data.devices.api.light.V1LightApi
 import com.aqua.aqualight.data.devices.api.model.ApiErrorCode
@@ -37,6 +39,7 @@ class AquaDeviceApiFactory(
                     connection = connection,
                     mode = mode,
                     capabilities = capabilities,
+                    firmwareApi = createFirmwareApi(mode),
                     lightApi = createLightApi(mode)
                 )
             )
@@ -47,6 +50,7 @@ class AquaDeviceApiFactory(
                     connection = connection,
                     mode = mode,
                     capabilities = capabilities,
+                    firmwareApi = createFirmwareApi(mode),
                     timerApi = createTimerApi(mode)
                 )
             )
@@ -57,6 +61,7 @@ class AquaDeviceApiFactory(
                     connection = connection,
                     mode = mode,
                     capabilities = capabilities,
+                    firmwareApi = createFirmwareApi(mode),
                     dosingApi = createDosingApi(mode)
                 )
             )
@@ -67,6 +72,7 @@ class AquaDeviceApiFactory(
                     connection = connection,
                     mode = mode,
                     capabilities = capabilities,
+                    firmwareApi = createFirmwareApi(mode),
                     coolingApi = createCoolingApi(mode)
                 )
             )
@@ -89,6 +95,12 @@ class AquaDeviceApiFactory(
         mode: DeviceApiMode
     ): DeviceApiCapabilities {
         return DeviceApiCapabilities.V1Default
+    }
+
+    private fun createFirmwareApi(
+        mode: DeviceApiMode
+    ): FirmwareApi {
+        return V1FirmwareApi(v1HttpClient)
     }
 
     private fun createLightApi(

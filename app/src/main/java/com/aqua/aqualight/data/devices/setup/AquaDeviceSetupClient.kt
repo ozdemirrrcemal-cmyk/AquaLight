@@ -33,8 +33,13 @@ class AquaDeviceSetupClient {
 
     data class DeviceWifiStatus(
         val connected: Boolean,
-        val clientIp: String
-    )
+        val clientIp: String,
+        val apEnabled: Boolean = false,
+        val configuredApEnabled: Boolean? = null
+    ) {
+        val setupAccessPointClosed: Boolean
+            get() = !apEnabled && configuredApEnabled != true
+    }
 
     data class DeviceApiToken(
         val token: String,
@@ -183,6 +188,31 @@ class AquaDeviceSetupClient {
         parseDeviceWifiStatus(result.responseBody)
     }
 
+    suspend fun readLanDeviceWifiStatus(
+        host: String,
+        deviceApiToken: String
+    ): DeviceWifiStatus = withContext(Dispatchers.IO) {
+        val safeHost = host.trim()
+        LocalNetworkAddressPolicy.requireLocalCleartextHost(safeHost)
+
+        val result = performJsonRequest(
+            network = null,
+            baseUrl = "http://$safeHost:80",
+            method = "GET",
+            path = "/api/v1/network/status",
+            body = null,
+            connectTimeoutMs = 6_000,
+            readTimeoutMs = 8_000,
+            deviceApiToken = deviceApiToken
+        )
+
+        if (!result.success) {
+            return@withContext DeviceWifiStatus(connected = false, clientIp = "")
+        }
+
+        parseDeviceWifiStatus(result.responseBody)
+    }
+
     fun parseDeviceWifiStatus(responseText: String?): DeviceWifiStatus {
         val data = responseText
             ?.takeIf { it.isNotBlank() }
@@ -193,10 +223,41 @@ class AquaDeviceSetupClient {
         val clientIp = data.optString("ipAddress", "").trim()
             .ifBlank { data.optString("currentIpAddress", "").trim() }
         val connected = data.optBoolean("connected", false)
+        val apEnabled = data.optBoolean("apEnabled", false)
+        val configuredApEnabled = if (data.has("configuredApEnabled") && !data.isNull("configuredApEnabled")) {
+            data.optBoolean("configuredApEnabled", false)
+        } else {
+            null
+        }
 
         return DeviceWifiStatus(
             connected = connected && isValidHomeNetworkIp(clientIp),
-            clientIp = clientIp
+            clientIp = clientIp,
+            apEnabled = apEnabled,
+            configuredApEnabled = configuredApEnabled
+        )
+    }
+
+    suspend fun closeSetupAccessPoint(
+        network: Network,
+        deviceApiToken: String = ""
+    ): SetupResult = withContext(Dispatchers.IO) {
+        val body = JSONObject().put(
+            "data",
+            JSONObject()
+                .put("setupApEnabled", false)
+                .put("applyNow", true)
+        )
+
+        performJsonRequest(
+            network = network,
+            method = "PUT",
+            path = "/api/v1/network/wifi",
+            body = body,
+            connectTimeoutMs = 8_000,
+            readTimeoutMs = 15_000,
+            acceptNetworkTransition = true,
+            deviceApiToken = deviceApiToken
         )
     }
 
@@ -270,7 +331,8 @@ class AquaDeviceSetupClient {
     }
 
     private fun performJsonRequest(
-        network: Network,
+        network: Network?,
+        baseUrl: String = BASE_URL,
         method: String,
         path: String,
         body: JSONObject?,
@@ -283,7 +345,12 @@ class AquaDeviceSetupClient {
         var bodySent = false
 
         return try {
-            connection = network.openConnection(URL("$BASE_URL$path")) as HttpURLConnection
+            val url = URL("$baseUrl$path")
+            connection = if (network != null) {
+                network.openConnection(url) as HttpURLConnection
+            } else {
+                url.openConnection() as HttpURLConnection
+            }
             connection.requestMethod = method
             connection.connectTimeout = connectTimeoutMs
             connection.readTimeout = readTimeoutMs

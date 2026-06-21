@@ -10,6 +10,8 @@ enum class V1Endpoint(
     NETWORK_STATUS("/api/v1/network/status"),
     NETWORK_WIFI("/api/v1/network/wifi"),
     NETWORK_SCAN("/api/v1/network/scan"),
+    FIRMWARE_STATUS("/api/v1/firmware/status"),
+    FIRMWARE_OTA("/api/v1/firmware/ota"),
     TIME_STATUS("/api/v1/time/status"),
     TIME_CONFIG("/api/v1/time/config"),
     TIME_SYNC("/api/v1/time/sync"),

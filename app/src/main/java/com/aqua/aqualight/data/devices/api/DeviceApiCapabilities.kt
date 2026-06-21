@@ -10,7 +10,8 @@ data class DeviceApiCapabilities(
     val supportsCalibration: Boolean = false,
     val supportsSchedules: Boolean = false,
     val supportsSettingsRead: Boolean = false,
-    val supportsSettingsWrite: Boolean = false
+    val supportsSettingsWrite: Boolean = false,
+    val supportsFirmwareOta: Boolean = false
 ) {
     companion object {
         val None = DeviceApiCapabilities()
@@ -25,7 +26,8 @@ data class DeviceApiCapabilities(
             supportsCalibration = true,
             supportsSchedules = true,
             supportsSettingsRead = true,
-            supportsSettingsWrite = true
+            supportsSettingsWrite = true,
+            supportsFirmwareOta = true
         )
     }
 }

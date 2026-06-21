@@ -577,7 +577,9 @@
     <string name="device_setup_waiting_phone_home_wifi">Waiting for your phone to return to home Wi-Fi...</string>
     <string name="device_setup_phone_not_home_wifi">Your phone did not return to %1$s. Connect to your home Wi-Fi and try again.</string>
     <string name="device_setup_finding_device">Finding device on your home network...</string>
+    <string name="device_setup_verifying_home_network_device">Verifying secure LAN connection and setup network shutdown...</string>
     <string name="device_setup_device_not_found">Device setup was sent, but the device was not found on your home network.</string>
+    <string name="device_setup_final_verification_failed">Device was found, but secure LAN verification failed or the setup network is still active. Hold the setup button for 5 seconds and try setup again.</string>
     <string name="device_setup_success">Device added successfully.</string>
     <string name="device_setup_failed">Setup failed. Check your Wi-Fi password and try again.</string>
     <string name="device_setup_generic_failed">Device setup failed.</string>

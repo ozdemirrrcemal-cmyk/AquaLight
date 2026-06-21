@@ -96,9 +96,7 @@ class DeviceSetupUseCase(
         onProgress(DeviceSetupProgress.CLOSING_SETUP_NETWORK)
 
         closeSetupAccessPoint(
-            target = target,
             connection = connection,
-            credentials = credentials,
             deviceApiToken = apiToken.token
         )
 
@@ -128,6 +126,18 @@ class DeviceSetupUseCase(
         ) ?: throw DeviceSetupFlowException(
             error = DeviceSetupFlowError.DEVICE_NOT_FOUND
         )
+
+        onProgress(DeviceSetupProgress.VERIFYING_HOME_NETWORK_DEVICE)
+
+        if (!verifyDeviceReadyOnHomeNetwork(
+                discoveredDevice = discoveredDevice,
+                deviceApiToken = apiToken.token
+            )
+        ) {
+            throw DeviceSetupFlowException(
+                error = DeviceSetupFlowError.FINAL_VERIFICATION_FAILED
+            )
+        }
 
         val savedDeviceId = deviceStoreWriter.saveDiscoveredDevice(
             device = discoveredDevice,
@@ -200,7 +210,7 @@ class DeviceSetupUseCase(
 
         onProgress(DeviceSetupProgress.CHECKING_DEVICE_CONNECTION)
 
-        repeat(15) {
+        repeat(40) {
             val status = try {
                 setupClient.readDeviceWifiStatus(
                     network = connection.network,
@@ -225,18 +235,11 @@ class DeviceSetupUseCase(
     }
 
     private suspend fun closeSetupAccessPoint(
-        target: DeviceSetupTarget,
         connection: DeviceSetupWifiConnector.SetupConnection,
-        credentials: HomeWifiCredentials,
         deviceApiToken: String
     ) {
-        val closeApResult = setupClient.sendHomeWifiCredentials(
+        val closeApResult = setupClient.closeSetupAccessPoint(
             network = connection.network,
-            setupSsid = target.setupSsid,
-            setupPassword = SETUP_AP_PASSWORD,
-            homeSsid = credentials.ssid,
-            homePassword = credentials.password,
-            disableSetupAccessPoint = true,
             deviceApiToken = deviceApiToken
         )
 
@@ -273,6 +276,37 @@ class DeviceSetupUseCase(
         }
 
         return null
+    }
+
+    private suspend fun verifyDeviceReadyOnHomeNetwork(
+        discoveredDevice: DiscoveredAquaDevice,
+        deviceApiToken: String
+    ): Boolean {
+        val host = discoveredDevice.ip.trim()
+        if (host.isBlank()) {
+            return false
+        }
+
+        repeat(8) {
+            val status = try {
+                setupClient.readLanDeviceWifiStatus(
+                    host = host,
+                    deviceApiToken = deviceApiToken
+                )
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (_: Exception) {
+                null
+            }
+
+            if (status?.connected == true && status.setupAccessPointClosed) {
+                return true
+            }
+
+            delay(2_000L)
+        }
+
+        return false
     }
 
     private fun isExpectedDevice(
@@ -340,6 +374,7 @@ enum class DeviceSetupProgress {
     CLOSING_SETUP_NETWORK,
     WAITING_PHONE_HOME_WIFI,
     FINDING_DEVICE_ON_HOME_NETWORK,
+    VERIFYING_HOME_NETWORK_DEVICE,
     SUCCESS
 }
 
@@ -348,7 +383,8 @@ enum class DeviceSetupFlowError {
     CONNECTION_FAILED,
     CLOSE_SETUP_AP_FAILED,
     PHONE_NOT_HOME_WIFI,
-    DEVICE_NOT_FOUND
+    DEVICE_NOT_FOUND,
+    FINAL_VERIFICATION_FAILED
 }
 
 class DeviceSetupFlowException(
