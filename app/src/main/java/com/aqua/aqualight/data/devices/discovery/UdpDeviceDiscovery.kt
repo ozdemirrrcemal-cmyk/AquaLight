@@ -46,7 +46,7 @@ object UdpDeviceDiscovery {
 
     suspend fun discover(
         context: Context,
-        timeoutMs: Long = 3_000L,
+        timeoutMs: Long = 5_000L,
         stopWhen: ((DiscoveredAquaDevice) -> Boolean)? = null,
         shouldStopEarly: (() -> Boolean)? = null
     ): List<DiscoveredAquaDevice> = withContext(Dispatchers.IO) {

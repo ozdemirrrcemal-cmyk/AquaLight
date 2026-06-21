@@ -1,6 +1,8 @@
 package com.aqua.aqualight.data.devices.setup
 
 import android.net.Network
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
+import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
 import com.aqua.aqualight.data.network.LocalNetworkAddressPolicy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -12,6 +14,7 @@ import java.net.HttpURLConnection
 import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.net.URL
+import java.util.zip.CRC32
 
 class AquaDeviceSetupClient {
 
@@ -211,6 +214,38 @@ class AquaDeviceSetupClient {
         }
 
         parseDeviceWifiStatus(result.responseBody)
+    }
+
+    suspend fun readLanDeviceIdentity(
+        host: String,
+        deviceApiToken: String = ""
+    ): DiscoveredAquaDevice? = withContext(Dispatchers.IO) {
+        val safeHost = host.trim()
+        if (!isValidHomeNetworkIp(safeHost)) {
+            return@withContext null
+        }
+
+        LocalNetworkAddressPolicy.requireLocalCleartextHost(safeHost)
+
+        val result = performJsonRequest(
+            network = null,
+            baseUrl = "http://$safeHost:80",
+            method = "GET",
+            path = "/api/v1/device/identity",
+            body = null,
+            connectTimeoutMs = 6_000,
+            readTimeoutMs = 8_000,
+            deviceApiToken = deviceApiToken
+        )
+
+        if (!result.success) {
+            return@withContext null
+        }
+
+        parseLanDeviceIdentity(
+            responseText = result.responseBody,
+            host = safeHost
+        )
     }
 
     fun parseDeviceWifiStatus(responseText: String?): DeviceWifiStatus {
@@ -422,6 +457,79 @@ class AquaDeviceSetupClient {
         return root.optJSONObject("error")?.optString("message")?.takeIf { it.isNotBlank() }
     }
 
+    private fun parseLanDeviceIdentity(
+        responseText: String?,
+        host: String
+    ): DiscoveredAquaDevice? {
+        val data = responseText
+            ?.takeIf { it.isNotBlank() }
+            ?.let { text -> runCatching { JSONObject(text) }.getOrNull() }
+            ?.optJSONObject("data")
+            ?: return null
+
+        val productId = data.optString("productId", "").trim()
+        val definition = AquaDeviceCatalog.findByProductId(productId) ?: return null
+        val protocolVersion = data.optIntOrNull("protocolVersion")
+
+        if (!definition.isProtocolVersionSupported(protocolVersion)) {
+            return null
+        }
+
+        val deviceUid = data.optString("deviceUid", "").trim().ifBlank {
+            data.optString("serialNumber", "").trim()
+        }
+        if (deviceUid.isBlank()) {
+            return null
+        }
+
+        val shortId = data.optString("shortId", "").trim().ifBlank {
+            deviceUid.substringAfterLast('-', "")
+        }
+        val serialNumber = data.optString("serialNumber", "").trim().ifBlank { deviceUid }
+        val firmwareSerial = data.optString("firmwareSerial", "").trim().ifBlank { serialNumber }
+        val displayName = data.optString("displayName", "").trim()
+            .ifBlank { data.optString("productDisplayName", "").trim() }
+            .ifBlank { definition.displayName }
+        val customName = data.optString("customName", "").trim()
+        val resolvedDisplayName = customName.ifBlank { displayName }
+
+        return DiscoveredAquaDevice(
+            id = stablePositiveId(deviceUid),
+            ip = host,
+            productId = definition.productId,
+            productKey = definition.productKey,
+            category = definition.category,
+            setupCode = definition.setupCode,
+            productFamily = data.optString("productFamily", "").trim().ifBlank { definition.productFamily },
+            productLine = data.optString("productLine", "").trim().ifBlank { definition.productLine },
+            productModel = data.optString("productModel", "").trim().ifBlank { definition.productModel },
+            displayName = resolvedDisplayName,
+            skuId = data.optString("skuId", "").trim()
+                .ifBlank { definition.variants.firstOrNull()?.skuId.orEmpty() }
+                .ifBlank { null },
+            skuCode = data.optString("skuCode", "").trim()
+                .ifBlank { definition.variants.firstOrNull()?.skuCode.orEmpty() }
+                .ifBlank { null },
+            deviceUid = deviceUid,
+            macAddress = data.optString("macAddress", "").trim().ifBlank { null },
+            serialNumber = serialNumber,
+            shortId = shortId,
+            firmwareSerial = firmwareSerial,
+            hardwareRevision = data.optString("hardwareRevision", "").trim().ifBlank { null },
+            firmwareVersion = data.optString("firmwareVersion", "").trim().ifBlank { null },
+            protocolVersion = protocolVersion,
+            firmwareBuild = data.optString("firmwareBuild", "").trim(),
+            udpVersion = null,
+            tabLight = false,
+            tabTimer = false,
+            tabTemperature = false,
+            supportedFeatures = definition.features.map { feature -> feature.name }.toSet(),
+            supportedScreens = definition.screens.map { screen -> screen.name }.toSet(),
+            aquaName = data.optString("brand", "").trim().ifBlank { definition.productFamily },
+            name = displayName
+        )
+    }
+
     private fun parseWifiScanResponse(responseText: String): List<HomeWifiNetwork> {
         val data = runCatching { JSONObject(responseText) }.getOrNull()
             ?.optJSONObject("data")
@@ -455,6 +563,12 @@ class AquaDeviceSetupClient {
             message.contains("closed", ignoreCase = true) ||
             message.contains("unreachable", ignoreCase = true) ||
             message.contains("failed to connect", ignoreCase = true)
+    }
+
+    private fun stablePositiveId(value: String): Long {
+        val crc = CRC32()
+        crc.update(value.toByteArray(Charsets.UTF_8))
+        return crc.value.toLong().and(0x7FFFFFFF).coerceAtLeast(1L)
     }
 
     private fun JSONObject.optIntOrNull(name: String): Int? {

@@ -80,18 +80,14 @@ class DeviceSetupUseCase(
             )
         }
 
-        if (
-            !waitForDeviceClientConnection(
-                connection = connection,
-                firstResponseBody = setupResult.responseBody,
-                deviceApiToken = apiToken.token,
-                onProgress = onProgress
-            )
-        ) {
-            throw DeviceSetupFlowException(
-                error = DeviceSetupFlowError.CONNECTION_FAILED
-            )
-        }
+        val homeJoinStatus = waitForDeviceClientConnection(
+            connection = connection,
+            firstResponseBody = setupResult.responseBody,
+            deviceApiToken = apiToken.token,
+            onProgress = onProgress
+        ) ?: throw DeviceSetupFlowException(
+            error = DeviceSetupFlowError.CONNECTION_FAILED
+        )
 
         onProgress(DeviceSetupProgress.CLOSING_SETUP_NETWORK)
 
@@ -121,7 +117,11 @@ class DeviceSetupUseCase(
 
         delay(7_000L)
 
-        val discoveredDevice = waitForDeviceOnHomeNetwork(
+        val discoveredDevice = waitForDeviceOnKnownHomeIp(
+            target = target,
+            host = homeJoinStatus.clientIp,
+            deviceApiToken = apiToken.token
+        ) ?: waitForDeviceOnHomeNetwork(
             target = target
         ) ?: throw DeviceSetupFlowException(
             error = DeviceSetupFlowError.DEVICE_NOT_FOUND
@@ -199,13 +199,13 @@ class DeviceSetupUseCase(
         firstResponseBody: String?,
         deviceApiToken: String,
         onProgress: (DeviceSetupProgress) -> Unit
-    ): Boolean {
+    ): AquaDeviceSetupClient.DeviceWifiStatus? {
         val firstStatus = setupClient.parseDeviceWifiStatus(
             responseText = firstResponseBody
         )
 
         if (firstStatus.connected) {
-            return true
+            return firstStatus
         }
 
         onProgress(DeviceSetupProgress.CHECKING_DEVICE_CONNECTION)
@@ -223,7 +223,7 @@ class DeviceSetupUseCase(
             }
 
             if (status?.connected == true) {
-                return true
+                return status
             }
 
             onProgress(DeviceSetupProgress.JOINING_HOME_WIFI)
@@ -231,7 +231,7 @@ class DeviceSetupUseCase(
             delay(3_000L)
         }
 
-        return false
+        return null
     }
 
     private suspend fun closeSetupAccessPoint(
@@ -251,13 +251,45 @@ class DeviceSetupUseCase(
         }
     }
 
+    private suspend fun waitForDeviceOnKnownHomeIp(
+        target: DeviceSetupTarget,
+        host: String,
+        deviceApiToken: String
+    ): DiscoveredAquaDevice? {
+        val safeHost = host.trim()
+        if (safeHost.isBlank()) {
+            return null
+        }
+
+        repeat(20) {
+            val device = try {
+                setupClient.readLanDeviceIdentity(
+                    host = safeHost,
+                    deviceApiToken = deviceApiToken
+                )
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (_: Exception) {
+                null
+            }
+
+            if (device != null && isExpectedDevice(target = target, device = device)) {
+                return device
+            }
+
+            delay(2_000L)
+        }
+
+        return null
+    }
+
     private suspend fun waitForDeviceOnHomeNetwork(
         target: DeviceSetupTarget
     ): DiscoveredAquaDevice? {
-        repeat(20) {
+        repeat(25) {
             val result = DeviceDiscoveryService.scan(
                 context = appContext,
-                timeoutMs = 3_000L,
+                timeoutMs = 6_000L,
                 reason = DeviceScanReason.MANUAL_SCAN
             )
 
