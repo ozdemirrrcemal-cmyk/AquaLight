@@ -535,6 +535,8 @@ data class DeviceSetupUiState(
     val setupContractValid: Boolean = false,
     val homeWifiSsidText: String = "",
     val selectedHomeSsid: String = "",
+    val selectedHomeBssid: String = "",
+    val selectedHomeChannel: Int = 0,
     val homeWifiSsidError: String? = null,
     val homeWifiPasswordError: String? = null,
     val statusText: String = "",
