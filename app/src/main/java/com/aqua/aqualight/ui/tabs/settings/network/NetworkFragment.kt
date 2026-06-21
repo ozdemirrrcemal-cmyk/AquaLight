@@ -314,7 +314,7 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
     }
 
     companion object {
-        private const val NETWORK_SCAN_TIMEOUT_MS = 1_500L
+        private const val NETWORK_SCAN_TIMEOUT_MS = 5_000L
         private const val NETWORK_SCAN_INTERVAL_MS = 5_000L
     }
 }

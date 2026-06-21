@@ -23,8 +23,8 @@ import kotlinx.coroutines.launch
 object DevicePresenceMonitor {
 
     private const val SCAN_INTERVAL_MS = 15_000L
-    private const val MONITOR_SCAN_TIMEOUT_MS = 3_000L
-    private const val LIVE_CHECK_TIMEOUT_MS = 900L
+    private const val MONITOR_SCAN_TIMEOUT_MS = 4_500L
+    private const val LIVE_CHECK_TIMEOUT_MS = 2_500L
 
     private const val RECENT_ONLINE_STATUS_VALID_MS = 20_000L
     private const val OFFLINE_AFTER_MISSED_CHECKS = 4

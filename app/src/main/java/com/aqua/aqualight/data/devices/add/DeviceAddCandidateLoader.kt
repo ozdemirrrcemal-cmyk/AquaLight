@@ -127,6 +127,6 @@ class DeviceAddCandidateLoader(
     }
 
     private companion object {
-        const val LOCAL_DISCOVERY_TIMEOUT_MS = 3_000L
+        const val LOCAL_DISCOVERY_TIMEOUT_MS = 6_000L
     }
 }

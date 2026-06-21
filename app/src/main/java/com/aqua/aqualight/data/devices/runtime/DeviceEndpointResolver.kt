@@ -102,7 +102,7 @@ class DeviceEndpointResolver(
     }
 
     private companion object {
-        const val LIVE_RESOLVE_TIMEOUT_MS = 1_800L
+        const val LIVE_RESOLVE_TIMEOUT_MS = 4_500L
     }
 }
 
