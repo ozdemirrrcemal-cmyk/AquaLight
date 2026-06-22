@@ -3,7 +3,6 @@ package com.aqua.aqualight.data.devices.discovery
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.LinkAddress
-import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.wifi.WifiManager
 import android.os.SystemClock
@@ -11,6 +10,7 @@ import android.util.Log
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
@@ -35,101 +35,39 @@ object UdpDeviceDiscovery {
     private const val MESSAGE_DEVICE_ANNOUNCE = "device_announce"
     private const val UDP_PORT = 10888
     private const val SOCKET_TIMEOUT_MS = 300
-    private const val DISCOVERY_REFRESH_INTERVAL_MS = 600L
     private const val BUFFER_SIZE = 1536
-
-    private data class DiscoveryNetwork(
-        val network: Network?,
-        val targets: List<InetAddress>,
-        val label: String
-    )
 
     suspend fun discover(
         context: Context,
-        timeoutMs: Long = 5_000L,
+        timeoutMs: Long = 3_000L,
         stopWhen: ((DiscoveredAquaDevice) -> Boolean)? = null,
         shouldStopEarly: (() -> Boolean)? = null
     ): List<DiscoveredAquaDevice> = withContext(Dispatchers.IO) {
         val appContext = context.applicationContext
         val resultMap = linkedMapOf<String, DiscoveredAquaDevice>()
-        val discoveryNetworks = getDiscoveryNetworks(appContext)
-        val multicastLock = acquireMulticastLock(appContext)
-        val deadlineMs = SystemClock.elapsedRealtime() + timeoutMs
-
-        try {
-            discoveryNetworks.forEach { discoveryNetwork ->
-                coroutineContext.ensureActive()
-                if (SystemClock.elapsedRealtime() >= deadlineMs || shouldStopEarly?.invoke() == true) {
-                    return@forEach
-                }
-
-                val remainingMs = deadlineMs - SystemClock.elapsedRealtime()
-                runDiscoverySession(
-                    discoveryNetwork = discoveryNetwork,
-                    timeoutMs = remainingMs,
-                    resultMap = resultMap,
-                    stopWhen = stopWhen,
-                    shouldStopEarly = shouldStopEarly
-                )
-
-                if (resultMap.values.any { device -> stopWhen?.invoke(device) == true }) {
-                    return@forEach
-                }
-            }
-        } finally {
-            runCatching { multicastLock?.release() }
-        }
-
-        resultMap.values.toList()
-    }
-
-    private suspend fun runDiscoverySession(
-        discoveryNetwork: DiscoveryNetwork,
-        timeoutMs: Long,
-        resultMap: LinkedHashMap<String, DiscoveredAquaDevice>,
-        stopWhen: ((DiscoveredAquaDevice) -> Boolean)?,
-        shouldStopEarly: (() -> Boolean)?
-    ) {
         val buffer = ByteArray(BUFFER_SIZE)
-        val targets = discoveryNetwork.targets
-        if (targets.isEmpty()) return
+        val targets = getBroadcastTargets(appContext)
 
-        Log.d(
-            TAG_DISCOVERY,
-            "${discoveryNetwork.label} targets: ${targets.joinToString { it.hostAddress.orEmpty() }}:$UDP_PORT"
-        )
+        Log.d(TAG_DISCOVERY, "Broadcast targets: ${targets.joinToString { it.hostAddress.orEmpty() }}:$UDP_PORT")
 
-        val socket = try {
-            DatagramSocket(null).apply {
-                reuseAddress = true
-                broadcast = true
-                soTimeout = SOCKET_TIMEOUT_MS
-                discoveryNetwork.network?.bindSocket(this)
-                bind(InetSocketAddress(UDP_PORT))
-            }
-        } catch (exception: Exception) {
-            Log.w(TAG_DISCOVERY, "Unable to open UDP discovery socket for ${discoveryNetwork.label}", exception)
-            return
+        val socket = DatagramSocket(null).apply {
+            reuseAddress = true
+            broadcast = true
+            soTimeout = SOCKET_TIMEOUT_MS
+            bind(InetSocketAddress(UDP_PORT))
         }
 
         try {
             coroutineContext.ensureActive()
-            var nextRefreshAtMs = 0L
-            val startTime = SystemClock.elapsedRealtime()
+            sendDiscoveryPackets(socket, targets)
 
+            val startTime = SystemClock.elapsedRealtime()
             while (
                 coroutineContext.isActive &&
                 SystemClock.elapsedRealtime() - startTime < timeoutMs &&
                 shouldStopEarly?.invoke() != true
             ) {
                 coroutineContext.ensureActive()
-
-                val now = SystemClock.elapsedRealtime()
-                if (now >= nextRefreshAtMs) {
-                    sendDiscoveryPacket(socket, targets)
-                    nextRefreshAtMs = now + DISCOVERY_REFRESH_INTERVAL_MS
-                }
-
                 try {
                     val packet = DatagramPacket(buffer, buffer.size)
                     socket.receive(packet)
@@ -154,19 +92,22 @@ object UdpDeviceDiscovery {
         } finally {
             socket.close()
         }
+
+        resultMap.values.toList()
     }
 
-    private suspend fun sendDiscoveryPacket(socket: DatagramSocket, targets: List<InetAddress>) {
+    private suspend fun sendDiscoveryPackets(socket: DatagramSocket, targets: List<InetAddress>) {
         val requestJson = """{"schema":"$DISCOVERY_SCHEMA","command":"refresh"}"""
         val sendData = requestJson.toByteArray(StandardCharsets.UTF_8)
 
-        targets.forEach { target ->
+        repeat(3) {
             coroutineContext.ensureActive()
-            runCatching {
-                socket.send(DatagramPacket(sendData, sendData.size, target, UDP_PORT))
-            }.onFailure { exception ->
-                Log.w(TAG_DISCOVERY, "Discovery packet send failed for ${target.hostAddress}", exception)
+            targets.forEach { target ->
+                runCatching {
+                    socket.send(DatagramPacket(sendData, sendData.size, target, UDP_PORT))
+                }
             }
+            delay(120L)
         }
     }
 
@@ -300,54 +241,25 @@ object UdpDeviceDiscovery {
         return crc.value.toLong().and(0x7FFFFFFF).coerceAtLeast(1L)
     }
 
-    private fun getDiscoveryNetworks(context: Context): List<DiscoveryNetwork> {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val networks = connectivityManager.allNetworks.mapNotNull { network ->
-            val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return@mapNotNull null
-            if (!capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
-                return@mapNotNull null
-            }
-
-            val linkProperties = connectivityManager.getLinkProperties(network) ?: return@mapNotNull null
-            val targets = linkProperties.linkAddresses
-                .mapNotNull { linkAddress -> linkAddress.toBroadcastAddress() }
-                .toMutableList()
-
-            runCatching { targets.add(getDhcpBroadcastAddress(context)) }
-            runCatching { targets.add(InetAddress.getByName("255.255.255.255")) }
-
-            DiscoveryNetwork(
-                network = network,
-                targets = targets.distinctBy { address -> address.hostAddress },
-                label = "wifi:${linkProperties.interfaceName ?: "unknown"}"
-            )
-        }
-
-        if (networks.isNotEmpty()) {
-            return networks
-        }
-
-        val fallbackTargets = linkedSetOf<InetAddress>()
-        runCatching { fallbackTargets.add(getDhcpBroadcastAddress(context)) }
-        runCatching { fallbackTargets.add(InetAddress.getByName("255.255.255.255")) }
-        return listOf(
-            DiscoveryNetwork(
-                network = null,
-                targets = fallbackTargets.toList(),
-                label = "default"
-            )
-        )
+    private fun getBroadcastTargets(context: Context): List<InetAddress> {
+        val targets = linkedSetOf<InetAddress>()
+        getConnectivityBroadcastAddresses(context).forEach { targets.add(it) }
+        runCatching { targets.add(getDhcpBroadcastAddress(context)) }
+        runCatching { targets.add(InetAddress.getByName("255.255.255.255")) }
+        return targets.toList()
     }
 
-    @Suppress("DEPRECATION")
-    private fun acquireMulticastLock(context: Context): WifiManager.MulticastLock? {
-        return runCatching {
-            val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-            wifiManager.createMulticastLock("AquaLightDeviceDiscovery").apply {
-                setReferenceCounted(false)
-                acquire()
+    private fun getConnectivityBroadcastAddresses(context: Context): List<InetAddress> {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        return connectivityManager.allNetworks
+            .filter { network ->
+                connectivityManager.getNetworkCapabilities(network)
+                    ?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
             }
-        }.getOrNull()
+            .flatMap { network ->
+                val linkProperties = connectivityManager.getLinkProperties(network) ?: return@flatMap emptyList()
+                linkProperties.linkAddresses.mapNotNull { linkAddress -> linkAddress.toBroadcastAddress() }
+            }
     }
 
     private fun LinkAddress.toBroadcastAddress(): InetAddress? {
