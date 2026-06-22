@@ -7,6 +7,7 @@ import com.aqua.aqualight.data.devices.DevicesDataStoreManager.DeviceInfo
 import com.aqua.aqualight.data.devices.discovery.DeviceDiscoveryService
 import com.aqua.aqualight.data.devices.discovery.DeviceScanReason
 import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
+import com.aqua.aqualight.data.devices.setup.AquaDeviceSetupClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -43,6 +44,8 @@ object DevicePresenceMonitor {
     private val missedChecks = mutableMapOf<Long, Int>()
 
     private var monitorJob: Job? = null
+
+    private val setupClient = AquaDeviceSetupClient()
 
     fun start(
         context: Context
@@ -287,9 +290,9 @@ object DevicePresenceMonitor {
     ) {
         val now = System.currentTimeMillis()
 
-        val matchedByDeviceId = savedDevices.associate {
-            savedDevice ->
-            savedDevice.id to findMatchingDiscoveredDevice(
+        val matchedByDeviceId = linkedMapOf<Long, DiscoveredAquaDevice?>()
+        for (savedDevice in savedDevices) {
+            matchedByDeviceId[savedDevice.id] = findMatchingDiscoveredOrReachableDevice(
                 savedDevice = savedDevice,
                 discoveredDevices = discoveredDevices
             )
@@ -503,6 +506,18 @@ object DevicePresenceMonitor {
         )
     }
 
+    private suspend fun findMatchingDiscoveredOrReachableDevice(
+        savedDevice: DeviceInfo,
+        discoveredDevices: List<DiscoveredAquaDevice>
+    ): DiscoveredAquaDevice? {
+        return findMatchingDiscoveredDevice(
+            savedDevice = savedDevice,
+            discoveredDevices = discoveredDevices
+        ) ?: findReachableCachedDevice(
+            savedDevice = savedDevice
+        )
+    }
+
     private fun findMatchingDiscoveredDevice(
         savedDevice: DeviceInfo,
         discoveredDevices: List<DiscoveredAquaDevice>
@@ -512,6 +527,29 @@ object DevicePresenceMonitor {
             DeviceIdentityMatcher.samePhysicalDevice(
                 savedDevice = savedDevice,
                 discoveredDevice = discoveredDevice
+            )
+        }
+    }
+
+    private suspend fun findReachableCachedDevice(
+        savedDevice: DeviceInfo
+    ): DiscoveredAquaDevice? {
+        val host = savedDevice.ip.trim()
+        if (host.isBlank()) {
+            return null
+        }
+
+        val discoveredDevice = runCatching {
+            setupClient.readLanDeviceIdentity(
+                host = host,
+                deviceApiToken = savedDevice.deviceApiToken
+            )
+        }.getOrNull() ?: return null
+
+        return discoveredDevice.takeIf {
+            DeviceIdentityMatcher.samePhysicalDevice(
+                savedDevice = savedDevice,
+                discoveredDevice = it
             )
         }
     }
@@ -545,6 +583,48 @@ object DevicePresenceMonitor {
         _statuses.update {
             current ->
             current + (state.deviceId to state)
+        }
+    }
+
+    fun markDeviceOnline(
+        deviceId: Long,
+        ip: String
+    ) {
+        if (deviceId <= 0L) {
+            return
+        }
+
+        val now = System.currentTimeMillis()
+        val safeIp = ip.trim()
+
+        missedChecks[deviceId] = 0
+
+        upsertStatus(
+            state = DeviceStatusState(
+                deviceId = deviceId,
+                ip = safeIp,
+                status = DeviceConnectionStatus.ONLINE,
+                isOnline = true,
+                lastSeenMillis = now,
+                lastCheckedMillis = now,
+                missedChecks = 0
+            )
+        )
+    }
+
+    fun removeDevices(
+        ids: Set<Long>
+    ) {
+        if (ids.isEmpty()) {
+            return
+        }
+
+        ids.forEach { id ->
+            missedChecks.remove(id)
+        }
+
+        _statuses.update { current ->
+            current.filterKeys { id -> id !in ids }
         }
     }
 

@@ -1,12 +1,15 @@
 package com.aqua.aqualight.data.devices.runtime
 
 import android.content.Context
+import com.aqua.aqualight.data.devices.DeviceIdentityMatcher
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.api.AquaDeviceConnection
 import com.aqua.aqualight.data.devices.api.model.ApiErrorCode
 import com.aqua.aqualight.data.devices.api.model.ApiResult
 import com.aqua.aqualight.data.devices.discovery.DeviceDiscoveryService
 import com.aqua.aqualight.data.devices.discovery.toDeviceLastSeenUpdate
+import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
+import com.aqua.aqualight.data.devices.setup.AquaDeviceSetupClient
 import kotlinx.coroutines.flow.first
 
 class DeviceEndpointResolver(
@@ -17,6 +20,7 @@ class DeviceEndpointResolver(
 ) {
 
     private val appContext = context.applicationContext
+    private val setupClient = AquaDeviceSetupClient()
 
     suspend fun resolve(
         deviceId: Long,
@@ -36,6 +40,20 @@ class DeviceEndpointResolver(
             )
 
         val cachedHost = storedDevice.ip.trim()
+
+        // Opening a device must not depend only on UDP discovery. Some routers,
+        // Android network handoff states, and AP+STA setup transitions can drop
+        // broadcast packets even though the device is reachable at its saved LAN IP.
+        // First verify the cached IP with the V1 identity endpoint; use UDP only as
+        // a resolver fallback when the cached address is stale or unreachable.
+        val directResolved = resolveCachedIp(
+            storedDevice = storedDevice,
+            cachedHost = cachedHost
+        )
+        if (directResolved != null) {
+            return ApiResult.success(directResolved)
+        }
+
         if (!forceDiscovery && cachedHost.isNotBlank()) {
             return ApiResult.success(
                 ResolvedDeviceEndpoint(
@@ -69,7 +87,6 @@ class DeviceEndpointResolver(
             )
         )
 
-        val updatedDevice = findStoredDevice(deviceId) ?: storedDevice
         val resolvedHost = discoveredDevice.ip.trim()
         if (resolvedHost.isBlank()) {
             return ApiResult.failure(
@@ -77,6 +94,13 @@ class DeviceEndpointResolver(
                 message = "Resolved device address is missing"
             )
         }
+
+        DevicePresenceMonitor.markDeviceOnline(
+            deviceId = storedDevice.id,
+            ip = resolvedHost
+        )
+
+        val updatedDevice = findStoredDevice(deviceId) ?: storedDevice
 
         return ApiResult.success(
             ResolvedDeviceEndpoint(
@@ -87,6 +111,52 @@ class DeviceEndpointResolver(
                     host = resolvedHost,
                     apiToken = updatedDevice.deviceApiToken
                 )
+            )
+        )
+    }
+
+    private suspend fun resolveCachedIp(
+        storedDevice: DevicesDataStoreManager.DeviceInfo,
+        cachedHost: String
+    ): ResolvedDeviceEndpoint? {
+        if (cachedHost.isBlank()) {
+            return null
+        }
+
+        val discoveredDevice = runCatching {
+            setupClient.readLanDeviceIdentity(
+                host = cachedHost,
+                deviceApiToken = storedDevice.deviceApiToken
+            )
+        }.getOrNull() ?: return null
+
+        if (!DeviceIdentityMatcher.samePhysicalDevice(storedDevice, discoveredDevice)) {
+            return null
+        }
+
+        devicesStore.updateDevicesLastSeen(
+            discovered = listOf(
+                discoveredDevice.toDeviceLastSeenUpdate(
+                    storedDeviceId = storedDevice.id
+                )
+            )
+        )
+
+        DevicePresenceMonitor.markDeviceOnline(
+            deviceId = storedDevice.id,
+            ip = discoveredDevice.ip
+        )
+
+        val updatedDevice = findStoredDevice(storedDevice.id) ?: storedDevice
+        val resolvedHost = discoveredDevice.ip.trim().ifBlank { cachedHost }
+
+        return ResolvedDeviceEndpoint(
+            device = updatedDevice.copy(
+                ip = resolvedHost
+            ),
+            connection = AquaDeviceConnection(
+                host = resolvedHost,
+                apiToken = updatedDevice.deviceApiToken
             )
         )
     }

@@ -242,15 +242,57 @@ class DeviceSetupUseCase(
             delay(3_000L)
         }
 
-        val diagnostic = lastStatus?.diagnosticText.orEmpty()
         return DeviceHomeJoinResult(
             status = null,
-            failureMessage = if (diagnostic.isBlank()) {
-                "Device did not join the home Wi-Fi network."
-            } else {
-                "Device did not join the home Wi-Fi network ($diagnostic)."
-            }
+            failureMessage = buildHomeJoinFailureMessage(
+                status = lastStatus
+            )
         )
+    }
+
+    private fun buildHomeJoinFailureMessage(
+        status: AquaDeviceSetupClient.DeviceWifiStatus?
+    ): String {
+        val diagnostic = status?.diagnosticText.orEmpty()
+        val state = status?.connectionState.orEmpty().lowercase()
+        val reason = status?.lastDisconnectReason.orEmpty().lowercase()
+        val reasonCode = status?.lastDisconnectReasonCode ?: 0
+
+        val looksLikePasswordOrHandshakeError =
+            state == "failedauth" ||
+                state == "failedhandshake" ||
+                reason.contains("auth") ||
+                reason.contains("handshake") ||
+                reason.contains("fourway") ||
+                reasonCode == 15
+
+        if (looksLikePasswordOrHandshakeError) {
+            return if (diagnostic.isBlank()) {
+                "Wi-Fi şifresi hatalı görünüyor. Şifreyi kontrol edip tekrar deneyin."
+            } else {
+                "Wi-Fi şifresi hatalı görünüyor. Şifreyi kontrol edip tekrar deneyin. ($diagnostic)"
+            }
+        }
+
+        val looksLikeNetworkNotFound =
+            state == "failednoap" ||
+                reason.contains("noap") ||
+                reason.contains("noapfound") ||
+                reason.contains("no_ap")
+
+        if (looksLikeNetworkNotFound) {
+            return if (diagnostic.isBlank()) {
+                "Seçilen Wi-Fi ağı bulunamadı. Modeme yaklaşıp tekrar deneyin."
+            } else {
+                "Seçilen Wi-Fi ağı bulunamadı. Modeme yaklaşıp tekrar deneyin. ($diagnostic)"
+            }
+        }
+
+        return if (diagnostic.isBlank()) {
+            "Cihaz ev Wi-Fi ağına bağlanamadı."
+        } else {
+            "Cihaz ev Wi-Fi ağına bağlanamadı. ($diagnostic)"
+        }
     }
 
     private suspend fun closeSetupAccessPoint(
