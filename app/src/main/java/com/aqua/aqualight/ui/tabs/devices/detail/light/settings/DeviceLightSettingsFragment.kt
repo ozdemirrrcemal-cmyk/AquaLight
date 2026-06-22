@@ -76,7 +76,7 @@ class DeviceLightSettingsFragment :
 
     private fun setupClicks() {
         binding.btnUpdateFirmware.setOnClickListener {
-            viewModel.updateFirmware()
+            showFirmwareUpdateConfirm()
         }
 
         binding.btnSyncTime.setOnClickListener {
@@ -170,6 +170,21 @@ class DeviceLightSettingsFragment :
                     viewModel.updateFanFullSpeedTemperature(value)
                 }
         }
+    }
+
+    private fun showFirmwareUpdateConfirm() {
+        DeviceConfirmBottomSheet
+            .create(requireContext())
+            .show(
+                title = "Update firmware?",
+                message = "The controller will download the latest compatible firmware, write it to the OTA slot and restart after validation. Keep the device powered during the update.",
+                confirmText = "Update",
+                cancelText = "Cancel",
+                tone = DeviceConfirmTone.WARNING,
+                onConfirm = {
+                    viewModel.updateFirmware()
+                }
+            )
     }
 
     private fun showCoolingModeConfirm() {
@@ -421,7 +436,7 @@ class DeviceLightSettingsFragment :
         }
 
         binding.btnSyncTime.isEnabled = enabled
-        binding.btnUpdateFirmware.isEnabled = enabled
+        binding.btnUpdateFirmware.isEnabled = deviceId > 0L
         binding.rowLimitTemperature.isEnabled = enabled
         binding.rowLightReduction.isEnabled = enabled
         binding.rowRecoveryInterval.isEnabled = enabled

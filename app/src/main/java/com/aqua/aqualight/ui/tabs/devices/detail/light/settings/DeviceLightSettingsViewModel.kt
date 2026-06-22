@@ -8,6 +8,8 @@ import com.aqua.aqualight.data.devices.api.light.LightCoolingControllerRequest
 import com.aqua.aqualight.data.devices.api.light.LightThermalProtectionRequest
 import com.aqua.aqualight.data.devices.api.light.LightTimeSyncRequest
 import com.aqua.aqualight.data.devices.api.model.ApiResult
+import com.aqua.aqualight.data.devices.firmware.DeviceFirmwareUpdateRepository
+import com.aqua.aqualight.data.devices.firmware.FirmwareUpdateResult
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeReadProfile
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeSession
@@ -39,6 +41,10 @@ class DeviceLightSettingsViewModel(
     private val consumerKey = "light_settings_${System.identityHashCode(this)}"
 
     private val runtimeRepository = LightRuntimeRepository.get(
+        context = application.applicationContext
+    )
+
+    private val firmwareUpdateRepository = DeviceFirmwareUpdateRepository(
         context = application.applicationContext
     )
 
@@ -157,7 +163,49 @@ class DeviceLightSettingsViewModel(
     }
 
     fun updateFirmware() {
-        emitFirmwareUpdateUnavailable()
+        val targetDeviceId = deviceId
+        if (targetDeviceId <= 0L) {
+            emitSettingsError(
+                "Device information is missing"
+            )
+            return
+        }
+
+        viewModelScope.launch {
+            _events.emit(
+                DeviceLightSettingsEvent.SetLoading(true)
+            )
+
+            when (val result = firmwareUpdateRepository.startLatestUpdate(targetDeviceId)) {
+                is FirmwareUpdateResult.Started -> {
+                    _events.emit(
+                        DeviceLightSettingsEvent.ShowMessage(
+                            "Firmware ${result.targetVersion} update started. Keep the device powered; it will restart after validation."
+                        )
+                    )
+                }
+
+                is FirmwareUpdateResult.UpToDate -> {
+                    _events.emit(
+                        DeviceLightSettingsEvent.ShowMessage(
+                            "Firmware is already up to date (${result.currentVersion})."
+                        )
+                    )
+                }
+
+                is FirmwareUpdateResult.Error -> {
+                    _events.emit(
+                        DeviceLightSettingsEvent.ShowError(
+                            result.message
+                        )
+                    )
+                }
+            }
+
+            _events.emit(
+                DeviceLightSettingsEvent.SetLoading(false)
+            )
+        }
     }
 
     fun updateLimitTemperature(
@@ -583,16 +631,6 @@ class DeviceLightSettingsViewModel(
             minute = now.get(Calendar.MINUTE),
             second = now.get(Calendar.SECOND)
         )
-    }
-
-    private fun emitFirmwareUpdateUnavailable() {
-        viewModelScope.launch {
-            _events.emit(
-                DeviceLightSettingsEvent.ShowWarning(
-                    "Firmware update requires a dedicated upload flow and is not wired to Light settings yet."
-                )
-            )
-        }
     }
 
     private fun emitSettingsError(
