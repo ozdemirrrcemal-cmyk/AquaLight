@@ -38,6 +38,8 @@ class DeviceFirmwareUpdateRepository(
             return@withContext FirmwareUpdateResult.Error("Device IP address is missing")
         }
 
+        val apiToken = device.deviceApiToken.trim()
+
         val statusResponse = getJson(
             url = "http://$host/api/v1/firmware/status",
             connectTimeoutMs = DEVICE_CONNECT_TIMEOUT_MS,
@@ -112,9 +114,16 @@ class DeviceFirmwareUpdateRepository(
                     .put("applyNow", true)
             )
 
+        if (apiToken.isBlank()) {
+            return@withContext FirmwareUpdateResult.Error(
+                "Device API token is missing. Reset the device with GPIO13 and add it again."
+            )
+        }
+
         val otaResponse = postJson(
             url = "http://$host/api/v1/firmware/ota",
             body = requestBody,
+            apiToken = apiToken,
             connectTimeoutMs = DEVICE_CONNECT_TIMEOUT_MS,
             readTimeoutMs = OTA_START_READ_TIMEOUT_MS
         )
@@ -193,6 +202,7 @@ class DeviceFirmwareUpdateRepository(
             url = url,
             method = "GET",
             body = null,
+            apiToken = "",
             connectTimeoutMs = connectTimeoutMs,
             readTimeoutMs = readTimeoutMs
         )
@@ -201,6 +211,7 @@ class DeviceFirmwareUpdateRepository(
     private fun postJson(
         url: String,
         body: JSONObject,
+        apiToken: String,
         connectTimeoutMs: Int,
         readTimeoutMs: Int
     ): HttpJsonResponse {
@@ -208,6 +219,7 @@ class DeviceFirmwareUpdateRepository(
             url = url,
             method = "POST",
             body = body,
+            apiToken = apiToken,
             connectTimeoutMs = connectTimeoutMs,
             readTimeoutMs = readTimeoutMs
         )
@@ -217,6 +229,7 @@ class DeviceFirmwareUpdateRepository(
         url: String,
         method: String,
         body: JSONObject?,
+        apiToken: String,
         connectTimeoutMs: Int,
         readTimeoutMs: Int
     ): HttpJsonResponse {
@@ -229,6 +242,15 @@ class DeviceFirmwareUpdateRepository(
                 useCaches = false
                 setRequestProperty("Accept", "application/json")
                 setRequestProperty("Content-Type", "application/json; charset=utf-8")
+
+                val token = apiToken.trim()
+                if (token.isNotBlank()) {
+                    setRequestProperty("Authorization", "Bearer $token")
+                    setRequestProperty("X-AquaLight-Device-Token", token)
+                    setRequestProperty("X-AquaLight-Token", token)
+                    setRequestProperty("X-AquaLight-Api-Token", token)
+                }
+
                 if (body != null) {
                     doOutput = true
                 }
@@ -331,7 +353,6 @@ class DeviceFirmwareUpdateRepository(
             }
         }
 
-        // If semantic parsing cannot prove order, allow a different manifest version to be applied.
         return true
     }
 
