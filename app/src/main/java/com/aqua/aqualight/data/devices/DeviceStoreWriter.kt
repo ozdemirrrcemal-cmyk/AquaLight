@@ -2,7 +2,6 @@ package com.aqua.aqualight.data.devices
 
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
-import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
 
 class DeviceStoreWriter(
     private val devicesStore: DevicesDataStoreManager
@@ -38,11 +37,6 @@ class DeviceStoreWriter(
                     deviceApiToken = deviceApiToken
                 )
             }
-
-            DevicePresenceMonitor.markDeviceOnline(
-                deviceId = existingDeviceId,
-                ip = device.ip
-            )
 
             return existingDeviceId
         }
@@ -134,11 +128,6 @@ class DeviceStoreWriter(
                     deviceApiToken = deviceApiToken
                 )
             )
-        )
-
-        DevicePresenceMonitor.markDeviceOnline(
-            deviceId = device.id,
-            ip = device.ip
         )
 
         return device.id
