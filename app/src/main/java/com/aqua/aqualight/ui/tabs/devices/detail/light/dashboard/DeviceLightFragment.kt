@@ -112,9 +112,9 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
             )
         }
 
-        binding.cardQuickSetup.setOnClickListener {
+        binding.cardAutomation.setOnClickListener {
             findNavController().navigate(
-                DeviceLightFragmentDirections.actionDeviceLightFragmentToDeviceLightQuickSetupFragment(
+                DeviceLightFragmentDirections.actionDeviceLightFragmentToDeviceLightAutomationFragment(
                     deviceId = deviceId
                 )
             )
@@ -225,12 +225,12 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         // guarded by their own ViewModels.
         binding.cardManual.isEnabled = true
         binding.cardPrograms.isEnabled = true
-        binding.cardQuickSetup.isEnabled = true
+        binding.cardAutomation.isEnabled = true
         binding.cardPresets.isEnabled = true
 
         binding.cardManual.alpha = 1f
         binding.cardPrograms.alpha = 1f
-        binding.cardQuickSetup.alpha = 1f
+        binding.cardAutomation.alpha = 1f
         binding.cardPresets.alpha = 1f
     }
 

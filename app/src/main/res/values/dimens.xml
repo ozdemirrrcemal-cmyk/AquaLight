@@ -83,15 +83,6 @@
     <dimen name="light_stats_divider_margin_vertical">13dp</dimen>
 
     <!-- Quick action cards -->
-    <dimen name="light_quick_action_height">78dp</dimen>
-    <dimen name="light_quick_action_icon_container_size">34dp</dimen>
-    <dimen name="light_quick_action_icon_size">18dp</dimen>
-    <dimen name="light_quick_action_gap">6dp</dimen>
-    <dimen name="light_quick_action_row_margin_top">12dp</dimen>
-    <dimen name="light_quick_action_padding_start">12dp</dimen>
-    <dimen name="light_quick_action_padding_end">10dp</dimen>
-    <dimen name="light_quick_action_text_margin_start">9dp</dimen>
-    <dimen name="light_quick_action_subtitle_margin_top">4dp</dimen>
 
     <!-- Program card -->
     <dimen name="light_program_row_margin_top">14dp</dimen>

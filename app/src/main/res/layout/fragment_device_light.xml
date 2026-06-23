@@ -705,7 +705,7 @@
                 </com.google.android.material.card.MaterialCardView>
 
                 <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardQuickSetup"
+                    android:id="@+id/cardAutomation"
                     style="@style/Widget.Aqua.Light.Card.Action"
                     android:layout_width="0dp"
                     android:layout_height="66dp"
@@ -736,7 +736,7 @@
                                 android:layout_height="17dp"
                                 android:layout_gravity="center"
                                 android:importantForAccessibility="no"
-                                android:src="@drawable/ic_light_dashboard_quick_setup_24"
+                                android:src="@drawable/ic_light_automation_24"
                                 app:tint="@color/light_gold" />
 
                         </FrameLayout>
@@ -758,7 +758,7 @@
                                 android:autoSizeMinTextSize="10.5sp"
                                 android:autoSizeMaxTextSize="13sp"
                                 android:autoSizeStepGranularity="0.5sp"
-                                android:text="@string/light_dashboard_action_quick_setup" />
+                                android:text="@string/light_dashboard_action_automation" />
 
                             <TextView
                                 style="@style/TextAppearance.Aqua.Light.DashboardActionSubtitle"
@@ -767,7 +767,7 @@
                                 android:layout_marginTop="3dp"
                                 android:ellipsize="end"
                                 android:maxLines="1"
-                                android:text="@string/light_dashboard_action_quick_setup_subtitle" />
+                                android:text="@string/light_dashboard_action_automation_subtitle" />
 
                         </LinearLayout>
 

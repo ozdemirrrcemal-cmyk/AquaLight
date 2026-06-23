@@ -182,7 +182,6 @@ object DebugDeviceSeeder {
                 "light_manual",
                 "light_programs",
                 "light_program_editor",
-                "light_quick_setup",
                 "light_presets",
                 "light_device_settings"
             )

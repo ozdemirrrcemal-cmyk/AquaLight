@@ -8,7 +8,6 @@
     <string name="screen_title_light_manual_control">Manual Control</string>
     <string name="screen_title_light_presets">Presets &amp; Scenes</string>
     <string name="screen_title_light_settings">Light Settings</string>
-    <string name="screen_title_light_quick_setup">Smart Quick Setup</string>
     <string name="screen_title_light_automation">Light Automation</string>
 
     <!-- Cloud simulation -->
@@ -85,8 +84,8 @@
     <string name="light_dashboard_action_manual_subtitle">Live control</string>
     <string name="light_dashboard_action_programs">Programs</string>
     <string name="light_dashboard_action_programs_subtitle">Schedule</string>
-    <string name="light_dashboard_action_quick_setup">Quick Setup</string>
-    <string name="light_dashboard_action_quick_setup_subtitle">Smart setup</string>
+    <string name="light_dashboard_action_automation">Automation</string>
+    <string name="light_dashboard_action_automation_subtitle">Light rules</string>
     <string name="light_dashboard_action_presets">Presets</string>
     <string name="light_dashboard_action_presets_subtitle">Scenes</string>
     <string name="light_dashboard_device_health">Device Health</string>

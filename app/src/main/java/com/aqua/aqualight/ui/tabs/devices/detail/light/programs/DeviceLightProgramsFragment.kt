@@ -69,13 +69,6 @@ class DeviceLightProgramsFragment :
             titleOverride = "Programs",
             actions = listOf(
                 AquaHeaderAction(
-                    iconRes = R.drawable.ic_light_automation_24,
-                    contentDescription = "Light automation",
-                    onClick = {
-                        openAutomation()
-                    }
-                ),
-                AquaHeaderAction(
                     iconRes = R.drawable.ic_add,
                     contentDescription = "Add program",
                     onClick = {
@@ -326,22 +319,6 @@ class DeviceLightProgramsFragment :
                 newName = newName
             )
         }
-    }
-
-    private fun openAutomation() {
-        if (deviceId <= 0L) {
-            showDeviceSnack(
-                message = LIGHT_DEVICE_INFORMATION_MISSING,
-                type = DeviceFeedbackType.ERROR
-            )
-            return
-        }
-
-        findNavController().navigate(
-            DeviceLightProgramsFragmentDirections.actionDeviceLightProgramsFragmentToDeviceLightAutomationFragment(
-                deviceId = deviceId
-            )
-        )
     }
 
     private fun openProgramEditor(

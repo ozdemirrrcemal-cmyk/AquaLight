@@ -6,7 +6,6 @@ enum class AquaDeviceFeature {
     OTA_UPDATE,
 
     LIGHT_CONTROL,
-    LIGHT_QUICK_SETUP,
     LIGHT_PRESETS,
     LIGHT_MOONLIGHT,
     LIGHT_ACCLIMATION,
