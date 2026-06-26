@@ -19,7 +19,6 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
-import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import java.util.concurrent.TimeUnit
 import java.io.File
 import java.io.FileOutputStream
@@ -43,8 +42,7 @@ object TankPdfExporter {
 
   fun createTankReportPdf(
     context: Context,
-    tank: SavedAquariumTank,
-    devices: List<DevicesDataStoreManager.DeviceInfo> = emptyList()
+    tank: SavedAquariumTank
   ): Uri {
     val document = PdfDocument()
     val texts = TankPdfTexts.from(context)
@@ -87,26 +85,7 @@ object TankPdfExporter {
     )
 
     writer.drawSectionTitle(texts.sectionDevices)
-
-    if (devices.isEmpty()) {
-      writer.drawMutedText(texts.noDevices)
-    } else {
-      devices.forEachIndexed {
-        index, device ->
-        writer.drawDeviceInfo(
-          number = index + 1,
-          type = getDeviceTypeText(
-            device = device,
-            fallbackText = texts.device
-          ),
-          serial = device.serial,
-          firmware = getDeviceFirmwareText(
-            device = device,
-            noValue = texts.noValue
-          )
-        )
-      }
-    }
+    writer.drawMutedText(texts.noDevices)
 
     writer.drawSectionTitle(texts.sectionTankLife)
 
@@ -224,27 +203,6 @@ object TankPdfExporter {
     }
 
     context.startActivity(chooser)
-  }
-
-  private fun getDeviceTypeText(
-    device: DevicesDataStoreManager.DeviceInfo,
-    fallbackText: String
-  ): String {
-    return device.aquaName.ifBlank {
-      fallbackText
-    }
-  }
-
-
-  private fun getDeviceFirmwareText(
-    device: DevicesDataStoreManager.DeviceInfo,
-    noValue: String
-  ): String {
-    return device.firmwareBuild
-    .substringBefore(" (")
-    .ifBlank {
-      noValue
-    }
   }
 
   private fun getLivestockQuantityText(

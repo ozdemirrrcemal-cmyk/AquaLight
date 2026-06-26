@@ -30,7 +30,6 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDeviceUi
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumChildTabHost
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.TankDetailTabArgs
@@ -474,14 +473,6 @@ class TankDetailFragment :
         )
     }
 
-    override fun onTankDetailDeviceClicked(
-        device: TankAssignedDeviceUi
-    ) {
-        tankDetailViewModel.openDevice(
-            deviceId = device.deviceId,
-            deviceTitle = device.title
-        )
-    }
 
     private fun showDeviceOfflineDialog() {
         showDeviceInfoDialog(

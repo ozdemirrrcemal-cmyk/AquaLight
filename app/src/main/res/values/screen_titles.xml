@@ -3,13 +3,8 @@
 
     <!-- Devices -->
     <string name="screen_title_devices">Devices</string>
-    <string name="screen_title_add_device">Add Device</string>
-    <string name="screen_title_device_setup">Device Setup</string>
     <string name="screen_title_device">Device</string>
     <string name="screen_title_unsupported_device">Unsupported Device</string>
-    <string name="screen_title_dosing">Dosing</string>
-    <string name="screen_title_timer">Timer</string>
-    <string name="screen_title_cooling">Cooling</string>
 
     <!-- Settings -->
     <string name="screen_title_settings">Settings</string>
@@ -17,7 +12,6 @@
     <string name="screen_title_user_info">User Info</string>
     <string name="screen_title_user_address">User Address</string>
     <string name="screen_title_device_status">Device Status</string>
-    <string name="screen_title_network">Network</string>
     <string name="screen_title_app_settings">App Settings</string>
     <string name="screen_title_usage">Usage</string>
     <string name="screen_title_privacy">Privacy</string>

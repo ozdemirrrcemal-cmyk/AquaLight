@@ -5,7 +5,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.asLiveData
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
-import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
@@ -27,9 +26,6 @@ class AquariumTankViewModel(
     appContext
   )
 
-  private val devicesDataStoreManager = DevicesDataStoreManager.create(
-    appContext
-  )
 
   val tanks: LiveData<List<SavedAquariumTank>> =
     tankDataStoreManager.tanksFlow.asLiveData()
@@ -69,9 +65,6 @@ class AquariumTankViewModel(
         tankId = tankId
       )
 
-      devicesDataStoreManager.unassignDevicesFromTank(
-        tankId = tankId
-      )
     }
 
     tankDataStoreManager.deleteTanks(

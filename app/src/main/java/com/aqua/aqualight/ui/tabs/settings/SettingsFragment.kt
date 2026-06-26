@@ -54,9 +54,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                         state = state
                     )
 
-                    renderActiveDevices(
-                        activeDevices = state.activeDeviceCount
-                    )
+                    renderDeviceStatusShell()
                 }
             }
         }
@@ -86,27 +84,14 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         }
     }
 
-    private fun renderActiveDevices(
-        activeDevices: Int
-    ) {
-        if (activeDevices > 0) {
-            binding.tvActiveDevices.text = getString(
-                R.string.settings_active_devices,
-                activeDevices
-            )
+    private fun renderDeviceStatusShell() {
+        binding.tvActiveDevices.text = getString(
+            R.string.settings_no_active_devices
+        )
 
-            binding.viewDeviceDot.setBackgroundResource(
-                R.drawable.bg_online_dot
-            )
-        } else {
-            binding.tvActiveDevices.text = getString(
-                R.string.settings_no_active_devices
-            )
-
-            binding.viewDeviceDot.setBackgroundResource(
-                R.drawable.bg_offline_dot
-            )
-        }
+        binding.viewDeviceDot.setBackgroundResource(
+            R.drawable.bg_offline_dot
+        )
     }
 
     private fun setupClickListeners() = with(binding) {
@@ -128,11 +113,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             )
         }
 
-        rowNetwork.setOnClickListener {
-            findNavController().navigate(
-                SettingsFragmentDirections.actionSettingsFragmentToNetworkFragment()
-            )
-        }
 
         rowSettings.setOnClickListener {
             findNavController().navigate(

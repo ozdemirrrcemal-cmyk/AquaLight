@@ -15,17 +15,8 @@
 
     <!-- Tank device selection -->
     <string name="tank_device_select_title">Select Device</string>
-    <string name="tank_device_select_info_title">Choose a saved device</string>
-    <string name="tank_device_select_info_subtitle">Select one of your saved AquaLight devices to assign it to this tank.</string>
     <string name="tank_device_select_empty_title">No saved devices</string>
     <string name="tank_device_select_empty_subtitle">Add a device from the Devices screen first, then return here to assign it to this tank.</string>
-    <string name="tank_device_select_arrow_desc">Select device</string>
-    <string name="tank_device_select_unknown_device">AquaLight Device</string>
-    <string name="tank_device_select_saved_device">Saved device</string>
-    <string name="tank_device_select_ip_status">IP: %1$s</string>
-    <string name="tank_device_select_serial_status">Serial: %1$s</string>
-    <string name="tank_device_select_assign_error">Device could not be assigned to this tank.</string>
-    <string name="tank_device_select_serial_unavailable">Serial number unavailable</string>
 
     <!-- Aquarium and tank -->
     <string name="aquarium_action_complete">Complete</string>
@@ -175,9 +166,6 @@
     <string name="aquarium_device_open_failed_title">Open Failed</string>
     <string name="aquarium_device_open_failed_message">The device could not be opened. Please try again.</string>
     <string name="aquarium_device_offline_title">Device Offline</string>
-    <string name="aquarium_remove_device_title">Remove device from tank?</string>
-    <string name="aquarium_remove_device_message">%1$s will remain saved, but it will no longer be assigned to this tank.</string>
-    <string name="aquarium_remove_action">Remove</string>
     <string name="aquarium_error_device_remove_failed">Device could not be removed from this tank.</string>
 
     <!-- Aquarium UI text -->
@@ -356,8 +344,6 @@
     <string name="aquarium_care_profile_status_complete">Complete</string>
     <string name="aquarium_care_profile_status_missing">Missing</string>
     <string name="aquarium_device_unknown_aquarium">Unknown aquarium</string>
-    <string name="aquarium_device_status_online">Online</string>
-    <string name="aquarium_device_status_offline">Offline</string>
     <string name="aquarium_device_label_offline">OFFLINE</string>
     <string name="aquarium_device_label_manual_mode">MANUAL MODE</string>
     <string name="aquarium_device_label_scene_active">SCENE ACTIVE</string>

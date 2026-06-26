@@ -4,7 +4,6 @@ import android.content.Context
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.reminder.CareTaskReminderScheduler
 import com.aqua.aqualight.data.care.smartcare.SmartCareDailyWorker
-import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
 import com.aqua.aqualight.utils.NotificationHelper
 import kotlinx.coroutines.flow.first
 
@@ -18,9 +17,6 @@ object SessionBoundServiceManager {
     ) {
         val appContext = context.applicationContext
 
-        DevicePresenceMonitor.start(
-            context = appContext
-        )
 
         SmartCareDailyWorker.schedule(
             context = appContext
@@ -33,7 +29,6 @@ object SessionBoundServiceManager {
     ) {
         val appContext = context.applicationContext
 
-        DevicePresenceMonitor.stop()
 
         SmartCareDailyWorker.cancel(
             context = appContext

@@ -9,7 +9,6 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
-import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.databinding.FragmentTankSettingsOthersBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.export.TankPdfExporter
@@ -17,7 +16,6 @@ import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -28,7 +26,6 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
 
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
-    private lateinit var devicesStore: DevicesDataStoreManager
 
     private var tankId: Long = 0L
     private var currentTank: SavedAquariumTank? = null
@@ -56,7 +53,6 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
         )
 
         _binding = FragmentTankSettingsOthersBinding.bind(view)
-        devicesStore = DevicesDataStoreManager.create(requireContext())
 
         setupClickListeners()
         observeTank()
@@ -288,14 +284,9 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val pdfUri = withContext(Dispatchers.IO) {
-                    val connectedDevices = devicesStore.devicesForTankFlow(
-                        tankId = tankId
-                    ).first()
-
                     TankPdfExporter.createTankReportPdf(
                         context = appContext,
-                        tank = tank,
-                        devices = connectedDevices
+                        tank = tank
                     )
                 }
 

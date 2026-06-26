@@ -195,41 +195,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:background="@color/settings_divider"/>
-
-                <!-- 3️⃣ Network -->
-                <LinearLayout
-                    android:id="@+id/rowNetwork"
-                    android:layout_width="match_parent"
-					android:layout_height="wrap_content"
-                    android:minHeight="56dp"
-                    android:paddingHorizontal="16dp"
-                    android:gravity="center_vertical"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:background="?android:attr/selectableItemBackground"
-                    android:contentDescription="@string/settings_network_desc">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/settings_network"
-                        android:textColor="@color/settings_text_secondary"
-                        android:textSize="14sp"/>
-
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_arrow_right"
-                        app:tint="@color/settings_text_secondary"
-                        android:contentDescription="@string/settings_arrow_desc"/>
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="@color/settings_divider"/>
-
                 <!-- 4️⃣ App Settings -->
                 <LinearLayout
                     android:id="@+id/rowSettings"

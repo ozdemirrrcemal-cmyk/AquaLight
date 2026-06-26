@@ -2,7 +2,6 @@ package com.aqua.aqualight.data.user
 
 import android.content.Context
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
-import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 
 /**
@@ -44,12 +43,6 @@ class UserDataOwnershipMigrator private constructor(
         CareTaskDataStoreManager.create(
             appContext
         ).assignLegacyTasksToOwner(
-            ownerUid = targetOwnerUid
-        )
-
-        DevicesDataStoreManager.create(
-            appContext
-        ).assignLegacyDevicesToOwner(
             ownerUid = targetOwnerUid
         )
     }

@@ -59,7 +59,7 @@ message UserPreferences {
   // Per-user profile/address cache. Active fields above are only the current session projection.
   repeated UserProfileCache profileCaches = 101;
 
-  // Devices were moved to devices_preferences.proto.
+  // Reserved legacy field slot/name. Do not reuse.
   reserved 100;
   reserved "devices";
 }

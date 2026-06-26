@@ -31,7 +31,6 @@
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
-  <!-- ESP32 firmware currently uses local HTTP; cleartext is guarded in code by LocalNetworkAddressPolicy. -->
   <application
     android:name=".app.AquaApp"
     android:allowBackup="false"

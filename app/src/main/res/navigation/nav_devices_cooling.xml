@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<navigation xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" xmlns:tools="http://schemas.android.com/tools" android:id="@+id/nav_devices_cooling" app:startDestination="@id/deviceCoolingFragment">
-  <fragment android:id="@+id/deviceCoolingFragment" android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingFragment" android:label="@string/screen_title_cooling" tools:layout="@layout/fragment_device_cooling">
-    <argument android:name="deviceId" app:argType="long"/>
-    <argument android:name="deviceTitle" app:argType="string" android:defaultValue=""/>
-  </fragment>
-</navigation>
