@@ -24,7 +24,7 @@ class DevicesViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
-    private val repository = DevicesRepositoryProvider.get()
+    private val repository = DevicesRepositoryProvider.get(application)
     private val connectivityObserver = DeviceConnectivityObserver(application)
     private val routeResolver = DeviceRouteResolver()
     private val localNetworkAvailable = MutableStateFlow(true)
@@ -56,8 +56,14 @@ class DevicesViewModel(
         viewModelScope.launch {
             val route = runCatching {
                 val uid = DeviceUid(deviceUid)
+                val snapshot = repository.currentDevice(uid)
+
+                if (snapshot != null && snapshot.endpoint.hasWebSocketEndpoint) {
+                    repository.connectRuntime(uid)
+                }
+
                 routeResolver.resolve(
-                    snapshot = repository.currentDevice(uid),
+                    snapshot = snapshot,
                     requestedDeviceUid = deviceUid
                 )
             }.getOrElse {

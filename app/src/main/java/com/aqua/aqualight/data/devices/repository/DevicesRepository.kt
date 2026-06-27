@@ -2,8 +2,11 @@ package com.aqua.aqualight.data.devices.repository
 
 import com.aqua.aqualight.data.devices.discovery.udp.AqlDiscoveryRefreshSender
 import com.aqua.aqualight.data.devices.model.DeviceConnectionState
+import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.store.DeviceRegistryStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -15,13 +18,14 @@ import kotlinx.coroutines.launch
 /**
  * Canonical Devices V2 repository boundary.
  *
- * UI code should use this class instead of reaching into UDP, BLE or WebSocket layers. At this
- * stage it bridges UDP discovery into a shared in-memory registry. WebSocket runtime and BLE
- * provisioning will plug into the same registry in later steps.
+ * UI code should use this class instead of reaching into UDP, BLE or WebSocket layers.
+ * UDP discovery, runtime WebSocket state and later BLE provisioning all converge into
+ * the same device registry.
  */
 class DevicesRepository(
     private val discoveryRepository: DeviceDiscoveryRepository = DeviceDiscoveryRepository(),
-    private val registryStore: DeviceRegistryStore = DeviceRegistryStore()
+    private val registryStore: DeviceRegistryStore = DeviceRegistryStore(),
+    private val runtimeRepository: DeviceRuntimeRepository? = null
 ) {
 
     val snapshots: StateFlow<Map<DeviceUid, DeviceSnapshot>> = registryStore.snapshots
@@ -39,8 +43,8 @@ class DevicesRepository(
     /**
      * Starts UDP discovery and mirrors discovered snapshots into the canonical registry.
      *
-     * The returned job is lifecycle-owned by the caller. Cancelling it stops the scanner and the
-     * registry collector together.
+     * Runtime WebSocket state is also mirrored into the same registry when runtime support
+     * is configured by the provider.
      */
     fun start(scope: CoroutineScope): Job = scope.launch {
         val scannerJob = discoveryRepository.start(this)
@@ -49,10 +53,18 @@ class DevicesRepository(
                 registryStore.upsertAll(discoveredDevices)
             }
         }
+        val runtimeStateJob = runtimeRepository?.let { runtime ->
+            launch {
+                runtime.connectionState.collect { state ->
+                    applyRuntimeConnectionState(state)
+                }
+            }
+        }
 
         try {
             awaitCancellation()
         } finally {
+            runtimeStateJob?.cancel()
             collectorJob.cancel()
             scannerJob.cancel()
         }
@@ -66,6 +78,34 @@ class DevicesRepository(
 
     fun reevaluatePresence(localNetworkAvailable: Boolean = true) {
         discoveryRepository.reevaluatePresence(localNetworkAvailable = localNetworkAvailable)
+    }
+
+    fun connectRuntime(deviceUid: DeviceUid): Result<Unit> {
+        val runtime = runtimeRepository
+            ?: return Result.failure(IllegalStateException("Device runtime is not configured."))
+
+        val snapshot = registryStore.currentDevice(deviceUid)
+            ?: return Result.failure(IllegalArgumentException("Device ${deviceUid.value} is not registered."))
+
+        return runtime.connect(snapshot)
+    }
+
+    fun commandClient(): AqlWsCommandClient? {
+        return runtimeRepository?.commandClient()
+    }
+
+    suspend fun saveRuntimeToken(
+        deviceUid: DeviceUid,
+        token: String
+    ) {
+        runtimeRepository?.saveToken(
+            deviceUid = deviceUid,
+            token = token
+        )
+    }
+
+    suspend fun clearRuntimeToken(deviceUid: DeviceUid) {
+        runtimeRepository?.clearToken(deviceUid)
     }
 
     fun registerSnapshot(snapshot: DeviceSnapshot): DeviceSnapshot =
@@ -84,5 +124,52 @@ class DevicesRepository(
 
     fun clearInMemoryRegistry() {
         registryStore.clear()
+    }
+
+    private fun applyRuntimeConnectionState(state: AqlWsConnectionState) {
+        when (state) {
+            AqlWsConnectionState.Disconnected -> Unit
+
+            is AqlWsConnectionState.Connecting -> {
+                registryStore.updateConnectionState(state.deviceUid) { previous ->
+                    previous.copy(
+                        onlineState = DeviceOnlineState.CONNECTING_WS,
+                        lastErrorMessage = null
+                    )
+                }
+            }
+
+            is AqlWsConnectionState.Connected -> {
+                registryStore.updateConnectionState(state.deviceUid) { previous ->
+                    previous.copy(
+                        onlineState = DeviceOnlineState.CONNECTING_WS,
+                        lastWsConnectedAtMillis = state.connectedAtMillis,
+                        lastErrorMessage = null
+                    )
+                }
+            }
+
+            is AqlWsConnectionState.Authenticated -> {
+                registryStore.updateConnectionState(state.deviceUid) { previous ->
+                    previous.copy(
+                        onlineState = DeviceOnlineState.AUTHENTICATED,
+                        lastWsConnectedAtMillis = previous.lastWsConnectedAtMillis
+                            ?: state.authenticatedAtMillis,
+                        lastAuthenticatedAtMillis = state.authenticatedAtMillis,
+                        lastErrorMessage = null
+                    )
+                }
+            }
+
+            is AqlWsConnectionState.Failed -> {
+                val deviceUid = state.deviceUid ?: return
+                registryStore.updateConnectionState(deviceUid) { previous ->
+                    previous.copy(
+                        onlineState = DeviceOnlineState.ERROR,
+                        lastErrorMessage = state.message.ifBlank { "WebSocket connection failed." }
+                    )
+                }
+            }
+        }
     }
 }
