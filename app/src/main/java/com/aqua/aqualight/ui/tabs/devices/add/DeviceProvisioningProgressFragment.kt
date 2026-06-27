@@ -80,8 +80,9 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
         binding.tvStepTwo.text = state.stepTwo
         binding.tvStepThree.text = state.stepThree
         binding.btnStartProvisioning.isEnabled = state.canStart
+        binding.btnStartProvisioning.text = state.buttonText
         binding.btnStartProvisioning.alpha = if (state.canStart) 1f else 0.45f
-        binding.progressBar.isVisible = state.canStart.not()
+        binding.progressBar.isVisible = state.showProgress
     }
 
     override fun onDestroyView() {

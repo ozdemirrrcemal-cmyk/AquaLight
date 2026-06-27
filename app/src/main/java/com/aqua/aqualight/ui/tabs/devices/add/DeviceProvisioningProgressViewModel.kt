@@ -1,17 +1,30 @@
 package com.aqua.aqualight.ui.tabs.devices.add
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningGattClient
+import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningGattEvent
+import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningDraft
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
-class DeviceProvisioningProgressViewModel : ViewModel() {
+class DeviceProvisioningProgressViewModel(
+    application: Application
+) : AndroidViewModel(application) {
+
+    private val gattClient = AqlBleProvisioningGattClient(application)
 
     private val _uiState = MutableStateFlow(DeviceProvisioningProgressUiState())
     val uiState: StateFlow<DeviceProvisioningProgressUiState> = _uiState.asStateFlow()
 
     private var boundSessionId: String? = null
+    private var activeDraft: AqlProvisioningDraft? = null
+    private var gattEventsJob: Job? = null
 
     fun bind(sessionId: String) {
         if (sessionId.isBlank() || boundSessionId == sessionId) {
@@ -21,6 +34,8 @@ class DeviceProvisioningProgressViewModel : ViewModel() {
         boundSessionId = sessionId
 
         val draft = AqlProvisioningDraftStore.get(sessionId)
+        activeDraft = draft
+
         if (draft == null) {
             _uiState.value = DeviceProvisioningProgressUiState(
                 title = "Provisioning session expired",
@@ -29,29 +44,173 @@ class DeviceProvisioningProgressViewModel : ViewModel() {
                 deviceSerial = "Unknown",
                 bleAddress = "Unknown",
                 wifiSsid = "Unknown",
-                canStart = false
+                canStart = false,
+                buttonText = "Unavailable",
+                showProgress = false
             )
             return
         }
 
         _uiState.value = DeviceProvisioningProgressUiState(
             title = "Ready for BLE provisioning",
-            message = "The selected device and Wi-Fi credentials are prepared. The next step will connect and write them over BLE.",
+            message = "The selected device and Wi-Fi credentials are prepared. Start provisioning to transfer them over BLE.",
             deviceName = draft.deviceTitle.ifBlank { "AquaLight Device" },
             deviceSerial = draft.deviceSerial.ifBlank { draft.candidateId },
             bleAddress = draft.bleAddress.ifBlank { "Unknown" },
             wifiSsid = draft.wifiCredentials.ssid,
-            canStart = true
+            canStart = true,
+            buttonText = "Start provisioning",
+            showProgress = false
         )
     }
 
     fun startProvisioning() {
+        val draft = activeDraft ?: run {
+            _uiState.value = _uiState.value.copy(
+                title = "Provisioning session expired",
+                message = "Go back and select the device again.",
+                canStart = false,
+                buttonText = "Unavailable",
+                showProgress = false
+            )
+            return
+        }
+
+        observeGattEvents()
+
         _uiState.value = _uiState.value.copy(
-            title = "BLE provisioning pending",
-            message = "GATT connect/write will be enabled in the next migration step.",
-            stepThree = "3. BLE provisioning engine will start next",
-            canStart = false
+            title = "Connecting over BLE",
+            message = "Opening a secure provisioning connection to the selected AquaLight device.",
+            stepThree = "3. Connecting to BLE device",
+            canStart = false,
+            buttonText = "Provisioning...",
+            showProgress = true
         )
+
+        gattClient.start(draft)
+    }
+
+    private fun observeGattEvents() {
+        if (gattEventsJob != null) {
+            return
+        }
+
+        gattEventsJob = viewModelScope.launch {
+            gattClient.events.collect { event ->
+                handleGattEvent(event)
+            }
+        }
+    }
+
+    private fun handleGattEvent(event: AqlBleProvisioningGattEvent) {
+        _uiState.value = when (event) {
+            is AqlBleProvisioningGattEvent.Connecting -> {
+                _uiState.value.copy(
+                    title = "Connecting over BLE",
+                    message = "Connecting to ${event.address}.",
+                    stepThree = "3. Connecting to BLE device",
+                    canStart = false,
+                    buttonText = "Provisioning...",
+                    showProgress = true
+                )
+            }
+
+            is AqlBleProvisioningGattEvent.Connected -> {
+                _uiState.value.copy(
+                    title = "BLE connected",
+                    message = "Discovering AquaLight provisioning service.",
+                    stepThree = "3. BLE connected",
+                    showProgress = true
+                )
+            }
+
+            AqlBleProvisioningGattEvent.ServicesDiscovered -> {
+                _uiState.value.copy(
+                    title = "Provisioning service ready",
+                    message = "Sending secure provisioning session request.",
+                    stepThree = "3. Provisioning service discovered",
+                    showProgress = true
+                )
+            }
+
+            AqlBleProvisioningGattEvent.StartSessionWritten -> {
+                _uiState.value.copy(
+                    title = "Session started",
+                    message = "Sending Wi-Fi credentials over BLE.",
+                    stepThree = "3. Session started",
+                    showProgress = true
+                )
+            }
+
+            AqlBleProvisioningGattEvent.WifiCredentialsWritten -> {
+                _uiState.value.copy(
+                    title = "Wi-Fi sent",
+                    message = "Waiting for device provisioning status.",
+                    stepThree = "3. Wi-Fi credentials sent",
+                    showProgress = true
+                )
+            }
+
+            is AqlBleProvisioningGattEvent.StatusReceived -> {
+                _uiState.value.copy(
+                    title = "Device status: ${event.statusMessage.status.wireValue}",
+                    message = event.statusMessage.message.ifBlank {
+                        "Waiting for runtime endpoint and token."
+                    },
+                    stepThree = "3. ${event.statusMessage.status.wireValue}",
+                    showProgress = true
+                )
+            }
+
+            is AqlBleProvisioningGattEvent.RuntimeHandoffReceived -> {
+                _uiState.value.copy(
+                    title = "Runtime endpoint received",
+                    message = event.handoff.endpoint.toWebSocketUrl()
+                        ?: "Runtime endpoint was received but is not complete yet.",
+                    stepThree = "3. Runtime token and endpoint received",
+                    showProgress = true
+                )
+            }
+
+            AqlBleProvisioningGattEvent.Completed -> {
+                _uiState.value.copy(
+                    title = "Provisioning completed",
+                    message = "The device returned runtime endpoint and token. Saving and device registry connection will be completed in the next step.",
+                    stepThree = "3. Provisioning completed",
+                    canStart = false,
+                    buttonText = "Completed",
+                    showProgress = false
+                )
+            }
+
+            is AqlBleProvisioningGattEvent.Failed -> {
+                _uiState.value.copy(
+                    title = "Provisioning failed",
+                    message = event.message,
+                    stepThree = "3. Failed",
+                    canStart = true,
+                    buttonText = "Try again",
+                    showProgress = false
+                )
+            }
+
+            AqlBleProvisioningGattEvent.Disconnected -> {
+                _uiState.value.copy(
+                    title = "BLE disconnected",
+                    message = "The provisioning connection was closed.",
+                    stepThree = "3. BLE disconnected",
+                    canStart = true,
+                    buttonText = "Try again",
+                    showProgress = false
+                )
+            }
+        }
+    }
+
+    override fun onCleared() {
+        gattEventsJob?.cancel()
+        gattClient.close()
+        super.onCleared()
     }
 }
 
@@ -65,5 +224,7 @@ data class DeviceProvisioningProgressUiState(
     val stepOne: String = "1. Device selected",
     val stepTwo: String = "2. Wi-Fi credentials prepared",
     val stepThree: String = "3. BLE provisioning connection pending",
-    val canStart: Boolean = false
+    val canStart: Boolean = false,
+    val buttonText: String = "Start provisioning",
+    val showProgress: Boolean = false
 )
