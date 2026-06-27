@@ -7,17 +7,32 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningDraft
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningRuntimeHandoff
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningStatus
+import java.net.URLDecoder
+import java.util.Locale
 import org.json.JSONObject
 
 class AqlBleProvisioningMessageCodec {
 
     fun startSessionJson(draft: AqlProvisioningDraft): String {
         val json = JSONObject()
-            .put(AqlBleProvisioningContract.Json.KEY_DEVICE_UID, draft.candidateId)
-            .put("bleAddress", draft.bleAddress)
-            .put("bleName", draft.bleName)
-            .put("deviceTitle", draft.deviceTitle)
-            .put("createdAt", draft.createdAtMillis)
+            .put(AqlBleProvisioningContract.Json.KEY_APP_NONCE, draft.sessionId)
+
+        val deviceUid = draft.candidateId
+            .trim()
+            .takeUnless { value -> value.isLikelyBleAddress() }
+            .orEmpty()
+
+        if (deviceUid.isNotBlank()) {
+            json.put(AqlBleProvisioningContract.Json.KEY_DEVICE_UID, deviceUid)
+        }
+
+        val provisioningId = provisioningIdFromRawQrPayload(draft.rawQrPayload)
+        if (provisioningId.isNotBlank()) {
+            json.put(
+                AqlBleProvisioningContract.Json.KEY_PROVISIONING_ID,
+                provisioningId
+            )
+        }
 
         if (draft.claimCode.isNotBlank()) {
             json.put(
@@ -60,7 +75,12 @@ class AqlBleProvisioningMessageCodec {
             status = AqlProvisioningStatus.fromWireValue(
                 json.optString(AqlBleProvisioningContract.Json.KEY_STATUS)
             ),
-            message = json.optString(AqlBleProvisioningContract.Json.KEY_MESSAGE).trim(),
+            message = json
+                .optString(AqlBleProvisioningContract.Json.KEY_MESSAGE)
+                .trim()
+                .ifBlank {
+                    json.optString(AqlBleProvisioningContract.Json.KEY_LAST_ERROR).trim()
+                },
             raw = raw
         )
     }
@@ -71,39 +91,59 @@ class AqlBleProvisioningMessageCodec {
     ): Result<AqlProvisioningRuntimeHandoff> {
         return runCatching {
             val json = JSONObject(raw.trim())
-            val deviceUidText = json
-                .optString(AqlBleProvisioningContract.Json.KEY_DEVICE_UID)
+
+            val fallbackUid = fallbackDeviceUid
                 .trim()
-                .ifBlank { fallbackDeviceUid.trim() }
+                .takeUnless { value -> value.isLikelyBleAddress() }
+                .orEmpty()
+
+            val deviceUidText = firstJsonValue(
+                json,
+                AqlBleProvisioningContract.Json.KEY_DEVICE_UID,
+                "uid",
+                "device_uid"
+            ).ifBlank { fallbackUid }
+
+            val wsPort = firstJsonInt(
+                json,
+                AqlBleProvisioningContract.Json.KEY_WS_PORT,
+                "wsPort",
+                "webSocketPort"
+            )
+
+            val wsPath = firstJsonValue(
+                json,
+                AqlBleProvisioningContract.Json.KEY_WS_PATH,
+                "wsPath",
+                "path"
+            ).ifBlank { AqlWsContract.DEFAULT_PATH }
+
+            val wsProtocol = firstJsonValue(
+                json,
+                AqlBleProvisioningContract.Json.KEY_WS_PROTOCOL,
+                "wsProtocol",
+                "protocol"
+            ).ifBlank { AqlWsContract.DEFAULT_PROTOCOL }
 
             val endpoint = DeviceRuntimeEndpoint(
                 ip = json.optString(AqlBleProvisioningContract.Json.KEY_IP).trim(),
                 wifiConnected = true,
                 runtimeTransport = "websocket",
-                wsPort = json.optInt(AqlBleProvisioningContract.Json.KEY_WS_PORT, 0),
-                wsPath = json
-                    .optString(
-                        AqlBleProvisioningContract.Json.KEY_WS_PATH,
-                        AqlWsContract.DEFAULT_PATH
-                    )
-                    .trim()
-                    .ifBlank { AqlWsContract.DEFAULT_PATH },
-                wsProtocol = json
-                    .optString(
-                        AqlBleProvisioningContract.Json.KEY_WS_PROTOCOL,
-                        AqlWsContract.DEFAULT_PROTOCOL
-                    )
-                    .trim()
-                    .ifBlank { AqlWsContract.DEFAULT_PROTOCOL },
-                wsProtocolVersion = json.optInt("wsProtocolVersion", 0)
+                wsPort = wsPort,
+                wsPath = wsPath,
+                wsProtocol = wsProtocol,
+                wsProtocolVersion = json.optInt("wsProtocolVersion", AqlWsContract.PROTOCOL_VERSION)
             )
 
             AqlProvisioningRuntimeHandoff(
                 deviceUid = DeviceUid(deviceUidText),
                 endpoint = endpoint,
-                webSocketToken = json
-                    .optString(AqlBleProvisioningContract.Json.KEY_TOKEN)
-                    .trim(),
+                webSocketToken = firstJsonValue(
+                    json,
+                    AqlBleProvisioningContract.Json.KEY_TOKEN,
+                    "pairingToken",
+                    "webSocketToken"
+                ),
                 productFamily = firstJsonValue(
                     json,
                     "family",
@@ -140,6 +180,42 @@ class AqlBleProvisioningMessageCodec {
         }
     }
 
+    private fun provisioningIdFromRawQrPayload(rawQrPayload: String): String {
+        val normalized = rawQrPayload.trim()
+        if (normalized.isBlank()) return ""
+
+        return runCatching {
+            if (normalized.startsWith("{")) {
+                JSONObject(normalized)
+                    .optString(AqlBleProvisioningContract.Qr.KEY_PRODUCT_ID)
+                    .trim()
+            } else {
+                parseQueryFields(normalized)[AqlBleProvisioningContract.Qr.KEY_PRODUCT_ID].orEmpty()
+            }
+        }.getOrDefault("")
+    }
+
+    private fun parseQueryFields(raw: String): Map<String, String> {
+        val query = raw.substringAfter("?", raw)
+        val fields = mutableMapOf<String, String>()
+
+        query.split("&")
+            .asSequence()
+            .filter { part -> part.isNotBlank() && part.contains("=") }
+            .forEach { part ->
+                val key = decode(part.substringBefore("="))
+                    .trim()
+                    .lowercase(Locale.US)
+                val value = decode(part.substringAfter("=")).trim()
+
+                if (key.isNotBlank()) {
+                    fields[key] = value
+                }
+            }
+
+        return fields
+    }
+
     private fun firstJsonValue(
         json: JSONObject,
         vararg keys: String
@@ -149,5 +225,33 @@ class AqlBleProvisioningMessageCodec {
             .map { key -> json.optString(key).trim() }
             .firstOrNull { value -> value.isNotBlank() }
             .orEmpty()
+    }
+
+    private fun firstJsonInt(
+        json: JSONObject,
+        vararg keys: String
+    ): Int {
+        return keys
+            .asSequence()
+            .map { key -> json.opt(key) }
+            .mapNotNull { value ->
+                when (value) {
+                    is Number -> value.toInt()
+                    is String -> value.trim().toIntOrNull()
+                    else -> null
+                }
+            }
+            .firstOrNull { value -> value > 0 }
+            ?: 0
+    }
+
+    private fun String.isLikelyBleAddress(): Boolean {
+        return matches(Regex("(?i)^([0-9a-f]{2}:){5}[0-9a-f]{2}$"))
+    }
+
+    private fun decode(value: String): String {
+        return runCatching {
+            URLDecoder.decode(value, Charsets.UTF_8.name())
+        }.getOrDefault(value)
     }
 }

@@ -36,16 +36,19 @@ object AqlBleProvisioningContract {
     }
 
     object Json {
-        const val KEY_DEVICE_UID = "uid"
-        const val KEY_CLAIM_CODE = "claim"
+        const val KEY_APP_NONCE = "appNonce"
+        const val KEY_DEVICE_UID = "deviceUid"
+        const val KEY_PROVISIONING_ID = "provisioningId"
+        const val KEY_CLAIM_CODE = "claimCode"
         const val KEY_WIFI_SSID = "ssid"
         const val KEY_WIFI_PASSWORD = "password"
         const val KEY_STATUS = "status"
         const val KEY_MESSAGE = "message"
+        const val KEY_LAST_ERROR = "lastError"
         const val KEY_TOKEN = "token"
         const val KEY_IP = "ip"
-        const val KEY_WS_PORT = "wsPort"
-        const val KEY_WS_PATH = "wsPath"
+        const val KEY_WS_PORT = "webSocketPort"
+        const val KEY_WS_PATH = "path"
         const val KEY_WS_PROTOCOL = "wsProtocol"
     }
 
