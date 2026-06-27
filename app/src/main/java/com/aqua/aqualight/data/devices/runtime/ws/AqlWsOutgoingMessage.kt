@@ -8,10 +8,12 @@ sealed interface AqlWsOutgoingMessage {
     fun toJsonString(): String
 
     data class Auth(
-        val token: String
+        val token: String,
+        val id: String = nextId(prefix = "auth")
     ) : AqlWsOutgoingMessage {
         override fun toJsonString(): String {
             return JSONObject()
+                .put("id", id)
                 .put("type", AqlWsContract.TYPE_AUTH)
                 .put("token", token)
                 .toString()
