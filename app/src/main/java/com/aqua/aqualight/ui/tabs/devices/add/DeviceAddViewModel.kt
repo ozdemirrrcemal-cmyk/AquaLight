@@ -98,8 +98,8 @@ class DeviceAddViewModel(
         stopBleScan()
         viewModelScope.launch {
             _events.send(
-                DeviceAddEvent.ShowMessage(
-                    message = "${candidate.title} seçildi. Wi-Fi provisioning akışı sonraki adımda bağlanacak."
+                DeviceAddEvent.OpenWifiProvisioning(
+                    candidate = candidate
                 )
             )
         }
@@ -247,4 +247,8 @@ enum class DeviceAddScanMode {
 
 sealed interface DeviceAddEvent {
     data class ShowMessage(val message: String) : DeviceAddEvent
+
+    data class OpenWifiProvisioning(
+        val candidate: DeviceAddCandidateUi
+    ) : DeviceAddEvent
 }

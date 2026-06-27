@@ -148,7 +148,22 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
                     Toast.LENGTH_SHORT
                 ).show()
             }
+
+            is DeviceAddEvent.OpenWifiProvisioning -> {
+                openWifiProvisioning(event.candidate)
+            }
         }
+    }
+
+    private fun openWifiProvisioning(candidate: DeviceAddCandidateUi) {
+        findNavController().navigate(
+            DeviceAddFragmentDirections.actionDeviceAddFragmentToDeviceWifiProvisioningFragment(
+                candidateId = candidate.id,
+                deviceTitle = candidate.title,
+                deviceSerial = candidate.serial,
+                deviceModel = candidate.model
+            )
+        )
     }
 
     override fun onDestroyView() {
