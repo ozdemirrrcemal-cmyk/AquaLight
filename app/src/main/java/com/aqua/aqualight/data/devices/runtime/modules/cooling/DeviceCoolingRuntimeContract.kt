@@ -2,4 +2,23 @@ package com.aqua.aqualight.data.devices.runtime.modules.cooling
 
 object DeviceCoolingRuntimeContract {
     const val MODULE = "cooling"
+
+    object Action {
+        const val STATUS_GET = "status.get"
+        const val CONFIG_APPLY = "config.apply"
+    }
+
+    object Field {
+        const val MODE = "mode"
+        const val MIN_TEMPERATURE_C = "minTemperatureC"
+        const val MAX_TEMPERATURE_C = "maxTemperatureC"
+        const val SAVE = "save"
+    }
+
+    object Limit {
+        const val LOWEST_MIN_C = 0.0
+        const val HIGHEST_MIN_C = 80.0
+        const val LOWEST_MAX_C = 1.0
+        const val HIGHEST_MAX_C = 90.0
+    }
 }
