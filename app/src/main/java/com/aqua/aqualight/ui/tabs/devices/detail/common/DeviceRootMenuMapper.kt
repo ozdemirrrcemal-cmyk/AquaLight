@@ -12,9 +12,25 @@ data class DeviceRootMenuSections(
     val primary: List<DeviceRootMenuItemUi> = emptyList(),
     val secondary: List<DeviceRootMenuItemUi> = emptyList()
 ) {
-    fun primaryText(emptyText: String): String = primary.toDisplayText(emptyText)
+    fun primaryText(emptyText: String): String = formatDeviceRootMenuItems(primary, emptyText)
 
-    fun secondaryText(emptyText: String): String = secondary.toDisplayText(emptyText)
+    fun secondaryText(emptyText: String): String = formatDeviceRootMenuItems(secondary, emptyText)
+}
+
+
+private fun formatDeviceRootMenuItems(
+    items: List<DeviceRootMenuItemUi>,
+    emptyText: String
+): String {
+    val available = items.filter { item -> item.enabled }
+
+    if (available.isEmpty()) {
+        return emptyText
+    }
+
+    return available.joinToString(separator = "\n\n") { item ->
+        "• ${item.title}\n  ${item.subtitle}"
+    }
 }
 
 object DeviceRootMenuMapper {
