@@ -3,15 +3,20 @@ package com.aqua.aqualight.ui.tabs.devices
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.monitor.DeviceConnectivityObserver
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
@@ -21,11 +26,15 @@ class DevicesViewModel(
 
     private val repository = DevicesRepositoryProvider.get()
     private val connectivityObserver = DeviceConnectivityObserver(application)
+    private val routeResolver = DeviceRouteResolver()
     private val localNetworkAvailable = MutableStateFlow(true)
     private val clockMillis = MutableStateFlow(System.currentTimeMillis())
 
     private val _uiState = MutableStateFlow(DevicesUiState())
     val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
+
+    private val _events = Channel<DevicesEvent>(capacity = Channel.BUFFERED)
+    val events: Flow<DevicesEvent> = _events.receiveAsFlow()
 
     private var refreshJob: Job? = null
 
@@ -42,10 +51,24 @@ class DevicesViewModel(
     }
 
     fun onDeviceClicked(deviceUid: String) {
-        // RouteResolver + direct NavController navigation lands in the next migration step.
-        // The click is intentionally captured here so UI already has a stable deviceUid boundary.
-        if (deviceUid.isNotBlank()) {
+        if (deviceUid.isBlank()) return
+
+        viewModelScope.launch {
+            val route = runCatching {
+                val uid = DeviceUid(deviceUid)
+                routeResolver.resolve(
+                    snapshot = repository.currentDevice(uid),
+                    requestedDeviceUid = deviceUid
+                )
+            }.getOrElse {
+                routeResolver.resolve(
+                    snapshot = null,
+                    requestedDeviceUid = deviceUid
+                )
+            }
+
             clockMillis.value = System.currentTimeMillis()
+            _events.send(DevicesEvent.OpenRoute(route))
         }
     }
 

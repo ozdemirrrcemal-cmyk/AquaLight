@@ -9,7 +9,104 @@
         android:id="@+id/devicesFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.DevicesFragment"
         android:label="@string/screen_title_devices"
-        tools:layout="@layout/fragment_devices" />
+        tools:layout="@layout/fragment_devices">
+
+        <action
+            android:id="@+id/action_devicesFragment_to_deviceLightRootFragment"
+            app:destination="@id/deviceLightRootFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+
+        <action
+            android:id="@+id/action_devicesFragment_to_deviceDosingRootFragment"
+            app:destination="@id/deviceDosingRootFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+
+        <action
+            android:id="@+id/action_devicesFragment_to_deviceTimerRootFragment"
+            app:destination="@id/deviceTimerRootFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+
+        <action
+            android:id="@+id/action_devicesFragment_to_deviceCoolingRootFragment"
+            app:destination="@id/deviceCoolingRootFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+
+        <action
+            android:id="@+id/action_devicesFragment_to_unsupportedDeviceFragment"
+            app:destination="@id/unsupportedDeviceFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceLightRootFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootFragment"
+        android:label="Light"
+        tools:layout="@layout/fragment_unsupported_device">
+        <argument
+            android:name="deviceUid"
+            app:argType="string" />
+        <argument
+            android:name="deviceTitle"
+            app:argType="string"
+            android:defaultValue="" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceDosingRootFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingRootFragment"
+        android:label="Dosing"
+        tools:layout="@layout/fragment_unsupported_device">
+        <argument
+            android:name="deviceUid"
+            app:argType="string" />
+        <argument
+            android:name="deviceTitle"
+            app:argType="string"
+            android:defaultValue="" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceTimerRootFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootFragment"
+        android:label="Timer"
+        tools:layout="@layout/fragment_unsupported_device">
+        <argument
+            android:name="deviceUid"
+            app:argType="string" />
+        <argument
+            android:name="deviceTitle"
+            app:argType="string"
+            android:defaultValue="" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceCoolingRootFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootFragment"
+        android:label="Cooling"
+        tools:layout="@layout/fragment_unsupported_device">
+        <argument
+            android:name="deviceUid"
+            app:argType="string" />
+        <argument
+            android:name="deviceTitle"
+            app:argType="string"
+            android:defaultValue="" />
+    </fragment>
 
     <fragment
         android:id="@+id/deviceRouterFragment"
@@ -67,5 +164,9 @@
             android:name="deviceId"
             app:argType="long"
             android:defaultValue="0L" />
+        <argument
+            android:name="deviceUid"
+            app:argType="string"
+            android:defaultValue="" />
     </fragment>
 </navigation>
