@@ -24,6 +24,31 @@ object AqlBleProvisioningContract {
     const val CLAIM_CODE_MIN_LENGTH = 8
     const val CLAIM_CODE_MAX_LENGTH = 64
 
+    object Qr {
+        const val KEY_VERSION = "v"
+        const val KEY_BRAND = "brand"
+        const val KEY_MODEL = "model"
+        const val KEY_HARDWARE_REVISION = "hw"
+        const val KEY_DEVICE_UID = "uid"
+        const val KEY_PRODUCT_ID = "pid"
+        const val KEY_CLAIM_CODE = "claim"
+        const val KEY_BLE_NAME = "ble"
+    }
+
+    object Json {
+        const val KEY_DEVICE_UID = "uid"
+        const val KEY_CLAIM_CODE = "claim"
+        const val KEY_WIFI_SSID = "ssid"
+        const val KEY_WIFI_PASSWORD = "password"
+        const val KEY_STATUS = "status"
+        const val KEY_MESSAGE = "message"
+        const val KEY_TOKEN = "token"
+        const val KEY_IP = "ip"
+        const val KEY_WS_PORT = "wsPort"
+        const val KEY_WS_PATH = "wsPath"
+        const val KEY_WS_PROTOCOL = "wsProtocol"
+    }
+
     object Status {
         const val IDLE = "idle"
         const val FACTORY = "factory"
