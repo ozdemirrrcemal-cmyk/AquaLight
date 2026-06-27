@@ -84,6 +84,16 @@ class AqlWsClient(
         )
     }
 
+    fun markAuthRequired(
+        deviceUid: DeviceUid,
+        message: String
+    ) {
+        _connectionState.value = AqlWsConnectionState.AuthRequired(
+            deviceUid = deviceUid,
+            message = message
+        )
+    }
+
     fun close(
         code: Int = NORMAL_CLOSE_CODE,
         reason: String = NORMAL_CLOSE_REASON

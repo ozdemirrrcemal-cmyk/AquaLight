@@ -41,7 +41,9 @@ sealed interface AqlWsIncomingMessage {
         override val type: String,
         override val json: JSONObject,
         val message: String,
-        val statusCode: Int
+        val statusCode: Int,
+        val code: String = "",
+        val field: String = ""
     ) : AqlWsIncomingMessage
 
     data class Generic(

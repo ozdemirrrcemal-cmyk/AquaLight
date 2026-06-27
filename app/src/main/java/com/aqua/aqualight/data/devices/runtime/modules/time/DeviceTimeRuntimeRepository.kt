@@ -83,16 +83,17 @@ class DeviceTimeRuntimeRepository(
             )
         }
 
-        val sent = commandClient.command(
+        val messageId = commandClient.command(
             module = DeviceTimeRuntimeContract.MODULE,
             action = action,
             data = data
         )
 
         return DeviceTimeCommandResult(
-            sent = sent,
+            sent = messageId != null,
             action = action,
-            errorMessage = if (sent) "" else "WebSocket send failed"
+            messageId = messageId.orEmpty(),
+            errorMessage = if (messageId != null) "" else "WebSocket send failed"
         )
     }
 

@@ -55,13 +55,17 @@ class AqlWsCommandClient(
         module: String,
         action: String,
         data: JSONObject = JSONObject()
-    ): Boolean {
-        return wsClient.send(
-            AqlWsCommandFactory.command(
-                module = module,
-                action = action,
-                data = data
-            )
+    ): String? {
+        val message = AqlWsCommandFactory.command(
+            module = module,
+            action = action,
+            data = data
         )
+
+        return if (wsClient.send(message)) {
+            message.id
+        } else {
+            null
+        }
     }
 }

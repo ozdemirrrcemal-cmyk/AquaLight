@@ -17,7 +17,7 @@ object AqlWsContract {
     const val TYPE_COMMAND = "cmd"
     const val TYPE_RESPONSE = "res"
     const val TYPE_EVENT = "evt"
-    const val TYPE_ERROR = "error"
+    const val TYPE_ERROR = "err"
 
     const val MODULE_DEVICE = "device"
     const val MODULE_SECURITY = "security"

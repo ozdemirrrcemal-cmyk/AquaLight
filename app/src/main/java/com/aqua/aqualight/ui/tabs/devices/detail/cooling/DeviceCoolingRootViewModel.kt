@@ -33,6 +33,7 @@ class DeviceCoolingRootViewModel(
     private var boundDeviceUid: DeviceUid? = null
     private var observeJob: Job? = null
     private var runtimeStatusJob: Job? = null
+    private var pendingStatusRequestId: String = ""
 
     private var runtimePrimaryCountText: String? = null
     private var runtimePrimaryPlaceholder: String? = null
@@ -122,9 +123,11 @@ class DeviceCoolingRootViewModel(
                 repository.connectRuntime(deviceUid)
                 delay(800L)
 
-                val sent = repository.runtimeModules()?.cooling?.requestStatus(deviceUid)?.isSuccess == true
+                val result = repository.runtimeModules()?.cooling?.requestStatus(deviceUid)
 
-                if (sent) {
+                pendingStatusRequestId = result?.messageId.orEmpty()
+
+                if (result?.isSuccess == true && pendingStatusRequestId.isNotBlank()) {
                     updateRuntimeOverlay(
                         primaryPlaceholder = "$DEFAULT_TITLE runtime status requested..."
                     )
@@ -150,31 +153,49 @@ class DeviceCoolingRootViewModel(
     ) {
         if (event.deviceUid != deviceUid) return
 
-        val response = (event as? AqlWsEvent.Message)
-            ?.parsed as? AqlWsIncomingMessage.Response
+        val message = (event as? AqlWsEvent.Message)
+            ?.parsed
             ?: return
 
-        if (response.module != DeviceCoolingRuntimeContract.MODULE ||
-            response.action != DeviceCoolingRuntimeContract.Action.STATUS_GET
-        ) {
+        val statusRequestId = pendingStatusRequestId
+        if (statusRequestId.isBlank() || message.id != statusRequestId) {
             return
         }
 
-        if (!response.ok) {
-            updateRuntimeOverlay(
-                primaryPlaceholder = "$DEFAULT_TITLE runtime status error: ${response.statusCode}"
+        when (message) {
+            is AqlWsIncomingMessage.Response -> {
+                if (!message.ok) {
+                    updateRuntimeStatusError(
+                        statusCode = message.statusCode,
+                        message = "Runtime status request failed."
+                    )
+                    return
+                }
+
+                val data = message.json.optJSONObject("data") ?: message.json
+                val status = DeviceCoolingStatusParser.parse(data)
+
+                updateRuntimeOverlay(
+                primaryCountText = status.fanOutputCount.toString(),
+                primaryPlaceholder = "Runtime fans: ${status.fanOutputCount}, mode: ${status.mode.wireValue}, range: ${status.minTemperatureC}-${status.maxTemperatureC} C",
+                secondaryPlaceholder = "Rules: ${status.ruleCount}, fixed sensor: ${status.fixedSensorIndex}, writable: ${!status.runtime.readOnly}"
             )
-            return
+            }
+
+            is AqlWsIncomingMessage.Error -> {
+                updateRuntimeOverlay(primaryPlaceholder = "$DEFAULT_TITLE runtime status error: ${message.statusCode} ${message.message}".trim())
+            }
+
+            else -> Unit
         }
+    }
 
-        val data = response.json.optJSONObject("data") ?: response.json
-        val status = DeviceCoolingStatusParser.parse(data)
-
-        updateRuntimeOverlay(
-            primaryCountText = status.fanOutputCount.toString(),
-            primaryPlaceholder = "Runtime fans: ${status.fanOutputCount}, mode: ${status.mode.wireValue}, range: ${status.minTemperatureC}-${status.maxTemperatureC} C",
-            secondaryPlaceholder = "Rules: ${status.ruleCount}, fixed sensor: ${status.fixedSensorIndex}, writable: ${!status.runtime.readOnly}"
-        )
+    private fun updateRuntimeStatusError(
+        statusCode: Int,
+        message: String
+    ) {
+        val errorText = "$DEFAULT_TITLE runtime status error: $statusCode $message".trim()
+        updateRuntimeOverlay(primaryPlaceholder = errorText)
     }
 
     private fun updateRuntimeOverlay(
@@ -190,6 +211,7 @@ class DeviceCoolingRootViewModel(
     }
 
     private fun clearRuntimeOverlay() {
+        pendingStatusRequestId = ""
         runtimePrimaryCountText = null
         runtimePrimaryPlaceholder = null
         runtimeSecondaryPlaceholder = null

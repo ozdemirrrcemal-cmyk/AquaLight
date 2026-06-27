@@ -28,7 +28,7 @@ class AqlWsMessageParser {
                     ok = json.optBoolean("ok", false),
                     module = json.optString("module").trim(),
                     action = json.optString("action").trim(),
-                    statusCode = json.optInt("statusCode", 0)
+                    statusCode = json.optInt("statusCode", json.optInt("status", 0))
                 )
 
                 AqlWsContract.TYPE_EVENT -> AqlWsIncomingMessage.Event(
@@ -40,14 +40,23 @@ class AqlWsMessageParser {
                     event = json.optString("event").trim()
                 )
 
-                AqlWsContract.TYPE_ERROR -> AqlWsIncomingMessage.Error(
-                    raw = raw,
-                    id = id,
-                    type = type,
-                    json = json,
-                    message = json.optString("message").trim(),
-                    statusCode = json.optInt("statusCode", 0)
-                )
+                AqlWsContract.TYPE_ERROR -> {
+                    val error = json.optJSONObject("error")
+                    AqlWsIncomingMessage.Error(
+                        raw = raw,
+                        id = id,
+                        type = type,
+                        json = json,
+                        message = error
+                            ?.optString("message")
+                            ?.trim()
+                            .orEmpty()
+                            .ifBlank { json.optString("message").trim() },
+                        statusCode = json.optInt("statusCode", json.optInt("status", 0)),
+                        code = error?.optString("code")?.trim().orEmpty(),
+                        field = error?.optString("field")?.trim().orEmpty()
+                    )
+                }
 
                 else -> AqlWsIncomingMessage.Generic(
                     raw = raw,

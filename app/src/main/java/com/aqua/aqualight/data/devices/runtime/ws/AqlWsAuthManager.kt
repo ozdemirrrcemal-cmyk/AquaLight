@@ -44,17 +44,27 @@ class AqlWsAuthManager(
                     wsClient.markAuthenticated(deviceUid)
                     AqlWsAuthStateChange.Authenticated(messageId = messageId)
                 } else {
+                    val rejectionMessage = "Authentication rejected with status ${message.statusCode}"
+                    wsClient.markAuthRequired(
+                        deviceUid = deviceUid,
+                        message = rejectionMessage
+                    )
                     AqlWsAuthStateChange.Rejected(
                         messageId = messageId,
-                        message = "Authentication rejected with status ${message.statusCode}"
+                        message = rejectionMessage
                     )
                 }
             }
 
             is AqlWsIncomingMessage.Error -> {
+                val rejectionMessage = message.message.ifBlank { "Authentication failed" }
+                wsClient.markAuthRequired(
+                    deviceUid = deviceUid,
+                    message = rejectionMessage
+                )
                 AqlWsAuthStateChange.Rejected(
                     messageId = messageId,
-                    message = message.message.ifBlank { "Authentication failed" }
+                    message = rejectionMessage
                 )
             }
 

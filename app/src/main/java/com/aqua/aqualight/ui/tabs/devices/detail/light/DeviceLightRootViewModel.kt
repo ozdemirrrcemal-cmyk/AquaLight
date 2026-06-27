@@ -32,6 +32,7 @@ class DeviceLightRootViewModel(
     private var boundDeviceUid: DeviceUid? = null
     private var observeJob: Job? = null
     private var runtimeStatusJob: Job? = null
+    private var pendingStatusRequestId: String = ""
 
     private var runtimeChannelCountText: String? = null
     private var runtimeManualText: String? = null
@@ -106,12 +107,13 @@ class DeviceLightRootViewModel(
                 repository.connectRuntime(deviceUid)
                 delay(800L)
 
-                val sent = repository.runtimeModules()
+                val result = repository.runtimeModules()
                     ?.light
                     ?.requestStatus(deviceUid)
-                    ?.isSuccess == true
 
-                if (sent) {
+                pendingStatusRequestId = result?.messageId.orEmpty()
+
+                if (result?.isSuccess == true && pendingStatusRequestId.isNotBlank()) {
                     updateRuntimeOverlay(
                         manualText = "Light runtime status requested..."
                     )
@@ -137,31 +139,49 @@ class DeviceLightRootViewModel(
     ) {
         if (event.deviceUid != deviceUid) return
 
-        val response = (event as? AqlWsEvent.Message)
-            ?.parsed as? AqlWsIncomingMessage.Response
+        val message = (event as? AqlWsEvent.Message)
+            ?.parsed
             ?: return
 
-        if (response.module != DeviceLightRuntimeContract.MODULE ||
-            response.action != DeviceLightRuntimeContract.Action.STATUS_GET
-        ) {
+        val statusRequestId = pendingStatusRequestId
+        if (statusRequestId.isBlank() || message.id != statusRequestId) {
             return
         }
 
-        if (!response.ok) {
-            updateRuntimeOverlay(
-                manualText = "Light runtime status error: ${response.statusCode}"
+        when (message) {
+            is AqlWsIncomingMessage.Response -> {
+                if (!message.ok) {
+                    updateRuntimeStatusError(
+                        statusCode = message.statusCode,
+                        message = "Runtime status request failed."
+                    )
+                    return
+                }
+
+                val data = message.json.optJSONObject("data") ?: message.json
+                val status = DeviceLightStatusParser.parse(data)
+
+                updateRuntimeOverlay(
+                channelCountText = status.channelCount.toString(),
+                manualText = "Runtime channels: ${status.channelCount}, manual: ${status.manualSupported}, liveEdit: ${status.liveEditEnabled}",
+                programsText = "Programs: ${status.programCount}, presets: ${status.presetsSupported}, simulation: ${status.simulationSupported}, writable: ${!status.runtime.readOnly}"
             )
-            return
+            }
+
+            is AqlWsIncomingMessage.Error -> {
+                updateRuntimeOverlay(manualText = "Light runtime status error: ${message.statusCode} ${message.message}".trim())
+            }
+
+            else -> Unit
         }
+    }
 
-        val data = response.json.optJSONObject("data") ?: response.json
-        val status = DeviceLightStatusParser.parse(data)
-
-        updateRuntimeOverlay(
-            channelCountText = status.channelCount.toString(),
-            manualText = "Runtime channels: ${status.channelCount}, manual: ${status.manualSupported}, liveEdit: ${status.liveEditEnabled}",
-            programsText = "Programs: ${status.programCount}, presets: ${status.presetsSupported}, simulation: ${status.simulationSupported}, writable: ${!status.runtime.readOnly}"
-        )
+    private fun updateRuntimeStatusError(
+        statusCode: Int,
+        message: String
+    ) {
+        val errorText = "$DEFAULT_TITLE runtime status error: $statusCode $message".trim()
+        updateRuntimeOverlay(manualText = errorText)
     }
 
     private fun updateRuntimeOverlay(
@@ -177,6 +197,7 @@ class DeviceLightRootViewModel(
     }
 
     private fun clearRuntimeOverlay() {
+        pendingStatusRequestId = ""
         runtimeChannelCountText = null
         runtimeManualText = null
         runtimeProgramsText = null

@@ -104,6 +104,7 @@ data class DeviceTimeCommandResult(
     val skipped: Boolean = false,
     val module: String = DeviceTimeRuntimeContract.MODULE,
     val action: String,
+    val messageId: String = "",
     val errorMessage: String = ""
 ) {
     val isSuccess: Boolean

@@ -151,16 +151,17 @@ class DeviceDosingRuntimeRepository(
             )
         }
 
-        val sent = commandClient.command(
+        val messageId = commandClient.command(
             module = DeviceDosingRuntimeContract.MODULE,
             action = action,
             data = data
         )
 
         return DeviceDosingCommandResult(
-            sent = sent,
+            sent = messageId != null,
             action = action,
-            errorMessage = if (sent) "" else "WebSocket send failed"
+            messageId = messageId.orEmpty(),
+            errorMessage = if (messageId != null) "" else "WebSocket send failed"
         )
     }
 

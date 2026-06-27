@@ -21,6 +21,11 @@ sealed interface AqlWsConnectionState {
         val authenticatedAtMillis: Long
     ) : AqlWsConnectionState
 
+    data class AuthRequired(
+        val deviceUid: DeviceUid,
+        val message: String
+    ) : AqlWsConnectionState
+
     data class Failed(
         val deviceUid: DeviceUid?,
         val message: String,

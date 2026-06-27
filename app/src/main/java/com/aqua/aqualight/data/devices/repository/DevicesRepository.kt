@@ -233,6 +233,15 @@ class DevicesRepository(
                 }
             }
 
+            is AqlWsConnectionState.AuthRequired -> {
+                registryStore.updateConnectionState(state.deviceUid) { previous ->
+                    previous.copy(
+                        onlineState = DeviceOnlineState.AUTH_REQUIRED,
+                        lastErrorMessage = state.message.ifBlank { "Authentication required." }
+                    )
+                }
+            }
+
             is AqlWsConnectionState.Failed -> {
                 val deviceUid = state.deviceUid ?: return
                 registryStore.updateConnectionState(deviceUid) { previous ->
