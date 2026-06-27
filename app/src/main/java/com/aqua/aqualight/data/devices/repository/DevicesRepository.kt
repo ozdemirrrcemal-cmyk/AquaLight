@@ -5,6 +5,7 @@ import com.aqua.aqualight.data.devices.model.DeviceConnectionState
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.store.DeviceKnownStore
@@ -139,6 +140,11 @@ class DevicesRepository(
     fun commandClient(deviceUid: DeviceUid): AqlWsCommandClient? {
         return runtimeRepository?.commandClient(deviceUid)
     }
+
+    fun runtimeModules(): DeviceRuntimeModuleProvider? {
+        return runtimeRepository?.runtimeModules
+    }
+
 
     suspend fun saveRuntimeToken(
         deviceUid: DeviceUid,

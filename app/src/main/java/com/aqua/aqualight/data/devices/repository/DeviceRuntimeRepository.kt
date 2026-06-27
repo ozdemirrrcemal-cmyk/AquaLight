@@ -4,8 +4,8 @@ import android.content.Context
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsAuthStateChange
+import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeSyncCoordinator
-import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsAuthManager
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsClient
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
@@ -36,12 +36,12 @@ class DeviceRuntimeRepository(
 
     private val sessions = ConcurrentHashMap<DeviceUid, RuntimeSession>()
 
-    private val timeRuntimeRepository = DeviceTimeRuntimeRepository { deviceUid ->
+    val runtimeModules: DeviceRuntimeModuleProvider = DeviceRuntimeModuleProvider { deviceUid ->
         sessions[deviceUid]?.commandClient
     }
 
     private val timeSyncCoordinator = DeviceTimeSyncCoordinator(
-        repository = timeRuntimeRepository
+        repository = runtimeModules.time
     )
 
     private val authManager = tokenProvider?.let { provider ->
