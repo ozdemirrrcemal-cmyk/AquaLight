@@ -10,6 +10,7 @@ object AqlWsContract {
     const val SCHEMA = "aql.ws.v1"
     const val DEFAULT_PATH = "/aql/v1/ws"
     const val DEFAULT_PROTOCOL = "aql.ws.v1"
+    const val PROTOCOL_VERSION = 1
 
     const val TYPE_HELLO = "hello"
     const val TYPE_AUTH = "auth"

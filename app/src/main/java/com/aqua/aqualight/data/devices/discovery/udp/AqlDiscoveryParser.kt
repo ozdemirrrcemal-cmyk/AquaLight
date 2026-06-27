@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.devices.discovery.udp
 
 import com.aqua.aqualight.data.devices.contract.AqlDiscoveryContract
+import com.aqua.aqualight.data.devices.contract.AqlWsContract
 import com.aqua.aqualight.data.devices.model.DeviceCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceConnectionState
 import com.aqua.aqualight.data.devices.model.DeviceFamily
@@ -51,7 +52,7 @@ object AqlDiscoveryParser {
         }
 
         val udpVersion = root.intOrZero("udpVersion")
-        if (udpVersion != AqlDiscoveryContract.UDP_VERSION) {
+        if (udpVersion < AqlDiscoveryContract.UDP_VERSION) {
             return ParseResult.Invalid(ParseError.UNSUPPORTED_UDP_VERSION)
         }
 
@@ -78,6 +79,16 @@ object AqlDiscoveryParser {
             return ParseResult.Invalid(ParseError.UNSUPPORTED_RUNTIME_TRANSPORT)
         }
 
+        val wsProtocol = network.stringOrBlank("wsProtocol")
+        if (wsProtocol != AqlWsContract.DEFAULT_PROTOCOL) {
+            return ParseResult.Invalid(ParseError.UNSUPPORTED_WS_PROTOCOL)
+        }
+
+        val wsProtocolVersion = network.intOrZero("wsProtocolVersion")
+        if (wsProtocolVersion < AqlWsContract.PROTOCOL_VERSION) {
+            return ParseResult.Invalid(ParseError.UNSUPPORTED_WS_PROTOCOL_VERSION)
+        }
+
         val endpointIp = network.stringOrBlank("ip").ifBlank { sourceIp }
         if (endpointIp.isBlank()) {
             return ParseResult.Invalid(ParseError.MISSING_RUNTIME_ENDPOINT)
@@ -90,8 +101,10 @@ object AqlDiscoveryParser {
         }
 
         val firmware = root.optJSONObject("firmware")
-        val capabilities = root.optJSONObject("capabilities") ?: JSONObject()
-        val limits = root.optJSONObject("limits") ?: JSONObject()
+        val capabilities = root.optJSONObject("capabilities")
+            ?: return ParseResult.Invalid(ParseError.MISSING_CAPABILITIES)
+        val limits = root.optJSONObject("limits")
+            ?: return ParseResult.Invalid(ParseError.MISSING_LIMITS)
 
         val snapshot = DeviceSnapshot(
             identity = DeviceIdentity(
@@ -134,8 +147,8 @@ object AqlDiscoveryParser {
                 runtimeTransport = runtimeTransport,
                 wsPort = wsPort,
                 wsPath = wsPath,
-                wsProtocol = network.stringOrBlank("wsProtocol"),
-                wsProtocolVersion = network.intOrZero("wsProtocolVersion"),
+                wsProtocol = wsProtocol,
+                wsProtocolVersion = wsProtocolVersion,
                 discoveryPort = network.intOrZero("discoveryPort")
             ),
             capabilities = DeviceCapabilities(
@@ -200,6 +213,10 @@ object AqlDiscoveryParser {
         MISSING_DEVICE_UID,
         UNSUPPORTED_PRODUCT_FAMILY,
         UNSUPPORTED_RUNTIME_TRANSPORT,
+        UNSUPPORTED_WS_PROTOCOL,
+        UNSUPPORTED_WS_PROTOCOL_VERSION,
+        MISSING_CAPABILITIES,
+        MISSING_LIMITS,
         MISSING_RUNTIME_ENDPOINT
     }
 }
