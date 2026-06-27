@@ -9,12 +9,16 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceProvisioningProgressBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.tabs.devices.DevicesFragmentDirections
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteTarget
 import kotlinx.coroutines.launch
 
 class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_provisioning_progress) {
@@ -47,6 +51,7 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
         setupHeader()
         setupActions()
         observeViewModel()
+        observeEvents()
 
         viewModel.bind(args.sessionId)
     }
@@ -90,6 +95,20 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
         }
     }
 
+    private fun observeEvents() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.events.collect { event ->
+                    when (event) {
+                        is DeviceProvisioningProgressEvent.OpenAddedDevice -> {
+                            openAddedDevice(event.route)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private fun renderState(state: DeviceProvisioningProgressUiState) {
         if (_binding == null) return
 
@@ -106,6 +125,59 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
         binding.btnStartProvisioning.text = state.buttonText
         binding.btnStartProvisioning.alpha = if (state.canStart) 1f else 0.45f
         binding.progressBar.isVisible = state.showProgress
+    }
+
+    private fun openAddedDevice(route: DeviceRoute) {
+        val navController = findNavController()
+
+        navController.popBackStack(
+            R.id.devicesFragment,
+            false
+        )
+
+        navController.navigate(
+            route.toDevicesDestination()
+        )
+    }
+
+    private fun DeviceRoute.toDevicesDestination(): NavDirections {
+        return when (target) {
+            DeviceRouteTarget.LIGHT_ROOT -> {
+                DevicesFragmentDirections.actionDevicesFragmentToDeviceLightRootFragment(
+                    deviceUid = deviceUid,
+                    deviceTitle = title
+                )
+            }
+
+            DeviceRouteTarget.DOSING_ROOT -> {
+                DevicesFragmentDirections.actionDevicesFragmentToDeviceDosingRootFragment(
+                    deviceUid = deviceUid,
+                    deviceTitle = title
+                )
+            }
+
+            DeviceRouteTarget.TIMER_ROOT -> {
+                DevicesFragmentDirections.actionDevicesFragmentToDeviceTimerRootFragment(
+                    deviceUid = deviceUid,
+                    deviceTitle = title
+                )
+            }
+
+            DeviceRouteTarget.COOLING_ROOT -> {
+                DevicesFragmentDirections.actionDevicesFragmentToDeviceCoolingRootFragment(
+                    deviceUid = deviceUid,
+                    deviceTitle = title
+                )
+            }
+
+            DeviceRouteTarget.UNSUPPORTED -> {
+                DevicesFragmentDirections.actionDevicesFragmentToUnsupportedDeviceFragment(
+                    deviceTitle = title.ifBlank { "Device" },
+                    message = message,
+                    deviceUid = deviceUid
+                )
+            }
+        }
     }
 
     override fun onDestroyView() {

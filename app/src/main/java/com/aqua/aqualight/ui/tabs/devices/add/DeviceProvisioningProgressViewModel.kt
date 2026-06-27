@@ -10,10 +10,14 @@ import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningDraft
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningRuntimeHandoff
 import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 class DeviceProvisioningProgressViewModel(
@@ -23,9 +27,13 @@ class DeviceProvisioningProgressViewModel(
     private val addressResolver = AqlBleProvisioningAddressResolver(application)
     private val gattClient = AqlBleProvisioningGattClient(application)
     private val handoffSaver = AqlProvisioningHandoffSaver(application)
+    private val routeResolver = DeviceRouteResolver()
 
     private val _uiState = MutableStateFlow(DeviceProvisioningProgressUiState())
     val uiState: StateFlow<DeviceProvisioningProgressUiState> = _uiState.asStateFlow()
+
+    private val _events = Channel<DeviceProvisioningProgressEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
 
     private var boundSessionId: String? = null
     private var activeDraft: AqlProvisioningDraft? = null
@@ -341,13 +349,22 @@ class DeviceProvisioningProgressViewModel(
                     AqlProvisioningDraftStore.remove(sessionId)
                 }
 
+                val route = routeResolver.resolve(
+                    snapshot = snapshot,
+                    requestedDeviceUid = snapshot.deviceUid.value
+                )
+
                 _uiState.value = _uiState.value.copy(
                     title = "Device added",
-                    message = "${snapshot.title} was saved. WebSocket runtime connection is starting.",
-                    stepThree = "3. Device saved and runtime connection started",
+                    message = "${snapshot.title} was saved. Opening device menu.",
+                    stepThree = "3. Device saved and menu opening",
                     canStart = false,
-                    buttonText = "Completed",
-                    showProgress = false
+                    buttonText = "Opening...",
+                    showProgress = true
+                )
+
+                _events.send(
+                    DeviceProvisioningProgressEvent.OpenAddedDevice(route)
                 )
             }.onFailure { error ->
                 _uiState.value = _uiState.value.copy(
@@ -368,6 +385,12 @@ class DeviceProvisioningProgressViewModel(
         gattClient.close()
         super.onCleared()
     }
+}
+
+sealed interface DeviceProvisioningProgressEvent {
+    data class OpenAddedDevice(
+        val route: DeviceRoute
+    ) : DeviceProvisioningProgressEvent
 }
 
 data class DeviceProvisioningProgressUiState(
