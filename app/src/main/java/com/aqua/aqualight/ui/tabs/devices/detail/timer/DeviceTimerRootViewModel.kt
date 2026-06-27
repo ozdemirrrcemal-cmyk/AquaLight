@@ -170,7 +170,11 @@ class DeviceTimerRootViewModel(
         val data = response.json.optJSONObject("data") ?: response.json
         val status = DeviceTimerStatusParser.parse(data)
 
-        __STATUS_RENDER__
+        updateRuntimeOverlay(
+            primaryCountText = status.channelCount.toString(),
+            primaryPlaceholder = "Runtime channels: ${status.channelCount}, schedules: ${status.scheduleCount}, lockLoop: ${status.lockLoop}",
+            secondaryPlaceholder = "Schema: ${status.schema.ifBlank { "timer" }}, writable: ${!status.runtime.readOnly}, channel.set: ${status.runtime.supportsChannelSet}"
+        )
     }
 
     private fun updateRuntimeOverlay(

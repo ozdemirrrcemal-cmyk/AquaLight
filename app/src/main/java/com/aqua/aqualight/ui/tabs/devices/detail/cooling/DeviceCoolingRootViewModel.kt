@@ -170,7 +170,11 @@ class DeviceCoolingRootViewModel(
         val data = response.json.optJSONObject("data") ?: response.json
         val status = DeviceCoolingStatusParser.parse(data)
 
-        __STATUS_RENDER__
+        updateRuntimeOverlay(
+            primaryCountText = status.fanOutputCount.toString(),
+            primaryPlaceholder = "Runtime fans: ${status.fanOutputCount}, mode: ${status.mode.wireValue}, range: ${status.minTemperatureC}-${status.maxTemperatureC} C",
+            secondaryPlaceholder = "Rules: ${status.ruleCount}, fixed sensor: ${status.fixedSensorIndex}, writable: ${!status.runtime.readOnly}"
+        )
     }
 
     private fun updateRuntimeOverlay(

@@ -170,7 +170,11 @@ class DeviceDosingRootViewModel(
         val data = response.json.optJSONObject("data") ?: response.json
         val status = DeviceDosingStatusParser.parse(data)
 
-        __STATUS_RENDER__
+        updateRuntimeOverlay(
+            primaryCountText = status.channelCount.toString(),
+            primaryPlaceholder = "Runtime pumps: ${status.channelCount}, schedules: ${status.scheduleCount}, unit: ${status.unit}",
+            secondaryPlaceholder = "Prime: ${status.runtime.supportsPrime}, calibration: ${status.runtime.supportsCalibrationWorkflow}, refill: ${status.runtime.supportsReservoirRefill}"
+        )
     }
 
     private fun updateRuntimeOverlay(
