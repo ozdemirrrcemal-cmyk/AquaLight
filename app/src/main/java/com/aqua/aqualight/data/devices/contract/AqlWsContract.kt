@@ -21,6 +21,7 @@ object AqlWsContract {
 
     const val MODULE_DEVICE = "device"
     const val MODULE_SECURITY = "security"
+    const val MODULE_TIME = "time"
 
     const val ACTION_DEVICE_IDENTITY_GET = "identity.get"
     const val ACTION_DEVICE_STATUS_GET = "status.get"
@@ -30,4 +31,11 @@ object AqlWsContract {
     const val ACTION_SECURITY_PAIR = "pair"
     const val ACTION_SECURITY_UNPAIR = "unpair"
     const val ACTION_SECURITY_RESET = "reset"
+
+
+    const val ACTION_TIME_STATUS_GET = "status.get"
+    const val ACTION_TIME_CONFIG_APPLY = "config.apply"
+    const val ACTION_TIME_PHONE_SYNC = "phone.sync"
+    const val ACTION_TIME_NTP_SYNC = "ntp.sync"
+    const val ACTION_TIME_RTC_SET = "rtc.set"
 }
