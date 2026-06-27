@@ -94,8 +94,51 @@ class AqlBleProvisioningMessageCodec {
                 endpoint = endpoint,
                 webSocketToken = json
                     .optString(AqlBleProvisioningContract.Json.KEY_TOKEN)
-                    .trim()
+                    .trim(),
+                productFamily = firstJsonValue(
+                    json,
+                    "family",
+                    "productFamily",
+                    "product_family"
+                ),
+                productName = firstJsonValue(
+                    json,
+                    "productName",
+                    "product_name",
+                    "displayName",
+                    "display_name",
+                    "product"
+                ),
+                productModel = firstJsonValue(
+                    json,
+                    "model",
+                    "productModel",
+                    "product_model"
+                ),
+                firmwareVersion = firstJsonValue(
+                    json,
+                    "firmwareVersion",
+                    "firmware_version",
+                    "fw"
+                ),
+                firmwareBuild = firstJsonValue(
+                    json,
+                    "firmwareBuild",
+                    "firmware_build",
+                    "build"
+                )
             )
         }
+    }
+
+    private fun firstJsonValue(
+        json: JSONObject,
+        vararg keys: String
+    ): String {
+        return keys
+            .asSequence()
+            .map { key -> json.optString(key).trim() }
+            .firstOrNull { value -> value.isNotBlank() }
+            .orEmpty()
     }
 }

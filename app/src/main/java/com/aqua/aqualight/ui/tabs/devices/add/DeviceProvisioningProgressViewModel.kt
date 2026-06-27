@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningGattClient
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningGattEvent
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningDraft
+import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningRuntimeHandoff
+import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +20,7 @@ class DeviceProvisioningProgressViewModel(
 ) : AndroidViewModel(application) {
 
     private val gattClient = AqlBleProvisioningGattClient(application)
+    private val handoffSaver = AqlProvisioningHandoffSaver(application)
 
     private val _uiState = MutableStateFlow(DeviceProvisioningProgressUiState())
     val uiState: StateFlow<DeviceProvisioningProgressUiState> = _uiState.asStateFlow()
@@ -25,6 +28,7 @@ class DeviceProvisioningProgressViewModel(
     private var boundSessionId: String? = null
     private var activeDraft: AqlProvisioningDraft? = null
     private var gattEventsJob: Job? = null
+    private var handoffSaved = false
 
     fun bind(sessionId: String) {
         if (sessionId.isBlank() || boundSessionId == sessionId) {
@@ -76,6 +80,7 @@ class DeviceProvisioningProgressViewModel(
             return
         }
 
+        handoffSaved = false
         observeGattEvents()
 
         _uiState.value = _uiState.value.copy(
@@ -103,7 +108,35 @@ class DeviceProvisioningProgressViewModel(
     }
 
     private fun handleGattEvent(event: AqlBleProvisioningGattEvent) {
-        _uiState.value = when (event) {
+        when (event) {
+            is AqlBleProvisioningGattEvent.RuntimeHandoffReceived -> {
+                renderRuntimeHandoffReceived(event.handoff)
+                saveRuntimeHandoff(event.handoff)
+            }
+
+            AqlBleProvisioningGattEvent.Completed -> {
+                if (!handoffSaved) {
+                    _uiState.value = _uiState.value.copy(
+                        title = "Provisioning completed",
+                        message = "Runtime handoff was received. Saving device is still in progress.",
+                        stepThree = "3. Saving device",
+                        canStart = false,
+                        buttonText = "Saving...",
+                        showProgress = true
+                    )
+                }
+            }
+
+            else -> {
+                _uiState.value = reduceGattEvent(event)
+            }
+        }
+    }
+
+    private fun reduceGattEvent(
+        event: AqlBleProvisioningGattEvent
+    ): DeviceProvisioningProgressUiState {
+        return when (event) {
             is AqlBleProvisioningGattEvent.Connecting -> {
                 _uiState.value.copy(
                     title = "Connecting over BLE",
@@ -163,24 +196,11 @@ class DeviceProvisioningProgressViewModel(
             }
 
             is AqlBleProvisioningGattEvent.RuntimeHandoffReceived -> {
-                _uiState.value.copy(
-                    title = "Runtime endpoint received",
-                    message = event.handoff.endpoint.toWebSocketUrl()
-                        ?: "Runtime endpoint was received but is not complete yet.",
-                    stepThree = "3. Runtime token and endpoint received",
-                    showProgress = true
-                )
+                _uiState.value
             }
 
             AqlBleProvisioningGattEvent.Completed -> {
-                _uiState.value.copy(
-                    title = "Provisioning completed",
-                    message = "The device returned runtime endpoint and token. Saving and device registry connection will be completed in the next step.",
-                    stepThree = "3. Provisioning completed",
-                    canStart = false,
-                    buttonText = "Completed",
-                    showProgress = false
-                )
+                _uiState.value
             }
 
             is AqlBleProvisioningGattEvent.Failed -> {
@@ -195,10 +215,76 @@ class DeviceProvisioningProgressViewModel(
             }
 
             AqlBleProvisioningGattEvent.Disconnected -> {
-                _uiState.value.copy(
-                    title = "BLE disconnected",
-                    message = "The provisioning connection was closed.",
-                    stepThree = "3. BLE disconnected",
+                if (handoffSaved) {
+                    _uiState.value
+                } else {
+                    _uiState.value.copy(
+                        title = "BLE disconnected",
+                        message = "The provisioning connection was closed.",
+                        stepThree = "3. BLE disconnected",
+                        canStart = true,
+                        buttonText = "Try again",
+                        showProgress = false
+                    )
+                }
+            }
+        }
+    }
+
+    private fun renderRuntimeHandoffReceived(
+        handoff: AqlProvisioningRuntimeHandoff
+    ) {
+        _uiState.value = _uiState.value.copy(
+            title = "Runtime handoff received",
+            message = handoff.endpoint.toWebSocketUrl()
+                ?: "Runtime endpoint was received. Saving device and token.",
+            stepThree = "3. Saving runtime token and endpoint",
+            canStart = false,
+            buttonText = "Saving...",
+            showProgress = true
+        )
+    }
+
+    private fun saveRuntimeHandoff(
+        handoff: AqlProvisioningRuntimeHandoff
+    ) {
+        val draft = activeDraft ?: run {
+            _uiState.value = _uiState.value.copy(
+                title = "Provisioning session expired",
+                message = "Runtime handoff arrived but the local provisioning session is missing.",
+                stepThree = "3. Save failed",
+                canStart = true,
+                buttonText = "Try again",
+                showProgress = false
+            )
+            return
+        }
+
+        viewModelScope.launch {
+            val result = handoffSaver.saveAndConnect(
+                draft = draft,
+                handoff = handoff
+            )
+
+            result.onSuccess { snapshot ->
+                handoffSaved = true
+                boundSessionId?.let { sessionId ->
+                    AqlProvisioningDraftStore.remove(sessionId)
+                }
+
+                _uiState.value = _uiState.value.copy(
+                    title = "Device added",
+                    message = "${snapshot.title} was saved. WebSocket runtime connection is starting.",
+                    stepThree = "3. Device saved and runtime connection started",
+                    canStart = false,
+                    buttonText = "Completed",
+                    showProgress = false
+                )
+            }.onFailure { error ->
+                _uiState.value = _uiState.value.copy(
+                    title = "Device save failed",
+                    message = error.message ?: "Runtime handoff could not be saved.",
+                    stepThree = "3. Save failed",
                     canStart = true,
                     buttonText = "Try again",
                     showProgress = false
