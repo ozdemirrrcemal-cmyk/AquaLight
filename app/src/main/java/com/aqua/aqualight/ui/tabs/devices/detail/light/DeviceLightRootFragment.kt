@@ -3,24 +3,78 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
-import com.aqua.aqualight.databinding.FragmentUnsupportedDeviceBinding
+import com.aqua.aqualight.databinding.FragmentDeviceLightRootBinding
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import kotlinx.coroutines.launch
 
-class DeviceLightRootFragment : Fragment(R.layout.fragment_unsupported_device) {
+class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
 
     private val args: DeviceLightRootFragmentArgs by navArgs()
+    private val viewModel: DeviceLightRootViewModel by viewModels()
 
-    private var _binding: FragmentUnsupportedDeviceBinding? = null
+    private var _binding: FragmentDeviceLightRootBinding? = null
     private val binding get() = _binding!!
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        _binding = FragmentUnsupportedDeviceBinding.bind(view)
 
-        binding.tvUnsupportedTitle.text = args.deviceTitle.ifBlank { "Light" }
-        binding.tvUnsupportedMessage.text =
-            "Light root opened with deviceUid ${args.deviceUid}. WebSocket runtime controls will be connected in the next migration step."
+        _binding = FragmentDeviceLightRootBinding.bind(view)
+
+        setupHeader(title = args.deviceTitle.ifBlank { "Light" })
+        observeViewModel()
+
+        viewModel.bind(
+            deviceUidText = args.deviceUid,
+            fallbackTitle = args.deviceTitle
+        )
+    }
+
+    private fun setupHeader(title: String) {
+        binding.appHeader.setupAquaHeader(
+            fragment = this,
+            config = AquaHeaderConfig(
+                titleOverride = title,
+                onBackClick = {
+                    findNavController().navigateUp()
+                }
+            )
+        )
+    }
+
+    private fun observeViewModel() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
+                    renderState(state)
+                }
+            }
+        }
+    }
+
+    private fun renderState(state: DeviceLightRootUiState) {
+        if (_binding == null) return
+
+        setupHeader(title = state.title)
+
+        binding.tvProductName.text = state.title
+        binding.tvDeviceUid.text = state.deviceUid.ifBlank { "Unknown device" }
+        binding.tvConnectionStatus.text = state.connectionStatus
+        binding.tvAuthStatus.text = state.authStatus
+        binding.tvIp.text = "IP: ${state.ipText}"
+        binding.tvFirmware.text = "Firmware: ${state.firmwareText}"
+        binding.tvModel.text = "Model: ${state.modelText}"
+        binding.tvChannelCount.text = "Light channels: ${state.channelCountText}"
+        binding.tvFeatures.text = "Features: ${state.featuresText}"
+        binding.tvManualPlaceholder.text = "Manual control hazırlanıyor."
+        binding.tvProgramsPlaceholder.text = "Programlar hazırlanıyor."
     }
 
     override fun onDestroyView() {

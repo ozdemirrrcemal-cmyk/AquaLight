@@ -56,7 +56,7 @@
         android:id="@+id/deviceLightRootFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootFragment"
         android:label="Light"
-        tools:layout="@layout/fragment_unsupported_device">
+        tools:layout="@layout/fragment_device_light_root">
         <argument
             android:name="deviceUid"
             app:argType="string" />
