@@ -94,6 +94,27 @@
             android:name="deviceModel"
             app:argType="string"
             android:defaultValue="" />
+        <argument
+            android:name="bleAddress"
+            app:argType="string"
+            android:defaultValue="" />
+        <action
+            android:id="@+id/action_deviceWifiProvisioningFragment_to_deviceProvisioningProgressFragment"
+            app:destination="@id/deviceProvisioningProgressFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceProvisioningProgressFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.add.DeviceProvisioningProgressFragment"
+        android:label="Provisioning"
+        tools:layout="@layout/fragment_device_provisioning_progress">
+        <argument
+            android:name="sessionId"
+            app:argType="string" />
     </fragment>
 
     <fragment

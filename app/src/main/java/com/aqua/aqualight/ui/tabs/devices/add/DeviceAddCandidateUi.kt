@@ -6,5 +6,6 @@ data class DeviceAddCandidateUi(
     val serial: String,
     val model: String,
     val status: String,
-    val rssiLabel: String = ""
+    val rssiLabel: String = "",
+    val bleAddress: String = id
 )

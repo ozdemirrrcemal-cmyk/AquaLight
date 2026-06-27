@@ -211,7 +211,8 @@ class DeviceAddViewModel(
             serial = displaySerial,
             model = modelLabel,
             status = displayStatus,
-            rssiLabel = "$rssi dBm"
+            rssiLabel = "$rssi dBm",
+            bleAddress = address
         )
     }
 

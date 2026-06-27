@@ -161,7 +161,8 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
                 candidateId = candidate.id,
                 deviceTitle = candidate.title,
                 deviceSerial = candidate.serial,
-                deviceModel = candidate.model
+                deviceModel = candidate.model,
+                bleAddress = candidate.bleAddress
             )
         )
     }

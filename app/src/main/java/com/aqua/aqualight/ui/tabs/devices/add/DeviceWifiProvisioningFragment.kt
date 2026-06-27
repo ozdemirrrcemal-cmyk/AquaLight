@@ -8,6 +8,8 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.data.devices.provisioning.model.AqlWifiCredentials
+import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
 import com.aqua.aqualight.databinding.FragmentDeviceWifiProvisioningBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -101,11 +103,35 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
             }
 
             else -> {
-                Toast.makeText(
-                    requireContext(),
-                    "Provisioning progress ekranı sonraki adımda bağlanacak.",
-                    Toast.LENGTH_SHORT
-                ).show()
+                val credentials = runCatching {
+                    AqlWifiCredentials(
+                        ssid = ssid,
+                        password = password
+                    )
+                }.getOrElse { error ->
+                    Toast.makeText(
+                        requireContext(),
+                        error.message ?: "Wi-Fi credentials are invalid.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return
+                }
+
+                val draft = AqlProvisioningDraftStore.create(
+                    candidateId = args.candidateId,
+                    bleAddress = args.bleAddress,
+                    deviceTitle = args.deviceTitle,
+                    deviceSerial = args.deviceSerial,
+                    deviceModel = args.deviceModel,
+                    wifiCredentials = credentials
+                )
+
+                findNavController().navigate(
+                    DeviceWifiProvisioningFragmentDirections
+                        .actionDeviceWifiProvisioningFragmentToDeviceProvisioningProgressFragment(
+                            sessionId = draft.sessionId
+                        )
+                )
             }
         }
     }
