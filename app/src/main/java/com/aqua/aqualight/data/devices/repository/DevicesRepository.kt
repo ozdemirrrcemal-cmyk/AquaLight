@@ -30,6 +30,9 @@ class DevicesRepository(
     private val runtimeRepository: DeviceRuntimeRepository? = null
 ) {
 
+    @Volatile
+    private var startJob: Job? = null
+
     val snapshots: StateFlow<Map<DeviceUid, DeviceSnapshot>> = registryStore.snapshots
 
     val devices: Flow<List<DeviceSnapshot>> = registryStore.devices
@@ -48,43 +51,64 @@ class DevicesRepository(
      * Runtime WebSocket state is also mirrored into the same registry when runtime support
      * is configured by the provider.
      */
-    fun start(scope: CoroutineScope): Job = scope.launch {
-        val knownDevices = knownStore?.loadSnapshots().orEmpty()
-        if (knownDevices.isNotEmpty()) {
-            registryStore.upsertAll(knownDevices)
+    fun start(scope: CoroutineScope): Job {
+        val activeJob = startJob
+        if (activeJob?.isActive == true) {
+            return activeJob
         }
 
-        val runtimeReconnectJob = runtimeRepository?.let { runtime ->
-            launch {
-                knownDevices
-                    .filter { snapshot -> snapshot.endpoint.hasWebSocketEndpoint }
-                    .forEach { snapshot ->
-                        runtime.connect(snapshot)
+        return synchronized(this) {
+            val currentJob = startJob
+            if (currentJob?.isActive == true) {
+                currentJob
+            } else {
+                scope.launch {
+                    val knownDevices = knownStore?.loadSnapshots().orEmpty()
+                    if (knownDevices.isNotEmpty()) {
+                        registryStore.upsertAll(knownDevices)
                     }
-            }
-        }
 
-        val scannerJob = discoveryRepository.start(this)
-        val collectorJob = launch {
-            discoveryRepository.devices.collect { discoveredDevices ->
-                registryStore.upsertAll(discoveredDevices)
-            }
-        }
-        val runtimeStateJob = runtimeRepository?.let { runtime ->
-            launch {
-                runtime.connectionState.collect { state ->
-                    applyRuntimeConnectionState(state)
+                    val runtimeReconnectJob = runtimeRepository?.let { runtime ->
+                        launch {
+                            knownDevices
+                                .filter { snapshot -> snapshot.endpoint.hasWebSocketEndpoint }
+                                .forEach { snapshot ->
+                                    runtime.connect(snapshot)
+                                }
+                        }
+                    }
+
+                    val scannerJob = discoveryRepository.start(this)
+                    val collectorJob = launch {
+                        discoveryRepository.devices.collect { discoveredDevices ->
+                            registryStore.upsertAll(discoveredDevices)
+                        }
+                    }
+                    val runtimeStateJob = runtimeRepository?.let { runtime ->
+                        launch {
+                            runtime.connectionState.collect { state ->
+                                applyRuntimeConnectionState(state)
+                            }
+                        }
+                    }
+
+                    try {
+                        awaitCancellation()
+                    } finally {
+                        runtimeReconnectJob?.cancel()
+                        runtimeStateJob?.cancel()
+                        collectorJob.cancel()
+                        scannerJob.cancel()
+                    }
+                }.also { job ->
+                    startJob = job
+                    job.invokeOnCompletion {
+                        if (startJob == job) {
+                            startJob = null
+                        }
+                    }
                 }
             }
-        }
-
-        try {
-            awaitCancellation()
-        } finally {
-            runtimeReconnectJob?.cancel()
-            runtimeStateJob?.cancel()
-            collectorJob.cancel()
-            scannerJob.cancel()
         }
     }
 
