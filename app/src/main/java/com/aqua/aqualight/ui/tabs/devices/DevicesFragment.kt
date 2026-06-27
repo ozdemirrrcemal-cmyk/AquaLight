@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDevicesBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteTarget
@@ -47,8 +48,21 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                showBackButton = false
+                showBackButton = false,
+                primaryAction = AquaHeaderPrimaryAction(
+                    text = "+ Add",
+                    contentDescription = "Add device",
+                    onClick = {
+                        openAddDevice()
+                    }
+                )
             )
+        )
+    }
+
+    private fun openAddDevice() {
+        findNavController().navigate(
+            DevicesFragmentDirections.actionDevicesFragmentToDeviceAddFragment()
         )
     }
 

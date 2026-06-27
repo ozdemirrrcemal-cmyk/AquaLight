@@ -44,6 +44,14 @@
             app:popExitAnim="@anim/nav_slide_out_right" />
 
         <action
+            android:id="@+id/action_devicesFragment_to_deviceAddFragment"
+            app:destination="@id/deviceAddFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+
+        <action
             android:id="@+id/action_devicesFragment_to_unsupportedDeviceFragment"
             app:destination="@id/unsupportedDeviceFragment"
             app:enterAnim="@anim/nav_slide_in_right"
@@ -51,6 +59,12 @@
             app:popEnterAnim="@anim/nav_slide_in_left"
             app:popExitAnim="@anim/nav_slide_out_right" />
     </fragment>
+
+    <fragment
+        android:id="@+id/deviceAddFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.add.DeviceAddFragment"
+        android:label="Add Device"
+        tools:layout="@layout/fragment_device_add" />
 
     <fragment
         android:id="@+id/deviceLightRootFragment"
