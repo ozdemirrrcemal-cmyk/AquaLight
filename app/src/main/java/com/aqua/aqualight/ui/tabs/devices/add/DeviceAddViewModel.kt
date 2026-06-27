@@ -32,11 +32,7 @@ class DeviceAddViewModel(
 
     fun onQrClicked() {
         viewModelScope.launch {
-            _events.send(
-                DeviceAddEvent.ShowMessage(
-                    message = "QR scanner ekranı bir sonraki adımda bağlanacak."
-                )
-            )
+            _events.send(DeviceAddEvent.OpenQrScanner)
         }
     }
 
@@ -248,6 +244,8 @@ enum class DeviceAddScanMode {
 
 sealed interface DeviceAddEvent {
     data class ShowMessage(val message: String) : DeviceAddEvent
+
+    object OpenQrScanner : DeviceAddEvent
 
     data class OpenWifiProvisioning(
         val candidate: DeviceAddCandidateUi

@@ -149,10 +149,20 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
                 ).show()
             }
 
+            DeviceAddEvent.OpenQrScanner -> {
+                openQrScanner()
+            }
+
             is DeviceAddEvent.OpenWifiProvisioning -> {
                 openWifiProvisioning(event.candidate)
             }
         }
+    }
+
+    private fun openQrScanner() {
+        findNavController().navigate(
+            DeviceAddFragmentDirections.actionDeviceAddFragmentToDeviceQrScanFragment()
+        )
     }
 
     private fun openWifiProvisioning(candidate: DeviceAddCandidateUi) {
