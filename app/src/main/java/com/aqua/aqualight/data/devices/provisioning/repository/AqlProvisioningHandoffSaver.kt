@@ -18,6 +18,7 @@ class AqlProvisioningHandoffSaver(
 ) {
 
     private val appContext = context.applicationContext
+    private val metadataResolver = AqlProvisioningRuntimeMetadataResolver()
 
     suspend fun saveAndConnect(
         draft: AqlProvisioningDraft,
@@ -70,9 +71,12 @@ class AqlProvisioningHandoffSaver(
 
             val registered = repository.registerSnapshot(snapshot)
 
-            repository.connectRuntime(handoff.deviceUid)
+            val resolved = metadataResolver.resolveAndConnect(
+                repository = repository,
+                provisionalSnapshot = registered
+            ).getOrDefault(registered)
 
-            registered
+            repository.registerSnapshot(resolved)
         }
     }
 
