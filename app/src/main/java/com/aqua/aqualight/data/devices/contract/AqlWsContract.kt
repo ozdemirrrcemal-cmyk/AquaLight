@@ -11,9 +11,13 @@ object AqlWsContract {
     const val DEFAULT_PATH = "/aql/v1/ws"
     const val DEFAULT_PROTOCOL = "aql.ws.v1"
 
+    const val TYPE_HELLO = "hello"
     const val TYPE_AUTH = "auth"
     const val TYPE_PING = "ping"
     const val TYPE_COMMAND = "cmd"
+    const val TYPE_RESPONSE = "res"
+    const val TYPE_EVENT = "evt"
+    const val TYPE_ERROR = "error"
 
     const val MODULE_DEVICE = "device"
     const val MODULE_SECURITY = "security"
