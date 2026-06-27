@@ -73,8 +73,8 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
         binding.tvModel.text = "Model: ${state.modelText}"
         binding.tvChannelCount.text = "Light channels: ${state.channelCountText}"
         binding.tvFeatures.text = "Features: ${state.featuresText}"
-        binding.tvManualPlaceholder.text = "Manual control hazırlanıyor."
-        binding.tvProgramsPlaceholder.text = "Programlar hazırlanıyor."
+        binding.tvManualPlaceholder.text = state.manualMenuText
+        binding.tvProgramsPlaceholder.text = state.programsMenuText
     }
 
     override fun onDestroyView() {

@@ -7,6 +7,7 @@ import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootMenuMapper
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -74,6 +75,8 @@ class DeviceLightRootViewModel(
             .ifBlank { fallbackTitle }
             .ifBlank { DEFAULT_TITLE }
 
+        val menuSections = DeviceRootMenuMapper.light(this)
+
         return DeviceLightRootUiState(
             title = productName,
             deviceUid = deviceUid.value,
@@ -87,7 +90,13 @@ class DeviceLightRootViewModel(
             } else {
                 "Unknown"
             },
-            featuresText = featureLabel()
+            featuresText = featureLabel(),
+            manualMenuText = menuSections.primaryText(
+                emptyText = "Firmware has not exposed manual light controls yet."
+            ),
+            programsMenuText = menuSections.secondaryText(
+                emptyText = "Firmware has not exposed light programs, presets or settings yet."
+            )
         )
     }
 
@@ -174,5 +183,7 @@ data class DeviceLightRootUiState(
     val firmwareText: String = "Unknown",
     val modelText: String = "Unknown",
     val channelCountText: String = "Unknown",
-    val featuresText: String = "Unknown"
+    val featuresText: String = "Unknown",
+    val manualMenuText: String = "Firmware has not exposed manual light controls yet.",
+    val programsMenuText: String = "Firmware has not exposed light programs, presets or settings yet."
 )

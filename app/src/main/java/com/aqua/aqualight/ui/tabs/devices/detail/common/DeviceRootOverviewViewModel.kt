@@ -96,6 +96,11 @@ class DeviceRootOverviewViewModel(
             .ifBlank { fallbackTitle }
             .ifBlank { kind.defaultTitle }
 
+        val menuSections = DeviceRootMenuMapper.overview(
+            kind = kind,
+            snapshot = this
+        )
+
         return DeviceRootOverviewUiState(
             title = productName,
             deviceUid = deviceUid.value,
@@ -108,9 +113,13 @@ class DeviceRootOverviewViewModel(
             primaryCountText = primaryCount(kind).takeIf { count -> count > 0 }?.toString() ?: "Unknown",
             featuresText = featureLabel(kind),
             primarySectionTitle = kind.primarySectionTitle,
-            primarySectionPlaceholder = kind.primarySectionPlaceholder,
+            primarySectionPlaceholder = menuSections.primaryText(
+                emptyText = kind.primarySectionPlaceholder
+            ),
             secondarySectionTitle = kind.secondarySectionTitle,
-            secondarySectionPlaceholder = kind.secondarySectionPlaceholder
+            secondarySectionPlaceholder = menuSections.secondaryText(
+                emptyText = kind.secondarySectionPlaceholder
+            )
         )
     }
 
