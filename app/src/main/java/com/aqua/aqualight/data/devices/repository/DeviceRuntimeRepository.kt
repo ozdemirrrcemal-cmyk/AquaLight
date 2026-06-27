@@ -3,6 +3,9 @@ package com.aqua.aqualight.data.devices.repository
 import android.content.Context
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsAuthStateChange
+import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeSyncCoordinator
+import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsAuthManager
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsClient
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
@@ -32,6 +35,14 @@ class DeviceRuntimeRepository(
     )
 
     private val sessions = ConcurrentHashMap<DeviceUid, RuntimeSession>()
+
+    private val timeRuntimeRepository = DeviceTimeRuntimeRepository { deviceUid ->
+        sessions[deviceUid]?.commandClient
+    }
+
+    private val timeSyncCoordinator = DeviceTimeSyncCoordinator(
+        repository = timeRuntimeRepository
+    )
 
     private val authManager = tokenProvider?.let { provider ->
         AqlWsAuthManager(provider)
@@ -85,11 +96,13 @@ class DeviceRuntimeRepository(
     }
 
     fun close(deviceUid: DeviceUid) {
+        timeSyncCoordinator.clearSessionMemory(deviceUid)
         sessions.remove(deviceUid)?.wsClient?.close()
     }
 
     fun close() {
         sessions.values.forEach { session ->
+            timeSyncCoordinator.clearSessionMemory(session.deviceUid)
             session.wsClient.close()
         }
         sessions.clear()
@@ -150,11 +163,17 @@ class DeviceRuntimeRepository(
             }
 
             is AqlWsEvent.Message -> {
-                manager.handleIncomingMessage(
+                val authStateChange = manager.handleIncomingMessage(
                     deviceUid = event.deviceUid,
                     message = event.parsed,
                     wsClient = session.wsClient
                 )
+
+                if (authStateChange is AqlWsAuthStateChange.Authenticated) {
+                    timeSyncCoordinator.syncPhoneNowIfNeeded(
+                        deviceUid = event.deviceUid
+                    )
+                }
             }
 
             else -> Unit
