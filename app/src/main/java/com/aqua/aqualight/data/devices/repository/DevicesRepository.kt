@@ -54,6 +54,16 @@ class DevicesRepository(
             registryStore.upsertAll(knownDevices)
         }
 
+        val runtimeReconnectJob = runtimeRepository?.let { runtime ->
+            launch {
+                knownDevices
+                    .filter { snapshot -> snapshot.endpoint.hasWebSocketEndpoint }
+                    .forEach { snapshot ->
+                        runtime.connect(snapshot)
+                    }
+            }
+        }
+
         val scannerJob = discoveryRepository.start(this)
         val collectorJob = launch {
             discoveryRepository.devices.collect { discoveredDevices ->
@@ -71,6 +81,7 @@ class DevicesRepository(
         try {
             awaitCancellation()
         } finally {
+            runtimeReconnectJob?.cancel()
             runtimeStateJob?.cancel()
             collectorJob.cancel()
             scannerJob.cancel()
@@ -99,6 +110,10 @@ class DevicesRepository(
 
     fun commandClient(): AqlWsCommandClient? {
         return runtimeRepository?.commandClient()
+    }
+
+    fun commandClient(deviceUid: DeviceUid): AqlWsCommandClient? {
+        return runtimeRepository?.commandClient(deviceUid)
     }
 
     suspend fun saveRuntimeToken(
@@ -133,6 +148,7 @@ class DevicesRepository(
 
     fun forgetDevice(deviceUid: DeviceUid): Boolean {
         val removed = registryStore.remove(deviceUid)
+        runtimeRepository?.close(deviceUid)
         knownStore?.remove(deviceUid)
         return removed
     }

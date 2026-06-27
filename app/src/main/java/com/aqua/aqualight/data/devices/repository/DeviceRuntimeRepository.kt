@@ -10,93 +10,164 @@ import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsTokenProvider
 import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 class DeviceRuntimeRepository(
-    private val wsClient: AqlWsClient = AqlWsClient(),
-    tokenProvider: AqlWsTokenProvider? = null,
+    private val tokenProvider: AqlWsTokenProvider? = null,
+    private val wsClientFactory: () -> AqlWsClient = { AqlWsClient() },
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 ) {
-    val connectionState: StateFlow<AqlWsConnectionState> = wsClient.connectionState
-    val events: SharedFlow<AqlWsEvent> = wsClient.events
 
-    private val commandClient = AqlWsCommandClient(wsClient)
+    private data class RuntimeSession(
+        val deviceUid: DeviceUid,
+        val wsClient: AqlWsClient,
+        val commandClient: AqlWsCommandClient
+    )
+
+    private val sessions = ConcurrentHashMap<DeviceUid, RuntimeSession>()
+
     private val authManager = tokenProvider?.let { provider ->
         AqlWsAuthManager(provider)
     }
 
-    init {
-        observeAuthLifecycle()
-    }
+    private val _connectionState = MutableSharedFlow<AqlWsConnectionState>(
+        extraBufferCapacity = EVENT_BUFFER_CAPACITY
+    )
+    val connectionState: SharedFlow<AqlWsConnectionState> = _connectionState.asSharedFlow()
+
+    private val _events = MutableSharedFlow<AqlWsEvent>(
+        extraBufferCapacity = EVENT_BUFFER_CAPACITY
+    )
+    val events: SharedFlow<AqlWsEvent> = _events.asSharedFlow()
+
+    @Volatile
+    private var lastActiveDeviceUid: DeviceUid? = null
 
     fun connect(snapshot: DeviceSnapshot): Result<Unit> {
-        return wsClient.connect(
-            deviceUid = snapshot.deviceUid,
+        val deviceUid = snapshot.deviceUid
+        val session = sessionFor(deviceUid)
+        lastActiveDeviceUid = deviceUid
+
+        return session.wsClient.connect(
+            deviceUid = deviceUid,
             endpoint = snapshot.endpoint
         )
     }
 
-    fun commandClient(): AqlWsCommandClient {
-        return commandClient
+    fun commandClient(): AqlWsCommandClient? {
+        val activeUid = lastActiveDeviceUid ?: return null
+        return sessions[activeUid]?.commandClient
+    }
+
+    fun commandClient(deviceUid: DeviceUid): AqlWsCommandClient? {
+        return sessions[deviceUid]?.commandClient
     }
 
     suspend fun saveToken(
         deviceUid: DeviceUid,
         token: String
     ) {
-        authManager?.saveToken(
+        tokenProvider?.saveToken(
             deviceUid = deviceUid,
             token = token
         )
     }
 
     suspend fun clearToken(deviceUid: DeviceUid) {
-        authManager?.clearToken(deviceUid)
+        tokenProvider?.clearToken(deviceUid)
+    }
+
+    fun close(deviceUid: DeviceUid) {
+        sessions.remove(deviceUid)?.wsClient?.close()
     }
 
     fun close() {
-        wsClient.close()
+        sessions.values.forEach { session ->
+            session.wsClient.close()
+        }
+        sessions.clear()
+        lastActiveDeviceUid = null
     }
 
-    private fun observeAuthLifecycle() {
-        val manager = authManager ?: return
+    private fun sessionFor(deviceUid: DeviceUid): RuntimeSession {
+        return sessions.getOrPut(deviceUid) {
+            createSession(deviceUid)
+        }
+    }
+
+    private fun createSession(deviceUid: DeviceUid): RuntimeSession {
+        val wsClient = wsClientFactory()
+        val commandClient = AqlWsCommandClient(wsClient)
+
+        val session = RuntimeSession(
+            deviceUid = deviceUid,
+            wsClient = wsClient,
+            commandClient = commandClient
+        )
+
+        observeSession(session)
+
+        return session
+    }
+
+    private fun observeSession(session: RuntimeSession) {
+        scope.launch {
+            session.wsClient.connectionState.collect { state ->
+                _connectionState.emit(state)
+            }
+        }
 
         scope.launch {
-            wsClient.events.collect { event ->
-                when (event) {
-                    is AqlWsEvent.Opened -> {
-                        manager.authenticateIfTokenExists(
-                            deviceUid = event.deviceUid,
-                            commandClient = commandClient
-                        )
-                    }
-
-                    is AqlWsEvent.Message -> {
-                        manager.handleIncomingMessage(
-                            deviceUid = event.deviceUid,
-                            message = event.parsed,
-                            wsClient = wsClient
-                        )
-                    }
-
-                    else -> Unit
-                }
+            session.wsClient.events.collect { event ->
+                handleAuthLifecycle(
+                    session = session,
+                    event = event
+                )
+                _events.emit(event)
             }
         }
     }
 
+    private suspend fun handleAuthLifecycle(
+        session: RuntimeSession,
+        event: AqlWsEvent
+    ) {
+        val manager = authManager ?: return
+
+        when (event) {
+            is AqlWsEvent.Opened -> {
+                manager.authenticateIfTokenExists(
+                    deviceUid = event.deviceUid,
+                    commandClient = session.commandClient
+                )
+            }
+
+            is AqlWsEvent.Message -> {
+                manager.handleIncomingMessage(
+                    deviceUid = event.deviceUid,
+                    message = event.parsed,
+                    wsClient = session.wsClient
+                )
+            }
+
+            else -> Unit
+        }
+    }
+
     companion object {
+        private const val EVENT_BUFFER_CAPACITY = 256
+
         fun withCredentialStore(
-            context: Context,
-            wsClient: AqlWsClient = AqlWsClient()
+            context: Context
         ): DeviceRuntimeRepository {
             return DeviceRuntimeRepository(
-                wsClient = wsClient,
                 tokenProvider = DeviceCredentialStore(context)
             )
         }
