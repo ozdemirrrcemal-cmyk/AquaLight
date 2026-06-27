@@ -10,7 +10,6 @@ import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -22,20 +21,16 @@ import coil3.request.crossfade
 import coil3.request.error
 import coil3.request.placeholder
 import com.aqua.aqualight.R
-import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.databinding.FragmentTankDetailBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumChildTabHost
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.TankDetailTabArgs
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
-import com.aqua.aqualight.utils.DialogManager
-import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
 
 class TankDetailFragment :
@@ -47,7 +42,6 @@ class TankDetailFragment :
     private var _binding: FragmentTankDetailBinding? = null
     private val binding get() = _binding!!
 
-    private val tankDetailViewModel: TankDetailViewModel by viewModels()
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
     private val maintenanceViewModel: MaintenanceViewModel by activityViewModels()
 
@@ -86,78 +80,11 @@ class TankDetailFragment :
         setupClickListeners()
         setupSystemBackButton()
         setupSwipeBetweenTabs()
-        observeDeviceOpenState()
         observeCareProfileActions()
         observeTank()
         selectTab(
             tab = selectedTab
         )
-    }
-
-    private fun observeDeviceOpenState() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(
-                Lifecycle.State.STARTED
-            ) {
-                launch {
-                    tankDetailViewModel.isOpeningDevice.collect { isOpening ->
-                        showGlobalLoading(
-                            show = isOpening
-                        )
-                    }
-                }
-
-                launch {
-                    tankDetailViewModel.events.collect { event ->
-                        handleDeviceOpenEvent(
-                            event = event
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    private fun handleDeviceOpenEvent(
-        event: TankDetailViewModel.TankDetailEvent
-    ) {
-        if (!isAdded || _binding == null) {
-            return
-        }
-
-        when (event) {
-            is TankDetailViewModel.TankDetailEvent.NavigateToDeviceRouter -> {
-                openDeviceController(
-                    deviceId = event.deviceId,
-                    deviceTitle = event.deviceTitle
-                )
-            }
-
-            TankDetailViewModel.TankDetailEvent.ShowOffline -> {
-                showDeviceOfflineDialog()
-            }
-
-            TankDetailViewModel.TankDetailEvent.ShowNotFound -> {
-                showDeviceInfoDialog(
-                    title = getString(R.string.aquarium_device_not_found_title),
-                    message = getString(R.string.aquarium_device_not_found_message)
-                )
-            }
-
-            TankDetailViewModel.TankDetailEvent.ShowUnsupported -> {
-                showDeviceInfoDialog(
-                    title = getString(R.string.aquarium_unsupported_device_title),
-                    message = getString(R.string.aquarium_unsupported_device_message)
-                )
-            }
-
-            TankDetailViewModel.TankDetailEvent.ShowOpenFailed -> {
-                showDeviceInfoDialog(
-                    title = getString(R.string.aquarium_device_open_failed_title),
-                    message = getString(R.string.aquarium_device_open_failed_message)
-                )
-            }
-        }
     }
 
     private fun setupHeader(
@@ -331,14 +258,6 @@ class TankDetailFragment :
         }
     }
 
-    private fun showGlobalLoading(
-        show: Boolean
-    ) {
-        setFragmentGlobalLoading(
-            show
-        )
-    }
-
     private fun moveTabBy(
         offset: Int
     ) {
@@ -474,31 +393,6 @@ class TankDetailFragment :
     }
 
 
-    private fun showDeviceOfflineDialog() {
-        showDeviceInfoDialog(
-            title = getString(R.string.aquarium_device_offline_title),
-            message = getString(
-                R.string.device_offline_message
-            )
-        )
-    }
-
-    private fun showDeviceInfoDialog(
-        title: String,
-        message: String
-    ) {
-        if (!isAdded || _binding == null) {
-            return
-        }
-
-        DialogManager.showInfoDialog(
-            context = requireContext(),
-            type = DialogType.WARNING,
-            title = title,
-            message = message
-        )
-    }
-
     private fun navigateFromTankDetail(
         directions: NavDirections
     ) {
@@ -515,28 +409,6 @@ class TankDetailFragment :
 
         navController.navigate(
             directions
-        )
-    }
-
-    private fun openDeviceController(
-        deviceId: Long,
-        deviceTitle: String
-    ) {
-        val navController =
-            findNavController()
-
-        if (navController.currentDestination?.id != R.id.tankDetailFragment) {
-            return
-        }
-
-        saveSelectedTabState(
-            tab = selectedTab
-        )
-
-        AppRouteNavigator.openDevice(
-            navController = navController,
-            deviceId = deviceId,
-            deviceTitle = deviceTitle
         )
     }
 
@@ -837,10 +709,6 @@ class TankDetailFragment :
     }
 
     override fun onDestroyView() {
-        showGlobalLoading(
-            show = false
-        )
-
         _binding =
             null
 
