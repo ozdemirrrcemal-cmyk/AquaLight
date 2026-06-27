@@ -4,7 +4,7 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
 import org.json.JSONObject
 
-class DeviceCoolingRuntimeStore(
+class DeviceCoolingRuntimeRepository(
     private val commandClientProvider: (DeviceUid) -> AqlWsCommandClient?
 ) {
     fun requestStatus(deviceUid: DeviceUid): DeviceCoolingCommandResult {
@@ -93,8 +93,8 @@ class DeviceCoolingRuntimeStore(
     }
 
     companion object {
-        fun singleSession(commandClient: AqlWsCommandClient): DeviceCoolingRuntimeStore {
-            return DeviceCoolingRuntimeStore { commandClient }
+        fun singleSession(commandClient: AqlWsCommandClient): DeviceCoolingRuntimeRepository {
+            return DeviceCoolingRuntimeRepository { commandClient }
         }
     }
 }

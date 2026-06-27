@@ -3,7 +3,7 @@ package com.aqua.aqualight.data.devices.runtime.modules.cooling
 import org.json.JSONArray
 import org.json.JSONObject
 
-object DeviceCoolingSnapshotParser {
+object DeviceCoolingStatusParser {
 
     fun parse(data: JSONObject): DeviceCoolingStatus {
         val status = data.optJSONObject("status") ?: data
