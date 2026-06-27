@@ -172,7 +172,10 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
                 deviceTitle = candidate.title,
                 deviceSerial = candidate.serial,
                 deviceModel = candidate.model,
-                bleAddress = candidate.bleAddress
+                bleAddress = candidate.bleAddress,
+                bleName = candidate.bleName,
+                claimCode = "",
+                rawQrPayload = ""
             )
         )
     }

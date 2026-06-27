@@ -119,6 +119,18 @@
             android:name="bleAddress"
             app:argType="string"
             android:defaultValue="" />
+        <argument
+            android:name="bleName"
+            app:argType="string"
+            android:defaultValue="" />
+        <argument
+            android:name="claimCode"
+            app:argType="string"
+            android:defaultValue="" />
+        <argument
+            android:name="rawQrPayload"
+            app:argType="string"
+            android:defaultValue="" />
         <action
             android:id="@+id/action_deviceWifiProvisioningFragment_to_deviceProvisioningProgressFragment"
             app:destination="@id/deviceProvisioningProgressFragment"

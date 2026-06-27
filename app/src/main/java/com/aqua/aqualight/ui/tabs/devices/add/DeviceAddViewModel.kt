@@ -208,7 +208,8 @@ class DeviceAddViewModel(
             model = modelLabel,
             status = displayStatus,
             rssiLabel = "$rssi dBm",
-            bleAddress = address
+            bleAddress = address,
+            bleName = name
         )
     }
 

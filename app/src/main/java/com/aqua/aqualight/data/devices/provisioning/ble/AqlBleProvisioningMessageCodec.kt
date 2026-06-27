@@ -12,12 +12,21 @@ import org.json.JSONObject
 class AqlBleProvisioningMessageCodec {
 
     fun startSessionJson(draft: AqlProvisioningDraft): String {
-        return JSONObject()
+        val json = JSONObject()
             .put(AqlBleProvisioningContract.Json.KEY_DEVICE_UID, draft.candidateId)
             .put("bleAddress", draft.bleAddress)
+            .put("bleName", draft.bleName)
             .put("deviceTitle", draft.deviceTitle)
             .put("createdAt", draft.createdAtMillis)
-            .toString()
+
+        if (draft.claimCode.isNotBlank()) {
+            json.put(
+                AqlBleProvisioningContract.Json.KEY_CLAIM_CODE,
+                draft.claimCode
+            )
+        }
+
+        return json.toString()
     }
 
     fun wifiCredentialsJson(draft: AqlProvisioningDraft): String {

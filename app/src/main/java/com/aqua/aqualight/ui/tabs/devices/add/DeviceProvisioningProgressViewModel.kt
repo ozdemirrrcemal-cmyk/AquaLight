@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.add
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningAddressResolver
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningGattClient
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningGattEvent
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningDraft
@@ -19,6 +20,7 @@ class DeviceProvisioningProgressViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
+    private val addressResolver = AqlBleProvisioningAddressResolver(application)
     private val gattClient = AqlBleProvisioningGattClient(application)
     private val handoffSaver = AqlProvisioningHandoffSaver(application)
 
@@ -29,6 +31,7 @@ class DeviceProvisioningProgressViewModel(
     private var activeDraft: AqlProvisioningDraft? = null
     private var gattEventsJob: Job? = null
     private var handoffSaved = false
+    private var startJob: Job? = null
 
     fun bind(sessionId: String) {
         if (sessionId.isBlank() || boundSessionId == sessionId) {
@@ -60,10 +63,21 @@ class DeviceProvisioningProgressViewModel(
             message = "The selected device and Wi-Fi credentials are prepared. Start provisioning to transfer them over BLE.",
             deviceName = draft.deviceTitle.ifBlank { "AquaLight Device" },
             deviceSerial = draft.deviceSerial.ifBlank { draft.candidateId },
-            bleAddress = draft.bleAddress.ifBlank { "Unknown" },
+            bleAddress = draft.bleAddress.ifBlank { draft.bleName.ifBlank { "Resolve from QR" } },
             wifiSsid = draft.wifiCredentials.ssid,
             canStart = true,
             buttonText = "Start provisioning",
+            showProgress = false
+        )
+    }
+
+    fun onBlePermissionDenied() {
+        _uiState.value = _uiState.value.copy(
+            title = "Bluetooth permission required",
+            message = "BLE permission is required to connect to the selected AquaLight device.",
+            stepThree = "3. Permission required",
+            canStart = true,
+            buttonText = "Try again",
             showProgress = false
         )
     }
@@ -80,19 +94,74 @@ class DeviceProvisioningProgressViewModel(
             return
         }
 
+        startJob?.cancel()
         handoffSaved = false
         observeGattEvents()
 
+        startJob = viewModelScope.launch {
+            val readyDraft = resolveBleAddressIfNeeded(draft) ?: return@launch
+            activeDraft = readyDraft
+
+            _uiState.value = _uiState.value.copy(
+                title = "Connecting over BLE",
+                message = "Opening a secure provisioning connection to the selected AquaLight device.",
+                bleAddress = readyDraft.bleAddress,
+                stepThree = "3. Connecting to BLE device",
+                canStart = false,
+                buttonText = "Provisioning...",
+                showProgress = true
+            )
+
+            gattClient.start(readyDraft)
+        }
+    }
+
+    private suspend fun resolveBleAddressIfNeeded(
+        draft: AqlProvisioningDraft
+    ): AqlProvisioningDraft? {
+        if (draft.bleAddress.isNotBlank()) {
+            return draft
+        }
+
+        val bleName = draft.bleName.trim()
+        if (bleName.isBlank()) {
+            _uiState.value = _uiState.value.copy(
+                title = "BLE device name missing",
+                message = "QR payload does not include a BLE name. Scan with BLE discovery instead.",
+                stepThree = "3. BLE resolve failed",
+                canStart = true,
+                buttonText = "Try again",
+                showProgress = false
+            )
+            return null
+        }
+
         _uiState.value = _uiState.value.copy(
-            title = "Connecting over BLE",
-            message = "Opening a secure provisioning connection to the selected AquaLight device.",
-            stepThree = "3. Connecting to BLE device",
+            title = "Finding QR device",
+            message = "Searching nearby Bluetooth devices for $bleName.",
+            bleAddress = bleName,
+            stepThree = "3. Resolving BLE address from QR",
             canStart = false,
-            buttonText = "Provisioning...",
+            buttonText = "Finding...",
             showProgress = true
         )
 
-        gattClient.start(draft)
+        val resolvedAddress = addressResolver.resolveAddress(bleName)
+            .getOrElse { error ->
+                _uiState.value = _uiState.value.copy(
+                    title = "QR device not found",
+                    message = error.message ?: "The QR device could not be found over BLE.",
+                    stepThree = "3. BLE resolve failed",
+                    canStart = true,
+                    buttonText = "Try again",
+                    showProgress = false
+                )
+                return null
+            }
+
+        return draft.copy(
+            bleAddress = resolvedAddress
+        )
     }
 
     private fun observeGattEvents() {
@@ -294,6 +363,7 @@ class DeviceProvisioningProgressViewModel(
     }
 
     override fun onCleared() {
+        startJob?.cancel()
         gattEventsJob?.cancel()
         gattClient.close()
         super.onCleared()

@@ -49,7 +49,9 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
     private fun renderSelectedDevice() {
         binding.tvDeviceName.text = args.deviceTitle.ifBlank { "AquaLight Device" }
         binding.tvDeviceSerial.text = "Serial: ${args.deviceSerial.ifBlank { args.candidateId }}"
-        binding.tvDeviceModel.text = args.deviceModel.ifBlank { "BLE provisioning" }
+        binding.tvDeviceModel.text = args.deviceModel.ifBlank {
+            args.bleName.ifBlank { "BLE provisioning" }
+        }
     }
 
     private fun setupActions() {
@@ -120,6 +122,9 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
                 val draft = AqlProvisioningDraftStore.create(
                     candidateId = args.candidateId,
                     bleAddress = args.bleAddress,
+                    bleName = args.bleName,
+                    claimCode = args.claimCode,
+                    rawQrPayload = args.rawQrPayload,
                     deviceTitle = args.deviceTitle,
                     deviceSerial = args.deviceSerial,
                     deviceModel = args.deviceModel,

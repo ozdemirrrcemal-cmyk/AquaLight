@@ -7,5 +7,6 @@ data class DeviceAddCandidateUi(
     val model: String,
     val status: String,
     val rssiLabel: String = "",
-    val bleAddress: String = id
+    val bleAddress: String = id,
+    val bleName: String = title
 )

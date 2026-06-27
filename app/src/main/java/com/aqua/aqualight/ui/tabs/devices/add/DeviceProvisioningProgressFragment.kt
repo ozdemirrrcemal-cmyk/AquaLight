@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.add
 
 import android.os.Bundle
 import android.view.View
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -20,9 +21,20 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
 
     private val args: DeviceProvisioningProgressFragmentArgs by navArgs()
     private val viewModel: DeviceProvisioningProgressViewModel by viewModels()
+    private val permissionController = DeviceAddPermissionController()
 
     private var _binding: FragmentDeviceProvisioningProgressBinding? = null
     private val binding get() = _binding!!
+
+    private val blePermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { result ->
+        if (permissionController.hasBlePermissionsFromResult(requireContext(), result)) {
+            viewModel.startProvisioning()
+        } else {
+            viewModel.onBlePermissionDenied()
+        }
+    }
 
     override fun onViewCreated(
         view: View,
@@ -53,8 +65,19 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
 
     private fun setupActions() {
         binding.btnStartProvisioning.setOnClickListener {
-            viewModel.startProvisioning()
+            startProvisioningWithPermissionCheck()
         }
+    }
+
+    private fun startProvisioningWithPermissionCheck() {
+        if (permissionController.hasBlePermissions(requireContext())) {
+            viewModel.startProvisioning()
+            return
+        }
+
+        blePermissionLauncher.launch(
+            permissionController.blePermissions()
+        )
     }
 
     private fun observeViewModel() {
