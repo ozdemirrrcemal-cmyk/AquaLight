@@ -102,14 +102,18 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     private fun confirmRemoveDevice(
         item: TankAssignedDeviceItem
     ) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Remove device")
-            .setMessage("Remove ${item.title} from this tank?")
-            .setNegativeButton(android.R.string.cancel, null)
-            .setPositiveButton("Remove") { _, _ ->
-                viewModel.removeDeviceFromTank(item.deviceUid)
-            }
-            .show()
+        DeviceConfirmBottomSheet
+            .create(requireContext())
+            .show(
+                title = getString(R.string.aquarium_remove_device_title),
+                message = getString(R.string.aquarium_remove_device_message, item.title),
+                confirmText = getString(R.string.aquarium_remove_action),
+                cancelText = getString(R.string.common_cancel),
+                tone = DeviceConfirmTone.DANGER,
+                onConfirm = {
+                    viewModel.removeDeviceFromTank(item.deviceUid)
+                }
+            )
     }
 
     private fun parentHost(): Host? {
