@@ -1,18 +1,9 @@
 name: Android CI
 
 on:
-  workflow_dispatch:
-
   push:
     branches:
       - main
-      - release
-      - 'feature/**'
-
-  pull_request:
-    branches:
-      - main
-      - release
 
 concurrency:
   group: android-ci-${{ github.ref }}
