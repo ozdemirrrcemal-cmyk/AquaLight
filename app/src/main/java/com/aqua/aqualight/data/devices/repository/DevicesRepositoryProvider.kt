@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.devices.repository
 
 import android.content.Context
+import com.aqua.aqualight.data.devices.store.DeviceKnownStore
 
 /**
  * Process-level Devices V2 repository holder.
@@ -24,6 +25,7 @@ object DevicesRepositoryProvider {
         val appContext = context?.applicationContext
         return if (appContext != null) {
             DevicesRepository(
+                knownStore = DeviceKnownStore(appContext),
                 runtimeRepository = DeviceRuntimeRepository.withCredentialStore(appContext)
             )
         } else {

@@ -7,6 +7,7 @@ import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
+import com.aqua.aqualight.data.devices.store.DeviceKnownStore
 import com.aqua.aqualight.data.devices.store.DeviceRegistryStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -25,6 +26,7 @@ import kotlinx.coroutines.launch
 class DevicesRepository(
     private val discoveryRepository: DeviceDiscoveryRepository = DeviceDiscoveryRepository(),
     private val registryStore: DeviceRegistryStore = DeviceRegistryStore(),
+    private val knownStore: DeviceKnownStore? = null,
     private val runtimeRepository: DeviceRuntimeRepository? = null
 ) {
 
@@ -47,6 +49,11 @@ class DevicesRepository(
      * is configured by the provider.
      */
     fun start(scope: CoroutineScope): Job = scope.launch {
+        val knownDevices = knownStore?.loadSnapshots().orEmpty()
+        if (knownDevices.isNotEmpty()) {
+            registryStore.upsertAll(knownDevices)
+        }
+
         val scannerJob = discoveryRepository.start(this)
         val collectorJob = launch {
             discoveryRepository.devices.collect { discoveredDevices ->
@@ -108,11 +115,15 @@ class DevicesRepository(
         runtimeRepository?.clearToken(deviceUid)
     }
 
-    fun registerSnapshot(snapshot: DeviceSnapshot): DeviceSnapshot =
-        registryStore.upsert(snapshot)
+    fun registerSnapshot(snapshot: DeviceSnapshot): DeviceSnapshot {
+        val registered = registryStore.upsert(snapshot)
+        knownStore?.saveSnapshot(registered)
+        return registered
+    }
 
     fun registerSnapshots(snapshots: Iterable<DeviceSnapshot>) {
         registryStore.upsertAll(snapshots)
+        knownStore?.saveSnapshots(snapshots)
     }
 
     fun updateConnectionState(
@@ -120,9 +131,18 @@ class DevicesRepository(
         update: (DeviceConnectionState) -> DeviceConnectionState
     ): DeviceSnapshot? = registryStore.updateConnectionState(deviceUid, update)
 
-    fun forgetDevice(deviceUid: DeviceUid): Boolean = registryStore.remove(deviceUid)
+    fun forgetDevice(deviceUid: DeviceUid): Boolean {
+        val removed = registryStore.remove(deviceUid)
+        knownStore?.remove(deviceUid)
+        return removed
+    }
 
     fun clearInMemoryRegistry() {
+        registryStore.clear()
+    }
+
+    fun clearKnownDevices() {
+        knownStore?.clear()
         registryStore.clear()
     }
 
