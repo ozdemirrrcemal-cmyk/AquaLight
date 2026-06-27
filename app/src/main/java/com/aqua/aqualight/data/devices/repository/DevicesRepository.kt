@@ -8,12 +8,14 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.store.DeviceKnownStore
 import com.aqua.aqualight.data.devices.store.DeviceRegistryStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
@@ -143,6 +145,10 @@ class DevicesRepository(
 
     fun runtimeModules(): DeviceRuntimeModuleProvider? {
         return runtimeRepository?.runtimeModules
+    }
+
+    fun runtimeEvents(): SharedFlow<AqlWsEvent>? {
+        return runtimeRepository?.events
     }
 
 

@@ -7,9 +7,15 @@ import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeContract
+import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerStatusParser
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootMenuMapper
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,6 +32,11 @@ class DeviceTimerRootViewModel(
 
     private var boundDeviceUid: DeviceUid? = null
     private var observeJob: Job? = null
+    private var runtimeStatusJob: Job? = null
+
+    private var runtimePrimaryCountText: String? = null
+    private var runtimePrimaryPlaceholder: String? = null
+    private var runtimeSecondaryPlaceholder: String? = null
 
     fun bind(
         deviceUidText: String,
@@ -33,6 +44,8 @@ class DeviceTimerRootViewModel(
     ) {
         if (deviceUidText.isBlank()) {
             observeJob?.cancel()
+            runtimeStatusJob?.cancel()
+            clearRuntimeOverlay()
 
             _uiState.value = DeviceTimerRootUiState(
                 title = fallbackTitle.ifBlank { DEFAULT_TITLE },
@@ -55,6 +68,8 @@ class DeviceTimerRootViewModel(
 
         boundDeviceUid = deviceUid
         observeJob?.cancel()
+        runtimeStatusJob?.cancel()
+        clearRuntimeOverlay()
 
         _uiState.value = DeviceTimerRootUiState(
             title = fallbackTitle.ifBlank { DEFAULT_TITLE },
@@ -70,21 +85,118 @@ class DeviceTimerRootViewModel(
 
         observeJob = viewModelScope.launch {
             repository.observeDevice(deviceUid).collect { snapshot ->
-                _uiState.value = snapshot
-                    ?.toRootUiState(fallbackTitle = fallbackTitle)
-                    ?: DeviceTimerRootUiState(
-                        title = fallbackTitle.ifBlank { DEFAULT_TITLE },
-                        deviceUid = deviceUid.value,
-                        connectionStatus = "Device not found",
-                        authStatus = "Unknown",
-                        primaryCountLabel = KIND.primaryCountLabel,
-                        primarySectionTitle = KIND.primarySectionTitle,
-                        primarySectionPlaceholder = KIND.primarySectionPlaceholder,
-                        secondarySectionTitle = KIND.secondarySectionTitle,
-                        secondarySectionPlaceholder = KIND.secondarySectionPlaceholder
-                    )
+                _uiState.value = (
+                    snapshot
+                        ?.toRootUiState(fallbackTitle = fallbackTitle)
+                        ?: DeviceTimerRootUiState(
+                            title = fallbackTitle.ifBlank { DEFAULT_TITLE },
+                            deviceUid = deviceUid.value,
+                            connectionStatus = "Device not found",
+                            authStatus = "Unknown",
+                            primaryCountLabel = KIND.primaryCountLabel,
+                            primarySectionTitle = KIND.primarySectionTitle,
+                            primarySectionPlaceholder = KIND.primarySectionPlaceholder,
+                            secondarySectionTitle = KIND.secondarySectionTitle,
+                            secondarySectionPlaceholder = KIND.secondarySectionPlaceholder
+                        )
+                    ).withRuntimeOverlay()
             }
         }
+
+        runtimeStatusJob = viewModelScope.launch {
+            observeRuntimeStatus(deviceUid)
+        }
+    }
+
+    private suspend fun observeRuntimeStatus(deviceUid: DeviceUid) {
+        val events = repository.runtimeEvents()
+        if (events == null) {
+            updateRuntimeOverlay(
+                primaryPlaceholder = "$DEFAULT_TITLE runtime WebSocket repository is not configured."
+            )
+            return
+        }
+
+        coroutineScope {
+            launch {
+                repository.connectRuntime(deviceUid)
+                delay(800L)
+
+                val sent = repository.runtimeModules()?.timer?.requestStatus(deviceUid)?.isSuccess == true
+
+                if (sent) {
+                    updateRuntimeOverlay(
+                        primaryPlaceholder = "$DEFAULT_TITLE runtime status requested..."
+                    )
+                } else {
+                    updateRuntimeOverlay(
+                        primaryPlaceholder = "$DEFAULT_TITLE runtime status request could not be sent."
+                    )
+                }
+            }
+
+            events.collect { event ->
+                handleRuntimeEvent(
+                    deviceUid = deviceUid,
+                    event = event
+                )
+            }
+        }
+    }
+
+    private fun handleRuntimeEvent(
+        deviceUid: DeviceUid,
+        event: AqlWsEvent
+    ) {
+        if (event.deviceUid != deviceUid) return
+
+        val response = (event as? AqlWsEvent.Message)
+            ?.parsed as? AqlWsIncomingMessage.Response
+            ?: return
+
+        if (response.module != DeviceTimerRuntimeContract.MODULE ||
+            response.action != DeviceTimerRuntimeContract.Action.STATUS_GET
+        ) {
+            return
+        }
+
+        if (!response.ok) {
+            updateRuntimeOverlay(
+                primaryPlaceholder = "$DEFAULT_TITLE runtime status error: ${response.statusCode}"
+            )
+            return
+        }
+
+        val data = response.json.optJSONObject("data") ?: response.json
+        val status = DeviceTimerStatusParser.parse(data)
+
+        __STATUS_RENDER__
+    }
+
+    private fun updateRuntimeOverlay(
+        primaryCountText: String? = null,
+        primaryPlaceholder: String? = null,
+        secondaryPlaceholder: String? = null
+    ) {
+        if (primaryCountText != null) runtimePrimaryCountText = primaryCountText
+        if (primaryPlaceholder != null) runtimePrimaryPlaceholder = primaryPlaceholder
+        if (secondaryPlaceholder != null) runtimeSecondaryPlaceholder = secondaryPlaceholder
+
+        _uiState.value = _uiState.value.withRuntimeOverlay()
+    }
+
+    private fun clearRuntimeOverlay() {
+        runtimePrimaryCountText = null
+        runtimePrimaryPlaceholder = null
+        runtimeSecondaryPlaceholder = null
+    }
+
+    private fun DeviceTimerRootUiState.withRuntimeOverlay(): DeviceTimerRootUiState {
+        return copy(
+            primaryCountText = runtimePrimaryCountText ?: primaryCountText,
+            primarySectionPlaceholder = runtimePrimaryPlaceholder ?: primarySectionPlaceholder,
+            secondarySectionPlaceholder = runtimeSecondaryPlaceholder ?: secondarySectionPlaceholder
+        )
     }
 
     private fun DeviceSnapshot.toRootUiState(fallbackTitle: String): DeviceTimerRootUiState {

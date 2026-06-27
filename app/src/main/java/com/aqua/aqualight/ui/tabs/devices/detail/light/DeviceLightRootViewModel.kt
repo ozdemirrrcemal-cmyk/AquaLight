@@ -7,8 +7,14 @@ import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeContract
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatusParser
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootMenuMapper
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,12 +31,21 @@ class DeviceLightRootViewModel(
 
     private var boundDeviceUid: DeviceUid? = null
     private var observeJob: Job? = null
+    private var runtimeStatusJob: Job? = null
+
+    private var runtimeChannelCountText: String? = null
+    private var runtimeManualText: String? = null
+    private var runtimeProgramsText: String? = null
 
     fun bind(
         deviceUidText: String,
         fallbackTitle: String
     ) {
         if (deviceUidText.isBlank()) {
+            observeJob?.cancel()
+            runtimeStatusJob?.cancel()
+            clearRuntimeOverlay()
+
             _uiState.value = DeviceLightRootUiState(
                 title = fallbackTitle.ifBlank { DEFAULT_TITLE },
                 deviceUid = "",
@@ -47,6 +62,8 @@ class DeviceLightRootViewModel(
 
         boundDeviceUid = deviceUid
         observeJob?.cancel()
+        runtimeStatusJob?.cancel()
+        clearRuntimeOverlay()
 
         _uiState.value = DeviceLightRootUiState(
             title = fallbackTitle.ifBlank { DEFAULT_TITLE },
@@ -57,16 +74,120 @@ class DeviceLightRootViewModel(
 
         observeJob = viewModelScope.launch {
             repository.observeDevice(deviceUid).collect { snapshot ->
-                _uiState.value = snapshot
-                    ?.toLightRootUiState(fallbackTitle = fallbackTitle)
-                    ?: DeviceLightRootUiState(
-                        title = fallbackTitle.ifBlank { DEFAULT_TITLE },
-                        deviceUid = deviceUid.value,
-                        connectionStatus = "Device not found",
-                        authStatus = "Unknown"
-                    )
+                _uiState.value = (
+                    snapshot
+                        ?.toLightRootUiState(fallbackTitle = fallbackTitle)
+                        ?: DeviceLightRootUiState(
+                            title = fallbackTitle.ifBlank { DEFAULT_TITLE },
+                            deviceUid = deviceUid.value,
+                            connectionStatus = "Device not found",
+                            authStatus = "Unknown"
+                        )
+                    ).withRuntimeOverlay()
             }
         }
+
+        runtimeStatusJob = viewModelScope.launch {
+            observeRuntimeStatus(deviceUid)
+        }
+    }
+
+    private suspend fun observeRuntimeStatus(deviceUid: DeviceUid) {
+        val events = repository.runtimeEvents()
+        if (events == null) {
+            updateRuntimeOverlay(
+                manualText = "Light runtime WebSocket repository is not configured."
+            )
+            return
+        }
+
+        coroutineScope {
+            launch {
+                repository.connectRuntime(deviceUid)
+                delay(800L)
+
+                val sent = repository.runtimeModules()
+                    ?.light
+                    ?.requestStatus(deviceUid)
+                    ?.isSuccess == true
+
+                if (sent) {
+                    updateRuntimeOverlay(
+                        manualText = "Light runtime status requested..."
+                    )
+                } else {
+                    updateRuntimeOverlay(
+                        manualText = "Light runtime status request could not be sent."
+                    )
+                }
+            }
+
+            events.collect { event ->
+                handleRuntimeEvent(
+                    deviceUid = deviceUid,
+                    event = event
+                )
+            }
+        }
+    }
+
+    private fun handleRuntimeEvent(
+        deviceUid: DeviceUid,
+        event: AqlWsEvent
+    ) {
+        if (event.deviceUid != deviceUid) return
+
+        val response = (event as? AqlWsEvent.Message)
+            ?.parsed as? AqlWsIncomingMessage.Response
+            ?: return
+
+        if (response.module != DeviceLightRuntimeContract.MODULE ||
+            response.action != DeviceLightRuntimeContract.Action.STATUS_GET
+        ) {
+            return
+        }
+
+        if (!response.ok) {
+            updateRuntimeOverlay(
+                manualText = "Light runtime status error: ${response.statusCode}"
+            )
+            return
+        }
+
+        val data = response.json.optJSONObject("data") ?: response.json
+        val status = DeviceLightStatusParser.parse(data)
+
+        updateRuntimeOverlay(
+            channelCountText = status.channelCount.toString(),
+            manualText = "Runtime channels: ${status.channelCount}, manual: ${status.manualSupported}, liveEdit: ${status.liveEditEnabled}",
+            programsText = "Programs: ${status.programCount}, presets: ${status.presetsSupported}, simulation: ${status.simulationSupported}, writable: ${!status.runtime.readOnly}"
+        )
+    }
+
+    private fun updateRuntimeOverlay(
+        channelCountText: String? = null,
+        manualText: String? = null,
+        programsText: String? = null
+    ) {
+        if (channelCountText != null) runtimeChannelCountText = channelCountText
+        if (manualText != null) runtimeManualText = manualText
+        if (programsText != null) runtimeProgramsText = programsText
+
+        _uiState.value = _uiState.value.withRuntimeOverlay()
+    }
+
+    private fun clearRuntimeOverlay() {
+        runtimeChannelCountText = null
+        runtimeManualText = null
+        runtimeProgramsText = null
+    }
+
+    private fun DeviceLightRootUiState.withRuntimeOverlay(): DeviceLightRootUiState {
+        return copy(
+            channelCountText = runtimeChannelCountText ?: channelCountText,
+            manualMenuText = runtimeManualText ?: manualMenuText,
+            programsMenuText = runtimeProgramsText ?: programsMenuText
+        )
     }
 
     private fun DeviceSnapshot.toLightRootUiState(fallbackTitle: String): DeviceLightRootUiState {
