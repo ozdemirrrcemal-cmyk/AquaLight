@@ -19,6 +19,7 @@ import coil3.request.placeholder
 import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentSettingsBinding
+import com.aqua.aqualight.ui.tabs.settings.device.DeviceSettingsDeviceOverviewUi
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -54,7 +55,9 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                         state = state
                     )
 
-                    renderDeviceStatusShell()
+                    renderDeviceStatus(
+                        overview = state.deviceOverview
+                    )
                 }
             }
         }
@@ -84,13 +87,17 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         }
     }
 
-    private fun renderDeviceStatusShell() {
-        binding.tvActiveDevices.text = getString(
-            R.string.settings_no_active_devices
-        )
+    private fun renderDeviceStatus(
+        overview: DeviceSettingsDeviceOverviewUi
+    ) {
+        binding.tvActiveDevices.text = overview.activeDeviceCountText
 
         binding.viewDeviceDot.setBackgroundResource(
-            R.drawable.bg_offline_dot
+            if (overview.hasOnlineDevices) {
+                R.drawable.bg_online_dot
+            } else {
+                R.drawable.bg_offline_dot
+            }
         )
     }
 

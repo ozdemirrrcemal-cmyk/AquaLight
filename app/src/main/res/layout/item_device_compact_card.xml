@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="4dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="6dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardBackgroundColor="#101D2C"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="0dp"
+    app:cardUseCompatPadding="false"
+    app:rippleColor="#24344A"
+    app:strokeColor="#22354D"
+    app:strokeWidth="1dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="96dp"
+        android:paddingStart="16dp"
+        android:paddingTop="15dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="15dp">
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/deviceIconContainer"
+            android:layout_width="54dp"
+            android:layout_height="54dp"
+            app:cardBackgroundColor="#162A3E"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:strokeColor="#2A4663"
+            app:strokeWidth="1dp">
+
+            <ImageView
+                android:id="@+id/ivDeviceIcon"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center"
+                android:adjustViewBounds="true"
+                android:contentDescription="@string/app_name"
+                android:scaleType="centerInside"
+                tools:src="@drawable/ic_device_light" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <LinearLayout
+            android:id="@+id/textColumn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="15dp"
+            android:layout_marginEnd="12dp"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/trailingContainer"
+            app:layout_constraintStart_toEndOf="@id/deviceIconContainer"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:id="@+id/tvDeviceName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:textColor="#F2F6FA"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                tools:text="WRGB Pro Elite" />
+
+            <TextView
+                android:id="@+id/tvSerialNumber"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="7dp"
+                android:ellipsize="end"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:textColor="#90A1B5"
+                android:textSize="12.5sp"
+                tools:text="UID: AQL-LIGHT-123456" />
+
+            <TextView
+                android:id="@+id/tvTankName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:ellipsize="end"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:textColor="#5FD6B4"
+                android:textSize="12.5sp"
+                tools:text="Light • 4CH / OTA" />
+
+        </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/trailingContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="76dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:id="@+id/tvStatusChip"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:layout_gravity="center"
+                android:background="@drawable/bg_device_compact_status_chip"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:minWidth="76dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:textColor="#5FD6B4"
+                android:textSize="11.5sp"
+                android:textStyle="bold"
+                tools:text="ONLINE" />
+
+            <TextView
+                android:id="@+id/tvCardAction"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:layout_gravity="center"
+                android:background="@drawable/bg_device_compact_action_chip"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:minWidth="70dp"
+                android:paddingHorizontal="14dp"
+                android:textColor="#5FD6B4"
+                android:textSize="12.5sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:text="Add"
+                tools:visibility="visible" />
+
+        </FrameLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

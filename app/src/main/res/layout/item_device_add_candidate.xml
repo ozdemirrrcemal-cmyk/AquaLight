@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cardCandidate"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardBackgroundColor="@color/settings_card_background"
+    app:cardCornerRadius="18dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/settings_card_stroke"
+    app:strokeWidth="1dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="82dp"
+        android:padding="14dp">
+
+        <TextView
+            android:id="@+id/tvDeviceIcon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_add_button_small"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:text="AQ"
+            android:textColor="@color/white"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tvCandidateTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_marginEnd="10dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@id/tvCandidateStatus"
+            app:layout_constraintStart_toEndOf="@id/tvDeviceIcon"
+            app:layout_constraintTop_toTopOf="@id/tvDeviceIcon"
+            tools:text="WRGB Pro Elite" />
+
+        <TextView
+            android:id="@+id/tvCandidateSerial"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginEnd="10dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="#8FA4BE"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toStartOf="@id/tvCandidateStatus"
+            app:layout_constraintStart_toEndOf="@id/tvDeviceIcon"
+            app:layout_constraintTop_toBottomOf="@id/tvCandidateTitle"
+            tools:text="Serial: AQL-LIGHT-123456" />
+
+        <TextView
+            android:id="@+id/tvCandidateModel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="10dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="#B9C8DA"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toStartOf="@id/tvCandidateStatus"
+            app:layout_constraintStart_toEndOf="@id/tvDeviceIcon"
+            app:layout_constraintTop_toBottomOf="@id/tvCandidateSerial"
+            tools:text="BLE: AquaLight-Setup" />
+
+        <TextView
+            android:id="@+id/tvCandidateStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="28dp"
+            android:background="@drawable/bg_maintenance_tab_selected"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:minWidth="68dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textColor="@color/white"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="@id/tvDeviceIcon"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/tvDeviceIcon"
+            tools:text="Ready" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

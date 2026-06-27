@@ -1,0 +1,205 @@
+package com.aqua.aqualight.data.devices.provisioning.ble
+
+import android.Manifest
+import android.annotation.SuppressLint
+import android.bluetooth.le.BluetoothLeScanner
+import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanFilter
+import android.bluetooth.le.ScanResult
+import android.bluetooth.le.ScanSettings
+import android.bluetooth.BluetoothManager
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
+import android.os.ParcelUuid
+import androidx.core.content.ContextCompat
+import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
+import kotlin.coroutines.resume
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
+
+class AqlBleProvisioningAddressResolver(
+    context: Context
+) {
+
+    private val appContext = context.applicationContext
+    private val bluetoothManager =
+        appContext.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+
+    suspend fun resolveAddress(
+        bleNameOrAddress: String
+    ): Result<String> {
+        val target = bleNameOrAddress.trim()
+
+        if (target.isBlank()) {
+            return Result.failure(
+                IllegalArgumentException("QR payload does not contain a BLE name.")
+            )
+        }
+
+        if (MAC_ADDRESS_REGEX.matches(target)) {
+            return Result.success(target)
+        }
+
+        if (!hasRequiredPermissions()) {
+            return Result.failure(
+                SecurityException("Bluetooth scan/connect permission is required.")
+            )
+        }
+
+        val adapter = bluetoothManager?.adapter
+            ?: return Result.failure(IllegalStateException("Bluetooth adapter is unavailable."))
+
+        if (!adapter.isEnabled) {
+            return Result.failure(IllegalStateException("Bluetooth is disabled."))
+        }
+
+        val scanner = adapter.bluetoothLeScanner
+            ?: return Result.failure(IllegalStateException("Bluetooth LE scanner is unavailable."))
+
+        val result = withTimeoutOrNull(RESOLVE_TIMEOUT_MS) {
+            awaitMatchingAddress(
+                scanner = scanner,
+                targetName = target
+            )
+        }
+
+        return result ?: Result.failure(
+            IllegalStateException("AquaLight BLE device '$target' was not found nearby.")
+        )
+    }
+
+    @SuppressLint("MissingPermission")
+    private suspend fun awaitMatchingAddress(
+        scanner: BluetoothLeScanner,
+        targetName: String
+    ): Result<String> {
+        return suspendCancellableCoroutine { continuation ->
+            lateinit var callback: ScanCallback
+
+            callback = object : ScanCallback() {
+                override fun onScanResult(
+                    callbackType: Int,
+                    result: ScanResult
+                ) {
+                    if (!matchesTargetName(result, targetName)) {
+                        return
+                    }
+
+                    val address = runCatching {
+                        result.device.address
+                    }.getOrNull().orEmpty()
+
+                    if (address.isBlank()) {
+                        return
+                    }
+
+                    stopScan(scanner, callback)
+
+                    if (continuation.isActive) {
+                        continuation.resume(Result.success(address))
+                    }
+                }
+
+                override fun onBatchScanResults(results: MutableList<ScanResult>) {
+                    results.forEach { result ->
+                        onScanResult(0, result)
+                    }
+                }
+
+                override fun onScanFailed(errorCode: Int) {
+                    stopScan(scanner, callback)
+
+                    if (continuation.isActive) {
+                        continuation.resume(
+                            Result.failure(
+                                IllegalStateException("BLE resolve scan failed with code $errorCode.")
+                            )
+                        )
+                    }
+                }
+            }
+
+            continuation.invokeOnCancellation {
+                stopScan(scanner, callback)
+            }
+
+            runCatching {
+                scanner.startScan(
+                    scanFilters(),
+                    scanSettings(),
+                    callback
+                )
+            }.onFailure { error ->
+                stopScan(scanner, callback)
+
+                if (continuation.isActive) {
+                    continuation.resume(
+                        Result.failure(error)
+                    )
+                }
+            }
+        }
+    }
+
+    private fun matchesTargetName(
+        result: ScanResult,
+        targetName: String
+    ): Boolean {
+        val advertisedName = result.scanRecord?.deviceName.orEmpty()
+        val deviceName = runCatching {
+            result.device.name
+        }.getOrNull().orEmpty()
+
+        return advertisedName.equals(targetName, ignoreCase = true) ||
+            deviceName.equals(targetName, ignoreCase = true)
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun stopScan(
+        scanner: BluetoothLeScanner,
+        callback: ScanCallback
+    ) {
+        runCatching {
+            scanner.stopScan(callback)
+        }
+    }
+
+    private fun scanFilters(): List<ScanFilter> {
+        return listOf(
+            ScanFilter.Builder()
+                .setServiceUuid(ParcelUuid.fromString(AqlBleProvisioningContract.SERVICE_UUID))
+                .build()
+        )
+    }
+
+    private fun scanSettings(): ScanSettings {
+        return ScanSettings.Builder()
+            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+            .setReportDelay(0L)
+            .build()
+    }
+
+    private fun hasRequiredPermissions(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            hasPermission(Manifest.permission.BLUETOOTH_SCAN) &&
+                hasPermission(Manifest.permission.BLUETOOTH_CONNECT)
+        } else {
+            hasPermission(Manifest.permission.ACCESS_FINE_LOCATION) ||
+                hasPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
+        }
+    }
+
+    private fun hasPermission(permission: String): Boolean {
+        return ContextCompat.checkSelfPermission(
+            appContext,
+            permission
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private companion object {
+        const val RESOLVE_TIMEOUT_MS = 12_000L
+        val MAC_ADDRESS_REGEX =
+            Regex("^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$")
+    }
+}

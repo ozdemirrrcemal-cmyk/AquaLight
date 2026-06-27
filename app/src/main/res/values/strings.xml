@@ -516,4 +516,4 @@
     <string name="delete_account_dialog_message">Are you sure you want to permanently delete your account?\nThis action cannot be undone.</string>
     <string name="ucrop_label_edit_photo">Edit photo</string>
 
-</resources>
+\n    <string name="aquarium_remove_device_title">Remove device?</string>\n    <string name="aquarium_remove_device_message">Remove %1$s from this tank?</string>\n    <string name="aquarium_remove_action">Remove</string>\n</resources>

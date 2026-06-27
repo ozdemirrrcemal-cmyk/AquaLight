@@ -9,46 +9,6 @@ import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
 
 object AppRouteNavigator {
 
-    fun openDevice(
-        navController: NavController,
-        deviceId: Long,
-        deviceTitle: String = "",
-        clearSetupFlow: Boolean = false
-    ) {
-        if (deviceId <= 0L) {
-            return
-        }
-
-        val request = deepLinkRequest(
-            uri = Uri.Builder()
-                .scheme(SCHEME)
-                .authority(AUTHORITY)
-                .appendPath(PATH_DEVICE)
-                .appendPath(deviceId.toString())
-                .appendQueryParameter(QUERY_DEVICE_TITLE, deviceTitle)
-                .build()
-        )
-
-        navController.navigate(
-            request,
-            navOptions {
-                anim {
-                    enter = R.anim.nav_slide_in_right
-                    exit = R.anim.nav_slide_out_left
-                    popEnter = R.anim.nav_slide_in_left
-                    popExit = R.anim.nav_slide_out_right
-                }
-
-                if (clearSetupFlow) {
-                    popUpTo(R.id.devicesFragment) {
-                        inclusive = false
-                    }
-                    launchSingleTop = true
-                }
-            }
-        )
-    }
-
     fun openTankSettings(
         navController: NavController,
         tankId: Long,
@@ -114,11 +74,9 @@ object AppRouteNavigator {
     private const val SCHEME = "aqualight"
     private const val AUTHORITY = "app"
 
-    private const val PATH_DEVICE = "device"
     private const val PATH_TANK = "tank"
     private const val PATH_SETTINGS = "settings"
     private const val PATH_CARE_TASK = "care-task"
 
-    private const val QUERY_DEVICE_TITLE = "deviceTitle"
     private const val QUERY_START_TAB = "startTab"
 }
