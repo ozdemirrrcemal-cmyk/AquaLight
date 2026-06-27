@@ -199,12 +199,18 @@ class DeviceAddViewModel(
     }
 
     private fun AqlBleProvisioningCandidate.toUi(): DeviceAddCandidateUi {
+        val modelLabel = buildList {
+            if (model.isNotBlank()) add(model)
+            add("BLE provisioning")
+            add("RSSI $rssi dBm")
+        }.joinToString(separator = " • ")
+
         return DeviceAddCandidateUi(
-            id = address,
-            title = name.ifBlank { "AquaLight Device" },
-            serial = address,
-            model = "BLE provisioning • RSSI $rssi dBm",
-            status = "Ready",
+            id = deviceUid.ifBlank { address },
+            title = displayTitle,
+            serial = displaySerial,
+            model = modelLabel,
+            status = displayStatus,
             rssiLabel = "$rssi dBm"
         )
     }

@@ -27,6 +27,7 @@ class AqlBleProvisioningScanner(
         appContext.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
 
     private val lock = Any()
+    private val advertisementParser = AqlBleProvisioningAdvertisementParser()
     private val candidatesByAddress = linkedMapOf<String, AqlBleProvisioningCandidate>()
 
     private val _candidates = MutableStateFlow<List<AqlBleProvisioningCandidate>>(emptyList())
@@ -139,17 +140,31 @@ class AqlBleProvisioningScanner(
             ?: return
 
         val now = clockMillis()
-        val advertisedName = result.scanRecord?.deviceName.orEmpty()
-        val displayName = advertisedName.ifBlank { "AquaLight Device" }
+        val fallbackName = runCatching { result.device.name }
+            .getOrNull()
+            .orEmpty()
+            .ifBlank { result.scanRecord?.deviceName.orEmpty() }
+            .ifBlank { "AquaLight Device" }
+
+        val advertisement = advertisementParser.parse(
+            scanRecord = result.scanRecord,
+            fallbackBleName = fallbackName
+        )
 
         synchronized(lock) {
             val previous = candidatesByAddress[address]
             candidatesByAddress[address] = AqlBleProvisioningCandidate(
                 address = address,
-                name = displayName,
+                name = advertisement.bleName.ifBlank { fallbackName },
                 rssi = result.rssi,
                 firstSeenAtMillis = previous?.firstSeenAtMillis ?: now,
-                lastSeenAtMillis = now
+                lastSeenAtMillis = now,
+                deviceUid = advertisement.deviceUid,
+                productName = advertisement.displayTitle,
+                model = advertisement.model,
+                serialNumber = advertisement.displaySerial,
+                claimState = advertisement.displayStatus,
+                rawAdvertisementPayload = advertisement.rawPayload
             )
 
             _candidates.value = candidatesByAddress.values
