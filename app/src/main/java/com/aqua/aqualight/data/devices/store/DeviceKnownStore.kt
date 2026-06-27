@@ -105,6 +105,8 @@ class DeviceKnownStore(
             .put("apiVersion", snapshot.apiVersion)
             .put("protocolVersion", snapshot.protocolVersion)
             .put("endpoint", endpointToJson(snapshot.endpoint))
+            .put("capabilities", capabilitiesToJson(snapshot.capabilities))
+            .put("limits", limitsToJson(snapshot.limits))
             .put("supportedFeatures", JSONArray(snapshot.supportedFeatures))
             .put("supportedScreens", JSONArray(snapshot.supportedScreens))
             .put("modules", JSONArray(snapshot.modules))
@@ -157,11 +159,68 @@ class DeviceKnownStore(
             .put("discoveryPort", endpoint.discoveryPort)
     }
 
+    private fun capabilitiesToJson(capabilities: DeviceCapabilities): JSONObject {
+        return JSONObject()
+            .put("light", capabilities.light)
+            .put("manualLight", capabilities.manualLight)
+            .put("lightProgram", capabilities.lightProgram)
+            .put("lightPresets", capabilities.lightPresets)
+            .put("lightSimulation", capabilities.lightSimulation)
+            .put("fan", capabilities.fan)
+            .put("cooling", capabilities.cooling)
+            .put("temperature", capabilities.temperature)
+            .put("standaloneTimer", capabilities.standaloneTimer)
+            .put("dosing", capabilities.dosing)
+            .put("timeSync", capabilities.timeSync)
+            .put("ota", capabilities.ota)
+    }
+
+    private fun limitsToJson(limits: DeviceLimits): JSONObject {
+        return JSONObject()
+            .put("lightChannelCount", limits.lightChannelCount)
+            .put("fanOutputCount", limits.fanOutputCount)
+            .put("fanChannelCount", limits.fanChannelCount)
+            .put("temperatureSensorCount", limits.temperatureSensorCount)
+            .put("timerChannelCount", limits.timerChannelCount)
+            .put("dosingChannelCount", limits.dosingChannelCount)
+    }
+
+    private fun jsonToCapabilities(json: JSONObject): DeviceCapabilities {
+        return DeviceCapabilities(
+            light = json.optBoolean("light", false),
+            manualLight = json.optBoolean("manualLight", false),
+            lightProgram = json.optBoolean("lightProgram", false),
+            lightPresets = json.optBoolean("lightPresets", false),
+            lightSimulation = json.optBoolean("lightSimulation", false),
+            fan = json.optBoolean("fan", false),
+            cooling = json.optBoolean("cooling", false),
+            temperature = json.optBoolean("temperature", false),
+            standaloneTimer = json.optBoolean("standaloneTimer", false),
+            dosing = json.optBoolean("dosing", false),
+            timeSync = json.optBoolean("timeSync", false),
+            ota = json.optBoolean("ota", false)
+        )
+    }
+
+    private fun jsonToLimits(json: JSONObject): DeviceLimits {
+        val fanOutputCount = json.optInt("fanOutputCount", 0)
+        return DeviceLimits(
+            lightChannelCount = json.optInt("lightChannelCount", 0),
+            fanOutputCount = fanOutputCount,
+            fanChannelCount = json.optInt("fanChannelCount", fanOutputCount),
+            temperatureSensorCount = json.optInt("temperatureSensorCount", 0),
+            timerChannelCount = json.optInt("timerChannelCount", 0),
+            dosingChannelCount = json.optInt("dosingChannelCount", 0)
+        )
+    }
+
     private fun jsonToSnapshot(json: JSONObject): DeviceSnapshot? {
         return runCatching {
             val identityJson = json.getJSONObject("identity")
             val productJson = json.optJSONObject("product") ?: JSONObject()
             val endpointJson = json.optJSONObject("endpoint") ?: JSONObject()
+            val capabilitiesJson = json.optJSONObject("capabilities") ?: JSONObject()
+            val limitsJson = json.optJSONObject("limits") ?: JSONObject()
 
             val identity = DeviceIdentity(
                 uid = DeviceUid(identityJson.getString("uid")),
@@ -215,8 +274,8 @@ class DeviceKnownStore(
                     wsProtocolVersion = endpointJson.optInt("wsProtocolVersion", 0),
                     discoveryPort = endpointJson.optInt("discoveryPort", 0)
                 ),
-                capabilities = DeviceCapabilities(),
-                limits = DeviceLimits(),
+                capabilities = jsonToCapabilities(capabilitiesJson),
+                limits = jsonToLimits(limitsJson),
                 supportedFeatures = json.optStringArray("supportedFeatures"),
                 supportedScreens = json.optStringArray("supportedScreens"),
                 modules = json.optStringArray("modules"),
