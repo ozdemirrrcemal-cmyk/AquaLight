@@ -10,32 +10,28 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
-import com.aqua.aqualight.databinding.FragmentDeviceRootOverviewBinding
+import com.aqua.aqualight.databinding.FragmentDeviceCoolingRootBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
-import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewUiState
-import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import kotlinx.coroutines.launch
 
-class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_root_overview) {
+class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root) {
 
     private val args: DeviceCoolingRootFragmentArgs by navArgs()
-    private val viewModel: DeviceRootOverviewViewModel by viewModels()
+    private val viewModel: DeviceCoolingRootViewModel by viewModels()
 
-    private var _binding: FragmentDeviceRootOverviewBinding? = null
+    private var _binding: FragmentDeviceCoolingRootBinding? = null
     private val binding get() = _binding!!
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        _binding = FragmentDeviceRootOverviewBinding.bind(view)
+        _binding = FragmentDeviceCoolingRootBinding.bind(view)
 
-        setupHeader(title = args.deviceTitle.ifBlank { KIND.defaultTitle })
+        setupHeader(title = args.deviceTitle.ifBlank { DEFAULT_TITLE })
         observeViewModel()
 
         viewModel.bind(
-            kind = KIND,
             deviceUidText = args.deviceUid,
             fallbackTitle = args.deviceTitle
         )
@@ -63,7 +59,7 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_root_overvie
         }
     }
 
-    private fun renderState(state: DeviceRootOverviewUiState) {
+    private fun renderState(state: DeviceCoolingRootUiState) {
         if (_binding == null) return
 
         setupHeader(title = state.title)
@@ -89,6 +85,6 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_root_overvie
     }
 
     private companion object {
-        val KIND = DeviceRootKind.COOLING
+        const val DEFAULT_TITLE = "Cooling"
     }
 }

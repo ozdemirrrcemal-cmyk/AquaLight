@@ -10,32 +10,28 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
-import com.aqua.aqualight.databinding.FragmentDeviceRootOverviewBinding
+import com.aqua.aqualight.databinding.FragmentDeviceTimerRootBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
-import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewUiState
-import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import kotlinx.coroutines.launch
 
-class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_root_overview) {
+class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_timer_root) {
 
     private val args: DeviceTimerRootFragmentArgs by navArgs()
-    private val viewModel: DeviceRootOverviewViewModel by viewModels()
+    private val viewModel: DeviceTimerRootViewModel by viewModels()
 
-    private var _binding: FragmentDeviceRootOverviewBinding? = null
+    private var _binding: FragmentDeviceTimerRootBinding? = null
     private val binding get() = _binding!!
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        _binding = FragmentDeviceRootOverviewBinding.bind(view)
+        _binding = FragmentDeviceTimerRootBinding.bind(view)
 
-        setupHeader(title = args.deviceTitle.ifBlank { KIND.defaultTitle })
+        setupHeader(title = args.deviceTitle.ifBlank { DEFAULT_TITLE })
         observeViewModel()
 
         viewModel.bind(
-            kind = KIND,
             deviceUidText = args.deviceUid,
             fallbackTitle = args.deviceTitle
         )
@@ -63,7 +59,7 @@ class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_root_overview)
         }
     }
 
-    private fun renderState(state: DeviceRootOverviewUiState) {
+    private fun renderState(state: DeviceTimerRootUiState) {
         if (_binding == null) return
 
         setupHeader(title = state.title)
@@ -89,6 +85,6 @@ class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_root_overview)
     }
 
     private companion object {
-        val KIND = DeviceRootKind.TIMER
+        const val DEFAULT_TITLE = "Timer"
     }
 }
