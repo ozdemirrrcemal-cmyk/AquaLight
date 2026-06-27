@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.add
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -20,12 +21,23 @@ import kotlinx.coroutines.launch
 class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
 
     private val viewModel: DeviceAddViewModel by viewModels()
+    private val permissionController = DeviceAddPermissionController()
 
     private var _binding: FragmentDeviceAddBinding? = null
     private val binding get() = _binding!!
 
     private val candidateAdapter = DeviceAddCandidateAdapter { candidate ->
         viewModel.onCandidateClicked(candidate)
+    }
+
+    private val blePermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { result ->
+        if (permissionController.hasBlePermissionsFromResult(requireContext(), result)) {
+            viewModel.startBleScan()
+        } else {
+            viewModel.onBlePermissionDenied()
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -63,12 +75,23 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         }
 
         binding.cardBle.setOnClickListener {
-            viewModel.onBleScanClicked()
+            startBleScanWithPermissionCheck()
         }
 
         binding.btnScanAgain.setOnClickListener {
-            viewModel.onScanAgainClicked()
+            startBleScanWithPermissionCheck()
         }
+    }
+
+    private fun startBleScanWithPermissionCheck() {
+        if (permissionController.hasBlePermissions(requireContext())) {
+            viewModel.startBleScan()
+            return
+        }
+
+        blePermissionLauncher.launch(
+            permissionController.blePermissions()
+        )
     }
 
     private fun observeViewModel() {
