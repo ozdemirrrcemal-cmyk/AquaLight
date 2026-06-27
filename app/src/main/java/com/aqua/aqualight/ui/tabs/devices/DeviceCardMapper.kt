@@ -4,6 +4,7 @@ import com.aqua.aqualight.data.devices.model.DeviceCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
+import com.aqua.aqualight.ui.common.devicecard.DeviceFamilyIconMapper
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
@@ -33,7 +34,8 @@ object DeviceCardMapper {
                 .ifBlank { snapshot.product.model }
                 .ifBlank { snapshot.product.productKey }
                 .ifBlank { snapshot.product.family.wireValue },
-            onlineState = onlineState
+            onlineState = onlineState,
+            iconRes = DeviceFamilyIconMapper.iconFor(snapshot.product.family)
         )
     }
 

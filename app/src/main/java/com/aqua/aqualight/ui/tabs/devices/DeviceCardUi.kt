@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices
 
+import androidx.annotation.DrawableRes
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 
 /** User-facing card model for the Devices tab. */
@@ -14,7 +15,8 @@ data class DeviceCardUi(
     val firmwareText: String,
     val lastSeenText: String,
     val productText: String,
-    val onlineState: DeviceOnlineState
+    val onlineState: DeviceOnlineState,
+    @DrawableRes val iconRes: Int
 ) {
     enum class StatusStyle {
         ONLINE,
