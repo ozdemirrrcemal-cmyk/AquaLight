@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="light_bg">#07131F</color>
+    <color name="light_surface_soft">#162638</color>
+    <color name="light_stroke">#2B425A</color>
+    <color name="light_text_primary">#F4F8FC</color>
+    <color name="light_text_secondary">#9AAEC4</color>
+    <color name="light_button_primary">#6489C9</color>
+    <color name="light_button_on_primary">#F4F8FC</color>
+    <color name="light_button_secondary">#162638</color>
+    <color name="light_button_on_secondary">#F4F8FC</color>
+</resources>

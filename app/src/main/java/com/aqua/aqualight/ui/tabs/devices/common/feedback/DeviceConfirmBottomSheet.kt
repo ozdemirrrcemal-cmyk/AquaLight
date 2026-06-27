@@ -59,9 +59,9 @@ class DeviceConfirmBottomSheet private constructor(
         tone: DeviceConfirmTone
     ): Int {
         return when (tone) {
-            DeviceConfirmTone.INFO -> R.drawable.ic_aqua_info_24
-            DeviceConfirmTone.WARNING -> R.drawable.ic_aqua_warning_24
-            DeviceConfirmTone.DANGER -> R.drawable.ic_aqua_warning_24
+            DeviceConfirmTone.INFO -> R.drawable.ic_info
+            DeviceConfirmTone.WARNING -> R.drawable.ic_warning
+            DeviceConfirmTone.DANGER -> R.drawable.ic_warning
         }
     }
 
