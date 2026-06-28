@@ -33,7 +33,7 @@ object AqlBleProvisioningContract {
         const val KEY_MODEL = "model"
         const val KEY_HARDWARE_REVISION = "hw"
         const val KEY_DEVICE_UID = "uid"
-        const val KEY_PRODUCT_ID = "pid"
+        const val KEY_PROVISIONING_ID = "pid"
         const val KEY_CLAIM_CODE = "claim"
         const val KEY_BLE_NAME = "ble"
     }
@@ -45,6 +45,9 @@ object AqlBleProvisioningContract {
         const val KEY_CLAIM_CODE = "claimCode"
         const val KEY_WIFI_SSID = "ssid"
         const val KEY_WIFI_PASSWORD = "password"
+        const val KEY_WIFI_BSSID = "bssid"
+        const val KEY_WIFI_CHANNEL = "channel"
+        const val KEY_WIFI_TIMEZONE = "timezone"
         const val KEY_STATUS = "status"
         const val KEY_MESSAGE = "message"
         const val KEY_LAST_ERROR = "lastError"
