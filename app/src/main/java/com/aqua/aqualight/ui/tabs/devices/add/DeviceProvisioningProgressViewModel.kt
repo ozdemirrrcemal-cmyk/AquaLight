@@ -1,8 +1,10 @@
 package com.aqua.aqualight.ui.tabs.devices.add
 
 import android.app.Application
+import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningAddressResolver
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningGattClient
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningGattEvent
@@ -30,7 +32,7 @@ class DeviceProvisioningProgressViewModel(
     private val handoffSaver = AqlProvisioningHandoffSaver(application)
     private val routeResolver = DeviceRouteResolver()
 
-    private val _uiState = MutableStateFlow(DeviceProvisioningProgressUiState())
+    private val _uiState = MutableStateFlow(initialState())
     val uiState: StateFlow<DeviceProvisioningProgressUiState> = _uiState.asStateFlow()
 
     private val _events = Channel<DeviceProvisioningProgressEvent>(Channel.BUFFERED)
@@ -54,45 +56,47 @@ class DeviceProvisioningProgressViewModel(
 
         if (draft == null) {
             _uiState.value = DeviceProvisioningProgressUiState(
-                title = "Setup session expired",
-                message = "Go back and select the device again.",
-                deviceName = "Unknown device",
-                deviceSerial = "Unknown",
-                bleAddress = "Unknown",
-                wifiSsid = "Unknown",
-                stepOne = "Device selected",
-                stepTwo = "Wi-Fi details prepared",
-                stepThree = "Setup session not found",
+                title = string(R.string.device_provisioning_session_expired_title),
+                message = string(R.string.device_provisioning_session_expired_message),
+                deviceName = string(R.string.device_provisioning_unknown_device),
+                deviceSerial = string(R.string.device_provisioning_unknown),
+                bleAddress = string(R.string.device_provisioning_unknown),
+                wifiSsid = string(R.string.device_provisioning_unknown),
+                stepOne = string(R.string.device_provisioning_step_device_selected),
+                stepTwo = string(R.string.device_provisioning_step_wifi_prepared),
+                stepThree = string(R.string.device_provisioning_session_not_found),
                 canStart = false,
-                buttonText = "Unavailable",
+                buttonText = string(R.string.device_provisioning_unavailable),
                 showProgress = false
             )
             return
         }
 
         _uiState.value = DeviceProvisioningProgressUiState(
-            title = "Device ready for setup",
-            message = "Wi-Fi details are ready. A secure connection to your AquaLight device is being prepared.",
-            deviceName = draft.deviceTitle.ifBlank { "AquaLight Device" },
+            title = string(R.string.device_provisioning_ready_title),
+            message = string(R.string.device_provisioning_ready_message),
+            deviceName = draft.deviceTitle.ifBlank { string(R.string.device_wifi_default_device_name) },
             deviceSerial = draft.deviceSerial.ifBlank { draft.candidateId },
-            bleAddress = draft.bleAddress.ifBlank { draft.bleName.ifBlank { "QR device will be located" } },
+            bleAddress = draft.bleAddress.ifBlank {
+                draft.bleName.ifBlank { string(R.string.device_provisioning_qr_device_will_be_located) }
+            },
             wifiSsid = draft.wifiCredentials.ssid,
-            stepOne = "Device selected",
-            stepTwo = "Wi-Fi details prepared",
-            stepThree = "Preparing secure connection",
+            stepOne = string(R.string.device_provisioning_step_device_selected),
+            stepTwo = string(R.string.device_provisioning_step_wifi_prepared),
+            stepThree = string(R.string.device_provisioning_step_preparing_secure),
             canStart = true,
-            buttonText = "Try again",
+            buttonText = string(R.string.device_provisioning_try_again),
             showProgress = false
         )
     }
 
     fun onBlePermissionDenied() {
         _uiState.value = _uiState.value.copy(
-            title = "Bluetooth permission required",
-            message = "Allow Bluetooth access to complete secure device setup.",
-            stepThree = "Waiting for Bluetooth permission",
+            title = string(R.string.device_provisioning_bluetooth_permission_title),
+            message = string(R.string.device_provisioning_bluetooth_permission_message),
+            stepThree = string(R.string.device_provisioning_waiting_bluetooth_permission),
             canStart = true,
-            buttonText = "Try again",
+            buttonText = string(R.string.device_provisioning_try_again),
             showProgress = false
         )
     }
@@ -100,10 +104,10 @@ class DeviceProvisioningProgressViewModel(
     fun startProvisioning() {
         val draft = activeDraft ?: run {
             _uiState.value = _uiState.value.copy(
-                title = "Setup session expired",
-                message = "Go back and select the device again.",
+                title = string(R.string.device_provisioning_session_expired_title),
+                message = string(R.string.device_provisioning_session_expired_message),
                 canStart = false,
-                buttonText = "Unavailable",
+                buttonText = string(R.string.device_provisioning_unavailable),
                 showProgress = false
             )
             return
@@ -118,12 +122,12 @@ class DeviceProvisioningProgressViewModel(
             activeDraft = readyDraft
 
             _uiState.value = _uiState.value.copy(
-                title = "Connecting to device",
-                message = "A secure Bluetooth connection is being established with your AquaLight device.",
+                title = string(R.string.device_provisioning_connecting_title),
+                message = string(R.string.device_provisioning_connecting_message),
                 bleAddress = readyDraft.bleAddress,
-                stepThree = "Connecting over Bluetooth",
+                stepThree = string(R.string.device_provisioning_connecting_step),
                 canStart = false,
-                buttonText = "Provisioning...",
+                buttonText = string(R.string.device_provisioning_running),
                 showProgress = true
             )
 
@@ -141,34 +145,34 @@ class DeviceProvisioningProgressViewModel(
         val bleName = draft.bleName.trim()
         if (bleName.isBlank()) {
             _uiState.value = _uiState.value.copy(
-                title = "Device not found",
-                message = "The QR code does not include a Bluetooth name. Search for the device with Scan and try again.",
-                stepThree = "Device not found",
+                title = string(R.string.device_provisioning_device_not_found_title),
+                message = string(R.string.device_provisioning_qr_missing_ble_message),
+                stepThree = string(R.string.device_provisioning_device_not_found_title),
                 canStart = true,
-                buttonText = "Try again",
+                buttonText = string(R.string.device_provisioning_try_again),
                 showProgress = false
             )
             return null
         }
 
         _uiState.value = _uiState.value.copy(
-            title = "Locating QR device",
-            message = "Searching for $bleName over Bluetooth.",
+            title = string(R.string.device_provisioning_locating_qr_title),
+            message = string(R.string.device_provisioning_locating_qr_message_format, bleName),
             bleAddress = bleName,
-            stepThree = "Locating QR device over Bluetooth",
+            stepThree = string(R.string.device_provisioning_locating_qr_step),
             canStart = false,
-            buttonText = "Finding...",
+            buttonText = string(R.string.device_provisioning_finding),
             showProgress = true
         )
 
         val resolvedAddress = addressResolver.resolveAddress(bleName)
             .getOrElse { error ->
                 _uiState.value = _uiState.value.copy(
-                    title = "QR device not found",
-                    message = error.message ?: "The device selected by QR could not be found over Bluetooth.",
-                    stepThree = "Device not found",
+                    title = string(R.string.device_provisioning_qr_not_found_title),
+                    message = error.message ?: string(R.string.device_provisioning_qr_not_found_message),
+                    stepThree = string(R.string.device_provisioning_device_not_found_title),
                     canStart = true,
-                    buttonText = "Try again",
+                    buttonText = string(R.string.device_provisioning_try_again),
                     showProgress = false
                 )
                 return null
@@ -201,11 +205,11 @@ class DeviceProvisioningProgressViewModel(
             AqlBleProvisioningGattEvent.Completed -> {
                 if (!handoffSaved) {
                     _uiState.value = _uiState.value.copy(
-                        title = "Setup complete",
-                        message = "Device details received. Preparing the device menu.",
-                        stepThree = "Preparing device menu",
+                        title = string(R.string.device_provisioning_setup_complete_title),
+                        message = string(R.string.device_provisioning_details_received_message),
+                        stepThree = string(R.string.device_provisioning_preparing_menu_step),
                         canStart = false,
-                        buttonText = "Saving...",
+                        buttonText = string(R.string.device_provisioning_saving),
                         showProgress = true
                     )
                 }
@@ -223,47 +227,47 @@ class DeviceProvisioningProgressViewModel(
         return when (event) {
             is AqlBleProvisioningGattEvent.Connecting -> {
                 _uiState.value.copy(
-                    title = "Connecting to device",
-                    message = "A secure Bluetooth connection is being established with your AquaLight device.",
-                    stepThree = "Connecting over Bluetooth",
+                    title = string(R.string.device_provisioning_connecting_title),
+                    message = string(R.string.device_provisioning_connecting_message),
+                    stepThree = string(R.string.device_provisioning_connecting_step),
                     canStart = false,
-                    buttonText = "Provisioning...",
+                    buttonText = string(R.string.device_provisioning_running),
                     showProgress = true
                 )
             }
 
             is AqlBleProvisioningGattEvent.Connected -> {
                 _uiState.value.copy(
-                    title = "Device found",
-                    message = "Preparing the setup service.",
-                    stepThree = "Bluetooth connection established",
+                    title = string(R.string.device_provisioning_device_found_title),
+                    message = string(R.string.device_provisioning_prepare_service_message),
+                    stepThree = string(R.string.device_provisioning_bluetooth_connected_step),
                     showProgress = true
                 )
             }
 
             AqlBleProvisioningGattEvent.ServicesDiscovered -> {
                 _uiState.value.copy(
-                    title = "Preparing secure session",
-                    message = "Starting the device setup session.",
-                    stepThree = "Starting secure session",
+                    title = string(R.string.device_provisioning_secure_session_title),
+                    message = string(R.string.device_provisioning_secure_session_message),
+                    stepThree = string(R.string.device_provisioning_secure_session_step),
                     showProgress = true
                 )
             }
 
             AqlBleProvisioningGattEvent.StartSessionWritten -> {
                 _uiState.value.copy(
-                    title = "Secure session started",
-                    message = "Sending Wi-Fi details to your device.",
-                    stepThree = "Sending Wi-Fi details",
+                    title = string(R.string.device_provisioning_session_started_title),
+                    message = string(R.string.device_provisioning_sending_wifi_message),
+                    stepThree = string(R.string.device_provisioning_sending_wifi_step),
                     showProgress = true
                 )
             }
 
             AqlBleProvisioningGattEvent.WifiCredentialsWritten -> {
                 _uiState.value.copy(
-                    title = "Wi-Fi details sent",
-                    message = "Your device is connecting to the Wi-Fi network.",
-                    stepThree = "Connecting device to Wi-Fi",
+                    title = string(R.string.device_provisioning_wifi_sent_title),
+                    message = string(R.string.device_provisioning_wifi_connecting_message),
+                    stepThree = string(R.string.device_provisioning_wifi_connecting_step),
                     showProgress = true
                 )
             }
@@ -277,25 +281,20 @@ class DeviceProvisioningProgressViewModel(
                     stepThree = event.statusMessage.status.toProgressStep(),
                     showProgress = event.statusMessage.status !in terminalStatuses,
                     canStart = event.statusMessage.status in retryStatuses,
-                    buttonText = "Try again"
+                    buttonText = string(R.string.device_provisioning_try_again)
                 )
             }
 
-            is AqlBleProvisioningGattEvent.RuntimeHandoffReceived -> {
-                _uiState.value
-            }
-
-            AqlBleProvisioningGattEvent.Completed -> {
-                _uiState.value
-            }
+            is AqlBleProvisioningGattEvent.RuntimeHandoffReceived -> _uiState.value
+            AqlBleProvisioningGattEvent.Completed -> _uiState.value
 
             is AqlBleProvisioningGattEvent.Failed -> {
                 _uiState.value.copy(
-                    title = "Setup could not be completed",
+                    title = string(R.string.device_provisioning_failed_title),
                     message = event.message.toFriendlyError(),
-                    stepThree = "Setup stopped",
+                    stepThree = string(R.string.device_provisioning_setup_stopped),
                     canStart = true,
-                    buttonText = "Try again",
+                    buttonText = string(R.string.device_provisioning_try_again),
                     showProgress = false
                 )
             }
@@ -305,11 +304,11 @@ class DeviceProvisioningProgressViewModel(
                     _uiState.value
                 } else {
                     _uiState.value.copy(
-                        title = "Connection closed",
-                        message = "The device setup connection was closed. If the device is still in setup mode, try again.",
-                        stepThree = "Connection closed",
+                        title = string(R.string.device_provisioning_connection_closed_title),
+                        message = string(R.string.device_provisioning_connection_closed_message),
+                        stepThree = string(R.string.device_provisioning_connection_closed_step),
                         canStart = true,
-                        buttonText = "Try again",
+                        buttonText = string(R.string.device_provisioning_try_again),
                         showProgress = false
                     )
                 }
@@ -321,11 +320,11 @@ class DeviceProvisioningProgressViewModel(
         handoff: AqlProvisioningRuntimeHandoff
     ) {
         _uiState.value = _uiState.value.copy(
-            title = "Device online",
-            message = "Your AquaLight device is connected to Wi-Fi. Preparing the device menu.",
-            stepThree = "Preparing device menu",
+            title = string(R.string.device_provisioning_device_online_title),
+            message = string(R.string.device_provisioning_device_online_message),
+            stepThree = string(R.string.device_provisioning_preparing_menu_step),
             canStart = false,
-            buttonText = "Saving...",
+            buttonText = string(R.string.device_provisioning_saving),
             showProgress = true
         )
     }
@@ -335,11 +334,11 @@ class DeviceProvisioningProgressViewModel(
     ) {
         val draft = activeDraft ?: run {
             _uiState.value = _uiState.value.copy(
-                title = "Setup session expired",
-                message = "Device details arrived, but the local setup session could not be found.",
-                stepThree = "Device could not be saved",
+                title = string(R.string.device_provisioning_session_expired_title),
+                message = string(R.string.device_provisioning_save_missing_session_message),
+                stepThree = string(R.string.device_provisioning_save_failed_step),
                 canStart = true,
-                buttonText = "Try again",
+                buttonText = string(R.string.device_provisioning_try_again),
                 showProgress = false
             )
             return
@@ -363,11 +362,11 @@ class DeviceProvisioningProgressViewModel(
                 )
 
                 _uiState.value = _uiState.value.copy(
-                    title = "Device added",
-                    message = "${snapshot.title} is ready. Opening the device menu.",
-                    stepThree = "Opening device menu",
+                    title = string(R.string.device_provisioning_added_title),
+                    message = string(R.string.device_provisioning_added_message_format, snapshot.title),
+                    stepThree = string(R.string.device_provisioning_opening_menu_step),
                     canStart = false,
-                    buttonText = "Opening...",
+                    buttonText = string(R.string.device_provisioning_opening),
                     showProgress = true
                 )
 
@@ -376,11 +375,11 @@ class DeviceProvisioningProgressViewModel(
                 )
             }.onFailure { error ->
                 _uiState.value = _uiState.value.copy(
-                    title = "Device could not be saved",
-                    message = error.message ?: "Device details could not be saved.",
-                    stepThree = "Device could not be saved",
+                    title = string(R.string.device_provisioning_save_failed_title),
+                    message = error.message ?: string(R.string.device_provisioning_save_failed_message),
+                    stepThree = string(R.string.device_provisioning_save_failed_step),
                     canStart = true,
-                    buttonText = "Try again",
+                    buttonText = string(R.string.device_provisioning_try_again),
                     showProgress = false
                 )
             }
@@ -391,19 +390,19 @@ class DeviceProvisioningProgressViewModel(
         return when (this) {
             AqlProvisioningStatus.IDLE,
             AqlProvisioningStatus.FACTORY,
-            AqlProvisioningStatus.PHYSICAL_RESET -> "Device in setup mode"
+            AqlProvisioningStatus.PHYSICAL_RESET -> string(R.string.device_provisioning_status_setup_mode_title)
             AqlProvisioningStatus.PROVISIONING_IN_PROGRESS,
-            AqlProvisioningStatus.CLAIM_VALIDATING -> "Verifying setup"
-            AqlProvisioningStatus.WIFI_CREDENTIALS_RECEIVED -> "Wi-Fi details received"
-            AqlProvisioningStatus.WIFI_CONNECTING -> "Connecting to Wi-Fi"
-            AqlProvisioningStatus.WIFI_CONNECTED -> "Wi-Fi connected"
-            AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY -> "Device online"
-            AqlProvisioningStatus.COMPLETED -> "Setup complete"
-            AqlProvisioningStatus.WIFI_FAILED -> "Wi-Fi connection failed"
-            AqlProvisioningStatus.CLAIM_REJECTED -> "Device verification failed"
-            AqlProvisioningStatus.TIMEOUT -> "Setup timed out"
+            AqlProvisioningStatus.CLAIM_VALIDATING -> string(R.string.device_provisioning_status_verifying_title)
+            AqlProvisioningStatus.WIFI_CREDENTIALS_RECEIVED -> string(R.string.device_provisioning_status_wifi_received_title)
+            AqlProvisioningStatus.WIFI_CONNECTING -> string(R.string.device_provisioning_status_wifi_connecting_title)
+            AqlProvisioningStatus.WIFI_CONNECTED -> string(R.string.device_provisioning_status_wifi_connected_title)
+            AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY -> string(R.string.device_provisioning_device_online_title)
+            AqlProvisioningStatus.COMPLETED -> string(R.string.device_provisioning_setup_complete_title)
+            AqlProvisioningStatus.WIFI_FAILED -> string(R.string.device_provisioning_status_wifi_failed_title)
+            AqlProvisioningStatus.CLAIM_REJECTED -> string(R.string.device_provisioning_status_claim_rejected_title)
+            AqlProvisioningStatus.TIMEOUT -> string(R.string.device_provisioning_status_timeout_title)
             AqlProvisioningStatus.ERROR,
-            AqlProvisioningStatus.UNKNOWN -> "Waiting for device status"
+            AqlProvisioningStatus.UNKNOWN -> string(R.string.device_provisioning_status_waiting_title)
         }
     }
 
@@ -411,34 +410,36 @@ class DeviceProvisioningProgressViewModel(
         return when (this) {
             AqlProvisioningStatus.IDLE,
             AqlProvisioningStatus.FACTORY,
-            AqlProvisioningStatus.PHYSICAL_RESET -> "The device is in setup mode. Preparing a secure session."
+            AqlProvisioningStatus.PHYSICAL_RESET -> string(R.string.device_provisioning_status_setup_mode_message)
             AqlProvisioningStatus.PROVISIONING_IN_PROGRESS,
-            AqlProvisioningStatus.CLAIM_VALIDATING -> "The AquaLight device is verifying the setup request."
-            AqlProvisioningStatus.WIFI_CREDENTIALS_RECEIVED -> "The device received the Wi-Fi details and is starting the connection."
-            AqlProvisioningStatus.WIFI_CONNECTING -> "The device is connecting to the selected 2.4 GHz Wi-Fi network."
-            AqlProvisioningStatus.WIFI_CONNECTED -> "Wi-Fi connection successful. Preparing the device menu."
-            AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY -> "The device runtime connection is ready. Opening the menu."
-            AqlProvisioningStatus.COMPLETED -> "Setup is complete. Opening the device menu."
-            AqlProvisioningStatus.WIFI_FAILED -> "The password may be incorrect or the device may not see the 2.4 GHz network. Check the network and password."
-            AqlProvisioningStatus.CLAIM_REJECTED -> "The device rejected this setup request. Use QR setup or hold the setup button for 5 seconds and try again."
-            AqlProvisioningStatus.TIMEOUT -> "The device setup window expired. Hold the setup button for 5 seconds and try again."
+            AqlProvisioningStatus.CLAIM_VALIDATING -> string(R.string.device_provisioning_status_verifying_message)
+            AqlProvisioningStatus.WIFI_CREDENTIALS_RECEIVED -> string(R.string.device_provisioning_status_wifi_received_message)
+            AqlProvisioningStatus.WIFI_CONNECTING -> string(R.string.device_provisioning_status_wifi_connecting_message)
+            AqlProvisioningStatus.WIFI_CONNECTED -> string(R.string.device_provisioning_status_wifi_connected_message)
+            AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY -> string(R.string.device_provisioning_status_runtime_ready_message)
+            AqlProvisioningStatus.COMPLETED -> string(R.string.device_provisioning_status_setup_complete_message)
+            AqlProvisioningStatus.WIFI_FAILED -> string(R.string.device_provisioning_status_wifi_failed_message)
+            AqlProvisioningStatus.CLAIM_REJECTED -> string(R.string.device_provisioning_status_claim_rejected_message)
+            AqlProvisioningStatus.TIMEOUT -> string(R.string.device_provisioning_status_timeout_message)
             AqlProvisioningStatus.ERROR,
-            AqlProvisioningStatus.UNKNOWN -> fallback.ifBlank { "Waiting for device setup status." }
+            AqlProvisioningStatus.UNKNOWN -> fallback.ifBlank {
+                string(R.string.device_provisioning_status_unknown_message)
+            }
         }
     }
 
     private fun AqlProvisioningStatus.toProgressStep(): String {
         return when (this) {
-            AqlProvisioningStatus.WIFI_CREDENTIALS_RECEIVED -> "Wi-Fi details delivered to device"
-            AqlProvisioningStatus.WIFI_CONNECTING -> "Connecting device to Wi-Fi"
-            AqlProvisioningStatus.WIFI_CONNECTED -> "Wi-Fi connection successful"
-            AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY -> "Preparing device menu"
-            AqlProvisioningStatus.COMPLETED -> "Setup complete"
-            AqlProvisioningStatus.WIFI_FAILED -> "Wi-Fi connection failed"
-            AqlProvisioningStatus.CLAIM_REJECTED -> "Device verification failed"
-            AqlProvisioningStatus.TIMEOUT -> "Setup timed out"
-            AqlProvisioningStatus.ERROR -> "Setup stopped"
-            else -> "Setup in progress"
+            AqlProvisioningStatus.WIFI_CREDENTIALS_RECEIVED -> string(R.string.device_provisioning_step_wifi_delivered)
+            AqlProvisioningStatus.WIFI_CONNECTING -> string(R.string.device_provisioning_wifi_connecting_step)
+            AqlProvisioningStatus.WIFI_CONNECTED -> string(R.string.device_provisioning_step_wifi_success)
+            AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY -> string(R.string.device_provisioning_preparing_menu_step)
+            AqlProvisioningStatus.COMPLETED -> string(R.string.device_provisioning_step_setup_complete)
+            AqlProvisioningStatus.WIFI_FAILED -> string(R.string.device_provisioning_step_wifi_failed)
+            AqlProvisioningStatus.CLAIM_REJECTED -> string(R.string.device_provisioning_step_verification_failed)
+            AqlProvisioningStatus.TIMEOUT -> string(R.string.device_provisioning_step_timeout)
+            AqlProvisioningStatus.ERROR -> string(R.string.device_provisioning_setup_stopped)
+            else -> string(R.string.device_provisioning_step_in_progress)
         }
     }
 
@@ -446,12 +447,30 @@ class DeviceProvisioningProgressViewModel(
         val normalized = trim()
         return when {
             normalized.contains("StartSession is required", ignoreCase = true) ->
-                "The device rejected Wi-Fi details before the secure setup session was ready. Put the device in setup mode and try again."
+                string(R.string.device_provisioning_error_start_session)
             normalized.contains("WiFi", ignoreCase = true) || normalized.contains("wifi", ignoreCase = true) ->
-                "Wi-Fi connection failed. Make sure the network is 2.4 GHz and the password is correct."
+                string(R.string.device_provisioning_error_wifi_failed)
             normalized.isNotBlank() -> normalized
-            else -> "An unexpected setup problem occurred. Try again."
+            else -> string(R.string.device_provisioning_error_unexpected)
         }
+    }
+
+    private fun initialState(): DeviceProvisioningProgressUiState {
+        return DeviceProvisioningProgressUiState(
+            title = string(R.string.device_provisioning_default_title),
+            message = string(R.string.device_provisioning_default_message),
+            stepOne = string(R.string.device_provisioning_step_device_selected),
+            stepTwo = string(R.string.device_provisioning_step_wifi_prepared),
+            stepThree = string(R.string.device_provisioning_step_preparing_secure),
+            buttonText = string(R.string.device_provisioning_try_again)
+        )
+    }
+
+    private fun string(
+        @StringRes resId: Int,
+        vararg args: Any
+    ): String {
+        return getApplication<Application>().getString(resId, *args)
     }
 
     override fun onCleared() {
@@ -486,16 +505,16 @@ sealed interface DeviceProvisioningProgressEvent {
 }
 
 data class DeviceProvisioningProgressUiState(
-    val title: String = "Setting up device",
-    val message: String = "Your AquaLight device is being prepared securely.",
+    val title: String = "",
+    val message: String = "",
     val deviceName: String = "",
     val deviceSerial: String = "",
     val bleAddress: String = "",
     val wifiSsid: String = "",
-    val stepOne: String = "Device selected",
-    val stepTwo: String = "Wi-Fi details prepared",
-    val stepThree: String = "Preparing secure connection",
+    val stepOne: String = "",
+    val stepTwo: String = "",
+    val stepThree: String = "",
     val canStart: Boolean = false,
-    val buttonText: String = "Try again",
+    val buttonText: String = "",
     val showProgress: Boolean = false
 )
