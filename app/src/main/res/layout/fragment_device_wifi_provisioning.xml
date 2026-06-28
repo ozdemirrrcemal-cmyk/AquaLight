@@ -58,9 +58,9 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textColor="@color/white"
-                        android:textSize="22sp"
+                        android:textSize="24sp"
                         android:textStyle="bold"
-                        tools:text="WRGB Pro Elite" />
+                        tools:text="Dosing Pro 4" />
 
                     <TextView
                         android:id="@+id/tvDeviceSerial"
@@ -68,8 +68,8 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:textColor="#8FA4BE"
-                        android:textSize="12sp"
-                        tools:text="Serial: AQL-LIGHT-123456" />
+                        android:textSize="13sp"
+                        tools:text="Serial: AQL-DP4-336172" />
 
                     <TextView
                         android:id="@+id/tvDeviceModel"
@@ -78,16 +78,7 @@
                         android:layout_marginTop="5dp"
                         android:textColor="#B9C8DA"
                         android:textSize="12sp"
-                        tools:text="BLE provisioning • RSSI -52 dBm" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="18dp"
-                        android:lineSpacingExtra="2dp"
-                        android:text="Connect this device to your aquarium Wi-Fi network. Credentials are sent locally over Bluetooth provisioning."
-                        android:textColor="#8FA4BE"
-                        android:textSize="14sp" />
+                        tools:text="Setup mode • RSSI -52 dBm" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -110,16 +101,77 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Wi-Fi network"
+                        android:text="2.4 GHz Wi-Fi ağını seçin"
                         android:textColor="@color/white"
-                        android:textSize="18sp"
+                        android:textSize="20sp"
                         android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="7dp"
+                        android:lineSpacingExtra="2dp"
+                        android:text="Cihazınız yalnızca 2.4 GHz ağlara bağlanır. Telefonunuzu aynı ağa bağlayıp Select Wi-Fi ile ağı seçebilirsiniz."
+                        android:textColor="#8FA4BE"
+                        android:textSize="13sp" />
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/wifiSelectRow"
+                        android:layout_width="match_parent"
+                        android:layout_height="58dp"
+                        android:layout_marginTop="18dp"
+                        android:background="@drawable/bg_aqua_input"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp">
+
+                        <ImageView
+                            android:id="@+id/ivWifiIcon"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:contentDescription="Wi-Fi"
+                            android:src="@drawable/ic_wifi"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:tint="@color/white" />
+
+                        <TextView
+                            android:id="@+id/tvSelectedWifi"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="14dp"
+                            android:layout_marginEnd="12dp"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:text="Wi-Fi seçilmedi"
+                            android:textColor="@color/white"
+                            android:textSize="15sp"
+                            android:textStyle="bold"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toStartOf="@id/tvSelectWifiAction"
+                            app:layout_constraintStart_toEndOf="@id/ivWifiIcon"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <TextView
+                            android:id="@+id/tvSelectWifiAction"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Select Wi-Fi"
+                            android:textColor="@color/aqua_accent"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
 
                     <EditText
                         android:id="@+id/etWifiSsid"
                         android:layout_width="match_parent"
                         android:layout_height="52dp"
-                        android:layout_marginTop="16dp"
+                        android:layout_marginTop="12dp"
                         android:background="@drawable/bg_aqua_input"
                         android:hint="Wi-Fi name / SSID"
                         android:inputType="text"
@@ -162,24 +214,25 @@
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnContinue"
                         android:layout_width="match_parent"
-                        android:layout_height="50dp"
+                        android:layout_height="52dp"
                         android:layout_marginTop="18dp"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
                         android:text="Continue"
                         android:textAllCaps="false"
                         android:textColor="@color/white"
+                        android:textSize="15sp"
                         android:textStyle="bold"
                         app:backgroundTint="#1E90FF"
-                        app:cornerRadius="17dp" />
+                        app:cornerRadius="18dp" />
 
                     <TextView
                         android:id="@+id/tvFormHint"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="13dp"
                         android:lineSpacingExtra="2dp"
-                        android:text="Your Wi-Fi credentials stay local and will be transferred directly to the selected AquaLight device over BLE."
+                        android:text="Wi-Fi bilgileri yalnızca seçili AquaLight cihazına Bluetooth üzerinden gönderilir."
                         android:textColor="#8FA4BE"
                         android:textSize="12sp" />
                 </LinearLayout>
