@@ -53,6 +53,9 @@ class AqlBleProvisioningGattClient(
     @Volatile
     private var runtimeEndpointCharacteristic: BluetoothGattCharacteristic? = null
 
+    @Volatile
+    private var wifiCredentialsWritten = false
+
     @SuppressLint("MissingPermission")
     fun start(draft: AqlProvisioningDraft) {
         close()
@@ -85,6 +88,7 @@ class AqlBleProvisioningGattClient(
         }
 
         activeDraft = draft
+        wifiCredentialsWritten = false
         emit(AqlBleProvisioningGattEvent.Connecting(draft.bleAddress))
 
         activeGatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -120,6 +124,7 @@ class AqlBleProvisioningGattClient(
         wifiCredentialsCharacteristic = null
         provisioningStatusCharacteristic = null
         runtimeEndpointCharacteristic = null
+        wifiCredentialsWritten = false
     }
 
     private val callback = object : BluetoothGattCallback() {
@@ -194,10 +199,11 @@ class AqlBleProvisioningGattClient(
             when (characteristic.uuid) {
                 START_SESSION_UUID -> {
                     emit(AqlBleProvisioningGattEvent.StartSessionWritten)
-                    writeWifiCredentials(gatt)
+                    readProvisioningStatus(gatt)
                 }
 
                 WIFI_CREDENTIALS_UUID -> {
+                    wifiCredentialsWritten = true
                     emit(AqlBleProvisioningGattEvent.WifiCredentialsWritten)
                     readProvisioningStatus(gatt)
                 }
@@ -283,7 +289,11 @@ class AqlBleProvisioningGattClient(
     private fun readProvisioningStatus(gatt: BluetoothGatt) {
         val characteristic = provisioningStatusCharacteristic
         if (characteristic == null) {
-            readRuntimeEndpoint(gatt)
+            if (!wifiCredentialsWritten) {
+                writeWifiCredentials(gatt)
+            } else {
+                readRuntimeEndpoint(gatt)
+            }
             return
         }
 
@@ -294,7 +304,11 @@ class AqlBleProvisioningGattClient(
         }
 
         if (!gatt.readCharacteristic(characteristic)) {
-            readRuntimeEndpoint(gatt)
+            if (!wifiCredentialsWritten) {
+                writeWifiCredentials(gatt)
+            } else {
+                readRuntimeEndpoint(gatt)
+            }
         }
     }
 
@@ -329,12 +343,11 @@ class AqlBleProvisioningGattClient(
                 val statusMessage = codec.parseStatus(raw)
                 emit(AqlBleProvisioningGattEvent.StatusReceived(statusMessage))
 
-                if (
-                    statusMessage.status == AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY ||
-                    statusMessage.status == AqlProvisioningStatus.COMPLETED
-                ) {
-                    readRuntimeEndpoint(gatt)
-                }
+                handleProvisioningStatus(
+                    gatt = gatt,
+                    status = statusMessage.status,
+                    message = statusMessage.message
+                )
             }
 
             RUNTIME_ENDPOINT_UUID -> {
@@ -358,6 +371,48 @@ class AqlBleProvisioningGattClient(
                     emit(AqlBleProvisioningGattEvent.Completed)
                     close()
                 }
+            }
+        }
+    }
+
+    private fun handleProvisioningStatus(
+        gatt: BluetoothGatt,
+        status: AqlProvisioningStatus,
+        message: String
+    ) {
+        when (status) {
+            AqlProvisioningStatus.PROVISIONING_IN_PROGRESS,
+            AqlProvisioningStatus.WIFI_CREDENTIALS_RECEIVED,
+            AqlProvisioningStatus.WIFI_CONNECTING,
+            AqlProvisioningStatus.WIFI_CONNECTED -> {
+                if (!wifiCredentialsWritten) {
+                    writeWifiCredentials(gatt)
+                }
+            }
+
+            AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY,
+            AqlProvisioningStatus.COMPLETED -> {
+                readRuntimeEndpoint(gatt)
+            }
+
+            AqlProvisioningStatus.CLAIM_REJECTED,
+            AqlProvisioningStatus.ERROR,
+            AqlProvisioningStatus.TIMEOUT -> {
+                emit(
+                    AqlBleProvisioningGattEvent.Failed(
+                        message.ifBlank { "Provisioning was rejected by the device: ${status.wireValue}." }
+                    )
+                )
+                close()
+            }
+
+            AqlProvisioningStatus.PHYSICAL_RESET,
+            AqlProvisioningStatus.FACTORY,
+            AqlProvisioningStatus.CLAIM_VALIDATING,
+            AqlProvisioningStatus.IDLE,
+            AqlProvisioningStatus.UNKNOWN -> {
+                // Wait for a later explicit provisioning state. Do not send Wi-Fi
+                // credentials only because the BLE write transport succeeded.
             }
         }
     }
