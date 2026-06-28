@@ -63,7 +63,7 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = "Provisioning",
+                titleOverride = getString(R.string.device_provisioning_title),
                 onBackClick = {
                     findNavController().navigateUp()
                 }
@@ -128,9 +128,18 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
         binding.tvTitle.text = state.title
         binding.tvMessage.text = state.message
         binding.tvDeviceName.text = state.deviceName
-        binding.tvDeviceSerial.text = "Serial: ${state.deviceSerial}"
-        binding.tvBleAddress.text = "BLE: ${state.bleAddress}"
-        binding.tvWifiSsid.text = "Wi-Fi: ${state.wifiSsid}"
+        binding.tvDeviceSerial.text = getString(
+            R.string.device_provisioning_serial_format,
+            state.deviceSerial
+        )
+        binding.tvBleAddress.text = getString(
+            R.string.device_provisioning_ble_format,
+            state.bleAddress
+        )
+        binding.tvWifiSsid.text = getString(
+            R.string.device_provisioning_wifi_format,
+            state.wifiSsid
+        )
         binding.tvStepOne.text = state.stepOne
         binding.tvStepTwo.text = state.stepTwo
         binding.tvStepThree.text = state.stepThree
@@ -186,7 +195,7 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
 
             DeviceRouteTarget.UNSUPPORTED -> {
                 DevicesFragmentDirections.actionDevicesFragmentToUnsupportedDeviceFragment(
-                    deviceTitle = title.ifBlank { "Device" },
+                    deviceTitle = title.ifBlank { getString(R.string.device_wifi_default_device_name) },
                     message = message,
                     deviceUid = deviceUid
                 )
