@@ -30,6 +30,8 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
     private var _binding: FragmentDeviceProvisioningProgressBinding? = null
     private val binding get() = _binding!!
 
+    private var autoStartRequested = false
+
     private val blePermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
@@ -54,6 +56,7 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
         observeEvents()
 
         viewModel.bind(args.sessionId)
+        requestAutoStart(view)
     }
 
     private fun setupHeader() {
@@ -71,6 +74,16 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
     private fun setupActions() {
         binding.btnStartProvisioning.setOnClickListener {
             startProvisioningWithPermissionCheck()
+        }
+    }
+
+    private fun requestAutoStart(view: View) {
+        if (autoStartRequested) return
+        autoStartRequested = true
+        view.post {
+            if (_binding != null) {
+                startProvisioningWithPermissionCheck()
+            }
         }
     }
 
@@ -121,6 +134,7 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
         binding.tvStepOne.text = state.stepOne
         binding.tvStepTwo.text = state.stepTwo
         binding.tvStepThree.text = state.stepThree
+        binding.btnStartProvisioning.isVisible = state.canStart
         binding.btnStartProvisioning.isEnabled = state.canStart
         binding.btnStartProvisioning.text = state.buttonText
         binding.btnStartProvisioning.alpha = if (state.canStart) 1f else 0.45f
