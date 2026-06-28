@@ -81,7 +81,7 @@
                         android:includeFontPadding="false"
                         android:textColor="#5FD6B4"
                         android:textSize="12.5sp"
-                        tools:text="Setup mode" />
+                        tools:text="QR setup" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -105,7 +105,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
-                        android:text="2.4 GHz Wi-Fi ağını seçin"
+                        android:text="Choose your 2.4 GHz Wi‑Fi network"
                         android:textColor="#F2F6FA"
                         android:textSize="18sp"
                         android:textStyle="bold" />
@@ -115,44 +115,44 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="7dp"
                         android:lineSpacingExtra="2dp"
-                        android:text="Cihazınız yalnızca 2.4 GHz ağlara bağlanır. Telefonunuzu aynı ağa bağlayıp Select Wi-Fi ile ağı seçebilirsiniz."
+                        android:text="AquaLight connects to 2.4 GHz Wi‑Fi networks. Select the network your phone is using, then enter the password."
                         android:textColor="#90A1B5"
                         android:textSize="12.5sp" />
 
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:id="@+id/wifiSelectRow"
                         android:layout_width="match_parent"
-                        android:layout_height="54dp"
+                        android:layout_height="52dp"
                         android:layout_marginTop="16dp"
                         android:background="@drawable/bg_aqua_input"
                         android:clickable="true"
                         android:focusable="true"
-                        android:paddingStart="15dp"
-                        android:paddingEnd="15dp">
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp">
 
                         <ImageView
                             android:id="@+id/ivWifiIcon"
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
-                            android:contentDescription="Wi-Fi"
-                            android:src="@drawable/ic_wifi"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:contentDescription="Wi‑Fi"
+                            android:src="@drawable/ic_wifi_signal_pro_24"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent"
-                            app:tint="@color/white" />
+                            app:tint="#F2F6FA" />
 
                         <TextView
                             android:id="@+id/tvSelectedWifi"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="13dp"
+                            android:layout_marginStart="12dp"
                             android:layout_marginEnd="10dp"
                             android:ellipsize="end"
                             android:includeFontPadding="false"
                             android:maxLines="1"
-                            android:text="Wi-Fi seçilmedi"
+                            android:text="No Wi‑Fi network selected"
                             android:textColor="#F2F6FA"
-                            android:textSize="14.5sp"
+                            android:textSize="14sp"
                             android:textStyle="bold"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toStartOf="@id/tvSelectWifiAction"
@@ -164,7 +164,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:includeFontPadding="false"
-                            android:text="Select Wi-Fi"
+                            android:text="Select"
                             android:textColor="#5FD6B4"
                             android:textSize="12.5sp"
                             android:textStyle="bold"
@@ -175,28 +175,17 @@
 
                     <EditText
                         android:id="@+id/etWifiSsid"
-                        android:layout_width="match_parent"
-                        android:layout_height="50dp"
-                        android:layout_marginTop="10dp"
-                        android:background="@drawable/bg_aqua_input"
-                        android:hint="Wi-Fi name / SSID"
-                        android:inputType="text"
-                        android:maxLength="32"
-                        android:maxLines="1"
-                        android:paddingStart="15dp"
-                        android:paddingEnd="15dp"
-                        android:singleLine="true"
-                        android:textColor="#F2F6FA"
-                        android:textColorHint="#7F91AA"
-                        android:textSize="14.5sp" />
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:visibility="gone" />
 
                     <EditText
                         android:id="@+id/etWifiPassword"
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
-                        android:layout_marginTop="10dp"
+                        android:layout_marginTop="12dp"
                         android:background="@drawable/bg_aqua_input"
-                        android:hint="Wi-Fi password"
+                        android:hint="Wi‑Fi password"
                         android:inputType="textPassword"
                         android:maxLength="64"
                         android:maxLines="1"
@@ -238,7 +227,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:lineSpacingExtra="2dp"
-                        android:text="Wi-Fi bilgileri yalnızca seçili AquaLight cihazına Bluetooth üzerinden gönderilir."
+                        android:text="Your Wi‑Fi credentials are sent only to the selected AquaLight device over Bluetooth."
                         android:textColor="#90A1B5"
                         android:textSize="12sp" />
                 </LinearLayout>
