@@ -13,6 +13,7 @@ import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftSt
 import com.aqua.aqualight.databinding.FragmentDeviceWifiProvisioningBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import java.util.TimeZone
 
 class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_provisioning) {
 
@@ -106,9 +107,12 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
 
             else -> {
                 val credentials = runCatching {
+                    val deviceTimeZone = TimeZone.getDefault()
                     AqlWifiCredentials(
                         ssid = ssid,
-                        password = password
+                        password = password,
+                        timezone = deviceTimeZone.id.orEmpty(),
+                        utcOffsetMinutes = deviceTimeZone.getOffset(System.currentTimeMillis()) / MILLIS_PER_MINUTE
                     )
                 }.getOrElse { error ->
                     Toast.makeText(
@@ -149,5 +153,6 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
     private companion object {
         const val MAX_SSID_LENGTH = 32
         const val MAX_PASSWORD_LENGTH = 64
+        const val MILLIS_PER_MINUTE = 60_000
     }
 }
