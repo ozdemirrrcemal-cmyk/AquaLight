@@ -109,7 +109,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"
-                android:text="Align the QR code inside the frame"
+                android:text="@string/device_qr_align_title"
                 android:textColor="#F2F6FA"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -120,7 +120,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="7dp"
                 android:lineSpacingExtra="2dp"
-                android:text="Setup will continue automatically after the code is detected."
+                android:text="@string/device_qr_align_message"
                 android:textColor="#90A1B5"
                 android:textSize="12.5sp" />
 
@@ -131,7 +131,7 @@
                 android:layout_marginTop="14dp"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
-                android:text="Allow camera"
+                android:text="@string/device_qr_allow_camera"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
                 android:textSize="14sp"
