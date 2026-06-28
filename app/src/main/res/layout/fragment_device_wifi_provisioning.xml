@@ -105,7 +105,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
-                        android:text="Choose your 2.4 GHz Wi‑Fi network"
+                        android:text="@string/device_wifi_card_title"
                         android:textColor="#F2F6FA"
                         android:textSize="18sp"
                         android:textStyle="bold" />
@@ -115,7 +115,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="7dp"
                         android:lineSpacingExtra="2dp"
-                        android:text="AquaLight connects to 2.4 GHz Wi‑Fi networks. Select the network your phone is using, then enter the password."
+                        android:text="@string/device_wifi_card_message"
                         android:textColor="#90A1B5"
                         android:textSize="12.5sp" />
 
@@ -134,7 +134,7 @@
                             android:id="@+id/ivWifiIcon"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
-                            android:contentDescription="Wi‑Fi"
+                            android:contentDescription="@string/device_wifi_icon_desc"
                             android:src="@drawable/ic_wifi_signal_pro_24"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
@@ -150,7 +150,7 @@
                             android:ellipsize="end"
                             android:includeFontPadding="false"
                             android:maxLines="1"
-                            android:text="No Wi‑Fi network selected"
+                            android:text="@string/device_wifi_not_selected"
                             android:textColor="#F2F6FA"
                             android:textSize="14sp"
                             android:textStyle="bold"
@@ -164,7 +164,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:includeFontPadding="false"
-                            android:text="Select"
+                            android:text="@string/device_wifi_select_action"
                             android:textColor="#5FD6B4"
                             android:textSize="12.5sp"
                             android:textStyle="bold"
@@ -179,7 +179,7 @@
                         android:layout_height="50dp"
                         android:layout_marginTop="12dp"
                         android:background="@drawable/bg_aqua_input"
-                        android:hint="Wi‑Fi password"
+                        android:hint="@string/device_wifi_password_hint"
                         android:inputType="textPassword"
                         android:maxLength="64"
                         android:maxLines="1"
@@ -196,7 +196,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:buttonTint="#5FD6B4"
-                        android:text="Show password"
+                        android:text="@string/device_wifi_show_password"
                         android:textColor="#90A1B5"
                         android:textSize="12.5sp" />
 
@@ -207,7 +207,7 @@
                         android:layout_marginTop="16dp"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
-                        android:text="Continue"
+                        android:text="@string/device_wifi_continue"
                         android:textAllCaps="false"
                         android:textColor="@color/white"
                         android:textSize="14.5sp"
@@ -221,7 +221,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:lineSpacingExtra="2dp"
-                        android:text="Your Wi‑Fi credentials are sent only to the selected AquaLight device over Bluetooth."
+                        android:text="@string/device_wifi_privacy_hint"
                         android:textColor="#90A1B5"
                         android:textSize="12sp" />
                 </LinearLayout>
