@@ -396,6 +396,7 @@ class AqlBleProvisioningGattClient(
             }
 
             AqlProvisioningStatus.CLAIM_REJECTED,
+            AqlProvisioningStatus.WIFI_FAILED,
             AqlProvisioningStatus.ERROR,
             AqlProvisioningStatus.TIMEOUT -> {
                 emit(
