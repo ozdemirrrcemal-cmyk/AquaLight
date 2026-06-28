@@ -8,7 +8,7 @@ data class AqlProvisioningQrPayload(
     val model: String,
     val hardwareRevision: String,
     val deviceUid: DeviceUid,
-    val productId: String,
+    val provisioningId: String,
     val claimCode: String,
     val bleName: String,
     val raw: String,
