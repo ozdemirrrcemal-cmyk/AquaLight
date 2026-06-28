@@ -9,17 +9,14 @@ import android.provider.Settings
 import android.text.InputType
 import android.view.View
 import android.widget.Toast
-import androidx.fragment.app.Fragment
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.devices.provisioning.model.AqlWifiCredentials
-import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
 import com.aqua.aqualight.databinding.FragmentDeviceWifiProvisioningBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import java.util.TimeZone
 
 class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_provisioning) {
 
@@ -27,8 +24,6 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
 
     private var _binding: FragmentDeviceWifiProvisioningBinding? = null
     private val binding get() = _binding!!
-
-    private var selectedWifiSsid: String = ""
 
     private val wifiPanelLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -76,7 +71,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
     }
 
     private fun setupActions() {
-        binding.wifiSelectRow.setOnClickListener {
+        binding.tvUseCurrentWifiAction.setOnClickListener {
             openWifiPicker()
         }
 
@@ -118,12 +113,11 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
     private fun applyCurrentWifiSsid(showMessageIfUnavailable: Boolean) {
         val ssid = currentWifiSsid().orEmpty()
         if (ssid.isNotBlank()) {
-            selectedWifiSsid = ssid
-            updateSelectedWifiLabel(ssid)
+            binding.etWifiSsid.setText(ssid)
+            binding.etWifiSsid.setSelection(ssid.length)
             return
         }
 
-        updateSelectedWifiLabel(selectedWifiSsid)
         if (showMessageIfUnavailable) {
             Toast.makeText(
                 requireContext(),
@@ -154,18 +148,13 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
             .takeIf { value -> value.isNotBlank() && value != UNKNOWN_SSID }
     }
 
-    private fun updateSelectedWifiLabel(value: String) {
-        binding.tvSelectedWifi.text = value.trim().ifBlank {
-            getString(R.string.device_wifi_not_selected)
-        }
-    }
-
     private fun onContinueClicked() {
-        val ssid = selectedWifiSsid.trim()
-        val password = binding.etWifiPassword.text?.toString().orEmpty()
+        val ssid = binding.etWifiSsid.text?.toString()?.trim().orEmpty()
+        val networkKey = binding.etWifiPassword.text?.toString().orEmpty()
 
         when {
             ssid.isBlank() -> {
+                binding.etWifiSsid.requestFocus()
                 Toast.makeText(
                     requireContext(),
                     getString(R.string.device_wifi_select_first),
@@ -174,6 +163,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
             }
 
             ssid.length > MAX_SSID_LENGTH -> {
+                binding.etWifiSsid.requestFocus()
                 Toast.makeText(
                     requireContext(),
                     getString(R.string.device_wifi_name_too_long),
@@ -181,7 +171,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
                 ).show()
             }
 
-            password.length > MAX_PASSWORD_LENGTH -> {
+            networkKey.length > MAX_PASSWORD_LENGTH -> {
                 binding.etWifiPassword.requestFocus()
                 Toast.makeText(
                     requireContext(),
@@ -191,17 +181,11 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
             }
 
             else -> {
-                val credentials = runCatching {
-                    val deviceTimeZone = TimeZone.getDefault()
-                    val utcOffsetMinutes = deviceTimeZone.getOffset(System.currentTimeMillis()) / MILLIS_PER_MINUTE
-                    val timeZoneId = deviceTimeZone.id.orEmpty()
-                    AqlWifiCredentials(
-                        ssid = ssid,
-                        password = password,
-                        timezone = "$timeZoneId$TIMEZONE_OFFSET_SEPARATOR$utcOffsetMinutes",
-                        utcOffsetMinutes = utcOffsetMinutes
-                    )
-                }.getOrElse { error ->
+                val draft = DeviceWifiProvisioningDraftFactory.create(
+                    args = args,
+                    ssid = ssid,
+                    networkKey = networkKey
+                ).getOrElse { error ->
                     Toast.makeText(
                         requireContext(),
                         error.message ?: getString(R.string.device_wifi_invalid_details),
@@ -209,18 +193,6 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
                     ).show()
                     return
                 }
-
-                val draft = AqlProvisioningDraftStore.create(
-                    candidateId = args.candidateId,
-                    bleAddress = args.bleAddress,
-                    bleName = args.bleName,
-                    claimCode = args.claimCode,
-                    rawQrPayload = args.rawQrPayload,
-                    deviceTitle = args.deviceTitle,
-                    deviceSerial = args.deviceSerial,
-                    deviceModel = args.deviceModel,
-                    wifiCredentials = credentials
-                )
 
                 findNavController().navigate(
                     DeviceWifiProvisioningFragmentDirections
@@ -240,8 +212,6 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
     private companion object {
         const val MAX_SSID_LENGTH = 32
         const val MAX_PASSWORD_LENGTH = 64
-        const val MILLIS_PER_MINUTE = 60_000
-        const val TIMEZONE_OFFSET_SEPARATOR = "|"
         const val UNKNOWN_SSID = "<unknown ssid>"
     }
 }
