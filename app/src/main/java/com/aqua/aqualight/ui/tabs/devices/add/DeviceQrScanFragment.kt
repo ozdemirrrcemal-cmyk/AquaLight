@@ -69,7 +69,7 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = "QR Setup",
+                titleOverride = "QR ile ekle",
                 onBackClick = {
                     findNavController().navigateUp()
                 }
@@ -106,16 +106,16 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         if (_binding == null) return
 
         binding.btnRequestCamera.isVisible = true
-        binding.tvScanTitle.text = "Camera permission required"
-        binding.tvScanStatus.text = "Allow camera permission to scan the AquaLight provisioning QR code."
+        binding.tvScanTitle.text = "Kamera izni gerekiyor"
+        binding.tvScanStatus.text = "Cihaz QR kodunu okutmak için kamera izni verin."
     }
 
     private fun startCamera() {
         if (_binding == null || hasResult) return
 
         binding.btnRequestCamera.isVisible = false
-        binding.tvScanTitle.text = "Scan AquaLight QR"
-        binding.tvScanStatus.text = "Place the QR code inside the frame. Setup will continue automatically."
+        binding.tvScanTitle.text = "QR kodu çerçeveye alın"
+        binding.tvScanStatus.text = "Kod okunduğunda Wi-Fi kurulum ekranı otomatik açılır."
 
         val options = BarcodeScannerOptions.Builder()
             .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
@@ -155,8 +155,8 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
                     )
                 }.onFailure { error ->
                     if (_binding != null) {
-                        binding.tvScanTitle.text = "Camera unavailable"
-                        binding.tvScanStatus.text = error.message ?: "Camera could not be started."
+                        binding.tvScanTitle.text = "Kamera açılamadı"
+                        binding.tvScanStatus.text = error.message ?: "Kamera şu anda başlatılamadı."
                     }
                 }
             },
@@ -204,7 +204,7 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
             }
             .addOnFailureListener { error ->
                 if (_binding != null && !hasResult) {
-                    binding.tvScanStatus.text = error.message ?: "QR scan failed. Try again."
+                    binding.tvScanStatus.text = error.message ?: "QR kod okunamadı. Tekrar deneyin."
                 }
             }
             .addOnCompleteListener {
@@ -219,8 +219,8 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         val payload = qrParser.parse(rawValue)
             .getOrElse { error ->
                 if (_binding != null) {
-                    binding.tvScanTitle.text = "Invalid AquaLight QR"
-                    binding.tvScanStatus.text = error.message ?: "This QR code is not a valid AquaLight provisioning code."
+                    binding.tvScanTitle.text = "Geçersiz QR kod"
+                    binding.tvScanStatus.text = error.message ?: "Bu kod AquaLight kurulum kodu değil."
                 }
                 return
             }
@@ -228,8 +228,8 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         hasResult = true
 
         if (_binding != null) {
-            binding.tvScanTitle.text = "QR verified"
-            binding.tvScanStatus.text = "Opening Wi-Fi setup for ${payload.model}."
+            binding.tvScanTitle.text = "QR doğrulandı"
+            binding.tvScanStatus.text = "Wi-Fi kurulumu açılıyor."
         }
 
         openWifiProvisioning(payload)
@@ -241,7 +241,7 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
                 candidateId = payload.deviceUid.value,
                 deviceTitle = payload.model.ifBlank { "AquaLight Device" },
                 deviceSerial = payload.deviceUid.value,
-                deviceModel = "QR provisioning • ${payload.provisioningId}",
+                deviceModel = "QR setup",
                 bleAddress = "",
                 bleName = payload.bleName,
                 claimCode = payload.claimCode,
