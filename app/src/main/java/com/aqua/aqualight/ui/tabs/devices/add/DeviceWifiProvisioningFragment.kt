@@ -9,8 +9,8 @@ import android.provider.Settings
 import android.text.InputType
 import android.view.View
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
@@ -54,7 +54,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = "Wi-Fi Setup",
+                titleOverride = getString(R.string.device_wifi_title),
                 onBackClick = {
                     findNavController().navigateUp()
                 }
@@ -63,10 +63,15 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
     }
 
     private fun renderSelectedDevice() {
-        binding.tvDeviceName.text = args.deviceTitle.ifBlank { "AquaLight Device" }
-        binding.tvDeviceSerial.text = "Serial: ${args.deviceSerial.ifBlank { args.candidateId }}"
+        binding.tvDeviceName.text = args.deviceTitle.ifBlank {
+            getString(R.string.device_wifi_default_device_name)
+        }
+        binding.tvDeviceSerial.text = getString(
+            R.string.device_wifi_serial_format,
+            args.deviceSerial.ifBlank { args.candidateId }
+        )
         binding.tvDeviceModel.text = args.deviceModel.ifBlank {
-            args.bleName.ifBlank { "Setup mode" }
+            args.bleName.ifBlank { getString(R.string.device_wifi_setup_mode) }
         }
     }
 
@@ -104,7 +109,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
         }.onFailure {
             Toast.makeText(
                 requireContext(),
-                "Unable to open Wi-Fi settings. Connect your phone to the 2.4 GHz network and try again.",
+                getString(R.string.device_wifi_settings_open_failed),
                 Toast.LENGTH_SHORT
             ).show()
         }
@@ -122,7 +127,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
         if (showMessageIfUnavailable) {
             Toast.makeText(
                 requireContext(),
-                "No Wi-Fi network could be read. Connect your phone to the 2.4 GHz network and try again.",
+                getString(R.string.device_wifi_network_not_read),
                 Toast.LENGTH_SHORT
             ).show()
         }
@@ -150,7 +155,9 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
     }
 
     private fun updateSelectedWifiLabel(value: String) {
-        binding.tvSelectedWifi.text = value.trim().ifBlank { "No Wi-Fi network selected" }
+        binding.tvSelectedWifi.text = value.trim().ifBlank {
+            getString(R.string.device_wifi_not_selected)
+        }
     }
 
     private fun onContinueClicked() {
@@ -161,7 +168,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
             ssid.isBlank() -> {
                 Toast.makeText(
                     requireContext(),
-                    "Select a Wi-Fi network first.",
+                    getString(R.string.device_wifi_select_first),
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -169,7 +176,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
             ssid.length > MAX_SSID_LENGTH -> {
                 Toast.makeText(
                     requireContext(),
-                    "The Wi-Fi network name is too long.",
+                    getString(R.string.device_wifi_name_too_long),
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -178,7 +185,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
                 binding.etWifiPassword.requestFocus()
                 Toast.makeText(
                     requireContext(),
-                    "The Wi-Fi password is too long.",
+                    getString(R.string.device_wifi_password_too_long),
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -197,7 +204,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
                 }.getOrElse { error ->
                     Toast.makeText(
                         requireContext(),
-                        error.message ?: "The Wi-Fi details are invalid.",
+                        error.message ?: getString(R.string.device_wifi_invalid_details),
                         Toast.LENGTH_SHORT
                     ).show()
                     return
