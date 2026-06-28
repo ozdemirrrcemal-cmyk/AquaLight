@@ -40,7 +40,7 @@ class AqlProvisioningQrParser {
                 model = requiredField(fields, AqlBleProvisioningContract.Qr.KEY_MODEL),
                 hardwareRevision = fields[AqlBleProvisioningContract.Qr.KEY_HARDWARE_REVISION].orEmpty(),
                 deviceUid = DeviceUid(requiredField(fields, AqlBleProvisioningContract.Qr.KEY_DEVICE_UID)),
-                productId = requiredField(fields, AqlBleProvisioningContract.Qr.KEY_PRODUCT_ID),
+                provisioningId = requiredField(fields, AqlBleProvisioningContract.Qr.KEY_PROVISIONING_ID),
                 claimCode = claimCode,
                 bleName = requiredField(fields, AqlBleProvisioningContract.Qr.KEY_BLE_NAME),
                 raw = normalizedRaw,
