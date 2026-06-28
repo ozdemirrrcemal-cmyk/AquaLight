@@ -54,15 +54,15 @@ class DeviceProvisioningProgressViewModel(
 
         if (draft == null) {
             _uiState.value = DeviceProvisioningProgressUiState(
-                title = "Kurulum oturumu süresi doldu",
-                message = "Geri dönüp cihazı tekrar seçin.",
+                title = "Setup session expired",
+                message = "Go back and select the device again.",
                 deviceName = "Unknown device",
                 deviceSerial = "Unknown",
                 bleAddress = "Unknown",
                 wifiSsid = "Unknown",
-                stepOne = "✓ Cihaz seçildi",
-                stepTwo = "✓ Wi-Fi bilgileri hazırlandı",
-                stepThree = "Kurulum oturumu bulunamadı",
+                stepOne = "Device selected",
+                stepTwo = "Wi-Fi details prepared",
+                stepThree = "Setup session not found",
                 canStart = false,
                 buttonText = "Unavailable",
                 showProgress = false
@@ -71,15 +71,15 @@ class DeviceProvisioningProgressViewModel(
         }
 
         _uiState.value = DeviceProvisioningProgressUiState(
-            title = "Cihaz kuruluma hazır",
-            message = "Wi-Fi bilgileri hazırlandı. AquaLight cihazına güvenli bağlantı kuruluyor.",
+            title = "Device ready for setup",
+            message = "Wi-Fi details are ready. A secure connection to your AquaLight device is being prepared.",
             deviceName = draft.deviceTitle.ifBlank { "AquaLight Device" },
             deviceSerial = draft.deviceSerial.ifBlank { draft.candidateId },
-            bleAddress = draft.bleAddress.ifBlank { draft.bleName.ifBlank { "QR cihazı aranacak" } },
+            bleAddress = draft.bleAddress.ifBlank { draft.bleName.ifBlank { "QR device will be located" } },
             wifiSsid = draft.wifiCredentials.ssid,
-            stepOne = "✓ Cihaz seçildi",
-            stepTwo = "✓ Wi-Fi bilgileri hazırlandı",
-            stepThree = "⏳ Güvenli bağlantı hazırlanıyor",
+            stepOne = "Device selected",
+            stepTwo = "Wi-Fi details prepared",
+            stepThree = "Preparing secure connection",
             canStart = true,
             buttonText = "Try again",
             showProgress = false
@@ -88,9 +88,9 @@ class DeviceProvisioningProgressViewModel(
 
     fun onBlePermissionDenied() {
         _uiState.value = _uiState.value.copy(
-            title = "Bluetooth izni gerekiyor",
-            message = "Cihazla güvenli kurulum bağlantısı kurmak için Bluetooth izni verin.",
-            stepThree = "Bluetooth izni bekleniyor",
+            title = "Bluetooth permission required",
+            message = "Allow Bluetooth access to complete secure device setup.",
+            stepThree = "Waiting for Bluetooth permission",
             canStart = true,
             buttonText = "Try again",
             showProgress = false
@@ -100,8 +100,8 @@ class DeviceProvisioningProgressViewModel(
     fun startProvisioning() {
         val draft = activeDraft ?: run {
             _uiState.value = _uiState.value.copy(
-                title = "Kurulum oturumu süresi doldu",
-                message = "Geri dönüp cihazı tekrar seçin.",
+                title = "Setup session expired",
+                message = "Go back and select the device again.",
                 canStart = false,
                 buttonText = "Unavailable",
                 showProgress = false
@@ -118,10 +118,10 @@ class DeviceProvisioningProgressViewModel(
             activeDraft = readyDraft
 
             _uiState.value = _uiState.value.copy(
-                title = "Cihaza bağlanılıyor",
-                message = "AquaLight cihazı ile güvenli Bluetooth bağlantısı kuruluyor.",
+                title = "Connecting to device",
+                message = "A secure Bluetooth connection is being established with your AquaLight device.",
                 bleAddress = readyDraft.bleAddress,
-                stepThree = "⏳ Bluetooth bağlantısı kuruluyor",
+                stepThree = "Connecting over Bluetooth",
                 canStart = false,
                 buttonText = "Provisioning...",
                 showProgress = true
@@ -141,9 +141,9 @@ class DeviceProvisioningProgressViewModel(
         val bleName = draft.bleName.trim()
         if (bleName.isBlank()) {
             _uiState.value = _uiState.value.copy(
-                title = "Cihaz bulunamadı",
-                message = "QR içinde Bluetooth adı yok. Cihazı Scan ile arayıp tekrar deneyin.",
-                stepThree = "Cihaz bulunamadı",
+                title = "Device not found",
+                message = "The QR code does not include a Bluetooth name. Search for the device with Scan and try again.",
+                stepThree = "Device not found",
                 canStart = true,
                 buttonText = "Try again",
                 showProgress = false
@@ -152,10 +152,10 @@ class DeviceProvisioningProgressViewModel(
         }
 
         _uiState.value = _uiState.value.copy(
-            title = "QR cihazı aranıyor",
-            message = "$bleName isimli AquaLight cihazı Bluetooth üzerinden aranıyor.",
+            title = "Locating QR device",
+            message = "Searching for $bleName over Bluetooth.",
             bleAddress = bleName,
-            stepThree = "⏳ QR cihazı Bluetooth ile aranıyor",
+            stepThree = "Locating QR device over Bluetooth",
             canStart = false,
             buttonText = "Finding...",
             showProgress = true
@@ -164,9 +164,9 @@ class DeviceProvisioningProgressViewModel(
         val resolvedAddress = addressResolver.resolveAddress(bleName)
             .getOrElse { error ->
                 _uiState.value = _uiState.value.copy(
-                    title = "QR cihazı bulunamadı",
-                    message = error.message ?: "QR ile seçilen cihaz Bluetooth üzerinden bulunamadı.",
-                    stepThree = "Cihaz bulunamadı",
+                    title = "QR device not found",
+                    message = error.message ?: "The device selected by QR could not be found over Bluetooth.",
+                    stepThree = "Device not found",
                     canStart = true,
                     buttonText = "Try again",
                     showProgress = false
@@ -201,9 +201,9 @@ class DeviceProvisioningProgressViewModel(
             AqlBleProvisioningGattEvent.Completed -> {
                 if (!handoffSaved) {
                     _uiState.value = _uiState.value.copy(
-                        title = "Kurulum tamamlandı",
-                        message = "Cihaz bilgileri alındı. Cihaz menüsü hazırlanıyor.",
-                        stepThree = "⏳ Cihaz menüsü hazırlanıyor",
+                        title = "Setup complete",
+                        message = "Device details received. Preparing the device menu.",
+                        stepThree = "Preparing device menu",
                         canStart = false,
                         buttonText = "Saving...",
                         showProgress = true
@@ -223,9 +223,9 @@ class DeviceProvisioningProgressViewModel(
         return when (event) {
             is AqlBleProvisioningGattEvent.Connecting -> {
                 _uiState.value.copy(
-                    title = "Cihaza bağlanılıyor",
-                    message = "AquaLight cihazı ile güvenli Bluetooth bağlantısı kuruluyor.",
-                    stepThree = "⏳ Bluetooth bağlantısı kuruluyor",
+                    title = "Connecting to device",
+                    message = "A secure Bluetooth connection is being established with your AquaLight device.",
+                    stepThree = "Connecting over Bluetooth",
                     canStart = false,
                     buttonText = "Provisioning...",
                     showProgress = true
@@ -234,36 +234,36 @@ class DeviceProvisioningProgressViewModel(
 
             is AqlBleProvisioningGattEvent.Connected -> {
                 _uiState.value.copy(
-                    title = "Cihaz bulundu",
-                    message = "Kurulum servisi hazırlanıyor.",
-                    stepThree = "✓ Bluetooth bağlantısı kuruldu",
+                    title = "Device found",
+                    message = "Preparing the setup service.",
+                    stepThree = "Bluetooth connection established",
                     showProgress = true
                 )
             }
 
             AqlBleProvisioningGattEvent.ServicesDiscovered -> {
                 _uiState.value.copy(
-                    title = "Güvenli oturum hazırlanıyor",
-                    message = "Cihaz kurulum oturumu başlatılıyor.",
-                    stepThree = "⏳ Güvenli oturum başlatılıyor",
+                    title = "Preparing secure session",
+                    message = "Starting the device setup session.",
+                    stepThree = "Starting secure session",
                     showProgress = true
                 )
             }
 
             AqlBleProvisioningGattEvent.StartSessionWritten -> {
                 _uiState.value.copy(
-                    title = "Güvenli oturum başladı",
-                    message = "Wi-Fi bilgileri cihazınıza gönderiliyor.",
-                    stepThree = "⏳ Wi-Fi bilgileri gönderiliyor",
+                    title = "Secure session started",
+                    message = "Sending Wi-Fi details to your device.",
+                    stepThree = "Sending Wi-Fi details",
                     showProgress = true
                 )
             }
 
             AqlBleProvisioningGattEvent.WifiCredentialsWritten -> {
                 _uiState.value.copy(
-                    title = "Wi-Fi bilgileri gönderildi",
-                    message = "Cihazınız Wi-Fi ağına bağlanıyor.",
-                    stepThree = "⏳ Cihaz Wi-Fi ağına bağlanıyor",
+                    title = "Wi-Fi details sent",
+                    message = "Your device is connecting to the Wi-Fi network.",
+                    stepThree = "Connecting device to Wi-Fi",
                     showProgress = true
                 )
             }
@@ -291,9 +291,9 @@ class DeviceProvisioningProgressViewModel(
 
             is AqlBleProvisioningGattEvent.Failed -> {
                 _uiState.value.copy(
-                    title = "Kurulum tamamlanamadı",
+                    title = "Setup could not be completed",
                     message = event.message.toFriendlyError(),
-                    stepThree = "Kurulum durdu",
+                    stepThree = "Setup stopped",
                     canStart = true,
                     buttonText = "Try again",
                     showProgress = false
@@ -305,9 +305,9 @@ class DeviceProvisioningProgressViewModel(
                     _uiState.value
                 } else {
                     _uiState.value.copy(
-                        title = "Bağlantı kapandı",
-                        message = "Cihaz kurulum bağlantısı kapandı. Cihaz kurulum modundaysa tekrar deneyebilirsiniz.",
-                        stepThree = "Bağlantı kapandı",
+                        title = "Connection closed",
+                        message = "The device setup connection was closed. If the device is still in setup mode, try again.",
+                        stepThree = "Connection closed",
                         canStart = true,
                         buttonText = "Try again",
                         showProgress = false
@@ -321,9 +321,9 @@ class DeviceProvisioningProgressViewModel(
         handoff: AqlProvisioningRuntimeHandoff
     ) {
         _uiState.value = _uiState.value.copy(
-            title = "Cihaz çevrimiçi",
-            message = "AquaLight cihazı Wi-Fi ağına bağlandı. Cihaz menüsü hazırlanıyor.",
-            stepThree = "⏳ Cihaz menüsü hazırlanıyor",
+            title = "Device online",
+            message = "Your AquaLight device is connected to Wi-Fi. Preparing the device menu.",
+            stepThree = "Preparing device menu",
             canStart = false,
             buttonText = "Saving...",
             showProgress = true
@@ -335,9 +335,9 @@ class DeviceProvisioningProgressViewModel(
     ) {
         val draft = activeDraft ?: run {
             _uiState.value = _uiState.value.copy(
-                title = "Kurulum oturumu süresi doldu",
-                message = "Cihaz bilgileri geldi fakat yerel kurulum oturumu bulunamadı.",
-                stepThree = "Cihaz kaydı yapılamadı",
+                title = "Setup session expired",
+                message = "Device details arrived, but the local setup session could not be found.",
+                stepThree = "Device could not be saved",
                 canStart = true,
                 buttonText = "Try again",
                 showProgress = false
@@ -363,9 +363,9 @@ class DeviceProvisioningProgressViewModel(
                 )
 
                 _uiState.value = _uiState.value.copy(
-                    title = "Cihaz eklendi",
-                    message = "${snapshot.title} hazır. Cihaz menüsü açılıyor.",
-                    stepThree = "✓ Cihaz menüsü açılıyor",
+                    title = "Device added",
+                    message = "${snapshot.title} is ready. Opening the device menu.",
+                    stepThree = "Opening device menu",
                     canStart = false,
                     buttonText = "Opening...",
                     showProgress = true
@@ -376,9 +376,9 @@ class DeviceProvisioningProgressViewModel(
                 )
             }.onFailure { error ->
                 _uiState.value = _uiState.value.copy(
-                    title = "Cihaz kaydedilemedi",
-                    message = error.message ?: "Cihaz bilgileri kaydedilemedi.",
-                    stepThree = "Cihaz kaydı yapılamadı",
+                    title = "Device could not be saved",
+                    message = error.message ?: "Device details could not be saved.",
+                    stepThree = "Device could not be saved",
                     canStart = true,
                     buttonText = "Try again",
                     showProgress = false
@@ -391,19 +391,19 @@ class DeviceProvisioningProgressViewModel(
         return when (this) {
             AqlProvisioningStatus.IDLE,
             AqlProvisioningStatus.FACTORY,
-            AqlProvisioningStatus.PHYSICAL_RESET -> "Cihaz kurulum modunda"
+            AqlProvisioningStatus.PHYSICAL_RESET -> "Device in setup mode"
             AqlProvisioningStatus.PROVISIONING_IN_PROGRESS,
-            AqlProvisioningStatus.CLAIM_VALIDATING -> "Kurulum doğrulanıyor"
-            AqlProvisioningStatus.WIFI_CREDENTIALS_RECEIVED -> "Wi-Fi bilgileri alındı"
-            AqlProvisioningStatus.WIFI_CONNECTING -> "Wi-Fi ağına bağlanıyor"
-            AqlProvisioningStatus.WIFI_CONNECTED -> "Wi-Fi bağlantısı kuruldu"
-            AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY -> "Cihaz çevrimiçi"
-            AqlProvisioningStatus.COMPLETED -> "Kurulum tamamlandı"
-            AqlProvisioningStatus.WIFI_FAILED -> "Wi-Fi bağlantısı kurulamadı"
-            AqlProvisioningStatus.CLAIM_REJECTED -> "Cihaz doğrulanamadı"
-            AqlProvisioningStatus.TIMEOUT -> "Kurulum süresi doldu"
+            AqlProvisioningStatus.CLAIM_VALIDATING -> "Verifying setup"
+            AqlProvisioningStatus.WIFI_CREDENTIALS_RECEIVED -> "Wi-Fi details received"
+            AqlProvisioningStatus.WIFI_CONNECTING -> "Connecting to Wi-Fi"
+            AqlProvisioningStatus.WIFI_CONNECTED -> "Wi-Fi connected"
+            AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY -> "Device online"
+            AqlProvisioningStatus.COMPLETED -> "Setup complete"
+            AqlProvisioningStatus.WIFI_FAILED -> "Wi-Fi connection failed"
+            AqlProvisioningStatus.CLAIM_REJECTED -> "Device verification failed"
+            AqlProvisioningStatus.TIMEOUT -> "Setup timed out"
             AqlProvisioningStatus.ERROR,
-            AqlProvisioningStatus.UNKNOWN -> "Cihazdan durum bekleniyor"
+            AqlProvisioningStatus.UNKNOWN -> "Waiting for device status"
         }
     }
 
@@ -411,34 +411,34 @@ class DeviceProvisioningProgressViewModel(
         return when (this) {
             AqlProvisioningStatus.IDLE,
             AqlProvisioningStatus.FACTORY,
-            AqlProvisioningStatus.PHYSICAL_RESET -> "Cihaz kurulum modunda. Güvenli oturum hazırlanıyor."
+            AqlProvisioningStatus.PHYSICAL_RESET -> "The device is in setup mode. Preparing a secure session."
             AqlProvisioningStatus.PROVISIONING_IN_PROGRESS,
-            AqlProvisioningStatus.CLAIM_VALIDATING -> "AquaLight cihazı kurulum isteğini doğruluyor."
-            AqlProvisioningStatus.WIFI_CREDENTIALS_RECEIVED -> "Cihaz Wi-Fi bilgilerini aldı. Bağlantı başlatılıyor."
-            AqlProvisioningStatus.WIFI_CONNECTING -> "Cihaz seçilen 2.4 GHz Wi-Fi ağına bağlanıyor."
-            AqlProvisioningStatus.WIFI_CONNECTED -> "Wi-Fi bağlantısı başarılı. Cihaz menüsü hazırlanıyor."
-            AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY -> "Cihaz çalışma bağlantısı hazır. Menü açılıyor."
-            AqlProvisioningStatus.COMPLETED -> "Kurulum tamamlandı. Cihaz menüsü açılıyor."
-            AqlProvisioningStatus.WIFI_FAILED -> "Şifre hatalı olabilir veya cihaz 2.4 GHz ağı göremiyor. Ağı ve şifreyi kontrol edin."
-            AqlProvisioningStatus.CLAIM_REJECTED -> "Cihaz bu kurulum isteğini kabul etmedi. QR ile ekleyin veya setup tuşuna 5 saniye basıp tekrar deneyin."
-            AqlProvisioningStatus.TIMEOUT -> "Cihaz kurulum süresi doldu. Setup tuşuna 5 saniye basıp tekrar deneyin."
+            AqlProvisioningStatus.CLAIM_VALIDATING -> "The AquaLight device is verifying the setup request."
+            AqlProvisioningStatus.WIFI_CREDENTIALS_RECEIVED -> "The device received the Wi-Fi details and is starting the connection."
+            AqlProvisioningStatus.WIFI_CONNECTING -> "The device is connecting to the selected 2.4 GHz Wi-Fi network."
+            AqlProvisioningStatus.WIFI_CONNECTED -> "Wi-Fi connection successful. Preparing the device menu."
+            AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY -> "The device runtime connection is ready. Opening the menu."
+            AqlProvisioningStatus.COMPLETED -> "Setup is complete. Opening the device menu."
+            AqlProvisioningStatus.WIFI_FAILED -> "The password may be incorrect or the device may not see the 2.4 GHz network. Check the network and password."
+            AqlProvisioningStatus.CLAIM_REJECTED -> "The device rejected this setup request. Use QR setup or hold the setup button for 5 seconds and try again."
+            AqlProvisioningStatus.TIMEOUT -> "The device setup window expired. Hold the setup button for 5 seconds and try again."
             AqlProvisioningStatus.ERROR,
-            AqlProvisioningStatus.UNKNOWN -> fallback.ifBlank { "Cihazdan kurulum durumu bekleniyor." }
+            AqlProvisioningStatus.UNKNOWN -> fallback.ifBlank { "Waiting for device setup status." }
         }
     }
 
     private fun AqlProvisioningStatus.toProgressStep(): String {
         return when (this) {
-            AqlProvisioningStatus.WIFI_CREDENTIALS_RECEIVED -> "✓ Wi-Fi bilgileri cihaza ulaştı"
-            AqlProvisioningStatus.WIFI_CONNECTING -> "⏳ Cihaz Wi-Fi ağına bağlanıyor"
-            AqlProvisioningStatus.WIFI_CONNECTED -> "✓ Wi-Fi bağlantısı başarılı"
-            AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY -> "⏳ Cihaz menüsü hazırlanıyor"
-            AqlProvisioningStatus.COMPLETED -> "✓ Kurulum tamamlandı"
-            AqlProvisioningStatus.WIFI_FAILED -> "Wi-Fi bağlantısı kurulamadı"
-            AqlProvisioningStatus.CLAIM_REJECTED -> "Cihaz doğrulanamadı"
-            AqlProvisioningStatus.TIMEOUT -> "Kurulum süresi doldu"
-            AqlProvisioningStatus.ERROR -> "Kurulum durdu"
-            else -> "⏳ Kurulum devam ediyor"
+            AqlProvisioningStatus.WIFI_CREDENTIALS_RECEIVED -> "Wi-Fi details delivered to device"
+            AqlProvisioningStatus.WIFI_CONNECTING -> "Connecting device to Wi-Fi"
+            AqlProvisioningStatus.WIFI_CONNECTED -> "Wi-Fi connection successful"
+            AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY -> "Preparing device menu"
+            AqlProvisioningStatus.COMPLETED -> "Setup complete"
+            AqlProvisioningStatus.WIFI_FAILED -> "Wi-Fi connection failed"
+            AqlProvisioningStatus.CLAIM_REJECTED -> "Device verification failed"
+            AqlProvisioningStatus.TIMEOUT -> "Setup timed out"
+            AqlProvisioningStatus.ERROR -> "Setup stopped"
+            else -> "Setup in progress"
         }
     }
 
@@ -446,11 +446,11 @@ class DeviceProvisioningProgressViewModel(
         val normalized = trim()
         return when {
             normalized.contains("StartSession is required", ignoreCase = true) ->
-                "Cihaz kurulum oturumunu başlatmadan Wi-Fi bilgisini kabul etmedi. Cihazı setup moduna alıp tekrar deneyin."
+                "The device rejected Wi-Fi details before the secure setup session was ready. Put the device in setup mode and try again."
             normalized.contains("WiFi", ignoreCase = true) || normalized.contains("wifi", ignoreCase = true) ->
-                "Wi-Fi bağlantısı kurulamadı. Ağın 2.4 GHz olduğundan ve şifrenin doğru olduğundan emin olun."
+                "Wi-Fi connection failed. Make sure the network is 2.4 GHz and the password is correct."
             normalized.isNotBlank() -> normalized
-            else -> "Kurulum sırasında beklenmeyen bir sorun oluştu. Tekrar deneyin."
+            else -> "An unexpected setup problem occurred. Try again."
         }
     }
 
@@ -486,15 +486,15 @@ sealed interface DeviceProvisioningProgressEvent {
 }
 
 data class DeviceProvisioningProgressUiState(
-    val title: String = "Cihaz kuruluyor",
-    val message: String = "AquaLight cihazı güvenli şekilde hazırlanıyor.",
+    val title: String = "Setting up device",
+    val message: String = "Your AquaLight device is being prepared securely.",
     val deviceName: String = "",
     val deviceSerial: String = "",
     val bleAddress: String = "",
     val wifiSsid: String = "",
-    val stepOne: String = "✓ Cihaz seçildi",
-    val stepTwo: String = "✓ Wi-Fi bilgileri hazırlandı",
-    val stepThree: String = "⏳ Güvenli bağlantı hazırlanıyor",
+    val stepOne: String = "Device selected",
+    val stepTwo: String = "Wi-Fi details prepared",
+    val stepThree: String = "Preparing secure connection",
     val canStart: Boolean = false,
     val buttonText: String = "Try again",
     val showProgress: Boolean = false
