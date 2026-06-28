@@ -77,6 +77,12 @@ class AqlBleProvisioningGattClient(
     private var runtimeNotificationsEnabled = false
 
     @Volatile
+    private var startSessionWritten = false
+
+    @Volatile
+    private var wifiCredentialsWriteStarted = false
+
+    @Volatile
     private var wifiCredentialsWritten = false
 
     private val statusPollRunnable = Runnable {
@@ -121,6 +127,8 @@ class AqlBleProvisioningGattClient(
         deviceClaimRequired = null
         statusNotificationsEnabled = false
         runtimeNotificationsEnabled = false
+        startSessionWritten = false
+        wifiCredentialsWriteStarted = false
         wifiCredentialsWritten = false
         mainHandler.removeCallbacks(statusPollRunnable)
         emit(AqlBleProvisioningGattEvent.Connecting(draft.bleAddress))
@@ -166,6 +174,8 @@ class AqlBleProvisioningGattClient(
         deviceClaimRequired = null
         statusNotificationsEnabled = false
         runtimeNotificationsEnabled = false
+        startSessionWritten = false
+        wifiCredentialsWriteStarted = false
         wifiCredentialsWritten = false
     }
 
@@ -277,6 +287,7 @@ class AqlBleProvisioningGattClient(
 
             when (characteristic.uuid) {
                 START_SESSION_UUID -> {
+                    startSessionWritten = true
                     emit(AqlBleProvisioningGattEvent.StartSessionWritten)
                     readProvisioningStatus(gatt)
                     scheduleStatusPoll()
@@ -417,6 +428,19 @@ class AqlBleProvisioningGattClient(
         )
     }
 
+    private fun writeWifiCredentialsIfReady(gatt: BluetoothGatt): Boolean {
+        if (wifiCredentialsWritten || wifiCredentialsWriteStarted) {
+            return true
+        }
+
+        if (!startSessionWritten) {
+            return false
+        }
+
+        writeWifiCredentials(gatt)
+        return true
+    }
+
     private fun writeWifiCredentials(gatt: BluetoothGatt) {
         if (!deviceInfoVerified) {
             failAndClose("DeviceInfo must be verified before Wi-Fi credentials are written.")
@@ -428,6 +452,15 @@ class AqlBleProvisioningGattClient(
             return
         }
 
+        if (!startSessionWritten) {
+            scheduleStatusPoll()
+            return
+        }
+
+        if (wifiCredentialsWriteStarted || wifiCredentialsWritten) {
+            return
+        }
+
         val draft = activeDraft ?: return
         val characteristic = wifiCredentialsCharacteristic
         if (characteristic == null) {
@@ -435,6 +468,7 @@ class AqlBleProvisioningGattClient(
             return
         }
 
+        wifiCredentialsWriteStarted = true
         writeString(
             gatt = gatt,
             characteristic = characteristic,
@@ -456,10 +490,10 @@ class AqlBleProvisioningGattClient(
         }
 
         if (!gatt.readCharacteristic(characteristic)) {
-            if (!wifiCredentialsWritten) {
-                writeWifiCredentials(gatt)
-            } else {
+            if (wifiCredentialsWritten) {
                 readRuntimeEndpoint(gatt)
+            } else if (!writeWifiCredentialsIfReady(gatt)) {
+                scheduleStatusPoll()
             }
         }
     }
@@ -540,16 +574,16 @@ class AqlBleProvisioningGattClient(
     ) {
         when (status) {
             AqlProvisioningStatus.PROVISIONING_IN_PROGRESS -> {
-                if (!wifiCredentialsWritten) {
-                    writeWifiCredentials(gatt)
-                } else {
+                if (!writeWifiCredentialsIfReady(gatt)) {
                     scheduleStatusPoll()
                 }
             }
 
             AqlProvisioningStatus.PHYSICAL_RESET -> {
                 if (!wifiCredentialsWritten && deviceClaimRequired == false) {
-                    writeWifiCredentials(gatt)
+                    if (!writeWifiCredentialsIfReady(gatt)) {
+                        scheduleStatusPoll()
+                    }
                 } else {
                     scheduleStatusPoll()
                 }
@@ -584,9 +618,6 @@ class AqlBleProvisioningGattClient(
             AqlProvisioningStatus.CLAIM_VALIDATING,
             AqlProvisioningStatus.IDLE,
             AqlProvisioningStatus.UNKNOWN -> {
-                // Firmware can update the status asynchronously after StartSession,
-                // Wi-Fi connect and token rotation. Keep polling instead of getting
-                // stuck on a stale/unknown value.
                 scheduleStatusPoll()
             }
         }
