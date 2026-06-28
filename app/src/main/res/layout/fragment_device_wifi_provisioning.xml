@@ -25,7 +25,7 @@
         android:fillViewport="true"
         android:overScrollMode="never"
         android:paddingStart="16dp"
-        android:paddingTop="12dp"
+        android:paddingTop="10dp"
         android:paddingEnd="16dp"
         android:paddingBottom="24dp"
         app:layout_constraintTop_toBottomOf="@id/appHeader"
@@ -41,24 +41,25 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="@color/settings_card_background"
+                app:cardBackgroundColor="#101D2C"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="0dp"
-                app:strokeColor="@color/settings_card_stroke"
+                app:strokeColor="#22354D"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="20dp">
+                    android:padding="18dp">
 
                     <TextView
                         android:id="@+id/tvDeviceName"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/white"
-                        android:textSize="24sp"
+                        android:includeFontPadding="false"
+                        android:textColor="#F2F6FA"
+                        android:textSize="20sp"
                         android:textStyle="bold"
                         tools:text="Dosing Pro 4" />
 
@@ -66,44 +67,47 @@
                         android:id="@+id/tvDeviceSerial"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:textColor="#8FA4BE"
-                        android:textSize="13sp"
+                        android:layout_marginTop="7dp"
+                        android:includeFontPadding="false"
+                        android:textColor="#90A1B5"
+                        android:textSize="12.5sp"
                         tools:text="Serial: AQL-DP4-336172" />
 
                     <TextView
                         android:id="@+id/tvDeviceModel"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="5dp"
-                        android:textColor="#B9C8DA"
-                        android:textSize="12sp"
-                        tools:text="Setup mode • RSSI -52 dBm" />
+                        android:layout_marginTop="6dp"
+                        android:includeFontPadding="false"
+                        android:textColor="#5FD6B4"
+                        android:textSize="12.5sp"
+                        tools:text="Setup mode" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                app:cardBackgroundColor="@color/settings_card_background"
+                android:layout_marginTop="12dp"
+                app:cardBackgroundColor="#101D2C"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="0dp"
-                app:strokeColor="@color/settings_card_stroke"
+                app:strokeColor="#22354D"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="20dp">
+                    android:padding="18dp">
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:includeFontPadding="false"
                         android:text="2.4 GHz Wi-Fi ağını seçin"
-                        android:textColor="@color/white"
-                        android:textSize="20sp"
+                        android:textColor="#F2F6FA"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -112,24 +116,24 @@
                         android:layout_marginTop="7dp"
                         android:lineSpacingExtra="2dp"
                         android:text="Cihazınız yalnızca 2.4 GHz ağlara bağlanır. Telefonunuzu aynı ağa bağlayıp Select Wi-Fi ile ağı seçebilirsiniz."
-                        android:textColor="#8FA4BE"
-                        android:textSize="13sp" />
+                        android:textColor="#90A1B5"
+                        android:textSize="12.5sp" />
 
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:id="@+id/wifiSelectRow"
                         android:layout_width="match_parent"
-                        android:layout_height="58dp"
-                        android:layout_marginTop="18dp"
+                        android:layout_height="54dp"
+                        android:layout_marginTop="16dp"
                         android:background="@drawable/bg_aqua_input"
                         android:clickable="true"
                         android:focusable="true"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="16dp">
+                        android:paddingStart="15dp"
+                        android:paddingEnd="15dp">
 
                         <ImageView
                             android:id="@+id/ivWifiIcon"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
                             android:contentDescription="Wi-Fi"
                             android:src="@drawable/ic_wifi"
                             app:layout_constraintBottom_toBottomOf="parent"
@@ -141,13 +145,14 @@
                             android:id="@+id/tvSelectedWifi"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
-                            android:layout_marginEnd="12dp"
+                            android:layout_marginStart="13dp"
+                            android:layout_marginEnd="10dp"
                             android:ellipsize="end"
+                            android:includeFontPadding="false"
                             android:maxLines="1"
                             android:text="Wi-Fi seçilmedi"
-                            android:textColor="@color/white"
-                            android:textSize="15sp"
+                            android:textColor="#F2F6FA"
+                            android:textSize="14.5sp"
                             android:textStyle="bold"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toStartOf="@id/tvSelectWifiAction"
@@ -158,9 +163,10 @@
                             android:id="@+id/tvSelectWifiAction"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:includeFontPadding="false"
                             android:text="Select Wi-Fi"
-                            android:textColor="@color/aqua_accent"
-                            android:textSize="13sp"
+                            android:textColor="#5FD6B4"
+                            android:textSize="12.5sp"
                             android:textStyle="bold"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
@@ -170,70 +176,70 @@
                     <EditText
                         android:id="@+id/etWifiSsid"
                         android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginTop="12dp"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="10dp"
                         android:background="@drawable/bg_aqua_input"
                         android:hint="Wi-Fi name / SSID"
                         android:inputType="text"
                         android:maxLength="32"
                         android:maxLines="1"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="16dp"
+                        android:paddingStart="15dp"
+                        android:paddingEnd="15dp"
                         android:singleLine="true"
-                        android:textColor="@color/white"
-                        android:textColorHint="#8FA4BE"
-                        android:textSize="15sp" />
+                        android:textColor="#F2F6FA"
+                        android:textColorHint="#7F91AA"
+                        android:textSize="14.5sp" />
 
                     <EditText
                         android:id="@+id/etWifiPassword"
                         android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginTop="12dp"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="10dp"
                         android:background="@drawable/bg_aqua_input"
                         android:hint="Wi-Fi password"
                         android:inputType="textPassword"
                         android:maxLength="64"
                         android:maxLines="1"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="16dp"
+                        android:paddingStart="15dp"
+                        android:paddingEnd="15dp"
                         android:singleLine="true"
-                        android:textColor="@color/white"
-                        android:textColorHint="#8FA4BE"
-                        android:textSize="15sp" />
+                        android:textColor="#F2F6FA"
+                        android:textColorHint="#7F91AA"
+                        android:textSize="14.5sp" />
 
                     <CheckBox
                         android:id="@+id/cbShowPassword"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:buttonTint="#64FFDA"
+                        android:layout_marginTop="6dp"
+                        android:buttonTint="#5FD6B4"
                         android:text="Show password"
-                        android:textColor="#8FA4BE"
-                        android:textSize="13sp" />
+                        android:textColor="#90A1B5"
+                        android:textSize="12.5sp" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnContinue"
                         android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginTop="18dp"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="16dp"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
                         android:text="Continue"
                         android:textAllCaps="false"
                         android:textColor="@color/white"
-                        android:textSize="15sp"
+                        android:textSize="14.5sp"
                         android:textStyle="bold"
                         app:backgroundTint="#1E90FF"
-                        app:cornerRadius="18dp" />
+                        app:cornerRadius="17dp" />
 
                     <TextView
                         android:id="@+id/tvFormHint"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="13dp"
+                        android:layout_marginTop="12dp"
                         android:lineSpacingExtra="2dp"
                         android:text="Wi-Fi bilgileri yalnızca seçili AquaLight cihazına Bluetooth üzerinden gönderilir."
-                        android:textColor="#8FA4BE"
+                        android:textColor="#90A1B5"
                         android:textSize="12sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
