@@ -45,9 +45,22 @@ class AqlBleProvisioningMessageCodec {
     }
 
     fun wifiCredentialsJson(draft: AqlProvisioningDraft): String {
+        val wifiCredentials = draft.wifiCredentials
+
         return JSONObject()
-            .put(AqlBleProvisioningContract.Json.KEY_WIFI_SSID, draft.wifiCredentials.ssid)
-            .put(AqlBleProvisioningContract.Json.KEY_WIFI_PASSWORD, draft.wifiCredentials.password)
+            .put(AqlBleProvisioningContract.Json.KEY_WIFI_SSID, wifiCredentials.ssid)
+            .put(AqlBleProvisioningContract.Json.KEY_WIFI_PASSWORD, wifiCredentials.password)
+            .apply {
+                if (wifiCredentials.bssid.isNotBlank()) {
+                    put(AqlBleProvisioningContract.Json.KEY_WIFI_BSSID, wifiCredentials.bssid)
+                }
+                if (wifiCredentials.channel > 0) {
+                    put(AqlBleProvisioningContract.Json.KEY_WIFI_CHANNEL, wifiCredentials.channel)
+                }
+                if (wifiCredentials.timezone.isNotBlank()) {
+                    put(AqlBleProvisioningContract.Json.KEY_WIFI_TIMEZONE, wifiCredentials.timezone)
+                }
+            }
             .toString()
     }
 
@@ -187,10 +200,10 @@ class AqlBleProvisioningMessageCodec {
         return runCatching {
             if (normalized.startsWith("{")) {
                 JSONObject(normalized)
-                    .optString(AqlBleProvisioningContract.Qr.KEY_PRODUCT_ID)
+                    .optString(AqlBleProvisioningContract.Qr.KEY_PROVISIONING_ID)
                     .trim()
             } else {
-                parseQueryFields(normalized)[AqlBleProvisioningContract.Qr.KEY_PRODUCT_ID].orEmpty()
+                parseQueryFields(normalized)[AqlBleProvisioningContract.Qr.KEY_PROVISIONING_ID].orEmpty()
             }
         }.getOrDefault("")
     }
