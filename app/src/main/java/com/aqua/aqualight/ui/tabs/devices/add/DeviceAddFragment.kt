@@ -14,6 +14,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceAddBinding
+import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import kotlinx.coroutines.launch
@@ -58,7 +59,16 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
                 titleOverride = "Add Device",
                 onBackClick = {
                     findNavController().navigateUp()
-                }
+                },
+                actions = listOf(
+                    AquaHeaderAction(
+                        iconRes = R.drawable.ic_qr_code_24,
+                        contentDescription = "QR ile ekle",
+                        onClick = {
+                            viewModel.onQrClicked()
+                        }
+                    )
+                )
             )
         )
     }
@@ -70,11 +80,7 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
     }
 
     private fun setupActions() {
-        binding.cardQr.setOnClickListener {
-            viewModel.onQrClicked()
-        }
-
-        binding.cardBle.setOnClickListener {
+        binding.btnScan.setOnClickListener {
             startBleScanWithPermissionCheck()
         }
 
@@ -124,18 +130,31 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         val hasCandidates = state.candidates.isNotEmpty()
         binding.rvCandidates.isVisible = hasCandidates
         binding.emptyContainer.isVisible = !hasCandidates
+        binding.tipContainer.isVisible = state.mode == DeviceAddScanMode.READY
         binding.tvFoundDevicesLabel.text = if (hasCandidates) {
-            "Found devices"
+            "Bulunan cihazlar"
         } else {
-            "Discovery"
+            "Yakındaki cihazlar"
         }
 
         candidateAdapter.submitList(state.candidates)
 
         if (state.mode == DeviceAddScanMode.SCANNING) {
             binding.scanPulseView.startScan()
+            binding.btnScan.text = "Scanning..."
+            binding.btnScanAgain.text = "Scanning..."
+            binding.btnScan.isEnabled = false
+            binding.btnScanAgain.isEnabled = false
+            binding.btnScan.alpha = 0.72f
+            binding.btnScanAgain.alpha = 0.72f
         } else {
             binding.scanPulseView.stopScan()
+            binding.btnScan.text = "Scan"
+            binding.btnScanAgain.text = "Scan again"
+            binding.btnScan.isEnabled = true
+            binding.btnScanAgain.isEnabled = true
+            binding.btnScan.alpha = 1f
+            binding.btnScanAgain.alpha = 1f
         }
     }
 
