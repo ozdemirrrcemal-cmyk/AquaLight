@@ -13,6 +13,8 @@ import android.bluetooth.BluetoothStatusCodes
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningDraft
@@ -31,6 +33,7 @@ class AqlBleProvisioningGattClient(
     private val appContext = context.applicationContext
     private val bluetoothManager =
         appContext.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     private val _events = MutableSharedFlow<AqlBleProvisioningGattEvent>(
         extraBufferCapacity = EVENT_BUFFER_CAPACITY
@@ -65,6 +68,9 @@ class AqlBleProvisioningGattClient(
     private var deviceInfoVerified = false
 
     @Volatile
+    private var deviceClaimRequired: Boolean? = null
+
+    @Volatile
     private var statusNotificationsEnabled = false
 
     @Volatile
@@ -72,6 +78,11 @@ class AqlBleProvisioningGattClient(
 
     @Volatile
     private var wifiCredentialsWritten = false
+
+    private val statusPollRunnable = Runnable {
+        val gatt = activeGatt ?: return@Runnable
+        readProvisioningStatus(gatt)
+    }
 
     @SuppressLint("MissingPermission")
     fun start(draft: AqlProvisioningDraft) {
@@ -107,9 +118,11 @@ class AqlBleProvisioningGattClient(
         activeDraft = draft
         negotiatedMtu = DEFAULT_ATT_MTU
         deviceInfoVerified = false
+        deviceClaimRequired = null
         statusNotificationsEnabled = false
         runtimeNotificationsEnabled = false
         wifiCredentialsWritten = false
+        mainHandler.removeCallbacks(statusPollRunnable)
         emit(AqlBleProvisioningGattEvent.Connecting(draft.bleAddress))
 
         activeGatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -130,6 +143,8 @@ class AqlBleProvisioningGattClient(
 
     @SuppressLint("MissingPermission")
     fun close() {
+        mainHandler.removeCallbacks(statusPollRunnable)
+
         val gatt = activeGatt
         activeGatt = null
 
@@ -148,6 +163,7 @@ class AqlBleProvisioningGattClient(
         runtimeEndpointCharacteristic = null
         negotiatedMtu = DEFAULT_ATT_MTU
         deviceInfoVerified = false
+        deviceClaimRequired = null
         statusNotificationsEnabled = false
         runtimeNotificationsEnabled = false
         wifiCredentialsWritten = false
@@ -263,12 +279,14 @@ class AqlBleProvisioningGattClient(
                 START_SESSION_UUID -> {
                     emit(AqlBleProvisioningGattEvent.StartSessionWritten)
                     readProvisioningStatus(gatt)
+                    scheduleStatusPoll()
                 }
 
                 WIFI_CREDENTIALS_UUID -> {
                     wifiCredentialsWritten = true
                     emit(AqlBleProvisioningGattEvent.WifiCredentialsWritten)
                     readProvisioningStatus(gatt)
+                    scheduleStatusPoll()
                 }
             }
         }
@@ -370,6 +388,7 @@ class AqlBleProvisioningGattClient(
         }
 
         deviceInfoVerified = true
+        deviceClaimRequired = deviceInfo.claimRequired
         enableProvisioningStatusNotifications(gatt)
     }
 
@@ -497,14 +516,18 @@ class AqlBleProvisioningGattClient(
                             error.message ?: "Runtime endpoint handoff is invalid."
                         )
                     )
+                    scheduleStatusPoll()
                     return
                 }
 
                 emit(AqlBleProvisioningGattEvent.RuntimeHandoffReceived(handoff))
 
                 if (handoff.isUsable) {
+                    mainHandler.removeCallbacks(statusPollRunnable)
                     emit(AqlBleProvisioningGattEvent.Completed)
                     close()
+                } else {
+                    scheduleStatusPoll()
                 }
             }
         }
@@ -516,17 +539,35 @@ class AqlBleProvisioningGattClient(
         message: String
     ) {
         when (status) {
-            AqlProvisioningStatus.PROVISIONING_IN_PROGRESS,
-            AqlProvisioningStatus.WIFI_CREDENTIALS_RECEIVED,
-            AqlProvisioningStatus.WIFI_CONNECTING,
-            AqlProvisioningStatus.WIFI_CONNECTED -> {
+            AqlProvisioningStatus.PROVISIONING_IN_PROGRESS -> {
                 if (!wifiCredentialsWritten) {
                     writeWifiCredentials(gatt)
+                } else {
+                    scheduleStatusPoll()
                 }
+            }
+
+            AqlProvisioningStatus.PHYSICAL_RESET -> {
+                if (!wifiCredentialsWritten && deviceClaimRequired == false) {
+                    writeWifiCredentials(gatt)
+                } else {
+                    scheduleStatusPoll()
+                }
+            }
+
+            AqlProvisioningStatus.WIFI_CREDENTIALS_RECEIVED,
+            AqlProvisioningStatus.WIFI_CONNECTING -> {
+                scheduleStatusPoll()
+            }
+
+            AqlProvisioningStatus.WIFI_CONNECTED -> {
+                readRuntimeEndpoint(gatt)
+                scheduleStatusPoll()
             }
 
             AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY,
             AqlProvisioningStatus.COMPLETED -> {
+                mainHandler.removeCallbacks(statusPollRunnable)
                 readRuntimeEndpoint(gatt)
             }
 
@@ -539,13 +580,14 @@ class AqlBleProvisioningGattClient(
                 )
             }
 
-            AqlProvisioningStatus.PHYSICAL_RESET,
             AqlProvisioningStatus.FACTORY,
             AqlProvisioningStatus.CLAIM_VALIDATING,
             AqlProvisioningStatus.IDLE,
             AqlProvisioningStatus.UNKNOWN -> {
-                // Wait for a later explicit provisioning state. Do not send Wi-Fi
-                // credentials only because the BLE write transport succeeded.
+                // Firmware can update the status asynchronously after StartSession,
+                // Wi-Fi connect and token rotation. Keep polling instead of getting
+                // stuck on a stale/unknown value.
+                scheduleStatusPoll()
             }
         }
     }
@@ -790,6 +832,12 @@ class AqlBleProvisioningGattClient(
         }
     }
 
+    private fun scheduleStatusPoll() {
+        if (activeGatt == null) return
+        mainHandler.removeCallbacks(statusPollRunnable)
+        mainHandler.postDelayed(statusPollRunnable, STATUS_POLL_INTERVAL_MS)
+    }
+
     private fun failAndClose(message: String) {
         emit(AqlBleProvisioningGattEvent.Failed(message))
         close()
@@ -812,6 +860,7 @@ class AqlBleProvisioningGattClient(
         const val DEFAULT_ATT_MTU = 23
         const val ATT_MTU_OVERHEAD_BYTES = 3
         const val DEFAULT_ATT_PAYLOAD_BYTES = 20
+        const val STATUS_POLL_INTERVAL_MS = 1_500L
 
         val SERVICE_UUID: UUID =
             UUID.fromString(AqlBleProvisioningContract.SERVICE_UUID)
