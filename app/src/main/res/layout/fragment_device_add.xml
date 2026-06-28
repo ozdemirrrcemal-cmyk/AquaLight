@@ -161,97 +161,37 @@
                 android:id="@+id/tvFoundDevicesLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="22dp"
-                android:text="Yakındaki cihazlar"
+                android:layout_marginTop="4dp"
+                android:text="Bulunan cihazlar"
                 android:textColor="@color/white"
                 android:textSize="20sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+            <TextView
+                android:id="@+id/tvFoundDevicesHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:lineSpacingExtra="2dp"
+                android:text="Kuruluma devam etmek için cihazınızı seçin."
+                android:textColor="#8FA4BE"
+                android:textSize="13sp"
+                android:visibility="gone"
+                tools:visibility="visible" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvCandidates"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="14dp"
                 android:nestedScrollingEnabled="false"
                 android:overScrollMode="never"
                 android:visibility="gone"
                 tools:itemCount="2"
                 tools:listitem="@layout/item_device_add_candidate"
                 tools:visibility="visible" />
-
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/emptyContainer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                app:cardBackgroundColor="@color/settings_card_background"
-                app:cardCornerRadius="22dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/settings_card_stroke"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical"
-                    android:padding="20dp">
-
-                    <FrameLayout
-                        android:layout_width="54dp"
-                        android:layout_height="54dp"
-                        android:background="@drawable/bg_add_button_small">
-
-                        <ImageView
-                            android:layout_width="26dp"
-                            android:layout_height="26dp"
-                            android:layout_gravity="center"
-                            android:contentDescription="Discovery"
-                            android:src="@drawable/ic_radar"
-                            app:tint="@color/white" />
-                    </FrameLayout>
-
-                    <TextView
-                        android:id="@+id/tvEmptyTitle"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:gravity="center"
-                        android:textColor="@color/white"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        tools:text="Scan hazır" />
-
-                    <TextView
-                        android:id="@+id/tvEmptyMessage"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="7dp"
-                        android:gravity="center"
-                        android:lineSpacingExtra="2dp"
-                        android:textColor="#8FA4BE"
-                        android:textSize="13sp"
-                        tools:text="Scan butonuna basınca kurulum modundaki cihazlar burada listelenir." />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnScanAgain"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:layout_marginTop="18dp"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
-                        android:text="Scan"
-                        android:textAllCaps="false"
-                        android:textColor="@color/white"
-                        android:textStyle="bold"
-                        app:backgroundTint="@color/aqua_button_blue"
-                        app:cornerRadius="17dp"
-                        app:icon="@drawable/ic_radar"
-                        app:iconGravity="textStart"
-                        app:iconPadding="8dp"
-                        app:iconTint="@color/white" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>
