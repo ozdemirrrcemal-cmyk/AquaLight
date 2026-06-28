@@ -120,20 +120,18 @@
                         android:textSize="12.5sp" />
 
                     <androidx.constraintlayout.widget.ConstraintLayout
-                        android:id="@+id/wifiSelectRow"
+                        android:id="@+id/wifiNetworkRow"
                         android:layout_width="match_parent"
                         android:layout_height="52dp"
                         android:layout_marginTop="16dp"
                         android:background="@drawable/bg_aqua_input"
-                        android:clickable="true"
-                        android:focusable="true"
                         android:paddingStart="14dp"
                         android:paddingEnd="14dp">
 
                         <ImageView
                             android:id="@+id/ivWifiIcon"
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
+                            android:layout_width="19dp"
+                            android:layout_height="19dp"
                             android:contentDescription="@string/device_wifi_icon_desc"
                             android:src="@drawable/ic_wifi_signal_pro_24"
                             app:layout_constraintBottom_toBottomOf="parent"
@@ -141,32 +139,41 @@
                             app:layout_constraintTop_toTopOf="parent"
                             app:tint="#F2F6FA" />
 
-                        <TextView
-                            android:id="@+id/tvSelectedWifi"
+                        <EditText
+                            android:id="@+id/etWifiSsid"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="match_parent"
                             android:layout_marginStart="12dp"
                             android:layout_marginEnd="10dp"
-                            android:ellipsize="end"
+                            android:background="@null"
+                            android:hint="@string/device_wifi_network_hint"
                             android:includeFontPadding="false"
+                            android:inputType="text"
+                            android:maxLength="32"
                             android:maxLines="1"
-                            android:text="@string/device_wifi_not_selected"
+                            android:padding="0dp"
+                            android:singleLine="true"
                             android:textColor="#F2F6FA"
+                            android:textColorHint="#7F91AA"
                             android:textSize="14sp"
                             android:textStyle="bold"
                             app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toStartOf="@id/tvSelectWifiAction"
+                            app:layout_constraintEnd_toStartOf="@id/tvUseCurrentWifiAction"
                             app:layout_constraintStart_toEndOf="@id/ivWifiIcon"
                             app:layout_constraintTop_toTopOf="parent" />
 
                         <TextView
-                            android:id="@+id/tvSelectWifiAction"
+                            android:id="@+id/tvUseCurrentWifiAction"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                            android:layout_height="match_parent"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
                             android:includeFontPadding="false"
-                            android:text="@string/device_wifi_select_action"
+                            android:minWidth="78dp"
+                            android:text="@string/device_wifi_use_current_action"
                             android:textColor="#5FD6B4"
-                            android:textSize="12.5sp"
+                            android:textSize="12sp"
                             android:textStyle="bold"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
