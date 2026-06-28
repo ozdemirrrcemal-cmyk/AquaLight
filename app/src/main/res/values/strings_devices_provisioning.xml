@@ -60,21 +60,21 @@
     <string name="device_wifi_default_device_name">AquaLight Device</string>
     <string name="device_wifi_serial_format">Serial: %1$s</string>
     <string name="device_wifi_setup_mode">Setup mode</string>
-    <string name="device_wifi_card_title">Choose your 2.4 GHz Wi-Fi network</string>
-    <string name="device_wifi_card_message">AquaLight connects to 2.4 GHz Wi-Fi networks. Select the network your phone is using, then enter the password.</string>
-    <string name="device_wifi_icon_desc">Wi-Fi</string>
-    <string name="device_wifi_not_selected">No Wi-Fi network selected</string>
-    <string name="device_wifi_select_action">Select</string>
-    <string name="device_wifi_password_hint">Wi-Fi password</string>
+    <string name="device_wifi_card_title">Set up 2.4 GHz Wi‑Fi</string>
+    <string name="device_wifi_card_message">Enter the 2.4 GHz network name and password. Use current only as a shortcut when your phone is already on the correct network.</string>
+    <string name="device_wifi_icon_desc">Wi‑Fi</string>
+    <string name="device_wifi_network_hint">Wi‑Fi network</string>
+    <string name="device_wifi_use_current_action">Use current</string>
+    <string name="device_wifi_password_hint">Wi‑Fi password</string>
     <string name="device_wifi_show_password">Show password</string>
     <string name="device_wifi_continue">Continue</string>
-    <string name="device_wifi_privacy_hint">Your Wi-Fi credentials are sent only to the selected AquaLight device over Bluetooth.</string>
-    <string name="device_wifi_settings_open_failed">Unable to open Wi-Fi settings. Connect your phone to the 2.4 GHz network and try again.</string>
-    <string name="device_wifi_network_not_read">No Wi-Fi network could be read. Connect your phone to the 2.4 GHz network and try again.</string>
-    <string name="device_wifi_select_first">Select a Wi-Fi network first.</string>
-    <string name="device_wifi_name_too_long">The Wi-Fi network name is too long.</string>
-    <string name="device_wifi_password_too_long">The Wi-Fi password is too long.</string>
-    <string name="device_wifi_invalid_details">The Wi-Fi details are invalid.</string>
+    <string name="device_wifi_privacy_hint">Your Wi‑Fi credentials are sent only to the selected AquaLight device over Bluetooth.</string>
+    <string name="device_wifi_settings_open_failed">Unable to open Wi‑Fi settings. Enter the 2.4 GHz network name manually.</string>
+    <string name="device_wifi_network_not_read">The current phone network could not be read. Enter the 2.4 GHz network name manually.</string>
+    <string name="device_wifi_select_first">Enter a Wi‑Fi network name first.</string>
+    <string name="device_wifi_name_too_long">The Wi‑Fi network name is too long.</string>
+    <string name="device_wifi_password_too_long">The Wi‑Fi password is too long.</string>
+    <string name="device_wifi_invalid_details">The Wi‑Fi details are invalid.</string>
 
     <!-- QR Setup -->
     <string name="device_qr_title">QR Setup</string>
@@ -89,7 +89,7 @@
     <string name="device_qr_invalid_title">Invalid QR code</string>
     <string name="device_qr_invalid_message">This is not an AquaLight setup code.</string>
     <string name="device_qr_verified_title">QR code verified</string>
-    <string name="device_qr_opening_wifi">Opening Wi-Fi setup.</string>
+    <string name="device_qr_opening_wifi">Opening Wi‑Fi setup.</string>
     <string name="device_qr_setup_label">QR setup</string>
 
     <!-- Provisioning progress -->
