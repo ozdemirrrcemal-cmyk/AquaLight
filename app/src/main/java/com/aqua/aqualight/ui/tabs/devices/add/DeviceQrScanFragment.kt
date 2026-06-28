@@ -69,7 +69,7 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = "QR ile ekle",
+                titleOverride = "QR Setup",
                 onBackClick = {
                     findNavController().navigateUp()
                 }
@@ -106,16 +106,16 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         if (_binding == null) return
 
         binding.btnRequestCamera.isVisible = true
-        binding.tvScanTitle.text = "Kamera izni gerekiyor"
-        binding.tvScanStatus.text = "Cihaz QR kodunu okutmak için kamera izni verin."
+        binding.tvScanTitle.text = "Camera permission required"
+        binding.tvScanStatus.text = "Allow camera access to scan the device QR code."
     }
 
     private fun startCamera() {
         if (_binding == null || hasResult) return
 
         binding.btnRequestCamera.isVisible = false
-        binding.tvScanTitle.text = "QR kodu çerçeveye alın"
-        binding.tvScanStatus.text = "Kod okunduğunda Wi-Fi kurulum ekranı otomatik açılır."
+        binding.tvScanTitle.text = "Align the QR code inside the frame"
+        binding.tvScanStatus.text = "Setup will continue automatically after the code is detected."
 
         val options = BarcodeScannerOptions.Builder()
             .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
@@ -155,8 +155,8 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
                     )
                 }.onFailure { error ->
                     if (_binding != null) {
-                        binding.tvScanTitle.text = "Kamera açılamadı"
-                        binding.tvScanStatus.text = error.message ?: "Kamera şu anda başlatılamadı."
+                        binding.tvScanTitle.text = "Camera unavailable"
+                        binding.tvScanStatus.text = error.message ?: "The camera could not be started right now."
                     }
                 }
             },
@@ -204,7 +204,7 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
             }
             .addOnFailureListener { error ->
                 if (_binding != null && !hasResult) {
-                    binding.tvScanStatus.text = error.message ?: "QR kod okunamadı. Tekrar deneyin."
+                    binding.tvScanStatus.text = error.message ?: "QR code could not be read. Try again."
                 }
             }
             .addOnCompleteListener {
@@ -219,8 +219,8 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         val payload = qrParser.parse(rawValue)
             .getOrElse { error ->
                 if (_binding != null) {
-                    binding.tvScanTitle.text = "Geçersiz QR kod"
-                    binding.tvScanStatus.text = error.message ?: "Bu kod AquaLight kurulum kodu değil."
+                    binding.tvScanTitle.text = "Invalid QR code"
+                    binding.tvScanStatus.text = error.message ?: "This is not an AquaLight setup code."
                 }
                 return
             }
@@ -228,8 +228,8 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         hasResult = true
 
         if (_binding != null) {
-            binding.tvScanTitle.text = "QR doğrulandı"
-            binding.tvScanStatus.text = "Wi-Fi kurulumu açılıyor."
+            binding.tvScanTitle.text = "QR code verified"
+            binding.tvScanStatus.text = "Opening Wi‑Fi setup."
         }
 
         openWifiProvisioning(payload)
