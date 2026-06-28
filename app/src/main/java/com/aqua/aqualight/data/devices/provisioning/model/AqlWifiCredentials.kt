@@ -7,7 +7,8 @@ data class AqlWifiCredentials(
     val password: String,
     val bssid: String = "",
     val channel: Int = 0,
-    val timezone: String = ""
+    val timezone: String = "",
+    val utcOffsetMinutes: Int = 0
 ) {
     init {
         require(ssid.isNotBlank()) { "Wi-Fi SSID must not be blank." }
@@ -18,5 +19,8 @@ data class AqlWifiCredentials(
             "Wi-Fi password is too long."
         }
         require(channel >= 0) { "Wi-Fi channel must not be negative." }
+        require(utcOffsetMinutes >= -840 && utcOffsetMinutes <= 840) {
+            "UTC offset is out of range."
+        }
     }
 }
