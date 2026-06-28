@@ -63,7 +63,7 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
                 actions = listOf(
                     AquaHeaderAction(
                         iconRes = R.drawable.ic_qr_code_24,
-                        contentDescription = "QR ile ekle",
+                        contentDescription = "Add with QR code",
                         onClick = {
                             viewModel.onQrClicked()
                         }
