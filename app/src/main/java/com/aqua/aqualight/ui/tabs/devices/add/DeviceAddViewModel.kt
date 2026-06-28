@@ -1,8 +1,10 @@
 package com.aqua.aqualight.ui.tabs.devices.add
 
 import android.app.Application
+import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningCandidate
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningScanner
 import kotlinx.coroutines.Job
@@ -21,7 +23,7 @@ class DeviceAddViewModel(
 
     private val bleScanner = AqlBleProvisioningScanner(application)
 
-    private val _uiState = MutableStateFlow(DeviceAddUiState())
+    private val _uiState = MutableStateFlow(readyState())
     val uiState: StateFlow<DeviceAddUiState> = _uiState.asStateFlow()
 
     private val _events = Channel<DeviceAddEvent>(capacity = Channel.BUFFERED)
@@ -40,11 +42,11 @@ class DeviceAddViewModel(
         stopBleScan()
         _uiState.value = DeviceAddUiState(
             mode = DeviceAddScanMode.PERMISSION_REQUIRED,
-            heroTitle = "Bluetooth permission required",
-            heroSubtitle = "Allow Bluetooth access to find nearby AquaLight devices in setup mode.",
-            scanBadge = "Permission",
-            emptyTitle = "Permission required",
-            emptyMessage = "After Bluetooth permission is granted, press Scan to search for nearby devices."
+            heroTitle = string(R.string.device_add_bluetooth_permission_title),
+            heroSubtitle = string(R.string.device_add_bluetooth_permission_message),
+            scanBadge = string(R.string.device_add_scan_badge_permission),
+            emptyTitle = string(R.string.device_add_bluetooth_permission_empty_title),
+            emptyMessage = string(R.string.device_add_bluetooth_permission_empty_message)
         )
     }
 
@@ -54,12 +56,12 @@ class DeviceAddViewModel(
 
         _uiState.value = DeviceAddUiState(
             mode = DeviceAddScanMode.SCANNING,
-            heroTitle = "Searching nearby devices",
-            heroSubtitle = "Keep the device close to your phone. AquaLight devices in setup mode will appear here.",
-            scanBadge = "Scanning",
+            heroTitle = string(R.string.device_add_scanning_title),
+            heroSubtitle = string(R.string.device_add_scanning_message),
+            scanBadge = string(R.string.device_add_scan_badge_scanning),
             candidates = emptyList(),
-            emptyTitle = "Scanning...",
-            emptyMessage = "Searching for AquaLight devices in setup mode."
+            emptyTitle = string(R.string.device_add_scanning_empty_title),
+            emptyMessage = string(R.string.device_add_scanning_empty_message)
         )
 
         when (val result = bleScanner.startScan()) {
@@ -112,15 +114,19 @@ class DeviceAddViewModel(
                     _uiState.value = _uiState.value.copy(
                         mode = DeviceAddScanMode.SCANNING,
                         candidates = emptyList(),
-                        emptyTitle = "Scanning...",
-                        emptyMessage = "Searching for AquaLight devices in setup mode."
+                        emptyTitle = string(R.string.device_add_scanning_empty_title),
+                        emptyMessage = string(R.string.device_add_scanning_empty_message)
                     )
                 } else {
                     _uiState.value = DeviceAddUiState(
                         mode = DeviceAddScanMode.RESULTS,
-                        heroTitle = "${uiCandidates.size} device found",
-                        heroSubtitle = "Select the AquaLight device you want to set up.",
-                        scanBadge = "Nearby",
+                        heroTitle = if (uiCandidates.size == 1) {
+                            string(R.string.device_add_result_title_single, uiCandidates.size)
+                        } else {
+                            string(R.string.device_add_result_title_multi, uiCandidates.size)
+                        },
+                        heroSubtitle = string(R.string.device_add_result_message),
+                        scanBadge = string(R.string.device_add_scan_badge_nearby),
                         candidates = uiCandidates,
                         emptyTitle = "",
                         emptyMessage = ""
@@ -139,12 +145,12 @@ class DeviceAddViewModel(
                 bleScanner.stopScan()
                 _uiState.value = DeviceAddUiState(
                     mode = DeviceAddScanMode.EMPTY,
-                    heroTitle = "No device found",
-                    heroSubtitle = "Make sure the device is powered on. For a previously paired device, hold the setup button for 5 seconds and try again.",
-                    scanBadge = "Ready",
+                    heroTitle = string(R.string.device_add_no_device_title),
+                    heroSubtitle = string(R.string.device_add_no_device_message),
+                    scanBadge = string(R.string.device_add_scan_badge_ready),
                     candidates = emptyList(),
-                    emptyTitle = "No nearby devices",
-                    emptyMessage = "Put the device in setup mode, keep it close to your phone, then press Scan again. QR setup is available from the top-right icon."
+                    emptyTitle = string(R.string.device_add_no_nearby_title),
+                    emptyMessage = string(R.string.device_add_no_nearby_message)
                 )
             }
         }
@@ -154,11 +160,11 @@ class DeviceAddViewModel(
         stopBleScan()
         _uiState.value = DeviceAddUiState(
             mode = DeviceAddScanMode.BLUETOOTH_OFF,
-            heroTitle = "Bluetooth is off",
-            heroSubtitle = "Turn on Bluetooth to find nearby AquaLight devices.",
-            scanBadge = "Bluetooth",
-            emptyTitle = "Bluetooth is off",
-            emptyMessage = "Turn on Bluetooth in your phone settings, then scan again."
+            heroTitle = string(R.string.device_add_bluetooth_off_title),
+            heroSubtitle = string(R.string.device_add_bluetooth_off_message),
+            scanBadge = string(R.string.device_add_scan_badge_bluetooth),
+            emptyTitle = string(R.string.device_add_bluetooth_off_title),
+            emptyMessage = string(R.string.device_add_bluetooth_off_empty_message)
         )
     }
 
@@ -166,11 +172,11 @@ class DeviceAddViewModel(
         stopBleScan()
         _uiState.value = DeviceAddUiState(
             mode = DeviceAddScanMode.ERROR,
-            heroTitle = "Bluetooth unavailable",
-            heroSubtitle = "BLE setup scanning could not be started on this phone.",
-            scanBadge = "Unavailable",
-            emptyTitle = "Bluetooth unavailable",
-            emptyMessage = "This phone is not ready for BLE device setup right now."
+            heroTitle = string(R.string.device_add_bluetooth_unavailable_title),
+            heroSubtitle = string(R.string.device_add_bluetooth_unavailable_message),
+            scanBadge = string(R.string.device_add_scan_badge_unavailable),
+            emptyTitle = string(R.string.device_add_bluetooth_unavailable_title),
+            emptyMessage = string(R.string.device_add_bluetooth_unavailable_empty_message)
         )
     }
 
@@ -178,11 +184,11 @@ class DeviceAddViewModel(
         stopBleScan()
         _uiState.value = DeviceAddUiState(
             mode = DeviceAddScanMode.ERROR,
-            heroTitle = "Scan could not start",
-            heroSubtitle = "A problem occurred while starting Bluetooth scanning.",
-            scanBadge = "Error",
-            emptyTitle = "Scan failed",
-            emptyMessage = message.ifBlank { "BLE scan failed. Try again." }
+            heroTitle = string(R.string.device_add_scan_failed_title),
+            heroSubtitle = string(R.string.device_add_scan_failed_message),
+            scanBadge = string(R.string.device_add_scan_badge_error),
+            emptyTitle = string(R.string.device_add_scan_failed_empty_title),
+            emptyMessage = message.ifBlank { string(R.string.device_add_scan_failed_fallback) }
         )
     }
 
@@ -197,8 +203,8 @@ class DeviceAddViewModel(
     private fun AqlBleProvisioningCandidate.toUi(): DeviceAddCandidateUi {
         val modelLabel = buildList {
             if (model.isNotBlank()) add(model)
-            add("Setup mode")
-            add("RSSI $rssi dBm")
+            add(string(R.string.device_add_setup_mode_label))
+            add(string(R.string.device_add_rssi_format, rssi))
         }.joinToString(separator = " • ")
 
         return DeviceAddCandidateUi(
@@ -206,11 +212,30 @@ class DeviceAddViewModel(
             title = displayTitle,
             serial = displaySerial,
             model = modelLabel,
-            status = displayStatus.ifBlank { "Ready" },
+            status = displayStatus.ifBlank { string(R.string.device_add_status_ready) },
             rssiLabel = "$rssi dBm",
             bleAddress = address,
             bleName = name
         )
+    }
+
+    private fun readyState(): DeviceAddUiState {
+        return DeviceAddUiState(
+            mode = DeviceAddScanMode.READY,
+            heroTitle = string(R.string.device_add_scan_title_ready),
+            heroSubtitle = string(R.string.device_add_scan_subtitle_ready),
+            scanBadge = string(R.string.device_add_scan_badge_ready),
+            candidates = emptyList(),
+            emptyTitle = string(R.string.device_add_scan_badge_ready),
+            emptyMessage = string(R.string.device_add_scanning_empty_message)
+        )
+    }
+
+    private fun string(
+        @StringRes resId: Int,
+        vararg args: Any
+    ): String {
+        return getApplication<Application>().getString(resId, *args)
     }
 
     override fun onCleared() {
@@ -225,12 +250,12 @@ class DeviceAddViewModel(
 
 data class DeviceAddUiState(
     val mode: DeviceAddScanMode = DeviceAddScanMode.READY,
-    val heroTitle: String = "Find nearby AquaLight devices",
-    val heroSubtitle: String = "Press Scan when your device is in setup mode. Use the QR icon in the top-right for QR setup.",
-    val scanBadge: String = "Ready",
+    val heroTitle: String = "",
+    val heroSubtitle: String = "",
+    val scanBadge: String = "",
     val candidates: List<DeviceAddCandidateUi> = emptyList(),
-    val emptyTitle: String = "Ready to scan",
-    val emptyMessage: String = "AquaLight devices in setup mode will appear here after scanning."
+    val emptyTitle: String = "",
+    val emptyMessage: String = ""
 )
 
 enum class DeviceAddScanMode {
