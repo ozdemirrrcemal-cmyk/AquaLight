@@ -42,18 +42,21 @@
                 android:id="@+id/cardHero"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="@color/settings_card_background"
-                app:cardCornerRadius="26dp"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="30dp"
                 app:cardElevation="0dp"
-                app:strokeColor="@color/settings_card_stroke"
-                app:strokeWidth="1dp">
+                app:strokeWidth="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/bg_device_add_primary_panel"
                     android:gravity="center_horizontal"
                     android:orientation="vertical"
-                    android:padding="22dp">
+                    android:paddingStart="22dp"
+                    android:paddingTop="24dp"
+                    android:paddingEnd="22dp"
+                    android:paddingBottom="22dp">
 
                     <TextView
                         android:id="@+id/tvScanBadge"
@@ -62,165 +65,106 @@
                         android:background="@drawable/bg_maintenance_tab_selected"
                         android:gravity="center"
                         android:includeFontPadding="false"
-                        android:minWidth="104dp"
+                        android:minWidth="112dp"
                         android:paddingStart="14dp"
                         android:paddingEnd="14dp"
                         android:textColor="@color/white"
                         android:textSize="12sp"
                         android:textStyle="bold"
-                        tools:text="Secure setup" />
+                        tools:text="Ready" />
 
                     <com.aqua.aqualight.ui.tabs.devices.add.DeviceScanPulseView
                         android:id="@+id/scanPulseView"
-                        android:layout_width="190dp"
-                        android:layout_height="190dp"
-                        android:layout_marginTop="10dp" />
+                        android:layout_width="178dp"
+                        android:layout_height="178dp"
+                        android:layout_marginTop="8dp" />
 
                     <TextView
                         android:id="@+id/tvHeroTitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
                         android:gravity="center"
                         android:textColor="@color/white"
-                        android:textSize="22sp"
+                        android:textSize="24sp"
                         android:textStyle="bold"
-                        tools:text="Add your AquaLight device" />
+                        tools:text="Yakındaki AquaLight cihazlarını bulun" />
 
                     <TextView
                         android:id="@+id/tvHeroSubtitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="9dp"
                         android:gravity="center"
                         android:lineSpacingExtra="2dp"
-                        android:textColor="#8FA4BE"
+                        android:textColor="#AFC0D5"
                         android:textSize="14sp"
-                        tools:text="Scan a QR code or discover a nearby device over Bluetooth provisioning." />
+                        tools:text="Cihaz kurulum modundaysa Scan butonuna basın." />
 
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnScan"
+                        android:layout_width="match_parent"
+                        android:layout_height="54dp"
+                        android:layout_marginTop="22dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:text="Scan"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@color/aqua_button_blue"
+                        app:cornerRadius="19dp"
+                        app:icon="@drawable/ic_radar"
+                        app:iconGravity="textStart"
+                        app:iconPadding="9dp"
+                        app:iconTint="@color/white" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/tipContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
-                android:orientation="horizontal"
-                android:weightSum="2">
+                app:cardBackgroundColor="@color/settings_card_background"
+                app:cardCornerRadius="22dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/settings_card_stroke"
+                app:strokeWidth="1dp">
 
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardQr"
-                    android:layout_width="0dp"
-                    android:layout_height="132dp"
-                    android:layout_marginEnd="7dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    app:cardBackgroundColor="@color/settings_card_background"
-                    app:cardCornerRadius="22dp"
-                    app:cardElevation="0dp"
-                    app:strokeColor="@color/settings_card_stroke"
-                    app:strokeWidth="1dp"
-                    android:layout_weight="1">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="18dp">
 
-                    <LinearLayout
+                    <TextView
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:gravity="center_vertical"
-                        android:orientation="vertical"
-                        android:padding="16dp">
+                        android:layout_height="wrap_content"
+                        android:text="Kurulum modu"
+                        android:textColor="@color/white"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
 
-                        <TextView
-                            android:layout_width="44dp"
-                            android:layout_height="44dp"
-                            android:background="@drawable/bg_add_button_small"
-                            android:gravity="center"
-                            android:includeFontPadding="false"
-                            android:text="QR"
-                            android:textColor="@color/white"
-                            android:textSize="13sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
-                            android:text="QR ile ekle"
-                            android:textColor="@color/white"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="Kutudaki güvenli kodu okut"
-                            android:textColor="#8FA4BE"
-                            android:textSize="12sp" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardBle"
-                    android:layout_width="0dp"
-                    android:layout_height="132dp"
-                    android:layout_marginStart="7dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    app:cardBackgroundColor="@color/settings_card_background"
-                    app:cardCornerRadius="22dp"
-                    app:cardElevation="0dp"
-                    app:strokeColor="@color/settings_card_stroke"
-                    app:strokeWidth="1dp"
-                    android:layout_weight="1">
-
-                    <LinearLayout
+                    <TextView
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:gravity="center_vertical"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-
-                        <TextView
-                            android:layout_width="44dp"
-                            android:layout_height="44dp"
-                            android:background="@drawable/bg_add_button_small"
-                            android:gravity="center"
-                            android:includeFontPadding="false"
-                            android:text="BLE"
-                            android:textColor="@color/white"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
-                            android:text="BLE ile tara"
-                            android:textColor="@color/white"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="Yakındaki cihazları bul"
-                            android:textColor="#8FA4BE"
-                            android:textSize="12sp" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-            </LinearLayout>
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="7dp"
+                        android:lineSpacingExtra="3dp"
+                        android:text="Yeni cihazlar ilk açılışta otomatik kurulum modundadır. Daha önce kurulmuş cihaz için setup tuşuna 5 saniye basın, ardından Scan ile cihazı bulun."
+                        android:textColor="#8FA4BE"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <TextView
                 android:id="@+id/tvFoundDevicesLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="22dp"
-                android:text="Found devices"
+                android:text="Yakındaki cihazlar"
                 android:textColor="@color/white"
-                android:textSize="18sp"
+                android:textSize="20sp"
                 android:textStyle="bold" />
 
             <androidx.recyclerview.widget.RecyclerView
@@ -241,7 +185,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 app:cardBackgroundColor="@color/settings_card_background"
-                app:cardCornerRadius="20dp"
+                app:cardCornerRadius="22dp"
                 app:cardElevation="0dp"
                 app:strokeColor="@color/settings_card_stroke"
                 app:strokeWidth="1dp">
@@ -249,41 +193,63 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
                     android:orientation="vertical"
-                    android:padding="18dp">
+                    android:padding="20dp">
+
+                    <FrameLayout
+                        android:layout_width="54dp"
+                        android:layout_height="54dp"
+                        android:background="@drawable/bg_add_button_small">
+
+                        <ImageView
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="Discovery"
+                            android:src="@drawable/ic_radar"
+                            app:tint="@color/white" />
+                    </FrameLayout>
 
                     <TextView
                         android:id="@+id/tvEmptyTitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:gravity="center"
                         android:textColor="@color/white"
-                        android:textSize="16sp"
+                        android:textSize="18sp"
                         android:textStyle="bold"
-                        tools:text="No devices found yet" />
+                        tools:text="Scan hazır" />
 
                     <TextView
                         android:id="@+id/tvEmptyMessage"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
+                        android:layout_marginTop="7dp"
+                        android:gravity="center"
                         android:lineSpacingExtra="2dp"
                         android:textColor="#8FA4BE"
                         android:textSize="13sp"
-                        tools:text="Start BLE scan or use the QR code printed on the device." />
+                        tools:text="Scan butonuna basınca kurulum modundaki cihazlar burada listelenir." />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnScanAgain"
                         android:layout_width="match_parent"
-                        android:layout_height="46dp"
-                        android:layout_marginTop="16dp"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="18dp"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
-                        android:text="Scan again"
+                        android:text="Scan"
                         android:textAllCaps="false"
                         android:textColor="@color/white"
                         android:textStyle="bold"
-                        app:backgroundTint="#1E90FF"
-                        app:cornerRadius="16dp" />
+                        app:backgroundTint="@color/aqua_button_blue"
+                        app:cornerRadius="17dp"
+                        app:icon="@drawable/ic_radar"
+                        app:iconGravity="textStart"
+                        app:iconPadding="8dp"
+                        app:iconTint="@color/white" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
