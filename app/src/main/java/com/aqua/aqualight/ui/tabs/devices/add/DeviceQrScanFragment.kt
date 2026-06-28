@@ -241,7 +241,7 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
                 candidateId = payload.deviceUid.value,
                 deviceTitle = payload.model.ifBlank { "AquaLight Device" },
                 deviceSerial = payload.deviceUid.value,
-                deviceModel = "QR provisioning • ${payload.productId}",
+                deviceModel = "QR provisioning • ${payload.provisioningId}",
                 bleAddress = "",
                 bleName = payload.bleName,
                 claimCode = payload.claimCode,
