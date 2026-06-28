@@ -83,10 +83,6 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         binding.btnScan.setOnClickListener {
             startBleScanWithPermissionCheck()
         }
-
-        binding.btnScanAgain.setOnClickListener {
-            startBleScanWithPermissionCheck()
-        }
     }
 
     private fun startBleScanWithPermissionCheck() {
@@ -121,40 +117,31 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
     private fun renderState(state: DeviceAddUiState) {
         if (_binding == null) return
 
+        val hasCandidates = state.candidates.isNotEmpty()
+        val showSearchCard = !hasCandidates
+
+        binding.cardHero.isVisible = showSearchCard
+        binding.tipContainer.isVisible = showSearchCard && state.mode == DeviceAddScanMode.READY
+        binding.tvFoundDevicesLabel.isVisible = hasCandidates
+        binding.tvFoundDevicesHint.isVisible = hasCandidates
+        binding.rvCandidates.isVisible = hasCandidates
+
         binding.tvScanBadge.text = state.scanBadge
         binding.tvHeroTitle.text = state.heroTitle
         binding.tvHeroSubtitle.text = state.heroSubtitle
-        binding.tvEmptyTitle.text = state.emptyTitle
-        binding.tvEmptyMessage.text = state.emptyMessage
-
-        val hasCandidates = state.candidates.isNotEmpty()
-        binding.rvCandidates.isVisible = hasCandidates
-        binding.emptyContainer.isVisible = !hasCandidates
-        binding.tipContainer.isVisible = state.mode == DeviceAddScanMode.READY
-        binding.tvFoundDevicesLabel.text = if (hasCandidates) {
-            "Bulunan cihazlar"
-        } else {
-            "Yakındaki cihazlar"
-        }
 
         candidateAdapter.submitList(state.candidates)
 
         if (state.mode == DeviceAddScanMode.SCANNING) {
             binding.scanPulseView.startScan()
             binding.btnScan.text = "Scanning..."
-            binding.btnScanAgain.text = "Scanning..."
             binding.btnScan.isEnabled = false
-            binding.btnScanAgain.isEnabled = false
             binding.btnScan.alpha = 0.72f
-            binding.btnScanAgain.alpha = 0.72f
         } else {
             binding.scanPulseView.stopScan()
             binding.btnScan.text = "Scan"
-            binding.btnScanAgain.text = "Scan again"
             binding.btnScan.isEnabled = true
-            binding.btnScanAgain.isEnabled = true
             binding.btnScan.alpha = 1f
-            binding.btnScanAgain.alpha = 1f
         }
     }
 
