@@ -69,7 +69,7 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = "QR Setup",
+                titleOverride = getString(R.string.device_qr_title),
                 onBackClick = {
                     findNavController().navigateUp()
                 }
@@ -106,16 +106,16 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         if (_binding == null) return
 
         binding.btnRequestCamera.isVisible = true
-        binding.tvScanTitle.text = "Camera permission required"
-        binding.tvScanStatus.text = "Allow camera access to scan the device QR code."
+        binding.tvScanTitle.text = getString(R.string.device_qr_camera_permission_title)
+        binding.tvScanStatus.text = getString(R.string.device_qr_camera_permission_message)
     }
 
     private fun startCamera() {
         if (_binding == null || hasResult) return
 
         binding.btnRequestCamera.isVisible = false
-        binding.tvScanTitle.text = "Align the QR code inside the frame"
-        binding.tvScanStatus.text = "Setup will continue automatically after the code is detected."
+        binding.tvScanTitle.text = getString(R.string.device_qr_align_title)
+        binding.tvScanStatus.text = getString(R.string.device_qr_align_message)
 
         val options = BarcodeScannerOptions.Builder()
             .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
@@ -155,8 +155,9 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
                     )
                 }.onFailure { error ->
                     if (_binding != null) {
-                        binding.tvScanTitle.text = "Camera unavailable"
-                        binding.tvScanStatus.text = error.message ?: "The camera could not be started right now."
+                        binding.tvScanTitle.text = getString(R.string.device_qr_camera_unavailable_title)
+                        binding.tvScanStatus.text = error.message
+                            ?: getString(R.string.device_qr_camera_unavailable_message)
                     }
                 }
             },
@@ -204,7 +205,8 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
             }
             .addOnFailureListener { error ->
                 if (_binding != null && !hasResult) {
-                    binding.tvScanStatus.text = error.message ?: "QR code could not be read. Try again."
+                    binding.tvScanStatus.text = error.message
+                        ?: getString(R.string.device_qr_read_failed)
                 }
             }
             .addOnCompleteListener {
@@ -219,8 +221,9 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         val payload = qrParser.parse(rawValue)
             .getOrElse { error ->
                 if (_binding != null) {
-                    binding.tvScanTitle.text = "Invalid QR code"
-                    binding.tvScanStatus.text = error.message ?: "This is not an AquaLight setup code."
+                    binding.tvScanTitle.text = getString(R.string.device_qr_invalid_title)
+                    binding.tvScanStatus.text = error.message
+                        ?: getString(R.string.device_qr_invalid_message)
                 }
                 return
             }
@@ -228,8 +231,8 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         hasResult = true
 
         if (_binding != null) {
-            binding.tvScanTitle.text = "QR code verified"
-            binding.tvScanStatus.text = "Opening Wi‑Fi setup."
+            binding.tvScanTitle.text = getString(R.string.device_qr_verified_title)
+            binding.tvScanStatus.text = getString(R.string.device_qr_opening_wifi)
         }
 
         openWifiProvisioning(payload)
@@ -239,9 +242,9 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         findNavController().navigate(
             DeviceQrScanFragmentDirections.actionDeviceQrScanFragmentToDeviceWifiProvisioningFragment(
                 candidateId = payload.deviceUid.value,
-                deviceTitle = payload.model.ifBlank { "AquaLight Device" },
+                deviceTitle = payload.model.ifBlank { getString(R.string.device_wifi_default_device_name) },
                 deviceSerial = payload.deviceUid.value,
-                deviceModel = "QR setup",
+                deviceModel = getString(R.string.device_qr_setup_label),
                 bleAddress = "",
                 bleName = payload.bleName,
                 claimCode = payload.claimCode,
