@@ -10,7 +10,10 @@ object AqlBleProvisioningContract {
     const val CONTRACT_VERSION = 1
     const val BRAND = "AquaLight"
 
-    const val SERVICE_UUID = "9f4c0001-6f5a-4b7c-9a7f-2f8a3c1d0001"
+    // Firmware advertises the compact 16-bit service UUID FFF0 to keep the legacy
+    // BLE advertisement payload under the 31-byte Android-compatible limit.
+    // Android APIs require the expanded Bluetooth Base UUID representation.
+    const val SERVICE_UUID = "0000fff0-0000-1000-8000-00805f9b34fb"
     const val DEVICE_INFO_UUID = "9f4c0002-6f5a-4b7c-9a7f-2f8a3c1d0001"
     const val START_SESSION_UUID = "9f4c0003-6f5a-4b7c-9a7f-2f8a3c1d0001"
     const val WIFI_CREDENTIALS_UUID = "9f4c0004-6f5a-4b7c-9a7f-2f8a3c1d0001"
