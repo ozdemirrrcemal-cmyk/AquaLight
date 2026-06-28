@@ -10,7 +10,6 @@ import android.text.InputType
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -28,6 +27,8 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
 
     private var _binding: FragmentDeviceWifiProvisioningBinding? = null
     private val binding get() = _binding!!
+
+    private var selectedWifiSsid: String = ""
 
     private val wifiPanelLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -74,10 +75,6 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
             openWifiPicker()
         }
 
-        binding.etWifiSsid.doAfterTextChanged { editable ->
-            updateSelectedWifiLabel(editable?.toString().orEmpty())
-        }
-
         binding.cbShowPassword.setOnCheckedChangeListener { _, isChecked ->
             val selection = binding.etWifiPassword.selectionStart.coerceAtLeast(0)
             binding.etWifiPassword.inputType = if (isChecked) {
@@ -116,13 +113,12 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
     private fun applyCurrentWifiSsid(showMessageIfUnavailable: Boolean) {
         val ssid = currentWifiSsid().orEmpty()
         if (ssid.isNotBlank()) {
-            binding.etWifiSsid.setText(ssid)
-            binding.etWifiSsid.setSelection(ssid.length)
+            selectedWifiSsid = ssid
             updateSelectedWifiLabel(ssid)
             return
         }
 
-        updateSelectedWifiLabel(binding.etWifiSsid.text?.toString().orEmpty())
+        updateSelectedWifiLabel(selectedWifiSsid)
         if (showMessageIfUnavailable) {
             Toast.makeText(
                 requireContext(),
@@ -154,12 +150,11 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
     }
 
     private fun updateSelectedWifiLabel(value: String) {
-        val ssid = value.trim()
-        binding.tvSelectedWifi.text = ssid.ifBlank { "No Wi-Fi network selected" }
+        binding.tvSelectedWifi.text = value.trim().ifBlank { "No Wi-Fi network selected" }
     }
 
     private fun onContinueClicked() {
-        val ssid = binding.etWifiSsid.text?.toString()?.trim().orEmpty()
+        val ssid = selectedWifiSsid.trim()
         val password = binding.etWifiPassword.text?.toString().orEmpty()
 
         when {
