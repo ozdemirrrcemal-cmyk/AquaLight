@@ -72,6 +72,9 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         binding.rvSelectedDevices.setHasFixedSize(false)
         binding.rvSelectedDevices.isVisible = false
         binding.tvEmptyState.isVisible = true
+        binding.btnEmptyAddDevice.setOnClickListener {
+            openAddDevice()
+        }
     }
 
     private fun observeViewModel() {
