@@ -174,12 +174,6 @@
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
                     <EditText
-                        android:id="@+id/etWifiSsid"
-                        android:layout_width="0dp"
-                        android:layout_height="0dp"
-                        android:visibility="gone" />
-
-                    <EditText
                         android:id="@+id/etWifiPassword"
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
