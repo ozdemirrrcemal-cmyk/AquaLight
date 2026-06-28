@@ -108,11 +108,13 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
             else -> {
                 val credentials = runCatching {
                     val deviceTimeZone = TimeZone.getDefault()
+                    val utcOffsetMinutes = deviceTimeZone.getOffset(System.currentTimeMillis()) / MILLIS_PER_MINUTE
+                    val timeZoneId = deviceTimeZone.id.orEmpty()
                     AqlWifiCredentials(
                         ssid = ssid,
                         password = password,
-                        timezone = deviceTimeZone.id.orEmpty(),
-                        utcOffsetMinutes = deviceTimeZone.getOffset(System.currentTimeMillis()) / MILLIS_PER_MINUTE
+                        timezone = "$timeZoneId$TIMEZONE_OFFSET_SEPARATOR$utcOffsetMinutes",
+                        utcOffsetMinutes = utcOffsetMinutes
                     )
                 }.getOrElse { error ->
                     Toast.makeText(
@@ -154,5 +156,6 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
         const val MAX_SSID_LENGTH = 32
         const val MAX_PASSWORD_LENGTH = 64
         const val MILLIS_PER_MINUTE = 60_000
+        const val TIMEZONE_OFFSET_SEPARATOR = "|"
     }
 }
