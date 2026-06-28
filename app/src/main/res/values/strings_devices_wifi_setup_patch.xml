@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_wifi_card_message_corrected">Connect your phone to a 2.4 GHz Wi‑Fi network, then return to AquaLight. If the network name does not appear, enter it manually.</string>
+    <string name="device_wifi_select_wifi_action">Select Wi‑Fi</string>
+</resources>
