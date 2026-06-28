@@ -48,6 +48,7 @@ object AqlBleProvisioningContract {
         const val KEY_WIFI_BSSID = "bssid"
         const val KEY_WIFI_CHANNEL = "channel"
         const val KEY_WIFI_TIMEZONE = "timezone"
+        const val KEY_WIFI_UTC_OFFSET_MINUTES = "utcOffsetMinutes"
         const val KEY_STATUS = "status"
         const val KEY_MESSAGE = "message"
         const val KEY_LAST_ERROR = "lastError"
