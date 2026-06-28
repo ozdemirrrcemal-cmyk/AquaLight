@@ -40,11 +40,11 @@ class DeviceAddViewModel(
         stopBleScan()
         _uiState.value = DeviceAddUiState(
             mode = DeviceAddScanMode.PERMISSION_REQUIRED,
-            heroTitle = "Bluetooth izni gerekiyor",
-            heroSubtitle = "Yakındaki kurulum modundaki AquaLight cihazlarını bulmak için Bluetooth izni verin.",
+            heroTitle = "Bluetooth permission required",
+            heroSubtitle = "Allow Bluetooth access to find nearby AquaLight devices in setup mode.",
             scanBadge = "Permission",
-            emptyTitle = "İzin gerekli",
-            emptyMessage = "Bluetooth izni verildikten sonra Scan ile cihaz arayabilirsiniz."
+            emptyTitle = "Permission required",
+            emptyMessage = "After Bluetooth permission is granted, press Scan to search for nearby devices."
         )
     }
 
@@ -54,12 +54,12 @@ class DeviceAddViewModel(
 
         _uiState.value = DeviceAddUiState(
             mode = DeviceAddScanMode.SCANNING,
-            heroTitle = "Yakındaki cihazlar aranıyor",
-            heroSubtitle = "Cihazı telefonunuza yakın tutun. Kurulum modundaki AquaLight cihazları burada listelenecek.",
+            heroTitle = "Searching nearby devices",
+            heroSubtitle = "Keep the device close to your phone. AquaLight devices in setup mode will appear here.",
             scanBadge = "Scanning",
             candidates = emptyList(),
-            emptyTitle = "Aranıyor...",
-            emptyMessage = "Kurulum modundaki AquaLight cihazları taranıyor."
+            emptyTitle = "Scanning...",
+            emptyMessage = "Searching for AquaLight devices in setup mode."
         )
 
         when (val result = bleScanner.startScan()) {
@@ -112,14 +112,14 @@ class DeviceAddViewModel(
                     _uiState.value = _uiState.value.copy(
                         mode = DeviceAddScanMode.SCANNING,
                         candidates = emptyList(),
-                        emptyTitle = "Aranıyor...",
-                        emptyMessage = "Kurulum modundaki AquaLight cihazları taranıyor."
+                        emptyTitle = "Scanning...",
+                        emptyMessage = "Searching for AquaLight devices in setup mode."
                     )
                 } else {
                     _uiState.value = DeviceAddUiState(
                         mode = DeviceAddScanMode.RESULTS,
-                        heroTitle = "${uiCandidates.size} cihaz bulundu",
-                        heroSubtitle = "Kurulum yapmak istediğiniz AquaLight cihazını seçin.",
+                        heroTitle = "${uiCandidates.size} device found",
+                        heroSubtitle = "Select the AquaLight device you want to set up.",
                         scanBadge = "Nearby",
                         candidates = uiCandidates,
                         emptyTitle = "",
@@ -139,12 +139,12 @@ class DeviceAddViewModel(
                 bleScanner.stopScan()
                 _uiState.value = DeviceAddUiState(
                     mode = DeviceAddScanMode.EMPTY,
-                    heroTitle = "Cihaz bulunamadı",
-                    heroSubtitle = "Cihazın açık olduğundan emin olun. Daha önce kurulmuş cihazlar için setup tuşuna 5 saniye basıp tekrar deneyin.",
+                    heroTitle = "No device found",
+                    heroSubtitle = "Make sure the device is powered on. For a previously paired device, hold the setup button for 5 seconds and try again.",
                     scanBadge = "Ready",
                     candidates = emptyList(),
-                    emptyTitle = "Yakında cihaz yok",
-                    emptyMessage = "Cihazı kurulum moduna alın, telefonunuza yakın tutun ve tekrar Scan butonuna basın. QR ile ekleme sağ üsttedir."
+                    emptyTitle = "No nearby devices",
+                    emptyMessage = "Put the device in setup mode, keep it close to your phone, then press Scan again. QR setup is available from the top-right icon."
                 )
             }
         }
@@ -154,11 +154,11 @@ class DeviceAddViewModel(
         stopBleScan()
         _uiState.value = DeviceAddUiState(
             mode = DeviceAddScanMode.BLUETOOTH_OFF,
-            heroTitle = "Bluetooth kapalı",
-            heroSubtitle = "Yakındaki AquaLight cihazlarını bulmak için Bluetooth'u açın.",
+            heroTitle = "Bluetooth is off",
+            heroSubtitle = "Turn on Bluetooth to find nearby AquaLight devices.",
             scanBadge = "Bluetooth",
-            emptyTitle = "Bluetooth kapalı",
-            emptyMessage = "Telefon ayarlarından Bluetooth'u açın, sonra tekrar Scan yapın."
+            emptyTitle = "Bluetooth is off",
+            emptyMessage = "Turn on Bluetooth in your phone settings, then scan again."
         )
     }
 
@@ -166,11 +166,11 @@ class DeviceAddViewModel(
         stopBleScan()
         _uiState.value = DeviceAddUiState(
             mode = DeviceAddScanMode.ERROR,
-            heroTitle = "Bluetooth kullanılamıyor",
-            heroSubtitle = "Bu telefonda BLE kurulum taraması başlatılamadı.",
+            heroTitle = "Bluetooth unavailable",
+            heroSubtitle = "BLE setup scanning could not be started on this phone.",
             scanBadge = "Unavailable",
-            emptyTitle = "Bluetooth kullanılamıyor",
-            emptyMessage = "Bu cihaz şu anda BLE provisioning için uygun görünmüyor."
+            emptyTitle = "Bluetooth unavailable",
+            emptyMessage = "This phone is not ready for BLE device setup right now."
         )
     }
 
@@ -178,11 +178,11 @@ class DeviceAddViewModel(
         stopBleScan()
         _uiState.value = DeviceAddUiState(
             mode = DeviceAddScanMode.ERROR,
-            heroTitle = "Scan başlatılamadı",
-            heroSubtitle = "Bluetooth taraması başlatılırken sorun oluştu.",
+            heroTitle = "Scan could not start",
+            heroSubtitle = "A problem occurred while starting Bluetooth scanning.",
             scanBadge = "Error",
-            emptyTitle = "Scan başarısız",
-            emptyMessage = message.ifBlank { "BLE scan başarısız oldu. Tekrar deneyin." }
+            emptyTitle = "Scan failed",
+            emptyMessage = message.ifBlank { "BLE scan failed. Try again." }
         )
     }
 
@@ -225,12 +225,12 @@ class DeviceAddViewModel(
 
 data class DeviceAddUiState(
     val mode: DeviceAddScanMode = DeviceAddScanMode.READY,
-    val heroTitle: String = "Yakındaki AquaLight cihazlarını bulun",
-    val heroSubtitle: String = "Cihazınız kurulum modundaysa Scan butonuna basın. QR ile eklemek için sağ üstteki QR ikonunu kullanın.",
+    val heroTitle: String = "Find nearby AquaLight devices",
+    val heroSubtitle: String = "Press Scan when your device is in setup mode. Use the QR icon in the top-right for QR setup.",
     val scanBadge: String = "Ready",
     val candidates: List<DeviceAddCandidateUi> = emptyList(),
-    val emptyTitle: String = "Scan hazır",
-    val emptyMessage: String = "Scan butonuna bastığınızda kurulum modundaki AquaLight cihazları burada listelenir."
+    val emptyTitle: String = "Ready to scan",
+    val emptyMessage: String = "AquaLight devices in setup mode will appear here after scanning."
 )
 
 enum class DeviceAddScanMode {
