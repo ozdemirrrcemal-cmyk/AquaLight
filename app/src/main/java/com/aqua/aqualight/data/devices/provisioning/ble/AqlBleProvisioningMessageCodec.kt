@@ -50,6 +50,10 @@ class AqlBleProvisioningMessageCodec {
         return JSONObject()
             .put(AqlBleProvisioningContract.Json.KEY_WIFI_SSID, wifiCredentials.ssid)
             .put(AqlBleProvisioningContract.Json.KEY_WIFI_PASSWORD, wifiCredentials.password)
+            .put(
+                AqlBleProvisioningContract.Json.KEY_WIFI_UTC_OFFSET_MINUTES,
+                wifiCredentials.utcOffsetMinutes
+            )
             .apply {
                 if (wifiCredentials.bssid.isNotBlank()) {
                     put(AqlBleProvisioningContract.Json.KEY_WIFI_BSSID, wifiCredentials.bssid)
