@@ -82,7 +82,7 @@
                 android:layout_marginTop="18dp"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:text="Henüz cihaz yok"
+                android:text="No devices yet"
                 android:textColor="#F2F6FA"
                 android:textSize="20sp"
                 android:textStyle="bold" />
@@ -93,7 +93,7 @@
                 android:layout_marginTop="8dp"
                 android:gravity="center"
                 android:lineSpacingExtra="2dp"
-                android:text="AquaLight cihazlarınızı buradan ekleyip yönetebilirsiniz."
+                android:text="Add and manage your AquaLight devices from here."
                 android:textColor="#90A1B5"
                 android:textSize="13sp" />
 
@@ -104,7 +104,7 @@
                 android:layout_marginTop="22dp"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
-                android:text="Cihaz ekle"
+                android:text="Add device"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
                 android:textSize="14.5sp"
@@ -121,7 +121,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
                 android:gravity="center"
-                android:text="Yeni cihazlar ilk açılışta kurulum modundadır."
+                android:text="New devices enter setup mode on first power-up."
                 android:textColor="#6E7F94"
                 android:textSize="11.5sp" />
         </LinearLayout>
