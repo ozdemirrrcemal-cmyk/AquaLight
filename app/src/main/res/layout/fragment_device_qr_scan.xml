@@ -31,7 +31,7 @@
         android:id="@+id/topScrim"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="#99000000"
+        android:background="#A6000000"
         app:layout_constraintTop_toBottomOf="@id/appHeader"
         app:layout_constraintBottom_toTopOf="@id/scanFrame"
         app:layout_constraintStart_toStartOf="parent"
@@ -41,7 +41,7 @@
         android:id="@+id/bottomScrim"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="#99000000"
+        android:background="#A6000000"
         app:layout_constraintTop_toBottomOf="@id/scanFrame"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -51,7 +51,7 @@
         android:id="@+id/leftScrim"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="#99000000"
+        android:background="#A6000000"
         app:layout_constraintTop_toTopOf="@id/scanFrame"
         app:layout_constraintBottom_toBottomOf="@id/scanFrame"
         app:layout_constraintStart_toStartOf="parent"
@@ -61,7 +61,7 @@
         android:id="@+id/rightScrim"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="#99000000"
+        android:background="#A6000000"
         app:layout_constraintTop_toTopOf="@id/scanFrame"
         app:layout_constraintBottom_toBottomOf="@id/scanFrame"
         app:layout_constraintStart_toEndOf="@id/scanFrame"
@@ -69,10 +69,10 @@
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/scanFrame"
-        android:layout_width="270dp"
-        android:layout_height="270dp"
+        android:layout_width="276dp"
+        android:layout_height="276dp"
         app:cardBackgroundColor="@android:color/transparent"
-        app:cardCornerRadius="28dp"
+        app:cardCornerRadius="32dp"
         app:cardElevation="0dp"
         app:strokeColor="#64FFDA"
         app:strokeWidth="3dp"
@@ -90,7 +90,7 @@
         android:layout_marginEnd="18dp"
         android:layout_marginBottom="24dp"
         app:cardBackgroundColor="@color/settings_card_background"
-        app:cardCornerRadius="22dp"
+        app:cardCornerRadius="24dp"
         app:cardElevation="0dp"
         app:strokeColor="@color/settings_card_stroke"
         app:strokeWidth="1dp"
@@ -102,31 +102,31 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="18dp">
+            android:padding="20dp">
 
             <TextView
                 android:id="@+id/tvScanTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Scan AquaLight QR"
+                android:text="QR kodu çerçeveye alın"
                 android:textColor="@color/white"
-                android:textSize="18sp"
+                android:textSize="20sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tvScanStatus"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="7dp"
                 android:lineSpacingExtra="2dp"
-                android:text="Place the QR code inside the frame. Setup will continue automatically."
+                android:text="Kod okunduğunda Wi-Fi kurulum ekranı otomatik açılır."
                 android:textColor="#8FA4BE"
                 android:textSize="13sp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnRequestCamera"
                 android:layout_width="match_parent"
-                android:layout_height="46dp"
+                android:layout_height="48dp"
                 android:layout_marginTop="16dp"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
@@ -136,7 +136,7 @@
                 android:textStyle="bold"
                 android:visibility="gone"
                 app:backgroundTint="#1E90FF"
-                app:cornerRadius="16dp"
+                app:cornerRadius="17dp"
                 tools:visibility="visible" />
 
         </LinearLayout>
