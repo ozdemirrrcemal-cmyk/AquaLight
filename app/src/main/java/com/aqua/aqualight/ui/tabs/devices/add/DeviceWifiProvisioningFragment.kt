@@ -107,10 +107,9 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
         }.onFailure {
             Toast.makeText(
                 requireContext(),
-                "Wi-Fi ayarları açılamadı. Ağ adını manuel girebilirsiniz.",
+                "Unable to open Wi-Fi settings. Connect your phone to the 2.4 GHz network and try again.",
                 Toast.LENGTH_SHORT
             ).show()
-            binding.etWifiSsid.requestFocus()
         }
     }
 
@@ -127,7 +126,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
         if (showMessageIfUnavailable) {
             Toast.makeText(
                 requireContext(),
-                "Telefonun bağlı olduğu Wi-Fi okunamadı. Ağ adını manuel girebilirsiniz.",
+                "No Wi-Fi network could be read. Connect your phone to the 2.4 GHz network and try again.",
                 Toast.LENGTH_SHORT
             ).show()
         }
@@ -156,7 +155,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
 
     private fun updateSelectedWifiLabel(value: String) {
         val ssid = value.trim()
-        binding.tvSelectedWifi.text = ssid.ifBlank { "Wi-Fi seçilmedi" }
+        binding.tvSelectedWifi.text = ssid.ifBlank { "No Wi-Fi network selected" }
     }
 
     private fun onContinueClicked() {
@@ -165,19 +164,17 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
 
         when {
             ssid.isBlank() -> {
-                binding.etWifiSsid.requestFocus()
                 Toast.makeText(
                     requireContext(),
-                    "Wi-Fi ağı seçin veya ağ adını girin.",
+                    "Select a Wi-Fi network first.",
                     Toast.LENGTH_SHORT
                 ).show()
             }
 
             ssid.length > MAX_SSID_LENGTH -> {
-                binding.etWifiSsid.requestFocus()
                 Toast.makeText(
                     requireContext(),
-                    "Wi-Fi adı çok uzun.",
+                    "The Wi-Fi network name is too long.",
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -186,7 +183,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
                 binding.etWifiPassword.requestFocus()
                 Toast.makeText(
                     requireContext(),
-                    "Wi-Fi şifresi çok uzun.",
+                    "The Wi-Fi password is too long.",
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -205,7 +202,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
                 }.getOrElse { error ->
                     Toast.makeText(
                         requireContext(),
-                        error.message ?: "Wi-Fi bilgileri geçersiz.",
+                        error.message ?: "The Wi-Fi details are invalid.",
                         Toast.LENGTH_SHORT
                     ).show()
                     return
