@@ -56,14 +56,14 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = "Add Device",
+                titleOverride = getString(R.string.device_add_title),
                 onBackClick = {
                     findNavController().navigateUp()
                 },
                 actions = listOf(
                     AquaHeaderAction(
                         iconRes = R.drawable.ic_qr_code_24,
-                        contentDescription = "Add with QR code",
+                        contentDescription = getString(R.string.device_add_qr_action_desc),
                         onClick = {
                             viewModel.onQrClicked()
                         }
@@ -134,12 +134,12 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
 
         if (state.mode == DeviceAddScanMode.SCANNING) {
             binding.scanPulseView.startScan()
-            binding.btnScan.text = "Scanning..."
+            binding.btnScan.text = getString(R.string.device_add_scan_button_scanning)
             binding.btnScan.isEnabled = false
             binding.btnScan.alpha = 0.72f
         } else {
             binding.scanPulseView.stopScan()
-            binding.btnScan.text = "Scan"
+            binding.btnScan.text = getString(R.string.device_add_scan_button)
             binding.btnScan.isEnabled = true
             binding.btnScan.alpha = 1f
         }
