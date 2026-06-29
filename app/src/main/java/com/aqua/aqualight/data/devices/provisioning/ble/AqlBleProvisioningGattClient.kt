@@ -64,6 +64,11 @@ class AqlBleProvisioningGattClient(
         readDeviceInfo(gatt)
     }
 
+    private val wifiCredentialsWriteRunnable = Runnable {
+        val gatt = activeGatt ?: return@Runnable
+        writeWifiCredentials(gatt)
+    }
+
     @SuppressLint("MissingPermission")
     fun start(draft: AqlProvisioningDraft) {
         close()
@@ -101,6 +106,7 @@ class AqlBleProvisioningGattClient(
         wifiCredentialsWritten = false
         mainHandler.removeCallbacks(statusPollRunnable)
         mainHandler.removeCallbacks(deviceInfoRetryRunnable)
+        mainHandler.removeCallbacks(wifiCredentialsWriteRunnable)
         emit(AqlBleProvisioningGattEvent.Connecting(draft.bleAddress))
 
         activeGatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -114,6 +120,7 @@ class AqlBleProvisioningGattClient(
     fun close() {
         mainHandler.removeCallbacks(statusPollRunnable)
         mainHandler.removeCallbacks(deviceInfoRetryRunnable)
+        mainHandler.removeCallbacks(wifiCredentialsWriteRunnable)
 
         val gatt = activeGatt
         activeGatt = null
@@ -227,11 +234,11 @@ class AqlBleProvisioningGattClient(
                 START_SESSION_UUID -> {
                     startSessionWritten = true
                     emit(AqlBleProvisioningGattEvent.StartSessionWritten)
-                    readProvisioningStatus(gatt)
-                    scheduleStatusPoll()
+                    scheduleWifiCredentialsWrite()
                 }
                 WIFI_CREDENTIALS_UUID -> {
                     wifiCredentialsWritten = true
+                    mainHandler.removeCallbacks(wifiCredentialsWriteRunnable)
                     emit(AqlBleProvisioningGattEvent.WifiCredentialsWritten)
                     readProvisioningStatus(gatt)
                     scheduleStatusPoll()
@@ -408,8 +415,16 @@ class AqlBleProvisioningGattClient(
         if (wifiCredentialsWritten || wifiCredentialsWriteStarted) return true
         if (!startSessionWritten) return false
 
-        writeWifiCredentials(gatt)
+        scheduleWifiCredentialsWrite()
         return true
+    }
+
+    private fun scheduleWifiCredentialsWrite() {
+        if (activeGatt == null || wifiCredentialsWritten || wifiCredentialsWriteStarted) return
+
+        mainHandler.removeCallbacks(statusPollRunnable)
+        mainHandler.removeCallbacks(wifiCredentialsWriteRunnable)
+        mainHandler.postDelayed(wifiCredentialsWriteRunnable, WIFI_CREDENTIALS_WRITE_DELAY_MS)
     }
 
     private fun writeWifiCredentials(gatt: BluetoothGatt) {
@@ -434,6 +449,7 @@ class AqlBleProvisioningGattClient(
             return
         }
 
+        mainHandler.removeCallbacks(statusPollRunnable)
         wifiCredentialsWriteStarted = true
         writeString(gatt = gatt, characteristic = characteristic, value = codec.wifiCredentialsJson(draft))
     }
@@ -757,6 +773,7 @@ class AqlBleProvisioningGattClient(
         const val STATUS_POLL_INTERVAL_MS = 1_500L
         const val MAX_DEVICE_INFO_READ_ATTEMPTS = 3
         const val DEVICE_INFO_RETRY_DELAY_MS = 350L
+        const val WIFI_CREDENTIALS_WRITE_DELAY_MS = 180L
 
         val SERVICE_UUID: UUID = UUID.fromString(AqlBleProvisioningContract.SERVICE_UUID)
         val DEVICE_INFO_UUID: UUID = UUID.fromString(AqlBleProvisioningContract.DEVICE_INFO_UUID)
