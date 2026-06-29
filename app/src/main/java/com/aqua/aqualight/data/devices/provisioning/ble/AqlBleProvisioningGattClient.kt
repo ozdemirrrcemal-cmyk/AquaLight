@@ -243,7 +243,8 @@ class AqlBleProvisioningGattClient(
                     startSessionWritten = true
                     emit(AqlBleProvisioningGattEvent.StartSessionWritten)
                     gattQueue.complete(AqlBleGattOperation.WRITE_START_SESSION)
-                    gattQueue.enqueue(AqlBleGattOperation.WRITE_WIFI_CREDENTIALS)
+                    gattQueue.enqueue(AqlBleGattOperation.READ_PROVISIONING_STATUS)
+                    scheduleStatusPoll()
                 }
                 WIFI_CREDENTIALS_UUID -> {
                     wifiCredentialsWritten = true
@@ -494,6 +495,8 @@ class AqlBleProvisioningGattClient(
             val statusMessage = codec.parseStatus(raw)
             emit(AqlBleProvisioningGattEvent.StatusReceived(statusMessage))
             handleProvisioningStatus(gatt = gatt, status = statusMessage.status, message = statusMessage.message)
+        } else {
+            scheduleStatusPoll()
         }
         gattQueue.complete(AqlBleGattOperation.READ_PROVISIONING_STATUS)
     }
