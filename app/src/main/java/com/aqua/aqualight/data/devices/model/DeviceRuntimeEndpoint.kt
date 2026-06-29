@@ -15,11 +15,46 @@ data class DeviceRuntimeEndpoint(
     val discoveryPort: Int = 0
 ) {
     val hasWebSocketEndpoint: Boolean
-        get() = ip.isNotBlank() && wsPort > 0 && wsPath.isNotBlank()
+        get() = ip.isPrivateLanIpv4Literal() && wsPort in MIN_PORT..MAX_PORT && wsPath.isValidWsPath()
 
     fun toWebSocketUrl(): String? = if (hasWebSocketEndpoint) {
-        "ws://$ip:$wsPort$wsPath"
+        "ws://${ip.trim()}:$wsPort${wsPath.trim()}"
     } else {
         null
+    }
+
+    private fun String.isValidWsPath(): Boolean {
+        val value = trim()
+        return value.startsWith("/") &&
+            value.isNotBlank() &&
+            value.none { char -> char.isWhitespace() } &&
+            !value.contains("#")
+    }
+
+    private fun String.isPrivateLanIpv4Literal(): Boolean {
+        val octets = trim().split('.')
+        if (octets.size != IPV4_OCTET_COUNT) return false
+
+        val values = octets.map { octet ->
+            if (octet.isBlank() || octet.length > IPV4_MAX_OCTET_DIGITS) return false
+            if (octet.any { char -> char !in '0'..'9' }) return false
+            octet.toIntOrNull()?.takeIf { value -> value in IPV4_OCTET_RANGE } ?: return false
+        }
+
+        val first = values[0]
+        val second = values[1]
+
+        return first == 10 ||
+            (first == 172 && second in 16..31) ||
+            (first == 192 && second == 168) ||
+            (first == 169 && second == 254)
+    }
+
+    private companion object {
+        const val MIN_PORT = 1
+        const val MAX_PORT = 65_535
+        const val IPV4_OCTET_COUNT = 4
+        const val IPV4_MAX_OCTET_DIGITS = 3
+        val IPV4_OCTET_RANGE = 0..255
     }
 }
