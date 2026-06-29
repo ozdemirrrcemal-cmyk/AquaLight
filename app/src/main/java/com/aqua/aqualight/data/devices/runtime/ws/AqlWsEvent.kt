@@ -11,7 +11,6 @@ sealed interface AqlWsEvent {
 
     data class Message(
         override val deviceUid: DeviceUid,
-        val raw: String,
         val parsed: AqlWsIncomingMessage?
     ) : AqlWsEvent
 

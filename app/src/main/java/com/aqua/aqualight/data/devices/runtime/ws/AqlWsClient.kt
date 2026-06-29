@@ -123,7 +123,6 @@ class AqlWsClient(
                 emit(
                     AqlWsEvent.Message(
                         deviceUid = deviceUid,
-                        raw = text,
                         parsed = parsed
                     )
                 )
