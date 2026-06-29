@@ -29,3 +29,17 @@
 # Preserve line numbers in release crash reports while keeping source obfuscation enabled.
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
+
+# AquaLight production log privacy
+# Release builds must not emit Logcat entries. This prevents accidental exposure
+# of Wi-Fi credentials, QR/claim payloads, runtime pairing tokens, endpoint data,
+# or device/user identifiers from direct android.util.Log calls.
+-assumenosideeffects class android.util.Log {
+    public static int v(...);
+    public static int d(...);
+    public static int i(...);
+    public static int w(...);
+    public static int e(...);
+    public static int wtf(...);
+    public static int println(...);
+}
