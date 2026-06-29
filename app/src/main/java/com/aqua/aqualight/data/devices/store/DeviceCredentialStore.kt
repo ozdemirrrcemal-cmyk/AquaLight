@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsTokenProvider
 import java.security.MessageDigest
@@ -44,7 +45,7 @@ class DeviceCredentialStore(
 
     override suspend fun saveToken(deviceUid: DeviceUid, token: String) {
         val normalizedToken = token.trim()
-        if (normalizedToken.isBlank()) {
+        if (!normalizedToken.isRuntimeTokenHex()) {
             return
         }
 
@@ -71,6 +72,11 @@ class DeviceCredentialStore(
 
     private fun tokenPreferenceKey(deviceUid: DeviceUid): String {
         return "$KEY_PREFIX${sha256(deviceUid.value)}"
+    }
+
+    private fun String.isRuntimeTokenHex(): Boolean {
+        return length == AqlBleProvisioningContract.RUNTIME_TOKEN_HEX_LENGTH &&
+            matches(Regex("(?i)^[0-9a-f]+$"))
     }
 
     private fun sha256(value: String): String {

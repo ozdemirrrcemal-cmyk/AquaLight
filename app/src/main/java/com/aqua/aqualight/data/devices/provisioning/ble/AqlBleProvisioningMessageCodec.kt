@@ -155,6 +155,17 @@ class AqlBleProvisioningMessageCodec {
                 "protocol"
             ).ifBlank { AqlWsContract.DEFAULT_PROTOCOL }
 
+            val runtimeToken = firstJsonValue(
+                json,
+                AqlBleProvisioningContract.Json.KEY_TOKEN,
+                "pairingToken",
+                "webSocketToken"
+            )
+
+            require(runtimeToken.isRuntimeTokenHex()) {
+                "RuntimeEndpoint token is missing or invalid."
+            }
+
             val endpoint = DeviceRuntimeEndpoint(
                 ip = json.optString(AqlBleProvisioningContract.Json.KEY_IP).trim(),
                 wifiConnected = true,
@@ -168,12 +179,7 @@ class AqlBleProvisioningMessageCodec {
             AqlProvisioningRuntimeHandoff(
                 deviceUid = DeviceUid(deviceUidText),
                 endpoint = endpoint,
-                webSocketToken = firstJsonValue(
-                    json,
-                    AqlBleProvisioningContract.Json.KEY_TOKEN,
-                    "pairingToken",
-                    "webSocketToken"
-                ),
+                webSocketToken = runtimeToken,
                 productFamily = firstJsonValue(
                     json,
                     "family",
@@ -277,6 +283,11 @@ class AqlBleProvisioningMessageCodec {
 
     private fun String.isLikelyBleAddress(): Boolean {
         return matches(Regex("(?i)^([0-9a-f]{2}:){5}[0-9a-f]{2}$"))
+    }
+
+    private fun String.isRuntimeTokenHex(): Boolean {
+        return length == AqlBleProvisioningContract.RUNTIME_TOKEN_HEX_LENGTH &&
+            matches(Regex("(?i)^[0-9a-f]+$"))
     }
 
     private fun decode(value: String): String {

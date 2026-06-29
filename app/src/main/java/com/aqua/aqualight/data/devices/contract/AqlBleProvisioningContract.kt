@@ -30,6 +30,9 @@ object AqlBleProvisioningContract {
     const val CLAIM_CODE_MIN_LENGTH = 8
     const val CLAIM_CODE_MAX_LENGTH = 64
 
+    // Runtime pairing tokens are firmware-generated 32-byte random values encoded as 64 hex chars.
+    const val RUNTIME_TOKEN_HEX_LENGTH = 64
+
     object Qr {
         const val KEY_VERSION = "v"
         const val KEY_BRAND = "brand"
