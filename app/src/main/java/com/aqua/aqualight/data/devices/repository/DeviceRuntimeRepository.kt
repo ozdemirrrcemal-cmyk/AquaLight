@@ -95,6 +95,12 @@ class DeviceRuntimeRepository(
         tokenProvider?.clearToken(deviceUid)
     }
 
+    fun clearTokenAsync(deviceUid: DeviceUid) {
+        scope.launch {
+            tokenProvider?.clearToken(deviceUid)
+        }
+    }
+
     fun close(deviceUid: DeviceUid) {
         timeSyncCoordinator.clearSessionMemory(deviceUid)
         sessions.remove(deviceUid)?.wsClient?.close()
