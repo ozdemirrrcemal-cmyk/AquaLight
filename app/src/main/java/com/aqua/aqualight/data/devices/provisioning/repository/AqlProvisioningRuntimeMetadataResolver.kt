@@ -142,8 +142,26 @@ class AqlProvisioningRuntimeMetadataResolver {
                 product.familyRaw.ifBlank { product.family.wireValue }
             }
 
+        val reportedDeviceUid = identityData.optString("deviceUid")
+            .trim()
+        if (reportedDeviceUid.isNotBlank() && reportedDeviceUid != deviceUid.value) {
+            error("Runtime identity deviceUid does not match registered device uid.")
+        }
+
         return copy(
             identity = identity.copy(
+                shortId = identityData.optString("shortId")
+                    .trim()
+                    .ifBlank { identity.shortId },
+                macAddress = identityData.optString("macAddress")
+                    .trim()
+                    .ifBlank { identity.macAddress },
+                serialNumber = identityData.optString("serialNumber")
+                    .trim()
+                    .ifBlank { identity.serialNumber },
+                firmwareSerial = identityData.optString("firmwareSerial")
+                    .trim()
+                    .ifBlank { identity.firmwareSerial },
                 displayName = identityData.optString("displayName")
                     .trim()
                     .ifBlank { identity.displayName },
