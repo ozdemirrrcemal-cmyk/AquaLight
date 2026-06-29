@@ -109,7 +109,7 @@ class AqlBleProvisioningMessageCodec {
         return runCatching {
             val json = JSONObject(raw.trim())
 
-            val fallbackUid = fallbackDeviceUid
+            val expectedDeviceUid = fallbackDeviceUid
                 .trim()
                 .takeUnless { value -> value.isLikelyBleAddress() }
                 .orEmpty()
@@ -119,7 +119,15 @@ class AqlBleProvisioningMessageCodec {
                 AqlBleProvisioningContract.Json.KEY_DEVICE_UID,
                 "uid",
                 "device_uid"
-            ).ifBlank { fallbackUid }
+            )
+
+            require(deviceUidText.isNotBlank()) {
+                "RuntimeEndpoint does not include deviceUid."
+            }
+
+            require(expectedDeviceUid.isBlank() || deviceUidText.equals(expectedDeviceUid, ignoreCase = true)) {
+                "RuntimeEndpoint deviceUid does not match the provisioning draft."
+            }
 
             val wsPort = firstJsonInt(
                 json,
