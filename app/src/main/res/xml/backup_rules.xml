@@ -9,5 +9,6 @@
     <exclude domain="file" path="data_key.bin" />
     <exclude domain="file" path="profile_photos/" />
     <exclude domain="file" path="tank_photos/" />
+    <exclude domain="sharedpref" path="aql_device_credentials_v2.xml" />
     <exclude domain="sharedpref" path="__androidx_security_crypto_encrypted_file_pref__.xml" />
 </full-backup-content>
