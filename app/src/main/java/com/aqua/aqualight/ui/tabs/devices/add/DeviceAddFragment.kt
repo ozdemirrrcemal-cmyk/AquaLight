@@ -160,7 +160,7 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
             }
 
             is DeviceAddEvent.OpenWifiProvisioning -> {
-                openWifiProvisioning(event.candidate)
+                openPhysicalProof(event.candidate)
             }
         }
     }
@@ -171,17 +171,15 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         )
     }
 
-    private fun openWifiProvisioning(candidate: DeviceAddCandidateUi) {
+    private fun openPhysicalProof(candidate: DeviceAddCandidateUi) {
         findNavController().navigate(
-            DeviceAddFragmentDirections.actionDeviceAddFragmentToDeviceWifiProvisioningFragment(
+            DeviceAddFragmentDirections.actionDeviceAddFragmentToDevicePhysicalProofFragment(
                 candidateId = candidate.id,
                 deviceTitle = candidate.title,
                 deviceSerial = candidate.serial,
                 deviceModel = candidate.model,
                 bleAddress = candidate.bleAddress,
-                bleName = candidate.bleName,
-                claimCode = "",
-                rawQrPayload = ""
+                bleName = candidate.bleName
             )
         )
     }

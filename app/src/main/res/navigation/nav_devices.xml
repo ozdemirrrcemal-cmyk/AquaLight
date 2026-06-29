@@ -66,8 +66,8 @@
         android:label="Add Device"
         tools:layout="@layout/fragment_device_add">
         <action
-            android:id="@+id/action_deviceAddFragment_to_deviceWifiProvisioningFragment"
-            app:destination="@id/deviceWifiProvisioningFragment"
+            android:id="@+id/action_deviceAddFragment_to_devicePhysicalProofFragment"
+            app:destination="@id/devicePhysicalProofFragment"
             app:enterAnim="@anim/nav_slide_in_right"
             app:exitAnim="@anim/nav_slide_out_left"
             app:popEnterAnim="@anim/nav_slide_in_left"
@@ -88,6 +88,43 @@
         tools:layout="@layout/fragment_device_qr_scan">
         <action
             android:id="@+id/action_deviceQrScanFragment_to_deviceWifiProvisioningFragment"
+            app:destination="@id/deviceWifiProvisioningFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/devicePhysicalProofFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.add.DevicePhysicalProofFragment"
+        android:label="Physical Confirmation"
+        tools:layout="@layout/fragment_device_physical_proof">
+        <argument
+            android:name="candidateId"
+            app:argType="string" />
+        <argument
+            android:name="deviceTitle"
+            app:argType="string"
+            android:defaultValue="" />
+        <argument
+            android:name="deviceSerial"
+            app:argType="string"
+            android:defaultValue="" />
+        <argument
+            android:name="deviceModel"
+            app:argType="string"
+            android:defaultValue="" />
+        <argument
+            android:name="bleAddress"
+            app:argType="string"
+            android:defaultValue="" />
+        <argument
+            android:name="bleName"
+            app:argType="string"
+            android:defaultValue="" />
+        <action
+            android:id="@+id/action_devicePhysicalProofFragment_to_deviceWifiProvisioningFragment"
             app:destination="@id/deviceWifiProvisioningFragment"
             app:enterAnim="@anim/nav_slide_in_right"
             app:exitAnim="@anim/nav_slide_out_left"
