@@ -515,14 +515,14 @@
     <string name="delete_account_dialog_title">Delete Account</string>
     <string name="delete_account_dialog_message">Are you sure you want to permanently delete your account?\nThis action cannot be undone.</string>
     <string name="ucrop_label_edit_photo">Edit photo</string>
-
-\n    <string name="aquarium_remove_device_title">Remove device?</string>\n    <string name="aquarium_remove_device_message">Remove %1$s from this tank?</string>\n    <string name="aquarium_remove_action">Remove</string>\n    <string name="device_physical_proof_title">Physical confirmation</string>
+    <string name="aquarium_remove_device_title">Remove device?</string>
+    <string name="aquarium_remove_device_message">Remove %1$s from this tank?</string>
+    <string name="aquarium_remove_action">Remove</string>
+    <string name="device_physical_proof_title">Physical confirmation</string>
     <string name="device_physical_proof_manual_ble">Manual BLE setup</string>
     <string name="device_physical_proof_card_title">Confirm physical access</string>
     <string name="device_physical_proof_card_message">Manual BLE setup is allowed only when you can physically access the device. Hold the SETUP/RESET button to open physical reset provisioning before continuing.</string>
-    <string name="device_physical_proof_steps">1. Keep the phone close to the device.
-2. Hold SETUP/RESET until the device enters setup mode.
-3. Continue only after the device is physically in setup mode.</string>
+    <string name="device_physical_proof_steps">1. Keep the phone close to the device.\n2. Hold SETUP/RESET until the device enters setup mode.\n3. Continue only after the device is physically in setup mode.</string>
     <string name="device_physical_proof_continue">I held SETUP/RESET</string>
     <string name="device_physical_proof_security_hint">If this step is skipped, firmware factory mode still requires the QR claim and provisioning will be rejected.</string>
 
