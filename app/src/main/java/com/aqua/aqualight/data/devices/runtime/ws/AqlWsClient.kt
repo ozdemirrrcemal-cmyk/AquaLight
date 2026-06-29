@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.runtime.ws
 
+import com.aqua.aqualight.data.devices.contract.AqlWsContract
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import java.util.concurrent.TimeUnit
@@ -18,6 +19,7 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
+import org.json.JSONObject
 
 class AqlWsClient(
     private val okHttpClient: OkHttpClient = defaultOkHttpClient(),
@@ -70,10 +72,16 @@ class AqlWsClient(
     }
 
     fun send(message: AqlWsOutgoingMessage): Boolean {
-        return sendRaw(message.toJsonString())
+        if (!canSend(message)) {
+            return false
+        }
+        return activeSocket?.send(message.toJsonString()) == true
     }
 
     fun sendRaw(raw: String): Boolean {
+        if (!canSendRaw(raw)) {
+            return false
+        }
         return activeSocket?.send(raw) == true
     }
 
@@ -82,6 +90,33 @@ class AqlWsClient(
             deviceUid = deviceUid,
             authenticatedAtMillis = clockMillis()
         )
+    }
+
+    private fun canSend(message: AqlWsOutgoingMessage): Boolean {
+        return when (message) {
+            is AqlWsOutgoingMessage.Auth -> activeSocket != null
+            is AqlWsOutgoingMessage.Ping -> activeSocket != null
+            is AqlWsOutgoingMessage.Command -> isActiveDeviceAuthenticated()
+        }
+    }
+
+    private fun canSendRaw(raw: String): Boolean {
+        val type = runCatching {
+            JSONObject(raw).optString("type").trim()
+        }.getOrNull().orEmpty()
+
+        return when (type) {
+            AqlWsContract.TYPE_AUTH,
+            AqlWsContract.TYPE_PING -> activeSocket != null
+            AqlWsContract.TYPE_COMMAND -> isActiveDeviceAuthenticated()
+            else -> false
+        }
+    }
+
+    private fun isActiveDeviceAuthenticated(): Boolean {
+        val deviceUid = activeDeviceUid ?: return false
+        val state = _connectionState.value
+        return state is AqlWsConnectionState.Authenticated && state.deviceUid == deviceUid
     }
 
     fun markAuthRequired(
