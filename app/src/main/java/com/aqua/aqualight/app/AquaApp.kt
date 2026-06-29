@@ -3,6 +3,8 @@ package com.aqua.aqualight.app
 import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsClient
+import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.utils.NotificationHelper
 import kotlinx.coroutines.flow.first
@@ -23,6 +25,10 @@ class AquaApp : Application() {
 
         applyTheme(themeMode)
         applyLanguage(languageCode)
+
+        AqlWsClient.installDefaultTokenProvider(
+            DeviceCredentialStore(this)
+        )
 
         // 🔔 Notification channel
         NotificationHelper.createNotificationChannel(this)
