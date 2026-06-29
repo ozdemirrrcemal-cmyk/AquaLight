@@ -586,14 +586,13 @@ class AqlBleProvisioningGattClient(
             }
             AqlProvisioningStatus.WIFI_CREDENTIALS_RECEIVED,
             AqlProvisioningStatus.WIFI_CONNECTING -> scheduleStatusPoll()
-            AqlProvisioningStatus.WIFI_CONNECTED -> {
-                gattQueue.enqueue(AqlBleGattOperation.READ_RUNTIME_ENDPOINT)
-                scheduleStatusPoll()
-            }
-            AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY,
-            AqlProvisioningStatus.COMPLETED -> {
+            AqlProvisioningStatus.WIFI_CONNECTED -> scheduleStatusPoll()
+            AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY -> {
                 mainHandler.removeCallbacks(statusPollRunnable)
                 gattQueue.enqueue(AqlBleGattOperation.READ_RUNTIME_ENDPOINT)
+            }
+            AqlProvisioningStatus.COMPLETED -> {
+                failAndClose("Provisioning completed before RuntimeEndpoint handoff was received.")
             }
             AqlProvisioningStatus.CLAIM_REJECTED,
             AqlProvisioningStatus.WIFI_FAILED,
