@@ -44,18 +44,20 @@ internal class AqlBleGattOperationQueue(
     }
 
     private fun drain() {
-        val next: AqlBleGattOperation
+        var next: AqlBleGattOperation? = null
         synchronized(lock) {
-            if (active != null) return
-            next = pending.pollFirst() ?: return
-            active = next
+            if (active == null) {
+                next = pending.pollFirst()
+                active = next
+            }
         }
 
-        if (!startOperation(next)) {
+        val operation = next ?: return
+        if (!startOperation(operation)) {
             synchronized(lock) {
-                if (active == next) active = null
+                if (active == operation) active = null
             }
-            onStartFailure(next)
+            onStartFailure(operation)
         }
     }
 }
