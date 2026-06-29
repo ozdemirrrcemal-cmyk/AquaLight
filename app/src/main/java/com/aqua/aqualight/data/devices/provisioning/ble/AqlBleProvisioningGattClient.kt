@@ -37,6 +37,14 @@ class AqlBleProvisioningGattClient(
     private val _events = MutableSharedFlow<AqlBleProvisioningGattEvent>(extraBufferCapacity = EVENT_BUFFER_CAPACITY)
     val events: SharedFlow<AqlBleProvisioningGattEvent> = _events.asSharedFlow()
 
+    private val gattQueue = AqlBleGattOperationQueue(
+        handler = mainHandler,
+        startOperation = { operation -> startGattOperation(operation) },
+        onStartFailure = { operation ->
+            failAndClose("BLE GATT operation could not be started: $operation.")
+        }
+    )
+
     @Volatile private var activeGatt: BluetoothGatt? = null
     @Volatile private var activeDraft: AqlProvisioningDraft? = null
     @Volatile private var deviceInfoCharacteristic: BluetoothGattCharacteristic? = null
@@ -55,18 +63,11 @@ class AqlBleProvisioningGattClient(
     @Volatile private var wifiCredentialsWritten = false
 
     private val statusPollRunnable = Runnable {
-        val gatt = activeGatt ?: return@Runnable
-        readProvisioningStatus(gatt)
+        gattQueue.enqueue(AqlBleGattOperation.READ_PROVISIONING_STATUS)
     }
 
     private val deviceInfoRetryRunnable = Runnable {
-        val gatt = activeGatt ?: return@Runnable
-        readDeviceInfo(gatt)
-    }
-
-    private val wifiCredentialsWriteRunnable = Runnable {
-        val gatt = activeGatt ?: return@Runnable
-        writeWifiCredentials(gatt)
+        gattQueue.enqueue(AqlBleGattOperation.READ_DEVICE_INFO)
     }
 
     @SuppressLint("MissingPermission")
@@ -104,9 +105,9 @@ class AqlBleProvisioningGattClient(
         startSessionWritten = false
         wifiCredentialsWriteStarted = false
         wifiCredentialsWritten = false
+        gattQueue.clear()
         mainHandler.removeCallbacks(statusPollRunnable)
         mainHandler.removeCallbacks(deviceInfoRetryRunnable)
-        mainHandler.removeCallbacks(wifiCredentialsWriteRunnable)
         emit(AqlBleProvisioningGattEvent.Connecting(draft.bleAddress))
 
         activeGatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -120,7 +121,7 @@ class AqlBleProvisioningGattClient(
     fun close() {
         mainHandler.removeCallbacks(statusPollRunnable)
         mainHandler.removeCallbacks(deviceInfoRetryRunnable)
-        mainHandler.removeCallbacks(wifiCredentialsWriteRunnable)
+        gattQueue.clear()
 
         val gatt = activeGatt
         activeGatt = null
@@ -166,6 +167,7 @@ class AqlBleProvisioningGattClient(
         }
 
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
+            if (activeGatt !== gatt) return
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 failAndClose("BLE service discovery failed with status $status.")
                 return
@@ -194,15 +196,18 @@ class AqlBleProvisioningGattClient(
             }
 
             emit(AqlBleProvisioningGattEvent.ServicesDiscovered)
-            requestProvisioningMtu(gatt)
+            gattQueue.enqueue(AqlBleGattOperation.REQUEST_MTU)
         }
 
         override fun onMtuChanged(gatt: BluetoothGatt, mtu: Int, status: Int) {
+            if (activeGatt !== gatt) return
             negotiatedMtu = if (status == BluetoothGatt.GATT_SUCCESS && mtu > DEFAULT_ATT_MTU) mtu else DEFAULT_ATT_MTU
-            readDeviceInfo(gatt)
+            gattQueue.complete(AqlBleGattOperation.REQUEST_MTU)
+            gattQueue.enqueue(AqlBleGattOperation.READ_DEVICE_INFO)
         }
 
         override fun onDescriptorWrite(gatt: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
+            if (activeGatt !== gatt) return
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 failAndClose("BLE notification setup failed with status $status.")
                 return
@@ -211,11 +216,13 @@ class AqlBleProvisioningGattClient(
             when (descriptor.characteristic?.uuid) {
                 PROVISIONING_STATUS_UUID -> {
                     statusNotificationsEnabled = true
-                    enableRuntimeEndpointNotifications(gatt)
+                    gattQueue.complete(AqlBleGattOperation.ENABLE_STATUS_NOTIFICATIONS)
+                    gattQueue.enqueue(AqlBleGattOperation.ENABLE_RUNTIME_NOTIFICATIONS)
                 }
                 RUNTIME_ENDPOINT_UUID -> {
                     runtimeNotificationsEnabled = true
-                    writeStartSession(gatt)
+                    gattQueue.complete(AqlBleGattOperation.ENABLE_RUNTIME_NOTIFICATIONS)
+                    gattQueue.enqueue(AqlBleGattOperation.WRITE_START_SESSION)
                 }
             }
         }
@@ -225,6 +232,7 @@ class AqlBleProvisioningGattClient(
             characteristic: BluetoothGattCharacteristic,
             status: Int
         ) {
+            if (activeGatt !== gatt) return
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 failAndClose("BLE write failed with status $status.")
                 return
@@ -234,13 +242,14 @@ class AqlBleProvisioningGattClient(
                 START_SESSION_UUID -> {
                     startSessionWritten = true
                     emit(AqlBleProvisioningGattEvent.StartSessionWritten)
-                    scheduleWifiCredentialsWrite()
+                    gattQueue.complete(AqlBleGattOperation.WRITE_START_SESSION)
+                    gattQueue.enqueue(AqlBleGattOperation.WRITE_WIFI_CREDENTIALS)
                 }
                 WIFI_CREDENTIALS_UUID -> {
                     wifiCredentialsWritten = true
-                    mainHandler.removeCallbacks(wifiCredentialsWriteRunnable)
                     emit(AqlBleProvisioningGattEvent.WifiCredentialsWritten)
-                    readProvisioningStatus(gatt)
+                    gattQueue.complete(AqlBleGattOperation.WRITE_WIFI_CREDENTIALS)
+                    gattQueue.enqueue(AqlBleGattOperation.READ_PROVISIONING_STATUS)
                     scheduleStatusPoll()
                 }
             }
@@ -279,7 +288,7 @@ class AqlBleProvisioningGattClient(
             gatt: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic
         ) {
-            handleCharacteristicValue(
+            handleCharacteristicNotification(
                 gatt = gatt,
                 characteristic = characteristic,
                 value = characteristic.value ?: ByteArray(0)
@@ -291,7 +300,21 @@ class AqlBleProvisioningGattClient(
             characteristic: BluetoothGattCharacteristic,
             value: ByteArray
         ) {
-            handleCharacteristicValue(gatt = gatt, characteristic = characteristic, value = value)
+            handleCharacteristicNotification(gatt = gatt, characteristic = characteristic, value = value)
+        }
+    }
+
+    private fun startGattOperation(operation: AqlBleGattOperation): Boolean {
+        val gatt = activeGatt ?: return false
+        return when (operation) {
+            AqlBleGattOperation.REQUEST_MTU -> requestProvisioningMtu(gatt)
+            AqlBleGattOperation.READ_DEVICE_INFO -> readDeviceInfo(gatt)
+            AqlBleGattOperation.ENABLE_STATUS_NOTIFICATIONS -> enableProvisioningStatusNotifications(gatt)
+            AqlBleGattOperation.ENABLE_RUNTIME_NOTIFICATIONS -> enableRuntimeEndpointNotifications(gatt)
+            AqlBleGattOperation.WRITE_START_SESSION -> writeStartSession(gatt)
+            AqlBleGattOperation.WRITE_WIFI_CREDENTIALS -> writeWifiCredentials(gatt)
+            AqlBleGattOperation.READ_PROVISIONING_STATUS -> readProvisioningStatus(gatt)
+            AqlBleGattOperation.READ_RUNTIME_ENDPOINT -> readRuntimeEndpoint(gatt)
         }
     }
 
@@ -301,17 +324,17 @@ class AqlBleProvisioningGattClient(
         value: ByteArray,
         status: Int
     ) {
+        if (activeGatt !== gatt) return
         if (status != BluetoothGatt.GATT_SUCCESS) {
             failAndClose("BLE read failed with status $status.")
             return
         }
 
-        if (characteristic.uuid == DEVICE_INFO_UUID) {
-            handleDeviceInfoRead(gatt, value)
-            return
+        when (characteristic.uuid) {
+            DEVICE_INFO_UUID -> handleDeviceInfoRead(gatt, value)
+            PROVISIONING_STATUS_UUID -> handleProvisioningStatusRead(gatt, value)
+            RUNTIME_ENDPOINT_UUID -> handleRuntimeEndpointValue(value, completeReadOperation = true)
         }
-
-        handleCharacteristicValue(gatt = gatt, characteristic = characteristic, value = value)
     }
 
     @SuppressLint("MissingPermission")
@@ -326,31 +349,34 @@ class AqlBleProvisioningGattClient(
     }
 
     @SuppressLint("MissingPermission")
-    private fun requestProvisioningMtu(gatt: BluetoothGatt) {
+    private fun requestProvisioningMtu(gatt: BluetoothGatt): Boolean {
         if (!hasConnectPermission()) {
             failAndClose("Bluetooth connect permission is missing.")
-            return
+            return false
         }
         if (!gatt.requestMtu(REQUESTED_ATT_MTU)) {
             negotiatedMtu = DEFAULT_ATT_MTU
-            readDeviceInfo(gatt)
+            gattQueue.complete(AqlBleGattOperation.REQUEST_MTU)
+            gattQueue.enqueue(AqlBleGattOperation.READ_DEVICE_INFO)
         }
+        return true
     }
 
     @SuppressLint("MissingPermission")
-    private fun readDeviceInfo(gatt: BluetoothGatt) {
+    private fun readDeviceInfo(gatt: BluetoothGatt): Boolean {
         val characteristic = deviceInfoCharacteristic
         if (characteristic == null) {
             failAndClose("DeviceInfo characteristic is missing.")
-            return
+            return false
         }
         if (!hasConnectPermission()) {
             failAndClose("Bluetooth connect permission is missing.")
-            return
+            return false
         }
         if (!gatt.readCharacteristic(characteristic)) {
             retryDeviceInfoReadOrFail(gatt, "DeviceInfo read could not be started.")
         }
+        return true
     }
 
     private fun handleDeviceInfoRead(gatt: BluetoothGatt, value: ByteArray) {
@@ -375,13 +401,15 @@ class AqlBleProvisioningGattClient(
         deviceInfoReadAttempts = 0
         deviceClaimRequired = deviceInfo.claimRequired
         mainHandler.removeCallbacks(deviceInfoRetryRunnable)
-        enableProvisioningStatusNotifications(gatt)
+        gattQueue.complete(AqlBleGattOperation.READ_DEVICE_INFO)
+        gattQueue.enqueue(AqlBleGattOperation.ENABLE_STATUS_NOTIFICATIONS)
     }
 
     private fun retryDeviceInfoReadOrFail(gatt: BluetoothGatt, finalMessage: String) {
         if (activeGatt !== gatt || deviceInfoVerified) return
 
         deviceInfoReadAttempts += 1
+        gattQueue.complete(AqlBleGattOperation.READ_DEVICE_INFO)
         if (deviceInfoReadAttempts <= MAX_DEVICE_INFO_READ_ATTEMPTS) {
             mainHandler.removeCallbacks(deviceInfoRetryRunnable)
             mainHandler.postDelayed(deviceInfoRetryRunnable, DEVICE_INFO_RETRY_DELAY_MS)
@@ -391,110 +419,105 @@ class AqlBleProvisioningGattClient(
         failAndClose(finalMessage)
     }
 
-    private fun writeStartSession(gatt: BluetoothGatt) {
+    private fun writeStartSession(gatt: BluetoothGatt): Boolean {
         if (!deviceInfoVerified) {
             failAndClose("DeviceInfo must be verified before StartSession is written.")
-            return
+            return false
         }
         if (!statusNotificationsEnabled || !runtimeNotificationsEnabled) {
             failAndClose("BLE notifications must be enabled before StartSession is written.")
-            return
+            return false
         }
 
-        val draft = activeDraft ?: return
+        val draft = activeDraft ?: return false
         val characteristic = startSessionCharacteristic
         if (characteristic == null) {
             failAndClose("Start session characteristic is missing.")
-            return
+            return false
         }
 
-        writeString(gatt = gatt, characteristic = characteristic, value = codec.startSessionJson(draft))
+        return writeString(gatt = gatt, characteristic = characteristic, value = codec.startSessionJson(draft))
     }
 
-    private fun writeWifiCredentialsIfReady(gatt: BluetoothGatt): Boolean {
+    private fun writeWifiCredentialsIfReady(): Boolean {
         if (wifiCredentialsWritten || wifiCredentialsWriteStarted) return true
         if (!startSessionWritten) return false
 
-        scheduleWifiCredentialsWrite()
+        gattQueue.enqueue(AqlBleGattOperation.WRITE_WIFI_CREDENTIALS)
         return true
     }
 
-    private fun scheduleWifiCredentialsWrite() {
-        if (activeGatt == null || wifiCredentialsWritten || wifiCredentialsWriteStarted) return
-
-        mainHandler.removeCallbacks(statusPollRunnable)
-        mainHandler.removeCallbacks(wifiCredentialsWriteRunnable)
-        mainHandler.postDelayed(wifiCredentialsWriteRunnable, WIFI_CREDENTIALS_WRITE_DELAY_MS)
-    }
-
-    private fun writeWifiCredentials(gatt: BluetoothGatt) {
+    private fun writeWifiCredentials(gatt: BluetoothGatt): Boolean {
         if (!deviceInfoVerified) {
             failAndClose("DeviceInfo must be verified before Wi-Fi credentials are written.")
-            return
+            return false
         }
         if (!statusNotificationsEnabled || !runtimeNotificationsEnabled) {
             failAndClose("BLE notifications must be enabled before Wi-Fi credentials are written.")
-            return
+            return false
         }
         if (!startSessionWritten) {
             scheduleStatusPoll()
-            return
+            return true
         }
-        if (wifiCredentialsWriteStarted || wifiCredentialsWritten) return
+        if (wifiCredentialsWriteStarted || wifiCredentialsWritten) return true
 
-        val draft = activeDraft ?: return
+        val draft = activeDraft ?: return false
         val characteristic = wifiCredentialsCharacteristic
         if (characteristic == null) {
             failAndClose("Wi-Fi credentials characteristic is missing.")
-            return
+            return false
         }
 
         mainHandler.removeCallbacks(statusPollRunnable)
         wifiCredentialsWriteStarted = true
-        writeString(gatt = gatt, characteristic = characteristic, value = codec.wifiCredentialsJson(draft))
+        return writeString(gatt = gatt, characteristic = characteristic, value = codec.wifiCredentialsJson(draft))
     }
 
     @SuppressLint("MissingPermission")
-    private fun readProvisioningStatus(gatt: BluetoothGatt) {
+    private fun readProvisioningStatus(gatt: BluetoothGatt): Boolean {
         val characteristic = provisioningStatusCharacteristic
         if (characteristic == null) {
             failAndClose("ProvisioningStatus characteristic is missing.")
-            return
+            return false
         }
         if (!hasConnectPermission()) {
             failAndClose("Bluetooth connect permission is missing.")
-            return
+            return false
         }
-        if (!gatt.readCharacteristic(characteristic)) {
-            if (wifiCredentialsWritten) {
-                readRuntimeEndpoint(gatt)
-            } else if (!writeWifiCredentialsIfReady(gatt)) {
-                scheduleStatusPoll()
-            }
+        return gatt.readCharacteristic(characteristic)
+    }
+
+    private fun handleProvisioningStatusRead(gatt: BluetoothGatt, value: ByteArray) {
+        val raw = String(value, Charsets.UTF_8).trim()
+        if (raw.isNotBlank()) {
+            val statusMessage = codec.parseStatus(raw)
+            emit(AqlBleProvisioningGattEvent.StatusReceived(statusMessage))
+            handleProvisioningStatus(gatt = gatt, status = statusMessage.status, message = statusMessage.message)
         }
+        gattQueue.complete(AqlBleGattOperation.READ_PROVISIONING_STATUS)
     }
 
     @SuppressLint("MissingPermission")
-    private fun readRuntimeEndpoint(gatt: BluetoothGatt) {
+    private fun readRuntimeEndpoint(gatt: BluetoothGatt): Boolean {
         val characteristic = runtimeEndpointCharacteristic
         if (characteristic == null) {
             failAndClose("RuntimeEndpoint characteristic is missing.")
-            return
+            return false
         }
         if (!hasConnectPermission()) {
             failAndClose("Bluetooth connect permission is missing.")
-            return
+            return false
         }
-        if (!gatt.readCharacteristic(characteristic)) {
-            failAndClose("RuntimeEndpoint read could not be started.")
-        }
+        return gatt.readCharacteristic(characteristic)
     }
 
-    private fun handleCharacteristicValue(
+    private fun handleCharacteristicNotification(
         gatt: BluetoothGatt,
         characteristic: BluetoothGattCharacteristic,
         value: ByteArray
     ) {
+        if (activeGatt !== gatt) return
         val raw = String(value, Charsets.UTF_8).trim()
         if (raw.isBlank()) return
 
@@ -504,24 +527,37 @@ class AqlBleProvisioningGattClient(
                 emit(AqlBleProvisioningGattEvent.StatusReceived(statusMessage))
                 handleProvisioningStatus(gatt = gatt, status = statusMessage.status, message = statusMessage.message)
             }
-            RUNTIME_ENDPOINT_UUID -> {
-                val draft = activeDraft
-                val fallbackUid = draft?.candidateId.orEmpty()
-                val handoff = codec.parseRuntimeHandoff(raw = raw, fallbackDeviceUid = fallbackUid).getOrElse { error ->
-                    emit(AqlBleProvisioningGattEvent.Failed(error.message ?: "Runtime endpoint handoff is invalid."))
-                    scheduleStatusPoll()
-                    return
-                }
+            RUNTIME_ENDPOINT_UUID -> handleRuntimeEndpointValue(value, completeReadOperation = false)
+        }
+    }
 
-                emit(AqlBleProvisioningGattEvent.RuntimeHandoffReceived(handoff))
-                if (handoff.isUsable) {
-                    mainHandler.removeCallbacks(statusPollRunnable)
-                    emit(AqlBleProvisioningGattEvent.Completed)
-                    close()
-                } else {
-                    scheduleStatusPoll()
-                }
-            }
+    private fun handleRuntimeEndpointValue(
+        value: ByteArray,
+        completeReadOperation: Boolean
+    ) {
+        val raw = String(value, Charsets.UTF_8).trim()
+        if (raw.isBlank()) {
+            if (completeReadOperation) gattQueue.complete(AqlBleGattOperation.READ_RUNTIME_ENDPOINT)
+            return
+        }
+
+        val draft = activeDraft
+        val fallbackUid = draft?.candidateId.orEmpty()
+        val handoff = codec.parseRuntimeHandoff(raw = raw, fallbackDeviceUid = fallbackUid).getOrElse { error ->
+            emit(AqlBleProvisioningGattEvent.Failed(error.message ?: "Runtime endpoint handoff is invalid."))
+            if (completeReadOperation) gattQueue.complete(AqlBleGattOperation.READ_RUNTIME_ENDPOINT)
+            scheduleStatusPoll()
+            return
+        }
+
+        emit(AqlBleProvisioningGattEvent.RuntimeHandoffReceived(handoff))
+        if (completeReadOperation) gattQueue.complete(AqlBleGattOperation.READ_RUNTIME_ENDPOINT)
+        if (handoff.isUsable) {
+            mainHandler.removeCallbacks(statusPollRunnable)
+            emit(AqlBleProvisioningGattEvent.Completed)
+            close()
+        } else {
+            scheduleStatusPoll()
         }
     }
 
@@ -532,11 +568,11 @@ class AqlBleProvisioningGattClient(
     ) {
         when (status) {
             AqlProvisioningStatus.PROVISIONING_IN_PROGRESS -> {
-                if (!writeWifiCredentialsIfReady(gatt)) scheduleStatusPoll()
+                if (!writeWifiCredentialsIfReady()) scheduleStatusPoll()
             }
             AqlProvisioningStatus.PHYSICAL_RESET -> {
                 if (!wifiCredentialsWritten && deviceClaimRequired == false) {
-                    if (!writeWifiCredentialsIfReady(gatt)) scheduleStatusPoll()
+                    if (!writeWifiCredentialsIfReady()) scheduleStatusPoll()
                 } else {
                     scheduleStatusPoll()
                 }
@@ -544,13 +580,13 @@ class AqlBleProvisioningGattClient(
             AqlProvisioningStatus.WIFI_CREDENTIALS_RECEIVED,
             AqlProvisioningStatus.WIFI_CONNECTING -> scheduleStatusPoll()
             AqlProvisioningStatus.WIFI_CONNECTED -> {
-                readRuntimeEndpoint(gatt)
+                gattQueue.enqueue(AqlBleGattOperation.READ_RUNTIME_ENDPOINT)
                 scheduleStatusPoll()
             }
             AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY,
             AqlProvisioningStatus.COMPLETED -> {
                 mainHandler.removeCallbacks(statusPollRunnable)
-                readRuntimeEndpoint(gatt)
+                gattQueue.enqueue(AqlBleGattOperation.READ_RUNTIME_ENDPOINT)
             }
             AqlProvisioningStatus.CLAIM_REJECTED,
             AqlProvisioningStatus.WIFI_FAILED,
@@ -566,23 +602,23 @@ class AqlBleProvisioningGattClient(
     }
 
     @SuppressLint("MissingPermission")
-    private fun enableProvisioningStatusNotifications(gatt: BluetoothGatt) {
+    private fun enableProvisioningStatusNotifications(gatt: BluetoothGatt): Boolean {
         val characteristic = provisioningStatusCharacteristic
         if (characteristic == null) {
             failAndClose("ProvisioningStatus characteristic is missing.")
-            return
+            return false
         }
-        enableNotifications(gatt = gatt, characteristic = characteristic, label = "ProvisioningStatus")
+        return enableNotifications(gatt = gatt, characteristic = characteristic, label = "ProvisioningStatus")
     }
 
     @SuppressLint("MissingPermission")
-    private fun enableRuntimeEndpointNotifications(gatt: BluetoothGatt) {
+    private fun enableRuntimeEndpointNotifications(gatt: BluetoothGatt): Boolean {
         val characteristic = runtimeEndpointCharacteristic
         if (characteristic == null) {
             failAndClose("RuntimeEndpoint characteristic is missing.")
-            return
+            return false
         }
-        enableNotifications(gatt = gatt, characteristic = characteristic, label = "RuntimeEndpoint")
+        return enableNotifications(gatt = gatt, characteristic = characteristic, label = "RuntimeEndpoint")
     }
 
     @SuppressLint("MissingPermission")
@@ -590,23 +626,23 @@ class AqlBleProvisioningGattClient(
         gatt: BluetoothGatt,
         characteristic: BluetoothGattCharacteristic,
         label: String
-    ) {
+    ): Boolean {
         if (!hasConnectPermission()) {
             failAndClose("Bluetooth connect permission is missing.")
-            return
+            return false
         }
         if (!gatt.setCharacteristicNotification(characteristic, true)) {
             failAndClose("$label notifications could not be enabled locally.")
-            return
+            return false
         }
 
         val descriptor = characteristic.getDescriptor(CLIENT_CHARACTERISTIC_CONFIG_UUID)
         if (descriptor == null) {
             failAndClose("$label CCCD descriptor was not found.")
-            return
+            return false
         }
 
-        val started = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             gatt.writeDescriptor(descriptor, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE) == BluetoothStatusCodes.SUCCESS
         } else {
             @Suppress("DEPRECATION")
@@ -615,10 +651,6 @@ class AqlBleProvisioningGattClient(
                 gatt.writeDescriptor(descriptor)
             }
         }
-
-        if (!started) {
-            failAndClose("$label CCCD write could not be started.")
-        }
     }
 
     @SuppressLint("MissingPermission")
@@ -626,10 +658,10 @@ class AqlBleProvisioningGattClient(
         gatt: BluetoothGatt,
         characteristic: BluetoothGattCharacteristic,
         value: String
-    ) {
+    ): Boolean {
         if (!hasConnectPermission()) {
             failAndClose("Bluetooth connect permission is missing.")
-            return
+            return false
         }
 
         val bytes = value.toByteArray(Charsets.UTF_8)
@@ -637,14 +669,14 @@ class AqlBleProvisioningGattClient(
 
         if (bytes.size > AqlBleProvisioningContract.BLE_JSON_MAX_BYTES) {
             failAndClose("BLE JSON payload is ${bytes.size} bytes, limit is ${AqlBleProvisioningContract.BLE_JSON_MAX_BYTES} bytes.")
-            return
+            return false
         }
         if (bytes.size > maxPayloadBytes) {
             failAndClose("BLE payload is ${bytes.size} bytes, negotiated MTU $negotiatedMtu allows $maxPayloadBytes bytes.")
-            return
+            return false
         }
 
-        val started = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             gatt.writeCharacteristic(characteristic, bytes, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT) == BluetoothStatusCodes.SUCCESS
         } else {
             @Suppress("DEPRECATION")
@@ -653,10 +685,6 @@ class AqlBleProvisioningGattClient(
                 characteristic.value = bytes
                 gatt.writeCharacteristic(characteristic)
             }
-        }
-
-        if (!started) {
-            failAndClose("BLE write operation could not be started.")
         }
     }
 
@@ -773,7 +801,6 @@ class AqlBleProvisioningGattClient(
         const val STATUS_POLL_INTERVAL_MS = 1_500L
         const val MAX_DEVICE_INFO_READ_ATTEMPTS = 3
         const val DEVICE_INFO_RETRY_DELAY_MS = 350L
-        const val WIFI_CREDENTIALS_WRITE_DELAY_MS = 180L
 
         val SERVICE_UUID: UUID = UUID.fromString(AqlBleProvisioningContract.SERVICE_UUID)
         val DEVICE_INFO_UUID: UUID = UUID.fromString(AqlBleProvisioningContract.DEVICE_INFO_UUID)
