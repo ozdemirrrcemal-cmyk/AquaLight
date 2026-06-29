@@ -56,6 +56,7 @@ class AqlBleProvisioningGattClient(
     @Volatile private var deviceInfoVerified = false
     @Volatile private var deviceInfoReadAttempts = 0
     @Volatile private var deviceClaimRequired: Boolean? = null
+    @Volatile private var deviceNonce = ""
     @Volatile private var statusNotificationsEnabled = false
     @Volatile private var runtimeNotificationsEnabled = false
     @Volatile private var startSessionWritten = false
@@ -100,6 +101,7 @@ class AqlBleProvisioningGattClient(
         deviceInfoVerified = false
         deviceInfoReadAttempts = 0
         deviceClaimRequired = null
+        deviceNonce = ""
         statusNotificationsEnabled = false
         runtimeNotificationsEnabled = false
         startSessionWritten = false
@@ -139,6 +141,7 @@ class AqlBleProvisioningGattClient(
         deviceInfoVerified = false
         deviceInfoReadAttempts = 0
         deviceClaimRequired = null
+        deviceNonce = ""
         statusNotificationsEnabled = false
         runtimeNotificationsEnabled = false
         startSessionWritten = false
@@ -401,6 +404,7 @@ class AqlBleProvisioningGattClient(
         deviceInfoVerified = true
         deviceInfoReadAttempts = 0
         deviceClaimRequired = deviceInfo.claimRequired
+        deviceNonce = deviceInfo.deviceNonce
         mainHandler.removeCallbacks(deviceInfoRetryRunnable)
         gattQueue.complete(AqlBleGattOperation.READ_DEVICE_INFO)
         gattQueue.enqueue(AqlBleGattOperation.ENABLE_STATUS_NOTIFICATIONS)
@@ -437,7 +441,7 @@ class AqlBleProvisioningGattClient(
             return false
         }
 
-        return writeString(gatt = gatt, characteristic = characteristic, value = codec.startSessionJson(draft))
+        return writeString(gatt = gatt, characteristic = characteristic, value = codec.startSessionJson(draft, deviceNonce))
     }
 
     private fun writeWifiCredentialsIfReady(): Boolean {
@@ -696,6 +700,7 @@ class AqlBleProvisioningGattClient(
             val json = JSONObject(raw.trim())
             AqlBleDeviceInfo(
                 deviceUid = firstJsonString(json, AqlBleProvisioningContract.Json.KEY_DEVICE_UID, "uid", "device_uid"),
+                deviceNonce = firstJsonString(json, AqlBleProvisioningContract.Json.KEY_DEVICE_NONCE, "device_nonce"),
                 bleName = firstJsonString(json, "bleName", "ble_name", "name"),
                 mode = firstJsonString(json, AqlBleProvisioningContract.Json.KEY_STATUS, "mode"),
                 claimRequired = firstJsonBoolean(json, "claimRequired", "claim_required")
@@ -707,6 +712,7 @@ class AqlBleProvisioningGattClient(
         val draft = activeDraft ?: return "Provisioning draft is missing."
 
         if (deviceInfo.deviceUid.isBlank()) return "DeviceInfo does not include device uid."
+        if (!deviceInfo.deviceNonce.isUuidV4()) return "DeviceInfo does not include a valid deviceNonce."
 
         val expectedUid = draft.candidateId.trim().takeUnless { value -> value.isLikelyBleAddress() }.orEmpty()
         if (expectedUid.isNotBlank() && !deviceInfo.deviceUid.equals(expectedUid, ignoreCase = true)) {
@@ -765,6 +771,10 @@ class AqlBleProvisioningGattClient(
         return matches(Regex("(?i)^([0-9a-f]{2}:){5}[0-9a-f]{2}$"))
     }
 
+    private fun String.isUuidV4(): Boolean {
+        return matches(Regex("(?i)^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"))
+    }
+
     private fun hasConnectPermission(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             ContextCompat.checkSelfPermission(appContext, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
@@ -790,6 +800,7 @@ class AqlBleProvisioningGattClient(
 
     private data class AqlBleDeviceInfo(
         val deviceUid: String,
+        val deviceNonce: String,
         val bleName: String,
         val mode: String,
         val claimRequired: Boolean?

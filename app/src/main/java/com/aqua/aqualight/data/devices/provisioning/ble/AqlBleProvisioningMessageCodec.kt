@@ -13,9 +13,14 @@ import org.json.JSONObject
 
 class AqlBleProvisioningMessageCodec {
 
-    fun startSessionJson(draft: AqlProvisioningDraft): String {
+    fun startSessionJson(draft: AqlProvisioningDraft, deviceNonce: String = ""): String {
         val json = JSONObject()
             .put(AqlBleProvisioningContract.Json.KEY_APP_NONCE, draft.sessionId)
+
+        val normalizedDeviceNonce = deviceNonce.trim()
+        if (normalizedDeviceNonce.isNotBlank()) {
+            json.put(AqlBleProvisioningContract.Json.KEY_DEVICE_NONCE, normalizedDeviceNonce)
+        }
 
         val deviceUid = draft.candidateId
             .trim()

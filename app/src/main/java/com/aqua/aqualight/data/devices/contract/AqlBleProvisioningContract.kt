@@ -43,6 +43,7 @@ object AqlBleProvisioningContract {
 
     object Json {
         const val KEY_APP_NONCE = "appNonce"
+        const val KEY_DEVICE_NONCE = "deviceNonce"
         const val KEY_DEVICE_UID = "deviceUid"
         const val KEY_PROVISIONING_ID = "provisioningId"
         const val KEY_CLAIM_CODE = "claimCode"
