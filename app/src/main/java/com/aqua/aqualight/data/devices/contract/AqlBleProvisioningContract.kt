@@ -22,6 +22,9 @@ object AqlBleProvisioningContract {
 
     const val QR_MAX_BYTES = 512
     const val BLE_JSON_MAX_BYTES = 512
+
+    // Wi-Fi SSID/password limits are UTF-8 byte limits in the BLE JSON payload.
+    // Do not validate these as Kotlin character counts.
     const val WIFI_SSID_MAX_LENGTH = 32
     const val WIFI_PASSWORD_MAX_LENGTH = 64
     const val CLAIM_CODE_MIN_LENGTH = 8

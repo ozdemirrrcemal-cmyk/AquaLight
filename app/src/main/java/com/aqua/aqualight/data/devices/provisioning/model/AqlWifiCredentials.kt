@@ -12,10 +12,10 @@ data class AqlWifiCredentials(
 ) {
     init {
         require(ssid.isNotBlank()) { "Wi-Fi SSID must not be blank." }
-        require(ssid.length <= AqlBleProvisioningContract.WIFI_SSID_MAX_LENGTH) {
+        require(ssid.utf8ByteSize() <= AqlBleProvisioningContract.WIFI_SSID_MAX_LENGTH) {
             "Wi-Fi SSID is too long."
         }
-        require(password.length <= AqlBleProvisioningContract.WIFI_PASSWORD_MAX_LENGTH) {
+        require(password.utf8ByteSize() <= AqlBleProvisioningContract.WIFI_PASSWORD_MAX_LENGTH) {
             "Wi-Fi password is too long."
         }
         require(channel >= 0) { "Wi-Fi channel must not be negative." }
@@ -24,3 +24,5 @@ data class AqlWifiCredentials(
         }
     }
 }
+
+private fun String.utf8ByteSize(): Int = toByteArray(Charsets.UTF_8).size

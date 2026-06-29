@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
 import com.aqua.aqualight.databinding.FragmentDeviceWifiProvisioningBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -198,7 +199,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
                 ).show()
             }
 
-            ssid.length > MAX_SSID_LENGTH -> {
+            ssid.utf8ByteSize() > AqlBleProvisioningContract.WIFI_SSID_MAX_LENGTH -> {
                 binding.etWifiSsid.requestFocus()
                 Toast.makeText(
                     requireContext(),
@@ -207,7 +208,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
                 ).show()
             }
 
-            networkKey.length > MAX_PASSWORD_LENGTH -> {
+            networkKey.utf8ByteSize() > AqlBleProvisioningContract.WIFI_PASSWORD_MAX_LENGTH -> {
                 binding.etWifiPassword.requestFocus()
                 Toast.makeText(
                     requireContext(),
@@ -240,14 +241,14 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
         }
     }
 
+    private fun String.utf8ByteSize(): Int = toByteArray(Charsets.UTF_8).size
+
     override fun onDestroyView() {
         _binding = null
         super.onDestroyView()
     }
 
     private companion object {
-        const val MAX_SSID_LENGTH = 32
-        const val MAX_PASSWORD_LENGTH = 64
         const val WIFI_REFRESH_DELAY_MS = 700L
         const val UNKNOWN_SSID = "<unknown ssid>"
     }
