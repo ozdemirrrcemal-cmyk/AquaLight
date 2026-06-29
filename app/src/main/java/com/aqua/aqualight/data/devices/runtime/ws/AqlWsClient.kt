@@ -4,6 +4,8 @@ import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
 import com.aqua.aqualight.data.devices.contract.AqlWsContract
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import java.util.Collections
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -44,6 +46,10 @@ class AqlWsClient(
     @Volatile
     private var activeDeviceUid: DeviceUid? = null
 
+    private val pendingTokenInvalidationCommandIds = Collections.newSetFromMap(
+        ConcurrentHashMap<String, Boolean>()
+    )
+
     fun connect(
         deviceUid: DeviceUid,
         endpoint: DeviceRuntimeEndpoint
@@ -77,14 +83,27 @@ class AqlWsClient(
         if (!canSend(message)) {
             return false
         }
-        return activeSocket?.send(message.toJsonString()) == true
+
+        val sent = activeSocket?.send(message.toJsonString()) == true
+        if (sent) {
+            message.lifecycleInvalidatingCommandId()?.let { commandId ->
+                pendingTokenInvalidationCommandIds.add(commandId)
+            }
+        }
+        return sent
     }
 
     fun sendRaw(raw: String): Boolean {
         if (!canSendRaw(raw)) {
             return false
         }
-        return activeSocket?.send(raw) == true
+
+        val lifecycleInvalidatingCommandId = raw.lifecycleInvalidatingCommandId()
+        val sent = activeSocket?.send(raw) == true
+        if (sent && lifecycleInvalidatingCommandId != null) {
+            pendingTokenInvalidationCommandIds.add(lifecycleInvalidatingCommandId)
+        }
+        return sent
     }
 
     fun markAuthenticated(deviceUid: DeviceUid) {
@@ -115,6 +134,36 @@ class AqlWsClient(
         }
     }
 
+    private fun AqlWsOutgoingMessage.lifecycleInvalidatingCommandId(): String? {
+        return when (this) {
+            is AqlWsOutgoingMessage.Command -> id.takeIf { commandId ->
+                commandId.isNotBlank() &&
+                    module == AqlWsContract.MODULE_SECURITY &&
+                    action in TOKEN_INVALIDATING_SECURITY_ACTIONS
+            }
+
+            else -> null
+        }
+    }
+
+    private fun String.lifecycleInvalidatingCommandId(): String? {
+        val json = runCatching {
+            JSONObject(this)
+        }.getOrNull() ?: return null
+
+        val id = json.optString("id").trim()
+        val type = json.optString("type").trim()
+        val module = json.optString("module").trim()
+        val action = json.optString("action").trim()
+
+        return id.takeIf { commandId ->
+            commandId.isNotBlank() &&
+                type == AqlWsContract.TYPE_COMMAND &&
+                module == AqlWsContract.MODULE_SECURITY &&
+                action in TOKEN_INVALIDATING_SECURITY_ACTIONS
+        }
+    }
+
     private fun isActiveDeviceAuthenticated(): Boolean {
         val deviceUid = activeDeviceUid ?: return false
         val state = _connectionState.value
@@ -138,6 +187,7 @@ class AqlWsClient(
         activeSocket?.close(code, reason)
         activeSocket = null
         activeDeviceUid = null
+        pendingTokenInvalidationCommandIds.clear()
         _connectionState.value = AqlWsConnectionState.Disconnected
     }
 
@@ -200,6 +250,29 @@ class AqlWsClient(
         }
     }
 
+    private fun handleTokenLifecycleMessage(
+        deviceUid: DeviceUid,
+        message: AqlWsIncomingMessage?
+    ) {
+        when (message) {
+            is AqlWsIncomingMessage.Response -> {
+                val wasPending = pendingTokenInvalidationCommandIds.remove(message.id)
+                if (wasPending && message.ok) {
+                    clearTokenAndRequireAuth(
+                        deviceUid = deviceUid,
+                        reason = "runtime token cleared after security lifecycle change"
+                    )
+                }
+            }
+
+            is AqlWsIncomingMessage.Error -> {
+                pendingTokenInvalidationCommandIds.remove(message.id)
+            }
+
+            else -> Unit
+        }
+    }
+
     private fun clearTokenAndRequireAuth(
         deviceUid: DeviceUid,
         reason: String
@@ -255,6 +328,10 @@ class AqlWsClient(
                     deviceUid = deviceUid,
                     message = parsed
                 )
+                handleTokenLifecycleMessage(
+                    deviceUid = deviceUid,
+                    message = parsed
+                )
                 emit(
                     AqlWsEvent.Message(
                         deviceUid = deviceUid,
@@ -267,6 +344,7 @@ class AqlWsClient(
                 if (activeSocket == webSocket) {
                     activeSocket = null
                     activeDeviceUid = null
+                    pendingTokenInvalidationCommandIds.clear()
                     _connectionState.value = AqlWsConnectionState.Disconnected
                 }
                 emit(
@@ -281,6 +359,7 @@ class AqlWsClient(
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                 if (activeSocket == webSocket) {
                     activeSocket = null
+                    pendingTokenInvalidationCommandIds.clear()
                     _connectionState.value = AqlWsConnectionState.Failed(
                         deviceUid = deviceUid,
                         message = t.message.orEmpty(),
@@ -311,6 +390,10 @@ class AqlWsClient(
         private const val AUTH_ID_PREFIX = "auth-"
         private const val AUTH_FIELD_TOKEN = "token"
         private val AUTH_FAILURE_STATUS_CODES = setOf(401, 403)
+        private val TOKEN_INVALIDATING_SECURITY_ACTIONS = setOf(
+            AqlWsContract.ACTION_SECURITY_UNPAIR,
+            AqlWsContract.ACTION_SECURITY_RESET
+        )
 
         @Volatile
         private var defaultTokenProvider: AqlWsTokenProvider? = null
