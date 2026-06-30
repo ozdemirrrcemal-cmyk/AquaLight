@@ -3,8 +3,8 @@ package com.aqua.aqualight.data.devices.contract
 /**
  * Android mirror of the firmware WebSocket runtime contract.
  *
- * WebSocket is the only runtime transport for auth, commands, events, status,
- * OTA control and module settings.
+ * Values in this file mirror firmware src/api/v1/commands/AqlCommandNames.hpp
+ * and the AqlCommandAuthRequirement used when each command is registered.
  */
 object AqlWsContract {
     const val SCHEMA = "aql.ws.v1"
@@ -25,11 +25,11 @@ object AqlWsContract {
     const val MODULE_SECURITY = "security"
     const val MODULE_NETWORK = "network"
     const val MODULE_TIME = "time"
-    const val MODULE_FIRMWARE = "firmware"
     const val MODULE_LIGHT = "light"
     const val MODULE_COOLING = "cooling"
     const val MODULE_TIMER = "timer"
     const val MODULE_DOSING = "dosing"
+    const val MODULE_FIRMWARE = "firmware"
     const val MODULE_SYSTEM = "system"
 
     const val ACTION_STATUS_GET = "status.get"
@@ -87,7 +87,6 @@ object AqlWsContract {
         commandKey(MODULE_DEVICE, ACTION_DEVICE_STATUS_GET),
         commandKey(MODULE_DEVICE, ACTION_DEVICE_CAPABILITIES_GET),
         commandKey(MODULE_SECURITY, ACTION_SECURITY_STATUS_GET),
-        commandKey(MODULE_SECURITY, ACTION_SECURITY_PAIR),
         commandKey(MODULE_NETWORK, ACTION_NETWORK_STATUS_GET),
         commandKey(MODULE_TIME, ACTION_TIME_STATUS_GET),
         commandKey(MODULE_FIRMWARE, ACTION_FIRMWARE_STATUS_GET),
@@ -98,8 +97,13 @@ object AqlWsContract {
     )
 
     private val authenticatedCommands = setOf(
+        commandKey(MODULE_SECURITY, ACTION_SECURITY_PAIR),
         commandKey(MODULE_SECURITY, ACTION_SECURITY_UNPAIR),
         commandKey(MODULE_SECURITY, ACTION_SECURITY_RESET),
+        commandKey(MODULE_TIME, ACTION_TIME_CONFIG_APPLY),
+        commandKey(MODULE_TIME, ACTION_TIME_PHONE_SYNC),
+        commandKey(MODULE_TIME, ACTION_TIME_NTP_SYNC),
+        commandKey(MODULE_TIME, ACTION_TIME_RTC_SET),
         commandKey(MODULE_FIRMWARE, ACTION_FIRMWARE_OTA_STATUS),
         commandKey(MODULE_FIRMWARE, ACTION_FIRMWARE_OTA_START),
         commandKey(MODULE_FIRMWARE, ACTION_FIRMWARE_OTA_CLEAR),
@@ -121,6 +125,11 @@ object AqlWsContract {
         commandKey(MODULE_DOSING, ACTION_DOSING_DOSE_STOP),
         commandKey(MODULE_DOSING, ACTION_DOSING_RESERVOIR_REFILL)
     )
+
+    fun isRegisteredCommand(
+        module: String,
+        action: String
+    ): Boolean = isPublicCommand(module, action) || isAuthenticatedCommand(module, action)
 
     fun isPublicCommand(
         module: String,
