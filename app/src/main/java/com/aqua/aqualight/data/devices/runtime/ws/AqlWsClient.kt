@@ -117,21 +117,34 @@ class AqlWsClient(
         return when (message) {
             is AqlWsOutgoingMessage.Auth -> activeSocket != null
             is AqlWsOutgoingMessage.Ping -> activeSocket != null
-            is AqlWsOutgoingMessage.Command -> isActiveDeviceAuthenticated()
+            is AqlWsOutgoingMessage.Command -> activeSocket != null &&
+                (message.isPublicCommand() || isActiveDeviceAuthenticated())
         }
     }
 
     private fun canSendRaw(raw: String): Boolean {
-        val type = runCatching {
-            JSONObject(raw).optString("type").trim()
-        }.getOrNull().orEmpty()
+        val json = runCatching {
+            JSONObject(raw)
+        }.getOrNull() ?: return false
+
+        val type = json.optString("type").trim()
+        val module = json.optString("module").trim()
+        val action = json.optString("action").trim()
 
         return when (type) {
             AqlWsContract.TYPE_AUTH,
             AqlWsContract.TYPE_PING -> activeSocket != null
-            AqlWsContract.TYPE_COMMAND -> isActiveDeviceAuthenticated()
+            AqlWsContract.TYPE_COMMAND -> activeSocket != null &&
+                (AqlWsContract.isPublicCommand(module, action) || isActiveDeviceAuthenticated())
             else -> false
         }
+    }
+
+    private fun AqlWsOutgoingMessage.Command.isPublicCommand(): Boolean {
+        return AqlWsContract.isPublicCommand(
+            module = module,
+            action = action
+        )
     }
 
     private fun AqlWsOutgoingMessage.lifecycleInvalidatingCommandId(): String? {
@@ -316,10 +329,6 @@ class AqlWsClient(
                     connectedAtMillis = clockMillis()
                 )
                 emit(AqlWsEvent.Opened(deviceUid = deviceUid))
-                requestAuthIfPossible(
-                    webSocket = webSocket,
-                    deviceUid = deviceUid
-                )
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
