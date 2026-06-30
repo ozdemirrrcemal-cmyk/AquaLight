@@ -119,99 +119,70 @@ class AqlBleProvisioningMessageCodec {
                 .takeUnless { value -> value.isLikelyBleAddress() }
                 .orEmpty()
 
-            val deviceUidText = firstJsonValue(
-                json,
-                AqlBleProvisioningContract.Json.KEY_DEVICE_UID,
-                "uid",
-                "device_uid"
+            val deviceUidText = requiredJsonString(
+                json = json,
+                key = AqlBleProvisioningContract.Json.KEY_DEVICE_UID,
+                label = "RuntimeEndpoint"
             )
-
-            require(deviceUidText.isNotBlank()) {
-                "RuntimeEndpoint does not include deviceUid."
-            }
 
             require(expectedDeviceUid.isBlank() || deviceUidText.equals(expectedDeviceUid, ignoreCase = true)) {
                 "RuntimeEndpoint deviceUid does not match the provisioning draft."
             }
 
-            val wsPort = firstJsonInt(
-                json,
-                AqlBleProvisioningContract.Json.KEY_WS_PORT,
-                "wsPort",
-                "webSocketPort"
+            val ip = requiredJsonString(
+                json = json,
+                key = AqlBleProvisioningContract.Json.KEY_IP,
+                label = "RuntimeEndpoint"
             )
-
-            val wsPath = firstJsonValue(
-                json,
-                AqlBleProvisioningContract.Json.KEY_WS_PATH,
-                "wsPath",
-                "path"
-            ).ifBlank { AqlWsContract.DEFAULT_PATH }
-
-            val wsProtocol = firstJsonValue(
-                json,
-                AqlBleProvisioningContract.Json.KEY_WS_PROTOCOL,
-                "wsProtocol",
-                "protocol"
-            ).ifBlank { AqlWsContract.DEFAULT_PROTOCOL }
-
-            val runtimeToken = firstJsonValue(
-                json,
-                AqlBleProvisioningContract.Json.KEY_TOKEN,
-                "pairingToken",
-                "webSocketToken"
+            val wsPort = requiredJsonInt(
+                json = json,
+                key = AqlBleProvisioningContract.Json.KEY_WS_PORT,
+                label = "RuntimeEndpoint"
             )
+            val wsPath = requiredJsonString(
+                json = json,
+                key = AqlBleProvisioningContract.Json.KEY_WS_PATH,
+                label = "RuntimeEndpoint"
+            )
+            require(wsPath == AqlWsContract.DEFAULT_PATH) {
+                "RuntimeEndpoint path is not supported: $wsPath"
+            }
 
+            val productModel = requiredJsonString(
+                json = json,
+                key = KEY_PRODUCT_MODEL,
+                label = "RuntimeEndpoint"
+            )
+            val firmwareVersion = requiredJsonString(
+                json = json,
+                key = KEY_FIRMWARE_VERSION,
+                label = "RuntimeEndpoint"
+            )
+            val runtimeToken = requiredJsonString(
+                json = json,
+                key = AqlBleProvisioningContract.Json.KEY_TOKEN,
+                label = "RuntimeEndpoint"
+            )
             require(runtimeToken.isRuntimeTokenHex()) {
                 "RuntimeEndpoint token is missing or invalid."
             }
 
             val endpoint = DeviceRuntimeEndpoint(
-                ip = json.optString(AqlBleProvisioningContract.Json.KEY_IP).trim(),
+                ip = ip,
                 wifiConnected = true,
                 runtimeTransport = "websocket",
                 wsPort = wsPort,
                 wsPath = wsPath,
-                wsProtocol = wsProtocol,
-                wsProtocolVersion = json.optInt("wsProtocolVersion", AqlWsContract.PROTOCOL_VERSION)
+                wsProtocol = AqlWsContract.DEFAULT_PROTOCOL,
+                wsProtocolVersion = AqlWsContract.PROTOCOL_VERSION
             )
 
             AqlProvisioningRuntimeHandoff(
                 deviceUid = DeviceUid(deviceUidText),
                 endpoint = endpoint,
                 webSocketToken = runtimeToken,
-                productFamily = firstJsonValue(
-                    json,
-                    "family",
-                    "productFamily",
-                    "product_family"
-                ),
-                productName = firstJsonValue(
-                    json,
-                    "productName",
-                    "product_name",
-                    "displayName",
-                    "display_name",
-                    "product"
-                ),
-                productModel = firstJsonValue(
-                    json,
-                    "model",
-                    "productModel",
-                    "product_model"
-                ),
-                firmwareVersion = firstJsonValue(
-                    json,
-                    "firmwareVersion",
-                    "firmware_version",
-                    "fw"
-                ),
-                firmwareBuild = firstJsonValue(
-                    json,
-                    "firmwareBuild",
-                    "firmware_build",
-                    "build"
-                )
+                productModel = productModel,
+                firmwareVersion = firmwareVersion
             )
         }
     }
@@ -252,33 +223,32 @@ class AqlBleProvisioningMessageCodec {
         return fields
     }
 
-    private fun firstJsonValue(
+    private fun requiredJsonString(
         json: JSONObject,
-        vararg keys: String
+        key: String,
+        label: String
     ): String {
-        return keys
-            .asSequence()
-            .map { key -> json.optString(key).trim() }
-            .firstOrNull { value -> value.isNotBlank() }
-            .orEmpty()
+        return json.optString(key)
+            .trim()
+            .takeIf { value -> value.isNotBlank() }
+            ?: error("$label field '$key' is missing.")
     }
 
-    private fun firstJsonInt(
+    private fun requiredJsonInt(
         json: JSONObject,
-        vararg keys: String
+        key: String,
+        label: String
     ): Int {
-        return keys
-            .asSequence()
-            .map { key -> json.opt(key) }
-            .mapNotNull { value ->
-                when (value) {
-                    is Number -> value.toInt()
-                    is String -> value.trim().toIntOrNull()
-                    else -> null
-                }
-            }
-            .firstOrNull { value -> value > 0 }
-            ?: 0
+        val value = json.opt(key)
+        val intValue = when (value) {
+            is Number -> value.toInt()
+            is String -> value.trim().toIntOrNull()
+            else -> null
+        }
+
+        return intValue
+            ?.takeIf { number -> number > 0 }
+            ?: error("$label field '$key' is missing or invalid.")
     }
 
     private fun String.isLikelyBleAddress(): Boolean {
@@ -294,5 +264,10 @@ class AqlBleProvisioningMessageCodec {
         return runCatching {
             URLDecoder.decode(value, Charsets.UTF_8.name())
         }.getOrDefault(value)
+    }
+
+    private companion object {
+        const val KEY_PRODUCT_MODEL = "productModel"
+        const val KEY_FIRMWARE_VERSION = "firmwareVersion"
     }
 }
