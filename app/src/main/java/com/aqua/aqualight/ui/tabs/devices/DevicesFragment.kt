@@ -13,10 +13,12 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDevicesBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.AquaHeaderFilledIconAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteTarget
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 class DevicesFragment : Fragment(R.layout.fragment_devices) {
@@ -25,9 +27,14 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     private val binding get() = _binding!!
 
     private val viewModel: DevicesViewModel by viewModels()
-    private val deviceAdapter = DeviceCardAdapter { item ->
-        viewModel.onDeviceClicked(item.deviceUid)
-    }
+    private val deviceAdapter = DeviceCardAdapter(
+        onDeviceClick = { item ->
+            viewModel.onDeviceClicked(item.deviceUid)
+        },
+        onDeviceLongClick = { item ->
+            viewModel.onDeviceLongClicked(item.deviceUid)
+        }
+    )
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -44,19 +51,36 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         viewModel.onScreenVisible()
     }
 
-    private fun setupHeader() {
+    private fun setupHeader(
+        state: DevicesViewModel.DevicesUiState = viewModel.uiState.value
+    ) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
-            config = AquaHeaderConfig(
-                showBackButton = false,
-                primaryAction = AquaHeaderPrimaryAction(
-                    text = "+ Add",
-                    contentDescription = "Add device",
-                    onClick = {
-                        openAddDevice()
-                    }
+            config = if (state.selectionMode) {
+                AquaHeaderConfig(
+                    titleOverride = getString(R.string.devices_selected_count_title, state.selectedCount),
+                    showBackButton = false,
+                    filledIconAction = AquaHeaderFilledIconAction(
+                        iconRes = R.drawable.ic_delete_24,
+                        contentDescription = getString(R.string.devices_delete_selected_content_description),
+                        enabled = state.selectedCount > 0,
+                        onClick = {
+                            showDeleteConfirmation()
+                        }
+                    )
                 )
-            )
+            } else {
+                AquaHeaderConfig(
+                    showBackButton = false,
+                    primaryAction = AquaHeaderPrimaryAction(
+                        text = "+ Add",
+                        contentDescription = "Add device",
+                        onClick = {
+                            openAddDevice()
+                        }
+                    )
+                )
+            }
         )
     }
 
@@ -99,9 +123,36 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     private fun renderState(state: DevicesViewModel.DevicesUiState) {
         if (_binding == null) return
 
+        setupHeader(state)
         deviceAdapter.submitList(state.devices)
         binding.rvSelectedDevices.isVisible = state.devices.isNotEmpty()
         binding.tvEmptyState.isVisible = state.isEmpty
+    }
+
+    private fun showDeleteConfirmation() {
+        val selectedCount = viewModel.uiState.value.selectedCount
+        if (selectedCount <= 0) return
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(
+                resources.getQuantityString(
+                    R.plurals.devices_delete_confirm_title,
+                    selectedCount,
+                    selectedCount
+                )
+            )
+            .setMessage(
+                resources.getQuantityString(
+                    R.plurals.devices_delete_confirm_message,
+                    selectedCount,
+                    selectedCount
+                )
+            )
+            .setNegativeButton(R.string.common_cancel, null)
+            .setPositiveButton(R.string.common_delete) { _, _ ->
+                viewModel.deleteSelectedDevices()
+            }
+            .show()
     }
 
     private fun openDeviceRoute(route: DeviceRoute) {

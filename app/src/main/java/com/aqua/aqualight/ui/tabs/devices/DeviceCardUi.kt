@@ -16,7 +16,8 @@ data class DeviceCardUi(
     val lastSeenText: String,
     val productText: String,
     val onlineState: DeviceOnlineState,
-    @DrawableRes val iconRes: Int
+    @DrawableRes val iconRes: Int,
+    val isSelected: Boolean = false
 ) {
     enum class StatusStyle {
         ONLINE,

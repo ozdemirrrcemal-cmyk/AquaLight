@@ -29,6 +29,7 @@ class DevicesViewModel(
     private val routeResolver = DeviceRouteResolver()
     private val localNetworkAvailable = MutableStateFlow(true)
     private val clockMillis = MutableStateFlow(System.currentTimeMillis())
+    private val selectedDeviceUids = MutableStateFlow<Set<String>>(emptySet())
 
     private val _uiState = MutableStateFlow(DevicesUiState())
     val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
@@ -52,6 +53,11 @@ class DevicesViewModel(
 
     fun onDeviceClicked(deviceUid: String) {
         if (deviceUid.isBlank()) return
+
+        if (_uiState.value.selectionMode) {
+            toggleDeviceSelection(deviceUid)
+            return
+        }
 
         viewModelScope.launch {
             val route = runCatching {
@@ -78,17 +84,55 @@ class DevicesViewModel(
         }
     }
 
+    fun onDeviceLongClicked(deviceUid: String) {
+        if (deviceUid.isBlank()) return
+        selectedDeviceUids.value = selectedDeviceUids.value + deviceUid
+    }
+
+    fun clearSelection() {
+        selectedDeviceUids.value = emptySet()
+    }
+
+    fun deleteSelectedDevices() {
+        val selected = selectedDeviceUids.value
+        if (selected.isEmpty()) return
+
+        viewModelScope.launch {
+            selected.forEach { rawDeviceUid ->
+                runCatching {
+                    repository.forgetDevice(DeviceUid(rawDeviceUid))
+                }
+            }
+
+            selectedDeviceUids.value = emptySet()
+            clockMillis.value = System.currentTimeMillis()
+        }
+    }
+
+    private fun toggleDeviceSelection(deviceUid: String) {
+        val current = selectedDeviceUids.value
+        selectedDeviceUids.value = if (deviceUid in current) {
+            current - deviceUid
+        } else {
+            current + deviceUid
+        }
+    }
+
     private fun observeDevices() {
         viewModelScope.launch {
-            combine(repository.devices, clockMillis) { snapshots, now ->
+            combine(repository.devices, clockMillis, selectedDeviceUids) { snapshots, now, selectedUids ->
                 val cards = snapshots.map { snapshot ->
-                    DeviceCardMapper.map(snapshot = snapshot, nowMillis = now)
+                    val card = DeviceCardMapper.map(snapshot = snapshot, nowMillis = now)
+                    card.copy(isSelected = card.deviceUid in selectedUids)
                 }
+                val visibleSelectedCount = cards.count { card -> card.isSelected }
 
                 DevicesUiState(
                     devices = cards,
                     isEmpty = cards.isEmpty(),
-                    isDiscovering = cards.isEmpty()
+                    isDiscovering = cards.isEmpty(),
+                    selectionMode = visibleSelectedCount > 0,
+                    selectedCount = visibleSelectedCount
                 )
             }.collect { state ->
                 _uiState.value = state
@@ -130,7 +174,9 @@ class DevicesViewModel(
     data class DevicesUiState(
         val devices: List<DeviceCardUi> = emptyList(),
         val isEmpty: Boolean = true,
-        val isDiscovering: Boolean = true
+        val isDiscovering: Boolean = true,
+        val selectionMode: Boolean = false,
+        val selectedCount: Int = 0
     )
 
     companion object {

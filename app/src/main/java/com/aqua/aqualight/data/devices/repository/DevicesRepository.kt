@@ -66,7 +66,7 @@ class DevicesRepository(
                 currentJob
             } else {
                 scope.launch {
-                    val knownDevices = knownStore?.loadSnapshots().orEmpty()
+                    val knownDevices = filterIgnoredDevices(knownStore?.loadSnapshots().orEmpty())
                     if (knownDevices.isNotEmpty()) {
                         registryStore.upsertAll(knownDevices)
                     }
@@ -84,7 +84,7 @@ class DevicesRepository(
                     val scannerJob = discoveryRepository.start(this)
                     val collectorJob = launch {
                         discoveryRepository.devices.collect { discoveredDevices ->
-                            registryStore.upsertAll(discoveredDevices)
+                            registryStore.upsertAll(filterIgnoredDevices(discoveredDevices))
                         }
                     }
                     val runtimeStateJob = runtimeRepository?.let { runtime ->
@@ -167,14 +167,19 @@ class DevicesRepository(
     }
 
     fun registerSnapshot(snapshot: DeviceSnapshot): DeviceSnapshot {
+        knownStore?.allowDevice(snapshot.deviceUid)
         val registered = registryStore.upsert(snapshot)
         knownStore?.saveSnapshot(registered)
         return registered
     }
 
     fun registerSnapshots(snapshots: Iterable<DeviceSnapshot>) {
-        registryStore.upsertAll(snapshots)
-        knownStore?.saveSnapshots(snapshots)
+        val snapshotList = snapshots.toList()
+        snapshotList.forEach { snapshot ->
+            knownStore?.allowDevice(snapshot.deviceUid)
+        }
+        registryStore.upsertAll(snapshotList)
+        knownStore?.saveSnapshots(snapshotList)
     }
 
     fun updateConnectionState(
@@ -187,6 +192,7 @@ class DevicesRepository(
         val removed = registryStore.remove(deviceUid)
         runtimeRepository?.close(deviceUid)
         knownStore?.remove(deviceUid)
+        knownStore?.ignoreDevice(deviceUid)
         return removed
     }
 
@@ -196,7 +202,17 @@ class DevicesRepository(
 
     fun clearKnownDevices() {
         knownStore?.clear()
+        knownStore?.clearIgnoredDevices()
         registryStore.clear()
+    }
+
+    private fun filterIgnoredDevices(snapshots: Iterable<DeviceSnapshot>): List<DeviceSnapshot> {
+        val ignoredDeviceUids = knownStore?.ignoredDeviceUidValues().orEmpty()
+        if (ignoredDeviceUids.isEmpty()) return snapshots.toList()
+
+        return snapshots.filterNot { snapshot ->
+            snapshot.deviceUid.value in ignoredDeviceUids
+        }
     }
 
     private fun applyRuntimeConnectionState(state: AqlWsConnectionState) {

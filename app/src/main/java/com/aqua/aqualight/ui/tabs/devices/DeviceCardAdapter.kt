@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
@@ -11,7 +12,8 @@ import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardUi
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
 
 class DeviceCardAdapter(
-    private val onDeviceClick: (DeviceCardUi) -> Unit
+    private val onDeviceClick: (DeviceCardUi) -> Unit,
+    private val onDeviceLongClick: (DeviceCardUi) -> Unit
 ) : ListAdapter<DeviceCardUi, DeviceCardAdapter.DeviceViewHolder>(DiffCallback) {
 
     override fun onCreateViewHolder(
@@ -26,7 +28,8 @@ class DeviceCardAdapter(
 
         return DeviceViewHolder(
             binding = binding,
-            onDeviceClick = onDeviceClick
+            onDeviceClick = onDeviceClick,
+            onDeviceLongClick = onDeviceLongClick
         )
     }
 
@@ -39,7 +42,8 @@ class DeviceCardAdapter(
 
     class DeviceViewHolder(
         private val binding: ItemDeviceCompactCardBinding,
-        private val onDeviceClick: (DeviceCardUi) -> Unit
+        private val onDeviceClick: (DeviceCardUi) -> Unit,
+        private val onDeviceLongClick: (DeviceCardUi) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(item: DeviceCardUi) {
@@ -48,8 +52,22 @@ class DeviceCardAdapter(
                 item = item.toCompactCardUi()
             )
 
+            binding.root.strokeWidth = if (item.isSelected) {
+                SELECTED_STROKE_WIDTH_DP.dp()
+            } else {
+                DEFAULT_STROKE_WIDTH_DP.dp()
+            }
+            binding.root.strokeColor = Color.parseColor(
+                if (item.isSelected) SELECTED_STROKE_COLOR else DEFAULT_STROKE_COLOR
+            )
+
             binding.root.setOnClickListener {
                 onDeviceClick(item)
+            }
+
+            binding.root.setOnLongClickListener {
+                onDeviceLongClick(item)
+                true
             }
         }
 
@@ -73,6 +91,10 @@ class DeviceCardAdapter(
                 DeviceCardUi.StatusStyle.OFFLINE -> DeviceCompactStatusStyle.OFFLINE
             }
         }
+
+        private fun Int.dp(): Int {
+            return (this * itemView.resources.displayMetrics.density).toInt()
+        }
     }
 
     private object DiffCallback : DiffUtil.ItemCallback<DeviceCardUi>() {
@@ -89,5 +111,12 @@ class DeviceCardAdapter(
         ): Boolean {
             return oldItem == newItem
         }
+    }
+
+    private companion object {
+        const val DEFAULT_STROKE_WIDTH_DP = 1
+        const val SELECTED_STROKE_WIDTH_DP = 3
+        const val DEFAULT_STROKE_COLOR = "#22354D"
+        const val SELECTED_STROKE_COLOR = "#5FD6B4"
     }
 }

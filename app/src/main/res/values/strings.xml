@@ -525,4 +525,16 @@
     <string name="device_physical_proof_steps">1. Locate the physical SETUP/RESET button on the AquaLight device.\n2. Hold the button for 5 seconds, then release it. This clears network pairing only and opens BLE setup mode.\n3. Do not hold for 10 seconds unless you want a full user reset.\n4. When the device is advertising setup mode, continue to Wi-Fi setup.</string>
     <string name="device_physical_proof_continue">I held SETUP/RESET</string>
     <string name="device_physical_proof_security_hint">Security note: 5 seconds opens network setup / BLE provisioning. 10 seconds performs a full user reset and may clear user/runtime data.</string>
+    <!-- Devices selection/delete -->
+    <string name="devices_selected_count_title">%1$d selected</string>
+    <string name="devices_delete_selected_content_description">Delete selected devices</string>
+    <plurals name="devices_delete_confirm_title">
+        <item quantity="one">Delete device?</item>
+        <item quantity="other">Delete %1$d devices?</item>
+    </plurals>
+    <plurals name="devices_delete_confirm_message">
+        <item quantity="one">This removes the device from this app. The device will not enter setup mode. To pair it again, press the physical setup button.</item>
+        <item quantity="other">This removes the selected devices from this app. Devices will not enter setup mode. To pair them again, press the physical setup button.</item>
+    </plurals>
+
 </resources>

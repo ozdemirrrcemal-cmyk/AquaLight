@@ -73,6 +73,47 @@ class DeviceKnownStore(
         saveAll(remaining)
     }
 
+    fun ignoreDevice(deviceUid: DeviceUid) {
+        val ignored = ignoredDeviceUidValues().toMutableSet()
+        ignored += deviceUid.value
+        saveIgnoredDeviceUidValues(ignored)
+    }
+
+    fun allowDevice(deviceUid: DeviceUid) {
+        val ignored = ignoredDeviceUidValues()
+        if (deviceUid.value !in ignored) return
+        saveIgnoredDeviceUidValues(ignored - deviceUid.value)
+    }
+
+    fun isIgnored(deviceUid: DeviceUid): Boolean {
+        return deviceUid.value in ignoredDeviceUidValues()
+    }
+
+    fun ignoredDeviceUidValues(): Set<String> {
+        return preferences
+            .getStringSet(KEY_IGNORED_DEVICE_UIDS, emptySet())
+            .orEmpty()
+            .filter { value -> value.isNotBlank() }
+            .toSet()
+    }
+
+    fun clearIgnoredDevices() {
+        preferences.edit()
+            .remove(KEY_IGNORED_DEVICE_UIDS)
+            .apply()
+    }
+
+    private fun saveIgnoredDeviceUidValues(values: Set<String>) {
+        preferences.edit()
+            .putStringSet(
+                KEY_IGNORED_DEVICE_UIDS,
+                values
+                    .filter { value -> value.isNotBlank() }
+                    .toSet()
+            )
+            .apply()
+    }
+
     fun clear() {
         preferences.edit()
             .remove(KEY_DEVICES)
@@ -303,5 +344,6 @@ class DeviceKnownStore(
     private companion object {
         const val PREFERENCES_NAME = "aql_known_devices_v2"
         const val KEY_DEVICES = "devices"
+        const val KEY_IGNORED_DEVICE_UIDS = "ignoredDeviceUids"
     }
 }
