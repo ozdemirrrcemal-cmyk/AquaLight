@@ -51,6 +51,34 @@ class AqlWsCommandClient(
         return wsClient.send(AqlWsCommandFactory.deviceCapabilities())
     }
 
+    fun networkStatus(): Boolean {
+        return wsClient.send(AqlWsCommandFactory.networkStatus())
+    }
+
+    fun timeStatus(): Boolean {
+        return wsClient.send(AqlWsCommandFactory.timeStatus())
+    }
+
+    fun firmwareStatus(): Boolean {
+        return wsClient.send(AqlWsCommandFactory.firmwareStatus())
+    }
+
+    fun lightStatus(): Boolean {
+        return wsClient.send(AqlWsCommandFactory.lightStatus())
+    }
+
+    fun coolingStatus(): Boolean {
+        return wsClient.send(AqlWsCommandFactory.coolingStatus())
+    }
+
+    fun timerStatus(): Boolean {
+        return wsClient.send(AqlWsCommandFactory.timerStatus())
+    }
+
+    fun dosingStatus(): Boolean {
+        return wsClient.send(AqlWsCommandFactory.dosingStatus())
+    }
+
     fun command(
         module: String,
         action: String,
