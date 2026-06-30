@@ -164,7 +164,7 @@ class DeviceRuntimeRepository(
 
             is AqlWsEvent.Message -> {
                 if (event.parsed is AqlWsIncomingMessage.Hello) {
-                    session.commandClient.securityStatus()
+                    sendFirmwarePublicBootstrap(session.commandClient)
                     authManager?.authenticateIfTokenExists(
                         deviceUid = event.deviceUid,
                         commandClient = session.commandClient
@@ -178,8 +178,6 @@ class DeviceRuntimeRepository(
                 )
 
                 if (authStateChange is AqlWsAuthStateChange.Authenticated) {
-                    session.commandClient.deviceIdentity()
-                    session.commandClient.deviceCapabilities()
                     timeSyncCoordinator.syncPhoneNowIfNeeded(
                         deviceUid = event.deviceUid
                     )
@@ -188,6 +186,20 @@ class DeviceRuntimeRepository(
 
             else -> Unit
         }
+    }
+
+    private fun sendFirmwarePublicBootstrap(commandClient: AqlWsCommandClient) {
+        commandClient.securityStatus()
+        commandClient.deviceIdentity()
+        commandClient.deviceStatus()
+        commandClient.deviceCapabilities()
+        commandClient.networkStatus()
+        commandClient.timeStatus()
+        commandClient.firmwareStatus()
+        commandClient.lightStatus()
+        commandClient.coolingStatus()
+        commandClient.timerStatus()
+        commandClient.dosingStatus()
     }
 
     companion object {
