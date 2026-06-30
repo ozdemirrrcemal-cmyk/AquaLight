@@ -53,6 +53,55 @@ object AqlWsCommandFactory {
         )
     }
 
+    fun networkStatus(): AqlWsOutgoingMessage.Command {
+        return command(
+            module = AqlWsContract.MODULE_NETWORK,
+            action = AqlWsContract.ACTION_NETWORK_STATUS_GET
+        )
+    }
+
+    fun timeStatus(): AqlWsOutgoingMessage.Command {
+        return command(
+            module = AqlWsContract.MODULE_TIME,
+            action = AqlWsContract.ACTION_TIME_STATUS_GET
+        )
+    }
+
+    fun firmwareStatus(): AqlWsOutgoingMessage.Command {
+        return command(
+            module = AqlWsContract.MODULE_FIRMWARE,
+            action = AqlWsContract.ACTION_FIRMWARE_STATUS_GET
+        )
+    }
+
+    fun lightStatus(): AqlWsOutgoingMessage.Command {
+        return command(
+            module = AqlWsContract.MODULE_LIGHT,
+            action = AqlWsContract.ACTION_LIGHT_STATUS_GET
+        )
+    }
+
+    fun coolingStatus(): AqlWsOutgoingMessage.Command {
+        return command(
+            module = AqlWsContract.MODULE_COOLING,
+            action = AqlWsContract.ACTION_COOLING_STATUS_GET
+        )
+    }
+
+    fun timerStatus(): AqlWsOutgoingMessage.Command {
+        return command(
+            module = AqlWsContract.MODULE_TIMER,
+            action = AqlWsContract.ACTION_TIMER_STATUS_GET
+        )
+    }
+
+    fun dosingStatus(): AqlWsOutgoingMessage.Command {
+        return command(
+            module = AqlWsContract.MODULE_DOSING,
+            action = AqlWsContract.ACTION_DOSING_STATUS_GET
+        )
+    }
+
     fun command(
         module: String,
         action: String,
