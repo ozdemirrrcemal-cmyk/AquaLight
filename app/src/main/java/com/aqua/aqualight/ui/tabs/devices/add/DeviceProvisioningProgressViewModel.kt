@@ -202,6 +202,10 @@ class DeviceProvisioningProgressViewModel(
                 saveRuntimeHandoff(event.handoff)
             }
 
+            is AqlBleProvisioningGattEvent.DeviceInfoVerified -> {
+                renderDeviceInfoVerified(event)
+            }
+
             AqlBleProvisioningGattEvent.Completed -> {
                 if (!handoffSaved) {
                     _uiState.value = _uiState.value.copy(
@@ -285,6 +289,7 @@ class DeviceProvisioningProgressViewModel(
                 )
             }
 
+            is AqlBleProvisioningGattEvent.DeviceInfoVerified -> _uiState.value
             is AqlBleProvisioningGattEvent.RuntimeHandoffReceived -> _uiState.value
             AqlBleProvisioningGattEvent.Completed -> _uiState.value
 
@@ -314,6 +319,24 @@ class DeviceProvisioningProgressViewModel(
                 }
             }
         }
+    }
+
+    private fun renderDeviceInfoVerified(
+        event: AqlBleProvisioningGattEvent.DeviceInfoVerified
+    ) {
+        val currentDraft = activeDraft
+        if (currentDraft != null) {
+            activeDraft = currentDraft.copy(
+                deviceTitle = event.deviceTitle.ifBlank { currentDraft.deviceTitle },
+                deviceSerial = event.deviceSerial.ifBlank { currentDraft.deviceSerial },
+                deviceModel = event.deviceModel.ifBlank { currentDraft.deviceModel }
+            )
+        }
+
+        _uiState.value = _uiState.value.copy(
+            deviceName = event.deviceTitle.ifBlank { _uiState.value.deviceName },
+            deviceSerial = event.deviceSerial.ifBlank { _uiState.value.deviceSerial }
+        )
     }
 
     private fun renderRuntimeHandoffReceived(

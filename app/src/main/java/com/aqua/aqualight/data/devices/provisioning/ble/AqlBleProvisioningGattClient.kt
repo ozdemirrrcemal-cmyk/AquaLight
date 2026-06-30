@@ -431,10 +431,30 @@ class AqlBleProvisioningGattClient(
             return
         }
 
+        val existingDraft = activeDraft
+        val verifiedTitle = deviceInfo.displayName.ifBlank { existingDraft?.deviceTitle.orEmpty() }
+        val verifiedSerial = deviceInfo.serialNumber.ifBlank { existingDraft?.deviceSerial.orEmpty() }
+        val verifiedModel = deviceInfo.productModel.ifBlank { existingDraft?.deviceModel.orEmpty() }
+
+        if (existingDraft != null) {
+            activeDraft = existingDraft.copy(
+                deviceTitle = verifiedTitle,
+                deviceSerial = verifiedSerial,
+                deviceModel = verifiedModel
+            )
+        }
+
         deviceInfoVerified = true
         deviceInfoReadAttempts = 0
         deviceClaimRequired = deviceInfo.claimRequired
         deviceNonce = deviceInfo.deviceNonce
+        emit(
+            AqlBleProvisioningGattEvent.DeviceInfoVerified(
+                deviceTitle = verifiedTitle,
+                deviceSerial = verifiedSerial,
+                deviceModel = verifiedModel
+            )
+        )
         mainHandler.removeCallbacks(deviceInfoRetryRunnable)
         gattQueue.complete(AqlBleGattOperation.READ_DEVICE_INFO)
         gattQueue.enqueue(AqlBleGattOperation.ENABLE_STATUS_NOTIFICATIONS)
@@ -730,12 +750,16 @@ class AqlBleProvisioningGattClient(
             AqlBleDeviceInfo(
                 contractVersion = requiredJsonInt(json, KEY_CONTRACT_VERSION, DEVICE_INFO_LABEL),
                 deviceUid = requiredJsonString(json, AqlBleProvisioningContract.Json.KEY_DEVICE_UID, DEVICE_INFO_LABEL),
-                deviceNonce = requiredJsonString(json, AqlBleProvisioningContract.Json.KEY_DEVICE_NONCE, DEVICE_INFO_LABEL),
+                serialNumber = requiredJsonString(json, KEY_SERIAL_NUMBER, DEVICE_INFO_LABEL),
                 shortId = requiredJsonString(json, KEY_SHORT_ID, DEVICE_INFO_LABEL),
+                brand = requiredJsonString(json, KEY_BRAND, DEVICE_INFO_LABEL),
+                productId = requiredJsonString(json, KEY_PRODUCT_ID, DEVICE_INFO_LABEL),
                 productModel = requiredJsonString(json, KEY_PRODUCT_MODEL, DEVICE_INFO_LABEL),
+                displayName = requiredJsonString(json, KEY_DISPLAY_NAME, DEVICE_INFO_LABEL),
                 hardwareRevision = requiredJsonString(json, KEY_HARDWARE_REVISION, DEVICE_INFO_LABEL),
                 firmwareVersion = requiredJsonString(json, KEY_FIRMWARE_VERSION, DEVICE_INFO_LABEL),
                 bleName = requiredJsonString(json, KEY_BLE_NAME, DEVICE_INFO_LABEL),
+                deviceNonce = requiredJsonString(json, AqlBleProvisioningContract.Json.KEY_DEVICE_NONCE, DEVICE_INFO_LABEL),
                 mode = requiredJsonString(json, KEY_MODE, DEVICE_INFO_LABEL),
                 claimRequired = requiredJsonBoolean(json, KEY_CLAIM_REQUIRED, DEVICE_INFO_LABEL),
                 physicalReset = requiredJsonBoolean(json, KEY_PHYSICAL_RESET, DEVICE_INFO_LABEL)
@@ -750,6 +774,9 @@ class AqlBleProvisioningGattClient(
             return "Unsupported DeviceInfo contractVersion: ${deviceInfo.contractVersion}."
         }
         if (!deviceInfo.deviceNonce.isUuidV4()) return "DeviceInfo does not include a valid deviceNonce."
+        if (!deviceInfo.brand.equals(AqlBleProvisioningContract.BRAND, ignoreCase = true)) {
+            return "DeviceInfo brand is not supported: ${deviceInfo.brand}."
+        }
 
         val expectedUid = draft.candidateId.trim().takeUnless { value -> value.isLikelyBleAddress() }.orEmpty()
         if (expectedUid.isNotBlank() && !deviceInfo.deviceUid.equals(expectedUid, ignoreCase = true)) {
@@ -762,12 +789,32 @@ class AqlBleProvisioningGattClient(
         }
 
         val qrFields = parseQrFields(draft.rawQrPayload)
-        val expectedProductModel = qrFields[AqlBleProvisioningContract.Qr.KEY_MODEL].orEmpty().trim()
+        val expectedBrand = qrField(qrFields, AqlBleProvisioningContract.Qr.KEY_BRAND)
+        if (expectedBrand.isNotBlank() && !deviceInfo.brand.equals(expectedBrand, ignoreCase = true)) {
+            return "QR brand does not match the connected BLE device."
+        }
+
+        val expectedSerialNumber = qrField(qrFields, AqlBleProvisioningContract.Qr.KEY_SERIAL_NUMBER)
+        if (expectedSerialNumber.isNotBlank() && !deviceInfo.serialNumber.equals(expectedSerialNumber, ignoreCase = true)) {
+            return "QR serial number does not match the connected BLE device."
+        }
+
+        val expectedProductId = qrField(qrFields, AqlBleProvisioningContract.Qr.KEY_PRODUCT_ID)
+        if (expectedProductId.isNotBlank() && !deviceInfo.productId.equals(expectedProductId, ignoreCase = true)) {
+            return "QR product id does not match the connected BLE device."
+        }
+
+        val expectedProductModel = qrField(qrFields, AqlBleProvisioningContract.Qr.KEY_MODEL)
         if (expectedProductModel.isNotBlank() && !deviceInfo.productModel.equals(expectedProductModel, ignoreCase = true)) {
             return "QR product model does not match the connected BLE device."
         }
 
-        val expectedHardwareRevision = qrFields[AqlBleProvisioningContract.Qr.KEY_HARDWARE_REVISION].orEmpty().trim()
+        val expectedDisplayName = qrField(qrFields, AqlBleProvisioningContract.Qr.KEY_DISPLAY_NAME)
+        if (expectedDisplayName.isNotBlank() && !deviceInfo.displayName.equals(expectedDisplayName, ignoreCase = true)) {
+            return "QR display name does not match the connected BLE device."
+        }
+
+        val expectedHardwareRevision = qrField(qrFields, AqlBleProvisioningContract.Qr.KEY_HARDWARE_REVISION)
         if (expectedHardwareRevision.isNotBlank() && !deviceInfo.hardwareRevision.equals(expectedHardwareRevision, ignoreCase = true)) {
             return "QR hardware revision does not match the connected BLE device."
         }
@@ -833,6 +880,10 @@ class AqlBleProvisioningGattClient(
                 fields
             }
         }.getOrDefault(emptyMap())
+    }
+
+    private fun qrField(fields: Map<String, String>, key: String): String {
+        return fields[key.trim().lowercase(Locale.US)].orEmpty().trim()
     }
 
     private fun requiredJsonString(json: JSONObject, key: String, label: String): String {
@@ -953,12 +1004,16 @@ class AqlBleProvisioningGattClient(
     private data class AqlBleDeviceInfo(
         val contractVersion: Int,
         val deviceUid: String,
-        val deviceNonce: String,
+        val serialNumber: String,
         val shortId: String,
+        val brand: String,
+        val productId: String,
         val productModel: String,
+        val displayName: String,
         val hardwareRevision: String,
         val firmwareVersion: String,
         val bleName: String,
+        val deviceNonce: String,
         val mode: String,
         val claimRequired: Boolean,
         val physicalReset: Boolean
@@ -978,8 +1033,12 @@ class AqlBleProvisioningGattClient(
 
         const val DEVICE_INFO_LABEL = "DeviceInfo"
         const val KEY_CONTRACT_VERSION = "contractVersion"
+        const val KEY_SERIAL_NUMBER = "serialNumber"
         const val KEY_SHORT_ID = "shortId"
+        const val KEY_BRAND = "brand"
+        const val KEY_PRODUCT_ID = "productId"
         const val KEY_PRODUCT_MODEL = "productModel"
+        const val KEY_DISPLAY_NAME = "displayName"
         const val KEY_HARDWARE_REVISION = "hardwareRevision"
         const val KEY_FIRMWARE_VERSION = "firmwareVersion"
         const val KEY_BLE_NAME = "bleName"

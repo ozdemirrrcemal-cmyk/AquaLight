@@ -6,6 +6,11 @@ sealed interface AqlBleProvisioningGattEvent {
     data class Connecting(val address: String) : AqlBleProvisioningGattEvent
     data class Connected(val address: String) : AqlBleProvisioningGattEvent
     object ServicesDiscovered : AqlBleProvisioningGattEvent
+    data class DeviceInfoVerified(
+        val deviceTitle: String,
+        val deviceSerial: String,
+        val deviceModel: String
+    ) : AqlBleProvisioningGattEvent
     object StartSessionWritten : AqlBleProvisioningGattEvent
     object WifiCredentialsWritten : AqlBleProvisioningGattEvent
     data class StatusReceived(val statusMessage: AqlBleProvisioningStatusMessage) : AqlBleProvisioningGattEvent
