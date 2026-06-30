@@ -32,6 +32,8 @@ class AqlProvisioningRuntimeMetadataResolver {
                 return@runCatching provisionalSnapshot
             }
 
+            var bestResolvedSnapshot: DeviceSnapshot? = null
+
             withTimeoutOrNull(timeoutMillis) {
                 coroutineScope {
                     val resolved = CompletableDeferred<DeviceSnapshot>()
@@ -39,23 +41,33 @@ class AqlProvisioningRuntimeMetadataResolver {
                     var identityRequestId = ""
                     var capabilitiesRequestId = ""
                     var identityData: JSONObject? = null
+                    var fullIdentityData: JSONObject? = null
                     var capabilitiesData: JSONObject? = null
 
-                    fun completeIfReady() {
+                    fun refreshBestSnapshot(): DeviceSnapshot? {
                         val identity = identityData
                         val capabilities = capabilitiesData
+                        if (identity == null || capabilities == null) {
+                            return null
+                        }
 
+                        val mergedIdentity = identity.mergedWith(fullIdentityData)
+                        val snapshot = provisionalSnapshot.withRuntimeMetadata(
+                            identityData = mergedIdentity,
+                            capabilitiesData = capabilities
+                        )
+                        bestResolvedSnapshot = snapshot
+                        return snapshot
+                    }
+
+                    fun completeIfReady() {
+                        val snapshot = refreshBestSnapshot()
                         if (
-                            identity != null &&
-                            capabilities != null &&
+                            snapshot != null &&
+                            fullIdentityData != null &&
                             !resolved.isCompleted
                         ) {
-                            resolved.complete(
-                                provisionalSnapshot.withRuntimeMetadata(
-                                    identityData = identity,
-                                    capabilitiesData = capabilities
-                                )
-                            )
+                            resolved.complete(snapshot)
                         }
                     }
 
@@ -97,13 +109,20 @@ class AqlProvisioningRuntimeMetadataResolver {
                                     val data = response.json.optJSONObject("data")
                                         ?: JSONObject()
 
-                                    when (response.id) {
-                                        identityRequestId -> {
+                                    when {
+                                        response.id == identityRequestId ||
+                                            response.isDeviceAction(AqlWsContract.ACTION_DEVICE_IDENTITY_GET) -> {
                                             identityData = data
                                             completeIfReady()
                                         }
 
-                                        capabilitiesRequestId -> {
+                                        response.isDeviceAction(AqlWsContract.ACTION_DEVICE_IDENTITY_FULL_GET) -> {
+                                            fullIdentityData = data
+                                            completeIfReady()
+                                        }
+
+                                        response.id == capabilitiesRequestId ||
+                                            response.isDeviceAction(AqlWsContract.ACTION_DEVICE_CAPABILITIES_GET) -> {
                                             capabilitiesData = data
                                             completeIfReady()
                                         }
@@ -124,7 +143,7 @@ class AqlProvisioningRuntimeMetadataResolver {
                         collectorJob.cancel()
                     }
                 }
-            } ?: provisionalSnapshot
+            } ?: bestResolvedSnapshot ?: provisionalSnapshot
         }
     }
 
@@ -289,7 +308,25 @@ class AqlProvisioningRuntimeMetadataResolver {
         }
     }
 
+    private fun JSONObject.mergedWith(overlay: JSONObject?): JSONObject {
+        val merged = JSONObject(toString())
+        if (overlay == null) {
+            return merged
+        }
+
+        val keys = overlay.keys()
+        while (keys.hasNext()) {
+            val key = keys.next()
+            merged.put(key, overlay.opt(key))
+        }
+        return merged
+    }
+
+    private fun AqlWsIncomingMessage.Response.isDeviceAction(actionName: String): Boolean {
+        return module == AqlWsContract.MODULE_DEVICE && action == actionName
+    }
+
     private companion object {
-        const val DEFAULT_TIMEOUT_MILLIS = 12_000L
+        const val DEFAULT_TIMEOUT_MILLIS = 10_000L
     }
 }
