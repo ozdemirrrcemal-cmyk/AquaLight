@@ -25,26 +25,8 @@ class AqlWsCommandClient(
         return wsClient.send(AqlWsCommandFactory.securityStatus())
     }
 
-    fun securityPair(
-        deviceUid: String,
-        rotateToken: Boolean = false,
-        currentToken: String = ""
-    ): Boolean {
-        return wsClient.send(
-            AqlWsCommandFactory.securityPair(
-                deviceUid = deviceUid,
-                rotateToken = rotateToken,
-                currentToken = currentToken
-            )
-        )
-    }
-
     fun deviceIdentity(): Boolean {
         return wsClient.send(AqlWsCommandFactory.deviceIdentity())
-    }
-
-    fun deviceIdentityFull(): Boolean {
-        return wsClient.send(AqlWsCommandFactory.deviceIdentityFull())
     }
 
     fun deviceStatus(): Boolean {
