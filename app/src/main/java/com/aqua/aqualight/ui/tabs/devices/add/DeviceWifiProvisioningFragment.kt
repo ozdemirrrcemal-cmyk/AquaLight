@@ -191,8 +191,8 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
         }
 
         return rawSsid
-            .removePrefix(""")
-            .removeSuffix(""")
+            .removePrefix("\"")
+            .removeSuffix("\"")
             .takeIf { value -> value.isNotBlank() && value != UNKNOWN_SSID }
     }
 

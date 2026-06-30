@@ -93,6 +93,7 @@ object AqlBleProvisioningContract {
         const val WIFI_CREDENTIALS_RECEIVED = "wifiCredentialsReceived"
         const val WIFI_CONNECTING = "wifiConnecting"
         const val WIFI_CONNECTED = "wifiConnected"
+        const val WIFI_FAILED = "wifiFailed"
         const val WEB_SOCKET_TOKEN_READY = "webSocketTokenReady"
         const val COMPLETED = "completed"
         const val TIMEOUT = "timeout"
