@@ -30,6 +30,7 @@ object AqlWsContract {
     const val MODULE_COOLING = "cooling"
     const val MODULE_TIMER = "timer"
     const val MODULE_DOSING = "dosing"
+    const val MODULE_SYSTEM = "system"
 
     const val ACTION_STATUS_GET = "status.get"
     const val ACTION_CONFIG_APPLY = "config.apply"
@@ -67,9 +68,19 @@ object AqlWsContract {
 
     const val ACTION_TIMER_STATUS_GET = ACTION_STATUS_GET
     const val ACTION_TIMER_CONFIG_APPLY = ACTION_CONFIG_APPLY
+    const val ACTION_TIMER_CHANNEL_SET = "channel.set"
 
     const val ACTION_DOSING_STATUS_GET = ACTION_STATUS_GET
     const val ACTION_DOSING_CONFIG_APPLY = ACTION_CONFIG_APPLY
+    const val ACTION_DOSING_PRIME_START = "prime.start"
+    const val ACTION_DOSING_PRIME_STOP = "prime.stop"
+    const val ACTION_DOSING_CALIBRATION_START = "calibration.start"
+    const val ACTION_DOSING_CALIBRATION_FINISH = "calibration.finish"
+    const val ACTION_DOSING_CALIBRATION_CONFIRM = "calibration.confirm"
+    const val ACTION_DOSING_CALIBRATION_CANCEL = "calibration.cancel"
+    const val ACTION_DOSING_DOSE_NOW = "dose.now"
+    const val ACTION_DOSING_DOSE_STOP = "dose.stop"
+    const val ACTION_DOSING_RESERVOIR_REFILL = "reservoir.refill"
 
     private val publicCommands = setOf(
         commandKey(MODULE_DEVICE, ACTION_DEVICE_IDENTITY_GET),
@@ -98,7 +109,17 @@ object AqlWsContract {
         commandKey(MODULE_LIGHT, ACTION_LIGHT_PROGRAM_DELETE),
         commandKey(MODULE_COOLING, ACTION_COOLING_CONFIG_APPLY),
         commandKey(MODULE_TIMER, ACTION_TIMER_CONFIG_APPLY),
-        commandKey(MODULE_DOSING, ACTION_DOSING_CONFIG_APPLY)
+        commandKey(MODULE_TIMER, ACTION_TIMER_CHANNEL_SET),
+        commandKey(MODULE_DOSING, ACTION_DOSING_CONFIG_APPLY),
+        commandKey(MODULE_DOSING, ACTION_DOSING_PRIME_START),
+        commandKey(MODULE_DOSING, ACTION_DOSING_PRIME_STOP),
+        commandKey(MODULE_DOSING, ACTION_DOSING_CALIBRATION_START),
+        commandKey(MODULE_DOSING, ACTION_DOSING_CALIBRATION_FINISH),
+        commandKey(MODULE_DOSING, ACTION_DOSING_CALIBRATION_CONFIRM),
+        commandKey(MODULE_DOSING, ACTION_DOSING_CALIBRATION_CANCEL),
+        commandKey(MODULE_DOSING, ACTION_DOSING_DOSE_NOW),
+        commandKey(MODULE_DOSING, ACTION_DOSING_DOSE_STOP),
+        commandKey(MODULE_DOSING, ACTION_DOSING_RESERVOIR_REFILL)
     )
 
     fun isPublicCommand(
