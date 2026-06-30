@@ -1,5 +1,11 @@
 package com.aqua.aqualight.data.devices.contract
 
+/**
+ * Android mirror of the firmware WebSocket runtime contract.
+ *
+ * Values in this file mirror firmware src/api/v1/commands/AqlCommandNames.hpp
+ * and the AqlCommandAuthRequirement used when each command is registered.
+ */
 object AqlWsContract {
     const val SCHEMA = "aql.ws.v1"
     const val DEFAULT_PATH = "/aql/v1/ws"
@@ -122,15 +128,27 @@ object AqlWsContract {
         commandKey(MODULE_DOSING, ACTION_DOSING_RESERVOIR_REFILL)
     )
 
-    fun isRegisteredCommand(module: String, action: String): Boolean =
-        isPublicCommand(module, action) || isAuthenticatedCommand(module, action)
+    fun isRegisteredCommand(
+        module: String,
+        action: String
+    ): Boolean = isPublicCommand(module, action) || isAuthenticatedCommand(module, action)
 
-    fun isPublicCommand(module: String, action: String): Boolean =
-        commandKey(module, action) in publicCommands
+    fun isPublicCommand(
+        module: String,
+        action: String
+    ): Boolean = commandKey(module, action) in publicCommands
 
-    fun isAuthenticatedCommand(module: String, action: String): Boolean =
-        commandKey(module, action) in authenticatedCommands
+    fun isAuthenticatedCommand(
+        module: String,
+        action: String
+    ): Boolean = commandKey(module, action) in authenticatedCommands
 
-    private fun commandKey(module: String, action: String): String =
-        module.trim() + "." + action.trim()
+    private fun commandKey(
+        module: String,
+        action: String
+    ): String {
+        val normalizedModule = module.trim()
+        val normalizedAction = action.trim()
+        return "$normalizedModule.$normalizedAction"
+    }
 }
