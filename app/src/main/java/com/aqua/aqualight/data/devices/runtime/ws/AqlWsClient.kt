@@ -1,6 +1,5 @@
 package com.aqua.aqualight.data.devices.runtime.ws
 
-import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
 import com.aqua.aqualight.data.devices.contract.AqlWsContract
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -118,7 +117,10 @@ class AqlWsClient(
             is AqlWsOutgoingMessage.Auth -> activeSocket != null
             is AqlWsOutgoingMessage.Ping -> activeSocket != null
             is AqlWsOutgoingMessage.Command -> activeSocket != null &&
-                (message.isPublicCommand() || isActiveDeviceAuthenticated())
+                (
+                    message.isPublicCommand() ||
+                        (message.isAuthenticatedCommand() && isActiveDeviceAuthenticated())
+                    )
         }
     }
 
@@ -135,13 +137,23 @@ class AqlWsClient(
             AqlWsContract.TYPE_AUTH,
             AqlWsContract.TYPE_PING -> activeSocket != null
             AqlWsContract.TYPE_COMMAND -> activeSocket != null &&
-                (AqlWsContract.isPublicCommand(module, action) || isActiveDeviceAuthenticated())
+                (
+                    AqlWsContract.isPublicCommand(module, action) ||
+                        (AqlWsContract.isAuthenticatedCommand(module, action) && isActiveDeviceAuthenticated())
+                    )
             else -> false
         }
     }
 
     private fun AqlWsOutgoingMessage.Command.isPublicCommand(): Boolean {
         return AqlWsContract.isPublicCommand(
+            module = module,
+            action = action
+        )
+    }
+
+    private fun AqlWsOutgoingMessage.Command.isAuthenticatedCommand(): Boolean {
+        return AqlWsContract.isAuthenticatedCommand(
             module = module,
             action = action
         )
@@ -202,32 +214,6 @@ class AqlWsClient(
         activeDeviceUid = null
         pendingTokenInvalidationCommandIds.clear()
         _connectionState.value = AqlWsConnectionState.Disconnected
-    }
-
-    private fun requestAuthIfPossible(
-        webSocket: WebSocket,
-        deviceUid: DeviceUid
-    ) {
-        val provider = tokenProvider ?: return
-        scope.launch {
-            val token = provider.getToken(deviceUid)
-                ?.trim()
-                .orEmpty()
-
-            if (!token.isRuntimeTokenHex()) {
-                markAuthRequired(
-                    deviceUid = deviceUid,
-                    message = "runtime token is required"
-                )
-                return@launch
-            }
-
-            if (activeSocket == webSocket && activeDeviceUid == deviceUid) {
-                webSocket.send(
-                    AqlWsOutgoingMessage.Auth(token = token).toJsonString()
-                )
-            }
-        }
     }
 
     private fun handleAuthMessage(
@@ -306,15 +292,6 @@ class AqlWsClient(
 
     private fun AqlWsIncomingMessage.Error.isAuthReply(): Boolean {
         return id.startsWith(AUTH_ID_PREFIX) || field.equals(AUTH_FIELD_TOKEN, ignoreCase = true)
-    }
-
-    private fun String.isRuntimeTokenHex(): Boolean {
-        return length == AqlBleProvisioningContract.RUNTIME_TOKEN_HEX_LENGTH &&
-            all { char ->
-                char in '0'..'9' ||
-                    char in 'a'..'f' ||
-                    char in 'A'..'F'
-            }
     }
 
     private fun listenerFor(
