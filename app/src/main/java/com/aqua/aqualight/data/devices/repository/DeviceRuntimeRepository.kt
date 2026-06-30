@@ -178,6 +178,7 @@ class DeviceRuntimeRepository(
                 )
 
                 if (authStateChange is AqlWsAuthStateChange.Authenticated) {
+                    session.commandClient.deviceIdentityFull()
                     session.commandClient.networkStatus()
                     timeSyncCoordinator.syncPhoneNowIfNeeded(
                         deviceUid = event.deviceUid
