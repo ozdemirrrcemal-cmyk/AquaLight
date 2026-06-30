@@ -88,7 +88,7 @@
                         android:textColor="#F2F6FA"
                         android:textSize="21sp"
                         android:textStyle="bold"
-                        tools:text="Find nearby AquaLight devices" />
+                        tools:text="Add AquaLight securely" />
 
                     <TextView
                         android:id="@+id/tvHeroSubtitle"
@@ -99,13 +99,32 @@
                         android:lineSpacingExtra="2dp"
                         android:textColor="#90A1B5"
                         android:textSize="13sp"
-                        tools:text="Press Scan when your device is in setup mode." />
+                        tools:text="Use QR for first setup. Use manual scan only after opening setup mode on the device." />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnQrSetup"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="20dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:text="Scan secure QR code"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@color/aqua_button_blue"
+                        app:cornerRadius="17dp"
+                        app:icon="@drawable/ic_qr_code_24"
+                        app:iconGravity="textStart"
+                        app:iconPadding="8dp"
+                        app:iconTint="@color/white" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnScan"
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
-                        android:layout_marginTop="20dp"
+                        android:layout_marginTop="10dp"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
                         android:text="@string/device_add_scan_button"
@@ -113,7 +132,7 @@
                         android:textColor="@color/white"
                         android:textSize="15sp"
                         android:textStyle="bold"
-                        app:backgroundTint="@color/aqua_button_blue"
+                        app:backgroundTint="#183756"
                         app:cornerRadius="17dp"
                         app:icon="@drawable/ic_radar"
                         app:iconGravity="textStart"
@@ -143,7 +162,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
-                        android:text="@string/device_add_setup_mode_title"
+                        android:text="Setup rules"
                         android:textColor="#F2F6FA"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -153,7 +172,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="7dp"
                         android:lineSpacingExtra="2dp"
-                        android:text="@string/device_add_setup_mode_body"
+                        android:text="First setup uses the QR code. For an already paired device, open setup mode on the device, then press Manual BLE Scan. AquaLight verifies the firmware state before sending Wi‑Fi."
                         android:textColor="#90A1B5"
                         android:textSize="12.5sp" />
                 </LinearLayout>
@@ -178,7 +197,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:lineSpacingExtra="2dp"
-                android:text="@string/device_add_available_devices_hint"
+                android:text="Select a device only after setup mode is open. AquaLight will verify DeviceInfo before Wi‑Fi is sent."
                 android:textColor="#90A1B5"
                 android:textSize="12.5sp"
                 android:visibility="gone"
