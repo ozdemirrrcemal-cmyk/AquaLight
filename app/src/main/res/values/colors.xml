@@ -71,27 +71,68 @@
     <color name="bottom_nav_background">#1C3252</color>
     <color name="bottom_nav_item_active">#FFFFFF</color>
     <color name="bottom_nav_item_inactive">#A0A0A0</color>
-	
-	<color name="crop_toolbar_bg">#0A192F</color>
-	<color name="aqua_button_blue">#1E90FF</color>
-    <color name="aqua_button_red">#FF3B30</color>
-	
-	<color name="settings_card_stroke">#14FFFFFF</color>
-<color name="device_status_connected">#57D26A</color>
 
-<color name="snackbar_success">#1FAA59</color>
-<color name="snackbar_error">#D32F2F</color>
-<color name="snackbar_warning">#F9A825</color>
-<color name="aqua_accent">#64FFDA</color>
-<color name="card_stroke">#3A4A5E</color>
-<color name="aqua_input_background">#16314D</color>
-<color name="aqua_input_stroke_focused">#2B93F6</color>
-<color name="aqua_input_stroke_unfocused">#355679</color>
-<color name="aqua_input_stroke_disabled">#223A57</color>
-<color name="aqua_input_hint_focused">#8ABEF5</color>
-<color name="aqua_input_hint_unfocused">#7F91AA</color>
-<color name="white">#FFFFFF</color>
-	<color name="light_surface_deep">#0F1318</color>
-<color name="light_chip_auto">#1A3A63</color>
+    <color name="crop_toolbar_bg">#0A192F</color>
+    <color name="aqua_button_blue">#1E90FF</color>
+    <color name="aqua_button_red">#FF3B30</color>
+
+    <color name="settings_card_stroke">#14FFFFFF</color>
+    <color name="device_status_connected">#57D26A</color>
+
+    <color name="snackbar_success">#1FAA59</color>
+    <color name="snackbar_error">#D32F2F</color>
+    <color name="snackbar_warning">#F9A825</color>
+    <color name="aqua_accent">#64FFDA</color>
+    <color name="card_stroke">#3A4A5E</color>
+    <color name="aqua_input_background">#16314D</color>
+    <color name="aqua_input_stroke_focused">#2B93F6</color>
+    <color name="aqua_input_stroke_unfocused">#355679</color>
+    <color name="aqua_input_stroke_disabled">#223A57</color>
+    <color name="aqua_input_hint_focused">#8ABEF5</color>
+    <color name="aqua_input_hint_unfocused">#7F91AA</color>
+    <color name="white">#FFFFFF</color>
+
+    <!-- Light device module palette -->
+    <color name="light_accent">#64FFDA</color>
+    <color name="light_accent_soft">#2264FFDA</color>
+    <color name="light_action_blue_end">#56CCF2</color>
+    <color name="light_action_blue_start">#2F80ED</color>
+    <color name="light_action_blue_stroke">#7DCBFF</color>
+    <color name="light_action_cyan_end">#64D8FF</color>
+    <color name="light_action_cyan_start">#00B8D9</color>
+    <color name="light_action_cyan_stroke">#9EEBFF</color>
+    <color name="light_action_gold_end">#F2994A</color>
+    <color name="light_action_gold_start">#F2C94C</color>
+    <color name="light_action_gold_stroke">#FFE08A</color>
+    <color name="light_action_green_end">#6FCF97</color>
+    <color name="light_action_green_start">#27AE60</color>
+    <color name="light_action_green_stroke">#8FE6B0</color>
+    <color name="light_action_purple_end">#BB6BD9</color>
+    <color name="light_action_purple_start">#9B51E0</color>
+    <color name="light_action_purple_stroke">#D9A7FF</color>
+    <color name="light_action_red_end">#FF8A80</color>
+    <color name="light_action_red_start">#EB5757</color>
+    <color name="light_action_red_stroke">#FFB0A8</color>
+    <color name="light_card">#172B45</color>
+    <color name="light_card_elevated">#1D3656</color>
+    <color name="light_card_stroke">#2E4A68</color>
+    <color name="light_channel_blue">#4DA3FF</color>
+    <color name="light_channel_green">#5CDB95</color>
+    <color name="light_channel_red">#FF6B6B</color>
+    <color name="light_channel_white">#F4F7FF</color>
+    <color name="light_chart_panel_bottom">#10243B</color>
+    <color name="light_chart_panel_middle">#162C48</color>
+    <color name="light_chart_panel_stroke">#33506F</color>
+    <color name="light_chart_panel_top">#1B3658</color>
+    <color name="light_chip_auto">#1A3A63</color>
+    <color name="light_gold">#FFD166</color>
+    <color name="light_header_gradient_bottom">#10243B</color>
+    <color name="light_header_gradient_top">#1C3B63</color>
+    <color name="light_surface">#152B45</color>
+    <color name="light_surface_deep">#0F1318</color>
+    <color name="light_surface_soft">#1C3252</color>
+    <color name="light_text_primary">#F4F7FF</color>
+    <color name="light_text_secondary">#B8C7DA</color>
+    <color name="light_text_tertiary">#8EA0B8</color>
 
 </resources>
