@@ -39,6 +39,13 @@ object AqlWsCommandFactory {
         )
     }
 
+    fun deviceIdentityFull(): AqlWsOutgoingMessage.Command {
+        return command(
+            module = AqlWsContract.MODULE_DEVICE,
+            action = AqlWsContract.ACTION_DEVICE_IDENTITY_FULL_GET
+        )
+    }
+
     fun deviceStatus(): AqlWsOutgoingMessage.Command {
         return command(
             module = AqlWsContract.MODULE_DEVICE,
