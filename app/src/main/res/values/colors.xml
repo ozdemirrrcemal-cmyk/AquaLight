@@ -130,9 +130,6 @@
     <color name="light_header_gradient_top">#1C3B63</color>
     <color name="light_surface">#152B45</color>
     <color name="light_surface_deep">#0F1318</color>
-    <color name="light_surface_soft">#1C3252</color>
-    <color name="light_text_primary">#F4F7FF</color>
-    <color name="light_text_secondary">#B8C7DA</color>
     <color name="light_text_tertiary">#8EA0B8</color>
 
 </resources>
