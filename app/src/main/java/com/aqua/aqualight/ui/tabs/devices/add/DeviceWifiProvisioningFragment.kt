@@ -84,8 +84,12 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
             R.string.device_wifi_serial_format,
             args.deviceSerial.ifBlank { args.candidateId }
         )
-        binding.tvDeviceModel.text = args.deviceModel.ifBlank {
-            args.bleName.ifBlank { getString(R.string.device_wifi_setup_mode) }
+
+        val isQrSetup = args.claimCode.isNotBlank()
+        binding.tvDeviceModel.text = if (isQrSetup) {
+            "Secure QR setup • firmware identity will be verified"
+        } else {
+            "Manual BLE setup • physical reset will be verified"
         }
     }
 
