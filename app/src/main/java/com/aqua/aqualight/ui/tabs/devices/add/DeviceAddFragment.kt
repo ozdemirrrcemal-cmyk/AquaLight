@@ -51,6 +51,11 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         observeViewModel()
     }
 
+    override fun onStart() {
+        super.onStart()
+        viewModel.onScreenVisible()
+    }
+
     private fun setupHeader() {
         binding.appHeader.setupAquaHeader(
             fragment = this,

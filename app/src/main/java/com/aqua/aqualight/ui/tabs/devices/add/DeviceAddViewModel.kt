@@ -31,6 +31,15 @@ class DeviceAddViewModel(
 
     private var scanCollectJob: Job? = null
     private var scanTimeoutJob: Job? = null
+    private var resetScanStateOnReturn = false
+
+    fun onScreenVisible() {
+        if (!resetScanStateOnReturn) return
+        resetScanStateOnReturn = false
+        stopBleScan()
+        bleScanner.clearCandidates()
+        _uiState.value = readyState()
+    }
 
     fun onQrClicked() {
         viewModelScope.launch {
@@ -93,6 +102,7 @@ class DeviceAddViewModel(
     }
 
     fun onCandidateClicked(candidate: DeviceAddCandidateUi) {
+        resetScanStateOnReturn = true
         stopBleScan()
         viewModelScope.launch {
             _events.send(

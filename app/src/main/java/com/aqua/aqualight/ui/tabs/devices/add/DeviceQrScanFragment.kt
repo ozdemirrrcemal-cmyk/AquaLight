@@ -59,6 +59,8 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         super.onViewCreated(view, savedInstanceState)
 
         _binding = FragmentDeviceQrScanBinding.bind(view)
+        hasResult = false
+        isProcessingFrame = false
 
         setupHeader()
         setupActions()
