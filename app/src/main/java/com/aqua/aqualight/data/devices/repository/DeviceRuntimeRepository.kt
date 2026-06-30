@@ -3,14 +3,15 @@ package com.aqua.aqualight.data.devices.repository
 import android.content.Context
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsAuthStateChange
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeSyncCoordinator
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsAuthManager
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsAuthStateChange
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsClient
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsTokenProvider
 import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
 import java.util.concurrent.ConcurrentHashMap
@@ -158,24 +159,27 @@ class DeviceRuntimeRepository(
         session: RuntimeSession,
         event: AqlWsEvent
     ) {
-        val manager = authManager ?: return
-
         when (event) {
-            is AqlWsEvent.Opened -> {
-                manager.authenticateIfTokenExists(
-                    deviceUid = event.deviceUid,
-                    commandClient = session.commandClient
-                )
-            }
+            is AqlWsEvent.Opened -> Unit
 
             is AqlWsEvent.Message -> {
-                val authStateChange = manager.handleIncomingMessage(
+                if (event.parsed is AqlWsIncomingMessage.Hello) {
+                    session.commandClient.securityStatus()
+                    authManager?.authenticateIfTokenExists(
+                        deviceUid = event.deviceUid,
+                        commandClient = session.commandClient
+                    )
+                }
+
+                val authStateChange = authManager?.handleIncomingMessage(
                     deviceUid = event.deviceUid,
                     message = event.parsed,
                     wsClient = session.wsClient
                 )
 
                 if (authStateChange is AqlWsAuthStateChange.Authenticated) {
+                    session.commandClient.deviceIdentity()
+                    session.commandClient.deviceCapabilities()
                     timeSyncCoordinator.syncPhoneNowIfNeeded(
                         deviceUid = event.deviceUid
                     )
