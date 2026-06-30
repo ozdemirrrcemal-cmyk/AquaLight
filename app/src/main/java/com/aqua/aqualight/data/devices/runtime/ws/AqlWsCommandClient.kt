@@ -43,6 +43,10 @@ class AqlWsCommandClient(
         return wsClient.send(AqlWsCommandFactory.deviceIdentity())
     }
 
+    fun deviceIdentityFull(): Boolean {
+        return wsClient.send(AqlWsCommandFactory.deviceIdentityFull())
+    }
+
     fun deviceStatus(): Boolean {
         return wsClient.send(AqlWsCommandFactory.deviceStatus())
     }
