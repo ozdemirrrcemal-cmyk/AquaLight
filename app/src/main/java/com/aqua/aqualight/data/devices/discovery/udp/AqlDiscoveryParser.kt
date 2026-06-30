@@ -21,6 +21,10 @@ import org.json.JSONObject
  *
  * The parser intentionally rejects legacy discovery packets. Android must not silently accept
  * AP/HTTP/UDP-v1 era payloads because that would bring the old device data path back.
+ *
+ * Firmware discovery is a LAN handoff only: it exposes identity, product family and the
+ * WebSocket endpoint. Capabilities, limits and detailed UI metadata are optional here and must
+ * be refreshed from authenticated WebSocket runtime commands when available.
  */
 object AqlDiscoveryParser {
 
@@ -62,6 +66,7 @@ object AqlDiscoveryParser {
             ?: return ParseResult.Invalid(ParseError.MISSING_PRODUCT)
         val network = root.optJSONObject("network")
             ?: return ParseResult.Invalid(ParseError.MISSING_NETWORK)
+        val runtime = root.optJSONObject("runtime")
 
         val deviceUid = device.stringOrBlank("uid")
         if (deviceUid.isBlank()) {
@@ -74,17 +79,26 @@ object AqlDiscoveryParser {
             return ParseResult.Invalid(ParseError.UNSUPPORTED_PRODUCT_FAMILY)
         }
 
-        val runtimeTransport = network.stringOrBlank("runtimeTransport")
+        val runtimeTransport = runtime.stringOrBlankOrFallback(
+            primary = "transport",
+            fallback = network.stringOrBlank("runtimeTransport")
+        )
         if (runtimeTransport != AqlDiscoveryContract.RUNTIME_TRANSPORT_WEBSOCKET) {
             return ParseResult.Invalid(ParseError.UNSUPPORTED_RUNTIME_TRANSPORT)
         }
 
-        val wsProtocol = network.stringOrBlank("wsProtocol")
+        val wsProtocol = runtime.stringOrBlankOrFallback(
+            primary = "wsProtocol",
+            fallback = network.stringOrBlank("wsProtocol")
+        )
         if (wsProtocol != AqlWsContract.DEFAULT_PROTOCOL) {
             return ParseResult.Invalid(ParseError.UNSUPPORTED_WS_PROTOCOL)
         }
 
-        val wsProtocolVersion = network.intOrZero("wsProtocolVersion")
+        val wsProtocolVersion = runtime.intOrZeroOrFallback(
+            primary = "wsProtocolVersion",
+            fallback = network.intOrZero("wsProtocolVersion")
+        )
         if (wsProtocolVersion < AqlWsContract.PROTOCOL_VERSION) {
             return ParseResult.Invalid(ParseError.UNSUPPORTED_WS_PROTOCOL_VERSION)
         }
@@ -94,17 +108,21 @@ object AqlDiscoveryParser {
             return ParseResult.Invalid(ParseError.MISSING_RUNTIME_ENDPOINT)
         }
 
-        val wsPort = network.intOrZero("wsPort")
-        val wsPath = network.stringOrBlank("wsPath")
+        val wsPort = runtime.intOrZeroOrFallback(
+            primary = "wsPort",
+            fallback = network.intOrZero("wsPort")
+        )
+        val wsPath = runtime.stringOrBlankOrFallback(
+            primary = "wsPath",
+            fallback = network.stringOrBlank("wsPath")
+        )
         if (wsPort <= 0 || wsPath.isBlank()) {
             return ParseResult.Invalid(ParseError.MISSING_RUNTIME_ENDPOINT)
         }
 
         val firmware = root.optJSONObject("firmware")
         val capabilities = root.optJSONObject("capabilities")
-            ?: return ParseResult.Invalid(ParseError.MISSING_CAPABILITIES)
         val limits = root.optJSONObject("limits")
-            ?: return ParseResult.Invalid(ParseError.MISSING_LIMITS)
 
         val snapshot = DeviceSnapshot(
             identity = DeviceIdentity(
@@ -215,36 +233,51 @@ object AqlDiscoveryParser {
         UNSUPPORTED_RUNTIME_TRANSPORT,
         UNSUPPORTED_WS_PROTOCOL,
         UNSUPPORTED_WS_PROTOCOL_VERSION,
-        MISSING_CAPABILITIES,
-        MISSING_LIMITS,
         MISSING_RUNTIME_ENDPOINT
     }
 }
 
-private fun JSONObject.stringOrBlank(name: String): String =
-    when (val value = opt(name)) {
+private fun JSONObject?.stringOrBlankOrFallback(
+    primary: String,
+    fallback: String
+): String {
+    return this?.stringOrBlank(primary).orEmpty().ifBlank { fallback }
+}
+
+private fun JSONObject?.intOrZeroOrFallback(
+    primary: String,
+    fallback: Int
+): Int {
+    return this?.intOrZero(primary)?.takeIf { value -> value > 0 } ?: fallback
+}
+
+private fun JSONObject?.stringOrBlank(name: String): String = this?.let { json ->
+    when (val value = json.opt(name)) {
         null, JSONObject.NULL -> ""
         is String -> value.trim()
         else -> value.toString().trim()
     }
+}.orEmpty()
 
-private fun JSONObject.intOrZero(name: String): Int =
-    when (val value = opt(name)) {
+private fun JSONObject?.intOrZero(name: String): Int = this?.let { json ->
+    when (val value = json.opt(name)) {
         is Number -> value.toInt()
         is String -> value.trim().toIntOrNull() ?: 0
         else -> 0
     }
+} ?: 0
 
-private fun JSONObject.booleanOrFalse(name: String): Boolean =
-    when (val value = opt(name)) {
+private fun JSONObject?.booleanOrFalse(name: String): Boolean = this?.let { json ->
+    when (val value = json.opt(name)) {
         is Boolean -> value
         is Number -> value.toInt() != 0
         is String -> value.trim().equals("true", ignoreCase = true) || value.trim() == "1"
         else -> false
     }
+} ?: false
 
-private fun JSONObject.stringListFrom(name: String): List<String> =
-    optJSONArray(name)?.toStringList().orEmpty()
+private fun JSONObject?.stringListFrom(name: String): List<String> =
+    this?.optJSONArray(name)?.toStringList().orEmpty()
 
 private fun JSONArray.toStringList(): List<String> = buildList {
     for (index in 0 until length()) {
