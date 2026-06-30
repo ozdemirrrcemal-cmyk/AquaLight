@@ -14,7 +14,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceAddBinding
-import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import kotlinx.coroutines.launch
@@ -59,16 +58,7 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
                 titleOverride = getString(R.string.device_add_title),
                 onBackClick = {
                     findNavController().navigateUp()
-                },
-                actions = listOf(
-                    AquaHeaderAction(
-                        iconRes = R.drawable.ic_qr_code_24,
-                        contentDescription = getString(R.string.device_add_qr_action_desc),
-                        onClick = {
-                            viewModel.onQrClicked()
-                        }
-                    )
-                )
+                }
             )
         )
     }
@@ -80,6 +70,10 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
     }
 
     private fun setupActions() {
+        binding.btnQrSetup.setOnClickListener {
+            viewModel.onQrClicked()
+        }
+
         binding.btnScan.setOnClickListener {
             startBleScanWithPermissionCheck()
         }
@@ -119,9 +113,11 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
 
         val hasCandidates = state.candidates.isNotEmpty()
         val showSearchCard = !hasCandidates
+        val isScanning = state.mode == DeviceAddScanMode.SCANNING
 
         binding.cardHero.isVisible = showSearchCard
         binding.tipContainer.isVisible = showSearchCard && state.mode == DeviceAddScanMode.READY
+        binding.btnQrSetup.isVisible = showSearchCard && !isScanning
         binding.tvFoundDevicesLabel.isVisible = hasCandidates
         binding.tvFoundDevicesHint.isVisible = hasCandidates
         binding.rvCandidates.isVisible = hasCandidates
@@ -132,7 +128,7 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
 
         candidateAdapter.submitList(state.candidates)
 
-        if (state.mode == DeviceAddScanMode.SCANNING) {
+        if (isScanning) {
             binding.scanPulseView.startScan()
             binding.btnScan.text = getString(R.string.device_add_scan_button_scanning)
             binding.btnScan.isEnabled = false
@@ -160,7 +156,7 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
             }
 
             is DeviceAddEvent.OpenWifiProvisioning -> {
-                openPhysicalProof(event.candidate)
+                openManualWifiProvisioning(event.candidate)
             }
         }
     }
@@ -171,15 +167,17 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         )
     }
 
-    private fun openPhysicalProof(candidate: DeviceAddCandidateUi) {
+    private fun openManualWifiProvisioning(candidate: DeviceAddCandidateUi) {
         findNavController().navigate(
-            DeviceAddFragmentDirections.actionDeviceAddFragmentToDevicePhysicalProofFragment(
+            DeviceAddFragmentDirections.actionDeviceAddFragmentToDeviceWifiProvisioningFragment(
                 candidateId = candidate.id,
                 deviceTitle = candidate.title,
                 deviceSerial = candidate.serial,
                 deviceModel = candidate.model,
                 bleAddress = candidate.bleAddress,
-                bleName = candidate.bleName
+                bleName = candidate.bleName,
+                claimCode = "",
+                rawQrPayload = ""
             )
         )
     }
