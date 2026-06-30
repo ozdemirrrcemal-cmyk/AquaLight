@@ -12,37 +12,10 @@ object AqlWsCommandFactory {
         )
     }
 
-    fun securityPair(
-        deviceUid: String,
-        rotateToken: Boolean = false,
-        currentToken: String = ""
-    ): AqlWsOutgoingMessage.Command {
-        val data = JSONObject()
-            .put("deviceUid", deviceUid)
-            .put("rotateToken", rotateToken)
-
-        if (currentToken.isNotBlank()) {
-            data.put("currentToken", currentToken)
-        }
-
-        return command(
-            module = AqlWsContract.MODULE_SECURITY,
-            action = AqlWsContract.ACTION_SECURITY_PAIR,
-            data = data
-        )
-    }
-
     fun deviceIdentity(): AqlWsOutgoingMessage.Command {
         return command(
             module = AqlWsContract.MODULE_DEVICE,
             action = AqlWsContract.ACTION_DEVICE_IDENTITY_GET
-        )
-    }
-
-    fun deviceIdentityFull(): AqlWsOutgoingMessage.Command {
-        return command(
-            module = AqlWsContract.MODULE_DEVICE,
-            action = AqlWsContract.ACTION_DEVICE_IDENTITY_FULL_GET
         )
     }
 
