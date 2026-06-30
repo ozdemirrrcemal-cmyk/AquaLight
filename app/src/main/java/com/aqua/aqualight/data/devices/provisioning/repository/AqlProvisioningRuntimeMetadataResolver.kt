@@ -41,7 +41,6 @@ class AqlProvisioningRuntimeMetadataResolver {
                     var identityRequestId = ""
                     var capabilitiesRequestId = ""
                     var identityData: JSONObject? = null
-                    var fullIdentityData: JSONObject? = null
                     var capabilitiesData: JSONObject? = null
 
                     fun refreshBestSnapshot(): DeviceSnapshot? {
@@ -51,9 +50,8 @@ class AqlProvisioningRuntimeMetadataResolver {
                             return null
                         }
 
-                        val mergedIdentity = identity.mergedWith(fullIdentityData)
                         val snapshot = provisionalSnapshot.withRuntimeMetadata(
-                            identityData = mergedIdentity,
+                            identityData = identity,
                             capabilitiesData = capabilities
                         )
                         bestResolvedSnapshot = snapshot
@@ -62,11 +60,7 @@ class AqlProvisioningRuntimeMetadataResolver {
 
                     fun completeIfReady() {
                         val snapshot = refreshBestSnapshot()
-                        if (
-                            snapshot != null &&
-                            fullIdentityData != null &&
-                            !resolved.isCompleted
-                        ) {
+                        if (snapshot != null && !resolved.isCompleted) {
                             resolved.complete(snapshot)
                         }
                     }
@@ -113,11 +107,6 @@ class AqlProvisioningRuntimeMetadataResolver {
                                         response.id == identityRequestId ||
                                             response.isDeviceAction(AqlWsContract.ACTION_DEVICE_IDENTITY_GET) -> {
                                             identityData = data
-                                            completeIfReady()
-                                        }
-
-                                        response.isDeviceAction(AqlWsContract.ACTION_DEVICE_IDENTITY_FULL_GET) -> {
-                                            fullIdentityData = data
                                             completeIfReady()
                                         }
 
@@ -257,6 +246,7 @@ class AqlProvisioningRuntimeMetadataResolver {
             wsPort = runtime.optInt("wsPort", wsPort),
             wsProtocol = runtime.optString("wsSchema")
                 .trim()
+                .ifBlank { runtime.optString("wsProtocol").trim() }
                 .ifBlank { wsProtocol },
             wsProtocolVersion = runtime.optInt("wsProtocolVersion", wsProtocolVersion)
         )
@@ -306,20 +296,6 @@ class AqlProvisioningRuntimeMetadataResolver {
                 }
             }
         }
-    }
-
-    private fun JSONObject.mergedWith(overlay: JSONObject?): JSONObject {
-        val merged = JSONObject(toString())
-        if (overlay == null) {
-            return merged
-        }
-
-        val keys = overlay.keys()
-        while (keys.hasNext()) {
-            val key = keys.next()
-            merged.put(key, overlay.opt(key))
-        }
-        return merged
     }
 
     private fun AqlWsIncomingMessage.Response.isDeviceAction(actionName: String): Boolean {
