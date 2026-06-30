@@ -140,14 +140,22 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
             R.string.device_provisioning_wifi_format,
             state.wifiSsid
         )
-        binding.tvStepOne.text = state.stepOne
-        binding.tvStepTwo.text = state.stepTwo
-        binding.tvStepThree.text = state.stepThree
+        binding.tvStepOne.text = "✓ ${state.stepOne}"
+        binding.tvStepTwo.text = "✓ ${state.stepTwo}"
+        binding.tvStepThree.text = "${state.currentStepIcon()} ${state.stepThree}"
         binding.btnStartProvisioning.isVisible = state.canStart
         binding.btnStartProvisioning.isEnabled = state.canStart
         binding.btnStartProvisioning.text = state.buttonText
         binding.btnStartProvisioning.alpha = if (state.canStart) 1f else 0.45f
         binding.progressBar.isVisible = state.showProgress
+    }
+
+    private fun DeviceProvisioningProgressUiState.currentStepIcon(): String {
+        return when {
+            canStart -> "!"
+            showProgress -> "●"
+            else -> "✓"
+        }
     }
 
     private fun openAddedDevice(route: DeviceRoute) {
