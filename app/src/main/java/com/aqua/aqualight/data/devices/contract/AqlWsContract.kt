@@ -1,11 +1,5 @@
 package com.aqua.aqualight.data.devices.contract
 
-/**
- * Android mirror of the firmware WebSocket runtime contract.
- *
- * Values in this file mirror firmware src/api/v1/commands/AqlCommandNames.hpp
- * and the AqlCommandAuthRequirement used when each command is registered.
- */
 object AqlWsContract {
     const val SCHEMA = "aql.ws.v1"
     const val DEFAULT_PATH = "/aql/v1/ws"
@@ -36,6 +30,7 @@ object AqlWsContract {
     const val ACTION_CONFIG_APPLY = "config.apply"
 
     const val ACTION_DEVICE_IDENTITY_GET = "identity.get"
+    const val ACTION_DEVICE_IDENTITY_FULL_GET = "identity.full.get"
     const val ACTION_DEVICE_STATUS_GET = ACTION_STATUS_GET
     const val ACTION_DEVICE_CAPABILITIES_GET = "capabilities.get"
 
@@ -99,6 +94,7 @@ object AqlWsContract {
         commandKey(MODULE_SECURITY, ACTION_SECURITY_PAIR),
         commandKey(MODULE_SECURITY, ACTION_SECURITY_UNPAIR),
         commandKey(MODULE_SECURITY, ACTION_SECURITY_RESET),
+        commandKey(MODULE_DEVICE, ACTION_DEVICE_IDENTITY_FULL_GET),
         commandKey(MODULE_NETWORK, ACTION_NETWORK_STATUS_GET),
         commandKey(MODULE_TIME, ACTION_TIME_CONFIG_APPLY),
         commandKey(MODULE_TIME, ACTION_TIME_PHONE_SYNC),
@@ -126,23 +122,15 @@ object AqlWsContract {
         commandKey(MODULE_DOSING, ACTION_DOSING_RESERVOIR_REFILL)
     )
 
-    fun isRegisteredCommand(
-        module: String,
-        action: String
-    ): Boolean = isPublicCommand(module, action) || isAuthenticatedCommand(module, action)
+    fun isRegisteredCommand(module: String, action: String): Boolean =
+        isPublicCommand(module, action) || isAuthenticatedCommand(module, action)
 
-    fun isPublicCommand(
-        module: String,
-        action: String
-    ): Boolean = commandKey(module, action) in publicCommands
+    fun isPublicCommand(module: String, action: String): Boolean =
+        commandKey(module, action) in publicCommands
 
-    fun isAuthenticatedCommand(
-        module: String,
-        action: String
-    ): Boolean = commandKey(module, action) in authenticatedCommands
+    fun isAuthenticatedCommand(module: String, action: String): Boolean =
+        commandKey(module, action) in authenticatedCommands
 
-    private fun commandKey(
-        module: String,
-        action: String
-    ): String = "${module.trim()}.${action.trim()}"
+    private fun commandKey(module: String, action: String): String =
+        module.trim() + "." + action.trim()
 }
