@@ -37,9 +37,13 @@ class AqlProvisioningQrParser {
             AqlProvisioningQrPayload(
                 version = version,
                 brand = brand,
-                model = requiredField(fields, AqlBleProvisioningContract.Qr.KEY_MODEL),
-                hardwareRevision = fields[AqlBleProvisioningContract.Qr.KEY_HARDWARE_REVISION].orEmpty(),
                 deviceUid = DeviceUid(requiredField(fields, AqlBleProvisioningContract.Qr.KEY_DEVICE_UID)),
+                serialNumber = requiredField(fields, AqlBleProvisioningContract.Qr.KEY_SERIAL_NUMBER),
+                productId = requiredField(fields, AqlBleProvisioningContract.Qr.KEY_PRODUCT_ID),
+                model = requiredField(fields, AqlBleProvisioningContract.Qr.KEY_MODEL),
+                displayName = requiredField(fields, AqlBleProvisioningContract.Qr.KEY_DISPLAY_NAME),
+                hardwareRevision = requiredField(fields, AqlBleProvisioningContract.Qr.KEY_HARDWARE_REVISION),
+                skuCode = requiredField(fields, AqlBleProvisioningContract.Qr.KEY_SKU_CODE),
                 provisioningId = requiredField(fields, AqlBleProvisioningContract.Qr.KEY_PROVISIONING_ID),
                 claimCode = claimCode,
                 bleName = requiredField(fields, AqlBleProvisioningContract.Qr.KEY_BLE_NAME),
@@ -64,7 +68,7 @@ class AqlProvisioningQrParser {
 
         while (keys.hasNext()) {
             val key = keys.next()
-            fields[key.trim().lowercase(Locale.US)] = json.optString(key).trim()
+            fields[normalizeKey(key)] = json.optString(key).trim()
         }
 
         return fields
@@ -80,7 +84,7 @@ class AqlProvisioningQrParser {
             .forEach { part ->
                 val key = part.substringBefore("=")
                 val value = part.substringAfter("=")
-                fields[decode(key).trim().lowercase(Locale.US)] = decode(value).trim()
+                fields[normalizeKey(decode(key))] = decode(value).trim()
             }
 
         return fields
@@ -90,10 +94,14 @@ class AqlProvisioningQrParser {
         fields: Map<String, String>,
         key: String
     ): String {
-        return fields[key]
+        return fields[normalizeKey(key)]
             ?.trim()
             ?.takeIf { value -> value.isNotBlank() }
             ?: error("QR field '$key' is missing.")
+    }
+
+    private fun normalizeKey(key: String): String {
+        return key.trim().lowercase(Locale.US)
     }
 
     private fun decode(value: String): String {

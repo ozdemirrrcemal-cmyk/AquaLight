@@ -55,6 +55,7 @@ class AqlBleProvisioningAdvertisementParser {
             ),
             productName = firstValue(
                 fields,
+                "name",
                 "productName",
                 "product_name",
                 "displayName",

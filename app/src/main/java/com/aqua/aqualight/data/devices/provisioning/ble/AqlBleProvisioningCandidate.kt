@@ -16,13 +16,16 @@ data class AqlBleProvisioningCandidate(
     val displayTitle: String
         get() = productName
             .ifBlank { model }
-            .ifBlank { name }
+            .ifBlank {
+                name.takeUnless { value ->
+                    value.startsWith("AQL-SETUP-", ignoreCase = true)
+                }.orEmpty()
+            }
             .ifBlank { "AquaLight Device" }
 
     val displaySerial: String
         get() = serialNumber
             .ifBlank { deviceUid }
-            .ifBlank { address }
 
     val displayStatus: String
         get() = claimState

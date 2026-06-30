@@ -242,9 +242,9 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         findNavController().navigate(
             DeviceQrScanFragmentDirections.actionDeviceQrScanFragmentToDeviceWifiProvisioningFragment(
                 candidateId = payload.deviceUid.value,
-                deviceTitle = AqlDeviceDisplayNames.productTitle(payload.model),
-                deviceSerial = payload.deviceUid.value,
-                deviceModel = AqlDeviceDisplayNames.setupMethodLabel(isQrSetup = true),
+                deviceTitle = payload.displayName,
+                deviceSerial = payload.serialNumber,
+                deviceModel = "Secure QR Setup",
                 bleAddress = "",
                 bleName = payload.bleName,
                 claimCode = payload.claimCode,

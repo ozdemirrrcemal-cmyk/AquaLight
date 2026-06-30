@@ -82,15 +82,29 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
         }
         binding.tvDeviceSerial.text = getString(
             R.string.device_wifi_serial_format,
-            args.deviceSerial.ifBlank { args.candidateId }
+            safeSerialText()
         )
+        binding.tvDeviceModel.text = setupMethodLabel()
+    }
 
-        val isQrSetup = args.claimCode.isNotBlank()
-        binding.tvDeviceModel.text = if (isQrSetup) {
-            "Secure QR setup • firmware identity will be verified"
+    private fun setupMethodLabel(): String {
+        return if (args.claimCode.isNotBlank()) {
+            "Secure QR Setup"
         } else {
-            "Manual BLE setup • physical reset will be verified"
+            "Manual BLE Setup"
         }
+    }
+
+    private fun safeSerialText(): String {
+        return args.deviceSerial
+            .trim()
+            .ifBlank {
+                args.candidateId
+                    .trim()
+                    .takeUnless { value -> value.isLikelyBleAddress() }
+                    .orEmpty()
+            }
+            .ifBlank { "—" }
     }
 
     private fun setupActions() {
@@ -177,8 +191,8 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
         }
 
         return rawSsid
-            .removePrefix("\"")
-            .removeSuffix("\"")
+            .removePrefix(""")
+            .removeSuffix(""")
             .takeIf { value -> value.isNotBlank() && value != UNKNOWN_SSID }
     }
 
@@ -246,6 +260,10 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
     }
 
     private fun String.utf8ByteSize(): Int = toByteArray(Charsets.UTF_8).size
+
+    private fun String.isLikelyBleAddress(): Boolean {
+        return matches(Regex("(?i)^([0-9a-f]{2}:){5}[0-9a-f]{2}$"))
+    }
 
     override fun onDestroyView() {
         _binding = null
