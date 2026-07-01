@@ -4,6 +4,7 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareRuntimeRepository
+import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareUpdateRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeRepository
@@ -14,6 +15,9 @@ class DeviceRuntimeModuleProvider(
 ) {
     val firmware: DeviceFirmwareRuntimeRepository =
         DeviceFirmwareRuntimeRepository(commandClientProvider)
+
+    val firmwareUpdate: DeviceFirmwareUpdateRepository =
+        DeviceFirmwareUpdateRepository(firmware)
 
     val time: DeviceTimeRuntimeRepository =
         DeviceTimeRuntimeRepository(commandClientProvider)
