@@ -127,7 +127,7 @@ class DeviceRootOverviewViewModel(
         return when (kind) {
             DeviceRootKind.DOSING -> limits.dosingChannelCount
             DeviceRootKind.TIMER -> limits.timerChannelCount
-            DeviceRootKind.COOLING -> limits.fanChannelCount
+            DeviceRootKind.COOLING -> limits.fanOutputCount
         }
     }
 
@@ -235,7 +235,7 @@ enum class DeviceRootKind(
     ),
     COOLING(
         defaultTitle = "Cooling",
-        primaryCountLabel = "Fan channels",
+        primaryCountLabel = "Fan outputs",
         primarySectionTitle = "Fan control",
         primarySectionPlaceholder = "Fan control hazırlanıyor.",
         secondarySectionTitle = "Temperature automation",
