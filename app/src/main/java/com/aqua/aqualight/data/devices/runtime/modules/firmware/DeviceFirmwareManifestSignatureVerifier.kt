@@ -119,7 +119,7 @@ class DeviceFirmwareManifestSignatureVerifier(
 
         private fun sha256Hex(bytes: ByteArray): String {
             val digest = MessageDigest.getInstance("SHA-256").digest(bytes)
-            return digest.joinToString(separator = "") { value -> "%02x".format(value) }
+            return digest.joinToString(separator = "") { value -> "%02x".format(value.toInt() and 0xff) }
         }
     }
 }
