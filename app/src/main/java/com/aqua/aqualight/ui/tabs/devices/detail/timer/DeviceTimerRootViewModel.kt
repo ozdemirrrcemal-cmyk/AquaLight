@@ -7,7 +7,6 @@ import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
-import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeContract
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerStatusParser
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
@@ -176,10 +175,10 @@ class DeviceTimerRootViewModel(
                 val status = DeviceTimerStatusParser.parse(data)
 
                 updateRuntimeOverlay(
-                primaryCountText = status.channelCount.toString(),
-                primaryPlaceholder = "Runtime channels: ${status.channelCount}, schedules: ${status.scheduleCount}, lockLoop: ${status.lockLoop}",
-                secondaryPlaceholder = "Schema: ${status.schema.ifBlank { "timer" }}, writable: ${!status.runtime.readOnly}, channel.set: ${status.runtime.supportsChannelSet}"
-            )
+                    primaryCountText = status.channelCount.toString(),
+                    primaryPlaceholder = "Runtime channels: ${status.channelCount}, schedules: ${status.scheduleCount}, lockLoop: ${status.lockLoop}",
+                    secondaryPlaceholder = "Schema: ${status.schema.ifBlank { "timer" }}, writable: ${!status.runtime.readOnly}, channel.set: ${status.runtime.supportsChannelSet}"
+                )
             }
 
             is AqlWsIncomingMessage.Error -> {
@@ -262,7 +261,7 @@ class DeviceTimerRootViewModel(
         return when (KIND) {
             DeviceRootKind.DOSING -> limits.dosingChannelCount
             DeviceRootKind.TIMER -> limits.timerChannelCount
-            DeviceRootKind.COOLING -> limits.fanChannelCount
+            DeviceRootKind.COOLING -> limits.fanOutputCount
         }
     }
 
