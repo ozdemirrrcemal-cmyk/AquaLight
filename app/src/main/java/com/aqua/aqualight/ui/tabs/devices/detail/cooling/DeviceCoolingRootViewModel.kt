@@ -7,7 +7,6 @@ import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
-import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeContract
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingStatusParser
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
@@ -176,10 +175,10 @@ class DeviceCoolingRootViewModel(
                 val status = DeviceCoolingStatusParser.parse(data)
 
                 updateRuntimeOverlay(
-                primaryCountText = status.fanOutputCount.toString(),
-                primaryPlaceholder = "Runtime fans: ${status.fanOutputCount}, mode: ${status.mode.wireValue}, range: ${status.minTemperatureC}-${status.maxTemperatureC} C",
-                secondaryPlaceholder = "Rules: ${status.ruleCount}, fixed sensor: ${status.fixedSensorIndex}, writable: ${!status.runtime.readOnly}"
-            )
+                    primaryCountText = status.fanOutputCount.toString(),
+                    primaryPlaceholder = "Runtime fan outputs: ${status.fanOutputCount}, mode: ${status.mode.wireValue}, range: ${status.minTemperatureC}-${status.maxTemperatureC} C",
+                    secondaryPlaceholder = "Rules: ${status.ruleCount}, fixed sensor: ${status.fixedSensorIndex}, writable: ${!status.runtime.readOnly}"
+                )
             }
 
             is AqlWsIncomingMessage.Error -> {
@@ -262,7 +261,7 @@ class DeviceCoolingRootViewModel(
         return when (KIND) {
             DeviceRootKind.DOSING -> limits.dosingChannelCount
             DeviceRootKind.TIMER -> limits.timerChannelCount
-            DeviceRootKind.COOLING -> limits.fanChannelCount
+            DeviceRootKind.COOLING -> limits.fanOutputCount
         }
     }
 
