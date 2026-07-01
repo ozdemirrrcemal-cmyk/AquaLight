@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light
 
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -29,6 +30,7 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
         _binding = FragmentDeviceLightRootBinding.bind(view)
 
         setupHeader(title = args.deviceTitle.ifBlank { "Light" })
+        setupOtaTestPanel()
         observeViewModel()
 
         viewModel.bind(
@@ -47,6 +49,37 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
                 }
             )
         )
+    }
+
+    private fun setupOtaTestPanel() {
+        binding.otaTestPanel.visibility = View.GONE
+
+        binding.tvFirmware.setOnLongClickListener {
+            val shouldShow = binding.otaTestPanel.visibility != View.VISIBLE
+            binding.otaTestPanel.visibility = if (shouldShow) View.VISIBLE else View.GONE
+            Toast.makeText(
+                requireContext(),
+                if (shouldShow) "OTA test panel opened" else "OTA test panel hidden",
+                Toast.LENGTH_SHORT
+            ).show()
+            true
+        }
+
+        binding.btnOtaTestCheck.setOnClickListener {
+            viewModel.checkBetaOtaManifest()
+        }
+
+        binding.btnOtaTestStart.setOnClickListener {
+            viewModel.startOtaTestUpdate()
+        }
+
+        binding.btnOtaTestStatus.setOnClickListener {
+            viewModel.requestOtaTestStatus()
+        }
+
+        binding.btnOtaTestClear.setOnClickListener {
+            viewModel.clearOtaTestStatus()
+        }
     }
 
     private fun observeViewModel() {
@@ -75,6 +108,7 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
         binding.tvFeatures.text = "Features: ${state.featuresText}"
         binding.tvManualPlaceholder.text = state.manualMenuText
         binding.tvProgramsPlaceholder.text = state.programsMenuText
+        binding.tvOtaTestStatus.text = state.otaTestText
     }
 
     override fun onDestroyView() {
