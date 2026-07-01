@@ -270,12 +270,11 @@ class AqlProvisioningRuntimeMetadataResolver {
     }
 
     private fun JSONObject.toDeviceLimits(): DeviceLimits {
-        val fanOutputCount = optInt("fanOutputCount", 0)
+        val fanOutputCount = optInt("fanOutputCount", optInt("fanChannelCount", 0))
 
         return DeviceLimits(
             lightChannelCount = optInt("lightChannelCount", 0),
             fanOutputCount = fanOutputCount,
-            fanChannelCount = optInt("fanChannelCount", fanOutputCount),
             temperatureSensorCount = optInt("temperatureSensorCount", 0),
             timerChannelCount = optInt("timerChannelCount", 0),
             dosingChannelCount = optInt("dosingChannelCount", 0)
