@@ -12,7 +12,8 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 class DeviceFirmwareUpdateRepository(
     private val runtime: DeviceFirmwareRuntimeRepository,
     private val manifestSource: DeviceFirmwareManifestHttpSource = DeviceFirmwareManifestHttpSource(),
-    private val planner: DeviceFirmwareUpdatePlanner = DeviceFirmwareUpdatePlanner()
+    private val planner: DeviceFirmwareUpdatePlanner = DeviceFirmwareUpdatePlanner(),
+    private val signatureVerifier: DeviceFirmwareManifestSignatureVerifier = DeviceFirmwareManifestSignatureVerifier()
 ) {
 
     suspend fun fetchManifest(manifestUrl: String): Result<DeviceFirmwareManifest> {
@@ -20,7 +21,7 @@ class DeviceFirmwareUpdateRepository(
     }
 
     fun parseManifest(rawManifest: String): Result<DeviceFirmwareManifest> {
-        return DeviceFirmwareManifestParser.parse(rawManifest)
+        return signatureVerifier.verifyAndParse(rawManifest)
     }
 
     fun planUpdate(
