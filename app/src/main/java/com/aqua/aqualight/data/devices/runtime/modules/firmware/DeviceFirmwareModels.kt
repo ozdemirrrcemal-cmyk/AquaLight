@@ -181,12 +181,20 @@ data class DeviceFirmwareManifest(
     val tag: String,
     val releaseRepo: String,
     val generatedAt: String,
-    val artifacts: List<DeviceFirmwareManifestArtifact>
+    val artifacts: List<DeviceFirmwareManifestArtifact>,
+    val signature: DeviceFirmwareManifestSignature
 ) {
     val isSupportedSchema: Boolean
         get() = schema == DeviceFirmwareRuntimeContract.Manifest.SCHEMA &&
             brand == DeviceFirmwareRuntimeContract.Manifest.BRAND
 }
+
+data class DeviceFirmwareManifestSignature(
+    val scheme: String,
+    val keyId: String,
+    val payloadHash: String,
+    val value: String
+)
 
 data class DeviceFirmwareManifestArtifact(
     val env: String,
