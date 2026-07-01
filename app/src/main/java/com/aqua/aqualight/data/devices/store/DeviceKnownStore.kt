@@ -220,7 +220,6 @@ class DeviceKnownStore(
         return JSONObject()
             .put("lightChannelCount", limits.lightChannelCount)
             .put("fanOutputCount", limits.fanOutputCount)
-            .put("fanChannelCount", limits.fanChannelCount)
             .put("temperatureSensorCount", limits.temperatureSensorCount)
             .put("timerChannelCount", limits.timerChannelCount)
             .put("dosingChannelCount", limits.dosingChannelCount)
@@ -244,11 +243,10 @@ class DeviceKnownStore(
     }
 
     private fun jsonToLimits(json: JSONObject): DeviceLimits {
-        val fanOutputCount = json.optInt("fanOutputCount", 0)
+        val fanOutputCount = json.optInt("fanOutputCount", json.optInt("fanChannelCount", 0))
         return DeviceLimits(
             lightChannelCount = json.optInt("lightChannelCount", 0),
             fanOutputCount = fanOutputCount,
-            fanChannelCount = json.optInt("fanChannelCount", fanOutputCount),
             temperatureSensorCount = json.optInt("temperatureSensorCount", 0),
             timerChannelCount = json.optInt("timerChannelCount", 0),
             dosingChannelCount = json.optInt("dosingChannelCount", 0)
