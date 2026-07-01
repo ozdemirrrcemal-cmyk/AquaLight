@@ -6,7 +6,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 
 class DeviceFirmwareManifestHttpSource(
-    private val client: OkHttpClient = OkHttpClient()
+    private val client: OkHttpClient = OkHttpClient(),
+    private val signatureVerifier: DeviceFirmwareManifestSignatureVerifier = DeviceFirmwareManifestSignatureVerifier()
 ) {
 
     suspend fun load(url: String): Result<DeviceFirmwareManifest> {
@@ -30,7 +31,7 @@ class DeviceFirmwareManifestHttpSource(
                 }
             }
 
-            DeviceFirmwareManifestParser.parse(text).getOrThrow()
+            signatureVerifier.verifyAndParse(text).getOrThrow()
         }
     }
 }
