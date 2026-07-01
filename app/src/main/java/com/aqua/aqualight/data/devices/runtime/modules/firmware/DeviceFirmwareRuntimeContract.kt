@@ -34,6 +34,11 @@ object DeviceFirmwareRuntimeContract {
         const val DEV_CHANNEL = "dev"
     }
 
+    object Signature {
+        const val FIELD = "signature"
+        const val SCHEME_ECDSA_P256_SHA256 = "ECDSA_P256_SHA256"
+    }
+
     object Field {
         const val URL = "url"
         const val VERSION = "version"
