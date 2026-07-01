@@ -45,7 +45,7 @@ class DeviceLightRootViewModel(
     private var runtimeChannelCountText: String? = null
     private var runtimeManualText: String? = null
     private var runtimeProgramsText: String? = null
-    private var otaTestText: String? = null
+    private var otaTestOverlayText: String? = null
     private var lastSnapshot: DeviceSnapshot? = null
     private var lastOtaPlan: DeviceFirmwareUpdatePlan? = null
 
@@ -434,7 +434,7 @@ class DeviceLightRootViewModel(
     }
 
     private fun updateOtaTestText(text: String) {
-        otaTestText = text
+        otaTestOverlayText = text
         _uiState.value = _uiState.value.withRuntimeOverlay()
     }
 
@@ -450,7 +450,7 @@ class DeviceLightRootViewModel(
         pendingOtaStartRequestId = ""
         pendingOtaClearRequestId = ""
         lastOtaPlan = null
-        otaTestText = null
+        otaTestOverlayText = null
     }
 
     private fun DeviceLightRootUiState.withRuntimeOverlay(): DeviceLightRootUiState {
@@ -458,7 +458,7 @@ class DeviceLightRootViewModel(
             channelCountText = runtimeChannelCountText ?: channelCountText,
             manualMenuText = runtimeManualText ?: manualMenuText,
             programsMenuText = runtimeProgramsText ?: programsMenuText,
-            otaTestText = otaTestText ?: otaTestText
+            otaTestText = otaTestOverlayText ?: otaTestText
         )
     }
 
