@@ -21,6 +21,9 @@ class DeviceFirmwareUpdatePlanner {
             require(currentVersion.isNotBlank()) {
                 "Current firmware version is not known. Read firmware.status.get before OTA check."
             }
+            require(manifest.version.isNotBlank()) {
+                "Manifest firmware version is missing."
+            }
 
             val productKey = snapshot.product.productKey.trim()
             val productId = snapshot.product.productId.trim()
@@ -32,29 +35,22 @@ class DeviceFirmwareUpdatePlanner {
             require(productModel.isNotBlank()) { "Device product model is missing." }
             require(hardwareRevision.isNotBlank()) { "Device hardwareRevision is missing." }
 
-            val compatibleArtifacts = manifest.artifacts.filter { artifact ->
-                artifact.compatibility.productKey == productKey &&
-                    artifact.compatibility.productId == productId &&
-                    artifact.compatibility.model == productModel &&
-                    artifact.compatibility.hardwareRevision == hardwareRevision
-            }
+            val compatibleArtifacts = compatibleArtifacts(snapshot = snapshot, manifest = manifest)
 
             require(compatibleArtifacts.isNotEmpty()) {
                 "No compatible OTA artifact found for $productKey / $productModel / hw $hardwareRevision."
             }
 
-            val artifact = compatibleArtifacts
-                .filter { item -> DeviceFirmwareVersionComparator.compare(item.firmwareVersion(), currentVersion) > 0 }
-                .maxWithOrNull { left, right ->
-                    DeviceFirmwareVersionComparator.compare(left.firmwareVersion(), right.firmwareVersion())
-                }
-                ?: error("No newer compatible OTA artifact found. Current=$currentVersion manifest=${manifest.version}")
+            require(DeviceFirmwareVersionComparator.compare(manifest.version, currentVersion) > 0) {
+                "No newer compatible OTA artifact found. Current=$currentVersion manifest=${manifest.version}"
+            }
 
+            val artifact = compatibleArtifacts.first()
             validateArtifactAgainstManifest(artifact = artifact, manifest = manifest)
 
             val payload = DeviceFirmwareOtaStartPayload(
                 url = artifact.firmware.url,
-                version = artifact.firmwareVersion(),
+                version = manifest.version,
                 sha256 = artifact.firmware.sha256,
                 expectedSize = artifact.firmware.size,
                 productKey = productKey,
@@ -106,10 +102,6 @@ class DeviceFirmwareUpdatePlanner {
         artifact: DeviceFirmwareManifestArtifact,
         manifest: DeviceFirmwareManifest
     ) {
-        val version = artifact.firmwareVersion()
-        require(version == manifest.version) {
-            "Artifact firmware version does not match manifest version."
-        }
         require(manifest.tag.isNotBlank()) {
             "OTA manifest tag is missing."
         }
@@ -126,21 +118,6 @@ class DeviceFirmwareUpdatePlanner {
             "OTA artifact is not marked as OTA slot compatible."
         }
     }
-
-    private fun DeviceFirmwareManifestArtifact.firmwareVersion(): String {
-        return firmwareVersionFromAsset().ifBlank { productVersionFallback() }
-    }
-
-    private fun DeviceFirmwareManifestArtifact.firmwareVersionFromAsset(): String {
-        return ""
-    }
-
-    private fun DeviceFirmwareManifestArtifact.productVersionFallback(): String {
-        return compatibilityVersionPlaceholder
-    }
-
-    private val DeviceFirmwareManifestArtifact.compatibilityVersionPlaceholder: String
-        get() = ""
 }
 
 object DeviceFirmwareVersionComparator {
