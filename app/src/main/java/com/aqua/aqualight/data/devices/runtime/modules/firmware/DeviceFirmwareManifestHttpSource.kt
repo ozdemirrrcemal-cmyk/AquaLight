@@ -1,0 +1,36 @@
+package com.aqua.aqualight.data.devices.runtime.modules.firmware
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+
+class DeviceFirmwareManifestHttpSource(
+    private val client: OkHttpClient = OkHttpClient()
+) {
+
+    suspend fun load(url: String): Result<DeviceFirmwareManifest> {
+        return runCatching {
+            val sourceUrl = url.trim()
+            require(sourceUrl.startsWith("https://")) { "Manifest URL must use HTTPS." }
+            require(sourceUrl.startsWith(DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX)) {
+                "Manifest URL must use the AquaLight release source."
+            }
+            require(sourceUrl.endsWith(".json")) { "Manifest URL must be a JSON asset." }
+
+            val text = withContext(Dispatchers.IO) {
+                val request = Request.Builder()
+                    .url(sourceUrl)
+                    .get()
+                    .build()
+                val response = client.newCall(request).execute()
+                response.use { value ->
+                    require(value.isSuccessful) { "Manifest request failed: HTTP ${value.code}." }
+                    value.body?.string() ?: error("Manifest response body is empty.")
+                }
+            }
+
+            DeviceFirmwareManifestParser.parse(text).getOrThrow()
+        }
+    }
+}
