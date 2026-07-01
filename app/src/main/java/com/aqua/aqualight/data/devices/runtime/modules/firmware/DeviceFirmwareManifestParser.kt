@@ -16,7 +16,8 @@ object DeviceFirmwareManifestParser {
                 tag = root.requiredString("tag"),
                 releaseRepo = root.requiredString("releaseRepo"),
                 generatedAt = root.optString("generatedAt", "").trim(),
-                artifacts = parseArtifacts(root.optJSONArray("artifacts"))
+                artifacts = parseArtifacts(root.optJSONArray("artifacts")),
+                signature = parseSignature(root.requiredObject("signature"))
             )
 
             require(manifest.isSupportedSchema) {
@@ -25,9 +26,27 @@ object DeviceFirmwareManifestParser {
             require(manifest.artifacts.isNotEmpty()) {
                 "OTA manifest does not contain any artifacts."
             }
+            require(manifest.signature.scheme == DeviceFirmwareRuntimeContract.Signature.SCHEME_ECDSA_P256_SHA256) {
+                "Unsupported OTA manifest signature scheme: ${manifest.signature.scheme}"
+            }
+            require(manifest.signature.payloadHash.isSha256Hex()) {
+                "OTA manifest signature payloadHash must be 64 hex characters."
+            }
+            require(manifest.signature.value.isNotBlank()) {
+                "OTA manifest signature value is missing."
+            }
 
             manifest
         }
+    }
+
+    private fun parseSignature(json: JSONObject): DeviceFirmwareManifestSignature {
+        return DeviceFirmwareManifestSignature(
+            scheme = json.requiredString("scheme"),
+            keyId = json.requiredString("keyId"),
+            payloadHash = json.requiredString("payloadHash").lowercase(),
+            value = json.requiredString("value")
+        )
     }
 
     private fun parseArtifacts(array: JSONArray?): List<DeviceFirmwareManifestArtifact> {
