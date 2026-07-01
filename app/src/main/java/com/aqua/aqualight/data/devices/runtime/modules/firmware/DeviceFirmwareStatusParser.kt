@@ -45,10 +45,9 @@ object DeviceFirmwareStatusParser {
     }
 
     fun parseOtaStartAccepted(data: JSONObject): DeviceFirmwareOtaStartAccepted {
-        val request = data.optJSONObject("request")
         return DeviceFirmwareOtaStartAccepted(
             accepted = data.optBoolean("accepted", false),
-            request = request?.let { parseAcceptedRequest(it) },
+            request = null,
             ota = parseOtaSnapshot(data.optJSONObject("ota"))
         )
     }
@@ -59,35 +58,6 @@ object DeviceFirmwareStatusParser {
             previous = parseOtaSnapshot(data.optJSONObject("previous")),
             ota = parseOtaSnapshot(data.optJSONObject("ota"))
         )
-    }
-
-    private fun parseAcceptedRequest(request: JSONObject): DeviceFirmwareOtaStartPayload? {
-        val urlScheme = request.optString("urlScheme", "").trim()
-        val version = request.optString("version", "").trim()
-        val expectedSize = request.optInt("expectedSize", 0)
-        val productKey = request.optString("productKey", "").trim()
-        val productId = request.optString("productId", "").trim()
-        val hardwareRevision = request.optString("hardwareRevision", "").trim()
-
-        if (version.isBlank() || productKey.isBlank() || productId.isBlank() || hardwareRevision.isBlank()) {
-            return null
-        }
-
-        // Firmware intentionally echoes only urlScheme, not the full URL. The production start payload
-        // is retained by the caller from the update plan, so this parsed request is best-effort only.
-        return runCatching {
-            DeviceFirmwareOtaStartPayload(
-                url = "${urlScheme.ifBlank { "https" }}://placeholder.invalid/",
-                version = version,
-                sha256 = "0".repeat(DeviceFirmwareRuntimeContract.Limit.SHA256_HEX_LENGTH),
-                expectedSize = expectedSize.coerceAtLeast(1),
-                productKey = productKey,
-                productId = productId,
-                hardwareRevision = hardwareRevision,
-                applyNow = request.optBoolean("applyNow", true),
-                allowInsecureHttp = false
-            )
-        }.getOrNull()
     }
 
     private fun parsePartitionStatus(json: JSONObject?): DeviceFirmwarePartitionStatus {
