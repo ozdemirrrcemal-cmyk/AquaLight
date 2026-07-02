@@ -3,7 +3,7 @@ name: Android Release CI/CD
 on:
   workflow_dispatch:
   push:
-    branches: ["main", "codex/secure-ble-provisioning-recovery"]
+    branches: ["main"]
 
 concurrency:
   group: release-ci-${{ github.ref }}
