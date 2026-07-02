@@ -64,6 +64,7 @@ object AqlBleProvisioningContract {
         const val KEY_START_SESSION_PROOF = "proof"
         const val KEY_APP_PUBLIC_KEY = "appPublicKey"
         const val KEY_DEVICE_PUBLIC_KEY = "devicePublicKey"
+        const val KEY_ENVELOPE_SEQUENCE = "seq"
         const val KEY_DEVICE_UID = "deviceUid"
         const val KEY_SERIAL_NUMBER = "serialNumber"
         const val KEY_SHORT_ID = "shortId"
