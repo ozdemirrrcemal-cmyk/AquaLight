@@ -9,6 +9,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvid
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import com.aqua.aqualight.data.devices.store.DeviceKnownStore
 import com.aqua.aqualight.data.devices.store.DeviceRegistryStore
 import kotlinx.coroutines.CoroutineScope
@@ -30,7 +31,8 @@ class DevicesRepository(
     private val discoveryRepository: DeviceDiscoveryRepository = DeviceDiscoveryRepository(),
     private val registryStore: DeviceRegistryStore = DeviceRegistryStore(),
     private val knownStore: DeviceKnownStore? = null,
-    private val runtimeRepository: DeviceRuntimeRepository? = null
+    private val runtimeRepository: DeviceRuntimeRepository? = null,
+    private val runtimeMetadataReducer: DeviceRuntimeMetadataReducer = DeviceRuntimeMetadataReducer()
 ) {
 
     @Volatile
@@ -51,8 +53,9 @@ class DevicesRepository(
     /**
      * Starts UDP discovery and mirrors discovered snapshots into the canonical registry.
      *
-     * Runtime WebSocket state is also mirrored into the same registry when runtime support
-     * is configured by the provider.
+     * Runtime WebSocket state and metadata are also mirrored into the same registry when runtime
+     * support is configured by the provider. UDP discovery is treated as LAN presence only; runtime
+     * metadata is persisted through DeviceKnownStore and is not erased by later UDP announces.
      */
     fun start(scope: CoroutineScope): Job {
         val activeJob = startJob
@@ -94,12 +97,20 @@ class DevicesRepository(
                             }
                         }
                     }
+                    val runtimeMetadataJob = runtimeRepository?.let { runtime ->
+                        launch {
+                            runtime.events.collect { event ->
+                                applyRuntimeMetadataEvent(event)
+                            }
+                        }
+                    }
 
                     try {
                         awaitCancellation()
                     } finally {
                         runtimeReconnectJob?.cancel()
                         runtimeStateJob?.cancel()
+                        runtimeMetadataJob?.cancel()
                         collectorJob.cancel()
                         scannerJob.cancel()
                     }
@@ -151,7 +162,6 @@ class DevicesRepository(
         return runtimeRepository?.events
     }
 
-
     suspend fun saveRuntimeToken(
         deviceUid: DeviceUid,
         token: String
@@ -166,14 +176,14 @@ class DevicesRepository(
         runtimeRepository?.clearToken(deviceUid)
     }
 
-    fun registerSnapshot(snapshot: DeviceSnapshot): DeviceSnapshot {
+    suspend fun registerSnapshot(snapshot: DeviceSnapshot): DeviceSnapshot {
         knownStore?.allowDevice(snapshot.deviceUid)
         val registered = registryStore.upsert(snapshot)
         knownStore?.saveSnapshot(registered)
         return registered
     }
 
-    fun registerSnapshots(snapshots: Iterable<DeviceSnapshot>) {
+    suspend fun registerSnapshots(snapshots: Iterable<DeviceSnapshot>) {
         val snapshotList = snapshots.toList()
         snapshotList.forEach { snapshot ->
             knownStore?.allowDevice(snapshot.deviceUid)
@@ -187,7 +197,7 @@ class DevicesRepository(
         update: (DeviceConnectionState) -> DeviceConnectionState
     ): DeviceSnapshot? = registryStore.updateConnectionState(deviceUid, update)
 
-    fun forgetDevice(deviceUid: DeviceUid): Boolean {
+    suspend fun forgetDevice(deviceUid: DeviceUid): Boolean {
         runtimeRepository?.clearTokenAsync(deviceUid)
         val removed = registryStore.remove(deviceUid)
         runtimeRepository?.close(deviceUid)
@@ -200,19 +210,36 @@ class DevicesRepository(
         registryStore.clear()
     }
 
-    fun clearKnownDevices() {
+    suspend fun clearKnownDevices() {
         knownStore?.clear()
         knownStore?.clearIgnoredDevices()
         registryStore.clear()
     }
 
-    private fun filterIgnoredDevices(snapshots: Iterable<DeviceSnapshot>): List<DeviceSnapshot> {
+    private suspend fun filterIgnoredDevices(snapshots: Iterable<DeviceSnapshot>): List<DeviceSnapshot> {
         val ignoredDeviceUids = knownStore?.ignoredDeviceUidValues().orEmpty()
         if (ignoredDeviceUids.isEmpty()) return snapshots.toList()
 
         return snapshots.filterNot { snapshot ->
             snapshot.deviceUid.value in ignoredDeviceUids
         }
+    }
+
+    private suspend fun applyRuntimeMetadataEvent(event: AqlWsEvent) {
+        val message = (event as? AqlWsEvent.Message)
+            ?.parsed as? AqlWsIncomingMessage.Response
+            ?: return
+
+        val currentSnapshot = registryStore.currentDevice(event.deviceUid) ?: return
+        val reduced = runCatching {
+            runtimeMetadataReducer.reduce(
+                snapshot = currentSnapshot,
+                response = message
+            )
+        }.getOrNull() ?: return
+
+        val registered = registryStore.upsert(reduced)
+        knownStore?.saveSnapshot(registered)
     }
 
     private fun applyRuntimeConnectionState(state: AqlWsConnectionState) {

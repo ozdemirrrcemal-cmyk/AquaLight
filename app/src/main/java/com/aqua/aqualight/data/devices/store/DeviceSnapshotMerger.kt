@@ -1,14 +1,21 @@
 package com.aqua.aqualight.data.devices.store
 
+import com.aqua.aqualight.data.devices.model.DeviceCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceConnectionState
+import com.aqua.aqualight.data.devices.model.DeviceFamily
+import com.aqua.aqualight.data.devices.model.DeviceIdentity
+import com.aqua.aqualight.data.devices.model.DeviceLimits
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
+import com.aqua.aqualight.data.devices.model.DeviceProduct
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 
 /**
  * Central merge rules for one logical device.
  *
- * Firmware identity is keyed by deviceUid. IP/endpoints can change, but custom user naming and
- * runtime timestamps should not be lost just because a fresh UDP announce arrived.
+ * Device identity is keyed by deviceUid. UDP discovery is a LAN presence/endpoint source, not a
+ * full metadata source. Runtime/provisioning metadata must therefore survive later UDP announces,
+ * app restarts and device reboots unless a new runtime response explicitly replaces it.
  */
 object DeviceSnapshotMerger {
 
@@ -16,12 +23,107 @@ object DeviceSnapshotMerger {
         if (previous == null) return incoming
 
         return incoming.copy(
-            identity = incoming.identity.copy(
-                customName = incoming.identity.customName.ifBlank { previous.identity.customName }
-            ),
+            identity = mergeIdentity(previous.identity, incoming.identity),
+            product = mergeProduct(previous.product, incoming.product),
+            firmwareVersion = incoming.firmwareVersion.ifBlank { previous.firmwareVersion },
+            firmwareBuild = incoming.firmwareBuild.ifBlank { previous.firmwareBuild },
+            apiVersion = incoming.apiVersion.ifBlank { previous.apiVersion },
+            protocolVersion = incoming.protocolVersion.ifBlank { previous.protocolVersion },
+            endpoint = mergeEndpoint(previous.endpoint, incoming.endpoint),
+            capabilities = mergeCapabilities(previous.capabilities, incoming.capabilities),
+            limits = mergeLimits(previous.limits, incoming.limits),
+            supportedFeatures = incoming.supportedFeatures.ifEmpty { previous.supportedFeatures },
+            supportedScreens = incoming.supportedScreens.ifEmpty { previous.supportedScreens },
+            modules = incoming.modules.ifEmpty { previous.modules },
             connectionState = mergeConnectionState(previous.connectionState, incoming.connectionState),
             lastSeenAtMillis = maxOf(previous.lastSeenAtMillis, incoming.lastSeenAtMillis)
         )
+    }
+
+    private fun mergeIdentity(
+        previous: DeviceIdentity,
+        incoming: DeviceIdentity
+    ): DeviceIdentity {
+        return incoming.copy(
+            shortId = incoming.shortId.ifBlank { previous.shortId },
+            chipId = incoming.chipId.ifBlank { previous.chipId },
+            espChipId = incoming.espChipId.ifBlank { previous.espChipId },
+            efuseMac = incoming.efuseMac.ifBlank { previous.efuseMac },
+            macAddress = incoming.macAddress.ifBlank { previous.macAddress },
+            serialNumber = incoming.serialNumber.ifBlank { previous.serialNumber },
+            firmwareSerial = incoming.firmwareSerial.ifBlank { previous.firmwareSerial },
+            displayName = incoming.displayName.ifBlank { previous.displayName },
+            customName = incoming.customName.ifBlank { previous.customName },
+            setupCode = incoming.setupCode.ifBlank { previous.setupCode },
+            setupSsid = incoming.setupSsid.ifBlank { previous.setupSsid }
+        )
+    }
+
+    private fun mergeProduct(
+        previous: DeviceProduct,
+        incoming: DeviceProduct
+    ): DeviceProduct {
+        val familyRaw = incoming.familyRaw.ifBlank { previous.familyRaw }
+        val family = when {
+            incoming.family != DeviceFamily.UNKNOWN -> incoming.family
+            previous.family != DeviceFamily.UNKNOWN -> previous.family
+            familyRaw.isNotBlank() -> DeviceFamily.fromWire(familyRaw)
+            else -> DeviceFamily.UNKNOWN
+        }
+
+        return incoming.copy(
+            brand = incoming.brand.ifBlank { previous.brand },
+            productId = incoming.productId.ifBlank { previous.productId },
+            productKey = incoming.productKey.ifBlank { previous.productKey },
+            family = family,
+            familyRaw = familyRaw,
+            line = incoming.line.ifBlank { previous.line },
+            model = incoming.model.ifBlank { previous.model },
+            displayName = incoming.displayName.ifBlank { previous.displayName },
+            skuId = incoming.skuId.ifBlank { previous.skuId },
+            skuCode = incoming.skuCode.ifBlank { previous.skuCode },
+            setupCode = incoming.setupCode.ifBlank { previous.setupCode },
+            hardwareRevision = incoming.hardwareRevision.ifBlank { previous.hardwareRevision }
+        )
+    }
+
+    private fun mergeEndpoint(
+        previous: DeviceRuntimeEndpoint,
+        incoming: DeviceRuntimeEndpoint
+    ): DeviceRuntimeEndpoint {
+        return incoming.copy(
+            ip = incoming.ip.ifBlank { previous.ip },
+            wifiMode = incoming.wifiMode.ifBlank { previous.wifiMode },
+            runtimeTransport = incoming.runtimeTransport.ifBlank { previous.runtimeTransport },
+            wsPort = incoming.wsPort.takeIf { port -> port > 0 } ?: previous.wsPort,
+            wsPath = incoming.wsPath.ifBlank { previous.wsPath },
+            wsProtocol = incoming.wsProtocol.ifBlank { previous.wsProtocol },
+            wsProtocolVersion = incoming.wsProtocolVersion.takeIf { version -> version > 0 }
+                ?: previous.wsProtocolVersion,
+            discoveryPort = incoming.discoveryPort.takeIf { port -> port > 0 } ?: previous.discoveryPort
+        )
+    }
+
+    private fun mergeCapabilities(
+        previous: DeviceCapabilities,
+        incoming: DeviceCapabilities
+    ): DeviceCapabilities {
+        return if (incoming == DeviceCapabilities()) {
+            previous
+        } else {
+            incoming
+        }
+    }
+
+    private fun mergeLimits(
+        previous: DeviceLimits,
+        incoming: DeviceLimits
+    ): DeviceLimits {
+        return if (incoming == DeviceLimits()) {
+            previous
+        } else {
+            incoming
+        }
     }
 
     private fun mergeConnectionState(
@@ -29,9 +131,13 @@ object DeviceSnapshotMerger {
         incoming: DeviceConnectionState
     ): DeviceConnectionState {
         val resolvedOnlineState = when {
-            incoming.onlineState != DeviceOnlineState.UNKNOWN -> incoming.onlineState
-            previous.onlineState != DeviceOnlineState.UNKNOWN -> previous.onlineState
-            else -> DeviceOnlineState.UNKNOWN
+            incoming.onlineState == DeviceOnlineState.UNKNOWN &&
+                previous.onlineState != DeviceOnlineState.UNKNOWN -> previous.onlineState
+
+            incoming.onlineState.isLanPresenceOnly && previous.onlineState.isRuntimeAuthoritative ->
+                previous.onlineState
+
+            else -> incoming.onlineState
         }
 
         return incoming.copy(
@@ -48,6 +154,20 @@ object DeviceSnapshotMerger {
             lastErrorMessage = incoming.lastErrorMessage ?: previous.lastErrorMessage
         )
     }
+
+    private val DeviceOnlineState.isLanPresenceOnly: Boolean
+        get() = this == DeviceOnlineState.ONLINE_LAN || this == DeviceOnlineState.STALE
+
+    private val DeviceOnlineState.isRuntimeAuthoritative: Boolean
+        get() = when (this) {
+            DeviceOnlineState.CONNECTING_WS,
+            DeviceOnlineState.AUTHENTICATED,
+            DeviceOnlineState.AUTH_REQUIRED,
+            DeviceOnlineState.PROVISIONING,
+            DeviceOnlineState.OTA_UPDATING,
+            DeviceOnlineState.ERROR -> true
+            else -> false
+        }
 
     private fun maxNullable(left: Long?, right: Long?): Long? = when {
         left == null -> right

@@ -1,6 +1,11 @@
 package com.aqua.aqualight.data.devices.store
 
 import android.content.Context
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
 import com.aqua.aqualight.data.devices.contract.AqlWsContract
 import com.aqua.aqualight.data.devices.model.DeviceCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceConnectionState
@@ -12,26 +17,33 @@ import com.aqua.aqualight.data.devices.model.DeviceProduct
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import java.io.IOException
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import org.json.JSONArray
 import org.json.JSONObject
+
+private const val AQL_KNOWN_DEVICES_DATASTORE_NAME = "aql_known_devices_v2"
+private val Context.aqlKnownDevicesDataStore by preferencesDataStore(
+    name = AQL_KNOWN_DEVICES_DATASTORE_NAME
+)
 
 /**
  * Durable non-secret known-device store.
  *
  * WebSocket tokens stay in DeviceCredentialStore. This store only keeps identity/product/endpoint
- * data required to show provisioned devices after app restart and reconnect runtime later.
+ * and resolved runtime metadata required to show provisioned devices after app restart and reconnect
+ * runtime later. Preferences DataStore is used as the single durable source for this small metadata
+ * document; UI code still consumes DevicesRepository, never this store directly.
  */
 class DeviceKnownStore(
     context: Context
 ) {
 
-    private val preferences = context.applicationContext.getSharedPreferences(
-        PREFERENCES_NAME,
-        Context.MODE_PRIVATE
-    )
+    private val dataStore = context.applicationContext.aqlKnownDevicesDataStore
 
-    fun loadSnapshots(): List<DeviceSnapshot> {
-        val raw = preferences.getString(KEY_DEVICES, "[]").orEmpty()
+    suspend fun loadSnapshots(): List<DeviceSnapshot> {
+        val raw = preferences()[KEY_DEVICES].orEmpty().ifBlank { "[]" }
         val array = runCatching { JSONArray(raw) }.getOrDefault(JSONArray())
 
         return buildList {
@@ -44,7 +56,7 @@ class DeviceKnownStore(
         }
     }
 
-    fun saveSnapshot(snapshot: DeviceSnapshot) {
+    suspend fun saveSnapshot(snapshot: DeviceSnapshot) {
         val current = loadSnapshots()
             .associateBy { known -> known.deviceUid.value }
             .toMutableMap()
@@ -54,7 +66,7 @@ class DeviceKnownStore(
         saveAll(current.values)
     }
 
-    fun saveSnapshots(snapshots: Iterable<DeviceSnapshot>) {
+    suspend fun saveSnapshots(snapshots: Iterable<DeviceSnapshot>) {
         val current = loadSnapshots()
             .associateBy { known -> known.deviceUid.value }
             .toMutableMap()
@@ -66,61 +78,57 @@ class DeviceKnownStore(
         saveAll(current.values)
     }
 
-    fun remove(deviceUid: DeviceUid) {
+    suspend fun remove(deviceUid: DeviceUid) {
         val remaining = loadSnapshots()
             .filterNot { snapshot -> snapshot.deviceUid == deviceUid }
 
         saveAll(remaining)
     }
 
-    fun ignoreDevice(deviceUid: DeviceUid) {
+    suspend fun ignoreDevice(deviceUid: DeviceUid) {
         val ignored = ignoredDeviceUidValues().toMutableSet()
         ignored += deviceUid.value
         saveIgnoredDeviceUidValues(ignored)
     }
 
-    fun allowDevice(deviceUid: DeviceUid) {
+    suspend fun allowDevice(deviceUid: DeviceUid) {
         val ignored = ignoredDeviceUidValues()
         if (deviceUid.value !in ignored) return
         saveIgnoredDeviceUidValues(ignored - deviceUid.value)
     }
 
-    fun isIgnored(deviceUid: DeviceUid): Boolean {
+    suspend fun isIgnored(deviceUid: DeviceUid): Boolean {
         return deviceUid.value in ignoredDeviceUidValues()
     }
 
-    fun ignoredDeviceUidValues(): Set<String> {
-        return preferences
-            .getStringSet(KEY_IGNORED_DEVICE_UIDS, emptySet())
+    suspend fun ignoredDeviceUidValues(): Set<String> {
+        return preferences()[KEY_IGNORED_DEVICE_UIDS]
             .orEmpty()
             .filter { value -> value.isNotBlank() }
             .toSet()
     }
 
-    fun clearIgnoredDevices() {
-        preferences.edit()
-            .remove(KEY_IGNORED_DEVICE_UIDS)
-            .apply()
+    suspend fun clearIgnoredDevices() {
+        dataStore.edit { preferences ->
+            preferences.remove(KEY_IGNORED_DEVICE_UIDS)
+        }
     }
 
-    private fun saveIgnoredDeviceUidValues(values: Set<String>) {
-        preferences.edit()
-            .putStringSet(
-                KEY_IGNORED_DEVICE_UIDS,
-                values
-                    .filter { value -> value.isNotBlank() }
-                    .toSet()
-            )
-            .apply()
+    suspend fun clear() {
+        dataStore.edit { preferences ->
+            preferences.remove(KEY_DEVICES)
+        }
     }
 
-    fun clear() {
-        preferences.edit()
-            .remove(KEY_DEVICES)
-            .apply()
+    private suspend fun saveIgnoredDeviceUidValues(values: Set<String>) {
+        dataStore.edit { preferences ->
+            preferences[KEY_IGNORED_DEVICE_UIDS] = values
+                .filter { value -> value.isNotBlank() }
+                .toSet()
+        }
     }
 
-    private fun saveAll(snapshots: Iterable<DeviceSnapshot>) {
+    private suspend fun saveAll(snapshots: Iterable<DeviceSnapshot>) {
         val array = JSONArray()
 
         snapshots
@@ -132,10 +140,20 @@ class DeviceKnownStore(
                 array.put(snapshotToJson(snapshot))
             }
 
-        preferences.edit()
-            .putString(KEY_DEVICES, array.toString())
-            .apply()
+        dataStore.edit { preferences ->
+            preferences[KEY_DEVICES] = array.toString()
+        }
     }
+
+    private suspend fun preferences() = dataStore.data
+        .catch { error ->
+            if (error is IOException) {
+                emit(emptyPreferences())
+            } else {
+                throw error
+            }
+        }
+        .first()
 
     private fun snapshotToJson(snapshot: DeviceSnapshot): JSONObject {
         return JSONObject()
@@ -318,7 +336,6 @@ class DeviceKnownStore(
                 supportedScreens = json.optStringArray("supportedScreens"),
                 modules = json.optStringArray("modules"),
                 connectionState = DeviceConnectionState(
-                    onlineState = DeviceOnlineState.UNKNOWN,
                     lastErrorMessage = null
                 ),
                 lastSeenAtMillis = json.optLong("lastSeenAtMillis", 0L)
@@ -339,8 +356,7 @@ class DeviceKnownStore(
     }
 
     private companion object {
-        const val PREFERENCES_NAME = "aql_known_devices_v2"
-        const val KEY_DEVICES = "devices"
-        const val KEY_IGNORED_DEVICE_UIDS = "ignoredDeviceUids"
+        val KEY_DEVICES = stringPreferencesKey("devices")
+        val KEY_IGNORED_DEVICE_UIDS = stringSetPreferencesKey("ignoredDeviceUids")
     }
 }

@@ -5,6 +5,7 @@ import com.aqua.aqualight.data.devices.model.DeviceConnectionState
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.devices.store.DeviceSnapshotMerger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,8 +16,9 @@ import kotlinx.coroutines.flow.update
 /**
  * Professional replacement for the old presence monitor.
  *
- * It keeps the latest snapshot per `deviceUid` and derives online/offline state from UDP and
- * runtime timestamps. The UI must consume this model instead of talking to UDP/WebSocket directly.
+ * UDP discovery only proves LAN visibility and endpoint reachability. It must not downgrade a more
+ * authoritative WebSocket/authenticated runtime state or erase runtime metadata that was already
+ * resolved for the same deviceUid.
  */
 class DevicePresenceSupervisor(
     private val statusAggregator: DeviceStatusAggregator = DeviceStatusAggregator(),
@@ -107,21 +109,21 @@ class DevicePresenceSupervisor(
         nowMillis: Long
     ): DeviceSnapshot {
         val previousState = previous?.connectionState ?: DeviceConnectionState()
-        val mergedState = previousState.copy(
-            onlineState = statusAggregator.resolve(
-                state = previousState.copy(lastUdpSeenAtMillis = nowMillis),
-                nowMillis = nowMillis
+        val incomingWithPresence = incoming.copy(
+            connectionState = previousState.copy(
+                onlineState = statusAggregator.resolve(
+                    state = previousState.copy(lastUdpSeenAtMillis = nowMillis),
+                    nowMillis = nowMillis
+                ),
+                lastUdpSeenAtMillis = nowMillis,
+                lastErrorMessage = null
             ),
-            lastUdpSeenAtMillis = nowMillis,
-            lastErrorMessage = null
+            lastSeenAtMillis = nowMillis
         )
 
-        return incoming.copy(
-            identity = incoming.identity.copy(
-                customName = incoming.identity.customName.ifBlank { previous?.identity?.customName.orEmpty() }
-            ),
-            connectionState = mergedState,
-            lastSeenAtMillis = nowMillis
+        return DeviceSnapshotMerger.merge(
+            previous = previous,
+            incoming = incomingWithPresence
         )
     }
 
