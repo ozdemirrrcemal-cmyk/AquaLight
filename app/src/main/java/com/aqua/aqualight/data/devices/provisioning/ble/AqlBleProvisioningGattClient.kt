@@ -42,7 +42,7 @@ class AqlBleProvisioningGattClient(
     private val gattQueue = AqlBleGattOperationQueue(
         handler = mainHandler,
         startOperation = { operation -> startGattOperation(operation) },
-        onStartFailure = { operation -> failAndClose("BLE GATT operation could not be started: $operation.") }
+        onStartFailure = { operation -> handleGattOperationStartFailure(operation) }
     )
 
     @Volatile private var activeGatt: BluetoothGatt? = null
@@ -65,6 +65,7 @@ class AqlBleProvisioningGattClient(
     @Volatile private var wifiCredentialsWriteStarted = false
     @Volatile private var wifiCredentialsWritten = false
 
+    private val operationStartFailures = mutableMapOf<AqlBleGattOperation, Int>()
     private val statusPollRunnable = Runnable { gattQueue.enqueue(AqlBleGattOperation.READ_PROVISIONING_STATUS) }
     private val deviceInfoRetryRunnable = Runnable { gattQueue.enqueue(AqlBleGattOperation.READ_DEVICE_INFO) }
 
@@ -102,6 +103,7 @@ class AqlBleProvisioningGattClient(
         startSessionWritten = false
         wifiCredentialsWriteStarted = false
         wifiCredentialsWritten = false
+        operationStartFailures.clear()
         codec.resetSecureSession()
         gattQueue.clear()
         mainHandler.removeCallbacks(statusPollRunnable)
@@ -120,6 +122,7 @@ class AqlBleProvisioningGattClient(
         mainHandler.removeCallbacks(statusPollRunnable)
         mainHandler.removeCallbacks(deviceInfoRetryRunnable)
         gattQueue.clear()
+        operationStartFailures.clear()
         val gatt = activeGatt
         activeGatt = null
         runCatching { gatt?.disconnect() }
@@ -210,7 +213,7 @@ class AqlBleProvisioningGattClient(
                 RUNTIME_ENDPOINT_UUID -> {
                     runtimeNotificationsEnabled = true
                     gattQueue.complete(AqlBleGattOperation.ENABLE_RUNTIME_NOTIFICATIONS)
-                    gattQueue.enqueue(AqlBleGattOperation.WRITE_START_SESSION)
+                    gattQueue.enqueueDelayed(AqlBleGattOperation.WRITE_START_SESSION, POST_CCCD_WRITE_DELAY_MS)
                 }
             }
         }
@@ -224,6 +227,7 @@ class AqlBleProvisioningGattClient(
             when (characteristic.uuid) {
                 START_SESSION_UUID -> {
                     startSessionWritten = true
+                    operationStartFailures.remove(AqlBleGattOperation.WRITE_START_SESSION)
                     emit(AqlBleProvisioningGattEvent.StartSessionWritten)
                     gattQueue.complete(AqlBleGattOperation.WRITE_START_SESSION)
                     gattQueue.enqueue(AqlBleGattOperation.READ_PROVISIONING_STATUS)
@@ -231,6 +235,7 @@ class AqlBleProvisioningGattClient(
                 }
                 WIFI_CREDENTIALS_UUID -> {
                     wifiCredentialsWritten = true
+                    operationStartFailures.remove(AqlBleGattOperation.WRITE_WIFI_CREDENTIALS)
                     emit(AqlBleProvisioningGattEvent.WifiCredentialsWritten)
                     gattQueue.complete(AqlBleGattOperation.WRITE_WIFI_CREDENTIALS)
                     gattQueue.enqueue(AqlBleGattOperation.READ_PROVISIONING_STATUS)
@@ -260,7 +265,7 @@ class AqlBleProvisioningGattClient(
 
     private fun startGattOperation(operation: AqlBleGattOperation): Boolean {
         val gatt = activeGatt ?: return false
-        return when (operation) {
+        val started = when (operation) {
             AqlBleGattOperation.REQUEST_MTU -> requestProvisioningMtu(gatt)
             AqlBleGattOperation.READ_DEVICE_INFO -> readDeviceInfo(gatt)
             AqlBleGattOperation.ENABLE_STATUS_NOTIFICATIONS -> enableProvisioningStatusNotifications(gatt)
@@ -270,6 +275,25 @@ class AqlBleProvisioningGattClient(
             AqlBleGattOperation.READ_PROVISIONING_STATUS -> readProvisioningStatus(gatt)
             AqlBleGattOperation.READ_RUNTIME_ENDPOINT -> readRuntimeEndpoint(gatt)
         }
+        if (started) operationStartFailures.remove(operation)
+        return started
+    }
+
+    private fun handleGattOperationStartFailure(operation: AqlBleGattOperation) {
+        val retryable = when (operation) {
+            AqlBleGattOperation.WRITE_START_SESSION,
+            AqlBleGattOperation.WRITE_WIFI_CREDENTIALS,
+            AqlBleGattOperation.READ_PROVISIONING_STATUS,
+            AqlBleGattOperation.READ_RUNTIME_ENDPOINT -> true
+            else -> false
+        }
+        val attempt = (operationStartFailures[operation] ?: 0) + 1
+        operationStartFailures[operation] = attempt
+        if (retryable && activeGatt != null && attempt <= MAX_GATT_OPERATION_START_RETRIES) {
+            gattQueue.enqueueDelayed(operation, GATT_OPERATION_START_RETRY_DELAY_MS)
+            return
+        }
+        failAndClose("BLE GATT operation could not be started: $operation.")
     }
 
     private fun handleCharacteristicReadValue(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, value: ByteArray, status: Int) {
@@ -793,6 +817,9 @@ class AqlBleProvisioningGattClient(
         const val STATUS_POLL_INTERVAL_MS = 1_500L
         const val MAX_DEVICE_INFO_READ_ATTEMPTS = 3
         const val DEVICE_INFO_RETRY_DELAY_MS = 350L
+        const val POST_CCCD_WRITE_DELAY_MS = 350L
+        const val GATT_OPERATION_START_RETRY_DELAY_MS = 700L
+        const val MAX_GATT_OPERATION_START_RETRIES = 2
         const val DEVICE_INFO_LABEL = "DeviceInfo"
         const val KEY_SERIAL_NUMBER = "serialNumber"
         const val KEY_SHORT_ID = "shortId"
