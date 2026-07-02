@@ -3,11 +3,13 @@ package com.aqua.aqualight.data.devices.contract
 /**
  * Android mirror of the firmware BLE + QR provisioning contract.
  *
- * BLE is used only for provisioning: QR claim validation, Wi-Fi credential transfer,
- * Wi-Fi status reporting and first runtime endpoint/token handoff.
+ * BLE is used only for provisioning: QR claim proof, physical-reset recovery,
+ * encrypted Wi-Fi credential transfer, Wi-Fi status reporting and encrypted
+ * first runtime endpoint/token handoff.
  */
 object AqlBleProvisioningContract {
     const val CONTRACT_VERSION = 1
+    const val PROVISIONING_SECURITY_VERSION = 2
     const val BRAND = "AquaLight"
 
     // Firmware advertises the compact 16-bit service UUID FFF0 to keep the legacy
@@ -23,7 +25,7 @@ object AqlBleProvisioningContract {
     const val QR_MAX_BYTES = 512
     const val BLE_JSON_MAX_BYTES = 512
 
-    // Wi-Fi SSID/password limits are UTF-8 byte limits in the BLE JSON payload.
+    // Wi-Fi SSID/password limits are UTF-8 byte limits in the encrypted JSON payload.
     // Do not validate these as Kotlin character counts.
     const val WIFI_SSID_MAX_LENGTH = 32
     const val WIFI_PASSWORD_MAX_LENGTH = 64
@@ -32,6 +34,11 @@ object AqlBleProvisioningContract {
 
     // Runtime pairing tokens are firmware-generated 32-byte random values encoded as 64 hex chars.
     const val RUNTIME_TOKEN_HEX_LENGTH = 64
+
+    object SessionMode {
+        const val QR_CLAIM_SECURE = "qrClaimSecure"
+        const val PHYSICAL_RESET_SECURE = "physicalResetSecure"
+    }
 
     object Qr {
         const val KEY_VERSION = "v"
@@ -52,6 +59,11 @@ object AqlBleProvisioningContract {
         const val KEY_APP_NONCE = "appNonce"
         const val KEY_DEVICE_NONCE = "deviceNonce"
         const val KEY_CONTRACT_VERSION = "contractVersion"
+        const val KEY_SECURITY_VERSION = "securityVersion"
+        const val KEY_SESSION_MODE = "sessionMode"
+        const val KEY_START_SESSION_PROOF = "proof"
+        const val KEY_APP_PUBLIC_KEY = "appPublicKey"
+        const val KEY_DEVICE_PUBLIC_KEY = "devicePublicKey"
         const val KEY_DEVICE_UID = "deviceUid"
         const val KEY_SERIAL_NUMBER = "serialNumber"
         const val KEY_SHORT_ID = "shortId"
@@ -66,7 +78,6 @@ object AqlBleProvisioningContract {
         const val KEY_CLAIM_REQUIRED = "claimRequired"
         const val KEY_PHYSICAL_RESET = "physicalReset"
         const val KEY_PROVISIONING_ID = "provisioningId"
-        const val KEY_CLAIM_CODE = "claimCode"
         const val KEY_WIFI_SSID = "ssid"
         const val KEY_WIFI_PASSWORD = "password"
         const val KEY_WIFI_BSSID = "bssid"
