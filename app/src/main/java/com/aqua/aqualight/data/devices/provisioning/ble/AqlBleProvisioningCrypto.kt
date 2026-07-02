@@ -45,6 +45,8 @@ object AqlBleProvisioningCrypto {
     private const val GCM_TAG_BYTES = 16
     private const val P256_PUBLIC_KEY_BYTES = 65
     private const val P256_COORDINATE_BYTES = 32
+    private const val DIRECTION_APP_TO_DEVICE = "appToDevice"
+    private const val DIRECTION_DEVICE_TO_APP = "deviceToApp"
 
     private val secureRandom = SecureRandom()
 
@@ -61,7 +63,9 @@ object AqlBleProvisioningCrypto {
         val deviceNonce: String,
         val deviceUid: String,
         val provisioningId: String,
-        val key: ByteArray
+        val key: ByteArray,
+        var nextAppToDeviceSequence: Int = 1,
+        var expectedDeviceToAppSequence: Int = 1
     )
 
     fun startSessionJson(draft: AqlProvisioningDraft, deviceInfo: DeviceInfo): Result<Pair<String, Session>> {
@@ -73,6 +77,9 @@ object AqlBleProvisioningCrypto {
     }
 
     fun encryptJson(plaintextJson: String, session: Session, purpose: String): String {
+        val sequence = session.nextAppToDeviceSequence
+        require(sequence > 0) { "Secure provisioning envelope sequence is invalid." }
+
         val iv = ByteArray(GCM_IV_BYTES).also(secureRandom::nextBytes)
         val cipher = Cipher.getInstance(AES_GCM_TRANSFORMATION)
         cipher.init(
@@ -80,7 +87,7 @@ object AqlBleProvisioningCrypto {
             SecretKeySpec(session.key, AES_ALGORITHM),
             GCMParameterSpec(GCM_TAG_BITS, iv)
         )
-        cipher.updateAAD(aad(purpose, session))
+        cipher.updateAAD(aad(purpose, DIRECTION_APP_TO_DEVICE, sequence, session))
 
         val encryptedWithTag = cipher.doFinal(plaintextJson.toByteArray(Charsets.UTF_8))
         require(encryptedWithTag.size > GCM_TAG_BYTES) { "Encrypted provisioning payload is empty." }
@@ -90,10 +97,12 @@ object AqlBleProvisioningCrypto {
         return JSONObject()
             .put("v", VERSION)
             .put("alg", ALGORITHM)
+            .put(AqlBleProvisioningContract.Json.KEY_ENVELOPE_SEQUENCE, sequence)
             .put("iv", iv.toBase64())
             .put("ciphertext", ciphertext.toBase64())
             .put("tag", tag.toBase64())
             .toString()
+            .also { session.nextAppToDeviceSequence = sequence + 1 }
     }
 
     fun decryptJson(raw: String, session: Session, purpose: String): Result<String> {
@@ -103,6 +112,11 @@ object AqlBleProvisioningCrypto {
             val algorithm = json.optString("alg").trim()
             require(version == VERSION && algorithm == ALGORITHM) {
                 "Secure provisioning envelope is not supported."
+            }
+
+            val sequence = json.optInt(AqlBleProvisioningContract.Json.KEY_ENVELOPE_SEQUENCE, 0)
+            require(sequence == session.expectedDeviceToAppSequence) {
+                "Secure provisioning envelope sequence is invalid."
             }
 
             val iv = requiredString(json, "iv").fromBase64()
@@ -118,9 +132,10 @@ object AqlBleProvisioningCrypto {
                 SecretKeySpec(session.key, AES_ALGORITHM),
                 GCMParameterSpec(GCM_TAG_BITS, iv)
             )
-            cipher.updateAAD(aad(purpose, session))
+            cipher.updateAAD(aad(purpose, DIRECTION_DEVICE_TO_APP, sequence, session))
             String(cipher.doFinal(ciphertext + tag), Charsets.UTF_8).trim().also { plaintext ->
                 require(plaintext.isNotBlank()) { "Secure provisioning envelope plaintext is empty." }
+                session.expectedDeviceToAppSequence = sequence + 1
             }
         }
     }
@@ -262,15 +277,24 @@ object AqlBleProvisioningCrypto {
         ).joinToString(separator = "|").toByteArray(Charsets.UTF_8)
     }
 
-    private fun aad(purpose: String, session: Session): ByteArray {
-        return transcript(
-            sessionMode = session.sessionMode,
-            purpose = purpose,
-            deviceUid = session.deviceUid,
-            provisioningId = session.provisioningId,
-            deviceNonce = session.deviceNonce,
-            appNonce = session.appNonce
-        )
+    private fun aad(
+        purpose: String,
+        direction: String,
+        sequence: Int,
+        session: Session
+    ): ByteArray {
+        return listOf(
+            TRANSCRIPT_PREFIX,
+            "aad",
+            session.sessionMode,
+            purpose,
+            direction,
+            sequence.toString(),
+            session.deviceUid,
+            session.provisioningId,
+            session.deviceNonce,
+            session.appNonce
+        ).joinToString(separator = "|").toByteArray(Charsets.UTF_8)
     }
 
     private fun sha256(data: ByteArray): ByteArray {
