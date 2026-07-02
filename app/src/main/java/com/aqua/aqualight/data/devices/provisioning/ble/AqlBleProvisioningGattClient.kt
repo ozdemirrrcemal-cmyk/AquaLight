@@ -619,14 +619,14 @@ class AqlBleProvisioningGattClient(
                 contractVersion = requiredJsonInt(json, AqlBleProvisioningContract.Json.KEY_CONTRACT_VERSION, DEVICE_INFO_LABEL),
                 securityVersion = requiredJsonInt(json, AqlBleProvisioningContract.Json.KEY_SECURITY_VERSION, DEVICE_INFO_LABEL),
                 deviceUid = requiredJsonString(json, AqlBleProvisioningContract.Json.KEY_DEVICE_UID, DEVICE_INFO_LABEL),
-                serialNumber = requiredJsonString(json, KEY_SERIAL_NUMBER, DEVICE_INFO_LABEL),
+                serialNumber = json.optString(KEY_SERIAL_NUMBER).trim(),
                 shortId = requiredJsonString(json, KEY_SHORT_ID, DEVICE_INFO_LABEL),
-                brand = requiredJsonString(json, KEY_BRAND, DEVICE_INFO_LABEL),
-                productId = requiredJsonString(json, KEY_PRODUCT_ID, DEVICE_INFO_LABEL),
+                brand = json.optString(KEY_BRAND).trim(),
+                productId = json.optString(KEY_PRODUCT_ID).trim(),
                 productModel = requiredJsonString(json, KEY_PRODUCT_MODEL, DEVICE_INFO_LABEL),
                 displayName = requiredJsonString(json, KEY_DISPLAY_NAME, DEVICE_INFO_LABEL),
-                hardwareRevision = requiredJsonString(json, KEY_HARDWARE_REVISION, DEVICE_INFO_LABEL),
-                firmwareVersion = requiredJsonString(json, KEY_FIRMWARE_VERSION, DEVICE_INFO_LABEL),
+                hardwareRevision = json.optString(KEY_HARDWARE_REVISION).trim(),
+                firmwareVersion = json.optString(KEY_FIRMWARE_VERSION).trim(),
                 bleName = requiredJsonString(json, KEY_BLE_NAME, DEVICE_INFO_LABEL),
                 deviceNonce = requiredJsonString(json, AqlBleProvisioningContract.Json.KEY_DEVICE_NONCE, DEVICE_INFO_LABEL),
                 mode = requiredJsonString(json, KEY_MODE, DEVICE_INFO_LABEL),
@@ -643,7 +643,7 @@ class AqlBleProvisioningGattClient(
         if (info.contractVersion != AqlBleProvisioningContract.CONTRACT_VERSION) return "Unsupported DeviceInfo contractVersion: ${info.contractVersion}."
         if (info.securityVersion != AqlBleProvisioningContract.PROVISIONING_SECURITY_VERSION) return "Unsupported DeviceInfo securityVersion: ${info.securityVersion}."
         if (!info.deviceNonce.isUuidV4()) return "DeviceInfo does not include a valid deviceNonce."
-        if (!info.brand.equals(AqlBleProvisioningContract.BRAND, ignoreCase = true)) return "DeviceInfo brand is not supported: ${info.brand}."
+        if (info.brand.isNotBlank() && !info.brand.equals(AqlBleProvisioningContract.BRAND, ignoreCase = true)) return "DeviceInfo brand is not supported: ${info.brand}."
 
         val expectedUid = draft.candidateId.trim().takeUnless { value -> value.isLikelyBleAddress() }.orEmpty()
         if (expectedUid.isNotBlank() && !info.deviceUid.equals(expectedUid, ignoreCase = true)) return "QR device uid does not match the connected BLE device."
@@ -652,17 +652,17 @@ class AqlBleProvisioningGattClient(
 
         val qrFields = parseQrFields(draft.rawQrPayload)
         val expectedBrand = qrField(qrFields, AqlBleProvisioningContract.Qr.KEY_BRAND)
-        if (expectedBrand.isNotBlank() && !info.brand.equals(expectedBrand, ignoreCase = true)) return "QR brand does not match the connected BLE device."
+        if (expectedBrand.isNotBlank() && info.brand.isNotBlank() && !info.brand.equals(expectedBrand, ignoreCase = true)) return "QR brand does not match the connected BLE device."
         val expectedSerialNumber = qrField(qrFields, AqlBleProvisioningContract.Qr.KEY_SERIAL_NUMBER)
-        if (expectedSerialNumber.isNotBlank() && !info.serialNumber.equals(expectedSerialNumber, ignoreCase = true)) return "QR serial number does not match the connected BLE device."
+        if (expectedSerialNumber.isNotBlank() && info.serialNumber.isNotBlank() && !info.serialNumber.equals(expectedSerialNumber, ignoreCase = true)) return "QR serial number does not match the connected BLE device."
         val expectedProductId = qrField(qrFields, AqlBleProvisioningContract.Qr.KEY_PRODUCT_ID)
-        if (expectedProductId.isNotBlank() && !info.productId.equals(expectedProductId, ignoreCase = true)) return "QR product id does not match the connected BLE device."
+        if (expectedProductId.isNotBlank() && info.productId.isNotBlank() && !info.productId.equals(expectedProductId, ignoreCase = true)) return "QR product id does not match the connected BLE device."
         val expectedProductModel = qrField(qrFields, AqlBleProvisioningContract.Qr.KEY_MODEL)
         if (expectedProductModel.isNotBlank() && !info.productModel.equals(expectedProductModel, ignoreCase = true)) return "QR product model does not match the connected BLE device."
         val expectedDisplayName = qrField(qrFields, AqlBleProvisioningContract.Qr.KEY_DISPLAY_NAME)
         if (expectedDisplayName.isNotBlank() && !info.displayName.equals(expectedDisplayName, ignoreCase = true)) return "QR display name does not match the connected BLE device."
         val expectedHardwareRevision = qrField(qrFields, AqlBleProvisioningContract.Qr.KEY_HARDWARE_REVISION)
-        if (expectedHardwareRevision.isNotBlank() && !info.hardwareRevision.equals(expectedHardwareRevision, ignoreCase = true)) return "QR hardware revision does not match the connected BLE device."
+        if (expectedHardwareRevision.isNotBlank() && info.hardwareRevision.isNotBlank() && !info.hardwareRevision.equals(expectedHardwareRevision, ignoreCase = true)) return "QR hardware revision does not match the connected BLE device."
 
         if (!isAllowedProvisioningMode(info.mode)) return "Connected BLE device is not in provisioning mode: ${info.mode.ifBlank { "unknown" }}."
         if (info.mode == AqlBleProvisioningContract.Status.FACTORY) {

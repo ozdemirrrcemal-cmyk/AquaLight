@@ -89,6 +89,8 @@ class AqlBleProvisioningMessageCodec {
             val wsPort = requiredJsonInt(json, AqlBleProvisioningContract.Json.KEY_WS_PORT, "RuntimeEndpoint")
             val wsPath = requiredJsonString(json, AqlBleProvisioningContract.Json.KEY_WS_PATH, "RuntimeEndpoint")
             require(wsPath == AqlWsContract.DEFAULT_PATH) { "RuntimeEndpoint path is not supported: $wsPath" }
+            val productFamily = json.optString(KEY_PRODUCT_FAMILY).trim()
+            val productName = json.optString(KEY_PRODUCT_NAME).trim()
             val productModel = requiredJsonString(json, KEY_PRODUCT_MODEL, "RuntimeEndpoint")
             val firmwareVersion = requiredJsonString(json, KEY_FIRMWARE_VERSION, "RuntimeEndpoint")
             val runtimeToken = requiredJsonString(json, AqlBleProvisioningContract.Json.KEY_TOKEN, "RuntimeEndpoint")
@@ -108,6 +110,8 @@ class AqlBleProvisioningMessageCodec {
                 deviceUid = DeviceUid(deviceUidText),
                 endpoint = endpoint,
                 webSocketToken = runtimeToken,
+                productFamily = productFamily,
+                productName = productName,
                 productModel = productModel,
                 firmwareVersion = firmwareVersion
             )
@@ -145,6 +149,8 @@ class AqlBleProvisioningMessageCodec {
     private companion object {
         const val PURPOSE_WIFI_CREDENTIALS = "wifiCredentials"
         const val PURPOSE_RUNTIME_ENDPOINT = "runtimeEndpoint"
+        const val KEY_PRODUCT_FAMILY = "productFamily"
+        const val KEY_PRODUCT_NAME = "productName"
         const val KEY_PRODUCT_MODEL = "productModel"
         const val KEY_FIRMWARE_VERSION = "firmwareVersion"
     }

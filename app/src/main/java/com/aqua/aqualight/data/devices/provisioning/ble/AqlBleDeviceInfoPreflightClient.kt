@@ -140,13 +140,13 @@ class AqlBleDeviceInfoPreflightClient(
                 contractVersion = requiredInt(json, AqlBleProvisioningContract.Json.KEY_CONTRACT_VERSION),
                 securityVersion = requiredInt(json, AqlBleProvisioningContract.Json.KEY_SECURITY_VERSION),
                 deviceUid = requiredString(json, AqlBleProvisioningContract.Json.KEY_DEVICE_UID),
-                serialNumber = requiredString(json, AqlBleProvisioningContract.Json.KEY_SERIAL_NUMBER),
-                brand = requiredString(json, AqlBleProvisioningContract.Json.KEY_BRAND),
-                productId = requiredString(json, AqlBleProvisioningContract.Json.KEY_PRODUCT_ID),
+                serialNumber = json.optString(AqlBleProvisioningContract.Json.KEY_SERIAL_NUMBER).trim(),
+                brand = json.optString(AqlBleProvisioningContract.Json.KEY_BRAND).trim(),
+                productId = json.optString(AqlBleProvisioningContract.Json.KEY_PRODUCT_ID).trim(),
                 productModel = requiredString(json, AqlBleProvisioningContract.Json.KEY_PRODUCT_MODEL),
                 displayName = requiredString(json, AqlBleProvisioningContract.Json.KEY_DISPLAY_NAME),
-                hardwareRevision = requiredString(json, AqlBleProvisioningContract.Json.KEY_HARDWARE_REVISION),
-                firmwareVersion = requiredString(json, AqlBleProvisioningContract.Json.KEY_FIRMWARE_VERSION),
+                hardwareRevision = json.optString(AqlBleProvisioningContract.Json.KEY_HARDWARE_REVISION).trim(),
+                firmwareVersion = json.optString(AqlBleProvisioningContract.Json.KEY_FIRMWARE_VERSION).trim(),
                 bleName = requiredString(json, AqlBleProvisioningContract.Json.KEY_BLE_NAME),
                 deviceNonce = requiredString(json, AqlBleProvisioningContract.Json.KEY_DEVICE_NONCE),
                 mode = requiredString(json, AqlBleProvisioningContract.Json.KEY_MODE),
@@ -165,7 +165,7 @@ class AqlBleDeviceInfoPreflightClient(
         if (info.securityVersion != AqlBleProvisioningContract.PROVISIONING_SECURITY_VERSION) {
             return ManualSetupPreflightResult.Blocked("Unsupported DeviceInfo securityVersion: ${info.securityVersion}.")
         }
-        if (!info.brand.equals(AqlBleProvisioningContract.BRAND, ignoreCase = true)) {
+        if (info.brand.isNotBlank() && !info.brand.equals(AqlBleProvisioningContract.BRAND, ignoreCase = true)) {
             return ManualSetupPreflightResult.Blocked("DeviceInfo brand is not supported: ${info.brand}.")
         }
         if (info.mode == AqlBleProvisioningContract.Status.FACTORY && info.claimRequired && !info.physicalReset) {
