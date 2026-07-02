@@ -48,6 +48,7 @@ class DeviceFirmwareManifestSignatureVerifier(
         val verifier = Signature.getInstance("SHA256withECDSA")
         verifier.initVerify(publicKey)
         verifier.update(payload)
+
         val signatureBytes = Base64.decode(signature.value, Base64.DEFAULT)
         require(verifier.verify(signatureBytes)) {
             "OTA manifest signature verification failed."
@@ -67,10 +68,10 @@ class DeviceFirmwareManifestSignatureVerifier(
                 null, JSONObject.NULL -> "null"
                 is JSONObject -> canonicalizeObject(value)
                 is JSONArray -> canonicalizeArray(value)
-                is String -> JSONObject.quote(value)
+                is String -> canonicalJsonString(value)
                 is Number -> value.toString()
                 is Boolean -> value.toString()
-                else -> JSONObject.quote(value.toString())
+                else -> canonicalJsonString(value.toString())
             }
         }
 
@@ -82,7 +83,9 @@ class DeviceFirmwareManifestSignatureVerifier(
                 val iterator = json.keys()
                 while (iterator.hasNext()) {
                     val key = iterator.next()
-                    if (!excludedRootKeys.contains(key)) add(key)
+                    if (!excludedRootKeys.contains(key)) {
+                        add(key)
+                    }
                 }
             }.sorted()
 
@@ -91,7 +94,7 @@ class DeviceFirmwareManifestSignatureVerifier(
                 prefix = "{",
                 postfix = "}"
             ) { key ->
-                "${JSONObject.quote(key)}:${canonicalize(json.opt(key))}"
+                "${canonicalJsonString(key)}:${canonicalize(json.opt(key))}"
             }
         }
 
@@ -99,11 +102,18 @@ class DeviceFirmwareManifestSignatureVerifier(
             return buildString {
                 append('[')
                 for (index in 0 until array.length()) {
-                    if (index > 0) append(',')
+                    if (index > 0) {
+                        append(',')
+                    }
                     append(canonicalize(array.opt(index)))
                 }
                 append(']')
             }
+        }
+
+        private fun canonicalJsonString(value: String): String {
+            return JSONObject.quote(value)
+                .replace("\\/", "/")
         }
 
         private fun publicKeyFromPem(pem: String): java.security.PublicKey {
@@ -113,13 +123,18 @@ class DeviceFirmwareManifestSignatureVerifier(
                 .replace("\n", "")
                 .replace("\r", "")
                 .trim()
+
             val bytes = Base64.decode(base64, Base64.DEFAULT)
-            return KeyFactory.getInstance("EC").generatePublic(X509EncodedKeySpec(bytes))
+            return KeyFactory
+                .getInstance("EC")
+                .generatePublic(X509EncodedKeySpec(bytes))
         }
 
         private fun sha256Hex(bytes: ByteArray): String {
             val digest = MessageDigest.getInstance("SHA-256").digest(bytes)
-            return digest.joinToString(separator = "") { value -> "%02x".format(value.toInt() and 0xff) }
+            return digest.joinToString(separator = "") { value ->
+                "%02x".format(value.toInt() and 0xff)
+            }
         }
     }
 }
