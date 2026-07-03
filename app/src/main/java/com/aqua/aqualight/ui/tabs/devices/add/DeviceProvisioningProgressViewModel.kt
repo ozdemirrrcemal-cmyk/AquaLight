@@ -152,7 +152,7 @@ class DeviceProvisioningProgressViewModel(
                 showProgress = true
             )
 
-            addressResolver.resolveAddress(bleName)
+            addressResolver.resolveQrAddress(draft)
                 .onSuccess { resolvedAddress ->
                     if (resolvedAddress.isNotBlank()) {
                         return draft.copy(bleAddress = resolvedAddress)
