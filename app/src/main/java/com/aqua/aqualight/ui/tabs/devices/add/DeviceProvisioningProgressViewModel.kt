@@ -138,49 +138,54 @@ class DeviceProvisioningProgressViewModel(
     private suspend fun resolveBleAddressIfNeeded(
         draft: AqlProvisioningDraft
     ): AqlProvisioningDraft? {
-        if (draft.bleAddress.isNotBlank()) {
-            return draft
+        val existingAddress = draft.bleAddress.trim()
+        val bleName = draft.bleName.trim()
+
+        if (bleName.isNotBlank()) {
+            _uiState.value = _uiState.value.copy(
+                title = string(R.string.device_provisioning_locating_qr_title),
+                message = string(R.string.device_provisioning_locating_qr_message_format, bleName),
+                bleAddress = bleName,
+                stepThree = string(R.string.device_provisioning_locating_qr_step),
+                canStart = false,
+                buttonText = string(R.string.device_provisioning_finding),
+                showProgress = true
+            )
+
+            addressResolver.resolveAddress(bleName)
+                .onSuccess { resolvedAddress ->
+                    if (resolvedAddress.isNotBlank()) {
+                        return draft.copy(bleAddress = resolvedAddress)
+                    }
+                }
+                .onFailure { error ->
+                    if (existingAddress.isBlank()) {
+                        _uiState.value = _uiState.value.copy(
+                            title = string(R.string.device_provisioning_qr_not_found_title),
+                            message = error.message ?: string(R.string.device_provisioning_qr_not_found_message),
+                            stepThree = string(R.string.device_provisioning_device_not_found_title),
+                            canStart = true,
+                            buttonText = string(R.string.device_provisioning_try_again),
+                            showProgress = false
+                        )
+                        return null
+                    }
+                }
         }
 
-        val bleName = draft.bleName.trim()
-        if (bleName.isBlank()) {
-            _uiState.value = _uiState.value.copy(
-                title = string(R.string.device_provisioning_device_not_found_title),
-                message = string(R.string.device_provisioning_qr_missing_ble_message),
-                stepThree = string(R.string.device_provisioning_device_not_found_title),
-                canStart = true,
-                buttonText = string(R.string.device_provisioning_try_again),
-                showProgress = false
-            )
-            return null
+        if (existingAddress.isNotBlank()) {
+            return draft.copy(bleAddress = existingAddress)
         }
 
         _uiState.value = _uiState.value.copy(
-            title = string(R.string.device_provisioning_locating_qr_title),
-            message = string(R.string.device_provisioning_locating_qr_message_format, bleName),
-            bleAddress = bleName,
-            stepThree = string(R.string.device_provisioning_locating_qr_step),
-            canStart = false,
-            buttonText = string(R.string.device_provisioning_finding),
-            showProgress = true
+            title = string(R.string.device_provisioning_device_not_found_title),
+            message = string(R.string.device_provisioning_qr_missing_ble_message),
+            stepThree = string(R.string.device_provisioning_device_not_found_title),
+            canStart = true,
+            buttonText = string(R.string.device_provisioning_try_again),
+            showProgress = false
         )
-
-        val resolvedAddress = addressResolver.resolveAddress(bleName)
-            .getOrElse { error ->
-                _uiState.value = _uiState.value.copy(
-                    title = string(R.string.device_provisioning_qr_not_found_title),
-                    message = error.message ?: string(R.string.device_provisioning_qr_not_found_message),
-                    stepThree = string(R.string.device_provisioning_device_not_found_title),
-                    canStart = true,
-                    buttonText = string(R.string.device_provisioning_try_again),
-                    showProgress = false
-                )
-                return null
-            }
-
-        return draft.copy(
-            bleAddress = resolvedAddress
-        )
+        return null
     }
 
     private fun observeGattEvents() {
@@ -520,24 +525,3 @@ class DeviceProvisioningProgressViewModel(
         )
     }
 }
-
-sealed interface DeviceProvisioningProgressEvent {
-    data class OpenAddedDevice(
-        val route: DeviceRoute
-    ) : DeviceProvisioningProgressEvent
-}
-
-data class DeviceProvisioningProgressUiState(
-    val title: String = "",
-    val message: String = "",
-    val deviceName: String = "",
-    val deviceSerial: String = "",
-    val bleAddress: String = "",
-    val wifiSsid: String = "",
-    val stepOne: String = "",
-    val stepTwo: String = "",
-    val stepThree: String = "",
-    val canStart: Boolean = false,
-    val buttonText: String = "",
-    val showProgress: Boolean = false
-)

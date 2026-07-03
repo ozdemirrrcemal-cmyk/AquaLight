@@ -89,8 +89,10 @@ class AqlBleProvisioningMessageCodec {
             val wsPort = requiredJsonInt(json, AqlBleProvisioningContract.Json.KEY_WS_PORT, "RuntimeEndpoint")
             val wsPath = requiredJsonString(json, AqlBleProvisioningContract.Json.KEY_WS_PATH, "RuntimeEndpoint")
             require(wsPath == AqlWsContract.DEFAULT_PATH) { "RuntimeEndpoint path is not supported: $wsPath" }
-            val productModel = requiredJsonString(json, KEY_PRODUCT_MODEL, "RuntimeEndpoint")
-            val firmwareVersion = requiredJsonString(json, KEY_FIRMWARE_VERSION, "RuntimeEndpoint")
+            val forbiddenMetadataKey = RUNTIME_METADATA_KEYS.firstOrNull { key -> json.has(key) }
+            require(forbiddenMetadataKey == null) {
+                "RuntimeEndpoint must not include product metadata field '$forbiddenMetadataKey'."
+            }
             val runtimeToken = requiredJsonString(json, AqlBleProvisioningContract.Json.KEY_TOKEN, "RuntimeEndpoint")
             require(runtimeToken.isRuntimeTokenHex()) { "RuntimeEndpoint token is missing or invalid." }
 
@@ -107,9 +109,7 @@ class AqlBleProvisioningMessageCodec {
             AqlProvisioningRuntimeHandoff(
                 deviceUid = DeviceUid(deviceUidText),
                 endpoint = endpoint,
-                webSocketToken = runtimeToken,
-                productModel = productModel,
-                firmwareVersion = firmwareVersion
+                webSocketToken = runtimeToken
             )
         }
     }
@@ -145,7 +145,11 @@ class AqlBleProvisioningMessageCodec {
     private companion object {
         const val PURPOSE_WIFI_CREDENTIALS = "wifiCredentials"
         const val PURPOSE_RUNTIME_ENDPOINT = "runtimeEndpoint"
-        const val KEY_PRODUCT_MODEL = "productModel"
-        const val KEY_FIRMWARE_VERSION = "firmwareVersion"
+        val RUNTIME_METADATA_KEYS = setOf(
+            "productFamily",
+            "productName",
+            "productModel",
+            "firmwareVersion"
+        )
     }
 }

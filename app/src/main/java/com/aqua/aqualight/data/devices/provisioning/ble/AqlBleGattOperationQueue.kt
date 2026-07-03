@@ -5,8 +5,8 @@ import java.util.ArrayDeque
 
 internal class AqlBleGattOperationQueue(
     private val handler: Handler,
-    private val startOperation: (AqlBleGattOperation) -> Boolean,
-    private val onStartFailure: (AqlBleGattOperation) -> Unit
+    private val startOperation: (AqlBleGattOperation) -> AqlBleGattOperationStartResult,
+    private val onStartFailure: (AqlBleGattOperation, AqlBleGattOperationStartResult.NotStarted) -> Unit
 ) {
     private val lock = Any()
     private val pending = ArrayDeque<AqlBleGattOperation>()
@@ -53,13 +53,24 @@ internal class AqlBleGattOperationQueue(
         }
 
         val operation = next ?: return
-        if (!startOperation(operation)) {
-            synchronized(lock) {
-                if (active == operation) active = null
+        when (val result = startOperation(operation)) {
+            AqlBleGattOperationStartResult.Started -> Unit
+            is AqlBleGattOperationStartResult.NotStarted -> {
+                synchronized(lock) {
+                    if (active == operation) active = null
+                }
+                onStartFailure(operation, result)
             }
-            onStartFailure(operation)
         }
     }
+}
+
+internal sealed class AqlBleGattOperationStartResult {
+    object Started : AqlBleGattOperationStartResult()
+    data class NotStarted(
+        val retryable: Boolean,
+        val message: String
+    ) : AqlBleGattOperationStartResult()
 }
 
 internal enum class AqlBleGattOperation {
