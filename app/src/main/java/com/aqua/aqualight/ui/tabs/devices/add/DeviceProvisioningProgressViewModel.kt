@@ -42,6 +42,7 @@ class DeviceProvisioningProgressViewModel(
     private var activeDraft: AqlProvisioningDraft? = null
     private var gattEventsJob: Job? = null
     private var handoffSaved = false
+    private var handoffReceived = false
     private var startJob: Job? = null
 
     fun bind(sessionId: String) {
@@ -115,6 +116,7 @@ class DeviceProvisioningProgressViewModel(
 
         startJob?.cancel()
         handoffSaved = false
+        handoffReceived = false
         observeGattEvents()
 
         startJob = viewModelScope.launch {
@@ -203,6 +205,7 @@ class DeviceProvisioningProgressViewModel(
     private fun handleGattEvent(event: AqlBleProvisioningGattEvent) {
         when (event) {
             is AqlBleProvisioningGattEvent.RuntimeHandoffReceived -> {
+                handoffReceived = true
                 renderRuntimeHandoffReceived(event.handoff)
                 saveRuntimeHandoff(event.handoff)
             }
@@ -310,7 +313,7 @@ class DeviceProvisioningProgressViewModel(
             }
 
             AqlBleProvisioningGattEvent.Disconnected -> {
-                if (handoffSaved) {
+                if (handoffReceived || handoffSaved) {
                     _uiState.value
                 } else {
                     _uiState.value.copy(
