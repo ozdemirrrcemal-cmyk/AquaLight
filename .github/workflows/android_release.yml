@@ -59,6 +59,32 @@ jobs:
       - name: ⚙️ Grant permission for Gradle
         run: chmod +x ./gradlew
 
+      - name: 🔐 Verify OTA manifest signature config
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${AQL_OTA_MANIFEST_PUBLIC_KEY_PEM:-}" ]]; then
+            echo "❌ AQL_OTA_MANIFEST_PUBLIC_KEY_PEM secret is missing or empty." >&2
+            exit 1
+          fi
+          if [[ -z "${AQL_OTA_MANIFEST_KEY_ID:-}" ]]; then
+            echo "❌ AQL_OTA_MANIFEST_KEY_ID secret is missing or empty." >&2
+            exit 1
+          fi
+          if [[ "$AQL_OTA_MANIFEST_KEY_ID" != "aql-ota-manifest-2026-01" ]]; then
+            echo "❌ AQL_OTA_MANIFEST_KEY_ID must be aql-ota-manifest-2026-01." >&2
+            exit 1
+          fi
+          if ! grep -q -- "-----BEGIN PUBLIC KEY-----" <<< "$AQL_OTA_MANIFEST_PUBLIC_KEY_PEM"; then
+            echo "❌ OTA manifest public key must be PEM encoded." >&2
+            exit 1
+          fi
+          if ! grep -q -- "-----END PUBLIC KEY-----" <<< "$AQL_OTA_MANIFEST_PUBLIC_KEY_PEM"; then
+            echo "❌ OTA manifest public key PEM footer is missing." >&2
+            exit 1
+          fi
+          echo "✅ OTA manifest signature config is present."
+
       - name: Run Architecture Guard
         run: |
           python3 tools/architecture_guard.py
