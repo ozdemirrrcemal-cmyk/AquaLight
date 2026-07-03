@@ -14,7 +14,9 @@ import android.os.Build
 import android.os.ParcelUuid
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
+import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningDraft
 import kotlin.coroutines.resume
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 
@@ -25,6 +27,7 @@ class AqlBleProvisioningAddressResolver(
     private val appContext = context.applicationContext
     private val bluetoothManager =
         appContext.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+    private val preflightClient = AqlBleDeviceInfoPreflightClient(appContext)
 
     suspend fun resolveAddress(
         bleNameOrAddress: String
@@ -41,6 +44,64 @@ class AqlBleProvisioningAddressResolver(
             return Result.success(target)
         }
 
+        val scanner = scannerOrFailure().getOrElse { error ->
+            return Result.failure(error)
+        }
+
+        val exact = withTimeoutOrNull(RESOLVE_TIMEOUT_MS) {
+            awaitExactNameAddress(
+                scanner = scanner,
+                targetName = target
+            )
+        }
+
+        return exact ?: Result.failure(
+            IllegalStateException("AquaLight BLE device '$target' was not found nearby.")
+        )
+    }
+
+    suspend fun resolveQrAddress(
+        draft: AqlProvisioningDraft
+    ): Result<String> {
+        val existingAddress = draft.bleAddress.trim()
+        val targetName = draft.bleName.trim()
+
+        if (existingAddress.isNotBlank() && MAC_ADDRESS_REGEX.matches(existingAddress)) {
+            return Result.success(existingAddress)
+        }
+
+        if (targetName.isBlank()) {
+            return Result.failure(
+                IllegalArgumentException("QR payload does not contain a BLE name.")
+            )
+        }
+
+        val scanner = scannerOrFailure().getOrElse { error ->
+            return Result.failure(error)
+        }
+
+        val candidates = linkedMapOf<String, ScanCandidate>()
+
+        val exact = withTimeoutOrNull(RESOLVE_TIMEOUT_MS) {
+            awaitExactNameAddress(
+                scanner = scanner,
+                targetName = targetName,
+                candidates = candidates
+            )
+        }
+
+        if (exact != null) {
+            return exact
+        }
+
+        return verifyQrCandidates(
+            draft = draft,
+            targetName = targetName,
+            candidates = candidates.values.toList()
+        )
+    }
+
+    private fun scannerOrFailure(): Result<BluetoothLeScanner> {
         if (!hasRequiredPermissions()) {
             return Result.failure(
                 SecurityException("Bluetooth scan/connect permission is required.")
@@ -54,25 +115,16 @@ class AqlBleProvisioningAddressResolver(
             return Result.failure(IllegalStateException("Bluetooth is disabled."))
         }
 
-        val scanner = adapter.bluetoothLeScanner
-            ?: return Result.failure(IllegalStateException("Bluetooth LE scanner is unavailable."))
-
-        val result = withTimeoutOrNull(RESOLVE_TIMEOUT_MS) {
-            awaitMatchingAddress(
-                scanner = scanner,
-                targetName = target
-            )
-        }
-
-        return result ?: Result.failure(
-            IllegalStateException("AquaLight BLE device '$target' was not found nearby.")
-        )
+        return adapter.bluetoothLeScanner?.let { scanner ->
+            Result.success(scanner)
+        } ?: Result.failure(IllegalStateException("Bluetooth LE scanner is unavailable."))
     }
 
     @SuppressLint("MissingPermission")
-    private suspend fun awaitMatchingAddress(
+    private suspend fun awaitExactNameAddress(
         scanner: BluetoothLeScanner,
-        targetName: String
+        targetName: String,
+        candidates: MutableMap<String, ScanCandidate> = linkedMapOf()
     ): Result<String> {
         return suspendCancellableCoroutine { continuation ->
             lateinit var callback: ScanCallback
@@ -82,15 +134,18 @@ class AqlBleProvisioningAddressResolver(
                     callbackType: Int,
                     result: ScanResult
                 ) {
-                    if (!matchesTargetName(result, targetName)) {
-                        return
-                    }
-
                     val address = runCatching {
                         result.device.address
                     }.getOrNull().orEmpty()
 
                     if (address.isBlank()) {
+                        return
+                    }
+
+                    val candidate = result.toScanCandidate(address)
+                    candidates.putIfAbsent(address, candidate)
+
+                    if (!candidate.matchesTargetName(targetName)) {
                         return
                     }
 
@@ -142,15 +197,65 @@ class AqlBleProvisioningAddressResolver(
         }
     }
 
-    private fun matchesTargetName(
-        result: ScanResult,
-        targetName: String
-    ): Boolean {
-        val advertisedName = result.scanRecord?.deviceName.orEmpty()
+    private suspend fun verifyQrCandidates(
+        draft: AqlProvisioningDraft,
+        targetName: String,
+        candidates: List<ScanCandidate>
+    ): Result<String> {
+        if (candidates.isEmpty()) {
+            return Result.failure(
+                IllegalStateException("AquaLight BLE device '$targetName' was not found nearby.")
+            )
+        }
+
+        val orderedCandidates = candidates
+            .distinctBy { candidate -> candidate.address }
+            .take(MAX_QR_CANDIDATES_TO_PREFLIGHT)
+
+        var lastRejection = ""
+
+        for (candidate in orderedCandidates) {
+            when (val result = preflightClient.verifyQrCandidate(candidate.address, draft)) {
+                is QrCandidatePreflightResult.Allowed -> {
+                    delay(QR_PREFLIGHT_GATT_SETTLE_DELAY_MS)
+                    return Result.success(result.bleAddress)
+                }
+
+                is QrCandidatePreflightResult.Rejected -> {
+                    lastRejection = result.message
+                }
+
+                is QrCandidatePreflightResult.Failed -> {
+                    lastRejection = result.message
+                }
+            }
+        }
+
+        return Result.failure(
+            IllegalStateException(
+                lastRejection.ifBlank {
+                    "Nearby AquaLight setup devices were found, but none matched the scanned QR code."
+                }
+            )
+        )
+    }
+
+    private fun ScanResult.toScanCandidate(address: String): ScanCandidate {
+        val advertisedName = scanRecord?.deviceName.orEmpty()
         val deviceName = runCatching {
-            result.device.name
+            device.name
         }.getOrNull().orEmpty()
 
+        return ScanCandidate(
+            address = address,
+            advertisedName = advertisedName,
+            deviceName = deviceName
+        )
+    }
+
+    private fun ScanCandidate.matchesTargetName(
+        targetName: String
+    ): Boolean {
         return advertisedName.equals(targetName, ignoreCase = true) ||
             deviceName.equals(targetName, ignoreCase = true)
     }
@@ -197,8 +302,16 @@ class AqlBleProvisioningAddressResolver(
         ) == PackageManager.PERMISSION_GRANTED
     }
 
+    private data class ScanCandidate(
+        val address: String,
+        val advertisedName: String,
+        val deviceName: String
+    )
+
     private companion object {
         const val RESOLVE_TIMEOUT_MS = 12_000L
+        const val MAX_QR_CANDIDATES_TO_PREFLIGHT = 4
+        const val QR_PREFLIGHT_GATT_SETTLE_DELAY_MS = 250L
         val MAC_ADDRESS_REGEX =
             Regex("^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$")
     }
