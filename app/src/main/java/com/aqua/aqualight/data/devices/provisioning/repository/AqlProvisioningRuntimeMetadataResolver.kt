@@ -23,11 +23,7 @@ class AqlProvisioningRuntimeMetadataResolver(
     ): Result<DeviceSnapshot> {
         return runCatching {
             val events = repository.runtimeEvents()
-
-            if (events == null) {
-                repository.connectRuntime(provisionalSnapshot.deviceUid)
-                return@runCatching provisionalSnapshot
-            }
+                ?: error("Runtime event stream is unavailable; device identity cannot be verified.")
 
             var bestResolvedSnapshot: DeviceSnapshot? = null
 
@@ -132,7 +128,7 @@ class AqlProvisioningRuntimeMetadataResolver(
                         collectorJob.cancel()
                     }
                 }
-            } ?: bestResolvedSnapshot ?: provisionalSnapshot
+            } ?: bestResolvedSnapshot ?: error("Runtime identity and capabilities were not received before timeout.")
         }
     }
 

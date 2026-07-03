@@ -41,23 +41,17 @@ class AqlProvisioningHandoffSaver(
                     uid = handoff.deviceUid,
                     macAddress = draft.bleAddress,
                     serialNumber = draft.deviceSerial,
-                    displayName = resolvedTitle(
-                        handoff = handoff,
-                        draft = draft
-                    )
+                    displayName = resolvedTitle(draft)
                 ),
                 product = DeviceProduct(
                     brand = "AquaLight",
-                    family = DeviceFamily.fromWire(handoff.productFamily),
-                    familyRaw = handoff.productFamily,
-                    model = handoff.productModel.ifBlank { draft.deviceModel },
-                    displayName = resolvedTitle(
-                        handoff = handoff,
-                        draft = draft
-                    )
+                    family = DeviceFamily.UNKNOWN,
+                    familyRaw = "",
+                    model = draft.deviceModel,
+                    displayName = resolvedTitle(draft)
                 ),
-                firmwareVersion = handoff.firmwareVersion,
-                firmwareBuild = handoff.firmwareBuild,
+                firmwareVersion = "",
+                firmwareBuild = "",
                 endpoint = handoff.endpoint,
                 capabilities = DeviceCapabilities(),
                 limits = DeviceLimits(),
@@ -74,20 +68,21 @@ class AqlProvisioningHandoffSaver(
             val resolved = metadataResolver.resolveAndConnect(
                 repository = repository,
                 provisionalSnapshot = registered
-            ).getOrDefault(registered)
+            ).getOrThrow()
+
+            require(resolved.product.family != DeviceFamily.UNKNOWN) {
+                "Runtime device identity did not include a supported product family."
+            }
 
             repository.registerSnapshot(resolved)
         }
     }
 
     private fun resolvedTitle(
-        handoff: AqlProvisioningRuntimeHandoff,
         draft: AqlProvisioningDraft
     ): String {
-        return handoff.productName
-            .ifBlank { draft.deviceTitle }
-            .ifBlank { handoff.productModel }
+        return draft.deviceTitle
             .ifBlank { draft.deviceModel }
-            .ifBlank { handoff.deviceUid.value }
+            .ifBlank { draft.candidateId }
     }
 }
