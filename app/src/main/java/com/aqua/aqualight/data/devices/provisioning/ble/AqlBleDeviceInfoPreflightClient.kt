@@ -12,6 +12,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningDraft
+import java.net.URLDecoder
 import java.util.Locale
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
@@ -384,6 +385,12 @@ class AqlBleDeviceInfoPreflightClient(
                 fields
             }
         }.getOrDefault(emptyMap())
+    }
+
+    private fun decode(value: String): String {
+        return runCatching {
+            URLDecoder.decode(value, Charsets.UTF_8.name())
+        }.getOrDefault(value)
     }
 
     private fun qrField(fields: Map<String, String>, key: String): String =
