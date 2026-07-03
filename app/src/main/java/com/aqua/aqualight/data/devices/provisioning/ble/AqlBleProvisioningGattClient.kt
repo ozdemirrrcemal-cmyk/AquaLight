@@ -64,6 +64,8 @@ class AqlBleProvisioningGattClient(
     @Volatile private var startSessionWritten = false
     @Volatile private var wifiCredentialsWriteStarted = false
     @Volatile private var wifiCredentialsWritten = false
+    @Volatile private var runtimeHandoffReceived = false
+    @Volatile private var runtimeEndpointReadRequested = false
 
     private val operationStartFailures = mutableMapOf<AqlBleGattOperation, Int>()
     private val statusPollRunnable = Runnable { gattQueue.enqueue(AqlBleGattOperation.READ_PROVISIONING_STATUS) }
@@ -103,6 +105,8 @@ class AqlBleProvisioningGattClient(
         startSessionWritten = false
         wifiCredentialsWriteStarted = false
         wifiCredentialsWritten = false
+        runtimeHandoffReceived = false
+        runtimeEndpointReadRequested = false
         operationStartFailures.clear()
         codec.resetSecureSession()
         gattQueue.clear()
@@ -145,6 +149,8 @@ class AqlBleProvisioningGattClient(
         startSessionWritten = false
         wifiCredentialsWriteStarted = false
         wifiCredentialsWritten = false
+        runtimeHandoffReceived = false
+        runtimeEndpointReadRequested = false
         codec.resetSecureSession()
     }
 
@@ -490,20 +496,33 @@ class AqlBleProvisioningGattClient(
     }
 
     private fun handleRuntimeEndpointValue(value: ByteArray, completeReadOperation: Boolean) {
-        val raw = String(value, Charsets.UTF_8).trim()
-        if (raw.isBlank()) {
+        if (runtimeHandoffReceived) {
             if (completeReadOperation) gattQueue.complete(AqlBleGattOperation.READ_RUNTIME_ENDPOINT)
             return
         }
+
+        val raw = String(value, Charsets.UTF_8).trim()
+        if (raw.isBlank()) {
+            runtimeEndpointReadRequested = false
+            if (completeReadOperation) gattQueue.complete(AqlBleGattOperation.READ_RUNTIME_ENDPOINT)
+            scheduleStatusPoll()
+            return
+        }
+
         val fallbackUid = activeDraft?.candidateId.orEmpty()
         val handoff = codec.parseRuntimeHandoff(raw, fallbackUid).getOrElse { error ->
+            runtimeEndpointReadRequested = false
             emit(AqlBleProvisioningGattEvent.Failed(error.message ?: "Runtime endpoint handoff is invalid."))
             if (completeReadOperation) gattQueue.complete(AqlBleGattOperation.READ_RUNTIME_ENDPOINT)
             scheduleStatusPoll()
             return
         }
+
+        runtimeHandoffReceived = true
+        runtimeEndpointReadRequested = false
         emit(AqlBleProvisioningGattEvent.RuntimeHandoffReceived(handoff))
         if (completeReadOperation) gattQueue.complete(AqlBleGattOperation.READ_RUNTIME_ENDPOINT)
+
         if (handoff.isUsable) {
             mainHandler.removeCallbacks(statusPollRunnable)
             emit(AqlBleProvisioningGattEvent.Completed)
@@ -528,9 +547,23 @@ class AqlBleProvisioningGattClient(
             AqlProvisioningStatus.WIFI_CONNECTED -> scheduleStatusPoll()
             AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY -> {
                 mainHandler.removeCallbacks(statusPollRunnable)
-                gattQueue.enqueue(AqlBleGattOperation.READ_RUNTIME_ENDPOINT)
+                if (!runtimeHandoffReceived && !runtimeEndpointReadRequested) {
+                    runtimeEndpointReadRequested = true
+                    gattQueue.enqueue(AqlBleGattOperation.READ_RUNTIME_ENDPOINT)
+                }
             }
-            AqlProvisioningStatus.COMPLETED -> failAndClose("Provisioning completed before RuntimeEndpoint handoff was received.")
+            AqlProvisioningStatus.COMPLETED -> {
+                mainHandler.removeCallbacks(statusPollRunnable)
+                if (runtimeHandoffReceived) {
+                    emit(AqlBleProvisioningGattEvent.Completed)
+                    close()
+                } else if (!runtimeEndpointReadRequested) {
+                    runtimeEndpointReadRequested = true
+                    gattQueue.enqueue(AqlBleGattOperation.READ_RUNTIME_ENDPOINT)
+                } else {
+                    scheduleStatusPoll()
+                }
+            }
             AqlProvisioningStatus.CLAIM_REJECTED,
             AqlProvisioningStatus.WIFI_FAILED,
             AqlProvisioningStatus.ERROR,
