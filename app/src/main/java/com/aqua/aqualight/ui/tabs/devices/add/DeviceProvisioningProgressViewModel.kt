@@ -5,10 +5,12 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningAddressResolver
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningGattClient
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningGattEvent
+import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningStatusMessage
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningDraft
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningRuntimeHandoff
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningStatus
@@ -23,8 +25,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
-import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningStatusMessage
 
 class DeviceProvisioningProgressViewModel(
     application: Application
@@ -46,6 +46,8 @@ class DeviceProvisioningProgressViewModel(
     private var gattEventsJob: Job? = null
     private var handoffSaved = false
     private var handoffReceived = false
+    private var provisioningStopped = false
+    private var setupCompleted = false
     private var startJob: Job? = null
     private var pendingAddedRoute: DeviceRoute? = null
     private var pendingSavedDeviceUid: DeviceUid? = null
@@ -122,6 +124,8 @@ class DeviceProvisioningProgressViewModel(
         startJob?.cancel()
         handoffSaved = false
         handoffReceived = false
+        provisioningStopped = false
+        setupCompleted = false
         pendingAddedRoute = null
         pendingSavedDeviceUid = null
         observeGattEvents()
@@ -233,11 +237,18 @@ class DeviceProvisioningProgressViewModel(
             }
 
             is AqlBleProvisioningGattEvent.Failed -> {
-                rollbackPendingProvisioningRegistration()
+                markProvisioningStopped()
+                _uiState.value = reduceGattEvent(event)
+            }
+
+            AqlBleProvisioningGattEvent.Disconnected -> {
+                if (!setupCompleted) markProvisioningStopped()
                 _uiState.value = reduceGattEvent(event)
             }
 
             AqlBleProvisioningGattEvent.Completed -> {
+                setupCompleted = true
+                provisioningStopped = false
                 val route = pendingAddedRoute
                 if (handoffSaved && route != null) {
                     _uiState.value = _uiState.value.copy(
@@ -353,16 +364,7 @@ class DeviceProvisioningProgressViewModel(
             }
 
             AqlBleProvisioningGattEvent.Disconnected -> {
-                if (handoffSaved && pendingAddedRoute != null) {
-                    _uiState.value.copy(
-                        title = string(R.string.device_provisioning_failed_title),
-                        message = string(R.string.device_provisioning_connection_closed_message),
-                        stepThree = string(R.string.device_provisioning_setup_stopped),
-                        canStart = true,
-                        buttonText = string(R.string.device_provisioning_try_again),
-                        showProgress = false
-                    )
-                } else if (handoffReceived || handoffSaved) {
+                if (setupCompleted) {
                     _uiState.value
                 } else {
                     _uiState.value.copy(
@@ -431,6 +433,11 @@ class DeviceProvisioningProgressViewModel(
             )
 
             result.onSuccess { snapshot ->
+                if (provisioningStopped || setupCompleted) {
+                    handoffSaver.rollbackProvisioningRegistration(snapshot.deviceUid)
+                    return@onSuccess
+                }
+
                 handoffSaved = true
                 pendingSavedDeviceUid = snapshot.deviceUid
 
@@ -558,6 +565,10 @@ class DeviceProvisioningProgressViewModel(
         }
     }
 
+    private fun markProvisioningStopped() {
+        provisioningStopped = true
+        rollbackPendingProvisioningRegistration()
+    }
 
     private fun rollbackPendingProvisioningRegistration() {
         val deviceUid = pendingSavedDeviceUid ?: return
