@@ -49,6 +49,17 @@ class AqlBleProvisioningMessageCodec {
         }
     }
 
+    fun finalizeSetupJson(handoff: AqlProvisioningRuntimeHandoff): Result<String> {
+        return runCatching {
+            val session = secureSession ?: error("Secure BLE provisioning session is not active.")
+            val plaintext = JSONObject()
+                .put(AqlBleProvisioningContract.Json.KEY_DEVICE_UID, handoff.deviceUid.value)
+                .put(AqlBleProvisioningContract.Json.KEY_FINALIZE_ACCEPTED, true)
+                .toString()
+            AqlBleProvisioningCrypto.encryptJson(plaintext, session, PURPOSE_FINALIZE_SETUP)
+        }
+    }
+
     fun parseStatus(raw: String): AqlBleProvisioningStatusMessage {
         val normalizedRaw = raw.trim()
         if (normalizedRaw.isBlank()) {
