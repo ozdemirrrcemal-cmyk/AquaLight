@@ -22,6 +22,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
+import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningStatusMessage
 
 class DeviceProvisioningProgressViewModel(
     application: Application
@@ -287,9 +289,7 @@ class DeviceProvisioningProgressViewModel(
             is AqlBleProvisioningGattEvent.StatusReceived -> {
                 _uiState.value.copy(
                     title = event.statusMessage.status.toProgressTitle(),
-                    message = event.statusMessage.status.toProgressMessage(
-                        fallback = event.statusMessage.message
-                    ),
+                    message = event.statusMessage.toProgressMessage(),
                     stepThree = event.statusMessage.status.toProgressStep(),
                     showProgress = event.statusMessage.status !in terminalStatuses,
                     canStart = event.statusMessage.status in retryStatuses,
@@ -435,6 +435,28 @@ class DeviceProvisioningProgressViewModel(
             AqlProvisioningStatus.ERROR,
             AqlProvisioningStatus.UNKNOWN -> string(R.string.device_provisioning_status_waiting_title)
         }
+    }
+
+    private fun AqlBleProvisioningStatusMessage.toProgressMessage(): String {
+        if (status == AqlProvisioningStatus.WIFI_FAILED) {
+            return when (errorCode) {
+                AqlBleProvisioningContract.ErrorCode.WIFI_AUTH_FAILED ->
+                    string(R.string.device_provisioning_status_wifi_auth_failed_message)
+                AqlBleProvisioningContract.ErrorCode.WIFI_NETWORK_NOT_FOUND ->
+                    string(R.string.device_provisioning_status_wifi_network_not_found_message)
+                AqlBleProvisioningContract.ErrorCode.WIFI_HANDSHAKE_FAILED,
+                AqlBleProvisioningContract.ErrorCode.WIFI_ASSOCIATION_FAILED ->
+                    string(R.string.device_provisioning_status_wifi_router_rejected_message)
+                AqlBleProvisioningContract.ErrorCode.WIFI_TIMEOUT ->
+                    string(R.string.device_provisioning_status_wifi_timeout_message)
+                AqlBleProvisioningContract.ErrorCode.NETWORK_SAVE_FAILED ->
+                    string(R.string.device_provisioning_status_wifi_save_failed_message)
+                else -> message.ifBlank {
+                    string(R.string.device_provisioning_status_wifi_failed_message)
+                }
+            }
+        }
+        return status.toProgressMessage(fallback = message)
     }
 
     private fun AqlProvisioningStatus.toProgressMessage(fallback: String): String {

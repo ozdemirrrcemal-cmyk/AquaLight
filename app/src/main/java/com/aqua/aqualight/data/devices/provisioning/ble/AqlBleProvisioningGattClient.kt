@@ -68,6 +68,7 @@ class AqlBleProvisioningGattClient(
     @Volatile private var runtimeEndpointReadRequested = false
 
     private val operationStartFailures = mutableMapOf<AqlBleGattOperation, Int>()
+    private val readFailures = mutableMapOf<AqlBleGattOperation, Int>()
     private val statusPollRunnable = Runnable { gattQueue.enqueue(AqlBleGattOperation.READ_PROVISIONING_STATUS) }
     private val deviceInfoRetryRunnable = Runnable { gattQueue.enqueue(AqlBleGattOperation.READ_DEVICE_INFO) }
 
@@ -108,6 +109,7 @@ class AqlBleProvisioningGattClient(
         runtimeHandoffReceived = false
         runtimeEndpointReadRequested = false
         operationStartFailures.clear()
+        readFailures.clear()
         codec.resetSecureSession()
         gattQueue.clear()
         mainHandler.removeCallbacks(statusPollRunnable)
@@ -127,6 +129,7 @@ class AqlBleProvisioningGattClient(
         mainHandler.removeCallbacks(deviceInfoRetryRunnable)
         gattQueue.clear()
         operationStartFailures.clear()
+        readFailures.clear()
         val gatt = activeGatt
         activeGatt = null
         runCatching { gatt?.disconnect() }
@@ -297,15 +300,46 @@ class AqlBleProvisioningGattClient(
 
     private fun handleCharacteristicReadValue(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, value: ByteArray, status: Int) {
         if (activeGatt !== gatt) return
+        val operation = readOperationFor(characteristic.uuid)
         if (status != BluetoothGatt.GATT_SUCCESS) {
+            if (operation != null && retryGattReadOrFail(operation, status)) {
+                return
+            }
             failAndClose("BLE read failed with status $status.")
             return
         }
+        if (operation != null) readFailures.remove(operation)
         when (characteristic.uuid) {
             DEVICE_INFO_UUID -> handleDeviceInfoRead(gatt, value)
             PROVISIONING_STATUS_UUID -> handleProvisioningStatusRead(gatt, value)
             RUNTIME_ENDPOINT_UUID -> handleRuntimeEndpointValue(value, completeReadOperation = true)
         }
+    }
+
+    private fun readOperationFor(uuid: UUID): AqlBleGattOperation? {
+        return when (uuid) {
+            DEVICE_INFO_UUID -> AqlBleGattOperation.READ_DEVICE_INFO
+            PROVISIONING_STATUS_UUID -> AqlBleGattOperation.READ_PROVISIONING_STATUS
+            RUNTIME_ENDPOINT_UUID -> AqlBleGattOperation.READ_RUNTIME_ENDPOINT
+            else -> null
+        }
+    }
+
+    private fun retryGattReadOrFail(operation: AqlBleGattOperation, status: Int): Boolean {
+        if (!isRetryableGattStatus(status) || activeGatt == null) return false
+        val attempt = (readFailures[operation] ?: 0) + 1
+        readFailures[operation] = attempt
+        gattQueue.complete(operation)
+        return if (attempt <= MAX_GATT_READ_RETRIES) {
+            gattQueue.enqueueDelayed(operation, GATT_READ_RETRY_DELAY_MS)
+            true
+        } else {
+            false
+        }
+    }
+
+    private fun isRetryableGattStatus(status: Int): Boolean {
+        return status == GATT_STATUS_ERROR || status == GATT_STATUS_CONN_TIMEOUT || status == GATT_STATUS_CONN_TERMINATE_PEER_USER
     }
 
     @SuppressLint("MissingPermission")
@@ -858,6 +892,11 @@ class AqlBleProvisioningGattClient(
         const val DEVICE_INFO_RETRY_DELAY_MS = 350L
         const val GATT_OPERATION_START_RETRY_DELAY_MS = 700L
         const val MAX_GATT_OPERATION_START_RETRIES = 2
+        const val MAX_GATT_READ_RETRIES = 2
+        const val GATT_READ_RETRY_DELAY_MS = 650L
+        const val GATT_STATUS_ERROR = 133
+        const val GATT_STATUS_CONN_TIMEOUT = 8
+        const val GATT_STATUS_CONN_TERMINATE_PEER_USER = 19
         const val DEVICE_INFO_LABEL = "DeviceInfo"
         const val KEY_SERIAL_NUMBER = "serialNumber"
         const val KEY_SHORT_ID = "shortId"

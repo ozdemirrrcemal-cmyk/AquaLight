@@ -173,6 +173,11 @@
     <string name="device_provisioning_status_setup_complete_message">Setup is complete. Opening the device menu.</string>
     <string name="device_provisioning_status_wifi_failed_title">Wi-Fi connection failed</string>
     <string name="device_provisioning_status_wifi_failed_message">The password may be incorrect or the device may not see the 2.4 GHz network. Check the network and password.</string>
+    <string name="device_provisioning_status_wifi_auth_failed_message">Wi‑Fi password appears incorrect. Go back, re-enter the password, then continue.</string>
+    <string name="device_provisioning_status_wifi_network_not_found_message">The device could not see this Wi‑Fi network. Use a 2.4 GHz network and keep the device close to the router.</string>
+    <string name="device_provisioning_status_wifi_router_rejected_message">The router rejected the connection. Check the password, security mode, and 2.4 GHz compatibility.</string>
+    <string name="device_provisioning_status_wifi_timeout_message">The router did not respond in time. Move the device closer and try again.</string>
+    <string name="device_provisioning_status_wifi_save_failed_message">Wi‑Fi connected, but the device could not save the network settings. Try again.</string>
     <string name="device_provisioning_status_claim_rejected_title">Device verification failed</string>
     <string name="device_provisioning_status_claim_rejected_message">The device rejected this setup request. Use QR setup or hold the setup button for 5 seconds and try again.</string>
     <string name="device_provisioning_status_timeout_title">Setup timed out</string>
