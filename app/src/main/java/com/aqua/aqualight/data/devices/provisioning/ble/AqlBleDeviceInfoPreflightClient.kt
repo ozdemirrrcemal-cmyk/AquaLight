@@ -479,6 +479,9 @@ class AqlBleDeviceInfoPreflightClient(
         val DEVICE_INFO_UUID: UUID = UUID.fromString(AqlBleProvisioningContract.DEVICE_INFO_UUID)
         const val PREFLIGHT_TIMEOUT_MS = 12_000L
         const val QR_CANDIDATE_PREFLIGHT_TIMEOUT_MS = 5_000L
+        const val PREFLIGHT_READ_ATTEMPTS = 2
+        const val QR_CANDIDATE_PREFLIGHT_READ_ATTEMPTS = 2
+        const val PREFLIGHT_RETRY_DELAY_MS = 650L
     }
 }
 
