@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.add
 
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningDraft
 import com.aqua.aqualight.data.devices.provisioning.model.AqlWifiCredentials
+import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningBleAddressCache
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
 import java.util.TimeZone
 
@@ -25,7 +26,7 @@ object DeviceWifiProvisioningDraftFactory {
 
             AqlProvisioningDraftStore.create(
                 candidateId = args.candidateId,
-                bleAddress = args.bleAddress,
+                bleAddress = args.bleAddress.ifBlank { AqlProvisioningBleAddressCache.get(args.bleName) },
                 bleName = args.bleName,
                 claimCode = args.claimCode,
                 rawQrPayload = args.rawQrPayload,

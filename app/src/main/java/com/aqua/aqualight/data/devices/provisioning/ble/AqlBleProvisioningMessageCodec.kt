@@ -68,6 +68,8 @@ class AqlBleProvisioningMessageCodec {
             message = json.optString(AqlBleProvisioningContract.Json.KEY_MESSAGE).trim().ifBlank {
                 json.optString(AqlBleProvisioningContract.Json.KEY_LAST_ERROR).trim()
             },
+            errorCode = json.optString(AqlBleProvisioningContract.Json.KEY_ERROR_CODE).trim(),
+            retryable = json.optBoolean(AqlBleProvisioningContract.Json.KEY_RETRYABLE, false),
             raw = raw
         )
     }

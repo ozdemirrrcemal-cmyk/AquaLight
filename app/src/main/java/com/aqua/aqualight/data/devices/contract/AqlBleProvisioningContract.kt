@@ -88,6 +88,8 @@ object AqlBleProvisioningContract {
         const val KEY_STATUS = "status"
         const val KEY_MESSAGE = "message"
         const val KEY_LAST_ERROR = "lastError"
+        const val KEY_ERROR_CODE = "errorCode"
+        const val KEY_RETRYABLE = "retryable"
         const val KEY_TOKEN = "token"
         const val KEY_IP = "ip"
         const val KEY_WS_PORT = "webSocketPort"
@@ -110,5 +112,15 @@ object AqlBleProvisioningContract {
         const val COMPLETED = "completed"
         const val TIMEOUT = "timeout"
         const val ERROR = "error"
+    }
+
+    object ErrorCode {
+        const val WIFI_AUTH_FAILED = "wifiAuthFailed"
+        const val WIFI_NETWORK_NOT_FOUND = "wifiNetworkNotFound"
+        const val WIFI_HANDSHAKE_FAILED = "wifiHandshakeFailed"
+        const val WIFI_ASSOCIATION_FAILED = "wifiAssociationFailed"
+        const val WIFI_TIMEOUT = "wifiTimeout"
+        const val WIFI_CONNECT_FAILED = "wifiConnectFailed"
+        const val NETWORK_SAVE_FAILED = "networkSaveFailed"
     }
 }
