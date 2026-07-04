@@ -158,6 +158,7 @@ class AqlBleProvisioningMessageCodec {
     private companion object {
         const val PURPOSE_WIFI_CREDENTIALS = "wifiCredentials"
         const val PURPOSE_RUNTIME_ENDPOINT = "runtimeEndpoint"
+        const val PURPOSE_FINALIZE_SETUP = "finalizeSetup"
         val RUNTIME_METADATA_KEYS = setOf(
             "productFamily",
             "productName",
