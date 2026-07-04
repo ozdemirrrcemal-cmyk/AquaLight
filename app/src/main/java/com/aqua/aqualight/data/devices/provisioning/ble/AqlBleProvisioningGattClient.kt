@@ -18,6 +18,7 @@ import android.os.Looper
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningDraft
+import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningRuntimeHandoff
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningStatus
 import java.net.URLDecoder
 import java.util.Locale
@@ -52,6 +53,7 @@ class AqlBleProvisioningGattClient(
     @Volatile private var wifiCredentialsCharacteristic: BluetoothGattCharacteristic? = null
     @Volatile private var provisioningStatusCharacteristic: BluetoothGattCharacteristic? = null
     @Volatile private var runtimeEndpointCharacteristic: BluetoothGattCharacteristic? = null
+    @Volatile private var finalizeSetupCharacteristic: BluetoothGattCharacteristic? = null
     @Volatile private var negotiatedMtu = DEFAULT_ATT_MTU
     @Volatile private var deviceInfoVerified = false
     @Volatile private var deviceInfoReadAttempts = 0
@@ -66,6 +68,8 @@ class AqlBleProvisioningGattClient(
     @Volatile private var wifiCredentialsWritten = false
     @Volatile private var runtimeHandoffReceived = false
     @Volatile private var runtimeEndpointReadRequested = false
+    @Volatile private var finalizeSetupWritten = false
+    @Volatile private var pendingFinalizeHandoff: AqlProvisioningRuntimeHandoff? = null
 
     private val operationStartFailures = mutableMapOf<AqlBleGattOperation, Int>()
     private val readFailures = mutableMapOf<AqlBleGattOperation, Int>()
@@ -108,6 +112,8 @@ class AqlBleProvisioningGattClient(
         wifiCredentialsWritten = false
         runtimeHandoffReceived = false
         runtimeEndpointReadRequested = false
+        finalizeSetupWritten = false
+        pendingFinalizeHandoff = null
         operationStartFailures.clear()
         readFailures.clear()
         codec.resetSecureSession()
@@ -121,6 +127,15 @@ class AqlBleProvisioningGattClient(
         } else {
             device.connectGatt(appContext, false, callback)
         }
+    }
+
+    fun finalizeSetup(handoff: AqlProvisioningRuntimeHandoff) {
+        if (activeGatt == null || !runtimeHandoffReceived) {
+            emit(AqlBleProvisioningGattEvent.Failed("BLE setup confirmation cannot be sent because the runtime handoff is not active."))
+            return
+        }
+        pendingFinalizeHandoff = handoff
+        gattQueue.enqueue(AqlBleGattOperation.WRITE_FINALIZE_SETUP)
     }
 
     @SuppressLint("MissingPermission")
@@ -140,6 +155,7 @@ class AqlBleProvisioningGattClient(
         wifiCredentialsCharacteristic = null
         provisioningStatusCharacteristic = null
         runtimeEndpointCharacteristic = null
+        finalizeSetupCharacteristic = null
         negotiatedMtu = DEFAULT_ATT_MTU
         deviceInfoVerified = false
         deviceInfoReadAttempts = 0
@@ -154,6 +170,8 @@ class AqlBleProvisioningGattClient(
         wifiCredentialsWritten = false
         runtimeHandoffReceived = false
         runtimeEndpointReadRequested = false
+        finalizeSetupWritten = false
+        pendingFinalizeHandoff = null
         codec.resetSecureSession()
     }
 
@@ -191,8 +209,9 @@ class AqlBleProvisioningGattClient(
             wifiCredentialsCharacteristic = service.getCharacteristic(WIFI_CREDENTIALS_UUID)
             provisioningStatusCharacteristic = service.getCharacteristic(PROVISIONING_STATUS_UUID)
             runtimeEndpointCharacteristic = service.getCharacteristic(RUNTIME_ENDPOINT_UUID)
+            finalizeSetupCharacteristic = service.getCharacteristic(FINALIZE_SETUP_UUID)
             if (deviceInfoCharacteristic == null || startSessionCharacteristic == null || wifiCredentialsCharacteristic == null ||
-                provisioningStatusCharacteristic == null || runtimeEndpointCharacteristic == null) {
+                provisioningStatusCharacteristic == null || runtimeEndpointCharacteristic == null || finalizeSetupCharacteristic == null) {
                 failAndClose("Required provisioning characteristics were not found.")
                 return
             }
@@ -250,6 +269,14 @@ class AqlBleProvisioningGattClient(
                     gattQueue.enqueue(AqlBleGattOperation.READ_PROVISIONING_STATUS)
                     scheduleStatusPoll()
                 }
+                FINALIZE_SETUP_UUID -> {
+                    finalizeSetupWritten = true
+                    operationStartFailures.remove(AqlBleGattOperation.WRITE_FINALIZE_SETUP)
+                    emit(AqlBleProvisioningGattEvent.FinalizeSetupWritten)
+                    gattQueue.complete(AqlBleGattOperation.WRITE_FINALIZE_SETUP)
+                    emit(AqlBleProvisioningGattEvent.Completed)
+                    close()
+                }
             }
         }
 
@@ -283,6 +310,7 @@ class AqlBleProvisioningGattClient(
             AqlBleGattOperation.WRITE_WIFI_CREDENTIALS -> writeWifiCredentials(gatt)
             AqlBleGattOperation.READ_PROVISIONING_STATUS -> readProvisioningStatus(gatt)
             AqlBleGattOperation.READ_RUNTIME_ENDPOINT -> readRuntimeEndpoint(gatt)
+            AqlBleGattOperation.WRITE_FINALIZE_SETUP -> writeFinalizeSetup(gatt)
         }
         if (result is AqlBleGattOperationStartResult.Started) operationStartFailures.remove(operation)
         return result
@@ -481,6 +509,22 @@ class AqlBleProvisioningGattClient(
         return result
     }
 
+    private fun writeFinalizeSetup(gatt: BluetoothGatt): AqlBleGattOperationStartResult {
+        if (!runtimeHandoffReceived) {
+            failAndClose("RuntimeEndpoint handoff must be received before setup is finalized.")
+            return gattStarted()
+        }
+        if (finalizeSetupWritten) return gattStarted()
+        val handoff = pendingFinalizeHandoff ?: return gattNotStarted("RuntimeEndpoint handoff is missing for setup confirmation.", retryable = true)
+        val characteristic = finalizeSetupCharacteristic ?: return gattNotStarted("FinalizeSetup characteristic is missing.")
+        val encryptedPayload = codec.finalizeSetupJson(handoff).getOrElse { error ->
+            failAndClose(error.message ?: "Secure setup confirmation could not be prepared.")
+            return gattStarted()
+        }
+        mainHandler.removeCallbacks(statusPollRunnable)
+        return writeString(gatt, characteristic, encryptedPayload, "FinalizeSetup")
+    }
+
     @SuppressLint("MissingPermission")
     private fun readProvisioningStatus(gatt: BluetoothGatt): AqlBleGattOperationStartResult {
         val characteristic = provisioningStatusCharacteristic ?: return gattNotStarted("ProvisioningStatus characteristic is missing.")
@@ -559,8 +603,6 @@ class AqlBleProvisioningGattClient(
 
         if (handoff.isUsable) {
             mainHandler.removeCallbacks(statusPollRunnable)
-            emit(AqlBleProvisioningGattEvent.Completed)
-            close()
         } else {
             scheduleStatusPoll()
         }
@@ -579,6 +621,7 @@ class AqlBleProvisioningGattClient(
             AqlProvisioningStatus.WIFI_CREDENTIALS_RECEIVED,
             AqlProvisioningStatus.WIFI_CONNECTING,
             AqlProvisioningStatus.WIFI_CONNECTED -> scheduleStatusPoll()
+            AqlProvisioningStatus.FINALIZING -> scheduleStatusPoll()
             AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY -> {
                 mainHandler.removeCallbacks(statusPollRunnable)
                 if (!runtimeHandoffReceived && !runtimeEndpointReadRequested) {
@@ -588,7 +631,7 @@ class AqlBleProvisioningGattClient(
             }
             AqlProvisioningStatus.COMPLETED -> {
                 mainHandler.removeCallbacks(statusPollRunnable)
-                if (runtimeHandoffReceived) {
+                if (runtimeHandoffReceived && finalizeSetupWritten) {
                     emit(AqlBleProvisioningGattEvent.Completed)
                     close()
                 } else if (!runtimeEndpointReadRequested) {
@@ -916,6 +959,7 @@ class AqlBleProvisioningGattClient(
         val WIFI_CREDENTIALS_UUID: UUID = UUID.fromString(AqlBleProvisioningContract.WIFI_CREDENTIALS_UUID)
         val PROVISIONING_STATUS_UUID: UUID = UUID.fromString(AqlBleProvisioningContract.PROVISIONING_STATUS_UUID)
         val RUNTIME_ENDPOINT_UUID: UUID = UUID.fromString(AqlBleProvisioningContract.RUNTIME_ENDPOINT_UUID)
+        val FINALIZE_SETUP_UUID: UUID = UUID.fromString(AqlBleProvisioningContract.FINALIZE_SETUP_UUID)
         val CLIENT_CHARACTERISTIC_CONFIG_UUID: UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
     }
 }

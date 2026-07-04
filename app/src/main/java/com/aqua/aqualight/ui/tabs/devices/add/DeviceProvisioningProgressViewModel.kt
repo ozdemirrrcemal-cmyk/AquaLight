@@ -46,6 +46,7 @@ class DeviceProvisioningProgressViewModel(
     private var handoffSaved = false
     private var handoffReceived = false
     private var startJob: Job? = null
+    private var pendingAddedRoute: DeviceRoute? = null
 
     fun bind(sessionId: String) {
         if (sessionId.isBlank() || boundSessionId == sessionId) {
@@ -119,6 +120,7 @@ class DeviceProvisioningProgressViewModel(
         startJob?.cancel()
         handoffSaved = false
         handoffReceived = false
+        pendingAddedRoute = null
         observeGattEvents()
 
         startJob = viewModelScope.launch {
@@ -206,6 +208,17 @@ class DeviceProvisioningProgressViewModel(
 
     private fun handleGattEvent(event: AqlBleProvisioningGattEvent) {
         when (event) {
+            AqlBleProvisioningGattEvent.FinalizeSetupWritten -> {
+                _uiState.value = _uiState.value.copy(
+                    title = string(R.string.device_provisioning_setup_complete_title),
+                    message = string(R.string.device_provisioning_details_received_message),
+                    stepThree = string(R.string.device_provisioning_step_setup_complete),
+                    canStart = false,
+                    buttonText = string(R.string.device_provisioning_opening),
+                    showProgress = true
+                )
+            }
+
             is AqlBleProvisioningGattEvent.RuntimeHandoffReceived -> {
                 handoffReceived = true
                 renderRuntimeHandoffReceived(event.handoff)
@@ -217,7 +230,21 @@ class DeviceProvisioningProgressViewModel(
             }
 
             AqlBleProvisioningGattEvent.Completed -> {
-                if (!handoffSaved) {
+                val route = pendingAddedRoute
+                if (handoffSaved && route != null) {
+                    _uiState.value = _uiState.value.copy(
+                        title = string(R.string.device_provisioning_added_title),
+                        message = string(R.string.device_provisioning_added_message_format, _uiState.value.deviceName),
+                        stepThree = string(R.string.device_provisioning_opening_menu_step),
+                        canStart = false,
+                        buttonText = string(R.string.device_provisioning_opening),
+                        showProgress = true
+                    )
+                    pendingAddedRoute = null
+                    viewModelScope.launch {
+                        _events.send(DeviceProvisioningProgressEvent.OpenAddedDevice(route))
+                    }
+                } else if (!handoffSaved) {
                     _uiState.value = _uiState.value.copy(
                         title = string(R.string.device_provisioning_setup_complete_title),
                         message = string(R.string.device_provisioning_details_received_message),
@@ -300,6 +327,7 @@ class DeviceProvisioningProgressViewModel(
             is AqlBleProvisioningGattEvent.DeviceInfoVerified -> _uiState.value
             is AqlBleProvisioningGattEvent.RuntimeHandoffReceived -> _uiState.value
             AqlBleProvisioningGattEvent.Completed -> _uiState.value
+            AqlBleProvisioningGattEvent.FinalizeSetupWritten -> _uiState.value
 
             is AqlBleProvisioningGattEvent.Failed -> {
                 _uiState.value.copy(
@@ -313,7 +341,16 @@ class DeviceProvisioningProgressViewModel(
             }
 
             AqlBleProvisioningGattEvent.Disconnected -> {
-                if (handoffReceived || handoffSaved) {
+                if (handoffSaved && pendingAddedRoute != null) {
+                    _uiState.value.copy(
+                        title = string(R.string.device_provisioning_failed_title),
+                        message = string(R.string.device_provisioning_connection_closed_message),
+                        stepThree = string(R.string.device_provisioning_setup_stopped),
+                        canStart = true,
+                        buttonText = string(R.string.device_provisioning_try_again),
+                        showProgress = false
+                    )
+                } else if (handoffReceived || handoffSaved) {
                     _uiState.value
                 } else {
                     _uiState.value.copy(
@@ -392,18 +429,18 @@ class DeviceProvisioningProgressViewModel(
                     requestedDeviceUid = snapshot.deviceUid.value
                 )
 
+                pendingAddedRoute = route
+
                 _uiState.value = _uiState.value.copy(
-                    title = string(R.string.device_provisioning_added_title),
-                    message = string(R.string.device_provisioning_added_message_format, snapshot.title),
-                    stepThree = string(R.string.device_provisioning_opening_menu_step),
+                    title = string(R.string.device_provisioning_setup_complete_title),
+                    message = string(R.string.device_provisioning_details_received_message),
+                    stepThree = string(R.string.device_provisioning_preparing_menu_step),
                     canStart = false,
-                    buttonText = string(R.string.device_provisioning_opening),
+                    buttonText = string(R.string.device_provisioning_saving),
                     showProgress = true
                 )
 
-                _events.send(
-                    DeviceProvisioningProgressEvent.OpenAddedDevice(route)
-                )
+                gattClient.finalizeSetup(handoff)
             }.onFailure { error ->
                 _uiState.value = _uiState.value.copy(
                     title = string(R.string.device_provisioning_save_failed_title),
@@ -428,6 +465,7 @@ class DeviceProvisioningProgressViewModel(
             AqlProvisioningStatus.WIFI_CONNECTING -> string(R.string.device_provisioning_status_wifi_connecting_title)
             AqlProvisioningStatus.WIFI_CONNECTED -> string(R.string.device_provisioning_status_wifi_connected_title)
             AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY -> string(R.string.device_provisioning_device_online_title)
+            AqlProvisioningStatus.FINALIZING -> string(R.string.device_provisioning_setup_complete_title)
             AqlProvisioningStatus.COMPLETED -> string(R.string.device_provisioning_setup_complete_title)
             AqlProvisioningStatus.WIFI_FAILED -> string(R.string.device_provisioning_status_wifi_failed_title)
             AqlProvisioningStatus.CLAIM_REJECTED -> string(R.string.device_provisioning_status_claim_rejected_title)
@@ -470,6 +508,7 @@ class DeviceProvisioningProgressViewModel(
             AqlProvisioningStatus.WIFI_CONNECTING -> string(R.string.device_provisioning_status_wifi_connecting_message)
             AqlProvisioningStatus.WIFI_CONNECTED -> string(R.string.device_provisioning_status_wifi_connected_message)
             AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY -> string(R.string.device_provisioning_status_runtime_ready_message)
+            AqlProvisioningStatus.FINALIZING -> string(R.string.device_provisioning_details_received_message)
             AqlProvisioningStatus.COMPLETED -> string(R.string.device_provisioning_status_setup_complete_message)
             AqlProvisioningStatus.WIFI_FAILED -> string(R.string.device_provisioning_status_wifi_failed_message)
             AqlProvisioningStatus.CLAIM_REJECTED -> string(R.string.device_provisioning_status_claim_rejected_message)
@@ -487,6 +526,7 @@ class DeviceProvisioningProgressViewModel(
             AqlProvisioningStatus.WIFI_CONNECTING -> string(R.string.device_provisioning_wifi_connecting_step)
             AqlProvisioningStatus.WIFI_CONNECTED -> string(R.string.device_provisioning_step_wifi_success)
             AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY -> string(R.string.device_provisioning_preparing_menu_step)
+            AqlProvisioningStatus.FINALIZING -> string(R.string.device_provisioning_preparing_menu_step)
             AqlProvisioningStatus.COMPLETED -> string(R.string.device_provisioning_step_setup_complete)
             AqlProvisioningStatus.WIFI_FAILED -> string(R.string.device_provisioning_step_wifi_failed)
             AqlProvisioningStatus.CLAIM_REJECTED -> string(R.string.device_provisioning_step_verification_failed)
