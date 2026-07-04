@@ -197,6 +197,14 @@ class DevicesRepository(
         update: (DeviceConnectionState) -> DeviceConnectionState
     ): DeviceSnapshot? = registryStore.updateConnectionState(deviceUid, update)
 
+    suspend fun removeProvisioningRegistration(deviceUid: DeviceUid): Boolean {
+        runtimeRepository?.clearTokenAsync(deviceUid)
+        val removed = registryStore.remove(deviceUid)
+        runtimeRepository?.close(deviceUid)
+        knownStore?.remove(deviceUid)
+        return removed
+    }
+
     suspend fun forgetDevice(deviceUid: DeviceUid): Boolean {
         runtimeRepository?.clearTokenAsync(deviceUid)
         val removed = registryStore.remove(deviceUid)

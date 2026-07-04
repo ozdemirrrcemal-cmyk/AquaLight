@@ -9,6 +9,7 @@ import com.aqua.aqualight.data.devices.model.DeviceLimits
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceProduct
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
+import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningDraft
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningRuntimeHandoff
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
@@ -75,6 +76,14 @@ class AqlProvisioningHandoffSaver(
             }
 
             repository.registerSnapshot(resolved)
+        }
+    }
+
+    suspend fun rollbackProvisioningRegistration(deviceUid: DeviceUid): Result<Unit> {
+        return runCatching {
+            val repository = DevicesRepositoryProvider.get(appContext)
+            repository.removeProvisioningRegistration(deviceUid)
+            Unit
         }
     }
 

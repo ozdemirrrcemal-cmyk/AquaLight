@@ -274,8 +274,8 @@ class AqlBleProvisioningGattClient(
                     operationStartFailures.remove(AqlBleGattOperation.WRITE_FINALIZE_SETUP)
                     emit(AqlBleProvisioningGattEvent.FinalizeSetupWritten)
                     gattQueue.complete(AqlBleGattOperation.WRITE_FINALIZE_SETUP)
-                    emit(AqlBleProvisioningGattEvent.Completed)
-                    close()
+                    gattQueue.enqueue(AqlBleGattOperation.READ_PROVISIONING_STATUS)
+                    scheduleStatusPoll()
                 }
             }
         }

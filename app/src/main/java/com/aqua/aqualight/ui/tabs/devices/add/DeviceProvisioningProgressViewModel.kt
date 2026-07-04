@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningAddressResolver
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningGattClient
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningGattEvent
@@ -47,6 +48,7 @@ class DeviceProvisioningProgressViewModel(
     private var handoffReceived = false
     private var startJob: Job? = null
     private var pendingAddedRoute: DeviceRoute? = null
+    private var pendingSavedDeviceUid: DeviceUid? = null
 
     fun bind(sessionId: String) {
         if (sessionId.isBlank() || boundSessionId == sessionId) {
@@ -121,6 +123,7 @@ class DeviceProvisioningProgressViewModel(
         handoffSaved = false
         handoffReceived = false
         pendingAddedRoute = null
+        pendingSavedDeviceUid = null
         observeGattEvents()
 
         startJob = viewModelScope.launch {
@@ -229,6 +232,11 @@ class DeviceProvisioningProgressViewModel(
                 renderDeviceInfoVerified(event)
             }
 
+            is AqlBleProvisioningGattEvent.Failed -> {
+                rollbackPendingProvisioningRegistration()
+                _uiState.value = reduceGattEvent(event)
+            }
+
             AqlBleProvisioningGattEvent.Completed -> {
                 val route = pendingAddedRoute
                 if (handoffSaved && route != null) {
@@ -240,6 +248,10 @@ class DeviceProvisioningProgressViewModel(
                         buttonText = string(R.string.device_provisioning_opening),
                         showProgress = true
                     )
+                    boundSessionId?.let { sessionId ->
+                        AqlProvisioningDraftStore.remove(sessionId)
+                    }
+                    pendingSavedDeviceUid = null
                     pendingAddedRoute = null
                     viewModelScope.launch {
                         _events.send(DeviceProvisioningProgressEvent.OpenAddedDevice(route))
@@ -420,9 +432,7 @@ class DeviceProvisioningProgressViewModel(
 
             result.onSuccess { snapshot ->
                 handoffSaved = true
-                boundSessionId?.let { sessionId ->
-                    AqlProvisioningDraftStore.remove(sessionId)
-                }
+                pendingSavedDeviceUid = snapshot.deviceUid
 
                 val route = routeResolver.resolve(
                     snapshot = snapshot,
@@ -545,6 +555,17 @@ class DeviceProvisioningProgressViewModel(
                 string(R.string.device_provisioning_error_wifi_failed)
             normalized.isNotBlank() -> normalized
             else -> string(R.string.device_provisioning_error_unexpected)
+        }
+    }
+
+
+    private fun rollbackPendingProvisioningRegistration() {
+        val deviceUid = pendingSavedDeviceUid ?: return
+        pendingSavedDeviceUid = null
+        pendingAddedRoute = null
+        handoffSaved = false
+        viewModelScope.launch {
+            handoffSaver.rollbackProvisioningRegistration(deviceUid)
         }
     }
 
