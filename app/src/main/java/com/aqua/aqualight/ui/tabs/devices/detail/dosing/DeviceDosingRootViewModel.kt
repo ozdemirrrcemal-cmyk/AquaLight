@@ -7,14 +7,9 @@ import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.ui.common.devicepresence.DevicePresencePresentationMapper
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingStatusParser
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootMenuMapper
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,12 +26,6 @@ class DeviceDosingRootViewModel(
 
     private var boundDeviceUid: DeviceUid? = null
     private var observeJob: Job? = null
-    private var runtimeStatusJob: Job? = null
-    private var pendingStatusRequestId: String = ""
-
-    private var runtimePrimaryCountText: String? = null
-    private var runtimePrimaryPlaceholder: String? = null
-    private var runtimeSecondaryPlaceholder: String? = null
 
     fun bind(
         deviceUidText: String,
@@ -44,8 +33,6 @@ class DeviceDosingRootViewModel(
     ) {
         if (deviceUidText.isBlank()) {
             observeJob?.cancel()
-            runtimeStatusJob?.cancel()
-            clearRuntimeOverlay()
 
             _uiState.value = DeviceDosingRootUiState(
                 title = fallbackTitle.ifBlank { DEFAULT_TITLE },
@@ -67,8 +54,7 @@ class DeviceDosingRootViewModel(
 
         boundDeviceUid = deviceUid
         observeJob?.cancel()
-        runtimeStatusJob?.cancel()
-        clearRuntimeOverlay()
+        repository.connectRuntime(deviceUid)
 
         _uiState.value = DeviceDosingRootUiState(
             title = fallbackTitle.ifBlank { DEFAULT_TITLE },
@@ -96,129 +82,9 @@ class DeviceDosingRootViewModel(
                             secondarySectionTitle = KIND.secondarySectionTitle,
                             secondarySectionPlaceholder = KIND.secondarySectionPlaceholder
                         )
-                    ).withRuntimeOverlay()
-            }
-        }
-
-        runtimeStatusJob = viewModelScope.launch {
-            observeRuntimeStatus(deviceUid)
-        }
-    }
-
-    private suspend fun observeRuntimeStatus(deviceUid: DeviceUid) {
-        val events = repository.runtimeEvents()
-        if (events == null) {
-            updateRuntimeOverlay(
-                primaryPlaceholder = "$DEFAULT_TITLE runtime WebSocket repository is not configured."
-            )
-            return
-        }
-
-        coroutineScope {
-            launch {
-                repository.connectRuntime(deviceUid)
-                delay(800L)
-
-                val result = repository.runtimeModules()?.dosing?.requestStatus(deviceUid)
-
-                pendingStatusRequestId = result?.messageId.orEmpty()
-
-                if (result?.isSuccess == true && pendingStatusRequestId.isNotBlank()) {
-                    updateRuntimeOverlay(
-                        primaryPlaceholder = "$DEFAULT_TITLE runtime status requested..."
                     )
-                } else {
-                    updateRuntimeOverlay(
-                        primaryPlaceholder = "$DEFAULT_TITLE runtime status request could not be sent."
-                    )
-                }
-            }
-
-            events.collect { event ->
-                handleRuntimeEvent(
-                    deviceUid = deviceUid,
-                    event = event
-                )
             }
         }
-    }
-
-    private fun handleRuntimeEvent(
-        deviceUid: DeviceUid,
-        event: AqlWsEvent
-    ) {
-        if (event.deviceUid != deviceUid) return
-
-        val message = (event as? AqlWsEvent.Message)
-            ?.parsed
-            ?: return
-
-        val statusRequestId = pendingStatusRequestId
-        if (statusRequestId.isBlank() || message.id != statusRequestId) {
-            return
-        }
-
-        when (message) {
-            is AqlWsIncomingMessage.Response -> {
-                if (!message.ok) {
-                    updateRuntimeStatusError(
-                        statusCode = message.statusCode,
-                        message = "Runtime status request failed."
-                    )
-                    return
-                }
-
-                val data = message.json.optJSONObject("data") ?: message.json
-                val status = DeviceDosingStatusParser.parse(data)
-
-                updateRuntimeOverlay(
-                    primaryCountText = status.channelCount.toString(),
-                    primaryPlaceholder = "Runtime pumps: ${status.channelCount}, schedules: ${status.scheduleCount}, unit: ${status.unit}",
-                    secondaryPlaceholder = "Prime: ${status.runtime.supportsPrime}, calibration: ${status.runtime.supportsCalibrationWorkflow}, refill: ${status.runtime.supportsReservoirRefill}"
-                )
-            }
-
-            is AqlWsIncomingMessage.Error -> {
-                updateRuntimeOverlay(primaryPlaceholder = "$DEFAULT_TITLE runtime status error: ${message.statusCode} ${message.message}".trim())
-            }
-
-            else -> Unit
-        }
-    }
-
-    private fun updateRuntimeStatusError(
-        statusCode: Int,
-        message: String
-    ) {
-        val errorText = "$DEFAULT_TITLE runtime status error: $statusCode $message".trim()
-        updateRuntimeOverlay(primaryPlaceholder = errorText)
-    }
-
-    private fun updateRuntimeOverlay(
-        primaryCountText: String? = null,
-        primaryPlaceholder: String? = null,
-        secondaryPlaceholder: String? = null
-    ) {
-        if (primaryCountText != null) runtimePrimaryCountText = primaryCountText
-        if (primaryPlaceholder != null) runtimePrimaryPlaceholder = primaryPlaceholder
-        if (secondaryPlaceholder != null) runtimeSecondaryPlaceholder = secondaryPlaceholder
-
-        _uiState.value = _uiState.value.withRuntimeOverlay()
-    }
-
-    private fun clearRuntimeOverlay() {
-        pendingStatusRequestId = ""
-        runtimePrimaryCountText = null
-        runtimePrimaryPlaceholder = null
-        runtimeSecondaryPlaceholder = null
-    }
-
-    private fun DeviceDosingRootUiState.withRuntimeOverlay(): DeviceDosingRootUiState {
-        return copy(
-            primaryCountText = runtimePrimaryCountText ?: primaryCountText,
-            primarySectionPlaceholder = runtimePrimaryPlaceholder ?: primarySectionPlaceholder,
-            secondarySectionPlaceholder = runtimeSecondaryPlaceholder ?: secondarySectionPlaceholder
-        )
     }
 
     private fun DeviceSnapshot.toRootUiState(fallbackTitle: String): DeviceDosingRootUiState {
