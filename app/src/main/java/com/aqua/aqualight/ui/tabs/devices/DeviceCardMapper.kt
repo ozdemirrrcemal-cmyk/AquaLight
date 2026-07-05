@@ -101,18 +101,18 @@ object DeviceCardMapper {
     }
 
     private fun statusFor(onlineState: DeviceOnlineState): StatusPresentation = when (onlineState) {
-        DeviceOnlineState.AUTHENTICATED -> StatusPresentation("ONLINE", DeviceCardUi.StatusStyle.ONLINE)
+        DeviceOnlineState.AUTHENTICATED,
         DeviceOnlineState.ONLINE_LAN -> StatusPresentation("ONLINE", DeviceCardUi.StatusStyle.ONLINE)
-        DeviceOnlineState.CONNECTING_WS -> StatusPresentation("CONNECTING", DeviceCardUi.StatusStyle.CONNECTING)
-        DeviceOnlineState.DISCOVERING -> StatusPresentation("DISCOVERING", DeviceCardUi.StatusStyle.CONNECTING)
-        DeviceOnlineState.STALE -> StatusPresentation("STALE", DeviceCardUi.StatusStyle.WARNING)
-        DeviceOnlineState.AUTH_REQUIRED -> StatusPresentation("AUTH", DeviceCardUi.StatusStyle.WARNING)
+        DeviceOnlineState.CONNECTING_WS,
+        DeviceOnlineState.DISCOVERING,
+        DeviceOnlineState.UNKNOWN -> StatusPresentation("CONNECTING", DeviceCardUi.StatusStyle.CONNECTING)
+        DeviceOnlineState.AUTH_REQUIRED -> StatusPresentation("ACTION", DeviceCardUi.StatusStyle.WARNING)
         DeviceOnlineState.PROVISIONING -> StatusPresentation("SETUP", DeviceCardUi.StatusStyle.WARNING)
         DeviceOnlineState.OTA_UPDATING -> StatusPresentation("UPDATING", DeviceCardUi.StatusStyle.WARNING)
-        DeviceOnlineState.LOCAL_NETWORK_OFFLINE -> StatusPresentation("NO LAN", DeviceCardUi.StatusStyle.OFFLINE)
+        DeviceOnlineState.STALE,
+        DeviceOnlineState.LOCAL_NETWORK_OFFLINE,
         DeviceOnlineState.OFFLINE -> StatusPresentation("OFFLINE", DeviceCardUi.StatusStyle.OFFLINE)
         DeviceOnlineState.ERROR -> StatusPresentation("ERROR", DeviceCardUi.StatusStyle.OFFLINE)
-        DeviceOnlineState.UNKNOWN -> StatusPresentation("UNKNOWN", DeviceCardUi.StatusStyle.WARNING)
     }
 
     private fun lastSeenText(lastSeenAtMillis: Long, nowMillis: Long): String {
