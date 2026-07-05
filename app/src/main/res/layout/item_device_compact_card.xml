@@ -107,28 +107,21 @@
 
         <FrameLayout
             android:id="@+id/trailingContainer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minWidth="76dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
-            <TextView
-                android:id="@+id/tvStatusChip"
-                android:layout_width="wrap_content"
-                android:layout_height="30dp"
+            <ImageView
+                android:id="@+id/ivPresenceIcon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:layout_gravity="center"
-                android:background="@drawable/bg_device_compact_status_chip"
-                android:gravity="center"
-                android:includeFontPadding="false"
-                android:minWidth="76dp"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:textColor="#5FD6B4"
-                android:textSize="11.5sp"
-                android:textStyle="bold"
-                tools:text="ONLINE" />
+                android:contentDescription="@string/app_name"
+                android:src="@drawable/ic_status_wifi"
+                app:tint="#5FD6B4"
+                tools:tint="#5FD6B4" />
 
             <TextView
                 android:id="@+id/tvCardAction"
@@ -145,7 +138,7 @@
                 android:textStyle="bold"
                 android:visibility="gone"
                 tools:text="Add"
-                tools:visibility="visible" />
+                tools:visibility="gone" />
 
         </FrameLayout>
 
