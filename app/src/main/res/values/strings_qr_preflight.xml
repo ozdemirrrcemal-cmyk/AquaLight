@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_qr_preflight_checking_title">Verifying QR device</string>
+    <string name="device_qr_preflight_checking_message">Checking that this QR code matches the nearby AquaLight device.</string>
+    <string name="device_qr_preflight_scan_again">Scan again</string>
+    <string name="device_qr_preflight_bluetooth_permission_title">Bluetooth permission required</string>
+    <string name="device_qr_preflight_bluetooth_permission_message">Allow Bluetooth access to verify the QR device before Wi-Fi setup.</string>
+    <string name="device_qr_preflight_invalid_title">This is not an AquaLight QR code.</string>
+    <string name="device_qr_preflight_invalid_message">Please scan the QR code on the device label.</string>
+    <string name="device_qr_preflight_not_found_title">Device not found.</string>
+    <string name="device_qr_preflight_not_found_message">Make sure the device is powered on and in setup mode.</string>
+    <string name="device_qr_preflight_not_setup_title">Device is not in setup mode.</string>
+    <string name="device_qr_preflight_not_setup_message">Hold SETUP/RESET for 5 seconds, then try again.</string>
+    <string name="device_qr_preflight_mismatch_title">This QR code does not match the nearby device.</string>
+    <string name="device_qr_preflight_mismatch_message">Scan the correct QR code on the device label.</string>
+    <string name="device_qr_preflight_already_added_title">This device is already added.</string>
+    <string name="device_qr_preflight_already_added_message">No duplicate device was created.</string>
+</resources>
