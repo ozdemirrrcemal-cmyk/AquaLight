@@ -23,14 +23,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-/**
- * Canonical Devices V2 repository boundary.
- *
- * UI code should use this class instead of reaching into UDP, BLE or WebSocket layers.
- * UDP discovery, runtime WebSocket state and BLE provisioning all converge into the same device
- * registry. A single process-level presence monitor keeps every UI surface live from the same
- * snapshot stream.
- */
 class DevicesRepository(
     private val discoveryRepository: DeviceDiscoveryRepository = DeviceDiscoveryRepository(),
     private val registryStore: DeviceRegistryStore = DeviceRegistryStore(),
@@ -53,7 +45,6 @@ class DevicesRepository(
     private var startJob: Job? = null
 
     val snapshots: StateFlow<Map<DeviceUid, DeviceSnapshot>> = registryStore.snapshots
-
     val devices: Flow<List<DeviceSnapshot>> = registryStore.devices
 
     fun observeDevice(deviceUid: DeviceUid): Flow<DeviceSnapshot?> =
@@ -64,14 +55,9 @@ class DevicesRepository(
 
     fun currentDevices(): List<DeviceSnapshot> = registryStore.currentDevices()
 
-    /**
-     * Starts UDP discovery, runtime observers and the central live presence engine.
-     */
     fun start(scope: CoroutineScope): Job {
         val activeJob = startJob
-        if (activeJob?.isActive == true) {
-            return activeJob
-        }
+        if (activeJob?.isActive == true) return activeJob
 
         return synchronized(this) {
             val currentJob = startJob
@@ -118,9 +104,7 @@ class DevicesRepository(
                 }.also { job ->
                     startJob = job
                     job.invokeOnCompletion {
-                        if (startJob == job) {
-                            startJob = null
-                        }
+                        if (startJob == job) startJob = null
                     }
                 }
             }
@@ -144,37 +128,22 @@ class DevicesRepository(
     fun connectRuntime(deviceUid: DeviceUid): Result<Unit> {
         val runtime = runtimeRepository
             ?: return Result.failure(IllegalStateException("Device runtime is not configured."))
-
         val snapshot = registryStore.currentDevice(deviceUid)
-            ?: return Result.failure(IllegalArgumentException("Device ${deviceUid.value} is not registered."))
-
+            ?: return Result.failure(IllegalArgumentException("Device is not registered."))
         return runtime.connect(snapshot)
     }
 
-    fun commandClient(): AqlWsCommandClient? {
-        return runtimeRepository?.commandClient()
-    }
+    fun commandClient(): AqlWsCommandClient? = runtimeRepository?.commandClient()
 
-    fun commandClient(deviceUid: DeviceUid): AqlWsCommandClient? {
-        return runtimeRepository?.commandClient(deviceUid)
-    }
+    fun commandClient(deviceUid: DeviceUid): AqlWsCommandClient? =
+        runtimeRepository?.commandClient(deviceUid)
 
-    fun runtimeModules(): DeviceRuntimeModuleProvider? {
-        return runtimeRepository?.runtimeModules
-    }
+    fun runtimeModules(): DeviceRuntimeModuleProvider? = runtimeRepository?.runtimeModules
 
-    fun runtimeEvents(): SharedFlow<AqlWsEvent>? {
-        return runtimeRepository?.events
-    }
+    fun runtimeEvents(): SharedFlow<AqlWsEvent>? = runtimeRepository?.events
 
-    suspend fun saveRuntimeToken(
-        deviceUid: DeviceUid,
-        token: String
-    ) {
-        runtimeRepository?.saveToken(
-            deviceUid = deviceUid,
-            token = token
-        )
+    suspend fun saveRuntimeToken(deviceUid: DeviceUid, token: String) {
+        runtimeRepository?.saveToken(deviceUid = deviceUid, token = token)
     }
 
     suspend fun clearRuntimeToken(deviceUid: DeviceUid) {
@@ -256,7 +225,6 @@ class DevicesRepository(
     private suspend fun filterIgnoredDevices(snapshots: Iterable<DeviceSnapshot>): List<DeviceSnapshot> {
         val ignoredDeviceUids = knownStore?.ignoredDeviceUidValues().orEmpty()
         if (ignoredDeviceUids.isEmpty()) return snapshots.toList()
-
         return snapshots.filterNot { snapshot ->
             snapshot.deviceUid.value in ignoredDeviceUids
         }
@@ -266,7 +234,6 @@ class DevicesRepository(
         val message = (event as? AqlWsEvent.Message)
             ?.parsed as? AqlWsIncomingMessage.Response
             ?: return
-
         val currentSnapshot = registryStore.currentDevice(event.deviceUid) ?: return
         val reduced = runCatching {
             runtimeMetadataReducer.reduce(
@@ -274,69 +241,20 @@ class DevicesRepository(
                 response = message
             )
         }.getOrNull() ?: return
-
         val registered = registryStore.upsert(reduced)
         knownStore?.saveSnapshot(registered)
     }
 
     private fun applyRuntimeConnectionState(state: AqlWsConnectionState) {
-        when (state) {
-            AqlWsConnectionState.Disconnected -> Unit
-
-            is AqlWsConnectionState.Connecting -> {
-                registryStore.updateConnectionState(state.deviceUid) { previous ->
-                    previous.copy(
-                        onlineState = DeviceOnlineState.CONNECTING_WS,
-                        lastErrorMessage = null
-                    )
-                }
-            }
-
-            is AqlWsConnectionState.Connected -> {
-                registryStore.updateConnectionState(state.deviceUid) { previous ->
-                    previous.copy(
-                        onlineState = DeviceOnlineState.CONNECTING_WS,
-                        lastWsConnectedAtMillis = state.connectedAtMillis,
-                        lastErrorMessage = null
-                    )
-                }
-            }
-
-            is AqlWsConnectionState.Authenticated -> {
-                registryStore.updateConnectionState(state.deviceUid) { previous ->
-                    previous.copy(
-                        onlineState = DeviceOnlineState.AUTHENTICATED,
-                        lastWsConnectedAtMillis = previous.lastWsConnectedAtMillis
-                            ?: state.authenticatedAtMillis,
-                        lastAuthenticatedAtMillis = state.authenticatedAtMillis,
-                        lastErrorMessage = null
-                    )
-                }
-            }
-
-            is AqlWsConnectionState.AuthRequired -> {
-                registryStore.updateConnectionState(state.deviceUid) { previous ->
-                    previous.copy(
-                        onlineState = DeviceOnlineState.AUTH_REQUIRED,
-                        lastErrorMessage = state.message.ifBlank { "Authentication required." }
-                    )
-                }
-            }
-
-            is AqlWsConnectionState.Failed -> {
-                val deviceUid = state.deviceUid ?: return
-                applyRuntimeUnavailable(
-                    deviceUid = deviceUid,
-                    message = state.message.ifBlank { "WebSocket connection failed." }
-                )
-            }
-        }
+        val failed = state as? AqlWsConnectionState.Failed ?: return
+        val deviceUid = failed.deviceUid ?: return
+        applyRuntimeUnavailable(
+            deviceUid = deviceUid,
+            message = failed.message.ifBlank { "Connection failed." }
+        )
     }
 
-    private fun applyRuntimeUnavailable(
-        deviceUid: DeviceUid,
-        message: String? = null
-    ) {
+    private fun applyRuntimeUnavailable(deviceUid: DeviceUid, message: String? = null) {
         val nowMillis = System.currentTimeMillis()
         registryStore.updateConnectionState(deviceUid) { previous ->
             val clearedRuntimeState = previous.copy(
