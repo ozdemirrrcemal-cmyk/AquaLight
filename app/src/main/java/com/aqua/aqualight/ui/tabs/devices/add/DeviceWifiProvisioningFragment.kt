@@ -9,9 +9,12 @@ import android.os.Bundle
 import android.provider.Settings
 import android.text.InputType
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -53,6 +56,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
         setupHeader()
         renderSelectedDevice()
         setupActions()
+        observeProvisioningFailureResult()
         applyCurrentWifiSsid()
     }
 
@@ -124,8 +128,68 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
             )
         }
 
+        binding.etWifiSsid.doAfterTextChanged {
+            clearProvisioningFailureMessage()
+        }
+
+        binding.etWifiPassword.doAfterTextChanged {
+            clearProvisioningFailureMessage()
+        }
+
         binding.btnContinue.setOnClickListener {
             onContinueClicked()
+        }
+    }
+
+    private fun observeProvisioningFailureResult() {
+        val savedStateHandle = findNavController().currentBackStackEntry?.savedStateHandle ?: return
+        savedStateHandle.getLiveData<String>(DeviceWifiProvisioningResult.KEY_FAILURE_MESSAGE)
+            .observe(viewLifecycleOwner) { message ->
+                val field = savedStateHandle.remove<String>(
+                    DeviceWifiProvisioningResult.KEY_FAILURE_FIELD
+                ).orEmpty()
+                savedStateHandle.remove<String>(DeviceWifiProvisioningResult.KEY_FAILURE_MESSAGE)
+                showProvisioningFailure(
+                    message = message,
+                    field = field
+                )
+            }
+    }
+
+    private fun showProvisioningFailure(
+        message: String,
+        field: String
+    ) {
+        val errorMessage = message.ifBlank {
+            getString(R.string.device_wifi_provisioning_failed_error)
+        }
+
+        binding.tvWifiProvisioningError.text = errorMessage
+        binding.tvWifiProvisioningError.isVisible = true
+
+        if (field == DeviceWifiProvisioningResult.FIELD_SSID) {
+            binding.etWifiSsid.error = errorMessage
+            focusInput(binding.etWifiSsid)
+        } else {
+            binding.etWifiPassword.error = errorMessage
+            binding.etWifiPassword.selectAll()
+            focusInput(binding.etWifiPassword)
+        }
+    }
+
+    private fun clearProvisioningFailureMessage() {
+        binding.tvWifiProvisioningError.isVisible = false
+        binding.etWifiSsid.error = null
+        binding.etWifiPassword.error = null
+    }
+
+    private fun focusInput(view: View) {
+        binding.contentScrollView.post {
+            if (_binding == null) return@post
+            view.requestFocus()
+            val inputMethodManager = requireContext()
+                .getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+            inputMethodManager?.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT)
         }
     }
 
@@ -204,6 +268,8 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
     }
 
     private fun onContinueClicked() {
+        clearProvisioningFailureMessage()
+
         val ssid = binding.etWifiSsid.text?.toString()?.trim().orEmpty()
         val networkKey = binding.etWifiPassword.text?.toString().orEmpty()
 
