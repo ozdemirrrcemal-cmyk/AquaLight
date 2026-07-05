@@ -134,7 +134,7 @@ object DeviceSnapshotMerger {
             incoming.onlineState == DeviceOnlineState.UNKNOWN &&
                 previous.onlineState != DeviceOnlineState.UNKNOWN -> previous.onlineState
 
-            incoming.onlineState.isLanPresenceOnly && previous.onlineState.isStickyRuntimeState ->
+            incoming.onlineState.isLanPresenceOnly && previous.onlineState.isRuntimeAuthoritative ->
                 previous.onlineState
 
             else -> incoming.onlineState
@@ -158,12 +158,14 @@ object DeviceSnapshotMerger {
     private val DeviceOnlineState.isLanPresenceOnly: Boolean
         get() = this == DeviceOnlineState.ONLINE_LAN || this == DeviceOnlineState.STALE
 
-    private val DeviceOnlineState.isStickyRuntimeState: Boolean
+    private val DeviceOnlineState.isRuntimeAuthoritative: Boolean
         get() = when (this) {
+            DeviceOnlineState.CONNECTING_WS,
             DeviceOnlineState.AUTHENTICATED,
             DeviceOnlineState.AUTH_REQUIRED,
             DeviceOnlineState.PROVISIONING,
-            DeviceOnlineState.OTA_UPDATING -> true
+            DeviceOnlineState.OTA_UPDATING,
+            DeviceOnlineState.ERROR -> true
             else -> false
         }
 
