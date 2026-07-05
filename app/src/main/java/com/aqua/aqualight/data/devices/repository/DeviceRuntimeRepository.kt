@@ -141,7 +141,9 @@ class DeviceRuntimeRepository(
     private fun observeSession(session: RuntimeSession) {
         scope.launch {
             session.wsClient.connectionState.collect { state ->
-                _connectionState.emit(state)
+                if (state is AqlWsConnectionState.Failed) {
+                    _connectionState.emit(state)
+                }
             }
         }
 
@@ -171,18 +173,8 @@ class DeviceRuntimeRepository(
                         commandClient = session.commandClient
                     )) {
                         is AqlWsAuthAttemptResult.AuthMessageSent -> Unit
-                        AqlWsAuthAttemptResult.NoToken -> {
-                            session.wsClient.markAuthRequired(
-                                deviceUid = event.deviceUid,
-                                message = "Runtime token is missing. Pair the device again."
-                            )
-                        }
-                        AqlWsAuthAttemptResult.SendFailed -> {
-                            session.wsClient.markAuthRequired(
-                                deviceUid = event.deviceUid,
-                                message = "Runtime authentication could not be sent."
-                            )
-                        }
+                        AqlWsAuthAttemptResult.NoToken -> Unit
+                        AqlWsAuthAttemptResult.SendFailed -> Unit
                         null -> Unit
                     }
                 }
