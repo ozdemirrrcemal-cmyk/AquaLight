@@ -186,6 +186,24 @@ class DevicesRepository(
         runtimeRepository?.clearToken(deviceUid)
     }
 
+    suspend fun stageProvisioningSnapshot(snapshot: DeviceSnapshot): DeviceSnapshot {
+        val registered = registryStore.upsert(snapshot)
+        if (registered.endpoint.hasWebSocketEndpoint) {
+            runtimeRepository?.connect(registered)
+        }
+        return registered
+    }
+
+    suspend fun commitProvisioningSnapshot(snapshot: DeviceSnapshot): DeviceSnapshot {
+        knownStore?.allowDevice(snapshot.deviceUid)
+        val registered = registryStore.upsert(snapshot)
+        knownStore?.saveSnapshot(registered)
+        if (registered.endpoint.hasWebSocketEndpoint) {
+            runtimeRepository?.connect(registered)
+        }
+        return registered
+    }
+
     suspend fun registerSnapshot(snapshot: DeviceSnapshot): DeviceSnapshot {
         knownStore?.allowDevice(snapshot.deviceUid)
         val registered = registryStore.upsert(snapshot)

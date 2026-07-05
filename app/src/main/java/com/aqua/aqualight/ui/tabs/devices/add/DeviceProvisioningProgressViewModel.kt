@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
+import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningAddressResolver
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningGattClient
@@ -50,6 +51,7 @@ class DeviceProvisioningProgressViewModel(
     private var setupCompleted = false
     private var startJob: Job? = null
     private var pendingAddedRoute: DeviceRoute? = null
+    private var pendingPreparedSnapshot: DeviceSnapshot? = null
     private var pendingSavedDeviceUid: DeviceUid? = null
 
     fun bind(sessionId: String) {
@@ -129,6 +131,7 @@ class DeviceProvisioningProgressViewModel(
         provisioningStopped = false
         setupCompleted = false
         pendingAddedRoute = null
+        pendingPreparedSnapshot = null
         pendingSavedDeviceUid = null
         observeGattEvents()
 
@@ -257,7 +260,8 @@ class DeviceProvisioningProgressViewModel(
                 setupCompleted = true
                 provisioningStopped = false
                 val route = pendingAddedRoute
-                if (handoffSaved && route != null) {
+                val preparedSnapshot = pendingPreparedSnapshot
+                if (handoffSaved && route != null && preparedSnapshot != null) {
                     _uiState.value = _uiState.value.copy(
                         title = string(R.string.device_provisioning_added_title),
                         message = string(R.string.device_provisioning_added_message_format, _uiState.value.deviceName),
@@ -267,13 +271,31 @@ class DeviceProvisioningProgressViewModel(
                         showProgress = true,
                         wifiCredentialFailure = null
                     )
-                    boundSessionId?.let { sessionId ->
-                        AqlProvisioningDraftStore.remove(sessionId)
-                    }
-                    pendingSavedDeviceUid = null
-                    pendingAddedRoute = null
+
                     viewModelScope.launch {
-                        _events.send(DeviceProvisioningProgressEvent.OpenAddedDevice(route))
+                        handoffSaver.commitPreparedRegistration(preparedSnapshot)
+                            .onSuccess {
+                                boundSessionId?.let { sessionId ->
+                                    AqlProvisioningDraftStore.remove(sessionId)
+                                }
+                                pendingSavedDeviceUid = null
+                                pendingPreparedSnapshot = null
+                                pendingAddedRoute = null
+                                _events.send(DeviceProvisioningProgressEvent.OpenAddedDevice(route))
+                            }
+                            .onFailure { error ->
+                                setupCompleted = false
+                                rollbackPendingProvisioningRegistration()
+                                _uiState.value = _uiState.value.copy(
+                                    title = string(R.string.device_provisioning_save_failed_title),
+                                    message = error.message ?: string(R.string.device_provisioning_save_failed_message),
+                                    stepThree = string(R.string.device_provisioning_save_failed_step),
+                                    canStart = true,
+                                    buttonText = string(R.string.device_provisioning_try_again),
+                                    showProgress = false,
+                                    wifiCredentialFailure = null
+                                )
+                            }
                     }
                 } else if (!handoffSaved) {
                     _uiState.value = _uiState.value.copy(
@@ -446,7 +468,7 @@ class DeviceProvisioningProgressViewModel(
         }
 
         viewModelScope.launch {
-            val result = handoffSaver.saveAndConnect(
+            val result = handoffSaver.prepareAndConnect(
                 draft = draft,
                 handoff = handoff
             )
@@ -458,6 +480,7 @@ class DeviceProvisioningProgressViewModel(
                 }
 
                 handoffSaved = true
+                pendingPreparedSnapshot = snapshot
                 pendingSavedDeviceUid = snapshot.deviceUid
 
                 val route = routeResolver.resolve(
@@ -636,6 +659,7 @@ class DeviceProvisioningProgressViewModel(
         val deviceUid = pendingSavedDeviceUid ?: return
         pendingSavedDeviceUid = null
         pendingAddedRoute = null
+        pendingPreparedSnapshot = null
         handoffSaved = false
         viewModelScope.launch {
             handoffSaver.rollbackProvisioningRegistration(deviceUid)

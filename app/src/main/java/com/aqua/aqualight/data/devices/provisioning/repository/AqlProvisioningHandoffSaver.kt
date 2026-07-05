@@ -21,7 +21,7 @@ class AqlProvisioningHandoffSaver(
     private val appContext = context.applicationContext
     private val metadataResolver = AqlProvisioningRuntimeMetadataResolver()
 
-    suspend fun saveAndConnect(
+    suspend fun prepareAndConnect(
         draft: AqlProvisioningDraft,
         handoff: AqlProvisioningRuntimeHandoff
     ): Result<DeviceSnapshot> {
@@ -64,18 +64,25 @@ class AqlProvisioningHandoffSaver(
                 lastSeenAtMillis = System.currentTimeMillis()
             )
 
-            val registered = repository.registerSnapshot(snapshot)
+            val staged = repository.stageProvisioningSnapshot(snapshot)
 
             val resolved = metadataResolver.resolveAndConnect(
                 repository = repository,
-                provisionalSnapshot = registered
+                provisionalSnapshot = staged
             ).getOrThrow()
 
             require(resolved.product.family != DeviceFamily.UNKNOWN) {
                 "Runtime device identity did not include a supported product family."
             }
 
-            repository.registerSnapshot(resolved)
+            repository.stageProvisioningSnapshot(resolved)
+        }
+    }
+
+    suspend fun commitPreparedRegistration(snapshot: DeviceSnapshot): Result<DeviceSnapshot> {
+        return runCatching {
+            val repository = DevicesRepositoryProvider.get(appContext)
+            repository.commitProvisioningSnapshot(snapshot)
         }
     }
 
