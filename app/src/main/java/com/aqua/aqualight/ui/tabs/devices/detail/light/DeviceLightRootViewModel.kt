@@ -62,7 +62,6 @@ class DeviceLightRootViewModel(
                 title = fallbackTitle.ifBlank { DEFAULT_TITLE },
                 deviceUid = "",
                 connectionStatus = "Offline",
-                accessStatus = "Unavailable"
             )
             return
         }
@@ -82,7 +81,6 @@ class DeviceLightRootViewModel(
             title = fallbackTitle.ifBlank { DEFAULT_TITLE },
             deviceUid = deviceUid.value,
             connectionStatus = "Offline",
-            accessStatus = "Unavailable"
         )
 
         observeJob = viewModelScope.launch {
@@ -98,7 +96,6 @@ class DeviceLightRootViewModel(
                             title = fallbackTitle.ifBlank { DEFAULT_TITLE },
                             deviceUid = deviceUid.value,
                             connectionStatus = "Offline",
-                            accessStatus = "Unavailable"
                         )
                     ).withRuntimeOverlay()
             }
