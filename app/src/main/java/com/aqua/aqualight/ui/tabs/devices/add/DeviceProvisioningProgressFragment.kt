@@ -31,6 +31,7 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
     private val binding get() = _binding!!
 
     private var autoStartRequested = false
+    private var wifiFailureReturned = false
 
     private val blePermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -148,6 +149,11 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
         binding.btnStartProvisioning.text = state.buttonText
         binding.btnStartProvisioning.alpha = if (state.canStart) 1f else 0.45f
         binding.progressBar.isVisible = state.showProgress
+
+        if (!wifiFailureReturned && state.shouldReturnToWifiCredentials()) {
+            wifiFailureReturned = true
+            returnToWifiCredentials(state)
+        }
     }
 
     private fun DeviceProvisioningProgressUiState.currentStepIcon(): String {
@@ -155,6 +161,47 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
             canStart -> "!"
             showProgress -> "●"
             else -> "✓"
+        }
+    }
+
+    private fun DeviceProvisioningProgressUiState.shouldReturnToWifiCredentials(): Boolean {
+        return stepThree == getString(R.string.device_provisioning_step_wifi_failed)
+    }
+
+    private fun returnToWifiCredentials(state: DeviceProvisioningProgressUiState) {
+        val navController = findNavController()
+        val previousEntry = navController.previousBackStackEntry ?: run {
+            navController.navigateUp()
+            return
+        }
+
+        previousEntry.savedStateHandle[DeviceWifiProvisioningResult.KEY_FAILURE_MESSAGE] =
+            state.toWifiCredentialFailureMessage()
+        previousEntry.savedStateHandle[DeviceWifiProvisioningResult.KEY_FAILURE_FIELD] =
+            state.toWifiCredentialFailureField()
+
+        navController.popBackStack()
+    }
+
+    private fun DeviceProvisioningProgressUiState.toWifiCredentialFailureMessage(): String {
+        return when (message) {
+            getString(R.string.device_provisioning_status_wifi_network_not_found_message) ->
+                getString(R.string.device_wifi_network_not_found_error)
+            getString(R.string.device_provisioning_status_wifi_timeout_message) ->
+                getString(R.string.device_wifi_connection_timeout_error)
+            getString(R.string.device_provisioning_status_wifi_router_rejected_message) ->
+                getString(R.string.device_wifi_router_rejected_error)
+            getString(R.string.device_provisioning_status_wifi_auth_failed_message) ->
+                getString(R.string.device_wifi_password_incorrect_error)
+            else -> getString(R.string.device_wifi_provisioning_failed_error)
+        }
+    }
+
+    private fun DeviceProvisioningProgressUiState.toWifiCredentialFailureField(): String {
+        return when (message) {
+            getString(R.string.device_provisioning_status_wifi_network_not_found_message) ->
+                DeviceWifiProvisioningResult.FIELD_SSID
+            else -> DeviceWifiProvisioningResult.FIELD_PASSWORD
         }
     }
 
