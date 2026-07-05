@@ -9,6 +9,8 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsTokenProvider
 import java.security.MessageDigest
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Secure local credential store for AquaLight Devices V2.
@@ -37,10 +39,12 @@ class DeviceCredentialStore(
     }
 
     override suspend fun getToken(deviceUid: DeviceUid): String? {
-        return preferences
-            .getString(tokenPreferenceKey(deviceUid), null)
-            ?.trim()
-            ?.takeIf { token -> token.isNotBlank() }
+        return withContext(Dispatchers.IO) {
+            preferences
+                .getString(tokenPreferenceKey(deviceUid), null)
+                ?.trim()
+                ?.takeIf { token -> token.isNotBlank() }
+        }
     }
 
     override suspend fun saveToken(deviceUid: DeviceUid, token: String) {
@@ -49,15 +53,19 @@ class DeviceCredentialStore(
             return
         }
 
-        preferences.edit()
-            .putString(tokenPreferenceKey(deviceUid), normalizedToken)
-            .apply()
+        withContext(Dispatchers.IO) {
+            preferences.edit()
+                .putString(tokenPreferenceKey(deviceUid), normalizedToken)
+                .commit()
+        }
     }
 
     override suspend fun clearToken(deviceUid: DeviceUid) {
-        preferences.edit()
-            .remove(tokenPreferenceKey(deviceUid))
-            .apply()
+        withContext(Dispatchers.IO) {
+            preferences.edit()
+                .remove(tokenPreferenceKey(deviceUid))
+                .commit()
+        }
     }
 
     suspend fun hasToken(deviceUid: DeviceUid): Boolean {
