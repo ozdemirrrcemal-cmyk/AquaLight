@@ -13,7 +13,6 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
-import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
@@ -164,8 +163,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
             getString(R.string.device_wifi_provisioning_failed_error)
         }
 
-        binding.tvWifiProvisioningError.text = errorMessage
-        binding.tvWifiProvisioningError.isVisible = true
+        binding.tvFormHint.text = errorMessage
 
         if (field == DeviceWifiProvisioningResult.FIELD_SSID) {
             binding.etWifiSsid.error = errorMessage
@@ -178,7 +176,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
     }
 
     private fun clearProvisioningFailureMessage() {
-        binding.tvWifiProvisioningError.isVisible = false
+        binding.tvFormHint.text = getString(R.string.device_wifi_privacy_hint)
         binding.etWifiSsid.error = null
         binding.etWifiPassword.error = null
     }
