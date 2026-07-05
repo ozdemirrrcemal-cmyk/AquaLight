@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.settings.device
 
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -32,15 +33,12 @@ class DeviceStatusAdapter : RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewH
             binding.tvFirmware.text = item.productName.ifBlank { "Unknown" }
             binding.tvLastSeen.text = item.lastSeenText.ifBlank { "-" }
 
-            if (item.isOnline) {
-                binding.tvStatus.text = "ONLINE"
-                binding.tvStatus.setTextColor(Color.parseColor("#39D353"))
-                binding.viewStatusDot.setBackgroundResource(R.drawable.bg_online_dot)
-            } else {
-                binding.tvStatus.text = "OFFLINE"
-                binding.tvStatus.setTextColor(Color.parseColor("#F44336"))
-                binding.viewStatusDot.setBackgroundResource(R.drawable.bg_offline_dot)
-            }
+            val presenceText = if (item.isOnline) "Online" else "Offline"
+            binding.ivPresenceIcon.imageTintList = ColorStateList.valueOf(
+                if (item.isOnline) ONLINE_COLOR else OFFLINE_COLOR
+            )
+            binding.ivPresenceIcon.contentDescription = presenceText
+            binding.root.contentDescription = "${item.displayName.ifBlank { "Device" }}, $presenceText"
         }
     }
 
@@ -58,4 +56,9 @@ class DeviceStatusAdapter : RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewH
     }
 
     override fun getItemCount(): Int = items.size
+
+    private companion object {
+        val ONLINE_COLOR: Int = Color.parseColor("#5FD6B4")
+        val OFFLINE_COLOR: Int = Color.parseColor("#7B8794")
+    }
 }
