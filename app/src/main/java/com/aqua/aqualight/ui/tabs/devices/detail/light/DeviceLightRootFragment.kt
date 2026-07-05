@@ -100,7 +100,6 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
         binding.tvProductName.text = state.title
         binding.tvDeviceUid.text = state.deviceUid.ifBlank { "Unknown device" }
         binding.tvConnectionStatus.text = state.connectionStatus
-        binding.tvAccessStatus.text = state.accessStatus
         binding.tvIp.text = "IP: ${state.ipText}"
         binding.tvFirmware.text = "Firmware: ${state.firmwareText}"
         binding.tvModel.text = "Model: ${state.modelText}"
