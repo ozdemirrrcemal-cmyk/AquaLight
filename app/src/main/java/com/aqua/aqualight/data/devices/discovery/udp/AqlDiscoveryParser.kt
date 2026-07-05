@@ -16,11 +16,11 @@ import org.json.JSONException
 import org.json.JSONObject
 
 /**
- * Strict parser for the firmware UDP discovery v2 packet produced by
+ * Strict parser for the final AquaLight UDP discovery packet produced by
  * src/network/AqlDiscoveryService.hpp BuildDiscoveryJson().
  *
- * UDP discovery is only the LAN WebSocket endpoint handoff. Android does not accept legacy
- * discovery shapes or alternative runtime field locations here.
+ * UDP discovery is only the LAN WebSocket endpoint handoff. Android accepts exactly one
+ * unpublished commercial contract shape and rejects legacy/alternate packet layouts.
  */
 object AqlDiscoveryParser {
 
@@ -41,18 +41,15 @@ object AqlDiscoveryParser {
             return ParseResult.Invalid(ParseError.INVALID_JSON)
         }
 
-        val schema = root.stringOrBlank("schema")
-        if (schema != AqlDiscoveryContract.SCHEMA) {
+        if (root.stringOrBlank("schema") != AqlDiscoveryContract.SCHEMA) {
             return ParseResult.Invalid(ParseError.UNSUPPORTED_SCHEMA)
         }
 
-        val messageType = root.stringOrBlank("messageType")
-        if (messageType != AqlDiscoveryContract.MESSAGE_DEVICE_ANNOUNCE) {
+        if (root.stringOrBlank("type") != AqlDiscoveryContract.TYPE_DEVICE_ANNOUNCE) {
             return ParseResult.Invalid(ParseError.UNSUPPORTED_MESSAGE_TYPE)
         }
 
-        val udpVersion = root.intOrZero("udpVersion")
-        if (udpVersion < AqlDiscoveryContract.UDP_VERSION) {
+        if (root.intOrNull("version") != AqlDiscoveryContract.VERSION) {
             return ParseResult.Invalid(ParseError.UNSUPPORTED_UDP_VERSION)
         }
 
@@ -76,58 +73,52 @@ object AqlDiscoveryParser {
             return ParseResult.Invalid(ParseError.UNSUPPORTED_PRODUCT_FAMILY)
         }
 
-        val endpointIp = network.stringOrBlank("ip")
-        if (endpointIp.isBlank()) {
-            return ParseResult.Invalid(ParseError.MISSING_RUNTIME_ENDPOINT)
-        }
-
         val runtimeTransport = runtime.stringOrBlank("transport")
         if (runtimeTransport != AqlDiscoveryContract.RUNTIME_TRANSPORT_WEBSOCKET) {
             return ParseResult.Invalid(ParseError.UNSUPPORTED_RUNTIME_TRANSPORT)
         }
 
-        val wsProtocol = runtime.stringOrBlank("wsProtocol")
+        val endpointIp = runtime.stringOrBlank("host")
+        val wsPort = runtime.intOrNull("port") ?: 0
+        val wsPath = runtime.stringOrBlank("path")
+        if (endpointIp.isBlank() || wsPort <= 0 || wsPath.isBlank()) {
+            return ParseResult.Invalid(ParseError.MISSING_RUNTIME_ENDPOINT)
+        }
+
+        val wsProtocol = runtime.stringOrBlank("protocol")
         if (wsProtocol != AqlWsContract.DEFAULT_PROTOCOL) {
             return ParseResult.Invalid(ParseError.UNSUPPORTED_WS_PROTOCOL)
         }
 
-        val wsProtocolVersion = runtime.intOrZero("wsProtocolVersion")
-        if (wsProtocolVersion < AqlWsContract.PROTOCOL_VERSION) {
+        val wsProtocolVersion = runtime.intOrNull("protocolVersion") ?: 0
+        if (wsProtocolVersion != AqlWsContract.PROTOCOL_VERSION) {
             return ParseResult.Invalid(ParseError.UNSUPPORTED_WS_PROTOCOL_VERSION)
-        }
-
-        val wsPort = runtime.intOrZero("wsPort")
-        val wsPath = runtime.stringOrBlank("wsPath")
-        if (wsPort <= 0 || wsPath.isBlank()) {
-            return ParseResult.Invalid(ParseError.MISSING_RUNTIME_ENDPOINT)
         }
 
         val snapshot = DeviceSnapshot(
             identity = DeviceIdentity(
                 uid = DeviceUid(deviceUid),
                 shortId = device.stringOrBlank("shortId"),
-                displayName = device.stringOrBlank("displayName"),
-                customName = device.stringOrBlank("customName")
+                displayName = device.stringOrBlank("name"),
+                customName = ""
             ),
             product = DeviceProduct(
-                brand = product.stringOrBlank("brand"),
                 family = family,
                 familyRaw = familyRaw,
-                line = product.stringOrBlank("line"),
                 model = product.stringOrBlank("model"),
-                displayName = product.stringOrBlank("displayName")
+                displayName = product.stringOrBlank("name")
             ),
             endpoint = DeviceRuntimeEndpoint(
                 ip = endpointIp,
-                wifiMode = network.stringOrBlank("wifiMode"),
-                wifiConnected = network.booleanOrFalse("wifiConnected"),
-                setupApActive = network.booleanOrFalse("setupApActive"),
+                wifiMode = network.stringOrBlank("mode"),
+                wifiConnected = network.booleanOrNull("connected") == true,
+                setupApActive = false,
                 runtimeTransport = runtimeTransport,
                 wsPort = wsPort,
                 wsPath = wsPath,
                 wsProtocol = wsProtocol,
                 wsProtocolVersion = wsProtocolVersion,
-                discoveryPort = network.intOrZero("discoveryPort")
+                discoveryPort = AqlDiscoveryContract.PORT
             ),
             capabilities = DeviceCapabilities(),
             limits = DeviceLimits(),
@@ -179,17 +170,21 @@ private fun JSONObject.stringOrBlank(name: String): String =
         else -> value.toString().trim()
     }
 
-private fun JSONObject.intOrZero(name: String): Int =
+private fun JSONObject.intOrNull(name: String): Int? =
     when (val value = opt(name)) {
         is Number -> value.toInt()
-        is String -> value.trim().toIntOrNull() ?: 0
-        else -> 0
+        is String -> value.trim().toIntOrNull()
+        else -> null
     }
 
-private fun JSONObject.booleanOrFalse(name: String): Boolean =
+private fun JSONObject.booleanOrNull(name: String): Boolean? =
     when (val value = opt(name)) {
         is Boolean -> value
         is Number -> value.toInt() != 0
-        is String -> value.trim().equals("true", ignoreCase = true) || value.trim() == "1"
-        else -> false
+        is String -> when (value.trim().lowercase()) {
+            "true", "1" -> true
+            "false", "0" -> false
+            else -> null
+        }
+        else -> null
     }
