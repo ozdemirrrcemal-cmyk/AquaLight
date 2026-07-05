@@ -9,6 +9,7 @@ import com.aqua.aqualight.data.devices.model.DeviceLimits
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceProduct
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
+import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningDraft
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningRuntimeHandoff
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
@@ -20,7 +21,7 @@ class AqlProvisioningHandoffSaver(
     private val appContext = context.applicationContext
     private val metadataResolver = AqlProvisioningRuntimeMetadataResolver()
 
-    suspend fun saveAndConnect(
+    suspend fun prepareAndConnect(
         draft: AqlProvisioningDraft,
         handoff: AqlProvisioningRuntimeHandoff
     ): Result<DeviceSnapshot> {
@@ -63,18 +64,33 @@ class AqlProvisioningHandoffSaver(
                 lastSeenAtMillis = System.currentTimeMillis()
             )
 
-            val registered = repository.registerSnapshot(snapshot)
+            val staged = repository.stageProvisioningSnapshot(snapshot)
 
             val resolved = metadataResolver.resolveAndConnect(
                 repository = repository,
-                provisionalSnapshot = registered
+                provisionalSnapshot = staged
             ).getOrThrow()
 
             require(resolved.product.family != DeviceFamily.UNKNOWN) {
                 "Runtime device identity did not include a supported product family."
             }
 
-            repository.registerSnapshot(resolved)
+            repository.stageProvisioningSnapshot(resolved)
+        }
+    }
+
+    suspend fun commitPreparedRegistration(snapshot: DeviceSnapshot): Result<DeviceSnapshot> {
+        return runCatching {
+            val repository = DevicesRepositoryProvider.get(appContext)
+            repository.commitProvisioningSnapshot(snapshot)
+        }
+    }
+
+    suspend fun rollbackProvisioningRegistration(deviceUid: DeviceUid): Result<Unit> {
+        return runCatching {
+            val repository = DevicesRepositoryProvider.get(appContext)
+            repository.removeProvisioningRegistration(deviceUid)
+            Unit
         }
     }
 

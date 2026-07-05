@@ -3,27 +3,20 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.ui.common.devicepresence.DevicePresencePresentationMapper
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareOtaSnapshot
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareRuntimeContract
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareStatusParser
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareUpdatePlan
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeContract
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatusParser
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootMenuMapper
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import org.json.JSONObject
 
 class DeviceLightRootViewModel(
     application: Application
@@ -36,15 +29,9 @@ class DeviceLightRootViewModel(
 
     private var boundDeviceUid: DeviceUid? = null
     private var observeJob: Job? = null
-    private var runtimeStatusJob: Job? = null
-    private var pendingStatusRequestId: String = ""
     private var pendingOtaStatusRequestId: String = ""
     private var pendingOtaStartRequestId: String = ""
     private var pendingOtaClearRequestId: String = ""
-
-    private var runtimeChannelCountText: String? = null
-    private var runtimeManualText: String? = null
-    private var runtimeProgramsText: String? = null
     private var otaTestOverlayText: String? = null
     private var lastSnapshot: DeviceSnapshot? = null
     private var lastOtaPlan: DeviceFirmwareUpdatePlan? = null
@@ -55,14 +42,11 @@ class DeviceLightRootViewModel(
     ) {
         if (deviceUidText.isBlank()) {
             observeJob?.cancel()
-            runtimeStatusJob?.cancel()
-            clearRuntimeOverlay()
 
             _uiState.value = DeviceLightRootUiState(
                 title = fallbackTitle.ifBlank { DEFAULT_TITLE },
                 deviceUid = "",
-                connectionStatus = "Missing deviceUid",
-                authStatus = "Unknown"
+                connectionStatus = "Offline",
             )
             return
         }
@@ -74,15 +58,13 @@ class DeviceLightRootViewModel(
 
         boundDeviceUid = deviceUid
         observeJob?.cancel()
-        runtimeStatusJob?.cancel()
-        clearRuntimeOverlay()
         clearOtaTestState()
+        repository.connectRuntime(deviceUid)
 
         _uiState.value = DeviceLightRootUiState(
             title = fallbackTitle.ifBlank { DEFAULT_TITLE },
             deviceUid = deviceUid.value,
-            connectionStatus = "Loading",
-            authStatus = "Unknown"
+            connectionStatus = "Offline",
         )
 
         observeJob = viewModelScope.launch {
@@ -97,15 +79,10 @@ class DeviceLightRootViewModel(
                         ?: DeviceLightRootUiState(
                             title = fallbackTitle.ifBlank { DEFAULT_TITLE },
                             deviceUid = deviceUid.value,
-                            connectionStatus = "Device not found",
-                            authStatus = "Unknown"
+                            connectionStatus = "Offline",
                         )
-                    ).withRuntimeOverlay()
+                    )
             }
-        }
-
-        runtimeStatusJob = viewModelScope.launch {
-            observeRuntimeStatus(deviceUid)
         }
     }
 
@@ -244,205 +221,9 @@ class DeviceLightRootViewModel(
         }
     }
 
-    private suspend fun observeRuntimeStatus(deviceUid: DeviceUid) {
-        val events = repository.runtimeEvents()
-        if (events == null) {
-            updateRuntimeOverlay(
-                manualText = "Light runtime WebSocket repository is not configured."
-            )
-            return
-        }
-
-        coroutineScope {
-            launch {
-                repository.connectRuntime(deviceUid)
-                delay(800L)
-
-                val result = repository.runtimeModules()
-                    ?.light
-                    ?.requestStatus(deviceUid)
-
-                pendingStatusRequestId = result?.messageId.orEmpty()
-
-                if (result?.isSuccess == true && pendingStatusRequestId.isNotBlank()) {
-                    updateRuntimeOverlay(
-                        manualText = "Light runtime status requested..."
-                    )
-                } else {
-                    updateRuntimeOverlay(
-                        manualText = "Light runtime status request could not be sent."
-                    )
-                }
-            }
-
-            events.collect { event ->
-                handleRuntimeEvent(
-                    deviceUid = deviceUid,
-                    event = event
-                )
-            }
-        }
-    }
-
-    private fun handleRuntimeEvent(
-        deviceUid: DeviceUid,
-        event: AqlWsEvent
-    ) {
-        if (event.deviceUid != deviceUid) return
-
-        val message = (event as? AqlWsEvent.Message)
-            ?.parsed
-            ?: return
-
-        if (handleOtaRuntimeMessage(message)) {
-            return
-        }
-
-        val statusRequestId = pendingStatusRequestId
-        if (statusRequestId.isBlank() || message.id != statusRequestId) {
-            return
-        }
-
-        when (message) {
-            is AqlWsIncomingMessage.Response -> {
-                if (!message.ok) {
-                    updateRuntimeStatusError(
-                        statusCode = message.statusCode,
-                        message = "Runtime status request failed."
-                    )
-                    return
-                }
-
-                val data = message.json.optJSONObject("data") ?: message.json
-                val status = DeviceLightStatusParser.parse(data)
-
-                updateRuntimeOverlay(
-                    channelCountText = status.channelCount.toString(),
-                    manualText = "Runtime channels: ${status.channelCount}, manual: ${status.manualSupported}, liveEdit: ${status.liveEditEnabled}",
-                    programsText = "Programs: ${status.programCount}, presets: ${status.presetsSupported}, simulation: ${status.simulationSupported}, writable: ${!status.runtime.readOnly}"
-                )
-            }
-
-            is AqlWsIncomingMessage.Error -> {
-                updateRuntimeOverlay(manualText = "Light runtime status error: ${message.statusCode} ${message.message}".trim())
-            }
-
-            else -> Unit
-        }
-    }
-
-    private fun handleOtaRuntimeMessage(message: AqlWsIncomingMessage): Boolean {
-        when (message) {
-            is AqlWsIncomingMessage.Event -> {
-                if (
-                    message.event == DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS ||
-                    message.event == DeviceFirmwareRuntimeContract.Event.OTA_COMPLETED
-                ) {
-                    val data = message.json.optJSONObject("data") ?: JSONObject()
-                    val snapshot = DeviceFirmwareStatusParser.parseOtaProgressEvent(data)
-                    updateOtaTestText(formatOtaSnapshot("OTA event: ${message.event}", snapshot))
-                    return true
-                }
-            }
-
-            is AqlWsIncomingMessage.Response -> {
-                if (message.id == pendingOtaStartRequestId) {
-                    pendingOtaStartRequestId = ""
-                    if (!message.ok) {
-                        updateOtaTestText("OTA start rejected: HTTP ${message.statusCode}")
-                        return true
-                    }
-                    val data = message.json.optJSONObject("data") ?: JSONObject()
-                    val accepted = DeviceFirmwareStatusParser.parseOtaStartAccepted(data)
-                    updateOtaTestText(
-                        "OTA start accepted: ${accepted.accepted}\n" +
-                            formatOtaSnapshot("OTA snapshot", accepted.ota)
-                    )
-                    return true
-                }
-
-                if (message.id == pendingOtaStatusRequestId) {
-                    pendingOtaStatusRequestId = ""
-                    if (!message.ok) {
-                        updateOtaTestText("OTA status rejected: HTTP ${message.statusCode}")
-                        return true
-                    }
-                    val data = message.json.optJSONObject("data") ?: JSONObject()
-                    val snapshot = DeviceFirmwareStatusParser.parseOtaStatusResponse(data)
-                    updateOtaTestText(formatOtaSnapshot("OTA status", snapshot))
-                    return true
-                }
-
-                if (message.id == pendingOtaClearRequestId) {
-                    pendingOtaClearRequestId = ""
-                    if (!message.ok) {
-                        updateOtaTestText("OTA clear rejected: HTTP ${message.statusCode}")
-                        return true
-                    }
-                    val data = message.json.optJSONObject("data") ?: JSONObject()
-                    val clear = DeviceFirmwareStatusParser.parseOtaClearResult(data)
-                    updateOtaTestText(
-                        "OTA clear result: ${clear.cleared}\n" +
-                            formatOtaSnapshot("After clear", clear.ota)
-                    )
-                    return true
-                }
-            }
-
-            is AqlWsIncomingMessage.Error -> {
-                if (message.id == pendingOtaStartRequestId) {
-                    pendingOtaStartRequestId = ""
-                    updateOtaTestText(formatOtaError("OTA start error", message))
-                    return true
-                }
-                if (message.id == pendingOtaStatusRequestId) {
-                    pendingOtaStatusRequestId = ""
-                    updateOtaTestText(formatOtaError("OTA status error", message))
-                    return true
-                }
-                if (message.id == pendingOtaClearRequestId) {
-                    pendingOtaClearRequestId = ""
-                    updateOtaTestText(formatOtaError("OTA clear error", message))
-                    return true
-                }
-            }
-
-            else -> Unit
-        }
-
-        return false
-    }
-
-    private fun updateRuntimeStatusError(
-        statusCode: Int,
-        message: String
-    ) {
-        val errorText = "$DEFAULT_TITLE runtime status error: $statusCode $message".trim()
-        updateRuntimeOverlay(manualText = errorText)
-    }
-
-    private fun updateRuntimeOverlay(
-        channelCountText: String? = null,
-        manualText: String? = null,
-        programsText: String? = null
-    ) {
-        if (channelCountText != null) runtimeChannelCountText = channelCountText
-        if (manualText != null) runtimeManualText = manualText
-        if (programsText != null) runtimeProgramsText = programsText
-
-        _uiState.value = _uiState.value.withRuntimeOverlay()
-    }
-
     private fun updateOtaTestText(text: String) {
         otaTestOverlayText = text
-        _uiState.value = _uiState.value.withRuntimeOverlay()
-    }
-
-    private fun clearRuntimeOverlay() {
-        pendingStatusRequestId = ""
-        runtimeChannelCountText = null
-        runtimeManualText = null
-        runtimeProgramsText = null
+        _uiState.value = _uiState.value.copy(otaTestText = text)
     }
 
     private fun clearOtaTestState() {
@@ -453,14 +234,6 @@ class DeviceLightRootViewModel(
         otaTestOverlayText = null
     }
 
-    private fun DeviceLightRootUiState.withRuntimeOverlay(): DeviceLightRootUiState {
-        return copy(
-            channelCountText = runtimeChannelCountText ?: channelCountText,
-            manualMenuText = runtimeManualText ?: manualMenuText,
-            programsMenuText = runtimeProgramsText ?: programsMenuText,
-            otaTestText = otaTestOverlayText ?: otaTestText
-        )
-    }
 
     private fun DeviceSnapshot.toLightRootUiState(fallbackTitle: String): DeviceLightRootUiState {
         val productName = product.displayName
@@ -473,8 +246,7 @@ class DeviceLightRootViewModel(
         return DeviceLightRootUiState(
             title = productName,
             deviceUid = deviceUid.value,
-            connectionStatus = connectionState.onlineState.connectionLabel(),
-            authStatus = connectionState.onlineState.authLabel(),
+            connectionStatus = DevicePresencePresentationMapper.availabilityLabel(connectionState.onlineState),
             ipText = endpoint.ip.ifBlank { "Unknown" },
             firmwareText = firmwareLabel(),
             modelText = modelLabel(),
@@ -586,45 +358,7 @@ class DeviceLightRootViewModel(
         }.trim()
     }
 
-    private fun formatOtaError(
-        title: String,
-        message: AqlWsIncomingMessage.Error
-    ): String {
-        return buildString {
-            appendLine(title)
-            appendLine("status: ${message.statusCode}")
-            if (message.code.isNotBlank()) appendLine("code: ${message.code}")
-            if (message.field.isNotBlank()) appendLine("field: ${message.field}")
-            appendLine("message: ${message.message}")
-        }.trim()
-    }
 
-    private fun DeviceOnlineState.connectionLabel(): String {
-        return when (this) {
-            DeviceOnlineState.UNKNOWN -> "Unknown"
-            DeviceOnlineState.DISCOVERING -> "Discovering"
-            DeviceOnlineState.ONLINE_LAN -> "Online LAN"
-            DeviceOnlineState.CONNECTING_WS -> "Connecting WebSocket"
-            DeviceOnlineState.AUTHENTICATED -> "Authenticated"
-            DeviceOnlineState.STALE -> "Stale"
-            DeviceOnlineState.OFFLINE -> "Offline"
-            DeviceOnlineState.LOCAL_NETWORK_OFFLINE -> "Local network offline"
-            DeviceOnlineState.AUTH_REQUIRED -> "Auth required"
-            DeviceOnlineState.PROVISIONING -> "Provisioning"
-            DeviceOnlineState.OTA_UPDATING -> "OTA updating"
-            DeviceOnlineState.ERROR -> "Error"
-        }
-    }
-
-    private fun DeviceOnlineState.authLabel(): String {
-        return when (this) {
-            DeviceOnlineState.AUTHENTICATED -> "Authenticated"
-            DeviceOnlineState.AUTH_REQUIRED -> "Auth required"
-            DeviceOnlineState.CONNECTING_WS -> "Authenticating"
-            DeviceOnlineState.ERROR -> "Auth unknown"
-            else -> "Not authenticated"
-        }
-    }
 
     private companion object {
         const val DEFAULT_TITLE = "Light"
@@ -637,7 +371,6 @@ data class DeviceLightRootUiState(
     val title: String = "Light",
     val deviceUid: String = "",
     val connectionStatus: String = "Unknown",
-    val authStatus: String = "Unknown",
     val ipText: String = "Unknown",
     val firmwareText: String = "Unknown",
     val modelText: String = "Unknown",

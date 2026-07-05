@@ -15,6 +15,7 @@ import android.os.ParcelUuid
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningDraft
+import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningBleAddressCache
 import kotlin.coroutines.resume
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -67,7 +68,15 @@ class AqlBleProvisioningAddressResolver(
         val targetName = draft.bleName.trim()
 
         if (existingAddress.isNotBlank() && MAC_ADDRESS_REGEX.matches(existingAddress)) {
+            if (targetName.isNotBlank()) {
+                AqlProvisioningBleAddressCache.put(targetName, existingAddress)
+            }
             return Result.success(existingAddress)
+        }
+
+        val cachedAddress = AqlProvisioningBleAddressCache.get(targetName)
+        if (cachedAddress.isNotBlank() && MAC_ADDRESS_REGEX.matches(cachedAddress)) {
+            return Result.success(cachedAddress)
         }
 
         if (targetName.isBlank()) {
@@ -91,7 +100,9 @@ class AqlBleProvisioningAddressResolver(
         }
 
         if (exact != null) {
-            return exact
+            return exact.onSuccess { address ->
+                AqlProvisioningBleAddressCache.put(targetName, address)
+            }
         }
 
         return verifyQrCandidates(
@@ -218,6 +229,7 @@ class AqlBleProvisioningAddressResolver(
             when (val result = preflightClient.verifyQrCandidate(candidate.address, draft)) {
                 is QrCandidatePreflightResult.Allowed -> {
                     delay(QR_PREFLIGHT_GATT_SETTLE_DELAY_MS)
+                    AqlProvisioningBleAddressCache.put(targetName, result.bleAddress)
                     return Result.success(result.bleAddress)
                 }
 

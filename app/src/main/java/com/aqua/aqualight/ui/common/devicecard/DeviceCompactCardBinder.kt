@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.common.devicecard
 
+import android.content.res.ColorStateList
 import android.graphics.Color
 import androidx.core.view.isVisible
 import com.aqua.aqualight.databinding.ItemDeviceCompactCardBinding
@@ -13,6 +14,7 @@ object DeviceCompactCardBinder {
         val name = item.displayName.trim().ifBlank { "Device" }
         val serial = item.serialText.trim().ifBlank { item.deviceUid.ifBlank { "Unknown" } }
         val supporting = item.supportingText.trim()
+        val presenceText = item.statusText.trim().ifBlank { "Offline" }
 
         binding.tvDeviceName.text = name
         binding.tvSerialNumber.text = "UID: $serial"
@@ -24,15 +26,17 @@ object DeviceCompactCardBinder {
         binding.ivDeviceIcon.clearColorFilter()
         binding.ivDeviceIcon.contentDescription = name
 
-        binding.tvStatusChip.text = item.statusText.trim().ifBlank { "UNKNOWN" }
-        binding.tvStatusChip.setTextColor(statusTextColor(item.statusStyle))
+        binding.ivPresenceIcon.imageTintList = ColorStateList.valueOf(
+            presenceIconColor(item.statusStyle)
+        )
+        binding.ivPresenceIcon.contentDescription = presenceText
+        binding.ivPresenceIcon.isVisible = !item.showAction
 
-        binding.tvStatusChip.isVisible = !item.showAction
         binding.tvCardAction.text = item.actionText
         binding.tvCardAction.isVisible = item.showAction && item.actionText.isNotBlank()
 
         binding.trailingContainer.isVisible =
-            binding.tvStatusChip.isVisible || binding.tvCardAction.isVisible
+            binding.ivPresenceIcon.isVisible || binding.tvCardAction.isVisible
 
         binding.root.contentDescription = buildString {
             append(name)
@@ -45,21 +49,21 @@ object DeviceCompactCardBinder {
             if (item.showAction && item.actionText.isNotBlank()) {
                 append(", ")
                 append(item.actionText)
-            } else if (item.statusText.isNotBlank()) {
+            } else {
                 append(", ")
-                append(item.statusText)
+                append(presenceText)
             }
         }
     }
 
-    private fun statusTextColor(
+    private fun presenceIconColor(
         style: DeviceCompactStatusStyle
     ): Int {
         return when (style) {
-            DeviceCompactStatusStyle.ONLINE -> Color.parseColor("#5FD6B4")
-            DeviceCompactStatusStyle.CONNECTING -> Color.parseColor("#8BCAFF")
-            DeviceCompactStatusStyle.WARNING -> Color.parseColor("#F9C74F")
-            DeviceCompactStatusStyle.OFFLINE -> Color.parseColor("#D85C5C")
+            DeviceCompactStatusStyle.ONLINE,
+            DeviceCompactStatusStyle.CONNECTING,
+            DeviceCompactStatusStyle.WARNING -> Color.parseColor("#5FD6B4")
+            DeviceCompactStatusStyle.OFFLINE -> Color.parseColor("#7B8794")
         }
     }
 }

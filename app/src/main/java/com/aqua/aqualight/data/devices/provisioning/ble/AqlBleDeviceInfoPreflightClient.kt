@@ -21,6 +21,7 @@ import kotlin.coroutines.resume
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
+import kotlinx.coroutines.delay
 
 /**
  * Manual BLE setup preflight.
@@ -44,8 +45,11 @@ class AqlBleDeviceInfoPreflightClient(
         val device = runCatching { adapter.getRemoteDevice(address) }.getOrElse {
             return ManualSetupPreflightResult.Blocked("BLE device address is invalid. Scan again.")
         }
-        val deviceInfo = withTimeoutOrNull(PREFLIGHT_TIMEOUT_MS) { readDeviceInfo(device) }
-            ?: return ManualSetupPreflightResult.Blocked("DeviceInfo verification timed out. Keep setup mode open and scan again.")
+        val deviceInfo = readDeviceInfoWithRetry(
+            device = device,
+            timeoutMs = PREFLIGHT_TIMEOUT_MS,
+            attempts = PREFLIGHT_READ_ATTEMPTS
+        ) ?: return ManualSetupPreflightResult.Blocked("DeviceInfo verification timed out. Keep setup mode open and scan again.")
         return deviceInfo.fold(
             onSuccess = { info -> validateManualDeviceInfo(info) },
             onFailure = { error -> ManualSetupPreflightResult.Blocked(error.message ?: "DeviceInfo verification failed. Scan again.") }
@@ -75,9 +79,11 @@ class AqlBleDeviceInfoPreflightClient(
             return QrCandidatePreflightResult.Failed("BLE device address is invalid.")
         }
 
-        val deviceInfo = withTimeoutOrNull(QR_CANDIDATE_PREFLIGHT_TIMEOUT_MS) {
-            readDeviceInfo(device)
-        } ?: return QrCandidatePreflightResult.Failed("DeviceInfo QR candidate verification timed out.")
+        val deviceInfo = readDeviceInfoWithRetry(
+            device = device,
+            timeoutMs = QR_CANDIDATE_PREFLIGHT_TIMEOUT_MS,
+            attempts = QR_CANDIDATE_PREFLIGHT_READ_ATTEMPTS
+        ) ?: return QrCandidatePreflightResult.Failed("DeviceInfo QR candidate verification timed out.")
 
         return deviceInfo.fold(
             onSuccess = { info -> validateQrCandidateDeviceInfo(address, info, draft) },
@@ -87,6 +93,28 @@ class AqlBleDeviceInfoPreflightClient(
                 )
             }
         )
+    }
+
+
+    private suspend fun readDeviceInfoWithRetry(
+        device: BluetoothDevice,
+        timeoutMs: Long,
+        attempts: Int
+    ): Result<DeviceInfo>? {
+        var lastResult: Result<DeviceInfo>? = null
+        repeat(attempts.coerceAtLeast(1)) { index ->
+            val result = withTimeoutOrNull(timeoutMs) {
+                readDeviceInfo(device)
+            }
+            if (result != null) {
+                lastResult = result
+                if (result.isSuccess) return result
+            }
+            if (index < attempts - 1) {
+                delay(PREFLIGHT_RETRY_DELAY_MS)
+            }
+        }
+        return lastResult
     }
 
     @SuppressLint("MissingPermission")
@@ -451,6 +479,9 @@ class AqlBleDeviceInfoPreflightClient(
         val DEVICE_INFO_UUID: UUID = UUID.fromString(AqlBleProvisioningContract.DEVICE_INFO_UUID)
         const val PREFLIGHT_TIMEOUT_MS = 12_000L
         const val QR_CANDIDATE_PREFLIGHT_TIMEOUT_MS = 5_000L
+        const val PREFLIGHT_READ_ATTEMPTS = 2
+        const val QR_CANDIDATE_PREFLIGHT_READ_ATTEMPTS = 2
+        const val PREFLIGHT_RETRY_DELAY_MS = 650L
     }
 }
 

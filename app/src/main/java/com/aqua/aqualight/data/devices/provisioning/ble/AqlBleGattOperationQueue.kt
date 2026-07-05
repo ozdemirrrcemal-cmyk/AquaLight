@@ -6,11 +6,29 @@ import java.util.ArrayDeque
 internal class AqlBleGattOperationQueue(
     private val handler: Handler,
     private val startOperation: (AqlBleGattOperation) -> AqlBleGattOperationStartResult,
-    private val onStartFailure: (AqlBleGattOperation, AqlBleGattOperationStartResult.NotStarted) -> Unit
+    private val onStartFailure: (AqlBleGattOperation, AqlBleGattOperationStartResult.NotStarted) -> Unit,
+    private val operationTimeoutMillis: Long = DEFAULT_OPERATION_TIMEOUT_MS
 ) {
     private val lock = Any()
     private val pending = ArrayDeque<AqlBleGattOperation>()
     private var active: AqlBleGattOperation? = null
+
+    private val operationTimeoutRunnable = Runnable {
+        val timedOutOperation = synchronized(lock) {
+            val operation = active
+            active = null
+            operation
+        } ?: return@Runnable
+
+        onStartFailure(
+            timedOutOperation,
+            AqlBleGattOperationStartResult.NotStarted(
+                retryable = false,
+                message = "BLE GATT operation timed out: " + timedOutOperation.name + "."
+            )
+        )
+        drain()
+    }
 
     fun enqueue(operation: AqlBleGattOperation) {
         synchronized(lock) {
@@ -33,7 +51,10 @@ internal class AqlBleGattOperationQueue(
                 shouldDrain = true
             }
         }
-        if (shouldDrain) drain()
+        if (shouldDrain) {
+            handler.removeCallbacks(operationTimeoutRunnable)
+            drain()
+        }
     }
 
     fun clear() {
@@ -41,6 +62,7 @@ internal class AqlBleGattOperationQueue(
             pending.clear()
             active = null
         }
+        handler.removeCallbacks(operationTimeoutRunnable)
     }
 
     private fun drain() {
@@ -53,15 +75,23 @@ internal class AqlBleGattOperationQueue(
         }
 
         val operation = next ?: return
+        handler.removeCallbacks(operationTimeoutRunnable)
         when (val result = startOperation(operation)) {
-            AqlBleGattOperationStartResult.Started -> Unit
+            AqlBleGattOperationStartResult.Started -> {
+                handler.postDelayed(operationTimeoutRunnable, operationTimeoutMillis)
+            }
             is AqlBleGattOperationStartResult.NotStarted -> {
                 synchronized(lock) {
                     if (active == operation) active = null
                 }
+                handler.removeCallbacks(operationTimeoutRunnable)
                 onStartFailure(operation, result)
             }
         }
+    }
+
+    private companion object {
+        const val DEFAULT_OPERATION_TIMEOUT_MS = 15_000L
     }
 }
 
@@ -81,5 +111,6 @@ internal enum class AqlBleGattOperation {
     WRITE_START_SESSION,
     WRITE_WIFI_CREDENTIALS,
     READ_PROVISIONING_STATUS,
-    READ_RUNTIME_ENDPOINT
+    READ_RUNTIME_ENDPOINT,
+    WRITE_FINALIZE_SETUP
 }

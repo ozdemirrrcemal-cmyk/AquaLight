@@ -16,6 +16,7 @@ enum class AqlProvisioningStatus(
     WIFI_CONNECTED(AqlBleProvisioningContract.Status.WIFI_CONNECTED),
     WIFI_FAILED(AqlBleProvisioningContract.Status.WIFI_FAILED),
     WEB_SOCKET_TOKEN_READY(AqlBleProvisioningContract.Status.WEB_SOCKET_TOKEN_READY),
+    FINALIZING(AqlBleProvisioningContract.Status.FINALIZING),
     COMPLETED(AqlBleProvisioningContract.Status.COMPLETED),
     TIMEOUT(AqlBleProvisioningContract.Status.TIMEOUT),
     ERROR(AqlBleProvisioningContract.Status.ERROR),

@@ -6,6 +6,7 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeSyncCoordinator
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsAuthManager
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsAuthAttemptResult
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsAuthStateChange
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsClient
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
@@ -140,7 +141,9 @@ class DeviceRuntimeRepository(
     private fun observeSession(session: RuntimeSession) {
         scope.launch {
             session.wsClient.connectionState.collect { state ->
-                _connectionState.emit(state)
+                if (state is AqlWsConnectionState.Failed) {
+                    _connectionState.emit(state)
+                }
             }
         }
 
@@ -165,10 +168,15 @@ class DeviceRuntimeRepository(
             is AqlWsEvent.Message -> {
                 if (event.parsed is AqlWsIncomingMessage.Hello) {
                     sendFirmwarePublicBootstrap(session.commandClient)
-                    authManager?.authenticateIfTokenExists(
+                    when (authManager?.authenticateIfTokenExists(
                         deviceUid = event.deviceUid,
                         commandClient = session.commandClient
-                    )
+                    )) {
+                        is AqlWsAuthAttemptResult.AuthMessageSent -> Unit
+                        AqlWsAuthAttemptResult.NoToken -> Unit
+                        AqlWsAuthAttemptResult.SendFailed -> Unit
+                        null -> Unit
+                    }
                 }
 
                 val authStateChange = authManager?.handleIncomingMessage(

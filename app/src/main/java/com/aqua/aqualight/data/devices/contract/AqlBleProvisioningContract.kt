@@ -21,6 +21,7 @@ object AqlBleProvisioningContract {
     const val WIFI_CREDENTIALS_UUID = "9f4c0004-6f5a-4b7c-9a7f-2f8a3c1d0001"
     const val PROVISIONING_STATUS_UUID = "9f4c0005-6f5a-4b7c-9a7f-2f8a3c1d0001"
     const val RUNTIME_ENDPOINT_UUID = "9f4c0006-6f5a-4b7c-9a7f-2f8a3c1d0001"
+    const val FINALIZE_SETUP_UUID = "9f4c0007-6f5a-4b7c-9a7f-2f8a3c1d0001"
 
     const val QR_MAX_BYTES = 512
     const val BLE_JSON_MAX_BYTES = 512
@@ -85,9 +86,12 @@ object AqlBleProvisioningContract {
         const val KEY_WIFI_CHANNEL = "channel"
         const val KEY_WIFI_TIMEZONE = "timezone"
         const val KEY_WIFI_UTC_OFFSET_MINUTES = "utcOffsetMinutes"
+        const val KEY_FINALIZE_ACCEPTED = "accepted"
         const val KEY_STATUS = "status"
         const val KEY_MESSAGE = "message"
         const val KEY_LAST_ERROR = "lastError"
+        const val KEY_ERROR_CODE = "errorCode"
+        const val KEY_RETRYABLE = "retryable"
         const val KEY_TOKEN = "token"
         const val KEY_IP = "ip"
         const val KEY_WS_PORT = "webSocketPort"
@@ -107,8 +111,21 @@ object AqlBleProvisioningContract {
         const val WIFI_CONNECTED = "wifiConnected"
         const val WIFI_FAILED = "wifiFailed"
         const val WEB_SOCKET_TOKEN_READY = "webSocketTokenReady"
+        const val FINALIZING = "finalizing"
         const val COMPLETED = "completed"
         const val TIMEOUT = "timeout"
         const val ERROR = "error"
+    }
+
+    object ErrorCode {
+        const val WIFI_AUTH_FAILED = "wifiAuthFailed"
+        const val WIFI_NETWORK_NOT_FOUND = "wifiNetworkNotFound"
+        const val WIFI_HANDSHAKE_FAILED = "wifiHandshakeFailed"
+        const val WIFI_ASSOCIATION_FAILED = "wifiAssociationFailed"
+        const val WIFI_TIMEOUT = "wifiTimeout"
+        const val WIFI_CONNECT_FAILED = "wifiConnectFailed"
+        const val NETWORK_SAVE_FAILED = "networkSaveFailed"
+        const val SETUP_CONFIRMATION_TIMEOUT = "setupConfirmationTimeout"
+        const val FINALIZE_REJECTED = "finalizeRejected"
     }
 }

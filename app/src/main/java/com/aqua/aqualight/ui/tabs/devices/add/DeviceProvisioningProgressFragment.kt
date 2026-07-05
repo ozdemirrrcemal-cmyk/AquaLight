@@ -31,6 +31,7 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
     private val binding get() = _binding!!
 
     private var autoStartRequested = false
+    private var wifiFailureReturned = false
 
     private val blePermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -148,6 +149,12 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
         binding.btnStartProvisioning.text = state.buttonText
         binding.btnStartProvisioning.alpha = if (state.canStart) 1f else 0.45f
         binding.progressBar.isVisible = state.showProgress
+
+        val wifiFailure = state.wifiCredentialFailure
+        if (!wifiFailureReturned && wifiFailure != null) {
+            wifiFailureReturned = true
+            returnToWifiCredentials(wifiFailure)
+        }
     }
 
     private fun DeviceProvisioningProgressUiState.currentStepIcon(): String {
@@ -155,6 +162,28 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
             canStart -> "!"
             showProgress -> "●"
             else -> "✓"
+        }
+    }
+
+    private fun returnToWifiCredentials(failure: DeviceProvisioningWifiCredentialFailure) {
+        val navController = findNavController()
+        val previousEntry = navController.previousBackStackEntry ?: run {
+            navController.navigateUp()
+            return
+        }
+
+        previousEntry.savedStateHandle[DeviceWifiProvisioningResult.KEY_FAILURE_MESSAGE] =
+            failure.message
+        previousEntry.savedStateHandle[DeviceWifiProvisioningResult.KEY_FAILURE_FIELD] =
+            failure.field.toResultField()
+
+        navController.popBackStack()
+    }
+
+    private fun DeviceProvisioningWifiCredentialField.toResultField(): String {
+        return when (this) {
+            DeviceProvisioningWifiCredentialField.SSID -> DeviceWifiProvisioningResult.FIELD_SSID
+            DeviceProvisioningWifiCredentialField.PASSWORD -> DeviceWifiProvisioningResult.FIELD_PASSWORD
         }
     }
 

@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.settings.device
 
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
+import com.aqua.aqualight.ui.common.devicepresence.DevicePresencePresentationMapper
 import java.util.Locale
 import kotlin.math.max
 
@@ -64,11 +65,11 @@ object DeviceStatusSnapshotMapper {
     private fun DeviceSnapshot.supportingText(): String {
         return listOf(
             product.familyRaw.ifBlank { product.family.wireValue }.ifBlank { null },
-            connectionState.onlineState.statusLabel()
+            DevicePresencePresentationMapper.availabilityLabel(connectionState.onlineState)
         )
             .filterNotNull()
             .joinToString(separator = " • ")
-            .ifBlank { "Not connected" }
+            .ifBlank { "Device" }
     }
 
     private fun DeviceSnapshot.deviceCode(): String {
@@ -118,38 +119,6 @@ object DeviceStatusSnapshotMapper {
         ).maxOrNull() ?: 0L
     }
 
-    private fun DeviceOnlineState.isOnlineForSettings(): Boolean {
-        return when (this) {
-            DeviceOnlineState.ONLINE_LAN,
-            DeviceOnlineState.CONNECTING_WS,
-            DeviceOnlineState.AUTHENTICATED,
-            DeviceOnlineState.PROVISIONING,
-            DeviceOnlineState.OTA_UPDATING -> true
-
-            DeviceOnlineState.UNKNOWN,
-            DeviceOnlineState.DISCOVERING,
-            DeviceOnlineState.STALE,
-            DeviceOnlineState.OFFLINE,
-            DeviceOnlineState.LOCAL_NETWORK_OFFLINE,
-            DeviceOnlineState.AUTH_REQUIRED,
-            DeviceOnlineState.ERROR -> false
-        }
-    }
-
-    private fun DeviceOnlineState.statusLabel(): String {
-        return when (this) {
-            DeviceOnlineState.UNKNOWN -> "Unknown"
-            DeviceOnlineState.DISCOVERING -> "Discovering"
-            DeviceOnlineState.ONLINE_LAN -> "Online LAN"
-            DeviceOnlineState.CONNECTING_WS -> "Connecting"
-            DeviceOnlineState.AUTHENTICATED -> "Authenticated"
-            DeviceOnlineState.STALE -> "Stale"
-            DeviceOnlineState.OFFLINE -> "Offline"
-            DeviceOnlineState.LOCAL_NETWORK_OFFLINE -> "Network offline"
-            DeviceOnlineState.AUTH_REQUIRED -> "Auth required"
-            DeviceOnlineState.PROVISIONING -> "Provisioning"
-            DeviceOnlineState.OTA_UPDATING -> "OTA updating"
-            DeviceOnlineState.ERROR -> "Error"
-        }
-    }
+    private fun DeviceOnlineState.isOnlineForSettings(): Boolean =
+        DevicePresencePresentationMapper.isReachable(this)
 }

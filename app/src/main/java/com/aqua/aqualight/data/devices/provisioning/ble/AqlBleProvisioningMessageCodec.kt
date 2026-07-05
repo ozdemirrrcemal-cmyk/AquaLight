@@ -49,6 +49,17 @@ class AqlBleProvisioningMessageCodec {
         }
     }
 
+    fun finalizeSetupJson(handoff: AqlProvisioningRuntimeHandoff): Result<String> {
+        return runCatching {
+            val session = secureSession ?: error("Secure BLE provisioning session is not active.")
+            val plaintext = JSONObject()
+                .put(AqlBleProvisioningContract.Json.KEY_DEVICE_UID, handoff.deviceUid.value)
+                .put(AqlBleProvisioningContract.Json.KEY_FINALIZE_ACCEPTED, true)
+                .toString()
+            AqlBleProvisioningCrypto.encryptJson(plaintext, session, PURPOSE_FINALIZE_SETUP)
+        }
+    }
+
     fun parseStatus(raw: String): AqlBleProvisioningStatusMessage {
         val normalizedRaw = raw.trim()
         if (normalizedRaw.isBlank()) {
@@ -68,6 +79,8 @@ class AqlBleProvisioningMessageCodec {
             message = json.optString(AqlBleProvisioningContract.Json.KEY_MESSAGE).trim().ifBlank {
                 json.optString(AqlBleProvisioningContract.Json.KEY_LAST_ERROR).trim()
             },
+            errorCode = json.optString(AqlBleProvisioningContract.Json.KEY_ERROR_CODE).trim(),
+            retryable = json.optBoolean(AqlBleProvisioningContract.Json.KEY_RETRYABLE, false),
             raw = raw
         )
     }
@@ -145,6 +158,7 @@ class AqlBleProvisioningMessageCodec {
     private companion object {
         const val PURPOSE_WIFI_CREDENTIALS = "wifiCredentials"
         const val PURPOSE_RUNTIME_ENDPOINT = "runtimeEndpoint"
+        const val PURPOSE_FINALIZE_SETUP = "finalizeSetup"
         val RUNTIME_METADATA_KEYS = setOf(
             "productFamily",
             "productName",

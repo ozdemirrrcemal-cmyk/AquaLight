@@ -5,6 +5,7 @@ import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.ui.common.devicecard.DeviceFamilyIconMapper
+import com.aqua.aqualight.ui.common.devicepresence.DevicePresencePresentationMapper
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
@@ -100,19 +101,12 @@ object DeviceCardMapper {
         return parts.distinct().take(4).joinToString(separator = " / ")
     }
 
-    private fun statusFor(onlineState: DeviceOnlineState): StatusPresentation = when (onlineState) {
-        DeviceOnlineState.AUTHENTICATED -> StatusPresentation("ONLINE", DeviceCardUi.StatusStyle.ONLINE)
-        DeviceOnlineState.ONLINE_LAN -> StatusPresentation("ONLINE", DeviceCardUi.StatusStyle.ONLINE)
-        DeviceOnlineState.CONNECTING_WS -> StatusPresentation("CONNECTING", DeviceCardUi.StatusStyle.CONNECTING)
-        DeviceOnlineState.DISCOVERING -> StatusPresentation("DISCOVERING", DeviceCardUi.StatusStyle.CONNECTING)
-        DeviceOnlineState.STALE -> StatusPresentation("STALE", DeviceCardUi.StatusStyle.WARNING)
-        DeviceOnlineState.AUTH_REQUIRED -> StatusPresentation("AUTH", DeviceCardUi.StatusStyle.WARNING)
-        DeviceOnlineState.PROVISIONING -> StatusPresentation("SETUP", DeviceCardUi.StatusStyle.WARNING)
-        DeviceOnlineState.OTA_UPDATING -> StatusPresentation("UPDATING", DeviceCardUi.StatusStyle.WARNING)
-        DeviceOnlineState.LOCAL_NETWORK_OFFLINE -> StatusPresentation("NO LAN", DeviceCardUi.StatusStyle.OFFLINE)
-        DeviceOnlineState.OFFLINE -> StatusPresentation("OFFLINE", DeviceCardUi.StatusStyle.OFFLINE)
-        DeviceOnlineState.ERROR -> StatusPresentation("ERROR", DeviceCardUi.StatusStyle.OFFLINE)
-        DeviceOnlineState.UNKNOWN -> StatusPresentation("UNKNOWN", DeviceCardUi.StatusStyle.WARNING)
+    private fun statusFor(onlineState: DeviceOnlineState): StatusPresentation {
+        val reachable = DevicePresencePresentationMapper.isReachable(onlineState)
+        return StatusPresentation(
+            label = DevicePresencePresentationMapper.availabilityLabel(onlineState).uppercase(Locale.US),
+            style = if (reachable) DeviceCardUi.StatusStyle.ONLINE else DeviceCardUi.StatusStyle.OFFLINE
+        )
     }
 
     private fun lastSeenText(lastSeenAtMillis: Long, nowMillis: Long): String {

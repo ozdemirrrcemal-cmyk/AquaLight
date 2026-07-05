@@ -76,12 +76,11 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
                         android:orientation="horizontal"
-                        android:weightSum="2">
+                        android:weightSum="1">
 
                         <LinearLayout
-                            android:layout_width="0dp"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
                             android:orientation="vertical">
 
                             <TextView
@@ -99,31 +98,7 @@
                                 android:textColor="@color/white"
                                 android:textSize="15sp"
                                 android:textStyle="bold"
-                                tools:text="Authenticated" />
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Auth"
-                                android:textColor="#8FA4BE"
-                                android:textSize="12sp" />
-
-                            <TextView
-                                android:id="@+id/tvAuthStatus"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
-                                android:textColor="@color/white"
-                                android:textSize="15sp"
-                                android:textStyle="bold"
-                                tools:text="Authenticated" />
+                                tools:text="Online" />
                         </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>

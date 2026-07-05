@@ -1,22 +1,28 @@
 package com.aqua.aqualight.data.devices.repository
 
 import android.content.Context
+import com.aqua.aqualight.data.devices.monitor.DeviceConnectivityObserver
 import com.aqua.aqualight.data.devices.store.DeviceKnownStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 /**
  * Process-level Devices V2 repository holder.
  *
- * The first UI integration steps need DevicesFragment and later detail screens to observe the
- * same in-memory device registry. Durable dependency injection can replace this provider later,
- * but UI code should still depend on [DevicesRepository], not on UDP/BLE/WebSocket internals.
+ * All device UI surfaces observe the same repository instance. The repository is started from this
+ * provider so device presence is not tied to a single screen such as DevicesFragment.
  */
 object DevicesRepositoryProvider {
+
+    private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     @Volatile
     private var instance: DevicesRepository? = null
 
     fun get(context: Context? = null): DevicesRepository = instance ?: synchronized(this) {
         instance ?: createRepository(context).also { repository ->
+            repository.start(repositoryScope)
             instance = repository
         }
     }
@@ -26,7 +32,8 @@ object DevicesRepositoryProvider {
         return if (appContext != null) {
             DevicesRepository(
                 knownStore = DeviceKnownStore(appContext),
-                runtimeRepository = DeviceRuntimeRepository.withCredentialStore(appContext)
+                runtimeRepository = DeviceRuntimeRepository.withCredentialStore(appContext),
+                connectivityObserver = DeviceConnectivityObserver(appContext)
             )
         } else {
             DevicesRepository()

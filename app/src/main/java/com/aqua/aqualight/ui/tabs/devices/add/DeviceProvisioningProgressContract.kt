@@ -8,6 +8,16 @@ sealed interface DeviceProvisioningProgressEvent {
     ) : DeviceProvisioningProgressEvent
 }
 
+data class DeviceProvisioningWifiCredentialFailure(
+    val message: String,
+    val field: DeviceProvisioningWifiCredentialField
+)
+
+enum class DeviceProvisioningWifiCredentialField {
+    SSID,
+    PASSWORD
+}
+
 data class DeviceProvisioningProgressUiState(
     val title: String = "",
     val message: String = "",
@@ -20,5 +30,6 @@ data class DeviceProvisioningProgressUiState(
     val stepThree: String = "",
     val canStart: Boolean = false,
     val buttonText: String = "",
-    val showProgress: Boolean = false
+    val showProgress: Boolean = false,
+    val wifiCredentialFailure: DeviceProvisioningWifiCredentialFailure? = null
 )

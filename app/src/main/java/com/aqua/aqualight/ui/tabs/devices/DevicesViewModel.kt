@@ -4,10 +4,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.monitor.DeviceConnectivityObserver
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -15,7 +13,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -25,9 +22,7 @@ class DevicesViewModel(
 ) : AndroidViewModel(application) {
 
     private val repository = DevicesRepositoryProvider.get(application)
-    private val connectivityObserver = DeviceConnectivityObserver(application)
     private val routeResolver = DeviceRouteResolver()
-    private val localNetworkAvailable = MutableStateFlow(true)
     private val clockMillis = MutableStateFlow(System.currentTimeMillis())
     private val selectedDeviceUids = MutableStateFlow<Set<String>>(emptySet())
 
@@ -37,18 +32,16 @@ class DevicesViewModel(
     private val _events = Channel<DevicesEvent>(capacity = Channel.BUFFERED)
     val events: Flow<DevicesEvent> = _events.receiveAsFlow()
 
-    private var refreshJob: Job? = null
-
     init {
         repository.start(viewModelScope)
         observeDevices()
-        observeConnectivity()
-        startPresenceTicker()
-        refreshDiscoveryBurst()
+        startUiClockTicker()
+        repository.refreshVisibleDevices()
     }
 
     fun onScreenVisible() {
-        refreshDiscoveryBurst()
+        repository.refreshVisibleDevices()
+        clockMillis.value = System.currentTimeMillis()
     }
 
     fun onDeviceClicked(deviceUid: String) {
@@ -140,34 +133,12 @@ class DevicesViewModel(
         }
     }
 
-    private fun observeConnectivity() {
-        viewModelScope.launch {
-            connectivityObserver.observeLocalNetworkAvailable()
-                .distinctUntilChanged()
-                .collect { available ->
-                    localNetworkAvailable.value = available
-                    repository.reevaluatePresence(localNetworkAvailable = available)
-                    clockMillis.value = System.currentTimeMillis()
-                    if (available) refreshDiscoveryBurst()
-                }
-        }
-    }
-
-    private fun startPresenceTicker() {
+    private fun startUiClockTicker() {
         viewModelScope.launch {
             while (isActive) {
-                delay(PRESENCE_REEVALUATE_INTERVAL_MS)
-                repository.reevaluatePresence(localNetworkAvailable = localNetworkAvailable.value)
+                delay(UI_CLOCK_TICK_INTERVAL_MS)
                 clockMillis.value = System.currentTimeMillis()
             }
-        }
-    }
-
-    private fun refreshDiscoveryBurst() {
-        if (refreshJob?.isActive == true) return
-
-        refreshJob = viewModelScope.launch {
-            runCatching { repository.refreshForegroundBurst() }
         }
     }
 
@@ -179,7 +150,7 @@ class DevicesViewModel(
         val selectedCount: Int = 0
     )
 
-    companion object {
-        private const val PRESENCE_REEVALUATE_INTERVAL_MS = 15_000L
+    private companion object {
+        const val UI_CLOCK_TICK_INTERVAL_MS = 5_000L
     }
 }

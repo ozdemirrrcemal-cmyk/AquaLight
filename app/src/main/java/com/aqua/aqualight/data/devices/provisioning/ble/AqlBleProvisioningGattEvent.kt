@@ -15,6 +15,7 @@ sealed interface AqlBleProvisioningGattEvent {
     object WifiCredentialsWritten : AqlBleProvisioningGattEvent
     data class StatusReceived(val statusMessage: AqlBleProvisioningStatusMessage) : AqlBleProvisioningGattEvent
     data class RuntimeHandoffReceived(val handoff: AqlProvisioningRuntimeHandoff) : AqlBleProvisioningGattEvent
+    object FinalizeSetupWritten : AqlBleProvisioningGattEvent
     object Completed : AqlBleProvisioningGattEvent
     data class Failed(val message: String) : AqlBleProvisioningGattEvent
     object Disconnected : AqlBleProvisioningGattEvent

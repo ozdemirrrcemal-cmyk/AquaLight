@@ -3,14 +3,15 @@ package com.aqua.aqualight.data.devices.monitor
 /**
  * Central timing policy for device presence decisions.
  *
- * Firmware announces periodically, but Android should actively refresh when foregrounded. Keeping
- * these values in one place prevents random timeout constants from spreading across UI code.
+ * Firmware announces periodically and Android actively refreshes while the app process is alive.
+ * These values keep online/offline decisions live without allowing UI screens to invent their own
+ * timing rules or causing runtime/auth badges to flicker.
  */
 data class DeviceHeartbeatPolicy(
-    val udpFreshMillis: Long = 60_000L,
-    val udpStaleMillis: Long = 120_000L,
-    val wsFreshMillis: Long = 45_000L,
-    val authFreshMillis: Long = 45_000L
+    val udpFreshMillis: Long = 20_000L,
+    val udpStaleMillis: Long = 35_000L,
+    val wsFreshMillis: Long = 20_000L,
+    val authFreshMillis: Long = 60_000L
 ) {
     init {
         require(udpFreshMillis > 0L)
