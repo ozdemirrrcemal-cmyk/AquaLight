@@ -6,6 +6,7 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeSyncCoordinator
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsAuthManager
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsAuthAttemptResult
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsAuthStateChange
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsClient
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
@@ -165,10 +166,25 @@ class DeviceRuntimeRepository(
             is AqlWsEvent.Message -> {
                 if (event.parsed is AqlWsIncomingMessage.Hello) {
                     sendFirmwarePublicBootstrap(session.commandClient)
-                    authManager?.authenticateIfTokenExists(
+                    when (authManager?.authenticateIfTokenExists(
                         deviceUid = event.deviceUid,
                         commandClient = session.commandClient
-                    )
+                    )) {
+                        is AqlWsAuthAttemptResult.AuthMessageSent -> Unit
+                        AqlWsAuthAttemptResult.NoToken -> {
+                            session.wsClient.markAuthRequired(
+                                deviceUid = event.deviceUid,
+                                message = "Runtime token is missing. Pair the device again."
+                            )
+                        }
+                        AqlWsAuthAttemptResult.SendFailed -> {
+                            session.wsClient.markAuthRequired(
+                                deviceUid = event.deviceUid,
+                                message = "Runtime authentication could not be sent."
+                            )
+                        }
+                        null -> Unit
+                    }
                 }
 
                 val authStateChange = authManager?.handleIncomingMessage(
