@@ -105,7 +105,8 @@ class DeviceProvisioningProgressViewModel(
             stepThree = string(R.string.device_provisioning_waiting_bluetooth_permission),
             canStart = true,
             buttonText = string(R.string.device_provisioning_try_again),
-            showProgress = false
+            showProgress = false,
+            wifiCredentialFailure = null
         )
     }
 
@@ -116,7 +117,8 @@ class DeviceProvisioningProgressViewModel(
                 message = string(R.string.device_provisioning_session_expired_message),
                 canStart = false,
                 buttonText = string(R.string.device_provisioning_unavailable),
-                showProgress = false
+                showProgress = false,
+                wifiCredentialFailure = null
             )
             return
         }
@@ -141,7 +143,8 @@ class DeviceProvisioningProgressViewModel(
                 stepThree = string(R.string.device_provisioning_connecting_step),
                 canStart = false,
                 buttonText = string(R.string.device_provisioning_running),
-                showProgress = true
+                showProgress = true,
+                wifiCredentialFailure = null
             )
 
             gattClient.start(readyDraft)
@@ -162,7 +165,8 @@ class DeviceProvisioningProgressViewModel(
                 stepThree = string(R.string.device_provisioning_locating_qr_step),
                 canStart = false,
                 buttonText = string(R.string.device_provisioning_finding),
-                showProgress = true
+                showProgress = true,
+                wifiCredentialFailure = null
             )
 
             addressResolver.resolveQrAddress(draft)
@@ -179,7 +183,8 @@ class DeviceProvisioningProgressViewModel(
                             stepThree = string(R.string.device_provisioning_device_not_found_title),
                             canStart = true,
                             buttonText = string(R.string.device_provisioning_try_again),
-                            showProgress = false
+                            showProgress = false,
+                            wifiCredentialFailure = null
                         )
                         return null
                     }
@@ -196,7 +201,8 @@ class DeviceProvisioningProgressViewModel(
             stepThree = string(R.string.device_provisioning_device_not_found_title),
             canStart = true,
             buttonText = string(R.string.device_provisioning_try_again),
-            showProgress = false
+            showProgress = false,
+            wifiCredentialFailure = null
         )
         return null
     }
@@ -222,7 +228,8 @@ class DeviceProvisioningProgressViewModel(
                     stepThree = string(R.string.device_provisioning_step_setup_complete),
                     canStart = false,
                     buttonText = string(R.string.device_provisioning_opening),
-                    showProgress = true
+                    showProgress = true,
+                    wifiCredentialFailure = null
                 )
             }
 
@@ -257,7 +264,8 @@ class DeviceProvisioningProgressViewModel(
                         stepThree = string(R.string.device_provisioning_opening_menu_step),
                         canStart = false,
                         buttonText = string(R.string.device_provisioning_opening),
-                        showProgress = true
+                        showProgress = true,
+                        wifiCredentialFailure = null
                     )
                     boundSessionId?.let { sessionId ->
                         AqlProvisioningDraftStore.remove(sessionId)
@@ -274,7 +282,8 @@ class DeviceProvisioningProgressViewModel(
                         stepThree = string(R.string.device_provisioning_preparing_menu_step),
                         canStart = false,
                         buttonText = string(R.string.device_provisioning_saving),
-                        showProgress = true
+                        showProgress = true,
+                        wifiCredentialFailure = null
                     )
                 }
             }
@@ -296,7 +305,8 @@ class DeviceProvisioningProgressViewModel(
                     stepThree = string(R.string.device_provisioning_connecting_step),
                     canStart = false,
                     buttonText = string(R.string.device_provisioning_running),
-                    showProgress = true
+                    showProgress = true,
+                    wifiCredentialFailure = null
                 )
             }
 
@@ -305,7 +315,8 @@ class DeviceProvisioningProgressViewModel(
                     title = string(R.string.device_provisioning_device_found_title),
                     message = string(R.string.device_provisioning_prepare_service_message),
                     stepThree = string(R.string.device_provisioning_bluetooth_connected_step),
-                    showProgress = true
+                    showProgress = true,
+                    wifiCredentialFailure = null
                 )
             }
 
@@ -314,7 +325,8 @@ class DeviceProvisioningProgressViewModel(
                     title = string(R.string.device_provisioning_secure_session_title),
                     message = string(R.string.device_provisioning_secure_session_message),
                     stepThree = string(R.string.device_provisioning_secure_session_step),
-                    showProgress = true
+                    showProgress = true,
+                    wifiCredentialFailure = null
                 )
             }
 
@@ -323,7 +335,8 @@ class DeviceProvisioningProgressViewModel(
                     title = string(R.string.device_provisioning_session_started_title),
                     message = string(R.string.device_provisioning_sending_wifi_message),
                     stepThree = string(R.string.device_provisioning_sending_wifi_step),
-                    showProgress = true
+                    showProgress = true,
+                    wifiCredentialFailure = null
                 )
             }
 
@@ -332,7 +345,8 @@ class DeviceProvisioningProgressViewModel(
                     title = string(R.string.device_provisioning_wifi_sent_title),
                     message = string(R.string.device_provisioning_wifi_connecting_message),
                     stepThree = string(R.string.device_provisioning_wifi_connecting_step),
-                    showProgress = true
+                    showProgress = true,
+                    wifiCredentialFailure = null
                 )
             }
 
@@ -343,7 +357,8 @@ class DeviceProvisioningProgressViewModel(
                     stepThree = event.statusMessage.status.toProgressStep(),
                     showProgress = event.statusMessage.status !in terminalStatuses,
                     canStart = event.statusMessage.status in retryStatuses,
-                    buttonText = string(R.string.device_provisioning_try_again)
+                    buttonText = string(R.string.device_provisioning_try_again),
+                    wifiCredentialFailure = event.statusMessage.toWifiCredentialFailure()
                 )
             }
 
@@ -359,13 +374,14 @@ class DeviceProvisioningProgressViewModel(
                     stepThree = string(R.string.device_provisioning_setup_stopped),
                     canStart = true,
                     buttonText = string(R.string.device_provisioning_try_again),
-                    showProgress = false
+                    showProgress = false,
+                    wifiCredentialFailure = null
                 )
             }
 
             AqlBleProvisioningGattEvent.Disconnected -> {
                 if (setupCompleted) {
-                    _uiState.value
+                    _uiState.value.copy(wifiCredentialFailure = null)
                 } else {
                     _uiState.value.copy(
                         title = string(R.string.device_provisioning_connection_closed_title),
@@ -373,7 +389,8 @@ class DeviceProvisioningProgressViewModel(
                         stepThree = string(R.string.device_provisioning_connection_closed_step),
                         canStart = true,
                         buttonText = string(R.string.device_provisioning_try_again),
-                        showProgress = false
+                        showProgress = false,
+                        wifiCredentialFailure = null
                     )
                 }
             }
@@ -407,7 +424,8 @@ class DeviceProvisioningProgressViewModel(
             stepThree = string(R.string.device_provisioning_preparing_menu_step),
             canStart = false,
             buttonText = string(R.string.device_provisioning_saving),
-            showProgress = true
+            showProgress = true,
+            wifiCredentialFailure = null
         )
     }
 
@@ -421,7 +439,8 @@ class DeviceProvisioningProgressViewModel(
                 stepThree = string(R.string.device_provisioning_save_failed_step),
                 canStart = true,
                 buttonText = string(R.string.device_provisioning_try_again),
-                showProgress = false
+                showProgress = false,
+                wifiCredentialFailure = null
             )
             return
         }
@@ -454,7 +473,8 @@ class DeviceProvisioningProgressViewModel(
                     stepThree = string(R.string.device_provisioning_preparing_menu_step),
                     canStart = false,
                     buttonText = string(R.string.device_provisioning_saving),
-                    showProgress = true
+                    showProgress = true,
+                    wifiCredentialFailure = null
                 )
 
                 gattClient.finalizeSetup(handoff)
@@ -465,7 +485,8 @@ class DeviceProvisioningProgressViewModel(
                     stepThree = string(R.string.device_provisioning_save_failed_step),
                     canStart = true,
                     buttonText = string(R.string.device_provisioning_try_again),
-                    showProgress = false
+                    showProgress = false,
+                    wifiCredentialFailure = null
                 )
             }
         }
@@ -512,6 +533,47 @@ class DeviceProvisioningProgressViewModel(
             }
         }
         return status.toProgressMessage(fallback = message)
+    }
+
+    private fun AqlBleProvisioningStatusMessage.toWifiCredentialFailure(): DeviceProvisioningWifiCredentialFailure? {
+        if (status != AqlProvisioningStatus.WIFI_FAILED) {
+            return null
+        }
+
+        return when (errorCode) {
+            AqlBleProvisioningContract.ErrorCode.WIFI_AUTH_FAILED -> {
+                DeviceProvisioningWifiCredentialFailure(
+                    message = string(R.string.device_wifi_password_incorrect_error),
+                    field = DeviceProvisioningWifiCredentialField.PASSWORD
+                )
+            }
+            AqlBleProvisioningContract.ErrorCode.WIFI_NETWORK_NOT_FOUND -> {
+                DeviceProvisioningWifiCredentialFailure(
+                    message = string(R.string.device_wifi_network_not_found_error),
+                    field = DeviceProvisioningWifiCredentialField.SSID
+                )
+            }
+            AqlBleProvisioningContract.ErrorCode.WIFI_HANDSHAKE_FAILED,
+            AqlBleProvisioningContract.ErrorCode.WIFI_ASSOCIATION_FAILED -> {
+                DeviceProvisioningWifiCredentialFailure(
+                    message = string(R.string.device_wifi_router_rejected_error),
+                    field = DeviceProvisioningWifiCredentialField.PASSWORD
+                )
+            }
+            AqlBleProvisioningContract.ErrorCode.WIFI_TIMEOUT -> {
+                DeviceProvisioningWifiCredentialFailure(
+                    message = string(R.string.device_wifi_connection_timeout_error),
+                    field = DeviceProvisioningWifiCredentialField.PASSWORD
+                )
+            }
+            AqlBleProvisioningContract.ErrorCode.NETWORK_SAVE_FAILED -> null
+            else -> {
+                DeviceProvisioningWifiCredentialFailure(
+                    message = string(R.string.device_wifi_provisioning_failed_error),
+                    field = DeviceProvisioningWifiCredentialField.PASSWORD
+                )
+            }
+        }
     }
 
     private fun AqlProvisioningStatus.toProgressMessage(fallback: String): String {
