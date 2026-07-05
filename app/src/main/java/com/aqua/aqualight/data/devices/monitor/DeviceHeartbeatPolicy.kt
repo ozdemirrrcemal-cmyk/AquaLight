@@ -5,13 +5,13 @@ package com.aqua.aqualight.data.devices.monitor
  *
  * Firmware announces periodically and Android actively refreshes while the app process is alive.
  * These values keep online/offline decisions live without allowing UI screens to invent their own
- * timing rules.
+ * timing rules or causing runtime/auth badges to flicker.
  */
 data class DeviceHeartbeatPolicy(
-    val udpFreshMillis: Long = 15_000L,
-    val udpStaleMillis: Long = 30_000L,
-    val wsFreshMillis: Long = 10_000L,
-    val authFreshMillis: Long = 20_000L
+    val udpFreshMillis: Long = 20_000L,
+    val udpStaleMillis: Long = 35_000L,
+    val wsFreshMillis: Long = 20_000L,
+    val authFreshMillis: Long = 60_000L
 ) {
     init {
         require(udpFreshMillis > 0L)
