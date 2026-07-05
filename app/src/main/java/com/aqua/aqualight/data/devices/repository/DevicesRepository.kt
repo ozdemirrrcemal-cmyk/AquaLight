@@ -138,9 +138,11 @@ class DevicesRepository(
     }
 
     fun refreshVisibleDevices(localNetworkAvailable: Boolean = true) {
+        val nowMillis = System.currentTimeMillis()
         reevaluatePresence(localNetworkAvailable = localNetworkAvailable)
         currentDevices()
             .filter { snapshot -> snapshot.endpoint.hasWebSocketEndpoint }
+            .filter { snapshot -> shouldRefreshRuntime(snapshot, nowMillis) }
             .forEach { snapshot -> runtimeRepository?.connect(snapshot) }
     }
 
@@ -247,6 +249,32 @@ class DevicesRepository(
         }
     }
 
+    private fun shouldRefreshRuntime(
+        snapshot: DeviceSnapshot,
+        nowMillis: Long
+    ): Boolean {
+        val state = snapshot.connectionState
+        val lastAuthenticatedAt = state.lastAuthenticatedAtMillis
+        if (
+            state.onlineState == DeviceOnlineState.AUTHENTICATED &&
+            lastAuthenticatedAt != null &&
+            nowMillis - lastAuthenticatedAt <= FOREGROUND_RUNTIME_REFRESH_GRACE_MS
+        ) {
+            return false
+        }
+
+        val lastWsConnectedAt = state.lastWsConnectedAtMillis
+        if (
+            state.onlineState == DeviceOnlineState.CONNECTING_WS &&
+            lastWsConnectedAt != null &&
+            nowMillis - lastWsConnectedAt <= FOREGROUND_RUNTIME_REFRESH_GRACE_MS
+        ) {
+            return false
+        }
+
+        return true
+    }
+
     private suspend fun applyRuntimeMetadataEvent(event: AqlWsEvent) {
         val message = (event as? AqlWsEvent.Message)
             ?.parsed as? AqlWsIncomingMessage.Response
@@ -339,5 +367,9 @@ class DevicesRepository(
             }
             clearedRuntimeState.copy(onlineState = visibleState)
         }
+    }
+
+    private companion object {
+        const val FOREGROUND_RUNTIME_REFRESH_GRACE_MS = 10_000L
     }
 }
