@@ -170,7 +170,10 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
             focusInput(binding.etWifiSsid)
         } else {
             binding.etWifiPassword.error = errorMessage
-            binding.etWifiPassword.selectAll()
+            binding.etWifiPassword.setSelection(
+                0,
+                binding.etWifiPassword.text?.length ?: 0
+            )
             focusInput(binding.etWifiPassword)
         }
     }
