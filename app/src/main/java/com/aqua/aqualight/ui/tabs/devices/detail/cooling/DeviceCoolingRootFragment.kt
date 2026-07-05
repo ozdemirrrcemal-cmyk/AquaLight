@@ -25,12 +25,9 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         _binding = FragmentDeviceCoolingRootBinding.bind(view)
-
         setupHeader(title = args.deviceTitle.ifBlank { DEFAULT_TITLE })
         observeViewModel()
-
         viewModel.bind(
             deviceUidText = args.deviceUid,
             fallbackTitle = args.deviceTitle
@@ -42,9 +39,7 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
             fragment = this,
             config = AquaHeaderConfig(
                 titleOverride = title,
-                onBackClick = {
-                    findNavController().navigateUp()
-                }
+                onBackClick = { findNavController().navigateUp() }
             )
         )
     }
@@ -52,23 +47,17 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state ->
-                    renderState(state)
-                }
+                viewModel.uiState.collect { state -> renderState(state) }
             }
         }
     }
 
     private fun renderState(state: DeviceCoolingRootUiState) {
         if (_binding == null) return
-
         setupHeader(title = state.title)
-        val online = state.connectionStatus.isReachablePresenceLabel()
-
         binding.tvProductName.text = state.title
         binding.tvDeviceUid.text = state.deviceUid.ifBlank { "Unknown device" }
-        binding.tvConnectionStatus.text = if (online) "Online" else "Offline"
-        binding.tvAuthStatus.text = if (online) "Ready" else "Unavailable"
+        binding.tvConnectionStatus.text = state.connectionStatus
         binding.tvIp.text = "IP: ${state.ipText}"
         binding.tvFirmware.text = "Firmware: ${state.firmwareText}"
         binding.tvModel.text = "Model: ${state.modelText}"
@@ -83,18 +72,6 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
     override fun onDestroyView() {
         _binding = null
         super.onDestroyView()
-    }
-
-    private fun String.isReachablePresenceLabel(): Boolean {
-        return trim() in setOf(
-            "Online",
-            "Online LAN",
-            "Connecting WebSocket",
-            "Authenticated",
-            "Provisioning",
-            "OTA updating",
-            "Ready"
-        )
     }
 
     private companion object {
