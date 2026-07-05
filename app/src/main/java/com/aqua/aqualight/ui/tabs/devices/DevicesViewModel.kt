@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class DevicesViewModel(
@@ -43,12 +42,11 @@ class DevicesViewModel(
         repository.start(viewModelScope)
         observeDevices()
         observeConnectivity()
-        startPresenceTicker()
-        refreshDiscoveryBurst()
+        refreshForegroundPresence()
     }
 
     fun onScreenVisible() {
-        refreshDiscoveryBurst()
+        refreshForegroundPresence()
     }
 
     fun onDeviceClicked(deviceUid: String) {
@@ -146,28 +144,31 @@ class DevicesViewModel(
                 .distinctUntilChanged()
                 .collect { available ->
                     localNetworkAvailable.value = available
-                    repository.reevaluatePresence(localNetworkAvailable = available)
-                    clockMillis.value = System.currentTimeMillis()
-                    if (available) refreshDiscoveryBurst()
+                    if (available) {
+                        refreshForegroundPresence()
+                    } else {
+                        repository.reevaluatePresence(localNetworkAvailable = false)
+                        clockMillis.value = System.currentTimeMillis()
+                    }
                 }
         }
     }
 
-    private fun startPresenceTicker() {
-        viewModelScope.launch {
-            while (isActive) {
-                delay(PRESENCE_REEVALUATE_INTERVAL_MS)
-                repository.reevaluatePresence(localNetworkAvailable = localNetworkAvailable.value)
-                clockMillis.value = System.currentTimeMillis()
-            }
+    private fun refreshForegroundPresence() {
+        if (!localNetworkAvailable.value) {
+            repository.reevaluatePresence(localNetworkAvailable = false)
+            clockMillis.value = System.currentTimeMillis()
+            return
         }
-    }
-
-    private fun refreshDiscoveryBurst() {
         if (refreshJob?.isActive == true) return
 
         refreshJob = viewModelScope.launch {
+            repository.reevaluatePresence(localNetworkAvailable = true)
+            repository.refreshForegroundRuntimeConnections()
             runCatching { repository.refreshForegroundBurst() }
+            delay(FOREGROUND_REFRESH_SETTLE_MS)
+            repository.reevaluatePresence(localNetworkAvailable = localNetworkAvailable.value)
+            clockMillis.value = System.currentTimeMillis()
         }
     }
 
@@ -180,6 +181,6 @@ class DevicesViewModel(
     )
 
     companion object {
-        private const val PRESENCE_REEVALUATE_INTERVAL_MS = 15_000L
+        private const val FOREGROUND_REFRESH_SETTLE_MS = 4_000L
     }
 }
