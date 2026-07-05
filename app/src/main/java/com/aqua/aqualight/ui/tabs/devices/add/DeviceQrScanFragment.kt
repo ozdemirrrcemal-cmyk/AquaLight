@@ -14,10 +14,12 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.devices.provisioning.qr.AqlProvisioningQrParser
-import com.aqua.aqualight.data.devices.provisioning.qr.AqlProvisioningQrPayload
 import com.aqua.aqualight.databinding.FragmentDeviceQrScanBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -28,13 +30,16 @@ import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlinx.coroutines.launch
 
 class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
+
+    private val viewModel: DeviceQrScanViewModel by viewModels()
+    private val permissionController = DeviceAddPermissionController()
 
     private var _binding: FragmentDeviceQrScanBinding? = null
     private val binding get() = _binding!!
 
-    private val qrParser = AqlProvisioningQrParser()
     private val cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
 
     private var barcodeScanner: BarcodeScanner? = null
@@ -46,10 +51,18 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) {
-            startCamera()
+            restartScanner()
         } else {
             showCameraPermissionRequired()
         }
+    }
+
+    private val blePermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { result ->
+        viewModel.onBlePermissionResult(
+            permissionController.hasBlePermissionsFromResult(requireContext(), result)
+        )
     }
 
     override fun onViewCreated(
@@ -64,6 +77,7 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
 
         setupHeader()
         setupActions()
+        observeViewModel()
         ensureCameraPermission()
     }
 
@@ -81,7 +95,54 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
 
     private fun setupActions() {
         binding.btnRequestCamera.setOnClickListener {
-            requestCameraPermission()
+            if (!hasCameraPermission()) {
+                requestCameraPermission()
+            } else {
+                restartScanner()
+            }
+        }
+    }
+
+    private fun observeViewModel() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.uiState.collect { state ->
+                        renderState(state)
+                    }
+                }
+                launch {
+                    viewModel.events.collect { event ->
+                        handleEvent(event)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun renderState(state: DeviceQrScanUiState) {
+        if (_binding == null) return
+        if (state.title.isBlank() && state.message.isBlank()) return
+
+        binding.tvScanTitle.text = state.title
+        binding.tvScanStatus.text = state.message
+        binding.btnRequestCamera.isVisible = state.showScanAgain
+        if (state.showScanAgain) {
+            binding.btnRequestCamera.text = getString(R.string.device_qr_preflight_scan_again)
+        }
+    }
+
+    private fun handleEvent(event: DeviceQrScanEvent) {
+        when (event) {
+            DeviceQrScanEvent.RequestBlePermission -> {
+                blePermissionLauncher.launch(
+                    permissionController.blePermissions()
+                )
+            }
+
+            is DeviceQrScanEvent.OpenWifiProvisioning -> {
+                openWifiProvisioning(event.result)
+            }
         }
     }
 
@@ -108,13 +169,22 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         if (_binding == null) return
 
         binding.btnRequestCamera.isVisible = true
+        binding.btnRequestCamera.text = getString(R.string.device_qr_allow_camera)
         binding.tvScanTitle.text = getString(R.string.device_qr_camera_permission_title)
         binding.tvScanStatus.text = getString(R.string.device_qr_camera_permission_message)
+    }
+
+    private fun restartScanner() {
+        viewModel.onScanAgain()
+        hasResult = false
+        isProcessingFrame = false
+        startCamera()
     }
 
     private fun startCamera() {
         if (_binding == null || hasResult) return
 
+        stopCamera()
         binding.btnRequestCamera.isVisible = false
         binding.tvScanTitle.text = getString(R.string.device_qr_align_title)
         binding.tvScanStatus.text = getString(R.string.device_qr_align_message)
@@ -220,46 +290,38 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
     private fun handleQrPayload(rawValue: String) {
         if (hasResult) return
 
-        val payload = qrParser.parse(rawValue)
-            .getOrElse { error ->
-                if (_binding != null) {
-                    binding.tvScanTitle.text = getString(R.string.device_qr_invalid_title)
-                    binding.tvScanStatus.text = error.message
-                        ?: getString(R.string.device_qr_invalid_message)
-                }
-                return
-            }
-
         hasResult = true
-
-        if (_binding != null) {
-            binding.tvScanTitle.text = getString(R.string.device_qr_verified_title)
-            binding.tvScanStatus.text = getString(R.string.device_qr_opening_wifi)
-        }
-
-        openWifiProvisioning(payload)
+        stopCamera()
+        viewModel.onQrDetected(
+            rawValue = rawValue,
+            hasBlePermissions = permissionController.hasBlePermissions(requireContext())
+        )
     }
 
-    private fun openWifiProvisioning(payload: AqlProvisioningQrPayload) {
+    private fun openWifiProvisioning(result: DeviceQrPreflightSuccess) {
         findNavController().navigate(
             DeviceQrScanFragmentDirections.actionDeviceQrScanFragmentToDeviceWifiProvisioningFragment(
-                candidateId = payload.deviceUid.value,
-                deviceTitle = payload.displayName,
-                deviceSerial = payload.serialNumber,
-                deviceModel = "Secure QR Setup",
-                bleAddress = "",
-                bleName = payload.bleName,
-                claimCode = payload.claimCode,
-                rawQrPayload = payload.raw
+                candidateId = result.deviceUid,
+                deviceTitle = result.deviceTitle,
+                deviceSerial = result.deviceSerial,
+                deviceModel = result.deviceModel,
+                bleAddress = result.bleAddress,
+                bleName = result.bleName,
+                claimCode = result.claimCode,
+                rawQrPayload = result.rawQrPayload
             )
         )
     }
 
-    override fun onDestroyView() {
+    private fun stopCamera() {
         cameraProvider?.unbindAll()
         cameraProvider = null
         barcodeScanner?.close()
         barcodeScanner = null
+    }
+
+    override fun onDestroyView() {
+        stopCamera()
         _binding = null
         super.onDestroyView()
     }
