@@ -76,8 +76,11 @@ class DevicesRepository(
                         registryStore.upsertAll(knownDevices)
                     }
 
-                    val scannerJob = discoveryRepository.start(this) { discovered ->
-                        registryStore.upsertAll(filterIgnoredDevices(discoveredDevices = listOf(discovered.snapshot)))
+                    val scannerJob = discoveryRepository.start(this)
+                    val collectorJob = launch {
+                        discoveryRepository.devices.collect { discoveredDevices ->
+                            registryStore.upsertAll(filterIgnoredDevices(discoveredDevices))
+                        }
                     }
                     val runtimeStateJob = runtimeRepository?.let { runtime ->
                         launch {
@@ -110,6 +113,7 @@ class DevicesRepository(
                         runtimeReconnectJob?.cancel()
                         runtimeStateJob?.cancel()
                         runtimeMetadataJob?.cancel()
+                        collectorJob.cancel()
                         scannerJob.cancel()
                     }
                 }.also { job ->
