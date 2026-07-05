@@ -94,9 +94,13 @@ class DevicesRepository(
                             }
                         }
                     }
-                    val runtimeReconnectJob = runtimeRepository?.let {
+                    val runtimeReconnectJob = runtimeRepository?.let { runtime ->
                         launch {
-                            reconnectRuntimeDevices(knownDevices)
+                            knownDevices
+                                .filter { snapshot -> snapshot.endpoint.hasWebSocketEndpoint }
+                                .forEach { snapshot ->
+                                    runtime.connect(snapshot)
+                                }
                         }
                     }
 
@@ -127,11 +131,8 @@ class DevicesRepository(
     suspend fun refreshForegroundBurst(): List<AqlDiscoveryRefreshSender.SendResult> =
         discoveryRepository.refreshForegroundBurst()
 
-    fun refreshForegroundRuntimeConnections(): Int = reconnectRuntimeDevices(currentDevices())
-
     fun reevaluatePresence(localNetworkAvailable: Boolean = true) {
         discoveryRepository.reevaluatePresence(localNetworkAvailable = localNetworkAvailable)
-        registryStore.reevaluatePresence(localNetworkAvailable = localNetworkAvailable)
     }
 
     fun connectRuntime(deviceUid: DeviceUid): Result<Unit> {
@@ -222,18 +223,6 @@ class DevicesRepository(
         registryStore.clear()
     }
 
-    private fun reconnectRuntimeDevices(snapshots: Iterable<DeviceSnapshot>): Int {
-        val runtime = runtimeRepository ?: return 0
-        var attempted = 0
-        snapshots
-            .filter { snapshot -> snapshot.endpoint.hasWebSocketEndpoint }
-            .forEach { snapshot ->
-                runtime.connect(snapshot)
-                attempted += 1
-            }
-        return attempted
-    }
-
     private suspend fun filterIgnoredDevices(snapshots: Iterable<DeviceSnapshot>): List<DeviceSnapshot> {
         val ignoredDeviceUids = knownStore?.ignoredDeviceUidValues().orEmpty()
         if (ignoredDeviceUids.isEmpty()) return snapshots.toList()
@@ -308,25 +297,11 @@ class DevicesRepository(
                 val deviceUid = state.deviceUid ?: return
                 registryStore.updateConnectionState(deviceUid) { previous ->
                     previous.copy(
-                        onlineState = runtimeFailurePresentation(previous),
+                        onlineState = DeviceOnlineState.ERROR,
                         lastErrorMessage = state.message.ifBlank { "WebSocket connection failed." }
                     )
                 }
             }
         }
-    }
-
-    private fun runtimeFailurePresentation(previous: DeviceConnectionState): DeviceOnlineState {
-        val lastUdpSeenAt = previous.lastUdpSeenAtMillis ?: return DeviceOnlineState.OFFLINE
-        val ageMillis = System.currentTimeMillis() - lastUdpSeenAt
-        return if (ageMillis <= RUNTIME_FAILURE_LAN_FRESH_MS) {
-            DeviceOnlineState.ONLINE_LAN
-        } else {
-            DeviceOnlineState.OFFLINE
-        }
-    }
-
-    private companion object {
-        const val RUNTIME_FAILURE_LAN_FRESH_MS = 60_000L
     }
 }
