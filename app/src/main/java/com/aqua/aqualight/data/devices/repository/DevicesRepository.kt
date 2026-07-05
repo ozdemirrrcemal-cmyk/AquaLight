@@ -92,7 +92,6 @@ class DevicesRepository(
                     val runtimeMetadataJob = runtimeRepository?.let { runtime ->
                         launch {
                             runtime.events.collect { event ->
-                                applyRuntimeLifecycleEvent(event)
                                 applyRuntimeMetadataEvent(event)
                             }
                         }
@@ -245,26 +244,6 @@ class DevicesRepository(
 
         return snapshots.filterNot { snapshot ->
             snapshot.deviceUid.value in ignoredDeviceUids
-        }
-    }
-
-    private fun applyRuntimeLifecycleEvent(event: AqlWsEvent) {
-        when (event) {
-            is AqlWsEvent.Closed -> {
-                applyRuntimeUnavailable(
-                    deviceUid = event.deviceUid,
-                    message = event.reason
-                )
-            }
-
-            is AqlWsEvent.Failure -> {
-                applyRuntimeUnavailable(
-                    deviceUid = event.deviceUid,
-                    message = event.message
-                )
-            }
-
-            else -> Unit
         }
     }
 
