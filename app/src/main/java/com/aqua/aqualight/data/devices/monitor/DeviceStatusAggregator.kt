@@ -4,7 +4,10 @@ import com.aqua.aqualight.data.devices.model.DeviceConnectionState
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 
 /**
- * Converts low-level connectivity timestamps into one professional device state.
+ * Converts explicit network/runtime events into one user-facing device state.
+ *
+ * Authenticated runtime state is not aged offline by a timer. Foreground refresh and WebSocket
+ * callbacks are responsible for producing fresh CONNECTING/ONLINE/OFFLINE transitions.
  */
 class DeviceStatusAggregator(
     private val policy: DeviceHeartbeatPolicy = DeviceHeartbeatPolicy()
@@ -17,24 +20,49 @@ class DeviceStatusAggregator(
     ): DeviceOnlineState {
         if (!localNetworkAvailable) return DeviceOnlineState.LOCAL_NETWORK_OFFLINE
 
-        val lastAuthenticatedAt = state.lastAuthenticatedAtMillis
-        if (lastAuthenticatedAt != null && nowMillis - lastAuthenticatedAt <= policy.authFreshMillis) {
-            return DeviceOnlineState.AUTHENTICATED
+        return when (state.onlineState) {
+            DeviceOnlineState.AUTHENTICATED,
+            DeviceOnlineState.AUTH_REQUIRED,
+            DeviceOnlineState.PROVISIONING,
+            DeviceOnlineState.OTA_UPDATING -> state.onlineState
+
+            DeviceOnlineState.CONNECTING_WS -> {
+                if (isWithinForegroundReconnectGrace(state, nowMillis)) {
+                    DeviceOnlineState.CONNECTING_WS
+                } else {
+                    lanPresenceState(state, nowMillis) ?: DeviceOnlineState.OFFLINE
+                }
+            }
+
+            DeviceOnlineState.ERROR -> lanPresenceState(state, nowMillis) ?: DeviceOnlineState.OFFLINE
+
+            DeviceOnlineState.DISCOVERING,
+            DeviceOnlineState.ONLINE_LAN,
+            DeviceOnlineState.STALE,
+            DeviceOnlineState.OFFLINE,
+            DeviceOnlineState.LOCAL_NETWORK_OFFLINE,
+            DeviceOnlineState.UNKNOWN -> lanPresenceState(state, nowMillis) ?: DeviceOnlineState.UNKNOWN
         }
+    }
 
-        val lastWsConnectedAt = state.lastWsConnectedAtMillis
-        if (lastWsConnectedAt != null && nowMillis - lastWsConnectedAt <= policy.wsFreshMillis) {
-            return DeviceOnlineState.CONNECTING_WS
-        }
+    private fun isWithinForegroundReconnectGrace(
+        state: DeviceConnectionState,
+        nowMillis: Long
+    ): Boolean {
+        val lastWsConnectedAt = state.lastWsConnectedAtMillis ?: return true
+        return nowMillis - lastWsConnectedAt <= policy.foregroundReconnectGraceMillis
+    }
 
-        val lastUdpSeenAt = state.lastUdpSeenAtMillis
-            ?: return DeviceOnlineState.UNKNOWN
-
+    private fun lanPresenceState(
+        state: DeviceConnectionState,
+        nowMillis: Long
+    ): DeviceOnlineState? {
+        val lastUdpSeenAt = state.lastUdpSeenAtMillis ?: return null
         val ageMillis = nowMillis - lastUdpSeenAt
-        return when {
-            ageMillis <= policy.udpFreshMillis -> DeviceOnlineState.ONLINE_LAN
-            ageMillis <= policy.udpStaleMillis -> DeviceOnlineState.STALE
-            else -> DeviceOnlineState.OFFLINE
+        return if (ageMillis <= policy.udpFreshMillis) {
+            DeviceOnlineState.ONLINE_LAN
+        } else {
+            DeviceOnlineState.OFFLINE
         }
     }
 }
