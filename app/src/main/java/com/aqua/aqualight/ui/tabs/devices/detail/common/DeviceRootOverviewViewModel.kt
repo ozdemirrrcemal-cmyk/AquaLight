@@ -3,10 +3,10 @@ package com.aqua.aqualight.ui.tabs.devices.detail.common
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.ui.common.devicepresence.DevicePresencePresentationMapper
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,8 +34,8 @@ class DeviceRootOverviewViewModel(
             _uiState.value = DeviceRootOverviewUiState(
                 title = fallbackTitle.ifBlank { kind.defaultTitle },
                 deviceUid = "",
-                connectionStatus = "Missing deviceUid",
-                authStatus = "Unknown",
+                connectionStatus = "Offline",
+                authStatus = "Unavailable",
                 primaryCountLabel = kind.primaryCountLabel,
                 primarySectionTitle = kind.primarySectionTitle,
                 primarySectionPlaceholder = kind.primarySectionPlaceholder,
@@ -56,8 +56,8 @@ class DeviceRootOverviewViewModel(
         _uiState.value = DeviceRootOverviewUiState(
             title = fallbackTitle.ifBlank { kind.defaultTitle },
             deviceUid = deviceUid.value,
-            connectionStatus = "Loading",
-            authStatus = "Unknown",
+            connectionStatus = "Offline",
+            authStatus = "Unavailable",
             primaryCountLabel = kind.primaryCountLabel,
             primarySectionTitle = kind.primarySectionTitle,
             primarySectionPlaceholder = kind.primarySectionPlaceholder,
@@ -75,8 +75,8 @@ class DeviceRootOverviewViewModel(
                     ?: DeviceRootOverviewUiState(
                         title = fallbackTitle.ifBlank { kind.defaultTitle },
                         deviceUid = deviceUid.value,
-                        connectionStatus = "Device not found",
-                        authStatus = "Unknown",
+                        connectionStatus = "Offline",
+                        authStatus = "Unavailable",
                         primaryCountLabel = kind.primaryCountLabel,
                         primarySectionTitle = kind.primarySectionTitle,
                         primarySectionPlaceholder = kind.primarySectionPlaceholder,
@@ -104,8 +104,8 @@ class DeviceRootOverviewViewModel(
         return DeviceRootOverviewUiState(
             title = productName,
             deviceUid = deviceUid.value,
-            connectionStatus = connectionState.onlineState.connectionLabel(),
-            authStatus = connectionState.onlineState.authLabel(),
+            connectionStatus = DevicePresencePresentationMapper.availabilityLabel(connectionState.onlineState),
+            authStatus = DevicePresencePresentationMapper.accessLabel(connectionState.onlineState),
             ipText = endpoint.ip.ifBlank { "Unknown" },
             firmwareText = firmwareLabel(),
             modelText = modelLabel(),
@@ -180,33 +180,6 @@ class DeviceRootOverviewViewModel(
             .joinToString(separator = ", ")
             .ifBlank { "Unknown" }
     }
-
-    private fun DeviceOnlineState.connectionLabel(): String {
-        return when (this) {
-            DeviceOnlineState.UNKNOWN -> "Unknown"
-            DeviceOnlineState.DISCOVERING -> "Discovering"
-            DeviceOnlineState.ONLINE_LAN -> "Online LAN"
-            DeviceOnlineState.CONNECTING_WS -> "Connecting WebSocket"
-            DeviceOnlineState.AUTHENTICATED -> "Authenticated"
-            DeviceOnlineState.STALE -> "Stale"
-            DeviceOnlineState.OFFLINE -> "Offline"
-            DeviceOnlineState.LOCAL_NETWORK_OFFLINE -> "Local network offline"
-            DeviceOnlineState.AUTH_REQUIRED -> "Auth required"
-            DeviceOnlineState.PROVISIONING -> "Provisioning"
-            DeviceOnlineState.OTA_UPDATING -> "OTA updating"
-            DeviceOnlineState.ERROR -> "Error"
-        }
-    }
-
-    private fun DeviceOnlineState.authLabel(): String {
-        return when (this) {
-            DeviceOnlineState.AUTHENTICATED -> "Authenticated"
-            DeviceOnlineState.AUTH_REQUIRED -> "Auth required"
-            DeviceOnlineState.CONNECTING_WS -> "Authenticating"
-            DeviceOnlineState.ERROR -> "Auth unknown"
-            else -> "Not authenticated"
-        }
-    }
 }
 
 enum class DeviceRootKind(
@@ -246,8 +219,8 @@ enum class DeviceRootKind(
 data class DeviceRootOverviewUiState(
     val title: String = "Device",
     val deviceUid: String = "",
-    val connectionStatus: String = "Unknown",
-    val authStatus: String = "Unknown",
+    val connectionStatus: String = "Offline",
+    val authStatus: String = "Unavailable",
     val ipText: String = "Unknown",
     val firmwareText: String = "Unknown",
     val modelText: String = "Unknown",
