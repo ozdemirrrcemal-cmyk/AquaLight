@@ -2,9 +2,11 @@ package com.aqua.aqualight.data.devices.monitor
 
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
+import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DeviceDiscoveryRepository
 import com.aqua.aqualight.data.devices.repository.DeviceRuntimeRepository
 import com.aqua.aqualight.data.devices.store.DeviceRegistryStore
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -31,6 +33,7 @@ class DevicePresenceRuntimeMonitor(
 ) {
     private val started = AtomicBoolean(false)
     private val localNetworkAvailable = MutableStateFlow(currentLocalNetworkAvailable())
+    private val lastRuntimeProbeAtMillis = ConcurrentHashMap<DeviceUid, Long>()
 
     fun start(scope: CoroutineScope): Job {
         if (!started.compareAndSet(false, true)) {
@@ -74,6 +77,9 @@ class DevicePresenceRuntimeMonitor(
                 .distinctUntilChanged()
                 .collect { available ->
                     localNetworkAvailable.value = available
+                    if (!available) {
+                        lastRuntimeProbeAtMillis.clear()
+                    }
                     reevaluateNow(localNetworkAvailable = available)
                     if (available) {
                         runCatching { discoveryRepository.refreshNow() }
@@ -113,13 +119,47 @@ class DevicePresenceRuntimeMonitor(
                     nowMillis = nowMillis,
                     localNetworkAvailable = localNetworkAvailable
                 )
-                if (previous.onlineState == resolved) {
+                val stable = stableVisibleState(
+                    previous = previous.onlineState,
+                    resolved = resolved,
+                    snapshot = snapshot,
+                    nowMillis = nowMillis
+                )
+                if (previous.onlineState == stable) {
                     previous
                 } else {
-                    previous.copy(onlineState = resolved)
+                    previous.copy(onlineState = stable)
                 }
             }
         }
+    }
+
+    private fun stableVisibleState(
+        previous: DeviceOnlineState,
+        resolved: DeviceOnlineState,
+        snapshot: DeviceSnapshot,
+        nowMillis: Long
+    ): DeviceOnlineState {
+        if (resolved == DeviceOnlineState.LOCAL_NETWORK_OFFLINE || resolved == DeviceOnlineState.OFFLINE) {
+            return resolved
+        }
+
+        if (previous == DeviceOnlineState.AUTHENTICATED && resolved == DeviceOnlineState.ONLINE_LAN) {
+            return DeviceOnlineState.AUTHENTICATED
+        }
+
+        if (previous == DeviceOnlineState.AUTH_REQUIRED && resolved == DeviceOnlineState.ONLINE_LAN) {
+            return DeviceOnlineState.AUTH_REQUIRED
+        }
+
+        if (previous == DeviceOnlineState.CONNECTING_WS && resolved == DeviceOnlineState.ONLINE_LAN) {
+            val lastProbeAt = lastRuntimeProbeAtMillis[snapshot.deviceUid] ?: 0L
+            if (nowMillis - lastProbeAt <= CONNECTING_VISIBILITY_GRACE_MS) {
+                return DeviceOnlineState.CONNECTING_WS
+            }
+        }
+
+        return resolved
     }
 
     private fun probeRuntimeForVisibleDevices(force: Boolean = false) {
@@ -129,7 +169,10 @@ class DevicePresenceRuntimeMonitor(
             .asSequence()
             .filter { snapshot -> snapshot.endpoint.hasWebSocketEndpoint }
             .filter { snapshot -> force || shouldProbeRuntime(snapshot, nowMillis) }
-            .forEach { snapshot -> runtime.connect(snapshot) }
+            .forEach { snapshot ->
+                lastRuntimeProbeAtMillis[snapshot.deviceUid] = nowMillis
+                runtime.connect(snapshot)
+            }
     }
 
     private fun shouldProbeRuntime(
@@ -137,24 +180,36 @@ class DevicePresenceRuntimeMonitor(
         nowMillis: Long
     ): Boolean {
         val state = snapshot.connectionState
+        val lastProbeAt = lastRuntimeProbeAtMillis[snapshot.deviceUid]
+        if (lastProbeAt != null && nowMillis - lastProbeAt < probeBackoffFor(state.onlineState)) {
+            return false
+        }
+
         return when (state.onlineState) {
             DeviceOnlineState.AUTHENTICATED,
             DeviceOnlineState.PROVISIONING,
-            DeviceOnlineState.OTA_UPDATING -> false
-
-            DeviceOnlineState.CONNECTING_WS -> {
-                val connectedAt = state.lastWsConnectedAtMillis
-                connectedAt == null || nowMillis - connectedAt > CONNECTING_PROBE_GRACE_MS
-            }
+            DeviceOnlineState.OTA_UPDATING,
+            DeviceOnlineState.CONNECTING_WS -> false
 
             DeviceOnlineState.ONLINE_LAN,
             DeviceOnlineState.STALE,
             DeviceOnlineState.OFFLINE,
             DeviceOnlineState.UNKNOWN,
             DeviceOnlineState.DISCOVERING,
-            DeviceOnlineState.LOCAL_NETWORK_OFFLINE,
-            DeviceOnlineState.AUTH_REQUIRED,
             DeviceOnlineState.ERROR -> true
+
+            DeviceOnlineState.AUTH_REQUIRED,
+            DeviceOnlineState.LOCAL_NETWORK_OFFLINE -> false
+        }
+    }
+
+    private fun probeBackoffFor(state: DeviceOnlineState): Long {
+        return when (state) {
+            DeviceOnlineState.AUTH_REQUIRED -> AUTH_REQUIRED_PROBE_BACKOFF_MS
+            DeviceOnlineState.OFFLINE,
+            DeviceOnlineState.STALE,
+            DeviceOnlineState.ERROR -> OFFLINE_PROBE_BACKOFF_MS
+            else -> RUNTIME_PROBE_BACKOFF_MS
         }
     }
 
@@ -164,6 +219,9 @@ class DevicePresenceRuntimeMonitor(
     private companion object {
         const val PRESENCE_REEVALUATE_INTERVAL_MS = 3_000L
         const val DISCOVERY_REFRESH_INTERVAL_MS = 5_000L
-        const val CONNECTING_PROBE_GRACE_MS = 8_000L
+        const val RUNTIME_PROBE_BACKOFF_MS = 25_000L
+        const val OFFLINE_PROBE_BACKOFF_MS = 10_000L
+        const val AUTH_REQUIRED_PROBE_BACKOFF_MS = 60_000L
+        const val CONNECTING_VISIBILITY_GRACE_MS = 12_000L
     }
 }
