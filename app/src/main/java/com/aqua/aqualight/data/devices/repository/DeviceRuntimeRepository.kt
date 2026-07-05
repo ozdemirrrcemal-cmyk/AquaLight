@@ -177,7 +177,12 @@ class DeviceRuntimeRepository(
                                 message = "Runtime token is missing. Pair the device again."
                             )
                         }
-                        AqlWsAuthAttemptResult.SendFailed,
+                        AqlWsAuthAttemptResult.SendFailed -> {
+                            session.wsClient.markAuthRequired(
+                                deviceUid = event.deviceUid,
+                                message = "Runtime authentication could not be sent."
+                            )
+                        }
                         null -> Unit
                     }
                 }
