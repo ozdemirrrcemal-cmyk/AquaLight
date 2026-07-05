@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.devices.store
 import com.aqua.aqualight.data.devices.model.DeviceConnectionState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.devices.monitor.DeviceStatusAggregator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +19,9 @@ import kotlinx.coroutines.flow.update
  * single canonical in-process registry that UI, discovery and future WebSocket/BLE layers can share.
  * Durable DataStore/Keystore-backed stores will be added after runtime token handling lands.
  */
-class DeviceRegistryStore {
+class DeviceRegistryStore(
+    private val statusAggregator: DeviceStatusAggregator = DeviceStatusAggregator()
+) {
 
     private val _snapshots = MutableStateFlow<Map<DeviceUid, DeviceSnapshot>>(emptyMap())
 
@@ -78,6 +81,24 @@ class DeviceRegistryStore {
             current + (deviceUid to updated)
         }
         return updatedSnapshot
+    }
+
+    fun reevaluatePresence(localNetworkAvailable: Boolean = true) {
+        val nowMillis = System.currentTimeMillis()
+        _snapshots.update { current ->
+            current.mapValues { (_, snapshot) ->
+                val resolvedState = statusAggregator.resolve(
+                    state = snapshot.connectionState,
+                    nowMillis = nowMillis,
+                    localNetworkAvailable = localNetworkAvailable
+                )
+                snapshot.copy(
+                    connectionState = snapshot.connectionState.copy(
+                        onlineState = resolvedState
+                    )
+                )
+            }
+        }
     }
 
     fun remove(deviceUid: DeviceUid): Boolean {
