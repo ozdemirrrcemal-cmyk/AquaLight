@@ -99,7 +99,7 @@
                                 android:textColor="@color/white"
                                 android:textSize="15sp"
                                 android:textStyle="bold"
-                                tools:text="Authenticated" />
+                                tools:text="Online" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -111,19 +111,19 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Auth"
+                                android:text="Access"
                                 android:textColor="#8FA4BE"
                                 android:textSize="12sp" />
 
                             <TextView
-                                android:id="@+id/tvAuthStatus"
+                                android:id="@+id/tvAccessStatus"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
                                 android:textColor="@color/white"
                                 android:textSize="15sp"
                                 android:textStyle="bold"
-                                tools:text="Authenticated" />
+                                tools:text="Online" />
                         </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>

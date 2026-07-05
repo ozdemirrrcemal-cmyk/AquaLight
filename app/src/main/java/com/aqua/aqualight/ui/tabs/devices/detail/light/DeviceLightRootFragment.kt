@@ -96,12 +96,11 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
         if (_binding == null) return
 
         setupHeader(title = state.title)
-        val online = state.connectionStatus.isReachablePresenceLabel()
 
         binding.tvProductName.text = state.title
         binding.tvDeviceUid.text = state.deviceUid.ifBlank { "Unknown device" }
-        binding.tvConnectionStatus.text = if (online) "Online" else "Offline"
-        binding.tvAuthStatus.text = if (online) "Ready" else "Unavailable"
+        binding.tvConnectionStatus.text = state.connectionStatus
+        binding.tvAccessStatus.text = state.accessStatus
         binding.tvIp.text = "IP: ${state.ipText}"
         binding.tvFirmware.text = "Firmware: ${state.firmwareText}"
         binding.tvModel.text = "Model: ${state.modelText}"
@@ -117,15 +116,4 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
         super.onDestroyView()
     }
 
-    private fun String.isReachablePresenceLabel(): Boolean {
-        return trim() in setOf(
-            "Online",
-            "Online LAN",
-            "Connecting WebSocket",
-            "Authenticated",
-            "Provisioning",
-            "OTA updating",
-            "Ready"
-        )
-    }
 }
