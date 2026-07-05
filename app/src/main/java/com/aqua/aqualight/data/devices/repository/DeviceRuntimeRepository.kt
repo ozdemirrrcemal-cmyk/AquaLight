@@ -37,7 +37,6 @@ class DeviceRuntimeRepository(
     )
 
     private val sessions = ConcurrentHashMap<DeviceUid, RuntimeSession>()
-    private val authRequiredMessages = ConcurrentHashMap<DeviceUid, String>()
 
     val runtimeModules: DeviceRuntimeModuleProvider = DeviceRuntimeModuleProvider { deviceUid ->
         sessions[deviceUid]?.commandClient
@@ -96,13 +95,11 @@ class DeviceRuntimeRepository(
 
     suspend fun clearToken(deviceUid: DeviceUid) {
         tokenProvider?.clearToken(deviceUid)
-        authRequiredMessages.remove(deviceUid)
     }
 
     fun clearTokenAsync(deviceUid: DeviceUid) {
         scope.launch {
             tokenProvider?.clearToken(deviceUid)
-            authRequiredMessages.remove(deviceUid)
         }
     }
 
@@ -144,7 +141,7 @@ class DeviceRuntimeRepository(
     private fun observeSession(session: RuntimeSession) {
         scope.launch {
             session.wsClient.connectionState.collect { state ->
-                _connectionState.emit(state.toUserMeaningfulRuntimeState())
+                _connectionState.emit(state)
             }
         }
 
@@ -156,35 +153,6 @@ class DeviceRuntimeRepository(
                 )
                 _events.emit(event)
             }
-        }
-    }
-
-    private fun AqlWsConnectionState.toUserMeaningfulRuntimeState(): AqlWsConnectionState {
-        return when (this) {
-            is AqlWsConnectionState.AuthRequired -> {
-                authRequiredMessages[deviceUid] = message.ifBlank { AUTH_REQUIRED_MESSAGE }
-                this
-            }
-
-            is AqlWsConnectionState.Authenticated -> {
-                authRequiredMessages.remove(deviceUid)
-                this
-            }
-
-            is AqlWsConnectionState.Failed -> {
-                val uid = deviceUid
-                val authMessage = if (uid != null) authRequiredMessages[uid] else null
-                if (uid != null && authMessage != null) {
-                    AqlWsConnectionState.AuthRequired(
-                        deviceUid = uid,
-                        message = authMessage
-                    )
-                } else {
-                    this
-                }
-            }
-
-            else -> this
         }
     }
 
@@ -204,15 +172,13 @@ class DeviceRuntimeRepository(
                     )) {
                         is AqlWsAuthAttemptResult.AuthMessageSent -> Unit
                         AqlWsAuthAttemptResult.NoToken -> {
-                            markAuthRequired(
-                                session = session,
+                            session.wsClient.markAuthRequired(
                                 deviceUid = event.deviceUid,
                                 message = "Runtime token is missing. Pair the device again."
                             )
                         }
                         AqlWsAuthAttemptResult.SendFailed -> {
-                            markAuthRequired(
-                                session = session,
+                            session.wsClient.markAuthRequired(
                                 deviceUid = event.deviceUid,
                                 message = "Runtime authentication could not be sent."
                             )
@@ -221,46 +187,23 @@ class DeviceRuntimeRepository(
                     }
                 }
 
-                when (val authStateChange = authManager?.handleIncomingMessage(
+                val authStateChange = authManager?.handleIncomingMessage(
                     deviceUid = event.deviceUid,
                     message = event.parsed,
                     wsClient = session.wsClient
-                )) {
-                    is AqlWsAuthStateChange.Authenticated -> {
-                        session.commandClient.deviceIdentity()
-                        session.commandClient.networkStatus()
-                        timeSyncCoordinator.syncPhoneNowIfNeeded(
-                            deviceUid = event.deviceUid
-                        )
-                    }
+                )
 
-                    is AqlWsAuthStateChange.Rejected -> {
-                        markAuthRequired(
-                            session = session,
-                            deviceUid = event.deviceUid,
-                            message = authStateChange.message
-                        )
-                    }
-
-                    null -> Unit
+                if (authStateChange is AqlWsAuthStateChange.Authenticated) {
+                    session.commandClient.deviceIdentity()
+                    session.commandClient.networkStatus()
+                    timeSyncCoordinator.syncPhoneNowIfNeeded(
+                        deviceUid = event.deviceUid
+                    )
                 }
             }
 
             else -> Unit
         }
-    }
-
-    private fun markAuthRequired(
-        session: RuntimeSession,
-        deviceUid: DeviceUid,
-        message: String
-    ) {
-        val safeMessage = message.ifBlank { AUTH_REQUIRED_MESSAGE }
-        authRequiredMessages[deviceUid] = safeMessage
-        session.wsClient.markAuthRequired(
-            deviceUid = deviceUid,
-            message = safeMessage
-        )
     }
 
     private fun sendFirmwarePublicBootstrap(commandClient: AqlWsCommandClient) {
@@ -279,7 +222,6 @@ class DeviceRuntimeRepository(
 
     companion object {
         private const val EVENT_BUFFER_CAPACITY = 256
-        private const val AUTH_REQUIRED_MESSAGE = "Authentication required. Pair the device again."
 
         fun withCredentialStore(
             context: Context
