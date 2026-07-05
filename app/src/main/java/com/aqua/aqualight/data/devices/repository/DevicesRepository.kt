@@ -5,6 +5,8 @@ import com.aqua.aqualight.data.devices.model.DeviceConnectionState
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.devices.monitor.DeviceConnectivityObserver
+import com.aqua.aqualight.data.devices.monitor.DevicePresenceRuntimeMonitor
 import com.aqua.aqualight.data.devices.monitor.DeviceStatusAggregator
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
@@ -25,8 +27,9 @@ import kotlinx.coroutines.launch
  * Canonical Devices V2 repository boundary.
  *
  * UI code should use this class instead of reaching into UDP, BLE or WebSocket layers.
- * UDP discovery, runtime WebSocket state and later BLE provisioning all converge into
- * the same device registry.
+ * UDP discovery, runtime WebSocket state and BLE provisioning all converge into the same device
+ * registry. A single process-level presence monitor keeps every UI surface live from the same
+ * snapshot stream.
  */
 class DevicesRepository(
     private val discoveryRepository: DeviceDiscoveryRepository = DeviceDiscoveryRepository(),
@@ -34,8 +37,17 @@ class DevicesRepository(
     private val knownStore: DeviceKnownStore? = null,
     private val runtimeRepository: DeviceRuntimeRepository? = null,
     private val runtimeMetadataReducer: DeviceRuntimeMetadataReducer = DeviceRuntimeMetadataReducer(),
-    private val statusAggregator: DeviceStatusAggregator = DeviceStatusAggregator()
+    private val statusAggregator: DeviceStatusAggregator = DeviceStatusAggregator(),
+    connectivityObserver: DeviceConnectivityObserver? = null
 ) {
+
+    private val presenceRuntimeMonitor = DevicePresenceRuntimeMonitor(
+        discoveryRepository = discoveryRepository,
+        registryStore = registryStore,
+        runtimeRepository = runtimeRepository,
+        statusAggregator = statusAggregator,
+        connectivityObserver = connectivityObserver
+    )
 
     @Volatile
     private var startJob: Job? = null
@@ -53,11 +65,7 @@ class DevicesRepository(
     fun currentDevices(): List<DeviceSnapshot> = registryStore.currentDevices()
 
     /**
-     * Starts UDP discovery and mirrors discovered snapshots into the canonical registry.
-     *
-     * Runtime WebSocket state and metadata are also mirrored into the same registry when runtime
-     * support is configured by the provider. UDP discovery is treated as LAN presence only; runtime
-     * metadata is persisted through DeviceKnownStore and is not erased by later UDP announces.
+     * Starts UDP discovery, runtime observers and the central live presence engine.
      */
     fun start(scope: CoroutineScope): Job {
         val activeJob = startJob
@@ -96,20 +104,12 @@ class DevicesRepository(
                             }
                         }
                     }
-                    val runtimeReconnectJob = runtimeRepository?.let { runtime ->
-                        launch {
-                            knownDevices
-                                .filter { snapshot -> snapshot.endpoint.hasWebSocketEndpoint }
-                                .forEach { snapshot ->
-                                    runtime.connect(snapshot)
-                                }
-                        }
-                    }
+                    val presenceMonitorJob = presenceRuntimeMonitor.start(this)
 
                     try {
                         awaitCancellation()
                     } finally {
-                        runtimeReconnectJob?.cancel()
+                        presenceMonitorJob.cancel()
                         runtimeStateJob?.cancel()
                         runtimeMetadataJob?.cancel()
                         collectorJob.cancel()
@@ -134,16 +134,11 @@ class DevicesRepository(
         discoveryRepository.refreshForegroundBurst()
 
     fun reevaluatePresence(localNetworkAvailable: Boolean = true) {
-        discoveryRepository.reevaluatePresence(localNetworkAvailable = localNetworkAvailable)
+        presenceRuntimeMonitor.reevaluateNow(localNetworkAvailable = localNetworkAvailable)
     }
 
     fun refreshVisibleDevices(localNetworkAvailable: Boolean = true) {
-        val nowMillis = System.currentTimeMillis()
-        reevaluatePresence(localNetworkAvailable = localNetworkAvailable)
-        currentDevices()
-            .filter { snapshot -> snapshot.endpoint.hasWebSocketEndpoint }
-            .filter { snapshot -> shouldRefreshRuntime(snapshot, nowMillis) }
-            .forEach { snapshot -> runtimeRepository?.connect(snapshot) }
+        presenceRuntimeMonitor.refreshVisibleDevices(localNetworkAvailable = localNetworkAvailable)
     }
 
     fun connectRuntime(deviceUid: DeviceUid): Result<Unit> {
@@ -267,32 +262,6 @@ class DevicesRepository(
         }
     }
 
-    private fun shouldRefreshRuntime(
-        snapshot: DeviceSnapshot,
-        nowMillis: Long
-    ): Boolean {
-        val state = snapshot.connectionState
-        val lastAuthenticatedAt = state.lastAuthenticatedAtMillis
-        if (
-            state.onlineState == DeviceOnlineState.AUTHENTICATED &&
-            lastAuthenticatedAt != null &&
-            nowMillis - lastAuthenticatedAt <= FOREGROUND_RUNTIME_REFRESH_GRACE_MS
-        ) {
-            return false
-        }
-
-        val lastWsConnectedAt = state.lastWsConnectedAtMillis
-        if (
-            state.onlineState == DeviceOnlineState.CONNECTING_WS &&
-            lastWsConnectedAt != null &&
-            nowMillis - lastWsConnectedAt <= FOREGROUND_RUNTIME_REFRESH_GRACE_MS
-        ) {
-            return false
-        }
-
-        return true
-    }
-
     private suspend fun applyRuntimeMetadataEvent(event: AqlWsEvent) {
         val message = (event as? AqlWsEvent.Message)
             ?.parsed as? AqlWsIncomingMessage.Response
@@ -385,9 +354,5 @@ class DevicesRepository(
             }
             clearedRuntimeState.copy(onlineState = visibleState)
         }
-    }
-
-    private companion object {
-        const val FOREGROUND_RUNTIME_REFRESH_GRACE_MS = 10_000L
     }
 }
