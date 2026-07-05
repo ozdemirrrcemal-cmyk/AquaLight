@@ -48,6 +48,8 @@ class DevicesViewModel(
     }
 
     fun onScreenVisible() {
+        repository.refreshVisibleDevices(localNetworkAvailable = localNetworkAvailable.value)
+        clockMillis.value = System.currentTimeMillis()
         refreshDiscoveryBurst()
     }
 
@@ -148,7 +150,10 @@ class DevicesViewModel(
                     localNetworkAvailable.value = available
                     repository.reevaluatePresence(localNetworkAvailable = available)
                     clockMillis.value = System.currentTimeMillis()
-                    if (available) refreshDiscoveryBurst()
+                    if (available) {
+                        repository.refreshVisibleDevices(localNetworkAvailable = true)
+                        refreshDiscoveryBurst()
+                    }
                 }
         }
     }
@@ -167,7 +172,13 @@ class DevicesViewModel(
         if (refreshJob?.isActive == true) return
 
         refreshJob = viewModelScope.launch {
+            repository.reevaluatePresence(localNetworkAvailable = localNetworkAvailable.value)
+            clockMillis.value = System.currentTimeMillis()
             runCatching { repository.refreshForegroundBurst() }
+                .onSuccess {
+                    repository.reevaluatePresence(localNetworkAvailable = localNetworkAvailable.value)
+                    clockMillis.value = System.currentTimeMillis()
+                }
         }
     }
 
