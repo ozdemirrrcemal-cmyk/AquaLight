@@ -74,16 +74,6 @@ class DevicesRepository(
                         registryStore.upsertAll(knownDevices)
                     }
 
-                    val runtimeReconnectJob = runtimeRepository?.let { runtime ->
-                        launch {
-                            knownDevices
-                                .filter { snapshot -> snapshot.endpoint.hasWebSocketEndpoint }
-                                .forEach { snapshot ->
-                                    runtime.connect(snapshot)
-                                }
-                        }
-                    }
-
                     val scannerJob = discoveryRepository.start(this)
                     val collectorJob = launch {
                         discoveryRepository.devices.collect { discoveredDevices ->
@@ -102,6 +92,15 @@ class DevicesRepository(
                             runtime.events.collect { event ->
                                 applyRuntimeMetadataEvent(event)
                             }
+                        }
+                    }
+                    val runtimeReconnectJob = runtimeRepository?.let { runtime ->
+                        launch {
+                            knownDevices
+                                .filter { snapshot -> snapshot.endpoint.hasWebSocketEndpoint }
+                                .forEach { snapshot ->
+                                    runtime.connect(snapshot)
+                                }
                         }
                     }
 
