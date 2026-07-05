@@ -221,6 +221,20 @@ class DeviceLightRootViewModel(
         }
     }
 
+    private fun updateOtaTestText(text: String) {
+        otaTestOverlayText = text
+        _uiState.value = _uiState.value.copy(otaTestText = text)
+    }
+
+    private fun clearOtaTestState() {
+        pendingOtaStatusRequestId = ""
+        pendingOtaStartRequestId = ""
+        pendingOtaClearRequestId = ""
+        lastOtaPlan = null
+        otaTestOverlayText = null
+    }
+
+
     private fun DeviceSnapshot.toLightRootUiState(fallbackTitle: String): DeviceLightRootUiState {
         val productName = product.displayName
             .ifBlank { product.model }
