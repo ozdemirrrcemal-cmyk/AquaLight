@@ -15,10 +15,6 @@ object DevicePresencePresentationMapper {
         else -> "Offline"
     }
 
-    fun accessLabel(state: DeviceOnlineState): String = when {
-        isReachable(state) -> "Ready"
-        else -> "Unavailable"
-    }
 
     fun isReachable(state: DeviceOnlineState): Boolean {
         return when (state) {
