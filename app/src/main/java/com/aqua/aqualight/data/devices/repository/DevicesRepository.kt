@@ -5,6 +5,7 @@ import com.aqua.aqualight.data.devices.model.DeviceConnectionState
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.devices.monitor.DeviceStatusAggregator
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
@@ -32,7 +33,8 @@ class DevicesRepository(
     private val registryStore: DeviceRegistryStore = DeviceRegistryStore(),
     private val knownStore: DeviceKnownStore? = null,
     private val runtimeRepository: DeviceRuntimeRepository? = null,
-    private val runtimeMetadataReducer: DeviceRuntimeMetadataReducer = DeviceRuntimeMetadataReducer()
+    private val runtimeMetadataReducer: DeviceRuntimeMetadataReducer = DeviceRuntimeMetadataReducer(),
+    private val statusAggregator: DeviceStatusAggregator = DeviceStatusAggregator()
 ) {
 
     @Volatile
@@ -74,11 +76,8 @@ class DevicesRepository(
                         registryStore.upsertAll(knownDevices)
                     }
 
-                    val scannerJob = discoveryRepository.start(this)
-                    val collectorJob = launch {
-                        discoveryRepository.devices.collect { discoveredDevices ->
-                            registryStore.upsertAll(filterIgnoredDevices(discoveredDevices))
-                        }
+                    val scannerJob = discoveryRepository.start(this) { discovered ->
+                        registryStore.upsertAll(filterIgnoredDevices(discoveredDevices = listOf(discovered.snapshot)))
                     }
                     val runtimeStateJob = runtimeRepository?.let { runtime ->
                         launch {
@@ -90,6 +89,7 @@ class DevicesRepository(
                     val runtimeMetadataJob = runtimeRepository?.let { runtime ->
                         launch {
                             runtime.events.collect { event ->
+                                applyRuntimeLifecycleEvent(event)
                                 applyRuntimeMetadataEvent(event)
                             }
                         }
@@ -110,7 +110,6 @@ class DevicesRepository(
                         runtimeReconnectJob?.cancel()
                         runtimeStateJob?.cancel()
                         runtimeMetadataJob?.cancel()
-                        collectorJob.cancel()
                         scannerJob.cancel()
                     }
                 }.also { job ->
@@ -133,6 +132,13 @@ class DevicesRepository(
 
     fun reevaluatePresence(localNetworkAvailable: Boolean = true) {
         discoveryRepository.reevaluatePresence(localNetworkAvailable = localNetworkAvailable)
+    }
+
+    fun refreshVisibleDevices(localNetworkAvailable: Boolean = true) {
+        reevaluatePresence(localNetworkAvailable = localNetworkAvailable)
+        currentDevices()
+            .filter { snapshot -> snapshot.endpoint.hasWebSocketEndpoint }
+            .forEach { snapshot -> runtimeRepository?.connect(snapshot) }
     }
 
     fun connectRuntime(deviceUid: DeviceUid): Result<Unit> {
@@ -179,6 +185,9 @@ class DevicesRepository(
         knownStore?.allowDevice(snapshot.deviceUid)
         val registered = registryStore.upsert(snapshot)
         knownStore?.saveSnapshot(registered)
+        if (registered.endpoint.hasWebSocketEndpoint) {
+            runtimeRepository?.connect(registered)
+        }
         return registered
     }
 
@@ -189,6 +198,9 @@ class DevicesRepository(
         }
         registryStore.upsertAll(snapshotList)
         knownStore?.saveSnapshots(snapshotList)
+        snapshotList
+            .filter { snapshot -> snapshot.endpoint.hasWebSocketEndpoint }
+            .forEach { snapshot -> runtimeRepository?.connect(snapshot) }
     }
 
     fun updateConnectionState(
@@ -229,6 +241,26 @@ class DevicesRepository(
 
         return snapshots.filterNot { snapshot ->
             snapshot.deviceUid.value in ignoredDeviceUids
+        }
+    }
+
+    private fun applyRuntimeLifecycleEvent(event: AqlWsEvent) {
+        when (event) {
+            is AqlWsEvent.Closed -> {
+                applyRuntimeUnavailable(
+                    deviceUid = event.deviceUid,
+                    message = event.reason
+                )
+            }
+
+            is AqlWsEvent.Failure -> {
+                applyRuntimeUnavailable(
+                    deviceUid = event.deviceUid,
+                    message = event.message
+                )
+            }
+
+            else -> Unit
         }
     }
 
@@ -295,13 +327,34 @@ class DevicesRepository(
 
             is AqlWsConnectionState.Failed -> {
                 val deviceUid = state.deviceUid ?: return
-                registryStore.updateConnectionState(deviceUid) { previous ->
-                    previous.copy(
-                        onlineState = DeviceOnlineState.ERROR,
-                        lastErrorMessage = state.message.ifBlank { "WebSocket connection failed." }
-                    )
-                }
+                applyRuntimeUnavailable(
+                    deviceUid = deviceUid,
+                    message = state.message.ifBlank { "WebSocket connection failed." }
+                )
             }
+        }
+    }
+
+    private fun applyRuntimeUnavailable(
+        deviceUid: DeviceUid,
+        message: String? = null
+    ) {
+        val nowMillis = System.currentTimeMillis()
+        registryStore.updateConnectionState(deviceUid) { previous ->
+            val clearedRuntimeState = previous.copy(
+                lastWsConnectedAtMillis = null,
+                lastAuthenticatedAtMillis = null,
+                lastErrorMessage = message?.ifBlank { null }
+            )
+            val resolved = statusAggregator.resolve(
+                state = clearedRuntimeState,
+                nowMillis = nowMillis
+            )
+            val visibleState = when {
+                resolved == DeviceOnlineState.UNKNOWN && !message.isNullOrBlank() -> DeviceOnlineState.OFFLINE
+                else -> resolved
+            }
+            clearedRuntimeState.copy(onlineState = visibleState)
         }
     }
 }
