@@ -65,8 +65,8 @@ class DeviceAddViewModel(
 
         _uiState.value = DeviceAddUiState(
             mode = DeviceAddScanMode.SCANNING,
-            heroTitle = "Scanning secure setup window",
-            heroSubtitle = "Keep the device close. Only AquaLight devices currently advertising setup mode will appear.",
+            heroTitle = string(R.string.device_add_scanning_secure_title),
+            heroSubtitle = string(R.string.device_add_scanning_secure_message),
             scanBadge = string(R.string.device_add_scan_badge_scanning),
             candidates = emptyList(),
             emptyTitle = string(R.string.device_add_scanning_empty_title),
@@ -103,7 +103,7 @@ class DeviceAddViewModel(
 
     fun onCandidateClicked(candidate: DeviceAddCandidateUi) {
         if (candidate.bleAddress.isBlank()) {
-            showBleError("BLE address is missing. Scan again.")
+            showBleError(string(R.string.device_add_missing_ble_address))
             return
         }
 
@@ -136,7 +136,7 @@ class DeviceAddViewModel(
                         } else {
                             string(R.string.device_add_result_title_multi, uiCandidates.size)
                         },
-                        heroSubtitle = "Select the device. AquaLight will verify its firmware DeviceInfo before Wi‑Fi is sent.",
+                        heroSubtitle = string(R.string.device_add_result_secure_message),
                         scanBadge = string(R.string.device_add_scan_badge_nearby),
                         candidates = uiCandidates,
                         emptyTitle = "",
@@ -156,8 +156,8 @@ class DeviceAddViewModel(
                 bleScanner.stopScan()
                 _uiState.value = DeviceAddUiState(
                     mode = DeviceAddScanMode.EMPTY,
-                    heroTitle = "No setup window found",
-                    heroSubtitle = "For an already paired device, hold SETUP/RESET for 5 seconds, release it, then scan again. For first setup, use the secure QR code.",
+                    heroTitle = string(R.string.device_add_no_setup_window_title),
+                    heroSubtitle = string(R.string.device_add_no_setup_window_message),
                     scanBadge = string(R.string.device_add_scan_badge_ready),
                     candidates = emptyList(),
                     emptyTitle = string(R.string.device_add_no_nearby_title),
@@ -224,7 +224,7 @@ class DeviceAddViewModel(
             serial = displaySerial,
             model = modelLabel,
             status = displayStatus.ifBlank { string(R.string.device_add_status_ready) },
-            rssiLabel = "$rssi dBm",
+            rssiLabel = string(R.string.device_add_rssi_value_format, rssi),
             bleAddress = address,
             bleName = name
         )
@@ -233,8 +233,8 @@ class DeviceAddViewModel(
     private fun readyState(): DeviceAddUiState {
         return DeviceAddUiState(
             mode = DeviceAddScanMode.READY,
-            heroTitle = "Add AquaLight securely",
-            heroSubtitle = "Use QR for first setup. For an already paired device, hold SETUP/RESET for 5 seconds, release it, then scan nearby devices.",
+            heroTitle = string(R.string.device_add_ready_title),
+            heroSubtitle = string(R.string.device_add_ready_message),
             scanBadge = string(R.string.device_add_scan_badge_ready),
             candidates = emptyList(),
             emptyTitle = string(R.string.device_add_scan_badge_ready),
