@@ -140,7 +140,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     ) {
         baseActivity()?.showDeviceOfflineDialog(
             deviceTitle = event.title,
-            message = event.message
+            messageRes = event.messageRes
         )
     }
 
