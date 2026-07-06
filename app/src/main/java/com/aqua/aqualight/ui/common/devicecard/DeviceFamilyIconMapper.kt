@@ -12,7 +12,7 @@ object DeviceFamilyIconMapper {
             DeviceFamily.LIGHT -> R.drawable.ic_device_light
             DeviceFamily.TIMER -> R.drawable.ic_device_timer
             DeviceFamily.DOSING -> R.drawable.img_dosing_pump_4ch
-            DeviceFamily.COOLING -> R.drawable.ic_device_temperature
+            DeviceFamily.COOLING -> R.drawable.ic_device_cooling
             DeviceFamily.UNKNOWN -> R.drawable.ic_device_aqua_ster
         }
     }
