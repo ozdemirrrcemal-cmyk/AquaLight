@@ -64,7 +64,7 @@
             android:includeFontPadding="false"
             android:maxLines="1"
             android:textColor="#F2F6FA"
-            android:textSize="20sp"
+            android:textSize="16sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toStartOf="@id/flPresenceContainer"
             app:layout_constraintStart_toEndOf="@id/deviceIconContainer"
@@ -126,7 +126,7 @@
                     android:includeFontPadding="false"
                     android:text="IP"
                     android:textColor="#90A1B5"
-                    android:textSize="12sp" />
+                    android:textSize="9sp" />
 
                 <TextView
                     android:id="@+id/tvIp"
@@ -137,7 +137,7 @@
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:textColor="#F2F6FA"
-                    android:textSize="12.5sp"
+                    android:textSize="8sp"
                     tools:text="192.168.1.33" />
 
             </LinearLayout>
@@ -161,7 +161,7 @@
                     android:includeFontPadding="false"
                     android:text="Serial"
                     android:textColor="#90A1B5"
-                    android:textSize="12sp" />
+                    android:textSize="9sp" />
 
                 <TextView
                     android:id="@+id/tvSerial"
@@ -172,7 +172,7 @@
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:textColor="#F2F6FA"
-                    android:textSize="12.5sp"
+                    android:textSize="7sp"
                     tools:text="AQL-LGT-336172" />
 
             </LinearLayout>
@@ -213,7 +213,7 @@
                         android:maxLines="1"
                         android:text="Last seen"
                         android:textColor="#90A1B5"
-                        android:textSize="12sp" />
+                        android:textSize="9sp" />
 
                     <TextView
                         android:id="@+id/tvLastSeen"
@@ -224,7 +224,7 @@
                         android:includeFontPadding="false"
                         android:maxLines="1"
                         android:textColor="#F2F6FA"
-                        android:textSize="12.5sp"
+                        android:textSize="8sp"
                         tools:text="Just now" />
 
                 </LinearLayout>
