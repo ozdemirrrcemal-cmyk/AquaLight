@@ -8,8 +8,6 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.databinding.ItemDeviceCompactCardBinding
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardBinder
-import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardUi
-import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
 
 class DeviceCardAdapter(
     private val onDeviceClick: (DeviceCardUi) -> Unit,
@@ -49,7 +47,7 @@ class DeviceCardAdapter(
         fun bind(item: DeviceCardUi) {
             DeviceCompactCardBinder.bind(
                 binding = binding,
-                item = item.toCompactCardUi()
+                item = item.card
             )
 
             binding.root.strokeWidth = if (item.isSelected) {
@@ -68,27 +66,6 @@ class DeviceCardAdapter(
             binding.root.setOnLongClickListener {
                 onDeviceLongClick(item)
                 true
-            }
-        }
-
-        private fun DeviceCardUi.toCompactCardUi(): DeviceCompactCardUi {
-            return DeviceCompactCardUi(
-                deviceUid = deviceUid,
-                displayName = title,
-                serialText = serialText,
-                supportingText = subtitle,
-                iconRes = iconRes,
-                statusText = statusLabel,
-                statusStyle = statusStyle.toCompactStatusStyle()
-            )
-        }
-
-        private fun DeviceCardUi.StatusStyle.toCompactStatusStyle(): DeviceCompactStatusStyle {
-            return when (this) {
-                DeviceCardUi.StatusStyle.ONLINE -> DeviceCompactStatusStyle.ONLINE
-                DeviceCardUi.StatusStyle.CONNECTING -> DeviceCompactStatusStyle.CONNECTING
-                DeviceCardUi.StatusStyle.WARNING -> DeviceCompactStatusStyle.WARNING
-                DeviceCardUi.StatusStyle.OFFLINE -> DeviceCompactStatusStyle.OFFLINE
             }
         }
 
