@@ -133,7 +133,7 @@ class DeviceMenuOpenGate(
     private companion object {
         const val REACHABILITY_CHECK_TIMEOUT_MS = 2_500L
         const val DEFAULT_DEVICE_TITLE = "Device"
-        const val DEFAULT_OFFLINE_MESSAGE = "This device is offline right now. Make sure it is powered on and connected to the same Wi-Fi network."
+        const val DEFAULT_OFFLINE_MESSAGE = "Make sure it is powered on and connected to the same Wi-Fi network."
     }
 }
 
