@@ -13,6 +13,7 @@ import android.view.animation.AnimationUtils
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
@@ -127,7 +128,7 @@ open class BaseActivity : AppCompatActivity() {
 
     fun showDeviceOfflineDialog(
         deviceTitle: String,
-        message: String
+        @StringRes messageRes: Int = R.string.device_menu_offline_message
     ) {
         if (
             isFinishing ||
@@ -138,19 +139,26 @@ open class BaseActivity : AppCompatActivity() {
 
         val safeTitle = deviceTitle.trim()
             .ifBlank {
-                DEFAULT_DEVICE_TITLE
+                getString(R.string.device_menu_default_title)
             }
 
-        val safeMessage = message.trim()
+        val safeMessage = getString(messageRes)
+            .trim()
             .ifBlank {
-                DEFAULT_DEVICE_OFFLINE_MESSAGE
+                getString(R.string.device_menu_offline_message)
             }
 
         activeInfoDialog?.dismiss()
 
         activeInfoDialog = MaterialAlertDialogBuilder(this)
-            .setTitle(DEVICE_OFFLINE_DIALOG_TITLE)
-            .setMessage("$safeTitle is offline right now.\n\n$safeMessage")
+            .setTitle(getString(R.string.device_menu_offline_dialog_title))
+            .setMessage(
+                getString(
+                    R.string.device_menu_offline_dialog_message,
+                    safeTitle,
+                    safeMessage
+                )
+            )
             .setPositiveButton(android.R.string.ok) { dialog, _ ->
                 dialog.dismiss()
             }
@@ -400,11 +408,5 @@ open class BaseActivity : AppCompatActivity() {
         hideLoadingDialog()
 
         super.onDestroy()
-    }
-
-    private companion object {
-        const val DEVICE_OFFLINE_DIALOG_TITLE = "Device Offline"
-        const val DEFAULT_DEVICE_TITLE = "Device"
-        const val DEFAULT_DEVICE_OFFLINE_MESSAGE = "Make sure it is powered on and connected to the same Wi-Fi network."
     }
 }
