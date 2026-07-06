@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.devices
 
 import android.app.Application
+import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
@@ -145,6 +146,6 @@ sealed interface TankDetailDevicesEvent {
 
     data class ShowDeviceUnavailable(
         val title: String,
-        val messageRes: Int
+        @StringRes val messageRes: Int
     ) : TankDetailDevicesEvent
 }
