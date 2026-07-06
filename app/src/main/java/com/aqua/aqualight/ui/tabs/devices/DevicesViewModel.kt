@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceMenuOpenGate
@@ -64,8 +65,8 @@ class DevicesViewModel(
                 menuOpenGate.resolve(deviceUid)
             }.getOrElse {
                 DeviceMenuOpenGateResult.Blocked(
-                    title = "Device",
-                    message = "Make sure it is powered on and connected to the same Wi-Fi network."
+                    title = "",
+                    messageRes = R.string.device_menu_offline_message
                 )
             }
             openingDeviceMenu.value = false
@@ -80,7 +81,7 @@ class DevicesViewModel(
                     _events.send(
                         DevicesEvent.ShowDeviceUnavailable(
                             title = result.title,
-                            message = result.message
+                            messageRes = result.messageRes
                         )
                     )
                 }
