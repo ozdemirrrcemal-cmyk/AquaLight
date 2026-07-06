@@ -2,81 +2,81 @@
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/cardDevice"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="3dp"
-    android:layout_marginVertical="6dp"
-    android:backgroundTint="#1E2A38"
+    android:layout_marginHorizontal="4dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="6dp"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
-    app:cardCornerRadius="20dp"
-    app:cardElevation="3dp"
-    app:strokeColor="#31465D"
+    app:cardBackgroundColor="#101D2C"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="0dp"
+    app:cardUseCompatPadding="false"
+    app:rippleColor="#24344A"
+    app:strokeColor="#22354D"
     app:strokeWidth="1dp">
 
-    <RelativeLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingStart="6dp"
-        android:paddingTop="6dp"
-        android:paddingEnd="10dp"
-        android:paddingBottom="6dp">
+        android:minHeight="124dp"
+        android:paddingStart="16dp"
+        android:paddingTop="15dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="15dp">
 
-        <FrameLayout
-            android:id="@+id/flDeviceIconContainer"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:layout_alignParentStart="true"
-            android:layout_centerVertical="true"
-            android:background="@drawable/bg_device_icon_container"
-            android:padding="8dp">
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/deviceIconContainer"
+            android:layout_width="54dp"
+            android:layout_height="54dp"
+            app:cardBackgroundColor="#162A3E"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="0dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:strokeColor="#2A4663"
+            app:strokeWidth="1dp">
 
             <ImageView
                 android:id="@+id/ivDeviceIcon"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="Device Icon"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_gravity="center"
+                android:adjustViewBounds="true"
+                android:contentDescription="Device icon"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_device_aqua_ster"
-                app:tint="@android:color/white" />
-        </FrameLayout>
+                tools:src="@drawable/ic_device_light" />
 
-        <LinearLayout
-            android:id="@+id/llDeviceInfo"
-            android:layout_width="wrap_content"
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:id="@+id/tvDeviceName"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_alignTop="@id/flDeviceIconContainer"
-            android:layout_marginStart="12dp"
-            android:layout_toEndOf="@id/flDeviceIconContainer"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/tvDeviceName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="CO2 Regülatör"
-                android:textColor="@android:color/white"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvTankName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Akvaryum 1"
-                android:textColor="#8BCAFF"
-                android:textSize="12sp" />
-        </LinearLayout>
+            android:layout_marginStart="15dp"
+            android:layout_marginEnd="12dp"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:textColor="#F2F6FA"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@id/flPresenceContainer"
+            app:layout_constraintStart_toEndOf="@id/deviceIconContainer"
+            app:layout_constraintTop_toTopOf="@id/deviceIconContainer"
+            tools:text="WRGB Pro Elite 120" />
 
         <FrameLayout
             android:id="@+id/flPresenceContainer"
             android:layout_width="44dp"
             android:layout_height="44dp"
-            android:layout_alignParentEnd="true"
-            android:layout_alignTop="@id/llDeviceInfo">
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/deviceIconContainer">
 
             <ImageView
                 android:id="@+id/ivPresenceIcon"
@@ -85,29 +85,33 @@
                 android:layout_gravity="center"
                 android:contentDescription="Device presence"
                 android:src="@drawable/ic_status_wifi"
-                app:tint="#5FD6B4" />
+                app:tint="#5FD6B4"
+                tools:tint="#5FD6B4" />
+
         </FrameLayout>
 
         <View
             android:id="@+id/viewMetaTopDivider"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="1dp"
-            android:layout_below="@id/flDeviceIconContainer"
-            android:layout_marginStart="12dp"
-            android:layout_marginTop="2dp"
-            android:layout_toEndOf="@id/flDeviceIconContainer"
-            android:background="#24384F" />
+            android:layout_marginStart="15dp"
+            android:layout_marginTop="14dp"
+            android:background="#24384F"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/deviceIconContainer"
+            app:layout_constraintTop_toBottomOf="@id/tvDeviceName" />
 
         <LinearLayout
             android:id="@+id/llDeviceMeta"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_below="@id/viewMetaTopDivider"
-            android:layout_marginStart="12dp"
-            android:layout_marginTop="6dp"
-            android:layout_toEndOf="@id/flDeviceIconContainer"
+            android:layout_marginStart="15dp"
+            android:layout_marginTop="9dp"
             android:orientation="horizontal"
-            android:weightSum="4">
+            android:weightSum="3"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/deviceIconContainer"
+            app:layout_constraintTop_toBottomOf="@id/viewMetaTopDivider">
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -119,26 +123,29 @@
                     android:id="@+id/tvIpTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:includeFontPadding="false"
                     android:text="IP"
-                    android:textColor="#8BCAFF"
-                    android:textSize="9sp" />
+                    android:textColor="#90A1B5"
+                    android:textSize="12sp" />
 
                 <TextView
                     android:id="@+id/tvIp"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
+                    android:layout_marginTop="5dp"
                     android:ellipsize="end"
-                    android:singleLine="true"
-                    android:text="192.168.1.33"
-                    android:textColor="#EEF4FF"
-                    android:textSize="8sp" />
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:textColor="#F2F6FA"
+                    android:textSize="12.5sp"
+                    tools:text="192.168.1.33" />
+
             </LinearLayout>
 
             <View
                 android:layout_width="1dp"
-                android:layout_height="38dp"
-                android:layout_marginHorizontal="6dp"
+                android:layout_height="34dp"
+                android:layout_marginHorizontal="10dp"
                 android:background="#24384F" />
 
             <LinearLayout
@@ -151,64 +158,35 @@
                     android:id="@+id/tvSerialTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:includeFontPadding="false"
                     android:text="Serial"
-                    android:textColor="#8BCAFF"
-                    android:textSize="9sp" />
+                    android:textColor="#90A1B5"
+                    android:textSize="12sp" />
 
                 <TextView
                     android:id="@+id/tvSerial"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
+                    android:layout_marginTop="5dp"
                     android:ellipsize="end"
-                    android:singleLine="true"
-                    android:text="CA-628206344"
-                    android:textColor="#EEF4FF"
-                    android:textSize="7sp" />
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:textColor="#F2F6FA"
+                    android:textSize="12.5sp"
+                    tools:text="AQL-LGT-336172" />
+
             </LinearLayout>
 
             <View
                 android:layout_width="1dp"
-                android:layout_height="38dp"
-                android:layout_marginHorizontal="6dp"
+                android:layout_height="34dp"
+                android:layout_marginHorizontal="10dp"
                 android:background="#24384F" />
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="0.8"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/tvFirmwareTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Firmware"
-                    android:textColor="#8BCAFF"
-                    android:textSize="9sp" />
-
-                <TextView
-                    android:id="@+id/tvFirmware"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:ellipsize="end"
-                    android:singleLine="true"
-                    android:text="v5.1.4"
-                    android:textColor="#EEF4FF"
-                    android:textSize="8sp" />
-            </LinearLayout>
-
-            <View
-                android:layout_width="1dp"
-                android:layout_height="38dp"
-                android:layout_marginHorizontal="6dp"
-                android:background="#24384F" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1.2"
+                android:layout_weight="1"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -216,13 +194,14 @@
                     android:id="@+id/ivLastSeen"
                     android:layout_width="16dp"
                     android:layout_height="16dp"
-                    android:layout_marginEnd="4dp"
+                    android:layout_marginEnd="6dp"
                     android:contentDescription="Last seen icon"
                     android:src="@drawable/ic_last_seen" />
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:orientation="vertical">
 
                     <TextView
@@ -230,25 +209,30 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
-                        android:singleLine="true"
+                        android:includeFontPadding="false"
+                        android:maxLines="1"
                         android:text="Last seen"
-                        android:textColor="#8BCAFF"
-                        android:textSize="9sp" />
+                        android:textColor="#90A1B5"
+                        android:textSize="12sp" />
 
                     <TextView
                         android:id="@+id/tvLastSeen"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
+                        android:layout_marginTop="5dp"
                         android:ellipsize="end"
-                        android:singleLine="true"
-                        android:text="Just now"
-                        android:textColor="#EEF4FF"
-                        android:textSize="8sp" />
+                        android:includeFontPadding="false"
+                        android:maxLines="1"
+                        android:textColor="#F2F6FA"
+                        android:textSize="12.5sp"
+                        tools:text="Just now" />
+
                 </LinearLayout>
+
             </LinearLayout>
 
         </LinearLayout>
 
-    </RelativeLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
 </com.google.android.material.card.MaterialCardView>
