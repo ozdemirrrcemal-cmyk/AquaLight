@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.route
 
+import androidx.annotation.StringRes
+import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
@@ -24,16 +26,16 @@ class DeviceMenuOpenGate(
         val requestedDeviceUid = deviceUidText.trim()
         if (requestedDeviceUid.isBlank()) {
             return DeviceMenuOpenGateResult.Blocked(
-                title = DEFAULT_DEVICE_TITLE,
-                message = DEFAULT_OFFLINE_MESSAGE
+                title = "",
+                messageRes = R.string.device_menu_offline_message
             )
         }
 
         val deviceUid = DeviceUid(requestedDeviceUid)
         val initialSnapshot = devicesRepository.currentDevice(deviceUid)
             ?: return DeviceMenuOpenGateResult.Blocked(
-                title = DEFAULT_DEVICE_TITLE,
-                message = DEFAULT_OFFLINE_MESSAGE
+                title = "",
+                messageRes = R.string.device_menu_offline_message
             )
 
         devicesRepository.refreshVisibleDevices()
@@ -73,8 +75,8 @@ class DeviceMenuOpenGate(
         }
 
         return DeviceMenuOpenGateResult.Blocked(
-            title = finalSnapshot.title.ifBlank { DEFAULT_DEVICE_TITLE },
-            message = DEFAULT_OFFLINE_MESSAGE
+            title = finalSnapshot.title,
+            messageRes = R.string.device_menu_offline_message
         )
     }
 
@@ -132,8 +134,6 @@ class DeviceMenuOpenGate(
 
     private companion object {
         const val REACHABILITY_CHECK_TIMEOUT_MS = 2_500L
-        const val DEFAULT_DEVICE_TITLE = "Device"
-        const val DEFAULT_OFFLINE_MESSAGE = "Make sure it is powered on and connected to the same Wi-Fi network."
     }
 }
 
@@ -144,6 +144,6 @@ sealed interface DeviceMenuOpenGateResult {
 
     data class Blocked(
         val title: String,
-        val message: String
+        @StringRes val messageRes: Int
     ) : DeviceMenuOpenGateResult
 }
