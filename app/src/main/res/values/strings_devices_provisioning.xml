@@ -20,8 +20,12 @@
     <string name="device_add_scan_badge_unavailable">Unavailable</string>
     <string name="device_add_scan_badge_error">Error</string>
     <string name="device_add_scan_badge_nearby">Nearby</string>
+    <string name="device_add_ready_title">Add AquaLight securely</string>
+    <string name="device_add_ready_message">Use QR for first setup. For an already paired device, hold SETUP/RESET for 5 seconds, release it, then scan nearby devices.</string>
     <string name="device_add_scan_title_ready">Find nearby AquaLight devices</string>
     <string name="device_add_scan_subtitle_ready">Press Scan when your device is in setup mode. Use the QR icon in the top-right for QR setup.</string>
+    <string name="device_add_scanning_secure_title">Scanning secure setup window</string>
+    <string name="device_add_scanning_secure_message">Keep the device close. Only AquaLight devices currently advertising setup mode will appear.</string>
     <string name="device_add_setup_mode_title">Setup mode</string>
     <string name="device_add_setup_mode_body">New devices enter setup mode automatically on first power-up. For a previously paired device, hold the setup button for 5 seconds, then scan again.</string>
     <string name="device_add_available_devices_title">Available devices</string>
@@ -37,10 +41,13 @@
     <string name="device_add_result_title_single">%1$d device found</string>
     <string name="device_add_result_title_multi">%1$d devices found</string>
     <string name="device_add_result_message">Select the AquaLight device you want to set up.</string>
+    <string name="device_add_result_secure_message">Select the device. AquaLight will verify its firmware DeviceInfo before Wi‑Fi is sent.</string>
     <string name="device_add_no_device_title">No device found</string>
     <string name="device_add_no_device_message">Make sure the device is powered on. For a previously paired device, hold the setup button for 5 seconds and try again.</string>
     <string name="device_add_no_nearby_title">No nearby devices</string>
     <string name="device_add_no_nearby_message">Put the device in setup mode, keep it close to your phone, then press Scan again. QR setup is available from the top-right icon.</string>
+    <string name="device_add_no_setup_window_title">No setup window found</string>
+    <string name="device_add_no_setup_window_message">For an already paired device, hold SETUP/RESET for 5 seconds, release it, then scan again. For first setup, use the secure QR code.</string>
     <string name="device_add_bluetooth_off_title">Bluetooth is off</string>
     <string name="device_add_bluetooth_off_message">Turn on Bluetooth to find nearby AquaLight devices.</string>
     <string name="device_add_bluetooth_off_empty_message">Turn on Bluetooth in your phone settings, then scan again.</string>
@@ -51,8 +58,10 @@
     <string name="device_add_scan_failed_message">A problem occurred while starting Bluetooth scanning.</string>
     <string name="device_add_scan_failed_empty_title">Scan failed</string>
     <string name="device_add_scan_failed_fallback">BLE scan failed. Try again.</string>
+    <string name="device_add_missing_ble_address">BLE address is missing. Scan again.</string>
     <string name="device_add_setup_mode_label">Setup mode</string>
     <string name="device_add_rssi_format">RSSI %1$d dBm</string>
+    <string name="device_add_rssi_value_format">%1$d dBm</string>
     <string name="device_add_status_ready">Ready</string>
 
     <!-- Wi-Fi Setup -->
