@@ -48,6 +48,7 @@ class DeviceQrScanViewModel(
 
         val payload = qrParser.parse(rawValue)
             .getOrElse {
+                pendingPayload = null
                 showFailure(
                     titleRes = R.string.device_qr_preflight_invalid_title,
                     messageRes = R.string.device_qr_preflight_invalid_message
@@ -56,6 +57,7 @@ class DeviceQrScanViewModel(
             }
 
         if (repository.currentDevice(payload.deviceUid) != null) {
+            pendingPayload = null
             showFailure(
                 titleRes = R.string.device_qr_preflight_already_added_title,
                 messageRes = R.string.device_qr_preflight_already_added_message
@@ -63,16 +65,14 @@ class DeviceQrScanViewModel(
             return
         }
 
+        pendingPayload = payload
+
         if (!hasBlePermissions) {
-            pendingPayload = payload
             _uiState.value = DeviceQrScanUiState(
                 title = string(R.string.device_qr_preflight_bluetooth_permission_title),
                 message = string(R.string.device_qr_preflight_bluetooth_permission_message),
-                showScanAgain = false
+                primaryAction = DeviceQrScanPrimaryAction.REQUEST_BLE_PERMISSION
             )
-            viewModelScope.launch {
-                _events.send(DeviceQrScanEvent.RequestBlePermission)
-            }
             return
         }
 
@@ -81,17 +81,23 @@ class DeviceQrScanViewModel(
 
     fun onBlePermissionResult(granted: Boolean) {
         val payload = pendingPayload
-        pendingPayload = null
 
         if (!granted || payload == null) {
             showFailure(
                 titleRes = R.string.device_qr_preflight_bluetooth_permission_title,
-                messageRes = R.string.device_qr_preflight_bluetooth_permission_message
+                messageRes = R.string.device_qr_preflight_bluetooth_permission_message,
+                primaryAction = DeviceQrScanPrimaryAction.OPEN_APP_SETTINGS
             )
             return
         }
 
         startQrBleScan(payload)
+    }
+
+    fun retryPendingBleScan(): Boolean {
+        val payload = pendingPayload ?: return false
+        startQrBleScan(payload)
+        return true
     }
 
     fun onScanAgain() {
@@ -104,6 +110,7 @@ class DeviceQrScanViewModel(
     }
 
     private fun startQrBleScan(payload: AqlProvisioningQrPayload) {
+        pendingPayload = payload
         scanJob?.cancel()
         bleScanner.stopScan()
         bleScanner.clearCandidates()
@@ -111,7 +118,7 @@ class DeviceQrScanViewModel(
         _uiState.value = DeviceQrScanUiState(
             title = string(R.string.device_qr_preflight_checking_title),
             message = string(R.string.device_qr_preflight_checking_message),
-            showScanAgain = false
+            primaryAction = null
         )
 
         scanJob = viewModelScope.launch {
@@ -120,7 +127,8 @@ class DeviceQrScanViewModel(
                 AqlBleProvisioningScanner.StartResult.MissingPermission -> {
                     showFailure(
                         titleRes = R.string.device_qr_preflight_bluetooth_permission_title,
-                        messageRes = R.string.device_qr_preflight_bluetooth_permission_message
+                        messageRes = R.string.device_qr_preflight_bluetooth_permission_message,
+                        primaryAction = DeviceQrScanPrimaryAction.REQUEST_BLE_PERMISSION
                     )
                     return@launch
                 }
@@ -128,7 +136,8 @@ class DeviceQrScanViewModel(
                 AqlBleProvisioningScanner.StartResult.BluetoothOff -> {
                     showFailure(
                         titleRes = R.string.device_add_bluetooth_off_title,
-                        messageRes = R.string.device_add_bluetooth_off_message
+                        messageRes = R.string.device_add_bluetooth_off_message,
+                        primaryAction = DeviceQrScanPrimaryAction.OPEN_BLUETOOTH_SETTINGS
                     )
                     return@launch
                 }
@@ -154,10 +163,11 @@ class DeviceQrScanViewModel(
             bleScanner.stopScan()
 
             if (candidate != null) {
+                pendingPayload = null
                 _uiState.value = DeviceQrScanUiState(
                     title = string(R.string.device_qr_verified_title),
                     message = string(R.string.device_qr_opening_wifi),
-                    showScanAgain = false
+                    primaryAction = null
                 )
                 _events.send(
                     DeviceQrScanEvent.OpenWifiProvisioning(
@@ -210,13 +220,14 @@ class DeviceQrScanViewModel(
 
     private fun showFailure(
         @StringRes titleRes: Int,
-        @StringRes messageRes: Int
+        @StringRes messageRes: Int,
+        primaryAction: DeviceQrScanPrimaryAction = DeviceQrScanPrimaryAction.SCAN_AGAIN
     ) {
         bleScanner.stopScan()
         _uiState.value = DeviceQrScanUiState(
             title = string(titleRes),
             message = string(messageRes),
-            showScanAgain = true
+            primaryAction = primaryAction
         )
     }
 
@@ -239,12 +250,17 @@ class DeviceQrScanViewModel(
 data class DeviceQrScanUiState(
     val title: String = "",
     val message: String = "",
-    val showScanAgain: Boolean = false
+    val primaryAction: DeviceQrScanPrimaryAction? = null
 )
 
-sealed interface DeviceQrScanEvent {
-    object RequestBlePermission : DeviceQrScanEvent
+enum class DeviceQrScanPrimaryAction {
+    SCAN_AGAIN,
+    REQUEST_BLE_PERMISSION,
+    OPEN_BLUETOOTH_SETTINGS,
+    OPEN_APP_SETTINGS
+}
 
+sealed interface DeviceQrScanEvent {
     data class OpenWifiProvisioning(
         val result: DeviceQrPreflightSuccess
     ) : DeviceQrScanEvent
