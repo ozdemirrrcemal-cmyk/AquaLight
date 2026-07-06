@@ -132,7 +132,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     ) {
         baseActivity()?.showDeviceOfflineDialog(
             deviceTitle = event.title,
-            message = event.message
+            messageRes = event.messageRes
         )
     }
 
