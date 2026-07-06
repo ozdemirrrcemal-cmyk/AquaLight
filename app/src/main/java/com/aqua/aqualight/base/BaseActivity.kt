@@ -16,6 +16,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,6 +41,7 @@ open class BaseActivity : AppCompatActivity() {
 
     private var loadingDialog: Dialog? = null
     private var loadingLogo: ImageView? = null
+    private var activeInfoDialog: Dialog? = null
 
     private val loadingOwners: MutableSet<String> =
         linkedSetOf()
@@ -121,6 +123,46 @@ open class BaseActivity : AppCompatActivity() {
             ownerKey = legacyLoadingOwner,
             show = show
         )
+    }
+
+    fun showDeviceOfflineDialog(
+        deviceTitle: String,
+        message: String
+    ) {
+        if (
+            isFinishing ||
+            isDestroyed
+        ) {
+            return
+        }
+
+        val safeTitle = deviceTitle.trim()
+            .ifBlank {
+                DEFAULT_DEVICE_TITLE
+            }
+
+        val safeMessage = message.trim()
+            .ifBlank {
+                DEFAULT_DEVICE_OFFLINE_MESSAGE
+            }
+
+        activeInfoDialog?.dismiss()
+
+        activeInfoDialog = MaterialAlertDialogBuilder(this)
+            .setTitle(DEVICE_OFFLINE_DIALOG_TITLE)
+            .setMessage("$safeTitle is offline right now.\n\n$safeMessage")
+            .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                dialog.dismiss()
+            }
+            .create()
+            .also { dialog ->
+                dialog.setOnDismissListener {
+                    if (activeInfoDialog == dialog) {
+                        activeInfoDialog = null
+                    }
+                }
+                dialog.show()
+            }
     }
 
     private fun Any.toLoadingOwnerKey(): String {
@@ -352,9 +394,17 @@ open class BaseActivity : AppCompatActivity() {
 
         loadingOwners.clear()
 
+        activeInfoDialog?.dismiss()
+        activeInfoDialog = null
+
         hideLoadingDialog()
 
         super.onDestroy()
     }
 
+    private companion object {
+        const val DEVICE_OFFLINE_DIALOG_TITLE = "Device Offline"
+        const val DEFAULT_DEVICE_TITLE = "Device"
+        const val DEFAULT_DEVICE_OFFLINE_MESSAGE = "Make sure it is powered on and connected to the same Wi-Fi network."
+    }
 }
