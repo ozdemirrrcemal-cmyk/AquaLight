@@ -11,6 +11,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentDevicesBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderFilledIconAction
@@ -113,6 +114,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                     viewModel.events.collect { event ->
                         when (event) {
                             is DevicesEvent.OpenRoute -> openDeviceRoute(event.route)
+                            is DevicesEvent.ShowDeviceUnavailable -> showDeviceUnavailable(event)
                         }
                     }
                 }
@@ -127,6 +129,19 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         deviceAdapter.submitList(state.devices)
         binding.rvSelectedDevices.isVisible = state.devices.isNotEmpty()
         binding.tvEmptyState.isVisible = state.isEmpty
+        baseActivity()?.setGlobalLoading(
+            ownerKey = DEVICE_MENU_LOADING_OWNER,
+            show = state.isOpeningDeviceMenu
+        )
+    }
+
+    private fun showDeviceUnavailable(
+        event: DevicesEvent.ShowDeviceUnavailable
+    ) {
+        baseActivity()?.showDeviceOfflineDialog(
+            deviceTitle = event.title,
+            message = event.message
+        )
     }
 
     private fun showDeleteConfirmation() {
@@ -190,9 +205,18 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         findNavController().navigate(directions)
     }
 
+    private fun baseActivity(): BaseActivity? {
+        return activity as? BaseActivity
+    }
+
     override fun onDestroyView() {
+        baseActivity()?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
         binding.rvSelectedDevices.adapter = null
         _binding = null
         super.onDestroyView()
+    }
+
+    private companion object {
+        const val DEVICE_MENU_LOADING_OWNER = "DevicesFragment.DeviceMenuOpenGate"
     }
 }
