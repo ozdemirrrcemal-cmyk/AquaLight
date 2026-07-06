@@ -52,9 +52,7 @@ class TankDeviceSelectViewModel(
                     TankDeviceSelectItem(
                         deviceUid = snapshot.deviceUid.value,
                         card = DeviceCompactSnapshotMapper.map(
-                            snapshot = snapshot,
-                            showAction = true,
-                            actionText = "Add"
+                            snapshot = snapshot
                         )
                     )
                 }
