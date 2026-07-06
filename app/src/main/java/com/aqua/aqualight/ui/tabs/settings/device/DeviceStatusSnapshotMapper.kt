@@ -54,38 +54,19 @@ object DeviceStatusSnapshotMapper {
 
         return DeviceStatusItem(
             displayName = title.ifBlank { "Device" },
-            supportingText = supportingText(),
             iconRes = DeviceFamilyIconMapper.iconFor(product.family),
             ip = endpoint.ip.ifBlank { "Unknown" },
-            deviceCode = deviceCode(),
-            productName = productName(),
+            serialText = serialText(),
             lastSeenText = lastSeenText(nowMillis),
             isOnline = online
         )
     }
 
-    private fun DeviceSnapshot.supportingText(): String {
-        return listOf(
-            product.familyRaw.ifBlank { product.family.wireValue }.ifBlank { null },
-            DevicePresencePresentationMapper.availabilityLabel(connectionState.onlineState)
-        )
-            .filterNotNull()
-            .joinToString(separator = " • ")
-            .ifBlank { "Device" }
-    }
-
-    private fun DeviceSnapshot.deviceCode(): String {
-        return identity.shortId
-            .ifBlank { identity.serialNumber }
+    private fun DeviceSnapshot.serialText(): String {
+        return identity.serialNumber
             .ifBlank { identity.firmwareSerial }
+            .ifBlank { identity.shortId }
             .ifBlank { identity.uid.value }
-            .ifBlank { "Unknown" }
-    }
-
-    private fun DeviceSnapshot.productName(): String {
-        return product.displayName
-            .ifBlank { product.model }
-            .ifBlank { product.productId }
             .ifBlank { "Unknown" }
     }
 
