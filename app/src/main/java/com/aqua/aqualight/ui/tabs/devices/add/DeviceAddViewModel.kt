@@ -5,10 +5,8 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleDeviceInfoPreflightClient
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningCandidate
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningScanner
-import com.aqua.aqualight.data.devices.provisioning.ble.ManualSetupPreflightResult
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -24,7 +22,6 @@ class DeviceAddViewModel(
 ) : AndroidViewModel(application) {
 
     private val bleScanner = AqlBleProvisioningScanner(application)
-    private val deviceInfoPreflightClient = AqlBleDeviceInfoPreflightClient(application)
 
     private val _uiState = MutableStateFlow(readyState())
     val uiState: StateFlow<DeviceAddUiState> = _uiState.asStateFlow()
@@ -34,7 +31,6 @@ class DeviceAddViewModel(
 
     private var scanCollectJob: Job? = null
     private var scanTimeoutJob: Job? = null
-    private var preflightJob: Job? = null
     private var resetScanStateOnReturn = false
 
     fun onScreenVisible() {
@@ -69,8 +65,8 @@ class DeviceAddViewModel(
 
         _uiState.value = DeviceAddUiState(
             mode = DeviceAddScanMode.SCANNING,
-            heroTitle = "Scanning secure setup window",
-            heroSubtitle = "Keep the device close. Only AquaLight devices currently advertising setup mode will appear.",
+            heroTitle = string(R.string.device_add_scanning_secure_title),
+            heroSubtitle = string(R.string.device_add_scanning_secure_message),
             scanBadge = string(R.string.device_add_scan_badge_scanning),
             candidates = emptyList(),
             emptyTitle = string(R.string.device_add_scanning_empty_title),
@@ -107,82 +103,15 @@ class DeviceAddViewModel(
 
     fun onCandidateClicked(candidate: DeviceAddCandidateUi) {
         if (candidate.bleAddress.isBlank()) {
-            showManualPreflightBlocked("BLE address is missing. Scan again.")
+            showBleError(string(R.string.device_add_missing_ble_address))
             return
         }
 
         resetScanStateOnReturn = true
         stopBleScan()
-        preflightJob?.cancel()
-
-        _uiState.value = DeviceAddUiState(
-            mode = DeviceAddScanMode.SCANNING,
-            heroTitle = "Verifying setup mode",
-            heroSubtitle = "AquaLight is reading firmware DeviceInfo before Wi-Fi setup.",
-            scanBadge = string(R.string.device_add_scan_badge_scanning),
-            candidates = emptyList(),
-            emptyTitle = "Verifying firmware",
-            emptyMessage = "Checking whether this device allows Manual BLE Setup."
-        )
-
-        preflightJob = viewModelScope.launch {
-            when (val result = deviceInfoPreflightClient.verifyManualSetup(candidate.bleAddress)) {
-                is ManualSetupPreflightResult.Allowed -> {
-                    _events.send(
-                        DeviceAddEvent.OpenWifiProvisioning(
-                            candidate = candidate.copy(
-                                id = result.deviceUid.ifBlank { candidate.id },
-                                title = result.displayName.ifBlank { candidate.title },
-                                serial = result.serialNumber.ifBlank { candidate.serial },
-                                model = buildVerifiedModelLabel(result.productModel),
-                                bleName = result.bleName.ifBlank { candidate.bleName }
-                            )
-                        )
-                    )
-                }
-
-                is ManualSetupPreflightResult.QrRequired -> {
-                    showManualPreflightQrRequired(result.message)
-                }
-
-                is ManualSetupPreflightResult.Blocked -> {
-                    showManualPreflightBlocked(result.message)
-                }
-            }
+        viewModelScope.launch {
+            _events.send(DeviceAddEvent.OpenWifiProvisioning(candidate = candidate))
         }
-    }
-
-    private fun showManualPreflightQrRequired(message: String) {
-        resetScanStateOnReturn = false
-        _uiState.value = DeviceAddUiState(
-            mode = DeviceAddScanMode.ERROR,
-            heroTitle = "QR setup required",
-            heroSubtitle = message,
-            scanBadge = string(R.string.device_add_scan_badge_ready),
-            candidates = emptyList(),
-            emptyTitle = "Use the secure QR code",
-            emptyMessage = message
-        )
-    }
-
-    private fun showManualPreflightBlocked(message: String) {
-        resetScanStateOnReturn = false
-        _uiState.value = DeviceAddUiState(
-            mode = DeviceAddScanMode.ERROR,
-            heroTitle = "Manual BLE setup unavailable",
-            heroSubtitle = message,
-            scanBadge = string(R.string.device_add_scan_badge_ready),
-            candidates = emptyList(),
-            emptyTitle = "Setup mode is not ready",
-            emptyMessage = message
-        )
-    }
-
-    private fun buildVerifiedModelLabel(productModel: String): String {
-        return buildList {
-            if (productModel.isNotBlank()) add(productModel)
-            add(string(R.string.device_add_setup_mode_label))
-        }.joinToString(separator = " • ")
     }
 
     private fun observeBleCandidates() {
@@ -207,7 +136,7 @@ class DeviceAddViewModel(
                         } else {
                             string(R.string.device_add_result_title_multi, uiCandidates.size)
                         },
-                        heroSubtitle = "Select the device. AquaLight will verify its firmware DeviceInfo before Wi‑Fi is sent.",
+                        heroSubtitle = string(R.string.device_add_result_secure_message),
                         scanBadge = string(R.string.device_add_scan_badge_nearby),
                         candidates = uiCandidates,
                         emptyTitle = "",
@@ -227,8 +156,8 @@ class DeviceAddViewModel(
                 bleScanner.stopScan()
                 _uiState.value = DeviceAddUiState(
                     mode = DeviceAddScanMode.EMPTY,
-                    heroTitle = "No setup window found",
-                    heroSubtitle = "For an already paired device, hold SETUP/RESET for 5 seconds, release it, then scan again. For first setup, use the secure QR code.",
+                    heroTitle = string(R.string.device_add_no_setup_window_title),
+                    heroSubtitle = string(R.string.device_add_no_setup_window_message),
                     scanBadge = string(R.string.device_add_scan_badge_ready),
                     candidates = emptyList(),
                     emptyTitle = string(R.string.device_add_no_nearby_title),
@@ -295,7 +224,7 @@ class DeviceAddViewModel(
             serial = displaySerial,
             model = modelLabel,
             status = displayStatus.ifBlank { string(R.string.device_add_status_ready) },
-            rssiLabel = "$rssi dBm",
+            rssiLabel = string(R.string.device_add_rssi_value_format, rssi),
             bleAddress = address,
             bleName = name
         )
@@ -304,8 +233,8 @@ class DeviceAddViewModel(
     private fun readyState(): DeviceAddUiState {
         return DeviceAddUiState(
             mode = DeviceAddScanMode.READY,
-            heroTitle = "Add AquaLight securely",
-            heroSubtitle = "Use QR for first setup. For an already paired device, hold SETUP/RESET for 5 seconds, release it, then scan nearby devices.",
+            heroTitle = string(R.string.device_add_ready_title),
+            heroSubtitle = string(R.string.device_add_ready_message),
             scanBadge = string(R.string.device_add_scan_badge_ready),
             candidates = emptyList(),
             emptyTitle = string(R.string.device_add_scan_badge_ready),
@@ -321,7 +250,6 @@ class DeviceAddViewModel(
     }
 
     override fun onCleared() {
-        preflightJob?.cancel()
         stopBleScan()
         super.onCleared()
     }
