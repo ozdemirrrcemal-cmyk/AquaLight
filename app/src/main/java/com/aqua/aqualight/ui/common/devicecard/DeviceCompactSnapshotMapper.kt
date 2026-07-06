@@ -3,6 +3,8 @@ package com.aqua.aqualight.ui.common.devicecard
 import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
+import com.aqua.aqualight.ui.common.devicepresence.DevicePresencePresentationMapper
+import java.util.Locale
 
 object DeviceCompactSnapshotMapper {
 
@@ -68,42 +70,18 @@ object DeviceCompactSnapshotMapper {
     private fun statusText(
         onlineState: DeviceOnlineState
     ): String {
-        return when (onlineState) {
-            DeviceOnlineState.AUTHENTICATED,
-            DeviceOnlineState.ONLINE_LAN -> "ONLINE"
-
-            DeviceOnlineState.CONNECTING_WS -> "CONNECTING"
-            DeviceOnlineState.DISCOVERING -> "DISCOVERING"
-            DeviceOnlineState.STALE -> "STALE"
-            DeviceOnlineState.AUTH_REQUIRED -> "AUTH"
-            DeviceOnlineState.PROVISIONING -> "SETUP"
-            DeviceOnlineState.OTA_UPDATING -> "UPDATING"
-            DeviceOnlineState.LOCAL_NETWORK_OFFLINE -> "NO LAN"
-            DeviceOnlineState.OFFLINE -> "OFFLINE"
-            DeviceOnlineState.ERROR -> "ERROR"
-            DeviceOnlineState.UNKNOWN -> "UNKNOWN"
-        }
+        return DevicePresencePresentationMapper
+            .availabilityLabel(onlineState)
+            .uppercase(Locale.US)
     }
 
     private fun statusStyle(
         onlineState: DeviceOnlineState
     ): DeviceCompactStatusStyle {
-        return when (onlineState) {
-            DeviceOnlineState.AUTHENTICATED,
-            DeviceOnlineState.ONLINE_LAN -> DeviceCompactStatusStyle.ONLINE
-
-            DeviceOnlineState.CONNECTING_WS,
-            DeviceOnlineState.DISCOVERING -> DeviceCompactStatusStyle.CONNECTING
-
-            DeviceOnlineState.STALE,
-            DeviceOnlineState.AUTH_REQUIRED,
-            DeviceOnlineState.PROVISIONING,
-            DeviceOnlineState.OTA_UPDATING,
-            DeviceOnlineState.UNKNOWN -> DeviceCompactStatusStyle.WARNING
-
-            DeviceOnlineState.LOCAL_NETWORK_OFFLINE,
-            DeviceOnlineState.OFFLINE,
-            DeviceOnlineState.ERROR -> DeviceCompactStatusStyle.OFFLINE
+        return if (DevicePresencePresentationMapper.isReachable(onlineState)) {
+            DeviceCompactStatusStyle.ONLINE
+        } else {
+            DeviceCompactStatusStyle.OFFLINE
         }
     }
 }
