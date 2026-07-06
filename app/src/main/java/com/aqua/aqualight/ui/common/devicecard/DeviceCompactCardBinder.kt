@@ -17,7 +17,7 @@ object DeviceCompactCardBinder {
         val presenceText = item.statusText.trim().ifBlank { "Offline" }
 
         binding.tvDeviceName.text = name
-        binding.tvSerialNumber.text = "UID: $serial"
+        binding.tvSerialNumber.text = "Serial: $serial"
         binding.tvTankName.text = supporting
         binding.tvTankName.isVisible = supporting.isNotBlank()
 

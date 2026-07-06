@@ -10,7 +10,7 @@ object DeviceCompactSnapshotMapper {
 
     fun map(
         snapshot: DeviceSnapshot,
-        supportingText: String = buildDefaultSupportingText(snapshot),
+        supportingText: String = "",
         showAction: Boolean = false,
         actionText: String = ""
     ): DeviceCompactCardUi {
