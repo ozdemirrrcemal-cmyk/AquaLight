@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.settings.device
 
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
+import com.aqua.aqualight.ui.common.devicecard.DeviceFamilyIconMapper
 import com.aqua.aqualight.ui.common.devicepresence.DevicePresencePresentationMapper
 import java.util.Locale
 import kotlin.math.max
@@ -54,6 +55,7 @@ object DeviceStatusSnapshotMapper {
         return DeviceStatusItem(
             displayName = title.ifBlank { "Device" },
             supportingText = supportingText(),
+            iconRes = DeviceFamilyIconMapper.iconFor(product.family),
             ip = endpoint.ip.ifBlank { "Unknown" },
             deviceCode = deviceCode(),
             productName = productName(),
