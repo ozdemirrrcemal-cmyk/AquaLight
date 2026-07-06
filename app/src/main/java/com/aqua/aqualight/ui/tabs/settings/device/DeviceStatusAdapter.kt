@@ -5,7 +5,6 @@ import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemDeviceStatusBinding
 
 class DeviceStatusAdapter : RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewHolder>() {
@@ -25,7 +24,7 @@ class DeviceStatusAdapter : RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewH
         fun bind(item: DeviceStatusItem) {
             binding.tvDeviceName.text = item.displayName.ifBlank { "Device" }
             binding.tvTankName.text = item.supportingText.ifBlank { "Not connected" }
-            binding.ivDeviceIcon.setImageResource(R.drawable.ic_device_aqua_ster)
+            binding.ivDeviceIcon.setImageResource(item.iconRes)
             binding.tvIp.text = item.ip.ifBlank { "Unknown" }
             binding.tvSerialTitle.text = "Device code"
             binding.tvSerial.text = item.deviceCode.ifBlank { "Unknown" }
