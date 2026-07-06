@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_menu_default_title">Device</string>
+    <string name="device_menu_offline_dialog_title">Device Offline</string>
+    <string name="device_menu_offline_dialog_message">%1$s is offline right now.\n\n%2$s</string>
+    <string name="device_menu_offline_message">Make sure it is powered on and connected to the same Wi-Fi network.</string>
+</resources>
