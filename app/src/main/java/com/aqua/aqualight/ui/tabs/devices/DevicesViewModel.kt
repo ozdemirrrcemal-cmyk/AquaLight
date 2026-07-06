@@ -60,7 +60,14 @@ class DevicesViewModel(
 
         viewModelScope.launch {
             openingDeviceMenu.value = true
-            val result = menuOpenGate.resolve(deviceUid)
+            val result = runCatching {
+                menuOpenGate.resolve(deviceUid)
+            }.getOrElse {
+                DeviceMenuOpenGateResult.Blocked(
+                    title = "Device",
+                    message = "Make sure it is powered on and connected to the same Wi-Fi network."
+                )
+            }
             openingDeviceMenu.value = false
             clockMillis.value = System.currentTimeMillis()
 
