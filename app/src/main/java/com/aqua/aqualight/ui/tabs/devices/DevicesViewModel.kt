@@ -5,7 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
-import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceMenuOpenGate
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceMenuOpenGateResult
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -22,9 +23,10 @@ class DevicesViewModel(
 ) : AndroidViewModel(application) {
 
     private val repository = DevicesRepositoryProvider.get(application)
-    private val routeResolver = DeviceRouteResolver()
+    private val menuOpenGate = DeviceMenuOpenGate(repository)
     private val clockMillis = MutableStateFlow(System.currentTimeMillis())
     private val selectedDeviceUids = MutableStateFlow<Set<String>>(emptySet())
+    private val openingDeviceMenu = MutableStateFlow(false)
 
     private val _uiState = MutableStateFlow(DevicesUiState())
     val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
@@ -52,28 +54,30 @@ class DevicesViewModel(
             return
         }
 
-        viewModelScope.launch {
-            val route = runCatching {
-                val uid = DeviceUid(deviceUid)
-                val snapshot = repository.currentDevice(uid)
+        if (openingDeviceMenu.value) {
+            return
+        }
 
-                if (snapshot != null && snapshot.endpoint.hasWebSocketEndpoint) {
-                    repository.connectRuntime(uid)
+        viewModelScope.launch {
+            openingDeviceMenu.value = true
+            val result = menuOpenGate.resolve(deviceUid)
+            openingDeviceMenu.value = false
+            clockMillis.value = System.currentTimeMillis()
+
+            when (result) {
+                is DeviceMenuOpenGateResult.OpenRoute -> {
+                    _events.send(DevicesEvent.OpenRoute(result.route))
                 }
 
-                routeResolver.resolve(
-                    snapshot = snapshot,
-                    requestedDeviceUid = deviceUid
-                )
-            }.getOrElse {
-                routeResolver.resolve(
-                    snapshot = null,
-                    requestedDeviceUid = deviceUid
-                )
+                is DeviceMenuOpenGateResult.Blocked -> {
+                    _events.send(
+                        DevicesEvent.ShowDeviceUnavailable(
+                            title = result.title,
+                            message = result.message
+                        )
+                    )
+                }
             }
-
-            clockMillis.value = System.currentTimeMillis()
-            _events.send(DevicesEvent.OpenRoute(route))
         }
     }
 
@@ -113,7 +117,12 @@ class DevicesViewModel(
 
     private fun observeDevices() {
         viewModelScope.launch {
-            combine(repository.devices, clockMillis, selectedDeviceUids) { snapshots, now, selectedUids ->
+            combine(
+                repository.devices,
+                clockMillis,
+                selectedDeviceUids,
+                openingDeviceMenu
+            ) { snapshots, now, selectedUids, isOpeningDeviceMenu ->
                 val cards = snapshots.map { snapshot ->
                     val card = DeviceCardMapper.map(snapshot = snapshot, nowMillis = now)
                     card.copy(isSelected = card.deviceUid in selectedUids)
@@ -125,7 +134,8 @@ class DevicesViewModel(
                     isEmpty = cards.isEmpty(),
                     isDiscovering = cards.isEmpty(),
                     selectionMode = visibleSelectedCount > 0,
-                    selectedCount = visibleSelectedCount
+                    selectedCount = visibleSelectedCount,
+                    isOpeningDeviceMenu = isOpeningDeviceMenu
                 )
             }.collect { state ->
                 _uiState.value = state
@@ -147,7 +157,8 @@ class DevicesViewModel(
         val isEmpty: Boolean = true,
         val isDiscovering: Boolean = true,
         val selectionMode: Boolean = false,
-        val selectedCount: Int = 0
+        val selectedCount: Int = 0,
+        val isOpeningDeviceMenu: Boolean = false
     )
 
     private companion object {
