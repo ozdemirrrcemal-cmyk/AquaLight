@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.devices
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.R
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentStore
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -93,8 +94,8 @@ class TankDetailDevicesViewModel(
                 menuOpenGate.resolve(deviceUid)
             }.getOrElse {
                 DeviceMenuOpenGateResult.Blocked(
-                    title = "Device",
-                    message = "Make sure it is powered on and connected to the same Wi-Fi network."
+                    title = "",
+                    messageRes = R.string.device_menu_offline_message
                 )
             }
             openingDeviceMenu.value = false
@@ -108,7 +109,7 @@ class TankDetailDevicesViewModel(
                     _events.send(
                         TankDetailDevicesEvent.ShowDeviceUnavailable(
                             title = result.title,
-                            message = result.message
+                            messageRes = result.messageRes
                         )
                     )
                 }
@@ -144,6 +145,6 @@ sealed interface TankDetailDevicesEvent {
 
     data class ShowDeviceUnavailable(
         val title: String,
-        val message: String
+        val messageRes: Int
     ) : TankDetailDevicesEvent
 }
