@@ -3,6 +3,9 @@
     <string name="device_qr_preflight_checking_title">Verifying QR device</string>
     <string name="device_qr_preflight_checking_message">Checking that this QR code matches the nearby AquaLight device.</string>
     <string name="device_qr_preflight_scan_again">Scan again</string>
+    <string name="device_qr_preflight_allow_bluetooth_permission">Allow Bluetooth permission</string>
+    <string name="device_qr_preflight_open_bluetooth_settings">Open Bluetooth settings</string>
+    <string name="device_qr_preflight_open_app_settings">Open app settings</string>
     <string name="device_qr_preflight_bluetooth_permission_title">Bluetooth permission required</string>
     <string name="device_qr_preflight_bluetooth_permission_message">Allow Bluetooth access to verify the QR device before Wi-Fi setup.</string>
     <string name="device_qr_preflight_invalid_title">This is not an AquaLight QR code.</string>
