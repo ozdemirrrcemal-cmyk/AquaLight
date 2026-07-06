@@ -5,10 +5,8 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleDeviceInfoPreflightClient
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningCandidate
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningScanner
-import com.aqua.aqualight.data.devices.provisioning.ble.ManualSetupPreflightResult
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -24,7 +22,6 @@ class DeviceAddViewModel(
 ) : AndroidViewModel(application) {
 
     private val bleScanner = AqlBleProvisioningScanner(application)
-    private val deviceInfoPreflightClient = AqlBleDeviceInfoPreflightClient(application)
 
     private val _uiState = MutableStateFlow(readyState())
     val uiState: StateFlow<DeviceAddUiState> = _uiState.asStateFlow()
@@ -34,7 +31,6 @@ class DeviceAddViewModel(
 
     private var scanCollectJob: Job? = null
     private var scanTimeoutJob: Job? = null
-    private var preflightJob: Job? = null
     private var resetScanStateOnReturn = false
 
     fun onScreenVisible() {
@@ -107,82 +103,15 @@ class DeviceAddViewModel(
 
     fun onCandidateClicked(candidate: DeviceAddCandidateUi) {
         if (candidate.bleAddress.isBlank()) {
-            showManualPreflightBlocked("BLE address is missing. Scan again.")
+            showBleError("BLE address is missing. Scan again.")
             return
         }
 
         resetScanStateOnReturn = true
         stopBleScan()
-        preflightJob?.cancel()
-
-        _uiState.value = DeviceAddUiState(
-            mode = DeviceAddScanMode.SCANNING,
-            heroTitle = "Verifying setup mode",
-            heroSubtitle = "AquaLight is reading firmware DeviceInfo before Wi-Fi setup.",
-            scanBadge = string(R.string.device_add_scan_badge_scanning),
-            candidates = emptyList(),
-            emptyTitle = "Verifying firmware",
-            emptyMessage = "Checking whether this device allows Manual BLE Setup."
-        )
-
-        preflightJob = viewModelScope.launch {
-            when (val result = deviceInfoPreflightClient.verifyManualSetup(candidate.bleAddress)) {
-                is ManualSetupPreflightResult.Allowed -> {
-                    _events.send(
-                        DeviceAddEvent.OpenWifiProvisioning(
-                            candidate = candidate.copy(
-                                id = result.deviceUid.ifBlank { candidate.id },
-                                title = result.displayName.ifBlank { candidate.title },
-                                serial = result.serialNumber.ifBlank { candidate.serial },
-                                model = buildVerifiedModelLabel(result.productModel),
-                                bleName = result.bleName.ifBlank { candidate.bleName }
-                            )
-                        )
-                    )
-                }
-
-                is ManualSetupPreflightResult.QrRequired -> {
-                    showManualPreflightQrRequired(result.message)
-                }
-
-                is ManualSetupPreflightResult.Blocked -> {
-                    showManualPreflightBlocked(result.message)
-                }
-            }
+        viewModelScope.launch {
+            _events.send(DeviceAddEvent.OpenWifiProvisioning(candidate = candidate))
         }
-    }
-
-    private fun showManualPreflightQrRequired(message: String) {
-        resetScanStateOnReturn = false
-        _uiState.value = DeviceAddUiState(
-            mode = DeviceAddScanMode.ERROR,
-            heroTitle = "QR setup required",
-            heroSubtitle = message,
-            scanBadge = string(R.string.device_add_scan_badge_ready),
-            candidates = emptyList(),
-            emptyTitle = "Use the secure QR code",
-            emptyMessage = message
-        )
-    }
-
-    private fun showManualPreflightBlocked(message: String) {
-        resetScanStateOnReturn = false
-        _uiState.value = DeviceAddUiState(
-            mode = DeviceAddScanMode.ERROR,
-            heroTitle = "Manual BLE setup unavailable",
-            heroSubtitle = message,
-            scanBadge = string(R.string.device_add_scan_badge_ready),
-            candidates = emptyList(),
-            emptyTitle = "Setup mode is not ready",
-            emptyMessage = message
-        )
-    }
-
-    private fun buildVerifiedModelLabel(productModel: String): String {
-        return buildList {
-            if (productModel.isNotBlank()) add(productModel)
-            add(string(R.string.device_add_setup_mode_label))
-        }.joinToString(separator = " • ")
     }
 
     private fun observeBleCandidates() {
@@ -321,7 +250,6 @@ class DeviceAddViewModel(
     }
 
     override fun onCleared() {
-        preflightJob?.cancel()
         stopBleScan()
         super.onCleared()
     }
