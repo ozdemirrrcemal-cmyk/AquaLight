@@ -69,7 +69,7 @@
                     <!-- CATEGORY -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/inputLayoutCategory"
-                        style="@style/Widget.Aqua.Input.Layout"
+                        style="@style/Widget.Aqua.Input.Layout.Feedback"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/feedback_hint_category"
@@ -93,7 +93,7 @@
                     <!-- EMAIL -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/inputLayoutEmail"
-                        style="@style/Widget.Aqua.Input.Layout"
+                        style="@style/Widget.Aqua.Input.Layout.Feedback"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
@@ -119,7 +119,7 @@
 
                         <com.google.android.material.textfield.TextInputLayout
                             android:id="@+id/inputLayoutMessage"
-                            style="@style/Widget.Aqua.Input.Layout"
+                            style="@style/Widget.Aqua.Input.Layout.Feedback.Multiline"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:hint="@string/feedback_hint_message"

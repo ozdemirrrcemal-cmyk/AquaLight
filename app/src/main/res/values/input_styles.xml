@@ -99,4 +99,23 @@
         <item name="android:singleLine">true</item>
     </style>
 
+    <style name="Widget.Aqua.Input.Layout.Feedback" parent="Widget.Aqua.Input.Layout">
+        <item name="boxBackgroundColor">@color/aqua_input_background</item>
+        <item name="boxStrokeColor">@color/aqua_input_stroke_color</item>
+        <item name="boxStrokeWidth">1dp</item>
+        <item name="boxStrokeWidthFocused">2dp</item>
+        <item name="boxCornerRadiusTopStart">18dp</item>
+        <item name="boxCornerRadiusTopEnd">18dp</item>
+        <item name="boxCornerRadiusBottomStart">18dp</item>
+        <item name="boxCornerRadiusBottomEnd">18dp</item>
+        <item name="hintTextColor">@color/aqua_input_hint_color</item>
+    </style>
+
+    <style name="Widget.Aqua.Input.Layout.Feedback.Multiline" parent="Widget.Aqua.Input.Layout.Feedback">
+        <item name="boxCornerRadiusTopStart">18dp</item>
+        <item name="boxCornerRadiusTopEnd">18dp</item>
+        <item name="boxCornerRadiusBottomStart">18dp</item>
+        <item name="boxCornerRadiusBottomEnd">18dp</item>
+    </style>
+
 </resources>
