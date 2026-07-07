@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <style name="AquaBottomSheetDialogTheme" parent="ThemeOverlay.Material3.BottomSheetDialog">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:backgroundDimEnabled">true</item>
         <item name="bottomSheetStyle">@style/Widget.Aqua.BottomSheet.Modal</item>
     </style>
+
+    <style name="Widget.Aqua.BottomSheet" parent="" />
+
+    <style name="Widget.Aqua.BottomSheet.Button" parent="" />
 
     <style name="Widget.Aqua.BottomSheet.Modal" parent="Widget.Material3.BottomSheet.Modal">
         <item name="android:background">@drawable/bg_bottomsheet_rounded</item>
@@ -20,10 +25,7 @@
         <item name="cornerSizeBottomRight">0dp</item>
     </style>
 
-
-    <style name="Widget.Aqua.BottomSheet" parent="" />
-
-    <style name="Widget.Aqua.BottomSheet.Root">
+    <style name="Widget.Aqua.BottomSheet.Root" parent="">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:background">@drawable/bg_bottomsheet_rounded</item>
@@ -34,7 +36,7 @@
         <item name="android:paddingBottom">24dp</item>
     </style>
 
-    <style name="Widget.Aqua.BottomSheet.Handle">
+    <style name="Widget.Aqua.BottomSheet.Handle" parent="">
         <item name="android:layout_width">42dp</item>
         <item name="android:layout_height">4dp</item>
         <item name="android:layout_gravity">center_horizontal</item>
@@ -68,7 +70,8 @@
         <item name="android:includeFontPadding">false</item>
     </style>
 
-    <style name="TextAppearance.Aqua.BottomSheet.RowTitle" parent="TextAppearance.Material3.BodyLarge">
+    <style name="TextAppearance.Aqua.BottomSheet.RowTitle"
+        parent="TextAppearance.Material3.BodyLarge">
         <item name="fontFamily">@font/inter_semibold</item>
         <item name="android:fontFamily">@font/inter_semibold</item>
         <item name="android:textColor">@color/aqua_bottom_sheet_text_primary</item>
@@ -76,7 +79,8 @@
         <item name="android:includeFontPadding">false</item>
     </style>
 
-    <style name="TextAppearance.Aqua.BottomSheet.RowSubtitle" parent="TextAppearance.Material3.BodyMedium">
+    <style name="TextAppearance.Aqua.BottomSheet.RowSubtitle"
+        parent="TextAppearance.Material3.BodyMedium">
         <item name="fontFamily">@font/inter_medium</item>
         <item name="android:fontFamily">@font/inter_medium</item>
         <item name="android:textColor">@color/aqua_bottom_sheet_text_secondary</item>
@@ -97,6 +101,19 @@
         <item name="android:fontFamily">@font/inter_semibold</item>
     </style>
 
+    <style name="Widget.Aqua.BottomSheet.Button.Neutral"
+        parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/aqua_bottom_sheet_neutral</item>
+        <item name="android:textColor">@color/aqua_bottom_sheet_on_neutral</item>
+        <item name="cornerRadius">18dp</item>
+        <item name="android:minHeight">52dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="fontFamily">@font/inter_medium</item>
+        <item name="android:fontFamily">@font/inter_medium</item>
+    </style>
+
     <style name="Widget.Aqua.BottomSheet.Button.Danger"
         parent="Widget.Material3.Button">
         <item name="backgroundTint">@color/aqua_bottom_sheet_danger_container</item>
@@ -112,7 +129,8 @@
         <item name="android:fontFamily">@font/inter_semibold</item>
     </style>
 
-    <style name="Widget.Aqua.BottomSheet.SelectionCard" parent="Widget.MaterialComponents.CardView">
+    <style name="Widget.Aqua.BottomSheet.SelectionCard"
+        parent="Widget.MaterialComponents.CardView">
         <item name="cardBackgroundColor">@color/aqua_bottom_sheet_surface_elevated</item>
         <item name="cardCornerRadius">18dp</item>
         <item name="cardElevation">0dp</item>
@@ -120,4 +138,5 @@
         <item name="strokeWidth">1dp</item>
         <item name="cardUseCompatPadding">false</item>
     </style>
+
 </resources>
