@@ -752,7 +752,7 @@ class UserAddressFragment :
     ) {
         card.strokeColor =
             resources.getColor(
-                R.color.card_stroke,
+                R.color.aqua_card_outline_subtle,
                 null
             )
 

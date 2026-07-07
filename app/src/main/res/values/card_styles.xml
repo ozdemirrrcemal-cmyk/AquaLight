@@ -111,7 +111,4 @@
         <item name="strokeWidth">1dp</item>
     </style>
 
-    <!-- Backward-compatible alias for existing screens. -->
-    <style name="Widget.Aqua.CardStyles" parent="Widget.Aqua.Card" />
-
 </resources>

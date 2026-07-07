@@ -83,7 +83,7 @@ class ChangePasswordFragment :
             setTextColor(
                 ContextCompat.getColor(
                     requireContext(),
-                    R.color.settings_text_secondary
+                    R.color.aqua_card_text_secondary
                 )
             )
 
