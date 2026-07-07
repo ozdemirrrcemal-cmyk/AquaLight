@@ -7,6 +7,7 @@ import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
@@ -129,17 +130,33 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             }
 
             cardLanguage.setOnClickListener {
-                findNavController().navigate(
+                safeNavigate(
                     AppSettingsFragmentDirections.actionAppSettingsFragmentToLanguageSettingsFragment()
                 )
             }
 
             cardAbout.setOnClickListener {
-                findNavController().navigate(
+                safeNavigate(
                     AppSettingsFragmentDirections.actionAppSettingsFragmentToAboutAppFragment()
                 )
             }
         }
+
+    private fun safeNavigate(
+        directions: NavDirections
+    ) {
+        val navController = runCatching {
+            findNavController()
+        }.getOrNull() ?: return
+
+        if (navController.currentDestination?.id != R.id.appSettingsFragment) {
+            return
+        }
+
+        runCatching {
+            navController.navigate(directions)
+        }
+    }
 
     private fun refreshNotificationSwitchState() {
         viewLifecycleOwner.lifecycleScope.launch {

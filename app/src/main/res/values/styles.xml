@@ -205,10 +205,6 @@
     <item name="android:minHeight">0dp</item>
 </style>
 
-<style name="AppBottomSheetDialogTheme" parent="ThemeOverlay.Material3.BottomSheetDialog">
-    <item name="android:background">@android:color/transparent</item>
-    <item name="backgroundTint">@android:color/transparent</item>
-</style>
 
 <style name="TextAppearance.Aqua.Body" parent="TextAppearance.Material3.BodyMedium" />
 

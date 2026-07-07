@@ -11,6 +11,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import coil3.load
 import coil3.request.crossfade
@@ -103,52 +104,68 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
     private fun setupClickListeners() = with(binding) {
         ivProfilePhoto.setOnClickListener {
-            findNavController().navigate(
+            safeNavigate(
                 SettingsFragmentDirections.actionSettingsFragmentToEditProfileFragment()
             )
         }
 
         rowUserInfo.setOnClickListener {
-            findNavController().navigate(
+            safeNavigate(
                 SettingsFragmentDirections.actionSettingsFragmentToUserInfoFragment()
             )
         }
 
         rowDeviceStatus.setOnClickListener {
-            findNavController().navigate(
+            safeNavigate(
                 SettingsFragmentDirections.actionSettingsFragmentToDeviceStatusFragment()
             )
         }
 
 
         rowSettings.setOnClickListener {
-            findNavController().navigate(
+            safeNavigate(
                 SettingsFragmentDirections.actionSettingsFragmentToAppSettingsFragment()
             )
         }
 
         rowUsage.setOnClickListener {
-            findNavController().navigate(
+            safeNavigate(
                 SettingsFragmentDirections.actionSettingsFragmentToUsageFragment()
             )
         }
 
         rowPrivacy.setOnClickListener {
-            findNavController().navigate(
+            safeNavigate(
                 SettingsFragmentDirections.actionSettingsFragmentToPrivacyFragment()
             )
         }
 
         rowFeedback.setOnClickListener {
-            findNavController().navigate(
+            safeNavigate(
                 SettingsFragmentDirections.actionSettingsFragmentToFeedbackFragment()
             )
         }
 
         rowLogout.setOnClickListener {
-            findNavController().navigate(
+            safeNavigate(
                 SettingsFragmentDirections.actionSettingsFragmentToLogoutFragment()
             )
+        }
+    }
+
+    private fun safeNavigate(
+        directions: NavDirections
+    ) {
+        val navController = runCatching {
+            findNavController()
+        }.getOrNull() ?: return
+
+        if (navController.currentDestination?.id != R.id.settingsFragment) {
+            return
+        }
+
+        runCatching {
+            navController.navigate(directions)
         }
     }
 

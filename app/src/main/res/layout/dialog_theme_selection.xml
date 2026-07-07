@@ -2,76 +2,57 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="@drawable/bg_bottomsheet_rounded"
-    android:paddingStart="16dp"
-    android:paddingEnd="16dp"
-    android:paddingTop="12dp"
-    android:paddingBottom="16dp"
+    android:id="@+id/themeSelectionSheetRoot"
+    style="@style/Widget.Aqua.BottomSheet.Root"
     android:gravity="center_horizontal">
 
-    <!-- Küçük handle bar -->
     <View
-        android:layout_width="36dp"
-        android:layout_height="4dp"
-        android:layout_gravity="center_horizontal"
-        android:background="@drawable/bg_bottomsheet_handle"
-        android:layout_marginBottom="12dp" />
+        style="@style/Widget.Aqua.BottomSheet.Handle"
+        android:layout_marginBottom="16dp" />
 
-    <!-- 🌙 Tema Başlığı (ortada) -->
     <TextView
         android:id="@+id/tvDialogTitle"
+        style="@style/TextAppearance.Aqua.BottomSheet.SectionTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/theme_selection_title"
-        android:textColor="@android:color/white"
-        android:textSize="16sp"
-        android:fontFamily="@font/poppins_bold"
         android:gravity="center_horizontal"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="18dp"
+        android:text="@string/theme_selection_title"
         android:labelFor="@id/layoutLight" />
 
-    <!-- 🌞 Light Tema (kart içinde) -->
     <com.google.android.material.card.MaterialCardView
+        style="@style/Widget.Aqua.BottomSheet.SelectionCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="12dp"
-        style="@style/Widget.Aqua.CardStyles"
-        app:cardElevation="0dp"
-        app:cardUseCompatPadding="false"
         android:contentDescription="@string/theme_selection_light_option_description">
 
         <LinearLayout
             android:id="@+id/layoutLight"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="56dp"
             android:orientation="horizontal"
-            android:padding="8dp"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:paddingHorizontal="14dp">
 
-            <!-- Sol ikon -->
             <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_marginEnd="12dp"
-                android:src="@drawable/ic_theme_light" />
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_marginEnd="14dp"
+                android:src="@drawable/ic_theme_light"
+                app:tint="@color/aqua_bottom_sheet_text_primary" />
 
-            <!-- Metin -->
             <TextView
                 android:id="@+id/tvLight"
+                style="@style/TextAppearance.Aqua.BottomSheet.RowTitle"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:text="@string/theme_selection_light"
-                android:textColor="@android:color/white"
-                android:textSize="14sp"
-                android:fontFamily="@font/inter_medium" />
+                android:text="@string/theme_selection_light" />
 
-            <!-- Sağda radio -->
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/radioLight"
+                style="@style/Widget.Aqua.SettingsRadio"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:focusable="false"
@@ -79,45 +60,39 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- 🌚 Dark Tema (kart içinde) -->
     <com.google.android.material.card.MaterialCardView
+        style="@style/Widget.Aqua.BottomSheet.SelectionCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="12dp"
-        style="@style/Widget.Aqua.CardStyles"
-        app:cardElevation="0dp"
-        app:cardUseCompatPadding="false"
         android:contentDescription="@string/theme_selection_dark_option_description">
 
         <LinearLayout
             android:id="@+id/layoutDark"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="56dp"
             android:orientation="horizontal"
-            android:padding="8dp"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:paddingHorizontal="14dp">
 
-            <!-- Sol ikon -->
             <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginEnd="12dp"
-                android:src="@drawable/ic_theme_dark" />
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_marginEnd="14dp"
+                android:src="@drawable/ic_theme_dark"
+                app:tint="@color/aqua_bottom_sheet_text_primary" />
 
-            <!-- Metin -->
             <TextView
                 android:id="@+id/tvDark"
+                style="@style/TextAppearance.Aqua.BottomSheet.RowTitle"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:text="@string/theme_selection_dark"
-                android:textColor="@android:color/white"
-                android:textSize="14sp"
-                android:fontFamily="@font/inter_medium" />
+                android:text="@string/theme_selection_dark" />
 
-            <!-- Sağda radio -->
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/radioDark"
+                style="@style/Widget.Aqua.SettingsRadio"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:focusable="false"
@@ -125,44 +100,38 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- ⚙️ System Default (kart içinde) -->
     <com.google.android.material.card.MaterialCardView
+        style="@style/Widget.Aqua.BottomSheet.SelectionCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        style="@style/Widget.Aqua.CardStyles"
-        app:cardElevation="0dp"
-        app:cardUseCompatPadding="false"
         android:contentDescription="@string/theme_selection_system_option_description">
 
         <LinearLayout
             android:id="@+id/layoutSystem"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="56dp"
             android:orientation="horizontal"
-            android:padding="8dp"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:paddingHorizontal="14dp">
 
-            <!-- Sol ikon -->
             <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginEnd="12dp"
-                android:src="@drawable/ic_theme_system" />
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_marginEnd="14dp"
+                android:src="@drawable/ic_theme_system"
+                app:tint="@color/aqua_bottom_sheet_text_primary" />
 
-            <!-- Metin -->
             <TextView
                 android:id="@+id/tvSystem"
+                style="@style/TextAppearance.Aqua.BottomSheet.RowTitle"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:text="@string/theme_selection_system_default"
-                android:textColor="@android:color/white"
-                android:textSize="14sp"
-                android:fontFamily="@font/inter_medium" />
+                android:text="@string/theme_selection_system_default" />
 
-            <!-- Sağda radio -->
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/radioSystem"
+                style="@style/Widget.Aqua.SettingsRadio"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:focusable="false"

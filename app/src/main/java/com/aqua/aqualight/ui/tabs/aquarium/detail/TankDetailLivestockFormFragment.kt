@@ -13,6 +13,7 @@ import android.widget.NumberPicker
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -492,8 +493,9 @@ Fragment(R.layout.fragment_tank_livestock_form) {
         }
     }
 
+
     private fun showAddedDateSheet() {
-        val dialog = BottomSheetDialog(requireContext())
+        val dialog = BottomSheetDialog(requireContext(), R.style.AquaBottomSheetDialogTheme)
 
         val calendar = Calendar.getInstance().apply {
             timeInMillis = selectedAddedDateMillis
@@ -502,22 +504,41 @@ Fragment(R.layout.fragment_tank_livestock_form) {
         val container = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(
-                18.dp(),
-                18.dp(),
-                18.dp(),
-                20.dp()
+                22.dp(),
+                14.dp(),
+                22.dp(),
+                24.dp()
             )
-            background = createTopRoundedDrawable(
-                color = "#10233A",
-                radiusPx = 24.dp()
+            background = ContextCompat.getDrawable(
+                requireContext(),
+                R.drawable.bg_bottomsheet_rounded
             )
+        }
+
+        val handle = View(requireContext()).apply {
+            background = ContextCompat.getDrawable(
+                requireContext(),
+                R.drawable.bg_bottomsheet_handle
+            )
+            layoutParams = LinearLayout.LayoutParams(
+                42.dp(),
+                4.dp()
+            ).apply {
+                gravity = Gravity.CENTER_HORIZONTAL
+                bottomMargin = 16.dp()
+            }
         }
 
         val title = TextView(requireContext()).apply {
             text = getString(R.string.aquarium_added_date_label)
             gravity = Gravity.CENTER
-            textSize = 16f
-            setTextColor(Color.WHITE)
+            textSize = 18f
+            setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.aqua_bottom_sheet_text_primary
+                )
+            )
             setTypeface(null, Typeface.BOLD)
             includeFontPadding = false
 
@@ -539,18 +560,16 @@ Fragment(R.layout.fragment_tank_livestock_form) {
             layoutParams = params
         }
 
-        val monthNames = Array(12) {
-            index ->
+        val monthNames = Array(12) { index ->
             DateFormatSymbols(Locale.getDefault())
-            .months[index]
-            .replaceFirstChar {
-                char ->
-                if (char.isLowerCase()) {
-                    char.titlecase(Locale.getDefault())
-                } else {
-                    char.toString()
+                .months[index]
+                .replaceFirstChar { char ->
+                    if (char.isLowerCase()) {
+                        char.titlecase(Locale.getDefault())
+                    } else {
+                        char.toString()
+                    }
                 }
-            }
         }
 
         val dayPicker = createDateNumberPicker().apply {
@@ -568,7 +587,6 @@ Fragment(R.layout.fragment_tank_livestock_form) {
 
         val yearPicker = createDateNumberPicker().apply {
             val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-
             minValue = currentYear - 20
             maxValue = currentYear + 5
             value = calendar.get(Calendar.YEAR)
@@ -592,13 +610,11 @@ Fragment(R.layout.fragment_tank_livestock_form) {
             }
         }
 
-        monthPicker.setOnValueChangedListener {
-            _, _, _ ->
+        monthPicker.setOnValueChangedListener { _, _, _ ->
             updateDayMax()
         }
 
-        yearPicker.setOnValueChangedListener {
-            _, _, _ ->
+        yearPicker.setOnValueChangedListener { _, _, _ ->
             updateDayMax()
         }
 
@@ -615,15 +631,23 @@ Fragment(R.layout.fragment_tank_livestock_form) {
             textSize = 14f
             setTypeface(null, Typeface.BOLD)
             setAllCaps(false)
-            setTextColor(Color.WHITE)
-            cornerRadius = 16.dp()
+            setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.aqua_bottom_sheet_on_primary
+                )
+            )
+            cornerRadius = 18.dp()
             backgroundTintList = android.content.res.ColorStateList.valueOf(
-                Color.parseColor("#2196F3")
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.aqua_bottom_sheet_primary
+                )
             )
 
             val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                50.dp()
+                52.dp()
             )
             params.topMargin = 24.dp()
             layoutParams = params
@@ -646,6 +670,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
             }
         }
 
+        container.addView(handle)
         container.addView(title)
         container.addView(pickerRow)
         container.addView(saveButton)

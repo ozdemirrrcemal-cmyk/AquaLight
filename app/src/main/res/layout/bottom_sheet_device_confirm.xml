@@ -1,22 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/deviceConfirmSheetRoot"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="@drawable/bg_light_bottom_sheet"
-    android:orientation="vertical"
-    android:paddingStart="22dp"
-    android:paddingTop="14dp"
-    android:paddingEnd="22dp"
-    android:paddingBottom="24dp">
+    style="@style/Widget.Aqua.BottomSheet.Root">
 
     <View
-        android:layout_width="42dp"
-        android:layout_height="4dp"
-        android:layout_gravity="center_horizontal"
-        android:background="@drawable/bg_light_sheet_handle" />
+        style="@style/Widget.Aqua.BottomSheet.Handle" />
 
     <ImageView
         android:id="@+id/ivConfirmIcon"
@@ -24,30 +13,28 @@
         android:layout_height="48dp"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="22dp"
-        android:background="@drawable/bg_light_sheet_icon"
+        android:background="@drawable/bg_bottomsheet_icon_surface"
         android:contentDescription="@null"
         android:padding="12dp"
         android:src="@drawable/ic_warning" />
 
     <TextView
         android:id="@+id/tvConfirmTitle"
-        style="@style/TextAppearance.Aqua.Light.SheetTitle"
+        style="@style/TextAppearance.Aqua.BottomSheet.Title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="18dp"
         android:gravity="center"
-        android:text="Confirm action"
-        tools:text="Delete preset?" />
+        android:text="Confirm action" />
 
     <TextView
         android:id="@+id/tvConfirmMessage"
-        style="@style/TextAppearance.Aqua.Light.SheetSubtitle"
+        style="@style/TextAppearance.Aqua.BottomSheet.Subtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="9dp"
         android:gravity="center"
-        android:text="Are you sure you want to continue?"
-        tools:text="This removes the preset from your saved presets. Current light output will not change." />
+        android:text="Are you sure you want to continue?" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -57,7 +44,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnConfirmCancel"
-            style="@style/Widget.Aqua.Light.Button.Secondary"
+            style="@style/Widget.Aqua.BottomSheet.Button.Neutral"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_marginEnd="10dp"
@@ -66,7 +53,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnConfirmPrimary"
-            style="@style/Widget.Aqua.Light.Button.Primary"
+            style="@style/Widget.Aqua.BottomSheet.Button.Critical"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_marginStart="10dp"

@@ -9,6 +9,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
@@ -39,7 +40,7 @@ object GlobalActionBottomSheet {
     details: List<BottomSheetDetailRow> = emptyList(),
     actions: List<BottomSheetAction> = emptyList()
   ) {
-    val dialog = BottomSheetDialog(context)
+    val dialog = BottomSheetDialog(context, R.style.AquaBottomSheetDialogTheme)
 
     val view = LayoutInflater.from(context).inflate(
       R.layout.bottom_sheet_global_action,
@@ -47,21 +48,10 @@ object GlobalActionBottomSheet {
       false
     )
 
-    val titleText = view.findViewById<TextView>(
-      R.id.tvGlobalActionTitle
-    )
-
-    val messageText = view.findViewById<TextView>(
-      R.id.tvGlobalActionMessage
-    )
-
-    val detailsContainer = view.findViewById<LinearLayout>(
-      R.id.globalActionDetailsContainer
-    )
-
-    val buttonsContainer = view.findViewById<LinearLayout>(
-      R.id.globalActionButtonsContainer
-    )
+    val titleText = view.findViewById<TextView>(R.id.tvGlobalActionTitle)
+    val messageText = view.findViewById<TextView>(R.id.tvGlobalActionMessage)
+    val detailsContainer = view.findViewById<LinearLayout>(R.id.globalActionDetailsContainer)
+    val buttonsContainer = view.findViewById<LinearLayout>(R.id.globalActionButtonsContainer)
 
     titleText.text = title
 
@@ -72,31 +62,15 @@ object GlobalActionBottomSheet {
       messageText.visibility = View.VISIBLE
     }
 
-    renderDetails(
-      context = context,
-      container = detailsContainer,
-      details = details
-    )
-
-    renderActions(
-      context = context,
-      container = buttonsContainer,
-      dialog = dialog,
-      actions = actions
-    )
+    renderDetails(context, detailsContainer, details)
+    renderActions(context, buttonsContainer, dialog, actions)
 
     dialog.setContentView(view)
-
     dialog.setOnShowListener {
-      val bottomSheet = dialog.findViewById<View>(
+      dialog.findViewById<View>(
         com.google.android.material.R.id.design_bottom_sheet
-      )
-
-      bottomSheet?.background = ColorDrawable(
-        Color.TRANSPARENT
-      )
+      )?.background = ColorDrawable(Color.TRANSPARENT)
     }
-
     dialog.show()
   }
 
@@ -114,37 +88,22 @@ object GlobalActionBottomSheet {
 
     container.visibility = View.VISIBLE
 
-    details.forEachIndexed {
-      index,
-      detail ->
-
+    details.forEachIndexed { index, detail ->
       val row = LayoutInflater.from(context).inflate(
         R.layout.item_global_bottom_sheet_detail_row,
         container,
         false
       )
 
-      val labelText = row.findViewById<TextView>(
-        R.id.tvDetailLabel
-      )
+      row.findViewById<TextView>(R.id.tvDetailLabel).text = detail.label
+      row.findViewById<TextView>(R.id.tvDetailValue).text = detail.value
 
-      val valueText = row.findViewById<TextView>(
-        R.id.tvDetailValue
-      )
-
-      labelText.text = detail.label
-      valueText.text = detail.value
-
-      val params = LinearLayout.LayoutParams(
+      row.layoutParams = LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.MATCH_PARENT,
         LinearLayout.LayoutParams.WRAP_CONTENT
-      )
-
-      if (index > 0) {
-        params.topMargin = 11.dp(context)
+      ).apply {
+        if (index > 0) topMargin = 11.dp(context)
       }
-
-      row.layoutParams = params
 
       container.addView(row)
     }
@@ -165,26 +124,15 @@ object GlobalActionBottomSheet {
 
     container.visibility = View.VISIBLE
 
-    actions.forEachIndexed {
-      index,
-      action ->
+    actions.forEachIndexed { index, action ->
+      val button = createActionButton(context, dialog, action)
 
-      val button = createActionButton(
-        context = context,
-        dialog = dialog,
-        action = action
-      )
-
-      val params = LinearLayout.LayoutParams(
+      button.layoutParams = LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.MATCH_PARENT,
         50.dp(context)
-      )
-
-      if (index > 0) {
-        params.topMargin = 10.dp(context)
+      ).apply {
+        if (index > 0) topMargin = 10.dp(context)
       }
-
-      button.layoutParams = params
 
       container.addView(button)
     }
@@ -208,32 +156,22 @@ object GlobalActionBottomSheet {
 
       when (action.style) {
         BottomSheetActionStyle.PRIMARY -> {
-          setTextColor(Color.WHITE)
-          backgroundTintList = ColorStateList.valueOf(
-            Color.parseColor("#2196F3")
-          )
+          setTextColor(context.color(R.color.aqua_bottom_sheet_on_primary))
+          backgroundTintList = context.tint(R.color.aqua_bottom_sheet_primary)
         }
 
         BottomSheetActionStyle.DANGER -> {
-          setTextColor(Color.parseColor("#FF8A8A"))
-          backgroundTintList = ColorStateList.valueOf(
-            Color.parseColor("#321E2A")
-          )
+          setTextColor(context.color(R.color.aqua_bottom_sheet_danger))
+          backgroundTintList = context.tint(R.color.aqua_bottom_sheet_danger_container)
           strokeWidth = 1.dp(context)
-          strokeColor = ColorStateList.valueOf(
-            Color.parseColor("#7A3344")
-          )
+          strokeColor = context.tint(R.color.aqua_bottom_sheet_danger_outline)
         }
 
         BottomSheetActionStyle.NEUTRAL -> {
-          setTextColor(Color.parseColor("#D8E6F5"))
-          backgroundTintList = ColorStateList.valueOf(
-            Color.parseColor("#20384F")
-          )
+          setTextColor(context.color(R.color.aqua_bottom_sheet_on_neutral))
+          backgroundTintList = context.tint(R.color.aqua_bottom_sheet_neutral)
           strokeWidth = 1.dp(context)
-          strokeColor = ColorStateList.valueOf(
-            Color.parseColor("#35536E")
-          )
+          strokeColor = context.tint(R.color.aqua_bottom_sheet_outline)
         }
       }
 
@@ -244,9 +182,12 @@ object GlobalActionBottomSheet {
     }
   }
 
-  private fun Int.dp(
-    context: Context
-  ): Int {
-    return (this * context.resources.displayMetrics.density).toInt()
-  }
+  private fun Context.color(colorRes: Int): Int =
+    ContextCompat.getColor(this, colorRes)
+
+  private fun Context.tint(colorRes: Int): ColorStateList =
+    ColorStateList.valueOf(color(colorRes))
+
+  private fun Int.dp(context: Context): Int =
+    (this * context.resources.displayMetrics.density).toInt()
 }
