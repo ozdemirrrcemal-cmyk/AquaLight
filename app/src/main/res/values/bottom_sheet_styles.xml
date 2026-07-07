@@ -117,10 +117,4 @@
         <item name="cardUseCompatPadding">false</item>
     </style>
 
-    <!-- Backward-compatible aliases used by existing device bottom sheets. -->
-    <style name="TextAppearance.Aqua.Light.SheetTitle" parent="TextAppearance.Aqua.BottomSheet.Title" />
-    <style name="TextAppearance.Aqua.Light.SheetSubtitle" parent="TextAppearance.Aqua.BottomSheet.Subtitle" />
-    <style name="Widget.Aqua.Light.Button.Primary" parent="Widget.Aqua.BottomSheet.Button.Primary" />
-    <style name="Widget.Aqua.Light.Button.Secondary" parent="Widget.Aqua.BottomSheet.Button.Neutral" />
-
 </resources>
