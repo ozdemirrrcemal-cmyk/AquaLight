@@ -77,9 +77,17 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
     }
 
     private fun updateRadios(mode: String) = with(binding) {
-        radioLight.isChecked = mode == "light"
-        radioDark.isChecked = mode == "dark"
-        radioSystem.isChecked = mode == "system"
+        val lightSelected = mode == "light"
+        val darkSelected = mode == "dark"
+        val systemSelected = mode == "system"
+
+        layoutLight.isSelected = lightSelected
+        layoutDark.isSelected = darkSelected
+        layoutSystem.isSelected = systemSelected
+
+        radioLight.isChecked = lightSelected
+        radioDark.isChecked = darkSelected
+        radioSystem.isChecked = systemSelected
     }
 
     private fun applyTheme(mode: String) {
