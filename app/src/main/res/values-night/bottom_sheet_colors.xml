@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Main Tank Devices remove sheet base -->
-    <color name="aqua_bottom_sheet_surface">#101D2C</color>
+    <color name="aqua_bottom_sheet_surface">#07131F</color>
     <color name="aqua_bottom_sheet_surface_elevated">#101D2C</color>
     <color name="aqua_bottom_sheet_surface_pressed">#132943</color>
     <color name="aqua_bottom_sheet_outline">#22354D</color>
