@@ -17,7 +17,8 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.aqua.aqualight.utils.DialogManager
+import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,7 +43,6 @@ open class BaseActivity : AppCompatActivity() {
 
     private var loadingDialog: Dialog? = null
     private var loadingLogo: ImageView? = null
-    private var activeInfoDialog: Dialog? = null
 
     private val loadingOwners: MutableSet<String> =
         linkedSetOf()
@@ -148,29 +148,17 @@ open class BaseActivity : AppCompatActivity() {
                 getString(R.string.device_menu_offline_message)
             }
 
-        activeInfoDialog?.dismiss()
-
-        activeInfoDialog = MaterialAlertDialogBuilder(this)
-            .setTitle(getString(R.string.device_menu_offline_dialog_title))
-            .setMessage(
-                getString(
-                    R.string.device_menu_offline_dialog_message,
-                    safeTitle,
-                    safeMessage
-                )
-            )
-            .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                dialog.dismiss()
-            }
-            .create()
-            .also { dialog ->
-                dialog.setOnDismissListener {
-                    if (activeInfoDialog == dialog) {
-                        activeInfoDialog = null
-                    }
-                }
-                dialog.show()
-            }
+        DialogManager.showInfoDialog(
+            context = this,
+            type = DialogType.WARNING,
+            title = getString(R.string.device_menu_offline_dialog_title),
+            message = getString(
+                R.string.device_menu_offline_dialog_message,
+                safeTitle,
+                safeMessage
+            ),
+            buttonTextResId = android.R.string.ok
+        )
     }
 
     private fun Any.toLoadingOwnerKey(): String {

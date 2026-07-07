@@ -1,90 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="@drawable/dialog_background"
-    android:elevation="8dp"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:paddingStart="22dp"
-    android:paddingTop="22dp"
-    android:paddingEnd="22dp"
-    android:paddingBottom="20dp">
+    android:style="@style/Widget.Aqua.Dialog.Root">
 
-    <ImageView
-        android:id="@+id/dialogIcon"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_gravity="center"
-        android:layout_marginBottom="12dp"
-        android:contentDescription="@string/dialog_icon_desc" />
+    <FrameLayout
+        android:style="@style/Widget.Aqua.Dialog.IconSurface">
+
+        <ImageView
+            android:id="@+id/dialogIcon"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/dialog_icon_desc" />
+    </FrameLayout>
 
     <TextView
         android:id="@+id/dialogTitle"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:includeFontPadding="false"
-        android:textAppearance="?attr/textAppearanceTitleMedium"
-        android:textColor="?attr/colorOnSurface"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+        android:textAppearance="@style/TextAppearance.Aqua.Dialog.Title" />
 
     <TextView
         android:id="@+id/dialogMessage"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="12dp"
         android:gravity="center"
-        android:includeFontPadding="false"
-        android:lineSpacingExtra="2dp"
-        android:maxLines="3"
-        android:textAppearance="?attr/textAppearanceBodyMedium"
-        android:textColor="#8FA4BE"
-        android:textSize="14sp" />
+        android:maxLines="6"
+        android:textAppearance="@style/TextAppearance.Aqua.Dialog.Message" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="18dp"
-        android:gravity="center"
+        android:layout_marginTop="26dp"
         android:orientation="horizontal">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCancel"
-            style="@style/Widget.Material3.Button"
+            style="@style/Widget.Aqua.Dialog.Button.Neutral"
             android:layout_width="0dp"
-            android:layout_height="46dp"
-            android:layout_marginEnd="7dp"
+            android:layout_height="52dp"
+            android:layout_marginEnd="10dp"
             android:layout_weight="1"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:minWidth="0dp"
-            android:minHeight="0dp"
-            android:text="@string/cancel"
-            android:textAllCaps="false"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            app:cornerRadius="23dp" />
+            android:text="@string/cancel" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnConfirm"
-            style="@style/Widget.Material3.Button"
+            style="@style/Widget.Aqua.Dialog.Button.Danger"
             android:layout_width="0dp"
-            android:layout_height="46dp"
-            android:layout_marginStart="7dp"
+            android:layout_height="52dp"
+            android:layout_marginStart="10dp"
             android:layout_weight="1"
-            android:backgroundTint="@color/aqua_button_red"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:minWidth="0dp"
-            android:minHeight="0dp"
-            android:text="@string/confirm"
-            android:textAllCaps="false"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            app:cornerRadius="23dp" />
-
+            android:text="@string/confirm" />
     </LinearLayout>
 
 </LinearLayout>

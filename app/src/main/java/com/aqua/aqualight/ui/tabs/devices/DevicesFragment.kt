@@ -19,7 +19,8 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteTarget
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.aqua.aqualight.utils.DialogManager
+import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
 
 class DevicesFragment : Fragment(R.layout.fragment_devices) {
@@ -148,26 +149,25 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         val selectedCount = viewModel.uiState.value.selectedCount
         if (selectedCount <= 0) return
 
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle(
-                resources.getQuantityString(
-                    R.plurals.devices_delete_confirm_title,
-                    selectedCount,
-                    selectedCount
-                )
-            )
-            .setMessage(
-                resources.getQuantityString(
-                    R.plurals.devices_delete_confirm_message,
-                    selectedCount,
-                    selectedCount
-                )
-            )
-            .setNegativeButton(R.string.common_cancel, null)
-            .setPositiveButton(R.string.common_delete) { _, _ ->
+        DialogManager.showConfirmDialog(
+            context = requireContext(),
+            type = DialogType.WARNING,
+            title = resources.getQuantityString(
+                R.plurals.devices_delete_confirm_title,
+                selectedCount,
+                selectedCount
+            ),
+            message = resources.getQuantityString(
+                R.plurals.devices_delete_confirm_message,
+                selectedCount,
+                selectedCount
+            ),
+            confirmTextResId = R.string.common_delete,
+            cancelTextResId = R.string.common_cancel,
+            onConfirm = {
                 viewModel.deleteSelectedDevices()
             }
-            .show()
+        )
     }
 
     private fun openDeviceRoute(route: DeviceRoute) {

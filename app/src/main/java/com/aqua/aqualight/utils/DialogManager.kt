@@ -31,16 +31,9 @@ object DialogManager {
             android.view.LayoutInflater.from(context)
         )
 
-        val iconRes = when (type) {
-            DialogType.ERROR -> R.drawable.ic_error
-            DialogType.SUCCESS -> R.drawable.ic_success
-            DialogType.WARNING -> R.drawable.ic_warning
-            DialogType.INFO -> R.drawable.ic_info
-        }
-
         binding.dialogIcon.apply {
             imageTintList = null
-            setImageResource(iconRes)
+            setImageResource(iconResFor(type))
             contentDescription = context.getString(R.string.dialog_icon_desc)
         }
 
@@ -77,11 +70,12 @@ object DialogManager {
                 }
             }
 
-            handler.postDelayed(dismissRunnable!!, autoDismissMillis)
+            handler.postDelayed(dismissRunnable!!)
         }
 
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         dialog.show()
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.window?.setDimAmount(0.52f)
     }
 
     fun showConfirmDialog(
@@ -98,16 +92,9 @@ object DialogManager {
             android.view.LayoutInflater.from(context)
         )
 
-        val iconRes = when (type) {
-            DialogType.ERROR -> R.drawable.ic_error
-            DialogType.WARNING -> R.drawable.ic_warning
-            DialogType.SUCCESS -> R.drawable.ic_success
-            DialogType.INFO -> R.drawable.ic_info
-        }
-
         binding.dialogIcon.apply {
             imageTintList = null
-            setImageResource(iconRes)
+            setImageResource(iconResFor(type))
             contentDescription = context.getString(R.string.dialog_icon_desc)
         }
 
@@ -131,7 +118,19 @@ object DialogManager {
             onConfirm?.invoke()
         }
 
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         dialog.show()
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.window?.setDimAmount(0.52f)
+    }
+
+    private fun iconResFor(
+        type: DialogType
+    ): Int {
+        return when (type) {
+            DialogType.ERROR -> R.drawable.ic_error
+            DialogType.SUCCESS -> R.drawable.ic_success
+            DialogType.WARNING -> R.drawable.ic_warning
+            DialogType.INFO -> R.drawable.ic_info
+        }
     }
 }

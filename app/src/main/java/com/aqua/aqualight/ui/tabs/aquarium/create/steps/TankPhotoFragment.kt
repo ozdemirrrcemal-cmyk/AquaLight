@@ -17,13 +17,14 @@ import coil3.request.crossfade
 import coil3.request.error
 import coil3.request.placeholder
 import com.aqua.aqualight.R
+import com.aqua.aqualight.utils.DialogManager
+import com.aqua.aqualight.utils.DialogType
 import com.aqua.aqualight.databinding.FragmentTankPhotoBinding
 import com.aqua.aqualight.ui.tabs.aquarium.photo.TankPhotoFlowCoordinator
 import com.aqua.aqualight.ui.tabs.aquarium.plants.PlantTagUiRenderer
 import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantTagFragment
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.yalantis.ucrop.UCrop
 
 class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragment {

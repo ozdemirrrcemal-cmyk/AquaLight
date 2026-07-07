@@ -31,30 +31,6 @@
         <item name="android:paddingBottom">17dp</item>
         <item name="android:elevation">0dp</item>
     </style>
-	
-<!-- 🎨 AppDialogTheme : Her dialog bu temayı kullanacak -->
-<style name="AppDialogTheme" parent="ThemeOverlay.Material3.MaterialAlertDialog">
-
-    <!-- 🔹 Tamamen şeffaf pencere ve alt katmanı kaldır -->
-    <item name="android:windowBackground">@android:color/transparent</item>
-    <item name="android:background">@null</item>
-
-    <!-- 🔹 Köşeler -->
-    <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.Material3.Corner.Medium</item>
-
-    <!-- 🔹 Yazılar -->
-    <item name="android:textColorPrimary">?attr/colorOnSurface</item>
-    <item name="android:fontFamily">@font/poppins_medium</item>
-
-    <!-- 🔹 Animasyonlar -->
-    <item name="android:windowEnterAnimation">@anim/dialog_scale_in</item>
-    <item name="android:windowExitAnimation">@anim/dialog_fade_out</item>
-
-    <!-- 🔹 Gölge -->
-    <item name="android:elevation">12dp</item>
-
-</style>
-
 <!-- 🔳 TextInputLayout stili -->
 <style name="AuthTextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox">
     <!-- Çerçeve (border) -->
