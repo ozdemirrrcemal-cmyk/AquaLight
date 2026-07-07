@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Widget.Aqua.BottomSheet.Button.Critical" parent="Widget.Aqua.BottomSheet.Button.Primary">
+        <item name="backgroundTint">@color/aqua_button_red</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="strokeColor">@color/aqua_button_red</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+</resources>
