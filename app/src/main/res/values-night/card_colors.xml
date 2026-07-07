@@ -43,4 +43,8 @@
 
     <color name="aqua_card_icon_accent_surface">#1C3252</color>
     <color name="aqua_card_icon_accent_outline">#2D4E78</color>
+
+    <!-- Photo / media overlay cards -->
+    <color name="aqua_card_photo_overlay_surface">#800D1D31</color>
+    <color name="aqua_card_photo_overlay_outline">#33FFFFFF</color>
 </resources>
