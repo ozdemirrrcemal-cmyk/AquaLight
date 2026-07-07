@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- AquaInput base colors -->
-    <color name="aqua_input_background">#16314D</color>
+    <color name="aqua_input_background">#07131F</color>
 
-    <color name="aqua_input_stroke_focused">#2B93F6</color>
-    <color name="aqua_input_stroke_unfocused">#355679</color>
-    <color name="aqua_input_stroke_disabled">#223A57</color>
+    <color name="aqua_input_stroke_focused">#6489C9</color>
+    <color name="aqua_input_stroke_unfocused">#223A57</color>
+    <color name="aqua_input_stroke_disabled">#1A2E45</color>
 
-    <color name="aqua_input_hint_focused">#8ABEF5</color>
-    <color name="aqua_input_hint_unfocused">#7F91AA</color>
+    <color name="aqua_input_hint_focused">#B7C7D9</color>
+    <color name="aqua_input_hint_unfocused">#9AAEC4</color>
 
     <color name="aqua_input_text_primary">#F4F8FC</color>
     <color name="aqua_input_text_secondary">#9AAEC4</color>

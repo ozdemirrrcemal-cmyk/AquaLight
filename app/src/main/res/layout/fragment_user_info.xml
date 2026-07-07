@@ -134,7 +134,7 @@
                     <!-- INPUT -->
 
                     <EditText
-                        style="@style/Widget.Aqua.Input.PlainEditText"
+                        style="@style/Widget.Aqua.Input.PlainEditText.Embedded"
                         android:id="@+id/etUsername"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"

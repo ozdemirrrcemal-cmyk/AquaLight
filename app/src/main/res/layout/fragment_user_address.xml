@@ -69,7 +69,7 @@
                         android:textSize="11sp" />
 
                     <EditText
-                        style="@style/Widget.Aqua.Input.PlainEditText"
+                        style="@style/Widget.Aqua.Input.PlainEditText.Embedded"
                         android:id="@+id/etFirstName"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -117,7 +117,7 @@
                         android:textSize="11sp" />
 
                     <EditText
-                        style="@style/Widget.Aqua.Input.PlainEditText"
+                        style="@style/Widget.Aqua.Input.PlainEditText.Embedded"
                         android:id="@+id/etLastName"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -223,7 +223,7 @@
                         android:textSize="11sp" />
 
                     <EditText
-                        style="@style/Widget.Aqua.Input.PlainEditText"
+                        style="@style/Widget.Aqua.Input.PlainEditText.Embedded"
                         android:id="@+id/etCity"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -270,7 +270,7 @@
                         android:textSize="11sp" />
 
                     <EditText
-                        style="@style/Widget.Aqua.Input.PlainEditText.Multiline"
+                        style="@style/Widget.Aqua.Input.PlainEditText.Embedded"
                         android:id="@+id/etAddress"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -320,7 +320,7 @@
                         android:textSize="11sp" />
 
                     <EditText
-                        style="@style/Widget.Aqua.Input.PlainEditText"
+                        style="@style/Widget.Aqua.Input.PlainEditText.Embedded"
                         android:id="@+id/etPostCode"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -367,7 +367,7 @@
                         android:textSize="11sp" />
 
                     <EditText
-                        style="@style/Widget.Aqua.Input.PlainEditText"
+                        style="@style/Widget.Aqua.Input.PlainEditText.Embedded"
                         android:id="@+id/etPhoneNumber"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
