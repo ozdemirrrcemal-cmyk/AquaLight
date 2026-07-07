@@ -31,31 +31,4 @@
         <item name="android:paddingBottom">17dp</item>
         <item name="android:elevation">0dp</item>
     </style>
-<!-- 🔳 TextInputLayout stili -->
-<style name="AuthTextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox">
-    <!-- Çerçeve (border) -->
-    <item name="boxStrokeColor">@color/auth_input_stroke_color</item>
-    <item name="boxStrokeWidth">1dp</item>
-    <item name="boxStrokeWidthFocused">2dp</item>
-
-    <!-- Kenar yuvarlaklık -->
-    <item name="boxCornerRadiusTopStart">12dp</item>
-    <item name="boxCornerRadiusTopEnd">12dp</item>
-    <item name="boxCornerRadiusBottomStart">12dp</item>
-    <item name="boxCornerRadiusBottomEnd">12dp</item>
-
-    <!-- Hint rengi -->
-    <item name="hintTextColor">@color/auth_hint_color</item>
-    <item name="android:textColorHint">@color/auth_hint_color</item>
-
-    <!-- İç yüzey rengi (şeffaf olsun) -->
-    <item name="boxBackgroundColor">@android:color/transparent</item>
-</style>
-
-<!-- ✏️ TextInputEditText stili -->
-<style name="AuthEditText" parent="Widget.Material3.TextInputEditText.OutlinedBox">
-    <item name="android:textColor">@color/auth_text_color</item>
-    <item name="colorControlActivated">@color/auth_focus_color</item> <!-- ✅ Güvenli -->
-</style>
-
 </resources>

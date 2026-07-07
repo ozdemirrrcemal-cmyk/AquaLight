@@ -6,12 +6,10 @@
     <color name="md_theme_dark_onPrimary">#FFFFFF</color>
     <color name="md_theme_dark_primaryContainer">#0A192F</color>
     <color name="md_theme_dark_onPrimaryContainer">#FFFFFF</color>
-
     <color name="md_theme_dark_secondary">#4A6363</color>
     <color name="md_theme_dark_onSecondary">#FFFFFF</color>
     <color name="md_theme_dark_secondaryContainer">#0A192F</color>
     <color name="md_theme_dark_onSecondaryContainer">#FFFFFF</color>
-
     <color name="md_theme_dark_background">#0A192F</color>
     <color name="md_theme_dark_onBackground">#FFFFFF</color>
     <color name="md_theme_dark_surface">#0A192F</color>
@@ -36,8 +34,8 @@
 
    <!-- 🔤 Auth metin & border renkleri (DARK THEME) -->
 <color name="auth_text_color">@android:color/white</color>
-<color name="auth_unfocused_color">@color/aqua_card_text_secondary</color>
-<color name="auth_focus_color">#1E90FF</color>
+    <color name="auth_unfocused_color">@color/aqua_card_text_secondary</color>
+    <color name="auth_focus_color">#1E90FF</color>
 
     <!-- 🧾 Settings ekranı -->
     <color name="background_color">#0A192F</color>              <!-- Ana arka plan -->
@@ -47,9 +45,8 @@
     <color name="bottom_nav_background">#112240</color>
     <color name="bottom_nav_item_active">#FFFFFF</color>
     <color name="bottom_nav_item_inactive">#A0A0A0</color>
-	
-	<color name="crop_toolbar_bg">#0A192F</color>
-	<color name="aqua_button_blue">#1E90FF</color>
+    <color name="crop_toolbar_bg">#0A192F</color>
+    <color name="aqua_button_blue">#1E90FF</color>
     <color name="aqua_button_red">#FF3B30</color>
 	
 
