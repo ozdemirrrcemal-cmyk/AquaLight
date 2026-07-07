@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:style="@style/Widget.Aqua.Dialog.Root">
+    style="@style/Widget.Aqua.Dialog.Root">
 
     <FrameLayout
-        android:style="@style/Widget.Aqua.Dialog.IconSurface">
+        style="@style/Widget.Aqua.Dialog.IconSurface">
 
         <ImageView
             android:id="@+id/dialogIcon"
