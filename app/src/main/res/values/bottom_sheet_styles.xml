@@ -20,6 +20,9 @@
         <item name="cornerSizeBottomRight">0dp</item>
     </style>
 
+
+    <style name="Widget.Aqua.BottomSheet" />
+
     <style name="Widget.Aqua.BottomSheet.Root">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
