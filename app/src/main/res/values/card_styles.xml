@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Widget.Aqua.Card" parent="Widget.MaterialComponents.CardView">
+        <item name="cardBackgroundColor">@color/aqua_card_surface</item>
+        <item name="cardCornerRadius">18dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="cardUseCompatPadding">false</item>
+        <item name="strokeColor">@color/aqua_card_outline</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="rippleColor">@color/aqua_card_surface_pressed</item>
+    </style>
+
+    <style name="Widget.Aqua.Card.Elevated" parent="Widget.Aqua.Card">
+        <item name="cardBackgroundColor">@color/aqua_card_surface_elevated</item>
+        <item name="strokeColor">@color/aqua_card_outline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+    <style name="Widget.Aqua.Card.Grouped" parent="Widget.Aqua.Card">
+        <item name="cardBackgroundColor">@color/aqua_card_surface_grouped</item>
+        <item name="cardCornerRadius">18dp</item>
+        <item name="strokeColor">@color/aqua_card_outline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+    <style name="Widget.Aqua.Card.Metric" parent="Widget.Aqua.Card">
+        <item name="cardBackgroundColor">@color/aqua_card_surface</item>
+        <item name="cardCornerRadius">16dp</item>
+        <item name="strokeColor">@color/aqua_card_outline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+    <style name="Widget.Aqua.Card.Selection" parent="Widget.Aqua.Card">
+        <item name="cardBackgroundColor">@color/aqua_card_surface</item>
+        <item name="strokeColor">@color/aqua_card_accent</item>
+        <item name="strokeWidth">2dp</item>
+    </style>
+
+    <style name="Widget.Aqua.Card.Danger" parent="Widget.Aqua.Card">
+        <item name="cardBackgroundColor">@color/aqua_card_danger_container</item>
+        <item name="strokeColor">@color/aqua_card_danger_outline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+    <!-- Backward-compatible alias for existing screens. -->
+    <style name="Widget.Aqua.CardStyles" parent="Widget.Aqua.Card" />
+
+</resources>

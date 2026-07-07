@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- AquaCard base: Living Room / Devices device card language -->
+    <color name="aqua_card_surface">#07131F</color>
+    <color name="aqua_card_surface_elevated">#0B1D31</color>
+    <color name="aqua_card_surface_grouped">#0B1D31</color>
+    <color name="aqua_card_surface_pressed">#132943</color>
+
+    <color name="aqua_card_outline">#223A57</color>
+    <color name="aqua_card_outline_subtle">#1A3048</color>
+    <color name="aqua_card_divider">#1A3048</color>
+
+    <color name="aqua_card_text_primary">#F4F8FC</color>
+    <color name="aqua_card_text_secondary">#9AAEC4</color>
+
+    <color name="aqua_card_accent">#6489C9</color>
+
+    <color name="aqua_card_danger">#FF5A52</color>
+    <color name="aqua_card_danger_container">#321E2A</color>
+    <color name="aqua_card_danger_outline">#7A3344</color>
+</resources>
