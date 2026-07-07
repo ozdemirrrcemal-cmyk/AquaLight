@@ -125,6 +125,9 @@ class DevicesRepository(
         presenceRuntimeMonitor.refreshVisibleDevices(localNetworkAvailable = localNetworkAvailable)
     }
 
+    fun isLocalNetworkAvailable(): Boolean =
+        presenceRuntimeMonitor.isLocalNetworkAvailable()
+
     fun connectRuntime(deviceUid: DeviceUid): Result<Unit> {
         val runtime = runtimeRepository
             ?: return Result.failure(IllegalStateException("Device runtime is not configured."))
