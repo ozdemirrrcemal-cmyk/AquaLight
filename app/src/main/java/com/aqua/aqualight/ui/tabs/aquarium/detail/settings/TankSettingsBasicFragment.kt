@@ -634,7 +634,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
         contentBinding.inputIdea.setText(tank.description)
 
         showSettingsBottomSheet(
-            title = getString(R.string.aquarium_idea_title),
+            title = getString(R.string.aquarium_tank_concept_title),
             contentView = contentBinding.root
         ) { dialog ->
             contentBinding.btnCancel.setOnClickListener {
