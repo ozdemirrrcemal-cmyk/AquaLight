@@ -104,7 +104,7 @@
             android:includeFontPadding="false"
             android:maxLines="1"
             android:text="@string/maintenance_required"
-            android:textColor="#6F829B"
+            android:textColor="@color/aqua_card_text_secondary"
             android:textSize="12.5sp" />
 
         </LinearLayout>
@@ -113,7 +113,7 @@
           android:layout_width="22dp"
           android:layout_height="22dp"
           android:src="@drawable/ic_arrow_right"
-          app:tint="#8FA4BE" />
+          app:tint="@color/aqua_card_text_secondary" />
 
       </LinearLayout>
 
@@ -196,7 +196,7 @@
             android:includeFontPadding="false"
             android:maxLines="1"
             android:text="@string/maintenance_required"
-            android:textColor="#6F829B"
+            android:textColor="@color/aqua_card_text_secondary"
             android:textSize="12.5sp" />
 
         </LinearLayout>
@@ -205,7 +205,7 @@
           android:layout_width="22dp"
           android:layout_height="22dp"
           android:src="@drawable/ic_arrow_right"
-          app:tint="#8FA4BE" />
+          app:tint="@color/aqua_card_text_secondary" />
 
       </LinearLayout>
 
