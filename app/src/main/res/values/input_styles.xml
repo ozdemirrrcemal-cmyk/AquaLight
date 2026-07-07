@@ -100,8 +100,9 @@
     </style>
 
     <style name="Widget.Aqua.Input.Layout.Feedback" parent="Widget.Aqua.Input.Layout">
-        <item name="boxBackgroundColor">@color/aqua_input_background</item>
-        <item name="boxStrokeColor">@color/aqua_input_stroke_color</item>
+        
+        <item name="boxStrokeColor">@color/aqua_input_feedback_stroke_color</item><item name="boxBackgroundColor">@color/aqua_input_background</item>
+        <item name="boxStrokeColor">@color/aqua_input_feedback_stroke_color</item>
         <item name="boxStrokeWidth">1dp</item>
         <item name="boxStrokeWidthFocused">2dp</item>
         <item name="boxCornerRadiusTopStart">18dp</item>
