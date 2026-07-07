@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Widget.Aqua.SelectionRow">
+    <style name="Widget.Aqua.SelectionRow" parent="@android:style/Widget">
         <item name="android:background">@drawable/bg_aqua_selection_row</item>
         <item name="android:minHeight">56dp</item>
         <item name="android:paddingStart">14dp</item>
