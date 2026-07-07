@@ -21,7 +21,7 @@
     </style>
 
 
-    <style name="Widget.Aqua.BottomSheet" />
+    <style name="Widget.Aqua.BottomSheet" parent="" />
 
     <style name="Widget.Aqua.BottomSheet.Root">
         <item name="android:layout_width">match_parent</item>
