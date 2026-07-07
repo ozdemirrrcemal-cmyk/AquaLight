@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView
+    style="@style/Widget.Aqua.Card.Device"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -12,12 +13,8 @@
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
-    app:cardBackgroundColor="#101D2C"
-    app:cardCornerRadius="24dp"
-    app:cardElevation="0dp"
     app:cardUseCompatPadding="false"
     app:rippleColor="#24344A"
-    app:strokeColor="#22354D"
     app:strokeWidth="1dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -30,16 +27,13 @@
         android:paddingBottom="15dp">
 
         <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.Aqua.Card.Device.Media"
             android:id="@+id/deviceIconContainer"
             android:layout_width="54dp"
             android:layout_height="54dp"
-            app:cardBackgroundColor="#162A3E"
-            app:cardCornerRadius="18dp"
-            app:cardElevation="0dp"
-            app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:strokeColor="#2A4663"
             app:strokeWidth="1dp">
 
             <ImageView

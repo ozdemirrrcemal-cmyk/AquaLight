@@ -15,6 +15,12 @@
 
     <color name="aqua_card_accent">#6489C9</color>
 
+    <!-- Device cards: Living Room / Devices reference language -->
+    <color name="aqua_card_device_surface">#101D2C</color>
+    <color name="aqua_card_device_media_surface">#162A3E</color>
+    <color name="aqua_card_device_outline">#22354D</color>
+    <color name="aqua_card_device_media_outline">#2A4663</color>
+
     <color name="aqua_card_danger">#FF5A52</color>
     <color name="aqua_card_danger_container">#321E2A</color>
     <color name="aqua_card_danger_outline">#7A3344</color>
