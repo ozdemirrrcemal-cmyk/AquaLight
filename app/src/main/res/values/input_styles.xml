@@ -96,4 +96,15 @@
         <item name="android:paddingBottom">14dp</item>
     </style>
 
+
+    <style name="Widget.Aqua.Input.PlainEditText.Search" parent="Widget.Aqua.Input.PlainEditText">
+        <item name="android:minHeight">48dp</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:paddingTop">10dp</item>
+        <item name="android:paddingBottom">10dp</item>
+        <item name="android:singleLine">true</item>
+    </style>
+
 </resources>
