@@ -17,6 +17,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.isVisible
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
@@ -340,7 +341,7 @@ class AddCareTaskFragment :
     }
 
     private fun showWaterChangePercentBottomSheet() {
-        val dialog = BottomSheetDialog(requireContext())
+        val dialog = BottomSheetDialog(requireContext(), R.style.AquaBottomSheetDialogTheme)
 
         val contentView = LayoutInflater.from(requireContext()).inflate(
             R.layout.bottom_sheet_water_change_percent,
@@ -432,15 +433,15 @@ class AddCareTaskFragment :
 
             background = createRoundedDrawable(
                 color = if (selected) {
-                    "#1C3D63"
+                    colorHex(R.color.aqua_bottom_sheet_surface_pressed)
                 } else {
-                    "#10233A"
+                    colorHex(R.color.aqua_bottom_sheet_surface_elevated)
                 },
                 radiusPx = 15.dp(),
                 strokeColor = if (selected) {
-                    "#2196F3"
+                    colorHex(R.color.aqua_bottom_sheet_selection_active)
                 } else {
-                    "#223A57"
+                    colorHex(R.color.aqua_bottom_sheet_outline_subtle)
                 },
                 strokeWidthPx = 1.dp()
             )
@@ -480,7 +481,7 @@ class AddCareTaskFragment :
             return
         }
 
-        val dialog = BottomSheetDialog(requireContext())
+        val dialog = BottomSheetDialog(requireContext(), R.style.AquaBottomSheetDialogTheme)
 
         val contentView = LayoutInflater.from(requireContext()).inflate(
             R.layout.bottom_sheet_select_aquarium,
@@ -536,15 +537,15 @@ class AddCareTaskFragment :
             radius = 16.dp().toFloat()
             strokeWidth = 1.dp()
             strokeColor = if (selected) {
-                Color.parseColor("#2196F3")
+                colorRes(R.color.aqua_bottom_sheet_selection_active)
             } else {
-                Color.parseColor("#223A57")
+                colorRes(R.color.aqua_bottom_sheet_outline_subtle)
             }
             setCardBackgroundColor(
                 if (selected) {
-                    Color.parseColor("#1C3D63")
+                    colorRes(R.color.aqua_bottom_sheet_surface_pressed)
                 } else {
-                    Color.parseColor("#10233A")
+                    colorRes(R.color.aqua_bottom_sheet_surface_elevated)
                 }
             )
             cardElevation = 0f
@@ -608,7 +609,7 @@ class AddCareTaskFragment :
                 ""
             }
             textSize = 11.5f
-            setTextColor(Color.parseColor("#5FD6B4"))
+            setTextColor(colorRes(R.color.aqua_bottom_sheet_selection_active))
             setTypeface(null, Typeface.BOLD)
             includeFontPadding = false
         }
@@ -744,6 +745,18 @@ class AddCareTaskFragment :
                     "#35506D"
                 }
             )
+        )
+    }
+
+    private fun colorRes(colorRes: Int): Int {
+        return ContextCompat.getColor(requireContext(), colorRes)
+    }
+
+    private fun colorHex(colorRes: Int): String {
+        return String.format(
+            Locale.US,
+            "#%06X",
+            0xFFFFFF and colorRes(colorRes)
         )
     }
 

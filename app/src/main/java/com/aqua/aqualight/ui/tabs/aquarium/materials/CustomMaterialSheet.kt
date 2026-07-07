@@ -24,17 +24,15 @@ object CustomMaterialSheet {
         onSave: (String) -> Unit
     ) {
         val context = fragment.requireContext()
-        val dialog = BottomSheetDialog(context)
+        val dialog = BottomSheetDialog(context, R.style.AquaBottomSheetDialogTheme)
 
         val root = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(24.dp(context), 22.dp(context), 24.dp(context), 24.dp(context))
-            background = ContextCompat.getDrawable(
-                context,
-                R.drawable.bg_aqua_bottom_sheet
-            )
+            setPadding(22.dp(context), 14.dp(context), 22.dp(context), 24.dp(context))
+            background = ContextCompat.getDrawable(context, R.drawable.bg_bottomsheet_rounded)
         }
 
+        addHandle(root)
         addSheetHeader(
             root = root,
             title = context.getString(R.string.material_picker_new_material),
@@ -80,6 +78,21 @@ object CustomMaterialSheet {
         dialog.show()
     }
 
+    private fun addHandle(root: LinearLayout) {
+        val context = root.context
+        val handle = View(context).apply {
+            background = ContextCompat.getDrawable(context, R.drawable.bg_bottomsheet_handle)
+            layoutParams = LinearLayout.LayoutParams(
+                42.dp(context),
+                4.dp(context)
+            ).apply {
+                gravity = Gravity.CENTER_HORIZONTAL
+                bottomMargin = 16.dp(context)
+            }
+        }
+        root.addView(handle)
+    }
+
     private fun createLabel(
         context: android.content.Context,
         text: String,
@@ -87,7 +100,7 @@ object CustomMaterialSheet {
     ): TextView {
         return TextView(context).apply {
             this.text = text
-            setTextColor(Color.WHITE)
+            setTextColor(context.color(R.color.aqua_bottom_sheet_text_primary))
             textSize = 14f
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -109,8 +122,8 @@ object CustomMaterialSheet {
                 setSelection(initialName.length)
             }
             hint = context.getString(R.string.material_picker_enter_material_name)
-            setHintTextColor(Color.parseColor("#7F91AA"))
-            setTextColor(Color.WHITE)
+            setHintTextColor(context.color(R.color.aqua_bottom_sheet_text_secondary))
+            setTextColor(context.color(R.color.aqua_bottom_sheet_text_primary))
             textSize = 15f
             setSingleLine(true)
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS
@@ -127,7 +140,7 @@ object CustomMaterialSheet {
         return TextView(context).apply {
             text = categoryTitle
             gravity = Gravity.CENTER_VERTICAL
-            setTextColor(Color.parseColor("#D6E2F0"))
+            setTextColor(context.color(R.color.aqua_bottom_sheet_text_primary))
             textSize = 15f
             setTypeface(null, Typeface.NORMAL)
             setPadding(16.dp(context), 0, 16.dp(context), 0)
@@ -140,10 +153,11 @@ object CustomMaterialSheet {
     ): MaterialCardView {
         val context = content.context
         return MaterialCardView(context).apply {
-            radius = 14.dp(context).toFloat()
+            radius = 18.dp(context).toFloat()
             strokeWidth = 1.dp(context)
-            strokeColor = Color.parseColor("#223A57")
-            setCardBackgroundColor(Color.parseColor("#16314D"))
+            strokeColor = context.color(R.color.aqua_bottom_sheet_outline_subtle)
+            setCardBackgroundColor(context.color(R.color.aqua_bottom_sheet_surface_elevated))
+            cardElevation = 0f
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 56.dp(context)
@@ -168,11 +182,13 @@ object CustomMaterialSheet {
         return MaterialButton(context).apply {
             text = context.getString(R.string.material_picker_save)
             textSize = 16f
-            setTextColor(Color.WHITE)
+            setTextColor(context.color(R.color.aqua_bottom_sheet_on_primary))
             setTypeface(null, Typeface.BOLD)
             setAllCaps(false)
-            cornerRadius = 16.dp(context)
-            setBackgroundColor(Color.parseColor("#2196F3"))
+            cornerRadius = 18.dp(context)
+            backgroundTintList = android.content.res.ColorStateList.valueOf(
+                context.color(R.color.aqua_bottom_sheet_primary)
+            )
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 56.dp(context)
@@ -191,7 +207,7 @@ object CustomMaterialSheet {
         return TextView(context).apply {
             text = context.getString(R.string.material_picker_cancel)
             gravity = Gravity.CENTER
-            setTextColor(Color.parseColor("#8FA4BE"))
+            setTextColor(context.color(R.color.aqua_bottom_sheet_text_secondary))
             textSize = 15f
             setPadding(0, 18.dp(context), 0, 0)
             setOnClickListener { dialog.dismiss() }
@@ -217,7 +233,7 @@ object CustomMaterialSheet {
 
         val titleView = TextView(context).apply {
             text = title
-            setTextColor(Color.WHITE)
+            setTextColor(context.color(R.color.aqua_bottom_sheet_text_primary))
             textSize = 18f
             gravity = Gravity.CENTER
             setTypeface(null, Typeface.BOLD)
@@ -229,7 +245,7 @@ object CustomMaterialSheet {
 
         val closeView = TextView(context).apply {
             text = context.getString(R.string.common_close)
-            setTextColor(Color.WHITE)
+            setTextColor(context.color(R.color.aqua_bottom_sheet_text_primary))
             textSize = 34f
             gravity = Gravity.CENTER
             includeFontPadding = false
@@ -245,6 +261,9 @@ object CustomMaterialSheet {
         header.addView(closeView)
         root.addView(header)
     }
+
+    private fun android.content.Context.color(colorRes: Int): Int =
+        ContextCompat.getColor(this, colorRes)
 
     private fun Int.dp(context: android.content.Context): Int {
         return (this * context.resources.displayMetrics.density).toInt()
