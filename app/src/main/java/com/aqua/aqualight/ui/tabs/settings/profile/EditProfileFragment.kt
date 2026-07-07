@@ -378,16 +378,17 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         title: String,
         message: String
     ) {
-        MaterialAlertDialogBuilder(
-            requireContext()
+        if (!isAdded) {
+            return
+        }
+
+        DialogManager.showInfoDialog(
+            context = requireContext(),
+            type = DialogType.WARNING,
+            title = title,
+            message = message,
+            buttonTextResId = android.R.string.ok
         )
-            .setTitle(title)
-            .setMessage(message)
-            .setPositiveButton(
-                android.R.string.ok,
-                null
-            )
-            .show()
     }
 
     override fun onDestroyView() {

@@ -339,11 +339,17 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
         title: String,
         message: String
     ) {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle(title)
-            .setMessage(message)
-            .setPositiveButton(android.R.string.ok, null)
-            .show()
+        if (!isAdded) {
+            return
+        }
+
+        DialogManager.showInfoDialog(
+            context = requireContext(),
+            type = DialogType.WARNING,
+            title = title,
+            message = message,
+            buttonTextResId = android.R.string.ok
+        )
     }
 
     override fun validateAndSave(): Boolean {

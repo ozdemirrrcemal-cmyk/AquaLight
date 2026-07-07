@@ -70,7 +70,7 @@ object DialogManager {
                 }
             }
 
-            handler.postDelayed(dismissRunnable!!)
+            handler.postDelayed(dismissRunnable!!, autoDismissMillis)
         }
 
         dialog.show()

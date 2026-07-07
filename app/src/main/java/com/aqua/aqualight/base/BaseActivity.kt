@@ -390,9 +390,6 @@ open class BaseActivity : AppCompatActivity() {
 
         loadingOwners.clear()
 
-        activeInfoDialog?.dismiss()
-        activeInfoDialog = null
-
         hideLoadingDialog()
 
         super.onDestroy()
