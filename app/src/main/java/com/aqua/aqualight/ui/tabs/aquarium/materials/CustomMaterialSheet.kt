@@ -4,6 +4,7 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.text.InputType
 import android.view.Gravity
+import android.view.ContextThemeWrapper
 import android.view.View
 import android.widget.EditText
 import android.widget.FrameLayout
@@ -100,7 +101,6 @@ object CustomMaterialSheet {
     ): TextView {
         return TextView(context).apply {
             this.text = text
-            setTextColor(context.color(R.color.aqua_bottom_sheet_text_primary))
             textSize = 14f
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -116,19 +116,14 @@ object CustomMaterialSheet {
         initialName: String
     ): EditText {
         val context = fragment.requireContext()
-        return EditText(context).apply {
+        return EditText(ContextThemeWrapper(context, R.style.Widget_Aqua_Input_PlainEditText_Embedded)).apply {
             setText(initialName)
             if (initialName.isNotBlank()) {
                 setSelection(initialName.length)
             }
             hint = context.getString(R.string.material_picker_enter_material_name)
-            setHintTextColor(context.color(R.color.aqua_bottom_sheet_text_secondary))
-            setTextColor(context.color(R.color.aqua_bottom_sheet_text_primary))
-            textSize = 15f
             setSingleLine(true)
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS
-            background = null
-            setPadding(16.dp(context), 0, 16.dp(context), 0)
         }
     }
 
@@ -140,10 +135,7 @@ object CustomMaterialSheet {
         return TextView(context).apply {
             text = categoryTitle
             gravity = Gravity.CENTER_VERTICAL
-            setTextColor(context.color(R.color.aqua_bottom_sheet_text_primary))
-            textSize = 15f
             setTypeface(null, Typeface.NORMAL)
-            setPadding(16.dp(context), 0, 16.dp(context), 0)
             includeFontPadding = false
         }
     }
@@ -208,7 +200,6 @@ object CustomMaterialSheet {
             text = context.getString(R.string.material_picker_cancel)
             gravity = Gravity.CENTER
             setTextColor(context.color(R.color.aqua_bottom_sheet_text_secondary))
-            textSize = 15f
             setPadding(0, 18.dp(context), 0, 0)
             setOnClickListener { dialog.dismiss() }
             layoutParams = LinearLayout.LayoutParams(
@@ -233,7 +224,6 @@ object CustomMaterialSheet {
 
         val titleView = TextView(context).apply {
             text = title
-            setTextColor(context.color(R.color.aqua_bottom_sheet_text_primary))
             textSize = 18f
             gravity = Gravity.CENTER
             setTypeface(null, Typeface.BOLD)
@@ -245,7 +235,6 @@ object CustomMaterialSheet {
 
         val closeView = TextView(context).apply {
             text = context.getString(R.string.common_close)
-            setTextColor(context.color(R.color.aqua_bottom_sheet_text_primary))
             textSize = 34f
             gravity = Gravity.CENTER
             includeFontPadding = false
