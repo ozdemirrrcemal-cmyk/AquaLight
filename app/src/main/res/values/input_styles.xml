@@ -107,4 +107,15 @@
         <item name="android:singleLine">true</item>
     </style>
 
+
+    <style name="Widget.Aqua.Input.PlainEditText.Compact" parent="Widget.Aqua.Input.PlainEditText">
+        <item name="android:minHeight">48dp</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:paddingStart">14dp</item>
+        <item name="android:paddingEnd">14dp</item>
+        <item name="android:paddingTop">10dp</item>
+        <item name="android:paddingBottom">10dp</item>
+        <item name="android:singleLine">true</item>
+    </style>
+
 </resources>

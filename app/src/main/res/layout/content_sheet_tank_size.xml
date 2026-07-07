@@ -63,22 +63,17 @@
         android:textStyle="bold" />
 
       <EditText
+        style="@style/Widget.Aqua.Input.PlainEditText.Multiline"
         android:id="@+id/inputWidth"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_marginTop="9dp"
-        android:background="@drawable/bg_settings_sheet_input"
         android:gravity="center_vertical"
         android:includeFontPadding="false"
         android:inputType="numberDecimal"
         android:maxLines="1"
-        android:paddingStart="14dp"
-        android:paddingEnd="14dp"
         android:selectAllOnFocus="true"
-        android:singleLine="true"
-        android:textColor="@android:color/white"
-        android:textColorHint="#8FA4BE"
-        android:textSize="18sp" />
+        android:singleLine="true" />
 
     </LinearLayout>
 
@@ -99,22 +94,17 @@
         android:textStyle="bold" />
 
       <EditText
+        style="@style/Widget.Aqua.Input.PlainEditText.Multiline"
         android:id="@+id/inputLength"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_marginTop="9dp"
-        android:background="@drawable/bg_settings_sheet_input"
         android:gravity="center_vertical"
         android:includeFontPadding="false"
         android:inputType="numberDecimal"
         android:maxLines="1"
-        android:paddingStart="14dp"
-        android:paddingEnd="14dp"
         android:selectAllOnFocus="true"
-        android:singleLine="true"
-        android:textColor="@android:color/white"
-        android:textColorHint="#8FA4BE"
-        android:textSize="18sp" />
+        android:singleLine="true" />
 
     </LinearLayout>
 
@@ -134,22 +124,17 @@
         android:textStyle="bold" />
 
       <EditText
+        style="@style/Widget.Aqua.Input.PlainEditText.Multiline"
         android:id="@+id/inputHeight"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_marginTop="9dp"
-        android:background="@drawable/bg_settings_sheet_input"
         android:gravity="center_vertical"
         android:includeFontPadding="false"
         android:inputType="numberDecimal"
         android:maxLines="1"
-        android:paddingStart="14dp"
-        android:paddingEnd="14dp"
         android:selectAllOnFocus="true"
-        android:singleLine="true"
-        android:textColor="@android:color/white"
-        android:textColorHint="#8FA4BE"
-        android:textSize="18sp" />
+        android:singleLine="true" />
 
     </LinearLayout>
 
