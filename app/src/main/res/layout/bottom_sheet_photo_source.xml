@@ -19,129 +19,106 @@
         android:gravity="center"
         android:text="@string/aquarium_photo_title" />
 
-    <com.google.android.material.card.MaterialCardView
+    <LinearLayout
         android:id="@+id/btnCamera"
-        style="@style/Widget.Aqua.BottomSheet.SelectionCard"
+        style="@style/Widget.Aqua.SelectionRow.BottomSheet"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="64dp"
         android:layout_marginBottom="12dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:foreground="?attr/selectableItemBackground">
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingHorizontal="18dp">
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_camera"
+            app:tint="@color/aqua_card_text_primary" />
 
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_camera"
-                app:tint="@color/aqua_bottom_sheet_text_primary" />
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_weight="1"
+            android:includeFontPadding="false"
+            android:text="@string/photo_bottom_sheet_camera"
+            android:textColor="@color/aqua_card_text_primary"
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
-            <TextView
-                style="@style/TextAppearance.Aqua.BottomSheet.RowTitle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="16dp"
-                android:text="@string/photo_bottom_sheet_camera" />
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_arrow_right"
+            app:tint="@color/aqua_card_text_secondary" />
 
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/ic_arrow_right"
-                app:tint="@color/aqua_bottom_sheet_text_secondary" />
+    </LinearLayout>
 
-        </LinearLayout>
-
-    </com.google.android.material.card.MaterialCardView>
-
-    <com.google.android.material.card.MaterialCardView
+    <LinearLayout
         android:id="@+id/btnGallery"
-        style="@style/Widget.Aqua.BottomSheet.SelectionCard"
+        style="@style/Widget.Aqua.SelectionRow.BottomSheet"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="64dp"
         android:layout_marginBottom="12dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:foreground="?attr/selectableItemBackground">
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingHorizontal="18dp">
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_gallery"
+            app:tint="@color/aqua_card_text_primary" />
 
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_gallery"
-                app:tint="@color/aqua_bottom_sheet_text_primary" />
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_weight="1"
+            android:includeFontPadding="false"
+            android:text="@string/photo_bottom_sheet_gallery"
+            android:textColor="@color/aqua_card_text_primary"
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
-            <TextView
-                style="@style/TextAppearance.Aqua.BottomSheet.RowTitle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="16dp"
-                android:text="@string/photo_bottom_sheet_gallery" />
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_arrow_right"
+            app:tint="@color/aqua_card_text_secondary" />
 
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/ic_arrow_right"
-                app:tint="@color/aqua_bottom_sheet_text_secondary" />
+    </LinearLayout>
 
-        </LinearLayout>
-
-    </com.google.android.material.card.MaterialCardView>
-
-    <com.google.android.material.card.MaterialCardView
+    <LinearLayout
         android:id="@+id/btnRemove"
-        style="@style/Widget.Aqua.BottomSheet.SelectionCard"
+        style="@style/Widget.Aqua.SelectionRow.Danger"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:clickable="true"
-        android:focusable="true"
-        android:foreground="?attr/selectableItemBackground"
-        android:visibility="gone"
-        app:cardBackgroundColor="@color/aqua_bottom_sheet_danger_container"
-        app:strokeColor="@color/aqua_bottom_sheet_danger_outline">
+        android:layout_height="64dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:visibility="gone">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingHorizontal="18dp">
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_delete"
+            app:tint="@color/aqua_bottom_sheet_danger" />
 
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_delete"
-                app:tint="@color/aqua_bottom_sheet_danger" />
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_weight="1"
+            android:includeFontPadding="false"
+            android:text="@string/photo_bottom_sheet_remove"
+            android:textColor="@color/aqua_bottom_sheet_danger"
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
-            <TextView
-                style="@style/TextAppearance.Aqua.BottomSheet.RowTitle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_weight="1"
-                android:text="@string/photo_bottom_sheet_remove"
-                android:textColor="@color/aqua_bottom_sheet_danger" />
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_arrow_right"
+            app:tint="@color/aqua_card_text_secondary" />
 
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/ic_arrow_right"
-                app:tint="@color/aqua_bottom_sheet_text_secondary" />
+    </LinearLayout>
 
-        </LinearLayout>
-
-    </com.google.android.material.card.MaterialCardView>
 </LinearLayout>
