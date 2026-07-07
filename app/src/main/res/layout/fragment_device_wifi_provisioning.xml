@@ -132,8 +132,8 @@
                             app:tint="#F2F6FA" />
 
                         <EditText
-        style="@style/Widget.Aqua.Input.PlainEditText.Multiline"
                             android:id="@+id/etWifiSsid"
+                            style="@style/Widget.Aqua.Input.PlainEditText.Embedded"
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_marginStart="12dp"
@@ -169,8 +169,8 @@
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
                     <EditText
-        style="@style/Widget.Aqua.Input.PlainEditText.Multiline"
                         android:id="@+id/etWifiPassword"
+                        style="@style/Widget.Aqua.Input.PlainEditText.Compact"
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
                         android:layout_marginTop="12dp"
