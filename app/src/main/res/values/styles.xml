@@ -164,22 +164,6 @@
     <!-- 🔹 Lint’in istediği satır -->
     <item name="android:orientation">horizontal</item>
 </style>
-<style name="AquaSettingsSheetGridOption">
-  <item name="android:layout_width">0dp</item>
-  <item name="android:layout_height">64dp</item>
-  <item name="android:layout_columnWeight">1</item>
-  <item name="android:layout_marginEnd">8dp</item>
-  <item name="android:layout_marginBottom">10dp</item>
-
-  <item name="android:gravity">center</item>
-  <item name="android:includeFontPadding">false</item>
-  <item name="android:textAlignment">center</item>
-  <item name="android:textColor">@android:color/white</item>
-  <item name="android:textSize">12sp</item>
-  <item name="android:maxLines">2</item>
-  <item name="android:ellipsize">none</item>
-  <item name="android:background">@drawable/bg_settings_sheet_grid_option</item>
-</style>
 
 <style name="ShapeAppearanceOverlay.Aqua.DockedActivityButton" parent="">
   <item name="cornerFamily">rounded</item>
