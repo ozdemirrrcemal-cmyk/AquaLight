@@ -40,8 +40,10 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
+            android:background="@android:color/transparent"
             android:hint="@string/address_info_country_search_hint"
             android:imeOptions="actionDone"
+            android:minHeight="0dp"
             android:padding="0dp"
             android:singleLine="true" />
 
