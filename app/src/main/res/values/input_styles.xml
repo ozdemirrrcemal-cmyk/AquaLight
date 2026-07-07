@@ -3,7 +3,7 @@
 
     <style name="Widget.Aqua.Input.Layout" parent="Widget.Material3.TextInputLayout.OutlinedBox">
         <item name="boxBackgroundMode">outline</item>
-        <item name="boxBackgroundColor">@color/aqua_input_background</item>
+        <item name="boxBackgroundColor">@android:color/transparent</item>
         <item name="boxStrokeColor">@color/aqua_input_stroke_color</item>
         <item name="boxStrokeWidth">1dp</item>
         <item name="boxStrokeWidthFocused">2dp</item>
@@ -12,6 +12,7 @@
         <item name="boxCornerRadiusBottomStart">14dp</item>
         <item name="boxCornerRadiusBottomEnd">14dp</item>
         <item name="hintTextColor">@color/aqua_input_hint_color</item>
+        <item name="android:textColorHint">@color/aqua_input_hint_color</item>
         <item name="errorTextColor">@color/aqua_input_error</item>
         <item name="errorIconTint">@color/aqua_input_error</item>
         <item name="errorEnabled">true</item>
@@ -31,13 +32,22 @@
         <item name="boxCornerRadiusBottomEnd">18dp</item>
     </style>
 
+    <style name="Widget.Aqua.Input.Layout.Feedback" parent="Widget.Aqua.Input.Layout">
+        <item name="boxCornerRadiusTopStart">18dp</item>
+        <item name="boxCornerRadiusTopEnd">18dp</item>
+        <item name="boxCornerRadiusBottomStart">18dp</item>
+        <item name="boxCornerRadiusBottomEnd">18dp</item>
+        <item name="boxStrokeColor">@color/aqua_input_feedback_stroke_color</item>
+    </style>
+
+    <style name="Widget.Aqua.Input.Layout.Feedback.Multiline" parent="Widget.Aqua.Input.Layout.Feedback" />
+
     <style name="Widget.Aqua.Input.EditText" parent="Widget.Material3.TextInputEditText.OutlinedBox">
         <item name="android:textColor">@color/aqua_input_text_primary</item>
         <item name="android:textColorHint">@color/aqua_input_hint_unfocused</item>
         <item name="android:textCursorDrawable">@null</item>
         <item name="android:textSize">16sp</item>
         <item name="android:includeFontPadding">false</item>
-        <item name="android:background">@android:color/transparent</item>
     </style>
 
     <style name="Widget.Aqua.Input.EditText.Multiline" parent="Widget.Aqua.Input.EditText">
@@ -45,9 +55,8 @@
         <item name="android:minLines">4</item>
         <item name="android:maxLines">8</item>
     </style>
-<!-- 🔳 TextInputLayout stili -->
-<!-- ✏️ TextInputEditText stili -->
-<style name="Widget.Aqua.Input.PlainEditText" parent="@android:style/Widget.EditText">
+
+    <style name="Widget.Aqua.Input.PlainEditText" parent="@android:style/Widget.EditText">
         <item name="android:background">@drawable/bg_aqua_input</item>
         <item name="android:textColor">@color/aqua_input_text_primary</item>
         <item name="android:textColorHint">@color/aqua_input_hint_unfocused</item>
@@ -98,20 +107,5 @@
         <item name="android:paddingBottom">0dp</item>
         <item name="android:singleLine">true</item>
     </style>
-
-    <style name="Widget.Aqua.Input.Layout.Feedback" parent="Widget.Aqua.Input.Layout">
-        <item name="boxBackgroundMode">outline</item>
-        <item name="boxBackgroundColor">@color/aqua_input_background</item>
-        <item name="boxStrokeColor">@color/aqua_input_feedback_stroke_color</item>
-        <item name="boxStrokeWidth">1dp</item>
-        <item name="boxStrokeWidthFocused">2dp</item>
-        <item name="boxCornerRadiusTopStart">18dp</item>
-        <item name="boxCornerRadiusTopEnd">18dp</item>
-        <item name="boxCornerRadiusBottomStart">18dp</item>
-        <item name="boxCornerRadiusBottomEnd">18dp</item>
-        <item name="hintTextColor">@color/aqua_input_hint_color</item>
-    </style>
-
-    <style name="Widget.Aqua.Input.Layout.Feedback.Multiline" parent="Widget.Aqua.Input.Layout.Feedback" />
 
 </resources>

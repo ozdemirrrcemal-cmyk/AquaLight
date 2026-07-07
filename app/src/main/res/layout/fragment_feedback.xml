@@ -69,14 +69,10 @@
                     <!-- CATEGORY -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/inputLayoutCategory"
-                        style="@style/Widget.Aqua.Input.Layout.Feedback"
+                        style="@style/Widget.Aqua.Input.Layout.Feedback.Multiline"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:clipToOutline="true"
-                        android:background="@drawable/bg_aqua_feedback_input_outline"
                         android:hint="@string/feedback_hint_category"
-                        app:hintTextColor="@color/aqua_input_hint_color"
-                        app:boxBackgroundMode="none"
                         app:startIconDrawable="@drawable/ic_category"
                         app:startIconTint="#64FFDA"
                         app:endIconMode="dropdown_menu"
