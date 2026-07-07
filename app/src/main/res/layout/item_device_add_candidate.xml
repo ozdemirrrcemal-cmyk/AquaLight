@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Aqua.Card.Device"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -12,13 +13,8 @@
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
-    app:cardBackgroundColor="#101D2C"
-    app:cardCornerRadius="24dp"
-    app:cardElevation="0dp"
     app:cardUseCompatPadding="false"
-    app:rippleColor="#24344A"
-    app:strokeColor="#22354D"
-    app:strokeWidth="1dp">
+    app:rippleColor="#24344A">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
