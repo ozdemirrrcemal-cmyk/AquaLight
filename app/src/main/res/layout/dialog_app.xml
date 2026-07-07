@@ -1,44 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
-    android:padding="24dp"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="@drawable/dialog_background"
-    android:gravity="center"
-    android:elevation="8dp">
+    style="@style/Widget.Aqua.Dialog.Root">
 
-    <ImageView
-        android:id="@+id/dialogIcon"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
-        android:layout_gravity="center"
-        android:layout_marginBottom="16dp"
-        android:contentDescription="@string/dialog_icon_desc" />
+    <FrameLayout
+        style="@style/Widget.Aqua.Dialog.IconSurface">
+
+        <ImageView
+            android:id="@+id/dialogIcon"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/dialog_icon_desc" />
+    </FrameLayout>
 
     <TextView
         android:id="@+id/dialogTitle"
-        android:textAppearance="?attr/textAppearanceTitleMedium"
-        android:textStyle="bold"
-        android:textColor="?attr/colorOnSurface"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:gravity="center"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:textAppearance="@style/TextAppearance.Aqua.Dialog.Title" />
 
     <TextView
         android:id="@+id/dialogMessage"
-        android:layout_marginTop="8dp"
-        android:textAppearance="?attr/textAppearanceBodyMedium"
-        android:textColor="?attr/colorOnSurfaceVariant"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
         android:gravity="center"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:maxLines="6"
+        android:textAppearance="@style/TextAppearance.Aqua.Dialog.Message" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/dialogButton"
-        style="@style/Widget.Material3.Button"
+        style="@style/Widget.Aqua.Dialog.Button.Primary"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
         android:layout_marginTop="20dp"
-        android:text="@string/ok"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:text="@string/ok" />
+
 </LinearLayout>
