@@ -8,7 +8,7 @@
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/emailContainer"
-        style="@style/AuthTextInputLayout"
+        style="@style/Widget.Aqua.Input.Layout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="4dp"
@@ -21,7 +21,7 @@
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/emailEditText"
-            style="@style/AuthEditText"
+            style="@style/Widget.Aqua.Input.EditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/signin_email_hint"
@@ -31,7 +31,7 @@
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/passwordContainer"
-        style="@style/AuthTextInputLayout"
+        style="@style/Widget.Aqua.Input.Layout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="4dp"
@@ -44,7 +44,7 @@
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/passwordEditText"
-            style="@style/AuthEditText"
+            style="@style/Widget.Aqua.Input.EditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/signin_password_hint"
