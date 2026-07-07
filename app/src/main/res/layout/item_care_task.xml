@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView
+    style="@style/Widget.Aqua.Card"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/cardCareTask"
@@ -8,12 +9,7 @@
     android:layout_marginBottom="12dp"
     android:clickable="true"
     android:focusable="true"
-    android:foreground="?attr/selectableItemBackground"
-    app:cardBackgroundColor="#10233A"
-    app:cardCornerRadius="18dp"
-    app:cardElevation="0dp"
-    app:strokeColor="#223A57"
-    app:strokeWidth="1dp">
+    android:foreground="?attr/selectableItemBackground">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -115,7 +111,7 @@
                 android:ellipsize="end"
                 android:includeFontPadding="false"
                 android:maxLines="2"
-                android:textColor="#8FA4BE"
+                android:textColor="@color/aqua_card_text_secondary"
                 android:textSize="11.8sp" />
 
             <TextView
