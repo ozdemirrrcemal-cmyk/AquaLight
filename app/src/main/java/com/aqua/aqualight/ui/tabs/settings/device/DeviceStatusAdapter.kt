@@ -5,7 +5,6 @@ import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemDeviceStatusBinding
 
 class DeviceStatusAdapter : RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewHolder>() {
@@ -23,22 +22,25 @@ class DeviceStatusAdapter : RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewH
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(item: DeviceStatusItem) {
-            binding.tvDeviceName.text = item.displayName.ifBlank { "Device" }
-            binding.tvTankName.text = item.supportingText.ifBlank { "Not connected" }
-            binding.ivDeviceIcon.setImageResource(R.drawable.ic_device_aqua_ster)
+            val name = item.displayName.ifBlank { "Device" }
+            val serial = item.serialText.ifBlank { "Unknown" }
+            val presenceText = if (item.isOnline) "Online" else "Offline"
+
+            binding.tvDeviceName.text = name
+            binding.ivDeviceIcon.setImageResource(item.iconRes)
+            binding.ivDeviceIcon.imageTintList = null
+            binding.ivDeviceIcon.clearColorFilter()
+            binding.ivDeviceIcon.contentDescription = name
             binding.tvIp.text = item.ip.ifBlank { "Unknown" }
-            binding.tvSerialTitle.text = "Device code"
-            binding.tvSerial.text = item.deviceCode.ifBlank { "Unknown" }
-            binding.tvFirmwareTitle.text = "Product"
-            binding.tvFirmware.text = item.productName.ifBlank { "Unknown" }
+            binding.tvSerialTitle.text = "Serial"
+            binding.tvSerial.text = serial
             binding.tvLastSeen.text = item.lastSeenText.ifBlank { "-" }
 
-            val presenceText = if (item.isOnline) "Online" else "Offline"
             binding.ivPresenceIcon.imageTintList = ColorStateList.valueOf(
                 if (item.isOnline) ONLINE_COLOR else OFFLINE_COLOR
             )
             binding.ivPresenceIcon.contentDescription = presenceText
-            binding.root.contentDescription = "${item.displayName.ifBlank { "Device" }}, $presenceText"
+            binding.root.contentDescription = "$name, Serial: $serial, $presenceText"
         }
     }
 

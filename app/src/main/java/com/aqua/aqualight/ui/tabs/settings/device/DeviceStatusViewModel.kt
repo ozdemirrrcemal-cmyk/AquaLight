@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.settings.device
 
 import android.app.Application
+import androidx.annotation.DrawableRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
@@ -70,10 +71,9 @@ data class DeviceStatusUiState(
 
 data class DeviceStatusItem(
     val displayName: String = "",
-    val supportingText: String = "",
+    @DrawableRes val iconRes: Int,
     val ip: String = "",
-    val deviceCode: String = "",
-    val productName: String = "",
+    val serialText: String = "",
     val lastSeenText: String = "",
     val isOnline: Boolean = false
 )

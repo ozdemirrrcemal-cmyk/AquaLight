@@ -30,6 +30,8 @@ import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumChildTabHost
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.TankDetailTabArgs
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteTarget
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
 import kotlinx.coroutines.launch
 
@@ -392,6 +394,55 @@ class TankDetailFragment :
         )
     }
 
+    override fun onTankDetailDeviceClicked(
+        route: DeviceRoute
+    ) {
+        selectedTab = TankDetailTab.DEVICES
+        saveSelectedTabState(
+            tab = TankDetailTab.DEVICES
+        )
+
+        openDeviceRoute(route)
+    }
+
+    private fun openDeviceRoute(
+        route: DeviceRoute
+    ) {
+        val directions = when (route.target) {
+            DeviceRouteTarget.LIGHT_ROOT ->
+                TankDetailFragmentDirections.actionTankDetailFragmentToDeviceLightRootFragment(
+                    deviceUid = route.deviceUid,
+                    deviceTitle = route.title
+                )
+
+            DeviceRouteTarget.DOSING_ROOT ->
+                TankDetailFragmentDirections.actionTankDetailFragmentToDeviceDosingRootFragment(
+                    deviceUid = route.deviceUid,
+                    deviceTitle = route.title
+                )
+
+            DeviceRouteTarget.TIMER_ROOT ->
+                TankDetailFragmentDirections.actionTankDetailFragmentToDeviceTimerRootFragment(
+                    deviceUid = route.deviceUid,
+                    deviceTitle = route.title
+                )
+
+            DeviceRouteTarget.COOLING_ROOT ->
+                TankDetailFragmentDirections.actionTankDetailFragmentToDeviceCoolingRootFragment(
+                    deviceUid = route.deviceUid,
+                    deviceTitle = route.title
+                )
+
+            DeviceRouteTarget.UNSUPPORTED ->
+                TankDetailFragmentDirections.actionTankDetailFragmentToUnsupportedDeviceFragment(
+                    deviceTitle = route.title,
+                    message = route.message,
+                    deviceUid = route.deviceUid
+                )
+        }
+
+        navigateFromTankDetail(directions)
+    }
 
     private fun navigateFromTankDetail(
         directions: NavDirections
@@ -411,7 +462,6 @@ class TankDetailFragment :
             directions
         )
     }
-
 
     private fun observeTank() {
         aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->

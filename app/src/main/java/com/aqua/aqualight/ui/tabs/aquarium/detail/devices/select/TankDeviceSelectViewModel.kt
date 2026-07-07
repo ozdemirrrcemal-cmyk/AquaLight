@@ -52,10 +52,7 @@ class TankDeviceSelectViewModel(
                     TankDeviceSelectItem(
                         deviceUid = snapshot.deviceUid.value,
                         card = DeviceCompactSnapshotMapper.map(
-                            snapshot = snapshot,
-                            supportingText = "Available • ${DeviceCompactSnapshotMapper.familyLabel(snapshot.product.family)}",
-                            showAction = true,
-                            actionText = "Add"
+                            snapshot = snapshot
                         )
                     )
                 }

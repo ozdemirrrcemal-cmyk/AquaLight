@@ -13,9 +13,11 @@ import android.view.animation.AnimationUtils
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,6 +42,7 @@ open class BaseActivity : AppCompatActivity() {
 
     private var loadingDialog: Dialog? = null
     private var loadingLogo: ImageView? = null
+    private var activeInfoDialog: Dialog? = null
 
     private val loadingOwners: MutableSet<String> =
         linkedSetOf()
@@ -121,6 +124,53 @@ open class BaseActivity : AppCompatActivity() {
             ownerKey = legacyLoadingOwner,
             show = show
         )
+    }
+
+    fun showDeviceOfflineDialog(
+        deviceTitle: String,
+        @StringRes messageRes: Int = R.string.device_menu_offline_message
+    ) {
+        if (
+            isFinishing ||
+            isDestroyed
+        ) {
+            return
+        }
+
+        val safeTitle = deviceTitle.trim()
+            .ifBlank {
+                getString(R.string.device_menu_default_title)
+            }
+
+        val safeMessage = getString(messageRes)
+            .trim()
+            .ifBlank {
+                getString(R.string.device_menu_offline_message)
+            }
+
+        activeInfoDialog?.dismiss()
+
+        activeInfoDialog = MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.device_menu_offline_dialog_title))
+            .setMessage(
+                getString(
+                    R.string.device_menu_offline_dialog_message,
+                    safeTitle,
+                    safeMessage
+                )
+            )
+            .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                dialog.dismiss()
+            }
+            .create()
+            .also { dialog ->
+                dialog.setOnDismissListener {
+                    if (activeInfoDialog == dialog) {
+                        activeInfoDialog = null
+                    }
+                }
+                dialog.show()
+            }
     }
 
     private fun Any.toLoadingOwnerKey(): String {
@@ -352,9 +402,11 @@ open class BaseActivity : AppCompatActivity() {
 
         loadingOwners.clear()
 
+        activeInfoDialog?.dismiss()
+        activeInfoDialog = null
+
         hideLoadingDialog()
 
         super.onDestroy()
     }
-
 }

@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail
 
-import android.app.AlertDialog
 import android.os.Bundle
 import android.view.View
 import androidx.core.view.isVisible
@@ -11,13 +10,16 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentTankDetailDevicesBinding
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDeviceItem
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDevicesAdapter
+import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesEvent
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesUiState
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmBottomSheet
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmTone
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
 import kotlinx.coroutines.launch
 
 class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices) {
@@ -25,6 +27,10 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     interface Host {
         fun onTankDetailAddDeviceClicked(
             tankId: Long
+        )
+
+        fun onTankDetailDeviceClicked(
+            route: DeviceRoute
         )
     }
 
@@ -62,8 +68,8 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
 
     private fun setupRecycler() {
         adapter = TankAssignedDevicesAdapter(
-            onDeviceClick = {
-                // Cihaz detay açma daha sonra merkezi route ile bağlanacak.
+            onDeviceClick = { item ->
+                viewModel.onDeviceClicked(item.deviceUid)
             },
             onDeviceLongClick = { item ->
                 confirmRemoveDevice(item)
@@ -86,8 +92,24 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state ->
-                    renderState(state)
+                launch {
+                    viewModel.uiState.collect { state ->
+                        renderState(state)
+                    }
+                }
+
+                launch {
+                    viewModel.events.collect { event ->
+                        when (event) {
+                            is TankDetailDevicesEvent.OpenDeviceRoute -> {
+                                parentHost()?.onTankDetailDeviceClicked(event.route)
+                            }
+
+                            is TankDetailDevicesEvent.ShowDeviceUnavailable -> {
+                                showDeviceUnavailable(event)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -99,6 +121,19 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
         adapter.submitList(state.devices)
         binding.rvAssignedDevices.isVisible = state.isEmpty.not()
         binding.cardDevicesEmpty.isVisible = state.isEmpty
+        baseActivity()?.setGlobalLoading(
+            ownerKey = TANK_DEVICE_MENU_LOADING_OWNER,
+            show = state.isOpeningDeviceMenu
+        )
+    }
+
+    private fun showDeviceUnavailable(
+        event: TankDetailDevicesEvent.ShowDeviceUnavailable
+    ) {
+        baseActivity()?.showDeviceOfflineDialog(
+            deviceTitle = event.title,
+            messageRes = event.messageRes
+        )
     }
 
     private fun confirmRemoveDevice(
@@ -122,7 +157,12 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
         return parentFragment as? Host
     }
 
+    private fun baseActivity(): BaseActivity? {
+        return activity as? BaseActivity
+    }
+
     override fun onDestroyView() {
+        baseActivity()?.clearGlobalLoading(TANK_DEVICE_MENU_LOADING_OWNER)
         binding.rvAssignedDevices.adapter = null
         _binding = null
         super.onDestroyView()
@@ -131,6 +171,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     companion object {
 
         private const val ARG_TANK_ID = "tankId"
+        private const val TANK_DEVICE_MENU_LOADING_OWNER = "TankDetailDevicesFragment.DeviceMenuOpenGate"
 
         fun newInstance(
             tankId: Long
