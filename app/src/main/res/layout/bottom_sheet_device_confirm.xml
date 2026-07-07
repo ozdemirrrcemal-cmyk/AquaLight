@@ -13,7 +13,7 @@
         android:layout_height="48dp"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="22dp"
-        android:background="@drawable/bg_light_sheet_icon"
+        android:background="@drawable/bg_bottomsheet_icon_surface"
         android:contentDescription="@null"
         android:padding="12dp"
         android:src="@drawable/ic_warning" />
@@ -53,7 +53,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnConfirmPrimary"
-            style="@style/Widget.Aqua.BottomSheet.Button.Primary"
+            style="@style/Widget.Aqua.BottomSheet.Button.Critical"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_marginStart="10dp"
