@@ -9,6 +9,7 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.os.bundleOf
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -98,7 +99,12 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
                 getString(R.string.plant_picker_found, plantList.size)
             }
 
-            setTextColor(Color.parseColor("#8FA4BE"))
+            setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.aqua_card_text_secondary
+                )
+            )
             textSize = 14f
             includeFontPadding = false
 
@@ -127,7 +133,12 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
     private fun showEmptySearchResult() {
         val emptyText = TextView(requireContext()).apply {
             text = getString(R.string.plant_picker_empty)
-            setTextColor(Color.parseColor("#8FA4BE"))
+            setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.aqua_card_text_secondary
+                )
+            )
             textSize = 15f
             gravity = Gravity.CENTER
             includeFontPadding = false
@@ -149,8 +160,16 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
         val card = MaterialCardView(requireContext()).apply {
             radius = 18.dp().toFloat()
             strokeWidth = 1.dp()
-            strokeColor = Color.parseColor("#223A57")
-            setCardBackgroundColor(Color.parseColor("#10233A"))
+            strokeColor = ContextCompat.getColor(
+                requireContext(),
+                R.color.aqua_card_outline
+            )
+            setCardBackgroundColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.aqua_card_surface
+                )
+            )
             cardElevation = 0f
             useCompatPadding = false
             isClickable = true
@@ -184,14 +203,24 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
 
         val categoryText = TextView(requireContext()).apply {
             text = plant.category
-            setTextColor(Color.parseColor("#8FA4BE"))
+            setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.aqua_card_text_secondary
+                )
+            )
             textSize = 12f
             includeFontPadding = false
         }
 
         val plantNameText = TextView(requireContext()).apply {
             text = plant.name
-            setTextColor(Color.WHITE)
+            setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.aqua_card_text_primary
+                )
+            )
             textSize = 15f
             includeFontPadding = false
             maxLines = 2
