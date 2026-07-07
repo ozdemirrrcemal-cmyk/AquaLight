@@ -240,11 +240,15 @@ class CountryPickerBottomSheet : BottomSheetDialogFragment() {
             holder.tvCountryIso.text =
                 item.iso
 
-            holder.radio.isChecked =
+            val selected =
                 item.iso.equals(
                     selectedIso,
                     ignoreCase = true
                 )
+
+            holder.itemView.isSelected = selected
+
+            holder.radio.isChecked = selected
 
             val clickListener =
                 View.OnClickListener {
