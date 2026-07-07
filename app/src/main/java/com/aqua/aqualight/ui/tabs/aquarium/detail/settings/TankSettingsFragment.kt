@@ -441,10 +441,6 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
             radiusPx = 3.dp()
         )
 
-        sheetBinding.btnCloseCareProfile.setOnClickListener {
-            dialog.dismiss()
-        }
-
         sheetBinding.careProfileItemsContainer.removeAllViews()
 
         result.items.forEach { item ->
