@@ -41,7 +41,8 @@
         <item name="android:background">@drawable/bg_bottomsheet_handle</item>
     </style>
 
-    <style name="TextAppearance.Aqua.BottomSheet.Title" parent="TextAppearance.Material3.TitleLarge">
+    <style name="TextAppearance.Aqua.BottomSheet.Title"
+        parent="TextAppearance.Material3.TitleLarge">
         <item name="fontFamily">@font/inter_semibold</item>
         <item name="android:fontFamily">@font/inter_semibold</item>
         <item name="android:textColor">@color/aqua_bottom_sheet_text_primary</item>
@@ -49,11 +50,17 @@
         <item name="android:includeFontPadding">false</item>
     </style>
 
-    <style name="TextAppearance.Aqua.BottomSheet.SectionTitle" parent="TextAppearance.Aqua.BottomSheet.Title">
-        <item name="android:textSize">18sp</item>
+    <style name="TextAppearance.Aqua.BottomSheet.SectionTitle"
+        parent="TextAppearance.Material3.TitleLarge">
+        <item name="fontFamily">@font/inter_semibold</item>
+        <item name="android:fontFamily">@font/inter_semibold</item>
+        <item name="android:textColor">@color/aqua_bottom_sheet_text_primary</item>
+        <item name="android:textSize">21sp</item>
+        <item name="android:includeFontPadding">false</item>
     </style>
 
-    <style name="TextAppearance.Aqua.BottomSheet.Subtitle" parent="TextAppearance.Material3.BodyMedium">
+    <style name="TextAppearance.Aqua.BottomSheet.Subtitle"
+        parent="TextAppearance.Material3.BodyMedium">
         <item name="fontFamily">@font/inter_medium</item>
         <item name="android:fontFamily">@font/inter_medium</item>
         <item name="android:textColor">@color/aqua_bottom_sheet_text_secondary</item>
@@ -77,7 +84,8 @@
         <item name="android:includeFontPadding">false</item>
     </style>
 
-    <style name="Widget.Aqua.BottomSheet.Button.Primary" parent="Widget.Material3.Button">
+    <style name="Widget.Aqua.BottomSheet.Button.Primary"
+        parent="Widget.Material3.Button">
         <item name="backgroundTint">@color/aqua_bottom_sheet_primary</item>
         <item name="android:textColor">@color/aqua_bottom_sheet_on_primary</item>
         <item name="cornerRadius">18dp</item>
@@ -89,14 +97,11 @@
         <item name="android:fontFamily">@font/inter_semibold</item>
     </style>
 
-    <style name="Widget.Aqua.BottomSheet.Button.Danger" parent="Widget.Aqua.BottomSheet.Button.Primary">
-        <item name="backgroundTint">@color/aqua_bottom_sheet_danger_container</item>
-        <item name="android:textColor">@color/aqua_bottom_sheet_danger</item>
-        <item name="strokeColor">@color/aqua_bottom_sheet_danger_outline</item>
-        <item name="strokeWidth">1dp</item>
-    </style>
+    <style name="Widget.Aqua.BottomSheet.Button.Danger"
+        parent="Widget.Aqua.BottomSheet.Button.Primary" />
 
-    <style name="Widget.Aqua.BottomSheet.Button.Neutral" parent="Widget.Material3.Button">
+    <style name="Widget.Aqua.BottomSheet.Button.Neutral"
+        parent="Widget.Material3.Button">
         <item name="backgroundTint">@color/aqua_bottom_sheet_neutral</item>
         <item name="android:textColor">@color/aqua_bottom_sheet_on_neutral</item>
         <item name="cornerRadius">18dp</item>
