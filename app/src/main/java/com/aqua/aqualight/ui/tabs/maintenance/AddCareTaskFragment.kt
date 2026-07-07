@@ -420,7 +420,21 @@ class AddCareTaskFragment :
             text = getString(R.string.maintenance_percent_value, percent)
             gravity = Gravity.CENTER
             textSize = 12.8f
-            setTextColor(Color.WHITE)
+            isSelected = selected
+            background = ContextCompat.getDrawable(
+                requireContext(),
+                R.drawable.bg_aqua_selection_row_compact
+            )
+            setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    if (selected) {
+                        R.color.aqua_card_text_primary
+                    } else {
+                        R.color.aqua_card_text_secondary
+                    }
+                )
+            )
             setTypeface(
                 null,
                 if (selected) {
@@ -430,21 +444,6 @@ class AddCareTaskFragment :
                 }
             )
             includeFontPadding = false
-
-            background = createRoundedDrawable(
-                color = if (selected) {
-                    colorHex(R.color.aqua_bottom_sheet_surface_pressed)
-                } else {
-                    colorHex(R.color.aqua_bottom_sheet_surface_elevated)
-                },
-                radiusPx = 15.dp(),
-                strokeColor = if (selected) {
-                    colorHex(R.color.aqua_bottom_sheet_selection_active)
-                } else {
-                    colorHex(R.color.aqua_bottom_sheet_outline_subtle)
-                },
-                strokeWidthPx = 1.dp()
-            )
 
             val params = GridLayout.LayoutParams().apply {
                 width = 0
