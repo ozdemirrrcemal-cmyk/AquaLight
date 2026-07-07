@@ -20,7 +20,7 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            style="@style/Widget.Aqua.CardStyles"
+            style="@style/Widget.Aqua.Card.Elevated"
             android:layout_marginBottom="5dp">
 
             <LinearLayout
@@ -61,7 +61,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/settings_default_username"
-                        android:textColor="@color/settings_text_secondary"
+                        android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="12sp"/>
 
                     <TextView
@@ -69,7 +69,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:text="@string/settings_default_email"
-    android:textColor="@color/settings_text_secondary"
+    android:textColor="@color/aqua_card_text_secondary"
     android:textSize="12sp"/>
 
 <com.google.android.material.card.MaterialCardView
@@ -79,7 +79,7 @@
     android:layout_marginTop="8dp"
     app:cardCornerRadius="50dp"
     app:cardElevation="0dp"
-    app:strokeColor="@color/card_stroke"
+    app:strokeColor="@color/aqua_card_outline_subtle"
     app:strokeWidth="1dp">
 
     <LinearLayout
@@ -106,7 +106,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:text="3 Active Devices"
-            android:textColor="@android:color/white"
+            android:textColor="@color/aqua_card_text_primary"
             android:textSize="11sp"
             android:textStyle="bold" />
 
@@ -121,7 +121,7 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            style="@style/Widget.Aqua.CardStyles">
+            style="@style/Widget.Aqua.Card.Grouped">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -146,21 +146,21 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/settings_user_info"
-                        android:textColor="@color/settings_text_secondary"
+                        android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="14sp"/>
 
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_arrow_right"
-                        app:tint="@color/settings_text_secondary"
+                        app:tint="@color/aqua_card_text_secondary"
                         android:contentDescription="@string/settings_arrow_desc"/>
                 </LinearLayout>
 
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:background="@color/settings_divider"/>
+                    android:background="@color/aqua_card_divider"/>
 
                 <!-- 2️⃣ Device Status -->
                 <LinearLayout
@@ -180,21 +180,21 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/settings_device_status"
-                        android:textColor="@color/settings_text_secondary"
+                        android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="14sp"/>
 
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_arrow_right"
-                        app:tint="@color/settings_text_secondary"
+                        app:tint="@color/aqua_card_text_secondary"
                         android:contentDescription="@string/settings_arrow_desc"/>
                 </LinearLayout>
 
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:background="@color/settings_divider"/>
+                    android:background="@color/aqua_card_divider"/>
                 <!-- 4️⃣ App Settings -->
                 <LinearLayout
                     android:id="@+id/rowSettings"
@@ -213,21 +213,21 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/settings_app"
-                        android:textColor="@color/settings_text_secondary"
+                        android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="14sp"/>
 
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_arrow_right"
-                        app:tint="@color/settings_text_secondary"
+                        app:tint="@color/aqua_card_text_secondary"
                         android:contentDescription="@string/settings_arrow_desc"/>
                 </LinearLayout>
 
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:background="@color/settings_divider"/>
+                    android:background="@color/aqua_card_divider"/>
 
                 <!-- 5️⃣ Usage Statistics -->
                 <LinearLayout
@@ -247,21 +247,21 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/settings_usage"
-                        android:textColor="@color/settings_text_secondary"
+                        android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="14sp"/>
 
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_arrow_right"
-                        app:tint="@color/settings_text_secondary"
+                        app:tint="@color/aqua_card_text_secondary"
                         android:contentDescription="@string/settings_arrow_desc"/>
                 </LinearLayout>
 
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:background="@color/settings_divider"/>
+                    android:background="@color/aqua_card_divider"/>
 
                 <!-- 6️⃣ Privacy Policy -->
                 <LinearLayout
@@ -281,21 +281,21 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/settings_privacy"
-                        android:textColor="@color/settings_text_secondary"
+                        android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="14sp"/>
 
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_arrow_right"
-                        app:tint="@color/settings_text_secondary"
+                        app:tint="@color/aqua_card_text_secondary"
                         android:contentDescription="@string/settings_arrow_desc"/>
                 </LinearLayout>
 
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:background="@color/settings_divider"/>
+                    android:background="@color/aqua_card_divider"/>
 
                 <!-- 7️⃣ Feedback / Support -->
                 <LinearLayout
@@ -315,21 +315,21 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/settings_feedback"
-                        android:textColor="@color/settings_text_secondary"
+                        android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="14sp"/>
 
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_arrow_right"
-                        app:tint="@color/settings_text_secondary"
+                        app:tint="@color/aqua_card_text_secondary"
                         android:contentDescription="@string/settings_arrow_desc"/>
                 </LinearLayout>
 
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:background="@color/settings_divider"/>
+                    android:background="@color/aqua_card_divider"/>
 
                 <!-- 8️⃣ Logout / Account Management -->
                 <LinearLayout
@@ -349,14 +349,14 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/settings_logout"
-                        android:textColor="@color/settings_text_secondary"
+                        android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="14sp"/>
 
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_arrow_right"
-                        app:tint="@color/settings_text_secondary"
+                        app:tint="@color/aqua_card_text_secondary"
                         android:contentDescription="@string/settings_arrow_desc"/>
                 </LinearLayout>
             </LinearLayout>
@@ -417,7 +417,7 @@
     android:layout_marginTop="12dp"
     android:layout_marginBottom="12dp"
     android:gravity="center"
-    android:textColor="@color/settings_text_secondary"
+    android:textColor="@color/aqua_card_text_secondary"
     android:textSize="12sp" />
     </LinearLayout>
 </ScrollView>
