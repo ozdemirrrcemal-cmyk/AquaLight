@@ -42,7 +42,7 @@
         android:layout_height="wrap_content"
         android:includeFontPadding="false"
         android:text="@string/maintenance_task_type_label"
-        android:textColor="?attr/colorOnSurface"
+        android:textColor="@color/aqua_card_text_primary"
         android:textSize="15sp"
         android:textStyle="bold" />
 
@@ -91,7 +91,7 @@
             android:includeFontPadding="false"
             android:maxLines="1"
             android:text="@string/maintenance_select_care_task_type"
-            android:textColor="#8FA4BE"
+            android:textColor="@color/aqua_card_text_secondary"
             android:textSize="14sp"
             android:textStyle="bold" />
 
@@ -130,7 +130,7 @@
           android:layout_height="wrap_content"
           android:includeFontPadding="false"
           android:text="@string/maintenance_custom_title_label"
-          android:textColor="?attr/colorOnSurface"
+          android:textColor="@color/aqua_card_text_primary"
           android:textSize="13sp"
           android:textStyle="bold" />
 
@@ -157,7 +157,7 @@
         android:layout_marginTop="22dp"
         android:includeFontPadding="false"
         android:text="@string/maintenance_aquarium_label"
-        android:textColor="?attr/colorOnSurface"
+        android:textColor="@color/aqua_card_text_primary"
         android:textSize="15sp"
         android:textStyle="bold" />
 
@@ -188,7 +188,7 @@
             android:includeFontPadding="false"
             android:maxLines="1"
             android:text="@string/maintenance_select_aquarium"
-            android:textColor="#8FA4BE"
+            android:textColor="@color/aqua_card_text_secondary"
             android:textSize="14sp"
             android:textStyle="bold" />
 
@@ -220,7 +220,7 @@
         android:layout_marginTop="22dp"
         android:includeFontPadding="false"
         android:text="@string/maintenance_schedule_label"
-        android:textColor="?attr/colorOnSurface"
+        android:textColor="@color/aqua_card_text_primary"
         android:textSize="15sp"
         android:textStyle="bold" />
 
@@ -249,7 +249,7 @@
             android:layout_height="wrap_content"
             android:includeFontPadding="false"
             android:text="@string/maintenance_date_label"
-            android:textColor="#8FA4BE"
+            android:textColor="@color/aqua_card_text_secondary"
             android:textSize="11.5sp" />
 
           <TextView
@@ -260,7 +260,7 @@
             android:ellipsize="end"
             android:includeFontPadding="false"
             android:maxLines="1"
-            android:textColor="?attr/colorOnSurface"
+            android:textColor="@color/aqua_card_text_primary"
             android:textSize="14sp"
             android:textStyle="bold" />
 
@@ -285,7 +285,7 @@
             android:layout_height="wrap_content"
             android:includeFontPadding="false"
             android:text="@string/maintenance_time_label"
-            android:textColor="#8FA4BE"
+            android:textColor="@color/aqua_card_text_secondary"
             android:textSize="11.5sp" />
 
           <TextView
@@ -296,7 +296,7 @@
             android:ellipsize="end"
             android:includeFontPadding="false"
             android:maxLines="1"
-            android:textColor="?attr/colorOnSurface"
+            android:textColor="@color/aqua_card_text_primary"
             android:textSize="14sp"
             android:textStyle="bold" />
 
@@ -305,14 +305,10 @@
       </LinearLayout>
 
       <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.Aqua.Card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="22dp"
-        app:cardBackgroundColor="#10233A"
-        app:cardCornerRadius="18dp"
-        app:cardElevation="0dp"
-        app:strokeColor="#223A57"
-        app:strokeWidth="1dp">
+        android:layout_marginTop="22dp">
 
         <LinearLayout
           android:layout_width="match_parent"
@@ -337,7 +333,7 @@
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"
                 android:text="@string/maintenance_repeat_label"
-                android:textColor="?attr/colorOnSurface"
+                android:textColor="@color/aqua_card_text_primary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -347,7 +343,7 @@
                 android:layout_marginTop="6dp"
                 android:includeFontPadding="false"
                 android:text="@string/maintenance_repeat_description"
-                android:textColor="#8FA4BE"
+                android:textColor="@color/aqua_card_text_secondary"
                 android:textSize="12.5sp" />
 
             </LinearLayout>
@@ -406,14 +402,10 @@
       </com.google.android.material.card.MaterialCardView>
 
       <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.Aqua.Card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
-        app:cardBackgroundColor="#10233A"
-        app:cardCornerRadius="18dp"
-        app:cardElevation="0dp"
-        app:strokeColor="#223A57"
-        app:strokeWidth="1dp">
+        android:layout_marginTop="14dp">
 
         <LinearLayout
           android:layout_width="match_parent"
@@ -438,7 +430,7 @@
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"
                 android:text="@string/maintenance_reminder_label"
-                android:textColor="?attr/colorOnSurface"
+                android:textColor="@color/aqua_card_text_primary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -448,7 +440,7 @@
                 android:layout_marginTop="6dp"
                 android:includeFontPadding="false"
                 android:text="@string/maintenance_reminder_description"
-                android:textColor="#8FA4BE"
+                android:textColor="@color/aqua_card_text_secondary"
                 android:textSize="12.5sp" />
 
             </LinearLayout>
@@ -485,7 +477,7 @@
                   android:layout_height="wrap_content"
                   android:includeFontPadding="false"
                   android:text="@string/maintenance_missed_reminder_label"
-                  android:textColor="?attr/colorOnSurface"
+                  android:textColor="@color/aqua_card_text_primary"
                   android:textSize="14sp"
                   android:textStyle="bold" />
 
@@ -495,7 +487,7 @@
                   android:layout_marginTop="6dp"
                   android:includeFontPadding="false"
                   android:text="@string/maintenance_missed_reminder_description"
-                  android:textColor="#8FA4BE"
+                  android:textColor="@color/aqua_card_text_secondary"
                   android:textSize="12.5sp" />
 
               </LinearLayout>
@@ -561,7 +553,7 @@
         android:layout_marginTop="22dp"
         android:includeFontPadding="false"
         android:text="@string/maintenance_note_label"
-        android:textColor="?attr/colorOnSurface"
+        android:textColor="@color/aqua_card_text_primary"
         android:textSize="13sp"
         android:textStyle="bold" />
 

@@ -29,6 +29,7 @@
             android:rowCount="2">
 
             <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Aqua.Card.Metric"
                 android:id="@+id/cardTankDays"
                 android:layout_width="0dp"
                 android:layout_height="72dp"
@@ -37,12 +38,7 @@
                 android:layout_marginBottom="10dp"
                 android:clickable="true"
                 android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                app:cardBackgroundColor="#10233A"
-                app:cardCornerRadius="15dp"
-                app:cardElevation="0dp"
-                app:strokeColor="#223A57"
-                app:strokeWidth="1dp">
+                android:foreground="?attr/selectableItemBackground">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -57,7 +53,7 @@
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
                         android:text="@string/aquarium_days_title"
-                        android:textColor="#8FA4BE"
+                        android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="10.5sp" />
 
                     <TextView
@@ -69,7 +65,7 @@
                         android:includeFontPadding="false"
                         android:maxLines="1"
                         android:text="@string/aquarium_text_0_days"
-                        android:textColor="?attr/colorOnSurface"
+                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
@@ -78,6 +74,7 @@
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Aqua.Card.Metric"
                 android:id="@+id/cardTankValue"
                 android:layout_width="0dp"
                 android:layout_height="72dp"
@@ -87,12 +84,7 @@
                 android:layout_marginBottom="10dp"
                 android:clickable="true"
                 android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                app:cardBackgroundColor="#10233A"
-                app:cardCornerRadius="15dp"
-                app:cardElevation="0dp"
-                app:strokeColor="#223A57"
-                app:strokeWidth="1dp">
+                android:foreground="?attr/selectableItemBackground">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -107,7 +99,7 @@
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
                         android:text="@string/aquarium_volume_title"
-                        android:textColor="#8FA4BE"
+                        android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="10.5sp" />
 
                     <TextView
@@ -119,7 +111,7 @@
                         android:includeFontPadding="false"
                         android:maxLines="1"
                         android:text="@string/aquarium_text_79_gal"
-                        android:textColor="?attr/colorOnSurface"
+                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
@@ -128,6 +120,7 @@
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Aqua.Card.Metric"
                 android:id="@+id/cardTankSize"
                 android:layout_width="0dp"
                 android:layout_height="72dp"
@@ -136,12 +129,7 @@
                 android:layout_marginBottom="10dp"
                 android:clickable="true"
                 android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                app:cardBackgroundColor="#10233A"
-                app:cardCornerRadius="15dp"
-                app:cardElevation="0dp"
-                app:strokeColor="#223A57"
-                app:strokeWidth="1dp">
+                android:foreground="?attr/selectableItemBackground">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -156,7 +144,7 @@
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
                         android:text="@string/aquarium_size_title"
-                        android:textColor="#8FA4BE"
+                        android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="10.5sp" />
 
                     <TextView
@@ -168,7 +156,7 @@
                         android:includeFontPadding="false"
                         android:maxLines="1"
                         android:text="@string/aquarium_text_120x50x50"
-                        android:textColor="?attr/colorOnSurface"
+                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="13sp"
                         android:textStyle="bold" />
 
@@ -177,6 +165,7 @@
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Aqua.Card.Metric"
                 android:id="@+id/cardTankType"
                 android:layout_width="0dp"
                 android:layout_height="72dp"
@@ -184,12 +173,7 @@
                 android:layout_marginEnd="5dp"
                 android:clickable="true"
                 android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                app:cardBackgroundColor="#10233A"
-                app:cardCornerRadius="15dp"
-                app:cardElevation="0dp"
-                app:strokeColor="#223A57"
-                app:strokeWidth="1dp">
+                android:foreground="?attr/selectableItemBackground">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -204,7 +188,7 @@
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
                         android:text="@string/aquarium_type_title"
-                        android:textColor="#8FA4BE"
+                        android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="10.5sp" />
 
                     <TextView
@@ -216,7 +200,7 @@
                         android:includeFontPadding="false"
                         android:maxLines="1"
                         android:text="@string/aquarium_tank_type_shrimp"
-                        android:textColor="?attr/colorOnSurface"
+                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
@@ -225,6 +209,7 @@
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Aqua.Card.Metric"
                 android:id="@+id/cardTankSetup"
                 android:layout_width="0dp"
                 android:layout_height="72dp"
@@ -233,12 +218,7 @@
                 android:layout_marginEnd="5dp"
                 android:clickable="true"
                 android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                app:cardBackgroundColor="#10233A"
-                app:cardCornerRadius="15dp"
-                app:cardElevation="0dp"
-                app:strokeColor="#223A57"
-                app:strokeWidth="1dp">
+                android:foreground="?attr/selectableItemBackground">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -253,7 +233,7 @@
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
                         android:text="@string/aquarium_setup_title"
-                        android:textColor="#8FA4BE"
+                        android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="10.5sp" />
 
                     <TextView
@@ -265,7 +245,7 @@
                         android:includeFontPadding="false"
                         android:maxLines="1"
                         android:text="@string/aquarium_text_17_may_26"
-                        android:textColor="?attr/colorOnSurface"
+                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="13sp"
                         android:textStyle="bold" />
 
@@ -274,6 +254,7 @@
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Aqua.Card.Metric"
                 android:id="@+id/cardTankStyle"
                 android:layout_width="0dp"
                 android:layout_height="72dp"
@@ -281,12 +262,7 @@
                 android:layout_marginStart="5dp"
                 android:clickable="true"
                 android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                app:cardBackgroundColor="#10233A"
-                app:cardCornerRadius="15dp"
-                app:cardElevation="0dp"
-                app:strokeColor="#223A57"
-                app:strokeWidth="1dp">
+                android:foreground="?attr/selectableItemBackground">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -301,7 +277,7 @@
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
                         android:text="@string/aquarium_style_title"
-                        android:textColor="#8FA4BE"
+                        android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="10.5sp" />
 
                     <TextView
@@ -313,7 +289,7 @@
                         android:includeFontPadding="false"
                         android:maxLines="1"
                         android:text="@string/aquarium_style_mountain"
-                        android:textColor="?attr/colorOnSurface"
+                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="13sp"
                         android:textStyle="bold" />
 
@@ -330,7 +306,7 @@
             android:layout_marginTop="16dp"
             android:includeFontPadding="false"
             android:text="@string/aquarium_components_title"
-            android:textColor="?attr/colorOnSurface"
+            android:textColor="@color/aqua_card_text_primary"
             android:textSize="16sp"
             android:textStyle="bold" />
 
@@ -341,7 +317,7 @@
             android:layout_marginTop="14dp"
             android:includeFontPadding="false"
             android:text="@string/aquarium_material_group_bio"
-            android:textColor="?attr/colorOnSurface"
+            android:textColor="@color/aqua_card_text_primary"
             android:textSize="13sp" />
 
         <LinearLayout
@@ -358,7 +334,7 @@
             android:layout_marginTop="14dp"
             android:includeFontPadding="false"
             android:text="@string/aquarium_material_group_hardware"
-            android:textColor="?attr/colorOnSurface"
+            android:textColor="@color/aqua_card_text_primary"
             android:textSize="13sp" />
 
         <LinearLayout
