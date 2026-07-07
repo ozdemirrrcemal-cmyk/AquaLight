@@ -42,7 +42,6 @@ import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.ui.tabs.settings.app.NotificationsBottomSheet
 import com.aqua.aqualight.utils.NotificationHelper
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -532,24 +531,23 @@ class AddCareTaskFragment :
     ): View {
         val selected = tank.id == selectedTankId
 
-        val card = MaterialCardView(requireContext()).apply {
-            radius = 16.dp().toFloat()
-            strokeWidth = 1.dp()
-            strokeColor = if (selected) {
-                colorRes(R.color.aqua_bottom_sheet_selection_active)
-            } else {
-                colorRes(R.color.aqua_bottom_sheet_outline_subtle)
-            }
-            setCardBackgroundColor(
-                if (selected) {
-                    colorRes(R.color.aqua_bottom_sheet_surface_pressed)
-                } else {
-                    colorRes(R.color.aqua_bottom_sheet_surface_elevated)
-                }
-            )
-            cardElevation = 0f
+        val row = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            isSelected = selected
             isClickable = true
             isFocusable = true
+            background = ContextCompat.getDrawable(
+                requireContext(),
+                R.drawable.bg_aqua_selection_row_compact
+            )
+
+            setPadding(
+                14.dp(),
+                8.dp(),
+                14.dp(),
+                8.dp()
+            )
 
             val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -566,23 +564,21 @@ class AddCareTaskFragment :
             }
         }
 
-        val row = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(
-                14.dp(),
-                8.dp(),
-                14.dp(),
-                8.dp()
-            )
-        }
-
         val title = TextView(requireContext()).apply {
             text = tank.name.ifBlank {
                 getString(R.string.maintenance_unnamed_aquarium)
             }
             textSize = 13.5f
-            setTextColor(Color.WHITE)
+            setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    if (selected) {
+                        R.color.aqua_card_text_primary
+                    } else {
+                        R.color.aqua_card_text_secondary
+                    }
+                )
+            )
             setTypeface(
                 null,
                 if (selected) {
@@ -608,7 +604,12 @@ class AddCareTaskFragment :
                 ""
             }
             textSize = 11.5f
-            setTextColor(colorRes(R.color.aqua_bottom_sheet_selection_active))
+            setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.aqua_card_accent
+                )
+            )
             setTypeface(null, Typeface.BOLD)
             includeFontPadding = false
         }
@@ -616,9 +617,7 @@ class AddCareTaskFragment :
         row.addView(title)
         row.addView(check)
 
-        card.addView(row)
-
-        return card
+        return row
     }
 
     private fun updateSelectedTaskTypeUi() {
