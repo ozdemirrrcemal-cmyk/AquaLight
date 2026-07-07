@@ -7,6 +7,7 @@
     <color name="aqua_bottom_sheet_outline">#2B425A</color>
     <color name="aqua_bottom_sheet_outline_subtle">#2B425A</color>
     <color name="aqua_bottom_sheet_handle">#2B425A</color>
+    <color name="aqua_bottom_sheet_sheet_border">#223A57</color>
 
     <color name="aqua_bottom_sheet_text_primary">#F4F8FC</color>
     <color name="aqua_bottom_sheet_text_secondary">#9AAEC4</color>
