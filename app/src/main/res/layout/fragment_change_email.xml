@@ -44,7 +44,7 @@
                 android:id="@+id/cardChangeEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                style="@style/Widget.Aqua.CardStyles">
+                style="@style/Widget.Aqua.Card">
 
                 <LinearLayout
                     android:id="@+id/formContainer"
@@ -62,7 +62,7 @@
                         android:layout_height="wrap_content"
                         android:hint="@string/change_email_current_hint"
                         app:startIconDrawable="@drawable/ic_email"
-                        app:startIconTint="@color/settings_text_secondary">
+                        app:startIconTint="@color/aqua_card_text_secondary">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etCurrentEmail"
@@ -81,7 +81,7 @@
                         android:layout_marginTop="12dp"
                         android:hint="@string/change_email_new_hint"
                         app:startIconDrawable="@drawable/ic_email"
-                        app:startIconTint="@color/settings_text_secondary">
+                        app:startIconTint="@color/aqua_card_text_secondary">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etNewEmail"
@@ -100,7 +100,7 @@
                         android:layout_marginTop="12dp"
                         android:hint="@string/change_email_password_hint"
                         app:startIconDrawable="@drawable/ic_lock"
-                        app:startIconTint="@color/settings_text_secondary"
+                        app:startIconTint="@color/aqua_card_text_secondary"
                         app:endIconMode="password_toggle">
 
                         <com.google.android.material.textfield.TextInputEditText

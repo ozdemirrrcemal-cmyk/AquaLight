@@ -283,7 +283,7 @@ class UserInfoFragment :
 
         binding.cardUsername.strokeColor =
             resources.getColor(
-                R.color.card_stroke,
+                R.color.aqua_card_outline_subtle,
                 null
             )
 

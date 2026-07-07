@@ -28,21 +28,17 @@
             android:layout_marginTop="8dp"
             android:includeFontPadding="false"
             android:text="@string/aquarium_text_automation_reminders"
-            android:textColor="?attr/colorOnSurface"
+            android:textColor="@color/aqua_card_text_primary"
             android:textSize="14sp" />
 
         <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.Aqua.Card.Form"
             android:id="@+id/rowSmartCareSuggestions"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:clickable="true"
-            android:focusable="true"
-            app:cardBackgroundColor="#10233A"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:strokeColor="#223A57"
-            app:strokeWidth="1dp">
+            android:focusable="true">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -68,7 +64,7 @@
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
                         android:text="@string/aquarium_text_smart_care_suggestions"
-                        android:textColor="?attr/colorOnSurface"
+                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
@@ -80,7 +76,7 @@
                         android:includeFontPadding="false"
                         android:lineSpacingExtra="2dp"
                         android:text="@string/aquarium_text_automatically_create_smart_care_tasks_for_this_tank"
-                        android:textColor="#8FA4BE"
+                        android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="12sp" />
 
                 </LinearLayout>
@@ -96,17 +92,13 @@
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.Aqua.Card.Form"
             android:id="@+id/rowCareReminderNotifications"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:clickable="true"
-            android:focusable="true"
-            app:cardBackgroundColor="#10233A"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:strokeColor="#223A57"
-            app:strokeWidth="1dp">
+            android:focusable="true">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -132,7 +124,7 @@
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
                         android:text="@string/aquarium_text_care_reminder_notifications"
-                        android:textColor="?attr/colorOnSurface"
+                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
@@ -144,7 +136,7 @@
                         android:includeFontPadding="false"
                         android:lineSpacingExtra="2dp"
                         android:text="@string/aquarium_text_send_reminder_notifications_for_this_tank_s_care_tasks"
-                        android:textColor="#8FA4BE"
+                        android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="12sp" />
 
                 </LinearLayout>
@@ -166,21 +158,17 @@
             android:layout_marginTop="26dp"
             android:includeFontPadding="false"
             android:text="@string/aquarium_text_data_management"
-            android:textColor="?attr/colorOnSurface"
+            android:textColor="@color/aqua_card_text_primary"
             android:textSize="14sp" />
 
         <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.Aqua.Card.Form"
             android:id="@+id/rowDuplicateTank"
             android:layout_width="match_parent"
             android:layout_height="60dp"
             android:layout_marginTop="12dp"
             android:clickable="true"
-            android:focusable="true"
-            app:cardBackgroundColor="#10233A"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:strokeColor="#223A57"
-            app:strokeWidth="1dp">
+            android:focusable="true">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -196,7 +184,7 @@
                     android:layout_weight="1"
                     android:includeFontPadding="false"
                     android:text="@string/aquarium_text_duplicate_tank"
-                    android:textColor="?attr/colorOnSurface"
+                    android:textColor="@color/aqua_card_text_primary"
                     android:textSize="14sp"
                     android:textStyle="bold" />
 
@@ -213,17 +201,13 @@
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.Aqua.Card.Form"
             android:id="@+id/rowExportTankData"
             android:layout_width="match_parent"
             android:layout_height="60dp"
             android:layout_marginTop="10dp"
             android:clickable="true"
-            android:focusable="true"
-            app:cardBackgroundColor="#10233A"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:strokeColor="#223A57"
-            app:strokeWidth="1dp">
+            android:focusable="true">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -239,7 +223,7 @@
                     android:layout_weight="1"
                     android:includeFontPadding="false"
                     android:text="@string/aquarium_text_export_tank_data"
-                    android:textColor="?attr/colorOnSurface"
+                    android:textColor="@color/aqua_card_text_primary"
                     android:textSize="14sp"
                     android:textStyle="bold" />
 

@@ -46,7 +46,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/usage_subinfo"
-                android:textColor="@color/settings_text_secondary"
+                android:textColor="@color/aqua_card_text_secondary"
                 android:textSize="14sp"
                 android:gravity="center"
                 android:lineSpacingExtra="4dp"
@@ -59,7 +59,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                style="@style/Widget.Aqua.CardStyles">
+                style="@style/Widget.Aqua.Card">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -73,7 +73,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/usage_summary_title"
-                        android:textColor="@android:color/white"
+                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold"
                         android:layout_marginBottom="8dp" />
@@ -95,7 +95,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/usage_7d_automation_label"
-                                android:textColor="@color/settings_text_secondary"
+                                android:textColor="@color/aqua_card_text_secondary"
                                 android:textSize="12sp" />
 
                             <TextView
@@ -104,7 +104,7 @@
                                 android:layout_height="wrap_content"
                                 android:text=""
                                 tools:text="42"
-                                android:textColor="@android:color/white"
+                                android:textColor="@color/aqua_card_text_primary"
                                 android:textSize="18sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
@@ -121,7 +121,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/usage_7d_alerts_label"
-                                android:textColor="@color/settings_text_secondary"
+                                android:textColor="@color/aqua_card_text_secondary"
                                 android:textSize="12sp" />
 
                             <TextView
@@ -130,7 +130,7 @@
                                 android:layout_height="wrap_content"
                                 android:text=""
                                 tools:text="3"
-                                android:textColor="@android:color/white"
+                                android:textColor="@color/aqua_card_text_primary"
                                 android:textSize="18sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
@@ -144,7 +144,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                style="@style/Widget.Aqua.CardStyles">
+                style="@style/Widget.Aqua.Card">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -158,7 +158,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/usage_today_title"
-                        android:textColor="@android:color/white"
+                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold"
                         android:layout_marginBottom="8dp" />
@@ -180,7 +180,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/usage_today_automation_label"
-                                android:textColor="@color/settings_text_secondary"
+                                android:textColor="@color/aqua_card_text_secondary"
                                 android:textSize="12sp" />
 
                             <TextView
@@ -189,7 +189,7 @@
                                 android:layout_height="wrap_content"
                                 android:text=""
                                 tools:text="6"
-                                android:textColor="@android:color/white"
+                                android:textColor="@color/aqua_card_text_primary"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
@@ -206,7 +206,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/usage_today_manual_label"
-                                android:textColor="@color/settings_text_secondary"
+                                android:textColor="@color/aqua_card_text_secondary"
                                 android:textSize="12sp" />
 
                             <TextView
@@ -215,7 +215,7 @@
                                 android:layout_height="wrap_content"
                                 android:text=""
                                 tools:text="2"
-                                android:textColor="@android:color/white"
+                                android:textColor="@color/aqua_card_text_primary"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
@@ -229,7 +229,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                style="@style/Widget.Aqua.CardStyles">
+                style="@style/Widget.Aqua.Card">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -243,7 +243,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/usage_last_activity_title"
-                        android:textColor="@android:color/white"
+                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold"
                         android:layout_marginBottom="8dp" />
@@ -253,7 +253,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/usage_last_event_time_label"
-                        android:textColor="@color/settings_text_secondary"
+                        android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="12sp" />
 
                     <TextView
@@ -262,7 +262,7 @@
                         android:layout_height="wrap_content"
                         android:text=""
                         tools:text="Today, 21:34"
-                        android:textColor="@android:color/white"
+                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="14sp"
                         android:layout_marginBottom="8dp" />
 
@@ -271,7 +271,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/usage_last_event_label"
-                        android:textColor="@color/settings_text_secondary"
+                        android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="12sp" />
 
                     <TextView
@@ -280,7 +280,7 @@
                         android:layout_height="wrap_content"
                         android:text=""
                         tools:text="Lighting • Evening schedule turned ON"
-                        android:textColor="@android:color/white"
+                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="14sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -290,7 +290,7 @@
                 android:id="@+id/cardUsageInfo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                style="@style/Widget.Aqua.CardStyles">
+                style="@style/Widget.Aqua.Card">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -304,7 +304,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/usage_privacy_title"
-                        android:textColor="@android:color/white"
+                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold"
                         android:layout_marginBottom="4dp" />
@@ -314,7 +314,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/usage_privacy_body"
-                        android:textColor="@color/settings_text_secondary"
+                        android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="13sp"
                         android:lineSpacingExtra="3dp" />
                 </LinearLayout>

@@ -46,7 +46,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                style="@style/Widget.Aqua.CardStyles">
+                style="@style/Widget.Aqua.Card">
 
                 <LinearLayout
                     android:orientation="horizontal"
@@ -66,7 +66,7 @@
                             android:id="@+id/tvNotificationsTitle"
                             android:text="@string/settings_notifications_title"
                             android:textSize="14sp"
-                            android:textColor="@android:color/white"
+                            android:textColor="@color/aqua_card_text_primary"
                             android:textStyle="bold"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -76,7 +76,7 @@
                             android:id="@+id/tvNotificationsSubtitle"
                             android:text="@string/settings_notifications_subtitle"
                             android:textSize="12sp"
-                            android:textColor="@color/settings_text_secondary"
+                            android:textColor="@color/aqua_card_text_secondary"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content" />
                     </LinearLayout>
@@ -94,7 +94,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                style="@style/Widget.Aqua.CardStyles">
+                style="@style/Widget.Aqua.Card">
 
                 <LinearLayout
                     android:orientation="horizontal"
@@ -114,7 +114,7 @@
                             android:id="@+id/tvAutoUpdateTitle"
                             android:text="@string/settings_autoupdate_title"
                             android:textSize="14sp"
-                            android:textColor="@android:color/white"
+                            android:textColor="@color/aqua_card_text_primary"
                             android:textStyle="bold"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -124,7 +124,7 @@
                             android:id="@+id/tvAutoUpdateSubtitle"
                             android:text="@string/settings_autoupdate_subtitle"
                             android:textSize="12sp"
-                            android:textColor="@color/settings_text_secondary"
+                            android:textColor="@color/aqua_card_text_secondary"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content" />
                     </LinearLayout>
@@ -142,7 +142,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                style="@style/Widget.Aqua.CardStyles"
+                style="@style/Widget.Aqua.Card"
                 android:clickable="true"
                 android:focusable="true"
                 android:contentDescription="@string/settings_theme_section_description">
@@ -164,7 +164,7 @@
                             android:id="@+id/tvThemeTitle"
                             android:text="@string/settings_theme_title"
                             android:textSize="14sp"
-                            android:textColor="@android:color/white"
+                            android:textColor="@color/aqua_card_text_primary"
                             android:textStyle="bold"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content" />
@@ -173,7 +173,7 @@
                             android:id="@+id/tvThemeSummary"
                             android:text="@string/settings_theme_summary_light"
                             android:textSize="12sp"
-                            android:textColor="@color/settings_text_secondary"
+                            android:textColor="@color/aqua_card_text_secondary"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content" />
                     </LinearLayout>
@@ -182,7 +182,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@drawable/ic_arrow_right"
-                        app:tint="@color/settings_text_secondary"
+                        app:tint="@color/aqua_card_text_secondary"
                         android:contentDescription="@string/settings_theme_arrow_description" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -193,7 +193,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                style="@style/Widget.Aqua.CardStyles"
+                style="@style/Widget.Aqua.Card"
                 android:clickable="true"
                 android:focusable="true"
                 android:contentDescription="@string/settings_language_section_description">
@@ -215,7 +215,7 @@
                             android:id="@+id/tvLanguageSummary"
                             android:text="@string/settings_language_title"
                             android:textSize="14sp"
-                            android:textColor="@android:color/white"
+                            android:textColor="@color/aqua_card_text_primary"
                             android:textStyle="bold"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content" />
@@ -224,7 +224,7 @@
                             android:id="@+id/tvLanguageSubtitle"
                             android:text="@string/settings_language_subtitle"
                             android:textSize="12sp"
-                            android:textColor="@color/settings_text_secondary"
+                            android:textColor="@color/aqua_card_text_secondary"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content" />
                     </LinearLayout>
@@ -234,7 +234,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@drawable/ic_arrow_right"
-                        app:tint="@color/settings_text_secondary"
+                        app:tint="@color/aqua_card_text_secondary"
                         android:contentDescription="@string/settings_language_arrow_description" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -245,7 +245,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
-    style="@style/Widget.Aqua.CardStyles"
+    style="@style/Widget.Aqua.Card"
     android:clickable="true"
     android:focusable="true"
     android:contentDescription="@string/settings_backup_restore_section_description">
@@ -267,7 +267,7 @@
                 android:id="@+id/tvBackupRestoreTitle"
                 android:text="@string/settings_backup_restore_title"
                 android:textSize="14sp"
-                android:textColor="@android:color/white"
+                android:textColor="@color/aqua_card_text_primary"
                 android:textStyle="bold"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
@@ -276,7 +276,7 @@
                 android:id="@+id/tvBackupRestoreSubtitle"
                 android:text="@string/settings_backup_restore_subtitle"
                 android:textSize="12sp"
-                android:textColor="@color/settings_text_secondary"
+                android:textColor="@color/aqua_card_text_secondary"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
         </LinearLayout>
@@ -286,7 +286,7 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/ic_arrow_right"
-            app:tint="@color/settings_text_secondary"
+            app:tint="@color/aqua_card_text_secondary"
             android:contentDescription="@string/settings_backup_restore_arrow_description" />
 
     </LinearLayout>
@@ -299,7 +299,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                style="@style/Widget.Aqua.CardStyles"
+                style="@style/Widget.Aqua.Card"
                 android:clickable="true"
                 android:focusable="true"
                 android:contentDescription="@string/settings_about_section_description">
@@ -321,7 +321,7 @@
                             android:id="@+id/tvAboutTitle"
                             android:text="@string/settings_about_title"
                             android:textSize="14sp"
-                            android:textColor="@android:color/white"
+                            android:textColor="@color/aqua_card_text_primary"
                             android:textStyle="bold"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content" />
@@ -330,7 +330,7 @@
                             android:id="@+id/tvAboutSubtitle"
                             android:text="@string/settings_about_subtitle"
                             android:textSize="12sp"
-                            android:textColor="@color/settings_text_secondary"
+                            android:textColor="@color/aqua_card_text_secondary"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content" />
                     </LinearLayout>
@@ -340,7 +340,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@drawable/ic_arrow_right"
-                        app:tint="@color/settings_text_secondary"
+                        app:tint="@color/aqua_card_text_secondary"
                         android:contentDescription="@string/settings_about_arrow_description" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

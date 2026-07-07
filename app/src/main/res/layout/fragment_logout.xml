@@ -44,7 +44,7 @@
                 android:id="@+id/cardAccountActions"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                style="@style/Widget.Aqua.CardStyles">
+                style="@style/Widget.Aqua.Card">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -68,14 +68,14 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/account_settings_change_password"
-                            android:textColor="@color/settings_text_secondary"
+                            android:textColor="@color/aqua_card_text_secondary"
                             android:textSize="14sp"/>
 
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:src="@drawable/ic_arrow_right"
-                            app:tint="@color/settings_text_secondary"
+                            app:tint="@color/aqua_card_text_secondary"
                             android:contentDescription="@string/settings_arrow_desc"/>
                     </LinearLayout>
 
@@ -101,14 +101,14 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/account_settings_change_email"
-                            android:textColor="@color/settings_text_secondary"
+                            android:textColor="@color/aqua_card_text_secondary"
                             android:textSize="14sp"/>
 
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:src="@drawable/ic_arrow_right"
-                            app:tint="@color/settings_text_secondary"
+                            app:tint="@color/aqua_card_text_secondary"
                             android:contentDescription="@string/settings_arrow_desc"/>
                     </LinearLayout>
 
@@ -134,14 +134,14 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/account_settings_security_settings"
-                            android:textColor="@color/settings_text_secondary"
+                            android:textColor="@color/aqua_card_text_secondary"
                             android:textSize="14sp"/>
 
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:src="@drawable/ic_arrow_right"
-                            app:tint="@color/settings_text_secondary"
+                            app:tint="@color/aqua_card_text_secondary"
                             android:contentDescription="@string/settings_arrow_desc"/>
                     </LinearLayout>
 

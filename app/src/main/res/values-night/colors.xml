@@ -36,13 +36,11 @@
 
    <!-- 🔤 Auth metin & border renkleri (DARK THEME) -->
 <color name="auth_text_color">@android:color/white</color>
-<color name="auth_unfocused_color">@color/settings_text_secondary</color>
+<color name="auth_unfocused_color">@color/aqua_card_text_secondary</color>
 <color name="auth_focus_color">#1E90FF</color>
 
     <!-- 🧾 Settings ekranı -->
     <color name="background_color">#0A192F</color>              <!-- Ana arka plan -->
-    <color name="settings_card_background">#112240</color>      <!-- Kart arka planı -->
-    <color name="settings_text_secondary">#A0A0A0</color>       <!-- İkincil metin -->
     <color name="settings_divider">#223355</color>              <!-- Divider çizgisi -->
 
     <!-- ⬇️ Bottom Navigation -->

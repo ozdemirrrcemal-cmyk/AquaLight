@@ -52,7 +52,7 @@
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardProfile"
-                style="@style/Widget.Aqua.CardStyles"
+                style="@style/Widget.Aqua.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp">
@@ -90,7 +90,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:text="@string/user_info_name_default"
-                        android:textColor="@android:color/white"
+                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -100,7 +100,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
                         android:text="@string/user_info_email_default"
-                        android:textColor="@color/settings_text_secondary"
+                        android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="14sp" />
 
                 </LinearLayout>
@@ -111,7 +111,7 @@
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardUsername"
-                style="@style/Widget.Aqua.CardStyles"
+                style="@style/Widget.Aqua.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp">
@@ -128,7 +128,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/user_info_username_hint"
-                        android:textColor="@color/settings_text_secondary"
+                        android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="11sp" />
 
                     <!-- INPUT -->
@@ -144,7 +144,7 @@
                         android:maxLength="20"
                         android:maxLines="1"
                         android:padding="0dp"
-                        android:textColor="@android:color/white"
+                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold"
                         android:contentDescription="@string/user_info_username_desc" />
@@ -169,7 +169,7 @@
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardAddress"
-                style="@style/Widget.Aqua.CardStyles"
+                style="@style/Widget.Aqua.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
@@ -190,14 +190,14 @@
                         android:layout_marginEnd="12dp"
                         android:contentDescription="@string/user_info_location_icon_desc"
                         android:src="@drawable/ic_location"
-                        app:tint="@color/settings_text_secondary" />
+                        app:tint="@color/aqua_card_text_secondary" />
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/user_info_address_label"
-                        android:textColor="@color/settings_text_secondary"
+                        android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="16sp" />
 
                     <ImageView
@@ -205,7 +205,7 @@
                         android:layout_height="20dp"
                         android:contentDescription="@string/user_info_arrow_desc"
                         android:src="@drawable/ic_arrow_right"
-                        app:tint="@color/settings_text_secondary" />
+                        app:tint="@color/aqua_card_text_secondary" />
 
                 </LinearLayout>
 

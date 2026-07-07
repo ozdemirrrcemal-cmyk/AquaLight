@@ -38,16 +38,12 @@
         android:rowCount="2">
 
         <com.google.android.material.card.MaterialCardView
+          style="@style/Widget.Aqua.Card.Metric"
           android:layout_width="0dp"
           android:layout_height="74dp"
           android:layout_columnWeight="1"
           android:layout_marginEnd="7dp"
-          android:layout_marginBottom="8dp"
-          app:cardBackgroundColor="#10233A"
-          app:cardCornerRadius="16dp"
-          app:cardElevation="0dp"
-          app:strokeColor="#223A57"
-          app:strokeWidth="1dp">
+          android:layout_marginBottom="8dp">
 
           <LinearLayout
             android:layout_width="match_parent"
@@ -63,7 +59,7 @@
               android:gravity="center"
               android:includeFontPadding="false"
               android:text="@string/aquarium_text_last_trim"
-              android:textColor="#8FA4BE"
+              android:textColor="@color/aqua_card_text_secondary"
               android:textSize="12sp" />
 
             <TextView
@@ -83,16 +79,12 @@
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
+          style="@style/Widget.Aqua.Card.Metric"
           android:layout_width="0dp"
           android:layout_height="74dp"
           android:layout_columnWeight="1"
           android:layout_marginStart="7dp"
-          android:layout_marginBottom="8dp"
-          app:cardBackgroundColor="#10233A"
-          app:cardCornerRadius="16dp"
-          app:cardElevation="0dp"
-          app:strokeColor="#223A57"
-          app:strokeWidth="1dp">
+          android:layout_marginBottom="8dp">
 
           <LinearLayout
             android:layout_width="match_parent"
@@ -108,7 +100,7 @@
               android:gravity="center"
               android:includeFontPadding="false"
               android:text="@string/aquarium_text_last_water_change"
-              android:textColor="#8FA4BE"
+              android:textColor="@color/aqua_card_text_secondary"
               android:textSize="12sp" />
 
             <TextView
@@ -128,15 +120,11 @@
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
+          style="@style/Widget.Aqua.Card.Metric"
           android:layout_width="0dp"
           android:layout_height="74dp"
           android:layout_columnWeight="1"
-          android:layout_marginEnd="7dp"
-          app:cardBackgroundColor="#10233A"
-          app:cardCornerRadius="16dp"
-          app:cardElevation="0dp"
-          app:strokeColor="#223A57"
-          app:strokeWidth="1dp">
+          android:layout_marginEnd="7dp">
 
           <LinearLayout
             android:layout_width="match_parent"
@@ -152,7 +140,7 @@
               android:gravity="center"
               android:includeFontPadding="false"
               android:text="@string/aquarium_text_next_care"
-              android:textColor="#8FA4BE"
+              android:textColor="@color/aqua_card_text_secondary"
               android:textSize="11sp" />
 
             <TextView
@@ -179,7 +167,7 @@
               android:includeFontPadding="false"
               android:maxLines="1"
               android:text="@string/aquarium_text_value"
-              android:textColor="#8FA4BE"
+              android:textColor="@color/aqua_card_text_secondary"
               android:textSize="10.4sp" />
 
           </LinearLayout>
@@ -187,15 +175,11 @@
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
+          style="@style/Widget.Aqua.Card.Metric"
           android:layout_width="0dp"
           android:layout_height="74dp"
           android:layout_columnWeight="1"
-          android:layout_marginStart="7dp"
-          app:cardBackgroundColor="#10233A"
-          app:cardCornerRadius="16dp"
-          app:cardElevation="0dp"
-          app:strokeColor="#223A57"
-          app:strokeWidth="1dp">
+          android:layout_marginStart="7dp">
 
           <LinearLayout
             android:layout_width="match_parent"
@@ -211,7 +195,7 @@
               android:gravity="center"
               android:includeFontPadding="false"
               android:text="@string/aquarium_text_last_filter_main"
-              android:textColor="#8FA4BE"
+              android:textColor="@color/aqua_card_text_secondary"
               android:textSize="12sp" />
 
             <TextView
@@ -239,7 +223,7 @@
         android:layout_marginTop="16dp"
         android:includeFontPadding="false"
         android:text="@string/aquarium_text_timeline"
-        android:textColor="?attr/colorOnSurface"
+        android:textColor="@color/aqua_card_text_primary"
         android:textSize="15sp"
         android:textStyle="bold" />
 
@@ -251,7 +235,7 @@
         android:gravity="center"
         android:includeFontPadding="false"
         android:text="@string/aquarium_no_activity_yet"
-        android:textColor="#8FA4BE"
+        android:textColor="@color/aqua_card_text_secondary"
         android:textSize="13sp"
         android:visibility="gone" />
 
@@ -317,7 +301,7 @@
         android:gravity="center_vertical"
         android:includeFontPadding="false"
         android:text="@string/aquarium_text_add_activity"
-        android:textColor="?attr/colorOnSurface"
+        android:textColor="@color/aqua_card_text_primary"
         android:textSize="13sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

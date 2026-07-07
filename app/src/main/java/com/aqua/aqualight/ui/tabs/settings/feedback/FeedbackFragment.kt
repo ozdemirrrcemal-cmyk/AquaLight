@@ -346,28 +346,28 @@ class FeedbackFragment :
             tvScreenshotInfo.setTextColor(
                 ContextCompat.getColor(
                     requireContext(),
-                    R.color.settings_text_secondary
+                    R.color.aqua_card_text_secondary
                 )
             )
 
             ivScreenshotIcon.setColorFilter(
                 ContextCompat.getColor(
                     requireContext(),
-                    R.color.settings_text_secondary
+                    R.color.aqua_card_text_secondary
                 )
             )
 
             ivScreenshotClear.setColorFilter(
                 ContextCompat.getColor(
                     requireContext(),
-                    R.color.settings_text_secondary
+                    R.color.aqua_card_text_secondary
                 )
             )
 
             cardScreenshot.strokeColor =
                 ContextCompat.getColor(
                     requireContext(),
-                    R.color.card_stroke
+                    R.color.aqua_card_outline_subtle
                 )
         }
 

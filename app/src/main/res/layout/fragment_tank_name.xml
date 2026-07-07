@@ -24,20 +24,16 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:text="@string/aquarium_text_give_your_aquarium_a_clear_and_recognizable_name_this_name_w"
-            android:textColor="#8FA4BE"
+            android:textColor="@color/aqua_card_text_secondary"
             android:textSize="14sp"
             android:lineSpacingExtra="3dp" />
 
         <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.Aqua.Card.Form"
             android:id="@+id/cardTankName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="34dp"
-            app:cardBackgroundColor="#10233A"
-            app:cardCornerRadius="22dp"
-            app:cardElevation="0dp"
-            app:strokeColor="#223A57"
-            app:strokeWidth="1dp">
+            android:layout_marginTop="34dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -50,7 +46,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/aquarium_name_field_title"
-                    android:textColor="?attr/colorOnSurface"
+                    android:textColor="@color/aqua_card_text_primary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
@@ -60,7 +56,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="@string/aquarium_text_example_living_room_tank_planted_120_shrimp_tank"
-                    android:textColor="#7F91AA"
+                    android:textColor="@color/aqua_card_text_secondary"
                     android:textSize="13sp"
                     android:lineSpacingExtra="2dp" />
 
@@ -90,7 +86,7 @@
                         android:maxLength="32"
                         android:minHeight="58dp"
                         android:singleLine="true"
-                        android:textColor="?attr/colorOnSurface"
+                        android:textColor="@color/aqua_card_text_primary"
                         android:textColorHint="@color/aqua_input_hint_unfocused"
                         android:textCursorDrawable="@null"
                         android:textSize="16sp" />
@@ -102,15 +98,11 @@
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.Aqua.Card.Info"
             android:id="@+id/cardInfo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            app:cardBackgroundColor="#0D1D31"
-            app:cardCornerRadius="18dp"
-            app:cardElevation="0dp"
-            app:strokeColor="#1A304C"
-            app:strokeWidth="1dp">
+            android:layout_marginTop="18dp">
 
             <TextView
                 android:id="@+id/tvNameInfo"
@@ -118,7 +110,7 @@
                 android:layout_height="wrap_content"
                 android:padding="16dp"
                 android:text="@string/aquarium_text_you_can_change_this_name_later_from_aquarium_settings"
-                android:textColor="#8FA4BE"
+                android:textColor="@color/aqua_card_text_secondary"
                 android:textSize="13sp"
                 android:lineSpacingExtra="2dp" />
 

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Widget.Aqua.Card" parent="Widget.MaterialComponents.CardView">
+        <item name="cardBackgroundColor">@color/aqua_card_surface</item>
+        <item name="cardCornerRadius">18dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="cardUseCompatPadding">false</item>
+        <item name="strokeColor">@color/aqua_card_outline</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="rippleColor">@color/aqua_card_surface_pressed</item>
+    </style>
+
+    <style name="Widget.Aqua.Card.Elevated" parent="Widget.Aqua.Card">
+        <item name="cardBackgroundColor">@color/aqua_card_surface_elevated</item>
+        <item name="strokeColor">@color/aqua_card_outline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+    <style name="Widget.Aqua.Card.Grouped" parent="Widget.Aqua.Card">
+        <item name="cardBackgroundColor">@color/aqua_card_surface_grouped</item>
+        <item name="cardCornerRadius">18dp</item>
+        <item name="strokeColor">@color/aqua_card_outline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+    <style name="Widget.Aqua.Card.Metric" parent="Widget.Aqua.Card">
+        <item name="cardBackgroundColor">@color/aqua_card_metric_surface</item>
+        <item name="cardCornerRadius">16dp</item>
+        <item name="strokeColor">@color/aqua_card_metric_outline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+    <style name="Widget.Aqua.Card.Selection" parent="Widget.Aqua.Card">
+        <item name="cardBackgroundColor">@color/aqua_card_surface</item>
+        <item name="strokeColor">@color/aqua_card_accent</item>
+        <item name="strokeWidth">2dp</item>
+    </style>
+
+    <style name="Widget.Aqua.Card.Danger" parent="Widget.Aqua.Card">
+        <item name="cardBackgroundColor">@color/aqua_card_danger_container</item>
+        <item name="strokeColor">@color/aqua_card_danger_outline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+
+    <style name="Widget.Aqua.Card.Device" parent="Widget.Aqua.Card">
+        <item name="cardBackgroundColor">@color/aqua_card_device_surface</item>
+        <item name="cardCornerRadius">24dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeColor">@color/aqua_card_device_outline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+    <style name="Widget.Aqua.Card.Device.Media" parent="Widget.Aqua.Card">
+        <item name="cardBackgroundColor">@color/aqua_card_device_media_surface</item>
+        <item name="cardCornerRadius">18dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeColor">@color/aqua_card_device_media_outline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+
+    <style name="Widget.Aqua.Card.Device.Section" parent="Widget.Aqua.Card">
+        <item name="cardBackgroundColor">@color/aqua_card_device_section_surface</item>
+        <item name="cardCornerRadius">20dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeColor">@color/aqua_card_device_section_outline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+    <style name="Widget.Aqua.Card.Device.Highlight" parent="Widget.Aqua.Card.Device.Section">
+        <item name="cardBackgroundColor">@color/aqua_card_device_highlight_surface</item>
+        <item name="strokeColor">@color/aqua_card_device_highlight_outline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+
+    <style name="Widget.Aqua.Card.Form" parent="Widget.Aqua.Card">
+        <item name="cardBackgroundColor">@color/aqua_card_form_surface</item>
+        <item name="cardCornerRadius">22dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeColor">@color/aqua_card_form_outline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+    <style name="Widget.Aqua.Card.Info" parent="Widget.Aqua.Card">
+        <item name="cardBackgroundColor">@color/aqua_card_info_surface</item>
+        <item name="cardCornerRadius">18dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeColor">@color/aqua_card_info_outline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+    <style name="Widget.Aqua.Card.Warning" parent="Widget.Aqua.Card.Form" />
+
+    <style name="Widget.Aqua.Card.IconAccent" parent="Widget.Aqua.Card">
+        <item name="cardBackgroundColor">@color/aqua_card_icon_accent_surface</item>
+        <item name="cardCornerRadius">14dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeColor">@color/aqua_card_icon_accent_outline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+
+    <style name="Widget.Aqua.Card.PhotoOverlay" parent="Widget.Aqua.Card">
+        <item name="cardBackgroundColor">@color/aqua_card_photo_overlay_surface</item>
+        <item name="cardCornerRadius">18dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeColor">@color/aqua_card_photo_overlay_outline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+</resources>

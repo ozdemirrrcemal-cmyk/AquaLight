@@ -52,7 +52,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="12dp"
-                    style="@style/Widget.Aqua.CardStyles">
+                    style="@style/Widget.Aqua.Card">
 
                     <LinearLayout
                         android:orientation="horizontal"
@@ -74,7 +74,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/language_turkish"
-                            android:textColor="@android:color/white"
+                            android:textColor="@color/aqua_card_text_primary"
                             android:textSize="14sp"
                             android:textStyle="bold" />
 
@@ -95,7 +95,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="12dp"
-                    style="@style/Widget.Aqua.CardStyles">
+                    style="@style/Widget.Aqua.Card">
 
                     <LinearLayout
                         android:orientation="horizontal"
@@ -117,7 +117,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/language_english"
-                            android:textColor="@android:color/white"
+                            android:textColor="@color/aqua_card_text_primary"
                             android:textSize="14sp"
                             android:textStyle="bold" />
 
@@ -138,7 +138,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="12dp"
-                    style="@style/Widget.Aqua.CardStyles">
+                    style="@style/Widget.Aqua.Card">
 
                     <LinearLayout
                         android:orientation="horizontal"
@@ -160,7 +160,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/language_german"
-                            android:textColor="@android:color/white"
+                            android:textColor="@color/aqua_card_text_primary"
                             android:textSize="14sp"
                             android:textStyle="bold" />
 
@@ -181,7 +181,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="12dp"
-                    style="@style/Widget.Aqua.CardStyles">
+                    style="@style/Widget.Aqua.Card">
 
                     <LinearLayout
                         android:orientation="horizontal"
@@ -203,7 +203,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/language_french"
-                            android:textColor="@android:color/white"
+                            android:textColor="@color/aqua_card_text_primary"
                             android:textSize="14sp"
                             android:textStyle="bold" />
 
@@ -224,7 +224,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="12dp"
-                    style="@style/Widget.Aqua.CardStyles">
+                    style="@style/Widget.Aqua.Card">
 
                     <LinearLayout
                         android:orientation="horizontal"
@@ -246,7 +246,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/language_russian"
-                            android:textColor="@android:color/white"
+                            android:textColor="@color/aqua_card_text_primary"
                             android:textSize="14sp"
                             android:textStyle="bold" />
 
@@ -267,7 +267,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="12dp"
-                    style="@style/Widget.Aqua.CardStyles">
+                    style="@style/Widget.Aqua.Card">
 
                     <LinearLayout
                         android:orientation="horizontal"
@@ -289,7 +289,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/language_chinese"
-                            android:textColor="@android:color/white"
+                            android:textColor="@color/aqua_card_text_primary"
                             android:textSize="14sp"
                             android:textStyle="bold" />
 

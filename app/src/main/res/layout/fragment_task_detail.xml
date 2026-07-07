@@ -37,14 +37,10 @@
             android:orientation="vertical">
 
             <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Aqua.Card.Form"
                 android:id="@+id/summaryCard"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:cardBackgroundColor="#10233A"
-                app:cardCornerRadius="22dp"
-                app:cardElevation="0dp"
-                app:strokeColor="#223A57"
-                app:strokeWidth="1dp">
+                android:layout_height="wrap_content">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -115,7 +111,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="7dp"
                             android:includeFontPadding="false"
-                            android:textColor="#8FA4BE"
+                            android:textColor="@color/aqua_card_text_secondary"
                             android:textSize="12sp" />
 
                     </LinearLayout>
@@ -187,14 +183,10 @@
                 android:textStyle="bold" />
 
             <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Aqua.Card.Form"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="9dp"
-                app:cardBackgroundColor="#10233A"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeColor="#223A57"
-                app:strokeWidth="1dp">
+                android:layout_marginTop="9dp">
 
                 <TextView
                     android:id="@+id/tvDescriptionValue"
@@ -224,15 +216,11 @@
                 android:textStyle="bold" />
 
             <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Aqua.Card.Form"
                 android:id="@+id/noteCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="9dp"
-                app:cardBackgroundColor="#10233A"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeColor="#223A57"
-                app:strokeWidth="1dp">
+                android:layout_marginTop="9dp">
 
                 <TextView
                     android:id="@+id/tvNoteValue"
@@ -293,7 +281,7 @@
                 android:textStyle="bold"
                 app:backgroundTint="#10233A"
                 app:cornerRadius="16dp"
-                app:strokeColor="#5A2A35"
+                app:strokeColor="@color/aqua_card_danger_outline"
                 app:strokeWidth="1dp" />
 
         </LinearLayout>

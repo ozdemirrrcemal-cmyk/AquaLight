@@ -35,7 +35,7 @@
                 android:layout_weight="1"
                 android:includeFontPadding="false"
                 android:text="@string/aquarium_tank_life_title"
-                android:textColor="?attr/colorOnSurface"
+                android:textColor="@color/aqua_card_text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -53,7 +53,7 @@
                 android:paddingBottom="0dp"
                 android:text="@string/aquarium_action_add"
                 android:textAllCaps="false"
-                android:textColor="?attr/colorOnSurface"
+                android:textColor="@color/aqua_card_text_primary"
                 android:textSize="12sp"
                 android:textStyle="bold"
                 android:contentDescription="@string/devices_scan_button_desc"
@@ -69,19 +69,15 @@
             android:layout_marginTop="8dp"
             android:includeFontPadding="false"
             android:text="@string/aquarium_no_livestock_yet"
-            android:textColor="#8FA4BE"
+            android:textColor="@color/aqua_card_text_secondary"
             android:textSize="13sp" />
 
         <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.Aqua.Card"
             android:id="@+id/cardTankLifeEmpty"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardBackgroundColor="#10233A"
-            app:cardCornerRadius="18dp"
-            app:cardElevation="0dp"
-            app:strokeColor="#223A57"
-            app:strokeWidth="1dp">
+            android:layout_marginTop="16dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -100,7 +96,7 @@
                     android:gravity="center"
                     android:includeFontPadding="false"
                     android:text="@string/aquarium_no_livestock_added"
-                    android:textColor="?attr/colorOnSurface"
+                    android:textColor="@color/aqua_card_text_primary"
                     android:textSize="15sp"
                     android:textStyle="bold" />
 
@@ -113,7 +109,7 @@
                     android:includeFontPadding="false"
                     android:lineSpacingExtra="3dp"
                     android:text="@string/aquarium_text_add_fish_shrimp_coral_or_other_livestock_living_in_this_aqua"
-                    android:textColor="#8FA4BE"
+                    android:textColor="@color/aqua_card_text_secondary"
                     android:textSize="13sp" />
 
                 <com.google.android.material.button.MaterialButton
@@ -125,7 +121,7 @@
                     android:insetBottom="0dp"
                     android:text="@string/aquarium_action_add_livestock"
                     android:textAllCaps="false"
-                    android:textColor="?attr/colorOnSurface"
+                    android:textColor="@color/aqua_card_text_primary"
                     android:textSize="13sp"
                     android:textStyle="bold"
                     app:backgroundTint="#1C3252"

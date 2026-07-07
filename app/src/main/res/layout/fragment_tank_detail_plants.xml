@@ -34,12 +34,12 @@
             android:layout_marginTop="14dp"
             android:text="@string/aquarium_action_add_plant"
             android:textAllCaps="false"
-            android:textColor="#8FA4BE"
+            android:textColor="@color/aqua_card_text_secondary"
             android:textSize="15sp"
             android:textStyle="bold"
             app:backgroundTint="#10233A"
             app:cornerRadius="18dp"
-            app:strokeColor="#223A57"
+            app:strokeColor="@color/aqua_card_metric_outline"
             app:strokeWidth="1dp" />
 
     </LinearLayout>

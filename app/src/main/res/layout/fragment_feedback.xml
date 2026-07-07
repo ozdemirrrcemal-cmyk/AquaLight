@@ -55,7 +55,7 @@
             <!-- 🟦 FORM CARD -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardFeedbackForm"
-                style="@style/Widget.Aqua.CardStyles"
+                style="@style/Widget.Aqua.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
@@ -166,7 +166,7 @@
                     <!-- ATTACHMENT CARD -->
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/cardScreenshot"
-                        style="@style/Widget.Aqua.CardStyles"
+                        style="@style/Widget.Aqua.Card"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
@@ -196,7 +196,7 @@
                                     android:layout_width="24dp"
                                     android:layout_height="24dp"
                                     android:src="@drawable/ic_image"
-                                    app:tint="@color/settings_text_secondary" />
+                                    app:tint="@color/aqua_card_text_secondary" />
 
                                 <TextView
                                     android:id="@+id/tvScreenshotInfo"
@@ -206,7 +206,7 @@
                                     android:layout_weight="1"
                                     android:text="@string/feedback_screenshot_add"
                                     android:textSize="14sp"
-                                    android:textColor="@color/settings_text_secondary" />
+                                    android:textColor="@color/aqua_card_text_secondary" />
 
                                 <ImageView
                                     android:id="@+id/ivScreenshotClear"
@@ -214,7 +214,7 @@
                                     android:layout_height="24dp"
                                     android:src="@drawable/ic_close"
                                     android:visibility="gone"
-                                    app:tint="@color/settings_text_secondary" />
+                                    app:tint="@color/aqua_card_text_secondary" />
 
                             </LinearLayout>
 
