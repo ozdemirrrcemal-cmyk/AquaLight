@@ -9,47 +9,47 @@
 
   <TextView
     android:id="@+id/optionFish"
-    style="@style/AquaSettingsSheetGridOption"
+    style="@style/Widget.Aqua.SelectionRow.GridOption"
     android:text="@string/aquarium_tank_type_fish" />
 
   <TextView
     android:id="@+id/optionShrimp"
-    style="@style/AquaSettingsSheetGridOption"
+    style="@style/Widget.Aqua.SelectionRow.GridOption"
     android:text="@string/aquarium_tank_type_shrimp" />
 
   <TextView
     android:id="@+id/optionPlanted"
-    style="@style/AquaSettingsSheetGridOption"
+    style="@style/Widget.Aqua.SelectionRow.GridOption"
     android:text="@string/aquarium_tank_type_planted" />
 
   <TextView
     android:id="@+id/optionMarine"
-    style="@style/AquaSettingsSheetGridOption"
+    style="@style/Widget.Aqua.SelectionRow.GridOption"
     android:text="@string/aquarium_tank_type_marine" />
 
   <TextView
     android:id="@+id/optionSofties"
-    style="@style/AquaSettingsSheetGridOption"
+    style="@style/Widget.Aqua.SelectionRow.GridOption"
     android:text="@string/aquarium_tank_type_softies" />
 
   <TextView
     android:id="@+id/optionMixedReef"
-    style="@style/AquaSettingsSheetGridOption"
+    style="@style/Widget.Aqua.SelectionRow.GridOption"
     android:text="@string/aquarium_tank_type_mixed_reef" />
 
   <TextView
     android:id="@+id/optionSps"
-    style="@style/AquaSettingsSheetGridOption"
+    style="@style/Widget.Aqua.SelectionRow.GridOption"
     android:text="@string/aquarium_tank_type_sps" />
 
   <TextView
     android:id="@+id/optionCoral"
-    style="@style/AquaSettingsSheetGridOption"
+    style="@style/Widget.Aqua.SelectionRow.GridOption"
     android:text="@string/aquarium_tank_type_coral" />
 
   <TextView
     android:id="@+id/optionOther"
-    style="@style/AquaSettingsSheetGridOption"
+    style="@style/Widget.Aqua.SelectionRow.GridOption"
     android:text="@string/aquarium_tank_type_other" />
 
   <com.google.android.material.button.MaterialButton
@@ -64,7 +64,7 @@
     android:minHeight="0dp"
     android:text="@string/common_save"
     android:textAllCaps="false"
-    android:textColor="@android:color/white"
+    android:textColor="@color/aqua_card_text_primary"
     android:textSize="14sp"
     android:textStyle="bold"
     app:backgroundTint="#2196F3"
@@ -79,7 +79,7 @@
     android:gravity="center"
     android:includeFontPadding="false"
     android:text="@string/common_cancel"
-    android:textColor="#8FA4BE"
+    android:textColor="@color/aqua_card_text_secondary"
     android:textSize="14sp" />
 
 </GridLayout>
