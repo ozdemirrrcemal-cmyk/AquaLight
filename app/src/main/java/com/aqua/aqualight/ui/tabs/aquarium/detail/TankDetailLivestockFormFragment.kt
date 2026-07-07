@@ -311,19 +311,26 @@ Fragment(R.layout.fragment_tank_livestock_form) {
             text = category
             gravity = Gravity.CENTER
             textSize = 13.5f
-            setTextColor(Color.WHITE)
+            isSelected = selected
+            background = ContextCompat.getDrawable(
+                requireContext(),
+                R.drawable.bg_aqua_selection_row_compact
+            )
+            setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    if (selected) {
+                        R.color.aqua_card_text_primary
+                    } else {
+                        R.color.aqua_card_text_secondary
+                    }
+                )
+            )
             setTypeface(
                 null,
                 if (selected) Typeface.BOLD else Typeface.NORMAL
             )
             includeFontPadding = false
-
-            background = createRoundedDrawable(
-                color = if (selected) "#1C3D63" else "#10233A",
-                radiusPx = 15.dp(),
-                strokeColor = if (selected) "#2196F3" else "#223A57",
-                strokeWidthPx = 1.dp()
-            )
 
             val params = GridLayout.LayoutParams().apply {
                 width = 0
