@@ -57,7 +57,7 @@
                     <!-- Eski e-posta -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/inputLayoutCurrentEmail"
-                        style="@style/AuthTextInputLayout"
+                        style="@style/Widget.Aqua.Input.Layout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/change_email_current_hint"
@@ -66,7 +66,7 @@
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etCurrentEmail"
-                            style="@style/AuthEditText"
+                            style="@style/Widget.Aqua.Input.EditText"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="textEmailAddress" />
@@ -75,7 +75,7 @@
                     <!-- Yeni e-posta -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/inputLayoutNewEmail"
-                        style="@style/AuthTextInputLayout"
+                        style="@style/Widget.Aqua.Input.Layout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
@@ -85,7 +85,7 @@
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etNewEmail"
-                            style="@style/AuthEditText"
+                            style="@style/Widget.Aqua.Input.EditText"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="textEmailAddress" />
@@ -94,7 +94,7 @@
                     <!-- Şifre doğrulama -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/inputLayoutPassword"
-                        style="@style/AuthTextInputLayout"
+                        style="@style/Widget.Aqua.Input.Layout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
@@ -105,7 +105,7 @@
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etPassword"
-                            style="@style/AuthEditText"
+                            style="@style/Widget.Aqua.Input.EditText"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="textPassword" />

@@ -39,6 +39,7 @@
                 android:contentDescription="@string/address_info_country_search_hint" />
 
             <EditText
+                style="@style/Widget.Aqua.Input.PlainEditText.Search"
                 android:id="@+id/etSearchCountry"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -47,9 +48,6 @@
                 android:hint="@string/address_info_country_search_hint"
                 android:singleLine="true"
                 android:imeOptions="actionDone"
-                android:textColor="@color/aqua_bottom_sheet_text_primary"
-                android:textColorHint="@color/aqua_bottom_sheet_text_secondary"
-                android:background="@null"
                 android:padding="0dp" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>

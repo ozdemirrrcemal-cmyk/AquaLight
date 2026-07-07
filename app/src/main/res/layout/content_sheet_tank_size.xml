@@ -34,7 +34,7 @@
       android:layout_height="wrap_content"
       android:includeFontPadding="false"
       android:text="@string/aquarium_unit_centimeters"
-      android:textColor="#8FA4BE"
+      android:textColor="@color/aqua_card_text_secondary"
       android:textSize="13.5sp" />
 
   </LinearLayout>
@@ -63,22 +63,17 @@
         android:textStyle="bold" />
 
       <EditText
+        style="@style/Widget.Aqua.Input.PlainEditText.Multiline"
         android:id="@+id/inputWidth"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_marginTop="9dp"
-        android:background="@drawable/bg_settings_sheet_input"
         android:gravity="center_vertical"
         android:includeFontPadding="false"
         android:inputType="numberDecimal"
         android:maxLines="1"
-        android:paddingStart="14dp"
-        android:paddingEnd="14dp"
         android:selectAllOnFocus="true"
-        android:singleLine="true"
-        android:textColor="@android:color/white"
-        android:textColorHint="#8FA4BE"
-        android:textSize="18sp" />
+        android:singleLine="true" />
 
     </LinearLayout>
 
@@ -99,22 +94,17 @@
         android:textStyle="bold" />
 
       <EditText
+        style="@style/Widget.Aqua.Input.PlainEditText.Multiline"
         android:id="@+id/inputLength"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_marginTop="9dp"
-        android:background="@drawable/bg_settings_sheet_input"
         android:gravity="center_vertical"
         android:includeFontPadding="false"
         android:inputType="numberDecimal"
         android:maxLines="1"
-        android:paddingStart="14dp"
-        android:paddingEnd="14dp"
         android:selectAllOnFocus="true"
-        android:singleLine="true"
-        android:textColor="@android:color/white"
-        android:textColorHint="#8FA4BE"
-        android:textSize="18sp" />
+        android:singleLine="true" />
 
     </LinearLayout>
 
@@ -134,22 +124,17 @@
         android:textStyle="bold" />
 
       <EditText
+        style="@style/Widget.Aqua.Input.PlainEditText.Multiline"
         android:id="@+id/inputHeight"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_marginTop="9dp"
-        android:background="@drawable/bg_settings_sheet_input"
         android:gravity="center_vertical"
         android:includeFontPadding="false"
         android:inputType="numberDecimal"
         android:maxLines="1"
-        android:paddingStart="14dp"
-        android:paddingEnd="14dp"
         android:selectAllOnFocus="true"
-        android:singleLine="true"
-        android:textColor="@android:color/white"
-        android:textColorHint="#8FA4BE"
-        android:textSize="18sp" />
+        android:singleLine="true" />
 
     </LinearLayout>
 
@@ -180,7 +165,7 @@
     android:gravity="center"
     android:includeFontPadding="false"
     android:text="@string/common_cancel"
-    android:textColor="#8FA4BE"
+    android:textColor="@color/aqua_card_text_secondary"
     android:textSize="14sp" />
 
 </LinearLayout>

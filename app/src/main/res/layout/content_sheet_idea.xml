@@ -7,23 +7,16 @@
   android:orientation="vertical">
 
   <EditText
+        style="@style/Widget.Aqua.Input.PlainEditText.Multiline"
     android:id="@+id/inputIdea"
     android:layout_width="match_parent"
     android:layout_height="112dp"
-    android:background="@drawable/bg_settings_sheet_input"
     android:gravity="top|start"
     android:hint="@string/aquarium_hint_tank_idea"
     android:includeFontPadding="false"
     android:inputType="textMultiLine"
     android:maxLines="5"
-    android:minLines="4"
-    android:paddingStart="14dp"
-    android:paddingTop="12dp"
-    android:paddingEnd="14dp"
-    android:paddingBottom="12dp"
-    android:textColor="@android:color/white"
-    android:textColorHint="#8FA4BE"
-    android:textSize="14sp" />
+    android:minLines="4" />
 
   <com.google.android.material.button.MaterialButton
     android:id="@+id/btnSave"

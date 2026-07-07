@@ -132,22 +132,18 @@
                             app:tint="#F2F6FA" />
 
                         <EditText
+        style="@style/Widget.Aqua.Input.PlainEditText.Multiline"
                             android:id="@+id/etWifiSsid"
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_marginStart="12dp"
                             android:layout_marginEnd="10dp"
-                            android:background="@null"
                             android:hint="@string/device_wifi_network_hint"
                             android:includeFontPadding="false"
                             android:inputType="text"
                             android:maxLength="32"
                             android:maxLines="1"
-                            android:padding="0dp"
                             android:singleLine="true"
-                            android:textColor="#F2F6FA"
-                            android:textColorHint="#7F91AA"
-                            android:textSize="14sp"
                             android:textStyle="bold"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toStartOf="@id/tvUseCurrentWifiAction"
@@ -173,21 +169,16 @@
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
                     <EditText
+        style="@style/Widget.Aqua.Input.PlainEditText.Multiline"
                         android:id="@+id/etWifiPassword"
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
                         android:layout_marginTop="12dp"
-                        android:background="@drawable/bg_aqua_input"
                         android:hint="@string/device_wifi_password_hint"
                         android:inputType="textPassword"
                         android:maxLength="64"
                         android:maxLines="1"
-                        android:paddingStart="15dp"
-                        android:paddingEnd="15dp"
-                        android:singleLine="true"
-                        android:textColor="#F2F6FA"
-                        android:textColorHint="#7F91AA"
-                        android:textSize="14.5sp" />
+                        android:singleLine="true" />
 
                     <CheckBox
                         android:id="@+id/cbShowPassword"

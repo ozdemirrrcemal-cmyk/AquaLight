@@ -8,7 +8,7 @@
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/emailContainer"
-        style="@style/AuthTextInputLayout"
+        style="@style/Widget.Aqua.Input.Layout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:contentDescription="@string/register_email_field_desc"
@@ -20,7 +20,7 @@
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/emailEditText"
-            style="@style/AuthEditText"
+            style="@style/Widget.Aqua.Input.EditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/register_hint_email"
@@ -30,7 +30,7 @@
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/passwordContainer"
-        style="@style/AuthTextInputLayout"
+        style="@style/Widget.Aqua.Input.Layout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:contentDescription="@string/register_password_field_desc"
@@ -42,7 +42,7 @@
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/passwordEditText"
-            style="@style/AuthEditText"
+            style="@style/Widget.Aqua.Input.EditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/register_hint_password"
@@ -52,7 +52,7 @@
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/passwordRepeatContainer"
-        style="@style/AuthTextInputLayout"
+        style="@style/Widget.Aqua.Input.Layout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:contentDescription="@string/register_password_repeat_field_desc"
@@ -64,7 +64,7 @@
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etPasswordRepeat"
-            style="@style/AuthEditText"
+            style="@style/Widget.Aqua.Input.EditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/register_hint_password_repeat"

@@ -104,7 +104,7 @@
             android:includeFontPadding="false"
             android:maxLines="1"
             android:text="@string/maintenance_required"
-            android:textColor="#6F829B"
+            android:textColor="@color/aqua_card_text_secondary"
             android:textSize="12.5sp" />
 
         </LinearLayout>
@@ -113,7 +113,7 @@
           android:layout_width="22dp"
           android:layout_height="22dp"
           android:src="@drawable/ic_arrow_right"
-          app:tint="#8FA4BE" />
+          app:tint="@color/aqua_card_text_secondary" />
 
       </LinearLayout>
 
@@ -135,19 +135,14 @@
           android:textStyle="bold" />
 
         <EditText
+        style="@style/Widget.Aqua.Input.PlainEditText"
           android:id="@+id/etCustomTitle"
           android:layout_width="match_parent"
           android:layout_height="50dp"
           android:layout_marginTop="9dp"
-          android:background="@drawable/bg_care_input"
           android:hint="@string/maintenance_custom_title_hint"
           android:inputType="textCapSentences"
-          android:paddingStart="14dp"
-          android:paddingEnd="14dp"
-          android:singleLine="true"
-          android:textColor="@android:color/white"
-          android:textColorHint="#8FA4BE"
-          android:textSize="14sp" />
+          android:singleLine="true" />
 
       </LinearLayout>
 
@@ -201,7 +196,7 @@
             android:includeFontPadding="false"
             android:maxLines="1"
             android:text="@string/maintenance_required"
-            android:textColor="#6F829B"
+            android:textColor="@color/aqua_card_text_secondary"
             android:textSize="12.5sp" />
 
         </LinearLayout>
@@ -210,7 +205,7 @@
           android:layout_width="22dp"
           android:layout_height="22dp"
           android:src="@drawable/ic_arrow_right"
-          app:tint="#8FA4BE" />
+          app:tint="@color/aqua_card_text_secondary" />
 
       </LinearLayout>
 
@@ -374,16 +369,14 @@
               android:textSize="13sp" />
 
             <EditText
+        style="@style/Widget.Aqua.Input.PlainEditText.Compact"
               android:id="@+id/etRepeatDays"
               android:layout_width="70dp"
               android:layout_height="42dp"
-              android:background="@drawable/bg_care_input"
               android:gravity="center"
               android:inputType="number"
               android:maxLength="3"
               android:text="@string/maintenance_default_repeat_days"
-              android:textColor="@android:color/white"
-              android:textSize="14sp"
               android:textStyle="bold" />
 
             <TextView
@@ -518,16 +511,14 @@
                 android:textSize="13sp" />
 
               <EditText
+        style="@style/Widget.Aqua.Input.PlainEditText.Compact"
                 android:id="@+id/etMissedReminderDays"
                 android:layout_width="70dp"
                 android:layout_height="42dp"
-                android:background="@drawable/bg_care_input"
                 android:gravity="center"
                 android:inputType="number"
                 android:maxLength="2"
                 android:text="@string/maintenance_default_missed_reminder_days"
-                android:textColor="@android:color/white"
-                android:textSize="14sp"
                 android:textStyle="bold" />
 
               <TextView
@@ -558,23 +549,16 @@
         android:textStyle="bold" />
 
       <EditText
+        style="@style/Widget.Aqua.Input.PlainEditText.Multiline"
         android:id="@+id/etNote"
         android:layout_width="match_parent"
         android:layout_height="112dp"
         android:layout_marginTop="9dp"
-        android:background="@drawable/bg_care_input"
         android:gravity="top|start"
         android:hint="@string/maintenance_note_hint"
         android:inputType="textMultiLine|textCapSentences"
         android:maxLines="5"
-        android:minLines="4"
-        android:paddingStart="14dp"
-        android:paddingTop="12dp"
-        android:paddingEnd="14dp"
-        android:paddingBottom="12dp"
-        android:textColor="@android:color/white"
-        android:textColorHint="#8FA4BE"
-        android:textSize="14sp" />
+        android:minLines="4" />
 
     </LinearLayout>
 

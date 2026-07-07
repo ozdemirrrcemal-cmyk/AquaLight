@@ -4,7 +4,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background_color"
 	android:scrollbars="none"
 	android:overScrollMode="never"
     android:fillViewport="true">
@@ -24,7 +23,6 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:text="@string/aquarium_text_give_your_aquarium_a_clear_and_recognizable_name_this_name_w"
-            android:textColor="@color/aqua_card_text_secondary"
             android:textSize="14sp"
             android:lineSpacingExtra="3dp" />
 
@@ -46,7 +44,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/aquarium_name_field_title"
-                    android:textColor="@color/aqua_card_text_primary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
@@ -56,29 +53,20 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="@string/aquarium_text_example_living_room_tank_planted_120_shrimp_tank"
-                    android:textColor="@color/aqua_card_text_secondary"
                     android:textSize="13sp"
                     android:lineSpacingExtra="2dp" />
 
                 <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.Aqua.Input.Layout"
                     android:id="@+id/tilTankName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="18dp"
                     android:hint="@string/aquarium_tank_name_title"
-                    app:boxBackgroundMode="outline"
-                    app:boxBackgroundColor="@color/aqua_input_background"
-                    app:boxCornerRadiusTopStart="14dp"
-                    app:boxCornerRadiusTopEnd="14dp"
-                    app:boxCornerRadiusBottomStart="14dp"
-                    app:boxCornerRadiusBottomEnd="14dp"
-                    app:boxStrokeColor="@color/aqua_input_stroke_color"
-                    app:boxStrokeWidth="1dp"
-                    app:boxStrokeWidthFocused="2dp"
-                    app:hintTextColor="@color/aqua_input_hint_color"
                     app:errorEnabled="true">
 
                     <com.google.android.material.textfield.TextInputEditText
+                        style="@style/Widget.Aqua.Input.EditText"
                         android:id="@+id/etTankName"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -86,9 +74,6 @@
                         android:maxLength="32"
                         android:minHeight="58dp"
                         android:singleLine="true"
-                        android:textColor="@color/aqua_card_text_primary"
-                        android:textColorHint="@color/aqua_input_hint_unfocused"
-                        android:textCursorDrawable="@null"
                         android:textSize="16sp" />
 
                 </com.google.android.material.textfield.TextInputLayout>
@@ -110,7 +95,6 @@
                 android:layout_height="wrap_content"
                 android:padding="16dp"
                 android:text="@string/aquarium_text_you_can_change_this_name_later_from_aquarium_settings"
-                android:textColor="@color/aqua_card_text_secondary"
                 android:textSize="13sp"
                 android:lineSpacingExtra="2dp" />
 
