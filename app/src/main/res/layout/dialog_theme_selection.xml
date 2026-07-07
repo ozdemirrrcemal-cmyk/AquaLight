@@ -56,7 +56,6 @@
                 android:layout_height="wrap_content"
                 android:focusable="false"
                 android:clickable="false" />
-        </LinearLayout>
     </LinearLayout>
 
     <LinearLayout
@@ -95,7 +94,6 @@
                 android:layout_height="wrap_content"
                 android:focusable="false"
                 android:clickable="false" />
-        </LinearLayout>
     </LinearLayout>
 
     <LinearLayout
@@ -133,7 +131,6 @@
                 android:layout_height="wrap_content"
                 android:focusable="false"
                 android:clickable="false" />
-        </LinearLayout>
     </LinearLayout>
 
 </LinearLayout>
