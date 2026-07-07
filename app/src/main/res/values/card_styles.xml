@@ -60,6 +60,21 @@
         <item name="strokeWidth">1dp</item>
     </style>
 
+
+    <style name="Widget.Aqua.Card.Device.Section" parent="Widget.Aqua.Card">
+        <item name="cardBackgroundColor">@color/aqua_card_device_section_surface</item>
+        <item name="cardCornerRadius">20dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeColor">@color/aqua_card_device_section_outline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+    <style name="Widget.Aqua.Card.Device.Highlight" parent="Widget.Aqua.Card.Device.Section">
+        <item name="cardBackgroundColor">@color/aqua_card_device_highlight_surface</item>
+        <item name="strokeColor">@color/aqua_card_device_highlight_outline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
     <!-- Backward-compatible alias for existing screens. -->
     <style name="Widget.Aqua.CardStyles" parent="Widget.Aqua.Card" />
 

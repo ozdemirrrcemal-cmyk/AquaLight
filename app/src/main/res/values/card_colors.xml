@@ -21,6 +21,12 @@
     <color name="aqua_card_device_outline">#22354D</color>
     <color name="aqua_card_device_media_outline">#2A4663</color>
 
+    <!-- Device detail/root section cards -->
+    <color name="aqua_card_device_section_surface">#0B1D31</color>
+    <color name="aqua_card_device_section_outline">#223A57</color>
+    <color name="aqua_card_device_highlight_surface">#1C2633</color>
+    <color name="aqua_card_device_highlight_outline">#4D647F</color>
+
     <color name="aqua_card_danger">#FF5A52</color>
     <color name="aqua_card_danger_container">#321E2A</color>
     <color name="aqua_card_danger_outline">#7A3344</color>
