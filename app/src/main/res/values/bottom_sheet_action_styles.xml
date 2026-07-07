@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Widget.Aqua.BottomSheet.Button.Critical"
-        parent="Widget.Aqua.BottomSheet.Button.Primary" />
+        parent="Widget.Aqua.BottomSheet.Button.Danger" />
 </resources>

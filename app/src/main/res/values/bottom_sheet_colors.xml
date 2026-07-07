@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Main Tank Devices remove sheet base -->
     <color name="aqua_bottom_sheet_surface">#07131F</color>
     <color name="aqua_bottom_sheet_surface_elevated">#162638</color>
     <color name="aqua_bottom_sheet_surface_pressed">#162638</color>
@@ -10,16 +11,18 @@
     <color name="aqua_bottom_sheet_text_primary">#F4F8FC</color>
     <color name="aqua_bottom_sheet_text_secondary">#9AAEC4</color>
 
+    <!-- Normal primary action -->
     <color name="aqua_bottom_sheet_primary">#6489C9</color>
     <color name="aqua_bottom_sheet_on_primary">#F4F8FC</color>
 
+    <!-- Cancel / neutral action -->
     <color name="aqua_bottom_sheet_neutral">#162638</color>
     <color name="aqua_bottom_sheet_on_neutral">#F4F8FC</color>
 
-    <!-- Main'deki remove sheet'te danger action da primary button gibi görünüyordu. -->
-    <color name="aqua_bottom_sheet_danger">#F4F8FC</color>
-    <color name="aqua_bottom_sheet_danger_container">#6489C9</color>
-    <color name="aqua_bottom_sheet_danger_outline">#6489C9</color>
+    <!-- Remove / delete / destructive action: kırmızı kalacak -->
+    <color name="aqua_bottom_sheet_danger">#FF5A52</color>
+    <color name="aqua_bottom_sheet_danger_container">#321E2A</color>
+    <color name="aqua_bottom_sheet_danger_outline">#7A3344</color>
 
     <color name="aqua_bottom_sheet_selection_active">#6489C9</color>
 </resources>
