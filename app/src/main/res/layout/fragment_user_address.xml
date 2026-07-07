@@ -69,15 +69,14 @@
                         android:textSize="11sp" />
 
                     <EditText
+                        style="@style/Widget.Aqua.Input.PlainEditText"
                         android:id="@+id/etFirstName"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@null"
                         android:hint="@string/address_info_first_name_hint"
                         android:imeOptions="actionNext"
                         android:inputType="textPersonName"
                         android:padding="0dp"
-                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
@@ -118,15 +117,14 @@
                         android:textSize="11sp" />
 
                     <EditText
+                        style="@style/Widget.Aqua.Input.PlainEditText"
                         android:id="@+id/etLastName"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@null"
                         android:hint="@string/address_info_last_name_hint"
                         android:imeOptions="actionNext"
                         android:inputType="textPersonName"
                         android:padding="0dp"
-                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
@@ -225,15 +223,14 @@
                         android:textSize="11sp" />
 
                     <EditText
+                        style="@style/Widget.Aqua.Input.PlainEditText"
                         android:id="@+id/etCity"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@null"
                         android:hint="@string/address_info_city_hint"
                         android:imeOptions="actionNext"
                         android:inputType="textCapWords"
                         android:padding="0dp"
-                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
@@ -273,10 +270,10 @@
                         android:textSize="11sp" />
 
                     <EditText
+                        style="@style/Widget.Aqua.Input.PlainEditText.Multiline"
                         android:id="@+id/etAddress"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@null"
                         android:gravity="top"
                         android:hint="@string/address_info_address_hint"
                         android:imeOptions="actionNext"
@@ -284,7 +281,6 @@
                         android:minLines="1"
                         android:maxLines="3"
                         android:padding="0dp"
-                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
@@ -324,15 +320,14 @@
                         android:textSize="11sp" />
 
                     <EditText
+                        style="@style/Widget.Aqua.Input.PlainEditText"
                         android:id="@+id/etPostCode"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@null"
                         android:hint="@string/address_info_postcode_hint"
                         android:imeOptions="actionNext"
                         android:inputType="number"
                         android:padding="0dp"
-                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
@@ -372,15 +367,14 @@
                         android:textSize="11sp" />
 
                     <EditText
+                        style="@style/Widget.Aqua.Input.PlainEditText"
                         android:id="@+id/etPhoneNumber"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@null"
                         android:hint="@string/address_info_phone_hint"
                         android:imeOptions="actionDone"
                         android:inputType="phone"
                         android:padding="0dp"
-                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
