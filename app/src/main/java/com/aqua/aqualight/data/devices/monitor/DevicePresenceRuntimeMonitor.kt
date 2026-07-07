@@ -69,6 +69,8 @@ class DevicePresenceRuntimeMonitor(
         }
     }
 
+    fun isLocalNetworkAvailable(): Boolean = currentLocalNetworkAvailable()
+
     private fun CoroutineScope.launchConnectivityWatcher(): Job? {
         val observer = connectivityObserver ?: return null
         return launch {
