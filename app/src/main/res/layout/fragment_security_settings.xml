@@ -44,7 +44,7 @@
                 android:id="@+id/cardSecurity"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                style="@style/Widget.Aqua.CardStyles">
+                style="@style/Widget.Aqua.Card">
 
                 <LinearLayout
                     android:layout_width="match_parent"

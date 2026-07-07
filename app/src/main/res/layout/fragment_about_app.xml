@@ -45,7 +45,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                style="@style/Widget.Aqua.CardStyles">
+                style="@style/Widget.Aqua.Card">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -74,7 +74,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/app_name"
-                            android:textColor="@android:color/white"
+                            android:textColor="@color/aqua_card_text_primary"
                             android:textSize="18sp"
                             android:textStyle="bold" />
 
@@ -83,7 +83,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/about_app_header_tagline"
-                            android:textColor="@color/settings_text_secondary"
+                            android:textColor="@color/aqua_card_text_secondary"
                             android:textSize="13sp"
                             android:layout_marginTop="2dp" />
 
@@ -93,7 +93,7 @@
                             android:layout_height="wrap_content"
                             android:text=""
                             tools:text="Version 1.0.0 (100)"
-                            android:textColor="@color/settings_text_secondary"
+                            android:textColor="@color/aqua_card_text_secondary"
                             android:textSize="12sp"
                             android:layout_marginTop="4dp" />
                     </LinearLayout>
@@ -106,7 +106,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                style="@style/Widget.Aqua.CardStyles">
+                style="@style/Widget.Aqua.Card">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -120,7 +120,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/about_app_overview_title"
-                        android:textColor="@android:color/white"
+                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold"
                         android:layout_marginBottom="4dp" />
@@ -130,7 +130,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/about_app_overview_body"
-                        android:textColor="@color/settings_text_secondary"
+                        android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="13sp"
                         android:lineSpacingExtra="3dp" />
                 </LinearLayout>
@@ -142,7 +142,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                style="@style/Widget.Aqua.CardStyles">
+                style="@style/Widget.Aqua.Card">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -156,7 +156,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/about_app_system_info_title"
-                        android:textColor="@android:color/white"
+                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold"
                         android:layout_marginBottom="8dp" />
@@ -174,7 +174,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/about_app_version_label"
-                            android:textColor="@color/settings_text_secondary"
+                            android:textColor="@color/aqua_card_text_secondary"
                             android:textSize="12sp" />
 
                         <TextView
@@ -183,7 +183,7 @@
                             android:layout_height="wrap_content"
                             android:text=""
                             tools:text="1.0.0"
-                            android:textColor="@android:color/white"
+                            android:textColor="@color/aqua_card_text_primary"
                             android:textSize="14sp" />
                     </LinearLayout>
 
@@ -200,7 +200,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/about_app_build_label"
-                            android:textColor="@color/settings_text_secondary"
+                            android:textColor="@color/aqua_card_text_secondary"
                             android:textSize="12sp" />
 
                         <TextView
@@ -209,7 +209,7 @@
                             android:layout_height="wrap_content"
                             android:text=""
                             tools:text="100"
-                            android:textColor="@android:color/white"
+                            android:textColor="@color/aqua_card_text_primary"
                             android:textSize="14sp" />
                     </LinearLayout>
 
@@ -226,7 +226,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/about_app_device_label"
-                            android:textColor="@color/settings_text_secondary"
+                            android:textColor="@color/aqua_card_text_secondary"
                             android:textSize="12sp" />
 
                         <TextView
@@ -235,7 +235,7 @@
                             android:layout_height="wrap_content"
                             android:text=""
                             tools:text="Xiaomi M2101K9AG"
-                            android:textColor="@android:color/white"
+                            android:textColor="@color/aqua_card_text_primary"
                             android:textSize="14sp" />
                     </LinearLayout>
 
@@ -251,7 +251,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/about_app_android_label"
-                            android:textColor="@color/settings_text_secondary"
+                            android:textColor="@color/aqua_card_text_secondary"
                             android:textSize="12sp" />
 
                         <TextView
@@ -260,7 +260,7 @@
                             android:layout_height="wrap_content"
                             android:text=""
                             tools:text="Android 13"
-                            android:textColor="@android:color/white"
+                            android:textColor="@color/aqua_card_text_primary"
                             android:textSize="14sp" />
                     </LinearLayout>
                 </LinearLayout>
@@ -272,7 +272,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                style="@style/Widget.Aqua.CardStyles">
+                style="@style/Widget.Aqua.Card">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -286,7 +286,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/about_app_legal_title"
-                        android:textColor="@android:color/white"
+                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold"
                         android:layout_marginBottom="8dp" />
@@ -306,7 +306,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/about_app_privacy_policy"
-                            android:textColor="@color/settings_text_secondary"
+                            android:textColor="@color/aqua_card_text_secondary"
                             android:textSize="13sp" />
 
                         <ImageView
@@ -331,7 +331,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/about_app_terms"
-                            android:textColor="@color/settings_text_secondary"
+                            android:textColor="@color/aqua_card_text_secondary"
                             android:textSize="13sp" />
 
                         <ImageView
@@ -356,7 +356,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/about_app_licenses"
-                            android:textColor="@color/settings_text_secondary"
+                            android:textColor="@color/aqua_card_text_secondary"
                             android:textSize="13sp" />
 
                         <ImageView
@@ -374,7 +374,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/about_app_footer"
-                android:textColor="@color/settings_text_secondary"
+                android:textColor="@color/aqua_card_text_secondary"
                 android:textSize="12sp"
                 android:gravity="center"
                 android:layout_marginTop="4dp" />
