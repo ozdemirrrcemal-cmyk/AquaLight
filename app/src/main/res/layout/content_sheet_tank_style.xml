@@ -26,7 +26,7 @@
     android:includeFontPadding="false"
     android:lineSpacingExtra="2dp"
     android:text="@string/aquarium_text_choose_a_style_or_write_your_own_aquarium_concept"
-    android:textColor="#8FA4BE"
+    android:textColor="@color/aqua_card_text_secondary"
     android:textSize="13sp" />
 
   <LinearLayout
@@ -47,14 +47,14 @@
         android:layout_width="0dp"
         android:layout_height="64dp"
         android:layout_weight="1"
-        android:background="@drawable/bg_settings_sheet_grid_option"
+        android:background="@drawable/bg_aqua_selection_row_compact"
         android:gravity="center"
         android:includeFontPadding="false"
         android:lineSpacingExtra="0dp"
         android:maxLines="2"
         android:text="@string/aquarium_style_nature_aquarium"
         android:textAlignment="center"
-        android:textColor="@android:color/white"
+        android:textColor="@color/aqua_card_text_primary"
         android:textSize="14sp" />
 
       <TextView
@@ -63,14 +63,14 @@
         android:layout_height="64dp"
         android:layout_marginStart="10dp"
         android:layout_weight="1"
-        android:background="@drawable/bg_settings_sheet_grid_option"
+        android:background="@drawable/bg_aqua_selection_row_compact"
         android:gravity="center"
         android:includeFontPadding="false"
         android:lineSpacingExtra="0dp"
         android:maxLines="2"
         android:text="@string/aquarium_style_iwagumi"
         android:textAlignment="center"
-        android:textColor="@android:color/white"
+        android:textColor="@color/aqua_card_text_primary"
         android:textSize="14sp" />
 
       <TextView
@@ -79,14 +79,14 @@
         android:layout_height="64dp"
         android:layout_marginStart="10dp"
         android:layout_weight="1"
-        android:background="@drawable/bg_settings_sheet_grid_option"
+        android:background="@drawable/bg_aqua_selection_row_compact"
         android:gravity="center"
         android:includeFontPadding="false"
         android:lineSpacingExtra="0dp"
         android:maxLines="2"
         android:text="@string/aquarium_style_dutch"
         android:textAlignment="center"
-        android:textColor="@android:color/white"
+        android:textColor="@color/aqua_card_text_primary"
         android:textSize="14sp" />
 
     </LinearLayout>
@@ -103,14 +103,14 @@
         android:layout_width="0dp"
         android:layout_height="64dp"
         android:layout_weight="1"
-        android:background="@drawable/bg_settings_sheet_grid_option"
+        android:background="@drawable/bg_aqua_selection_row_compact"
         android:gravity="center"
         android:includeFontPadding="false"
         android:lineSpacingExtra="0dp"
         android:maxLines="2"
         android:text="@string/aquarium_style_jungle"
         android:textAlignment="center"
-        android:textColor="@android:color/white"
+        android:textColor="@color/aqua_card_text_primary"
         android:textSize="14sp" />
 
       <TextView
@@ -119,14 +119,14 @@
         android:layout_height="64dp"
         android:layout_marginStart="10dp"
         android:layout_weight="1"
-        android:background="@drawable/bg_settings_sheet_grid_option"
+        android:background="@drawable/bg_aqua_selection_row_compact"
         android:gravity="center"
         android:includeFontPadding="false"
         android:lineSpacingExtra="0dp"
         android:maxLines="2"
         android:text="@string/aquarium_style_biotope"
         android:textAlignment="center"
-        android:textColor="@android:color/white"
+        android:textColor="@color/aqua_card_text_primary"
         android:textSize="14sp" />
 
       <TextView
@@ -135,14 +135,14 @@
         android:layout_height="64dp"
         android:layout_marginStart="10dp"
         android:layout_weight="1"
-        android:background="@drawable/bg_settings_sheet_grid_option"
+        android:background="@drawable/bg_aqua_selection_row_compact"
         android:gravity="center"
         android:includeFontPadding="false"
         android:lineSpacingExtra="0dp"
         android:maxLines="2"
         android:text="@string/aquarium_style_blackwater"
         android:textAlignment="center"
-        android:textColor="@android:color/white"
+        android:textColor="@color/aqua_card_text_primary"
         android:textSize="14sp" />
 
     </LinearLayout>
@@ -159,14 +159,14 @@
         android:layout_width="0dp"
         android:layout_height="64dp"
         android:layout_weight="1"
-        android:background="@drawable/bg_settings_sheet_grid_option"
+        android:background="@drawable/bg_aqua_selection_row_compact"
         android:gravity="center"
         android:includeFontPadding="false"
         android:lineSpacingExtra="0dp"
         android:maxLines="2"
         android:text="@string/aquarium_style_forest"
         android:textAlignment="center"
-        android:textColor="@android:color/white"
+        android:textColor="@color/aqua_card_text_primary"
         android:textSize="14sp" />
 
       <TextView
@@ -175,14 +175,14 @@
         android:layout_height="64dp"
         android:layout_marginStart="10dp"
         android:layout_weight="1"
-        android:background="@drawable/bg_settings_sheet_grid_option"
+        android:background="@drawable/bg_aqua_selection_row_compact"
         android:gravity="center"
         android:includeFontPadding="false"
         android:lineSpacingExtra="0dp"
         android:maxLines="2"
         android:text="@string/aquarium_style_mountain"
         android:textAlignment="center"
-        android:textColor="@android:color/white"
+        android:textColor="@color/aqua_card_text_primary"
         android:textSize="14sp" />
 
       <TextView
@@ -191,14 +191,14 @@
         android:layout_height="64dp"
         android:layout_marginStart="10dp"
         android:layout_weight="1"
-        android:background="@drawable/bg_settings_sheet_grid_option"
+        android:background="@drawable/bg_aqua_selection_row_compact"
         android:gravity="center"
         android:includeFontPadding="false"
         android:lineSpacingExtra="0dp"
         android:maxLines="2"
         android:text="@string/aquarium_style_island"
         android:textAlignment="center"
-        android:textColor="@android:color/white"
+        android:textColor="@color/aqua_card_text_primary"
         android:textSize="14sp" />
 
     </LinearLayout>
@@ -216,7 +216,7 @@
     android:minHeight="0dp"
     android:text="@string/common_save"
     android:textAllCaps="false"
-    android:textColor="@android:color/white"
+    android:textColor="@color/aqua_card_text_primary"
     android:textSize="14sp"
     android:textStyle="bold"
     app:backgroundTint="#2196F3"
@@ -230,7 +230,7 @@
     android:gravity="center"
     android:includeFontPadding="false"
     android:text="@string/common_cancel"
-    android:textColor="#8FA4BE"
+    android:textColor="@color/aqua_card_text_secondary"
     android:textSize="14sp" />
 
 </LinearLayout>
