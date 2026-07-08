@@ -4,7 +4,9 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.fragment.NavHostFragment
@@ -17,6 +19,7 @@ import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.databinding.ActivityMainBinding
 import com.aqua.aqualight.ui.navigation.AppDestinationContract
 import com.aqua.aqualight.ui.navigation.AppRouteNavigator
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 class MainActivity : BaseActivity() {
@@ -238,6 +241,8 @@ class MainActivity : BaseActivity() {
             syncBottomBarState(destination)
         }
 
+        observeBottomBarBackStack(navController)
+
         syncBottomBarState(
             navController.currentDestination
         )
@@ -246,6 +251,22 @@ class MainActivity : BaseActivity() {
             syncBottomBarState(
                 navController.currentDestination
             )
+        }
+    }
+
+    private fun observeBottomBarBackStack(
+        navController: NavController
+    ) {
+        lifecycleScope.launch {
+            repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+                navController.currentBackStackEntryFlow.collect { backStackEntry ->
+                    syncBottomBarState(
+                        backStackEntry.destination
+                    )
+                }
+            }
         }
     }
 
@@ -270,6 +291,11 @@ class MainActivity : BaseActivity() {
 
         binding.bottomNav.isVisible =
             shouldShowBottomBar
+
+        if (shouldShowBottomBar) {
+            binding.bottomNav.alpha = 1f
+            binding.bottomNav.bringToFront()
+        }
 
         exitFromTopLevelBackCallback?.isEnabled =
             shouldShowBottomBar
