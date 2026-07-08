@@ -20,6 +20,7 @@
     <color name="md_theme_light_outlineVariant">#37474F</color>
     <color name="md_theme_light_error">#D32F2F</color>
     <color name="md_theme_light_onError">#FFFFFF</color>
+    <color name="background_color">#152B45</color>
 
     <!-- 🌙 Dark palette isimleri (Lint için base’te de tanımlı) -->
     <color name="md_theme_dark_primary">#2196F3</color>
