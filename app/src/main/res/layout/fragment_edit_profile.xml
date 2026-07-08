@@ -62,7 +62,7 @@
     <!-- 💾 Kaydet Butonu -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSave"
-        style="@style/Widget.Aqua.PrimaryButton"
+        style="@style/Widget.Aqua.Button.Primary"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="@string/edit_profile_save_button"
