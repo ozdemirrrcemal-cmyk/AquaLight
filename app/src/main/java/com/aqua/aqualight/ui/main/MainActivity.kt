@@ -7,10 +7,8 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
-import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.navOptions
+import androidx.navigation.ui.setupWithNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.auth.AuthSessionManager
@@ -221,15 +219,7 @@ class MainActivity : BaseActivity() {
 
         bottomBarSetup = true
 
-        binding.bottomNav.setOnItemSelectedListener { item ->
-            navigateTopLevelDestination(
-                destinationId = item.itemId
-            )
-        }
-
-        binding.bottomNav.setOnItemReselectedListener {
-            // Keep the current top-level back stack untouched on reselection.
-        }
+        binding.bottomNav.setupWithNavController(navController)
 
         exitFromTopLevelBackCallback =
             object : OnBackPressedCallback(false) {
@@ -259,43 +249,6 @@ class MainActivity : BaseActivity() {
         }
     }
 
-    private fun navigateTopLevelDestination(
-        destinationId: Int
-    ): Boolean {
-        if (destinationId !in AppDestinationContract.topLevelGraphIds) {
-            return false
-        }
-
-        if (currentTopLevelGraphId(navController.currentDestination) == destinationId) {
-            return true
-        }
-
-        val options = navOptions {
-            anim {
-                enter = R.anim.aqua_nav_enter
-                exit = R.anim.aqua_nav_exit
-                popEnter = R.anim.aqua_nav_enter
-                popExit = R.anim.aqua_nav_exit
-            }
-
-            launchSingleTop = true
-            restoreState = true
-
-            popUpTo(navController.graph.findStartDestination().id) {
-                saveState = true
-            }
-        }
-
-        return runCatching {
-            navController.navigate(
-                destinationId,
-                null,
-                options
-            )
-            true
-        }.getOrDefault(false)
-    }
-
     private fun syncBottomBarState(
         destination: NavDestination?
     ) {
@@ -318,10 +271,6 @@ class MainActivity : BaseActivity() {
         binding.bottomNav.isVisible =
             shouldShowBottomBar
 
-        if (shouldShowBottomBar) {
-            syncBottomNavSelectedItem(destination)
-        }
-
         exitFromTopLevelBackCallback?.isEnabled =
             shouldShowBottomBar
 
@@ -330,29 +279,6 @@ class MainActivity : BaseActivity() {
             startSessionBoundServicesIfNeeded()
             consumePendingCareTaskIfPossible()
         }
-    }
-
-    private fun syncBottomNavSelectedItem(
-        destination: NavDestination?
-    ) {
-        val graphId = currentTopLevelGraphId(destination) ?: return
-
-        if (binding.bottomNav.selectedItemId == graphId) {
-            return
-        }
-
-        binding.bottomNav.menu.findItem(graphId)?.isChecked = true
-    }
-
-    private fun currentTopLevelGraphId(
-        destination: NavDestination?
-    ): Int? {
-        return destination
-            ?.hierarchy
-            ?.firstOrNull { node ->
-                node.id in AppDestinationContract.topLevelGraphIds
-            }
-            ?.id
     }
 
 }
