@@ -47,7 +47,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/usage_subinfo"
                 android:textColor="@color/aqua_card_text_secondary"
-                android:textSize="14sp"
+                android:textSize="@dimen/aqua_text_size_body"
                 android:gravity="center"
                 android:lineSpacingExtra="4dp"
                 android:layout_marginBottom="16dp"
@@ -74,7 +74,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/usage_summary_title"
                         android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold"
                         android:layout_marginBottom="8dp" />
 
@@ -96,7 +96,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/usage_7d_automation_label"
                                 android:textColor="@color/aqua_card_text_secondary"
-                                android:textSize="12sp" />
+                                android:textSize="@dimen/aqua_text_size_caption" />
 
                             <TextView
                                 android:id="@+id/tvTotalSessionsValue"
@@ -122,7 +122,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/usage_7d_alerts_label"
                                 android:textColor="@color/aqua_card_text_secondary"
-                                android:textSize="12sp" />
+                                android:textSize="@dimen/aqua_text_size_caption" />
 
                             <TextView
                                 android:id="@+id/tvTotalTimeValue"
@@ -159,7 +159,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/usage_today_title"
                         android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold"
                         android:layout_marginBottom="8dp" />
 
@@ -181,7 +181,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/usage_today_automation_label"
                                 android:textColor="@color/aqua_card_text_secondary"
-                                android:textSize="12sp" />
+                                android:textSize="@dimen/aqua_text_size_caption" />
 
                             <TextView
                                 android:id="@+id/tvTodaySessionsValue"
@@ -207,7 +207,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/usage_today_manual_label"
                                 android:textColor="@color/aqua_card_text_secondary"
-                                android:textSize="12sp" />
+                                android:textSize="@dimen/aqua_text_size_caption" />
 
                             <TextView
                                 android:id="@+id/tvTodayTimeValue"
@@ -244,7 +244,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/usage_last_activity_title"
                         android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold"
                         android:layout_marginBottom="8dp" />
 
@@ -254,7 +254,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/usage_last_event_time_label"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="12sp" />
+                        android:textSize="@dimen/aqua_text_size_caption" />
 
                     <TextView
                         android:id="@+id/tvLastOpenValue"
@@ -263,7 +263,7 @@
                         android:text=""
                         tools:text="Today, 21:34"
                         android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         android:layout_marginBottom="8dp" />
 
                     <TextView
@@ -272,7 +272,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/usage_last_event_label"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="12sp" />
+                        android:textSize="@dimen/aqua_text_size_caption" />
 
                     <TextView
                         android:id="@+id/tvMostUsedDeviceValue"
@@ -281,7 +281,7 @@
                         android:text=""
                         tools:text="Lighting • Evening schedule turned ON"
                         android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="14sp" />
+                        android:textSize="@dimen/aqua_text_size_body" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -305,7 +305,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/usage_privacy_title"
                         android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold"
                         android:layout_marginBottom="4dp" />
 
@@ -315,7 +315,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/usage_privacy_body"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="13sp"
+                        android:textSize="@dimen/aqua_text_size_body_small"
                         android:lineSpacingExtra="3dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

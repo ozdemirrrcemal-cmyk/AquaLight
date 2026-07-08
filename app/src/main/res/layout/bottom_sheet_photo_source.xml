@@ -42,7 +42,7 @@
             android:includeFontPadding="false"
             android:text="@string/photo_bottom_sheet_camera"
             android:textColor="@color/aqua_card_text_primary"
-            android:textSize="14sp"
+            android:textSize="@dimen/aqua_text_size_body"
             android:textStyle="bold" />
 
         <ImageView
@@ -76,7 +76,7 @@
             android:includeFontPadding="false"
             android:text="@string/photo_bottom_sheet_gallery"
             android:textColor="@color/aqua_card_text_primary"
-            android:textSize="14sp"
+            android:textSize="@dimen/aqua_text_size_body"
             android:textStyle="bold" />
 
         <ImageView
@@ -110,7 +110,7 @@
             android:includeFontPadding="false"
             android:text="@string/photo_bottom_sheet_remove"
             android:textColor="@color/aqua_bottom_sheet_danger"
-            android:textSize="14sp"
+            android:textSize="@dimen/aqua_text_size_body"
             android:textStyle="bold" />
 
         <ImageView

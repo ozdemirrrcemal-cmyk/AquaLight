@@ -28,7 +28,7 @@
             android:includeFontPadding="false"
             android:text="@string/aquarium_material_group_bio"
             android:textColor="?attr/colorOnSurface"
-            android:textSize="14sp" />
+            android:textSize="@dimen/aqua_text_size_body" />
 
         <LinearLayout
             android:id="@+id/bioMaterialsContainer"
@@ -45,7 +45,7 @@
             android:includeFontPadding="false"
             android:text="@string/aquarium_material_group_hardware"
             android:textColor="?attr/colorOnSurface"
-            android:textSize="14sp" />
+            android:textSize="@dimen/aqua_text_size_body" />
 
         <LinearLayout
             android:id="@+id/hardwareMaterialsContainer"

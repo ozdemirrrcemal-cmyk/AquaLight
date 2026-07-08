@@ -23,6 +23,6 @@
         android:layout_marginTop="12dp"
         android:gravity="center"
         android:textColor="?android:attr/textColorSecondary"
-        android:textSize="14sp" />
+        android:textSize="@dimen/aqua_text_size_body" />
 
 </LinearLayout>

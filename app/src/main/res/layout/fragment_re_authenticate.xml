@@ -51,7 +51,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/re_auth_confirm_password"
-                android:textSize="28sp"
+                android:textSize="@dimen/aqua_text_size_screen_title"
                 android:textStyle="bold" />
 
             <!-- DESCRIPTION -->

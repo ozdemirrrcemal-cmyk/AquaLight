@@ -130,7 +130,7 @@
                 android:text="@string/device_qr_allow_camera"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
-                android:textSize="14sp"
+                android:textSize="@dimen/aqua_text_size_body"
                 android:textStyle="bold"
                 android:visibility="gone"
                 app:backgroundTint="#1E90FF"

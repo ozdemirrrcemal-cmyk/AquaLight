@@ -80,7 +80,7 @@
             android:maxLines="1"
             android:text="@string/aquarium_detail_tab_devices"
             android:textColor="#8FA4BE"
-            android:textSize="12sp" />
+            android:textSize="@dimen/aqua_text_size_caption" />
 
         <TextView
             android:id="@+id/tabActivity"
@@ -92,7 +92,7 @@
             android:maxLines="1"
             android:text="@string/aquarium_detail_tab_activity"
             android:textColor="#8FA4BE"
-            android:textSize="12sp" />
+            android:textSize="@dimen/aqua_text_size_caption" />
 
         <TextView
             android:id="@+id/tabTank"
@@ -104,7 +104,7 @@
             android:maxLines="1"
             android:text="@string/aquarium_detail_tab_tank"
             android:textColor="?attr/colorOnSurface"
-            android:textSize="12sp"
+            android:textSize="@dimen/aqua_text_size_caption"
             android:textStyle="bold" />
 
         <TextView
@@ -117,7 +117,7 @@
             android:maxLines="1"
             android:text="@string/aquarium_detail_tab_plants"
             android:textColor="#8FA4BE"
-            android:textSize="12sp" />
+            android:textSize="@dimen/aqua_text_size_caption" />
 
         <TextView
             android:id="@+id/tabTankLife"
@@ -129,7 +129,7 @@
             android:maxLines="1"
             android:text="@string/aquarium_tank_life_title"
             android:textColor="#8FA4BE"
-            android:textSize="12sp" />
+            android:textSize="@dimen/aqua_text_size_caption" />
 
     </LinearLayout>
 
@@ -172,7 +172,7 @@
                 android:gravity="center"
                 android:text="@string/aquarium_text_this_section_will_be_available_soon"
                 android:textColor="#8FA4BE"
-                android:textSize="14sp"
+                android:textSize="@dimen/aqua_text_size_body"
                 android:visibility="gone" />
 
         </LinearLayout>

@@ -66,7 +66,7 @@
                         android:maxLines="1"
                         android:text="@string/aquarium_text_0_days"
                         android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold" />
 
                 </LinearLayout>
@@ -112,7 +112,7 @@
                         android:maxLines="1"
                         android:text="@string/aquarium_text_79_gal"
                         android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold" />
 
                 </LinearLayout>
@@ -157,7 +157,7 @@
                         android:maxLines="1"
                         android:text="@string/aquarium_text_120x50x50"
                         android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="13sp"
+                        android:textSize="@dimen/aqua_text_size_body_small"
                         android:textStyle="bold" />
 
                 </LinearLayout>
@@ -201,7 +201,7 @@
                         android:maxLines="1"
                         android:text="@string/aquarium_tank_type_shrimp"
                         android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold" />
 
                 </LinearLayout>
@@ -246,7 +246,7 @@
                         android:maxLines="1"
                         android:text="@string/aquarium_text_17_may_26"
                         android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="13sp"
+                        android:textSize="@dimen/aqua_text_size_body_small"
                         android:textStyle="bold" />
 
                 </LinearLayout>
@@ -290,7 +290,7 @@
                         android:maxLines="1"
                         android:text="@string/aquarium_style_mountain"
                         android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="13sp"
+                        android:textSize="@dimen/aqua_text_size_body_small"
                         android:textStyle="bold" />
 
                 </LinearLayout>
@@ -318,7 +318,7 @@
             android:includeFontPadding="false"
             android:text="@string/aquarium_material_group_bio"
             android:textColor="@color/aqua_card_text_primary"
-            android:textSize="13sp" />
+            android:textSize="@dimen/aqua_text_size_body_small" />
 
         <LinearLayout
             android:id="@+id/tankBioComponentsContainer"
@@ -335,7 +335,7 @@
             android:includeFontPadding="false"
             android:text="@string/aquarium_material_group_hardware"
             android:textColor="@color/aqua_card_text_primary"
-            android:textSize="13sp" />
+            android:textSize="@dimen/aqua_text_size_body_small" />
 
         <LinearLayout
             android:id="@+id/tankHardwareComponentsContainer"

@@ -161,7 +161,7 @@
                             android:minWidth="78dp"
                             android:text="@string/device_wifi_select_wifi_action"
                             android:textColor="#5FD6B4"
-                            android:textSize="12sp"
+                            android:textSize="@dimen/aqua_text_size_caption"
                             android:textStyle="bold"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
@@ -213,7 +213,7 @@
                         android:lineSpacingExtra="2dp"
                         android:text="@string/device_wifi_privacy_hint"
                         android:textColor="#90A1B5"
-                        android:textSize="12sp" />
+                        android:textSize="@dimen/aqua_text_size_caption" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>

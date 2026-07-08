@@ -29,7 +29,7 @@
             android:includeFontPadding="false"
             android:text="@string/aquarium_text_automation_reminders"
             android:textColor="@color/aqua_card_text_primary"
-            android:textSize="14sp" />
+            android:textSize="@dimen/aqua_text_size_body" />
 
         <LinearLayout
     style="@style/Widget.Aqua.SelectionRow.Large"
@@ -63,7 +63,7 @@
                         android:includeFontPadding="false"
                         android:text="@string/aquarium_text_smart_care_suggestions"
                         android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold" />
 
                     <TextView
@@ -75,7 +75,7 @@
                         android:lineSpacingExtra="2dp"
                         android:text="@string/aquarium_text_automatically_create_smart_care_tasks_for_this_tank"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="12sp" />
+                        android:textSize="@dimen/aqua_text_size_caption" />
 
                 </LinearLayout>
 
@@ -121,7 +121,7 @@
                         android:includeFontPadding="false"
                         android:text="@string/aquarium_text_care_reminder_notifications"
                         android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold" />
 
                     <TextView
@@ -133,7 +133,7 @@
                         android:lineSpacingExtra="2dp"
                         android:text="@string/aquarium_text_send_reminder_notifications_for_this_tank_s_care_tasks"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="12sp" />
+                        android:textSize="@dimen/aqua_text_size_caption" />
 
                 </LinearLayout>
 
@@ -155,7 +155,7 @@
             android:includeFontPadding="false"
             android:text="@string/aquarium_text_data_management"
             android:textColor="@color/aqua_card_text_primary"
-            android:textSize="14sp" />
+            android:textSize="@dimen/aqua_text_size_body" />
 
         <LinearLayout
     style="@style/Widget.Aqua.SelectionRow.Settings"
@@ -179,7 +179,7 @@
                     android:includeFontPadding="false"
                     android:text="@string/aquarium_text_duplicate_tank"
                     android:textColor="@color/aqua_card_text_primary"
-                    android:textSize="14sp"
+                    android:textSize="@dimen/aqua_text_size_body"
                     android:textStyle="bold" />
 
                 <ImageView
@@ -216,7 +216,7 @@
                     android:includeFontPadding="false"
                     android:text="@string/aquarium_text_export_tank_data"
                     android:textColor="@color/aqua_card_text_primary"
-                    android:textSize="14sp"
+                    android:textSize="@dimen/aqua_text_size_body"
                     android:textStyle="bold" />
 
                 <ImageView
@@ -239,7 +239,7 @@
             android:includeFontPadding="false"
             android:text="@string/aquarium_text_danger_zone"
             android:textColor="#E06A6A"
-            android:textSize="14sp" />
+            android:textSize="@dimen/aqua_text_size_body" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/rowDeleteTank"
@@ -254,7 +254,7 @@
             android:text="@string/aquarium_text_delete_tank"
             android:textAllCaps="false"
             android:textColor="@android:color/white"
-            android:textSize="14sp"
+            android:textSize="@dimen/aqua_text_size_body"
             android:textStyle="bold"
             app:backgroundTint="#D85C5C"
             app:cornerRadius="16dp"

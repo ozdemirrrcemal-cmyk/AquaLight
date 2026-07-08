@@ -205,7 +205,7 @@
                                     android:layout_marginStart="12dp"
                                     android:layout_weight="1"
                                     android:text="@string/feedback_screenshot_add"
-                                    android:textSize="14sp"
+                                    android:textSize="@dimen/aqua_text_size_body"
                                     android:textColor="@color/aqua_card_text_secondary" />
 
                                 <ImageView

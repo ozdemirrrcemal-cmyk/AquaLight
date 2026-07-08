@@ -23,7 +23,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:text="@string/aquarium_text_give_your_aquarium_a_clear_and_recognizable_name_this_name_w"
-            android:textSize="14sp"
+            android:textSize="@dimen/aqua_text_size_body"
             android:lineSpacingExtra="3dp" />
 
         <com.google.android.material.card.MaterialCardView
@@ -53,7 +53,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="@string/aquarium_text_example_living_room_tank_planted_120_shrimp_tank"
-                    android:textSize="13sp"
+                    android:textSize="@dimen/aqua_text_size_body_small"
                     android:lineSpacingExtra="2dp" />
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -95,7 +95,7 @@
                 android:layout_height="wrap_content"
                 android:padding="16dp"
                 android:text="@string/aquarium_text_you_can_change_this_name_later_from_aquarium_settings"
-                android:textSize="13sp"
+                android:textSize="@dimen/aqua_text_size_body_small"
                 android:lineSpacingExtra="2dp" />
 
         </com.google.android.material.card.MaterialCardView>

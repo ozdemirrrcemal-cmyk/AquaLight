@@ -84,7 +84,7 @@
                             android:layout_height="wrap_content"
                             android:text="@string/about_app_header_tagline"
                             android:textColor="@color/aqua_card_text_secondary"
-                            android:textSize="13sp"
+                            android:textSize="@dimen/aqua_text_size_body_small"
                             android:layout_marginTop="2dp" />
 
                         <TextView
@@ -94,7 +94,7 @@
                             android:text=""
                             tools:text="Version 1.0.0 (100)"
                             android:textColor="@color/aqua_card_text_secondary"
-                            android:textSize="12sp"
+                            android:textSize="@dimen/aqua_text_size_caption"
                             android:layout_marginTop="4dp" />
                     </LinearLayout>
                 </LinearLayout>
@@ -121,7 +121,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/about_app_overview_title"
                         android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold"
                         android:layout_marginBottom="4dp" />
 
@@ -131,7 +131,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/about_app_overview_body"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="13sp"
+                        android:textSize="@dimen/aqua_text_size_body_small"
                         android:lineSpacingExtra="3dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -157,7 +157,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/about_app_system_info_title"
                         android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold"
                         android:layout_marginBottom="8dp" />
 
@@ -175,7 +175,7 @@
                             android:layout_weight="1"
                             android:text="@string/about_app_version_label"
                             android:textColor="@color/aqua_card_text_secondary"
-                            android:textSize="12sp" />
+                            android:textSize="@dimen/aqua_text_size_caption" />
 
                         <TextView
                             android:id="@+id/tvVersionValue"
@@ -184,7 +184,7 @@
                             android:text=""
                             tools:text="1.0.0"
                             android:textColor="@color/aqua_card_text_primary"
-                            android:textSize="14sp" />
+                            android:textSize="@dimen/aqua_text_size_body" />
                     </LinearLayout>
 
                     <!-- Build -->
@@ -201,7 +201,7 @@
                             android:layout_weight="1"
                             android:text="@string/about_app_build_label"
                             android:textColor="@color/aqua_card_text_secondary"
-                            android:textSize="12sp" />
+                            android:textSize="@dimen/aqua_text_size_caption" />
 
                         <TextView
                             android:id="@+id/tvBuildValue"
@@ -210,7 +210,7 @@
                             android:text=""
                             tools:text="100"
                             android:textColor="@color/aqua_card_text_primary"
-                            android:textSize="14sp" />
+                            android:textSize="@dimen/aqua_text_size_body" />
                     </LinearLayout>
 
                     <!-- Cihaz -->
@@ -227,7 +227,7 @@
                             android:layout_weight="1"
                             android:text="@string/about_app_device_label"
                             android:textColor="@color/aqua_card_text_secondary"
-                            android:textSize="12sp" />
+                            android:textSize="@dimen/aqua_text_size_caption" />
 
                         <TextView
                             android:id="@+id/tvDeviceValue"
@@ -236,7 +236,7 @@
                             android:text=""
                             tools:text="Xiaomi M2101K9AG"
                             android:textColor="@color/aqua_card_text_primary"
-                            android:textSize="14sp" />
+                            android:textSize="@dimen/aqua_text_size_body" />
                     </LinearLayout>
 
                     <!-- Android -->
@@ -252,7 +252,7 @@
                             android:layout_weight="1"
                             android:text="@string/about_app_android_label"
                             android:textColor="@color/aqua_card_text_secondary"
-                            android:textSize="12sp" />
+                            android:textSize="@dimen/aqua_text_size_caption" />
 
                         <TextView
                             android:id="@+id/tvAndroidValue"
@@ -261,7 +261,7 @@
                             android:text=""
                             tools:text="Android 13"
                             android:textColor="@color/aqua_card_text_primary"
-                            android:textSize="14sp" />
+                            android:textSize="@dimen/aqua_text_size_body" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -287,7 +287,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/about_app_legal_title"
                         android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold"
                         android:layout_marginBottom="8dp" />
 
@@ -307,7 +307,7 @@
                             android:layout_weight="1"
                             android:text="@string/about_app_privacy_policy"
                             android:textColor="@color/aqua_card_text_secondary"
-                            android:textSize="13sp" />
+                            android:textSize="@dimen/aqua_text_size_body_small" />
 
                         <ImageView
                             android:layout_width="20dp"
@@ -332,7 +332,7 @@
                             android:layout_weight="1"
                             android:text="@string/about_app_terms"
                             android:textColor="@color/aqua_card_text_secondary"
-                            android:textSize="13sp" />
+                            android:textSize="@dimen/aqua_text_size_body_small" />
 
                         <ImageView
                             android:layout_width="20dp"
@@ -357,7 +357,7 @@
                             android:layout_weight="1"
                             android:text="@string/about_app_licenses"
                             android:textColor="@color/aqua_card_text_secondary"
-                            android:textSize="13sp" />
+                            android:textSize="@dimen/aqua_text_size_body_small" />
 
                         <ImageView
                             android:layout_width="20dp"
@@ -375,7 +375,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/about_app_footer"
                 android:textColor="@color/aqua_card_text_secondary"
-                android:textSize="12sp"
+                android:textSize="@dimen/aqua_text_size_caption"
                 android:gravity="center"
                 android:layout_marginTop="4dp" />
 

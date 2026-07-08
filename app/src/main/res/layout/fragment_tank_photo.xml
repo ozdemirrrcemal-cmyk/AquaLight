@@ -24,7 +24,7 @@
       android:layout_marginTop="10dp"
       android:text="@string/aquarium_text_add_a_visual_reference_for_this_aquarium_you_can_use_a_photo"
       android:textColor="@color/aqua_card_text_secondary"
-      android:textSize="14sp"
+      android:textSize="@dimen/aqua_text_size_body"
       android:lineSpacingExtra="3dp" />
 
     <!-- Fotoğraf kartı -->
@@ -57,7 +57,7 @@
           android:layout_marginTop="4dp"
           android:text="@string/aquarium_text_use_a_photo_to_make_this_aquarium_easier_to_recognize_later"
           android:textColor="@color/aqua_card_text_secondary"
-          android:textSize="13sp"
+          android:textSize="@dimen/aqua_text_size_body_small"
           android:lineSpacingExtra="2dp" />
 
         <!-- Görsel alanı -->

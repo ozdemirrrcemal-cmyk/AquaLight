@@ -66,7 +66,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/address_info_first_name_label"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="11sp" />
+                        android:textSize="@dimen/aqua_text_size_micro" />
 
                     <EditText
                         style="@style/Widget.Aqua.Input.PlainEditText.Embedded"
@@ -77,7 +77,7 @@
                         android:imeOptions="actionNext"
                         android:inputType="textPersonName"
                         android:padding="0dp"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold" />
 
                     <com.google.android.material.textview.MaterialTextView
@@ -86,7 +86,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:textColor="@color/snackbar_error"
-                        android:textSize="12sp"
+                        android:textSize="@dimen/aqua_text_size_caption"
                         android:visibility="gone"
                         tools:text="First name required" />
 
@@ -114,7 +114,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/address_info_last_name_label"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="11sp" />
+                        android:textSize="@dimen/aqua_text_size_micro" />
 
                     <EditText
                         style="@style/Widget.Aqua.Input.PlainEditText.Embedded"
@@ -125,7 +125,7 @@
                         android:imeOptions="actionNext"
                         android:inputType="textPersonName"
                         android:padding="0dp"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold" />
 
                     <com.google.android.material.textview.MaterialTextView
@@ -134,7 +134,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:textColor="@color/snackbar_error"
-                        android:textSize="12sp"
+                        android:textSize="@dimen/aqua_text_size_caption"
                         android:visibility="gone"
                         tools:text="Last name required" />
 
@@ -163,7 +163,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/address_info_country_label"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="11sp" />
+                        android:textSize="@dimen/aqua_text_size_micro" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -179,7 +179,7 @@
                             android:layout_weight="1"
                             android:text="Turkey"
                             android:textColor="@color/aqua_card_text_primary"
-                            android:textSize="14sp"
+                            android:textSize="@dimen/aqua_text_size_body"
                             android:textStyle="bold" />
 
                         <ImageView
@@ -220,7 +220,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/address_info_city_label"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="11sp" />
+                        android:textSize="@dimen/aqua_text_size_micro" />
 
                     <EditText
                         style="@style/Widget.Aqua.Input.PlainEditText.Embedded"
@@ -231,7 +231,7 @@
                         android:imeOptions="actionNext"
                         android:inputType="textCapWords"
                         android:padding="0dp"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold" />
 
                     <com.google.android.material.textview.MaterialTextView
@@ -240,7 +240,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:textColor="@color/snackbar_error"
-                        android:textSize="12sp"
+                        android:textSize="@dimen/aqua_text_size_caption"
                         android:visibility="gone" />
 
                 </LinearLayout>
@@ -267,7 +267,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/address_info_address_label"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="11sp" />
+                        android:textSize="@dimen/aqua_text_size_micro" />
 
                     <EditText
                         style="@style/Widget.Aqua.Input.PlainEditText.Embedded"
@@ -281,7 +281,7 @@
                         android:minLines="1"
                         android:maxLines="3"
                         android:padding="0dp"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold" />
 
                     <com.google.android.material.textview.MaterialTextView
@@ -290,7 +290,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:textColor="@color/snackbar_error"
-                        android:textSize="12sp"
+                        android:textSize="@dimen/aqua_text_size_caption"
                         android:visibility="gone" />
 
                 </LinearLayout>
@@ -317,7 +317,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/address_info_postcode_label"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="11sp" />
+                        android:textSize="@dimen/aqua_text_size_micro" />
 
                     <EditText
                         style="@style/Widget.Aqua.Input.PlainEditText.Embedded"
@@ -328,7 +328,7 @@
                         android:imeOptions="actionNext"
                         android:inputType="number"
                         android:padding="0dp"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold" />
 
                     <com.google.android.material.textview.MaterialTextView
@@ -337,7 +337,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:textColor="@color/snackbar_error"
-                        android:textSize="12sp"
+                        android:textSize="@dimen/aqua_text_size_caption"
                         android:visibility="gone" />
 
                 </LinearLayout>
@@ -364,7 +364,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/address_info_phone_label"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="11sp" />
+                        android:textSize="@dimen/aqua_text_size_micro" />
 
                     <EditText
                         style="@style/Widget.Aqua.Input.PlainEditText.Embedded"
@@ -375,7 +375,7 @@
                         android:imeOptions="actionDone"
                         android:inputType="phone"
                         android:padding="0dp"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold" />
 
                     <com.google.android.material.textview.MaterialTextView
@@ -384,7 +384,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:textColor="@color/snackbar_error"
-                        android:textSize="12sp"
+                        android:textSize="@dimen/aqua_text_size_caption"
                         android:visibility="gone" />
 
                 </LinearLayout>

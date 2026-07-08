@@ -26,7 +26,7 @@
             android:layout_marginTop="8dp"
             android:text="@string/aquarium_text_add_the_biological_materials_and_hardware_used_in_this_aquar"
             android:textColor="#8FA4BE"
-            android:textSize="14sp"
+            android:textSize="@dimen/aqua_text_size_body"
             android:lineSpacingExtra="3dp" />
 
         <TextView

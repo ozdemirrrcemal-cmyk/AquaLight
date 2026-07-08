@@ -75,7 +75,7 @@
                             android:layout_weight="1"
                             android:text="@string/language_turkish"
                             android:textColor="@color/aqua_card_text_primary"
-                            android:textSize="14sp"
+                            android:textSize="@dimen/aqua_text_size_body"
                             android:textStyle="bold" />
 
                         <com.google.android.material.radiobutton.MaterialRadioButton
@@ -118,7 +118,7 @@
                             android:layout_weight="1"
                             android:text="@string/language_english"
                             android:textColor="@color/aqua_card_text_primary"
-                            android:textSize="14sp"
+                            android:textSize="@dimen/aqua_text_size_body"
                             android:textStyle="bold" />
 
                         <com.google.android.material.radiobutton.MaterialRadioButton
@@ -161,7 +161,7 @@
                             android:layout_weight="1"
                             android:text="@string/language_german"
                             android:textColor="@color/aqua_card_text_primary"
-                            android:textSize="14sp"
+                            android:textSize="@dimen/aqua_text_size_body"
                             android:textStyle="bold" />
 
                         <com.google.android.material.radiobutton.MaterialRadioButton
@@ -204,7 +204,7 @@
                             android:layout_weight="1"
                             android:text="@string/language_french"
                             android:textColor="@color/aqua_card_text_primary"
-                            android:textSize="14sp"
+                            android:textSize="@dimen/aqua_text_size_body"
                             android:textStyle="bold" />
 
                         <com.google.android.material.radiobutton.MaterialRadioButton
@@ -247,7 +247,7 @@
                             android:layout_weight="1"
                             android:text="@string/language_russian"
                             android:textColor="@color/aqua_card_text_primary"
-                            android:textSize="14sp"
+                            android:textSize="@dimen/aqua_text_size_body"
                             android:textStyle="bold" />
 
                         <com.google.android.material.radiobutton.MaterialRadioButton
@@ -290,7 +290,7 @@
                             android:layout_weight="1"
                             android:text="@string/language_chinese"
                             android:textColor="@color/aqua_card_text_primary"
-                            android:textSize="14sp"
+                            android:textSize="@dimen/aqua_text_size_body"
                             android:textStyle="bold" />
 
                         <com.google.android.material.radiobutton.MaterialRadioButton

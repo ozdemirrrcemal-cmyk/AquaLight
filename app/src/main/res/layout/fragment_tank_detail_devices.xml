@@ -48,7 +48,7 @@
             android:text="@string/aquarium_action_add"
             android:textAllCaps="false"
             android:textColor="?attr/colorOnSurface"
-            android:textSize="12sp"
+            android:textSize="@dimen/aqua_text_size_caption"
             android:textStyle="bold"
             app:backgroundTint="#1C3252"
             app:cornerRadius="17dp" />

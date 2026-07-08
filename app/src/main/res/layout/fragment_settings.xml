@@ -62,7 +62,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/settings_default_username"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="12sp"/>
+                        android:textSize="@dimen/aqua_text_size_caption"/>
 
                     <TextView
     android:id="@+id/tvEmail"
@@ -70,7 +70,7 @@
     android:layout_height="wrap_content"
     android:text="@string/settings_default_email"
     android:textColor="@color/aqua_card_text_secondary"
-    android:textSize="12sp"/>
+    android:textSize="@dimen/aqua_text_size_caption"/>
 
 <com.google.android.material.card.MaterialCardView
     android:id="@+id/cardActiveDevices"
@@ -107,7 +107,7 @@
             android:layout_marginStart="8dp"
             android:text="3 Active Devices"
             android:textColor="@color/aqua_card_text_primary"
-            android:textSize="11sp"
+            android:textSize="@dimen/aqua_text_size_micro"
             android:textStyle="bold" />
 
     </LinearLayout>
@@ -147,7 +147,7 @@
                         android:layout_weight="1"
                         android:text="@string/settings_user_info"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="14sp"/>
+                        android:textSize="@dimen/aqua_text_size_body"/>
 
                     <ImageView
                         android:layout_width="20dp"
@@ -181,7 +181,7 @@
                         android:layout_weight="1"
                         android:text="@string/settings_device_status"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="14sp"/>
+                        android:textSize="@dimen/aqua_text_size_body"/>
 
                     <ImageView
                         android:layout_width="20dp"
@@ -214,7 +214,7 @@
                         android:layout_weight="1"
                         android:text="@string/settings_app"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="14sp"/>
+                        android:textSize="@dimen/aqua_text_size_body"/>
 
                     <ImageView
                         android:layout_width="20dp"
@@ -248,7 +248,7 @@
                         android:layout_weight="1"
                         android:text="@string/settings_usage"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="14sp"/>
+                        android:textSize="@dimen/aqua_text_size_body"/>
 
                     <ImageView
                         android:layout_width="20dp"
@@ -282,7 +282,7 @@
                         android:layout_weight="1"
                         android:text="@string/settings_privacy"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="14sp"/>
+                        android:textSize="@dimen/aqua_text_size_body"/>
 
                     <ImageView
                         android:layout_width="20dp"
@@ -316,7 +316,7 @@
                         android:layout_weight="1"
                         android:text="@string/settings_feedback"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="14sp"/>
+                        android:textSize="@dimen/aqua_text_size_body"/>
 
                     <ImageView
                         android:layout_width="20dp"
@@ -350,7 +350,7 @@
                         android:layout_weight="1"
                         android:text="@string/settings_logout"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="14sp"/>
+                        android:textSize="@dimen/aqua_text_size_body"/>
 
                     <ImageView
                         android:layout_width="20dp"
@@ -418,6 +418,6 @@
     android:layout_marginBottom="12dp"
     android:gravity="center"
     android:textColor="@color/aqua_card_text_secondary"
-    android:textSize="12sp" />
+    android:textSize="@dimen/aqua_text_size_caption" />
     </LinearLayout>
 </ScrollView>

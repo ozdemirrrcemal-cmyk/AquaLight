@@ -90,7 +90,7 @@
                 android:includeFontPadding="false"
                 android:maxLines="1"
                 android:textColor="#B8C7D9"
-                android:textSize="12sp" />
+                android:textSize="@dimen/aqua_text_size_caption" />
 
             <TextView
                 android:id="@+id/tvTaskSecondary"
@@ -101,7 +101,7 @@
                 android:includeFontPadding="false"
                 android:maxLines="1"
                 android:textColor="#B8C7D9"
-                android:textSize="12sp" />
+                android:textSize="@dimen/aqua_text_size_caption" />
 
             <TextView
                 android:id="@+id/tvTaskDescription"
