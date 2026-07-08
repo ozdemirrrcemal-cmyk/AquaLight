@@ -28,7 +28,7 @@
             android:layout_weight="1"
             android:includeFontPadding="false"
             android:text="@string/aquarium_detail_tab_devices"
-            android:textColor="@color/aqua_state_text_primary"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="18sp"
             android:textStyle="bold" />
 
@@ -100,7 +100,7 @@
                 android:gravity="center"
                 android:includeFontPadding="false"
                 android:text="@string/aquarium_no_device_connected"
-                android:textColor="?attr/colorOnSurface"
+                android:textColor="@color/aqua_state_text_primary"
                 android:textSize="15sp"
                 android:textStyle="bold" />
 

@@ -159,7 +159,7 @@
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
                         android:text="Setup rules"
-                        android:textColor="@color/aqua_state_text_primary"
+                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
@@ -181,7 +181,7 @@
                 android:layout_marginTop="4dp"
                 android:includeFontPadding="false"
                 android:text="@string/device_add_available_devices_title"
-                android:textColor="@color/aqua_state_text_primary"
+                android:textColor="@color/aqua_card_text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:visibility="gone"
@@ -194,7 +194,7 @@
                 android:layout_marginTop="6dp"
                 android:lineSpacingExtra="2dp"
                 android:text="Select a device only after setup mode is open. AquaLight will verify DeviceInfo before Wi‑Fi is sent."
-                android:textColor="@color/aqua_state_text_secondary"
+                android:textColor="@color/aqua_card_text_secondary"
                 android:textSize="12.5sp"
                 android:visibility="gone"
                 tools:visibility="visible" />
