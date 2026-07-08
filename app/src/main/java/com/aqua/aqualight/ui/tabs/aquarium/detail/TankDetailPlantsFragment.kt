@@ -9,6 +9,7 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
@@ -116,8 +117,16 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
         val card = MaterialCardView(requireContext()).apply {
             radius = 18.dp().toFloat()
             strokeWidth = 1.dp()
-            strokeColor = Color.parseColor("#223A57")
-            setCardBackgroundColor(Color.parseColor("#10233A"))
+            strokeColor = ContextCompat.getColor(
+                requireContext(),
+                R.color.aqua_card_outline
+            )
+            setCardBackgroundColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.aqua_card_surface
+                )
+            )
             cardElevation = 0f
             useCompatPadding = false
 
@@ -171,14 +180,24 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
         val categoryText = TextView(requireContext()).apply {
             text = plant.category
             textSize = 12f
-            setTextColor(Color.parseColor("#8FA4BE"))
+            setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.aqua_card_text_secondary
+                )
+            )
             includeFontPadding = false
         }
 
         val nameText = TextView(requireContext()).apply {
             text = plant.plantName
             textSize = 14f
-            setTextColor(Color.WHITE)
+            setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.aqua_card_text_primary
+                )
+            )
             setTypeface(null, Typeface.NORMAL)
             includeFontPadding = false
             maxLines = 2

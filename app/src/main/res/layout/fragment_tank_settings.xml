@@ -48,7 +48,7 @@
             android:gravity="center"
             android:includeFontPadding="false"
             android:text="@string/aquarium_settings_tab_details"
-            android:textColor="#8FA4BE"
+            android:textColor="@color/aqua_card_text_secondary"
             android:textSize="15sp" />
 
         <TextView
@@ -58,7 +58,7 @@
             android:gravity="center"
             android:includeFontPadding="false"
             android:text="@string/aquarium_settings_tab_others"
-            android:textColor="#8FA4BE"
+            android:textColor="@color/aqua_card_text_secondary"
             android:textSize="15sp" />
 
     </LinearLayout>

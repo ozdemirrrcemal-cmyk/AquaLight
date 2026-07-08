@@ -31,14 +31,12 @@
             android:textColor="@color/aqua_card_text_primary"
             android:textSize="14sp" />
 
-        <com.google.android.material.card.MaterialCardView
-            style="@style/Widget.Aqua.Card.Form"
+        <LinearLayout
+    style="@style/Widget.Aqua.SelectionRow.Large"
             android:id="@+id/rowSmartCareSuggestions"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:clickable="true"
-            android:focusable="true">
+            android:layout_marginTop="12dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -89,16 +87,14 @@
 
             </LinearLayout>
 
-        </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
 
-        <com.google.android.material.card.MaterialCardView
-            style="@style/Widget.Aqua.Card.Form"
+        <LinearLayout
+    style="@style/Widget.Aqua.SelectionRow.Large"
             android:id="@+id/rowCareReminderNotifications"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:clickable="true"
-            android:focusable="true">
+            android:layout_marginTop="10dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -149,7 +145,7 @@
 
             </LinearLayout>
 
-        </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
 
         <TextView
             android:id="@+id/tvDataManagementTitle"
@@ -161,14 +157,12 @@
             android:textColor="@color/aqua_card_text_primary"
             android:textSize="14sp" />
 
-        <com.google.android.material.card.MaterialCardView
-            style="@style/Widget.Aqua.Card.Form"
+        <LinearLayout
+    style="@style/Widget.Aqua.SelectionRow.Settings"
             android:id="@+id/rowDuplicateTank"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:layout_marginTop="12dp"
-            android:clickable="true"
-            android:focusable="true">
+            android:layout_marginTop="12dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -194,20 +188,18 @@
                     android:contentDescription="@string/aquarium_content_desc_open"
                     android:scaleType="center"
                     android:src="@drawable/ic_arrow_right"
-                    app:tint="#8FA4BE" />
+                    app:tint="@color/aqua_card_text_secondary" />
 
             </LinearLayout>
 
-        </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
 
-        <com.google.android.material.card.MaterialCardView
-            style="@style/Widget.Aqua.Card.Form"
+        <LinearLayout
+    style="@style/Widget.Aqua.SelectionRow.Settings"
             android:id="@+id/rowExportTankData"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:layout_marginTop="10dp"
-            android:clickable="true"
-            android:focusable="true">
+            android:layout_marginTop="10dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -233,11 +225,11 @@
                     android:contentDescription="@string/aquarium_content_desc_open"
                     android:scaleType="center"
                     android:src="@drawable/ic_arrow_right"
-                    app:tint="#8FA4BE" />
+                    app:tint="@color/aqua_card_text_secondary" />
 
             </LinearLayout>
 
-        </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
 
         <TextView
             android:id="@+id/tvDangerZoneTitle"

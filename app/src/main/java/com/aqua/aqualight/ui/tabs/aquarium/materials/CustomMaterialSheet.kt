@@ -4,7 +4,6 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.text.InputType
 import android.view.Gravity
-import android.view.ContextThemeWrapper
 import android.view.View
 import android.widget.EditText
 import android.widget.FrameLayout
@@ -116,14 +115,28 @@ object CustomMaterialSheet {
         initialName: String
     ): EditText {
         val context = fragment.requireContext()
-        return EditText(ContextThemeWrapper(context, R.style.Widget_Aqua_Input_PlainEditText_Embedded)).apply {
+        return EditText(context).apply {
+            background = null
+            minHeight = 0
+            gravity = Gravity.CENTER_VERTICAL or Gravity.START
+            includeFontPadding = false
+            setPadding(
+                16.dp(context),
+                0,
+                16.dp(context),
+                0
+            )
+            setTextColor(context.color(R.color.aqua_bottom_sheet_text_primary))
+            setHintTextColor(context.color(R.color.aqua_bottom_sheet_text_secondary))
+            textSize = 16f
+            setSingleLine(true)
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS
+            hint = context.getString(R.string.material_picker_enter_material_name)
+
             setText(initialName)
             if (initialName.isNotBlank()) {
                 setSelection(initialName.length)
             }
-            hint = context.getString(R.string.material_picker_enter_material_name)
-            setSingleLine(true)
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS
         }
     }
 
@@ -134,9 +147,17 @@ object CustomMaterialSheet {
         val context = fragment.requireContext()
         return TextView(context).apply {
             text = categoryTitle
-            gravity = Gravity.CENTER_VERTICAL
+            gravity = Gravity.CENTER_VERTICAL or Gravity.START
             setTypeface(null, Typeface.NORMAL)
             includeFontPadding = false
+            setTextColor(context.color(R.color.aqua_bottom_sheet_text_primary))
+            textSize = 16f
+            setPadding(
+                16.dp(context),
+                0,
+                16.dp(context),
+                0
+            )
         }
     }
 

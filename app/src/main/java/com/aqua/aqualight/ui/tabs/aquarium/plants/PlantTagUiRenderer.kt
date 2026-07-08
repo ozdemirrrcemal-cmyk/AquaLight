@@ -7,6 +7,7 @@ import android.view.Gravity
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.aquarium.model.TankPlantTag
 import com.google.android.material.card.MaterialCardView
@@ -51,7 +52,12 @@ object PlantTagUiRenderer {
                     text = "${index + 1}"
                     gravity = Gravity.CENTER
                     textSize = 12f
-                    setTextColor(Color.WHITE)
+                    setTextColor(
+                ContextCompat.getColor(
+                    context,
+                    R.color.aqua_card_text_primary
+                )
+            )
                     setTypeface(null, Typeface.BOLD)
                     setBackgroundResource(R.drawable.bg_plant_marker)
                     includeFontPadding = false
@@ -75,8 +81,16 @@ object PlantTagUiRenderer {
         val card = MaterialCardView(context).apply {
             radius = context.dp(18).toFloat()
             strokeWidth = context.dp(1)
-            strokeColor = Color.parseColor("#223A57")
-            setCardBackgroundColor(Color.parseColor("#10233A"))
+            strokeColor = ContextCompat.getColor(
+                context,
+                R.color.aqua_card_outline
+            )
+            setCardBackgroundColor(
+                ContextCompat.getColor(
+                    context,
+                    R.color.aqua_card_surface
+                )
+            )
             cardElevation = 0f
             useCompatPadding = false
 
@@ -130,7 +144,12 @@ object PlantTagUiRenderer {
             text = plant.category
             textSize = 12f
             includeFontPadding = false
-            setTextColor(Color.parseColor("#8FA4BE"))
+            setTextColor(
+                ContextCompat.getColor(
+                    context,
+                    R.color.aqua_card_text_secondary
+                )
+            )
         }
 
         val nameText = TextView(context).apply {
@@ -153,7 +172,12 @@ object PlantTagUiRenderer {
             textSize = 26f
             gravity = Gravity.CENTER
             includeFontPadding = false
-            setTextColor(Color.parseColor("#8FA4BE"))
+            setTextColor(
+                ContextCompat.getColor(
+                    context,
+                    R.color.aqua_card_text_secondary
+                )
+            )
             contentDescription = context.getString(R.string.aquarium_remove_plant_tag)
 
             setOnClickListener {

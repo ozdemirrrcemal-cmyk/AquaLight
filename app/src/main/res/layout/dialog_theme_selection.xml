@@ -20,34 +20,33 @@
         android:text="@string/theme_selection_title"
         android:labelFor="@id/layoutLight" />
 
-    <com.google.android.material.card.MaterialCardView
-        style="@style/Widget.Aqua.BottomSheet.SelectionCard"
+    <LinearLayout
+        android:id="@+id/layoutLight"
+        style="@style/Widget.Aqua.SelectionRow.BottomSheet"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="56dp"
         android:layout_marginBottom="12dp"
-        android:contentDescription="@string/theme_selection_light_option_description">
-
-        <LinearLayout
-            android:id="@+id/layoutLight"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingHorizontal="14dp">
+        android:contentDescription="@string/theme_selection_light_option_description"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
             <ImageView
                 android:layout_width="22dp"
                 android:layout_height="22dp"
                 android:layout_marginEnd="14dp"
                 android:src="@drawable/ic_theme_light"
-                app:tint="@color/aqua_bottom_sheet_text_primary" />
+                app:tint="@color/aqua_card_text_primary" />
 
             <TextView
                 android:id="@+id/tvLight"
-                style="@style/TextAppearance.Aqua.BottomSheet.RowTitle"
+                
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
+                android:includeFontPadding="false"
+                android:textColor="@color/aqua_card_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold"
                 android:text="@string/theme_selection_light" />
 
             <com.google.android.material.radiobutton.MaterialRadioButton
@@ -57,37 +56,35 @@
                 android:layout_height="wrap_content"
                 android:focusable="false"
                 android:clickable="false" />
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
 
-    <com.google.android.material.card.MaterialCardView
-        style="@style/Widget.Aqua.BottomSheet.SelectionCard"
+    <LinearLayout
+        android:id="@+id/layoutDark"
+        style="@style/Widget.Aqua.SelectionRow.BottomSheet"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="56dp"
         android:layout_marginBottom="12dp"
-        android:contentDescription="@string/theme_selection_dark_option_description">
-
-        <LinearLayout
-            android:id="@+id/layoutDark"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingHorizontal="14dp">
+        android:contentDescription="@string/theme_selection_dark_option_description"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
             <ImageView
                 android:layout_width="22dp"
                 android:layout_height="22dp"
                 android:layout_marginEnd="14dp"
                 android:src="@drawable/ic_theme_dark"
-                app:tint="@color/aqua_bottom_sheet_text_primary" />
+                app:tint="@color/aqua_card_text_primary" />
 
             <TextView
                 android:id="@+id/tvDark"
-                style="@style/TextAppearance.Aqua.BottomSheet.RowTitle"
+                
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
+                android:includeFontPadding="false"
+                android:textColor="@color/aqua_card_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold"
                 android:text="@string/theme_selection_dark" />
 
             <com.google.android.material.radiobutton.MaterialRadioButton
@@ -97,36 +94,34 @@
                 android:layout_height="wrap_content"
                 android:focusable="false"
                 android:clickable="false" />
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
 
-    <com.google.android.material.card.MaterialCardView
-        style="@style/Widget.Aqua.BottomSheet.SelectionCard"
+    <LinearLayout
+        android:id="@+id/layoutSystem"
+        style="@style/Widget.Aqua.SelectionRow.BottomSheet"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:contentDescription="@string/theme_selection_system_option_description">
-
-        <LinearLayout
-            android:id="@+id/layoutSystem"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingHorizontal="14dp">
+        android:layout_height="56dp"
+        android:contentDescription="@string/theme_selection_system_option_description"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
             <ImageView
                 android:layout_width="22dp"
                 android:layout_height="22dp"
                 android:layout_marginEnd="14dp"
                 android:src="@drawable/ic_theme_system"
-                app:tint="@color/aqua_bottom_sheet_text_primary" />
+                app:tint="@color/aqua_card_text_primary" />
 
             <TextView
                 android:id="@+id/tvSystem"
-                style="@style/TextAppearance.Aqua.BottomSheet.RowTitle"
+                
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
+                android:includeFontPadding="false"
+                android:textColor="@color/aqua_card_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold"
                 android:text="@string/theme_selection_system_default" />
 
             <com.google.android.material.radiobutton.MaterialRadioButton
@@ -136,7 +131,6 @@
                 android:layout_height="wrap_content"
                 android:focusable="false"
                 android:clickable="false" />
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
 
 </LinearLayout>

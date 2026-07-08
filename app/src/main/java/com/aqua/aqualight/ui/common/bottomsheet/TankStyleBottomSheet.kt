@@ -62,12 +62,9 @@ object TankStyleBottomSheet {
           }
         )
 
+        view.isSelected = selected
         view.setBackgroundResource(
-          if (selected) {
-            R.drawable.bg_settings_sheet_grid_option_selected
-          } else {
-            R.drawable.bg_settings_sheet_grid_option
-          }
+          R.drawable.bg_aqua_selection_row_compact
         )
       }
     }

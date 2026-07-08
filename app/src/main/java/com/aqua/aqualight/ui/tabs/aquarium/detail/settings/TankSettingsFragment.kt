@@ -9,6 +9,7 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
@@ -332,7 +333,10 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     }
 
     private fun resetTabs() {
-        val inactiveColor = Color.parseColor("#8FA4BE")
+        val inactiveColor = ContextCompat.getColor(
+            requireContext(),
+            R.color.aqua_card_text_secondary
+        )
 
         SettingsTab.values().forEach { tab ->
             tabViewFor(tab).apply {
@@ -436,10 +440,6 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
             color = colorToHex(profileColor),
             radiusPx = 3.dp()
         )
-
-        sheetBinding.btnCloseCareProfile.setOnClickListener {
-            dialog.dismiss()
-        }
 
         sheetBinding.careProfileItemsContainer.removeAllViews()
 

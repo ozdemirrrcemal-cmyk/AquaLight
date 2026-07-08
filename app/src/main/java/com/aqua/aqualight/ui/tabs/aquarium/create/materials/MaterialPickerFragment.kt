@@ -13,6 +13,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.FrameLayout
 import androidx.core.view.isVisible
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.ViewModelProvider
@@ -250,8 +251,16 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
         val chip = MaterialCardView(requireContext()).apply {
             radius = 13.dp().toFloat()
             strokeWidth = 1.dp()
-            strokeColor = Color.parseColor("#223A57")
-            setCardBackgroundColor(Color.parseColor("#10233A"))
+            strokeColor = ContextCompat.getColor(
+                requireContext(),
+                R.color.aqua_card_outline
+            )
+            setCardBackgroundColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.aqua_card_surface
+                )
+            )
             cardElevation = 0f
             isClickable = true
             isFocusable = true
@@ -278,7 +287,12 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
             }
 
             gravity = Gravity.CENTER
-            setTextColor(Color.parseColor("#8FA4BE"))
+            setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.aqua_card_text_secondary
+                )
+            )
             textSize = 12.5f
             includeFontPadding = false
             setPadding(
@@ -365,12 +379,22 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
         val card = MaterialCardView(requireContext()).apply {
             radius = 16.dp().toFloat()
             strokeWidth = 1.dp()
-            strokeColor = Color.parseColor(
-                if (isSelected) "#2B93F6" else "#223A57"
+            strokeColor = ContextCompat.getColor(
+                requireContext(),
+                if (isSelected) {
+                    R.color.aqua_card_accent
+                } else {
+                    R.color.aqua_card_outline
+                }
             )
             setCardBackgroundColor(
-                Color.parseColor(
-                    if (isSelected) "#102C49" else "#10233A"
+                ContextCompat.getColor(
+                    requireContext(),
+                    if (isSelected) {
+                        R.color.aqua_card_surface_pressed
+                    } else {
+                        R.color.aqua_card_surface
+                    }
                 )
             )
             cardElevation = 0f
@@ -424,7 +448,12 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
 
         val category = TextView(requireContext()).apply {
             text = product.categoryTitle
-            setTextColor(Color.parseColor("#7F93AD"))
+            setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.aqua_card_text_secondary
+                )
+            )
             textSize = 11.5f
             includeFontPadding = false
             maxLines = 1
@@ -433,7 +462,12 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
 
         val name = TextView(requireContext()).apply {
             text = product.name
-            setTextColor(Color.WHITE)
+            setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.aqua_card_text_primary
+                )
+            )
             textSize = 13.5f
             setTypeface(null, Typeface.NORMAL)
             includeFontPadding = false

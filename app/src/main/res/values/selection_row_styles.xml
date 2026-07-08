@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Widget.Aqua.SelectionRow" parent="@android:style/Widget">
+        <item name="android:background">@drawable/bg_aqua_selection_row</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="android:paddingStart">14dp</item>
+        <item name="android:paddingEnd">12dp</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
+
+    <style name="Widget.Aqua.SelectionRow.Large" parent="Widget.Aqua.SelectionRow">
+        <item name="android:minHeight">72dp</item>
+    </style>
+
+    <style name="Widget.Aqua.SelectionRow.Compact" parent="Widget.Aqua.SelectionRow">
+        <item name="android:background">@drawable/bg_aqua_selection_row_compact</item>
+        <item name="android:minHeight">46dp</item>
+        <item name="android:paddingStart">14dp</item>
+        <item name="android:paddingEnd">14dp</item>
+    </style>
+
+    <style name="Widget.Aqua.SelectionRow.BottomSheet" parent="Widget.Aqua.SelectionRow.Compact" />
+
+    <style name="Widget.Aqua.SelectionRow.Danger" parent="Widget.Aqua.SelectionRow">
+        <item name="android:background">@drawable/bg_aqua_selection_row_danger</item>
+    </style>
+
+    <style name="Widget.Aqua.SelectionRow.Control" parent="Widget.Aqua.SelectionRow">
+        <item name="android:clickable">false</item>
+        <item name="android:focusable">false</item>
+        <item name="android:minHeight">52dp</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
+    </style>
+
+    <style name="Widget.Aqua.SelectionRow.Settings" parent="Widget.Aqua.SelectionRow">
+        <item name="android:minHeight">60dp</item>
+        <item name="android:paddingStart">0dp</item>
+        <item name="android:paddingEnd">0dp</item>
+    </style>
+
+
+    <style name="Widget.Aqua.SelectionRow.GridOption" parent="Widget.Aqua.SelectionRow.Compact">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">64dp</item>
+        <item name="android:layout_columnWeight">1</item>
+        <item name="android:layout_margin">5dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:lineSpacingExtra">0dp</item>
+        <item name="android:maxLines">2</item>
+        <item name="android:textAlignment">center</item>
+        <item name="android:textColor">@color/aqua_card_text_primary</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+</resources>

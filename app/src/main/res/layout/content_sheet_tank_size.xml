@@ -7,16 +7,12 @@
   android:orientation="vertical">
 
   <LinearLayout
+  style="@style/Widget.Aqua.SelectionRow.BottomSheet"
     android:id="@+id/unitRow"
     android:layout_width="match_parent"
     android:layout_height="46dp"
-    android:background="@drawable/bg_settings_sheet_input"
-    android:clickable="true"
-    android:focusable="true"
     android:gravity="center_vertical"
-    android:orientation="horizontal"
-    android:paddingStart="14dp"
-    android:paddingEnd="14dp">
+    android:orientation="horizontal">
 
     <TextView
       android:layout_width="0dp"

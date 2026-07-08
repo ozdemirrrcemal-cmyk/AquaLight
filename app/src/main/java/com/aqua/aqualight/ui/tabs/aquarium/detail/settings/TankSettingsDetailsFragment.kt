@@ -12,6 +12,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankSettingsDetailsBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
@@ -19,7 +20,6 @@ import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.aquarium.materials.MaterialSummaryFormatter
-import com.google.android.material.card.MaterialCardView
 import java.util.Locale
 
 class TankSettingsDetailsFragment : Fragment(R.layout.fragment_tank_settings_details) {
@@ -95,15 +95,22 @@ class TankSettingsDetailsFragment : Fragment(R.layout.fragment_tank_settings_det
         title: String,
         materials: List<SavedAquariumMaterial>
     ): View {
-        val card = MaterialCardView(requireContext()).apply {
-            radius = 16.dp().toFloat()
-            strokeWidth = 1.dp()
-            strokeColor = Color.parseColor("#223A57")
-            setCardBackgroundColor(Color.parseColor("#10233A"))
-            cardElevation = 0f
-            useCompatPadding = false
+        val row = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
             isClickable = true
             isFocusable = true
+            background = ContextCompat.getDrawable(
+                requireContext(),
+                R.drawable.bg_aqua_selection_row
+            )
+
+            setPadding(
+                14.dp(),
+                12.dp(),
+                12.dp(),
+                12.dp()
+            )
 
             val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -113,21 +120,14 @@ class TankSettingsDetailsFragment : Fragment(R.layout.fragment_tank_settings_det
             layoutParams = params
         }
 
-        val row = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-
-            setPadding(
-                14.dp(),
-                12.dp(),
-                12.dp(),
-                12.dp()
-            )
-        }
-
         val iconBackground = GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
-            setColor(Color.parseColor("#263B5A"))
+            setColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.aqua_card_icon_accent_surface
+                )
+            )
             cornerRadius = 12.dp().toFloat()
         }
 
@@ -161,7 +161,12 @@ class TankSettingsDetailsFragment : Fragment(R.layout.fragment_tank_settings_det
         val titleText = TextView(requireContext()).apply {
             text = title
             textSize = 14f
-            setTextColor(Color.WHITE)
+            setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.aqua_card_text_primary
+                )
+            )
             setTypeface(null, Typeface.BOLD)
             includeFontPadding = false
             maxLines = 1
@@ -171,7 +176,12 @@ class TankSettingsDetailsFragment : Fragment(R.layout.fragment_tank_settings_det
         val summaryText = TextView(requireContext()).apply {
             text = getMaterialSummary(materials)
             textSize = 12f
-            setTextColor(Color.parseColor("#8FA4BE"))
+            setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.aqua_card_text_secondary
+                )
+            )
 
             setLineSpacing(
                 2.dp().toFloat(),
@@ -191,7 +201,12 @@ class TankSettingsDetailsFragment : Fragment(R.layout.fragment_tank_settings_det
 
         val arrow = ImageView(requireContext()).apply {
             setImageResource(R.drawable.ic_arrow_right)
-            setColorFilter(Color.parseColor("#8FA4BE"))
+            setColorFilter(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.aqua_card_text_secondary
+                )
+            )
             scaleType = ImageView.ScaleType.CENTER
 
             layoutParams = LinearLayout.LayoutParams(
@@ -207,16 +222,14 @@ class TankSettingsDetailsFragment : Fragment(R.layout.fragment_tank_settings_det
         row.addView(textBox)
         row.addView(arrow)
 
-        card.addView(row)
-
-        card.setOnClickListener {
+        row.setOnClickListener {
             (parentFragment as? TankSettingsFragment)?.openMaterialPickerFlow(
                 categoryKey = categoryKey,
                 categoryTitle = title
             )
         }
 
-        return card
+        return row
     }
 
     private fun getMaterialSummary(

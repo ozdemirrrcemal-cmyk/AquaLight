@@ -14,6 +14,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.os.bundleOf
+import androidx.core.content.ContextCompat
 import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.FragmentManager
 import com.aqua.aqualight.R
@@ -23,7 +24,6 @@ import com.aqua.aqualight.data.care.catalog.CareTaskTypeDefinition
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.google.android.material.card.MaterialCardView
 
 class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
 
@@ -162,7 +162,12 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
     return TextView(requireContext()).apply {
       text = title
       textSize = 12f
-      setTextColor(Color.parseColor("#8FA4BE"))
+      setTextColor(
+        ContextCompat.getColor(
+          requireContext(),
+          R.color.aqua_card_text_secondary
+        )
+      )
       setTypeface(null, Typeface.BOLD)
       includeFontPadding = false
 
@@ -189,28 +194,24 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
     val accentColor = parseColorOrDefault(item.accentColor)
     val isRightColumn = itemIndex % 2 == 1
 
-    val card = MaterialCardView(requireContext()).apply {
-      radius = 16.dp().toFloat()
-      strokeWidth = 1.dp()
-
-      strokeColor = if (selected) {
-        accentColor
-      } else {
-        Color.parseColor("#223A57")
-      }
-
-      setCardBackgroundColor(
-        if (selected) {
-          Color.parseColor("#1C3D63")
-        } else {
-          Color.parseColor("#10233A")
-        }
-      )
-
-      cardElevation = 0f
-      useCompatPadding = false
+    val card = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+      isSelected = selected
       isClickable = true
       isFocusable = true
+
+      background = ContextCompat.getDrawable(
+        requireContext(),
+        R.drawable.bg_aqua_selection_row_compact
+      )
+
+      setPadding(
+        9.dp(),
+        8.dp(),
+        9.dp(),
+        8.dp()
+      )
 
       layoutParams = GridLayout.LayoutParams().apply {
         width = 0
@@ -237,23 +238,6 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
         publishSelectedTaskType(item)
         dismiss()
       }
-    }
-
-    val row = LinearLayout(requireContext()).apply {
-      orientation = LinearLayout.HORIZONTAL
-      gravity = Gravity.CENTER_VERTICAL
-
-      layoutParams = FrameLayout.LayoutParams(
-        FrameLayout.LayoutParams.MATCH_PARENT,
-        FrameLayout.LayoutParams.MATCH_PARENT
-      )
-
-      setPadding(
-        9.dp(),
-        8.dp(),
-        9.dp(),
-        8.dp()
-      )
     }
 
     val iconContainer = FrameLayout(requireContext()).apply {
@@ -285,7 +269,17 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
     val title = TextView(requireContext()).apply {
       text = item.title(requireContext())
       textSize = 12.2f
-      setTextColor(Color.WHITE)
+
+      setTextColor(
+        ContextCompat.getColor(
+          requireContext(),
+          if (selected) {
+            R.color.aqua_card_text_primary
+          } else {
+            R.color.aqua_card_text_secondary
+          }
+        )
+      )
 
       setTypeface(
         null,
@@ -308,10 +302,8 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
       }
     }
 
-    row.addView(iconContainer)
-    row.addView(title)
-
-    card.addView(row)
+    card.addView(iconContainer)
+    card.addView(title)
 
     return card
   }
@@ -380,7 +372,10 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
     return runCatching {
       Color.parseColor(color)
     }.getOrDefault(
-      Color.parseColor("#2196F3")
+      ContextCompat.getColor(
+        requireContext(),
+        R.color.aqua_card_accent
+      )
     )
   }
 
