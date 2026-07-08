@@ -28,7 +28,7 @@
             android:layout_weight="1"
             android:includeFontPadding="false"
             android:text="@string/aquarium_detail_tab_devices"
-            android:textColor="?attr/colorOnSurface"
+            android:textColor="@color/aqua_state_text_primary"
             android:textSize="18sp"
             android:textStyle="bold" />
 
@@ -69,7 +69,6 @@
         app:layout_constraintEnd_toEndOf="parent" />
 
     <com.google.android.material.card.MaterialCardView
-        style="@style/Widget.Aqua.Card.Device"
         android:id="@+id/cardDevicesEmpty"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -78,6 +77,10 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/devicesHeaderRow"
+        app:cardBackgroundColor="@color/aqua_state_container_surface"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="0dp"
+        app:strokeColor="@color/aqua_state_container_outline"
         app:strokeWidth="1dp">
 
         <LinearLayout
@@ -110,7 +113,7 @@
                 android:includeFontPadding="false"
                 android:lineSpacingExtra="3dp"
                 android:text="@string/aquarium_text_add_a_saved_device_to_control_or_monitor_this_aquarium"
-                android:textColor="@color/aqua_card_text_secondary"
+                android:textColor="@color/aqua_state_text_secondary"
                 android:textSize="13sp" />
 
         </LinearLayout>
