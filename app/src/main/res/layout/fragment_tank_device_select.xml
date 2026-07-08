@@ -43,7 +43,7 @@
         android:gravity="center"
         android:text="@string/tank_device_select_empty_title"
         android:textAlignment="center"
-        android:textColor="#8FA4BE"
+        android:textColor="@color/aqua_state_text_secondary"
         android:textSize="14sp"
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/appHeader"

@@ -80,6 +80,9 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
         binding.rvDevices.isVisible =
             state.isEmpty.not()
 
+        binding.emptyStateContainer.isVisible =
+            state.isEmpty
+
         adapter.submitList(
             state.devices
         )
