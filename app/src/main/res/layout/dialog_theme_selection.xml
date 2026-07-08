@@ -45,7 +45,7 @@
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"
                 android:textColor="@color/aqua_card_text_primary"
-                android:textSize="14sp"
+                android:textSize="@dimen/aqua_text_size_body"
                 android:textStyle="bold"
                 android:text="@string/theme_selection_light" />
 
@@ -83,7 +83,7 @@
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"
                 android:textColor="@color/aqua_card_text_primary"
-                android:textSize="14sp"
+                android:textSize="@dimen/aqua_text_size_body"
                 android:textStyle="bold"
                 android:text="@string/theme_selection_dark" />
 
@@ -120,7 +120,7 @@
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"
                 android:textColor="@color/aqua_card_text_primary"
-                android:textSize="14sp"
+                android:textSize="@dimen/aqua_text_size_body"
                 android:textStyle="bold"
                 android:text="@string/theme_selection_system_default" />
 

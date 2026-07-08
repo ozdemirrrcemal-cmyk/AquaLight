@@ -27,7 +27,7 @@
     android:lineSpacingExtra="2dp"
     android:text="@string/aquarium_text_choose_a_style_or_write_your_own_aquarium_concept"
     android:textColor="@color/aqua_card_text_secondary"
-    android:textSize="13sp" />
+    android:textSize="@dimen/aqua_text_size_body_small" />
 
   <LinearLayout
     android:id="@+id/styleOptionsContainer"
@@ -55,7 +55,7 @@
         android:text="@string/aquarium_style_nature_aquarium"
         android:textAlignment="center"
         android:textColor="@color/aqua_card_text_primary"
-        android:textSize="14sp" />
+        android:textSize="@dimen/aqua_text_size_body" />
 
       <TextView
         android:id="@+id/optionIwagumi"
@@ -71,7 +71,7 @@
         android:text="@string/aquarium_style_iwagumi"
         android:textAlignment="center"
         android:textColor="@color/aqua_card_text_primary"
-        android:textSize="14sp" />
+        android:textSize="@dimen/aqua_text_size_body" />
 
       <TextView
         android:id="@+id/optionDutch"
@@ -87,7 +87,7 @@
         android:text="@string/aquarium_style_dutch"
         android:textAlignment="center"
         android:textColor="@color/aqua_card_text_primary"
-        android:textSize="14sp" />
+        android:textSize="@dimen/aqua_text_size_body" />
 
     </LinearLayout>
 
@@ -111,7 +111,7 @@
         android:text="@string/aquarium_style_jungle"
         android:textAlignment="center"
         android:textColor="@color/aqua_card_text_primary"
-        android:textSize="14sp" />
+        android:textSize="@dimen/aqua_text_size_body" />
 
       <TextView
         android:id="@+id/optionBiotope"
@@ -127,7 +127,7 @@
         android:text="@string/aquarium_style_biotope"
         android:textAlignment="center"
         android:textColor="@color/aqua_card_text_primary"
-        android:textSize="14sp" />
+        android:textSize="@dimen/aqua_text_size_body" />
 
       <TextView
         android:id="@+id/optionBlackwater"
@@ -143,7 +143,7 @@
         android:text="@string/aquarium_style_blackwater"
         android:textAlignment="center"
         android:textColor="@color/aqua_card_text_primary"
-        android:textSize="14sp" />
+        android:textSize="@dimen/aqua_text_size_body" />
 
     </LinearLayout>
 
@@ -167,7 +167,7 @@
         android:text="@string/aquarium_style_forest"
         android:textAlignment="center"
         android:textColor="@color/aqua_card_text_primary"
-        android:textSize="14sp" />
+        android:textSize="@dimen/aqua_text_size_body" />
 
       <TextView
         android:id="@+id/optionMountain"
@@ -183,7 +183,7 @@
         android:text="@string/aquarium_style_mountain"
         android:textAlignment="center"
         android:textColor="@color/aqua_card_text_primary"
-        android:textSize="14sp" />
+        android:textSize="@dimen/aqua_text_size_body" />
 
       <TextView
         android:id="@+id/optionIsland"
@@ -199,7 +199,7 @@
         android:text="@string/aquarium_style_island"
         android:textAlignment="center"
         android:textColor="@color/aqua_card_text_primary"
-        android:textSize="14sp" />
+        android:textSize="@dimen/aqua_text_size_body" />
 
     </LinearLayout>
 
@@ -217,7 +217,7 @@
     android:text="@string/common_save"
     android:textAllCaps="false"
     android:textColor="@color/aqua_card_text_primary"
-    android:textSize="14sp"
+    android:textSize="@dimen/aqua_text_size_body"
     android:textStyle="bold"
     app:backgroundTint="#2196F3"
     app:cornerRadius="16dp" />
@@ -231,6 +231,6 @@
     android:includeFontPadding="false"
     android:text="@string/common_cancel"
     android:textColor="@color/aqua_card_text_secondary"
-    android:textSize="14sp" />
+    android:textSize="@dimen/aqua_text_size_body" />
 
 </LinearLayout>

@@ -66,7 +66,7 @@
                         android:gravity="center"
                         android:includeFontPadding="false"
                         android:textColor="#F2F6FA"
-                        android:textSize="19sp"
+                        android:textSize="@dimen/aqua_text_size_title_intermediate"
                         android:textStyle="bold"
                         tools:text="Connecting to device" />
 
@@ -78,7 +78,7 @@
                         android:gravity="center"
                         android:lineSpacingExtra="2dp"
                         android:textColor="#90A1B5"
-                        android:textSize="12.5sp"
+                        android:textSize="@dimen/aqua_text_size_caption_plus"
                         tools:text="AquaLight device setup is in progress." />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -101,7 +101,7 @@
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
                         android:textColor="#F2F6FA"
-                        android:textSize="17sp"
+                        android:textSize="@dimen/aqua_text_size_card_title"
                         android:textStyle="bold"
                         tools:text="WRGB Pro Elite" />
 
@@ -112,7 +112,7 @@
                         android:layout_marginTop="7dp"
                         android:includeFontPadding="false"
                         android:textColor="#90A1B5"
-                        android:textSize="12.5sp"
+                        android:textSize="@dimen/aqua_text_size_caption_plus"
                         tools:text="Serial: AQL-LIGHT-123456" />
 
                     <TextView
@@ -122,7 +122,7 @@
                         android:layout_marginTop="6dp"
                         android:includeFontPadding="false"
                         android:textColor="#5FD6B4"
-                        android:textSize="12.5sp"
+                        android:textSize="@dimen/aqua_text_size_caption_plus"
                         tools:text="BLE: AA:BB:CC:DD:EE:FF" />
 
                     <TextView
@@ -132,7 +132,7 @@
                         android:layout_marginTop="12dp"
                         android:includeFontPadding="false"
                         android:textColor="#F2F6FA"
-                        android:textSize="13sp"
+                        android:textSize="@dimen/aqua_text_size_body_small"
                         tools:text="Wi-Fi: HomeNetwork" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -156,7 +156,7 @@
                         android:includeFontPadding="false"
                         android:text="@string/device_provisioning_step_device_selected"
                         android:textColor="#F2F6FA"
-                        android:textSize="13sp"
+                        android:textSize="@dimen/aqua_text_size_body_small"
                         android:textStyle="bold" />
 
                     <TextView
@@ -167,7 +167,7 @@
                         android:includeFontPadding="false"
                         android:text="@string/device_provisioning_step_wifi_prepared"
                         android:textColor="#F2F6FA"
-                        android:textSize="13sp"
+                        android:textSize="@dimen/aqua_text_size_body_small"
                         android:textStyle="bold" />
 
                     <TextView
@@ -178,7 +178,7 @@
                         android:includeFontPadding="false"
                         android:text="@string/device_provisioning_step_preparing_secure"
                         android:textColor="#90A1B5"
-                        android:textSize="13sp"
+                        android:textSize="@dimen/aqua_text_size_body_small"
                         android:textStyle="bold" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -193,7 +193,7 @@
                 android:text="@string/device_provisioning_try_again"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
-                android:textSize="14sp"
+                android:textSize="@dimen/aqua_text_size_body"
                 android:textStyle="bold"
                 app:backgroundTint="#1E90FF"
                 app:cornerRadius="16dp" />

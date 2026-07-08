@@ -73,7 +73,7 @@
               android:includeFontPadding="false"
               android:text="@string/aquarium_text_livestock"
               android:textColor="@color/aqua_card_text_primary"
-              android:textSize="16sp"
+              android:textSize="@dimen/aqua_text_size_body_xlarge"
               android:textStyle="bold" />
 
             <TextView
@@ -84,7 +84,7 @@
               android:includeFontPadding="false"
               android:text="@string/aquarium_tank_type_fish"
               android:textColor="@color/aqua_card_text_secondary"
-              android:textSize="13sp" />
+              android:textSize="@dimen/aqua_text_size_body_small" />
 
           </LinearLayout>
 
@@ -99,7 +99,7 @@
         android:includeFontPadding="false"
         android:text="@string/aquarium_text_name"
         android:textColor="@color/aqua_card_text_primary"
-        android:textSize="13sp"
+        android:textSize="@dimen/aqua_text_size_body_small"
         android:textStyle="bold" />
 
       <EditText
@@ -119,7 +119,7 @@
         android:includeFontPadding="false"
         android:text="@string/aquarium_text_category"
         android:textColor="@color/aqua_card_text_primary"
-        android:textSize="13sp"
+        android:textSize="@dimen/aqua_text_size_body_small"
         android:textStyle="bold" />
 
       <GridLayout
@@ -136,7 +136,7 @@
         android:includeFontPadding="false"
         android:text="@string/aquarium_text_quantity"
         android:textColor="@color/aqua_card_text_primary"
-        android:textSize="13sp"
+        android:textSize="@dimen/aqua_text_size_body_small"
         android:textStyle="bold" />
 
       <LinearLayout
@@ -155,7 +155,7 @@
           android:gravity="center"
           android:text="@string/common_minus"
           android:textColor="@color/aqua_card_text_primary"
-          android:textSize="24sp"
+          android:textSize="@dimen/aqua_text_size_header_title"
           android:textStyle="bold" />
 
         <TextView
@@ -167,7 +167,7 @@
           android:includeFontPadding="false"
           android:text="@string/aquarium_text_1"
           android:textColor="@color/aqua_card_text_primary"
-          android:textSize="18sp"
+          android:textSize="@dimen/aqua_text_size_title_small"
           android:textStyle="bold" />
 
         <TextView
@@ -177,7 +177,7 @@
           android:gravity="center"
           android:text="@string/common_plus"
           android:textColor="@color/aqua_card_text_primary"
-          android:textSize="22sp"
+          android:textSize="@dimen/aqua_text_size_title_large"
           android:textStyle="bold" />
 
       </LinearLayout>
@@ -189,7 +189,7 @@
         android:includeFontPadding="false"
         android:text="@string/aquarium_text_added_date"
         android:textColor="@color/aqua_card_text_primary"
-        android:textSize="13sp"
+        android:textSize="@dimen/aqua_text_size_body_small"
         android:textStyle="bold" />
 
       <LinearLayout
@@ -211,7 +211,7 @@
           android:includeFontPadding="false"
           android:text="@string/aquarium_text_18_may_2026"
           android:textColor="@color/aqua_card_text_primary"
-          android:textSize="14sp"
+          android:textSize="@dimen/aqua_text_size_body"
           android:textStyle="bold" />
 
         <ImageView
@@ -229,7 +229,7 @@
         android:includeFontPadding="false"
         android:text="@string/aquarium_text_note"
         android:textColor="@color/aqua_card_text_primary"
-        android:textSize="13sp"
+        android:textSize="@dimen/aqua_text_size_body_small"
         android:textStyle="bold" />
 
       <EditText
@@ -254,7 +254,7 @@
         android:text="@string/aquarium_text_save_livestock"
         android:textAllCaps="false"
         android:textColor="@android:color/white"
-        android:textSize="14sp"
+        android:textSize="@dimen/aqua_text_size_body"
         android:textStyle="bold"
         app:backgroundTint="#2196F3"
         app:cornerRadius="18dp" />
@@ -268,7 +268,7 @@
         android:includeFontPadding="false"
         android:text="@string/aquarium_text_delete_livestock"
         android:textColor="#D85C5C"
-        android:textSize="14sp"
+        android:textSize="@dimen/aqua_text_size_body"
         android:textStyle="bold"
         android:visibility="gone" />
 

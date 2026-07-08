@@ -35,7 +35,7 @@
             android:text="@string/aquarium_action_add_plant"
             android:textAllCaps="false"
             android:textColor="@color/aqua_card_text_secondary"
-            android:textSize="15sp"
+            android:textSize="@dimen/aqua_text_size_body_large"
             android:textStyle="bold"
             app:backgroundTint="#10233A"
             app:cornerRadius="18dp"

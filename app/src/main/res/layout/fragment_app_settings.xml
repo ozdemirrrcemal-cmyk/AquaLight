@@ -65,7 +65,7 @@
                         <TextView
                             android:id="@+id/tvNotificationsTitle"
                             android:text="@string/settings_notifications_title"
-                            android:textSize="14sp"
+                            android:textSize="@dimen/aqua_text_size_body"
                             android:textColor="@color/aqua_card_text_primary"
                             android:textStyle="bold"
                             android:layout_width="wrap_content"
@@ -75,7 +75,7 @@
                         <TextView
                             android:id="@+id/tvNotificationsSubtitle"
                             android:text="@string/settings_notifications_subtitle"
-                            android:textSize="12sp"
+                            android:textSize="@dimen/aqua_text_size_caption"
                             android:textColor="@color/aqua_card_text_secondary"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content" />
@@ -113,7 +113,7 @@
                         <TextView
                             android:id="@+id/tvAutoUpdateTitle"
                             android:text="@string/settings_autoupdate_title"
-                            android:textSize="14sp"
+                            android:textSize="@dimen/aqua_text_size_body"
                             android:textColor="@color/aqua_card_text_primary"
                             android:textStyle="bold"
                             android:layout_width="wrap_content"
@@ -123,7 +123,7 @@
                         <TextView
                             android:id="@+id/tvAutoUpdateSubtitle"
                             android:text="@string/settings_autoupdate_subtitle"
-                            android:textSize="12sp"
+                            android:textSize="@dimen/aqua_text_size_caption"
                             android:textColor="@color/aqua_card_text_secondary"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content" />
@@ -163,7 +163,7 @@
                         <TextView
                             android:id="@+id/tvThemeTitle"
                             android:text="@string/settings_theme_title"
-                            android:textSize="14sp"
+                            android:textSize="@dimen/aqua_text_size_body"
                             android:textColor="@color/aqua_card_text_primary"
                             android:textStyle="bold"
                             android:layout_width="wrap_content"
@@ -172,7 +172,7 @@
                         <TextView
                             android:id="@+id/tvThemeSummary"
                             android:text="@string/settings_theme_summary_light"
-                            android:textSize="12sp"
+                            android:textSize="@dimen/aqua_text_size_caption"
                             android:textColor="@color/aqua_card_text_secondary"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content" />
@@ -214,7 +214,7 @@
                         <TextView
                             android:id="@+id/tvLanguageSummary"
                             android:text="@string/settings_language_title"
-                            android:textSize="14sp"
+                            android:textSize="@dimen/aqua_text_size_body"
                             android:textColor="@color/aqua_card_text_primary"
                             android:textStyle="bold"
                             android:layout_width="wrap_content"
@@ -223,7 +223,7 @@
                         <TextView
                             android:id="@+id/tvLanguageSubtitle"
                             android:text="@string/settings_language_subtitle"
-                            android:textSize="12sp"
+                            android:textSize="@dimen/aqua_text_size_caption"
                             android:textColor="@color/aqua_card_text_secondary"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content" />
@@ -266,7 +266,7 @@
             <TextView
                 android:id="@+id/tvBackupRestoreTitle"
                 android:text="@string/settings_backup_restore_title"
-                android:textSize="14sp"
+                android:textSize="@dimen/aqua_text_size_body"
                 android:textColor="@color/aqua_card_text_primary"
                 android:textStyle="bold"
                 android:layout_width="wrap_content"
@@ -275,7 +275,7 @@
             <TextView
                 android:id="@+id/tvBackupRestoreSubtitle"
                 android:text="@string/settings_backup_restore_subtitle"
-                android:textSize="12sp"
+                android:textSize="@dimen/aqua_text_size_caption"
                 android:textColor="@color/aqua_card_text_secondary"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
@@ -320,7 +320,7 @@
                         <TextView
                             android:id="@+id/tvAboutTitle"
                             android:text="@string/settings_about_title"
-                            android:textSize="14sp"
+                            android:textSize="@dimen/aqua_text_size_body"
                             android:textColor="@color/aqua_card_text_primary"
                             android:textStyle="bold"
                             android:layout_width="wrap_content"
@@ -329,7 +329,7 @@
                         <TextView
                             android:id="@+id/tvAboutSubtitle"
                             android:text="@string/settings_about_subtitle"
-                            android:textSize="12sp"
+                            android:textSize="@dimen/aqua_text_size_caption"
                             android:textColor="@color/aqua_card_text_secondary"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content" />

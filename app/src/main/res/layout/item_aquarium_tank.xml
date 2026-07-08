@@ -75,7 +75,7 @@
                     android:maxLines="1"
                     android:text="@string/aquarium_text_yatak_odas"
                     android:textColor="#101820"
-                    android:textSize="14sp"
+                    android:textSize="@dimen/aqua_text_size_body"
                     android:textStyle="bold" />
 
                 <LinearLayout
@@ -91,7 +91,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/aquarium_text_day_35"
                         android:textColor="#101820"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold" />
 
                     <View
@@ -114,7 +114,7 @@
                 android:maxLines="1"
                 android:text="@string/aquarium_text_last_water_change_today_last_trim_today"
                 android:textColor="#17202A"
-                android:textSize="11sp" />
+                android:textSize="@dimen/aqua_text_size_micro" />
 
             <LinearLayout
                 android:id="@+id/bottomInfoRow"
@@ -133,7 +133,7 @@
                     android:maxLines="1"
                     android:text="@string/aquarium_text_120w_x_50l_x_50h"
                     android:textColor="#17202A"
-                    android:textSize="10.5sp" />
+                    android:textSize="@dimen/aqua_text_size_micro_caption" />
 
                 <TextView
                     android:id="@+id/tvSetupDate"
@@ -143,7 +143,7 @@
                     android:maxLines="1"
                     android:text="@string/aquarium_text_setup_date_2026_04_12"
                     android:textColor="#17202A"
-                    android:textSize="10.5sp" />
+                    android:textSize="@dimen/aqua_text_size_micro_caption" />
 
             </LinearLayout>
 

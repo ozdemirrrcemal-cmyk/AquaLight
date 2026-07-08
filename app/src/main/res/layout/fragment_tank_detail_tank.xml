@@ -54,7 +54,7 @@
                         android:includeFontPadding="false"
                         android:text="@string/aquarium_days_title"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="10.5sp" />
+                        android:textSize="@dimen/aqua_text_size_micro_caption" />
 
                     <TextView
                         android:id="@+id/tvTankDaysValue"
@@ -66,7 +66,7 @@
                         android:maxLines="1"
                         android:text="@string/aquarium_text_0_days"
                         android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold" />
 
                 </LinearLayout>
@@ -100,7 +100,7 @@
                         android:includeFontPadding="false"
                         android:text="@string/aquarium_volume_title"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="10.5sp" />
+                        android:textSize="@dimen/aqua_text_size_micro_caption" />
 
                     <TextView
                         android:id="@+id/tvTankVolumeValue"
@@ -112,7 +112,7 @@
                         android:maxLines="1"
                         android:text="@string/aquarium_text_79_gal"
                         android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold" />
 
                 </LinearLayout>
@@ -145,7 +145,7 @@
                         android:includeFontPadding="false"
                         android:text="@string/aquarium_size_title"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="10.5sp" />
+                        android:textSize="@dimen/aqua_text_size_micro_caption" />
 
                     <TextView
                         android:id="@+id/tvTankSizeValue"
@@ -157,7 +157,7 @@
                         android:maxLines="1"
                         android:text="@string/aquarium_text_120x50x50"
                         android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="13sp"
+                        android:textSize="@dimen/aqua_text_size_body_small"
                         android:textStyle="bold" />
 
                 </LinearLayout>
@@ -189,7 +189,7 @@
                         android:includeFontPadding="false"
                         android:text="@string/aquarium_type_title"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="10.5sp" />
+                        android:textSize="@dimen/aqua_text_size_micro_caption" />
 
                     <TextView
                         android:id="@+id/tvTankTypeValue"
@@ -201,7 +201,7 @@
                         android:maxLines="1"
                         android:text="@string/aquarium_tank_type_shrimp"
                         android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold" />
 
                 </LinearLayout>
@@ -234,7 +234,7 @@
                         android:includeFontPadding="false"
                         android:text="@string/aquarium_setup_title"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="10.5sp" />
+                        android:textSize="@dimen/aqua_text_size_micro_caption" />
 
                     <TextView
                         android:id="@+id/tvTankSetupDateValue"
@@ -246,7 +246,7 @@
                         android:maxLines="1"
                         android:text="@string/aquarium_text_17_may_26"
                         android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="13sp"
+                        android:textSize="@dimen/aqua_text_size_body_small"
                         android:textStyle="bold" />
 
                 </LinearLayout>
@@ -278,7 +278,7 @@
                         android:includeFontPadding="false"
                         android:text="@string/aquarium_style_title"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="10.5sp" />
+                        android:textSize="@dimen/aqua_text_size_micro_caption" />
 
                     <TextView
                         android:id="@+id/tvTankStyleValue"
@@ -290,7 +290,7 @@
                         android:maxLines="1"
                         android:text="@string/aquarium_style_mountain"
                         android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="13sp"
+                        android:textSize="@dimen/aqua_text_size_body_small"
                         android:textStyle="bold" />
 
                 </LinearLayout>
@@ -307,7 +307,7 @@
             android:includeFontPadding="false"
             android:text="@string/aquarium_components_title"
             android:textColor="@color/aqua_card_text_primary"
-            android:textSize="16sp"
+            android:textSize="@dimen/aqua_text_size_body_xlarge"
             android:textStyle="bold" />
 
         <TextView
@@ -318,7 +318,7 @@
             android:includeFontPadding="false"
             android:text="@string/aquarium_material_group_bio"
             android:textColor="@color/aqua_card_text_primary"
-            android:textSize="13sp" />
+            android:textSize="@dimen/aqua_text_size_body_small" />
 
         <LinearLayout
             android:id="@+id/tankBioComponentsContainer"
@@ -335,7 +335,7 @@
             android:includeFontPadding="false"
             android:text="@string/aquarium_material_group_hardware"
             android:textColor="@color/aqua_card_text_primary"
-            android:textSize="13sp" />
+            android:textSize="@dimen/aqua_text_size_body_small" />
 
         <LinearLayout
             android:id="@+id/tankHardwareComponentsContainer"

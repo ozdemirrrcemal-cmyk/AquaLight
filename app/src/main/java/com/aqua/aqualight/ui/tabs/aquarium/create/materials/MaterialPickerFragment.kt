@@ -361,7 +361,10 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
                     R.color.aqua_state_text_secondary
                 )
             )
-            textSize = 15f
+            setTextSize(
+                android.util.TypedValue.COMPLEX_UNIT_PX,
+                resources.getDimension(R.dimen.aqua_text_size_state_title_small)
+            )
             includeFontPadding = false
 
             val params = LinearLayout.LayoutParams(

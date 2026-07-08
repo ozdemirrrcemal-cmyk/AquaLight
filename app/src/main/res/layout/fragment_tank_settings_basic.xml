@@ -95,7 +95,7 @@
                     android:includeFontPadding="false"
                     android:text="@string/aquarium_tank_name_title"
                     android:textColor="@color/aqua_card_text_primary"
-                    android:textSize="14sp"
+                    android:textSize="@dimen/aqua_text_size_body"
                     android:textStyle="bold" />
 
                 <TextView
@@ -107,7 +107,7 @@
                     android:maxLines="1"
                     android:text="@string/aquarium_text_aquarium"
                     android:textColor="@color/aqua_card_text_secondary"
-                    android:textSize="13sp" />
+                    android:textSize="@dimen/aqua_text_size_body_small" />
 
                 <ImageView
                     android:layout_width="22dp"
@@ -144,7 +144,7 @@
                     android:includeFontPadding="false"
                     android:text="@string/aquarium_tank_type_title"
                     android:textColor="@color/aqua_card_text_primary"
-                    android:textSize="14sp"
+                    android:textSize="@dimen/aqua_text_size_body"
                     android:textStyle="bold" />
 
                 <TextView
@@ -154,7 +154,7 @@
                     android:includeFontPadding="false"
                     android:text="@string/aquarium_tank_type_fish"
                     android:textColor="@color/aqua_card_text_secondary"
-                    android:textSize="13sp" />
+                    android:textSize="@dimen/aqua_text_size_body_small" />
 
                 <ImageView
                     android:layout_width="22dp"
@@ -192,7 +192,7 @@
                     android:includeFontPadding="false"
                     android:text="@string/aquarium_tank_size_cm_title"
                     android:textColor="@color/aqua_card_text_primary"
-                    android:textSize="14sp"
+                    android:textSize="@dimen/aqua_text_size_body"
                     android:textStyle="bold" />
 
                 <TextView
@@ -202,7 +202,7 @@
                     android:includeFontPadding="false"
                     android:text="@string/aquarium_text_10_w_x_10_l_x_10_h_2"
                     android:textColor="@color/aqua_card_text_secondary"
-                    android:textSize="13sp" />
+                    android:textSize="@dimen/aqua_text_size_body_small" />
 
                 <ImageView
                     android:layout_width="22dp"
@@ -239,7 +239,7 @@
                     android:includeFontPadding="false"
                     android:text="@string/aquarium_volume_title"
                     android:textColor="@color/aqua_card_text_primary"
-                    android:textSize="14sp"
+                    android:textSize="@dimen/aqua_text_size_body"
                     android:textStyle="bold" />
 
                 <TextView
@@ -249,7 +249,7 @@
                     android:includeFontPadding="false"
                     android:text="@string/aquarium_text_1_l"
                     android:textColor="@color/aqua_card_text_secondary"
-                    android:textSize="13sp" />
+                    android:textSize="@dimen/aqua_text_size_body_small" />
 
                 <ImageView
                     android:layout_width="22dp"
@@ -286,7 +286,7 @@
                     android:includeFontPadding="false"
                     android:text="@string/aquarium_setup_date_title"
                     android:textColor="@color/aqua_card_text_primary"
-                    android:textSize="14sp"
+                    android:textSize="@dimen/aqua_text_size_body"
                     android:textStyle="bold" />
 
                 <TextView
@@ -296,7 +296,7 @@
                     android:includeFontPadding="false"
                     android:text="@string/aquarium_text_17_may_2026"
                     android:textColor="@color/aqua_card_text_secondary"
-                    android:textSize="13sp" />
+                    android:textSize="@dimen/aqua_text_size_body_small" />
 
                 <ImageView
                     android:layout_width="22dp"
@@ -333,7 +333,7 @@
                     android:includeFontPadding="false"
                     android:text="@string/aquarium_tank_style_title"
                     android:textColor="@color/aqua_card_text_primary"
-                    android:textSize="14sp"
+                    android:textSize="@dimen/aqua_text_size_body"
                     android:textStyle="bold" />
 
                 <TextView
@@ -346,7 +346,7 @@
                     android:maxWidth="190dp"
                     android:text="@string/aquarium_text_nature_aquarium"
                     android:textColor="@color/aqua_card_text_secondary"
-                    android:textSize="13sp" />
+                    android:textSize="@dimen/aqua_text_size_body_small" />
 
                 <ImageView
                     android:layout_width="22dp"
@@ -383,7 +383,7 @@
                     android:includeFontPadding="false"
                     android:text="@string/aquarium_tank_concept_title"
                     android:textColor="@color/aqua_card_text_primary"
-                    android:textSize="14sp"
+                    android:textSize="@dimen/aqua_text_size_body"
                     android:textStyle="bold" />
 
                 <TextView
@@ -396,7 +396,7 @@
                     android:maxWidth="190dp"
                     android:text="@string/aquarium_no_idea_added"
                     android:textColor="@color/aqua_card_text_secondary"
-                    android:textSize="13sp" />
+                    android:textSize="@dimen/aqua_text_size_body_small" />
 
                 <ImageView
                     android:layout_width="22dp"

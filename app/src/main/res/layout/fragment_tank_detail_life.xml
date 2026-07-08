@@ -36,7 +36,7 @@
                 android:includeFontPadding="false"
                 android:text="@string/aquarium_tank_life_title"
                 android:textColor="@color/aqua_card_text_primary"
-                android:textSize="18sp"
+                android:textSize="@dimen/aqua_text_size_title_small"
                 android:textStyle="bold" />
 
             <com.google.android.material.button.MaterialButton
@@ -54,7 +54,7 @@
                 android:text="@string/aquarium_action_add"
                 android:textAllCaps="false"
                 android:textColor="@color/aqua_card_text_primary"
-                android:textSize="12sp"
+                android:textSize="@dimen/aqua_text_size_caption"
                 android:textStyle="bold"
                 android:contentDescription="@string/devices_scan_button_desc"
                 app:backgroundTint="#1C3252"
@@ -70,7 +70,7 @@
             android:includeFontPadding="false"
             android:text="@string/aquarium_no_livestock_yet"
             android:textColor="@color/aqua_card_text_secondary"
-            android:textSize="13sp" />
+            android:textSize="@dimen/aqua_text_size_body_small" />
 
         <com.google.android.material.card.MaterialCardView
             style="@style/Widget.Aqua.Card"
@@ -97,7 +97,7 @@
                     android:includeFontPadding="false"
                     android:text="@string/aquarium_no_livestock_added"
                     android:textColor="@color/aqua_card_text_primary"
-                    android:textSize="15sp"
+                    android:textSize="@dimen/aqua_text_size_body_large"
                     android:textStyle="bold" />
 
                 <TextView
@@ -110,7 +110,7 @@
                     android:lineSpacingExtra="3dp"
                     android:text="@string/aquarium_text_add_fish_shrimp_coral_or_other_livestock_living_in_this_aqua"
                     android:textColor="@color/aqua_card_text_secondary"
-                    android:textSize="13sp" />
+                    android:textSize="@dimen/aqua_text_size_body_small" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnEmptyAddLife"
@@ -122,7 +122,7 @@
                     android:text="@string/aquarium_action_add_livestock"
                     android:textAllCaps="false"
                     android:textColor="@color/aqua_card_text_primary"
-                    android:textSize="13sp"
+                    android:textSize="@dimen/aqua_text_size_body_small"
                     android:textStyle="bold"
                     app:backgroundTint="#1C3252"
                     app:cornerRadius="23dp" />

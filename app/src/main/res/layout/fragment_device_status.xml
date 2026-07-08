@@ -76,7 +76,7 @@ tools:context=".ui.tabs.settings.device.DeviceStatusFragment">
             android:includeFontPadding="false"
             android:text="No active devices"
             android:textColor="@color/aqua_state_text_primary"
-            android:textSize="17sp"
+            android:textSize="@dimen/aqua_text_size_state_title"
             android:textStyle="bold" />
 
         <TextView
@@ -89,7 +89,7 @@ tools:context=".ui.tabs.settings.device.DeviceStatusFragment">
             android:lineSpacingExtra="3dp"
             android:text="Connected devices will appear here once they are available."
             android:textColor="@color/aqua_state_text_secondary"
-            android:textSize="13sp" />
+            android:textSize="@dimen/aqua_text_size_state_body" />
 
     </LinearLayout>
 

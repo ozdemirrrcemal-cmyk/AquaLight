@@ -139,7 +139,10 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
                     R.color.aqua_state_text_secondary
                 )
             )
-            textSize = 15f
+            setTextSize(
+                android.util.TypedValue.COMPLEX_UNIT_PX,
+                resources.getDimension(R.dimen.aqua_text_size_state_title_small)
+            )
             gravity = Gravity.CENTER
             includeFontPadding = false
 

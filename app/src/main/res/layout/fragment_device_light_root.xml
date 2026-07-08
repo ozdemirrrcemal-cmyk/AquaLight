@@ -54,7 +54,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textColor="@color/white"
-                        android:textSize="22sp"
+                        android:textSize="@dimen/aqua_text_size_title_large"
                         android:textStyle="bold"
                         tools:text="WRGB Pro Elite" />
 
@@ -64,7 +64,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:textColor="#8FA4BE"
-                        android:textSize="12sp"
+                        android:textSize="@dimen/aqua_text_size_caption"
                         tools:text="AQL-LIGHT-123456" />
 
                     <LinearLayout
@@ -84,7 +84,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="Connection"
                                 android:textColor="#8FA4BE"
-                                android:textSize="12sp" />
+                                android:textSize="@dimen/aqua_text_size_caption" />
 
                             <TextView
                                 android:id="@+id/tvConnectionStatus"
@@ -92,7 +92,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
                                 android:textColor="@color/white"
-                                android:textSize="15sp"
+                                android:textSize="@dimen/aqua_text_size_body_large"
                                 android:textStyle="bold"
                                 tools:text="Online" />
                         </LinearLayout>
@@ -117,7 +117,7 @@
                         android:layout_height="wrap_content"
                         android:text="Device information"
                         android:textColor="@color/white"
-                        android:textSize="18sp"
+                        android:textSize="@dimen/aqua_text_size_title_small"
                         android:textStyle="bold" />
 
                     <TextView
@@ -126,7 +126,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="14dp"
                         android:textColor="#DCE7F3"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         tools:text="IP: 192.168.1.40" />
 
                     <TextView
@@ -135,7 +135,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
                         android:textColor="#DCE7F3"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         tools:text="Firmware: 1.0.0 / build 20260624" />
 
                     <TextView
@@ -144,7 +144,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
                         android:textColor="#DCE7F3"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         tools:text="Model: wrgb-pro-elite" />
 
                     <TextView
@@ -153,7 +153,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
                         android:textColor="#DCE7F3"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         tools:text="Light channels: 4" />
 
                     <TextView
@@ -162,7 +162,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
                         android:textColor="#DCE7F3"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         tools:text="Features: Manual light, Program, Presets, OTA" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -187,7 +187,7 @@
                         android:layout_height="wrap_content"
                         android:text="Hidden OTA test panel"
                         android:textColor="@color/white"
-                        android:textSize="18sp"
+                        android:textSize="@dimen/aqua_text_size_title_small"
                         android:textStyle="bold" />
 
                     <TextView
@@ -196,7 +196,7 @@
                         android:layout_marginTop="6dp"
                         android:text="Temporary internal panel. Long press Firmware to show or hide. Remove after OTA validation."
                         android:textColor="#8FA4BE"
-                        android:textSize="13sp" />
+                        android:textSize="@dimen/aqua_text_size_body_small" />
 
                     <TextView
                         android:id="@+id/tvOtaTestStatus"
@@ -205,7 +205,7 @@
                         android:layout_marginTop="12dp"
                         android:fontFamily="monospace"
                         android:textColor="#DCE7F3"
-                        android:textSize="12sp"
+                        android:textSize="@dimen/aqua_text_size_caption"
                         tools:text="Hidden OTA test panel. Long press Firmware to unlock." />
 
                     <LinearLayout
@@ -279,7 +279,7 @@
                         android:layout_height="wrap_content"
                         android:text="Manual control"
                         android:textColor="@color/white"
-                        android:textSize="18sp"
+                        android:textSize="@dimen/aqua_text_size_title_small"
                         android:textStyle="bold" />
 
                     <TextView
@@ -289,7 +289,7 @@
                         android:layout_marginTop="8dp"
                         android:text="Manual control hazırlanıyor."
                         android:textColor="#8FA4BE"
-                        android:textSize="14sp" />
+                        android:textSize="@dimen/aqua_text_size_body" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -310,7 +310,7 @@
                         android:layout_height="wrap_content"
                         android:text="Programs"
                         android:textColor="@color/white"
-                        android:textSize="18sp"
+                        android:textSize="@dimen/aqua_text_size_title_small"
                         android:textStyle="bold" />
 
                     <TextView
@@ -320,7 +320,7 @@
                         android:layout_marginTop="8dp"
                         android:text="Programlar hazırlanıyor."
                         android:textColor="#8FA4BE"
-                        android:textSize="14sp" />
+                        android:textSize="@dimen/aqua_text_size_body" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>

@@ -26,7 +26,7 @@
 
     <style name="SplashTitleText">
         <item name="android:textColor">@color/md_theme_light_onPrimary</item>
-        <item name="android:textSize">32sp</item>
+        <item name="android:textSize">@dimen/aqua_text_size_display</item>
         <item name="fontFamily">@font/poppins_bold</item>
         <item name="android:letterSpacing">0.08</item>
         <item name="android:gravity">center</item>
@@ -34,7 +34,7 @@
 
     <style name="SplashSubtitleText">
         <item name="android:textColor">@color/md_theme_light_onSurface</item>
-        <item name="android:textSize">16sp</item>
+        <item name="android:textSize">@dimen/aqua_text_size_body_xlarge</item>
         <item name="fontFamily">@font/raleway_medium</item>
         <item name="android:letterSpacing">0.04</item>
         <item name="android:gravity">center</item>

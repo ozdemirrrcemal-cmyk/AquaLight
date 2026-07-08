@@ -55,7 +55,7 @@
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
                         android:textColor="#F2F6FA"
-                        android:textSize="20sp"
+                        android:textSize="@dimen/aqua_text_size_title_medium"
                         android:textStyle="bold"
                         tools:text="Dosing Pro 4" />
 
@@ -66,7 +66,7 @@
                         android:layout_marginTop="7dp"
                         android:includeFontPadding="false"
                         android:textColor="#90A1B5"
-                        android:textSize="12.5sp"
+                        android:textSize="@dimen/aqua_text_size_caption_plus"
                         tools:text="Serial: AQL-DP4-336172" />
 
                     <TextView
@@ -76,7 +76,7 @@
                         android:layout_marginTop="6dp"
                         android:includeFontPadding="false"
                         android:textColor="#5FD6B4"
-                        android:textSize="12.5sp"
+                        android:textSize="@dimen/aqua_text_size_caption_plus"
                         tools:text="QR setup" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -99,7 +99,7 @@
                         android:includeFontPadding="false"
                         android:text="@string/device_wifi_card_title"
                         android:textColor="#F2F6FA"
-                        android:textSize="18sp"
+                        android:textSize="@dimen/aqua_text_size_title_small"
                         android:textStyle="bold" />
 
                     <TextView
@@ -109,7 +109,7 @@
                         android:lineSpacingExtra="2dp"
                         android:text="@string/device_wifi_card_message_corrected"
                         android:textColor="#90A1B5"
-                        android:textSize="12.5sp" />
+                        android:textSize="@dimen/aqua_text_size_caption_plus" />
 
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:id="@+id/wifiNetworkRow"
@@ -161,7 +161,7 @@
                             android:minWidth="78dp"
                             android:text="@string/device_wifi_select_wifi_action"
                             android:textColor="#5FD6B4"
-                            android:textSize="12sp"
+                            android:textSize="@dimen/aqua_text_size_caption"
                             android:textStyle="bold"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
@@ -188,7 +188,7 @@
                         android:buttonTint="#5FD6B4"
                         android:text="@string/device_wifi_show_password"
                         android:textColor="#90A1B5"
-                        android:textSize="12.5sp" />
+                        android:textSize="@dimen/aqua_text_size_caption_plus" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnContinue"
@@ -200,7 +200,7 @@
                         android:text="@string/device_wifi_continue"
                         android:textAllCaps="false"
                         android:textColor="@color/white"
-                        android:textSize="14.5sp"
+                        android:textSize="@dimen/aqua_text_size_body_plus"
                         android:textStyle="bold"
                         app:backgroundTint="#1E90FF"
                         app:cornerRadius="17dp" />
@@ -213,7 +213,7 @@
                         android:lineSpacingExtra="2dp"
                         android:text="@string/device_wifi_privacy_hint"
                         android:textColor="#90A1B5"
-                        android:textSize="12sp" />
+                        android:textSize="@dimen/aqua_text_size_caption" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>

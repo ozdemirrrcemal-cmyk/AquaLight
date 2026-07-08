@@ -53,7 +53,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textColor="@color/white"
-                        android:textSize="22sp"
+                        android:textSize="@dimen/aqua_text_size_title_large"
                         android:textStyle="bold"
                         tools:text="Dose Pro 4" />
 
@@ -63,7 +63,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:textColor="#8FA4BE"
-                        android:textSize="12sp"
+                        android:textSize="@dimen/aqua_text_size_caption"
                         tools:text="AQL-DOSING-123456" />
 
                     <LinearLayout
@@ -83,7 +83,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="Connection"
                                 android:textColor="#8FA4BE"
-                                android:textSize="12sp" />
+                                android:textSize="@dimen/aqua_text_size_caption" />
 
                             <TextView
                                 android:id="@+id/tvConnectionStatus"
@@ -91,7 +91,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
                                 android:textColor="@color/white"
-                                android:textSize="15sp"
+                                android:textSize="@dimen/aqua_text_size_body_large"
                                 android:textStyle="bold"
                                 tools:text="Online" />
                         </LinearLayout>
@@ -116,7 +116,7 @@
                         android:layout_height="wrap_content"
                         android:text="Device information"
                         android:textColor="@color/white"
-                        android:textSize="18sp"
+                        android:textSize="@dimen/aqua_text_size_title_small"
                         android:textStyle="bold" />
 
                     <TextView
@@ -125,7 +125,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="14dp"
                         android:textColor="#DCE7F3"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         tools:text="IP: 192.168.1.40" />
 
                     <TextView
@@ -134,7 +134,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
                         android:textColor="#DCE7F3"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         tools:text="Firmware: 1.0.0 / build 20260624" />
 
                     <TextView
@@ -143,7 +143,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
                         android:textColor="#DCE7F3"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         tools:text="Model: dose-pro-4" />
 
                     <TextView
@@ -152,7 +152,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
                         android:textColor="#DCE7F3"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         tools:text="Dosing channels: 4" />
 
                     <TextView
@@ -161,7 +161,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
                         android:textColor="#DCE7F3"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         tools:text="Features: Dosing, Time sync, OTA" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -183,7 +183,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textColor="@color/white"
-                        android:textSize="18sp"
+                        android:textSize="@dimen/aqua_text_size_title_small"
                         android:textStyle="bold"
                         tools:text="Channel controls" />
 
@@ -193,7 +193,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:textColor="#8FA4BE"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         tools:text="Channel controls hazırlanıyor." />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -215,7 +215,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textColor="@color/white"
-                        android:textSize="18sp"
+                        android:textSize="@dimen/aqua_text_size_title_small"
                         android:textStyle="bold"
                         tools:text="Schedules" />
 
@@ -225,7 +225,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:textColor="#8FA4BE"
-                        android:textSize="14sp"
+                        android:textSize="@dimen/aqua_text_size_body"
                         tools:text="Schedules hazırlanıyor." />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

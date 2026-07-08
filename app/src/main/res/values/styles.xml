@@ -52,7 +52,7 @@
 </style>
 
 <style name="TextAppearance.Aqua.BottomNav" parent="TextAppearance.MaterialComponents.Body2">
-    <item name="android:textSize">12sp</item>
+    <item name="android:textSize">@dimen/aqua_text_size_caption</item>
 </style>
 
 <style name="Widget.Aqua.BottomNav"
@@ -73,7 +73,7 @@
     <item name="fontFamily">@font/inter_semibold</item>
     <item name="android:fontFamily">@font/inter_semibold</item>
     <item name="android:textColor">@android:color/white</item>
-    <item name="android:textSize">20sp</item>
+    <item name="android:textSize">@dimen/aqua_text_size_toolbar_title</item>
 </style>
 
 
@@ -83,7 +83,7 @@
     <item name="fontFamily">@font/inter_regular</item>
     <item name="android:fontFamily">@font/inter_regular</item>
     <item name="android:textColor">@android:color/white</item>
-    <item name="android:textSize">18sp</item>
+    <item name="android:textSize">@dimen/aqua_text_size_step_title</item>
     <item name="android:lineSpacingExtra">2dp</item>
 </style>
 
@@ -107,7 +107,7 @@
     <item name="fontFamily">@font/inter_regular</item>
     <item name="android:fontFamily">@font/inter_regular</item>
     <item name="android:textColor">@color/aqua_card_text_secondary</item>
-    <item name="android:textSize">14sp</item>
+    <item name="android:textSize">@dimen/aqua_text_size_body</item>
 </style>
 
 <!-- Feedback alt bilgi -->
@@ -116,7 +116,7 @@
     <item name="fontFamily">@font/inter_regular</item>
     <item name="android:fontFamily">@font/inter_regular</item>
     <item name="android:textColor">@color/aqua_card_text_secondary</item>
-    <item name="android:textSize">13sp</item>
+    <item name="android:textSize">@dimen/aqua_text_size_body_small</item>
 </style>
 
 <!-- Feedback success mesajı -->
@@ -125,7 +125,7 @@
     <item name="fontFamily">@font/inter_medium</item>
     <item name="android:fontFamily">@font/inter_medium</item>
     <item name="android:textColor">#64FFDA</item>
-    <item name="android:textSize">15sp</item>
+    <item name="android:textSize">@dimen/aqua_text_size_feedback_success</item>
 </style>
 
 <!-- ⚙️ Ayarlar ekranı RadioButton stili -->
@@ -144,13 +144,17 @@
 </style>
 
 
-<style name="TextAppearance.Aqua.Body" parent="TextAppearance.Material3.BodyMedium" />
+<style name="TextAppearance.Aqua.Body" parent="TextAppearance.Material3.BodyMedium">
+    <item name="android:textSize">@dimen/aqua_text_size_body</item>
+</style>
 
 <style name="TextAppearance.Aqua.BodyBold" parent="TextAppearance.Material3.BodyLarge">
     <item name="android:textStyle">bold</item>
 </style>
 
-<style name="TextAppearance.Aqua.Caption" parent="TextAppearance.Material3.LabelMedium" />
+<style name="TextAppearance.Aqua.Caption" parent="TextAppearance.Material3.LabelMedium">
+    <item name="android:textSize">@dimen/aqua_text_size_caption</item>
+</style>
 
   <style name="Aqua" />
 

@@ -37,7 +37,7 @@
             android:includeFontPadding="false"
             android:text="@string/aquarium_settings_tab_basic"
             android:textColor="?attr/colorOnSurface"
-            android:textSize="15sp"
+            android:textSize="@dimen/aqua_text_size_body_large"
             android:textStyle="bold" />
 
         <TextView
@@ -49,7 +49,7 @@
             android:includeFontPadding="false"
             android:text="@string/aquarium_settings_tab_details"
             android:textColor="@color/aqua_card_text_secondary"
-            android:textSize="15sp" />
+            android:textSize="@dimen/aqua_text_size_body_large" />
 
         <TextView
             android:id="@+id/tabOthers"
@@ -59,7 +59,7 @@
             android:includeFontPadding="false"
             android:text="@string/aquarium_settings_tab_others"
             android:textColor="@color/aqua_card_text_secondary"
-            android:textSize="15sp" />
+            android:textSize="@dimen/aqua_text_size_body_large" />
 
     </LinearLayout>
 

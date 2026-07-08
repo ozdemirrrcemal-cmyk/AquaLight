@@ -60,7 +60,7 @@
               android:includeFontPadding="false"
               android:text="@string/aquarium_text_last_trim"
               android:textColor="@color/aqua_card_text_secondary"
-              android:textSize="12sp" />
+              android:textSize="@dimen/aqua_text_size_caption" />
 
             <TextView
               android:id="@+id/tvLastTrimValue"
@@ -71,7 +71,7 @@
               android:includeFontPadding="false"
               android:text="@string/aquarium_text_days_ago"
               android:textColor="#5FD6B4"
-              android:textSize="12sp"
+              android:textSize="@dimen/aqua_text_size_caption"
               android:textStyle="bold" />
 
           </LinearLayout>
@@ -101,7 +101,7 @@
               android:includeFontPadding="false"
               android:text="@string/aquarium_text_last_water_change"
               android:textColor="@color/aqua_card_text_secondary"
-              android:textSize="12sp" />
+              android:textSize="@dimen/aqua_text_size_caption" />
 
             <TextView
               android:id="@+id/tvLastWaterChangeValue"
@@ -112,7 +112,7 @@
               android:includeFontPadding="false"
               android:text="@string/aquarium_text_days_ago"
               android:textColor="#5FD6B4"
-              android:textSize="12sp"
+              android:textSize="@dimen/aqua_text_size_caption"
               android:textStyle="bold" />
 
           </LinearLayout>
@@ -141,7 +141,7 @@
               android:includeFontPadding="false"
               android:text="@string/aquarium_text_next_care"
               android:textColor="@color/aqua_card_text_secondary"
-              android:textSize="11sp" />
+              android:textSize="@dimen/aqua_text_size_micro" />
 
             <TextView
               android:id="@+id/tvNextCareTaskTitle"
@@ -154,7 +154,7 @@
               android:maxLines="1"
               android:text="@string/aquarium_text_value"
               android:textColor="#F2C94C"
-              android:textSize="10.6sp"
+              android:textSize="@dimen/aqua_text_size_micro_label"
               android:textStyle="bold" />
 
             <TextView
@@ -168,7 +168,7 @@
               android:maxLines="1"
               android:text="@string/aquarium_text_value"
               android:textColor="@color/aqua_card_text_secondary"
-              android:textSize="10.4sp" />
+              android:textSize="@dimen/aqua_text_size_micro_tight" />
 
           </LinearLayout>
 
@@ -196,7 +196,7 @@
               android:includeFontPadding="false"
               android:text="@string/aquarium_text_last_filter_main"
               android:textColor="@color/aqua_card_text_secondary"
-              android:textSize="12sp" />
+              android:textSize="@dimen/aqua_text_size_caption" />
 
             <TextView
               android:id="@+id/tvLastFilterValue"
@@ -207,7 +207,7 @@
               android:includeFontPadding="false"
               android:text="@string/aquarium_text_days_ago"
               android:textColor="#5FD6B4"
-              android:textSize="12sp"
+              android:textSize="@dimen/aqua_text_size_caption"
               android:textStyle="bold" />
 
           </LinearLayout>
@@ -224,7 +224,7 @@
         android:includeFontPadding="false"
         android:text="@string/aquarium_text_timeline"
         android:textColor="@color/aqua_card_text_primary"
-        android:textSize="15sp"
+        android:textSize="@dimen/aqua_text_size_body_large"
         android:textStyle="bold" />
 
       <TextView
@@ -236,7 +236,7 @@
         android:includeFontPadding="false"
         android:text="@string/aquarium_no_activity_yet"
         android:textColor="@color/aqua_card_text_secondary"
-        android:textSize="13sp"
+        android:textSize="@dimen/aqua_text_size_body_small"
         android:visibility="gone" />
 
       <LinearLayout
@@ -302,7 +302,7 @@
         android:includeFontPadding="false"
         android:text="@string/aquarium_text_add_activity"
         android:textColor="@color/aqua_card_text_primary"
-        android:textSize="13sp"
+        android:textSize="@dimen/aqua_text_size_body_small"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/addActivityIconCircle"

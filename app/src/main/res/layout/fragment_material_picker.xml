@@ -45,7 +45,7 @@
                 android:includeFontPadding="false"
                 android:text="@string/material_picker_popular_keywords"
                 android:textColor="#8FA4BE"
-                android:textSize="13sp" />
+                android:textSize="@dimen/aqua_text_size_body_small" />
 
             <HorizontalScrollView
                 android:id="@+id/keywordScrollView"
@@ -96,7 +96,7 @@
             android:includeFontPadding="false"
             android:text="@string/material_picker_selected_zero"
             android:textColor="#8FA4BE"
-            android:textSize="12.5sp" />
+            android:textSize="@dimen/aqua_text_size_caption_plus" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSave"
@@ -106,7 +106,7 @@
             android:layout_marginTop="10dp"
             android:text="@string/common_save"
             android:textAllCaps="false"
-            android:textSize="15sp"
+            android:textSize="@dimen/aqua_text_size_body_large"
             android:textStyle="bold" />
 
     </LinearLayout>

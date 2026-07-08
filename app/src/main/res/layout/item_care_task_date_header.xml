@@ -9,5 +9,5 @@
     android:paddingTop="6dp"
     android:paddingBottom="10dp"
     android:textColor="@android:color/white"
-    android:textSize="11.5sp"
+    android:textSize="@dimen/aqua_text_size_micro_plus"
     android:textStyle="normal" />

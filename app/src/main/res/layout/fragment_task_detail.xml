@@ -86,7 +86,7 @@
                                 android:includeFontPadding="false"
                                 android:maxLines="1"
                                 android:textColor="@android:color/white"
-                                android:textSize="16sp"
+                                android:textSize="@dimen/aqua_text_size_body_xlarge"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -100,7 +100,7 @@
                                 android:paddingStart="9dp"
                                 android:paddingEnd="9dp"
                                 android:textColor="@android:color/white"
-                                android:textSize="10.5sp"
+                                android:textSize="@dimen/aqua_text_size_micro_caption"
                                 android:textStyle="bold" />
 
                         </LinearLayout>
@@ -112,7 +112,7 @@
                             android:layout_marginTop="7dp"
                             android:includeFontPadding="false"
                             android:textColor="@color/aqua_card_text_secondary"
-                            android:textSize="12sp" />
+                            android:textSize="@dimen/aqua_text_size_caption" />
 
                     </LinearLayout>
 
@@ -127,7 +127,7 @@
                 android:includeFontPadding="false"
                 android:text="@string/maintenance_task_information"
                 android:textColor="@android:color/white"
-                android:textSize="13sp"
+                android:textSize="@dimen/aqua_text_size_body_small"
                 android:textStyle="bold" />
 
             <LinearLayout
@@ -179,7 +179,7 @@
                 android:includeFontPadding="false"
                 android:text="@string/maintenance_description_label"
                 android:textColor="@android:color/white"
-                android:textSize="13sp"
+                android:textSize="@dimen/aqua_text_size_body_small"
                 android:textStyle="bold" />
 
             <com.google.android.material.card.MaterialCardView
@@ -200,7 +200,7 @@
                     android:paddingEnd="14dp"
                     android:paddingBottom="13dp"
                     android:textColor="#B8C7D9"
-                    android:textSize="12sp" />
+                    android:textSize="@dimen/aqua_text_size_caption" />
 
             </com.google.android.material.card.MaterialCardView>
 
@@ -212,7 +212,7 @@
                 android:includeFontPadding="false"
                 android:text="@string/maintenance_note_label"
                 android:textColor="@android:color/white"
-                android:textSize="13sp"
+                android:textSize="@dimen/aqua_text_size_body_small"
                 android:textStyle="bold" />
 
             <com.google.android.material.card.MaterialCardView
@@ -234,7 +234,7 @@
                     android:paddingEnd="14dp"
                     android:paddingBottom="13dp"
                     android:textColor="#B8C7D9"
-                    android:textSize="12sp" />
+                    android:textSize="@dimen/aqua_text_size_caption" />
 
             </com.google.android.material.card.MaterialCardView>
 
@@ -249,7 +249,7 @@
                 android:padding="14dp"
                 android:text="@string/maintenance_automatic_task_info"
                 android:textColor="#5FD6B4"
-                android:textSize="12sp"
+                android:textSize="@dimen/aqua_text_size_caption"
                 android:visibility="gone" />
 
             <com.google.android.material.button.MaterialButton
@@ -262,7 +262,7 @@
                 android:text="@string/maintenance_complete_task"
                 android:textAllCaps="false"
                 android:textColor="@android:color/white"
-                android:textSize="13sp"
+                android:textSize="@dimen/aqua_text_size_body_small"
                 android:textStyle="bold"
                 app:backgroundTint="#2196F3"
                 app:cornerRadius="16dp" />
@@ -277,7 +277,7 @@
                 android:text="@string/maintenance_delete_task"
                 android:textAllCaps="false"
                 android:textColor="#D85C5C"
-                android:textSize="13sp"
+                android:textSize="@dimen/aqua_text_size_body_small"
                 android:textStyle="bold"
                 app:backgroundTint="#10233A"
                 app:cornerRadius="16dp"

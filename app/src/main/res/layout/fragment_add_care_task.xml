@@ -43,7 +43,7 @@
         android:includeFontPadding="false"
         android:text="@string/maintenance_task_type_label"
         android:textColor="@color/aqua_card_text_primary"
-        android:textSize="15sp"
+        android:textSize="@dimen/aqua_text_size_body_large"
         android:textStyle="bold" />
 
       <LinearLayout
@@ -88,7 +88,7 @@
             android:maxLines="1"
             android:text="@string/maintenance_select_care_task_type"
             android:textColor="@color/aqua_card_text_secondary"
-            android:textSize="14sp"
+            android:textSize="@dimen/aqua_text_size_body"
             android:textStyle="bold" />
 
           <TextView
@@ -101,7 +101,7 @@
             android:maxLines="1"
             android:text="@string/maintenance_required"
             android:textColor="@color/aqua_card_text_secondary"
-            android:textSize="12.5sp" />
+            android:textSize="@dimen/aqua_text_size_caption_plus" />
 
         </LinearLayout>
 
@@ -127,7 +127,7 @@
           android:includeFontPadding="false"
           android:text="@string/maintenance_custom_title_label"
           android:textColor="@color/aqua_card_text_primary"
-          android:textSize="13sp"
+          android:textSize="@dimen/aqua_text_size_body_small"
           android:textStyle="bold" />
 
         <EditText
@@ -149,7 +149,7 @@
         android:includeFontPadding="false"
         android:text="@string/maintenance_aquarium_label"
         android:textColor="@color/aqua_card_text_primary"
-        android:textSize="15sp"
+        android:textSize="@dimen/aqua_text_size_body_large"
         android:textStyle="bold" />
 
       <LinearLayout
@@ -176,7 +176,7 @@
             android:maxLines="1"
             android:text="@string/maintenance_select_aquarium"
             android:textColor="@color/aqua_card_text_secondary"
-            android:textSize="14sp"
+            android:textSize="@dimen/aqua_text_size_body"
             android:textStyle="bold" />
 
           <TextView
@@ -189,7 +189,7 @@
             android:maxLines="1"
             android:text="@string/maintenance_required"
             android:textColor="@color/aqua_card_text_secondary"
-            android:textSize="12.5sp" />
+            android:textSize="@dimen/aqua_text_size_caption_plus" />
 
         </LinearLayout>
 
@@ -208,7 +208,7 @@
         android:includeFontPadding="false"
         android:text="@string/maintenance_schedule_label"
         android:textColor="@color/aqua_card_text_primary"
-        android:textSize="15sp"
+        android:textSize="@dimen/aqua_text_size_body_large"
         android:textStyle="bold" />
 
       <LinearLayout
@@ -233,7 +233,7 @@
             android:includeFontPadding="false"
             android:text="@string/maintenance_date_label"
             android:textColor="@color/aqua_card_text_secondary"
-            android:textSize="11.5sp" />
+            android:textSize="@dimen/aqua_text_size_micro_plus" />
 
           <TextView
             android:id="@+id/tvDueDateValue"
@@ -244,7 +244,7 @@
             android:includeFontPadding="false"
             android:maxLines="1"
             android:textColor="@color/aqua_card_text_primary"
-            android:textSize="14sp"
+            android:textSize="@dimen/aqua_text_size_body"
             android:textStyle="bold" />
 
         </LinearLayout>
@@ -265,7 +265,7 @@
             android:includeFontPadding="false"
             android:text="@string/maintenance_time_label"
             android:textColor="@color/aqua_card_text_secondary"
-            android:textSize="11.5sp" />
+            android:textSize="@dimen/aqua_text_size_micro_plus" />
 
           <TextView
             android:id="@+id/tvDueTimeValue"
@@ -276,7 +276,7 @@
             android:includeFontPadding="false"
             android:maxLines="1"
             android:textColor="@color/aqua_card_text_primary"
-            android:textSize="14sp"
+            android:textSize="@dimen/aqua_text_size_body"
             android:textStyle="bold" />
 
         </LinearLayout>
@@ -313,7 +313,7 @@
                 android:includeFontPadding="false"
                 android:text="@string/maintenance_repeat_label"
                 android:textColor="@color/aqua_card_text_primary"
-                android:textSize="14sp"
+                android:textSize="@dimen/aqua_text_size_body"
                 android:textStyle="bold" />
 
               <TextView
@@ -323,7 +323,7 @@
                 android:includeFontPadding="false"
                 android:text="@string/maintenance_repeat_description"
                 android:textColor="@color/aqua_card_text_secondary"
-                android:textSize="12.5sp" />
+                android:textSize="@dimen/aqua_text_size_caption_plus" />
 
             </LinearLayout>
 
@@ -350,7 +350,7 @@
               android:includeFontPadding="false"
               android:text="@string/maintenance_repeat_every_label"
               android:textColor="#B8C7D9"
-              android:textSize="13sp" />
+              android:textSize="@dimen/aqua_text_size_body_small" />
 
             <EditText
         style="@style/Widget.Aqua.Input.PlainEditText.Compact"
@@ -370,7 +370,7 @@
               android:includeFontPadding="false"
               android:text="@string/maintenance_days_label"
               android:textColor="#B8C7D9"
-              android:textSize="13sp" />
+              android:textSize="@dimen/aqua_text_size_body_small" />
 
           </LinearLayout>
 
@@ -408,7 +408,7 @@
                 android:includeFontPadding="false"
                 android:text="@string/maintenance_reminder_label"
                 android:textColor="@color/aqua_card_text_primary"
-                android:textSize="14sp"
+                android:textSize="@dimen/aqua_text_size_body"
                 android:textStyle="bold" />
 
               <TextView
@@ -418,7 +418,7 @@
                 android:includeFontPadding="false"
                 android:text="@string/maintenance_reminder_description"
                 android:textColor="@color/aqua_card_text_secondary"
-                android:textSize="12.5sp" />
+                android:textSize="@dimen/aqua_text_size_caption_plus" />
 
             </LinearLayout>
 
@@ -455,7 +455,7 @@
                   android:includeFontPadding="false"
                   android:text="@string/maintenance_missed_reminder_label"
                   android:textColor="@color/aqua_card_text_primary"
-                  android:textSize="14sp"
+                  android:textSize="@dimen/aqua_text_size_body"
                   android:textStyle="bold" />
 
                 <TextView
@@ -465,7 +465,7 @@
                   android:includeFontPadding="false"
                   android:text="@string/maintenance_missed_reminder_description"
                   android:textColor="@color/aqua_card_text_secondary"
-                  android:textSize="12.5sp" />
+                  android:textSize="@dimen/aqua_text_size_caption_plus" />
 
               </LinearLayout>
 
@@ -492,7 +492,7 @@
                 android:includeFontPadding="false"
                 android:text="@string/maintenance_repeat_missed_reminders_for_label"
                 android:textColor="#B8C7D9"
-                android:textSize="13sp" />
+                android:textSize="@dimen/aqua_text_size_body_small" />
 
               <EditText
         style="@style/Widget.Aqua.Input.PlainEditText.Compact"
@@ -512,7 +512,7 @@
                 android:includeFontPadding="false"
                 android:text="@string/maintenance_days_label"
                 android:textColor="#B8C7D9"
-                android:textSize="13sp" />
+                android:textSize="@dimen/aqua_text_size_body_small" />
 
             </LinearLayout>
 
@@ -529,7 +529,7 @@
         android:includeFontPadding="false"
         android:text="@string/maintenance_note_label"
         android:textColor="@color/aqua_card_text_primary"
-        android:textSize="13sp"
+        android:textSize="@dimen/aqua_text_size_body_small"
         android:textStyle="bold" />
 
       <EditText
@@ -573,7 +573,7 @@
       android:text="@string/maintenance_save_task"
       android:textAllCaps="false"
       android:textColor="@android:color/white"
-      android:textSize="14sp"
+      android:textSize="@dimen/aqua_text_size_body"
       android:textStyle="bold"
       app:backgroundTint="#35506D"
       app:cornerRadius="18dp" />

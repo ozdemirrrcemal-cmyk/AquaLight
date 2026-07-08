@@ -6,7 +6,7 @@
     android:gravity="center_vertical"
     android:paddingStart="16dp"
     android:paddingEnd="16dp"
-    android:textSize="15sp"
+    android:textSize="@dimen/aqua_text_size_body_large"
     android:textColor="?attr/colorOnSurface"
     android:maxLines="1"
     android:ellipsize="end"

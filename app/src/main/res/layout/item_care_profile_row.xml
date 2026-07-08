@@ -34,7 +34,7 @@
         android:maxLines="1"
         android:text="@string/aquarium_care_profile_tank_name"
         android:textColor="@android:color/white"
-        android:textSize="14sp"
+        android:textSize="@dimen/aqua_text_size_body"
         android:textStyle="bold" />
 
       <TextView
@@ -47,7 +47,7 @@
         android:maxLines="1"
         android:text="@string/aquarium_no_value_placeholder"
         android:textColor="@color/aqua_card_text_secondary"
-        android:textSize="13sp" />
+        android:textSize="@dimen/aqua_text_size_body_small" />
 
     </LinearLayout>
 
@@ -59,7 +59,7 @@
       android:gravity="center"
       android:includeFontPadding="false"
       android:text="@string/aquarium_action_complete"
-      android:textSize="11sp"
+      android:textSize="@dimen/aqua_text_size_micro"
       android:textStyle="bold" />
 
   </LinearLayout>

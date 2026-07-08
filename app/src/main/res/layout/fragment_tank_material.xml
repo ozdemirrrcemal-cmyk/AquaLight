@@ -26,7 +26,7 @@
             android:layout_marginTop="8dp"
             android:text="@string/aquarium_text_add_the_biological_materials_and_hardware_used_in_this_aquar"
             android:textColor="#8FA4BE"
-            android:textSize="14sp"
+            android:textSize="@dimen/aqua_text_size_body"
             android:lineSpacingExtra="3dp" />
 
         <TextView
@@ -36,7 +36,7 @@
             android:layout_marginTop="26dp"
             android:text="@string/aquarium_material_group_bio"
             android:textColor="?attr/colorOnSurface"
-            android:textSize="15sp"
+            android:textSize="@dimen/aqua_text_size_body_large"
             android:textStyle="bold" />
 
         <LinearLayout
@@ -53,7 +53,7 @@
             android:layout_marginTop="26dp"
             android:text="@string/aquarium_material_group_hardware"
             android:textColor="?attr/colorOnSurface"
-            android:textSize="15sp"
+            android:textSize="@dimen/aqua_text_size_body_large"
             android:textStyle="bold" />
 
         <LinearLayout
