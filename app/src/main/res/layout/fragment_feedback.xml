@@ -229,7 +229,7 @@
             <!-- SEND BUTTON -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSend"
-                style="@style/Widget.Aqua.PrimaryButton"
+                style="@style/Widget.Aqua.Button.Primary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
@@ -237,7 +237,6 @@
                 android:textAllCaps="false"
                 android:contentDescription="@string/feedback_send_desc"
                 app:icon="@drawable/ic_send"
-                app:iconTint="#64FFDA"
                 app:iconSize="18dp"
                 app:iconGravity="textStart"
                 app:iconPadding="8dp" />

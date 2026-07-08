@@ -103,41 +103,39 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnQrSetup"
-                        android:layout_width="match_parent"
+                        
+                style="@style/Widget.Aqua.Button.Primary"
+                android:layout_width="match_parent"
                         android:layout_height="50dp"
                         android:layout_marginTop="20dp"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
                         android:text="Scan secure QR code"
                         android:textAllCaps="false"
-                        android:textColor="@color/white"
                         android:textSize="@dimen/aqua_text_size_body_large"
                         android:textStyle="bold"
-                        app:backgroundTint="@color/aqua_button_blue"
                         app:cornerRadius="17dp"
                         app:icon="@drawable/ic_qr_code_24"
                         app:iconGravity="textStart"
-                        app:iconPadding="8dp"
-                        app:iconTint="@color/white" />
+                        app:iconPadding="8dp" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnScan"
-                        android:layout_width="match_parent"
+                        
+                style="@style/Widget.Aqua.Button.Secondary"
+                android:layout_width="match_parent"
                         android:layout_height="50dp"
                         android:layout_marginTop="10dp"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
                         android:text="@string/device_add_scan_button"
                         android:textAllCaps="false"
-                        android:textColor="@color/white"
                         android:textSize="@dimen/aqua_text_size_body_large"
                         android:textStyle="bold"
-                        app:backgroundTint="@color/aqua_toolbar_action_primary_container"
                         app:cornerRadius="17dp"
                         app:icon="@drawable/ic_radar"
                         app:iconGravity="textStart"
-                        app:iconPadding="8dp"
-                        app:iconTint="@color/white" />
+                        app:iconPadding="8dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
