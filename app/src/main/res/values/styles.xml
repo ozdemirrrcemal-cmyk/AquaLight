@@ -13,7 +13,7 @@
     <item name="android:height">32dp</item>
 
     <!-- Arka plan rengi -->
-    <item name="android:color">?attr/colorSecondaryContainer</item>
+    <item name="android:color">?attr/aquaBottomNavActiveIndicator</item>
 
     <!-- Köşeleri yuvarla (pill) -->
     <item name="shapeAppearance">@style/ShapeAppearance.Aqua.BottomNavIndicator</item>
