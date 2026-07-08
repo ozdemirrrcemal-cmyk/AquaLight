@@ -31,11 +31,19 @@ data class AquaHeaderFilledIconAction(
     val onClick: () -> Unit
 )
 
+enum class AquaHeaderCardIconTone {
+    SUCCESS,
+    PRIMARY,
+    NEUTRAL,
+    DANGER
+}
+
 data class AquaHeaderCardIconAction(
     @DrawableRes val iconRes: Int,
     val contentDescription: String,
-    @ColorInt val backgroundColor: Int,
-    @ColorInt val strokeColor: Int,
+    val tone: AquaHeaderCardIconTone = AquaHeaderCardIconTone.NEUTRAL,
+    @ColorInt val backgroundColor: Int? = null,
+    @ColorInt val strokeColor: Int? = null,
     @ColorInt val iconTintColor: Int = Color.WHITE,
     val enabled: Boolean = true,
     val onClick: () -> Unit

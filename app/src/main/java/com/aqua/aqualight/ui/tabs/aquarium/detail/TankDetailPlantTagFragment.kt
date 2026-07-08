@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail
 
-import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.view.MotionEvent
@@ -16,6 +15,7 @@ import coil3.request.crossfade
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentPlantTagBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderCardIconAction
+import com.aqua.aqualight.ui.common.header.AquaHeaderCardIconTone
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
@@ -88,9 +88,7 @@ class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
                 cardIconAction = AquaHeaderCardIconAction(
                     iconRes = R.drawable.ic_check_24,
                     contentDescription = getString(R.string.aquarium_confirm),
-                    backgroundColor = Color.parseColor("#1F6F4A"),
-                    strokeColor = Color.parseColor("#2A8A5E"),
-                    iconTintColor = Color.WHITE,
+                    tone = AquaHeaderCardIconTone.SUCCESS,
                     enabled = !isSaving,
                     onClick = {
                         savePlantsAndClose()

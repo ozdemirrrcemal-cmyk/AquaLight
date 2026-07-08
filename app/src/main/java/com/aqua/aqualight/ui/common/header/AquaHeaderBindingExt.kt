@@ -4,8 +4,10 @@ import android.content.res.ColorStateList
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.LayoutAquaHeaderBinding
 
 fun LayoutAquaHeaderBinding.setupAquaHeader(
@@ -181,10 +183,12 @@ fun LayoutAquaHeaderBinding.setupAquaHeader(
 
         btnCardIconAction.setCardBackgroundColor(
             cardIconAction.backgroundColor
+                ?: fragment.resolveCardIconActionBackgroundColor(cardIconAction.tone)
         )
 
         btnCardIconAction.strokeColor =
             cardIconAction.strokeColor
+                ?: fragment.resolveCardIconActionStrokeColor(cardIconAction.tone)
 
         btnCardIconAction.contentDescription =
             cardIconAction.contentDescription
