@@ -224,10 +224,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
                     R.color.aqua_card_text_primary
                 )
             )
-            setTextSize(
-                android.util.TypedValue.COMPLEX_UNIT_PX,
-                resources.getDimension(R.dimen.aqua_text_size_state_title_small)
-            )
+            textSize = 15f
             includeFontPadding = false
             maxLines = 2
 
