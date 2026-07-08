@@ -1,19 +1,21 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.settings
 
 import android.graphics.Color
-import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.View
 import android.widget.FrameLayout
-import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
-import androidx.core.view.isVisible
-import androidx.core.content.ContextCompat
+import androidx.annotation.StringRes
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
+import androidx.viewpager2.adapter.FragmentStateAdapter
+import androidx.viewpager2.widget.ViewPager2
 import com.aqua.aqualight.R
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.databinding.DialogCareProfileBinding
 import com.aqua.aqualight.databinding.FragmentTankSettingsBinding
 import com.aqua.aqualight.databinding.ItemCareProfileRowBinding
@@ -24,15 +26,12 @@ import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.careprofile.CareProfileCalculator
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragment
 import com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailFragment
-import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumChildTabHost
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.tabs.TabLayoutMediator
 import kotlin.math.roundToInt
-import androidx.navigation.NavDirections
-import androidx.navigation.fragment.navArgs
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
 
@@ -47,6 +46,8 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     private var selectedTab: SettingsTab = SettingsTab.BASIC
     private var currentTank: SavedAquariumTank? = null
     private var isDeletingTank: Boolean = false
+    private var tabMediator: TabLayoutMediator? = null
+    private var pageChangeCallback: ViewPager2.OnPageChangeCallback? = null
 
     override fun onCreate(
         savedInstanceState: Bundle?
@@ -70,11 +71,11 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         selectedTab = restoreSelectedTab(savedInstanceState)
 
         setupHeader()
-        setupClickListeners()
         setupSystemBackButton()
-        setupSwipeBetweenTabs()
+        setupSettingsPager(
+            initialTab = selectedTab
+        )
         observeTank()
-        selectTab(selectedTab)
     }
 
     private fun setupHeader(
@@ -147,20 +148,6 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
             )
     }
 
-    private fun setupClickListeners() {
-        binding.tabBasic.setOnClickListener {
-            selectTab(SettingsTab.BASIC)
-        }
-
-        binding.tabDetails.setOnClickListener {
-            selectTab(SettingsTab.DETAILS)
-        }
-
-        binding.tabOthers.setOnClickListener {
-            selectTab(SettingsTab.OTHERS)
-        }
-    }
-
     private fun setupSystemBackButton() {
         requireActivity().onBackPressedDispatcher.addCallback(
             viewLifecycleOwner,
@@ -172,41 +159,81 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         )
     }
 
-    private fun setupSwipeBetweenTabs() {
-        listOf(
-            binding.basicFragmentContainer,
-            binding.detailsFragmentContainer,
-            binding.othersFragmentContainer
-        ).forEach { container ->
-            container.setOnSwipeLeftListener {
-                moveTabBy(offset = 1)
+    private fun setupSettingsPager(
+        initialTab: SettingsTab
+    ) {
+        binding.settingsPager.adapter =
+            TankSettingsPagerAdapter(
+                fragment = this,
+                tankId = tankId
+            )
+
+        binding.settingsPager.offscreenPageLimit =
+            SETTINGS_PAGER_OFFSCREEN_LIMIT
+
+        tabMediator =
+            TabLayoutMediator(
+                binding.settingsTabs,
+                binding.settingsPager
+            ) { tab, position ->
+                tab.text = getString(
+                    TAB_ORDER[position].titleRes
+                )
+            }.also { mediator ->
+                mediator.attach()
             }
 
-            container.setOnSwipeRightListener {
-                moveTabBy(offset = -1)
+        binding.settingsPager.setCurrentItem(
+            tabIndexOf(
+                tab = initialTab
+            ),
+            false
+        )
+
+        pageChangeCallback =
+            object : ViewPager2.OnPageChangeCallback() {
+                override fun onPageSelected(
+                    position: Int
+                ) {
+                    val tab = TAB_ORDER.getOrNull(
+                        position
+                    ) ?: return
+
+                    if (selectedTab == tab) {
+                        return
+                    }
+
+                    selectedTab = tab
+                    saveSelectedTabState(tab)
+                }
+            }.also { callback ->
+                binding.settingsPager.registerOnPageChangeCallback(
+                    callback
+                )
             }
+    }
+
+    private fun selectTab(
+        tab: SettingsTab,
+        smoothScroll: Boolean = true
+    ) {
+        selectedTab = tab
+        saveSelectedTabState(tab)
+
+        val targetIndex = tabIndexOf(tab)
+
+        if (binding.settingsPager.currentItem != targetIndex) {
+            binding.settingsPager.setCurrentItem(
+                targetIndex,
+                smoothScroll
+            )
         }
     }
 
-    private fun moveTabBy(
-        offset: Int
-    ) {
-        val currentIndex = TAB_ORDER.indexOf(selectedTab)
-
-        if (currentIndex == -1) {
-            return
-        }
-
-        val targetIndex = (currentIndex + offset).coerceIn(
-            0,
-            TAB_ORDER.lastIndex
-        )
-
-        if (targetIndex == currentIndex) {
-            return
-        }
-
-        selectTab(TAB_ORDER[targetIndex])
+    private fun tabIndexOf(
+        tab: SettingsTab
+    ): Int {
+        return TAB_ORDER.indexOf(tab).coerceAtLeast(0)
     }
 
     private fun observeTank() {
@@ -248,79 +275,6 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         isDeletingTank = true
     }
 
-    private fun selectTab(
-        tab: SettingsTab
-    ) {
-        selectedTab = tab
-        saveSelectedTabState(tab)
-
-        resetTabs()
-        activateTab(tabViewFor(tab))
-        moveTabUnderline(tabViewFor(tab))
-        showContentForTab(tab)
-
-        binding.contentScrollView.post {
-            binding.contentScrollView.scrollTo(
-                0,
-                0
-            )
-        }
-    }
-
-    private fun showContentForTab(
-        tab: SettingsTab
-    ) {
-        binding.contentScrollView.isVisible = false
-
-        when (tab) {
-            SettingsTab.BASIC -> {
-                binding.basicFragmentContainer.isVisible = true
-
-                showFragmentIfNeeded(
-                    containerId = R.id.basicFragmentContainer,
-                    tag = TAG_BASIC_FRAGMENT
-                ) {
-                    TankSettingsBasicFragment.newInstance(tankId)
-                }
-            }
-
-            SettingsTab.DETAILS -> {
-                binding.detailsFragmentContainer.isVisible = true
-
-                showFragmentIfNeeded(
-                    containerId = R.id.detailsFragmentContainer,
-                    tag = TAG_DETAILS_FRAGMENT
-                ) {
-                    TankSettingsDetailsFragment.newInstance(tankId)
-                }
-            }
-
-            SettingsTab.OTHERS -> {
-                binding.othersFragmentContainer.isVisible = true
-
-                showFragmentIfNeeded(
-                    containerId = R.id.othersFragmentContainer,
-                    tag = TAG_OTHERS_FRAGMENT
-                ) {
-                    TankSettingsOthersFragment.newInstance(tankId)
-                }
-            }
-        }
-    }
-
-    private fun showFragmentIfNeeded(
-        containerId: Int,
-        tag: String,
-        fragmentFactory: () -> Fragment
-    ) {
-        AquariumChildTabHost.showOnce(
-            fragmentManager = childFragmentManager,
-            containerId = containerId,
-            tag = tag,
-            fragmentFactory = fragmentFactory
-        )
-    }
-
     private fun getInitialTab(): SettingsTab {
         val startTab = args.startTab
 
@@ -329,74 +283,6 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
             AquariumTabArgs.OTHERS -> SettingsTab.OTHERS
             AquariumTabArgs.BASIC -> SettingsTab.BASIC
             else -> SettingsTab.BASIC
-        }
-    }
-
-    private fun resetTabs() {
-        val inactiveColor = ContextCompat.getColor(
-            requireContext(),
-            R.color.aqua_card_text_secondary
-        )
-
-        SettingsTab.values().forEach { tab ->
-            tabViewFor(tab).apply {
-                setTextColor(inactiveColor)
-                setTypeface(null, Typeface.NORMAL)
-            }
-        }
-
-        hideAllTabContainers()
-    }
-
-    private fun hideAllTabContainers() {
-        binding.contentScrollView.isVisible = true
-        binding.basicFragmentContainer.isVisible = false
-        binding.detailsFragmentContainer.isVisible = false
-        binding.othersFragmentContainer.isVisible = false
-    }
-
-    private fun tabViewFor(
-        tab: SettingsTab
-    ): TextView {
-        return when (tab) {
-            SettingsTab.BASIC -> binding.tabBasic
-            SettingsTab.DETAILS -> binding.tabDetails
-            SettingsTab.OTHERS -> binding.tabOthers
-        }
-    }
-
-    private fun activateTab(
-        tabView: TextView
-    ) {
-        tabView.setTextColor(Color.WHITE)
-        tabView.setTypeface(null, Typeface.BOLD)
-    }
-
-    private fun moveTabUnderline(
-        tabView: TextView
-    ) {
-        binding.settingsTabsContainer.post {
-            val textWidth = tabView.paint
-                .measureText(tabView.text.toString())
-                .toInt()
-
-            val underlineWidth = (textWidth * 0.90f)
-                .toInt()
-                .coerceIn(
-                    36.dp(),
-                    72.dp()
-                )
-
-            val params = binding.tabUnderline.layoutParams
-            params.width = underlineWidth
-            binding.tabUnderline.layoutParams = params
-
-            val targetX = tabView.x + ((tabView.width - underlineWidth) / 2f)
-
-            binding.tabUnderline.animate()
-                .translationX(targetX)
-                .setDuration(180)
-                .start()
         }
     }
 
@@ -526,7 +412,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         ) {
             selectTab(SettingsTab.DETAILS)
 
-            binding.detailsFragmentContainer.post {
+            binding.settingsPager.post {
                 openMaterialPickerFlow(
                     categoryKey = item.materialCategoryKey,
                     categoryTitle = item.materialCategoryTitle
@@ -588,9 +474,9 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     ) {
         selectTab(SettingsTab.BASIC)
 
-        childFragmentManager.executePendingTransactions()
+        binding.settingsPager.post {
+            childFragmentManager.executePendingTransactions()
 
-        binding.basicFragmentContainer.post {
             val basicFragment = getBasicFragment() ?: return@post
 
             basicFragment.openCareProfileAction(action)
@@ -666,9 +552,9 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     }
 
     private fun getBasicFragment(): TankSettingsBasicFragment? {
-        return childFragmentManager.findFragmentByTag(
-            TAG_BASIC_FRAGMENT
-        ) as? TankSettingsBasicFragment
+        return childFragmentManager.fragments
+            .filterIsInstance<TankSettingsBasicFragment>()
+            .firstOrNull()
     }
 
     private fun getCareProfileColor(
@@ -726,22 +612,78 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     }
 
     override fun onDestroyView() {
-        super.onDestroyView()
+        pageChangeCallback?.let { callback ->
+            binding.settingsPager.unregisterOnPageChangeCallback(
+                callback
+            )
+        }
+        pageChangeCallback = null
+
+        tabMediator?.detach()
+        tabMediator = null
+
+        binding.settingsPager.adapter = null
+
         _binding = null
+
+        super.onDestroyView()
     }
 
-    private enum class SettingsTab {
-        BASIC,
-        DETAILS,
-        OTHERS
+    private class TankSettingsPagerAdapter(
+        fragment: Fragment,
+        private val tankId: Long
+    ) : FragmentStateAdapter(fragment) {
+
+        override fun getItemCount(): Int {
+            return TAB_ORDER.size
+        }
+
+        override fun createFragment(
+            position: Int
+        ): Fragment {
+            return when (TAB_ORDER[position]) {
+                SettingsTab.BASIC -> TankSettingsBasicFragment.newInstance(tankId)
+                SettingsTab.DETAILS -> TankSettingsDetailsFragment.newInstance(tankId)
+                SettingsTab.OTHERS -> TankSettingsOthersFragment.newInstance(tankId)
+            }
+        }
+
+        override fun getItemId(
+            position: Int
+        ): Long {
+            return TAB_ORDER[position].stableId
+        }
+
+        override fun containsItem(
+            itemId: Long
+        ): Boolean {
+            return TAB_ORDER.any { tab ->
+                tab.stableId == itemId
+            }
+        }
+    }
+
+    private enum class SettingsTab(
+        @StringRes val titleRes: Int,
+        val stableId: Long
+    ) {
+        BASIC(
+            R.string.aquarium_settings_tab_basic,
+            1L
+        ),
+        DETAILS(
+            R.string.aquarium_settings_tab_details,
+            2L
+        ),
+        OTHERS(
+            R.string.aquarium_settings_tab_others,
+            3L
+        )
     }
 
     companion object {
         private const val KEY_SELECTED_TAB = "selectedTab"
-
-        private const val TAG_BASIC_FRAGMENT = "TankSettingsBasicFragment"
-        private const val TAG_DETAILS_FRAGMENT = "TankSettingsDetailsFragment"
-        private const val TAG_OTHERS_FRAGMENT = "TankSettingsOthersFragment"
+        private const val SETTINGS_PAGER_OFFSCREEN_LIMIT = 2
 
         private val TAB_ORDER = listOf(
             SettingsTab.BASIC,
