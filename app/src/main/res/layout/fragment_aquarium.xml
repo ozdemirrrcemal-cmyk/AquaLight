@@ -40,7 +40,7 @@
         android:paddingEnd="32dp"
         android:text="@string/aquarium_empty_tank_list_message"
         android:textColor="@color/aqua_state_text_secondary"
-        android:textSize="14sp"
+        android:textSize="@dimen/aqua_text_size_state_text"
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/appHeader"
         app:layout_constraintBottom_toBottomOf="parent"
