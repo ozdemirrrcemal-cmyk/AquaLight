@@ -17,17 +17,14 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
     private var _binding: DialogThemeSelectionBinding? = null
     private val binding get() = _binding!!
 
-    // DataStore tabanlı UserPreferences
     private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
 
-    // Sheet kapandığında AppSettingsFragment isterse ekstra bir iş yapsın diye callback
     var onThemeChanged: (() -> Unit)? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = DialogThemeSelectionBinding.bind(view)
 
-        // İlk açıldığında seçili modu radio'lara yansıt
         refreshRadios()
 
         with(binding) {
@@ -39,38 +36,16 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
 
     private fun selectTheme(mode: String) {
         viewLifecycleOwner.lifecycleScope.launch {
-            // 1) DataStore’a yaz
             userPrefs.updateThemeMode(mode)
-
-            // 2) Radio’yu güncelle (sheet kapanmadan da doğru görünsün)
             updateRadios(mode)
 
-            // 3) Küçük fade animasyonu ile temayı uygula
-            val root = requireActivity()
-                .window
-                .decorView
-                .findViewById<View>(android.R.id.content)
-
-            root.animate()
-                .alpha(0f)
-                .setDuration(150)
-                .withEndAction {
-                    applyTheme(mode)
-                    root.animate()
-                        .alpha(1f)
-                        .setDuration(150)
-                        .start()
-                }
-                .start()
-
-            // 4) Sheet’i kapat
-            dismiss()
+            dismissAllowingStateLoss()
+            applyTheme(mode)
         }
     }
 
     private fun refreshRadios() {
         viewLifecycleOwner.lifecycleScope.launch {
-            // DataStore’daki themeMode değerini oku ("light" / "dark" / "system")
             val mode = userPrefs.themeMode.first()
             updateRadios(mode)
         }
@@ -91,11 +66,13 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
     }
 
     private fun applyTheme(mode: String) {
-        when (mode) {
-            "dark" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-            "system" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-            else -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-        }
+        AppCompatDelegate.setDefaultNightMode(
+            when (mode) {
+                "dark" -> AppCompatDelegate.MODE_NIGHT_YES
+                "system" -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+                else -> AppCompatDelegate.MODE_NIGHT_NO
+            }
+        )
     }
 
     override fun onDismiss(dialog: DialogInterface) {
