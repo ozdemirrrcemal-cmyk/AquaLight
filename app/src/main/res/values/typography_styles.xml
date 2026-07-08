@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <style name="TextAppearance.Aqua" parent="TextAppearance.Material3.BodyMedium" />
+
     <style name="TextAppearance.Aqua.ScreenTitle">
         <item name="android:textSize">@dimen/aqua_text_size_screen_title</item>
         <item name="android:textStyle">bold</item>
