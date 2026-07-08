@@ -1,6 +1,8 @@
 package com.aqua.aqualight.ui.common.bottomsheet
 
+import android.app.UiModeManager
 import android.content.DialogInterface
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatDelegate
@@ -18,6 +20,8 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
     private val binding get() = _binding!!
 
     private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
+
+    private var pendingThemeMode: String? = null
 
     var onThemeChanged: (() -> Unit)? = null
 
@@ -39,8 +43,8 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
             userPrefs.updateThemeMode(mode)
             updateRadios(mode)
 
+            pendingThemeMode = mode
             dismissAllowingStateLoss()
-            applyTheme(mode)
         }
     }
 
@@ -66,6 +70,18 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
     }
 
     private fun applyTheme(mode: String) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val uiModeManager = requireContext().getSystemService(UiModeManager::class.java)
+            uiModeManager?.setApplicationNightMode(
+                when (mode) {
+                    "dark" -> UiModeManager.MODE_NIGHT_YES
+                    "system" -> UiModeManager.MODE_NIGHT_AUTO
+                    else -> UiModeManager.MODE_NIGHT_NO
+                }
+            )
+            return
+        }
+
         AppCompatDelegate.setDefaultNightMode(
             when (mode) {
                 "dark" -> AppCompatDelegate.MODE_NIGHT_YES
@@ -77,6 +93,14 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
 
     override fun onDismiss(dialog: DialogInterface) {
         super.onDismiss(dialog)
+
+        val selectedMode = pendingThemeMode
+        pendingThemeMode = null
+
+        if (selectedMode != null) {
+            applyTheme(selectedMode)
+        }
+
         onThemeChanged?.invoke()
     }
 
