@@ -70,4 +70,12 @@ class TankDeviceAssignmentRepository(
             deviceUid = deviceUid
         )
     }
+
+    fun removeDeviceFromAnyTank(
+        deviceUid: DeviceUid
+    ) {
+        assignmentStore.removeDeviceFromAnyTank(
+            deviceUid = deviceUid
+        )
+    }
 }
