@@ -8,4 +8,7 @@
     <color name="aqua_toolbar_action_neutral_outline">#22354D</color>
     <color name="aqua_toolbar_action_danger_container">#3A1C29</color>
     <color name="aqua_toolbar_action_danger_outline">#A2445F</color>
+    <color name="aqua_toolbar_icon_primary">#F2F6FA</color>
+    <color name="aqua_toolbar_icon_secondary">#8FA4BE</color>
+    <color name="aqua_toolbar_icon_disabled">#51667F</color>
 </resources>
