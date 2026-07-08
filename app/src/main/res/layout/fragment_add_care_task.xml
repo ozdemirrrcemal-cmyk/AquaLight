@@ -564,6 +564,7 @@
     app:layout_constraintStart_toStartOf="parent">
 
     <com.google.android.material.button.MaterialButton
+      style="@style/Widget.Aqua.Button.Primary"
       android:id="@+id/btnSaveTask"
       android:layout_width="match_parent"
       android:layout_height="52dp"
@@ -571,12 +572,7 @@
       android:insetTop="0dp"
       android:insetBottom="0dp"
       android:text="@string/maintenance_save_task"
-      android:textAllCaps="false"
-      android:textColor="@android:color/white"
-      android:textSize="@dimen/aqua_text_size_body"
-      android:textStyle="bold"
-      app:backgroundTint="#35506D"
-      app:cornerRadius="18dp" />
+      android:textStyle="bold" />
 
   </LinearLayout>
 

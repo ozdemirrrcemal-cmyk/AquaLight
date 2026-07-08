@@ -56,8 +56,36 @@
         <item name="strokeColor">@color/aqua_button_danger_stroke</item>
         <item name="strokeWidth">@dimen/aqua_button_stroke_width</item>
     </style>
-
-    <style name="Widget.Aqua.Button.Compact" parent="Widget.Aqua.Button.Primary">
+    <style name="Widget.Aqua.Button.Compact" parent="Widget.Aqua.Button.Primary.Compact" />
+    <style name="Widget.Aqua.Button.Primary.Compact" parent="Widget.Aqua.Button.Primary">
+        <item name="android:minHeight">@dimen/aqua_button_height_compact</item>
+        <item name="android:paddingStart">@dimen/aqua_button_padding_horizontal_compact</item>
+        <item name="android:paddingEnd">@dimen/aqua_button_padding_horizontal_compact</item>
+        <item name="android:textSize">@dimen/aqua_text_size_body</item>
+        <item name="cornerRadius">@dimen/aqua_button_radius_compact</item>
+    </style>
+    <style name="Widget.Aqua.Button.Secondary.Compact" parent="Widget.Aqua.Button.Secondary">
+        <item name="android:minHeight">@dimen/aqua_button_height_compact</item>
+        <item name="android:paddingStart">@dimen/aqua_button_padding_horizontal_compact</item>
+        <item name="android:paddingEnd">@dimen/aqua_button_padding_horizontal_compact</item>
+        <item name="android:textSize">@dimen/aqua_text_size_body</item>
+        <item name="cornerRadius">@dimen/aqua_button_radius_compact</item>
+    </style>
+    <style name="Widget.Aqua.Button.Neutral.Compact" parent="Widget.Aqua.Button.Neutral">
+        <item name="android:minHeight">@dimen/aqua_button_height_compact</item>
+        <item name="android:paddingStart">@dimen/aqua_button_padding_horizontal_compact</item>
+        <item name="android:paddingEnd">@dimen/aqua_button_padding_horizontal_compact</item>
+        <item name="android:textSize">@dimen/aqua_text_size_body</item>
+        <item name="cornerRadius">@dimen/aqua_button_radius_compact</item>
+    </style>
+    <style name="Widget.Aqua.Button.Outline.Compact" parent="Widget.Aqua.Button.Outline">
+        <item name="android:minHeight">@dimen/aqua_button_height_compact</item>
+        <item name="android:paddingStart">@dimen/aqua_button_padding_horizontal_compact</item>
+        <item name="android:paddingEnd">@dimen/aqua_button_padding_horizontal_compact</item>
+        <item name="android:textSize">@dimen/aqua_text_size_body</item>
+        <item name="cornerRadius">@dimen/aqua_button_radius_compact</item>
+    </style>
+    <style name="Widget.Aqua.Button.Danger.Compact" parent="Widget.Aqua.Button.Danger">
         <item name="android:minHeight">@dimen/aqua_button_height_compact</item>
         <item name="android:paddingStart">@dimen/aqua_button_padding_horizontal_compact</item>
         <item name="android:paddingEnd">@dimen/aqua_button_padding_horizontal_compact</item>

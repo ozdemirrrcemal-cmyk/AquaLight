@@ -242,6 +242,7 @@
             android:textSize="@dimen/aqua_text_size_body" />
 
         <com.google.android.material.button.MaterialButton
+            style="@style/Widget.Aqua.Button.Danger"
             android:id="@+id/rowDeleteTank"
             android:layout_width="match_parent"
             android:layout_height="56dp"
@@ -252,16 +253,10 @@
             android:minWidth="0dp"
             android:minHeight="0dp"
             android:text="@string/aquarium_text_delete_tank"
-            android:textAllCaps="false"
-            android:textColor="@android:color/white"
-            android:textSize="@dimen/aqua_text_size_body"
             android:textStyle="bold"
-            app:backgroundTint="#D85C5C"
-            app:cornerRadius="16dp"
             app:icon="@drawable/ic_delete"
             app:iconGravity="textEnd"
-            app:iconPadding="8dp"
-            app:iconTint="@android:color/white" />
+            app:iconPadding="8dp" />
 
     </LinearLayout>
 

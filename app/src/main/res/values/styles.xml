@@ -89,9 +89,7 @@
 
 <!-- 🔹 Primary (mavi) buton – eski inline görünüme uygun -->
 <style name="Widget.Aqua.PrimaryButton" parent="Widget.Aqua.Button.Primary" />
-<style name="Widget.Aqua.DangerButton" parent="@style/Widget.Aqua.PrimaryButton">
-    <item name="backgroundTint">@color/aqua_button_red</item>
-</style>
+<style name="Widget.Aqua.DangerButton" parent="Widget.Aqua.Button.Danger" />
 
 <!-- Feedback üst açıklama -->
 <style name="TextAppearance.Aqua.Feedback.SubInfo"

@@ -40,6 +40,7 @@
                 android:textStyle="bold" />
 
             <com.google.android.material.button.MaterialButton
+                style="@style/Widget.Aqua.Button.Secondary.Compact"
                 android:id="@+id/btnAddLife"
                 android:layout_width="78dp"
                 android:layout_height="34dp"
@@ -52,13 +53,8 @@
                 android:paddingEnd="10dp"
                 android:paddingBottom="0dp"
                 android:text="@string/aquarium_action_add"
-                android:textAllCaps="false"
-                android:textColor="@color/aqua_card_text_primary"
-                android:textSize="@dimen/aqua_text_size_caption"
                 android:textStyle="bold"
-                android:contentDescription="@string/devices_scan_button_desc"
-                app:backgroundTint="#1C3252"
-                app:cornerRadius="17dp" />
+                android:contentDescription="@string/devices_scan_button_desc" />
 
         </LinearLayout>
 
@@ -113,6 +109,7 @@
                     android:textSize="@dimen/aqua_text_size_body_small" />
 
                 <com.google.android.material.button.MaterialButton
+                    style="@style/Widget.Aqua.Button.Secondary.Compact"
                     android:id="@+id/btnEmptyAddLife"
                     android:layout_width="180dp"
                     android:layout_height="46dp"
@@ -120,12 +117,7 @@
                     android:insetTop="0dp"
                     android:insetBottom="0dp"
                     android:text="@string/aquarium_action_add_livestock"
-                    android:textAllCaps="false"
-                    android:textColor="@color/aqua_card_text_primary"
-                    android:textSize="@dimen/aqua_text_size_body_small"
-                    android:textStyle="bold"
-                    app:backgroundTint="#1C3252"
-                    app:cornerRadius="23dp" />
+                    android:textStyle="bold" />
 
             </LinearLayout>
 

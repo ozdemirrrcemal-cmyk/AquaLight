@@ -33,6 +33,7 @@
             android:textStyle="bold" />
 
         <com.google.android.material.button.MaterialButton
+            style="@style/Widget.Aqua.Button.Secondary.Compact"
             android:id="@+id/btnAddDevice"
             android:layout_width="78dp"
             android:layout_height="34dp"
@@ -46,12 +47,7 @@
             android:paddingEnd="10dp"
             android:paddingBottom="0dp"
             android:text="@string/aquarium_action_add"
-            android:textAllCaps="false"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="@dimen/aqua_text_size_caption"
-            android:textStyle="bold"
-            app:backgroundTint="#1C3252"
-            app:cornerRadius="17dp" />
+            android:textStyle="bold" />
 
     </LinearLayout>
 

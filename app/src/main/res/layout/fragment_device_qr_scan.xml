@@ -121,6 +121,7 @@
                 android:textSize="@dimen/aqua_text_size_caption_plus" />
 
             <com.google.android.material.button.MaterialButton
+                style="@style/Widget.Aqua.Button.Primary"
                 android:id="@+id/btnRequestCamera"
                 android:layout_width="match_parent"
                 android:layout_height="46dp"
@@ -128,13 +129,8 @@
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
                 android:text="@string/device_qr_allow_camera"
-                android:textAllCaps="false"
-                android:textColor="@color/white"
-                android:textSize="@dimen/aqua_text_size_body"
                 android:textStyle="bold"
                 android:visibility="gone"
-                app:backgroundTint="#1E90FF"
-                app:cornerRadius="16dp"
                 tools:visibility="visible" />
 
         </LinearLayout>

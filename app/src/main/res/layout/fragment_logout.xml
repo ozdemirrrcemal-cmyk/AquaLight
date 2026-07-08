@@ -167,7 +167,7 @@
         <!-- 🚪 LOG OUT butonu -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogout"
-            style="@style/Widget.Aqua.PrimaryButton"
+            style="@style/Widget.Aqua.Button.Primary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/account_settings_logout"
@@ -176,7 +176,7 @@
         <!-- 🗑 DELETE ACCOUNT butonu -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnDeleteAccount"
-            style="@style/Widget.Aqua.DangerButton"
+            style="@style/Widget.Aqua.Button.Danger"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
