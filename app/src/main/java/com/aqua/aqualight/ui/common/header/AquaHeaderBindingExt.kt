@@ -469,3 +469,31 @@ fun LayoutAquaHeaderBinding.setupAquaHeader(
         }
     }
 }
+
+
+private fun Fragment.resolveCardIconActionBackgroundColor(
+    tone: AquaHeaderCardIconTone
+): Int {
+    val colorRes = when (tone) {
+        AquaHeaderCardIconTone.SUCCESS -> R.color.aqua_toolbar_action_success_container
+        AquaHeaderCardIconTone.PRIMARY -> R.color.aqua_toolbar_action_primary_container
+        AquaHeaderCardIconTone.NEUTRAL -> R.color.aqua_toolbar_action_neutral_container
+        AquaHeaderCardIconTone.DANGER -> R.color.aqua_toolbar_action_danger_container
+    }
+
+    return ContextCompat.getColor(requireContext(), colorRes)
+}
+
+private fun Fragment.resolveCardIconActionStrokeColor(
+    tone: AquaHeaderCardIconTone
+): Int {
+    val colorRes = when (tone) {
+        AquaHeaderCardIconTone.SUCCESS -> R.color.aqua_toolbar_action_success_outline
+        AquaHeaderCardIconTone.PRIMARY -> R.color.aqua_toolbar_action_primary_outline
+        AquaHeaderCardIconTone.NEUTRAL -> R.color.aqua_toolbar_action_neutral_outline
+        AquaHeaderCardIconTone.DANGER -> R.color.aqua_toolbar_action_danger_outline
+    }
+
+    return ContextCompat.getColor(requireContext(), colorRes)
+}
+
