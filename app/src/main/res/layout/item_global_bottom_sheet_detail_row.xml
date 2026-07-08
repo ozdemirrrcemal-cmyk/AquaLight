@@ -26,7 +26,7 @@
         android:includeFontPadding="false"
         android:maxLines="1"
         android:textColor="@android:color/white"
-        android:textSize="12.5sp"
+        android:textSize="@dimen/aqua_text_size_caption_plus"
         android:textStyle="bold" />
 
 </LinearLayout>

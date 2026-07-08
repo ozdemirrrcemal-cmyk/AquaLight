@@ -61,7 +61,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:text="@string/re_auth_password_description"
-                android:textSize="15sp" />
+                android:textSize="@dimen/aqua_text_size_body_large" />
 
             <!-- PASSWORD AREA -->
             <LinearLayout

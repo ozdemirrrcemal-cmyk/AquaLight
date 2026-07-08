@@ -22,4 +22,10 @@
     <dimen name="aqua_text_size_state_body">13sp</dimen>
     <dimen name="aqua_text_size_state_caption">12sp</dimen>
     <dimen name="aqua_text_size_state_text">14sp</dimen>
+    <dimen name="aqua_text_size_micro_plus">11.5sp</dimen>
+    <dimen name="aqua_text_size_caption_plus">12.5sp</dimen>
+    <dimen name="aqua_text_size_body_compact">13.5sp</dimen>
+    <dimen name="aqua_text_size_body_large">15sp</dimen>
+    <dimen name="aqua_text_size_title_small">18sp</dimen>
+    <dimen name="aqua_text_size_title_medium">20sp</dimen>
 </resources>

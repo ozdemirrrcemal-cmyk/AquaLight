@@ -82,7 +82,7 @@
                 android:includeFontPadding="false"
                 android:maxLines="1"
                 android:textColor="#90A1B5"
-                android:textSize="12.5sp"
+                android:textSize="@dimen/aqua_text_size_caption_plus"
                 tools:text="UID: AQL-LIGHT-123456" />
 
             <TextView
@@ -94,7 +94,7 @@
                 android:includeFontPadding="false"
                 android:maxLines="1"
                 android:textColor="#5FD6B4"
-                android:textSize="12.5sp"
+                android:textSize="@dimen/aqua_text_size_caption_plus"
                 tools:text="Light • 4CH / OTA" />
 
         </LinearLayout>
@@ -128,7 +128,7 @@
                 android:minWidth="70dp"
                 android:paddingHorizontal="14dp"
                 android:textColor="#5FD6B4"
-                android:textSize="12.5sp"
+                android:textSize="@dimen/aqua_text_size_caption_plus"
                 android:textStyle="bold"
                 android:visibility="gone"
                 tools:text="Add"

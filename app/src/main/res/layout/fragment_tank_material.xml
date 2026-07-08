@@ -36,7 +36,7 @@
             android:layout_marginTop="26dp"
             android:text="@string/aquarium_material_group_bio"
             android:textColor="?attr/colorOnSurface"
-            android:textSize="15sp"
+            android:textSize="@dimen/aqua_text_size_body_large"
             android:textStyle="bold" />
 
         <LinearLayout
@@ -53,7 +53,7 @@
             android:layout_marginTop="26dp"
             android:text="@string/aquarium_material_group_hardware"
             android:textColor="?attr/colorOnSurface"
-            android:textSize="15sp"
+            android:textSize="@dimen/aqua_text_size_body_large"
             android:textStyle="bold" />
 
         <LinearLayout

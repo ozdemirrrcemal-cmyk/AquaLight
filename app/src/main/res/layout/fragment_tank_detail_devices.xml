@@ -29,7 +29,7 @@
             android:includeFontPadding="false"
             android:text="@string/aquarium_detail_tab_devices"
             android:textColor="?attr/colorOnSurface"
-            android:textSize="18sp"
+            android:textSize="@dimen/aqua_text_size_title_small"
             android:textStyle="bold" />
 
         <com.google.android.material.button.MaterialButton

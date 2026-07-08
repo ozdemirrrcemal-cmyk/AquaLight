@@ -54,7 +54,7 @@
             android:layout_height="wrap_content"
             android:text="@string/splasch_app_title"
             android:textColor="#0A192F"
-            android:textSize="20sp"
+            android:textSize="@dimen/aqua_text_size_title_medium"
             android:fontFamily="@font/poppins_bold"
             android:includeFontPadding="false" />
 
@@ -64,7 +64,7 @@
             android:layout_height="wrap_content"
             android:text="@string/splasch_app_subtitle"
             android:textColor="#0A192F"
-            android:textSize="15sp"
+            android:textSize="@dimen/aqua_text_size_body_large"
             android:fontFamily="@font/raleway_medium"
             android:includeFontPadding="false" />
     </LinearLayout>

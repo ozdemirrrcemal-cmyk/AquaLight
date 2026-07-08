@@ -127,7 +127,7 @@
                 android:paddingEnd="11dp"
                 android:text="@string/maintenance_status_completed"
                 android:textColor="#5FD6B4"
-                android:textSize="11.5sp"
+                android:textSize="@dimen/aqua_text_size_micro_plus"
                 android:textStyle="bold"
                 android:visibility="gone" />
 

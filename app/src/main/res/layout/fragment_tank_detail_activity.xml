@@ -224,7 +224,7 @@
         android:includeFontPadding="false"
         android:text="@string/aquarium_text_timeline"
         android:textColor="@color/aqua_card_text_primary"
-        android:textSize="15sp"
+        android:textSize="@dimen/aqua_text_size_body_large"
         android:textStyle="bold" />
 
       <TextView

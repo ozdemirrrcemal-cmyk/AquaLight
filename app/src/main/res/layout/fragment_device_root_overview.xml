@@ -91,7 +91,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
                                 android:textColor="@color/white"
-                                android:textSize="15sp"
+                                android:textSize="@dimen/aqua_text_size_body_large"
                                 android:textStyle="bold"
                                 tools:text="Online" />
                         </LinearLayout>
@@ -116,7 +116,7 @@
                         android:layout_height="wrap_content"
                         android:text="Device information"
                         android:textColor="@color/white"
-                        android:textSize="18sp"
+                        android:textSize="@dimen/aqua_text_size_title_small"
                         android:textStyle="bold" />
 
                     <TextView
@@ -183,7 +183,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textColor="@color/white"
-                        android:textSize="18sp"
+                        android:textSize="@dimen/aqua_text_size_title_small"
                         android:textStyle="bold"
                         tools:text="Channel controls" />
 
@@ -215,7 +215,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textColor="@color/white"
-                        android:textSize="18sp"
+                        android:textSize="@dimen/aqua_text_size_title_small"
                         android:textStyle="bold"
                         tools:text="Schedules" />
 

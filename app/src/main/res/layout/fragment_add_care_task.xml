@@ -43,7 +43,7 @@
         android:includeFontPadding="false"
         android:text="@string/maintenance_task_type_label"
         android:textColor="@color/aqua_card_text_primary"
-        android:textSize="15sp"
+        android:textSize="@dimen/aqua_text_size_body_large"
         android:textStyle="bold" />
 
       <LinearLayout
@@ -101,7 +101,7 @@
             android:maxLines="1"
             android:text="@string/maintenance_required"
             android:textColor="@color/aqua_card_text_secondary"
-            android:textSize="12.5sp" />
+            android:textSize="@dimen/aqua_text_size_caption_plus" />
 
         </LinearLayout>
 
@@ -149,7 +149,7 @@
         android:includeFontPadding="false"
         android:text="@string/maintenance_aquarium_label"
         android:textColor="@color/aqua_card_text_primary"
-        android:textSize="15sp"
+        android:textSize="@dimen/aqua_text_size_body_large"
         android:textStyle="bold" />
 
       <LinearLayout
@@ -189,7 +189,7 @@
             android:maxLines="1"
             android:text="@string/maintenance_required"
             android:textColor="@color/aqua_card_text_secondary"
-            android:textSize="12.5sp" />
+            android:textSize="@dimen/aqua_text_size_caption_plus" />
 
         </LinearLayout>
 
@@ -208,7 +208,7 @@
         android:includeFontPadding="false"
         android:text="@string/maintenance_schedule_label"
         android:textColor="@color/aqua_card_text_primary"
-        android:textSize="15sp"
+        android:textSize="@dimen/aqua_text_size_body_large"
         android:textStyle="bold" />
 
       <LinearLayout
@@ -233,7 +233,7 @@
             android:includeFontPadding="false"
             android:text="@string/maintenance_date_label"
             android:textColor="@color/aqua_card_text_secondary"
-            android:textSize="11.5sp" />
+            android:textSize="@dimen/aqua_text_size_micro_plus" />
 
           <TextView
             android:id="@+id/tvDueDateValue"
@@ -265,7 +265,7 @@
             android:includeFontPadding="false"
             android:text="@string/maintenance_time_label"
             android:textColor="@color/aqua_card_text_secondary"
-            android:textSize="11.5sp" />
+            android:textSize="@dimen/aqua_text_size_micro_plus" />
 
           <TextView
             android:id="@+id/tvDueTimeValue"
@@ -323,7 +323,7 @@
                 android:includeFontPadding="false"
                 android:text="@string/maintenance_repeat_description"
                 android:textColor="@color/aqua_card_text_secondary"
-                android:textSize="12.5sp" />
+                android:textSize="@dimen/aqua_text_size_caption_plus" />
 
             </LinearLayout>
 
@@ -418,7 +418,7 @@
                 android:includeFontPadding="false"
                 android:text="@string/maintenance_reminder_description"
                 android:textColor="@color/aqua_card_text_secondary"
-                android:textSize="12.5sp" />
+                android:textSize="@dimen/aqua_text_size_caption_plus" />
 
             </LinearLayout>
 
@@ -465,7 +465,7 @@
                   android:includeFontPadding="false"
                   android:text="@string/maintenance_missed_reminder_description"
                   android:textColor="@color/aqua_card_text_secondary"
-                  android:textSize="12.5sp" />
+                  android:textSize="@dimen/aqua_text_size_caption_plus" />
 
               </LinearLayout>
 

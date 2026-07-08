@@ -107,7 +107,7 @@
                 android:includeFontPadding="false"
                 android:text="@string/device_qr_align_title"
                 android:textColor="#F2F6FA"
-                android:textSize="18sp"
+                android:textSize="@dimen/aqua_text_size_title_small"
                 android:textStyle="bold" />
 
             <TextView
@@ -118,7 +118,7 @@
                 android:lineSpacingExtra="2dp"
                 android:text="@string/device_qr_align_message"
                 android:textColor="#90A1B5"
-                android:textSize="12.5sp" />
+                android:textSize="@dimen/aqua_text_size_caption_plus" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnRequestCamera"

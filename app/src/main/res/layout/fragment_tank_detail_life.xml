@@ -36,7 +36,7 @@
                 android:includeFontPadding="false"
                 android:text="@string/aquarium_tank_life_title"
                 android:textColor="@color/aqua_card_text_primary"
-                android:textSize="18sp"
+                android:textSize="@dimen/aqua_text_size_title_small"
                 android:textStyle="bold" />
 
             <com.google.android.material.button.MaterialButton
@@ -97,7 +97,7 @@
                     android:includeFontPadding="false"
                     android:text="@string/aquarium_no_livestock_added"
                     android:textColor="@color/aqua_card_text_primary"
-                    android:textSize="15sp"
+                    android:textSize="@dimen/aqua_text_size_body_large"
                     android:textStyle="bold" />
 
                 <TextView

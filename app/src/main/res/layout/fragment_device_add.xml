@@ -69,7 +69,7 @@
                         android:paddingStart="12dp"
                         android:paddingEnd="12dp"
                         android:textColor="#5FD6B4"
-                        android:textSize="11.5sp"
+                        android:textSize="@dimen/aqua_text_size_micro_plus"
                         android:textStyle="bold"
                         tools:text="Ready" />
 
@@ -111,7 +111,7 @@
                         android:text="Scan secure QR code"
                         android:textAllCaps="false"
                         android:textColor="@color/white"
-                        android:textSize="15sp"
+                        android:textSize="@dimen/aqua_text_size_body_large"
                         android:textStyle="bold"
                         app:backgroundTint="@color/aqua_button_blue"
                         app:cornerRadius="17dp"
@@ -130,7 +130,7 @@
                         android:text="@string/device_add_scan_button"
                         android:textAllCaps="false"
                         android:textColor="@color/white"
-                        android:textSize="15sp"
+                        android:textSize="@dimen/aqua_text_size_body_large"
                         android:textStyle="bold"
                         app:backgroundTint="@color/aqua_toolbar_action_primary_container"
                         app:cornerRadius="17dp"
@@ -170,7 +170,7 @@
                         android:lineSpacingExtra="2dp"
                         android:text="First setup uses the QR code. For an already paired device, open setup mode on the device, then press Manual BLE Scan. AquaLight verifies the firmware state before sending Wi‑Fi."
                         android:textColor="@color/aqua_state_text_secondary"
-                        android:textSize="12.5sp" />
+                        android:textSize="@dimen/aqua_text_size_caption_plus" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -182,7 +182,7 @@
                 android:includeFontPadding="false"
                 android:text="@string/device_add_available_devices_title"
                 android:textColor="@color/aqua_card_text_primary"
-                android:textSize="18sp"
+                android:textSize="@dimen/aqua_text_size_title_small"
                 android:textStyle="bold"
                 android:visibility="gone"
                 tools:visibility="visible" />
@@ -195,7 +195,7 @@
                 android:lineSpacingExtra="2dp"
                 android:text="Select a device only after setup mode is open. AquaLight will verify DeviceInfo before Wi‑Fi is sent."
                 android:textColor="@color/aqua_card_text_secondary"
-                android:textSize="12.5sp"
+                android:textSize="@dimen/aqua_text_size_caption_plus"
                 android:visibility="gone"
                 tools:visibility="visible" />
 
