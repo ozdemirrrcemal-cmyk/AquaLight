@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Global Aqua button system for normal app screens.
+
+        Do not use these styles directly for dialog or bottom sheet actions yet.
+        Dialog and bottom sheet buttons keep their existing color tokens.
+    -->
+
+    <style name="Widget.Aqua.Button" parent="Widget.MaterialComponents.Button">
+        <item name="android:minHeight">@dimen/aqua_button_height</item>
+        <item name="android:paddingStart">@dimen/aqua_button_padding_horizontal</item>
+        <item name="android:paddingEnd">@dimen/aqua_button_padding_horizontal</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">@dimen/aqua_text_size_body_xlarge</item>
+        <item name="cornerRadius">@dimen/aqua_button_radius</item>
+        <item name="iconPadding">@dimen/aqua_button_icon_padding</item>
+        <item name="rippleColor">@color/aqua_button_ripple</item>
+        <item name="elevation">0dp</item>
+    </style>
+
+    <style name="Widget.Aqua.Button.Primary" parent="Widget.Aqua.Button">
+        <item name="backgroundTint">@color/aqua_button_primary_container</item>
+        <item name="android:textColor">@color/aqua_button_primary_content</item>
+        <item name="iconTint">@color/aqua_button_primary_content</item>
+        <item name="strokeWidth">0dp</item>
+    </style>
+
+    <style name="Widget.Aqua.Button.Secondary" parent="Widget.Aqua.Button">
+        <item name="backgroundTint">@color/aqua_button_secondary_container</item>
+        <item name="android:textColor">@color/aqua_button_secondary_content</item>
+        <item name="iconTint">@color/aqua_button_secondary_content</item>
+        <item name="strokeWidth">0dp</item>
+    </style>
+
+    <style name="Widget.Aqua.Button.Neutral" parent="Widget.Aqua.Button">
+        <item name="backgroundTint">@color/aqua_button_neutral_container</item>
+        <item name="android:textColor">@color/aqua_button_neutral_content</item>
+        <item name="iconTint">@color/aqua_button_neutral_content</item>
+        <item name="strokeWidth">0dp</item>
+    </style>
+
+    <style name="Widget.Aqua.Button.Outline" parent="Widget.Aqua.Button">
+        <item name="backgroundTint">@color/aqua_button_outline_container</item>
+        <item name="android:textColor">@color/aqua_button_outline_content</item>
+        <item name="iconTint">@color/aqua_button_outline_content</item>
+        <item name="strokeColor">@color/aqua_button_outline_stroke</item>
+        <item name="strokeWidth">@dimen/aqua_button_stroke_width</item>
+    </style>
+
+    <style name="Widget.Aqua.Button.Danger" parent="Widget.Aqua.Button">
+        <item name="backgroundTint">@color/aqua_button_danger_container</item>
+        <item name="android:textColor">@color/aqua_button_danger_content</item>
+        <item name="iconTint">@color/aqua_button_danger_content</item>
+        <item name="strokeColor">@color/aqua_button_danger_stroke</item>
+        <item name="strokeWidth">@dimen/aqua_button_stroke_width</item>
+    </style>
+
+    <style name="Widget.Aqua.Button.Compact" parent="Widget.Aqua.Button.Primary">
+        <item name="android:minHeight">@dimen/aqua_button_height_compact</item>
+        <item name="android:paddingStart">@dimen/aqua_button_padding_horizontal_compact</item>
+        <item name="android:paddingEnd">@dimen/aqua_button_padding_horizontal_compact</item>
+        <item name="android:textSize">@dimen/aqua_text_size_body</item>
+        <item name="cornerRadius">@dimen/aqua_button_radius_compact</item>
+    </style>
+</resources>
