@@ -64,7 +64,7 @@
         android:id="@+id/btnSave"
         style="@style/Widget.Aqua.Button.Primary"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="@dimen/aqua_button_height"
         android:text="@string/edit_profile_save_button"
         android:contentDescription="@string/edit_profile_save_button_desc"
         android:layout_marginBottom="16dp"

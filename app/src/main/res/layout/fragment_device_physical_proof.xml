@@ -126,10 +126,8 @@
                         style="@style/Widget.Aqua.Button.Primary"
                         android:id="@+id/btnContinue"
                         android:layout_width="match_parent"
-                        android:layout_height="50dp"
+                        android:layout_height="@dimen/aqua_button_height"
                         android:layout_marginTop="18dp"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
                         android:text="@string/device_physical_proof_continue"
                         android:textStyle="bold" />
 

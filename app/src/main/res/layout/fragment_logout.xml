@@ -169,7 +169,7 @@
             android:id="@+id/btnLogout"
             style="@style/Widget.Aqua.Button.Primary"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="@dimen/aqua_button_height"
             android:text="@string/account_settings_logout"
             android:contentDescription="@string/account_settings_logout_desc" />
 
@@ -178,7 +178,7 @@
             android:id="@+id/btnDeleteAccount"
             style="@style/Widget.Aqua.Button.Danger"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="@dimen/aqua_button_height"
             android:layout_marginTop="8dp"
             android:text="@string/account_settings_delete_account"
             android:contentDescription="@string/account_settings_delete_account_desc" />

@@ -219,7 +219,7 @@
                             style="@style/Widget.Aqua.Button.Secondary.Compact"
                             android:id="@+id/btnOtaTestCheck"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="@dimen/aqua_button_height"
                             android:layout_marginEnd="6dp"
                             android:layout_weight="1"
                             android:text="Check beta" />
@@ -228,7 +228,7 @@
                             style="@style/Widget.Aqua.Button.Neutral.Compact"
                             android:id="@+id/btnOtaTestStatus"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="@dimen/aqua_button_height"
                             android:layout_marginStart="6dp"
                             android:layout_weight="1"
                             android:text="Status" />
@@ -245,7 +245,7 @@
                             style="@style/Widget.Aqua.Button.Primary.Compact"
                             android:id="@+id/btnOtaTestStart"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="@dimen/aqua_button_height"
                             android:layout_marginEnd="6dp"
                             android:layout_weight="1"
                             android:text="Start OTA" />
@@ -254,7 +254,7 @@
                             style="@style/Widget.Aqua.Button.Danger.Compact"
                             android:id="@+id/btnOtaTestClear"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="@dimen/aqua_button_height"
                             android:layout_marginStart="6dp"
                             android:layout_weight="1"
                             android:text="Clear" />

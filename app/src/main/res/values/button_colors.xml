@@ -19,8 +19,8 @@
     <color name="aqua_button_danger_stroke">#90415A</color>
     <color name="aqua_button_danger_content">#FF6B6B</color>
 
-    <color name="aqua_button_disabled_container">#1A2636</color>
-    <color name="aqua_button_disabled_content">#66758A</color>
+    <color name="aqua_button_disabled_container">#2D4D6A</color>
+    <color name="aqua_button_disabled_content">#D6E2F0</color>
 
     <color name="aqua_button_ripple">#33FFFFFF</color>
     <color name="aqua_button_auth_primary_container">#2798F7</color>

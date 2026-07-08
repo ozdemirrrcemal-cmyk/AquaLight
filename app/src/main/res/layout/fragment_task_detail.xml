@@ -256,10 +256,8 @@
                 style="@style/Widget.Aqua.Button.Primary"
                 android:id="@+id/btnCompleteTask"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="@dimen/aqua_button_height"
                 android:layout_marginTop="18dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
                 android:text="@string/maintenance_complete_task"
                 android:textStyle="bold" />
 
@@ -267,10 +265,8 @@
                 style="@style/Widget.Aqua.Button.Danger"
                 android:id="@+id/btnDeleteTask"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="@dimen/aqua_button_height"
                 android:layout_marginTop="12dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
                 android:text="@string/maintenance_delete_task"
                 android:textStyle="bold" />
 

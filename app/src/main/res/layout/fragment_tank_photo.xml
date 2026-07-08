@@ -121,7 +121,7 @@
           android:id="@+id/btnAddPlant"
           style="@style/Widget.Aqua.Button.Primary"
           android:layout_width="match_parent"
-          android:layout_height="52dp"
+          android:layout_height="@dimen/aqua_button_height"
           android:layout_marginTop="18dp"
           android:text="@string/aquarium_text_add_plant"
           android:textAllCaps="false"

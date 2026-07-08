@@ -3,11 +3,12 @@
     <!-- Global Aqua button sizing tokens. -->
 
     <dimen name="aqua_button_height">56dp</dimen>
-    <dimen name="aqua_button_height_compact">48dp</dimen>
+    <dimen name="aqua_button_height_compact">56dp</dimen>
     <dimen name="aqua_button_radius">18dp</dimen>
-    <dimen name="aqua_button_radius_compact">16dp</dimen>
+    <dimen name="aqua_button_radius_compact">18dp</dimen>
     <dimen name="aqua_button_padding_horizontal">22dp</dimen>
-    <dimen name="aqua_button_padding_horizontal_compact">18dp</dimen>
+    <dimen name="aqua_button_padding_horizontal_compact">22dp</dimen>
     <dimen name="aqua_button_icon_padding">10dp</dimen>
     <dimen name="aqua_button_stroke_width">1dp</dimen>
+    <dimen name="aqua_button_empty_action_min_width">224dp</dimen>
 </resources>
