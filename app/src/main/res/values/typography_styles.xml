@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="TextAppearance.Aqua.ScreenTitle">
+        <item name="android:textSize">@dimen/aqua_text_size_screen_title</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.HeaderTitle">
+        <item name="android:textSize">@dimen/aqua_text_size_header_title</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.SectionTitle">
+        <item name="android:textSize">@dimen/aqua_text_size_section_title</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.CardTitle">
+        <item name="android:textSize">@dimen/aqua_text_size_card_title</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.Body">
+        <item name="android:textSize">@dimen/aqua_text_size_body</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.BodySmall">
+        <item name="android:textSize">@dimen/aqua_text_size_body_small</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.Caption">
+        <item name="android:textSize">@dimen/aqua_text_size_caption</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.Micro">
+        <item name="android:textSize">@dimen/aqua_text_size_micro</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+</resources>
