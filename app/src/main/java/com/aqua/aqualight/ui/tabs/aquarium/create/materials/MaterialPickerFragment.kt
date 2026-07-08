@@ -355,7 +355,12 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
         val emptyText = TextView(requireContext()).apply {
             text = getString(R.string.material_picker_no_materials_found)
             gravity = Gravity.CENTER
-            setTextColor(Color.parseColor("#8FA4BE"))
+            setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.aqua_state_text_secondary
+                )
+            )
             textSize = 15f
             includeFontPadding = false
 
