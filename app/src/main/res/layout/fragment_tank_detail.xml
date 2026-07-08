@@ -6,14 +6,14 @@
     android:layout_height="match_parent"
     android:background="@color/background_color">
 
-   <include
-    android:id="@+id/appHeader"
-    layout="@layout/layout_aqua_header"
-    android:layout_width="0dp"
-    android:layout_height="wrap_content"
-    app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintEnd_toEndOf="parent" />
+    <include
+        android:id="@+id/appHeader"
+        layout="@layout/layout_aqua_header"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardTankImage"
@@ -57,181 +57,41 @@
 
     </com.google.android.material.card.MaterialCardView>
 
-    <LinearLayout
-        android:id="@+id/tabsContainer"
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tankTabs"
         android:layout_width="0dp"
-        android:layout_height="34dp"
+        android:layout_height="48dp"
         android:layout_marginStart="14dp"
         android:layout_marginTop="2dp"
         android:layout_marginEnd="14dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
+        android:background="@color/background_color"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/cardTankImage">
+        app:layout_constraintTop_toBottomOf="@id/cardTankImage"
+        app:tabGravity="fill"
+        app:tabIndicatorColor="#2196F3"
+        app:tabIndicatorFullWidth="false"
+        app:tabIndicatorGravity="bottom"
+        app:tabIndicatorHeight="3dp"
+        app:tabMinWidth="0dp"
+        app:tabMode="fixed"
+        app:tabPaddingEnd="0dp"
+        app:tabPaddingStart="0dp"
+        app:tabRippleColor="@android:color/transparent"
+        app:tabSelectedTextColor="@android:color/white"
+        app:tabTextAppearance="@style/TextAppearance.Aqua.TankTab"
+        app:tabTextColor="#8FA4BE" />
 
-        <TextView
-            android:id="@+id/tabDevices"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:gravity="center"
-            android:maxLines="1"
-            android:text="@string/aquarium_detail_tab_devices"
-            android:textColor="#8FA4BE"
-            android:textSize="@dimen/aqua_text_size_caption" />
-
-        <TextView
-            android:id="@+id/tabActivity"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:gravity="center"
-            android:maxLines="1"
-            android:text="@string/aquarium_detail_tab_activity"
-            android:textColor="#8FA4BE"
-            android:textSize="@dimen/aqua_text_size_caption" />
-
-        <TextView
-            android:id="@+id/tabTank"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:gravity="center"
-            android:maxLines="1"
-            android:text="@string/aquarium_detail_tab_tank"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="@dimen/aqua_text_size_caption"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/tabPlants"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:gravity="center"
-            android:maxLines="1"
-            android:text="@string/aquarium_detail_tab_plants"
-            android:textColor="#8FA4BE"
-            android:textSize="@dimen/aqua_text_size_caption" />
-
-        <TextView
-            android:id="@+id/tabTankLife"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:gravity="center"
-            android:maxLines="1"
-            android:text="@string/aquarium_tank_life_title"
-            android:textColor="#8FA4BE"
-            android:textSize="@dimen/aqua_text_size_caption" />
-
-    </LinearLayout>
-
-    <View
-        android:id="@+id/tabUnderline"
-        android:layout_width="58dp"
-        android:layout_height="3dp"
-        android:background="#2196F3"
-        app:layout_constraintStart_toStartOf="@id/tabsContainer"
-        app:layout_constraintTop_toBottomOf="@id/tabsContainer" />
-
-    <ScrollView
-        android:id="@+id/contentScrollView"
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/tankDetailPager"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:background="@color/background_color"
         android:clipToPadding="false"
-        android:fillViewport="true"
         android:overScrollMode="never"
-        android:paddingStart="14dp"
-        android:paddingTop="16dp"
-        android:paddingEnd="14dp"
-        android:paddingBottom="120dp"
-        android:scrollbars="none"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tabUnderline">
+        app:layout_constraintTop_toBottomOf="@id/tankTabs" />
 
-        <LinearLayout
-            android:id="@+id/detailContentContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/tvEmptyTab"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="44dp"
-                android:gravity="center"
-                android:text="@string/aquarium_text_this_section_will_be_available_soon"
-                android:textColor="#8FA4BE"
-                android:textSize="@dimen/aqua_text_size_body"
-                android:visibility="gone" />
-
-        </LinearLayout>
-
-    </ScrollView>
-
-    <com.aqua.aqualight.ui.common.view.SwipeInterceptFrameLayout
-        android:id="@+id/tankFragmentContainer"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@color/background_color"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tabUnderline" />
-
-    <com.aqua.aqualight.ui.common.view.SwipeInterceptFrameLayout
-        android:id="@+id/devicesFragmentContainer"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@color/background_color"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tabUnderline" />
-		
-    <com.aqua.aqualight.ui.common.view.SwipeInterceptFrameLayout
-        android:id="@+id/activityFragmentContainer"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@color/background_color"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tabUnderline" />
-
-    <com.aqua.aqualight.ui.common.view.SwipeInterceptFrameLayout
-        android:id="@+id/plantsFragmentContainer"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@color/background_color"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tabUnderline" />
-
-    <com.aqua.aqualight.ui.common.view.SwipeInterceptFrameLayout
-        android:id="@+id/tankLifeFragmentContainer"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@color/background_color"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tabUnderline" />
-   
 </androidx.constraintlayout.widget.ConstraintLayout>
