@@ -9,4 +9,10 @@
     <dimen name="aqua_text_size_body_small">13sp</dimen>
     <dimen name="aqua_text_size_caption">12sp</dimen>
     <dimen name="aqua_text_size_micro">11sp</dimen>
+    <dimen name="aqua_text_size_toolbar_title">20sp</dimen>
+    <dimen name="aqua_text_size_header_search">15sp</dimen>
+    <dimen name="aqua_text_size_toolbar_clear_action">24sp</dimen>
+    <dimen name="aqua_text_size_toolbar_pill_action">12.5sp</dimen>
+    <dimen name="aqua_text_size_toolbar_primary_action">12sp</dimen>
+    <dimen name="aqua_text_size_toolbar_score">11sp</dimen>
 </resources>

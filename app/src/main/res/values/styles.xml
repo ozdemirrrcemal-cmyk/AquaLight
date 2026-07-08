@@ -73,7 +73,7 @@
     <item name="fontFamily">@font/inter_semibold</item>
     <item name="android:fontFamily">@font/inter_semibold</item>
     <item name="android:textColor">@android:color/white</item>
-    <item name="android:textSize">20sp</item>
+    <item name="android:textSize">@dimen/aqua_text_size_toolbar_title</item>
 </style>
 
 
@@ -144,13 +144,17 @@
 </style>
 
 
-<style name="TextAppearance.Aqua.Body" parent="TextAppearance.Material3.BodyMedium" />
+<style name="TextAppearance.Aqua.Body" parent="TextAppearance.Material3.BodyMedium">
+    <item name="android:textSize">@dimen/aqua_text_size_body</item>
+</style>
 
 <style name="TextAppearance.Aqua.BodyBold" parent="TextAppearance.Material3.BodyLarge">
     <item name="android:textStyle">bold</item>
 </style>
 
-<style name="TextAppearance.Aqua.Caption" parent="TextAppearance.Material3.LabelMedium" />
+<style name="TextAppearance.Aqua.Caption" parent="TextAppearance.Material3.LabelMedium">
+    <item name="android:textSize">@dimen/aqua_text_size_caption</item>
+</style>
 
   <style name="Aqua" />
 
