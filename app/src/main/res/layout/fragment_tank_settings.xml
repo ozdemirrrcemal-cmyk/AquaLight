@@ -6,125 +6,47 @@
     android:layout_height="match_parent"
     android:background="@color/background_color">
 
-   <include
-    android:id="@+id/appHeader"
-    layout="@layout/layout_aqua_header"
-    android:layout_width="0dp"
-    android:layout_height="wrap_content"
-    app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintEnd_toEndOf="parent" />
-
-    <LinearLayout
-        android:id="@+id/settingsTabsContainer"
+    <include
+        android:id="@+id/appHeader"
+        layout="@layout/layout_aqua_header"
         android:layout_width="0dp"
-        android:layout_height="42dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/settingsTabs"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
         android:layout_marginStart="16dp"
         android:layout_marginTop="10dp"
         android:layout_marginEnd="16dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
+        android:background="@color/background_color"
+        app:layout_constraintTop_toBottomOf="@id/appHeader"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/appHeader">
+        app:tabGravity="fill"
+        app:tabIndicatorColor="#2196F3"
+        app:tabIndicatorFullWidth="false"
+        app:tabIndicatorGravity="bottom"
+        app:tabIndicatorHeight="3dp"
+        app:tabMinWidth="0dp"
+        app:tabMode="fixed"
+        app:tabPaddingEnd="0dp"
+        app:tabPaddingStart="0dp"
+        app:tabSelectedTextColor="@android:color/white"
+        app:tabTextAppearance="@style/TextAppearance.Aqua.SettingsTab"
+        app:tabTextColor="@color/aqua_card_text_secondary" />
 
-        <TextView
-            android:id="@+id/tabBasic"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_marginEnd="24dp"
-            android:gravity="center"
-            android:includeFontPadding="false"
-            android:text="@string/aquarium_settings_tab_basic"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="@dimen/aqua_text_size_body_large"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/tabDetails"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_marginEnd="24dp"
-            android:gravity="center"
-            android:includeFontPadding="false"
-            android:text="@string/aquarium_settings_tab_details"
-            android:textColor="@color/aqua_card_text_secondary"
-            android:textSize="@dimen/aqua_text_size_body_large" />
-
-        <TextView
-            android:id="@+id/tabOthers"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:includeFontPadding="false"
-            android:text="@string/aquarium_settings_tab_others"
-            android:textColor="@color/aqua_card_text_secondary"
-            android:textSize="@dimen/aqua_text_size_body_large" />
-
-    </LinearLayout>
-
-    <View
-        android:id="@+id/tabUnderline"
-        android:layout_width="60dp"
-        android:layout_height="3dp"
-        android:background="#2196F3"
-        app:layout_constraintStart_toStartOf="@id/settingsTabsContainer"
-        app:layout_constraintTop_toBottomOf="@id/settingsTabsContainer" />
-
-    <ScrollView
-        android:id="@+id/contentScrollView"
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/settingsPager"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:background="@color/background_color"
         android:clipToPadding="false"
-        android:fillViewport="true"
         android:overScrollMode="never"
-        android:paddingStart="16dp"
-        android:paddingTop="12dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="120dp"
-        android:scrollbars="none"
-        app:layout_constraintTop_toBottomOf="@id/tabUnderline"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <LinearLayout
-            android:id="@+id/contentContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" />
-
-    </ScrollView>
-
-   <com.aqua.aqualight.ui.common.view.SwipeInterceptFrameLayout
-        android:id="@+id/basicFragmentContainer"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@color/background_color"
-        android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/tabUnderline"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-   <com.aqua.aqualight.ui.common.view.SwipeInterceptFrameLayout
-        android:id="@+id/detailsFragmentContainer"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@color/background_color"
-        android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/tabUnderline"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-		
-   <com.aqua.aqualight.ui.common.view.SwipeInterceptFrameLayout
-        android:id="@+id/othersFragmentContainer"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@color/background_color"
-        android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/tabUnderline"
+        app:layout_constraintTop_toBottomOf="@id/settingsTabs"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
