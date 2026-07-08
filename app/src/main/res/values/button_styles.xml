@@ -92,4 +92,24 @@
         <item name="android:textSize">@dimen/aqua_text_size_body</item>
         <item name="cornerRadius">@dimen/aqua_button_radius_compact</item>
     </style>
+    <style name="Widget.Aqua.Button.Auth.Primary" parent="Widget.Aqua.Button">
+        <item name="backgroundTint">@color/aqua_button_auth_primary_container</item>
+        <item name="android:textColor">@color/aqua_button_auth_primary_content</item>
+        <item name="iconTint">@color/aqua_button_auth_primary_content</item>
+        <item name="strokeWidth">0dp</item>
+    </style>
+    <style name="Widget.Aqua.Button.Auth.Secondary" parent="Widget.Aqua.Button">
+        <item name="backgroundTint">@color/aqua_button_auth_secondary_container</item>
+        <item name="android:textColor">@color/aqua_button_auth_secondary_content</item>
+        <item name="iconTint">@color/aqua_button_auth_secondary_content</item>
+        <item name="strokeColor">@color/aqua_button_auth_secondary_stroke</item>
+        <item name="strokeWidth">@dimen/aqua_button_stroke_width</item>
+    </style>
+    <style name="Widget.Aqua.Button.Auth.Google" parent="Widget.Aqua.Button">
+        <item name="backgroundTint">@color/aqua_button_auth_google_container</item>
+        <item name="android:textColor">@color/aqua_button_auth_google_content</item>
+        <item name="iconTint">@null</item>
+        <item name="strokeColor">@color/aqua_button_auth_google_stroke</item>
+        <item name="strokeWidth">@dimen/aqua_button_stroke_width</item>
+    </style>
 </resources>

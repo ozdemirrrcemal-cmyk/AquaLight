@@ -23,4 +23,12 @@
     <color name="aqua_button_disabled_content">#66758A</color>
 
     <color name="aqua_button_ripple">#33FFFFFF</color>
+    <color name="aqua_button_auth_primary_container">#2798F7</color>
+    <color name="aqua_button_auth_primary_content">#FFFFFF</color>
+    <color name="aqua_button_auth_secondary_container">#020711</color>
+    <color name="aqua_button_auth_secondary_content">#FFFFFF</color>
+    <color name="aqua_button_auth_secondary_stroke">#13243A</color>
+    <color name="aqua_button_auth_google_container">#FFFFFF</color>
+    <color name="aqua_button_auth_google_content">#111827</color>
+    <color name="aqua_button_auth_google_stroke">#DADCE0</color>
 </resources>
