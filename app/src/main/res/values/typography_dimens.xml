@@ -15,4 +15,6 @@
     <dimen name="aqua_text_size_toolbar_pill_action">12.5sp</dimen>
     <dimen name="aqua_text_size_toolbar_primary_action">12sp</dimen>
     <dimen name="aqua_text_size_toolbar_score">11sp</dimen>
+    <dimen name="aqua_text_size_step_title">18sp</dimen>
+    <dimen name="aqua_text_size_feedback_success">15sp</dimen>
 </resources>
