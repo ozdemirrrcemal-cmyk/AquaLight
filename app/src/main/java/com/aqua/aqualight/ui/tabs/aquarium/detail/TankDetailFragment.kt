@@ -12,7 +12,6 @@ import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.viewpager2.adapter.FragmentStateAdapter
-import androidx.viewpager2.widget.ViewPager2
 import coil3.load
 import coil3.request.crossfade
 import coil3.request.error
@@ -23,13 +22,14 @@ import com.aqua.aqualight.databinding.FragmentTankDetailBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.tabs.AquaSwipeTabHost
+import com.aqua.aqualight.ui.common.tabs.AquaSwipeTabSpec
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.TankDetailTabArgs
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteTarget
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
-import com.google.android.material.tabs.TabLayoutMediator
 
 class TankDetailFragment :
     Fragment(R.layout.fragment_tank_detail),
@@ -46,8 +46,7 @@ class TankDetailFragment :
     private var tankId: Long = 0L
     private var selectedTab: TankDetailTab = TankDetailTab.DEVICES
     private var currentTank: SavedAquariumTank? = null
-    private var tabMediator: TabLayoutMediator? = null
-    private var pageChangeCallback: ViewPager2.OnPageChangeCallback? = null
+    private var tabHost: AquaSwipeTabHost<TankDetailTab>? = null
 
     override fun onCreate(
         savedInstanceState: Bundle?
@@ -122,61 +121,27 @@ class TankDetailFragment :
     private fun setupTankTabPager(
         initialTab: TankDetailTab
     ) {
-        binding.tankDetailPager.adapter =
-            TankDetailPagerAdapter(
-                fragment = this,
-                tankId = tankId
-            )
-
-        binding.tankDetailPager.offscreenPageLimit =
-            TANK_PAGER_OFFSCREEN_LIMIT
-
-        tabMediator =
-            TabLayoutMediator(
-                binding.tankTabs,
-                binding.tankDetailPager
-            ) { tab, position ->
-                tab.text =
-                    getString(
-                        TAB_ORDER[position].titleRes
-                    )
-            }.also { mediator ->
-                mediator.attach()
-            }
-
-        binding.tankDetailPager.setCurrentItem(
-            tabIndexOf(
-                tab = initialTab
-            ),
-            false
-        )
-
-        pageChangeCallback =
-            object : ViewPager2.OnPageChangeCallback() {
-                override fun onPageSelected(
-                    position: Int
-                ) {
-                    val tab =
-                        TAB_ORDER.getOrNull(
-                            position
-                        ) ?: return
-
-                    if (selectedTab == tab) {
-                        return
-                    }
-
-                    selectedTab =
-                        tab
-
-                    saveSelectedTabState(
-                        tab = tab
-                    )
-                }
-            }.also { callback ->
-                binding.tankDetailPager.registerOnPageChangeCallback(
-                    callback
+        tabHost = AquaSwipeTabHost(
+            fragment = this,
+            tabLayout = binding.tankTabs,
+            viewPager = binding.tankDetailPager,
+            tabs = TAB_ORDER,
+            onTabSelected = { tab ->
+                selectedTab = tab
+                saveSelectedTabState(
+                    tab = tab
                 )
             }
+        ).also { host ->
+            host.attach(
+                adapter = TankDetailPagerAdapter(
+                    fragment = this,
+                    tankId = tankId
+                ),
+                initialTab = initialTab,
+                offscreenPageLimit = TANK_PAGER_OFFSCREEN_LIMIT
+            )
+        }
     }
 
     private fun restoreSelectedTab(
@@ -266,34 +231,15 @@ class TankDetailFragment :
         tab: TankDetailTab,
         smoothScroll: Boolean = true
     ) {
-        selectedTab =
-            tab
-
-        saveSelectedTabState(
-            tab = tab
-        )
-
-        val targetIndex =
-            tabIndexOf(
+        tabHost?.select(
+            tab = tab,
+            smoothScroll = smoothScroll
+        ) ?: run {
+            selectedTab = tab
+            saveSelectedTabState(
                 tab = tab
             )
-
-        if (binding.tankDetailPager.currentItem != targetIndex) {
-            binding.tankDetailPager.setCurrentItem(
-                targetIndex,
-                smoothScroll
-            )
         }
-    }
-
-    private fun tabIndexOf(
-        tab: TankDetailTab
-    ): Int {
-        return TAB_ORDER.indexOf(
-            tab
-        ).coerceAtLeast(
-            0
-        )
     }
 
     private fun observeCareProfileActions() {
@@ -533,20 +479,8 @@ class TankDetailFragment :
     }
 
     override fun onDestroyView() {
-        pageChangeCallback?.let { callback ->
-            binding.tankDetailPager.unregisterOnPageChangeCallback(
-                callback
-            )
-        }
-        pageChangeCallback =
-            null
-
-        tabMediator?.detach()
-        tabMediator =
-            null
-
-        binding.tankDetailPager.adapter =
-            null
+        tabHost?.detach()
+        tabHost = null
 
         _binding =
             null
@@ -610,9 +544,9 @@ class TankDetailFragment :
     }
 
     private enum class TankDetailTab(
-        @StringRes val titleRes: Int,
-        val stableId: Long
-    ) {
+        @StringRes override val titleRes: Int,
+        override val stableId: Long
+    ) : AquaSwipeTabSpec {
         DEVICES(
             R.string.aquarium_detail_tab_devices,
             1L
