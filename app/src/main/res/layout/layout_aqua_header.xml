@@ -245,7 +245,7 @@
             android:textSize="12sp"
             android:textStyle="bold"
             android:visibility="gone"
-            app:backgroundTint="#1C3252"
+            app:backgroundTint="@color/aqua_toolbar_primary_action_container"
             app:cornerRadius="17dp"
             tools:text="+ Add"
             tools:visibility="visible" />
