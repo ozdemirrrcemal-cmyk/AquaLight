@@ -13,7 +13,6 @@ import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.viewpager2.adapter.FragmentStateAdapter
-import androidx.viewpager2.widget.ViewPager2
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.databinding.DialogCareProfileBinding
@@ -22,6 +21,8 @@ import com.aqua.aqualight.databinding.ItemCareProfileRowBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderScoreBadge
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.tabs.AquaSwipeTabHost
+import com.aqua.aqualight.ui.common.tabs.AquaSwipeTabSpec
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.careprofile.CareProfileCalculator
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragment
@@ -30,7 +31,6 @@ import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.material.tabs.TabLayoutMediator
 import kotlin.math.roundToInt
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
@@ -46,8 +46,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     private var selectedTab: SettingsTab = SettingsTab.BASIC
     private var currentTank: SavedAquariumTank? = null
     private var isDeletingTank: Boolean = false
-    private var tabMediator: TabLayoutMediator? = null
-    private var pageChangeCallback: ViewPager2.OnPageChangeCallback? = null
+    private var tabHost: AquaSwipeTabHost<SettingsTab>? = null
 
     override fun onCreate(
         savedInstanceState: Bundle?
@@ -162,78 +161,38 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     private fun setupSettingsPager(
         initialTab: SettingsTab
     ) {
-        binding.settingsPager.adapter =
-            TankSettingsPagerAdapter(
-                fragment = this,
-                tankId = tankId
+        tabHost = AquaSwipeTabHost(
+            fragment = this,
+            tabLayout = binding.settingsTabs,
+            viewPager = binding.settingsPager,
+            tabs = TAB_ORDER,
+            onTabSelected = { tab ->
+                selectedTab = tab
+                saveSelectedTabState(tab)
+            }
+        ).also { host ->
+            host.attach(
+                adapter = TankSettingsPagerAdapter(
+                    fragment = this,
+                    tankId = tankId
+                ),
+                initialTab = initialTab,
+                offscreenPageLimit = SETTINGS_PAGER_OFFSCREEN_LIMIT
             )
-
-        binding.settingsPager.offscreenPageLimit =
-            SETTINGS_PAGER_OFFSCREEN_LIMIT
-
-        tabMediator =
-            TabLayoutMediator(
-                binding.settingsTabs,
-                binding.settingsPager
-            ) { tab, position ->
-                tab.text = getString(
-                    TAB_ORDER[position].titleRes
-                )
-            }.also { mediator ->
-                mediator.attach()
-            }
-
-        binding.settingsPager.setCurrentItem(
-            tabIndexOf(
-                tab = initialTab
-            ),
-            false
-        )
-
-        pageChangeCallback =
-            object : ViewPager2.OnPageChangeCallback() {
-                override fun onPageSelected(
-                    position: Int
-                ) {
-                    val tab = TAB_ORDER.getOrNull(
-                        position
-                    ) ?: return
-
-                    if (selectedTab == tab) {
-                        return
-                    }
-
-                    selectedTab = tab
-                    saveSelectedTabState(tab)
-                }
-            }.also { callback ->
-                binding.settingsPager.registerOnPageChangeCallback(
-                    callback
-                )
-            }
+        }
     }
 
     private fun selectTab(
         tab: SettingsTab,
         smoothScroll: Boolean = true
     ) {
-        selectedTab = tab
-        saveSelectedTabState(tab)
-
-        val targetIndex = tabIndexOf(tab)
-
-        if (binding.settingsPager.currentItem != targetIndex) {
-            binding.settingsPager.setCurrentItem(
-                targetIndex,
-                smoothScroll
-            )
+        tabHost?.select(
+            tab = tab,
+            smoothScroll = smoothScroll
+        ) ?: run {
+            selectedTab = tab
+            saveSelectedTabState(tab)
         }
-    }
-
-    private fun tabIndexOf(
-        tab: SettingsTab
-    ): Int {
-        return TAB_ORDER.indexOf(tab).coerceAtLeast(0)
     }
 
     private fun observeTank() {
@@ -612,17 +571,8 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     }
 
     override fun onDestroyView() {
-        pageChangeCallback?.let { callback ->
-            binding.settingsPager.unregisterOnPageChangeCallback(
-                callback
-            )
-        }
-        pageChangeCallback = null
-
-        tabMediator?.detach()
-        tabMediator = null
-
-        binding.settingsPager.adapter = null
+        tabHost?.detach()
+        tabHost = null
 
         _binding = null
 
@@ -664,9 +614,9 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     }
 
     private enum class SettingsTab(
-        @StringRes val titleRes: Int,
-        val stableId: Long
-    ) {
+        @StringRes override val titleRes: Int,
+        override val stableId: Long
+    ) : AquaSwipeTabSpec {
         BASIC(
             R.string.aquarium_settings_tab_basic,
             1L
