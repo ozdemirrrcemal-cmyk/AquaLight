@@ -165,10 +165,10 @@
             android:focusable="true"
             android:foreground="?attr/selectableItemBackgroundBorderless"
             android:visibility="gone"
-            app:cardBackgroundColor="#1F6F4A"
+            app:cardBackgroundColor="@color/aqua_toolbar_action_success_container"
             app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
-            app:strokeColor="#2A8A5E"
+            app:strokeColor="@color/aqua_toolbar_action_success_outline"
             app:strokeWidth="1dp"
             tools:visibility="visible">
 
