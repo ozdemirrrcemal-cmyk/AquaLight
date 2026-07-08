@@ -4,8 +4,10 @@ import android.content.res.ColorStateList
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.LayoutAquaHeaderBinding
 
 fun LayoutAquaHeaderBinding.setupAquaHeader(
@@ -181,10 +183,12 @@ fun LayoutAquaHeaderBinding.setupAquaHeader(
 
         btnCardIconAction.setCardBackgroundColor(
             cardIconAction.backgroundColor
+                ?: fragment.resolveCardIconActionBackgroundColor(cardIconAction.tone)
         )
 
         btnCardIconAction.strokeColor =
             cardIconAction.strokeColor
+                ?: fragment.resolveCardIconActionStrokeColor(cardIconAction.tone)
 
         btnCardIconAction.contentDescription =
             cardIconAction.contentDescription
@@ -465,3 +469,31 @@ fun LayoutAquaHeaderBinding.setupAquaHeader(
         }
     }
 }
+
+
+private fun Fragment.resolveCardIconActionBackgroundColor(
+    tone: AquaHeaderCardIconTone
+): Int {
+    val colorRes = when (tone) {
+        AquaHeaderCardIconTone.SUCCESS -> R.color.aqua_toolbar_action_success_container
+        AquaHeaderCardIconTone.PRIMARY -> R.color.aqua_toolbar_action_primary_container
+        AquaHeaderCardIconTone.NEUTRAL -> R.color.aqua_toolbar_action_neutral_container
+        AquaHeaderCardIconTone.DANGER -> R.color.aqua_toolbar_action_danger_container
+    }
+
+    return ContextCompat.getColor(requireContext(), colorRes)
+}
+
+private fun Fragment.resolveCardIconActionStrokeColor(
+    tone: AquaHeaderCardIconTone
+): Int {
+    val colorRes = when (tone) {
+        AquaHeaderCardIconTone.SUCCESS -> R.color.aqua_toolbar_action_success_outline
+        AquaHeaderCardIconTone.PRIMARY -> R.color.aqua_toolbar_action_primary_outline
+        AquaHeaderCardIconTone.NEUTRAL -> R.color.aqua_toolbar_action_neutral_outline
+        AquaHeaderCardIconTone.DANGER -> R.color.aqua_toolbar_action_danger_outline
+    }
+
+    return ContextCompat.getColor(requireContext(), colorRes)
+}
+

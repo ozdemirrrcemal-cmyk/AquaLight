@@ -85,7 +85,7 @@ class TaskDetailFragment :
         pillTextAction = if (canEdit && task != null) {
           AquaHeaderPillTextAction(
             text = getString(R.string.maintenance_edit),
-            backgroundRes = R.drawable.bg_maintenance_tab_selected,
+            backgroundRes = R.drawable.bg_aqua_toolbar_pill_action_primary,
             contentDescription = getString(R.string.maintenance_edit_task),
             onClick = {
               openEditTaskScreen(task)

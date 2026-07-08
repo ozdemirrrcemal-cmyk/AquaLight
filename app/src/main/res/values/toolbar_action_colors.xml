@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="aqua_toolbar_action_success_container">#1F6F4A</color>
+    <color name="aqua_toolbar_action_success_outline">#2A8A5E</color>
+    <color name="aqua_toolbar_action_primary_container">#12365A</color>
+    <color name="aqua_toolbar_action_primary_outline">#2B93F6</color>
+    <color name="aqua_toolbar_action_neutral_container">#101D2C</color>
+    <color name="aqua_toolbar_action_neutral_outline">#22354D</color>
+    <color name="aqua_toolbar_action_danger_container">#3A1C29</color>
+    <color name="aqua_toolbar_action_danger_outline">#A2445F</color>
+    <color name="aqua_toolbar_icon_primary">#F2F6FA</color>
+    <color name="aqua_toolbar_icon_secondary">#8FA4BE</color>
+    <color name="aqua_toolbar_icon_disabled">#51667F</color>
+    <color name="aqua_toolbar_filled_icon_container">#3300FFFF</color>
+    <color name="aqua_toolbar_pill_primary_container">#1C3D63</color>
+    <color name="aqua_toolbar_pill_primary_outline">#2196F3</color>
+    <color name="aqua_toolbar_primary_action_container">#1C3252</color>
+</resources>
