@@ -50,7 +50,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_device_add_primary_panel"
+                    android:background="@drawable/bg_aqua_state_container"
                     android:gravity="center_horizontal"
                     android:orientation="vertical"
                     android:paddingStart="18dp"
@@ -85,7 +85,7 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:includeFontPadding="false"
-                        android:textColor="#F2F6FA"
+                        android:textColor="@color/aqua_state_text_primary"
                         android:textSize="21sp"
                         android:textStyle="bold"
                         tools:text="Add AquaLight securely" />
@@ -97,7 +97,7 @@
                         android:layout_marginTop="8dp"
                         android:gravity="center"
                         android:lineSpacingExtra="2dp"
-                        android:textColor="#90A1B5"
+                        android:textColor="@color/aqua_state_text_secondary"
                         android:textSize="13sp"
                         tools:text="Use QR for first setup. Use manual scan only after opening setup mode on the device." />
 
@@ -132,7 +132,7 @@
                         android:textColor="@color/white"
                         android:textSize="15sp"
                         android:textStyle="bold"
-                        app:backgroundTint="#183756"
+                        app:backgroundTint="@color/aqua_toolbar_action_primary_container"
                         app:cornerRadius="17dp"
                         app:icon="@drawable/ic_radar"
                         app:iconGravity="textStart"
@@ -159,7 +159,7 @@
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
                         android:text="Setup rules"
-                        android:textColor="#F2F6FA"
+                        android:textColor="@color/aqua_card_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
@@ -169,7 +169,7 @@
                         android:layout_marginTop="7dp"
                         android:lineSpacingExtra="2dp"
                         android:text="First setup uses the QR code. For an already paired device, open setup mode on the device, then press Manual BLE Scan. AquaLight verifies the firmware state before sending Wi‑Fi."
-                        android:textColor="#90A1B5"
+                        android:textColor="@color/aqua_state_text_secondary"
                         android:textSize="12.5sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -181,7 +181,7 @@
                 android:layout_marginTop="4dp"
                 android:includeFontPadding="false"
                 android:text="@string/device_add_available_devices_title"
-                android:textColor="#F2F6FA"
+                android:textColor="@color/aqua_card_text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:visibility="gone"
@@ -194,7 +194,7 @@
                 android:layout_marginTop="6dp"
                 android:lineSpacingExtra="2dp"
                 android:text="Select a device only after setup mode is open. AquaLight will verify DeviceInfo before Wi‑Fi is sent."
-                android:textColor="#90A1B5"
+                android:textColor="@color/aqua_card_text_secondary"
                 android:textSize="12.5sp"
                 android:visibility="gone"
                 tools:visibility="visible" />

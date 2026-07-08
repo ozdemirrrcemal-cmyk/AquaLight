@@ -39,4 +39,61 @@ tools:context=".ui.tabs.settings.device.DeviceStatusFragment">
     app:layout_constraintStart_toStartOf="parent"  
     app:layout_constraintEnd_toEndOf="parent"/>
 
+<com.google.android.material.card.MaterialCardView
+    android:id="@+id/emptyStateContainer"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="28dp"
+    android:layout_marginEnd="28dp"
+    android:visibility="gone"
+    app:cardBackgroundColor="@color/aqua_state_container_surface"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="0dp"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@id/appHeader"
+    app:layout_constraintVertical_bias="0.48"
+    app:strokeColor="@color/aqua_state_container_outline"
+    app:strokeWidth="1dp"
+    tools:visibility="visible">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingStart="22dp"
+        android:paddingTop="24dp"
+        android:paddingEnd="22dp"
+        android:paddingBottom="24dp">
+
+        <TextView
+            android:id="@+id/tvEmptyDeviceStatusTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:text="No active devices"
+            android:textColor="@color/aqua_state_text_primary"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvEmptyDeviceStatusMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:lineSpacingExtra="3dp"
+            android:text="Connected devices will appear here once they are available."
+            android:textColor="@color/aqua_state_text_secondary"
+            android:textSize="13sp" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

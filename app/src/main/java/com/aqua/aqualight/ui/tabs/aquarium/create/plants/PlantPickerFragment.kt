@@ -136,7 +136,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
             setTextColor(
                 ContextCompat.getColor(
                     requireContext(),
-                    R.color.aqua_card_text_secondary
+                    R.color.aqua_state_text_secondary
                 )
             )
             textSize = 15f
