@@ -7,8 +7,12 @@
         <!-- Ana renkler -->
         <item name="colorPrimary">@color/md_theme_dark_primary</item>
         <item name="colorOnPrimary">@color/md_theme_dark_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/md_theme_dark_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/md_theme_dark_onPrimaryContainer</item>
         <item name="colorSecondary">@color/md_theme_dark_secondary</item>
         <item name="colorOnSecondary">@color/md_theme_dark_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/md_theme_dark_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/md_theme_dark_onSecondaryContainer</item>
 
         <!-- Arka plan ve yüzey -->
         <item name="android:colorBackground">@color/md_theme_dark_background</item>
@@ -22,6 +26,12 @@
         <item name="colorOutlineVariant">@color/md_theme_dark_outlineVariant</item>
         <item name="colorError">@color/md_theme_dark_error</item>
         <item name="colorOnError">@color/md_theme_dark_onError</item>
+
+        <!-- Aqua bottom navigation tokens -->
+        <item name="aquaBottomNavBackground">@color/bottom_nav_background</item>
+        <item name="aquaBottomNavActiveIndicator">@color/md_theme_dark_secondaryContainer</item>
+        <item name="aquaBottomNavItemActive">@color/md_theme_dark_onSurface</item>
+        <item name="aquaBottomNavItemInactive">@color/md_theme_dark_onSurfaceVariant</item>
 
         <item name="bottomSheetDialogTheme">@style/AquaBottomSheetDialogTheme</item>
 
