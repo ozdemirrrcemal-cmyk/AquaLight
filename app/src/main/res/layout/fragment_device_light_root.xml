@@ -216,22 +216,22 @@
                         android:weightSum="1">
 
                         <com.google.android.material.button.MaterialButton
+                            style="@style/Widget.Aqua.Button.Secondary.Compact"
                             android:id="@+id/btnOtaTestCheck"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="@dimen/aqua_button_height"
                             android:layout_marginEnd="6dp"
                             android:layout_weight="1"
-                            android:text="Check beta"
-                            android:textAllCaps="false" />
+                            android:text="Check beta" />
 
                         <com.google.android.material.button.MaterialButton
+                            style="@style/Widget.Aqua.Button.Neutral.Compact"
                             android:id="@+id/btnOtaTestStatus"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="@dimen/aqua_button_height"
                             android:layout_marginStart="6dp"
                             android:layout_weight="1"
-                            android:text="Status"
-                            android:textAllCaps="false" />
+                            android:text="Status" />
                     </LinearLayout>
 
                     <LinearLayout
@@ -242,22 +242,22 @@
                         android:weightSum="1">
 
                         <com.google.android.material.button.MaterialButton
+                            style="@style/Widget.Aqua.Button.Primary.Compact"
                             android:id="@+id/btnOtaTestStart"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="@dimen/aqua_button_height"
                             android:layout_marginEnd="6dp"
                             android:layout_weight="1"
-                            android:text="Start OTA"
-                            android:textAllCaps="false" />
+                            android:text="Start OTA" />
 
                         <com.google.android.material.button.MaterialButton
+                            style="@style/Widget.Aqua.Button.Danger.Compact"
                             android:id="@+id/btnOtaTestClear"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="@dimen/aqua_button_height"
                             android:layout_marginStart="6dp"
                             android:layout_weight="1"
-                            android:text="Clear"
-                            android:textAllCaps="false" />
+                            android:text="Clear" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

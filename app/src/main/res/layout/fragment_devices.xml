@@ -98,23 +98,16 @@
                 android:textSize="@dimen/aqua_text_size_body_small" />
 
             <com.google.android.material.button.MaterialButton
+                style="@style/Widget.Aqua.Button.Primary"
                 android:id="@+id/btnEmptyAddDevice"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:layout_height="@dimen/aqua_button_height"
                 android:layout_marginTop="22dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
                 android:text="@string/devices_empty_add_button"
-                android:textAllCaps="false"
-                android:textColor="@color/white"
-                android:textSize="@dimen/aqua_text_size_body_plus"
                 android:textStyle="bold"
-                app:backgroundTint="@color/aqua_button_blue"
-                app:cornerRadius="17dp"
                 app:icon="@drawable/ic_add_24"
                 app:iconGravity="textStart"
-                app:iconPadding="8dp"
-                app:iconTint="@color/white" />
+                app:iconPadding="8dp" />
 
             <TextView
                 android:layout_width="match_parent"

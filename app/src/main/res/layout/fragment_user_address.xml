@@ -400,9 +400,9 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSave"
-        style="@style/Widget.Aqua.PrimaryButton"
+        style="@style/Widget.Aqua.Button.Primary"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="@dimen/aqua_button_height"
         android:text="@string/address_info_save_button" />
 
 </LinearLayout>

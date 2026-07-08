@@ -253,36 +253,22 @@
                 android:visibility="gone" />
 
             <com.google.android.material.button.MaterialButton
+                style="@style/Widget.Aqua.Button.Primary"
                 android:id="@+id/btnCompleteTask"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="@dimen/aqua_button_height"
                 android:layout_marginTop="18dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
                 android:text="@string/maintenance_complete_task"
-                android:textAllCaps="false"
-                android:textColor="@android:color/white"
-                android:textSize="@dimen/aqua_text_size_body_small"
-                android:textStyle="bold"
-                app:backgroundTint="#2196F3"
-                app:cornerRadius="16dp" />
+                android:textStyle="bold" />
 
             <com.google.android.material.button.MaterialButton
+                style="@style/Widget.Aqua.Button.Danger"
                 android:id="@+id/btnDeleteTask"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="@dimen/aqua_button_height"
                 android:layout_marginTop="12dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
                 android:text="@string/maintenance_delete_task"
-                android:textAllCaps="false"
-                android:textColor="#D85C5C"
-                android:textSize="@dimen/aqua_text_size_body_small"
-                android:textStyle="bold"
-                app:backgroundTint="#10233A"
-                app:cornerRadius="16dp"
-                app:strokeColor="@color/aqua_card_danger_outline"
-                app:strokeWidth="1dp" />
+                android:textStyle="bold" />
 
         </LinearLayout>
 

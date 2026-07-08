@@ -28,19 +28,13 @@
             android:orientation="vertical" />
 
         <com.google.android.material.button.MaterialButton
+            style="@style/Widget.Aqua.Button.Secondary.Compact"
             android:id="@+id/btnAddPlant"
             android:layout_width="match_parent"
-            android:layout_height="52dp"
+            android:layout_height="@dimen/aqua_button_height"
             android:layout_marginTop="14dp"
             android:text="@string/aquarium_action_add_plant"
-            android:textAllCaps="false"
-            android:textColor="@color/aqua_card_text_secondary"
-            android:textSize="@dimen/aqua_text_size_body_large"
-            android:textStyle="bold"
-            app:backgroundTint="#10233A"
-            app:cornerRadius="18dp"
-            app:strokeColor="@color/aqua_card_metric_outline"
-            app:strokeWidth="1dp" />
+            android:textStyle="bold" />
 
     </LinearLayout>
 

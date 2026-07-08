@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Global Aqua screen button tokens. Dialog and bottom sheet buttons keep their own existing colors. -->
+
+    <color name="aqua_button_primary_container">#2798F7</color>
+    <color name="aqua_button_primary_content">#FFFFFF</color>
+
+    <color name="aqua_button_secondary_container">#143A5C</color>
+    <color name="aqua_button_secondary_content">#FFFFFF</color>
+
+    <color name="aqua_button_neutral_container">#132237</color>
+    <color name="aqua_button_neutral_content">#FFFFFF</color>
+
+    <color name="aqua_button_outline_container">#00000000</color>
+    <color name="aqua_button_outline_stroke">#2A425F</color>
+    <color name="aqua_button_outline_content">#DDE8F5</color>
+
+    <color name="aqua_button_danger_container">#3A1728</color>
+    <color name="aqua_button_danger_stroke">#90415A</color>
+    <color name="aqua_button_danger_content">#FF6B6B</color>
+
+    <color name="aqua_button_disabled_container">#2D4D6A</color>
+    <color name="aqua_button_disabled_content">#D6E2F0</color>
+
+    <color name="aqua_button_ripple">#33FFFFFF</color>
+    <color name="aqua_button_auth_primary_container">#2798F7</color>
+    <color name="aqua_button_auth_primary_content">#FFFFFF</color>
+    <color name="aqua_button_auth_secondary_container">#020711</color>
+    <color name="aqua_button_auth_secondary_content">#FFFFFF</color>
+    <color name="aqua_button_auth_secondary_stroke">#13243A</color>
+    <color name="aqua_button_auth_google_container">#FFFFFF</color>
+    <color name="aqua_button_auth_google_content">#111827</color>
+    <color name="aqua_button_auth_google_stroke">#DADCE0</color>
+</resources>

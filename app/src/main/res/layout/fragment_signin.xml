@@ -68,9 +68,9 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnLogin"
-        style="@style/RedButton"
+        style="@style/Widget.Aqua.Button.Auth.Primary"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="@dimen/aqua_button_height"
         android:layout_marginBottom="4dp"
         android:contentDescription="@string/signin_login_button_desc"
         android:text="@string/signin_login_button"
@@ -80,9 +80,9 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnReturnToAuth"
-        style="@style/BlackButton"
+        style="@style/Widget.Aqua.Button.Auth.Secondary"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="@dimen/aqua_button_height"
         android:layout_marginBottom="20dp"
         android:contentDescription="@string/signin_back_button_desc"
         android:text="@string/signin_back_button"

@@ -79,7 +79,7 @@
     <string name="aquarium_material_group_hardware">Hardware</string>
     <string name="aquarium_name_field_title">Aquarium Name</string>
     <string name="aquarium_no_activity_yet">No activity yet.</string>
-    <string name="aquarium_no_device_connected">No device connected</string>
+    <string name="aquarium_no_device_connected">No device assigned</string>
     <string name="aquarium_no_livestock_added">No livestock added</string>
     <string name="aquarium_no_livestock_yet">No livestock yet</string>
     <string name="aquarium_photo_title_full">Aquarium Photo</string>
@@ -182,7 +182,7 @@
     <string name="aquarium_text_18_may_2026">18 May 2026</string>
     <string name="aquarium_text_1_l">1 L</string>
     <string name="aquarium_text_79_gal">79 gal</string>
-    <string name="aquarium_text_add_a_saved_device_to_control_or_monitor_this_aquarium">Add a saved device to control or monitor this aquarium.</string>
+    <string name="aquarium_text_add_a_saved_device_to_control_or_monitor_this_aquarium">Assign a saved device to control or monitor this aquarium.</string>
     <string name="aquarium_text_add_a_visual_reference_for_this_aquarium_you_can_use_a_photo">Add a visual reference for this aquarium. You can use a photo that represents the final look, inspiration, or current setup.</string>
     <string name="aquarium_text_add_activity">Add Activity</string>
     <string name="aquarium_text_add_fish_shrimp_coral_or_other_livestock_living_in_this_aqua">Add fish, shrimp, coral or other livestock living in this aquarium.</string>

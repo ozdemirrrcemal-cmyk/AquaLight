@@ -191,19 +191,13 @@
                         android:textSize="@dimen/aqua_text_size_caption_plus" />
 
                     <com.google.android.material.button.MaterialButton
+                        style="@style/Widget.Aqua.Button.Primary"
                         android:id="@+id/btnContinue"
                         android:layout_width="match_parent"
-                        android:layout_height="50dp"
+                        android:layout_height="@dimen/aqua_button_height"
                         android:layout_marginTop="16dp"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
                         android:text="@string/device_wifi_continue"
-                        android:textAllCaps="false"
-                        android:textColor="@color/white"
-                        android:textSize="@dimen/aqua_text_size_body_plus"
-                        android:textStyle="bold"
-                        app:backgroundTint="#1E90FF"
-                        app:cornerRadius="17dp" />
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tvFormHint"

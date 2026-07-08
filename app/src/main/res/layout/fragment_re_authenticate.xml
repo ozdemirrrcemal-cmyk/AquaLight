@@ -93,9 +93,9 @@
             <!-- CONTINUE -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnContinue"
-                style="@style/Widget.Aqua.PrimaryButton"
+                style="@style/Widget.Aqua.Button.Primary"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="@dimen/aqua_button_height"
                 android:layout_marginTop="30dp"
                 android:text="@string/re_auth_continue" />
 

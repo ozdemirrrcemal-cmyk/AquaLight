@@ -184,19 +184,13 @@
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.button.MaterialButton
+                style="@style/Widget.Aqua.Button.Primary"
                 android:id="@+id/btnStartProvisioning"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="@dimen/aqua_button_height"
                 android:layout_marginTop="16dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
                 android:text="@string/device_provisioning_try_again"
-                android:textAllCaps="false"
-                android:textColor="@color/white"
-                android:textSize="@dimen/aqua_text_size_body"
-                android:textStyle="bold"
-                app:backgroundTint="#1E90FF"
-                app:cornerRadius="16dp" />
+                android:textStyle="bold" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

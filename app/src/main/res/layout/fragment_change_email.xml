@@ -117,9 +117,9 @@
             <!-- 💾 Kaydet butonu -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSaveEmail"
-                style="@style/Widget.Aqua.PrimaryButton"
+                style="@style/Widget.Aqua.Button.Primary"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="@dimen/aqua_button_height"
                 android:layout_marginTop="24dp"
                 android:text="@string/change_email_save_button"
                 android:contentDescription="@string/change_email_save_button_desc" />

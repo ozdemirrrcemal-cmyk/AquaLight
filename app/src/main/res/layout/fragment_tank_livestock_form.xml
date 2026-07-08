@@ -245,19 +245,13 @@
         android:minLines="4" />
 
       <com.google.android.material.button.MaterialButton
+        style="@style/Widget.Aqua.Button.Primary"
         android:id="@+id/btnSaveLife"
         android:layout_width="match_parent"
-        android:layout_height="52dp"
+        android:layout_height="@dimen/aqua_button_height"
         android:layout_marginTop="26dp"
-        android:insetTop="0dp"
-        android:insetBottom="0dp"
         android:text="@string/aquarium_text_save_livestock"
-        android:textAllCaps="false"
-        android:textColor="@android:color/white"
-        android:textSize="@dimen/aqua_text_size_body"
-        android:textStyle="bold"
-        app:backgroundTint="#2196F3"
-        app:cornerRadius="18dp" />
+        android:textStyle="bold" />
 
       <TextView
         android:id="@+id/btnDeleteLife"
