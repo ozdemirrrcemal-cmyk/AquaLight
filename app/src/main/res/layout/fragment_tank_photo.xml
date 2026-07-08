@@ -47,7 +47,7 @@
           android:layout_height="wrap_content"
           android:text="@string/aquarium_photo_title_full"
           android:textColor="@color/aqua_card_text_primary"
-          android:textSize="16sp"
+          android:textSize="@dimen/aqua_text_size_body_xlarge"
           android:textStyle="bold" />
 
         <TextView
@@ -125,7 +125,7 @@
           android:layout_marginTop="18dp"
           android:text="@string/aquarium_text_add_plant"
           android:textAllCaps="false"
-          android:textSize="16sp"
+          android:textSize="@dimen/aqua_text_size_body_xlarge"
           android:textStyle="bold" />
         <LinearLayout
           android:id="@+id/selectedPlantsContainer"

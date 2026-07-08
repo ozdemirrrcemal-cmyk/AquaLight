@@ -190,7 +190,7 @@
                                 android:text=""
                                 tools:text="6"
                                 android:textColor="@color/aqua_card_text_primary"
-                                android:textSize="16sp"
+                                android:textSize="@dimen/aqua_text_size_body_xlarge"
                                 android:textStyle="bold" />
                         </LinearLayout>
 
@@ -216,7 +216,7 @@
                                 android:text=""
                                 tools:text="2"
                                 android:textColor="@color/aqua_card_text_primary"
-                                android:textSize="16sp"
+                                android:textSize="@dimen/aqua_text_size_body_xlarge"
                                 android:textStyle="bold" />
                         </LinearLayout>
                     </LinearLayout>

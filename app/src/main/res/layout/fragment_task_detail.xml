@@ -86,7 +86,7 @@
                                 android:includeFontPadding="false"
                                 android:maxLines="1"
                                 android:textColor="@android:color/white"
-                                android:textSize="16sp"
+                                android:textSize="@dimen/aqua_text_size_body_xlarge"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -100,7 +100,7 @@
                                 android:paddingStart="9dp"
                                 android:paddingEnd="9dp"
                                 android:textColor="@android:color/white"
-                                android:textSize="10.5sp"
+                                android:textSize="@dimen/aqua_text_size_micro_caption"
                                 android:textStyle="bold" />
 
                         </LinearLayout>

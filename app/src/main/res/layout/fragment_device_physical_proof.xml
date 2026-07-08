@@ -132,7 +132,7 @@
                         android:text="@string/device_physical_proof_continue"
                         android:textAllCaps="false"
                         android:textColor="@color/white"
-                        android:textSize="14.5sp"
+                        android:textSize="@dimen/aqua_text_size_body_plus"
                         android:textStyle="bold"
                         app:backgroundTint="#1E90FF"
                         app:cornerRadius="17dp" />

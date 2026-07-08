@@ -61,7 +61,7 @@
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:textColor="@android:color/white"
-                    android:textSize="13.2sp"
+                    android:textSize="@dimen/aqua_text_size_body_precise"
                     android:textStyle="bold" />
 
                 <TextView
@@ -76,7 +76,7 @@
                     android:paddingStart="9dp"
                     android:paddingEnd="9dp"
                     android:textColor="@android:color/white"
-                    android:textSize="10.5sp"
+                    android:textSize="@dimen/aqua_text_size_micro_caption"
                     android:textStyle="bold" />
 
             </LinearLayout>
@@ -112,7 +112,7 @@
                 android:includeFontPadding="false"
                 android:maxLines="2"
                 android:textColor="@color/aqua_card_text_secondary"
-                android:textSize="11.8sp" />
+                android:textSize="@dimen/aqua_text_size_caption_precise" />
 
             <TextView
                 android:id="@+id/tvCompletedBadge"

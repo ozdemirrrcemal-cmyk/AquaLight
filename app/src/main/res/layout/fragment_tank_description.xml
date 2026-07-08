@@ -46,7 +46,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/aquarium_concept_field_title"
-                    android:textSize="16sp"
+                    android:textSize="@dimen/aqua_text_size_body_xlarge"
                     android:textStyle="bold" />
 
                 <TextView
@@ -81,7 +81,7 @@
                         android:maxLines="8"
                         android:overScrollMode="always"
                         android:scrollbars="vertical"
-                        android:textSize="16sp" />
+                        android:textSize="@dimen/aqua_text_size_body_xlarge" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 

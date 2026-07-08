@@ -154,7 +154,7 @@
               android:maxLines="1"
               android:text="@string/aquarium_text_value"
               android:textColor="#F2C94C"
-              android:textSize="10.6sp"
+              android:textSize="@dimen/aqua_text_size_micro_label"
               android:textStyle="bold" />
 
             <TextView
@@ -168,7 +168,7 @@
               android:maxLines="1"
               android:text="@string/aquarium_text_value"
               android:textColor="@color/aqua_card_text_secondary"
-              android:textSize="10.4sp" />
+              android:textSize="@dimen/aqua_text_size_micro_tight" />
 
           </LinearLayout>
 

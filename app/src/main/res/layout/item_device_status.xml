@@ -58,7 +58,7 @@
             android:includeFontPadding="false"
             android:maxLines="1"
             android:textColor="#F2F6FA"
-            android:textSize="16sp"
+            android:textSize="@dimen/aqua_text_size_body_xlarge"
             android:textStyle="bold"
             app:layout_constraintEnd_toStartOf="@id/flPresenceContainer"
             app:layout_constraintStart_toEndOf="@id/deviceIconContainer"
@@ -120,7 +120,7 @@
                     android:includeFontPadding="false"
                     android:text="IP"
                     android:textColor="#90A1B5"
-                    android:textSize="9sp" />
+                    android:textSize="@dimen/aqua_text_size_status_tiny" />
 
                 <TextView
                     android:id="@+id/tvIp"
@@ -131,7 +131,7 @@
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:textColor="#F2F6FA"
-                    android:textSize="8sp"
+                    android:textSize="@dimen/aqua_text_size_status_micro"
                     tools:text="192.168.1.33" />
 
             </LinearLayout>
@@ -155,7 +155,7 @@
                     android:includeFontPadding="false"
                     android:text="Serial"
                     android:textColor="#90A1B5"
-                    android:textSize="9sp" />
+                    android:textSize="@dimen/aqua_text_size_status_tiny" />
 
                 <TextView
                     android:id="@+id/tvSerial"
@@ -166,7 +166,7 @@
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:textColor="#F2F6FA"
-                    android:textSize="7sp"
+                    android:textSize="@dimen/aqua_text_size_status_nano"
                     tools:text="AQL-LGT-336172" />
 
             </LinearLayout>
@@ -207,7 +207,7 @@
                         android:maxLines="1"
                         android:text="Last seen"
                         android:textColor="#90A1B5"
-                        android:textSize="9sp" />
+                        android:textSize="@dimen/aqua_text_size_status_tiny" />
 
                     <TextView
                         android:id="@+id/tvLastSeen"
@@ -218,7 +218,7 @@
                         android:includeFontPadding="false"
                         android:maxLines="1"
                         android:textColor="#F2F6FA"
-                        android:textSize="8sp"
+                        android:textSize="@dimen/aqua_text_size_status_micro"
                         tools:text="Just now" />
 
                 </LinearLayout>

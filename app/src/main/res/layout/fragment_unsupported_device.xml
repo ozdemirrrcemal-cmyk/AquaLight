@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:textColor="?android:attr/textColorPrimary"
-        android:textSize="22sp"
+        android:textSize="@dimen/aqua_text_size_title_large"
         android:textStyle="bold" />
 
     <TextView

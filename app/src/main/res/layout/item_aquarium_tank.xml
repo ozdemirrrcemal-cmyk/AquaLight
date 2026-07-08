@@ -133,7 +133,7 @@
                     android:maxLines="1"
                     android:text="@string/aquarium_text_120w_x_50l_x_50h"
                     android:textColor="#17202A"
-                    android:textSize="10.5sp" />
+                    android:textSize="@dimen/aqua_text_size_micro_caption" />
 
                 <TextView
                     android:id="@+id/tvSetupDate"
@@ -143,7 +143,7 @@
                     android:maxLines="1"
                     android:text="@string/aquarium_text_setup_date_2026_04_12"
                     android:textColor="#17202A"
-                    android:textSize="10.5sp" />
+                    android:textSize="@dimen/aqua_text_size_micro_caption" />
 
             </LinearLayout>
 
