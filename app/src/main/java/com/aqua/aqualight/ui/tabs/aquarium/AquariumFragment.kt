@@ -61,6 +61,7 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
 
         setupHeader()
         setupRecyclerView()
+        setupEmptyStateActions()
         observeTanks()
         observeCareSummary()
     }
@@ -91,9 +92,7 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
                         if (isDeleteMode) {
                             showDeleteConfirmDialog()
                         } else {
-                            navigateFromAquarium(
-                                AquariumFragmentDirections.actionAquariumFragmentToCreateTankFragment()
-                            )
+                            openCreateTank()
                         }
                     }
                 )
@@ -114,6 +113,18 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
 
         binding.rvTanks.setHasFixedSize(
             false
+        )
+    }
+
+    private fun setupEmptyStateActions() {
+        binding.btnEmptyAddAquarium.setOnClickListener {
+            openCreateTank()
+        }
+    }
+
+    private fun openCreateTank() {
+        navigateFromAquarium(
+            AquariumFragmentDirections.actionAquariumFragmentToCreateTankFragment()
         )
     }
 
