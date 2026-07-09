@@ -17,6 +17,7 @@ import com.aqua.aqualight.databinding.FragmentAppSettingsBinding
 import com.aqua.aqualight.ui.common.bottomsheet.ThemeBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.main.MainActivity
 import com.aqua.aqualight.utils.NotificationHelper
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
@@ -146,6 +147,9 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
     private fun openThemeSheet() {
         val sheet = ThemeBottomSheet().apply {
             onBeforeThemeApplied = {
+                (activity as? MainActivity)
+                    ?.markSettingsRootRestoreAfterThemeChange()
+
                 runCatching {
                     findNavController().popBackStack(
                         R.id.settingsFragment,
