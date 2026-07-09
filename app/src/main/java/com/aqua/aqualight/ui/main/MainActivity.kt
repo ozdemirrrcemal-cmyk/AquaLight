@@ -28,6 +28,8 @@ class MainActivity : BaseActivity() {
         const val EXTRA_START_IN_APP = "EXTRA_START_IN_APP"
         const val EXTRA_OPEN_CARE_TASK_ID = "EXTRA_OPEN_CARE_TASK_ID"
         const val EXTRA_OWNER_UID = "EXTRA_OWNER_UID"
+        const val EXTRA_RESTORE_SETTINGS_ROOT_AFTER_THEME_CHANGE =
+            "EXTRA_RESTORE_SETTINGS_ROOT_AFTER_THEME_CHANGE"
     }
 
     private lateinit var binding: ActivityMainBinding
@@ -74,6 +76,7 @@ class MainActivity : BaseActivity() {
 
                 binding.navHost.isVisible = true
 
+                restoreSettingsRootAfterThemeChangeIfNeeded()
                 startSessionBoundServicesIfNeeded()
                 consumePendingCareTaskIfPossible()
             }
@@ -83,6 +86,7 @@ class MainActivity : BaseActivity() {
 
             lifecycleScope.launch {
                 isAuthenticated = isUserAuthenticated()
+                restoreSettingsRootAfterThemeChangeIfNeeded()
                 startSessionBoundServicesIfNeeded()
                 consumePendingCareTaskIfPossible()
             }
@@ -99,6 +103,7 @@ class MainActivity : BaseActivity() {
 
         lifecycleScope.launch {
             isAuthenticated = isUserAuthenticated()
+            restoreSettingsRootAfterThemeChangeIfNeeded()
             startSessionBoundServicesIfNeeded()
             consumePendingCareTaskIfPossible()
         }
@@ -115,6 +120,7 @@ class MainActivity : BaseActivity() {
         }
 
         binding.root.post {
+            restoreSettingsRootAfterThemeChangeIfNeeded()
             syncBottomBarState(
                 navController.currentDestination
             )
@@ -129,6 +135,7 @@ class MainActivity : BaseActivity() {
         intent?.removeExtra(EXTRA_OPEN_CARE_TASK_ID)
         intent?.removeExtra(EXTRA_START_IN_APP)
         intent?.removeExtra(EXTRA_OWNER_UID)
+        intent?.removeExtra(EXTRA_RESTORE_SETTINGS_ROOT_AFTER_THEME_CHANGE)
     }
 
     private suspend fun isUserAuthenticated(): Boolean {
@@ -152,6 +159,42 @@ class MainActivity : BaseActivity() {
         }
 
         navController.graph = graph
+    }
+
+    private fun restoreSettingsRootAfterThemeChangeIfNeeded() {
+        val shouldRestore = intent?.getBooleanExtra(
+            EXTRA_RESTORE_SETTINGS_ROOT_AFTER_THEME_CHANGE,
+            false
+        ) == true
+
+        if (!shouldRestore || !isAuthenticated) {
+            return
+        }
+
+        intent?.removeExtra(
+            EXTRA_RESTORE_SETTINGS_ROOT_AFTER_THEME_CHANGE
+        )
+
+        binding.root.post {
+            val restored = runCatching {
+                navController.popBackStack(
+                    R.id.settingsFragment,
+                    false
+                )
+            }.getOrDefault(false)
+
+            if (!restored) {
+                binding.bottomNav.selectedItemId = R.id.nav_settings
+            }
+
+            binding.bottomNav.isVisible = true
+            binding.bottomNav.alpha = 1f
+            binding.bottomNav.bringToFront()
+
+            syncBottomBarState(
+                navController.currentDestination
+            )
+        }
     }
 
     private fun captureCareTaskIntent(
