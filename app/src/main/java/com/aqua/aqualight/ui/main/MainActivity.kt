@@ -273,21 +273,8 @@ class MainActivity : BaseActivity() {
     private fun syncBottomBarState(
         destination: NavDestination?
     ) {
-        val destinationId =
-            destination?.id
-
-        val isInsideAppGraph =
-            destinationId == R.id.nav_app ||
-                AppDestinationContract.isInsideAppGraph(destination)
-
-        val isTopLevelDestination =
-            destinationId == R.id.nav_app ||
-                destinationId?.let(
-                    AppDestinationContract::isTopLevelDestination
-                ) == true
-
         val shouldShowBottomBar =
-            isInsideAppGraph && isTopLevelDestination
+            AppDestinationContract.shouldShowBottomBar(destination)
 
         binding.bottomNav.isVisible =
             shouldShowBottomBar
@@ -298,9 +285,12 @@ class MainActivity : BaseActivity() {
         }
 
         exitFromTopLevelBackCallback?.isEnabled =
-            shouldShowBottomBar
+            shouldShowBottomBar &&
+                destination?.id?.let(
+                    AppDestinationContract::isTopLevelDestination
+                ) == true
 
-        if (isInsideAppGraph) {
+        if (AppDestinationContract.isInsideAppGraph(destination)) {
             isAuthenticated = authSessionManager.isAuthenticated()
             startSessionBoundServicesIfNeeded()
             consumePendingCareTaskIfPossible()
