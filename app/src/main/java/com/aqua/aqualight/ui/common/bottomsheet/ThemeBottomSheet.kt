@@ -63,26 +63,56 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
                 context?.applicationContext
             val hostActivity =
                 activity
+            val mainActivity =
+                hostActivity as? MainActivity
             val hostView =
                 hostActivity?.window?.decorView
+
+            mainActivity?.appendThemeDiagnostic(
+                "ThemeSheet select mode=$normalizedMode before ${mainActivity.navigationDiagnosticSnapshot()}"
+            )
 
             hostActivity?.intent?.putExtra(
                 MainActivity.EXTRA_RESTORE_SETTINGS_ROOT_AFTER_THEME_CHANGE,
                 true
             )
+            mainActivity?.appendThemeDiagnostic(
+                "ThemeSheet restoreFlag set"
+            )
 
             onBeforeThemeApplied?.invoke()
+            mainActivity?.appendThemeDiagnostic(
+                "ThemeSheet after onBefore ${mainActivity.navigationDiagnosticSnapshot()}"
+            )
+
             dismiss()
+            mainActivity?.appendThemeDiagnostic(
+                "ThemeSheet dismissed, posting apply"
+            )
 
             hostView?.post {
+                mainActivity?.appendThemeDiagnostic(
+                    "ThemeSheet post beforeApply ${mainActivity.navigationDiagnosticSnapshot()}"
+                )
+
                 if (appContext != null) {
                     AppThemeController.apply(
                         context = appContext,
                         mode = normalizedMode
                     )
+                    mainActivity?.appendThemeDiagnostic(
+                        "ThemeSheet apply called mode=$normalizedMode"
+                    )
+                } else {
+                    mainActivity?.appendThemeDiagnostic(
+                        "ThemeSheet apply skipped appContext=null"
+                    )
                 }
 
                 hostActivity?.recreate()
+                mainActivity?.appendThemeDiagnostic(
+                    "ThemeSheet recreate called"
+                )
                 onThemeChanged?.invoke()
             }
         }
