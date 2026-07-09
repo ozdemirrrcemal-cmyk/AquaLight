@@ -3,8 +3,8 @@
     <item
         android:id="@+id/nav_aquarium"
         android:title="Aquarium"
-        android:icon="@drawable/ic_aquarium" />
-	<item
+        android:icon="@drawable/ic_nav_aquarium_pro" />
+    <item
         android:id="@+id/nav_maintenance"
         android:title="Maintenance"
         android:icon="@drawable/ic_aquarium_maintenance" />
