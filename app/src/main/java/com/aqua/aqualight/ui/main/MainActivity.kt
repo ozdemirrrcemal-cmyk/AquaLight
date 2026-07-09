@@ -28,7 +28,6 @@ class MainActivity : BaseActivity() {
         const val EXTRA_START_IN_APP = "EXTRA_START_IN_APP"
         const val EXTRA_OPEN_CARE_TASK_ID = "EXTRA_OPEN_CARE_TASK_ID"
         const val EXTRA_OWNER_UID = "EXTRA_OWNER_UID"
-        const val EXTRA_OPEN_SETTINGS_TAB = "EXTRA_OPEN_SETTINGS_TAB"
     }
 
     private lateinit var binding: ActivityMainBinding
@@ -75,7 +74,6 @@ class MainActivity : BaseActivity() {
 
                 binding.navHost.isVisible = true
 
-                openSettingsTabIfRequested()
                 startSessionBoundServicesIfNeeded()
                 consumePendingCareTaskIfPossible()
             }
@@ -85,7 +83,6 @@ class MainActivity : BaseActivity() {
 
             lifecycleScope.launch {
                 isAuthenticated = isUserAuthenticated()
-                openSettingsTabIfRequested()
                 startSessionBoundServicesIfNeeded()
                 consumePendingCareTaskIfPossible()
             }
@@ -102,7 +99,6 @@ class MainActivity : BaseActivity() {
 
         lifecycleScope.launch {
             isAuthenticated = isUserAuthenticated()
-            openSettingsTabIfRequested()
             startSessionBoundServicesIfNeeded()
             consumePendingCareTaskIfPossible()
         }
@@ -133,7 +129,6 @@ class MainActivity : BaseActivity() {
         intent?.removeExtra(EXTRA_OPEN_CARE_TASK_ID)
         intent?.removeExtra(EXTRA_START_IN_APP)
         intent?.removeExtra(EXTRA_OWNER_UID)
-        intent?.removeExtra(EXTRA_OPEN_SETTINGS_TAB)
     }
 
     private suspend fun isUserAuthenticated(): Boolean {
@@ -157,32 +152,6 @@ class MainActivity : BaseActivity() {
         }
 
         navController.graph = graph
-    }
-
-    private fun openSettingsTabIfRequested() {
-        val shouldOpenSettingsTab =
-            intent?.getBooleanExtra(
-                EXTRA_OPEN_SETTINGS_TAB,
-                false
-            ) == true
-
-        if (!shouldOpenSettingsTab || !isAuthenticated) {
-            return
-        }
-
-        intent?.removeExtra(
-            EXTRA_OPEN_SETTINGS_TAB
-        )
-
-        binding.bottomNav.post {
-            if (binding.bottomNav.selectedItemId != R.id.nav_settings) {
-                binding.bottomNav.selectedItemId = R.id.nav_settings
-            }
-
-            syncBottomBarState(
-                navController.currentDestination
-            )
-        }
     }
 
     private fun captureCareTaskIntent(
