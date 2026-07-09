@@ -1,15 +1,13 @@
 package com.aqua.aqualight.ui.common.bottomsheet
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.Navigation
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.theme.AppThemeController
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.DialogThemeSelectionBinding
-import com.aqua.aqualight.ui.main.MainActivity
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -66,14 +64,22 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
             dismiss()
 
             hostActivity?.window?.decorView?.post {
+                runCatching {
+                    Navigation.findNavController(
+                        hostActivity,
+                        R.id.nav_host
+                    ).popBackStack(
+                        R.id.settingsFragment,
+                        false
+                    )
+                }
+
                 AppThemeController.apply(
                     context = hostActivity.applicationContext,
                     mode = normalizedMode
                 )
 
-                restartMainActivityForThemeChange(
-                    hostActivity
-                )
+                onThemeChanged?.invoke()
             }
         }
     }
@@ -104,43 +110,6 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
         radioLight.isChecked = lightSelected
         radioDark.isChecked = darkSelected
         radioSystem.isChecked = systemSelected
-    }
-
-    private fun restartMainActivityForThemeChange(
-        hostActivity: FragmentActivity
-    ) {
-        val restartIntent = Intent(
-            hostActivity,
-            MainActivity::class.java
-        ).apply {
-            putExtra(
-                MainActivity.EXTRA_START_IN_APP,
-                true
-            )
-            putExtra(
-                MainActivity.EXTRA_OPEN_SETTINGS_TAB,
-                true
-            )
-            addFlags(
-                Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_CLEAR_TASK
-            )
-        }
-
-        hostActivity.startActivity(
-            restartIntent
-        )
-        hostActivity.overridePendingTransition(
-            0,
-            0
-        )
-        hostActivity.finish()
-        hostActivity.overridePendingTransition(
-            0,
-            0
-        )
-
-        onThemeChanged?.invoke()
     }
 
     override fun onDestroyView() {
