@@ -1,15 +1,13 @@
 package com.aqua.aqualight.ui.common.bottomsheet
 
-import android.app.UiModeManager
 import android.content.DialogInterface
-import android.os.Build
 import android.os.Bundle
 import android.view.View
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.DialogThemeSelectionBinding
+import com.aqua.aqualight.ui.theme.AppThemeController
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -19,7 +17,9 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
     private var _binding: DialogThemeSelectionBinding? = null
     private val binding get() = _binding!!
 
-    private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
+    private val userPrefs by lazy {
+        UserPreferencesManager.create(requireContext())
+    }
 
     private var pendingThemeMode: String? = null
 
@@ -32,33 +32,57 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
         refreshRadios()
 
         with(binding) {
-            layoutLight.setOnClickListener { selectTheme("light") }
-            layoutDark.setOnClickListener { selectTheme("dark") }
-            layoutSystem.setOnClickListener { selectTheme("system") }
+            layoutLight.setOnClickListener {
+                selectTheme(AppThemeController.MODE_LIGHT)
+            }
+
+            layoutDark.setOnClickListener {
+                selectTheme(AppThemeController.MODE_DARK)
+            }
+
+            layoutSystem.setOnClickListener {
+                selectTheme(AppThemeController.MODE_SYSTEM)
+            }
         }
     }
 
     private fun selectTheme(mode: String) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            userPrefs.updateThemeMode(mode)
-            updateRadios(mode)
+        val normalizedMode = AppThemeController.normalize(
+            mode
+        )
 
-            pendingThemeMode = mode
-            dismissAllowingStateLoss()
+        viewLifecycleOwner.lifecycleScope.launch {
+            userPrefs.updateThemeMode(
+                normalizedMode
+            )
+
+            updateRadios(
+                normalizedMode
+            )
+
+            pendingThemeMode = normalizedMode
+            dismiss()
         }
     }
 
     private fun refreshRadios() {
         viewLifecycleOwner.lifecycleScope.launch {
             val mode = userPrefs.themeMode.first()
-            updateRadios(mode)
+
+            updateRadios(
+                mode
+            )
         }
     }
 
     private fun updateRadios(mode: String) = with(binding) {
-        val lightSelected = mode == "light"
-        val darkSelected = mode == "dark"
-        val systemSelected = mode == "system"
+        val normalizedMode = AppThemeController.normalize(
+            mode
+        )
+
+        val lightSelected = normalizedMode == AppThemeController.MODE_LIGHT
+        val darkSelected = normalizedMode == AppThemeController.MODE_DARK
+        val systemSelected = normalizedMode == AppThemeController.MODE_SYSTEM
 
         layoutLight.isSelected = lightSelected
         layoutDark.isSelected = darkSelected
@@ -69,28 +93,6 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
         radioSystem.isChecked = systemSelected
     }
 
-    private fun applyTheme(mode: String) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val uiModeManager = requireContext().getSystemService(UiModeManager::class.java)
-            uiModeManager?.setApplicationNightMode(
-                when (mode) {
-                    "dark" -> UiModeManager.MODE_NIGHT_YES
-                    "system" -> UiModeManager.MODE_NIGHT_AUTO
-                    else -> UiModeManager.MODE_NIGHT_NO
-                }
-            )
-            return
-        }
-
-        AppCompatDelegate.setDefaultNightMode(
-            when (mode) {
-                "dark" -> AppCompatDelegate.MODE_NIGHT_YES
-                "system" -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
-                else -> AppCompatDelegate.MODE_NIGHT_NO
-            }
-        )
-    }
-
     override fun onDismiss(dialog: DialogInterface) {
         super.onDismiss(dialog)
 
@@ -98,7 +100,12 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
         pendingThemeMode = null
 
         if (selectedMode != null) {
-            applyTheme(selectedMode)
+            context?.applicationContext?.let { appContext ->
+                AppThemeController.apply(
+                    context = appContext,
+                    mode = selectedMode
+                )
+            }
         }
 
         onThemeChanged?.invoke()
