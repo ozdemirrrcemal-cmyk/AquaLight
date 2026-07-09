@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="aquarium_empty_title">No aquarium yet</string>
+    <string name="aquarium_empty_message">Create your first aquarium to start tracking tanks, care tasks, and devices.</string>
+    <string name="aquarium_empty_icon_desc">Aquarium empty state icon</string>
+</resources>
