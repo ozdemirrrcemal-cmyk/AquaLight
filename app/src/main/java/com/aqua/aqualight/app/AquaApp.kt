@@ -6,6 +6,7 @@ import androidx.core.os.LocaleListCompat
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsClient
 import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
 import com.aqua.aqualight.data.user.UserPreferencesManager
+import com.aqua.aqualight.ui.theme.AppThemeController
 import com.aqua.aqualight.utils.NotificationHelper
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -35,11 +36,10 @@ class AquaApp : Application() {
     }
 
     private fun applyTheme(mode: String) {
-        when (mode) {
-            "dark" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-            "system" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-            else -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-        }
+        AppThemeController.apply(
+            context = this,
+            mode = mode
+        )
     }
 
     private fun applyLanguage(code: String) {
