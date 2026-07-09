@@ -3,7 +3,6 @@ package com.aqua.aqualight.ui.common.bottomsheet
 import android.os.Bundle
 import android.view.View
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.Navigation
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.theme.AppThemeController
 import com.aqua.aqualight.data.user.UserPreferencesManager
@@ -21,6 +20,7 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
         UserPreferencesManager.create(requireContext())
     }
 
+    var onBeforeThemeApplied: (() -> Unit)? = null
     var onThemeChanged: (() -> Unit)? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -58,26 +58,21 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
                 normalizedMode
             )
 
-            val hostActivity =
-                activity
+            val appContext =
+                context?.applicationContext
+            val hostView =
+                activity?.window?.decorView
 
+            onBeforeThemeApplied?.invoke()
             dismiss()
 
-            hostActivity?.window?.decorView?.post {
-                runCatching {
-                    Navigation.findNavController(
-                        hostActivity,
-                        R.id.nav_host
-                    ).popBackStack(
-                        R.id.settingsFragment,
-                        false
+            hostView?.post {
+                if (appContext != null) {
+                    AppThemeController.apply(
+                        context = appContext,
+                        mode = normalizedMode
                     )
                 }
-
-                AppThemeController.apply(
-                    context = hostActivity.applicationContext,
-                    mode = normalizedMode
-                )
 
                 onThemeChanged?.invoke()
             }
