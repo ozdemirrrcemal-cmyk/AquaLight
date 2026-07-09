@@ -7,7 +7,6 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.theme.AppThemeController
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.DialogThemeSelectionBinding
-import com.aqua.aqualight.ui.main.MainActivity
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -61,51 +60,17 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
 
             val appContext =
                 context?.applicationContext
-            val hostActivity =
-                activity
-            val mainActivity =
-                hostActivity as? MainActivity
             val hostView =
-                hostActivity?.window?.decorView
-
-            mainActivity?.appendThemeDiagnostic(
-                "ThemeSheet select mode=$normalizedMode before ${mainActivity.navigationDiagnosticSnapshot()}"
-            )
-
-            hostActivity?.intent?.putExtra(
-                MainActivity.EXTRA_RESTORE_SETTINGS_ROOT_AFTER_THEME_CHANGE,
-                true
-            )
-            mainActivity?.appendThemeDiagnostic(
-                "ThemeSheet restoreFlag set"
-            )
+                activity?.window?.decorView
 
             onBeforeThemeApplied?.invoke()
-            mainActivity?.appendThemeDiagnostic(
-                "ThemeSheet after onBefore ${mainActivity.navigationDiagnosticSnapshot()}"
-            )
-
             dismiss()
-            mainActivity?.appendThemeDiagnostic(
-                "ThemeSheet dismissed, posting apply"
-            )
 
             hostView?.post {
-                mainActivity?.appendThemeDiagnostic(
-                    "ThemeSheet post beforeApply ${mainActivity.navigationDiagnosticSnapshot()}"
-                )
-
                 if (appContext != null) {
                     AppThemeController.apply(
                         context = appContext,
                         mode = normalizedMode
-                    )
-                    mainActivity?.appendThemeDiagnostic(
-                        "ThemeSheet apply called mode=$normalizedMode"
-                    )
-                } else {
-                    mainActivity?.appendThemeDiagnostic(
-                        "ThemeSheet apply skipped appContext=null"
                     )
                 }
 
