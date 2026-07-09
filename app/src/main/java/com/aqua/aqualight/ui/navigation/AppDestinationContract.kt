@@ -14,6 +14,7 @@ object AppDestinationContract {
     )
 
     val topLevelGraphIds: Set<Int> = setOf(
+        R.id.nav_app,
         R.id.nav_aquarium,
         R.id.nav_maintenance,
         R.id.nav_devices,
@@ -30,28 +31,27 @@ object AppDestinationContract {
     fun isInsideAppGraph(
         destination: NavDestination?
     ): Boolean {
-        return destination
-            ?.hierarchy
-            ?.any { node -> node.id == R.id.nav_app }
-            ?: false
+        val destinationId =
+            destination?.id ?: return false
+
+        return destinationId == R.id.nav_app ||
+            destination.hierarchy.any { node ->
+                node.id == R.id.nav_app
+            }
     }
 
     fun shouldShowBottomBar(
         destination: NavDestination?
     ): Boolean {
-        val hierarchy =
-            destination?.hierarchy?.toList()
-                ?: return false
+        val destinationId =
+            destination?.id ?: return false
 
-        val isInsideAppGraph =
-            hierarchy.any { node -> node.id == R.id.nav_app }
-
-        if (!isInsideAppGraph) {
+        if (!isInsideAppGraph(destination)) {
             return false
         }
 
         return isTopLevelDestination(
-            destination.id
+            destinationId
         )
     }
 }
