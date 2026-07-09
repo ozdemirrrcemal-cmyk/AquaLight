@@ -109,10 +109,6 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
                     )
                 }
 
-                hostActivity?.recreate()
-                mainActivity?.appendThemeDiagnostic(
-                    "ThemeSheet recreate called"
-                )
                 onThemeChanged?.invoke()
             }
         }
