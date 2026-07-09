@@ -11,12 +11,12 @@ import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
+import com.aqua.aqualight.data.care.reminder.CareTaskReminderScheduler
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentAppSettingsBinding
 import com.aqua.aqualight.ui.common.bottomsheet.ThemeBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import com.aqua.aqualight.data.care.reminder.CareTaskReminderScheduler
 import com.aqua.aqualight.utils.NotificationHelper
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
@@ -127,10 +127,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             }
 
             cardThemeMode.setOnClickListener {
-                ThemeBottomSheet().show(
-                    parentFragmentManager,
-                    "theme_sheet"
-                )
+                openThemeSheet()
             }
 
             cardLanguage.setOnClickListener {
@@ -145,6 +142,24 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
                 )
             }
         }
+
+    private fun openThemeSheet() {
+        val sheet = ThemeBottomSheet().apply {
+            onBeforeThemeApplied = {
+                runCatching {
+                    findNavController().popBackStack(
+                        R.id.settingsFragment,
+                        false
+                    )
+                }
+            }
+        }
+
+        sheet.show(
+            parentFragmentManager,
+            "theme_sheet"
+        )
+    }
 
     private fun safeNavigate(
         directions: NavDirections
