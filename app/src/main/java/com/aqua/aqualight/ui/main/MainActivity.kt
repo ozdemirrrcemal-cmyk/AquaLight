@@ -81,45 +81,26 @@ class MainActivity : BaseActivity() {
 
         captureCareTaskIntent(intent)
 
-        if (savedInstanceState == null) {
-            lifecycleScope.launch {
-                isAuthenticated = isUserAuthenticated()
-                appendThemeDiagnostic(
-                    "freshCreate auth=$isAuthenticated beforeGraph destination=${destinationLabel(navController.currentDestination)}"
-                )
-
-                installRootGraph(startInApp = isAuthenticated)
-                appendThemeDiagnostic(
-                    "graphInstalled startInApp=$isAuthenticated destination=${destinationLabel(navController.currentDestination)} hierarchy=${hierarchyLabel(navController.currentDestination)}"
-                )
-
-                setupBottomBarIfNeeded(navController)
-
-                binding.navHost.isVisible = true
-                appendThemeDiagnostic(
-                    "navHostShown destination=${destinationLabel(navController.currentDestination)} bottomVisible=${binding.bottomNav.isVisible}"
-                )
-
-                restoreSettingsRootAfterThemeChangeIfNeeded()
-                startSessionBoundServicesIfNeeded()
-                consumePendingCareTaskIfPossible()
-            }
-        } else {
-            setupBottomBarIfNeeded(navController)
-            binding.navHost.isVisible = true
+        lifecycleScope.launch {
+            isAuthenticated = isUserAuthenticated()
             appendThemeDiagnostic(
-                "restoredCreate destination=${destinationLabel(navController.currentDestination)} hierarchy=${hierarchyLabel(navController.currentDestination)} bottomVisible=${binding.bottomNav.isVisible}"
+                "sessionResolved saved=${savedInstanceState != null} auth=$isAuthenticated beforeEnsure destination=${destinationLabel(navController.currentDestination)}"
             )
 
-            lifecycleScope.launch {
-                isAuthenticated = isUserAuthenticated()
-                appendThemeDiagnostic(
-                    "restoredCreate auth=$isAuthenticated destination=${destinationLabel(navController.currentDestination)}"
-                )
-                restoreSettingsRootAfterThemeChangeIfNeeded()
-                startSessionBoundServicesIfNeeded()
-                consumePendingCareTaskIfPossible()
-            }
+            ensureRootGraphForCurrentSession(
+                startInApp = isAuthenticated
+            )
+
+            setupBottomBarIfNeeded(navController)
+
+            binding.navHost.isVisible = true
+            appendThemeDiagnostic(
+                "navHostShown destination=${destinationLabel(navController.currentDestination)} bottomVisible=${binding.bottomNav.isVisible} hierarchy=${hierarchyLabel(navController.currentDestination)}"
+            )
+
+            restoreSettingsRootAfterThemeChangeIfNeeded()
+            startSessionBoundServicesIfNeeded()
+            consumePendingCareTaskIfPossible()
         }
     }
 
@@ -134,6 +115,9 @@ class MainActivity : BaseActivity() {
 
         lifecycleScope.launch {
             isAuthenticated = isUserAuthenticated()
+            ensureRootGraphForCurrentSession(
+                startInApp = isAuthenticated
+            )
             restoreSettingsRootAfterThemeChangeIfNeeded()
             startSessionBoundServicesIfNeeded()
             consumePendingCareTaskIfPossible()
@@ -186,6 +170,27 @@ class MainActivity : BaseActivity() {
             AuthSessionManager.SessionState.Authenticated
     }
 
+    private fun ensureRootGraphForCurrentSession(startInApp: Boolean) {
+        val currentDestination = navController.currentDestination
+
+        if (currentDestination != null) {
+            appendThemeDiagnostic(
+                "ensureGraph preserved current=${destinationLabel(currentDestination)} hierarchy=${hierarchyLabel(currentDestination)}"
+            )
+            return
+        }
+
+        appendThemeDiagnostic(
+            "ensureGraph installing because currentDestination=null startInApp=$startInApp"
+        )
+        installRootGraph(
+            startInApp = startInApp
+        )
+        appendThemeDiagnostic(
+            "ensureGraph installed destination=${destinationLabel(navController.currentDestination)} hierarchy=${hierarchyLabel(navController.currentDestination)}"
+        )
+    }
+
     private fun installRootGraph(startInApp: Boolean) {
         val graph = navController.navInflater.inflate(
             R.navigation.nav_root
@@ -215,6 +220,10 @@ class MainActivity : BaseActivity() {
         intent?.removeExtra(EXTRA_RESTORE_SETTINGS_ROOT_AFTER_THEME_CHANGE)
 
         binding.root.post {
+            ensureRootGraphForCurrentSession(
+                startInApp = true
+            )
+
             val beforeDestination = destinationLabel(navController.currentDestination)
             val restored = runCatching {
                 navController.popBackStack(
@@ -250,10 +259,13 @@ class MainActivity : BaseActivity() {
     private fun selectBottomNavItemSafely(itemId: Int) {
         val item = binding.bottomNav.menu.findItem(itemId)
         appendThemeDiagnostic(
-            "selectBottomNavSafely target=${resourceName(itemId)} itemExists=${item != null} currentSelected=${resourceName(binding.bottomNav.selectedItemId)} menu=${bottomMenuLabel()}"
+            "selectBottomNavSafely target=${resourceName(itemId)} itemExists=${item != null} currentSelected=${resourceName(binding.bottomNav.selectedItemId)} current=${destinationLabel(navController.currentDestination)} menu=${bottomMenuLabel()}"
         )
 
-        if (item == null) {
+        if (item == null || navController.currentDestination == null) {
+            appendThemeDiagnostic(
+                "selectBottomNavSafely skipped itemNull=${item == null} destinationNull=${navController.currentDestination == null}"
+            )
             return
         }
 
@@ -266,7 +278,7 @@ class MainActivity : BaseActivity() {
                 )
             }.onFailure {
                 appendThemeDiagnostic(
-                    "selectBottomNavSafely failed ${it.javaClass.simpleName}: ${it.message} target=${resourceName(itemId)} selected=${resourceName(binding.bottomNav.selectedItemId)} menu=${bottomMenuLabel()}"
+                    "selectBottomNavSafely failed ${it.javaClass.simpleName}: ${it.message} target=${resourceName(itemId)} selected=${resourceName(binding.bottomNav.selectedItemId)} current=${destinationLabel(navController.currentDestination)} menu=${bottomMenuLabel()}"
                 )
             }
         }
@@ -359,6 +371,11 @@ class MainActivity : BaseActivity() {
     private fun setupBottomBarIfNeeded(navController: NavController) {
         if (bottomBarSetup) {
             appendThemeDiagnostic("setupBottomBar skipped alreadySetup")
+            return
+        }
+
+        if (navController.currentDestination == null) {
+            appendThemeDiagnostic("setupBottomBar postponed because currentDestination=null")
             return
         }
 
