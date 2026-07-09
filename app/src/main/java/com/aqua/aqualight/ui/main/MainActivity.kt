@@ -104,6 +104,23 @@ class MainActivity : BaseActivity() {
         }
     }
 
+    override fun onPostResume() {
+        super.onPostResume()
+
+        if (
+            !::binding.isInitialized ||
+            !::navController.isInitialized
+        ) {
+            return
+        }
+
+        binding.root.post {
+            syncBottomBarState(
+                navController.currentDestination
+            )
+        }
+    }
+
     fun clearSessionNavigationState() {
         isAuthenticated = false
         pendingCareTaskId = -1L
