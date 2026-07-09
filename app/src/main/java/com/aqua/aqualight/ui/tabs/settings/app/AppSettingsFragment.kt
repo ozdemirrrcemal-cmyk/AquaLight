@@ -14,6 +14,7 @@ import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentAppSettingsBinding
 import com.aqua.aqualight.ui.common.bottomsheet.ThemeBottomSheet
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.data.care.reminder.CareTaskReminderScheduler
 import com.aqua.aqualight.utils.NotificationHelper
@@ -99,7 +100,10 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
     private fun setupHeader() {
         binding.appHeader.setupAquaHeader(
-            fragment = this
+            fragment = this,
+            config = AquaHeaderConfig(
+                titleOverride = getString(R.string.screen_title_app_settings)
+            )
         )
     }
 
