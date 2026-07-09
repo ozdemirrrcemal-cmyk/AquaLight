@@ -56,9 +56,7 @@ class MainActivity : BaseActivity() {
     private val themeDiagnosticTrace = StringBuilder()
     private var syncTraceCount: Int = 0
 
-    override fun onCreate(
-        savedInstanceState: Bundle?
-    ) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -78,7 +76,7 @@ class MainActivity : BaseActivity() {
         binding.navHost.isVisible = false
         binding.bottomNav.isVisible = false
         appendThemeDiagnostic(
-            "initialHide navHostVisible=${binding.navHost.isVisible} bottomVisible=${binding.bottomNav.isVisible}"
+            "initialHide navHostVisible=${binding.navHost.isVisible} bottomVisible=${binding.bottomNav.isVisible} menu=${bottomMenuLabel()}"
         )
 
         captureCareTaskIntent(intent)
@@ -90,9 +88,7 @@ class MainActivity : BaseActivity() {
                     "freshCreate auth=$isAuthenticated beforeGraph destination=${destinationLabel(navController.currentDestination)}"
                 )
 
-                installRootGraph(
-                    startInApp = isAuthenticated
-                )
+                installRootGraph(startInApp = isAuthenticated)
                 appendThemeDiagnostic(
                     "graphInstalled startInApp=$isAuthenticated destination=${destinationLabel(navController.currentDestination)} hierarchy=${hierarchyLabel(navController.currentDestination)}"
                 )
@@ -127,9 +123,7 @@ class MainActivity : BaseActivity() {
         }
     }
 
-    override fun onNewIntent(
-        intent: Intent
-    ) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
 
         setIntent(intent)
@@ -149,10 +143,7 @@ class MainActivity : BaseActivity() {
     override fun onPostResume() {
         super.onPostResume()
 
-        if (
-            !::binding.isInitialized ||
-            !::navController.isInitialized
-        ) {
+        if (!::binding.isInitialized || !::navController.isInitialized) {
             return
         }
 
@@ -165,9 +156,7 @@ class MainActivity : BaseActivity() {
                 "onPostResume.post beforeRestore current=${destinationLabel(navController.currentDestination)} bottomVisible=${binding.bottomNav.isVisible}"
             )
             restoreSettingsRootAfterThemeChangeIfNeeded()
-            syncBottomBarState(
-                navController.currentDestination
-            )
+            syncBottomBarState(navController.currentDestination)
         }
     }
 
@@ -184,16 +173,12 @@ class MainActivity : BaseActivity() {
         appendThemeDiagnostic("clearSessionNavigationState called")
     }
 
-    fun appendThemeDiagnostic(
-        message: String
-    ) {
-        appendThemeDiagnosticInternal(
-            message
-        )
+    fun appendThemeDiagnostic(message: String) {
+        appendThemeDiagnosticInternal(message)
     }
 
     fun navigationDiagnosticSnapshot(): String {
-        return "dest=${destinationLabel(navController.currentDestination)} hierarchy=${hierarchyLabel(navController.currentDestination)} shouldShow=${AppDestinationContract.shouldShowBottomBar(navController.currentDestination)} inside=${AppDestinationContract.isInsideAppGraph(navController.currentDestination)} bottomVisible=${binding.bottomNav.isVisible} bottomHeight=${binding.bottomNav.height} bottomAlpha=${binding.bottomNav.alpha} bottomTranslationY=${binding.bottomNav.translationY} navHostVisible=${binding.navHost.isVisible} navHostHeight=${binding.navHost.height} selected=${resourceName(binding.bottomNav.selectedItemId)}"
+        return "dest=${destinationLabel(navController.currentDestination)} hierarchy=${hierarchyLabel(navController.currentDestination)} shouldShow=${AppDestinationContract.shouldShowBottomBar(navController.currentDestination)} inside=${AppDestinationContract.isInsideAppGraph(navController.currentDestination)} bottomVisible=${binding.bottomNav.isVisible} bottomHeight=${binding.bottomNav.height} bottomAlpha=${binding.bottomNav.alpha} bottomTranslationY=${binding.bottomNav.translationY} navHostVisible=${binding.navHost.isVisible} navHostHeight=${binding.navHost.height} selected=${resourceName(binding.bottomNav.selectedItemId)} menu=${bottomMenuLabel()}"
     }
 
     private suspend fun isUserAuthenticated(): Boolean {
@@ -201,9 +186,7 @@ class MainActivity : BaseActivity() {
             AuthSessionManager.SessionState.Authenticated
     }
 
-    private fun installRootGraph(
-        startInApp: Boolean
-    ) {
+    private fun installRootGraph(startInApp: Boolean) {
         val graph = navController.navInflater.inflate(
             R.navigation.nav_root
         ).apply {
@@ -222,40 +205,35 @@ class MainActivity : BaseActivity() {
     private fun restoreSettingsRootAfterThemeChangeIfNeeded() {
         val shouldRestore = isThemeRestoreFlagSet()
         appendThemeDiagnostic(
-            "restoreCheck should=$shouldRestore auth=$isAuthenticated current=${destinationLabel(navController.currentDestination)} bottomVisible=${binding.bottomNav.isVisible}"
+            "restoreCheck should=$shouldRestore auth=$isAuthenticated current=${destinationLabel(navController.currentDestination)} bottomVisible=${binding.bottomNav.isVisible} menu=${bottomMenuLabel()}"
         )
 
         if (!shouldRestore || !isAuthenticated) {
             return
         }
 
-        intent?.removeExtra(
-            EXTRA_RESTORE_SETTINGS_ROOT_AFTER_THEME_CHANGE
-        )
+        intent?.removeExtra(EXTRA_RESTORE_SETTINGS_ROOT_AFTER_THEME_CHANGE)
 
         binding.root.post {
-            val beforeDestination = destinationLabel(
-                navController.currentDestination
-            )
+            val beforeDestination = destinationLabel(navController.currentDestination)
             val restored = runCatching {
                 navController.popBackStack(
                     R.id.settingsFragment,
                     false
                 )
+            }.onFailure {
+                appendThemeDiagnostic(
+                    "restorePost popToSettings threw ${it.javaClass.simpleName}: ${it.message}"
+                )
             }.getOrDefault(false)
-            val afterPopDestination = destinationLabel(
-                navController.currentDestination
-            )
+            val afterPopDestination = destinationLabel(navController.currentDestination)
 
             appendThemeDiagnostic(
-                "restorePost popToSettings=$restored before=$beforeDestination afterPop=$afterPopDestination selectedBefore=${resourceName(binding.bottomNav.selectedItemId)}"
+                "restorePost popToSettings=$restored before=$beforeDestination afterPop=$afterPopDestination selectedBefore=${resourceName(binding.bottomNav.selectedItemId)} menu=${bottomMenuLabel()}"
             )
 
             if (!restored) {
-                binding.bottomNav.selectedItemId = R.id.nav_settings
-                appendThemeDiagnostic(
-                    "restorePost fallback select nav_settings destination=${destinationLabel(navController.currentDestination)} selectedAfter=${resourceName(binding.bottomNav.selectedItemId)}"
-                )
+                selectBottomNavItemSafely(R.id.nav_settings)
             }
 
             binding.bottomNav.isVisible = true
@@ -265,15 +243,36 @@ class MainActivity : BaseActivity() {
                 "restorePost forcedBottom visible=${binding.bottomNav.isVisible} height=${binding.bottomNav.height} alpha=${binding.bottomNav.alpha} y=${binding.bottomNav.y} translationY=${binding.bottomNav.translationY}"
             )
 
-            syncBottomBarState(
-                navController.currentDestination
-            )
+            syncBottomBarState(navController.currentDestination)
         }
     }
 
-    private fun captureCareTaskIntent(
-        intent: Intent?
-    ) {
+    private fun selectBottomNavItemSafely(itemId: Int) {
+        val item = binding.bottomNav.menu.findItem(itemId)
+        appendThemeDiagnostic(
+            "selectBottomNavSafely target=${resourceName(itemId)} itemExists=${item != null} currentSelected=${resourceName(binding.bottomNav.selectedItemId)} menu=${bottomMenuLabel()}"
+        )
+
+        if (item == null) {
+            return
+        }
+
+        binding.bottomNav.post {
+            runCatching {
+                binding.bottomNav.selectedItemId = itemId
+            }.onSuccess {
+                appendThemeDiagnostic(
+                    "selectBottomNavSafely success target=${resourceName(itemId)} selected=${resourceName(binding.bottomNav.selectedItemId)} current=${destinationLabel(navController.currentDestination)}"
+                )
+            }.onFailure {
+                appendThemeDiagnostic(
+                    "selectBottomNavSafely failed ${it.javaClass.simpleName}: ${it.message} target=${resourceName(itemId)} selected=${resourceName(binding.bottomNav.selectedItemId)} menu=${bottomMenuLabel()}"
+                )
+            }
+        }
+    }
+
+    private fun captureCareTaskIntent(intent: Intent?) {
         val taskId = intent?.getLongExtra(
             EXTRA_OPEN_CARE_TASK_ID,
             -1L
@@ -357,9 +356,7 @@ class MainActivity : BaseActivity() {
         )
     }
 
-    private fun setupBottomBarIfNeeded(
-        navController: NavController
-    ) {
+    private fun setupBottomBarIfNeeded(navController: NavController) {
         if (bottomBarSetup) {
             appendThemeDiagnostic("setupBottomBar skipped alreadySetup")
             return
@@ -367,17 +364,16 @@ class MainActivity : BaseActivity() {
 
         bottomBarSetup = true
         appendThemeDiagnostic(
-            "setupBottomBar start current=${destinationLabel(navController.currentDestination)} selected=${resourceName(binding.bottomNav.selectedItemId)}"
+            "setupBottomBar start current=${destinationLabel(navController.currentDestination)} selected=${resourceName(binding.bottomNav.selectedItemId)} menu=${bottomMenuLabel()}"
         )
 
         binding.bottomNav.setupWithNavController(navController)
         appendThemeDiagnostic(
-            "setupWithNavController done selected=${resourceName(binding.bottomNav.selectedItemId)}"
+            "setupWithNavController done selected=${resourceName(binding.bottomNav.selectedItemId)} menu=${bottomMenuLabel()}"
         )
 
         exitFromTopLevelBackCallback =
             object : OnBackPressedCallback(false) {
-
                 override fun handleOnBackPressed() {
                     finish()
                 }
@@ -397,42 +393,30 @@ class MainActivity : BaseActivity() {
 
         observeBottomBarBackStack(navController)
 
-        syncBottomBarState(
-            navController.currentDestination
-        )
+        syncBottomBarState(navController.currentDestination)
 
         binding.root.post {
             appendThemeDiagnostic(
                 "setupBottomBar root.post current=${destinationLabel(navController.currentDestination)} bottomVisible=${binding.bottomNav.isVisible}"
             )
-            syncBottomBarState(
-                navController.currentDestination
-            )
+            syncBottomBarState(navController.currentDestination)
         }
     }
 
-    private fun observeBottomBarBackStack(
-        navController: NavController
-    ) {
+    private fun observeBottomBarBackStack(navController: NavController) {
         lifecycleScope.launch {
-            repeatOnLifecycle(
-                Lifecycle.State.STARTED
-            ) {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
                 navController.currentBackStackEntryFlow.collect { backStackEntry ->
                     appendThemeDiagnostic(
                         "backStackFlow ${destinationLabel(backStackEntry.destination)}"
                     )
-                    syncBottomBarState(
-                        backStackEntry.destination
-                    )
+                    syncBottomBarState(backStackEntry.destination)
                 }
             }
         }
     }
 
-    private fun syncBottomBarState(
-        destination: NavDestination?
-    ) {
+    private fun syncBottomBarState(destination: NavDestination?) {
         val shouldShowBottomBar =
             AppDestinationContract.shouldShowBottomBar(destination)
         val insideApp =
@@ -442,8 +426,7 @@ class MainActivity : BaseActivity() {
                 AppDestinationContract::isTopLevelDestination
             ) == true
 
-        binding.bottomNav.isVisible =
-            shouldShowBottomBar
+        binding.bottomNav.isVisible = shouldShowBottomBar
 
         if (shouldShowBottomBar) {
             binding.bottomNav.alpha = 1f
@@ -468,20 +451,13 @@ class MainActivity : BaseActivity() {
     }
 
     private fun setupThemeDiagnosticOverlay() {
-        val padding = (
-            8f * resources.displayMetrics.density
-        ).toInt()
+        val padding = (8f * resources.displayMetrics.density).toInt()
 
         themeDiagnosticOverlay = TextView(this).apply {
             textSize = 10f
             setTextColor(Color.WHITE)
             setBackgroundColor(Color.argb(230, 0, 0, 0))
-            setPadding(
-                padding,
-                padding,
-                padding,
-                padding
-            )
+            setPadding(padding, padding, padding, padding)
             gravity = Gravity.START
             maxLines = 18
             setTextIsSelectable(true)
@@ -516,9 +492,7 @@ class MainActivity : BaseActivity() {
         }
     }
 
-    private fun appendThemeDiagnosticInternal(
-        message: String
-    ) {
+    private fun appendThemeDiagnosticInternal(message: String) {
         val line = "${System.currentTimeMillis() % 100000}: $message\n"
         themeDiagnosticTrace.append(line)
 
@@ -554,17 +528,13 @@ class MainActivity : BaseActivity() {
         ) == true
     }
 
-    private fun destinationLabel(
-        destination: NavDestination?
-    ): String {
+    private fun destinationLabel(destination: NavDestination?): String {
         return destination?.let { navDestination ->
             "${resourceName(navDestination.id)}(${navDestination.id})"
         } ?: "null"
     }
 
-    private fun hierarchyLabel(
-        destination: NavDestination?
-    ): String {
+    private fun hierarchyLabel(destination: NavDestination?): String {
         return destination?.hierarchy?.joinToString(
             separator = " > "
         ) { node ->
@@ -572,9 +542,15 @@ class MainActivity : BaseActivity() {
         } ?: "null"
     }
 
-    private fun resourceName(
-        id: Int
-    ): String {
+    private fun bottomMenuLabel(): String {
+        return (0 until binding.bottomNav.menu.size()).joinToString(
+            separator = ","
+        ) { index ->
+            resourceName(binding.bottomNav.menu.getItem(index).itemId)
+        }
+    }
+
+    private fun resourceName(id: Int): String {
         return runCatching {
             resources.getResourceEntryName(id)
         }.getOrElse {
