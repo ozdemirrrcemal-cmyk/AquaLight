@@ -20,6 +20,10 @@ object AppDestinationContract {
         R.id.nav_settings
     )
 
+    private val bottomBarPersistentGraphIds: Set<Int> = setOf(
+        R.id.nav_settings
+    )
+
     fun isTopLevelDestination(
         destinationId: Int
     ): Boolean {
@@ -34,5 +38,31 @@ object AppDestinationContract {
             ?.hierarchy
             ?.any { node -> node.id == R.id.nav_app }
             ?: false
+    }
+
+    fun shouldShowBottomBar(
+        destination: NavDestination?
+    ): Boolean {
+        val hierarchy =
+            destination?.hierarchy?.toList()
+                ?: return false
+
+        val isInsideAppGraph =
+            hierarchy.any { node -> node.id == R.id.nav_app }
+
+        if (!isInsideAppGraph) {
+            return false
+        }
+
+        val destinationId =
+            destination.id
+
+        if (isTopLevelDestination(destinationId)) {
+            return true
+        }
+
+        return hierarchy.any { node ->
+            node.id in bottomBarPersistentGraphIds
+        }
     }
 }
