@@ -179,7 +179,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         DialogManager.showInfoDialog(
             context = requireContext(),
             type = DialogType.ERROR,
-            title = getString(R.string.devices_delete_confirm_title),
+            title = getString(R.string.devices_delete_failed_title),
             message = message
         )
     }
