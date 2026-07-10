@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_assigned_tank_supporting_text">Aquarium: %1$s</string>
+    <string name="tank_device_operation_failed_title">Device operation failed</string>
+    <string name="tank_device_assignment_failed">The device could not be assigned. Please try again.</string>
+    <string name="tank_device_assignment_tank_missing">This aquarium no longer exists.</string>
+    <string name="tank_device_assignment_device_missing">This device is no longer registered.</string>
+    <string name="tank_device_assignment_conflict">This device is already assigned to %1$s.</string>
+    <string name="tank_device_assignment_session_missing">Your session is no longer active. Please sign in again.</string>
+    <string name="tank_device_remove_failed">The device could not be removed from this aquarium. Please try again.</string>
+    <string name="devices_delete_failed_title">Device removal failed</string>
+    <string name="devices_delete_partial_failure">%1$d device(s) were removed, but %2$d could not be removed. Please try again.</string>
+    <string name="devices_delete_failed">The selected device(s) could not be removed. Please try again.</string>
+</resources>
