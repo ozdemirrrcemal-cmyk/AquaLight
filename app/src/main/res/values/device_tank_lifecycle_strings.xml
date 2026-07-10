@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="device_assigned_tank_supporting_text">Aquarium: %1$s</string>
+    <string name="tank_device_operation_failed_title">Device operation failed</string>
     <string name="tank_device_assignment_failed">The device could not be assigned. Please try again.</string>
     <string name="tank_device_assignment_tank_missing">This aquarium no longer exists.</string>
     <string name="tank_device_assignment_device_missing">This device is no longer registered.</string>
