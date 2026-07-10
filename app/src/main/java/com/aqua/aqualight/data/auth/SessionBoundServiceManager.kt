@@ -41,9 +41,7 @@ object SessionBoundServiceManager {
         TankDeviceAssignmentStartupRepair.reset()
 
         runCatching {
-            DevicesRepositoryProvider.stopSession(
-                context = appContext
-            )
+            DevicesRepositoryProvider.stopSession()
         }
 
         SmartCareDailyWorker.cancel(
