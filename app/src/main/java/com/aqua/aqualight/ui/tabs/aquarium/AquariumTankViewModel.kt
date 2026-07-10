@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.asLiveData
@@ -74,13 +75,32 @@ class AquariumTankViewModel(
       tankIds = safeTankIds
     )
 
-    // Relationship cleanup intentionally runs after durable tank deletion.
-    // If the final cleanup is interrupted, startup repair safely removes the
-    // dangling assignments without ever detaching devices from a tank that
-    // failed to delete.
-    tankDeviceAssignmentRepository.removeAssignmentsForTanks(
-      tankIds = safeTankIds.toSet()
-    )
+    // The aquarium record is the authoritative deletion. Relationship cleanup
+    // follows it so a failed aquarium deletion never detaches valid devices.
+    // A cleanup interruption is healed immediately when possible and again by
+    // authenticated startup repair, without reporting a false tank-delete
+    // failure after the tank has already been removed.
+    runCatching {
+      tankDeviceAssignmentRepository.removeAssignmentsForTanks(
+        tankIds = safeTankIds.toSet()
+      )
+    }.onFailure { cleanupError ->
+      Log.e(
+        TAG,
+        "Aquarium deleted but assignment cleanup failed; running repair.",
+        cleanupError
+      )
+
+      runCatching {
+        tankDeviceAssignmentRepository.repairStaleAssignments()
+      }.onFailure { repairError ->
+        Log.e(
+          TAG,
+          "Immediate assignment repair failed after aquarium deletion.",
+          repairError
+        )
+      }
+    }
   }
 
   suspend fun updateTankPhoto(
@@ -249,5 +269,9 @@ class AquariumTankViewModel(
         tankId = tankId
       )
     }
+  }
+
+  private companion object {
+    const val TAG = "AquariumTankViewModel"
   }
 }
