@@ -6,6 +6,9 @@ import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryPr
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.auth.SessionBoundServiceManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
+import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
+import com.aqua.aqualight.data.devices.store.DeviceKnownStore
 import java.io.File
 
 /**
@@ -126,11 +129,32 @@ class UserDataCleaner private constructor(
         runStep(
             step = Step.DEVICES
         ) {
+            val knownStore = DeviceKnownStore(appContext)
+
             TankDeviceAssignmentRepositoryProvider
                 .get(appContext)
                 .clearAssignmentsForOwner(
                     ownerUid = targetOwnerUid
                 )
+
+            knownStore.clear(
+                ownerUid = targetOwnerUid
+            )
+            knownStore.clearIgnoredDevices(
+                ownerUid = targetOwnerUid
+            )
+            DeviceCredentialStore(appContext).clearOwner(
+                ownerUid = targetOwnerUid
+            )
+
+            if (
+                UserDataScope.normalizeOwnerUid(UserDataScope.currentUid()) ==
+                UserDataScope.normalizeOwnerUid(targetOwnerUid)
+            ) {
+                DevicesRepositoryProvider
+                    .get(appContext)
+                    .clearInMemoryRegistry()
+            }
         }
 
         runStep(
