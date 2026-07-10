@@ -23,31 +23,36 @@ object DevicesRepositoryProvider {
     private var instance: DevicesRepository? = null
 
     fun get(context: Context? = null): DevicesRepository {
-        val repository = instance ?: synchronized(this) {
-            instance ?: createRepository(context).also { created ->
-                instance = created
-            }
+        return repository(context).also { deviceRepository ->
+            deviceRepository.start(repositoryScope)
         }
-
-        repository.start(repositoryScope)
-        return repository
     }
 
     fun restartForCurrentOwner(
         context: Context
     ) {
-        val repository = get(context.applicationContext)
+        val deviceRepository = repository(context.applicationContext)
 
         repositoryScope.launch {
-            repository.stopSession()
-            repository.start(repositoryScope)
+            deviceRepository.stopSession()
+            deviceRepository.start(repositoryScope)
         }
     }
 
-    suspend fun stopSession(
-        context: Context
-    ) {
-        get(context.applicationContext).stopSession()
+    suspend fun stopSession() {
+        instance?.stopSession()
+    }
+
+    fun clearInMemoryRegistryIfCreated() {
+        instance?.clearInMemoryRegistry()
+    }
+
+    private fun repository(context: Context?): DevicesRepository {
+        return instance ?: synchronized(this) {
+            instance ?: createRepository(context).also { created ->
+                instance = created
+            }
+        }
     }
 
     private fun createRepository(context: Context?): DevicesRepository {
