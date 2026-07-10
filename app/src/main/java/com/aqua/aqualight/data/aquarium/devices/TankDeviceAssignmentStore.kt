@@ -1,157 +1,487 @@
 package com.aqua.aqualight.data.aquarium.devices
 
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.dataStore
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import org.json.JSONArray
-import org.json.JSONObject
+import com.aqua.aqualight.data.user.UserDataScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+
+private const val TANK_DEVICE_ASSIGNMENTS_FILE =
+    "tank_device_assignments_v1.pb"
+
+private val Context.tankDeviceAssignmentsDataStore: DataStore<TankDeviceAssignmentsStore> by dataStore(
+    fileName = TANK_DEVICE_ASSIGNMENTS_FILE,
+    serializer = TankDeviceAssignmentsSerializer
+)
 
 data class TankDeviceAssignment(
-    val tankId: Long,
+    val ownerUid: String,
     val deviceUid: DeviceUid,
-    val assignedAtMillis: Long
+    val tankId: Long,
+    val assignedAtMillis: Long,
+    val updatedAtMillis: Long
 )
+
+sealed interface TankDeviceAssignmentWriteResult {
+    data class Assigned(
+        val assignment: TankDeviceAssignment
+    ) : TankDeviceAssignmentWriteResult
+
+    data class AlreadyAssigned(
+        val assignment: TankDeviceAssignment
+    ) : TankDeviceAssignmentWriteResult
+
+    data class Conflict(
+        val existingAssignment: TankDeviceAssignment
+    ) : TankDeviceAssignmentWriteResult
+
+    data class Removed(
+        val assignment: TankDeviceAssignment
+    ) : TankDeviceAssignmentWriteResult
+
+    data object NotFound : TankDeviceAssignmentWriteResult
+    data object InvalidInput : TankDeviceAssignmentWriteResult
+}
+
+data class TankDeviceAssignmentRepairResult(
+    val removedInvalid: Int = 0,
+    val removedMissingTank: Int = 0,
+    val removedMissingDevice: Int = 0,
+    val removedDuplicate: Int = 0
+) {
+    val removedTotal: Int
+        get() =
+            removedInvalid +
+                removedMissingTank +
+                removedMissingDevice +
+                removedDuplicate
+}
 
 class TankDeviceAssignmentStore private constructor(
     context: Context
 ) {
-    private val appContext = context.applicationContext
+    private val dataStore =
+        context.applicationContext.tankDeviceAssignmentsDataStore
 
-    private val prefs = appContext.getSharedPreferences(
-        PREF_NAME,
-        Context.MODE_PRIVATE
-    )
+    fun assignmentsForOwner(
+        ownerUid: String
+    ): Flow<List<TankDeviceAssignment>> {
+        val normalizedOwnerUid =
+            UserDataScope.normalizeOwnerUid(ownerUid)
 
-    private val _assignments = MutableStateFlow(loadAssignments())
-    val assignments: StateFlow<List<TankDeviceAssignment>> = _assignments.asStateFlow()
-
-    @Synchronized
-    fun assignDeviceToTank(
-        tankId: Long,
-        deviceUid: DeviceUid
-    ) {
-        if (tankId <= 0L || deviceUid.value.isBlank()) {
-            return
+        if (normalizedOwnerUid.isBlank()) {
+            return dataStore.data.map { emptyList() }
         }
 
-        val now = System.currentTimeMillis()
+        return dataStore.data.map { store ->
+            store.assignmentsList
+                .asSequence()
+                .filter { stored ->
+                    stored.ownerUid == normalizedOwnerUid
+                }
+                .mapNotNull { stored ->
+                    stored.toDomainOrNull()
+                }
+                .sortedWith(ASSIGNMENT_ORDER)
+                .toList()
+        }
+    }
 
-        val next = _assignments.value
-            .filterNot { assignment ->
-                assignment.deviceUid == deviceUid
+    suspend fun assignmentsSnapshotForOwner(
+        ownerUid: String
+    ): List<TankDeviceAssignment> {
+        return assignmentsForOwner(ownerUid).first()
+    }
+
+    suspend fun assign(
+        ownerUid: String,
+        tankId: Long,
+        deviceUid: DeviceUid
+    ): TankDeviceAssignmentWriteResult {
+        val normalizedOwnerUid =
+            UserDataScope.normalizeOwnerUid(ownerUid)
+        val normalizedDeviceUid =
+            deviceUid.value.trim()
+
+        if (
+            normalizedOwnerUid.isBlank() ||
+            normalizedDeviceUid.isBlank() ||
+            tankId <= 0L
+        ) {
+            return TankDeviceAssignmentWriteResult.InvalidInput
+        }
+
+        var result: TankDeviceAssignmentWriteResult =
+            TankDeviceAssignmentWriteResult.InvalidInput
+
+        dataStore.updateData { currentStore ->
+            val existing = currentStore.assignmentsList
+                .firstOrNull { stored ->
+                    stored.ownerUid == normalizedOwnerUid &&
+                        stored.deviceUid == normalizedDeviceUid
+                }
+                ?.toDomainOrNull()
+
+            if (existing != null) {
+                result = if (existing.tankId == tankId) {
+                    TankDeviceAssignmentWriteResult.AlreadyAssigned(existing)
+                } else {
+                    TankDeviceAssignmentWriteResult.Conflict(existing)
+                }
+
+                return@updateData currentStore
             }
-            .plus(
-                TankDeviceAssignment(
-                    tankId = tankId,
-                    deviceUid = deviceUid,
-                    assignedAtMillis = now
+
+            val nowMillis = System.currentTimeMillis()
+            val storedAssignment = StoredTankDeviceAssignment.newBuilder()
+                .setOwnerUid(normalizedOwnerUid)
+                .setDeviceUid(normalizedDeviceUid)
+                .setTankId(tankId)
+                .setAssignedAtMillis(nowMillis)
+                .setUpdatedAtMillis(nowMillis)
+                .build()
+
+            result = TankDeviceAssignmentWriteResult.Assigned(
+                assignment = requireNotNull(
+                    storedAssignment.toDomainOrNull()
                 )
             )
 
-        saveAssignments(next)
-        _assignments.value = next
+            currentStore.toBuilder()
+                .addAssignments(storedAssignment)
+                .build()
+        }
+
+        return result
     }
 
-    @Synchronized
-    fun removeDeviceFromTank(
+    suspend fun remove(
+        ownerUid: String,
         tankId: Long,
         deviceUid: DeviceUid
-    ) {
-        val next = _assignments.value.filterNot { assignment ->
-            assignment.tankId == tankId && assignment.deviceUid == deviceUid
+    ): TankDeviceAssignmentWriteResult {
+        val normalizedOwnerUid =
+            UserDataScope.normalizeOwnerUid(ownerUid)
+        val normalizedDeviceUid =
+            deviceUid.value.trim()
+
+        if (
+            normalizedOwnerUid.isBlank() ||
+            normalizedDeviceUid.isBlank() ||
+            tankId <= 0L
+        ) {
+            return TankDeviceAssignmentWriteResult.InvalidInput
         }
 
-        saveAssignments(next)
-        _assignments.value = next
+        var result: TankDeviceAssignmentWriteResult =
+            TankDeviceAssignmentWriteResult.NotFound
+
+        dataStore.updateData { currentStore ->
+            val removed = currentStore.assignmentsList
+                .firstOrNull { stored ->
+                    stored.ownerUid == normalizedOwnerUid &&
+                        stored.deviceUid == normalizedDeviceUid &&
+                        stored.tankId == tankId
+                }
+                ?.toDomainOrNull()
+
+            if (removed == null) {
+                return@updateData currentStore
+            }
+
+            result = TankDeviceAssignmentWriteResult.Removed(removed)
+
+            currentStore.toBuilder()
+                .clearAssignments()
+                .addAllAssignments(
+                    currentStore.assignmentsList.filterNot { stored ->
+                        stored.ownerUid == normalizedOwnerUid &&
+                            stored.deviceUid == normalizedDeviceUid &&
+                            stored.tankId == tankId
+                    }
+                )
+                .build()
+        }
+
+        return result
     }
 
-    @Synchronized
-    fun removeDeviceFromAnyTank(
+    suspend fun removeForDevice(
+        ownerUid: String,
         deviceUid: DeviceUid
-    ) {
-        val next = _assignments.value.filterNot { assignment ->
-            assignment.deviceUid == deviceUid
+    ): TankDeviceAssignmentWriteResult {
+        val normalizedOwnerUid =
+            UserDataScope.normalizeOwnerUid(ownerUid)
+        val normalizedDeviceUid =
+            deviceUid.value.trim()
+
+        if (
+            normalizedOwnerUid.isBlank() ||
+            normalizedDeviceUid.isBlank()
+        ) {
+            return TankDeviceAssignmentWriteResult.InvalidInput
         }
 
-        saveAssignments(next)
-        _assignments.value = next
+        var result: TankDeviceAssignmentWriteResult =
+            TankDeviceAssignmentWriteResult.NotFound
+
+        dataStore.updateData { currentStore ->
+            val removed = currentStore.assignmentsList
+                .firstOrNull { stored ->
+                    stored.ownerUid == normalizedOwnerUid &&
+                        stored.deviceUid == normalizedDeviceUid
+                }
+                ?.toDomainOrNull()
+
+            if (removed == null) {
+                return@updateData currentStore
+            }
+
+            result = TankDeviceAssignmentWriteResult.Removed(removed)
+
+            currentStore.toBuilder()
+                .clearAssignments()
+                .addAllAssignments(
+                    currentStore.assignmentsList.filterNot { stored ->
+                        stored.ownerUid == normalizedOwnerUid &&
+                            stored.deviceUid == normalizedDeviceUid
+                    }
+                )
+                .build()
+        }
+
+        return result
     }
 
-    private fun loadAssignments(): List<TankDeviceAssignment> {
-        val raw = prefs.getString(KEY_ASSIGNMENTS_JSON, "").orEmpty()
+    suspend fun removeForTanks(
+        ownerUid: String,
+        tankIds: Set<Long>
+    ): Int {
+        val normalizedOwnerUid =
+            UserDataScope.normalizeOwnerUid(ownerUid)
+        val normalizedTankIds =
+            tankIds.filter { tankId -> tankId > 0L }.toSet()
 
-        if (raw.isBlank()) {
-            return emptyList()
+        if (
+            normalizedOwnerUid.isBlank() ||
+            normalizedTankIds.isEmpty()
+        ) {
+            return 0
         }
 
-        return runCatching {
-            val array = JSONArray(raw)
+        var removedCount = 0
 
-            buildList {
-                for (index in 0 until array.length()) {
-                    val item = array.optJSONObject(index) ?: continue
-                    val tankId = item.optLong(KEY_TANK_ID, 0L)
-                    val uid = item.optString(KEY_DEVICE_UID, "")
-                    val assignedAt = item.optLong(KEY_ASSIGNED_AT, 0L)
+        dataStore.updateData { currentStore ->
+            val remaining = currentStore.assignmentsList.filterNot { stored ->
+                val remove =
+                    stored.ownerUid == normalizedOwnerUid &&
+                        stored.tankId in normalizedTankIds
 
-                    if (tankId > 0L && uid.isNotBlank()) {
-                        add(
-                            TankDeviceAssignment(
-                                tankId = tankId,
-                                deviceUid = DeviceUid(uid),
-                                assignedAtMillis = assignedAt.takeIf { value -> value > 0L }
-                                    ?: System.currentTimeMillis()
-                            )
-                        )
+                if (remove) {
+                    removedCount += 1
+                }
+
+                remove
+            }
+
+            if (removedCount == 0) {
+                currentStore
+            } else {
+                currentStore.toBuilder()
+                    .clearAssignments()
+                    .addAllAssignments(remaining)
+                    .build()
+            }
+        }
+
+        return removedCount
+    }
+
+    suspend fun clearOwner(
+        ownerUid: String
+    ): Int {
+        val normalizedOwnerUid =
+            UserDataScope.normalizeOwnerUid(ownerUid)
+
+        if (normalizedOwnerUid.isBlank()) {
+            return 0
+        }
+
+        var removedCount = 0
+
+        dataStore.updateData { currentStore ->
+            val remaining = currentStore.assignmentsList.filterNot { stored ->
+                val remove = stored.ownerUid == normalizedOwnerUid
+
+                if (remove) {
+                    removedCount += 1
+                }
+
+                remove
+            }
+
+            if (removedCount == 0) {
+                currentStore
+            } else {
+                currentStore.toBuilder()
+                    .clearAssignments()
+                    .addAllAssignments(remaining)
+                    .build()
+            }
+        }
+
+        return removedCount
+    }
+
+    suspend fun repair(
+        ownerUid: String,
+        validTankIds: Set<Long>,
+        validDeviceUids: Set<DeviceUid>
+    ): TankDeviceAssignmentRepairResult {
+        val normalizedOwnerUid =
+            UserDataScope.normalizeOwnerUid(ownerUid)
+
+        if (normalizedOwnerUid.isBlank()) {
+            return TankDeviceAssignmentRepairResult()
+        }
+
+        val validTanks = validTankIds.filter { tankId -> tankId > 0L }.toSet()
+        val validDevices = validDeviceUids
+            .map { deviceUid -> deviceUid.value.trim() }
+            .filter { value -> value.isNotBlank() }
+            .toSet()
+
+        var removedInvalid = 0
+        var removedMissingTank = 0
+        var removedMissingDevice = 0
+        var removedDuplicate = 0
+
+        dataStore.updateData { currentStore ->
+            val otherOwners = currentStore.assignmentsList.filterNot { stored ->
+                stored.ownerUid == normalizedOwnerUid
+            }
+            val keptByDeviceUid = linkedMapOf<String, StoredTankDeviceAssignment>()
+
+            currentStore.assignmentsList
+                .asSequence()
+                .filter { stored ->
+                    stored.ownerUid == normalizedOwnerUid
+                }
+                .sortedWith(
+                    compareByDescending<StoredTankDeviceAssignment> { stored ->
+                        stored.updatedAtMillis
+                    }.thenByDescending { stored ->
+                        stored.assignedAtMillis
+                    }
+                )
+                .forEach { stored ->
+                    val deviceUid = stored.deviceUid.trim()
+
+                    when {
+                        deviceUid.isBlank() || stored.tankId <= 0L -> {
+                            removedInvalid += 1
+                        }
+
+                        stored.tankId !in validTanks -> {
+                            removedMissingTank += 1
+                        }
+
+                        deviceUid !in validDevices -> {
+                            removedMissingDevice += 1
+                        }
+
+                        deviceUid in keptByDeviceUid -> {
+                            removedDuplicate += 1
+                        }
+
+                        else -> {
+                            keptByDeviceUid[deviceUid] = stored.toBuilder()
+                                .setOwnerUid(normalizedOwnerUid)
+                                .setDeviceUid(deviceUid)
+                                .build()
+                        }
                     }
                 }
-            }
-        }.getOrElse {
-            emptyList()
-        }
-    }
 
-    private fun saveAssignments(
-        assignments: List<TankDeviceAssignment>
-    ) {
-        val array = JSONArray()
-
-        assignments.forEach { assignment ->
-            array.put(
-                JSONObject()
-                    .put(KEY_TANK_ID, assignment.tankId)
-                    .put(KEY_DEVICE_UID, assignment.deviceUid.value)
-                    .put(KEY_ASSIGNED_AT, assignment.assignedAtMillis)
-            )
+            currentStore.toBuilder()
+                .clearAssignments()
+                .addAllAssignments(otherOwners)
+                .addAllAssignments(
+                    keptByDeviceUid.values.sortedWith(STORED_ASSIGNMENT_ORDER)
+                )
+                .build()
         }
 
-        prefs.edit()
-            .putString(KEY_ASSIGNMENTS_JSON, array.toString())
-            .apply()
+        return TankDeviceAssignmentRepairResult(
+            removedInvalid = removedInvalid,
+            removedMissingTank = removedMissingTank,
+            removedMissingDevice = removedMissingDevice,
+            removedDuplicate = removedDuplicate
+        )
     }
 
     companion object {
-        private const val PREF_NAME = "tank_device_assignments_v2"
-        private const val KEY_ASSIGNMENTS_JSON = "assignments_json"
-        private const val KEY_TANK_ID = "tankId"
-        private const val KEY_DEVICE_UID = "deviceUid"
-        private const val KEY_ASSIGNED_AT = "assignedAtMillis"
+        private val ASSIGNMENT_ORDER =
+            compareBy<TankDeviceAssignment> { assignment ->
+                assignment.assignedAtMillis
+            }.thenBy { assignment ->
+                assignment.deviceUid.value
+            }
+
+        private val STORED_ASSIGNMENT_ORDER =
+            compareBy<StoredTankDeviceAssignment> { stored ->
+                stored.assignedAtMillis
+            }.thenBy { stored ->
+                stored.deviceUid
+            }
 
         @Volatile
-        private var INSTANCE: TankDeviceAssignmentStore? = null
+        private var instance: TankDeviceAssignmentStore? = null
 
         fun get(
             context: Context
         ): TankDeviceAssignmentStore {
-            return INSTANCE ?: synchronized(this) {
-                INSTANCE ?: TankDeviceAssignmentStore(
-                    context = context.applicationContext
+            return instance ?: synchronized(this) {
+                instance ?: TankDeviceAssignmentStore(
+                    context.applicationContext
                 ).also { store ->
-                    INSTANCE = store
+                    instance = store
                 }
             }
         }
     }
+}
+
+private fun StoredTankDeviceAssignment.toDomainOrNull(): TankDeviceAssignment? {
+    val normalizedOwnerUid =
+        UserDataScope.normalizeOwnerUid(ownerUid)
+    val normalizedDeviceUid =
+        deviceUid.trim()
+
+    if (
+        normalizedOwnerUid.isBlank() ||
+        normalizedDeviceUid.isBlank() ||
+        tankId <= 0L
+    ) {
+        return null
+    }
+
+    val normalizedAssignedAt = assignedAtMillis
+        .takeIf { value -> value > 0L }
+        ?: updatedAtMillis.takeIf { value -> value > 0L }
+        ?: 1L
+    val normalizedUpdatedAt = updatedAtMillis
+        .takeIf { value -> value > 0L }
+        ?: normalizedAssignedAt
+
+    return TankDeviceAssignment(
+        ownerUid = normalizedOwnerUid,
+        deviceUid = DeviceUid(normalizedDeviceUid),
+        tankId = tankId,
+        assignedAtMillis = normalizedAssignedAt,
+        updatedAtMillis = normalizedUpdatedAt
+    )
 }
