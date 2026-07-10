@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.devices.store
 
 import android.content.Context
+import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -36,6 +37,9 @@ private val Context.aqlKnownDevicesDataStore by preferencesDataStore(
  * WebSocket tokens stay in DeviceCredentialStore. This store only keeps identity,
  * product, endpoint and resolved runtime metadata. No device from one Firebase
  * account is exposed to another local account on the same installation.
+ *
+ * All mutations are performed inside DataStore.edit. This prevents concurrent
+ * runtime metadata updates or account cleanup from overwriting another device.
  */
 class DeviceKnownStore(
     context: Context
@@ -71,19 +75,23 @@ class DeviceKnownStore(
         ownerUid: String = UserDataScope.requireCurrentUid()
     ) {
         val normalizedOwnerUid = requireOwnerUid(ownerUid)
-        val current = loadOwnedSnapshots()
-            .associateBy { record ->
-                record.ownerUid to record.snapshot.deviceUid.value
-            }
-            .toMutableMap()
 
-        current[normalizedOwnerUid to snapshot.deviceUid.value] =
-            OwnedSnapshot(
-                ownerUid = normalizedOwnerUid,
-                snapshot = snapshot
-            )
-
-        saveOwnedSnapshots(current.values)
+        updateOwnedSnapshots { currentRecords ->
+            currentRecords
+                .associateBy { record ->
+                    record.ownerUid to record.snapshot.deviceUid.value
+                }
+                .toMutableMap()
+                .apply {
+                    this[normalizedOwnerUid to snapshot.deviceUid.value] =
+                        OwnedSnapshot(
+                            ownerUid = normalizedOwnerUid,
+                            snapshot = snapshot
+                        )
+                }
+                .values
+                .toList()
+        }
     }
 
     suspend fun saveSnapshots(
@@ -91,21 +99,30 @@ class DeviceKnownStore(
         ownerUid: String = UserDataScope.requireCurrentUid()
     ) {
         val normalizedOwnerUid = requireOwnerUid(ownerUid)
-        val current = loadOwnedSnapshots()
-            .associateBy { record ->
-                record.ownerUid to record.snapshot.deviceUid.value
-            }
-            .toMutableMap()
+        val snapshotsToSave = snapshots.toList()
 
-        snapshots.forEach { snapshot ->
-            current[normalizedOwnerUid to snapshot.deviceUid.value] =
-                OwnedSnapshot(
-                    ownerUid = normalizedOwnerUid,
-                    snapshot = snapshot
-                )
+        if (snapshotsToSave.isEmpty()) {
+            return
         }
 
-        saveOwnedSnapshots(current.values)
+        updateOwnedSnapshots { currentRecords ->
+            currentRecords
+                .associateBy { record ->
+                    record.ownerUid to record.snapshot.deviceUid.value
+                }
+                .toMutableMap()
+                .apply {
+                    snapshotsToSave.forEach { snapshot ->
+                        this[normalizedOwnerUid to snapshot.deviceUid.value] =
+                            OwnedSnapshot(
+                                ownerUid = normalizedOwnerUid,
+                                snapshot = snapshot
+                            )
+                    }
+                }
+                .values
+                .toList()
+        }
     }
 
     suspend fun remove(
@@ -113,12 +130,13 @@ class DeviceKnownStore(
         ownerUid: String = UserDataScope.requireCurrentUid()
     ) {
         val normalizedOwnerUid = requireOwnerUid(ownerUid)
-        val remaining = loadOwnedSnapshots().filterNot { record ->
-            record.ownerUid == normalizedOwnerUid &&
-                record.snapshot.deviceUid == deviceUid
-        }
 
-        saveOwnedSnapshots(remaining)
+        updateOwnedSnapshots { currentRecords ->
+            currentRecords.filterNot { record ->
+                record.ownerUid == normalizedOwnerUid &&
+                    record.snapshot.deviceUid == deviceUid
+            }
+        }
     }
 
     suspend fun ignoreDevice(
@@ -132,12 +150,12 @@ class DeviceKnownStore(
             return
         }
 
-        val ignored = ignoredEntries().toMutableSet()
-        ignored += ignoredEntry(
-            ownerUid = normalizedOwnerUid,
-            deviceUid = normalizedDeviceUid
-        )
-        saveIgnoredEntries(ignored)
+        updateIgnoredEntries { currentEntries ->
+            currentEntries + ignoredEntry(
+                ownerUid = normalizedOwnerUid,
+                deviceUid = normalizedDeviceUid
+            )
+        }
     }
 
     suspend fun allowDevice(
@@ -145,17 +163,18 @@ class DeviceKnownStore(
         ownerUid: String = UserDataScope.requireCurrentUid()
     ) {
         val normalizedOwnerUid = requireOwnerUid(ownerUid)
-        val targetEntry = ignoredEntry(
-            ownerUid = normalizedOwnerUid,
-            deviceUid = deviceUid.value.trim()
-        )
-        val ignored = ignoredEntries()
+        val normalizedDeviceUid = deviceUid.value.trim()
 
-        if (targetEntry !in ignored) {
+        if (normalizedDeviceUid.isBlank()) {
             return
         }
 
-        saveIgnoredEntries(ignored - targetEntry)
+        updateIgnoredEntries { currentEntries ->
+            currentEntries - ignoredEntry(
+                ownerUid = normalizedOwnerUid,
+                deviceUid = normalizedDeviceUid
+            )
+        }
     }
 
     suspend fun isIgnored(
@@ -198,11 +217,12 @@ class DeviceKnownStore(
         val normalizedOwnerUid = normalizeOwnerUidOrNull(ownerUid)
             ?: return
         val prefix = "$normalizedOwnerUid$IGNORED_ENTRY_SEPARATOR"
-        val remaining = ignoredEntries().filterNot { entry ->
-            entry.startsWith(prefix)
-        }.toSet()
 
-        saveIgnoredEntries(remaining)
+        updateIgnoredEntries { currentEntries ->
+            currentEntries.filterNot { entry ->
+                entry.startsWith(prefix)
+            }.toSet()
+        }
     }
 
     suspend fun clear(
@@ -210,19 +230,44 @@ class DeviceKnownStore(
     ) {
         val normalizedOwnerUid = normalizeOwnerUidOrNull(ownerUid)
             ?: return
-        val remaining = loadOwnedSnapshots().filterNot { record ->
-            record.ownerUid == normalizedOwnerUid
-        }
 
-        saveOwnedSnapshots(remaining)
+        updateOwnedSnapshots { currentRecords ->
+            currentRecords.filterNot { record ->
+                record.ownerUid == normalizedOwnerUid
+            }
+        }
     }
 
     private suspend fun loadOwnedSnapshots(): List<OwnedSnapshot> {
-        val raw = preferences()[KEY_DEVICES]
-            .orEmpty()
-            .ifBlank { "[]" }
+        return decodeOwnedSnapshots(
+            preferences()[KEY_DEVICES]
+        )
+    }
+
+    private suspend fun updateOwnedSnapshots(
+        transform: (List<OwnedSnapshot>) -> List<OwnedSnapshot>
+    ) {
+        dataStore.edit { preferences ->
+            val currentRecords = decodeOwnedSnapshots(
+                preferences[KEY_DEVICES]
+            )
+            val updatedRecords = transform(currentRecords)
+                .distinctBy { record ->
+                    record.ownerUid to record.snapshot.deviceUid.value
+                }
+
+            writeOwnedSnapshots(
+                preferences = preferences,
+                records = updatedRecords
+            )
+        }
+    }
+
+    private fun decodeOwnedSnapshots(
+        rawValue: String?
+    ): List<OwnedSnapshot> {
         val array = runCatching {
-            JSONArray(raw)
+            JSONArray(rawValue.orEmpty().ifBlank { "[]" })
         }.getOrDefault(JSONArray())
 
         return buildList {
@@ -249,7 +294,8 @@ class DeviceKnownStore(
         }
     }
 
-    private suspend fun saveOwnedSnapshots(
+    private fun writeOwnedSnapshots(
+        preferences: MutablePreferences,
         records: Iterable<OwnedSnapshot>
     ) {
         val array = JSONArray()
@@ -272,12 +318,10 @@ class DeviceKnownStore(
                 )
             }
 
-        dataStore.edit { preferences ->
-            if (array.length() == 0) {
-                preferences.remove(KEY_DEVICES)
-            } else {
-                preferences[KEY_DEVICES] = array.toString()
-            }
+        if (array.length() == 0) {
+            preferences.remove(KEY_DEVICES)
+        } else {
+            preferences[KEY_DEVICES] = array.toString()
         }
     }
 
@@ -290,16 +334,22 @@ class DeviceKnownStore(
             .toSet()
     }
 
-    private suspend fun saveIgnoredEntries(
-        values: Set<String>
+    private suspend fun updateIgnoredEntries(
+        transform: (Set<String>) -> Set<String>
     ) {
         dataStore.edit { preferences ->
-            if (values.isEmpty()) {
+            val currentEntries = preferences[KEY_IGNORED_DEVICE_UIDS]
+                .orEmpty()
+                .filter { entry -> entry.isNotBlank() }
+                .toSet()
+            val updatedEntries = transform(currentEntries)
+                .filter { entry -> entry.isNotBlank() }
+                .toSet()
+
+            if (updatedEntries.isEmpty()) {
                 preferences.remove(KEY_IGNORED_DEVICE_UIDS)
             } else {
-                preferences[KEY_IGNORED_DEVICE_UIDS] = values
-                    .filter { entry -> entry.isNotBlank() }
-                    .toSet()
+                preferences[KEY_IGNORED_DEVICE_UIDS] = updatedEntries
             }
         }
     }
