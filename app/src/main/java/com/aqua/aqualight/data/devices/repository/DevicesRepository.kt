@@ -85,7 +85,9 @@ class DevicesRepository(
                     val collectorJob = launch {
                         discoveryRepository.devices.collect { discoveredDevices ->
                             registryStore.upsertAll(
-                                filterIgnoredDevices(discoveredDevices)
+                                filterDiscoveryDevicesForActiveOwner(
+                                    discoveredDevices
+                                )
                             )
                         }
                     }
@@ -248,6 +250,27 @@ class DevicesRepository(
         knownStore?.clear()
         knownStore?.clearIgnoredDevices()
         registryStore.clear()
+    }
+
+    private suspend fun filterDiscoveryDevicesForActiveOwner(
+        snapshots: Iterable<DeviceSnapshot>
+    ): List<DeviceSnapshot> {
+        val durableStore = knownStore
+            ?: return snapshots.toList()
+        val ignoredDeviceUids = durableStore.ignoredDeviceUidValues()
+        val durableDeviceUids = durableStore.loadSnapshots()
+            .map { snapshot -> snapshot.deviceUid }
+            .toSet()
+        val stagedOrVisibleDeviceUids = registryStore.currentDevices()
+            .map { snapshot -> snapshot.deviceUid }
+            .toSet()
+        val allowedDeviceUids =
+            durableDeviceUids + stagedOrVisibleDeviceUids
+
+        return snapshots.filter { snapshot ->
+            snapshot.deviceUid in allowedDeviceUids &&
+                snapshot.deviceUid.value !in ignoredDeviceUids
+        }
     }
 
     private suspend fun filterIgnoredDevices(
