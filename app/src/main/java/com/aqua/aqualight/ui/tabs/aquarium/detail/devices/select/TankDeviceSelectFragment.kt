@@ -12,9 +12,12 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentTankDeviceSelectBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.utils.DialogManager
+import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
 
 class TankDeviceSelectFragment : Fragment(R.layout.fragment_tank_device_select) {
@@ -83,6 +86,10 @@ class TankDeviceSelectFragment : Fragment(R.layout.fragment_tank_device_select) 
                         TankDeviceSelectEvent.DeviceAssigned -> {
                             findNavController().navigateUp()
                         }
+
+                        is TankDeviceSelectEvent.ShowAssignmentError -> {
+                            showAssignmentError(event)
+                        }
                     }
                 }
             }
@@ -100,9 +107,34 @@ class TankDeviceSelectFragment : Fragment(R.layout.fragment_tank_device_select) 
         } else {
             ""
         }
+
+        baseActivity()?.setGlobalLoading(
+            ownerKey = TANK_DEVICE_ASSIGNMENT_LOADING_OWNER,
+            show = state.isAssigning
+        )
+    }
+
+    private fun showAssignmentError(
+        event: TankDeviceSelectEvent.ShowAssignmentError
+    ) {
+        val message = event.formatArg?.let { formatArg ->
+            getString(event.messageRes, formatArg)
+        } ?: getString(event.messageRes)
+
+        DialogManager.showInfoDialog(
+            context = requireContext(),
+            type = DialogType.ERROR,
+            title = getString(R.string.tank_device_operation_failed_title),
+            message = message
+        )
+    }
+
+    private fun baseActivity(): BaseActivity? {
+        return activity as? BaseActivity
     }
 
     override fun onDestroyView() {
+        baseActivity()?.clearGlobalLoading(TANK_DEVICE_ASSIGNMENT_LOADING_OWNER)
         binding.rvDevices.adapter = null
         _binding = null
         super.onDestroyView()
@@ -112,5 +144,7 @@ class TankDeviceSelectFragment : Fragment(R.layout.fragment_tank_device_select) 
         const val ARG_TANK_ID = "tankId"
         const val RESULT_SELECTED_DEVICE_ID = "tankDeviceSelectResultDeviceId"
         const val RESULT_SELECTED_TANK_ID = "tankDeviceSelectResultTankId"
+        private const val TANK_DEVICE_ASSIGNMENT_LOADING_OWNER =
+            "TankDeviceSelectFragment.Assignment"
     }
 }
