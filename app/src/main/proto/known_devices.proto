@@ -1,0 +1,101 @@
+syntax = "proto3";
+
+option java_package = "com.aqua.aqualight.data.devices.store";
+option java_multiple_files = true;
+
+message KnownDevicesStore {
+  repeated OwnedKnownDeviceRecord devices = 1;
+  repeated IgnoredKnownDeviceRecord ignored_devices = 2;
+}
+
+message OwnedKnownDeviceRecord {
+  string owner_uid = 1;
+  StoredKnownDeviceSnapshot snapshot = 2;
+}
+
+message IgnoredKnownDeviceRecord {
+  string owner_uid = 1;
+  string device_uid = 2;
+}
+
+message StoredKnownDeviceSnapshot {
+  StoredDeviceIdentity identity = 1;
+  StoredDeviceProduct product = 2;
+  string firmware_version = 3;
+  string firmware_build = 4;
+  string api_version = 5;
+  string protocol_version = 6;
+  StoredDeviceRuntimeEndpoint endpoint = 7;
+  StoredDeviceCapabilities capabilities = 8;
+  StoredDeviceLimits limits = 9;
+  repeated string supported_features = 10;
+  repeated string supported_screens = 11;
+  repeated string modules = 12;
+  int64 last_seen_at_millis = 13;
+}
+
+message StoredDeviceIdentity {
+  string uid = 1;
+  string short_id = 2;
+  string chip_id = 3;
+  string esp_chip_id = 4;
+  string efuse_mac = 5;
+  string mac_address = 6;
+  string serial_number = 7;
+  string firmware_serial = 8;
+  string display_name = 9;
+  string custom_name = 10;
+  string setup_code = 11;
+  string setup_ssid = 12;
+}
+
+message StoredDeviceProduct {
+  string brand = 1;
+  string product_id = 2;
+  string product_key = 3;
+  string family = 4;
+  string family_raw = 5;
+  string line = 6;
+  string model = 7;
+  string display_name = 8;
+  string sku_id = 9;
+  string sku_code = 10;
+  string setup_code = 11;
+  string hardware_revision = 12;
+}
+
+message StoredDeviceRuntimeEndpoint {
+  string ip = 1;
+  string wifi_mode = 2;
+  bool wifi_connected = 3;
+  bool setup_ap_active = 4;
+  string runtime_transport = 5;
+  int32 ws_port = 6;
+  string ws_path = 7;
+  string ws_protocol = 8;
+  int32 ws_protocol_version = 9;
+  int32 discovery_port = 10;
+}
+
+message StoredDeviceCapabilities {
+  bool light = 1;
+  bool manual_light = 2;
+  bool light_program = 3;
+  bool light_presets = 4;
+  bool light_simulation = 5;
+  bool fan = 6;
+  bool cooling = 7;
+  bool temperature = 8;
+  bool standalone_timer = 9;
+  bool dosing = 10;
+  bool time_sync = 11;
+  bool ota = 12;
+}
+
+message StoredDeviceLimits {
+  int32 light_channel_count = 1;
+  int32 fan_output_count = 2;
+  int32 temperature_sensor_count = 3;
+  int32 timer_channel_count = 4;
+  int32 dosing_channel_count = 5;
+}
