@@ -1,0 +1,49 @@
+name: Verify release dispatch for system bar fix
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/verify_release_dispatch.yml
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  verify-release-run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify Android Release CI/CD run exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          TARGET_REF: fix/system-bar-insets
+        run: |
+          set -euo pipefail
+          sleep 15
+          curl --fail-with-body \
+            --silent \
+            --show-error \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${REPOSITORY}/actions/workflows/android_release.yml/runs?branch=${TARGET_REF}&event=workflow_dispatch&per_page=5" \
+            > release-runs.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(Path("release-runs.json").read_text())
+          runs = payload.get("workflow_runs", [])
+          if not runs:
+              raise SystemExit("Android Release CI/CD workflow_dispatch run was not found")
+
+          run = runs[0]
+          print(
+              "Release workflow found: "
+              f"id={run['id']} status={run['status']} "
+              f"conclusion={run.get('conclusion')} head_branch={run['head_branch']}"
+          )
+          PY
