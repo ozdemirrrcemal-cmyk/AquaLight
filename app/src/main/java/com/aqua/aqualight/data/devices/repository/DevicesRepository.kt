@@ -55,6 +55,14 @@ class DevicesRepository(
 
     fun currentDevices(): List<DeviceSnapshot> = registryStore.currentDevices()
 
+    suspend fun knownDeviceUids(): Set<DeviceUid> {
+        val durableSnapshots = knownStore?.loadSnapshots()
+
+        return (durableSnapshots ?: currentDevices())
+            .map { snapshot -> snapshot.deviceUid }
+            .toSet()
+    }
+
     fun start(scope: CoroutineScope): Job {
         val activeJob = startJob
         if (activeJob?.isActive == true) return activeJob
@@ -207,11 +215,11 @@ class DevicesRepository(
     }
 
     suspend fun forgetDevice(deviceUid: DeviceUid): Boolean {
+        knownStore?.ignoreDevice(deviceUid)
         runtimeRepository?.clearTokenAsync(deviceUid)
+        knownStore?.remove(deviceUid)
         val removed = registryStore.remove(deviceUid)
         runtimeRepository?.close(deviceUid)
-        knownStore?.remove(deviceUid)
-        knownStore?.ignoreDevice(deviceUid)
         return removed
     }
 
