@@ -130,29 +130,31 @@ class UserDataCleaner private constructor(
         runStep(
             step = Step.DEVICES
         ) {
+            val normalizedTargetOwnerUid = UserDataScope.normalizeOwnerUid(targetOwnerUid)
+            val activeOwnerMatchesTarget =
+                UserDataScope.normalizeOwnerUid(UserDataScope.currentUid()) ==
+                    normalizedTargetOwnerUid
+
+            if (activeOwnerMatchesTarget) {
+                DevicesRepositoryProvider.stopSession()
+            }
+
             val knownStore = DeviceKnownStore(appContext)
 
             TankDeviceAssignmentStore
                 .get(appContext)
                 .clearOwner(
-                    ownerUid = targetOwnerUid
+                    ownerUid = normalizedTargetOwnerUid
                 )
             knownStore.clear(
-                ownerUid = targetOwnerUid
+                ownerUid = normalizedTargetOwnerUid
             )
             knownStore.clearIgnoredDevices(
-                ownerUid = targetOwnerUid
+                ownerUid = normalizedTargetOwnerUid
             )
             DeviceCredentialStore(appContext).clearOwner(
-                ownerUid = targetOwnerUid
+                ownerUid = normalizedTargetOwnerUid
             )
-
-            if (
-                UserDataScope.normalizeOwnerUid(UserDataScope.currentUid()) ==
-                UserDataScope.normalizeOwnerUid(targetOwnerUid)
-            ) {
-                DevicesRepositoryProvider.clearInMemoryRegistryIfCreated()
-            }
         }
 
         runStep(
