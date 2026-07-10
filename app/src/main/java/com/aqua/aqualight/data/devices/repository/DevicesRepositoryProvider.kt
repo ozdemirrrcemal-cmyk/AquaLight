@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.devices.repository
 import android.content.Context
 import com.aqua.aqualight.data.devices.monitor.DeviceConnectivityObserver
 import com.aqua.aqualight.data.devices.store.DeviceKnownStore
+import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -11,9 +12,9 @@ import kotlinx.coroutines.launch
 /**
  * Process-level repository holder.
  *
- * Session restart tears down old runtime/discovery state before loading the newly authenticated
- * owner's durable devices. This prevents one account's in-memory registry from surviving into the
- * next account on the same installation.
+ * A real owner change tears down old runtime/discovery state before loading the newly authenticated
+ * owner's durable devices. Re-entering MainActivity for the same owner keeps the active runtime
+ * session instead of reconnecting unnecessarily.
  */
 object DevicesRepositoryProvider {
 
@@ -21,6 +22,9 @@ object DevicesRepositoryProvider {
 
     @Volatile
     private var instance: DevicesRepository? = null
+
+    @Volatile
+    private var activeOwnerUid: String = ""
 
     fun get(context: Context? = null): DevicesRepository {
         return repository(context).also { deviceRepository ->
@@ -31,7 +35,28 @@ object DevicesRepositoryProvider {
     fun restartForCurrentOwner(
         context: Context
     ) {
+        val ownerUid = UserDataScope.normalizeOwnerUid(
+            UserDataScope.currentUid()
+        )
+
+        if (ownerUid.isBlank()) {
+            return
+        }
+
         val deviceRepository = repository(context.applicationContext)
+        val ownerChanged = synchronized(this) {
+            if (activeOwnerUid == ownerUid) {
+                false
+            } else {
+                activeOwnerUid = ownerUid
+                true
+            }
+        }
+
+        if (!ownerChanged) {
+            deviceRepository.start(repositoryScope)
+            return
+        }
 
         repositoryScope.launch {
             deviceRepository.stopSession()
@@ -41,10 +66,7 @@ object DevicesRepositoryProvider {
 
     suspend fun stopSession() {
         instance?.stopSession()
-    }
-
-    fun clearInMemoryRegistryIfCreated() {
-        instance?.clearInMemoryRegistry()
+        activeOwnerUid = ""
     }
 
     private fun repository(context: Context?): DevicesRepository {
