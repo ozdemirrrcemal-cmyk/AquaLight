@@ -18,6 +18,7 @@ import com.aqua.aqualight.data.devices.store.DeviceRegistryStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -73,7 +74,9 @@ class DevicesRepository(
                 currentJob
             } else {
                 scope.launch {
-                    val knownDevices = filterIgnoredDevices(knownStore?.loadSnapshots().orEmpty())
+                    val knownDevices = filterIgnoredDevices(
+                        knownStore?.loadSnapshots().orEmpty()
+                    )
                     if (knownDevices.isNotEmpty()) {
                         registryStore.upsertAll(knownDevices)
                     }
@@ -81,7 +84,9 @@ class DevicesRepository(
                     val scannerJob = discoveryRepository.start(this)
                     val collectorJob = launch {
                         discoveryRepository.devices.collect { discoveredDevices ->
-                            registryStore.upsertAll(filterIgnoredDevices(discoveredDevices))
+                            registryStore.upsertAll(
+                                filterIgnoredDevices(discoveredDevices)
+                            )
                         }
                     }
                     val runtimeStateJob = runtimeRepository?.let { runtime ->
@@ -117,6 +122,18 @@ class DevicesRepository(
                 }
             }
         }
+    }
+
+    suspend fun stopSession() {
+        val activeJob = synchronized(this) {
+            startJob.also {
+                startJob = null
+            }
+        }
+
+        activeJob?.cancelAndJoin()
+        runtimeRepository?.close()
+        registryStore.clear()
     }
 
     suspend fun refreshNow(): AqlDiscoveryRefreshSender.SendResult =
@@ -233,7 +250,9 @@ class DevicesRepository(
         registryStore.clear()
     }
 
-    private suspend fun filterIgnoredDevices(snapshots: Iterable<DeviceSnapshot>): List<DeviceSnapshot> {
+    private suspend fun filterIgnoredDevices(
+        snapshots: Iterable<DeviceSnapshot>
+    ): List<DeviceSnapshot> {
         val ignoredDeviceUids = knownStore?.ignoredDeviceUidValues().orEmpty()
         if (ignoredDeviceUids.isEmpty()) return snapshots.toList()
         return snapshots.filterNot { snapshot ->
