@@ -6,12 +6,14 @@ import com.aqua.aqualight.data.devices.store.DeviceKnownStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 /**
- * Process-level Devices V2 repository holder.
+ * Process-level repository holder.
  *
- * All device UI surfaces observe the same repository instance. The repository is started from this
- * provider so device presence is not tied to a single screen such as DevicesFragment.
+ * Session restart tears down old runtime/discovery state before loading the newly authenticated
+ * owner's durable devices. This prevents one account's in-memory registry from surviving into the
+ * next account on the same installation.
  */
 object DevicesRepositoryProvider {
 
@@ -20,11 +22,32 @@ object DevicesRepositoryProvider {
     @Volatile
     private var instance: DevicesRepository? = null
 
-    fun get(context: Context? = null): DevicesRepository = instance ?: synchronized(this) {
-        instance ?: createRepository(context).also { repository ->
-            repository.start(repositoryScope)
-            instance = repository
+    fun get(context: Context? = null): DevicesRepository {
+        val repository = instance ?: synchronized(this) {
+            instance ?: createRepository(context).also { created ->
+                instance = created
+            }
         }
+
+        repository.start(repositoryScope)
+        return repository
+    }
+
+    fun restartForCurrentOwner(
+        context: Context
+    ) {
+        val repository = get(context.applicationContext)
+
+        repositoryScope.launch {
+            repository.stopSession()
+            repository.start(repositoryScope)
+        }
+    }
+
+    suspend fun stopSession(
+        context: Context
+    ) {
+        get(context.applicationContext).stopSession()
     }
 
     private fun createRepository(context: Context?): DevicesRepository {
