@@ -16,9 +16,9 @@ import kotlinx.coroutines.withContext
 /**
  * Secure owner-scoped local credential store.
  *
- * Both the Firebase owner UID and device UID are included in the SHA-256 key
- * material. Neither raw identifier is exposed in encrypted preference keys, and
- * accounts sharing one installation cannot reuse each other's runtime token.
+ * Preference keys contain only SHA-256 digests of the Firebase owner UID and
+ * device UID. Accounts sharing one installation cannot read or remove each
+ * other's runtime token.
  */
 class DeviceCredentialStore(
     context: Context
@@ -85,6 +85,26 @@ class DeviceCredentialStore(
         return getToken(deviceUid).isNullOrBlank().not()
     }
 
+    suspend fun clearOwner(
+        ownerUid: String
+    ) {
+        val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
+
+        if (normalizedOwnerUid.isBlank()) {
+            return
+        }
+
+        val ownerPrefix = tokenOwnerPrefix(normalizedOwnerUid)
+
+        withContext(Dispatchers.IO) {
+            val editor = preferences.edit()
+            preferences.all.keys
+                .filter { key -> key.startsWith(ownerPrefix) }
+                .forEach(editor::remove)
+            editor.commit()
+        }
+    }
+
     fun clearAll() {
         preferences.edit()
             .clear()
@@ -103,13 +123,23 @@ class DeviceCredentialStore(
         ownerUid: String,
         deviceUid: DeviceUid
     ): String {
-        val keyMaterial = buildString {
-            append(UserDataScope.normalizeOwnerUid(ownerUid))
-            append(KEY_MATERIAL_SEPARATOR)
-            append(deviceUid.value.trim().uppercase(Locale.US))
-        }
+        val normalizedDeviceUid =
+            deviceUid.value.trim().uppercase(Locale.US)
 
-        return "$KEY_PREFIX${sha256(keyMaterial)}"
+        return buildString {
+            append(tokenOwnerPrefix(ownerUid))
+            append(sha256(normalizedDeviceUid))
+        }
+    }
+
+    private fun tokenOwnerPrefix(
+        ownerUid: String
+    ): String {
+        return buildString {
+            append(KEY_PREFIX)
+            append(sha256(UserDataScope.normalizeOwnerUid(ownerUid)))
+            append(KEY_PART_SEPARATOR)
+        }
     }
 
     private fun String.isRuntimeTokenHex(): Boolean {
@@ -130,6 +160,6 @@ class DeviceCredentialStore(
     private companion object {
         const val PREFERENCES_NAME = "aql_device_credentials_v1"
         const val KEY_PREFIX = "ws_token_"
-        const val KEY_MATERIAL_SEPARATOR = "\u001F"
+        const val KEY_PART_SEPARATOR = "_"
     }
 }
