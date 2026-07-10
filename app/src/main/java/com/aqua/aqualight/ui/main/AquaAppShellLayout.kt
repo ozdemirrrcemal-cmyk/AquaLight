@@ -67,12 +67,7 @@ class AquaAppShellLayout @JvmOverloads constructor(
             WindowInsetsCompat.Type.displayCutout()
 
     init {
-        context.findActivity()?.let { activity ->
-            WindowCompat.setDecorFitsSystemWindows(
-                activity.window,
-                false
-            )
-        }
+        enableEdgeToEdgeWindow()
 
         ViewCompat.setOnApplyWindowInsetsListener(this) { _, windowInsets ->
             safeDrawingInsets =
@@ -114,19 +109,25 @@ class AquaAppShellLayout @JvmOverloads constructor(
             bottomNavigation?.visibility
                 ?: View.GONE
 
+        bottomNavigation?.let { bottomNavigationView ->
+            ViewCompat.setOnApplyWindowInsetsListener(
+                bottomNavigationView
+            ) { _, childInsets ->
+                applyInsetsToBottomNavigation(
+                    bottomNavigationView
+                )
+
+                childInsets
+            }
+        }
+
         applyInsetsToShellChildren()
     }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
 
-        context.findActivity()?.let { activity ->
-            WindowCompat.setDecorFitsSystemWindows(
-                activity.window,
-                false
-            )
-        }
-
+        enableEdgeToEdgeWindow()
         ViewCompat.requestApplyInsets(this)
     }
 
@@ -194,6 +195,14 @@ class AquaAppShellLayout @JvmOverloads constructor(
                     }
         )
 
+        applyInsetsToBottomNavigation(
+            bottomNavigationView
+        )
+    }
+
+    private fun applyInsetsToBottomNavigation(
+        bottomNavigationView: View
+    ) {
         bottomNavigationView.updatePadding(
             left =
                 bottomNavigationBasePadding.left +
@@ -207,6 +216,15 @@ class AquaAppShellLayout @JvmOverloads constructor(
                 bottomNavigationBasePadding.bottom +
                     safeDrawingInsets.bottom
         )
+    }
+
+    private fun enableEdgeToEdgeWindow() {
+        context.findActivity()?.let { activity ->
+            WindowCompat.setDecorFitsSystemWindows(
+                activity.window,
+                false
+            )
+        }
     }
 
     private fun View?.capturePadding(): ViewPadding {
