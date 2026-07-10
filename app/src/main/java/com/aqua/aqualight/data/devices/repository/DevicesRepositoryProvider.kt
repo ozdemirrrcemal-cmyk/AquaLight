@@ -6,7 +6,9 @@ import com.aqua.aqualight.data.devices.store.DeviceKnownStore
 import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 
 /**
@@ -26,6 +28,9 @@ object DevicesRepositoryProvider {
     @Volatile
     private var activeOwnerUid: String = ""
 
+    @Volatile
+    private var sessionTransitionJob: Job? = null
+
     fun get(context: Context? = null): DevicesRepository {
         return repository(context).also { deviceRepository ->
             deviceRepository.start(repositoryScope)
@@ -44,29 +49,56 @@ object DevicesRepositoryProvider {
         }
 
         val deviceRepository = repository(context.applicationContext)
-        val ownerChanged = synchronized(this) {
+        var startImmediately = false
+
+        synchronized(this) {
             if (activeOwnerUid == ownerUid) {
-                false
+                startImmediately = sessionTransitionJob?.isActive != true
             } else {
                 activeOwnerUid = ownerUid
-                true
+                sessionTransitionJob?.cancel()
+
+                val transitionJob = repositoryScope.launch {
+                    deviceRepository.stopSession()
+
+                    val ownerStillActive = synchronized(this@DevicesRepositoryProvider) {
+                        activeOwnerUid == ownerUid
+                    }
+                    val firebaseOwnerStillMatches = UserDataScope.normalizeOwnerUid(
+                        UserDataScope.currentUid()
+                    ) == ownerUid
+
+                    if (ownerStillActive && firebaseOwnerStillMatches) {
+                        deviceRepository.start(repositoryScope)
+                    }
+                }
+
+                sessionTransitionJob = transitionJob
+                transitionJob.invokeOnCompletion {
+                    synchronized(this@DevicesRepositoryProvider) {
+                        if (sessionTransitionJob === transitionJob) {
+                            sessionTransitionJob = null
+                        }
+                    }
+                }
             }
         }
 
-        if (!ownerChanged) {
-            deviceRepository.start(repositoryScope)
-            return
-        }
-
-        repositoryScope.launch {
-            deviceRepository.stopSession()
+        if (startImmediately) {
             deviceRepository.start(repositoryScope)
         }
     }
 
     suspend fun stopSession() {
+        val transitionJob = synchronized(this) {
+            activeOwnerUid = ""
+            sessionTransitionJob.also {
+                sessionTransitionJob = null
+            }
+        }
+
+        transitionJob?.cancelAndJoin()
         instance?.stopSession()
-        activeOwnerUid = ""
     }
 
     private fun repository(context: Context?): DevicesRepository {
