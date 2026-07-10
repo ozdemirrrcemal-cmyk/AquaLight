@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+option java_package = "com.aqua.aqualight.data.aquarium.devices";
+option java_multiple_files = true;
+
+message TankDeviceAssignmentsStore {
+  repeated StoredTankDeviceAssignment assignments = 1;
+}
+
+message StoredTankDeviceAssignment {
+  string owner_uid = 1;
+  int64 tank_id = 2;
+  string device_uid = 3;
+  int64 assigned_at_millis = 4;
+  int64 updated_at_millis = 5;
+}
