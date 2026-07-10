@@ -7,16 +7,17 @@ import androidx.security.crypto.MasterKey
 import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsTokenProvider
+import com.aqua.aqualight.data.user.UserDataScope
 import java.security.MessageDigest
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Secure local credential store for AquaLight Devices V2.
+ * Secure owner-scoped runtime credential store.
  *
- * Runtime WebSocket pairing tokens are stored per deviceUid. The preference key does not contain
- * the raw deviceUid; it uses a SHA-256 digest to avoid exposing device identity in preference keys.
+ * Preference keys contain SHA-256 digests of both Firebase owner UID and device UID. Raw identifiers
+ * are not exposed, and a token saved for one account cannot be resolved or removed by another.
  */
 class DeviceCredentialStore(
     context: Context
@@ -39,31 +40,42 @@ class DeviceCredentialStore(
     }
 
     override suspend fun getToken(deviceUid: DeviceUid): String? {
+        val ownerUid = currentOwnerUidOrNull()
+            ?: return null
+
         return withContext(Dispatchers.IO) {
             preferences
-                .getString(tokenPreferenceKey(deviceUid), null)
+                .getString(tokenPreferenceKey(ownerUid, deviceUid), null)
                 ?.trim()
                 ?.takeIf { token -> token.isNotBlank() }
         }
     }
 
     override suspend fun saveToken(deviceUid: DeviceUid, token: String) {
+        val ownerUid = UserDataScope.requireCurrentUid()
         val normalizedToken = token.trim()
+
         if (!normalizedToken.isRuntimeTokenHex()) {
             return
         }
 
         withContext(Dispatchers.IO) {
             preferences.edit()
-                .putString(tokenPreferenceKey(deviceUid), normalizedToken)
+                .putString(
+                    tokenPreferenceKey(ownerUid, deviceUid),
+                    normalizedToken
+                )
                 .commit()
         }
     }
 
     override suspend fun clearToken(deviceUid: DeviceUid) {
+        val ownerUid = currentOwnerUidOrNull()
+            ?: return
+
         withContext(Dispatchers.IO) {
             preferences.edit()
-                .remove(tokenPreferenceKey(deviceUid))
+                .remove(tokenPreferenceKey(ownerUid, deviceUid))
                 .commit()
         }
     }
@@ -72,14 +84,62 @@ class DeviceCredentialStore(
         return getToken(deviceUid).isNullOrBlank().not()
     }
 
+    suspend fun clearOwner(
+        ownerUid: String
+    ) {
+        val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
+
+        if (normalizedOwnerUid.isBlank()) {
+            return
+        }
+
+        val ownerPrefix = tokenOwnerPrefix(normalizedOwnerUid)
+
+        withContext(Dispatchers.IO) {
+            val editor = preferences.edit()
+            preferences.all.keys
+                .filter { key -> key.startsWith(ownerPrefix) }
+                .forEach(editor::remove)
+            editor.commit()
+        }
+    }
+
     fun clearAll() {
         preferences.edit()
             .clear()
             .apply()
     }
 
-    private fun tokenPreferenceKey(deviceUid: DeviceUid): String {
-        return "$KEY_PREFIX${sha256(deviceUid.value)}"
+    private fun currentOwnerUidOrNull(): String? {
+        return UserDataScope.normalizeOwnerUid(
+            UserDataScope.currentUid()
+        ).takeIf { ownerUid ->
+            ownerUid.isNotBlank()
+        }
+    }
+
+    private fun tokenPreferenceKey(
+        ownerUid: String,
+        deviceUid: DeviceUid
+    ): String {
+        val normalizedDeviceUid = deviceUid.value
+            .trim()
+            .uppercase(Locale.US)
+
+        return buildString {
+            append(tokenOwnerPrefix(ownerUid))
+            append(sha256(normalizedDeviceUid))
+        }
+    }
+
+    private fun tokenOwnerPrefix(
+        ownerUid: String
+    ): String {
+        return buildString {
+            append(KEY_PREFIX)
+            append(sha256(UserDataScope.normalizeOwnerUid(ownerUid)))
+            append(KEY_PART_SEPARATOR)
+        }
     }
 
     private fun String.isRuntimeTokenHex(): Boolean {
@@ -90,7 +150,7 @@ class DeviceCredentialStore(
     private fun sha256(value: String): String {
         val digest = MessageDigest
             .getInstance("SHA-256")
-            .digest(value.trim().uppercase(Locale.US).toByteArray(Charsets.UTF_8))
+            .digest(value.toByteArray(Charsets.UTF_8))
 
         return digest.joinToString(separator = "") { byte ->
             "%02x".format(byte)
@@ -100,5 +160,6 @@ class DeviceCredentialStore(
     private companion object {
         const val PREFERENCES_NAME = "aql_device_credentials_v2"
         const val KEY_PREFIX = "ws_token_"
+        const val KEY_PART_SEPARATOR = "_"
     }
 }
