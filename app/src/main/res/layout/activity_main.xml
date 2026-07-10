@@ -1,31 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
+<com.aqua.aqualight.ui.main.AquaAppShellLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/colorSurface">
+    android:background="@color/background_color">
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/nav_host"
         android:name="androidx.navigation.fragment.NavHostFragment"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
         app:defaultNavHost="true"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/bottomNav"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNav"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:background="?attr/aquaBottomNavBackground"
         style="@style/Widget.Aqua.BottomNav"
-        app:itemIconTint="@color/bottom_nav_item_tint"
-        app:itemTextColor="@color/bottom_nav_item_tint"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="?attr/aquaBottomNavBackground"
+        android:visibility="gone"
         app:itemActiveIndicatorStyle="@style/Widget.Aqua.BottomNav.ActiveIndicator"
         app:itemIconSize="23dp"
-        app:menu="@menu/menu_bottom"
-        android:visibility="gone" />
+        app:itemIconTint="@color/bottom_nav_item_tint"
+        app:itemTextColor="@color/bottom_nav_item_tint"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:menu="@menu/menu_bottom" />
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</com.aqua.aqualight.ui.main.AquaAppShellLayout>
