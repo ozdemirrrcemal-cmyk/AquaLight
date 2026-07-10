@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.auth
 
 import android.content.Context
+import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentStartupRepair
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.reminder.CareTaskReminderScheduler
 import com.aqua.aqualight.data.care.smartcare.SmartCareDailyWorker
@@ -17,6 +18,9 @@ object SessionBoundServiceManager {
     ) {
         val appContext = context.applicationContext
 
+        TankDeviceAssignmentStartupRepair.schedule(
+            context = appContext
+        )
 
         SmartCareDailyWorker.schedule(
             context = appContext
@@ -29,6 +33,7 @@ object SessionBoundServiceManager {
     ) {
         val appContext = context.applicationContext
 
+        TankDeviceAssignmentStartupRepair.reset()
 
         SmartCareDailyWorker.cancel(
             context = appContext
