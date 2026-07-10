@@ -141,7 +141,9 @@ class UserDataCleaner private constructor(
             ) {
                 runCatching {
                     block()
-                }.onFailure(cleanupErrors::add)
+                }.onFailure { error ->
+                    cleanupErrors += error
+                }
             }
 
             if (activeOwnerMatchesTarget) {
