@@ -4,13 +4,14 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.asLiveData
-import com.aqua.aqualight.data.care.CareTaskDataStoreManager
-import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
 import com.aqua.aqualight.data.aquarium.model.TankPlantTag
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 
 class AquariumTankViewModel(
   application: Application
@@ -26,6 +27,10 @@ class AquariumTankViewModel(
     appContext
   )
 
+  private val tankDeviceAssignmentRepository =
+    TankDeviceAssignmentRepositoryProvider.get(
+      appContext
+    )
 
   val tanks: LiveData<List<SavedAquariumTank>> =
     tankDataStoreManager.tanksFlow.asLiveData()
@@ -60,15 +65,21 @@ class AquariumTankViewModel(
     }
 
     safeTankIds.forEach { tankId ->
-
       careTaskDataStoreManager.deleteTasksForTank(
         tankId = tankId
       )
-
     }
 
     tankDataStoreManager.deleteTanks(
       tankIds = safeTankIds
+    )
+
+    // Relationship cleanup intentionally runs after durable tank deletion.
+    // If the final cleanup is interrupted, startup repair safely removes the
+    // dangling assignments without ever detaching devices from a tank that
+    // failed to delete.
+    tankDeviceAssignmentRepository.removeAssignmentsForTanks(
+      tankIds = safeTankIds.toSet()
     )
   }
 
