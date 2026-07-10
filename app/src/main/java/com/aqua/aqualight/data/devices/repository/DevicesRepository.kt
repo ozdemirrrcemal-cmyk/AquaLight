@@ -18,6 +18,7 @@ import com.aqua.aqualight.data.devices.store.DeviceRegistryStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -73,7 +74,9 @@ class DevicesRepository(
                 currentJob
             } else {
                 scope.launch {
-                    val knownDevices = filterIgnoredDevices(knownStore?.loadSnapshots().orEmpty())
+                    val knownDevices = filterIgnoredDevices(
+                        knownStore?.loadSnapshots().orEmpty()
+                    )
                     if (knownDevices.isNotEmpty()) {
                         registryStore.upsertAll(knownDevices)
                     }
@@ -81,7 +84,9 @@ class DevicesRepository(
                     val scannerJob = discoveryRepository.start(this)
                     val collectorJob = launch {
                         discoveryRepository.devices.collect { discoveredDevices ->
-                            registryStore.upsertAll(filterIgnoredDevices(discoveredDevices))
+                            registryStore.upsertAll(
+                                filterDiscoveryDevicesForActiveOwner(discoveredDevices)
+                            )
                         }
                     }
                     val runtimeStateJob = runtimeRepository?.let { runtime ->
@@ -117,6 +122,18 @@ class DevicesRepository(
                 }
             }
         }
+    }
+
+    suspend fun stopSession() {
+        val activeJob = synchronized(this) {
+            startJob.also {
+                startJob = null
+            }
+        }
+
+        activeJob?.cancelAndJoin()
+        runtimeRepository?.close()
+        registryStore.clear()
     }
 
     suspend fun refreshNow(): AqlDiscoveryRefreshSender.SendResult =
@@ -208,18 +225,18 @@ class DevicesRepository(
 
     suspend fun removeProvisioningRegistration(deviceUid: DeviceUid): Boolean {
         runtimeRepository?.clearToken(deviceUid)
+        knownStore?.remove(deviceUid)
         val removed = registryStore.remove(deviceUid)
         runtimeRepository?.close(deviceUid)
-        knownStore?.remove(deviceUid)
         return removed
     }
 
     suspend fun forgetDevice(deviceUid: DeviceUid): Boolean {
         runtimeRepository?.clearToken(deviceUid)
+        knownStore?.ignoreDevice(deviceUid)
+        knownStore?.remove(deviceUid)
         val removed = registryStore.remove(deviceUid)
         runtimeRepository?.close(deviceUid)
-        knownStore?.remove(deviceUid)
-        knownStore?.ignoreDevice(deviceUid)
         return removed
     }
 
@@ -233,7 +250,29 @@ class DevicesRepository(
         registryStore.clear()
     }
 
-    private suspend fun filterIgnoredDevices(snapshots: Iterable<DeviceSnapshot>): List<DeviceSnapshot> {
+    private suspend fun filterDiscoveryDevicesForActiveOwner(
+        snapshots: Iterable<DeviceSnapshot>
+    ): List<DeviceSnapshot> {
+        val durableStore = knownStore
+            ?: return snapshots.toList()
+        val ignoredDeviceUids = durableStore.ignoredDeviceUidValues()
+        val durableDeviceUids = durableStore.loadSnapshots()
+            .map { snapshot -> snapshot.deviceUid }
+            .toSet()
+        val stagedOrVisibleDeviceUids = registryStore.currentDevices()
+            .map { snapshot -> snapshot.deviceUid }
+            .toSet()
+        val allowedDeviceUids = durableDeviceUids + stagedOrVisibleDeviceUids
+
+        return snapshots.filter { snapshot ->
+            snapshot.deviceUid in allowedDeviceUids &&
+                snapshot.deviceUid.value !in ignoredDeviceUids
+        }
+    }
+
+    private suspend fun filterIgnoredDevices(
+        snapshots: Iterable<DeviceSnapshot>
+    ): List<DeviceSnapshot> {
         val ignoredDeviceUids = knownStore?.ignoredDeviceUidValues().orEmpty()
         if (ignoredDeviceUids.isEmpty()) return snapshots.toList()
         return snapshots.filterNot { snapshot ->
