@@ -134,27 +134,54 @@ class UserDataCleaner private constructor(
             val activeOwnerMatchesTarget =
                 UserDataScope.normalizeOwnerUid(UserDataScope.currentUid()) ==
                     normalizedTargetOwnerUid
+            val cleanupErrors = mutableListOf<Throwable>()
+
+            suspend fun attempt(
+                block: suspend () -> Unit
+            ) {
+                runCatching {
+                    block()
+                }.onFailure(cleanupErrors::add)
+            }
 
             if (activeOwnerMatchesTarget) {
-                DevicesRepositoryProvider.stopSession()
+                attempt {
+                    DevicesRepositoryProvider.stopSession()
+                }
             }
 
             val knownStore = DeviceKnownStore(appContext)
 
-            TankDeviceAssignmentStore
-                .get(appContext)
-                .clearOwner(
+            attempt {
+                TankDeviceAssignmentStore
+                    .get(appContext)
+                    .clearOwner(
+                        ownerUid = normalizedTargetOwnerUid
+                    )
+            }
+            attempt {
+                knownStore.clear(
                     ownerUid = normalizedTargetOwnerUid
                 )
-            knownStore.clear(
-                ownerUid = normalizedTargetOwnerUid
-            )
-            knownStore.clearIgnoredDevices(
-                ownerUid = normalizedTargetOwnerUid
-            )
-            DeviceCredentialStore(appContext).clearOwner(
-                ownerUid = normalizedTargetOwnerUid
-            )
+            }
+            attempt {
+                knownStore.clearIgnoredDevices(
+                    ownerUid = normalizedTargetOwnerUid
+                )
+            }
+            attempt {
+                DeviceCredentialStore(appContext).clearOwner(
+                    ownerUid = normalizedTargetOwnerUid
+                )
+            }
+
+            if (cleanupErrors.isNotEmpty()) {
+                throw IllegalStateException(
+                    "One or more owner-scoped device cleanup operations failed."
+                ).also { aggregateError ->
+                    cleanupErrors.forEach(aggregateError::addSuppressed)
+                }
+            }
         }
 
         runStep(
