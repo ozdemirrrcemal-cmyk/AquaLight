@@ -81,9 +81,9 @@ class TankDeviceAssignmentStore private constructor(
                 .filter { stored ->
                     stored.ownerUid == normalizedOwnerUid
                 }
-                .mapNotNull(
-                    StoredTankDeviceAssignment::toDomainOrNull
-                )
+                .mapNotNull { stored ->
+                    stored.toDomainOrNull()
+                }
                 .sortedWith(ASSIGNMENT_ORDER)
                 .toList()
         }
@@ -123,7 +123,10 @@ class TankDeviceAssignmentStore private constructor(
                         stored.deviceUid == normalizedDeviceUid
                 }
 
-            if (existing?.tankId == tankId) {
+            // One device may belong to only one aquarium. The conflict check is
+            // inside the atomic DataStore update so two concurrent UI requests
+            // can never silently move the same device between aquariums.
+            if (existing != null) {
                 result = existing.toDomainOrNull()
                     ?.let(
                         TankDeviceAssignmentMutationResult::AlreadyAssigned
@@ -145,17 +148,13 @@ class TankDeviceAssignmentStore private constructor(
                     .build()
 
             val nextAssignments = currentStore.assignmentsList
-                .filterNot { stored ->
-                    stored.ownerUid == normalizedOwnerUid &&
-                        stored.deviceUid == normalizedDeviceUid
-                }
                 .plus(nextAssignment)
 
             result = TankDeviceAssignmentMutationResult.Assigned(
                 assignment = requireNotNull(
                     nextAssignment.toDomainOrNull()
                 ),
-                previousTankId = existing?.tankId
+                previousTankId = null
             )
 
             currentStore.toBuilder()
