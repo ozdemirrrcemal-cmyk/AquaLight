@@ -1,16 +1,18 @@
 package com.aqua.aqualight.ui.tabs.aquarium
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.asLiveData
-import com.aqua.aqualight.data.care.CareTaskDataStoreManager
-import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
 import com.aqua.aqualight.data.aquarium.model.TankPlantTag
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 
 class AquariumTankViewModel(
   application: Application
@@ -26,6 +28,8 @@ class AquariumTankViewModel(
     appContext
   )
 
+  private val tankDeviceAssignmentRepository =
+    TankDeviceAssignmentRepositoryProvider.get(appContext)
 
   val tanks: LiveData<List<SavedAquariumTank>> =
     tankDataStoreManager.tanksFlow.asLiveData()
@@ -60,16 +64,36 @@ class AquariumTankViewModel(
     }
 
     safeTankIds.forEach { tankId ->
-
       careTaskDataStoreManager.deleteTasksForTank(
         tankId = tankId
       )
-
     }
 
     tankDataStoreManager.deleteTanks(
       tankIds = safeTankIds
     )
+
+    runCatching {
+      tankDeviceAssignmentRepository.removeAssignmentsForTanks(
+        tankIds = safeTankIds.toSet()
+      )
+    }.onFailure { cleanupError ->
+      Log.e(
+        TAG,
+        "Tank deleted but device assignment cleanup failed.",
+        cleanupError
+      )
+
+      runCatching {
+        tankDeviceAssignmentRepository.repairStaleAssignments()
+      }.onFailure { repairError ->
+        Log.e(
+          TAG,
+          "Assignment repair failed after tank deletion.",
+          repairError
+        )
+      }
+    }
   }
 
   suspend fun updateTankPhoto(
@@ -238,5 +262,9 @@ class AquariumTankViewModel(
         tankId = tankId
       )
     }
+  }
+
+  private companion object {
+    const val TAG = "AquariumTankViewModel"
   }
 }
