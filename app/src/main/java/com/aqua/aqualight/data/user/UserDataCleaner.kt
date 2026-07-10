@@ -2,7 +2,7 @@ package com.aqua.aqualight.data.user
 
 import android.content.Context
 import android.net.Uri
-import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
+import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentStore
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.auth.SessionBoundServiceManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
@@ -132,12 +132,11 @@ class UserDataCleaner private constructor(
         ) {
             val knownStore = DeviceKnownStore(appContext)
 
-            TankDeviceAssignmentRepositoryProvider
+            TankDeviceAssignmentStore
                 .get(appContext)
-                .clearAssignmentsForOwner(
+                .clearOwner(
                     ownerUid = targetOwnerUid
                 )
-
             knownStore.clear(
                 ownerUid = targetOwnerUid
             )
