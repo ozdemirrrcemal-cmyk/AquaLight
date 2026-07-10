@@ -8,8 +8,6 @@ import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsTokenProvider
 import com.aqua.aqualight.data.user.UserDataScope
-import java.security.MessageDigest
-import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -45,7 +43,13 @@ class DeviceCredentialStore(
 
         return withContext(Dispatchers.IO) {
             preferences
-                .getString(tokenPreferenceKey(ownerUid, deviceUid), null)
+                .getString(
+                    DeviceCredentialKeyFactory.key(
+                        ownerUid = ownerUid,
+                        deviceUid = deviceUid.value
+                    ),
+                    null
+                )
                 ?.trim()
                 ?.takeIf { token -> token.isNotBlank() }
         }
@@ -62,7 +66,10 @@ class DeviceCredentialStore(
         withContext(Dispatchers.IO) {
             preferences.edit()
                 .putString(
-                    tokenPreferenceKey(ownerUid, deviceUid),
+                    DeviceCredentialKeyFactory.key(
+                        ownerUid = ownerUid,
+                        deviceUid = deviceUid.value
+                    ),
                     normalizedToken
                 )
                 .commit()
@@ -75,7 +82,12 @@ class DeviceCredentialStore(
 
         withContext(Dispatchers.IO) {
             preferences.edit()
-                .remove(tokenPreferenceKey(ownerUid, deviceUid))
+                .remove(
+                    DeviceCredentialKeyFactory.key(
+                        ownerUid = ownerUid,
+                        deviceUid = deviceUid.value
+                    )
+                )
                 .commit()
         }
     }
@@ -93,7 +105,7 @@ class DeviceCredentialStore(
             return
         }
 
-        val ownerPrefix = tokenOwnerPrefix(normalizedOwnerUid)
+        val ownerPrefix = DeviceCredentialKeyFactory.ownerPrefix(normalizedOwnerUid)
 
         withContext(Dispatchers.IO) {
             val editor = preferences.edit()
@@ -118,48 +130,12 @@ class DeviceCredentialStore(
         }
     }
 
-    private fun tokenPreferenceKey(
-        ownerUid: String,
-        deviceUid: DeviceUid
-    ): String {
-        val normalizedDeviceUid = deviceUid.value
-            .trim()
-            .uppercase(Locale.US)
-
-        return buildString {
-            append(tokenOwnerPrefix(ownerUid))
-            append(sha256(normalizedDeviceUid))
-        }
-    }
-
-    private fun tokenOwnerPrefix(
-        ownerUid: String
-    ): String {
-        return buildString {
-            append(KEY_PREFIX)
-            append(sha256(UserDataScope.normalizeOwnerUid(ownerUid)))
-            append(KEY_PART_SEPARATOR)
-        }
-    }
-
     private fun String.isRuntimeTokenHex(): Boolean {
         return length == AqlBleProvisioningContract.RUNTIME_TOKEN_HEX_LENGTH &&
             matches(Regex("(?i)^[0-9a-f]+$"))
     }
 
-    private fun sha256(value: String): String {
-        val digest = MessageDigest
-            .getInstance("SHA-256")
-            .digest(value.toByteArray(Charsets.UTF_8))
-
-        return digest.joinToString(separator = "") { byte ->
-            "%02x".format(byte)
-        }
-    }
-
     private companion object {
         const val PREFERENCES_NAME = "aql_device_credentials_v2"
-        const val KEY_PREFIX = "ws_token_"
-        const val KEY_PART_SEPARATOR = "_"
     }
 }
