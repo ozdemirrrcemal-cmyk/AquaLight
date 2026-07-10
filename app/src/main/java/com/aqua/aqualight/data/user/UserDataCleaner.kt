@@ -130,60 +130,9 @@ class UserDataCleaner private constructor(
         runStep(
             step = Step.DEVICES
         ) {
-            val normalizedTargetOwnerUid = UserDataScope.normalizeOwnerUid(targetOwnerUid)
-            val activeOwnerMatchesTarget =
-                UserDataScope.normalizeOwnerUid(UserDataScope.currentUid()) ==
-                    normalizedTargetOwnerUid
-            val cleanupErrors = mutableListOf<Throwable>()
-
-            suspend fun attempt(
-                block: suspend () -> Unit
-            ) {
-                runCatching {
-                    block()
-                }.onFailure { error ->
-                    cleanupErrors += error
-                }
-            }
-
-            if (activeOwnerMatchesTarget) {
-                attempt {
-                    DevicesRepositoryProvider.stopSession()
-                }
-            }
-
-            val knownStore = DeviceKnownStore(appContext)
-
-            attempt {
-                TankDeviceAssignmentStore
-                    .get(appContext)
-                    .clearOwner(
-                        ownerUid = normalizedTargetOwnerUid
-                    )
-            }
-            attempt {
-                knownStore.clear(
-                    ownerUid = normalizedTargetOwnerUid
-                )
-            }
-            attempt {
-                knownStore.clearIgnoredDevices(
-                    ownerUid = normalizedTargetOwnerUid
-                )
-            }
-            attempt {
-                DeviceCredentialStore(appContext).clearOwner(
-                    ownerUid = normalizedTargetOwnerUid
-                )
-            }
-
-            if (cleanupErrors.isNotEmpty()) {
-                throw IllegalStateException(
-                    "One or more owner-scoped device cleanup operations failed."
-                ).also { aggregateError ->
-                    cleanupErrors.forEach(aggregateError::addSuppressed)
-                }
-            }
+            clearOwnerDeviceData(
+                ownerUid = targetOwnerUid
+            )
         }
 
         runStep(
@@ -208,6 +157,65 @@ class UserDataCleaner private constructor(
         return CleanupResult(
             issues = issues.toList()
         )
+    }
+
+    private suspend fun clearOwnerDeviceData(
+        ownerUid: String
+    ) {
+        val normalizedTargetOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
+        require(normalizedTargetOwnerUid.isNotBlank()) {
+            "Owner-scoped device cleanup requires a non-empty owner UID."
+        }
+
+        val activeOwnerMatchesTarget =
+            UserDataScope.normalizeOwnerUid(UserDataScope.currentUid()) ==
+                normalizedTargetOwnerUid
+        val knownStore = DeviceKnownStore(appContext)
+        val cleanupFailures = OwnerDeviceDataCleaner(
+            stopActiveSession = {
+                DevicesRepositoryProvider.stopSession()
+            },
+            clearAssignments = { targetOwnerUid ->
+                TankDeviceAssignmentStore
+                    .get(appContext)
+                    .clearOwner(
+                        ownerUid = targetOwnerUid
+                    )
+            },
+            clearKnownDevices = { targetOwnerUid ->
+                knownStore.clear(
+                    ownerUid = targetOwnerUid
+                )
+            },
+            clearIgnoredDevices = { targetOwnerUid ->
+                knownStore.clearIgnoredDevices(
+                    ownerUid = targetOwnerUid
+                )
+            },
+            clearCredentials = { targetOwnerUid ->
+                DeviceCredentialStore(appContext).clearOwner(
+                    ownerUid = targetOwnerUid
+                )
+            }
+        ).clear(
+            ownerUid = normalizedTargetOwnerUid,
+            activeOwnerMatchesTarget = activeOwnerMatchesTarget
+        )
+
+        if (cleanupFailures.isNotEmpty()) {
+            throw IllegalStateException(
+                "One or more owner-scoped device cleanup operations failed."
+            ).also { aggregateError ->
+                cleanupFailures.forEach { failure ->
+                    aggregateError.addSuppressed(
+                        IllegalStateException(
+                            "Device cleanup operation ${failure.operation} failed.",
+                            failure.error
+                        )
+                    )
+                }
+            }
+        }
     }
 
     private fun String?.orCurrentOwnerUidOrReturn(): String {
