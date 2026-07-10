@@ -3,7 +3,7 @@ name: Android Release CI/CD
 on:
   workflow_dispatch:
   push:
-    branches: ["main"]
+    branches: ["main", "feature/production-tank-device-assignment-v1"]
 
 concurrency:
   group: release-ci-${{ github.ref }}
