@@ -12,136 +12,295 @@ import com.aqua.aqualight.data.devices.model.DeviceConnectionState
 import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceIdentity
 import com.aqua.aqualight.data.devices.model.DeviceLimits
-import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceProduct
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.user.UserDataScope
 import java.io.IOException
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import org.json.JSONArray
 import org.json.JSONObject
 
-private const val AQL_KNOWN_DEVICES_DATASTORE_NAME = "aql_known_devices_v2"
+private const val AQL_KNOWN_DEVICES_DATASTORE_NAME =
+    "aql_known_devices_v1"
+
 private val Context.aqlKnownDevicesDataStore by preferencesDataStore(
     name = AQL_KNOWN_DEVICES_DATASTORE_NAME
 )
 
 /**
- * Durable non-secret known-device store.
+ * Durable non-secret known-device store, partitioned by authenticated owner.
  *
- * WebSocket tokens stay in DeviceCredentialStore. This store only keeps identity/product/endpoint
- * and resolved runtime metadata required to show provisioned devices after app restart and reconnect
- * runtime later. Preferences DataStore is used as the single durable source for this small metadata
- * document; UI code still consumes DevicesRepository, never this store directly.
+ * WebSocket tokens stay in DeviceCredentialStore. This store only keeps identity,
+ * product, endpoint and resolved runtime metadata. No device from one Firebase
+ * account is exposed to another local account on the same installation.
  */
 class DeviceKnownStore(
     context: Context
 ) {
+    private data class OwnedSnapshot(
+        val ownerUid: String,
+        val snapshot: DeviceSnapshot
+    )
 
-    private val dataStore = context.applicationContext.aqlKnownDevicesDataStore
+    private val dataStore =
+        context.applicationContext.aqlKnownDevicesDataStore
 
-    suspend fun loadSnapshots(): List<DeviceSnapshot> {
-        val raw = preferences()[KEY_DEVICES].orEmpty().ifBlank { "[]" }
-        val array = runCatching { JSONArray(raw) }.getOrDefault(JSONArray())
+    suspend fun loadSnapshots(
+        ownerUid: String = UserDataScope.currentUid()
+    ): List<DeviceSnapshot> {
+        val normalizedOwnerUid = normalizeOwnerUidOrNull(ownerUid)
+            ?: return emptyList()
+
+        return loadOwnedSnapshots()
+            .asSequence()
+            .filter { record ->
+                record.ownerUid == normalizedOwnerUid
+            }
+            .map { record ->
+                record.snapshot
+            }
+            .sortedWith(SNAPSHOT_ORDER)
+            .toList()
+    }
+
+    suspend fun saveSnapshot(
+        snapshot: DeviceSnapshot,
+        ownerUid: String = UserDataScope.requireCurrentUid()
+    ) {
+        val normalizedOwnerUid = requireOwnerUid(ownerUid)
+        val current = loadOwnedSnapshots()
+            .associateBy { record ->
+                record.ownerUid to record.snapshot.deviceUid.value
+            }
+            .toMutableMap()
+
+        current[normalizedOwnerUid to snapshot.deviceUid.value] =
+            OwnedSnapshot(
+                ownerUid = normalizedOwnerUid,
+                snapshot = snapshot
+            )
+
+        saveOwnedSnapshots(current.values)
+    }
+
+    suspend fun saveSnapshots(
+        snapshots: Iterable<DeviceSnapshot>,
+        ownerUid: String = UserDataScope.requireCurrentUid()
+    ) {
+        val normalizedOwnerUid = requireOwnerUid(ownerUid)
+        val current = loadOwnedSnapshots()
+            .associateBy { record ->
+                record.ownerUid to record.snapshot.deviceUid.value
+            }
+            .toMutableMap()
+
+        snapshots.forEach { snapshot ->
+            current[normalizedOwnerUid to snapshot.deviceUid.value] =
+                OwnedSnapshot(
+                    ownerUid = normalizedOwnerUid,
+                    snapshot = snapshot
+                )
+        }
+
+        saveOwnedSnapshots(current.values)
+    }
+
+    suspend fun remove(
+        deviceUid: DeviceUid,
+        ownerUid: String = UserDataScope.requireCurrentUid()
+    ) {
+        val normalizedOwnerUid = requireOwnerUid(ownerUid)
+        val remaining = loadOwnedSnapshots().filterNot { record ->
+            record.ownerUid == normalizedOwnerUid &&
+                record.snapshot.deviceUid == deviceUid
+        }
+
+        saveOwnedSnapshots(remaining)
+    }
+
+    suspend fun ignoreDevice(
+        deviceUid: DeviceUid,
+        ownerUid: String = UserDataScope.requireCurrentUid()
+    ) {
+        val normalizedOwnerUid = requireOwnerUid(ownerUid)
+        val normalizedDeviceUid = deviceUid.value.trim()
+
+        if (normalizedDeviceUid.isBlank()) {
+            return
+        }
+
+        val ignored = ignoredEntries().toMutableSet()
+        ignored += ignoredEntry(
+            ownerUid = normalizedOwnerUid,
+            deviceUid = normalizedDeviceUid
+        )
+        saveIgnoredEntries(ignored)
+    }
+
+    suspend fun allowDevice(
+        deviceUid: DeviceUid,
+        ownerUid: String = UserDataScope.requireCurrentUid()
+    ) {
+        val normalizedOwnerUid = requireOwnerUid(ownerUid)
+        val targetEntry = ignoredEntry(
+            ownerUid = normalizedOwnerUid,
+            deviceUid = deviceUid.value.trim()
+        )
+        val ignored = ignoredEntries()
+
+        if (targetEntry !in ignored) {
+            return
+        }
+
+        saveIgnoredEntries(ignored - targetEntry)
+    }
+
+    suspend fun isIgnored(
+        deviceUid: DeviceUid,
+        ownerUid: String = UserDataScope.currentUid()
+    ): Boolean {
+        val normalizedOwnerUid = normalizeOwnerUidOrNull(ownerUid)
+            ?: return false
+
+        return ignoredEntry(
+            ownerUid = normalizedOwnerUid,
+            deviceUid = deviceUid.value.trim()
+        ) in ignoredEntries()
+    }
+
+    suspend fun ignoredDeviceUidValues(
+        ownerUid: String = UserDataScope.currentUid()
+    ): Set<String> {
+        val normalizedOwnerUid = normalizeOwnerUidOrNull(ownerUid)
+            ?: return emptySet()
+        val prefix = "$normalizedOwnerUid$IGNORED_ENTRY_SEPARATOR"
+
+        return ignoredEntries()
+            .asSequence()
+            .filter { entry ->
+                entry.startsWith(prefix)
+            }
+            .map { entry ->
+                entry.removePrefix(prefix).trim()
+            }
+            .filter { value ->
+                value.isNotBlank()
+            }
+            .toSet()
+    }
+
+    suspend fun clearIgnoredDevices(
+        ownerUid: String = UserDataScope.currentUid()
+    ) {
+        val normalizedOwnerUid = normalizeOwnerUidOrNull(ownerUid)
+            ?: return
+        val prefix = "$normalizedOwnerUid$IGNORED_ENTRY_SEPARATOR"
+        val remaining = ignoredEntries().filterNot { entry ->
+            entry.startsWith(prefix)
+        }.toSet()
+
+        saveIgnoredEntries(remaining)
+    }
+
+    suspend fun clear(
+        ownerUid: String = UserDataScope.currentUid()
+    ) {
+        val normalizedOwnerUid = normalizeOwnerUidOrNull(ownerUid)
+            ?: return
+        val remaining = loadOwnedSnapshots().filterNot { record ->
+            record.ownerUid == normalizedOwnerUid
+        }
+
+        saveOwnedSnapshots(remaining)
+    }
+
+    private suspend fun loadOwnedSnapshots(): List<OwnedSnapshot> {
+        val raw = preferences()[KEY_DEVICES]
+            .orEmpty()
+            .ifBlank { "[]" }
+        val array = runCatching {
+            JSONArray(raw)
+        }.getOrDefault(JSONArray())
 
         return buildList {
             for (index in 0 until array.length()) {
-                val json = array.optJSONObject(index) ?: continue
-                jsonToSnapshot(json)?.let { snapshot ->
-                    add(snapshot)
+                val envelope = array.optJSONObject(index)
+                    ?: continue
+                val ownerUid = UserDataScope.normalizeOwnerUid(
+                    envelope.optString(JSON_OWNER_UID)
+                )
+                val snapshotJson = envelope.optJSONObject(JSON_SNAPSHOT)
+                    ?: continue
+                val snapshot = jsonToSnapshot(snapshotJson)
+                    ?: continue
+
+                if (ownerUid.isNotBlank()) {
+                    add(
+                        OwnedSnapshot(
+                            ownerUid = ownerUid,
+                            snapshot = snapshot
+                        )
+                    )
                 }
             }
         }
     }
 
-    suspend fun saveSnapshot(snapshot: DeviceSnapshot) {
-        val current = loadSnapshots()
-            .associateBy { known -> known.deviceUid.value }
-            .toMutableMap()
-
-        current[snapshot.deviceUid.value] = snapshot
-
-        saveAll(current.values)
-    }
-
-    suspend fun saveSnapshots(snapshots: Iterable<DeviceSnapshot>) {
-        val current = loadSnapshots()
-            .associateBy { known -> known.deviceUid.value }
-            .toMutableMap()
-
-        snapshots.forEach { snapshot ->
-            current[snapshot.deviceUid.value] = snapshot
-        }
-
-        saveAll(current.values)
-    }
-
-    suspend fun remove(deviceUid: DeviceUid) {
-        val remaining = loadSnapshots()
-            .filterNot { snapshot -> snapshot.deviceUid == deviceUid }
-
-        saveAll(remaining)
-    }
-
-    suspend fun ignoreDevice(deviceUid: DeviceUid) {
-        val ignored = ignoredDeviceUidValues().toMutableSet()
-        ignored += deviceUid.value
-        saveIgnoredDeviceUidValues(ignored)
-    }
-
-    suspend fun allowDevice(deviceUid: DeviceUid) {
-        val ignored = ignoredDeviceUidValues()
-        if (deviceUid.value !in ignored) return
-        saveIgnoredDeviceUidValues(ignored - deviceUid.value)
-    }
-
-    suspend fun isIgnored(deviceUid: DeviceUid): Boolean {
-        return deviceUid.value in ignoredDeviceUidValues()
-    }
-
-    suspend fun ignoredDeviceUidValues(): Set<String> {
-        return preferences()[KEY_IGNORED_DEVICE_UIDS]
-            .orEmpty()
-            .filter { value -> value.isNotBlank() }
-            .toSet()
-    }
-
-    suspend fun clearIgnoredDevices() {
-        dataStore.edit { preferences ->
-            preferences.remove(KEY_IGNORED_DEVICE_UIDS)
-        }
-    }
-
-    suspend fun clear() {
-        dataStore.edit { preferences ->
-            preferences.remove(KEY_DEVICES)
-        }
-    }
-
-    private suspend fun saveIgnoredDeviceUidValues(values: Set<String>) {
-        dataStore.edit { preferences ->
-            preferences[KEY_IGNORED_DEVICE_UIDS] = values
-                .filter { value -> value.isNotBlank() }
-                .toSet()
-        }
-    }
-
-    private suspend fun saveAll(snapshots: Iterable<DeviceSnapshot>) {
+    private suspend fun saveOwnedSnapshots(
+        records: Iterable<OwnedSnapshot>
+    ) {
         val array = JSONArray()
 
-        snapshots
+        records
             .sortedWith(
-                compareBy<DeviceSnapshot> { snapshot -> snapshot.title.lowercase() }
-                    .thenBy { snapshot -> snapshot.deviceUid.value }
+                compareBy<OwnedSnapshot> { record ->
+                    record.ownerUid
+                }.thenBy { record ->
+                    record.snapshot.title.lowercase()
+                }.thenBy { record ->
+                    record.snapshot.deviceUid.value
+                }
             )
-            .forEach { snapshot ->
-                array.put(snapshotToJson(snapshot))
+            .forEach { record ->
+                array.put(
+                    JSONObject()
+                        .put(JSON_OWNER_UID, record.ownerUid)
+                        .put(JSON_SNAPSHOT, snapshotToJson(record.snapshot))
+                )
             }
 
         dataStore.edit { preferences ->
-            preferences[KEY_DEVICES] = array.toString()
+            if (array.length() == 0) {
+                preferences.remove(KEY_DEVICES)
+            } else {
+                preferences[KEY_DEVICES] = array.toString()
+            }
+        }
+    }
+
+    private suspend fun ignoredEntries(): Set<String> {
+        return preferences()[KEY_IGNORED_DEVICE_UIDS]
+            .orEmpty()
+            .filter { entry ->
+                entry.isNotBlank()
+            }
+            .toSet()
+    }
+
+    private suspend fun saveIgnoredEntries(
+        values: Set<String>
+    ) {
+        dataStore.edit { preferences ->
+            if (values.isEmpty()) {
+                preferences.remove(KEY_IGNORED_DEVICE_UIDS)
+            } else {
+                preferences[KEY_IGNORED_DEVICE_UIDS] = values
+                    .filter { entry -> entry.isNotBlank() }
+                    .toSet()
+            }
         }
     }
 
@@ -355,8 +514,42 @@ class DeviceKnownStore(
         }
     }
 
+    private fun normalizeOwnerUidOrNull(
+        ownerUid: String
+    ): String? {
+        return UserDataScope.normalizeOwnerUid(ownerUid)
+            .takeIf { value -> value.isNotBlank() }
+    }
+
+    private fun requireOwnerUid(
+        ownerUid: String
+    ): String {
+        return requireNotNull(normalizeOwnerUidOrNull(ownerUid)) {
+            "Known-device storage requires an authenticated owner."
+        }
+    }
+
+    private fun ignoredEntry(
+        ownerUid: String,
+        deviceUid: String
+    ): String {
+        return "$ownerUid$IGNORED_ENTRY_SEPARATOR$deviceUid"
+    }
+
     private companion object {
-        val KEY_DEVICES = stringPreferencesKey("devices")
-        val KEY_IGNORED_DEVICE_UIDS = stringSetPreferencesKey("ignoredDeviceUids")
+        const val JSON_OWNER_UID = "ownerUid"
+        const val JSON_SNAPSHOT = "snapshot"
+        const val IGNORED_ENTRY_SEPARATOR = "\u001F"
+
+        val KEY_DEVICES = stringPreferencesKey("ownedDevices")
+        val KEY_IGNORED_DEVICE_UIDS =
+            stringSetPreferencesKey("ownedIgnoredDeviceUids")
+
+        val SNAPSHOT_ORDER =
+            compareBy<DeviceSnapshot> { snapshot ->
+                snapshot.title.lowercase()
+            }.thenBy { snapshot ->
+                snapshot.deviceUid.value
+            }
     }
 }
