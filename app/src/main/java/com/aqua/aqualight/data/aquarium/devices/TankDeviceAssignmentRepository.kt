@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.aquarium.devices
 
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -168,13 +169,12 @@ class TankDeviceAssignmentRepository(
         }
 
         val tanks = tankDataStoreManager.tanksSnapshotForOwner(ownerUid)
-        val targetTank = tanks.firstOrNull { tank ->
+        tanks.firstOrNull { tank ->
             tank.id == tankId
         } ?: return AssignDeviceToTankResult.TankNotFound
 
-        val visibleDevice = devicesRepository.currentDevice(
-            DeviceUid(normalizedDeviceUid)
-        )
+        val normalizedUid = DeviceUid(normalizedDeviceUid)
+        val visibleDevice = devicesRepository.currentDevice(normalizedUid)
 
         if (visibleDevice == null) {
             val durableDeviceExists = devicesRepository.knownDeviceUids()
@@ -194,26 +194,14 @@ class TankDeviceAssignmentRepository(
             }
 
         if (existingAssignment != null) {
-            val existingTankName = tanks
-                .firstOrNull { tank ->
-                    tank.id == existingAssignment.tankId
-                }
-                ?.name
-                .orEmpty()
-
-            return AssignDeviceToTankResult.AlreadyAssignedToTank(
-                tankId = existingAssignment.tankId,
-                tankName = existingTankName.ifBlank {
-                    targetTank.name
-                }
-            )
+            return existingAssignment.toAlreadyAssignedResult(tanks)
         }
 
         return when (
             val result = assignmentStore.assignDeviceToTank(
                 ownerUid = ownerUid,
                 tankId = tankId,
-                deviceUid = DeviceUid(normalizedDeviceUid)
+                deviceUid = normalizedUid
             )
         ) {
             is TankDeviceAssignmentMutationResult.Assigned -> {
@@ -223,10 +211,7 @@ class TankDeviceAssignmentRepository(
             }
 
             is TankDeviceAssignmentMutationResult.AlreadyAssigned -> {
-                AssignDeviceToTankResult.AlreadyAssignedToTank(
-                    tankId = result.assignment.tankId,
-                    tankName = targetTank.name
-                )
+                result.assignment.toAlreadyAssignedResult(tanks)
             }
 
             TankDeviceAssignmentMutationResult.InvalidInput -> {
@@ -349,6 +334,22 @@ class TankDeviceAssignmentRepository(
             ownerUid = ownerUid,
             validTankIds = validTankIds,
             validDeviceUids = validDeviceUids
+        )
+    }
+
+    private fun TankDeviceAssignment.toAlreadyAssignedResult(
+        tanks: List<SavedAquariumTank>
+    ): AssignDeviceToTankResult.AlreadyAssignedToTank {
+        val tankName = tanks
+            .firstOrNull { tank ->
+                tank.id == tankId
+            }
+            ?.name
+            .orEmpty()
+
+        return AssignDeviceToTankResult.AlreadyAssignedToTank(
+            tankId = tankId,
+            tankName = tankName
         )
     }
 
