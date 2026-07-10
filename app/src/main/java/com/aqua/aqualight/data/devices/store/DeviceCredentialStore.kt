@@ -116,12 +116,6 @@ class DeviceCredentialStore(
         }
     }
 
-    fun clearAll() {
-        preferences.edit()
-            .clear()
-            .apply()
-    }
-
     private fun currentOwnerUidOrNull(): String? {
         return UserDataScope.normalizeOwnerUid(
             UserDataScope.currentUid()
@@ -136,6 +130,6 @@ class DeviceCredentialStore(
     }
 
     private companion object {
-        const val PREFERENCES_NAME = "aql_device_credentials_v2"
+        const val PREFERENCES_NAME = "aql_device_credentials_v1"
     }
 }
