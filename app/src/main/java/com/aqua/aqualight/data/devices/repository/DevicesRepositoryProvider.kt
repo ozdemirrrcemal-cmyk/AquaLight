@@ -15,24 +15,24 @@ import kotlinx.coroutines.launch
  * Process-level repository holder.
  *
  * A real owner change tears down old runtime/discovery state before loading the newly authenticated
- * owner's durable devices. Re-entering MainActivity for the same owner keeps the active runtime
- * session instead of reconnecting unnecessarily.
+ * owner's durable devices. Production callers must provide an Android context; there is no
+ * persistence-free singleton fallback.
  */
 object DevicesRepositoryProvider {
 
     private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val sessionState = OwnerSessionStateMachine()
 
     @Volatile
     private var instance: DevicesRepository? = null
 
     @Volatile
-    private var activeOwnerUid: String = ""
-
-    @Volatile
     private var sessionTransitionJob: Job? = null
 
-    fun get(context: Context? = null): DevicesRepository {
-        return repository(context).also { deviceRepository ->
+    fun get(
+        context: Context
+    ): DevicesRepository {
+        return repository(context.applicationContext).also { deviceRepository ->
             deviceRepository.start(repositoryScope)
         }
     }
@@ -40,58 +40,54 @@ object DevicesRepositoryProvider {
     fun restartForCurrentOwner(
         context: Context
     ) {
-        val ownerUid = UserDataScope.normalizeOwnerUid(
-            UserDataScope.currentUid()
-        )
+        val decision = sessionState.start(
+            ownerUid = UserDataScope.currentUid()
+        ) ?: return
+        val deviceRepository = repository(context.applicationContext)
 
-        if (ownerUid.isBlank()) {
+        if (!decision.requiresRestart) {
+            if (sessionTransitionJob?.isActive != true) {
+                deviceRepository.start(repositoryScope)
+            }
             return
         }
 
-        val deviceRepository = repository(context.applicationContext)
-        var startImmediately = false
-
         synchronized(this) {
-            if (activeOwnerUid == ownerUid) {
-                startImmediately = sessionTransitionJob?.isActive != true
-            } else {
-                activeOwnerUid = ownerUid
-                sessionTransitionJob?.cancel()
+            sessionTransitionJob?.cancel()
 
-                val transitionJob = repositoryScope.launch {
-                    deviceRepository.stopSession()
+            val transitionJob = repositoryScope.launch {
+                deviceRepository.stopSession()
 
-                    val ownerStillActive = synchronized(this@DevicesRepositoryProvider) {
-                        activeOwnerUid == ownerUid
-                    }
-                    val firebaseOwnerStillMatches = UserDataScope.normalizeOwnerUid(
-                        UserDataScope.currentUid()
-                    ) == ownerUid
+                val firebaseOwnerStillMatches = UserDataScope.normalizeOwnerUid(
+                    UserDataScope.currentUid()
+                ) == decision.ownerUid
 
-                    if (ownerStillActive && firebaseOwnerStillMatches) {
-                        deviceRepository.start(repositoryScope)
-                    }
+                if (
+                    firebaseOwnerStillMatches &&
+                    sessionState.isCurrent(
+                        ownerUid = decision.ownerUid,
+                        expectedGeneration = decision.generation
+                    )
+                ) {
+                    deviceRepository.start(repositoryScope)
                 }
+            }
 
-                sessionTransitionJob = transitionJob
-                transitionJob.invokeOnCompletion {
-                    synchronized(this@DevicesRepositoryProvider) {
-                        if (sessionTransitionJob === transitionJob) {
-                            sessionTransitionJob = null
-                        }
+            sessionTransitionJob = transitionJob
+            transitionJob.invokeOnCompletion {
+                synchronized(this@DevicesRepositoryProvider) {
+                    if (sessionTransitionJob === transitionJob) {
+                        sessionTransitionJob = null
                     }
                 }
             }
         }
-
-        if (startImmediately) {
-            deviceRepository.start(repositoryScope)
-        }
     }
 
     suspend fun stopSession() {
+        sessionState.stop()
+
         val transitionJob = synchronized(this) {
-            activeOwnerUid = ""
             sessionTransitionJob.also {
                 sessionTransitionJob = null
             }
@@ -101,24 +97,21 @@ object DevicesRepositoryProvider {
         instance?.stopSession()
     }
 
-    private fun repository(context: Context?): DevicesRepository {
+    private fun repository(
+        context: Context
+    ): DevicesRepository {
         return instance ?: synchronized(this) {
-            instance ?: createRepository(context).also { created ->
+            instance ?: DevicesRepository(
+                knownStore = DeviceKnownStore(context.applicationContext),
+                runtimeRepository = DeviceRuntimeRepository.withCredentialStore(
+                    context.applicationContext
+                ),
+                connectivityObserver = DeviceConnectivityObserver(
+                    context.applicationContext
+                )
+            ).also { created ->
                 instance = created
             }
-        }
-    }
-
-    private fun createRepository(context: Context?): DevicesRepository {
-        val appContext = context?.applicationContext
-        return if (appContext != null) {
-            DevicesRepository(
-                knownStore = DeviceKnownStore(appContext),
-                runtimeRepository = DeviceRuntimeRepository.withCredentialStore(appContext),
-                connectivityObserver = DeviceConnectivityObserver(appContext)
-            )
-        } else {
-            DevicesRepository()
         }
     }
 }
