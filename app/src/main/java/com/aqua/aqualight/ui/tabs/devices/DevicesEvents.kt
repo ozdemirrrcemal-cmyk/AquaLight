@@ -12,4 +12,9 @@ sealed class DevicesEvent {
         val title: String,
         @StringRes val messageRes: Int
     ) : DevicesEvent()
+
+    data class ShowDeleteFailure(
+        val removedCount: Int,
+        val failedCount: Int
+    ) : DevicesEvent()
 }
