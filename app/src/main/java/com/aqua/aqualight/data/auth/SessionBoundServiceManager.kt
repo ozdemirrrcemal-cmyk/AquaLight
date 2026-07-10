@@ -39,10 +39,7 @@ object SessionBoundServiceManager {
         val appContext = context.applicationContext
 
         TankDeviceAssignmentStartupRepair.reset()
-
-        runCatching {
-            DevicesRepositoryProvider.stopSession()
-        }
+        DevicesRepositoryProvider.stopSession()
 
         SmartCareDailyWorker.cancel(
             context = appContext
