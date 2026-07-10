@@ -6,13 +6,17 @@ import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryPr
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.auth.SessionBoundServiceManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
+import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
+import com.aqua.aqualight.data.devices.store.DeviceKnownStore
 import java.io.File
 
 /**
- * Clears local data that belongs to the active user account.
+ * Clears local data that belongs to one authenticated account.
  *
- * Records are removed only for the target Firebase uid. Normal logout
- * intentionally does not call this cleaner.
+ * Normal logout intentionally preserves durable account data. Account/local-data deletion removes
+ * only the target owner UID's tanks, assignments, known devices, ignored-device state and runtime
+ * credentials; records belonging to other accounts on the same installation remain intact.
  */
 class UserDataCleaner private constructor(
     private val appContext: Context
@@ -126,11 +130,30 @@ class UserDataCleaner private constructor(
         runStep(
             step = Step.DEVICES
         ) {
+            val knownStore = DeviceKnownStore(appContext)
+
             TankDeviceAssignmentRepositoryProvider
                 .get(appContext)
                 .clearAssignmentsForOwner(
                     ownerUid = targetOwnerUid
                 )
+
+            knownStore.clear(
+                ownerUid = targetOwnerUid
+            )
+            knownStore.clearIgnoredDevices(
+                ownerUid = targetOwnerUid
+            )
+            DeviceCredentialStore(appContext).clearOwner(
+                ownerUid = targetOwnerUid
+            )
+
+            if (
+                UserDataScope.normalizeOwnerUid(UserDataScope.currentUid()) ==
+                UserDataScope.normalizeOwnerUid(targetOwnerUid)
+            ) {
+                DevicesRepositoryProvider.clearInMemoryRegistryIfCreated()
+            }
         }
 
         runStep(
