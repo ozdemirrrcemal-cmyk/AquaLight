@@ -130,11 +130,14 @@ object DeviceSnapshotMerger {
         previous: DeviceConnectionState,
         incoming: DeviceConnectionState
     ): DeviceConnectionState {
+        val preserveRuntimeState =
+            incoming.onlineState == DeviceOnlineState.UNKNOWN ||
+                shouldPreserveRuntimeState(previous, incoming)
         val resolvedOnlineState = when {
             incoming.onlineState == DeviceOnlineState.UNKNOWN &&
                 previous.onlineState != DeviceOnlineState.UNKNOWN -> previous.onlineState
 
-            shouldPreserveRuntimeState(previous, incoming) -> previous.onlineState
+            preserveRuntimeState -> previous.onlineState
 
             else -> incoming.onlineState
         }
@@ -150,6 +153,10 @@ object DeviceSnapshotMerger {
                 previous.lastAuthenticatedAtMillis,
                 incoming.lastAuthenticatedAtMillis
             ),
+            runtimeConnected = incoming.runtimeConnected ||
+                (preserveRuntimeState && previous.runtimeConnected),
+            runtimeAuthenticated = incoming.runtimeAuthenticated ||
+                (preserveRuntimeState && previous.runtimeAuthenticated),
             lastErrorMessage = incoming.lastErrorMessage ?: previous.lastErrorMessage
         )
     }
@@ -160,10 +167,17 @@ object DeviceSnapshotMerger {
     ): Boolean {
         if (!incoming.onlineState.isLanPresenceOnly) return false
 
+        if (previous.runtimeConnected || previous.runtimeAuthenticated) {
+            return true
+        }
+
         return when (previous.onlineState) {
+            DeviceOnlineState.CONNECTING_WS,
             DeviceOnlineState.AUTHENTICATED,
+            DeviceOnlineState.AUTH_REQUIRED,
             DeviceOnlineState.PROVISIONING,
             DeviceOnlineState.OTA_UPDATING -> true
+
             else -> false
         }
     }
