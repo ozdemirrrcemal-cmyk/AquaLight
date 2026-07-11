@@ -19,8 +19,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class DevicesRepository(
@@ -44,6 +46,9 @@ class DevicesRepository(
     @Volatile
     private var startJob: Job? = null
 
+    private val _ready = MutableStateFlow(false)
+    val ready: StateFlow<Boolean> = _ready.asStateFlow()
+
     val snapshots: StateFlow<Map<DeviceUid, DeviceSnapshot>> = registryStore.snapshots
     val devices: Flow<List<DeviceSnapshot>> = registryStore.devices
 
@@ -65,6 +70,7 @@ class DevicesRepository(
                 currentJob
             } else {
                 scope.launch {
+                    _ready.value = false
                     val knownDevices = filterIgnoredDevices(knownStore?.loadSnapshots().orEmpty())
                     if (knownDevices.isNotEmpty()) {
                         registryStore.upsertAll(knownDevices)
@@ -91,10 +97,12 @@ class DevicesRepository(
                         }
                     }
                     val presenceMonitorJob = presenceRuntimeMonitor.start(this)
+                    _ready.value = true
 
                     try {
                         awaitCancellation()
                     } finally {
+                        _ready.value = false
                         presenceMonitorJob.cancel()
                         runtimeStateJob?.cancel()
                         runtimeMetadataJob?.cancel()
@@ -105,10 +113,24 @@ class DevicesRepository(
                     startJob = job
                     job.invokeOnCompletion {
                         if (startJob == job) startJob = null
+                        _ready.value = false
                     }
                 }
             }
         }
+    }
+
+    fun stop() {
+        val job = synchronized(this) {
+            startJob.also {
+                startJob = null
+            }
+        }
+
+        _ready.value = false
+        job?.cancel()
+        runtimeRepository?.close()
+        registryStore.clear()
     }
 
     suspend fun refreshNow(): AqlDiscoveryRefreshSender.SendResult =
@@ -210,8 +232,7 @@ class DevicesRepository(
         runtimeRepository?.clearTokenAsync(deviceUid)
         val removed = registryStore.remove(deviceUid)
         runtimeRepository?.close(deviceUid)
-        knownStore?.remove(deviceUid)
-        knownStore?.ignoreDevice(deviceUid)
+        knownStore?.forgetDevice(deviceUid)
         return removed
     }
 
@@ -220,8 +241,7 @@ class DevicesRepository(
     }
 
     suspend fun clearKnownDevices() {
-        knownStore?.clear()
-        knownStore?.clearIgnoredDevices()
+        knownStore?.clearOwnerData()
         registryStore.clear()
     }
 
