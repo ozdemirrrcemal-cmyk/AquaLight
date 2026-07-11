@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_permission_allow_bluetooth">Allow Bluetooth access</string>
+    <string name="device_permission_open_app_settings">Open app settings</string>
+</resources>
