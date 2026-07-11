@@ -51,8 +51,28 @@ jobs:
           languages: java-kotlin
           build-mode: manual
 
-      - name: Build project
-        run: ./gradlew assembleDebug --no-daemon
+      - name: Run Debug unit tests
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew testDebugUnitTest --no-daemon --stacktrace 2>&1 | tee unit-test.log
+
+      - name: Build Debug APK
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee assemble-debug.log
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-validation-logs-${{ github.run_number }}
+          path: |
+            unit-test.log
+            assemble-debug.log
+            app/build/reports/tests/testDebugUnitTest/**
+          if-no-files-found: ignore
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
