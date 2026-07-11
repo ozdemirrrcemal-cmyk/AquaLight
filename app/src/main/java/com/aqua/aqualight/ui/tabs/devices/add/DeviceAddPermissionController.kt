@@ -26,7 +26,7 @@ internal fun resolveDevicePermissionAction(
     }
 }
 
-class DeviceAddPermissionController {
+internal class DeviceAddPermissionController {
 
     fun blePermissions(): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
