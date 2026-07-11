@@ -4,8 +4,6 @@ import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import com.aqua.aqualight.base.theme.AppThemeController
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsClient
-import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.utils.NotificationHelper
 import kotlinx.coroutines.flow.first
@@ -27,11 +25,7 @@ class AquaApp : Application() {
         applyTheme(themeMode)
         applyLanguage(languageCode)
 
-        AqlWsClient.installDefaultTokenProvider(
-            DeviceCredentialStore(this)
-        )
-
-        // 🔔 Notification channel
+        // Runtime token providers are installed only inside owner-bound device repositories.
         NotificationHelper.createNotificationChannel(this)
     }
 
