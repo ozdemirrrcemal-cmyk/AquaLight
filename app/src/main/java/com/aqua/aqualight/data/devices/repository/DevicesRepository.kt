@@ -299,7 +299,9 @@ class DevicesRepository(
         originalError: Throwable,
         rollbackSnapshot: DeviceSnapshot?
     ): Throwable {
-        if (rollbackSnapshot == null || knownStore == null) {
+        val durableStore = knownStore
+
+        if (rollbackSnapshot == null || durableStore == null) {
             return DevicePersistenceTransactionException(
                 message = "$operation failed and no durable rollback snapshot was available.",
                 cause = originalError
@@ -307,7 +309,7 @@ class DevicesRepository(
         }
 
         val rollbackError = runCatching {
-            knownStore.saveSnapshot(rollbackSnapshot)
+            durableStore.saveSnapshot(rollbackSnapshot)
         }.exceptionOrNull()
 
         return DevicePersistenceTransactionException(
