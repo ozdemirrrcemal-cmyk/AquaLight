@@ -46,8 +46,6 @@ object TankDeviceAssignmentsSerializer : Serializer<TankDeviceAssignmentsStore> 
     private fun validate(
         store: TankDeviceAssignmentsStore
     ) {
-        val uniqueAssignments = mutableSetOf<Pair<String, String>>()
-
         store.assignmentsList.forEach { assignment ->
             val ownerUid = UserDataScope.normalizeOwnerUid(assignment.ownerUid)
             val deviceUid = assignment.deviceUid.trim()
@@ -72,9 +70,6 @@ object TankDeviceAssignmentsSerializer : Serializer<TankDeviceAssignmentsStore> 
             }
             require(assignment.updatedAtMillis > 0L) {
                 "Assignment update timestamp must be positive."
-            }
-            require(uniqueAssignments.add(ownerUid to deviceUid)) {
-                "A device may have only one assignment per owner."
             }
         }
     }
