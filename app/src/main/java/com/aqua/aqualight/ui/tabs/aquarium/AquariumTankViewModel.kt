@@ -4,6 +4,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.asLiveData
+import com.aqua.aqualight.data.aquarium.devices.TankAssignmentCleanupResult
+import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.aquarium.model.TankDraft
@@ -26,6 +28,8 @@ class AquariumTankViewModel(
     appContext
   )
 
+  private val assignmentRepository =
+    TankDeviceAssignmentRepositoryProvider.get(appContext)
 
   val tanks: LiveData<List<SavedAquariumTank>> =
     tankDataStoreManager.tanksFlow.asLiveData()
@@ -60,16 +64,34 @@ class AquariumTankViewModel(
     }
 
     safeTankIds.forEach { tankId ->
-
       careTaskDataStoreManager.deleteTasksForTank(
         tankId = tankId
       )
-
     }
 
     tankDataStoreManager.deleteTanks(
       tankIds = safeTankIds
     )
+
+    safeTankIds.forEach { tankId ->
+      when (
+        val cleanupResult = assignmentRepository.removeAssignmentsForTank(
+          tankId = tankId
+        )
+      ) {
+        is TankAssignmentCleanupResult.Completed -> Unit
+
+        TankAssignmentCleanupResult.InvalidRequest -> {
+          throw IllegalStateException(
+            "Tank assignment cleanup received an invalid tank id."
+          )
+        }
+
+        is TankAssignmentCleanupResult.Failure -> {
+          throw cleanupResult.error
+        }
+      }
+    }
   }
 
   suspend fun updateTankPhoto(
