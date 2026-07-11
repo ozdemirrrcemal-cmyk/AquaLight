@@ -39,16 +39,7 @@ object DeviceCompactSnapshotMapper {
         }
     }
 
-    private fun serialText(
-        snapshot: DeviceSnapshot
-    ): String {
-        return snapshot.identity.serialNumber
-            .ifBlank { snapshot.identity.firmwareSerial }
-            .ifBlank { snapshot.identity.shortId }
-            .ifBlank { snapshot.deviceUid.value }
-    }
-
-    private fun buildDefaultSupportingText(
+    fun defaultSupportingText(
         snapshot: DeviceSnapshot
     ): String {
         val family = familyLabel(snapshot.product.family)
@@ -65,6 +56,15 @@ object DeviceCompactSnapshotMapper {
             .distinct()
             .joinToString(separator = " • ")
             .ifBlank { "AquaLight device" }
+    }
+
+    private fun serialText(
+        snapshot: DeviceSnapshot
+    ): String {
+        return snapshot.identity.serialNumber
+            .ifBlank { snapshot.identity.firmwareSerial }
+            .ifBlank { snapshot.identity.shortId }
+            .ifBlank { snapshot.deviceUid.value }
     }
 
     private fun statusText(
