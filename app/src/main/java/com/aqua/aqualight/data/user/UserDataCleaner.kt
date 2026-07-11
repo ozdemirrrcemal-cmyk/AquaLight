@@ -6,6 +6,7 @@ import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentStore
 import com.aqua.aqualight.data.auth.SessionBoundServiceManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.devices.store.DeviceKnownStore
 import java.io.File
 
 /**
@@ -130,6 +131,11 @@ class UserDataCleaner private constructor(
                 .clearOwnerAssignments(
                     ownerUid = targetOwnerUid
                 )
+
+            DeviceKnownStore(
+                context = appContext,
+                ownerUid = targetOwnerUid
+            ).clearOwnerData()
         }
 
         runStep(
