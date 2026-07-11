@@ -2,7 +2,17 @@
 <resources>
     <string name="devices_assigned_tank_supporting_text">Assigned to %1$s</string>
     <string name="devices_delete_partial_title">Some Devices Were Not Removed</string>
-    <string name="devices_delete_partial_message">%1$d device(s) were removed. %2$d device(s) could not be removed and remain selected so you can try again.</string>
+    <plurals name="devices_delete_removed_sentence">
+        <item quantity="one">%1$d device was removed.</item>
+        <item quantity="other">%1$d devices were removed.</item>
+    </plurals>
+    <plurals name="devices_delete_remain_selected_sentence">
+        <item quantity="one">%1$d device could not be removed and remains selected so you can try again.</item>
+        <item quantity="other">%1$d devices could not be removed and remain selected so you can try again.</item>
+    </plurals>
     <string name="devices_delete_failed_title">Devices Could Not Be Removed</string>
-    <string name="devices_delete_failed_message">%1$d selected device(s) could not be removed. No failed device was cleared from your selection. Please try again.</string>
+    <plurals name="devices_delete_failed_message">
+        <item quantity="one">The selected device could not be removed and remains selected. Please try again.</item>
+        <item quantity="other">%1$d selected devices could not be removed and remain selected. Please try again.</item>
+    </plurals>
 </resources>
