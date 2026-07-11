@@ -47,9 +47,29 @@ object TankDeviceAssignmentRepositoryProvider {
         }
     }
 
-    fun clear() {
-        synchronized(this) {
-            entry = null
+    fun clear(
+        expectedOwnerUid: String? = null
+    ): Boolean {
+        val normalizedExpected = expectedOwnerUid
+            ?.trim()
+            ?.takeIf(String::isNotBlank)
+
+        return synchronized(this) {
+            val current = entry
+
+            if (
+                normalizedExpected != null &&
+                current?.ownerUid != normalizedExpected
+            ) {
+                false
+            } else {
+                entry = null
+                current != null
+            }
         }
+    }
+
+    fun currentOwnerUid(): String? {
+        return entry?.ownerUid
     }
 }
