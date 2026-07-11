@@ -50,12 +50,11 @@ class LogoutManager private constructor(
     }
 
     suspend fun logout(): LogoutResult {
-        val serviceCleanupError = runCatching {
-            SessionBoundServiceManager.stop(
-                context = appContext,
-                cancelNotifications = true
-            )
-        }.exceptionOrNull()
+        val ownerUid = firebaseAuth.currentUser?.uid.orEmpty()
+        val serviceCleanupError = stopSessionBoundServices(
+            ownerUid = ownerUid,
+            cancelNotifications = true
+        )
 
         val googleSignOutError = runCatching {
             GoogleSignInClientFactory.create(
@@ -82,12 +81,11 @@ class LogoutManager private constructor(
     suspend fun cleanupAfterLocalSensitiveAction(
         cancelNotifications: Boolean = true
     ): LogoutResult {
-        val serviceCleanupError = runCatching {
-            SessionBoundServiceManager.stop(
-                context = appContext,
-                cancelNotifications = cancelNotifications
-            )
-        }.exceptionOrNull()
+        val ownerUid = firebaseAuth.currentUser?.uid.orEmpty()
+        val serviceCleanupError = stopSessionBoundServices(
+            ownerUid = ownerUid,
+            cancelNotifications = cancelNotifications
+        )
 
         val googleSignOutError = runCatching {
             GoogleSignInClientFactory.create(
@@ -108,6 +106,22 @@ class LogoutManager private constructor(
             googleSignOutError = googleSignOutError,
             firebaseSignOutError = firebaseSignOutError,
             preferenceCleanupError = preferenceCleanupError
+        )
+    }
+
+    private suspend fun stopSessionBoundServices(
+        ownerUid: String,
+        cancelNotifications: Boolean
+    ): Throwable? {
+        return runCatching {
+            SessionBoundServiceManager.stop(
+                context = appContext,
+                cancelNotifications = cancelNotifications,
+                expectedOwnerUid = ownerUid.ifBlank { null }
+            )
+        }.fold(
+            onSuccess = SessionBoundServiceManager.StopResult::exceptionOrNull,
+            onFailure = { error -> error }
         )
     }
 
