@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class TankDeviceAssignmentsSerializerTest {
@@ -33,5 +34,28 @@ class TankDeviceAssignmentsSerializerTest {
 
         assertEquals(1, restored.assignmentsCount)
         assertEquals(expectedAssignment, restored.getAssignments(0))
+    }
+
+    @Test
+    fun write_rejectsNonPositiveTimestamps() {
+        val invalidStore = TankDeviceAssignmentsStore.newBuilder()
+            .addAssignments(
+                StoredTankDeviceAssignment.newBuilder()
+                    .setOwnerUid("owner-123")
+                    .setDeviceUid("AQL-DEVICE-001")
+                    .setTankId(42L)
+                    .setAssignedAtMillis(0L)
+                    .setUpdatedAtMillis(0L)
+            )
+            .build()
+
+        assertThrows(IllegalArgumentException::class.java) {
+            runBlocking {
+                TankDeviceAssignmentsSerializer.writeTo(
+                    t = invalidStore,
+                    output = ByteArrayOutputStream()
+                )
+            }
+        }
     }
 }
