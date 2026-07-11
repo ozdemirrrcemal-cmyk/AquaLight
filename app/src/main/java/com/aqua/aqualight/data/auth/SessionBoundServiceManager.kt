@@ -5,6 +5,7 @@ import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryPr
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.reminder.CareTaskReminderScheduler
 import com.aqua.aqualight.data.care.smartcare.SmartCareDailyWorker
+import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.utils.NotificationHelper
 import kotlinx.coroutines.flow.first
 
@@ -30,6 +31,7 @@ object SessionBoundServiceManager {
         val appContext = context.applicationContext
 
         TankDeviceAssignmentRepositoryProvider.clear()
+        DevicesRepositoryProvider.clear()
 
         SmartCareDailyWorker.cancel(
             context = appContext
