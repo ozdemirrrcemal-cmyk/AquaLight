@@ -5,10 +5,12 @@ import com.aqua.aqualight.data.aquarium.devices.TankAssignmentRepairResult
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.data.user.UserDataScope
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
-import kotlinx.coroutines.flow.first
 
 class OwnerSessionCoordinator private constructor(
     private val appContext: Context
@@ -147,6 +149,14 @@ class OwnerSessionCoordinator private constructor(
             } catch (error: Throwable) {
                 stateMachine.abort(transition)
                 clearTransitionProviders(transition)
+
+                if (
+                    error is CancellationException &&
+                    error !is TimeoutCancellationException
+                ) {
+                    throw error
+                }
+
                 OpenResult.Failure(
                     ownerUid = normalizedOwnerUid,
                     generation = transition.generation,
