@@ -59,21 +59,19 @@ object SessionBoundServiceManager {
     private suspend fun cancelPendingCareTaskReminders(
         context: Context
     ) {
-        runCatching {
-            val careTaskDataStoreManager = CareTaskDataStoreManager.create(
-                context
+        val careTaskDataStoreManager = CareTaskDataStoreManager.create(
+            context
+        )
+
+        val pendingTasks = careTaskDataStoreManager.pendingTasksFlow
+            .first()
+
+        pendingTasks.forEach { task ->
+            CareTaskReminderScheduler.cancel(
+                context = context,
+                taskId = task.id,
+                ownerUid = task.ownerUid
             )
-
-            val pendingTasks = careTaskDataStoreManager.pendingTasksFlow
-                .first()
-
-            pendingTasks.forEach { task ->
-                CareTaskReminderScheduler.cancel(
-                    context = context,
-                    taskId = task.id,
-                    ownerUid = task.ownerUid
-                )
-            }
         }
     }
 }
