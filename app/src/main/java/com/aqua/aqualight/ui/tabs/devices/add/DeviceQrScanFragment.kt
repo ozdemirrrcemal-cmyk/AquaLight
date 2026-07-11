@@ -51,6 +51,8 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
     private var hasResult = false
     private var primaryAction: DeviceQrScanPrimaryAction? = null
     private var retryBlePreflightOnResume = false
+    private var appSettingsActionTarget: AppSettingsTarget? = null
+    private var pendingAppSettingsReturn: AppSettingsTarget? = null
 
     private val cameraPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -65,8 +67,17 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
     private val blePermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
+        val granted = permissionController.hasBlePermissionsFromResult(
+            requireContext(),
+            result
+        )
+        val permanentlyDenied = !granted &&
+            permissionController.blePermissionAction(this) ==
+            DevicePermissionAction.OPEN_APP_SETTINGS
+
         viewModel.onBlePermissionResult(
-            permissionController.hasBlePermissionsFromResult(requireContext(), result)
+            granted = granted,
+            permanentlyDenied = permanentlyDenied
         )
     }
 
@@ -81,6 +92,8 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         isProcessingFrame = false
         primaryAction = null
         retryBlePreflightOnResume = false
+        appSettingsActionTarget = null
+        pendingAppSettingsReturn = null
 
         setupHeader()
         setupActions()
@@ -90,6 +103,35 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
 
     override fun onResume() {
         super.onResume()
+
+        pendingAppSettingsReturn?.let { target ->
+            pendingAppSettingsReturn = null
+            when (target) {
+                AppSettingsTarget.CAMERA -> {
+                    if (hasCameraPermission()) {
+                        restartScanner()
+                    } else {
+                        showCameraPermissionRequired()
+                    }
+                }
+
+                AppSettingsTarget.BLE -> {
+                    if (permissionController.hasBlePermissions(requireContext())) {
+                        if (!viewModel.retryPendingBleScan()) {
+                            restartScanner()
+                        }
+                    } else {
+                        viewModel.onBlePermissionResult(
+                            granted = false,
+                            permanentlyDenied =
+                                permissionController.blePermissionAction(this) ==
+                                    DevicePermissionAction.OPEN_APP_SETTINGS
+                        )
+                    }
+                }
+            }
+        }
+
         if (retryBlePreflightOnResume) {
             retryBlePreflightOnResume = false
             if (!viewModel.retryPendingBleScan()) {
@@ -114,16 +156,23 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         binding.btnRequestCamera.setOnClickListener {
             when (primaryAction) {
                 DeviceQrScanPrimaryAction.SCAN_AGAIN -> restartScanner()
-                DeviceQrScanPrimaryAction.REQUEST_BLE_PERMISSION -> requestBlePermission()
-                DeviceQrScanPrimaryAction.OPEN_BLUETOOTH_SETTINGS -> openBluetoothSettings()
-                DeviceQrScanPrimaryAction.OPEN_APP_SETTINGS -> openAppSettings()
-                null -> {
-                    if (!hasCameraPermission()) {
-                        requestCameraPermission()
-                    } else {
-                        restartScanner()
-                    }
+                DeviceQrScanPrimaryAction.REQUEST_BLE_PERMISSION ->
+                    handleBlePermissionAction()
+
+                DeviceQrScanPrimaryAction.OPEN_BLUETOOTH_SETTINGS ->
+                    openBluetoothSettings()
+
+                DeviceQrScanPrimaryAction.OPEN_APP_SETTINGS -> {
+                    val target = appSettingsActionTarget
+                        ?: if (!hasCameraPermission() && !hasResult) {
+                            AppSettingsTarget.CAMERA
+                        } else {
+                            AppSettingsTarget.BLE
+                        }
+                    openAppSettings(target)
                 }
+
+                null -> handleCameraPermissionAction()
             }
         }
     }
@@ -150,6 +199,13 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         if (state.title.isBlank() && state.message.isBlank()) return
 
         primaryAction = state.primaryAction
+        appSettingsActionTarget = if (
+            state.primaryAction == DeviceQrScanPrimaryAction.OPEN_APP_SETTINGS
+        ) {
+            AppSettingsTarget.BLE
+        } else {
+            null
+        }
         binding.tvScanTitle.text = state.title
         binding.tvScanStatus.text = state.message
         binding.btnRequestCamera.isVisible = state.primaryAction != null
@@ -174,11 +230,45 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         }
     }
 
+    private fun handleCameraPermissionAction() {
+        when (permissionController.cameraPermissionAction(this)) {
+            DevicePermissionAction.GRANTED -> restartScanner()
+            DevicePermissionAction.REQUEST_PERMISSION -> requestCameraPermission()
+            DevicePermissionAction.OPEN_APP_SETTINGS -> {
+                appSettingsActionTarget = AppSettingsTarget.CAMERA
+                openAppSettings(AppSettingsTarget.CAMERA)
+            }
+        }
+    }
+
+    private fun handleBlePermissionAction() {
+        when (permissionController.blePermissionAction(this)) {
+            DevicePermissionAction.GRANTED -> {
+                viewModel.onBlePermissionResult(granted = true)
+            }
+
+            DevicePermissionAction.REQUEST_PERMISSION -> {
+                requestBlePermission()
+            }
+
+            DevicePermissionAction.OPEN_APP_SETTINGS -> {
+                viewModel.onBlePermissionResult(
+                    granted = false,
+                    permanentlyDenied = true
+                )
+                appSettingsActionTarget = AppSettingsTarget.BLE
+                openAppSettings(AppSettingsTarget.BLE)
+            }
+        }
+    }
+
     private fun requestCameraPermission() {
+        permissionController.markCameraPermissionRequested(requireContext())
         cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
     }
 
     private fun requestBlePermission() {
+        permissionController.markBlePermissionsRequested(requireContext())
         blePermissionLauncher.launch(
             permissionController.blePermissions()
         )
@@ -193,8 +283,8 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         }
     }
 
-    private fun openAppSettings() {
-        retryBlePreflightOnResume = true
+    private fun openAppSettings(target: AppSettingsTarget) {
+        pendingAppSettingsReturn = target
         val packageUri = Uri.fromParts("package", requireContext().packageName, null)
         runCatching {
             startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, packageUri))
@@ -213,15 +303,33 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
     private fun showCameraPermissionRequired() {
         if (_binding == null) return
 
-        primaryAction = null
+        val permissionAction = permissionController.cameraPermissionAction(this)
+        val shouldOpenSettings =
+            permissionAction == DevicePermissionAction.OPEN_APP_SETTINGS
+
+        primaryAction = if (shouldOpenSettings) {
+            DeviceQrScanPrimaryAction.OPEN_APP_SETTINGS
+        } else {
+            null
+        }
+        appSettingsActionTarget = if (shouldOpenSettings) {
+            AppSettingsTarget.CAMERA
+        } else {
+            null
+        }
         binding.btnRequestCamera.isVisible = true
-        binding.btnRequestCamera.text = getString(R.string.device_qr_allow_camera)
+        binding.btnRequestCamera.text = if (shouldOpenSettings) {
+            getString(R.string.device_permission_open_app_settings)
+        } else {
+            getString(R.string.device_qr_allow_camera)
+        }
         binding.tvScanTitle.text = getString(R.string.device_qr_camera_permission_title)
         binding.tvScanStatus.text = getString(R.string.device_qr_camera_permission_message)
     }
 
     private fun restartScanner() {
         primaryAction = null
+        appSettingsActionTarget = null
         viewModel.onScanAgain()
         hasResult = false
         isProcessingFrame = false
@@ -232,6 +340,7 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         if (_binding == null || hasResult) return
 
         primaryAction = null
+        appSettingsActionTarget = null
         stopCamera()
         binding.btnRequestCamera.isVisible = false
         binding.tvScanTitle.text = getString(R.string.device_qr_align_title)
@@ -370,7 +479,7 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
             DeviceQrScanPrimaryAction.OPEN_BLUETOOTH_SETTINGS ->
                 getString(R.string.device_qr_preflight_open_bluetooth_settings)
             DeviceQrScanPrimaryAction.OPEN_APP_SETTINGS ->
-                getString(R.string.device_qr_preflight_open_app_settings)
+                getString(R.string.device_permission_open_app_settings)
         }
     }
 
@@ -390,5 +499,10 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
     override fun onDestroy() {
         cameraExecutor.shutdown()
         super.onDestroy()
+    }
+
+    private enum class AppSettingsTarget {
+        CAMERA,
+        BLE
     }
 }
