@@ -46,7 +46,7 @@ class TankDeviceAssignmentStore private constructor(
         }
     }
 
-    suspend fun assignDeviceToTank(
+    internal suspend fun assignDeviceToTank(
         ownerUid: String,
         tankId: Long,
         deviceUid: DeviceUid,
