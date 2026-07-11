@@ -69,8 +69,7 @@ class TankDeviceAssignmentStore private constructor(
     fun assignmentsForOwner(
         ownerUid: String
     ): Flow<List<TankDeviceAssignment>> {
-        val normalizedOwnerUid =
-            UserDataScope.normalizeOwnerUid(ownerUid)
+        val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
 
         if (normalizedOwnerUid.isBlank()) {
             return dataStore.data.map { emptyList() }
@@ -82,9 +81,7 @@ class TankDeviceAssignmentStore private constructor(
                 .filter { stored ->
                     stored.ownerUid == normalizedOwnerUid
                 }
-                .mapNotNull { stored ->
-                    stored.toDomainOrNull()
-                }
+                .mapNotNull(StoredTankDeviceAssignment::toDomainOrNull)
                 .sortedWith(ASSIGNMENT_ORDER)
                 .toList()
         }
@@ -101,10 +98,8 @@ class TankDeviceAssignmentStore private constructor(
         tankId: Long,
         deviceUid: DeviceUid
     ): TankDeviceAssignmentWriteResult {
-        val normalizedOwnerUid =
-            UserDataScope.normalizeOwnerUid(ownerUid)
-        val normalizedDeviceUid =
-            deviceUid.value.trim()
+        val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
+        val normalizedDeviceUid = deviceUid.value.trim()
 
         if (
             normalizedOwnerUid.isBlank() ||
@@ -131,7 +126,6 @@ class TankDeviceAssignmentStore private constructor(
                 } else {
                     TankDeviceAssignmentWriteResult.Conflict(existing)
                 }
-
                 return@updateData currentStore
             }
 
@@ -143,12 +137,9 @@ class TankDeviceAssignmentStore private constructor(
                 .setAssignedAtMillis(nowMillis)
                 .setUpdatedAtMillis(nowMillis)
                 .build()
+            val assignment = requireNotNull(storedAssignment.toDomainOrNull())
 
-            result = TankDeviceAssignmentWriteResult.Assigned(
-                assignment = requireNotNull(
-                    storedAssignment.toDomainOrNull()
-                )
-            )
+            result = TankDeviceAssignmentWriteResult.Assigned(assignment)
 
             currentStore.toBuilder()
                 .addAssignments(storedAssignment)
@@ -163,10 +154,8 @@ class TankDeviceAssignmentStore private constructor(
         tankId: Long,
         deviceUid: DeviceUid
     ): TankDeviceAssignmentWriteResult {
-        val normalizedOwnerUid =
-            UserDataScope.normalizeOwnerUid(ownerUid)
-        val normalizedDeviceUid =
-            deviceUid.value.trim()
+        val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
+        val normalizedDeviceUid = deviceUid.value.trim()
 
         if (
             normalizedOwnerUid.isBlank() ||
@@ -187,23 +176,17 @@ class TankDeviceAssignmentStore private constructor(
                         stored.tankId == tankId
                 }
                 ?.toDomainOrNull()
-
-            if (removed == null) {
-                return@updateData currentStore
-            }
+                ?: return@updateData currentStore
 
             result = TankDeviceAssignmentWriteResult.Removed(removed)
 
-            currentStore.toBuilder()
-                .clearAssignments()
-                .addAllAssignments(
-                    currentStore.assignmentsList.filterNot { stored ->
-                        stored.ownerUid == normalizedOwnerUid &&
-                            stored.deviceUid == normalizedDeviceUid &&
-                            stored.tankId == tankId
-                    }
-                )
-                .build()
+            currentStore.withAssignments(
+                currentStore.assignmentsList.filterNot { stored ->
+                    stored.ownerUid == normalizedOwnerUid &&
+                        stored.deviceUid == normalizedDeviceUid &&
+                        stored.tankId == tankId
+                }
+            )
         }
 
         return result
@@ -213,10 +196,8 @@ class TankDeviceAssignmentStore private constructor(
         ownerUid: String,
         deviceUid: DeviceUid
     ): TankDeviceAssignmentWriteResult {
-        val normalizedOwnerUid =
-            UserDataScope.normalizeOwnerUid(ownerUid)
-        val normalizedDeviceUid =
-            deviceUid.value.trim()
+        val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
+        val normalizedDeviceUid = deviceUid.value.trim()
 
         if (
             normalizedOwnerUid.isBlank() ||
@@ -235,22 +216,16 @@ class TankDeviceAssignmentStore private constructor(
                         stored.deviceUid == normalizedDeviceUid
                 }
                 ?.toDomainOrNull()
-
-            if (removed == null) {
-                return@updateData currentStore
-            }
+                ?: return@updateData currentStore
 
             result = TankDeviceAssignmentWriteResult.Removed(removed)
 
-            currentStore.toBuilder()
-                .clearAssignments()
-                .addAllAssignments(
-                    currentStore.assignmentsList.filterNot { stored ->
-                        stored.ownerUid == normalizedOwnerUid &&
-                            stored.deviceUid == normalizedDeviceUid
-                    }
-                )
-                .build()
+            currentStore.withAssignments(
+                currentStore.assignmentsList.filterNot { stored ->
+                    stored.ownerUid == normalizedOwnerUid &&
+                        stored.deviceUid == normalizedDeviceUid
+                }
+            )
         }
 
         return result
@@ -260,10 +235,10 @@ class TankDeviceAssignmentStore private constructor(
         ownerUid: String,
         tankIds: Set<Long>
     ): Int {
-        val normalizedOwnerUid =
-            UserDataScope.normalizeOwnerUid(ownerUid)
-        val normalizedTankIds =
-            tankIds.filter { tankId -> tankId > 0L }.toSet()
+        val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
+        val normalizedTankIds = tankIds
+            .filter { tankId -> tankId > 0L }
+            .toSet()
 
         if (
             normalizedOwnerUid.isBlank() ||
@@ -283,17 +258,13 @@ class TankDeviceAssignmentStore private constructor(
                 if (remove) {
                     removedCount += 1
                 }
-
                 remove
             }
 
             if (removedCount == 0) {
                 currentStore
             } else {
-                currentStore.toBuilder()
-                    .clearAssignments()
-                    .addAllAssignments(remaining)
-                    .build()
+                currentStore.withAssignments(remaining)
             }
         }
 
@@ -303,8 +274,7 @@ class TankDeviceAssignmentStore private constructor(
     suspend fun clearOwner(
         ownerUid: String
     ): Int {
-        val normalizedOwnerUid =
-            UserDataScope.normalizeOwnerUid(ownerUid)
+        val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
 
         if (normalizedOwnerUid.isBlank()) {
             return 0
@@ -319,17 +289,13 @@ class TankDeviceAssignmentStore private constructor(
                 if (remove) {
                     removedCount += 1
                 }
-
                 remove
             }
 
             if (removedCount == 0) {
                 currentStore
             } else {
-                currentStore.toBuilder()
-                    .clearAssignments()
-                    .addAllAssignments(remaining)
-                    .build()
+                currentStore.withAssignments(remaining)
             }
         }
 
@@ -341,14 +307,15 @@ class TankDeviceAssignmentStore private constructor(
         validTankIds: Set<Long>,
         validDeviceUids: Set<DeviceUid>
     ): TankDeviceAssignmentRepairResult {
-        val normalizedOwnerUid =
-            UserDataScope.normalizeOwnerUid(ownerUid)
+        val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
 
         if (normalizedOwnerUid.isBlank()) {
             return TankDeviceAssignmentRepairResult()
         }
 
-        val validTanks = validTankIds.filter { tankId -> tankId > 0L }.toSet()
+        val validTanks = validTankIds
+            .filter { tankId -> tankId > 0L }
+            .toSet()
         val validDevices = validDeviceUids
             .map { deviceUid -> deviceUid.value.trim() }
             .filter { value -> value.isNotBlank() }
@@ -367,9 +334,7 @@ class TankDeviceAssignmentStore private constructor(
 
             currentStore.assignmentsList
                 .asSequence()
-                .filter { stored ->
-                    stored.ownerUid == normalizedOwnerUid
-                }
+                .filter { stored -> stored.ownerUid == normalizedOwnerUid }
                 .sortedWith(
                     compareByDescending<StoredTankDeviceAssignment> { stored ->
                         stored.updatedAtMillis
@@ -381,7 +346,7 @@ class TankDeviceAssignmentStore private constructor(
                     val deviceUid = stored.deviceUid.trim()
 
                     when {
-                        deviceUid.isBlank() || stored.tankId <= 0L -> {
+                        stored.toDomainOrNull() == null -> {
                             removedInvalid += 1
                         }
 
@@ -406,13 +371,9 @@ class TankDeviceAssignmentStore private constructor(
                     }
                 }
 
-            currentStore.toBuilder()
-                .clearAssignments()
-                .addAllAssignments(otherOwners)
-                .addAllAssignments(
-                    keptByDeviceUid.values.sortedWith(STORED_ASSIGNMENT_ORDER)
-                )
-                .build()
+            currentStore.withAssignments(
+                otherOwners + keptByDeviceUid.values.sortedWith(STORED_ASSIGNMENT_ORDER)
+            )
         }
 
         return TankDeviceAssignmentRepairResult(
@@ -455,33 +416,34 @@ class TankDeviceAssignmentStore private constructor(
     }
 }
 
+private fun TankDeviceAssignmentsStore.withAssignments(
+    assignments: Iterable<StoredTankDeviceAssignment>
+): TankDeviceAssignmentsStore {
+    return toBuilder()
+        .clearAssignments()
+        .addAllAssignments(assignments)
+        .build()
+}
+
 private fun StoredTankDeviceAssignment.toDomainOrNull(): TankDeviceAssignment? {
-    val normalizedOwnerUid =
-        UserDataScope.normalizeOwnerUid(ownerUid)
-    val normalizedDeviceUid =
-        deviceUid.trim()
+    val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
+    val normalizedDeviceUid = deviceUid.trim()
 
     if (
         normalizedOwnerUid.isBlank() ||
         normalizedDeviceUid.isBlank() ||
-        tankId <= 0L
+        tankId <= 0L ||
+        assignedAtMillis <= 0L ||
+        updatedAtMillis <= 0L
     ) {
         return null
     }
-
-    val normalizedAssignedAt = assignedAtMillis
-        .takeIf { value -> value > 0L }
-        ?: updatedAtMillis.takeIf { value -> value > 0L }
-        ?: 1L
-    val normalizedUpdatedAt = updatedAtMillis
-        .takeIf { value -> value > 0L }
-        ?: normalizedAssignedAt
 
     return TankDeviceAssignment(
         ownerUid = normalizedOwnerUid,
         deviceUid = DeviceUid(normalizedDeviceUid),
         tankId = tankId,
-        assignedAtMillis = normalizedAssignedAt,
-        updatedAtMillis = normalizedUpdatedAt
+        assignedAtMillis = assignedAtMillis,
+        updatedAtMillis = updatedAtMillis
     )
 }
