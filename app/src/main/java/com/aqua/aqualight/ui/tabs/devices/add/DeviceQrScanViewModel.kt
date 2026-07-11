@@ -79,14 +79,21 @@ class DeviceQrScanViewModel(
         startQrBleScan(payload)
     }
 
-    fun onBlePermissionResult(granted: Boolean) {
+    fun onBlePermissionResult(
+        granted: Boolean,
+        permanentlyDenied: Boolean = false
+    ) {
         val payload = pendingPayload
 
         if (!granted || payload == null) {
             showFailure(
                 titleRes = R.string.device_qr_preflight_bluetooth_permission_title,
                 messageRes = R.string.device_qr_preflight_bluetooth_permission_message,
-                primaryAction = DeviceQrScanPrimaryAction.OPEN_APP_SETTINGS
+                primaryAction = if (permanentlyDenied) {
+                    DeviceQrScanPrimaryAction.OPEN_APP_SETTINGS
+                } else {
+                    DeviceQrScanPrimaryAction.REQUEST_BLE_PERMISSION
+                }
             )
             return
         }
