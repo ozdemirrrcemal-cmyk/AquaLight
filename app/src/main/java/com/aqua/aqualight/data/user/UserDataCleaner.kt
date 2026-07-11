@@ -66,6 +66,7 @@ class UserDataCleaner private constructor(
     ): CleanupResult {
         val targetOwnerUid = ownerUid.orCurrentOwnerUidOrReturn()
         val issues = mutableListOf<CleanupIssue>()
+        var sessionBoundServicesStopped = false
         val tankDataStoreManager = AquariumTankDataStoreManager(
             appContext
         )
@@ -105,6 +106,7 @@ class UserDataCleaner private constructor(
                     context = appContext,
                     cancelNotifications = true
                 )
+                sessionBoundServicesStopped = true
             }
         }
 
@@ -131,7 +133,8 @@ class UserDataCleaner private constructor(
             step = Step.DEVICES
         ) {
             clearOwnerDeviceData(
-                ownerUid = targetOwnerUid
+                ownerUid = targetOwnerUid,
+                activeSessionAlreadyStopped = sessionBoundServicesStopped
             )
         }
 
@@ -160,7 +163,8 @@ class UserDataCleaner private constructor(
     }
 
     private suspend fun clearOwnerDeviceData(
-        ownerUid: String
+        ownerUid: String,
+        activeSessionAlreadyStopped: Boolean
     ) {
         val normalizedTargetOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
         require(normalizedTargetOwnerUid.isNotBlank()) {
@@ -168,7 +172,8 @@ class UserDataCleaner private constructor(
         }
 
         val activeOwnerMatchesTarget =
-            UserDataScope.normalizeOwnerUid(UserDataScope.currentUid()) ==
+            !activeSessionAlreadyStopped &&
+                UserDataScope.normalizeOwnerUid(UserDataScope.currentUid()) ==
                 normalizedTargetOwnerUid
         val knownStore = DeviceKnownStore(appContext)
         val cleanupFailures = OwnerDeviceDataCleaner(
