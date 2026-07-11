@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.devices.store
 
 import com.aqua.aqualight.data.devices.model.DeviceIdentity
+import com.aqua.aqualight.data.devices.model.DeviceProduct
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import org.junit.Assert.assertEquals
@@ -123,7 +124,8 @@ class KnownDevicesStoreReducerTest {
             identity = DeviceIdentity(
                 uid = DeviceUid(deviceUid),
                 customName = customName
-            )
+            ),
+            product = DeviceProduct()
         )
     }
 
