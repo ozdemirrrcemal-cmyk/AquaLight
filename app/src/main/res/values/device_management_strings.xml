@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="devices_add_action">+ Add</string>
+    <string name="devices_add_content_description">Add device</string>
     <string name="devices_assigned_tank_supporting_text">Assigned to %1$s</string>
     <string name="devices_delete_partial_title">Some Devices Were Not Removed</string>
     <plurals name="devices_delete_removed_sentence">
