@@ -17,7 +17,8 @@ import com.google.firebase.auth.auth
 class AuthSessionManager private constructor(
     private val firebaseAuth: FirebaseAuth,
     private val userPrefs: UserPreferencesManager,
-    private val ownershipMigrator: UserDataOwnershipMigrator
+    private val ownershipMigrator: UserDataOwnershipMigrator,
+    private val ownerSessionCoordinator: OwnerSessionCoordinator
 ) {
 
     data class Session(
@@ -49,6 +50,9 @@ class AuthSessionManager private constructor(
                 ),
                 ownershipMigrator = UserDataOwnershipMigrator.create(
                     appContext
+                ),
+                ownerSessionCoordinator = OwnerSessionCoordinator.create(
+                    appContext
                 )
             )
         }
@@ -75,6 +79,7 @@ class AuthSessionManager private constructor(
         ownershipMigrator.migrateLegacyRecordsToOwner(
             ownerUid = user.uid
         )
+        openOwnerSession(user.uid)
 
         return SessionState.Authenticated(
             session = user.toSession()
@@ -89,11 +94,33 @@ class AuthSessionManager private constructor(
         ownershipMigrator.migrateLegacyRecordsToOwner(
             ownerUid = user.uid
         )
+        openOwnerSession(user.uid)
         return user.toSession()
     }
 
     suspend fun markLoggedOut() {
         userPrefs.logout()
+    }
+
+    private suspend fun openOwnerSession(
+        ownerUid: String
+    ) {
+        when (
+            val result = ownerSessionCoordinator.open(ownerUid)
+        ) {
+            is OwnerSessionCoordinator.OpenResult.Active,
+            is OwnerSessionCoordinator.OpenResult.AlreadyActive -> Unit
+
+            is OwnerSessionCoordinator.OpenResult.Superseded -> {
+                throw IllegalStateException(
+                    "Owner session transition was superseded for ${result.ownerUid}."
+                )
+            }
+
+            is OwnerSessionCoordinator.OpenResult.Failure -> {
+                throw result.error
+            }
+        }
     }
 
     private suspend fun syncLocalSession(
