@@ -20,7 +20,8 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 class LogoutManager private constructor(
     private val appContext: Context,
     private val firebaseAuth: FirebaseAuth,
-    private val userPrefs: UserPreferencesManager
+    private val userPrefs: UserPreferencesManager,
+    private val ownerSessionCoordinator: OwnerSessionCoordinator
 ) {
 
     data class LogoutResult(
@@ -43,6 +44,9 @@ class LogoutManager private constructor(
                 appContext = appContext,
                 firebaseAuth = Firebase.auth,
                 userPrefs = UserPreferencesManager.create(
+                    appContext
+                ),
+                ownerSessionCoordinator = OwnerSessionCoordinator.create(
                     appContext
                 )
             )
@@ -114,13 +118,20 @@ class LogoutManager private constructor(
         cancelNotifications: Boolean
     ): Throwable? {
         return runCatching {
-            SessionBoundServiceManager.stop(
-                context = appContext,
-                cancelNotifications = cancelNotifications,
-                expectedOwnerUid = ownerUid.ifBlank { null }
+            ownerSessionCoordinator.close(
+                expectedOwnerUid = ownerUid.ifBlank { null },
+                cancelNotifications = cancelNotifications
             )
         }.fold(
-            onSuccess = SessionBoundServiceManager.StopResult::exceptionOrNull,
+            onSuccess = { result ->
+                when (result) {
+                    is OwnerSessionCoordinator.CloseResult.Closed -> {
+                        result.stopResult.exceptionOrNull()
+                    }
+
+                    is OwnerSessionCoordinator.CloseResult.StaleRequestIgnored -> null
+                }
+            },
             onFailure = { error -> error }
         )
     }
