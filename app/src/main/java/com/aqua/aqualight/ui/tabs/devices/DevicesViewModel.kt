@@ -6,9 +6,11 @@ import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceMenuOpenGate
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceMenuOpenGateResult
+import java.util.concurrent.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -27,10 +29,15 @@ class DevicesViewModel(
     private val repository = DevicesRepositoryProvider.get(application)
     private val assignmentRepository =
         TankDeviceAssignmentRepositoryProvider.get(application)
+    private val deviceDataCleaner = OwnerDeviceDataCleaner.create(
+        devicesRepository = repository,
+        assignmentRepository = assignmentRepository
+    )
     private val menuOpenGate = DeviceMenuOpenGate(repository)
     private val clockMillis = MutableStateFlow(System.currentTimeMillis())
     private val selectedDeviceUids = MutableStateFlow<Set<String>>(emptySet())
     private val openingDeviceMenu = MutableStateFlow(false)
+    private val deletingDevices = MutableStateFlow(false)
 
     private val _uiState = MutableStateFlow(DevicesUiState())
     val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
@@ -51,7 +58,7 @@ class DevicesViewModel(
     }
 
     fun onDeviceClicked(deviceUid: String) {
-        if (deviceUid.isBlank()) return
+        if (deviceUid.isBlank() || deletingDevices.value) return
 
         if (_uiState.value.selectionMode) {
             toggleDeviceSelection(deviceUid)
@@ -93,33 +100,66 @@ class DevicesViewModel(
     }
 
     fun onDeviceLongClicked(deviceUid: String) {
-        if (deviceUid.isBlank()) return
+        if (deviceUid.isBlank() || deletingDevices.value) return
         selectedDeviceUids.value = selectedDeviceUids.value + deviceUid
     }
 
     fun clearSelection() {
+        if (deletingDevices.value) return
         selectedDeviceUids.value = emptySet()
     }
 
     fun deleteSelectedDevices() {
         val selected = selectedDeviceUids.value
-        if (selected.isEmpty()) return
+        if (selected.isEmpty() || deletingDevices.value) return
 
         viewModelScope.launch {
-            selected.forEach { rawDeviceUid ->
-                val deviceUid = DeviceUid(rawDeviceUid)
+            deletingDevices.value = true
 
-                runCatching {
-                    repository.forgetDevice(deviceUid)
+            try {
+                val result = deviceDataCleaner.deleteDevices(
+                    selected.map(::DeviceUid)
+                )
+                val failedUids = result.failures
+                    .map { failure -> failure.deviceUid.value }
+                    .toSet()
+
+                selectedDeviceUids.value = failedUids
+                clockMillis.value = System.currentTimeMillis()
+
+                when {
+                    result.isCompleteSuccess -> Unit
+
+                    result.isCompleteFailure -> {
+                        _events.send(
+                            DevicesEvent.ShowDeleteFailed(
+                                failedCount = result.failedCount
+                            )
+                        )
+                    }
+
+                    else -> {
+                        _events.send(
+                            DevicesEvent.ShowDeletePartialSuccess(
+                                succeededCount = result.succeededCount,
+                                failedCount = result.failedCount
+                            )
+                        )
+                    }
+                }
+            } catch (error: Throwable) {
+                if (error is CancellationException) {
+                    throw error
                 }
 
-                assignmentRepository.removeDeviceFromAnyTank(
-                    deviceUid = deviceUid
+                _events.send(
+                    DevicesEvent.ShowDeleteFailed(
+                        failedCount = selected.size
+                    )
                 )
+            } finally {
+                deletingDevices.value = false
             }
-
-            selectedDeviceUids.value = emptySet()
-            clockMillis.value = System.currentTimeMillis()
         }
     }
 
@@ -133,15 +173,37 @@ class DevicesViewModel(
     }
 
     private fun observeDevices() {
+        val operationState = combine(
+            openingDeviceMenu,
+            deletingDevices
+        ) { isOpeningDeviceMenu, isDeletingDevices ->
+            OperationState(
+                isOpeningDeviceMenu = isOpeningDeviceMenu,
+                isDeletingDevices = isDeletingDevices
+            )
+        }
+
         viewModelScope.launch {
             combine(
                 repository.devices,
+                assignmentRepository.assignedTankNamesByDevice(),
                 clockMillis,
                 selectedDeviceUids,
-                openingDeviceMenu
-            ) { snapshots, now, selectedUids, isOpeningDeviceMenu ->
+                operationState
+            ) { snapshots, tankNamesByDevice, now, selectedUids, operation ->
                 val cards = snapshots.map { snapshot ->
-                    val card = DeviceCardMapper.map(snapshot = snapshot, nowMillis = now)
+                    val assignedTankText = tankNamesByDevice[snapshot.deviceUid]
+                        ?.let { tankName ->
+                            getApplication<Application>().getString(
+                                R.string.devices_assigned_tank_supporting_text,
+                                tankName
+                            )
+                        }
+                    val card = DeviceCardMapper.map(
+                        snapshot = snapshot,
+                        assignedTankText = assignedTankText,
+                        nowMillis = now
+                    )
                     card.copy(isSelected = card.deviceUid in selectedUids)
                 }
                 val visibleSelectedCount = cards.count { card -> card.isSelected }
@@ -152,7 +214,8 @@ class DevicesViewModel(
                     isDiscovering = cards.isEmpty(),
                     selectionMode = visibleSelectedCount > 0,
                     selectedCount = visibleSelectedCount,
-                    isOpeningDeviceMenu = isOpeningDeviceMenu
+                    isOpeningDeviceMenu = operation.isOpeningDeviceMenu,
+                    isDeletingDevices = operation.isDeletingDevices
                 )
             }.collect { state ->
                 _uiState.value = state
@@ -169,13 +232,19 @@ class DevicesViewModel(
         }
     }
 
+    private data class OperationState(
+        val isOpeningDeviceMenu: Boolean,
+        val isDeletingDevices: Boolean
+    )
+
     data class DevicesUiState(
         val devices: List<DeviceCardUi> = emptyList(),
         val isEmpty: Boolean = true,
         val isDiscovering: Boolean = true,
         val selectionMode: Boolean = false,
         val selectedCount: Int = 0,
-        val isOpeningDeviceMenu: Boolean = false
+        val isOpeningDeviceMenu: Boolean = false,
+        val isDeletingDevices: Boolean = false
     )
 
     private companion object {
