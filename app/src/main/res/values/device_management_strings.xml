@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="devices_assigned_tank_supporting_text">Assigned to %1$s</string>
+    <string name="devices_delete_partial_title">Some Devices Were Not Removed</string>
+    <string name="devices_delete_partial_message">%1$d device(s) were removed. %2$d device(s) could not be removed and remain selected so you can try again.</string>
+    <string name="devices_delete_failed_title">Devices Could Not Be Removed</string>
+    <string name="devices_delete_failed_message">%1$d selected device(s) could not be removed. No failed device was cleared from your selection. Please try again.</string>
+</resources>
