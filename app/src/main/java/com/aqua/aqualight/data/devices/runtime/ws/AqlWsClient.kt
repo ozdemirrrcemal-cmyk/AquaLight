@@ -300,6 +300,8 @@ class AqlWsClient(
     ): WebSocketListener {
         return object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
+                if (activeSocket != webSocket) return
+
                 _connectionState.value = AqlWsConnectionState.Connected(
                     deviceUid = deviceUid,
                     url = url,
@@ -309,6 +311,8 @@ class AqlWsClient(
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
+                if (activeSocket != webSocket) return
+
                 val parsed = messageParser.parse(text).getOrNull()
                 handleAuthMessage(
                     deviceUid = deviceUid,
@@ -327,12 +331,12 @@ class AqlWsClient(
             }
 
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-                if (activeSocket == webSocket) {
-                    activeSocket = null
-                    activeDeviceUid = null
-                    pendingTokenInvalidationCommandIds.clear()
-                    _connectionState.value = AqlWsConnectionState.Disconnected
-                }
+                if (activeSocket != webSocket) return
+
+                activeSocket = null
+                activeDeviceUid = null
+                pendingTokenInvalidationCommandIds.clear()
+                _connectionState.value = AqlWsConnectionState.Disconnected
                 emit(
                     AqlWsEvent.Closed(
                         deviceUid = deviceUid,
@@ -343,15 +347,16 @@ class AqlWsClient(
             }
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                if (activeSocket == webSocket) {
-                    activeSocket = null
-                    pendingTokenInvalidationCommandIds.clear()
-                    _connectionState.value = AqlWsConnectionState.Failed(
-                        deviceUid = deviceUid,
-                        message = t.message.orEmpty(),
-                        cause = t
-                    )
-                }
+                if (activeSocket != webSocket) return
+
+                activeSocket = null
+                activeDeviceUid = null
+                pendingTokenInvalidationCommandIds.clear()
+                _connectionState.value = AqlWsConnectionState.Failed(
+                    deviceUid = deviceUid,
+                    message = t.message.orEmpty(),
+                    cause = t
+                )
                 emit(
                     AqlWsEvent.Failure(
                         deviceUid = deviceUid,
@@ -393,7 +398,7 @@ class AqlWsClient(
                 .connectTimeout(8, TimeUnit.SECONDS)
                 .readTimeout(0, TimeUnit.SECONDS)
                 .writeTimeout(8, TimeUnit.SECONDS)
-                .pingInterval(20, TimeUnit.SECONDS)
+                .pingInterval(5, TimeUnit.SECONDS)
                 .build()
         }
     }
