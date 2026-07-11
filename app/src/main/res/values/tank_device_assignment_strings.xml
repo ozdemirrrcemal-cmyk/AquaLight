@@ -6,4 +6,5 @@
     <string name="tank_device_assignment_failed_message">The device could not be assigned. Your existing assignments were not changed. Please try again.</string>
     <string name="tank_device_load_failed_title">Devices Unavailable</string>
     <string name="tank_device_load_failed_message">Saved devices could not be loaded. Please close this screen and try again.</string>
+    <string name="tank_device_remove_failed_title">Remove Failed</string>
 </resources>
