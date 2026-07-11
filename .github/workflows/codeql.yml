@@ -51,8 +51,8 @@ jobs:
           languages: java-kotlin
           build-mode: manual
 
-      - name: Build project
-        run: ./gradlew assembleDebug --no-daemon
+      - name: Build and run unit tests
+        run: ./gradlew assembleDebug testDebugUnitTest --no-daemon
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
