@@ -99,10 +99,15 @@ class UserDataCleaner private constructor(
             runStep(
                 step = Step.SESSION_BOUND_SERVICES
             ) {
-                SessionBoundServiceManager.stop(
+                val stopResult = SessionBoundServiceManager.stop(
                     context = appContext,
-                    cancelNotifications = true
+                    cancelNotifications = true,
+                    expectedOwnerUid = targetOwnerUid
                 )
+
+                stopResult.exceptionOrNull()?.let { error ->
+                    throw error
+                }
             }
         }
 
