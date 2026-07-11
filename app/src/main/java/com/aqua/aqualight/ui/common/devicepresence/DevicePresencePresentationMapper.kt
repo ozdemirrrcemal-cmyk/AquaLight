@@ -3,10 +3,10 @@ package com.aqua.aqualight.ui.common.devicepresence
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 
 /**
- * User-facing presence contract.
+ * User-facing availability contract.
  *
- * Runtime/auth/socket states are engineering details. Product UI surfaces should answer the only
- * question that matters to users: can the app reach this device right now?
+ * UDP, socket, authentication, reconnect and stale states are engineering details. Product UI
+ * surfaces expose only whether the device can currently accept authenticated control commands.
  */
 object DevicePresencePresentationMapper {
 
@@ -15,22 +15,7 @@ object DevicePresencePresentationMapper {
         else -> "Offline"
     }
 
-
     fun isReachable(state: DeviceOnlineState): Boolean {
-        return when (state) {
-            DeviceOnlineState.AUTHENTICATED,
-            DeviceOnlineState.ONLINE_LAN,
-            DeviceOnlineState.CONNECTING_WS,
-            DeviceOnlineState.PROVISIONING,
-            DeviceOnlineState.OTA_UPDATING -> true
-
-            DeviceOnlineState.UNKNOWN,
-            DeviceOnlineState.DISCOVERING,
-            DeviceOnlineState.STALE,
-            DeviceOnlineState.OFFLINE,
-            DeviceOnlineState.LOCAL_NETWORK_OFFLINE,
-            DeviceOnlineState.AUTH_REQUIRED,
-            DeviceOnlineState.ERROR -> false
-        }
+        return state == DeviceOnlineState.AUTHENTICATED
     }
 }
