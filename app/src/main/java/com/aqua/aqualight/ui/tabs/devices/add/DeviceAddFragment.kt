@@ -1,6 +1,9 @@
 package com.aqua.aqualight.ui.tabs.devices.add
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -26,6 +29,8 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
     private var _binding: FragmentDeviceAddBinding? = null
     private val binding get() = _binding!!
 
+    private var retryBlePermissionOnResume = false
+
     private val candidateAdapter = DeviceAddCandidateAdapter { candidate ->
         viewModel.onCandidateClicked(candidate)
     }
@@ -44,6 +49,7 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         super.onViewCreated(view, savedInstanceState)
 
         _binding = FragmentDeviceAddBinding.bind(view)
+        retryBlePermissionOnResume = false
 
         setupHeader()
         setupRecycler()
@@ -54,6 +60,19 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
     override fun onStart() {
         super.onStart()
         viewModel.onScreenVisible()
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        if (!retryBlePermissionOnResume) return
+        retryBlePermissionOnResume = false
+
+        if (permissionController.hasBlePermissions(requireContext())) {
+            viewModel.startBleScan()
+        } else {
+            viewModel.onBlePermissionDenied()
+        }
     }
 
     private fun setupHeader() {
@@ -85,14 +104,46 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
     }
 
     private fun startBleScanWithPermissionCheck() {
-        if (permissionController.hasBlePermissions(requireContext())) {
-            viewModel.startBleScan()
-            return
-        }
+        when (permissionController.blePermissionAction(this)) {
+            DevicePermissionAction.GRANTED -> {
+                viewModel.startBleScan()
+            }
 
+            DevicePermissionAction.REQUEST_PERMISSION -> {
+                requestBlePermissions()
+            }
+
+            DevicePermissionAction.OPEN_APP_SETTINGS -> {
+                openAppSettingsForBlePermission()
+            }
+        }
+    }
+
+    private fun requestBlePermissions() {
+        permissionController.markBlePermissionsRequested(requireContext())
         blePermissionLauncher.launch(
             permissionController.blePermissions()
         )
+    }
+
+    private fun openAppSettingsForBlePermission() {
+        retryBlePermissionOnResume = true
+        val packageUri = Uri.fromParts(
+            "package",
+            requireContext().packageName,
+            null
+        )
+
+        runCatching {
+            startActivity(
+                Intent(
+                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    packageUri
+                )
+            )
+        }.onFailure {
+            startActivity(Intent(Settings.ACTION_SETTINGS))
+        }
     }
 
     private fun observeViewModel() {
@@ -119,6 +170,11 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         val hasCandidates = state.candidates.isNotEmpty()
         val showSearchCard = !hasCandidates
         val isScanning = state.mode == DeviceAddScanMode.SCANNING
+        val permissionAction = if (state.mode == DeviceAddScanMode.PERMISSION_REQUIRED) {
+            permissionController.blePermissionAction(this)
+        } else {
+            null
+        }
 
         binding.cardHero.isVisible = showSearchCard
         binding.tipContainer.isVisible = showSearchCard && state.mode == DeviceAddScanMode.READY
@@ -140,7 +196,15 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
             binding.btnScan.alpha = 0.72f
         } else {
             binding.scanPulseView.stopScan()
-            binding.btnScan.text = getString(R.string.device_add_scan_button)
+            binding.btnScan.text = when (permissionAction) {
+                DevicePermissionAction.REQUEST_PERMISSION ->
+                    getString(R.string.device_permission_allow_bluetooth)
+
+                DevicePermissionAction.OPEN_APP_SETTINGS ->
+                    getString(R.string.device_permission_open_app_settings)
+
+                else -> getString(R.string.device_add_scan_button)
+            }
             binding.btnScan.isEnabled = true
             binding.btnScan.alpha = 1f
         }
