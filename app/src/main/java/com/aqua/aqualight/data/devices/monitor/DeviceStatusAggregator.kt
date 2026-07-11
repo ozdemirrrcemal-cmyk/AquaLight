@@ -4,10 +4,11 @@ import com.aqua.aqualight.data.devices.model.DeviceConnectionState
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 
 /**
- * Converts low-level connectivity timestamps into one product-level device presence state.
+ * Produces the single canonical device-availability state.
  *
- * Runtime socket and token handshakes are implementation details. This resolver only answers
- * whether the device is currently reachable on the local network.
+ * UDP discovery is only LAN evidence and may trigger a runtime reconnect. A device is user-usable
+ * only while its authenticated WebSocket runtime is live. UI surfaces still expose only Online or
+ * Offline through DevicePresencePresentationMapper.
  */
 class DeviceStatusAggregator(
     private val policy: DeviceHeartbeatPolicy = DeviceHeartbeatPolicy()
@@ -20,23 +21,60 @@ class DeviceStatusAggregator(
     ): DeviceOnlineState {
         if (!localNetworkAvailable) return DeviceOnlineState.LOCAL_NETWORK_OFFLINE
 
-        val lastRuntimeSeenAt = listOfNotNull(
-            state.lastAuthenticatedAtMillis,
-            state.lastWsConnectedAtMillis
-        ).maxOrNull()
+        if (state.runtimeConnected && state.runtimeAuthenticated) {
+            return DeviceOnlineState.AUTHENTICATED
+        }
 
-        if (lastRuntimeSeenAt != null && nowMillis - lastRuntimeSeenAt <= policy.wsFreshMillis) {
-            return DeviceOnlineState.ONLINE_LAN
+        if (state.runtimeConnected) {
+            return when (state.onlineState) {
+                DeviceOnlineState.AUTH_REQUIRED -> DeviceOnlineState.AUTH_REQUIRED
+                else -> DeviceOnlineState.CONNECTING_WS
+            }
+        }
+
+        when (state.onlineState) {
+            DeviceOnlineState.PROVISIONING,
+            DeviceOnlineState.OTA_UPDATING -> return state.onlineState
+
+            else -> Unit
         }
 
         val lastUdpSeenAt = state.lastUdpSeenAtMillis
-            ?: return DeviceOnlineState.UNKNOWN
+        if (lastUdpSeenAt != null) {
+            val udpAgeMillis = nowMillis - lastUdpSeenAt
+            if (udpAgeMillis <= policy.udpFreshMillis) {
+                return DeviceOnlineState.ONLINE_LAN
+            }
+        }
 
-        val ageMillis = nowMillis - lastUdpSeenAt
+        val authenticatedWithinGrace = state.lastAuthenticatedAtMillis
+            ?.let { authenticatedAt -> nowMillis - authenticatedAt <= policy.authFreshMillis }
+            ?: false
+        val webSocketWithinGrace = state.lastWsConnectedAtMillis
+            ?.let { connectedAt -> nowMillis - connectedAt <= policy.wsFreshMillis }
+            ?: false
+
+        if (authenticatedWithinGrace || webSocketWithinGrace) {
+            return DeviceOnlineState.STALE
+        }
+
+        if (lastUdpSeenAt != null) {
+            val udpAgeMillis = nowMillis - lastUdpSeenAt
+            if (udpAgeMillis <= policy.udpStaleMillis) {
+                return DeviceOnlineState.STALE
+            }
+        }
+
+        val hasPreviousPresenceEvidence =
+            lastUdpSeenAt != null ||
+                state.lastWsConnectedAtMillis != null ||
+                state.lastAuthenticatedAtMillis != null
+
         return when {
-            ageMillis <= policy.udpFreshMillis -> DeviceOnlineState.ONLINE_LAN
-            ageMillis <= policy.udpStaleMillis -> DeviceOnlineState.STALE
-            else -> DeviceOnlineState.OFFLINE
+            hasPreviousPresenceEvidence -> DeviceOnlineState.OFFLINE
+            state.onlineState == DeviceOnlineState.ERROR -> DeviceOnlineState.ERROR
+            state.onlineState == DeviceOnlineState.DISCOVERING -> DeviceOnlineState.DISCOVERING
+            else -> DeviceOnlineState.UNKNOWN
         }
     }
 }
