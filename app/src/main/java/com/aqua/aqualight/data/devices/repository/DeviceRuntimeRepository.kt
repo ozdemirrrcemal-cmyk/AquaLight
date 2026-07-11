@@ -26,7 +26,9 @@ import kotlinx.coroutines.launch
 
 class DeviceRuntimeRepository(
     private val tokenProvider: AqlWsTokenProvider? = null,
-    private val wsClientFactory: () -> AqlWsClient = { AqlWsClient() },
+    private val wsClientFactory: (AqlWsTokenProvider?) -> AqlWsClient = { provider ->
+        AqlWsClient(tokenProvider = provider)
+    },
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 ) {
 
@@ -97,15 +99,12 @@ class DeviceRuntimeRepository(
         tokenProvider?.clearToken(deviceUid)
     }
 
-    fun clearTokenAsync(deviceUid: DeviceUid) {
-        scope.launch {
-            tokenProvider?.clearToken(deviceUid)
-        }
-    }
-
     fun close(deviceUid: DeviceUid) {
         timeSyncCoordinator.clearSessionMemory(deviceUid)
         sessions.remove(deviceUid)?.wsClient?.close()
+        if (lastActiveDeviceUid == deviceUid) {
+            lastActiveDeviceUid = null
+        }
     }
 
     fun close() {
@@ -124,7 +123,7 @@ class DeviceRuntimeRepository(
     }
 
     private fun createSession(deviceUid: DeviceUid): RuntimeSession {
-        val wsClient = wsClientFactory()
+        val wsClient = wsClientFactory(tokenProvider)
         val commandClient = AqlWsCommandClient(wsClient)
 
         val session = RuntimeSession(
@@ -216,10 +215,14 @@ class DeviceRuntimeRepository(
         private const val EVENT_BUFFER_CAPACITY = 256
 
         fun withCredentialStore(
-            context: Context
+            context: Context,
+            ownerUid: String
         ): DeviceRuntimeRepository {
             return DeviceRuntimeRepository(
-                tokenProvider = DeviceCredentialStore(context)
+                tokenProvider = DeviceCredentialStore(
+                    context = context,
+                    ownerUid = ownerUid
+                )
             )
         }
     }
