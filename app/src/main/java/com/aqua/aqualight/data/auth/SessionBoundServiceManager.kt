@@ -37,22 +37,52 @@ object SessionBoundServiceManager {
         cancelNotifications: Boolean = true
     ) {
         val appContext = context.applicationContext
+        val failures = mutableListOf<Throwable>()
+
+        suspend fun attempt(
+            label: String,
+            block: suspend () -> Unit
+        ) {
+            runCatching {
+                block()
+            }.onFailure { error ->
+                failures += IllegalStateException(
+                    "Session shutdown step '$label' failed.",
+                    error
+                )
+            }
+        }
 
         TankDeviceAssignmentStartupRepair.reset()
-        DevicesRepositoryProvider.stopSession()
 
-        SmartCareDailyWorker.cancel(
-            context = appContext
-        )
-
-        cancelPendingCareTaskReminders(
-            context = appContext
-        )
-
-        if (cancelNotifications) {
-            NotificationHelper.cancelAllAppNotifications(
+        attempt("device-runtime") {
+            DevicesRepositoryProvider.stopSession()
+        }
+        attempt("smart-care-worker") {
+            SmartCareDailyWorker.cancel(
                 context = appContext
             )
+        }
+        attempt("care-reminders") {
+            cancelPendingCareTaskReminders(
+                context = appContext
+            )
+        }
+
+        if (cancelNotifications) {
+            attempt("notifications") {
+                NotificationHelper.cancelAllAppNotifications(
+                    context = appContext
+                )
+            }
+        }
+
+        if (failures.isNotEmpty()) {
+            throw IllegalStateException(
+                "One or more session-bound services could not be stopped."
+            ).also { aggregateError ->
+                failures.forEach(aggregateError::addSuppressed)
+            }
         }
     }
 
