@@ -4,8 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentStore
-import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
+import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceMenuOpenGate
@@ -26,10 +25,8 @@ class DevicesViewModel(
 ) : AndroidViewModel(application) {
 
     private val repository = DevicesRepositoryProvider.get(application)
-    private val assignmentRepository = TankDeviceAssignmentRepository(
-        devicesRepository = repository,
-        assignmentStore = TankDeviceAssignmentStore.get(application)
-    )
+    private val assignmentRepository =
+        TankDeviceAssignmentRepositoryProvider.get(application)
     private val menuOpenGate = DeviceMenuOpenGate(repository)
     private val clockMillis = MutableStateFlow(System.currentTimeMillis())
     private val selectedDeviceUids = MutableStateFlow<Set<String>>(emptySet())
