@@ -99,7 +99,7 @@ class DevicesRepository(
                     val runtimeMetadataJob = runtimeRepository?.let { runtime ->
                         launch {
                             runtime.events.collect { event ->
-                                applyRuntimeMetadataEvent(event)
+                                applyRuntimeEvent(event)
                             }
                         }
                     }
@@ -280,6 +280,24 @@ class DevicesRepository(
         }
     }
 
+    private suspend fun applyRuntimeEvent(event: AqlWsEvent) {
+        when (event) {
+            is AqlWsEvent.Closed -> applyRuntimeUnavailable(
+                deviceUid = event.deviceUid,
+                message = event.reason.ifBlank { "Connection closed." }
+            )
+
+            is AqlWsEvent.Failure -> applyRuntimeUnavailable(
+                deviceUid = event.deviceUid,
+                message = event.message.ifBlank { "Connection failed." }
+            )
+
+            else -> Unit
+        }
+
+        applyRuntimeMetadataEvent(event)
+    }
+
     private suspend fun applyRuntimeMetadataEvent(event: AqlWsEvent) {
         val message = (event as? AqlWsEvent.Message)
             ?.parsed as? AqlWsIncomingMessage.Response
@@ -296,31 +314,88 @@ class DevicesRepository(
     }
 
     private fun applyRuntimeConnectionState(state: AqlWsConnectionState) {
-        val failed = state as? AqlWsConnectionState.Failed ?: return
-        val deviceUid = failed.deviceUid ?: return
-        applyRuntimeUnavailable(
-            deviceUid = deviceUid,
-            message = failed.message.ifBlank { "Connection failed." }
-        )
+        when (state) {
+            AqlWsConnectionState.Disconnected -> Unit
+
+            is AqlWsConnectionState.Connecting -> {
+                registryStore.updateConnectionState(state.deviceUid) { previous ->
+                    previous.copy(
+                        onlineState = DeviceOnlineState.CONNECTING_WS,
+                        runtimeConnected = false,
+                        runtimeAuthenticated = false,
+                        lastErrorMessage = null
+                    )
+                }
+            }
+
+            is AqlWsConnectionState.Connected -> {
+                registryStore.updateConnectionState(state.deviceUid) { previous ->
+                    previous.copy(
+                        onlineState = DeviceOnlineState.CONNECTING_WS,
+                        lastWsConnectedAtMillis = state.connectedAtMillis,
+                        runtimeConnected = true,
+                        runtimeAuthenticated = false,
+                        lastErrorMessage = null
+                    )
+                }
+            }
+
+            is AqlWsConnectionState.Authenticated -> {
+                registryStore.updateConnectionState(state.deviceUid) { previous ->
+                    previous.copy(
+                        onlineState = DeviceOnlineState.AUTHENTICATED,
+                        lastWsConnectedAtMillis = previous.lastWsConnectedAtMillis
+                            ?: state.authenticatedAtMillis,
+                        lastAuthenticatedAtMillis = state.authenticatedAtMillis,
+                        runtimeConnected = true,
+                        runtimeAuthenticated = true,
+                        lastErrorMessage = null
+                    )
+                }
+            }
+
+            is AqlWsConnectionState.AuthRequired -> {
+                registryStore.updateConnectionState(state.deviceUid) { previous ->
+                    previous.copy(
+                        onlineState = DeviceOnlineState.AUTH_REQUIRED,
+                        runtimeConnected = true,
+                        runtimeAuthenticated = false,
+                        lastErrorMessage = state.message.ifBlank { null }
+                    )
+                }
+            }
+
+            is AqlWsConnectionState.Failed -> {
+                val deviceUid = state.deviceUid ?: return
+                applyRuntimeUnavailable(
+                    deviceUid = deviceUid,
+                    message = state.message.ifBlank { "Connection failed." }
+                )
+            }
+        }
     }
 
     private fun applyRuntimeUnavailable(deviceUid: DeviceUid, message: String? = null) {
         val nowMillis = System.currentTimeMillis()
         registryStore.updateConnectionState(deviceUid) { previous ->
-            val clearedRuntimeState = previous.copy(
-                lastWsConnectedAtMillis = null,
-                lastAuthenticatedAtMillis = null,
+            val unavailableState = previous.copy(
+                onlineState = DeviceOnlineState.STALE,
+                runtimeConnected = false,
+                runtimeAuthenticated = false,
                 lastErrorMessage = message?.ifBlank { null }
             )
             val resolved = statusAggregator.resolve(
-                state = clearedRuntimeState,
-                nowMillis = nowMillis
+                state = unavailableState,
+                nowMillis = nowMillis,
+                localNetworkAvailable = presenceRuntimeMonitor.isLocalNetworkAvailable()
             )
             val visibleState = when {
-                resolved == DeviceOnlineState.UNKNOWN && !message.isNullOrBlank() -> DeviceOnlineState.OFFLINE
+                resolved == DeviceOnlineState.UNKNOWN && !message.isNullOrBlank() ->
+                    DeviceOnlineState.OFFLINE
+
                 else -> resolved
             }
-            clearedRuntimeState.copy(onlineState = visibleState)
+            unavailableState.copy(onlineState = visibleState)
         }
     }
 }
