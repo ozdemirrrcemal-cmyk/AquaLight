@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.user
 
 import android.content.Context
 import android.net.Uri
+import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentStore
 import com.aqua.aqualight.data.auth.SessionBoundServiceManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
@@ -122,6 +123,14 @@ class UserDataCleaner private constructor(
             )
         }
 
+        runStep(
+            step = Step.DEVICES
+        ) {
+            TankDeviceAssignmentStore.get(appContext)
+                .clearOwnerAssignments(
+                    ownerUid = targetOwnerUid
+                )
+        }
 
         runStep(
             step = Step.APP_OWNED_FILES
