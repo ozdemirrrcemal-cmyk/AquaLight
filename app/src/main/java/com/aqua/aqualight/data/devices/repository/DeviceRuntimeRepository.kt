@@ -141,8 +141,9 @@ class DeviceRuntimeRepository(
     private fun observeSession(session: RuntimeSession) {
         scope.launch {
             session.wsClient.connectionState.collect { state ->
-                if (state is AqlWsConnectionState.Failed) {
-                    _connectionState.emit(state)
+                when (state) {
+                    AqlWsConnectionState.Disconnected -> Unit
+                    else -> _connectionState.emit(state)
                 }
             }
         }
