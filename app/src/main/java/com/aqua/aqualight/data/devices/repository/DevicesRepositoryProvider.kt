@@ -72,10 +72,30 @@ object DevicesRepositoryProvider {
         }
     }
 
-    fun clear() {
-        synchronized(this) {
-            entry?.repository?.stop()
-            entry = null
+    fun clear(
+        expectedOwnerUid: String? = null
+    ): Boolean {
+        val normalizedExpected = expectedOwnerUid
+            ?.trim()
+            ?.takeIf(String::isNotBlank)
+
+        return synchronized(this) {
+            val current = entry
+
+            if (
+                normalizedExpected != null &&
+                current?.ownerUid != normalizedExpected
+            ) {
+                false
+            } else {
+                current?.repository?.stop()
+                entry = null
+                current != null
+            }
         }
+    }
+
+    fun currentOwnerUid(): String? {
+        return entry?.ownerUid
     }
 }
