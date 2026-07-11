@@ -7,22 +7,26 @@ import androidx.security.crypto.MasterKey
 import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsTokenProvider
-import java.security.MessageDigest
-import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Secure local credential store for AquaLight Devices V2.
+ * Secure owner-scoped runtime credential store.
  *
- * Runtime WebSocket pairing tokens are stored per deviceUid. The preference key does not contain
- * the raw deviceUid; it uses a SHA-256 digest to avoid exposing device identity in preference keys.
+ * Preference keys contain only SHA-256 digests. A token written for one owner
+ * can never be addressed by another owner, even when the device UID is equal.
  */
 class DeviceCredentialStore(
-    context: Context
+    context: Context,
+    ownerUid: String
 ) : AqlWsTokenProvider {
 
     private val appContext = context.applicationContext
+    private val ownerUid = ownerUid.trim().also { normalizedOwnerUid ->
+        require(normalizedOwnerUid.isNotBlank()) {
+            "ownerUid must not be blank"
+        }
+    }
 
     private val preferences: SharedPreferences by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         val masterKey = MasterKey.Builder(appContext)
@@ -38,48 +42,91 @@ class DeviceCredentialStore(
         )
     }
 
-    override suspend fun getToken(deviceUid: DeviceUid): String? {
+    override suspend fun getToken(
+        deviceUid: DeviceUid
+    ): String? {
         return withContext(Dispatchers.IO) {
-            preferences
+            val token = preferences
                 .getString(tokenPreferenceKey(deviceUid), null)
                 ?.trim()
-                ?.takeIf { token -> token.isNotBlank() }
+                ?.takeIf(String::isNotBlank)
+                ?: return@withContext null
+
+            check(token.isRuntimeTokenHex()) {
+                "Stored runtime token is malformed."
+            }
+
+            token
         }
     }
 
-    override suspend fun saveToken(deviceUid: DeviceUid, token: String) {
+    override suspend fun saveToken(
+        deviceUid: DeviceUid,
+        token: String
+    ) {
         val normalizedToken = token.trim()
-        if (!normalizedToken.isRuntimeTokenHex()) {
-            return
+        require(normalizedToken.isRuntimeTokenHex()) {
+            "Runtime token must be a ${AqlBleProvisioningContract.RUNTIME_TOKEN_HEX_LENGTH}-character hexadecimal value."
         }
 
         withContext(Dispatchers.IO) {
-            preferences.edit()
-                .putString(tokenPreferenceKey(deviceUid), normalizedToken)
-                .commit()
+            check(
+                preferences.edit()
+                    .putString(tokenPreferenceKey(deviceUid), normalizedToken)
+                    .commit()
+            ) {
+                "Runtime token could not be persisted."
+            }
         }
     }
 
-    override suspend fun clearToken(deviceUid: DeviceUid) {
+    override suspend fun clearToken(
+        deviceUid: DeviceUid
+    ) {
         withContext(Dispatchers.IO) {
-            preferences.edit()
-                .remove(tokenPreferenceKey(deviceUid))
-                .commit()
+            check(
+                preferences.edit()
+                    .remove(tokenPreferenceKey(deviceUid))
+                    .commit()
+            ) {
+                "Runtime token could not be removed."
+            }
         }
     }
 
-    suspend fun hasToken(deviceUid: DeviceUid): Boolean {
+    suspend fun hasToken(
+        deviceUid: DeviceUid
+    ): Boolean {
         return getToken(deviceUid).isNullOrBlank().not()
     }
 
-    fun clearAll() {
-        preferences.edit()
-            .clear()
-            .apply()
+    suspend fun clearOwner() {
+        withContext(Dispatchers.IO) {
+            val ownerPrefix = DeviceCredentialKeyFactory.ownerPrefix(ownerUid)
+            val keys = preferences.all.keys.filter { key ->
+                key.startsWith(ownerPrefix)
+            }
+
+            if (keys.isEmpty()) {
+                return@withContext
+            }
+
+            val editor = preferences.edit()
+            keys.forEach(editor::remove)
+
+            check(editor.commit()) {
+                "Owner runtime credentials could not be removed."
+            }
+        }
     }
 
-    private fun tokenPreferenceKey(deviceUid: DeviceUid): String {
-        return "$KEY_PREFIX${sha256(deviceUid.value)}"
+    private fun tokenPreferenceKey(
+        deviceUid: DeviceUid
+    ): String {
+        return DeviceCredentialKeyFactory.tokenKey(
+            ownerUid = ownerUid,
+            deviceUid = deviceUid
+        )
     }
 
     private fun String.isRuntimeTokenHex(): Boolean {
@@ -87,18 +134,7 @@ class DeviceCredentialStore(
             matches(Regex("(?i)^[0-9a-f]+$"))
     }
 
-    private fun sha256(value: String): String {
-        val digest = MessageDigest
-            .getInstance("SHA-256")
-            .digest(value.trim().uppercase(Locale.US).toByteArray(Charsets.UTF_8))
-
-        return digest.joinToString(separator = "") { byte ->
-            "%02x".format(byte)
-        }
-    }
-
     private companion object {
-        const val PREFERENCES_NAME = "aql_device_credentials_v2"
-        const val KEY_PREFIX = "ws_token_"
+        const val PREFERENCES_NAME = "device_credentials"
     }
 }
