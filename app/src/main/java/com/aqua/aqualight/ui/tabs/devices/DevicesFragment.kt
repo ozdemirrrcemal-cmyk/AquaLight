@@ -75,8 +75,8 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                 AquaHeaderConfig(
                     showBackButton = false,
                     primaryAction = AquaHeaderPrimaryAction(
-                        text = "+ Add",
-                        contentDescription = "Add device",
+                        text = getString(R.string.devices_add_action),
+                        contentDescription = getString(R.string.devices_add_content_description),
                         onClick = {
                             if (!state.isDeletingDevices) {
                                 openAddDevice()
@@ -162,15 +162,22 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     private fun showDeletePartialSuccess(
         event: DevicesEvent.ShowDeletePartialSuccess
     ) {
+        val removedSentence = resources.getQuantityString(
+            R.plurals.devices_delete_removed_sentence,
+            event.succeededCount,
+            event.succeededCount
+        )
+        val failedSentence = resources.getQuantityString(
+            R.plurals.devices_delete_remain_selected_sentence,
+            event.failedCount,
+            event.failedCount
+        )
+
         DialogManager.showInfoDialog(
             context = requireContext(),
             type = DialogType.WARNING,
             title = getString(R.string.devices_delete_partial_title),
-            message = getString(
-                R.string.devices_delete_partial_message,
-                event.succeededCount,
-                event.failedCount
-            )
+            message = "$removedSentence $failedSentence"
         )
     }
 
@@ -181,8 +188,9 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             context = requireContext(),
             type = DialogType.ERROR,
             title = getString(R.string.devices_delete_failed_title),
-            message = getString(
-                R.string.devices_delete_failed_message,
+            message = resources.getQuantityString(
+                R.plurals.devices_delete_failed_message,
+                event.failedCount,
                 event.failedCount
             )
         )
