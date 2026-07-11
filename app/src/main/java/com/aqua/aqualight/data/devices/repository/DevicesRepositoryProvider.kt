@@ -53,7 +53,8 @@ object DevicesRepositoryProvider {
                         ownerUid = ownerUid
                     ),
                     runtimeRepository = DeviceRuntimeRepository.withCredentialStore(
-                        context = appContext
+                        context = appContext,
+                        ownerUid = ownerUid
                     ),
                     connectivityObserver = DeviceConnectivityObserver(appContext)
                 )
