@@ -7,6 +7,7 @@ import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import java.util.concurrent.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -79,6 +80,33 @@ class TankDeviceAssignmentRepository(
                     snapshot.title.lowercase()
                 }
                 .toList()
+        }
+    }
+
+    fun assignedTankNamesByDevice(): Flow<Map<DeviceUid, String>> {
+        return combine(
+            ownerAssignments,
+            tankStore.tanksFlow
+        ) { assignments, tanks ->
+            val tankNamesById = tanks.associate { tank ->
+                tank.id to tank.name
+            }
+
+            assignments.mapNotNull { assignment ->
+                tankNamesById[assignment.tankId]
+                    ?.takeIf(String::isNotBlank)
+                    ?.let { tankName ->
+                        assignment.deviceUid to tankName
+                    }
+            }.toMap()
+        }
+    }
+
+    suspend fun assignmentForDevice(
+        deviceUid: DeviceUid
+    ): TankDeviceAssignment? {
+        return ownerAssignments.first().firstOrNull { assignment ->
+            assignment.deviceUid == deviceUid
         }
     }
 
