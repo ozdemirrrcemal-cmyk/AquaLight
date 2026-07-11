@@ -70,6 +70,7 @@ class AuthSessionManager private constructor(
         val user = firebaseAuth.currentUser
 
         if (user == null) {
+            closeResidualOwnerSession()
             userPrefs.logout()
             return SessionState.Unauthenticated
         }
@@ -100,6 +101,16 @@ class AuthSessionManager private constructor(
 
     suspend fun markLoggedOut() {
         userPrefs.logout()
+    }
+
+    private suspend fun closeResidualOwnerSession() {
+        val snapshot = ownerSessionCoordinator.snapshot()
+        val ownerUid = snapshot.pendingOwnerUid ?: snapshot.activeOwnerUid ?: return
+
+        ownerSessionCoordinator.close(
+            expectedOwnerUid = ownerUid,
+            cancelNotifications = true
+        )
     }
 
     private suspend fun openOwnerSession(
