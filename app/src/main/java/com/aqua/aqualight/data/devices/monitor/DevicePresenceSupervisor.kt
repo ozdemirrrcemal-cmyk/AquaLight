@@ -50,6 +50,8 @@ class DevicePresenceSupervisor(
             previous.copy(
                 onlineState = DeviceOnlineState.CONNECTING_WS,
                 lastWsConnectedAtMillis = connectedAtMillis,
+                runtimeConnected = true,
+                runtimeAuthenticated = false,
                 lastErrorMessage = null
             )
         }
@@ -61,6 +63,8 @@ class DevicePresenceSupervisor(
                 onlineState = DeviceOnlineState.AUTHENTICATED,
                 lastAuthenticatedAtMillis = authenticatedAtMillis,
                 lastWsConnectedAtMillis = previous.lastWsConnectedAtMillis ?: authenticatedAtMillis,
+                runtimeConnected = true,
+                runtimeAuthenticated = true,
                 lastErrorMessage = null
             )
         }
@@ -70,6 +74,8 @@ class DevicePresenceSupervisor(
         updateConnection(deviceUid) { previous ->
             previous.copy(
                 onlineState = DeviceOnlineState.AUTH_REQUIRED,
+                runtimeConnected = true,
+                runtimeAuthenticated = false,
                 lastErrorMessage = message
             )
         }
@@ -79,6 +85,8 @@ class DevicePresenceSupervisor(
         updateConnection(deviceUid) { previous ->
             previous.copy(
                 onlineState = DeviceOnlineState.ERROR,
+                runtimeConnected = false,
+                runtimeAuthenticated = false,
                 lastErrorMessage = message
             )
         }
