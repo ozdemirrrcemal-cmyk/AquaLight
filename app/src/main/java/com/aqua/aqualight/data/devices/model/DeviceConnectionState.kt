@@ -5,8 +5,10 @@ data class DeviceConnectionState(
     val lastUdpSeenAtMillis: Long? = null,
     val lastWsConnectedAtMillis: Long? = null,
     val lastAuthenticatedAtMillis: Long? = null,
+    val runtimeConnected: Boolean = false,
+    val runtimeAuthenticated: Boolean = false,
     val lastErrorMessage: String? = null
 ) {
     val isUsableOnline: Boolean
-        get() = onlineState == DeviceOnlineState.AUTHENTICATED || onlineState == DeviceOnlineState.ONLINE_LAN
+        get() = onlineState == DeviceOnlineState.AUTHENTICATED
 }
