@@ -15,6 +15,7 @@ import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import com.aqua.aqualight.data.devices.store.DeviceKnownStore
 import com.aqua.aqualight.data.devices.store.DeviceRegistryStore
+import com.aqua.aqualight.data.devices.store.DeviceSnapshotMerger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
@@ -184,33 +185,22 @@ class DevicesRepository(
     }
 
     suspend fun commitProvisioningSnapshot(snapshot: DeviceSnapshot): DeviceSnapshot {
-        knownStore?.allowDevice(snapshot.deviceUid)
-        val registered = registryStore.upsert(snapshot)
-        knownStore?.saveSnapshot(registered)
-        if (registered.endpoint.hasWebSocketEndpoint) {
-            runtimeRepository?.connect(registered)
-        }
-        return registered
+        return persistThenRegister(snapshot)
     }
 
     suspend fun registerSnapshot(snapshot: DeviceSnapshot): DeviceSnapshot {
-        knownStore?.allowDevice(snapshot.deviceUid)
-        val registered = registryStore.upsert(snapshot)
-        knownStore?.saveSnapshot(registered)
-        if (registered.endpoint.hasWebSocketEndpoint) {
-            runtimeRepository?.connect(registered)
-        }
-        return registered
+        return persistThenRegister(snapshot)
     }
 
     suspend fun registerSnapshots(snapshots: Iterable<DeviceSnapshot>) {
-        val snapshotList = snapshots.toList()
-        snapshotList.forEach { snapshot ->
-            knownStore?.allowDevice(snapshot.deviceUid)
+        val mergedSnapshots = mergeIncomingSnapshots(snapshots)
+        if (mergedSnapshots.isEmpty()) {
+            return
         }
-        registryStore.upsertAll(snapshotList)
-        knownStore?.saveSnapshots(snapshotList)
-        snapshotList
+
+        knownStore?.saveSnapshots(mergedSnapshots)
+        registryStore.upsertAll(mergedSnapshots)
+        mergedSnapshots
             .filter { snapshot -> snapshot.endpoint.hasWebSocketEndpoint }
             .forEach { snapshot -> runtimeRepository?.connect(snapshot) }
     }
@@ -221,19 +211,41 @@ class DevicesRepository(
     ): DeviceSnapshot? = registryStore.updateConnectionState(deviceUid, update)
 
     suspend fun removeProvisioningRegistration(deviceUid: DeviceUid): Boolean {
-        runtimeRepository?.clearToken(deviceUid)
-        val removed = registryStore.remove(deviceUid)
-        runtimeRepository?.close(deviceUid)
+        val rollbackSnapshot = registryStore.currentDevice(deviceUid)
+
         knownStore?.remove(deviceUid)
-        return removed
+
+        try {
+            runtimeRepository?.clearToken(deviceUid)
+        } catch (error: Throwable) {
+            throw rollbackKnownDeviceOrWrap(
+                operation = "remove provisioning registration",
+                originalError = error,
+                rollbackSnapshot = rollbackSnapshot
+            )
+        }
+
+        runtimeRepository?.close(deviceUid)
+        return registryStore.remove(deviceUid)
     }
 
     suspend fun forgetDevice(deviceUid: DeviceUid): Boolean {
-        runtimeRepository?.clearToken(deviceUid)
-        val removed = registryStore.remove(deviceUid)
-        runtimeRepository?.close(deviceUid)
+        val rollbackSnapshot = registryStore.currentDevice(deviceUid)
+
         knownStore?.forgetDevice(deviceUid)
-        return removed
+
+        try {
+            runtimeRepository?.clearToken(deviceUid)
+        } catch (error: Throwable) {
+            throw rollbackKnownDeviceOrWrap(
+                operation = "forget device",
+                originalError = error,
+                rollbackSnapshot = rollbackSnapshot
+            )
+        }
+
+        runtimeRepository?.close(deviceUid)
+        return registryStore.remove(deviceUid)
     }
 
     fun clearInMemoryRegistry() {
@@ -243,6 +255,70 @@ class DevicesRepository(
     suspend fun clearKnownDevices() {
         knownStore?.clearOwnerData()
         registryStore.clear()
+    }
+
+    private suspend fun persistThenRegister(
+        snapshot: DeviceSnapshot
+    ): DeviceSnapshot {
+        val merged = DeviceSnapshotMerger.merge(
+            previous = registryStore.currentDevice(snapshot.deviceUid),
+            incoming = snapshot
+        )
+
+        knownStore?.saveSnapshot(merged)
+        val registered = registryStore.upsert(merged)
+
+        if (registered.endpoint.hasWebSocketEndpoint) {
+            runtimeRepository?.connect(registered)
+        }
+
+        return registered
+    }
+
+    private fun mergeIncomingSnapshots(
+        snapshots: Iterable<DeviceSnapshot>
+    ): List<DeviceSnapshot> {
+        val mergedByUid = registryStore.currentDevices()
+            .associateBy { snapshot -> snapshot.deviceUid }
+            .toMutableMap()
+        val incomingUids = linkedSetOf<DeviceUid>()
+
+        snapshots.forEach { incoming ->
+            incomingUids += incoming.deviceUid
+            mergedByUid[incoming.deviceUid] = DeviceSnapshotMerger.merge(
+                previous = mergedByUid[incoming.deviceUid],
+                incoming = incoming
+            )
+        }
+
+        return incomingUids.mapNotNull(mergedByUid::get)
+    }
+
+    private suspend fun rollbackKnownDeviceOrWrap(
+        operation: String,
+        originalError: Throwable,
+        rollbackSnapshot: DeviceSnapshot?
+    ): Throwable {
+        if (rollbackSnapshot == null || knownStore == null) {
+            return DevicePersistenceTransactionException(
+                message = "$operation failed and no durable rollback snapshot was available.",
+                cause = originalError
+            )
+        }
+
+        val rollbackError = runCatching {
+            knownStore.saveSnapshot(rollbackSnapshot)
+        }.exceptionOrNull()
+
+        return DevicePersistenceTransactionException(
+            message = if (rollbackError == null) {
+                "$operation failed; durable known-device state was restored."
+            } else {
+                "$operation failed and durable known-device rollback also failed."
+            },
+            cause = originalError,
+            rollbackError = rollbackError
+        )
     }
 
     private suspend fun filterIgnoredDevices(snapshots: Iterable<DeviceSnapshot>): List<DeviceSnapshot> {
@@ -297,3 +373,9 @@ class DevicesRepository(
         }
     }
 }
+
+class DevicePersistenceTransactionException(
+    message: String,
+    cause: Throwable,
+    val rollbackError: Throwable? = null
+) : IllegalStateException(message, cause)
