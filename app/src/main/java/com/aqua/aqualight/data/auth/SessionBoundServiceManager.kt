@@ -10,9 +10,48 @@ import com.aqua.aqualight.utils.NotificationHelper
 import kotlinx.coroutines.flow.first
 
 /**
- * Starts/stops services that must only run while a user session is active.
+ * Starts and stops services that are valid only for one authenticated owner.
  */
 object SessionBoundServiceManager {
+
+    enum class StopStep {
+        ASSIGNMENT_REPOSITORY,
+        DEVICES_REPOSITORY,
+        SMART_CARE,
+        CARE_REMINDERS,
+        NOTIFICATIONS
+    }
+
+    data class StopIssue(
+        val step: StopStep,
+        val error: Throwable
+    )
+
+    data class StopResult(
+        val issues: List<StopIssue>
+    ) {
+        val hasErrors: Boolean
+            get() = issues.isNotEmpty()
+
+        fun exceptionOrNull(): Throwable? {
+            return if (issues.isEmpty()) {
+                null
+            } else {
+                SessionBoundStopException(issues)
+            }
+        }
+    }
+
+    class SessionBoundStopException(
+        val issues: List<StopIssue>
+    ) : IllegalStateException(
+        issues.joinToString(
+            prefix = "Session shutdown failed in ",
+            separator = ", "
+        ) { issue ->
+            issue.step.name
+        }
+    )
 
     fun start(
         context: Context
@@ -26,46 +65,79 @@ object SessionBoundServiceManager {
 
     suspend fun stop(
         context: Context,
-        cancelNotifications: Boolean = true
-    ) {
+        cancelNotifications: Boolean = true,
+        expectedOwnerUid: String? = null
+    ): StopResult {
         val appContext = context.applicationContext
+        val issues = mutableListOf<StopIssue>()
 
-        TankDeviceAssignmentRepositoryProvider.clear()
-        DevicesRepositoryProvider.clear()
+        suspend fun runStep(
+            step: StopStep,
+            block: suspend () -> Unit
+        ) {
+            runCatching {
+                block()
+            }.onFailure { error ->
+                issues += StopIssue(
+                    step = step,
+                    error = error
+                )
+            }
+        }
 
-        SmartCareDailyWorker.cancel(
-            context = appContext
-        )
+        runStep(StopStep.ASSIGNMENT_REPOSITORY) {
+            TankDeviceAssignmentRepositoryProvider.clear(
+                expectedOwnerUid = expectedOwnerUid
+            )
+        }
 
-        cancelPendingCareTaskReminders(
-            context = appContext
-        )
+        runStep(StopStep.DEVICES_REPOSITORY) {
+            DevicesRepositoryProvider.clear(
+                expectedOwnerUid = expectedOwnerUid
+            )
+        }
 
-        if (cancelNotifications) {
-            NotificationHelper.cancelAllAppNotifications(
+        runStep(StopStep.SMART_CARE) {
+            SmartCareDailyWorker.cancel(
                 context = appContext
             )
         }
+
+        runStep(StopStep.CARE_REMINDERS) {
+            cancelPendingCareTaskReminders(
+                context = appContext
+            )
+        }
+
+        if (cancelNotifications) {
+            runStep(StopStep.NOTIFICATIONS) {
+                NotificationHelper.cancelAllAppNotifications(
+                    context = appContext
+                )
+            }
+        }
+
+        return StopResult(
+            issues = issues.toList()
+        )
     }
 
     private suspend fun cancelPendingCareTaskReminders(
         context: Context
     ) {
-        runCatching {
-            val careTaskDataStoreManager = CareTaskDataStoreManager.create(
-                context
+        val careTaskDataStoreManager = CareTaskDataStoreManager.create(
+            context
+        )
+
+        val pendingTasks = careTaskDataStoreManager.pendingTasksFlow
+            .first()
+
+        pendingTasks.forEach { task ->
+            CareTaskReminderScheduler.cancel(
+                context = context,
+                taskId = task.id,
+                ownerUid = task.ownerUid
             )
-
-            val pendingTasks = careTaskDataStoreManager.pendingTasksFlow
-                .first()
-
-            pendingTasks.forEach { task ->
-                CareTaskReminderScheduler.cancel(
-                    context = context,
-                    taskId = task.id,
-                    ownerUid = task.ownerUid
-                )
-            }
         }
     }
 }
