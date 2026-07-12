@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.aquarium.store
 
 import android.content.Context
 import androidx.datastore.core.DataStore
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStore
 import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
@@ -12,6 +13,7 @@ import com.aqua.aqualight.data.aquarium.model.SavedAquariumPlant
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.aquarium.photo.TankPhotoStorage
 import com.aqua.aqualight.data.aquarium.util.AquariumIdGenerator
+import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -20,7 +22,13 @@ import kotlinx.coroutines.flow.map
 
 private val Context.aquariumTanksDataStore: DataStore<AquariumTanksStore> by dataStore(
   fileName = "aquarium_tanks.pb",
-  serializer = AquariumTanksSerializer
+  serializer = AquariumTanksSerializer,
+  corruptionHandler = ReplaceFileCorruptionHandler {
+    LocalDataRecoveryTracker.markRecovered(
+      LocalDataRecoveryTracker.Area.AQUARIUM_TANKS
+    )
+    AquariumTanksStore.getDefaultInstance()
+  }
 )
 
 class AquariumTankDataStoreManager(

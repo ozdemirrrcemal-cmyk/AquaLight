@@ -28,18 +28,19 @@ class AqlProvisioningHandoffSaver(
     context: Context
 ) {
 
-    private data class PendingRegistration(
+    private class PendingRegistration(
         val ownerUid: String,
         val mode: AqlProvisioningRegistrationMode,
         val deviceUid: DeviceUid,
         val previousSnapshot: DeviceSnapshot?,
         val previousRuntimeToken: String?
-    )
+    ) {
+        val operationMutex = Mutex()
+        var stagedCredentialCommitted = false
+    }
 
     private val appContext = context.applicationContext
     private val metadataResolver = AqlProvisioningRuntimeMetadataResolver()
-    private val transactionMutex = Mutex()
-    private val pendingRegistrations = mutableMapOf<String, PendingRegistration>()
 
     suspend fun prepareAndConnect(
         draft: AqlProvisioningDraft,
@@ -73,7 +74,9 @@ class AqlProvisioningHandoffSaver(
             context = appContext,
             ownerUid = ownerUid
         )
-        val previousRuntimeToken = credentialStore.getToken(handoff.deviceUid)
+        val previousRuntimeToken = credentialStore.getCommittedToken(
+            handoff.deviceUid
+        )
         val mode = AqlProvisioningRegistrationModeResolver.resolve(
             existingDeviceUid = previousSnapshot?.deviceUid,
             verifiedDeviceUid = handoff.deviceUid
@@ -85,7 +88,10 @@ class AqlProvisioningHandoffSaver(
             previousSnapshot = previousSnapshot,
             previousRuntimeToken = previousRuntimeToken
         )
-        val transactionKey = transactionKey(handoff.deviceUid)
+        val transactionKey = transactionKey(
+            ownerUid = ownerUid,
+            deviceUid = handoff.deviceUid
+        )
 
         transactionMutex.withLock {
             check(pendingRegistrations[transactionKey] == null) {
@@ -94,75 +100,82 @@ class AqlProvisioningHandoffSaver(
             pendingRegistrations[transactionKey] = pendingRegistration
         }
 
-        try {
-            repository.saveRuntimeToken(
-                deviceUid = handoff.deviceUid,
-                token = handoff.webSocketToken
-            )
-
-            val incomingSnapshot = DeviceSnapshot(
-                identity = DeviceIdentity(
-                    uid = handoff.deviceUid,
-                    macAddress = draft.bleAddress,
-                    serialNumber = draft.deviceSerial,
-                    displayName = resolvedTitle(draft)
-                ),
-                product = DeviceProduct(
-                    brand = "AquaLight",
-                    family = DeviceFamily.UNKNOWN,
-                    familyRaw = "",
-                    model = draft.deviceModel,
-                    displayName = resolvedTitle(draft)
-                ),
-                firmwareVersion = "",
-                firmwareBuild = "",
-                endpoint = handoff.endpoint,
-                capabilities = DeviceCapabilities(),
-                limits = DeviceLimits(),
-                connectionState = DeviceConnectionState(
-                    onlineState = DeviceOnlineState.ONLINE_LAN,
-                    lastUdpSeenAtMillis = System.currentTimeMillis(),
-                    lastErrorMessage = null
-                ),
-                lastSeenAtMillis = System.currentTimeMillis()
-            )
-
-            val staged = repository.stageProvisioningSnapshot(
-                DeviceSnapshotMerger.merge(
-                    previous = previousSnapshot,
-                    incoming = incomingSnapshot
+        return pendingRegistration.operationMutex.withLock {
+            try {
+                credentialStore.stageToken(
+                    deviceUid = handoff.deviceUid,
+                    token = handoff.webSocketToken
                 )
-            )
 
-            val resolved = metadataResolver.resolveAndConnect(
-                repository = repository,
-                provisionalSnapshot = staged
-            ).getOrThrow()
-
-            require(resolved.product.family != DeviceFamily.UNKNOWN) {
-                "Runtime device identity did not include a supported product family."
-            }
-
-            return repository.stageProvisioningSnapshot(
-                DeviceSnapshotMerger.merge(
-                    previous = previousSnapshot,
-                    incoming = resolved
+                val incomingSnapshot = DeviceSnapshot(
+                    identity = DeviceIdentity(
+                        uid = handoff.deviceUid,
+                        macAddress = draft.bleAddress,
+                        serialNumber = draft.deviceSerial,
+                        displayName = resolvedTitle(draft)
+                    ),
+                    product = DeviceProduct(
+                        brand = "AquaLight",
+                        family = DeviceFamily.UNKNOWN,
+                        familyRaw = "",
+                        model = draft.deviceModel,
+                        displayName = resolvedTitle(draft)
+                    ),
+                    firmwareVersion = "",
+                    firmwareBuild = "",
+                    endpoint = handoff.endpoint,
+                    capabilities = DeviceCapabilities(),
+                    limits = DeviceLimits(),
+                    connectionState = DeviceConnectionState(
+                        onlineState = DeviceOnlineState.ONLINE_LAN,
+                        lastUdpSeenAtMillis = System.currentTimeMillis(),
+                        lastErrorMessage = null
+                    ),
+                    lastSeenAtMillis = System.currentTimeMillis()
                 )
-            )
-        } catch (error: Throwable) {
-            val rollbackError = withContext(NonCancellable) {
-                rollbackRegistration(
+
+                val staged = repository.stageProvisioningSnapshot(
+                    DeviceSnapshotMerger.merge(
+                        previous = previousSnapshot,
+                        incoming = incomingSnapshot
+                    )
+                )
+
+                val resolved = metadataResolver.resolveAndConnect(
                     repository = repository,
-                    pendingRegistration = pendingRegistration
+                    provisionalSnapshot = staged
+                ).getOrThrow()
+
+                require(resolved.product.family != DeviceFamily.UNKNOWN) {
+                    "Runtime device identity did not include a supported product family."
+                }
+
+                repository.stageProvisioningSnapshot(
+                    DeviceSnapshotMerger.merge(
+                        previous = previousSnapshot,
+                        incoming = resolved
+                    )
                 )
-            }
+            } catch (error: Throwable) {
+                val rollbackError = withContext(NonCancellable) {
+                    rollbackRegistration(
+                        repository = repository,
+                        pendingRegistration = pendingRegistration
+                    )
+                }
 
-            transactionMutex.withLock {
-                pendingRegistrations.remove(transactionKey)
-            }
+                if (rollbackError == null) {
+                    transactionMutex.withLock {
+                        pendingRegistrations.remove(
+                            transactionKey,
+                            pendingRegistration
+                        )
+                    }
+                }
 
-            rollbackError?.let(error::addSuppressed)
-            throw error
+                rollbackError?.let(error::addSuppressed)
+                throw error
+            }
         }
     }
 
@@ -170,11 +183,53 @@ class AqlProvisioningHandoffSaver(
         snapshot: DeviceSnapshot
     ): Result<DeviceSnapshot> {
         return try {
+            val ownerUid = UserDataScope.requireCurrentUid()
+            val transactionKey = transactionKey(
+                ownerUid = ownerUid,
+                deviceUid = snapshot.deviceUid
+            )
+            val pendingRegistration = transactionMutex.withLock {
+                pendingRegistrations[transactionKey]
+            } ?: error(
+                "No verified provisioning transaction exists for this device."
+            )
             val repository = DevicesRepositoryProvider.get(appContext)
-            val committed = repository.commitProvisioningSnapshot(snapshot)
+            val committed = pendingRegistration.operationMutex.withLock {
+                withContext(NonCancellable) {
+                    val currentPending = transactionMutex.withLock {
+                        pendingRegistrations[transactionKey]
+                    }
+                    check(currentPending === pendingRegistration) {
+                        "Provisioning transaction is no longer active."
+                    }
 
-            transactionMutex.withLock {
-                pendingRegistrations.remove(transactionKey(snapshot.deviceUid))
+                    val credentialStore = DeviceCredentialStore(
+                        context = appContext,
+                        ownerUid = pendingRegistration.ownerUid
+                    )
+
+                    try {
+                        credentialStore.commitStagedToken(
+                            pendingRegistration.deviceUid
+                        )
+                        pendingRegistration.stagedCredentialCommitted = true
+
+                        repository.commitProvisioningSnapshot(snapshot).also {
+                            transactionMutex.withLock {
+                                pendingRegistrations.remove(
+                                    transactionKey,
+                                    pendingRegistration
+                                )
+                            }
+                        }
+                    } catch (error: Throwable) {
+                        rollbackCredential(
+                            credentialStore = credentialStore,
+                            pendingRegistration = pendingRegistration
+                        )?.let(error::addSuppressed)
+                        throw error
+                    }
+                }
             }
 
             Result.success(committed)
@@ -187,43 +242,135 @@ class AqlProvisioningHandoffSaver(
     suspend fun rollbackProvisioningRegistration(
         deviceUid: DeviceUid
     ): Result<Unit> {
-        val transactionKey = transactionKey(deviceUid)
-        val pendingRegistration = transactionMutex.withLock {
-            pendingRegistrations.remove(transactionKey)
-        } ?: return Result.failure(
-            IllegalStateException(
-                "No pending provisioning transaction exists for this device."
+        val ownerUid = UserDataScope.currentUid().trim()
+        if (ownerUid.isBlank()) {
+            return Result.failure(
+                IllegalStateException(
+                    "An authenticated owner is required to roll back provisioning."
+                )
             )
-        )
+        }
 
-        return try {
-            val repository = DevicesRepositoryProvider
-                .takeIf {
-                    UserDataScope.currentUid() == pendingRegistration.ownerUid
+        return rollbackProvisioningRegistration(
+            ownerUid = ownerUid,
+            deviceUid = deviceUid
+        ).map { Unit }
+    }
+
+    suspend fun rollbackPendingRegistrationsForOwner(
+        ownerUid: String
+    ): Result<Int> {
+        val normalizedOwnerUid = ownerUid.trim()
+        if (normalizedOwnerUid.isBlank()) {
+            return Result.failure(
+                IllegalArgumentException("ownerUid must not be blank")
+            )
+        }
+
+        val deviceUids = transactionMutex.withLock {
+            pendingRegistrations.values
+                .asSequence()
+                .filter { pending ->
+                    pending.ownerUid == normalizedOwnerUid
                 }
-                ?.get(appContext)
+                .map { pending -> pending.deviceUid }
+                .distinctBy { deviceUid ->
+                    deviceUid.value.trim().uppercase(Locale.US)
+                }
+                .toList()
+        }
 
-            val rollbackError = withContext(NonCancellable) {
-                rollbackRegistration(
-                    repository = repository,
-                    pendingRegistration = pendingRegistration
+        var rolledBackCount = 0
+        val failures = mutableListOf<Throwable>()
+
+        deviceUids.forEach { deviceUid ->
+            rollbackProvisioningRegistration(
+                ownerUid = normalizedOwnerUid,
+                deviceUid = deviceUid
+            ).fold(
+                onSuccess = { rolledBack ->
+                    if (rolledBack) rolledBackCount += 1
+                },
+                onFailure = failures::add
+            )
+        }
+
+        return if (failures.isEmpty()) {
+            Result.success(rolledBackCount)
+        } else {
+            Result.failure(
+                AqlProvisioningRollbackException(failures)
+            )
+        }
+    }
+
+    suspend fun rollbackProvisioningRegistrationForOwner(
+        ownerUid: String,
+        deviceUid: DeviceUid
+    ): Result<Unit> {
+        val normalizedOwnerUid = ownerUid.trim()
+        if (normalizedOwnerUid.isBlank()) {
+            return Result.failure(
+                IllegalArgumentException("ownerUid must not be blank")
+            )
+        }
+
+        return rollbackProvisioningRegistration(
+            ownerUid = normalizedOwnerUid,
+            deviceUid = deviceUid
+        ).map { Unit }
+    }
+
+    private suspend fun rollbackProvisioningRegistration(
+        ownerUid: String,
+        deviceUid: DeviceUid
+    ): Result<Boolean> {
+        val transactionKey = transactionKey(
+            ownerUid = ownerUid,
+            deviceUid = deviceUid
+        )
+        val pendingRegistration = transactionMutex.withLock {
+            pendingRegistrations[transactionKey]
+        } ?: return Result.success(false)
+
+        return pendingRegistration.operationMutex.withLock {
+            val removed = transactionMutex.withLock {
+                pendingRegistrations.remove(
+                    transactionKey,
+                    pendingRegistration
                 )
             }
 
-            if (rollbackError != null) {
+            if (!removed) {
+                return@withLock Result.success(false)
+            }
+
+            try {
+                val repository = DevicesRepositoryProvider.currentRepository(
+                    expectedOwnerUid = pendingRegistration.ownerUid
+                )
+                val rollbackError = withContext(NonCancellable) {
+                    rollbackRegistration(
+                        repository = repository,
+                        pendingRegistration = pendingRegistration
+                    )
+                }
+
+                if (rollbackError != null) {
+                    transactionMutex.withLock {
+                        pendingRegistrations[transactionKey] = pendingRegistration
+                    }
+                    Result.failure(rollbackError)
+                } else {
+                    Result.success(true)
+                }
+            } catch (error: Throwable) {
                 transactionMutex.withLock {
                     pendingRegistrations[transactionKey] = pendingRegistration
                 }
-                Result.failure(rollbackError)
-            } else {
-                Result.success(Unit)
+                error.throwIfCancellation()
+                Result.failure(error)
             }
-        } catch (error: Throwable) {
-            transactionMutex.withLock {
-                pendingRegistrations[transactionKey] = pendingRegistration
-            }
-            error.throwIfCancellation()
-            Result.failure(error)
         }
     }
 
@@ -244,6 +391,7 @@ class AqlProvisioningHandoffSaver(
                             ownerUid = pendingRegistration.ownerUid
                         ).clearToken(pendingRegistration.deviceUid)
                     }
+                    pendingRegistration.stagedCredentialCommitted = false
                 }
 
                 AqlProvisioningRegistrationMode.RECONFIGURE_EXISTING -> {
@@ -257,27 +405,55 @@ class AqlProvisioningHandoffSaver(
                         ownerUid = pendingRegistration.ownerUid
                     )
 
-                    if (pendingRegistration.previousRuntimeToken == null) {
-                        credentialStore.clearToken(pendingRegistration.deviceUid)
-                    } else {
-                        credentialStore.saveToken(
-                            deviceUid = pendingRegistration.deviceUid,
-                            token = pendingRegistration.previousRuntimeToken
-                        )
-                    }
+                    rollbackCredential(
+                        credentialStore = credentialStore,
+                        pendingRegistration = pendingRegistration
+                    )?.let { error -> throw error }
 
-                    repository?.stageProvisioningSnapshot(previousSnapshot)
+                    repository?.commitProvisioningSnapshot(previousSnapshot)
                 }
             }
         }.exceptionOrNull()
     }
 
+    private suspend fun rollbackCredential(
+        credentialStore: DeviceCredentialStore,
+        pendingRegistration: PendingRegistration
+    ): Throwable? {
+        return runCatching {
+            if (pendingRegistration.stagedCredentialCommitted) {
+                val previousToken = pendingRegistration.previousRuntimeToken
+                if (previousToken == null) {
+                    credentialStore.clearToken(pendingRegistration.deviceUid)
+                } else {
+                    credentialStore.saveToken(
+                        deviceUid = pendingRegistration.deviceUid,
+                        token = previousToken
+                    )
+                }
+            } else {
+                credentialStore.rollbackStagedToken(
+                    pendingRegistration.deviceUid
+                )
+            }
+
+            pendingRegistration.stagedCredentialCommitted = false
+        }.exceptionOrNull()
+    }
+
     private fun transactionKey(
+        ownerUid: String,
         deviceUid: DeviceUid
     ): String {
-        return deviceUid.value
+        val normalizedOwnerUid = ownerUid.trim()
+        require(normalizedOwnerUid.isNotBlank()) {
+            "ownerUid must not be blank"
+        }
+        val normalizedDeviceUid = deviceUid.value
             .trim()
             .uppercase(Locale.US)
+
+        return "$normalizedOwnerUid\u0000$normalizedDeviceUid"
     }
 
     private fun Throwable.throwIfCancellation() {
@@ -293,4 +469,16 @@ class AqlProvisioningHandoffSaver(
             .ifBlank { draft.deviceModel }
             .ifBlank { draft.candidateId }
     }
+
+    private companion object {
+        val transactionMutex = Mutex()
+        val pendingRegistrations = mutableMapOf<String, PendingRegistration>()
+    }
 }
+
+class AqlProvisioningRollbackException(
+    val failures: List<Throwable>
+) : IllegalStateException(
+    "${failures.size} provisioning transaction(s) could not be rolled back.",
+    failures.firstOrNull()
+)

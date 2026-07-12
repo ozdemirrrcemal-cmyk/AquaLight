@@ -18,7 +18,7 @@
 5. Failed bulk deletion leaves failed devices selected and reports partial success.
 6. Stale assignments are repaired at authenticated session startup.
 7. Repeated taps and concurrent writes cannot create duplicates, overwrite another owner, or emit false success.
-8. Corrupt Proto content fails closed through strict serializers; invalid records are never silently skipped.
+8. Corrupt Proto content fails closed through strict validation. The affected authority is reset to empty, orphan credentials are removed, and the user receives a recovery notice; individual invalid records are never silently skipped.
 
 ## Phase 1 — Assignment persistence and domain contract
 

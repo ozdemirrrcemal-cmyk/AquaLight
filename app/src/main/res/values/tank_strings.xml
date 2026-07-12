@@ -152,6 +152,8 @@
     <string name="aquarium_delete_tank_title">Delete Tank?</string>
     <string name="aquarium_delete_tank_message">This will permanently delete "%1$s" and all saved tank data.</string>
     <string name="aquarium_error_tank_delete_failed">Tank could not be deleted.</string>
+    <string name="aquarium_delete_cleanup_warning_title">Tank Deleted</string>
+    <string name="aquarium_delete_cleanup_warning_message">The tank was deleted, but some related local data could not be cleaned up. AquaLight will retry the cleanup automatically.</string>
     <string name="aquarium_livestock_not_found_title">Livestock Not Found</string>
     <string name="aquarium_livestock_no_longer_exists_message">This livestock record no longer exists.</string>
     <string name="aquarium_validation_livestock_name_min">Livestock name must be at least 2 characters.</string>

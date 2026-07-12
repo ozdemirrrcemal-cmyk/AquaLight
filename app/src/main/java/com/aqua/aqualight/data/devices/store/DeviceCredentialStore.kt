@@ -47,6 +47,30 @@ class DeviceCredentialStore(
     ): String? {
         return withContext(Dispatchers.IO) {
             val token = preferences
+                .getString(pendingTokenPreferenceKey(deviceUid), null)
+                .orEmpty()
+                .ifBlank {
+                    preferences
+                        .getString(tokenPreferenceKey(deviceUid), null)
+                        .orEmpty()
+                }
+                .trim()
+                .takeIf(String::isNotBlank)
+                ?: return@withContext null
+
+            check(token.isRuntimeTokenHex()) {
+                "Stored runtime token is malformed."
+            }
+
+            token
+        }
+    }
+
+    suspend fun getCommittedToken(
+        deviceUid: DeviceUid
+    ): String? {
+        return withContext(Dispatchers.IO) {
+            val token = preferences
                 .getString(tokenPreferenceKey(deviceUid), null)
                 ?.trim()
                 ?.takeIf(String::isNotBlank)
@@ -87,10 +111,106 @@ class DeviceCredentialStore(
             check(
                 preferences.edit()
                     .remove(tokenPreferenceKey(deviceUid))
+                    .remove(pendingTokenPreferenceKey(deviceUid))
                     .commit()
             ) {
                 "Runtime token could not be removed."
             }
+        }
+    }
+
+    /**
+     * Makes a verified provisioning token available to the runtime without
+     * replacing the last committed credential.
+     */
+    suspend fun stageToken(
+        deviceUid: DeviceUid,
+        token: String
+    ) {
+        val normalizedToken = token.trim()
+        require(normalizedToken.isRuntimeTokenHex()) {
+            "Runtime token must be a ${AqlBleProvisioningContract.RUNTIME_TOKEN_HEX_LENGTH}-character hexadecimal value."
+        }
+
+        withContext(Dispatchers.IO) {
+            check(
+                preferences.edit()
+                    .putString(
+                        pendingTokenPreferenceKey(deviceUid),
+                        normalizedToken
+                    )
+                    .commit()
+            ) {
+                "Provisioning runtime token could not be staged."
+            }
+        }
+    }
+
+    /** Promotes a staged token with one encrypted preference transaction. */
+    suspend fun commitStagedToken(
+        deviceUid: DeviceUid
+    ) {
+        withContext(Dispatchers.IO) {
+            val pendingKey = pendingTokenPreferenceKey(deviceUid)
+            val stagedToken = preferences
+                .getString(pendingKey, null)
+                ?.trim()
+                ?.takeIf(String::isNotBlank)
+                ?: error("No staged runtime token exists for this device.")
+
+            check(stagedToken.isRuntimeTokenHex()) {
+                "Staged runtime token is malformed."
+            }
+
+            check(
+                preferences.edit()
+                    .putString(tokenPreferenceKey(deviceUid), stagedToken)
+                    .remove(pendingKey)
+                    .commit()
+            ) {
+                "Provisioning runtime token could not be committed."
+            }
+        }
+    }
+
+    suspend fun rollbackStagedToken(
+        deviceUid: DeviceUid
+    ) {
+        withContext(Dispatchers.IO) {
+            check(
+                preferences.edit()
+                    .remove(pendingTokenPreferenceKey(deviceUid))
+                    .commit()
+            ) {
+                "Provisioning runtime token could not be rolled back."
+            }
+        }
+    }
+
+    /**
+     * Discards transactions that could not survive a process restart. The last
+     * committed credential remains untouched.
+     */
+    suspend fun discardStagedTokens(): Int {
+        return withContext(Dispatchers.IO) {
+            val pendingPrefix = DeviceCredentialKeyFactory
+                .pendingTokenPrefix(ownerUid)
+            val pendingKeys = preferences.all.keys.filter { key ->
+                key.startsWith(pendingPrefix)
+            }
+
+            if (pendingKeys.isEmpty()) {
+                return@withContext 0
+            }
+
+            val editor = preferences.edit()
+            pendingKeys.forEach(editor::remove)
+
+            check(editor.commit()) {
+                "Staged runtime credentials could not be discarded."
+            }
+
+            pendingKeys.size
         }
     }
 
@@ -120,10 +240,58 @@ class DeviceCredentialStore(
         }
     }
 
+    /**
+     * Removes credentials that no longer have a durable known-device record.
+     *
+     * This is run only while opening an owner session. It recovers safely from
+     * process death during new-device provisioning and from a known-device store
+     * corruption reset without exposing a token-backed ghost registration.
+     */
+    suspend fun retainTokensFor(
+        deviceUids: Iterable<DeviceUid>
+    ): Int {
+        return withContext(Dispatchers.IO) {
+            val ownerPrefix = DeviceCredentialKeyFactory.ownerPrefix(ownerUid)
+            val allowedKeys = deviceUids
+                .flatMap { deviceUid ->
+                    listOf(
+                        tokenPreferenceKey(deviceUid),
+                        pendingTokenPreferenceKey(deviceUid)
+                    )
+                }
+                .toSet()
+            val orphanedKeys = preferences.all.keys.filter { key ->
+                key.startsWith(ownerPrefix) && key !in allowedKeys
+            }
+
+            if (orphanedKeys.isEmpty()) {
+                return@withContext 0
+            }
+
+            val editor = preferences.edit()
+            orphanedKeys.forEach(editor::remove)
+
+            check(editor.commit()) {
+                "Orphaned owner runtime credentials could not be removed."
+            }
+
+            orphanedKeys.size
+        }
+    }
+
     private fun tokenPreferenceKey(
         deviceUid: DeviceUid
     ): String {
         return DeviceCredentialKeyFactory.tokenKey(
+            ownerUid = ownerUid,
+            deviceUid = deviceUid
+        )
+    }
+
+    private fun pendingTokenPreferenceKey(
+        deviceUid: DeviceUid
+    ): String {
+        return DeviceCredentialKeyFactory.pendingTokenKey(
             ownerUid = ownerUid,
             deviceUid = deviceUid
         )

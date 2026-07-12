@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStore
 import com.aqua.aqualight.data.care.CareTasksStore
 import com.aqua.aqualight.data.care.StoredCareTask
@@ -17,6 +18,7 @@ import com.aqua.aqualight.data.care.model.CareTaskType
 import com.aqua.aqualight.data.care.reminder.CareTaskReminderScheduler
 import com.aqua.aqualight.data.care.smartcare.SmartCareGeneratedTask
 import com.aqua.aqualight.data.care.smartcare.SmartCareTaskType
+import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.google.protobuf.InvalidProtocolBufferException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -53,7 +55,13 @@ private object CareTasksSerializer : Serializer<CareTasksStore> {
 
 private val Context.careTasksDataStore: DataStore<CareTasksStore> by dataStore(
   fileName = "care_tasks.pb",
-  serializer = CareTasksSerializer
+  serializer = CareTasksSerializer,
+  corruptionHandler = ReplaceFileCorruptionHandler {
+    LocalDataRecoveryTracker.markRecovered(
+      LocalDataRecoveryTracker.Area.CARE_TASKS
+    )
+    CareTasksStore.getDefaultInstance()
+  }
 )
 
 class CareTaskDataStoreManager private constructor(
@@ -755,6 +763,68 @@ class CareTaskDataStoreManager private constructor(
         ownerUid = UserDataScope.currentUid()
       )
     }
+  }
+
+  /**
+   * Removes owner-scoped tasks whose authoritative tank record no longer exists.
+   *
+   * This makes tank deletion self-healing when a dependent DataStore write or
+   * process shutdown interrupts cleanup after the tank itself was deleted.
+   */
+  suspend fun repairOrphanedTankTasks(
+    ownerUid: String
+  ): Int {
+    val targetOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
+
+    if (targetOwnerUid.isBlank()) {
+      return 0
+    }
+
+    val validTankIds = tankDataStoreManager
+      .tanksSnapshotForOwner(targetOwnerUid)
+      .map { tank -> tank.id }
+      .toSet()
+
+    val removedTasks = mutableListOf<CareTask>()
+
+    context.careTasksDataStore.updateData { currentStore ->
+      removedTasks.clear()
+
+      currentStore.tasksList.forEach { storedTask ->
+        if (
+          storedTask.belongsToOwner(targetOwnerUid) &&
+          storedTask.tankId > 0L &&
+          storedTask.tankId !in validTankIds
+        ) {
+          removedTasks += storedTask.toCareTask()
+        }
+      }
+
+      if (removedTasks.isEmpty()) {
+        return@updateData currentStore
+      }
+
+      val remainingTasks = currentStore.tasksList.filterNot { storedTask ->
+        storedTask.belongsToOwner(targetOwnerUid) &&
+          storedTask.tankId > 0L &&
+          storedTask.tankId !in validTankIds
+      }
+
+      currentStore.toBuilder()
+        .clearTasks()
+        .addAllTasks(remainingTasks)
+        .build()
+    }
+
+    removedTasks.forEach { task ->
+      CareTaskReminderScheduler.cancel(
+        context = context,
+        taskId = task.id,
+        ownerUid = task.ownerUid.ifBlank { targetOwnerUid }
+      )
+    }
+
+    return removedTasks.size
   }
 
   suspend fun clearAllTasks(

@@ -14,6 +14,7 @@ import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.databinding.FragmentAquariumBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -23,6 +24,7 @@ import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
+import java.util.concurrent.CancellationException
 import kotlinx.coroutines.launch
 
 class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
@@ -398,11 +400,40 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                aquariumTankViewModel.deleteTanks(
-                    tankIds = tankIdsToDelete.toList()
-                )
+                when (
+                    val result = aquariumTankViewModel.deleteTanks(
+                        tankIds = tankIdsToDelete.toList()
+                    )
+                ) {
+                    OwnerTankDataCleaner.Result.NoOp -> Unit
+
+                    is OwnerTankDataCleaner.Result.DeleteFailed -> {
+                        throw result.error
+                    }
+
+                    is OwnerTankDataCleaner.Result.Deleted -> {
+                        if (result.hasCleanupIssues) {
+                            result.cleanupIssues.forEach { issue ->
+                                issue.error.printStackTrace()
+                            }
+
+                            DialogManager.showInfoDialog(
+                                context = requireContext(),
+                                type = DialogType.WARNING,
+                                title = getString(
+                                    R.string.aquarium_delete_cleanup_warning_title
+                                ),
+                                message = getString(
+                                    R.string.aquarium_delete_cleanup_warning_message
+                                )
+                            )
+                        }
+                    }
+                }
 
                 exitDeleteMode()
+            } catch (exception: CancellationException) {
+                throw exception
             } catch (exception: Exception) {
                 exception.printStackTrace()
 

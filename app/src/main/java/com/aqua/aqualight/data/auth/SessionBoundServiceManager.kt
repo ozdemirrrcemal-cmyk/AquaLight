@@ -5,8 +5,10 @@ import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryPr
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.reminder.CareTaskReminderScheduler
 import com.aqua.aqualight.data.care.smartcare.SmartCareDailyWorker
+import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.utils.NotificationHelper
+import java.util.concurrent.CancellationException
 import kotlinx.coroutines.flow.first
 
 /**
@@ -15,6 +17,7 @@ import kotlinx.coroutines.flow.first
 object SessionBoundServiceManager {
 
     enum class StopStep {
+        PROVISIONING_TRANSACTIONS,
         ASSIGNMENT_REPOSITORY,
         DEVICES_REPOSITORY,
         SMART_CARE,
@@ -78,10 +81,26 @@ object SessionBoundServiceManager {
             runCatching {
                 block()
             }.onFailure { error ->
+                if (error is CancellationException) {
+                    throw error
+                }
                 issues += StopIssue(
                     step = step,
                     error = error
                 )
+            }
+        }
+
+        val ownerUid = expectedOwnerUid
+            ?.trim()
+            ?.takeIf(String::isNotBlank)
+            ?: DevicesRepositoryProvider.currentOwnerUid()
+
+        if (ownerUid != null) {
+            runStep(StopStep.PROVISIONING_TRANSACTIONS) {
+                AqlProvisioningHandoffSaver(appContext)
+                    .rollbackPendingRegistrationsForOwner(ownerUid)
+                    .getOrThrow()
             }
         }
 

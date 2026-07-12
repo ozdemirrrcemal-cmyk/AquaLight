@@ -9,7 +9,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 
 /**
  * Single account deletion path for the app.
@@ -41,6 +43,11 @@ class AccountDeletionManager private constructor(
 
         val hasLocalCleanupErrors: Boolean
             get() = localCleanupResult.hasErrors
+
+        val hasPostDeleteCleanupErrors: Boolean
+            get() = hasLocalCleanupErrors ||
+                googleRevokeError != null ||
+                firebaseSignOutError != null
     }
 
     companion object {
@@ -100,32 +107,40 @@ class AccountDeletionManager private constructor(
             )
         }
 
-        val localCleanupResult =
-            userDataCleaner.clearLocalUserData(
+        return withContext(NonCancellable) {
+            val firstLocalCleanupResult = userDataCleaner.clearLocalUserData(
                 ownerUid = ownerUid,
                 clearUserPreferences = true,
                 stopSessionBoundServices = true
             )
+            val localCleanupResult = if (firstLocalCleanupResult.hasErrors) {
+                userDataCleaner.clearLocalUserData(
+                    ownerUid = ownerUid,
+                    clearUserPreferences = true,
+                    stopSessionBoundServices = true
+                )
+            } else {
+                firstLocalCleanupResult
+            }
 
-        val googleRevokeError =
-            runCatching {
+            val googleRevokeError = runCatching {
                 GoogleSignInClientFactory.create(
                     appContext
                 ).revokeAccess()
                     .awaitCompletion()
             }.exceptionOrNull()
 
-        val firebaseSignOutError =
-            runCatching {
+            val firebaseSignOutError = runCatching {
                 firebaseAuth.signOut()
             }.exceptionOrNull()
 
-        return DeleteResult(
-            cloudCleanupResult = cloudCleanupResult,
-            localCleanupResult = localCleanupResult,
-            googleRevokeError = googleRevokeError,
-            firebaseSignOutError = firebaseSignOutError
-        )
+            DeleteResult(
+                cloudCleanupResult = cloudCleanupResult,
+                localCleanupResult = localCleanupResult,
+                googleRevokeError = googleRevokeError,
+                firebaseSignOutError = firebaseSignOutError
+            )
+        }
     }
 
     private suspend fun Task<Void>.awaitCompletion() {

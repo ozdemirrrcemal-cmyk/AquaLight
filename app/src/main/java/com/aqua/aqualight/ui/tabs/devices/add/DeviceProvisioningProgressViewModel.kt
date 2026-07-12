@@ -17,9 +17,14 @@ import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningRuntime
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningStatus
 import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
+import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,6 +40,7 @@ class DeviceProvisioningProgressViewModel(
     private val gattClient = AqlBleProvisioningGattClient(application)
     private val handoffSaver = AqlProvisioningHandoffSaver(application)
     private val routeResolver = DeviceRouteResolver()
+    private val ownerUid = UserDataScope.requireCurrentUid()
 
     private val _uiState = MutableStateFlow(initialState())
     val uiState: StateFlow<DeviceProvisioningProgressUiState> = _uiState.asStateFlow()
@@ -50,6 +56,12 @@ class DeviceProvisioningProgressViewModel(
     private var provisioningStopped = false
     private var setupCompleted = false
     private var startJob: Job? = null
+    private var handoffSaveJob: Job? = null
+    private var commitJob: Job? = null
+    private var rollbackJob: Job? = null
+    private var exitJob: Job? = null
+    private var exitRequested = false
+    private var registrationCommitted = false
     private var pendingAddedRoute: DeviceRoute? = null
     private var pendingPreparedSnapshot: DeviceSnapshot? = null
     private var pendingSavedDeviceUid: DeviceUid? = null
@@ -112,7 +124,68 @@ class DeviceProvisioningProgressViewModel(
         )
     }
 
+    fun requestExit() {
+        if (exitJob?.isActive == true || registrationCommitted) {
+            return
+        }
+
+        exitRequested = true
+
+        if (commitJob?.isActive == true) {
+            return
+        }
+
+        provisioningStopped = true
+        _uiState.value = _uiState.value.copy(
+            title = string(R.string.device_provisioning_cancelling_title),
+            message = string(R.string.device_provisioning_cancelling_message),
+            stepThree = string(R.string.device_provisioning_cancelling_step),
+            canStart = false,
+            showProgress = true,
+            isCancelling = true,
+            wifiCredentialFailure = null
+        )
+
+        exitJob = viewModelScope.launch {
+            startJob?.cancelAndJoin()
+            handoffSaveJob?.cancelAndJoin()
+            rollbackJob?.join()
+            gattEventsJob?.cancelAndJoin()
+            runCatching(gattClient::close)
+                .exceptionOrNull()
+                ?.printStackTrace()
+
+            val pendingDeviceUid = pendingSavedDeviceUid
+            val rollbackResult = if (pendingDeviceUid == null) {
+                Result.success(Unit)
+            } else {
+                handoffSaver.rollbackProvisioningRegistrationForOwner(
+                    ownerUid = ownerUid,
+                    deviceUid = pendingDeviceUid
+                )
+            }
+
+            rollbackResult
+                .onSuccess {
+                    clearPendingRegistrationState()
+                    _events.send(DeviceProvisioningProgressEvent.ExitProvisioning)
+                }
+                .onFailure {
+                    exitRequested = false
+                    renderRollbackFailure()
+                }
+        }
+    }
+
     fun startProvisioning() {
+        if (
+            exitJob?.isActive == true ||
+            rollbackJob?.isActive == true ||
+            commitJob?.isActive == true
+        ) {
+            return
+        }
+
         val draft = activeDraft ?: run {
             _uiState.value = _uiState.value.copy(
                 title = string(R.string.device_provisioning_session_expired_title),
@@ -133,6 +206,8 @@ class DeviceProvisioningProgressViewModel(
         pendingAddedRoute = null
         pendingPreparedSnapshot = null
         pendingSavedDeviceUid = null
+        exitRequested = false
+        registrationCommitted = false
         observeGattEvents()
 
         startJob = viewModelScope.launch {
@@ -257,6 +332,14 @@ class DeviceProvisioningProgressViewModel(
             }
 
             AqlBleProvisioningGattEvent.Completed -> {
+                if (
+                    commitJob?.isActive == true ||
+                    rollbackJob?.isActive == true ||
+                    registrationCommitted
+                ) {
+                    return
+                }
+
                 setupCompleted = true
                 provisioningStopped = false
                 val route = pendingAddedRoute
@@ -272,19 +355,27 @@ class DeviceProvisioningProgressViewModel(
                         wifiCredentialFailure = null
                     )
 
-                    viewModelScope.launch {
+                    commitJob = viewModelScope.launch {
                         handoffSaver.commitPreparedRegistration(preparedSnapshot)
                             .onSuccess {
+                                registrationCommitted = true
                                 boundSessionId?.let { sessionId ->
                                     AqlProvisioningDraftStore.remove(sessionId)
                                 }
                                 pendingSavedDeviceUid = null
                                 pendingPreparedSnapshot = null
                                 pendingAddedRoute = null
-                                _events.send(DeviceProvisioningProgressEvent.OpenAddedDevice(route))
+                                if (exitRequested) {
+                                    _events.send(DeviceProvisioningProgressEvent.ExitProvisioning)
+                                } else {
+                                    _events.send(
+                                        DeviceProvisioningProgressEvent.OpenAddedDevice(route)
+                                    )
+                                }
                             }
                             .onFailure { error ->
                                 setupCompleted = false
+                                exitRequested = false
                                 rollbackPendingProvisioningRegistration()
                                 _uiState.value = _uiState.value.copy(
                                     title = string(R.string.device_provisioning_save_failed_title),
@@ -454,6 +545,10 @@ class DeviceProvisioningProgressViewModel(
     private fun saveRuntimeHandoff(
         handoff: AqlProvisioningRuntimeHandoff
     ) {
+        if (handoffSaveJob?.isActive == true || handoffSaved) {
+            return
+        }
+
         val draft = activeDraft ?: run {
             _uiState.value = _uiState.value.copy(
                 title = string(R.string.device_provisioning_session_expired_title),
@@ -467,7 +562,9 @@ class DeviceProvisioningProgressViewModel(
             return
         }
 
-        viewModelScope.launch {
+        handoffSaveJob = viewModelScope.launch {
+            pendingSavedDeviceUid = handoff.deviceUid
+
             val result = handoffSaver.prepareAndConnect(
                 draft = draft,
                 handoff = handoff
@@ -476,6 +573,12 @@ class DeviceProvisioningProgressViewModel(
             result.onSuccess { snapshot ->
                 if (provisioningStopped || setupCompleted) {
                     handoffSaver.rollbackProvisioningRegistration(snapshot.deviceUid)
+                        .onSuccess {
+                            clearPendingRegistrationState()
+                        }
+                        .onFailure {
+                            renderRollbackFailure()
+                        }
                     return@onSuccess
                 }
 
@@ -502,6 +605,20 @@ class DeviceProvisioningProgressViewModel(
 
                 gattClient.finalizeSetup(handoff)
             }.onFailure { error ->
+                val cleanupResult = handoffSaver.rollbackProvisioningRegistrationForOwner(
+                    ownerUid = ownerUid,
+                    deviceUid = handoff.deviceUid
+                )
+
+                if (cleanupResult.isFailure) {
+                    renderRollbackFailure()
+                    return@launch
+                }
+
+                cleanupResult.onSuccess {
+                    clearPendingRegistrationState()
+                }
+
                 _uiState.value = _uiState.value.copy(
                     title = string(R.string.device_provisioning_save_failed_title),
                     message = error.message ?: string(R.string.device_provisioning_save_failed_message),
@@ -657,13 +774,41 @@ class DeviceProvisioningProgressViewModel(
 
     private fun rollbackPendingProvisioningRegistration() {
         val deviceUid = pendingSavedDeviceUid ?: return
+        if (rollbackJob?.isActive == true) return
+
+        rollbackJob = viewModelScope.launch {
+            handoffSaver.rollbackProvisioningRegistration(deviceUid)
+                .onSuccess {
+                    clearPendingRegistrationState()
+                }
+                .onFailure {
+                    if (!exitRequested) {
+                        renderRollbackFailure()
+                    }
+                }
+        }
+    }
+
+    private suspend fun renderRollbackFailure() {
+        _uiState.value = _uiState.value.copy(
+            title = string(R.string.device_provisioning_cancel_failed_title),
+            message = string(R.string.device_provisioning_cancel_failed_message),
+            stepThree = string(R.string.device_provisioning_save_failed_step),
+            canStart = false,
+            showProgress = false,
+            isCancelling = false,
+            wifiCredentialFailure = null
+        )
+        _events.send(
+            DeviceProvisioningProgressEvent.ShowCancellationFailed
+        )
+    }
+
+    private fun clearPendingRegistrationState() {
         pendingSavedDeviceUid = null
         pendingAddedRoute = null
         pendingPreparedSnapshot = null
         handoffSaved = false
-        viewModelScope.launch {
-            handoffSaver.rollbackProvisioningRegistration(deviceUid)
-        }
     }
 
     private fun initialState(): DeviceProvisioningProgressUiState {
@@ -687,11 +832,39 @@ class DeviceProvisioningProgressViewModel(
     override fun onCleared() {
         startJob?.cancel()
         gattEventsJob?.cancel()
-        gattClient.close()
+        handoffSaveJob?.cancel()
+        runCatching(gattClient::close)
+            .exceptionOrNull()
+            ?.printStackTrace()
+
+        val pendingHandoffJob = handoffSaveJob
+        val pendingCommitJob = commitJob
+        val pendingRollbackJob = rollbackJob
+        val pendingExitJob = exitJob
+        val cleanupOwnerUid = ownerUid
+        val cleanupSaver = handoffSaver
+
+        PROCESS_CLEANUP_SCOPE.launch {
+            pendingHandoffJob?.join()
+            pendingCommitJob?.join()
+            pendingRollbackJob?.join()
+            pendingExitJob?.join()
+            pendingSavedDeviceUid?.let { deviceUid ->
+                cleanupSaver.rollbackProvisioningRegistrationForOwner(
+                    ownerUid = cleanupOwnerUid,
+                    deviceUid = deviceUid
+                )
+            }
+        }
+
         super.onCleared()
     }
 
     private companion object {
+        val PROCESS_CLEANUP_SCOPE = CoroutineScope(
+            SupervisorJob() + Dispatchers.IO
+        )
+
         val terminalStatuses = setOf(
             AqlProvisioningStatus.COMPLETED,
             AqlProvisioningStatus.WIFI_FAILED,

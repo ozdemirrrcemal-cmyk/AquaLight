@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import com.aqua.aqualight.base.theme.AppThemeController
+import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.utils.NotificationHelper
 import kotlinx.coroutines.flow.first
@@ -13,6 +14,8 @@ class AquaApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
+        LocalDataRecoveryTracker.initialize(this)
 
         val userPrefs = UserPreferencesManager.create(this)
 

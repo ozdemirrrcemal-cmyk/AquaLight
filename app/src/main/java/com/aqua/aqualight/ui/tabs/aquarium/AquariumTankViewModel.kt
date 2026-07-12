@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.asLiveData
-import com.aqua.aqualight.data.aquarium.devices.TankAssignmentCleanupResult
+import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
@@ -31,6 +31,12 @@ class AquariumTankViewModel(
   private val assignmentRepository =
     TankDeviceAssignmentRepositoryProvider.get(appContext)
 
+  private val tankDataCleaner = OwnerTankDataCleaner(
+    deleteTankRecords = tankDataStoreManager::deleteTanks,
+    deleteCareTasksForTank = careTaskDataStoreManager::deleteTasksForTank,
+    removeDeviceAssignmentsForTank = assignmentRepository::removeAssignmentsForTank
+  )
+
   val tanks: LiveData<List<SavedAquariumTank>> =
     tankDataStoreManager.tanksFlow.asLiveData()
 
@@ -52,46 +58,10 @@ class AquariumTankViewModel(
 
   suspend fun deleteTanks(
     tankIds: List<Long>
-  ) {
-    val safeTankIds = tankIds
-      .filter { tankId ->
-        tankId > 0L
-      }
-      .distinct()
-
-    if (safeTankIds.isEmpty()) {
-      return
-    }
-
-    safeTankIds.forEach { tankId ->
-      careTaskDataStoreManager.deleteTasksForTank(
-        tankId = tankId
-      )
-    }
-
-    tankDataStoreManager.deleteTanks(
-      tankIds = safeTankIds
+  ): OwnerTankDataCleaner.Result {
+    return tankDataCleaner.deleteTanks(
+      tankIds = tankIds
     )
-
-    safeTankIds.forEach { tankId ->
-      when (
-        val cleanupResult = assignmentRepository.removeAssignmentsForTank(
-          tankId = tankId
-        )
-      ) {
-        is TankAssignmentCleanupResult.Completed -> Unit
-
-        TankAssignmentCleanupResult.InvalidRequest -> {
-          throw IllegalStateException(
-            "Tank assignment cleanup received an invalid tank id."
-          )
-        }
-
-        is TankAssignmentCleanupResult.Failure -> {
-          throw cleanupResult.error
-        }
-      }
-    }
   }
 
   suspend fun updateTankPhoto(

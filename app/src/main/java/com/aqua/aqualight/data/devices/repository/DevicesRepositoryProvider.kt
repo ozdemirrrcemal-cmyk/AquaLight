@@ -98,4 +98,15 @@ object DevicesRepositoryProvider {
     fun currentOwnerUid(): String? {
         return entry?.ownerUid
     }
+
+    fun currentRepository(
+        expectedOwnerUid: String
+    ): DevicesRepository? {
+        val normalizedOwnerUid = expectedOwnerUid.trim()
+        if (normalizedOwnerUid.isBlank()) return null
+
+        return entry?.takeIf { current ->
+            current.ownerUid == normalizedOwnerUid
+        }?.repository
+    }
 }

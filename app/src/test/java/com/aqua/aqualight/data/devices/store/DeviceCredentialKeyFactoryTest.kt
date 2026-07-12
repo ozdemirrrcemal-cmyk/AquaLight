@@ -49,6 +49,40 @@ class DeviceCredentialKeyFactoryTest {
     }
 
     @Test
+    fun `pending and committed token keys are distinct and owner scoped`() {
+        val deviceUid = DeviceUid("device-1")
+        val committedKey = DeviceCredentialKeyFactory.tokenKey(
+            ownerUid = "owner-a",
+            deviceUid = deviceUid
+        )
+        val pendingKey = DeviceCredentialKeyFactory.pendingTokenKey(
+            ownerUid = "owner-a",
+            deviceUid = deviceUid
+        )
+
+        assertNotEquals(committedKey, pendingKey)
+        assertTrue(
+            pendingKey.startsWith(
+                DeviceCredentialKeyFactory.pendingTokenPrefix("owner-a")
+            )
+        )
+    }
+
+    @Test
+    fun `pending token key uses normalized device uid`() {
+        val lower = DeviceCredentialKeyFactory.pendingTokenKey(
+            ownerUid = "owner-a",
+            deviceUid = DeviceUid("device-1")
+        )
+        val upper = DeviceCredentialKeyFactory.pendingTokenKey(
+            ownerUid = "owner-a",
+            deviceUid = DeviceUid(" DEVICE-1 ")
+        )
+
+        assertEquals(lower, upper)
+    }
+
+    @Test
     fun `key does not expose raw owner or device identity`() {
         val key = DeviceCredentialKeyFactory.tokenKey(
             ownerUid = "secret-owner",

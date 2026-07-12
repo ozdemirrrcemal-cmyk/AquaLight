@@ -4,6 +4,9 @@ import android.content.Context
 import com.aqua.aqualight.data.aquarium.devices.TankAssignmentRepairResult
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
+import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
+import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
@@ -20,7 +23,9 @@ class OwnerSessionCoordinator private constructor(
         data class Active(
             val ownerUid: String,
             val generation: Long,
-            val repairedAssignmentCount: Int
+            val repairedAssignmentCount: Int,
+            val repairedCareTaskCount: Int,
+            val removedOrphanCredentialCount: Int
         ) : OpenResult
 
         data class AlreadyActive(
@@ -101,6 +106,16 @@ class OwnerSessionCoordinator private constructor(
             }
 
             try {
+                AqlProvisioningHandoffSaver(appContext)
+                    .rollbackPendingRegistrationsForOwner(normalizedOwnerUid)
+                    .getOrThrow()
+
+                val credentialStore = DeviceCredentialStore(
+                    context = appContext,
+                    ownerUid = normalizedOwnerUid
+                )
+                credentialStore.discardStagedTokens()
+
                 val devicesRepository = DevicesRepositoryProvider.get(appContext)
 
                 withTimeout(REPOSITORY_READY_TIMEOUT_MILLIS) {
@@ -108,6 +123,12 @@ class OwnerSessionCoordinator private constructor(
                         ready
                     }
                 }
+
+                val removedOrphanCredentialCount = credentialStore.retainTokensFor(
+                    devicesRepository.currentDevices().map { snapshot ->
+                        snapshot.deviceUid
+                    }
+                )
 
                 if (!stateMachine.isCurrent(transition)) {
                     clearTransitionProviders(transition)
@@ -131,6 +152,10 @@ class OwnerSessionCoordinator private constructor(
                     }
                 }
 
+                val repairedCareTaskCount = CareTaskDataStoreManager
+                    .create(appContext)
+                    .repairOrphanedTankTasks(normalizedOwnerUid)
+
                 SessionBoundServiceManager.start(appContext)
 
                 if (!stateMachine.commit(transition)) {
@@ -143,7 +168,9 @@ class OwnerSessionCoordinator private constructor(
                     OpenResult.Active(
                         ownerUid = normalizedOwnerUid,
                         generation = transition.generation,
-                        repairedAssignmentCount = repairedAssignmentCount
+                        repairedAssignmentCount = repairedAssignmentCount,
+                        repairedCareTaskCount = repairedCareTaskCount,
+                        removedOrphanCredentialCount = removedOrphanCredentialCount
                     )
                 }
             } catch (error: Throwable) {

@@ -3,15 +3,23 @@ package com.aqua.aqualight.data.devices.store
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 private val Context.knownDevicesDataStore: DataStore<KnownDevicesStore> by dataStore(
     fileName = "known_devices.pb",
-    serializer = KnownDevicesSerializer
+    serializer = KnownDevicesSerializer,
+    corruptionHandler = ReplaceFileCorruptionHandler {
+        LocalDataRecoveryTracker.markRecovered(
+            LocalDataRecoveryTracker.Area.KNOWN_DEVICES
+        )
+        KnownDevicesStore.getDefaultInstance()
+    }
 )
 
 /**

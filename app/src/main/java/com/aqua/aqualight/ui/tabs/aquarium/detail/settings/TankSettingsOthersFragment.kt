@@ -8,6 +8,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.databinding.FragmentTankSettingsOthersBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
@@ -15,6 +16,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.export.TankPdfExporter
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
+import java.util.concurrent.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -344,14 +346,40 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
         (parentFragment as? TankSettingsFragment)
         ?.markTankDeletionInProgress()
 
-        val baseActivity = activity as? BaseActivity
         setFragmentGlobalLoading(true)
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                aquariumTankViewModel.deleteTanks(
-                    tankIds = listOf(tankId)
-                )
+                when (
+                    val result = aquariumTankViewModel.deleteTanks(
+                        tankIds = listOf(tankId)
+                    )
+                ) {
+                    OwnerTankDataCleaner.Result.NoOp -> {
+                        throw IllegalArgumentException(
+                            "Tank deletion requires a valid tank id."
+                        )
+                    }
+
+                    is OwnerTankDataCleaner.Result.DeleteFailed -> {
+                        throw result.error
+                    }
+
+                    is OwnerTankDataCleaner.Result.Deleted -> {
+                        if (result.hasCleanupIssues) {
+                            result.cleanupIssues.forEach { issue ->
+                                issue.error.printStackTrace()
+                            }
+
+                            showSnackBar(
+                                message = getString(
+                                    R.string.aquarium_delete_cleanup_warning_message
+                                ),
+                                type = BaseActivity.SnackType.ERROR
+                            )
+                        }
+                    }
+                }
 
                 setFragmentGlobalLoading(false)
 
@@ -365,10 +393,16 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
                         TankSettingsFragmentDirections.actionTankSettingsFragmentToAquariumFragment()
                     )
                 }
+            } catch (exception: CancellationException) {
+                (parentFragment as? TankSettingsFragment)
+                    ?.markTankDeletionFinished()
+                throw exception
             } catch (exception: Exception) {
                 exception.printStackTrace()
 
                 isDeletingTank = false
+                (parentFragment as? TankSettingsFragment)
+                    ?.markTankDeletionFinished()
                 setFragmentGlobalLoading(false)
 
                 DialogManager.showInfoDialog(

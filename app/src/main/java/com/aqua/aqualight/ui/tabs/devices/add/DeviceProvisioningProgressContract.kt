@@ -6,6 +6,10 @@ sealed interface DeviceProvisioningProgressEvent {
     data class OpenAddedDevice(
         val route: DeviceRoute
     ) : DeviceProvisioningProgressEvent
+
+    data object ExitProvisioning : DeviceProvisioningProgressEvent
+
+    data object ShowCancellationFailed : DeviceProvisioningProgressEvent
 }
 
 data class DeviceProvisioningWifiCredentialFailure(
@@ -31,5 +35,6 @@ data class DeviceProvisioningProgressUiState(
     val canStart: Boolean = false,
     val buttonText: String = "",
     val showProgress: Boolean = false,
+    val isCancelling: Boolean = false,
     val wifiCredentialFailure: DeviceProvisioningWifiCredentialFailure? = null
 )

@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.add
 
 import android.os.Bundle
 import android.view.View
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -19,6 +20,8 @@ import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.DevicesFragmentDirections
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteTarget
+import com.aqua.aqualight.utils.DialogManager
+import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
 
 class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_provisioning_progress) {
@@ -52,6 +55,7 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
         _binding = FragmentDeviceProvisioningProgressBinding.bind(view)
 
         setupHeader()
+        setupBackHandling()
         setupActions()
         observeViewModel()
         observeEvents()
@@ -66,9 +70,20 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
             config = AquaHeaderConfig(
                 titleOverride = getString(R.string.device_provisioning_title),
                 onBackClick = {
-                    findNavController().navigateUp()
+                    viewModel.requestExit()
                 }
             )
+        )
+    }
+
+    private fun setupBackHandling() {
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    viewModel.requestExit()
+                }
+            }
         )
     }
 
@@ -117,6 +132,14 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
                         is DeviceProvisioningProgressEvent.OpenAddedDevice -> {
                             openAddedDevice(event.route)
                         }
+
+                        DeviceProvisioningProgressEvent.ExitProvisioning -> {
+                            findNavController().navigateUp()
+                        }
+
+                        DeviceProvisioningProgressEvent.ShowCancellationFailed -> {
+                            showCancellationFailed()
+                        }
                     }
                 }
             }
@@ -144,8 +167,8 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
         binding.tvStepOne.text = "✓ ${state.stepOne}"
         binding.tvStepTwo.text = "✓ ${state.stepTwo}"
         binding.tvStepThree.text = "${state.currentStepIcon()} ${state.stepThree}"
-        binding.btnStartProvisioning.isVisible = state.canStart
-        binding.btnStartProvisioning.isEnabled = state.canStart
+        binding.btnStartProvisioning.isVisible = state.canStart && !state.isCancelling
+        binding.btnStartProvisioning.isEnabled = state.canStart && !state.isCancelling
         binding.btnStartProvisioning.text = state.buttonText
         binding.btnStartProvisioning.alpha = if (state.canStart) 1f else 0.45f
         binding.progressBar.isVisible = state.showProgress
@@ -155,6 +178,15 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
             wifiFailureReturned = true
             returnToWifiCredentials(wifiFailure)
         }
+    }
+
+    private fun showCancellationFailed() {
+        DialogManager.showInfoDialog(
+            context = requireContext(),
+            type = DialogType.ERROR,
+            title = getString(R.string.device_provisioning_cancel_failed_title),
+            message = getString(R.string.device_provisioning_cancel_failed_message)
+        )
     }
 
     private fun DeviceProvisioningProgressUiState.currentStepIcon(): String {

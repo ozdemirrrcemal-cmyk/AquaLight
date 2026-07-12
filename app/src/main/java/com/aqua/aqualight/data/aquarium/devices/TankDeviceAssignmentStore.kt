@@ -3,7 +3,9 @@ package com.aqua.aqualight.data.aquarium.devices
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
@@ -11,7 +13,13 @@ import kotlinx.coroutines.sync.withLock
 
 private val Context.tankDeviceAssignmentsDataStore: DataStore<TankDeviceAssignmentsStore> by dataStore(
     fileName = "tank_device_assignments.pb",
-    serializer = TankDeviceAssignmentsSerializer
+    serializer = TankDeviceAssignmentsSerializer,
+    corruptionHandler = ReplaceFileCorruptionHandler {
+        LocalDataRecoveryTracker.markRecovered(
+            LocalDataRecoveryTracker.Area.TANK_DEVICE_ASSIGNMENTS
+        )
+        TankDeviceAssignmentsStore.getDefaultInstance()
+    }
 )
 
 class TankDeviceAssignmentStore private constructor(

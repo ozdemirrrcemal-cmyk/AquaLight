@@ -17,6 +17,22 @@ object DeviceCredentialKeyFactory {
         }
     }
 
+    fun pendingTokenKey(
+        ownerUid: String,
+        deviceUid: DeviceUid
+    ): String {
+        return buildString {
+            append(pendingTokenPrefix(ownerUid))
+            append(sha256(deviceUid.normalizedValue()))
+        }
+    }
+
+    fun pendingTokenPrefix(
+        ownerUid: String
+    ): String {
+        return ownerPrefix(ownerUid) + PENDING_TOKEN_SEGMENT
+    }
+
     fun ownerPrefix(
         ownerUid: String
     ): String {
@@ -52,4 +68,5 @@ object DeviceCredentialKeyFactory {
 
     private const val OWNER_SEGMENT = "owner_"
     private const val TOKEN_SEGMENT = "ws_token_"
+    private const val PENDING_TOKEN_SEGMENT = "ws_token_pending_"
 }

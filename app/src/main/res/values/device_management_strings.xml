@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="local_data_recovery_title">Local data recovered</string>
+    <string name="local_data_recovery_tanks_message">A damaged aquarium record was reset safely. Affected tanks and their related local data must be added again.</string>
+    <string name="local_data_recovery_care_tasks_message">A damaged care-task record was reset safely. Please review and recreate affected care reminders.</string>
+    <string name="local_data_recovery_devices_message">A damaged local device record was reset safely. For your security, affected devices must be added again.</string>
+    <string name="local_data_recovery_assignments_message">A damaged tank-device assignment record was reset safely. Please review your tank device assignments.</string>
+    <string name="local_data_recovery_combined_message">Some damaged local data was reset safely. Please review your aquariums, care tasks, devices, and tank assignments.</string>
+    <string name="session_startup_failed_title">Local Data Unavailable</string>
+    <string name="session_startup_failed_message">AquaLight could not safely open your local session. Please try signing in again. If the problem continues, restart the app.</string>
+    <string name="device_provisioning_cancelling_title">Cancelling setup</string>
+    <string name="device_provisioning_cancelling_message">AquaLight is securely rolling back the unfinished device setup.</string>
+    <string name="device_provisioning_cancelling_step">Removing unfinished setup data…</string>
+    <string name="device_provisioning_cancel_failed_title">Setup could not be cancelled</string>
+    <string name="device_provisioning_cancel_failed_message">Unfinished device data could not be removed safely. Please check storage access and try going back again.</string>
     <string name="devices_add_action">+ Add</string>
     <string name="devices_add_content_description">Add device</string>
     <string name="devices_assigned_tank_supporting_text">Assigned to %1$s</string>

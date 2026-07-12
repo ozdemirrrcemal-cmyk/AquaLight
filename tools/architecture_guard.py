@@ -83,6 +83,12 @@ require(
     'fileName = "tank_device_assignments.pb"',
     "assignment Proto DataStore must remain authoritative",
 )
+require(
+    assignment_path,
+    assignment_store,
+    "ReplaceFileCorruptionHandler",
+    "corrupt assignment Proto must recover to an empty fail-closed authority",
+)
 
 known_path = "app/src/main/java/com/aqua/aqualight/data/devices/store/DeviceKnownStore.kt"
 known_store = read(known_path)
@@ -107,6 +113,12 @@ require(
     "ownerUid: String",
     "known-device storage must be owner-bound",
 )
+require(
+    known_path,
+    known_store,
+    "ReplaceFileCorruptionHandler",
+    "corrupt known-device Proto must recover to an empty fail-closed authority",
+)
 
 credential_path = (
     "app/src/main/java/com/aqua/aqualight/data/devices/store/DeviceCredentialStore.kt"
@@ -130,6 +142,13 @@ require(
     "suspend fun clearOwner()",
     "credential cleanup must target one owner",
 )
+for token, reason in (
+    ("suspend fun stageToken(", "provisioning credentials must use two-phase persistence"),
+    ("suspend fun commitStagedToken(", "staged credentials need an explicit commit boundary"),
+    ("suspend fun discardStagedTokens()", "process death must discard uncommitted credentials"),
+    ("suspend fun retainTokensFor(", "orphan credentials must be reconciled against durable devices"),
+):
+    require(credential_path, credential_store, token, reason)
 
 provider_path = (
     "app/src/main/java/com/aqua/aqualight/data/devices/repository/"
@@ -209,6 +228,90 @@ require(
     "repairOwnerAssignments()",
     "stale assignment repair must run during owner startup",
 )
+require(
+    session_path,
+    session_coordinator,
+    "repairOrphanedTankTasks(normalizedOwnerUid)",
+    "stale tank care data must be reconciled during owner startup",
+)
+require(
+    session_path,
+    session_coordinator,
+    "rollbackPendingRegistrationsForOwner(normalizedOwnerUid)",
+    "owner startup must finish residual in-process provisioning rollback",
+)
+require(
+    session_path,
+    session_coordinator,
+    "credentialStore.discardStagedTokens()",
+    "owner startup must roll back process-killed credential staging",
+)
+require(
+    session_path,
+    session_coordinator,
+    "credentialStore.retainTokensFor(",
+    "owner startup must remove credentials without a durable device",
+)
+
+provisioning_saver_path = (
+    "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/repository/"
+    "AqlProvisioningHandoffSaver.kt"
+)
+provisioning_saver = read(provisioning_saver_path)
+for token, reason in (
+    ("rollbackPendingRegistrationsForOwner(", "session teardown must be able to roll back all provisioning transactions"),
+    ("credentialStore.stageToken(", "provisioning must not overwrite committed credentials before completion"),
+    ("credentialStore.commitStagedToken(", "provisioning must explicitly commit its verified credential"),
+):
+    require(provisioning_saver_path, provisioning_saver, token, reason)
+
+provisioning_view_model_path = (
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/"
+    "DeviceProvisioningProgressViewModel.kt"
+)
+provisioning_view_model = read(provisioning_view_model_path)
+require(
+    provisioning_view_model_path,
+    provisioning_view_model,
+    "fun requestExit()",
+    "provisioning exit must be a rollback-aware operation",
+)
+
+provisioning_fragment_path = (
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/"
+    "DeviceProvisioningProgressFragment.kt"
+)
+provisioning_fragment = read(provisioning_fragment_path)
+require(
+    provisioning_fragment_path,
+    provisioning_fragment,
+    "viewModel.requestExit()",
+    "provisioning back navigation must pass through rollback",
+)
+
+for proto_store_path, reason in (
+    (
+        "app/src/main/java/com/aqua/aqualight/data/aquarium/store/"
+        "AquariumTankDataStoreManager.kt",
+        "corrupt aquarium Proto must recover to an empty fail-closed authority",
+    ),
+    (
+        "app/src/main/java/com/aqua/aqualight/data/care/"
+        "CareTaskDataStoreManager.kt",
+        "corrupt care-task Proto must recover to an empty fail-closed authority",
+    ),
+):
+    proto_store = read(proto_store_path)
+    require(proto_store_path, proto_store, "ReplaceFileCorruptionHandler", reason)
+
+user_cleaner_path = "app/src/main/java/com/aqua/aqualight/data/user/UserDataCleaner.kt"
+user_cleaner = read(user_cleaner_path)
+for token, reason in (
+    ("Step.DEVICE_ASSIGNMENTS", "account cleanup must attempt assignment removal independently"),
+    ("Step.KNOWN_DEVICES", "account cleanup must attempt known-device removal independently"),
+    ("Step.DEVICE_CREDENTIALS", "account cleanup must attempt credential removal independently"),
+):
+    require(user_cleaner_path, user_cleaner, token, reason)
 
 proto_dir = ROOT / "app/src/main/proto"
 for required_proto in ("tank_device_assignments.proto", "known_devices.proto"):

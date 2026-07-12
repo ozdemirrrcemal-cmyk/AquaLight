@@ -234,6 +234,10 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         isDeletingTank = true
     }
 
+    fun markTankDeletionFinished() {
+        isDeletingTank = false
+    }
+
     private fun getInitialTab(): SettingsTab {
         val startTab = args.startTab
 
