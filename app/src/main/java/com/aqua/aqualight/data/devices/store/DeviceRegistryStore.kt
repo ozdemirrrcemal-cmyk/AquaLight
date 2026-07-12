@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.devices.store
 import com.aqua.aqualight.data.devices.model.DeviceConnectionState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.devices.repository.RegisteredDeviceDiscoveryPolicy
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -59,6 +60,28 @@ class DeviceRegistryStore {
             devices.fold(current) { acc, incoming ->
                 val merged = DeviceSnapshotMerger.merge(
                     previous = acc[incoming.deviceUid],
+                    incoming = incoming
+                )
+                acc + (incoming.deviceUid to merged)
+            }
+        }
+    }
+
+    /**
+     * Applies LAN discovery data only to devices already present in the registry.
+     *
+     * The membership check and merge happen inside one StateFlow update so a
+     * concurrent device deletion cannot be undone by a late UDP announcement.
+     */
+    fun updateExistingAll(devices: Iterable<DeviceSnapshot>) {
+        _snapshots.update { current ->
+            RegisteredDeviceDiscoveryPolicy.filterRegisteredUpdates(
+                registeredDeviceUids = current.keys,
+                discoveredDevices = devices
+            ).fold(current) { acc, incoming ->
+                val previous = acc[incoming.deviceUid] ?: return@fold acc
+                val merged = DeviceSnapshotMerger.merge(
+                    previous = previous,
                     incoming = incoming
                 )
                 acc + (incoming.deviceUid to merged)
