@@ -45,6 +45,23 @@ class AqlProvisioningHandoffSaver(
         draft: AqlProvisioningDraft,
         handoff: AqlProvisioningRuntimeHandoff
     ): Result<DeviceSnapshot> {
+        return try {
+            Result.success(
+                prepareAndConnectOrThrow(
+                    draft = draft,
+                    handoff = handoff
+                )
+            )
+        } catch (error: Throwable) {
+            error.throwIfCancellation()
+            Result.failure(error)
+        }
+    }
+
+    private suspend fun prepareAndConnectOrThrow(
+        draft: AqlProvisioningDraft,
+        handoff: AqlProvisioningRuntimeHandoff
+    ): DeviceSnapshot {
         require(handoff.isUsable) {
             "Runtime handoff is missing device uid, WebSocket endpoint or token."
         }
@@ -77,7 +94,7 @@ class AqlProvisioningHandoffSaver(
             pendingRegistrations[transactionKey] = pendingRegistration
         }
 
-        return try {
+        try {
             repository.saveRuntimeToken(
                 deviceUid = handoff.deviceUid,
                 token = handoff.webSocketToken
@@ -126,12 +143,10 @@ class AqlProvisioningHandoffSaver(
                 "Runtime device identity did not include a supported product family."
             }
 
-            Result.success(
-                repository.stageProvisioningSnapshot(
-                    DeviceSnapshotMerger.merge(
-                        previous = previousSnapshot,
-                        incoming = resolved
-                    )
+            return repository.stageProvisioningSnapshot(
+                DeviceSnapshotMerger.merge(
+                    previous = previousSnapshot,
+                    incoming = resolved
                 )
             )
         } catch (error: Throwable) {
@@ -147,8 +162,7 @@ class AqlProvisioningHandoffSaver(
             }
 
             rollbackError?.let(error::addSuppressed)
-            error.throwIfCancellation()
-            Result.failure(error)
+            throw error
         }
     }
 
