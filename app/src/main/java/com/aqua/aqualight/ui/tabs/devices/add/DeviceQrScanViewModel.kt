@@ -9,6 +9,7 @@ import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningCandid
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningScanner
 import com.aqua.aqualight.data.devices.provisioning.qr.AqlProvisioningQrParser
 import com.aqua.aqualight.data.devices.provisioning.qr.AqlProvisioningQrPayload
+import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -28,6 +29,7 @@ class DeviceQrScanViewModel(
 
     private val qrParser = AqlProvisioningQrParser()
     private val bleScanner = AqlBleProvisioningScanner(application)
+    private val repository = DevicesRepositoryProvider.get(application)
 
     private val _uiState = MutableStateFlow(DeviceQrScanUiState())
     val uiState: StateFlow<DeviceQrScanUiState> = _uiState.asStateFlow()
@@ -178,16 +180,30 @@ class DeviceQrScanViewModel(
                 return@launch
             }
 
-            if (bleScanner.candidates.value.isEmpty()) {
-                showFailure(
-                    titleRes = R.string.device_qr_preflight_not_found_title,
-                    messageRes = R.string.device_qr_preflight_not_found_message
-                )
-            } else {
-                showFailure(
-                    titleRes = R.string.device_qr_preflight_mismatch_title,
-                    messageRes = R.string.device_qr_preflight_mismatch_message
-                )
+            val hasNearbyCandidates = bleScanner.candidates.value.isNotEmpty()
+            val isAlreadyRegistered = repository.currentDevice(payload.deviceUid) != null
+
+            when {
+                hasNearbyCandidates -> {
+                    showFailure(
+                        titleRes = R.string.device_qr_preflight_mismatch_title,
+                        messageRes = R.string.device_qr_preflight_mismatch_message
+                    )
+                }
+
+                isAlreadyRegistered -> {
+                    showFailure(
+                        titleRes = R.string.device_qr_preflight_already_added_title,
+                        messageRes = R.string.device_qr_preflight_already_added_message
+                    )
+                }
+
+                else -> {
+                    showFailure(
+                        titleRes = R.string.device_qr_preflight_not_found_title,
+                        messageRes = R.string.device_qr_preflight_not_found_message
+                    )
+                }
             }
         }
     }
