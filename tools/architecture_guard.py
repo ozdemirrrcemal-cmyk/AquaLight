@@ -164,13 +164,35 @@ devices_repository = read(repository_path)
 for token in (
     "clearTokenAsync",
     "runCatching {\n                    repository.forgetDevice",
+    "registryStore.upsertAll(filterIgnoredDevices(discoveredDevices))",
 ):
-    forbid(repository_path, devices_repository, token, "fire-and-forget device cleanup is forbidden")
+    forbid(repository_path, devices_repository, token, "fire-and-forget or discovery registration is forbidden")
 require(
     repository_path,
     devices_repository,
     "knownStore?.forgetDevice(deviceUid)",
     "forgotten devices must be durably ignored before leaving the registry",
+)
+require(
+    repository_path,
+    devices_repository,
+    "registryStore.updateExistingAll(",
+    "LAN discovery must only update devices already registered for the owner",
+)
+
+registry_path = "app/src/main/java/com/aqua/aqualight/data/devices/store/DeviceRegistryStore.kt"
+registry_store = read(registry_path)
+require(
+    registry_path,
+    registry_store,
+    "fun updateExistingAll(",
+    "registry must expose an atomic registered-only discovery update",
+)
+require(
+    registry_path,
+    registry_store,
+    "val previous = acc[incoming.deviceUid] ?: return@fold acc",
+    "late discovery must not create or resurrect a device",
 )
 
 session_path = "app/src/main/java/com/aqua/aqualight/data/auth/OwnerSessionCoordinator.kt"
@@ -216,5 +238,5 @@ if errors:
 
 print(
     "Architecture guard passed: layer boundaries, Proto authority, owner isolation, "
-    "and non-global credential/session rules are intact."
+    "registered-only discovery, and non-global credential/session rules are intact."
 )
