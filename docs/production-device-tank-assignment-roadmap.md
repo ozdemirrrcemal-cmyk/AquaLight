@@ -91,7 +91,9 @@ Exit criteria:
 ## Phase 6 — CI, tests, and release gate
 
 - Unit-test serializers, reducers, credential keys, owner transitions, repair, cleanup, and partial deletion.
+- Run encrypted credential transaction, Proto corruption recovery, and uninstall/reinstall data-removal tests on Android API 27 and 35 emulators.
 - Run all Debug unit tests plus Debug APK assembly in CI.
+- Run Release unit tests, Release lint, minification, shrinking, and CI-only signed Release APK assembly on every PR.
 - Add static scans for removed legacy APIs and forbidden context-free providers.
 - Run release lint/resource shrinking and signed release assembly before merge.
 

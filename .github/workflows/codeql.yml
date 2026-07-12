@@ -45,8 +45,10 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Run architecture guard
-        run: python3 tools/architecture_guard.py
+      - name: Run architecture and navigation guards
+        run: |
+          python3 tools/architecture_guard.py
+          python3 tools/navigation_guard.py
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
@@ -72,6 +74,49 @@ jobs:
           set -o pipefail
           ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee assemble-debug.log
 
+      - name: Generate CI-only release keystore
+        run: |
+          keytool -genkeypair -noprompt \
+            -keystore release-key.jks \
+            -storepass aqualight-ci \
+            -alias aqualight-ci \
+            -keypass aqualight-ci \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 1 \
+            -dname "CN=AquaLight CI,O=AquaLight,C=TR"
+
+      - name: Run Release unit tests
+        shell: bash
+        env:
+          RELEASE_KEYSTORE_PASSWORD: aqualight-ci
+          RELEASE_KEY_ALIAS: aqualight-ci
+          RELEASE_KEY_PASSWORD: aqualight-ci
+        run: |
+          set -o pipefail
+          ./gradlew testReleaseUnitTest --no-daemon --stacktrace 2>&1 | tee unit-test-release.log
+
+      - name: Run Release lint
+        shell: bash
+        env:
+          RELEASE_KEYSTORE_PASSWORD: aqualight-ci
+          RELEASE_KEY_ALIAS: aqualight-ci
+          RELEASE_KEY_PASSWORD: aqualight-ci
+        run: |
+          set -o pipefail
+          ./gradlew lintRelease --no-daemon --stacktrace 2>&1 | tee lint-release.log
+
+      - name: Build minified Release APK with CI-only signing
+        shell: bash
+        env:
+          RELEASE_KEYSTORE_PASSWORD: aqualight-ci
+          RELEASE_KEY_ALIAS: aqualight-ci
+          RELEASE_KEY_PASSWORD: aqualight-ci
+        run: |
+          set -o pipefail
+          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee assemble-release.log
+          test -s app/build/outputs/apk/release/AquaLight.apk
+
       - name: Upload validation logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -79,11 +124,20 @@ jobs:
           name: codeql-validation-logs-${{ github.run_number }}
           path: |
             unit-test.log
+            unit-test-release.log
             lint-debug.log
+            lint-release.log
             assemble-debug.log
+            assemble-release.log
             app/build/reports/tests/testDebugUnitTest/**
+            app/build/reports/tests/testReleaseUnitTest/**
             app/build/reports/lint-results-debug.*
+            app/build/reports/lint-results-release.*
           if-no-files-found: ignore
+
+      - name: Remove CI-only release keystore
+        if: always()
+        run: rm -f release-key.jks
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3

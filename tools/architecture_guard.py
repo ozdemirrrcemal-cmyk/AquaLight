@@ -52,6 +52,10 @@ for guarded_dir in GUARDED_DIRS:
 manifest = ROOT / "app/src/main/AndroidManifest.xml"
 if manifest.exists():
     manifest_text = manifest.read_text(encoding="utf-8", errors="ignore")
+    if 'android:allowBackup="false"' not in manifest_text:
+        errors.append(
+            f"{manifest.relative_to(ROOT)}: Android cloud backup must remain disabled"
+        )
     old_receivers = [
         "com.aqua.aqualight.ui.tabs.maintenance.reminder.CareTaskReminderReceiver",
         "com.aqua.aqualight.ui.tabs.maintenance.reminder.CareTaskBootReceiver",
@@ -262,8 +266,30 @@ for token, reason in (
     ("rollbackPendingRegistrationsForOwner(", "session teardown must be able to roll back all provisioning transactions"),
     ("credentialStore.stageToken(", "provisioning must not overwrite committed credentials before completion"),
     ("credentialStore.commitStagedToken(", "provisioning must explicitly commit its verified credential"),
+    ("pendingRegistry.registerIfAbsent(", "duplicate provisioning transactions must be rejected atomically"),
 ):
     require(provisioning_saver_path, provisioning_saver, token, reason)
+
+transaction_registry_test_path = (
+    "app/src/test/java/com/aqua/aqualight/data/devices/provisioning/repository/"
+    "AqlProvisioningTransactionRegistryTest.kt"
+)
+transaction_registry_test = read(transaction_registry_test_path)
+for token, reason in (
+    (
+        "concurrent duplicate registration has exactly one winner",
+        "provisioning transaction registration needs a concurrency regression test",
+    ),
+    (
+        "stale transaction cannot remove current transaction",
+        "provisioning transaction removal must remain identity-safe",
+    ),
+    (
+        "same device uid is independent between owners",
+        "provisioning transactions must remain owner-isolated",
+    ),
+):
+    require(transaction_registry_test_path, transaction_registry_test, token, reason)
 
 provisioning_view_model_path = (
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/"
@@ -312,6 +338,99 @@ for token, reason in (
     ("Step.DEVICE_CREDENTIALS", "account cleanup must attempt credential removal independently"),
 ):
     require(user_cleaner_path, user_cleaner, token, reason)
+
+credential_instrumentation_path = (
+    "app/src/androidTest/java/com/aqua/aqualight/data/devices/store/"
+    "DeviceCredentialStoreInstrumentedTest.kt"
+)
+credential_instrumentation = read(credential_instrumentation_path)
+for token, reason in (
+    (
+        "stagedTokenDoesNotOverwriteCommittedTokenUntilCommit",
+        "two-phase credentials require an Android storage test",
+    ),
+    (
+        "processRestartCleanupDiscardsOnlyStagedTokens",
+        "process-restart credential recovery requires an Android storage test",
+    ),
+    (
+        "orphanReconciliationKeepsOnlyDurableDeviceCredentials",
+        "orphan credential reconciliation requires an Android storage test",
+    ),
+    (
+        "sameDeviceCredentialIsIsolatedBetweenOwners",
+        "credential owner isolation requires an Android storage test",
+    ),
+):
+    require(
+        credential_instrumentation_path,
+        credential_instrumentation,
+        token,
+        reason,
+    )
+
+corruption_instrumentation_path = (
+    "app/src/androidTest/java/com/aqua/aqualight/data/recovery/"
+    "ProtoCorruptionRecoveryInstrumentedTest.kt"
+)
+corruption_instrumentation = read(corruption_instrumentation_path)
+require(
+    corruption_instrumentation_path,
+    corruption_instrumentation,
+    "allAuthoritativeProtoStoresRecoverFailClosedAndReportRecovery",
+    "authoritative Proto corruption recovery requires an Android DataStore test",
+)
+
+emulator_workflow_path = ".github/workflows/android_instrumentation.yml"
+emulator_workflow = read(emulator_workflow_path)
+for token, reason in (
+    ("connectedDebugAndroidTest", "instrumentation tests must run in CI"),
+    (
+        "bash tools/verify_uninstall_clears_data.sh",
+        "emulator CI must verify uninstall/reinstall data removal",
+    ),
+    ("api-level: [27, 35]", "emulator CI must cover min and modern Android APIs"),
+    (
+        "android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d",
+        "emulator CI action must remain pinned to its reviewed v2.38.0 commit",
+    ),
+):
+    require(emulator_workflow_path, emulator_workflow, token, reason)
+
+uninstall_test_path = "tools/verify_uninstall_clears_data.sh"
+uninstall_test = read(uninstall_test_path)
+for token, reason in (
+    ("adb uninstall", "the uninstall smoke test must remove the application package"),
+    ("known_devices.pb", "the uninstall smoke test must cover durable known devices"),
+    ("device_credentials.xml", "the uninstall smoke test must cover encrypted credentials"),
+):
+    require(uninstall_test_path, uninstall_test, token, reason)
+
+for backup_rules_path in (
+    "app/src/main/res/xml/backup_rules.xml",
+    "app/src/main/res/xml/data_extraction_rules.xml",
+):
+    backup_rules = read(backup_rules_path)
+    for excluded_path in (
+        'domain="file" path="datastore/"',
+        'domain="sharedpref" path="device_credentials.xml"',
+    ):
+        require(
+            backup_rules_path,
+            backup_rules,
+            excluded_path,
+            "device registry and credential data must remain excluded from backup/transfer",
+        )
+
+pr_workflow_path = ".github/workflows/codeql.yml"
+pr_workflow = read(pr_workflow_path)
+for token, reason in (
+    ("python3 tools/navigation_guard.py", "PR validation must enforce navigation contracts"),
+    ("testReleaseUnitTest", "PR validation must compile and run Release unit tests"),
+    ("lintRelease", "PR validation must run Release lint"),
+    ("assembleRelease", "PR validation must exercise minification and release packaging"),
+):
+    require(pr_workflow_path, pr_workflow, token, reason)
 
 proto_dir = ROOT / "app/src/main/proto"
 for required_proto in ("tank_device_assignments.proto", "known_devices.proto"):

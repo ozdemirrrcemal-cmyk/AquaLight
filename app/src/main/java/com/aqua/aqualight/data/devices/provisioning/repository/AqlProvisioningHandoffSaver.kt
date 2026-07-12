@@ -17,7 +17,6 @@ import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
 import com.aqua.aqualight.data.devices.store.DeviceSnapshotMerger
 import com.aqua.aqualight.data.user.UserDataScope
-import java.util.Locale
 import java.util.concurrent.CancellationException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.sync.Mutex
@@ -88,16 +87,8 @@ class AqlProvisioningHandoffSaver(
             previousSnapshot = previousSnapshot,
             previousRuntimeToken = previousRuntimeToken
         )
-        val transactionKey = transactionKey(
-            ownerUid = ownerUid,
-            deviceUid = handoff.deviceUid
-        )
-
-        transactionMutex.withLock {
-            check(pendingRegistrations[transactionKey] == null) {
-                "A provisioning transaction is already active for this device."
-            }
-            pendingRegistrations[transactionKey] = pendingRegistration
+        check(pendingRegistry.registerIfAbsent(pendingRegistration)) {
+            "A provisioning transaction is already active for this device."
         }
 
         return pendingRegistration.operationMutex.withLock {
@@ -165,12 +156,7 @@ class AqlProvisioningHandoffSaver(
                 }
 
                 if (rollbackError == null) {
-                    transactionMutex.withLock {
-                        pendingRegistrations.remove(
-                            transactionKey,
-                            pendingRegistration
-                        )
-                    }
+                    pendingRegistry.remove(pendingRegistration)
                 }
 
                 rollbackError?.let(error::addSuppressed)
@@ -184,21 +170,19 @@ class AqlProvisioningHandoffSaver(
     ): Result<DeviceSnapshot> {
         return try {
             val ownerUid = UserDataScope.requireCurrentUid()
-            val transactionKey = transactionKey(
+            val pendingRegistration = pendingRegistry.find(
                 ownerUid = ownerUid,
                 deviceUid = snapshot.deviceUid
-            )
-            val pendingRegistration = transactionMutex.withLock {
-                pendingRegistrations[transactionKey]
-            } ?: error(
+            ) ?: error(
                 "No verified provisioning transaction exists for this device."
             )
             val repository = DevicesRepositoryProvider.get(appContext)
             val committed = pendingRegistration.operationMutex.withLock {
                 withContext(NonCancellable) {
-                    val currentPending = transactionMutex.withLock {
-                        pendingRegistrations[transactionKey]
-                    }
+                    val currentPending = pendingRegistry.find(
+                        ownerUid = ownerUid,
+                        deviceUid = snapshot.deviceUid
+                    )
                     check(currentPending === pendingRegistration) {
                         "Provisioning transaction is no longer active."
                     }
@@ -215,11 +199,8 @@ class AqlProvisioningHandoffSaver(
                         pendingRegistration.stagedCredentialCommitted = true
 
                         repository.commitProvisioningSnapshot(snapshot).also {
-                            transactionMutex.withLock {
-                                pendingRegistrations.remove(
-                                    transactionKey,
-                                    pendingRegistration
-                                )
+                            check(pendingRegistry.remove(pendingRegistration)) {
+                                "Provisioning transaction is no longer active."
                             }
                         }
                     } catch (error: Throwable) {
@@ -267,18 +248,7 @@ class AqlProvisioningHandoffSaver(
             )
         }
 
-        val deviceUids = transactionMutex.withLock {
-            pendingRegistrations.values
-                .asSequence()
-                .filter { pending ->
-                    pending.ownerUid == normalizedOwnerUid
-                }
-                .map { pending -> pending.deviceUid }
-                .distinctBy { deviceUid ->
-                    deviceUid.value.trim().uppercase(Locale.US)
-                }
-                .toList()
-        }
+        val deviceUids = pendingRegistry.deviceUidsForOwner(normalizedOwnerUid)
 
         var rolledBackCount = 0
         val failures = mutableListOf<Throwable>()
@@ -325,23 +295,17 @@ class AqlProvisioningHandoffSaver(
         ownerUid: String,
         deviceUid: DeviceUid
     ): Result<Boolean> {
-        val transactionKey = transactionKey(
+        val pendingRegistration = pendingRegistry.find(
             ownerUid = ownerUid,
             deviceUid = deviceUid
-        )
-        val pendingRegistration = transactionMutex.withLock {
-            pendingRegistrations[transactionKey]
-        } ?: return Result.success(false)
+        ) ?: return Result.success(false)
 
         return pendingRegistration.operationMutex.withLock {
-            val removed = transactionMutex.withLock {
-                pendingRegistrations.remove(
-                    transactionKey,
-                    pendingRegistration
-                )
-            }
-
-            if (!removed) {
+            val currentPending = pendingRegistry.find(
+                ownerUid = ownerUid,
+                deviceUid = deviceUid
+            )
+            if (currentPending !== pendingRegistration) {
                 return@withLock Result.success(false)
             }
 
@@ -357,17 +321,14 @@ class AqlProvisioningHandoffSaver(
                 }
 
                 if (rollbackError != null) {
-                    transactionMutex.withLock {
-                        pendingRegistrations[transactionKey] = pendingRegistration
-                    }
                     Result.failure(rollbackError)
                 } else {
+                    check(pendingRegistry.remove(pendingRegistration)) {
+                        "Provisioning transaction is no longer active."
+                    }
                     Result.success(true)
                 }
             } catch (error: Throwable) {
-                transactionMutex.withLock {
-                    pendingRegistrations[transactionKey] = pendingRegistration
-                }
                 error.throwIfCancellation()
                 Result.failure(error)
             }
@@ -441,21 +402,6 @@ class AqlProvisioningHandoffSaver(
         }.exceptionOrNull()
     }
 
-    private fun transactionKey(
-        ownerUid: String,
-        deviceUid: DeviceUid
-    ): String {
-        val normalizedOwnerUid = ownerUid.trim()
-        require(normalizedOwnerUid.isNotBlank()) {
-            "ownerUid must not be blank"
-        }
-        val normalizedDeviceUid = deviceUid.value
-            .trim()
-            .uppercase(Locale.US)
-
-        return "$normalizedOwnerUid\u0000$normalizedDeviceUid"
-    }
-
     private fun Throwable.throwIfCancellation() {
         if (this is CancellationException) {
             throw this
@@ -471,8 +417,11 @@ class AqlProvisioningHandoffSaver(
     }
 
     private companion object {
-        val transactionMutex = Mutex()
-        val pendingRegistrations = mutableMapOf<String, PendingRegistration>()
+        val pendingRegistry =
+            AqlProvisioningTransactionRegistry<PendingRegistration>(
+                ownerUidOf = PendingRegistration::ownerUid,
+                deviceUidOf = PendingRegistration::deviceUid
+            )
     }
 }
 
