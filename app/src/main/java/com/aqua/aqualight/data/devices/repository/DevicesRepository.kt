@@ -80,7 +80,9 @@ class DevicesRepository(
                     val scannerJob = discoveryRepository.start(this)
                     val collectorJob = launch {
                         discoveryRepository.devices.collect { discoveredDevices ->
-                            registryStore.upsertAll(filterIgnoredDevices(discoveredDevices))
+                            registryStore.updateExistingAll(
+                                filterIgnoredDevices(discoveredDevices)
+                            )
                         }
                     }
                     val runtimeStateJob = runtimeRepository?.let { runtime ->
