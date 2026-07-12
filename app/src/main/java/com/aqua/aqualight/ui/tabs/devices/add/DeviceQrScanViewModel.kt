@@ -9,7 +9,6 @@ import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningCandid
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningScanner
 import com.aqua.aqualight.data.devices.provisioning.qr.AqlProvisioningQrParser
 import com.aqua.aqualight.data.devices.provisioning.qr.AqlProvisioningQrPayload
-import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -29,7 +28,6 @@ class DeviceQrScanViewModel(
 
     private val qrParser = AqlProvisioningQrParser()
     private val bleScanner = AqlBleProvisioningScanner(application)
-    private val repository = DevicesRepositoryProvider.get(application)
 
     private val _uiState = MutableStateFlow(DeviceQrScanUiState())
     val uiState: StateFlow<DeviceQrScanUiState> = _uiState.asStateFlow()
@@ -56,15 +54,9 @@ class DeviceQrScanViewModel(
                 return
             }
 
-        if (repository.currentDevice(payload.deviceUid) != null) {
-            pendingPayload = null
-            showFailure(
-                titleRes = R.string.device_qr_preflight_already_added_title,
-                messageRes = R.string.device_qr_preflight_already_added_message
-            )
-            return
-        }
-
+        // Do not reject a locally registered UID here. Both QR and nearby-scan
+        // entries must reach the secure BLE verification flow. The verified
+        // runtime handoff then resolves new registration versus reconfiguration.
         pendingPayload = payload
 
         if (!hasBlePermissions) {
