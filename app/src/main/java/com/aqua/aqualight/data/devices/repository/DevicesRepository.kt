@@ -173,6 +173,9 @@ class DevicesRepository(
     fun runtimeConnectionStates(): SharedFlow<AqlWsConnectionState>? =
         runtimeRepository?.connectionState
 
+    fun currentRuntimeConnectionState(deviceUid: DeviceUid): AqlWsConnectionState? =
+        runtimeRepository?.currentConnectionState(deviceUid)
+
     suspend fun saveRuntimeToken(deviceUid: DeviceUid, token: String) {
         runtimeRepository?.saveToken(deviceUid = deviceUid, token = token)
     }

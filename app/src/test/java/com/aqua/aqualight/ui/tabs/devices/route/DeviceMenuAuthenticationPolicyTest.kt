@@ -40,6 +40,42 @@ class DeviceMenuAuthenticationPolicyTest {
     }
 
     @Test
+    fun `currently authenticated requested-device session opens without reconnecting`() {
+        assertTrue(
+            DeviceMenuAuthenticationPolicy.isActiveAuthenticatedSession(
+                state = AqlWsConnectionState.Authenticated(
+                    deviceUid = requestedUid,
+                    authenticatedAtMillis = 1L
+                ),
+                requestedDeviceUid = requestedUid
+            )
+        )
+    }
+
+    @Test
+    fun `connected or different-device session is not an authenticated current session`() {
+        assertFalse(
+            DeviceMenuAuthenticationPolicy.isActiveAuthenticatedSession(
+                state = AqlWsConnectionState.Connected(
+                    deviceUid = requestedUid,
+                    url = "ws://192.168.1.20:81/ws",
+                    connectedAtMillis = 1_000L
+                ),
+                requestedDeviceUid = requestedUid
+            )
+        )
+        assertFalse(
+            DeviceMenuAuthenticationPolicy.isActiveAuthenticatedSession(
+                state = AqlWsConnectionState.Authenticated(
+                    deviceUid = DeviceUid("AQL-OTHER"),
+                    authenticatedAtMillis = 1_000L
+                ),
+                requestedDeviceUid = requestedUid
+            )
+        )
+    }
+
+    @Test
     fun `stale or different-device authentication is rejected`() {
         assertFalse(
             DeviceMenuAuthenticationPolicy.accepts(

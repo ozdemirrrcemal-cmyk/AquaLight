@@ -126,6 +126,18 @@ class DeviceMenuOpenGate(
             return@coroutineScope null
         }
 
+        val currentState = devicesRepository.currentRuntimeConnectionState(deviceUid)
+        if (
+            DeviceMenuAuthenticationPolicy.isActiveAuthenticatedSession(
+                state = currentState,
+                requestedDeviceUid = deviceUid
+            )
+        ) {
+            authenticationSignal.cancel()
+            return@coroutineScope devicesRepository.currentDevice(deviceUid)
+                ?: fallbackSnapshot
+        }
+
         sendRuntimeProbe(deviceUid)
 
         val authenticated = authenticationSignal.await()
@@ -178,12 +190,20 @@ class DeviceMenuOpenGate(
     }
 
     private companion object {
-        const val STRICT_LIVE_CHECK_TIMEOUT_MS = 5_000L
+        const val STRICT_LIVE_CHECK_TIMEOUT_MS = 12_000L
         const val LAN_PROOF_CLOCK_GRACE_MS = 1_000L
     }
 }
 
 internal object DeviceMenuAuthenticationPolicy {
+
+    fun isActiveAuthenticatedSession(
+        state: AqlWsConnectionState?,
+        requestedDeviceUid: DeviceUid
+    ): Boolean {
+        val authenticated = state as? AqlWsConnectionState.Authenticated ?: return false
+        return authenticated.deviceUid == requestedDeviceUid
+    }
 
     fun accepts(
         state: AqlWsConnectionState,

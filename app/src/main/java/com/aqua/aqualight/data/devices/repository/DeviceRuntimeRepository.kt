@@ -35,7 +35,8 @@ class DeviceRuntimeRepository(
     private data class RuntimeSession(
         val deviceUid: DeviceUid,
         val wsClient: AqlWsClient,
-        val commandClient: AqlWsCommandClient
+        val commandClient: AqlWsCommandClient,
+        @Volatile var endpointUrl: String? = null
     )
 
     private val sessions = ConcurrentHashMap<DeviceUid, RuntimeSession>()
@@ -70,11 +71,31 @@ class DeviceRuntimeRepository(
         val session = sessionFor(deviceUid)
         lastActiveDeviceUid = deviceUid
 
-        return session.wsClient.connect(
-            deviceUid = deviceUid,
-            endpoint = snapshot.endpoint
-        )
+        return synchronized(session) {
+            val endpointUrl = snapshot.endpoint.toWebSocketUrl()
+            val endpointMatches = session.endpointUrl == endpointUrl
+            val currentState = session.wsClient.connectionState.value
+
+            if (
+                !RuntimeConnectionReusePolicy.shouldReconnect(
+                    state = currentState,
+                    requestedDeviceUid = deviceUid,
+                    endpointMatches = endpointMatches
+                )
+            ) {
+                return@synchronized Result.success(Unit)
+            }
+
+            session.endpointUrl = endpointUrl
+            session.wsClient.connect(
+                deviceUid = deviceUid,
+                endpoint = snapshot.endpoint
+            )
+        }
     }
+
+    fun currentConnectionState(deviceUid: DeviceUid): AqlWsConnectionState? =
+        sessions[deviceUid]?.wsClient?.connectionState?.value
 
     fun commandClient(): AqlWsCommandClient? {
         val activeUid = lastActiveDeviceUid ?: return null
@@ -222,6 +243,26 @@ class DeviceRuntimeRepository(
                     ownerUid = ownerUid
                 )
             )
+        }
+    }
+}
+
+internal object RuntimeConnectionReusePolicy {
+
+    fun shouldReconnect(
+        state: AqlWsConnectionState,
+        requestedDeviceUid: DeviceUid,
+        endpointMatches: Boolean
+    ): Boolean {
+        if (!endpointMatches) return true
+
+        return when (state) {
+            is AqlWsConnectionState.Connecting -> state.deviceUid != requestedDeviceUid
+            is AqlWsConnectionState.Connected -> state.deviceUid != requestedDeviceUid
+            is AqlWsConnectionState.Authenticated -> state.deviceUid != requestedDeviceUid
+            AqlWsConnectionState.Disconnected,
+            is AqlWsConnectionState.AuthRequired,
+            is AqlWsConnectionState.Failed -> true
         }
     }
 }
