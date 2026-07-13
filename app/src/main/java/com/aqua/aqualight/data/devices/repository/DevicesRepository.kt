@@ -170,6 +170,9 @@ class DevicesRepository(
 
     fun runtimeEvents(): SharedFlow<AqlWsEvent>? = runtimeRepository?.events
 
+    fun runtimeConnectionStates(): SharedFlow<AqlWsConnectionState>? =
+        runtimeRepository?.connectionState
+
     suspend fun saveRuntimeToken(deviceUid: DeviceUid, token: String) {
         runtimeRepository?.saveToken(deviceUid = deviceUid, token = token)
     }
@@ -349,12 +352,59 @@ class DevicesRepository(
     }
 
     private fun applyRuntimeConnectionState(state: AqlWsConnectionState) {
-        val failed = state as? AqlWsConnectionState.Failed ?: return
-        val deviceUid = failed.deviceUid ?: return
-        applyRuntimeUnavailable(
-            deviceUid = deviceUid,
-            message = failed.message.ifBlank { "Connection failed." }
-        )
+        when (state) {
+            AqlWsConnectionState.Disconnected -> Unit
+
+            is AqlWsConnectionState.Connecting -> {
+                registryStore.updateConnectionState(state.deviceUid) { previous ->
+                    previous.copy(
+                        onlineState = DeviceOnlineState.CONNECTING_WS,
+                        lastErrorMessage = null
+                    )
+                }
+            }
+
+            is AqlWsConnectionState.Connected -> {
+                registryStore.updateConnectionState(state.deviceUid) { previous ->
+                    previous.copy(
+                        onlineState = DeviceOnlineState.CONNECTING_WS,
+                        lastWsConnectedAtMillis = state.connectedAtMillis,
+                        lastAuthenticatedAtMillis = null,
+                        lastErrorMessage = null
+                    )
+                }
+            }
+
+            is AqlWsConnectionState.Authenticated -> {
+                registryStore.updateConnectionState(state.deviceUid) { previous ->
+                    previous.copy(
+                        onlineState = DeviceOnlineState.AUTHENTICATED,
+                        lastAuthenticatedAtMillis = state.authenticatedAtMillis,
+                        lastErrorMessage = null
+                    )
+                }
+            }
+
+            is AqlWsConnectionState.AuthRequired -> {
+                registryStore.updateConnectionState(state.deviceUid) { previous ->
+                    previous.copy(
+                        onlineState = DeviceOnlineState.AUTH_REQUIRED,
+                        lastAuthenticatedAtMillis = null,
+                        lastErrorMessage = state.message
+                            .trim()
+                            .takeIf(String::isNotBlank)
+                    )
+                }
+            }
+
+            is AqlWsConnectionState.Failed -> {
+                val deviceUid = state.deviceUid ?: return
+                applyRuntimeUnavailable(
+                    deviceUid = deviceUid,
+                    message = state.message.ifBlank { "Connection failed." }
+                )
+            }
+        }
     }
 
     private fun applyRuntimeUnavailable(deviceUid: DeviceUid, message: String? = null) {

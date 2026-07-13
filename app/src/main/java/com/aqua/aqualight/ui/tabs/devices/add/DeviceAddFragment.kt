@@ -1,6 +1,9 @@
 package com.aqua.aqualight.ui.tabs.devices.add
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,6 +28,7 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
 
     private var _binding: FragmentDeviceAddBinding? = null
     private val binding get() = _binding!!
+    private var retryBleScanOnResume = false
 
     private val candidateAdapter = DeviceAddCandidateAdapter { candidate ->
         viewModel.onCandidateClicked(candidate)
@@ -56,6 +60,16 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         viewModel.onScreenVisible()
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (retryBleScanOnResume) {
+            retryBleScanOnResume = false
+            if (permissionController.hasBlePermissions(requireContext())) {
+                viewModel.startBleScan()
+            }
+        }
+    }
+
     private fun setupHeader() {
         binding.appHeader.setupAquaHeader(
             fragment = this,
@@ -85,14 +99,28 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
     }
 
     private fun startBleScanWithPermissionCheck() {
-        if (permissionController.hasBlePermissions(requireContext())) {
-            viewModel.startBleScan()
-            return
+        when (permissionController.bleNextAction(this)) {
+            DeviceAddPermissionController.NextAction.GRANTED -> {
+                viewModel.startBleScan()
+            }
+            DeviceAddPermissionController.NextAction.REQUEST_PERMISSION -> {
+                permissionController.markBlePermissionRequested(requireContext())
+                blePermissionLauncher.launch(permissionController.blePermissions())
+            }
+            DeviceAddPermissionController.NextAction.OPEN_APP_SETTINGS -> {
+                openAppSettingsForBlePermission()
+            }
         }
+    }
 
-        blePermissionLauncher.launch(
-            permissionController.blePermissions()
-        )
+    private fun openAppSettingsForBlePermission() {
+        retryBleScanOnResume = true
+        val packageUri = Uri.fromParts("package", requireContext().packageName, null)
+        runCatching {
+            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, packageUri))
+        }.onFailure {
+            startActivity(Intent(Settings.ACTION_SETTINGS))
+        }
     }
 
     private fun observeViewModel() {
@@ -140,7 +168,15 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
             binding.btnScan.alpha = 0.72f
         } else {
             binding.scanPulseView.stopScan()
-            binding.btnScan.text = getString(R.string.device_add_scan_button)
+            binding.btnScan.text = if (
+                state.mode == DeviceAddScanMode.PERMISSION_REQUIRED &&
+                permissionController.bleNextAction(this) ==
+                DeviceAddPermissionController.NextAction.OPEN_APP_SETTINGS
+            ) {
+                getString(R.string.device_qr_preflight_open_app_settings)
+            } else {
+                getString(R.string.device_add_scan_button)
+            }
             binding.btnScan.isEnabled = true
             binding.btnScan.alpha = 1f
         }

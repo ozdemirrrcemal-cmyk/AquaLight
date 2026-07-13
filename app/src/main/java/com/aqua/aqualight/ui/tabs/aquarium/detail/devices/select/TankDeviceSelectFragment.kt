@@ -135,7 +135,13 @@ class TankDeviceSelectFragment : Fragment(R.layout.fragment_tank_device_select) 
         binding.rvDevices.isVisible = !state.isLoading && state.isEmpty.not()
         binding.tvEmptyState.isVisible = !state.isLoading && state.isEmpty
         binding.tvEmptyState.text = if (!state.isLoading && state.isEmpty) {
-            getString(R.string.tank_device_select_empty_subtitle)
+            when (state.emptyReason) {
+                TankDeviceSelectEmptyReason.NO_REGISTERED_DEVICES ->
+                    getString(R.string.tank_device_select_empty_subtitle)
+                TankDeviceSelectEmptyReason.ALL_REGISTERED_DEVICES_ASSIGNED ->
+                    getString(R.string.tank_device_select_all_assigned_subtitle)
+                TankDeviceSelectEmptyReason.NONE -> ""
+            }
         } else {
             ""
         }

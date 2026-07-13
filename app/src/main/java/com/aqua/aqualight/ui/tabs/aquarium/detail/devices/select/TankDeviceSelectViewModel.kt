@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentResult
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactSnapshotMapper
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -23,6 +25,7 @@ class TankDeviceSelectViewModel(
 
     private val assignmentRepository =
         TankDeviceAssignmentRepositoryProvider.get(application)
+    private val devicesRepository = DevicesRepositoryProvider.get(application)
 
     private val _uiState = MutableStateFlow(TankDeviceSelectUiState())
     val uiState: StateFlow<TankDeviceSelectUiState> = _uiState.asStateFlow()
@@ -42,8 +45,14 @@ class TankDeviceSelectViewModel(
 
         boundTankId = tankId
         observeJob?.cancel()
+        devicesRepository.start(viewModelScope)
         observeJob = viewModelScope.launch {
-            assignmentRepository.availableDevicesForTank(tankId)
+            combine(
+                assignmentRepository.availableDevicesForTank(tankId),
+                devicesRepository.devices
+            ) { availableDevices, registeredDevices ->
+                availableDevices to registeredDevices.isNotEmpty()
+            }
                 .catch {
                     _uiState.update { current ->
                         current.copy(
@@ -54,7 +63,7 @@ class TankDeviceSelectViewModel(
                     }
                     _events.send(TankDeviceSelectEvent.ShowLoadFailed)
                 }
-                .collect { snapshots ->
+                .collect { (snapshots, hasRegisteredDevices) ->
                     val items = snapshots.map { snapshot ->
                         TankDeviceSelectItem(
                             deviceUid = snapshot.deviceUid.value,
@@ -68,6 +77,12 @@ class TankDeviceSelectViewModel(
                         current.copy(
                             devices = items,
                             isEmpty = items.isEmpty(),
+                            emptyReason = when {
+                                items.isNotEmpty() -> TankDeviceSelectEmptyReason.NONE
+                                hasRegisteredDevices ->
+                                    TankDeviceSelectEmptyReason.ALL_REGISTERED_DEVICES_ASSIGNED
+                                else -> TankDeviceSelectEmptyReason.NO_REGISTERED_DEVICES
+                            },
                             isLoading = false
                         )
                     }
@@ -137,9 +152,17 @@ class TankDeviceSelectViewModel(
 data class TankDeviceSelectUiState(
     val devices: List<TankDeviceSelectItem> = emptyList(),
     val isEmpty: Boolean = true,
+    val emptyReason: TankDeviceSelectEmptyReason =
+        TankDeviceSelectEmptyReason.NO_REGISTERED_DEVICES,
     val isLoading: Boolean = true,
     val isAssigning: Boolean = false
 )
+
+enum class TankDeviceSelectEmptyReason {
+    NONE,
+    NO_REGISTERED_DEVICES,
+    ALL_REGISTERED_DEVICES_ASSIGNED
+}
 
 sealed interface TankDeviceSelectEvent {
     data object DeviceAssigned : TankDeviceSelectEvent

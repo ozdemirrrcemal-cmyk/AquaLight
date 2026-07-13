@@ -6,8 +6,8 @@ import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 /**
  * Converts low-level connectivity timestamps into one product-level device presence state.
  *
- * Runtime socket and token handshakes are implementation details. This resolver only answers
- * whether the device is currently reachable on the local network.
+ * Runtime socket reachability and authenticated reachability are deliberately distinct. A TCP/
+ * WebSocket connection alone is not permission to expose a commercial control surface.
  */
 class DeviceStatusAggregator(
     private val policy: DeviceHeartbeatPolicy = DeviceHeartbeatPolicy()
@@ -20,13 +20,24 @@ class DeviceStatusAggregator(
     ): DeviceOnlineState {
         if (!localNetworkAvailable) return DeviceOnlineState.LOCAL_NETWORK_OFFLINE
 
-        val lastRuntimeSeenAt = listOfNotNull(
-            state.lastAuthenticatedAtMillis,
-            state.lastWsConnectedAtMillis
-        ).maxOrNull()
+        if (state.onlineState == DeviceOnlineState.AUTH_REQUIRED) {
+            return DeviceOnlineState.AUTH_REQUIRED
+        }
 
-        if (lastRuntimeSeenAt != null && nowMillis - lastRuntimeSeenAt <= policy.wsFreshMillis) {
-            return DeviceOnlineState.ONLINE_LAN
+        val lastAuthenticatedAt = state.lastAuthenticatedAtMillis
+        if (
+            lastAuthenticatedAt != null &&
+            nowMillis - lastAuthenticatedAt <= policy.authFreshMillis
+        ) {
+            return DeviceOnlineState.AUTHENTICATED
+        }
+
+        val lastWsConnectedAt = state.lastWsConnectedAtMillis
+        if (
+            lastWsConnectedAt != null &&
+            nowMillis - lastWsConnectedAt <= policy.wsFreshMillis
+        ) {
+            return DeviceOnlineState.CONNECTING_WS
         }
 
         val lastUdpSeenAt = state.lastUdpSeenAtMillis

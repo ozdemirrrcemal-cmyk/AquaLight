@@ -192,16 +192,9 @@ class DevicesViewModel(
                 operationState
             ) { snapshots, tankNamesByDevice, now, selectedUids, operation ->
                 val cards = snapshots.map { snapshot ->
-                    val assignedTankText = tankNamesByDevice[snapshot.deviceUid]
-                        ?.let { tankName ->
-                            getApplication<Application>().getString(
-                                R.string.devices_assigned_tank_supporting_text,
-                                tankName
-                            )
-                        }
                     val card = DeviceCardMapper.map(
                         snapshot = snapshot,
-                        assignedTankText = assignedTankText,
+                        assignedTankName = tankNamesByDevice[snapshot.deviceUid],
                         nowMillis = now
                     )
                     card.copy(isSelected = card.deviceUid in selectedUids)

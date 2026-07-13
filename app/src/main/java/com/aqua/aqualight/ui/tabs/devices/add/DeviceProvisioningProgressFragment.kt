@@ -1,6 +1,9 @@
 package com.aqua.aqualight.ui.tabs.devices.add
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.view.View
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
@@ -35,6 +38,7 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
 
     private var autoStartRequested = false
     private var wifiFailureReturned = false
+    private var retryBleSetupOnResume = false
 
     private val blePermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -89,7 +93,21 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
 
     private fun setupActions() {
         binding.btnStartProvisioning.setOnClickListener {
-            startProvisioningWithPermissionCheck()
+            if (viewModel.uiState.value.requiresFreshDeviceSelection) {
+                viewModel.requestExit()
+            } else {
+                startProvisioningWithPermissionCheck()
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (retryBleSetupOnResume) {
+            retryBleSetupOnResume = false
+            if (permissionController.hasBlePermissions(requireContext())) {
+                viewModel.startProvisioning()
+            }
         }
     }
 
@@ -104,14 +122,33 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
     }
 
     private fun startProvisioningWithPermissionCheck() {
-        if (permissionController.hasBlePermissions(requireContext())) {
-            viewModel.startProvisioning()
-            return
+        when (permissionController.bleNextAction(this)) {
+            DeviceAddPermissionController.NextAction.GRANTED -> {
+                viewModel.startProvisioning()
+            }
+            DeviceAddPermissionController.NextAction.REQUEST_PERMISSION -> {
+                permissionController.markBlePermissionRequested(requireContext())
+                blePermissionLauncher.launch(permissionController.blePermissions())
+            }
+            DeviceAddPermissionController.NextAction.OPEN_APP_SETTINGS -> {
+                retryBleSetupOnResume = true
+                val packageUri = Uri.fromParts(
+                    "package",
+                    requireContext().packageName,
+                    null
+                )
+                runCatching {
+                    startActivity(
+                        Intent(
+                            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                            packageUri
+                        )
+                    )
+                }.onFailure {
+                    startActivity(Intent(Settings.ACTION_SETTINGS))
+                }
+            }
         }
-
-        blePermissionLauncher.launch(
-            permissionController.blePermissions()
-        )
     }
 
     private fun observeViewModel() {
@@ -134,7 +171,14 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
                         }
 
                         DeviceProvisioningProgressEvent.ExitProvisioning -> {
-                            findNavController().navigateUp()
+                            val navController = findNavController()
+                            val returnedToAdd = navController.popBackStack(
+                                R.id.deviceAddFragment,
+                                false
+                            )
+                            if (!returnedToAdd) {
+                                navController.navigate(R.id.deviceAddFragment)
+                            }
                         }
 
                         DeviceProvisioningProgressEvent.ShowCancellationFailed -> {
@@ -169,7 +213,16 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
         binding.tvStepThree.text = "${state.currentStepIcon()} ${state.stepThree}"
         binding.btnStartProvisioning.isVisible = state.canStart && !state.isCancelling
         binding.btnStartProvisioning.isEnabled = state.canStart && !state.isCancelling
-        binding.btnStartProvisioning.text = state.buttonText
+        binding.btnStartProvisioning.text = if (
+            state.canStart &&
+            !state.requiresFreshDeviceSelection &&
+            permissionController.bleNextAction(this) ==
+            DeviceAddPermissionController.NextAction.OPEN_APP_SETTINGS
+        ) {
+            getString(R.string.device_qr_preflight_open_app_settings)
+        } else {
+            state.buttonText
+        }
         binding.btnStartProvisioning.alpha = if (state.canStart) 1f else 0.45f
         binding.progressBar.isVisible = state.showProgress
 

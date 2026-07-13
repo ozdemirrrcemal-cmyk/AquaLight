@@ -1,10 +1,8 @@
 package com.aqua.aqualight.ui.navigation
 
+import android.content.Context
+import android.content.Intent
 import androidx.fragment.app.Fragment
-import androidx.navigation.NavController
-import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.navOptions
-import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.main.MainActivity
 
 object RootNavigator {
@@ -12,16 +10,7 @@ object RootNavigator {
     fun openAppGraph(
         fragment: Fragment
     ) {
-        rootNavController(fragment).navigate(
-            R.id.nav_app,
-            null,
-            navOptions {
-                popUpTo(R.id.authContainerFragment) {
-                    inclusive = true
-                }
-                launchSingleTop = true
-            }
-        )
+        restartForCurrentSession(fragment)
     }
 
     fun openAuthGraph(
@@ -33,25 +22,36 @@ object RootNavigator {
                 ?.clearSessionNavigationState()
         }
 
-        rootNavController(fragment).navigate(
-            R.id.authContainerFragment,
-            null,
-            navOptions {
-                popUpTo(R.id.nav_app) {
-                    inclusive = true
-                }
-                launchSingleTop = true
-            }
-        )
+        restartForCurrentSession(fragment)
     }
 
-    private fun rootNavController(
+    /**
+     * Owner-scoped repositories are captured by screen ViewModels. Reusing the root navigation
+     * back stack across sign-in/sign-out can resurrect a ViewModel owned by the previous user.
+     * A fresh task destroys all stale ViewModels before MainActivity resolves the current owner.
+     */
+    private fun restartForCurrentSession(
         fragment: Fragment
-    ): NavController {
-        val navHost = fragment.requireActivity()
-            .supportFragmentManager
-            .findFragmentById(R.id.nav_host) as NavHostFragment
+    ) {
+        val activity = fragment.requireActivity()
+        val intent = OwnerSessionRestartIntentFactory.create(activity)
 
-        return navHost.navController
+        activity.startActivity(intent)
+        activity.finish()
+        activity.overridePendingTransition(0, 0)
     }
+}
+
+internal object OwnerSessionRestartIntentFactory {
+
+    fun create(context: Context): Intent {
+        return Intent(context, MainActivity::class.java).apply {
+            addFlags(RESTART_FLAGS)
+        }
+    }
+
+    val RESTART_FLAGS: Int =
+        Intent.FLAG_ACTIVITY_NEW_TASK or
+            Intent.FLAG_ACTIVITY_CLEAR_TASK or
+            Intent.FLAG_ACTIVITY_CLEAR_TOP
 }

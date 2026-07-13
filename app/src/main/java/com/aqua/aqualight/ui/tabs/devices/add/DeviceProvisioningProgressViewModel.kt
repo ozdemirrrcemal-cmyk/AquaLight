@@ -98,7 +98,9 @@ class DeviceProvisioningProgressViewModel(
             title = string(R.string.device_provisioning_ready_title),
             message = string(R.string.device_provisioning_ready_message),
             deviceName = draft.deviceTitle.ifBlank { string(R.string.device_wifi_default_device_name) },
-            deviceSerial = draft.deviceSerial.ifBlank { draft.candidateId },
+            deviceSerial = draft.deviceSerial.ifBlank {
+                string(R.string.device_provisioning_unknown)
+            },
             bleAddress = draft.bleAddress.ifBlank {
                 draft.bleName.ifBlank { string(R.string.device_provisioning_qr_device_will_be_located) }
             },
@@ -168,6 +170,7 @@ class DeviceProvisioningProgressViewModel(
             rollbackResult
                 .onSuccess {
                     clearPendingRegistrationState()
+                    boundSessionId?.let(AqlProvisioningDraftStore::remove)
                     _events.send(DeviceProvisioningProgressEvent.ExitProvisioning)
                 }
                 .onFailure {
@@ -178,6 +181,11 @@ class DeviceProvisioningProgressViewModel(
     }
 
     fun startProvisioning() {
+        if (_uiState.value.requiresFreshDeviceSelection) {
+            requestExit()
+            return
+        }
+
         if (
             exitJob?.isActive == true ||
             rollbackJob?.isActive == true ||
@@ -257,7 +265,7 @@ class DeviceProvisioningProgressViewModel(
                     if (existingAddress.isBlank()) {
                         _uiState.value = _uiState.value.copy(
                             title = string(R.string.device_provisioning_qr_not_found_title),
-                            message = error.message ?: string(R.string.device_provisioning_qr_not_found_message),
+                            message = string(R.string.device_provisioning_qr_not_found_message),
                             stepThree = string(R.string.device_provisioning_device_not_found_title),
                             canStart = true,
                             buttonText = string(R.string.device_provisioning_try_again),
@@ -379,11 +387,12 @@ class DeviceProvisioningProgressViewModel(
                                 rollbackPendingProvisioningRegistration()
                                 _uiState.value = _uiState.value.copy(
                                     title = string(R.string.device_provisioning_save_failed_title),
-                                    message = error.message ?: string(R.string.device_provisioning_save_failed_message),
+                                    message = error.message.toFriendlySaveError(),
                                     stepThree = string(R.string.device_provisioning_save_failed_step),
                                     canStart = true,
-                                    buttonText = string(R.string.device_provisioning_try_again),
+                                    buttonText = string(R.string.device_provisioning_start_again),
                                     showProgress = false,
+                                    requiresFreshDeviceSelection = true,
                                     wifiCredentialFailure = null
                                 )
                             }
@@ -486,8 +495,9 @@ class DeviceProvisioningProgressViewModel(
                     message = event.message.toFriendlyError(),
                     stepThree = string(R.string.device_provisioning_setup_stopped),
                     canStart = true,
-                    buttonText = string(R.string.device_provisioning_try_again),
+                    buttonText = string(R.string.device_provisioning_start_again),
                     showProgress = false,
+                    requiresFreshDeviceSelection = true,
                     wifiCredentialFailure = null
                 )
             }
@@ -501,8 +511,9 @@ class DeviceProvisioningProgressViewModel(
                         message = string(R.string.device_provisioning_connection_closed_message),
                         stepThree = string(R.string.device_provisioning_connection_closed_step),
                         canStart = true,
-                        buttonText = string(R.string.device_provisioning_try_again),
+                        buttonText = string(R.string.device_provisioning_start_again),
                         showProgress = false,
+                        requiresFreshDeviceSelection = true,
                         wifiCredentialFailure = null
                     )
                 }
@@ -621,11 +632,12 @@ class DeviceProvisioningProgressViewModel(
 
                 _uiState.value = _uiState.value.copy(
                     title = string(R.string.device_provisioning_save_failed_title),
-                    message = error.message ?: string(R.string.device_provisioning_save_failed_message),
+                    message = error.message.toFriendlySaveError(),
                     stepThree = string(R.string.device_provisioning_save_failed_step),
                     canStart = true,
-                    buttonText = string(R.string.device_provisioning_try_again),
+                    buttonText = string(R.string.device_provisioning_start_again),
                     showProgress = false,
+                    requiresFreshDeviceSelection = true,
                     wifiCredentialFailure = null
                 )
             }
@@ -758,12 +770,24 @@ class DeviceProvisioningProgressViewModel(
     private fun String.toFriendlyError(): String {
         val normalized = trim()
         return when {
+            ProvisioningFailurePolicy.isSecureSessionFailure(normalized) ->
+                string(R.string.device_provisioning_error_secure_session_ended)
             normalized.contains("StartSession is required", ignoreCase = true) ->
                 string(R.string.device_provisioning_error_start_session)
             normalized.contains("WiFi", ignoreCase = true) || normalized.contains("wifi", ignoreCase = true) ->
                 string(R.string.device_provisioning_error_wifi_failed)
-            normalized.isNotBlank() -> normalized
             else -> string(R.string.device_provisioning_error_unexpected)
+        }
+    }
+
+    private fun String?.toFriendlySaveError(): String {
+        val normalized = orEmpty().trim()
+        return when {
+            ProvisioningFailurePolicy.isSecureSessionFailure(normalized) ->
+                string(R.string.device_provisioning_error_secure_session_ended)
+            ProvisioningFailurePolicy.isRuntimeConfirmationFailure(normalized) ->
+                string(R.string.device_provisioning_error_runtime_confirmation)
+            else -> string(R.string.device_provisioning_save_failed_message)
         }
     }
 
@@ -879,5 +903,25 @@ class DeviceProvisioningProgressViewModel(
             AqlProvisioningStatus.TIMEOUT,
             AqlProvisioningStatus.ERROR
         )
+    }
+}
+
+internal object ProvisioningFailurePolicy {
+
+    fun isSecureSessionFailure(message: String): Boolean {
+        return message.contains("status 147", ignoreCase = true) ||
+            message.contains("ECDH", ignoreCase = true) ||
+            message.contains("BAD_DECRYPT", ignoreCase = true) ||
+            message.contains("decrypt", ignoreCase = true) ||
+            message.contains(
+                "secure BLE provisioning session is not active",
+                ignoreCase = true
+            ) ||
+            message.contains("GATT connection is not active", ignoreCase = true)
+    }
+
+    fun isRuntimeConfirmationFailure(message: String): Boolean {
+        return message.contains("identity and capabilities", ignoreCase = true) ||
+            message.contains("supported product family", ignoreCase = true)
     }
 }

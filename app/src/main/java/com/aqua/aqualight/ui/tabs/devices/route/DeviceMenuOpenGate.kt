@@ -5,14 +5,13 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withTimeoutOrNull
 
 class DeviceMenuOpenGate(
@@ -83,7 +82,8 @@ class DeviceMenuOpenGate(
         if (fallbackSnapshot.endpoint.hasWebSocketEndpoint) {
             return verifyRuntimeLiveSnapshot(
                 deviceUid = deviceUid,
-                fallbackSnapshot = fallbackSnapshot
+                fallbackSnapshot = fallbackSnapshot,
+                gateStartedAtMillis = gateStartedAtMillis
             )
         }
 
@@ -101,38 +101,40 @@ class DeviceMenuOpenGate(
 
     private suspend fun verifyRuntimeLiveSnapshot(
         deviceUid: DeviceUid,
-        fallbackSnapshot: DeviceSnapshot
+        fallbackSnapshot: DeviceSnapshot,
+        gateStartedAtMillis: Long
     ): DeviceSnapshot? = coroutineScope {
-        val liveSignal = async {
-            waitForLiveRuntimeSnapshot(
-                deviceUid = deviceUid,
-                fallbackSnapshot = fallbackSnapshot
-            )
+        val connectionStates = devicesRepository.runtimeConnectionStates()
+            ?: return@coroutineScope null
+        val authenticationSignal = async(start = CoroutineStart.UNDISPATCHED) {
+            withTimeoutOrNull(STRICT_LIVE_CHECK_TIMEOUT_MS) {
+                connectionStates
+                    .filter { state ->
+                        DeviceMenuAuthenticationPolicy.accepts(
+                            state = state,
+                            requestedDeviceUid = deviceUid,
+                            gateStartedAtMillis = gateStartedAtMillis
+                        )
+                    }
+                    .first()
+            }
         }
 
         val connectStarted = fallbackSnapshot.connectRuntimeIfPossible(deviceUid)
         if (!connectStarted) {
-            liveSignal.cancel()
+            authenticationSignal.cancel()
             return@coroutineScope null
         }
 
         sendRuntimeProbe(deviceUid)
-        liveSignal.await()
-    }
 
-    private suspend fun waitForLiveRuntimeSnapshot(
-        deviceUid: DeviceUid,
-        fallbackSnapshot: DeviceSnapshot
-    ): DeviceSnapshot? {
-        val runtimeLiveFlow = devicesRepository
-            .runtimeEvents()
-            ?.filter { event -> event.isLiveRuntimeSignalFor(deviceUid) }
-            ?.map { devicesRepository.currentDevice(deviceUid) ?: fallbackSnapshot }
-            ?: emptyFlow()
+        val authenticated = authenticationSignal.await()
+            ?: return@coroutineScope null
 
-        return withTimeoutOrNull(STRICT_LIVE_CHECK_TIMEOUT_MS) {
-            runtimeLiveFlow.first()
-        }
+        return@coroutineScope devicesRepository.currentDevice(deviceUid)
+            ?: fallbackSnapshot.takeIf {
+                authenticated is AqlWsConnectionState.Authenticated
+            }
     }
 
     private suspend fun waitForFreshLanSnapshot(
@@ -175,24 +177,22 @@ class DeviceMenuOpenGate(
         return lastUdpSeenAtMillis + LAN_PROOF_CLOCK_GRACE_MS >= gateStartedAtMillis
     }
 
-    private fun AqlWsEvent.isLiveRuntimeSignalFor(
-        deviceUid: DeviceUid
-    ): Boolean {
-        if (this.deviceUid != deviceUid) {
-            return false
-        }
-
-        return when (this) {
-            is AqlWsEvent.Opened,
-            is AqlWsEvent.Message -> true
-            is AqlWsEvent.Closed,
-            is AqlWsEvent.Failure -> false
-        }
-    }
-
     private companion object {
-        const val STRICT_LIVE_CHECK_TIMEOUT_MS = 2_500L
+        const val STRICT_LIVE_CHECK_TIMEOUT_MS = 5_000L
         const val LAN_PROOF_CLOCK_GRACE_MS = 1_000L
+    }
+}
+
+internal object DeviceMenuAuthenticationPolicy {
+
+    fun accepts(
+        state: AqlWsConnectionState,
+        requestedDeviceUid: DeviceUid,
+        gateStartedAtMillis: Long
+    ): Boolean {
+        val authenticated = state as? AqlWsConnectionState.Authenticated ?: return false
+        return authenticated.deviceUid == requestedDeviceUid &&
+            authenticated.authenticatedAtMillis >= gateStartedAtMillis
     }
 }
 

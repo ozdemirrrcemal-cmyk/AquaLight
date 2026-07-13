@@ -263,6 +263,8 @@ data class DeviceQrScanUiState(
 
 enum class DeviceQrScanPrimaryAction {
     SCAN_AGAIN,
+    REQUEST_CAMERA_PERMISSION,
+    OPEN_CAMERA_SETTINGS,
     REQUEST_BLE_PERMISSION,
     OPEN_BLUETOOTH_SETTINGS,
     OPEN_APP_SETTINGS
