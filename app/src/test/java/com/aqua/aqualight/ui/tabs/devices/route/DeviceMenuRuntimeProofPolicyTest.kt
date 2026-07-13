@@ -113,17 +113,14 @@ class DeviceMenuRuntimeProofPolicyTest {
         module: String,
         action: String
     ): AqlWsEvent {
+        // Android's JVM stub throws from JSONObject.put(). The policy only consumes the typed
+        // response fields, so an empty object keeps this a plain unit test without Robolectric.
         val json = JSONObject()
-            .put("id", id)
-            .put("type", AqlWsContract.TYPE_RESPONSE)
-            .put("ok", ok)
-            .put("module", module)
-            .put("action", action)
 
         return AqlWsEvent.Message(
             deviceUid = deviceUid,
             parsed = AqlWsIncomingMessage.Response(
-                raw = json.toString(),
+                raw = "",
                 id = id,
                 type = AqlWsContract.TYPE_RESPONSE,
                 json = json,
