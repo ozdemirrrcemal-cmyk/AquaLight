@@ -56,13 +56,18 @@ class DevicePresenceRuntimeMonitor(
     }
 
     fun reevaluateNow(localNetworkAvailable: Boolean = this.localNetworkAvailable.value) {
+        val transitionedToUnavailable =
+            this.localNetworkAvailable.value && !localNetworkAvailable
         this.localNetworkAvailable.value = localNetworkAvailable
+        if (transitionedToUnavailable) {
+            lastRuntimeProbeAtMillis.clear()
+            runtimeRepository?.disconnectForLocalNetworkLoss()
+        }
         discoveryRepository.reevaluatePresence(localNetworkAvailable = localNetworkAvailable)
         reevaluateRegistry(localNetworkAvailable = localNetworkAvailable)
     }
 
     fun refreshVisibleDevices(localNetworkAvailable: Boolean = currentLocalNetworkAvailable()) {
-        this.localNetworkAvailable.value = localNetworkAvailable
         reevaluateNow(localNetworkAvailable = localNetworkAvailable)
         if (localNetworkAvailable) {
             probeRuntimeForVisibleDevices()
@@ -77,10 +82,6 @@ class DevicePresenceRuntimeMonitor(
             observer.observeLocalNetworkAvailable()
                 .distinctUntilChanged()
                 .collect { available ->
-                    localNetworkAvailable.value = available
-                    if (!available) {
-                        lastRuntimeProbeAtMillis.clear()
-                    }
                     reevaluateNow(localNetworkAvailable = available)
                     if (available) {
                         runCatching { discoveryRepository.refreshNow() }

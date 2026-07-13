@@ -97,6 +97,15 @@ class DeviceRuntimeRepository(
     fun currentConnectionState(deviceUid: DeviceUid): AqlWsConnectionState? =
         sessions[deviceUid]?.wsClient?.connectionState?.value
 
+    fun disconnectForLocalNetworkLoss() {
+        lastActiveDeviceUid = null
+        sessions.values.forEach { session ->
+            synchronized(session) {
+                session.wsClient.close(reason = LOCAL_NETWORK_UNAVAILABLE_REASON)
+            }
+        }
+    }
+
     fun commandClient(): AqlWsCommandClient? {
         val activeUid = lastActiveDeviceUid ?: return null
         return sessions[activeUid]?.commandClient
@@ -232,6 +241,7 @@ class DeviceRuntimeRepository(
 
     companion object {
         private const val EVENT_BUFFER_CAPACITY = 256
+        private const val LOCAL_NETWORK_UNAVAILABLE_REASON = "local network unavailable"
 
         fun withCredentialStore(
             context: Context,
