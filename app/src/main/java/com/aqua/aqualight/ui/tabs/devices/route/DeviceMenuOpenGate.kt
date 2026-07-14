@@ -265,6 +265,13 @@ internal object DeviceMenuAuthenticationPolicy {
 
 internal object DeviceMenuRuntimeProofPolicy {
 
+    /**
+     * Firmware command responses are correlated by the request id and currently do
+     * not echo module/action. The Android-generated id is unique for this exact
+     * network-status request, so same-device + exact-id + success is the primary
+     * proof. When future firmware echoes module/action, contradictory values are
+     * rejected without making those optional response fields mandatory.
+     */
     fun accepts(
         event: AqlWsEvent,
         requestedDeviceUid: DeviceUid,
@@ -278,10 +285,16 @@ internal object DeviceMenuRuntimeProofPolicy {
             ?.parsed as? AqlWsIncomingMessage.Response
             ?: return false
 
-        return response.id == expectedRequestId &&
-            response.ok &&
-            response.module == AqlWsContract.MODULE_NETWORK &&
+        if (response.id != expectedRequestId || !response.ok) {
+            return false
+        }
+
+        val moduleMatches = response.module.isBlank() ||
+            response.module == AqlWsContract.MODULE_NETWORK
+        val actionMatches = response.action.isBlank() ||
             response.action == AqlWsContract.ACTION_NETWORK_STATUS_GET
+
+        return moduleMatches && actionMatches
     }
 }
 
