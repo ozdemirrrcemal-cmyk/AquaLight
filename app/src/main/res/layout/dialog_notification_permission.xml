@@ -18,8 +18,7 @@
         android:background="@drawable/bg_bottomsheet_icon_surface"
         android:padding="14dp"
         android:src="@drawable/ic_notification"
-        android:contentDescription="@string/notifications_permission_icon_description"
-        app:tint="@color/aqua_bottom_sheet_text_primary" />
+        android:contentDescription="@string/notifications_permission_icon_description" />
 
     <TextView
         android:id="@+id/tvDialogTitle"
