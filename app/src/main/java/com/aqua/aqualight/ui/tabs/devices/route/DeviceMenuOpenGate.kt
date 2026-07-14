@@ -13,6 +13,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -119,22 +120,58 @@ class DeviceMenuOpenGate(
         }
 
         if (!requestFreshRuntimeProof(deviceUid)) {
-            return@coroutineScope null
+            delay(RUNTIME_PROBE_RETRY_DELAY_MS)
+            if (!requestFreshRuntimeProof(deviceUid)) {
+                return@coroutineScope null
+            }
         }
 
         return@coroutineScope devicesRepository.currentDevice(deviceUid)
             ?: fallbackSnapshot
     }
 
+    /**
+     * A network transition can leave the first TCP/WebSocket attempt racing the
+     * ESP32 stale-client heartbeat. The gate performs one bounded retry after the
+     * initial attempt instead of permanently reporting Offline or looping without
+     * limit. Both attempts still require a fresh authenticated state for this UID.
+     */
     private suspend fun awaitAuthenticatedRuntime(
         deviceUid: DeviceUid,
         fallbackSnapshot: DeviceSnapshot,
         gateStartedAtMillis: Long
+    ): Boolean {
+        if (
+            awaitAuthenticatedRuntimeAttempt(
+                deviceUid = deviceUid,
+                fallbackSnapshot = fallbackSnapshot,
+                gateStartedAtMillis = gateStartedAtMillis,
+                timeoutMillis = INITIAL_AUTHENTICATION_TIMEOUT_MS
+            )
+        ) {
+            return true
+        }
+
+        delay(RECONNECT_RETRY_DELAY_MS)
+
+        return awaitAuthenticatedRuntimeAttempt(
+            deviceUid = deviceUid,
+            fallbackSnapshot = devicesRepository.currentDevice(deviceUid) ?: fallbackSnapshot,
+            gateStartedAtMillis = gateStartedAtMillis,
+            timeoutMillis = RETRY_AUTHENTICATION_TIMEOUT_MS
+        )
+    }
+
+    private suspend fun awaitAuthenticatedRuntimeAttempt(
+        deviceUid: DeviceUid,
+        fallbackSnapshot: DeviceSnapshot,
+        gateStartedAtMillis: Long,
+        timeoutMillis: Long
     ): Boolean = coroutineScope {
         val connectionStates = devicesRepository.runtimeConnectionStates()
             ?: return@coroutineScope false
         val authenticationSignal = async(start = CoroutineStart.UNDISPATCHED) {
-            withTimeoutOrNull(AUTHENTICATION_TIMEOUT_MS) {
+            withTimeoutOrNull(timeoutMillis) {
                 connectionStates
                     .filter { state ->
                         DeviceMenuAuthenticationPolicy.accepts(
@@ -235,8 +272,11 @@ class DeviceMenuOpenGate(
     }
 
     private companion object {
-        const val AUTHENTICATION_TIMEOUT_MS = 12_000L
+        const val INITIAL_AUTHENTICATION_TIMEOUT_MS = 6_000L
+        const val RECONNECT_RETRY_DELAY_MS = 4_000L
+        const val RETRY_AUTHENTICATION_TIMEOUT_MS = 12_000L
         const val RUNTIME_PROBE_TIMEOUT_MS = 3_000L
+        const val RUNTIME_PROBE_RETRY_DELAY_MS = 250L
         const val STRICT_LIVE_CHECK_TIMEOUT_MS = 12_000L
         const val LAN_PROOF_CLOCK_GRACE_MS = 1_000L
     }
