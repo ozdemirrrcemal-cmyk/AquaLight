@@ -157,7 +157,10 @@ class OwnerSessionCoordinator private constructor(
                     .create(appContext)
                     .repairOrphanedTankTasks(normalizedOwnerUid)
 
-                SessionBoundServiceManager.start(appContext)
+                SessionBoundServiceManager.start(
+                    context = appContext,
+                    ownerUid = normalizedOwnerUid
+                )
 
                 if (!stateMachine.commit(transition)) {
                     clearTransitionProviders(transition)
