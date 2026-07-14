@@ -149,6 +149,7 @@ class DeviceRuntimeRepository(
             sessions.values.toList()
         }
         activeSessions.forEach { session ->
+            authManager?.clear(session.deviceUid)
             synchronized(session) {
                 session.wsClient.disconnect(reason = LOCAL_NETWORK_UNAVAILABLE_REASON)
             }
@@ -319,7 +320,8 @@ class DeviceRuntimeRepository(
                 }
             }
 
-            else -> Unit
+            is AqlWsEvent.Closed,
+            is AqlWsEvent.Failure -> authManager?.clear(event.deviceUid)
         }
     }
 
