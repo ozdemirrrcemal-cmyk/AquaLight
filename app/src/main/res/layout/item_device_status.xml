@@ -20,7 +20,6 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="124dp"
         android:paddingStart="16dp"
         android:paddingTop="15dp"
         android:paddingEnd="16dp"
@@ -69,8 +68,9 @@
             android:id="@+id/flPresenceContainer"
             android:layout_width="44dp"
             android:layout_height="44dp"
+            app:layout_constraintBottom_toBottomOf="@id/tvDeviceName"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/deviceIconContainer">
+            app:layout_constraintTop_toTopOf="@id/tvDeviceName">
 
             <ImageView
                 android:id="@+id/ivPresenceIcon"

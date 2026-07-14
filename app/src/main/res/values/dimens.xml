@@ -31,4 +31,8 @@
 
     <!-- Device health -->
 
+    <!-- QR scanner -->
+    <dimen name="device_qr_torch_margin_top">20dp</dimen>
+    <dimen name="device_qr_torch_margin_bottom">12dp</dimen>
+
 </resources>

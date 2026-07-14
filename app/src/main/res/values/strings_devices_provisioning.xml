@@ -100,6 +100,8 @@
     <string name="device_qr_camera_unavailable_title">Camera unavailable</string>
     <string name="device_qr_camera_unavailable_message">The camera could not be started right now.</string>
     <string name="device_qr_read_failed">QR code could not be read. Try again.</string>
+    <string name="device_qr_flashlight_turn_on">Turn on flashlight</string>
+    <string name="device_qr_flashlight_turn_off">Turn off flashlight</string>
     <string name="device_qr_invalid_title">Invalid QR code</string>
     <string name="device_qr_invalid_message">This is not an AquaLight setup code.</string>
     <string name="device_qr_verified_title">QR code verified</string>

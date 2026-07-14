@@ -11,4 +11,9 @@
     <dimen name="aqua_button_icon_padding">10dp</dimen>
     <dimen name="aqua_button_stroke_width">1dp</dimen>
     <dimen name="aqua_button_empty_action_min_width">224dp</dimen>
+
+    <!-- Shared icon-only toggle button tokens. -->
+    <dimen name="aqua_icon_toggle_button_size">48dp</dimen>
+    <dimen name="aqua_icon_toggle_button_radius">24dp</dimen>
+    <dimen name="aqua_icon_toggle_button_icon_size">24dp</dimen>
 </resources>
