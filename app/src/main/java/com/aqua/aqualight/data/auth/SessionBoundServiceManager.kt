@@ -18,8 +18,8 @@ object SessionBoundServiceManager {
 
     enum class StopStep {
         PROVISIONING_TRANSACTIONS,
-        ASSIGNMENT_REPOSITORY,
         DEVICES_REPOSITORY,
+        ASSIGNMENT_REPOSITORY,
         SMART_CARE,
         CARE_REMINDERS,
         NOTIFICATIONS
@@ -104,14 +104,16 @@ object SessionBoundServiceManager {
             }
         }
 
-        runStep(StopStep.ASSIGNMENT_REPOSITORY) {
-            TankDeviceAssignmentRepositoryProvider.clear(
+        // Stop runtime collectors, sockets and owner token access before clearing
+        // other owner-bound repositories or scheduling state.
+        runStep(StopStep.DEVICES_REPOSITORY) {
+            DevicesRepositoryProvider.clear(
                 expectedOwnerUid = expectedOwnerUid
             )
         }
 
-        runStep(StopStep.DEVICES_REPOSITORY) {
-            DevicesRepositoryProvider.clear(
+        runStep(StopStep.ASSIGNMENT_REPOSITORY) {
+            TankDeviceAssignmentRepositoryProvider.clear(
                 expectedOwnerUid = expectedOwnerUid
             )
         }
