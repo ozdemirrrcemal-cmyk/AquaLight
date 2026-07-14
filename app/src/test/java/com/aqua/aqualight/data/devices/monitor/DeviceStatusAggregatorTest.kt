@@ -51,4 +51,21 @@ class DeviceStatusAggregatorTest {
             )
         )
     }
+
+    @Test
+    fun `local network loss overrides fresh authenticated runtime proof`() {
+        assertEquals(
+            DeviceOnlineState.LOCAL_NETWORK_OFFLINE,
+            aggregator.resolve(
+                state = DeviceConnectionState(
+                    onlineState = DeviceOnlineState.AUTHENTICATED,
+                    lastAuthenticatedAtMillis = 1_000L,
+                    lastWsConnectedAtMillis = 1_000L,
+                    lastUdpSeenAtMillis = 1_000L
+                ),
+                nowMillis = 1_100L,
+                localNetworkAvailable = false
+            )
+        )
+    }
 }

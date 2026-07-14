@@ -92,10 +92,10 @@ class DevicesRepository(
                             }
                         }
                     }
-                    val runtimeMetadataJob = runtimeRepository?.let { runtime ->
+                    val runtimeEventsJob = runtimeRepository?.let { runtime ->
                         launch {
                             runtime.events.collect { event ->
-                                applyRuntimeMetadataEvent(event)
+                                applyRuntimeEvent(event)
                             }
                         }
                     }
@@ -108,7 +108,7 @@ class DevicesRepository(
                         _ready.value = false
                         presenceMonitorJob.cancel()
                         runtimeStateJob?.cancel()
-                        runtimeMetadataJob?.cancel()
+                        runtimeEventsJob?.cancel()
                         collectorJob.cancel()
                         scannerJob.cancel()
                     }
@@ -339,10 +339,17 @@ class DevicesRepository(
         }
     }
 
-    private suspend fun applyRuntimeMetadataEvent(event: AqlWsEvent) {
-        val message = (event as? AqlWsEvent.Message)
-            ?.parsed as? AqlWsIncomingMessage.Response
-            ?: return
+    private suspend fun applyRuntimeEvent(event: AqlWsEvent) {
+        when (event) {
+            is AqlWsEvent.Message -> applyRuntimeMetadataMessage(event)
+            is AqlWsEvent.Closed -> applyRuntimeClosed(event)
+            is AqlWsEvent.Opened,
+            is AqlWsEvent.Failure -> Unit
+        }
+    }
+
+    private suspend fun applyRuntimeMetadataMessage(event: AqlWsEvent.Message) {
+        val message = event.parsed as? AqlWsIncomingMessage.Response ?: return
         val currentSnapshot = registryStore.currentDevice(event.deviceUid) ?: return
         val reduced = runCatching {
             runtimeMetadataReducer.reduce(
@@ -352,6 +359,15 @@ class DevicesRepository(
         }.getOrNull() ?: return
         val registered = registryStore.upsert(reduced)
         knownStore?.saveSnapshot(registered)
+    }
+
+    private fun applyRuntimeClosed(event: AqlWsEvent.Closed) {
+        val currentState = runtimeRepository?.currentConnectionState(event.deviceUid)
+        if (!RuntimeClosedEventPolicy.shouldClearRuntimeProof(currentState)) return
+
+        // A closed active socket invalidates the longer-lived authenticated/WebSocket proof.
+        // Fresh UDP presence can still keep the device visible and trigger a safe reconnect.
+        applyRuntimeUnavailable(deviceUid = event.deviceUid)
     }
 
     private fun applyRuntimeConnectionState(state: AqlWsConnectionState) {
@@ -420,7 +436,8 @@ class DevicesRepository(
             )
             val resolved = statusAggregator.resolve(
                 state = clearedRuntimeState,
-                nowMillis = nowMillis
+                nowMillis = nowMillis,
+                localNetworkAvailable = presenceRuntimeMonitor.isLocalNetworkAvailable()
             )
             val visibleState = when {
                 resolved == DeviceOnlineState.UNKNOWN && !message.isNullOrBlank() -> DeviceOnlineState.OFFLINE
