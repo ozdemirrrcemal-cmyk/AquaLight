@@ -4,6 +4,7 @@ import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DeviceDiscoveryRepository
 import com.aqua.aqualight.data.devices.repository.DeviceRuntimeRepository
+import com.aqua.aqualight.data.devices.repository.reconnectAfterNetworkRestore
 import com.aqua.aqualight.data.devices.store.DeviceRegistryStore
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -103,7 +104,7 @@ class DevicePresenceRuntimeMonitor(
      * Android can report Wi-Fi availability before the local route, DHCP lease and multicast path
      * are completely usable. Starting the only WebSocket attempt immediately at that boundary can
      * leave the transport parked in Connecting until a user taps the card. Recovery is therefore
-     * automatic, delayed until the LAN settles, and retried once with a clean runtime reset.
+     * automatic, delayed until the LAN settles, and retried once with a clean device-scoped runtime.
      */
     private suspend fun recoverAfterLocalNetworkRestored() {
         if (!localNetworkAvailable.value) return
@@ -123,17 +124,14 @@ class DevicePresenceRuntimeMonitor(
             return
         }
 
-        // A global Wi-Fi loss already disconnected every device session. If the first recovery
-        // attempt became stuck before authentication, reset the reusable transports once and retry
-        // all still-unavailable devices without waiting for a card tap.
-        runtimeRepository?.disconnectForLocalNetworkLoss()
-        lastRuntimeProbeAtMillis.clear()
+        // Retry only sessions that are still unavailable. A device that has already authenticated
+        // must not be interrupted because another device recovered more slowly.
         refreshDiscoverySafely()
         delay(NETWORK_RECOVERY_SETTLE_MS)
         if (!localNetworkAvailable.value) return
 
         reevaluateNow(localNetworkAvailable = true)
-        probeRuntimeForVisibleDevices(force = true)
+        retryRuntimeForVisibleDevices()
     }
 
     private fun CoroutineScope.launchPresenceLoop(): Job = launch {
@@ -173,6 +171,21 @@ class DevicePresenceRuntimeMonitor(
             snapshot.endpoint.hasWebSocketEndpoint &&
                 DeviceNetworkRecoveryPolicy.shouldRetry(snapshot.connectionState.onlineState)
         }
+    }
+
+    private fun retryRuntimeForVisibleDevices() {
+        val runtime = runtimeRepository ?: return
+        val nowMillis = clockMillis()
+        registryStore.currentDevices()
+            .asSequence()
+            .filter { snapshot -> snapshot.endpoint.hasWebSocketEndpoint }
+            .filter { snapshot ->
+                DeviceNetworkRecoveryPolicy.shouldRetry(snapshot.connectionState.onlineState)
+            }
+            .forEach { snapshot ->
+                lastRuntimeProbeAtMillis[snapshot.deviceUid] = nowMillis
+                runtime.reconnectAfterNetworkRestore(snapshot)
+            }
     }
 
     private fun reevaluateRegistry(localNetworkAvailable: Boolean) {
