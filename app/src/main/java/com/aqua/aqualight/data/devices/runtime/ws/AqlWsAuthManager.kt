@@ -2,17 +2,26 @@ package com.aqua.aqualight.data.devices.runtime.ws
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 
 class AqlWsAuthManager(
     private val tokenProvider: AqlWsTokenProvider
 ) : AutoCloseable {
+    private val closed = AtomicBoolean(false)
     private val pendingAuthOwners = ConcurrentHashMap<String, DeviceUid>()
 
     suspend fun authenticateIfTokenExists(
         deviceUid: DeviceUid,
         commandClient: AqlWsCommandClient
     ): AqlWsAuthAttemptResult {
+        if (closed.get()) {
+            return AqlWsAuthAttemptResult.SendFailed
+        }
+
         val token = tokenProvider.getToken(deviceUid)?.trim().orEmpty()
+        if (closed.get()) {
+            return AqlWsAuthAttemptResult.SendFailed
+        }
         if (token.isBlank()) {
             return AqlWsAuthAttemptResult.NoToken
         }
@@ -20,7 +29,16 @@ class AqlWsAuthManager(
         val messageId = commandClient.authenticate(token)
             ?: return AqlWsAuthAttemptResult.SendFailed
 
+        if (closed.get()) {
+            return AqlWsAuthAttemptResult.SendFailed
+        }
+
         pendingAuthOwners[messageId] = deviceUid
+        if (closed.get()) {
+            pendingAuthOwners.remove(messageId, deviceUid)
+            return AqlWsAuthAttemptResult.SendFailed
+        }
+
         return AqlWsAuthAttemptResult.AuthMessageSent(messageId = messageId)
     }
 
@@ -29,12 +47,15 @@ class AqlWsAuthManager(
         message: AqlWsIncomingMessage?,
         wsClient: AqlWsTransport
     ): AqlWsAuthStateChange? {
-        if (message == null) {
+        if (closed.get() || message == null) {
             return null
         }
 
         val messageId = message.id.trim()
         if (messageId.isBlank() || !pendingAuthOwners.remove(messageId, deviceUid)) {
+            return null
+        }
+        if (closed.get()) {
             return null
         }
 
@@ -84,16 +105,21 @@ class AqlWsAuthManager(
         deviceUid: DeviceUid,
         token: String
     ) {
+        check(!closed.get()) { "WebSocket auth manager is closed." }
         if (token.isNotBlank()) {
             tokenProvider.saveToken(deviceUid, token.trim())
         }
+        check(!closed.get()) { "WebSocket auth manager closed during token save." }
     }
 
     suspend fun clearToken(deviceUid: DeviceUid) {
+        check(!closed.get()) { "WebSocket auth manager is closed." }
         tokenProvider.clearToken(deviceUid)
+        check(!closed.get()) { "WebSocket auth manager closed during token clear." }
     }
 
     override fun close() {
+        closed.set(true)
         pendingAuthOwners.clear()
     }
 }
