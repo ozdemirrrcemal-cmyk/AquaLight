@@ -29,7 +29,8 @@ class AqlWsClient(
     private val okHttpClient: OkHttpClient = defaultOkHttpClient(),
     private val messageParser: AqlWsMessageParser = AqlWsMessageParser(),
     private val clockMillis: () -> Long = { System.currentTimeMillis() },
-    private val tokenProvider: AqlWsTokenProvider? = defaultTokenProvider
+    private val tokenProvider: AqlWsTokenProvider? = defaultTokenProvider,
+    private val webSocketFactory: WebSocket.Factory = okHttpClient
 ) : AqlWsTransport {
     private data class DetachedConnection(
         val socket: WebSocket?,
@@ -107,7 +108,7 @@ class AqlWsClient(
                 )
             }
 
-            val socket = okHttpClient.newWebSocket(request, listener)
+            val socket = webSocketFactory.newWebSocket(request, listener)
             val rejectSocket = synchronized(lifecycleLock) {
                 if (
                     closed ||
@@ -130,30 +131,42 @@ class AqlWsClient(
     }
 
     override fun send(message: AqlWsOutgoingMessage): Boolean {
-        if (!canSend(message)) {
-            return false
-        }
-
-        val sent = activeSocket?.send(message.toJsonString()) == true
-        if (sent) {
-            message.lifecycleInvalidatingCommandId()?.let { commandId ->
-                pendingTokenInvalidationCommandIds.add(commandId)
+        return synchronized(lifecycleLock) {
+            if (closed || !canSendLocked(message)) {
+                return@synchronized false
             }
+
+            val sent = activeSocket?.send(message.toJsonString()) == true
+            if (sent) {
+                message.lifecycleInvalidatingCommandId()?.let { commandId ->
+                    pendingTokenInvalidationCommandIds.add(commandId)
+                }
+            }
+            sent
         }
-        return sent
     }
 
     override fun sendRaw(raw: String): Boolean {
-        if (!canSendRaw(raw)) {
-            return false
-        }
+        val json = runCatching {
+            JSONObject(raw)
+        }.getOrNull() ?: return false
 
+        val type = json.optString("type").trim()
+        val module = json.optString("module").trim()
+        val action = json.optString("action").trim()
         val lifecycleInvalidatingCommandId = raw.lifecycleInvalidatingCommandId()
-        val sent = activeSocket?.send(raw) == true
-        if (sent && lifecycleInvalidatingCommandId != null) {
-            pendingTokenInvalidationCommandIds.add(lifecycleInvalidatingCommandId)
+
+        return synchronized(lifecycleLock) {
+            if (closed || !canSendRawLocked(type, module, action)) {
+                return@synchronized false
+            }
+
+            val sent = activeSocket?.send(raw) == true
+            if (sent && lifecycleInvalidatingCommandId != null) {
+                pendingTokenInvalidationCommandIds.add(lifecycleInvalidatingCommandId)
+            }
+            sent
         }
-        return sent
     }
 
     override fun markAuthenticated(deviceUid: DeviceUid) {
@@ -168,34 +181,33 @@ class AqlWsClient(
         }
     }
 
-    private fun canSend(message: AqlWsOutgoingMessage): Boolean {
+    private fun canSendLocked(message: AqlWsOutgoingMessage): Boolean {
         return when (message) {
             is AqlWsOutgoingMessage.Auth -> activeSocket != null
             is AqlWsOutgoingMessage.Ping -> activeSocket != null
             is AqlWsOutgoingMessage.Command -> activeSocket != null &&
                 (
                     message.isPublicCommand() ||
-                        (message.isAuthenticatedCommand() && isActiveDeviceAuthenticated())
+                        (message.isAuthenticatedCommand() && isActiveDeviceAuthenticatedLocked())
                     )
         }
     }
 
-    private fun canSendRaw(raw: String): Boolean {
-        val json = runCatching {
-            JSONObject(raw)
-        }.getOrNull() ?: return false
-
-        val type = json.optString("type").trim()
-        val module = json.optString("module").trim()
-        val action = json.optString("action").trim()
-
+    private fun canSendRawLocked(
+        type: String,
+        module: String,
+        action: String
+    ): Boolean {
         return when (type) {
             AqlWsContract.TYPE_AUTH,
             AqlWsContract.TYPE_PING -> activeSocket != null
             AqlWsContract.TYPE_COMMAND -> activeSocket != null &&
                 (
                     AqlWsContract.isPublicCommand(module, action) ||
-                        (AqlWsContract.isAuthenticatedCommand(module, action) && isActiveDeviceAuthenticated())
+                        (
+                            AqlWsContract.isAuthenticatedCommand(module, action) &&
+                                isActiveDeviceAuthenticatedLocked()
+                            )
                     )
             else -> false
         }
@@ -245,7 +257,7 @@ class AqlWsClient(
         }
     }
 
-    private fun isActiveDeviceAuthenticated(): Boolean {
+    private fun isActiveDeviceAuthenticatedLocked(): Boolean {
         val deviceUid = activeDeviceUid ?: return false
         val state = _connectionState.value
         return state is AqlWsConnectionState.Authenticated && state.deviceUid == deviceUid
@@ -324,7 +336,11 @@ class AqlWsClient(
                 }
 
                 if (message.ok) {
-                    markAuthenticated(deviceUid)
+                    markAuthenticatedIfCurrent(
+                        deviceUid = deviceUid,
+                        webSocket = webSocket,
+                        generation = generation
+                    )
                 } else if (message.statusCode in AUTH_FAILURE_STATUS_CODES) {
                     clearTokenAndRequireAuth(
                         deviceUid = deviceUid,
@@ -350,6 +366,22 @@ class AqlWsClient(
         }
     }
 
+    private fun markAuthenticatedIfCurrent(
+        deviceUid: DeviceUid,
+        webSocket: WebSocket,
+        generation: Long
+    ) {
+        synchronized(lifecycleLock) {
+            if (!isCurrentConnectionLocked(webSocket, generation, deviceUid)) {
+                return
+            }
+            _connectionState.value = AqlWsConnectionState.Authenticated(
+                deviceUid = deviceUid,
+                authenticatedAtMillis = clockMillis()
+            )
+        }
+    }
+
     private fun handleTokenLifecycleMessage(
         deviceUid: DeviceUid,
         message: AqlWsIncomingMessage?,
@@ -358,8 +390,12 @@ class AqlWsClient(
     ) {
         when (message) {
             is AqlWsIncomingMessage.Response -> {
-                val wasPending = pendingTokenInvalidationCommandIds.remove(message.id)
-                if (wasPending && message.ok) {
+                val shouldClearToken = synchronized(lifecycleLock) {
+                    isCurrentConnectionLocked(webSocket, generation, deviceUid) &&
+                        pendingTokenInvalidationCommandIds.remove(message.id) &&
+                        message.ok
+                }
+                if (shouldClearToken) {
                     clearTokenAndRequireAuth(
                         deviceUid = deviceUid,
                         reason = "runtime token cleared after security lifecycle change",
@@ -370,7 +406,11 @@ class AqlWsClient(
             }
 
             is AqlWsIncomingMessage.Error -> {
-                pendingTokenInvalidationCommandIds.remove(message.id)
+                synchronized(lifecycleLock) {
+                    if (isCurrentConnectionLocked(webSocket, generation, deviceUid)) {
+                        pendingTokenInvalidationCommandIds.remove(message.id)
+                    }
+                }
             }
 
             else -> Unit
@@ -393,12 +433,29 @@ class AqlWsClient(
 
         connectionScope.launch {
             tokenProvider?.clearToken(deviceUid)
-            if (isCurrentConnection(webSocket, generation, deviceUid)) {
-                markAuthRequired(
-                    deviceUid = deviceUid,
-                    message = reason
-                )
+            markAuthRequiredIfCurrent(
+                deviceUid = deviceUid,
+                message = reason,
+                webSocket = webSocket,
+                generation = generation
+            )
+        }
+    }
+
+    private fun markAuthRequiredIfCurrent(
+        deviceUid: DeviceUid,
+        message: String,
+        webSocket: WebSocket,
+        generation: Long
+    ) {
+        synchronized(lifecycleLock) {
+            if (!isCurrentConnectionLocked(webSocket, generation, deviceUid)) {
+                return
             }
+            _connectionState.value = AqlWsConnectionState.AuthRequired(
+                deviceUid = deviceUid,
+                message = message
+            )
         }
     }
 
@@ -418,22 +475,12 @@ class AqlWsClient(
     ): WebSocketListener {
         return object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
-                if (!claimOrVerifyCurrentConnection(webSocket, generation, deviceUid)) {
+                if (!publishOpenedIfCurrent(webSocket, generation, deviceUid, url)) {
                     webSocket.close(NORMAL_CLOSE_CODE, STALE_SOCKET_CLOSE_REASON)
-                    return
                 }
-                _connectionState.value = AqlWsConnectionState.Connected(
-                    deviceUid = deviceUid,
-                    url = url,
-                    connectedAtMillis = clockMillis()
-                )
-                _events.tryEmit(AqlWsEvent.Opened(deviceUid = deviceUid))
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
-                if (!isCurrentConnection(webSocket, generation, deviceUid)) {
-                    return
-                }
                 val parsed = messageParser.parse(text).getOrNull()
                 handleAuthMessage(
                     deviceUid = deviceUid,
@@ -447,11 +494,11 @@ class AqlWsClient(
                     webSocket = webSocket,
                     generation = generation
                 )
-                _events.tryEmit(
-                    AqlWsEvent.Message(
-                        deviceUid = deviceUid,
-                        parsed = parsed
-                    )
+                publishMessageIfCurrent(
+                    webSocket = webSocket,
+                    generation = generation,
+                    deviceUid = deviceUid,
+                    parsed = parsed
                 )
             }
 
@@ -489,35 +536,61 @@ class AqlWsClient(
         }
     }
 
-    private fun claimOrVerifyCurrentConnection(
+    private fun publishOpenedIfCurrent(
         webSocket: WebSocket,
         generation: Long,
-        deviceUid: DeviceUid
+        deviceUid: DeviceUid,
+        url: String
     ): Boolean {
         return synchronized(lifecycleLock) {
-            if (
-                closed ||
-                connectionGeneration != generation ||
-                activeDeviceUid != deviceUid
-            ) {
-                false
-            } else {
-                if (activeSocket == null) {
-                    activeSocket = webSocket
-                }
-                activeSocket === webSocket
+            if (!claimOrVerifyCurrentConnectionLocked(webSocket, generation, deviceUid)) {
+                return@synchronized false
             }
+            _connectionState.value = AqlWsConnectionState.Connected(
+                deviceUid = deviceUid,
+                url = url,
+                connectedAtMillis = clockMillis()
+            )
+            _events.tryEmit(AqlWsEvent.Opened(deviceUid = deviceUid))
+            true
         }
     }
 
-    private fun isCurrentConnection(
+    private fun publishMessageIfCurrent(
+        webSocket: WebSocket,
+        generation: Long,
+        deviceUid: DeviceUid,
+        parsed: AqlWsIncomingMessage?
+    ) {
+        synchronized(lifecycleLock) {
+            if (!isCurrentConnectionLocked(webSocket, generation, deviceUid)) {
+                return
+            }
+            _events.tryEmit(
+                AqlWsEvent.Message(
+                    deviceUid = deviceUid,
+                    parsed = parsed
+                )
+            )
+        }
+    }
+
+    private fun claimOrVerifyCurrentConnectionLocked(
         webSocket: WebSocket,
         generation: Long,
         deviceUid: DeviceUid
     ): Boolean {
-        return synchronized(lifecycleLock) {
-            isCurrentConnectionLocked(webSocket, generation, deviceUid)
+        if (
+            closed ||
+            connectionGeneration != generation ||
+            activeDeviceUid != deviceUid
+        ) {
+            return false
         }
+        if (activeSocket == null) {
+            activeSocket = webSocket
+        }
+        return activeSocket === webSocket
     }
 
     private fun isCurrentConnectionLocked(
@@ -542,9 +615,9 @@ class AqlWsClient(
             if (!isCurrentConnectionLocked(webSocket, generation, deviceUid)) {
                 return
             }
-            _connectionState.value = nextState
+            val current = detachConnectionLocked(nextState = nextState)
             _events.tryEmit(event)
-            detachConnectionLocked(nextState = nextState)
+            current
         }
         detached.job?.cancel()
     }
