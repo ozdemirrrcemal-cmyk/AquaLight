@@ -2,6 +2,8 @@ package com.aqua.aqualight.data.user
 
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import kotlinx.coroutines.asContextElement
+import kotlinx.coroutines.withContext
 
 /**
  * Central ownership rules for local user-scoped data.
@@ -14,15 +16,44 @@ object UserDataScope {
 
     const val LEGACY_OWNER_UID = ""
 
+    private val explicitOwnerUid = ThreadLocal<String?>()
+
     fun currentUid(): String {
+        val scopedOwnerUid = normalizeOwnerUid(
+            explicitOwnerUid.get()
+        )
+        if (scopedOwnerUid.isNotBlank()) {
+            return scopedOwnerUid
+        }
         return Firebase.auth.currentUser?.uid.orEmpty()
     }
 
     fun requireCurrentUid(): String {
         return currentUid().ifBlank {
             throw IllegalStateException(
-                "User-scoped data requires an authenticated Firebase user."
+                "User-scoped data requires an authenticated owner UID."
             )
+        }
+    }
+
+    /**
+     * Runs a background DataStore operation with an immutable owner identity.
+     * The value is propagated across coroutine dispatcher switches and cannot be
+     * replaced by a concurrent Firebase account change.
+     */
+    suspend fun <T> withOwnerUid(
+        ownerUid: String,
+        block: suspend () -> T
+    ): T {
+        val normalizedOwnerUid = normalizeOwnerUid(ownerUid)
+        require(normalizedOwnerUid.isNotBlank()) {
+            "ownerUid must not be blank"
+        }
+
+        return withContext(
+            explicitOwnerUid.asContextElement(normalizedOwnerUid)
+        ) {
+            block()
         }
     }
 
