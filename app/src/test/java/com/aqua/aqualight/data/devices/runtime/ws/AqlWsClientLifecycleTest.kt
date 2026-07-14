@@ -8,7 +8,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
@@ -16,6 +20,7 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -51,7 +56,8 @@ class AqlWsClientLifecycleTest {
 
         assertEquals(AqlWsConnectionState.Disconnected, client.connectionState.value)
         assertTrue(observedEvents.isEmpty())
-        assertEquals(2, staleConnection.socket.closeCount.get())
+        assertEquals(1, staleConnection.socket.closeCount.get())
+        assertEquals(1, staleConnection.socket.cancelCount.get())
 
         client.close()
         observerScope.cancel()
@@ -92,9 +98,68 @@ class AqlWsClientLifecycleTest {
         assertTrue(state.url.contains("192.168.1.11"))
         assertEquals(1, observedEvents.size)
         assertTrue(observedEvents.single() is AqlWsEvent.Opened)
+        assertEquals(1, firstConnection.socket.closeCount.get())
+        assertEquals(1, firstConnection.socket.cancelCount.get())
 
         client.close()
         observerScope.cancel()
+    }
+
+    @Test
+    fun lifecycleEventsAreQueuedUntilCollectorStarts() = runBlocking {
+        val factory = RecordingWebSocketFactory()
+        val client = AqlWsClient(webSocketFactory = factory)
+        val deviceUid = DeviceUid("device-queued-events")
+
+        client.connect(deviceUid, endpoint("192.168.1.20")).getOrThrow()
+        val connection = factory.connections.single()
+        connection.listener.onOpen(
+            connection.socket,
+            responseFor(connection.request)
+        )
+        connection.listener.onMessage(connection.socket, "{}")
+
+        val events = withTimeout(1_000L) {
+            client.events.take(2).toList()
+        }
+
+        assertTrue(events[0] is AqlWsEvent.Opened)
+        assertTrue(events[1] is AqlWsEvent.Message)
+        client.shutdown()
+    }
+
+    @Test
+    fun terminalShutdownCancelsSocketAndRejectsFurtherConnects() = runBlocking {
+        val factory = RecordingWebSocketFactory()
+        val client = AqlWsClient(webSocketFactory = factory)
+        val deviceUid = DeviceUid("device-terminal-close")
+
+        client.connect(deviceUid, endpoint("192.168.1.30")).getOrThrow()
+        val connection = factory.connections.single()
+
+        client.shutdown()
+
+        assertEquals(1, connection.socket.cancelCount.get())
+        assertEquals(0, connection.socket.closeCount.get())
+        assertFalse(client.connect(deviceUid, endpoint("192.168.1.30")).isSuccess)
+    }
+
+    @Test
+    fun socketFactoryFailureTearsDownConnectingGeneration() = runBlocking {
+        val factory = ThrowOnceWebSocketFactory()
+        val client = AqlWsClient(webSocketFactory = factory)
+        val deviceUid = DeviceUid("device-factory-failure")
+
+        val firstResult = client.connect(deviceUid, endpoint("192.168.1.40"))
+        assertFalse(firstResult.isSuccess)
+        val failed = client.connectionState.value as AqlWsConnectionState.Failed
+        assertEquals(deviceUid, failed.deviceUid)
+
+        val secondResult = client.connect(deviceUid, endpoint("192.168.1.41"))
+        assertTrue(secondResult.isSuccess)
+        assertEquals(1, factory.delegate.connections.size)
+
+        client.shutdown()
     }
 
     private fun endpoint(ip: String): DeviceRuntimeEndpoint {
@@ -111,6 +176,22 @@ class AqlWsClientLifecycleTest {
             .code(101)
             .message("Switching Protocols")
             .build()
+    }
+
+    private class ThrowOnceWebSocketFactory : WebSocket.Factory {
+        val delegate = RecordingWebSocketFactory()
+        private var shouldThrow = true
+
+        override fun newWebSocket(
+            request: Request,
+            listener: WebSocketListener
+        ): WebSocket {
+            if (shouldThrow) {
+                shouldThrow = false
+                throw IllegalStateException("factory failure")
+            }
+            return delegate.newWebSocket(request, listener)
+        }
     }
 
     private class RecordingWebSocketFactory : WebSocket.Factory {
@@ -140,6 +221,7 @@ class AqlWsClientLifecycleTest {
         private val requestValue: Request
     ) : WebSocket {
         val closeCount = AtomicInteger(0)
+        val cancelCount = AtomicInteger(0)
 
         override fun request(): Request = requestValue
 
@@ -154,6 +236,8 @@ class AqlWsClientLifecycleTest {
             return true
         }
 
-        override fun cancel() = Unit
+        override fun cancel() {
+            cancelCount.incrementAndGet()
+        }
     }
 }
