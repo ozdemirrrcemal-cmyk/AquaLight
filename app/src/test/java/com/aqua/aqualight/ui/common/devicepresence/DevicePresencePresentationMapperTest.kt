@@ -20,10 +20,13 @@ class DevicePresencePresentationMapperTest {
     }
 
     @Test
-    fun `fresh UDP presence does not promise authenticated menu access`() {
+    fun `fresh UDP presence remains visually offline until authentication`() {
         assertEquals(
-            "Connecting",
+            "Offline",
             DevicePresencePresentationMapper.availabilityLabel(DeviceOnlineState.ONLINE_LAN)
+        )
+        assertTrue(
+            DevicePresencePresentationMapper.isConnecting(DeviceOnlineState.ONLINE_LAN)
         )
         assertFalse(
             DevicePresencePresentationMapper.isReachable(DeviceOnlineState.ONLINE_LAN)
@@ -31,9 +34,9 @@ class DevicePresencePresentationMapperTest {
     }
 
     @Test
-    fun `websocket handshake remains connecting until authentication`() {
+    fun `websocket handshake is internal and never exposes connecting label`() {
         assertEquals(
-            "Connecting",
+            "Offline",
             DevicePresencePresentationMapper.availabilityLabel(DeviceOnlineState.CONNECTING_WS)
         )
         assertTrue(
