@@ -10,6 +10,7 @@ import androidx.work.workDataOf
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.auth.FirebaseAuthenticatedOwnerProvider
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
+import com.aqua.aqualight.data.user.UserDataScope
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
@@ -62,9 +63,11 @@ class SmartCareDailyWorker(
                 return Result.success()
             }
 
-            careTaskDataStoreManager.syncAutomaticTasks(
-                generatedTasks = generatedTasks
-            )
+            UserDataScope.withOwnerUid(scheduledOwnerUid) {
+                careTaskDataStoreManager.syncAutomaticTasks(
+                    generatedTasks = generatedTasks
+                )
+            }
 
             Result.success()
         } catch (exception: Exception) {
