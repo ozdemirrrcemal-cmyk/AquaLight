@@ -3,10 +3,10 @@ package com.aqua.aqualight.data.auth
 import android.content.Context
 import com.aqua.aqualight.data.aquarium.devices.TankAssignmentRepairResult
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
-import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
-import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
-import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
+import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
+import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
 import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
@@ -89,10 +89,11 @@ class OwnerSessionCoordinator private constructor(
                 previousOwnerUid != null &&
                 previousOwnerUid != normalizedOwnerUid
             ) {
-                TankDeviceAssignmentRepositoryProvider.clear(
+                // Runtime/socket/token teardown is the first and awaited owner-switch barrier.
+                DevicesRepositoryProvider.clear(
                     expectedOwnerUid = previousOwnerUid
                 )
-                DevicesRepositoryProvider.clear(
+                TankDeviceAssignmentRepositoryProvider.clear(
                     expectedOwnerUid = previousOwnerUid
                 )
             }
@@ -225,14 +226,14 @@ class OwnerSessionCoordinator private constructor(
         return stateMachine.snapshot()
     }
 
-    private fun clearTransitionProviders(
+    private suspend fun clearTransitionProviders(
         transition: OwnerSessionStateMachine.Transition
     ) {
         val ownerUid = transition.targetOwnerUid ?: return
-        TankDeviceAssignmentRepositoryProvider.clear(
+        DevicesRepositoryProvider.clear(
             expectedOwnerUid = ownerUid
         )
-        DevicesRepositoryProvider.clear(
+        TankDeviceAssignmentRepositoryProvider.clear(
             expectedOwnerUid = ownerUid
         )
     }
