@@ -82,9 +82,26 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnTorch"
+        style="@style/Widget.Aqua.Button.IconToggle"
+        android:layout_width="@dimen/aqua_icon_toggle_button_size"
+        android:layout_height="@dimen/aqua_icon_toggle_button_size"
+        android:layout_marginTop="@dimen/device_qr_torch_margin_top"
+        android:layout_marginBottom="@dimen/device_qr_torch_margin_bottom"
+        android:contentDescription="@string/device_qr_flashlight_turn_on"
+        android:visibility="gone"
+        app:icon="@drawable/ic_flashlight"
+        app:layout_constraintTop_toBottomOf="@id/scanFrame"
+        app:layout_constraintBottom_toTopOf="@id/cardInstruction"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintVertical_bias="0"
+        tools:visibility="visible" />
+
     <com.google.android.material.card.MaterialCardView
-                style="@style/Widget.Aqua.Card.Device"
         android:id="@+id/cardInstruction"
+        style="@style/Widget.Aqua.Card.Device"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="18dp"

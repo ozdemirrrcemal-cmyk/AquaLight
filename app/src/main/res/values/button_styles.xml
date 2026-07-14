@@ -55,6 +55,28 @@
         <item name="strokeWidth">@dimen/aqua_button_stroke_width</item>
     </style>
 
+    <style name="Widget.Aqua.Button.IconToggle" parent="Widget.MaterialComponents.Button">
+        <item name="android:minWidth">0dp</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:paddingStart">0dp</item>
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingEnd">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:gravity">center</item>
+        <item name="backgroundTint">@color/aqua_button_icon_toggle_container_tint</item>
+        <item name="iconTint">@color/aqua_button_icon_toggle_content_tint</item>
+        <item name="iconSize">@dimen/aqua_icon_toggle_button_icon_size</item>
+        <item name="iconPadding">0dp</item>
+        <item name="iconGravity">textStart</item>
+        <item name="cornerRadius">@dimen/aqua_icon_toggle_button_radius</item>
+        <item name="strokeColor">@color/aqua_button_icon_toggle_stroke_tint</item>
+        <item name="strokeWidth">@dimen/aqua_button_stroke_width</item>
+        <item name="rippleColor">@color/aqua_button_ripple</item>
+        <item name="elevation">0dp</item>
+    </style>
+
     <style name="Widget.Aqua.Button.Danger" parent="Widget.Aqua.Button">
         <item name="backgroundTint">@color/aqua_button_danger_container_tint</item>
         <item name="android:textColor">@color/aqua_button_danger_content_tint</item>

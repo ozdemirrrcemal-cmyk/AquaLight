@@ -8,11 +8,13 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
+import androidx.camera.core.TorchState
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
@@ -47,6 +49,8 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
 
     private var barcodeScanner: BarcodeScanner? = null
     private var cameraProvider: ProcessCameraProvider? = null
+    private var activeCamera: Camera? = null
+    private var isTorchEnabled = false
     private var isProcessingFrame = false
     private var hasResult = false
     private var primaryAction: DeviceQrScanPrimaryAction? = null
@@ -121,6 +125,10 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
     }
 
     private fun setupActions() {
+        binding.btnTorch.setOnClickListener {
+            toggleTorch()
+        }
+
         binding.btnRequestCamera.setOnClickListener {
             when (primaryAction) {
                 DeviceQrScanPrimaryAction.SCAN_AGAIN -> restartScanner()
@@ -305,7 +313,10 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
                         preview,
                         analysis
                     )
+                }.onSuccess { camera ->
+                    bindTorchControl(camera)
                 }.onFailure { error ->
+                    clearTorchControl()
                     if (_binding != null) {
                         binding.tvScanTitle.text = getString(R.string.device_qr_camera_unavailable_title)
                         binding.tvScanStatus.text = error.message
@@ -315,6 +326,79 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
             },
             ContextCompat.getMainExecutor(requireContext())
         )
+    }
+
+    private fun bindTorchControl(camera: Camera) {
+        if (_binding == null) return
+
+        clearTorchControl()
+        activeCamera = camera
+
+        if (!camera.cameraInfo.hasFlashUnit()) {
+            return
+        }
+
+        binding.btnTorch.isVisible = true
+        binding.btnTorch.isEnabled = true
+        renderTorchState(camera.cameraInfo.torchState.value == TorchState.ON)
+
+        camera.cameraInfo.torchState.observe(viewLifecycleOwner) { torchState ->
+            if (activeCamera === camera && _binding != null) {
+                renderTorchState(torchState == TorchState.ON)
+            }
+        }
+    }
+
+    private fun toggleTorch() {
+        val camera = activeCamera ?: return
+        if (_binding == null || !camera.cameraInfo.hasFlashUnit()) return
+
+        val torchRequest = camera.cameraControl.enableTorch(!isTorchEnabled)
+        val mainExecutor = ContextCompat.getMainExecutor(requireContext())
+        binding.btnTorch.isEnabled = false
+
+        torchRequest.addListener(
+            {
+                if (activeCamera !== camera || _binding == null) {
+                    return@addListener
+                }
+
+                binding.btnTorch.isEnabled = true
+                runCatching { torchRequest.get() }
+                    .onFailure {
+                        renderTorchState(
+                            camera.cameraInfo.torchState.value == TorchState.ON
+                        )
+                    }
+            },
+            mainExecutor
+        )
+    }
+
+    private fun renderTorchState(enabled: Boolean) {
+        val currentBinding = _binding ?: return
+        isTorchEnabled = enabled
+        currentBinding.btnTorch.isSelected = enabled
+        currentBinding.btnTorch.contentDescription = currentBinding.root.context.getString(
+            if (enabled) {
+                R.string.device_qr_flashlight_turn_off
+            } else {
+                R.string.device_qr_flashlight_turn_on
+            }
+        )
+    }
+
+    private fun clearTorchControl() {
+        activeCamera?.cameraInfo?.torchState?.removeObservers(viewLifecycleOwner)
+        activeCamera = null
+        isTorchEnabled = false
+
+        _binding?.btnTorch?.apply {
+            isVisible = false
+            isEnabled = false
+            isSelected = false
+            contentDescription = context.getString(R.string.device_qr_flashlight_turn_on)
+        }
     }
 
     @OptIn(ExperimentalGetImage::class)
@@ -411,6 +495,8 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
     }
 
     private fun stopCamera() {
+        activeCamera?.cameraControl?.enableTorch(false)
+        clearTorchControl()
         cameraProvider?.unbindAll()
         cameraProvider = null
         barcodeScanner?.close()
