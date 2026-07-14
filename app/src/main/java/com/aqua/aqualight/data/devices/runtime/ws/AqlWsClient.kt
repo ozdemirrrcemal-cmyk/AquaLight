@@ -10,13 +10,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -39,14 +38,13 @@ class AqlWsClient(
 
     private val lifecycleLock = Any()
     private val clientJob = SupervisorJob()
+    private val eventChannel = Channel<AqlWsEvent>(capacity = Channel.UNLIMITED)
 
     private val _connectionState = MutableStateFlow<AqlWsConnectionState>(
         AqlWsConnectionState.Disconnected
     )
     override val connectionState: StateFlow<AqlWsConnectionState> = _connectionState.asStateFlow()
-
-    private val _events = MutableSharedFlow<AqlWsEvent>(extraBufferCapacity = EVENT_BUFFER_CAPACITY)
-    override val events: SharedFlow<AqlWsEvent> = _events.asSharedFlow()
+    override val events: Flow<AqlWsEvent> = eventChannel.receiveAsFlow()
 
     @Volatile
     private var activeSocket: WebSocket? = null
@@ -75,6 +73,10 @@ class AqlWsClient(
         endpoint: DeviceRuntimeEndpoint
     ): Result<Unit> {
         return runCatching {
+            synchronized(lifecycleLock) {
+                check(!closed) { "WebSocket client is closed." }
+            }
+
             val url = endpoint.toWebSocketUrl()
                 ?: error("Device ${deviceUid.value} has no WebSocket endpoint")
             val request = Request.Builder()
@@ -108,7 +110,17 @@ class AqlWsClient(
                 )
             }
 
-            val socket = webSocketFactory.newWebSocket(request, listener)
+            val socket = try {
+                webSocketFactory.newWebSocket(request, listener)
+            } catch (error: Throwable) {
+                failConnectionSetup(
+                    deviceUid = deviceUid,
+                    generation = generation,
+                    error = error
+                )
+                throw error
+            }
+
             val rejectSocket = synchronized(lifecycleLock) {
                 if (
                     closed ||
@@ -125,7 +137,7 @@ class AqlWsClient(
             }
 
             if (rejectSocket) {
-                socket.close(NORMAL_CLOSE_CODE, STALE_SOCKET_CLOSE_REASON)
+                socket.cancel()
             }
         }
     }
@@ -179,6 +191,125 @@ class AqlWsClient(
                 authenticatedAtMillis = clockMillis()
             )
         }
+    }
+
+    override fun markAuthRequired(
+        deviceUid: DeviceUid,
+        message: String
+    ) {
+        synchronized(lifecycleLock) {
+            if (closed || activeDeviceUid != deviceUid || activeSocket == null) {
+                return
+            }
+            _connectionState.value = AqlWsConnectionState.AuthRequired(
+                deviceUid = deviceUid,
+                message = message
+            )
+        }
+    }
+
+    override fun disconnect(
+        code: Int,
+        reason: String
+    ) {
+        val detached = synchronized(lifecycleLock) {
+            if (closed) {
+                return
+            }
+            detachConnectionLocked(
+                nextState = AqlWsConnectionState.Disconnected
+            )
+        }
+        detached.job?.cancel()
+        detached.socket?.let { socket ->
+            if (!socket.close(code, reason)) {
+                socket.cancel()
+            }
+        }
+    }
+
+    override fun close() {
+        val detached = synchronized(lifecycleLock) {
+            detachForTerminalCloseLocked() ?: return
+        }
+        detached.job?.cancel()
+        detached.socket?.cancel()
+        clientJob.cancel()
+        eventChannel.close()
+    }
+
+    override suspend fun shutdown() {
+        val detached = synchronized(lifecycleLock) {
+            detachForTerminalCloseLocked()
+        }
+
+        detached?.job?.cancel()
+        detached?.socket?.cancel()
+        clientJob.cancel()
+        eventChannel.close()
+
+        detached?.job?.join()
+        clientJob.join()
+    }
+
+    private fun detachForTerminalCloseLocked(): DetachedConnection? {
+        if (closed) {
+            return null
+        }
+        closed = true
+        return detachConnectionLocked(
+            nextState = AqlWsConnectionState.Disconnected
+        )
+    }
+
+    private fun detachConnectionLocked(
+        nextState: AqlWsConnectionState
+    ): DetachedConnection {
+        val detached = DetachedConnection(
+            socket = activeSocket,
+            job = activeConnectionJob
+        )
+        connectionGeneration += 1L
+        activeSocket = null
+        activeDeviceUid = null
+        activeConnectionJob = null
+        activeConnectionScope = null
+        pendingTokenInvalidationCommandIds.clear()
+        _connectionState.value = nextState
+        return detached
+    }
+
+    private fun failConnectionSetup(
+        deviceUid: DeviceUid,
+        generation: Long,
+        error: Throwable
+    ) {
+        val detached = synchronized(lifecycleLock) {
+            if (
+                closed ||
+                connectionGeneration != generation ||
+                activeDeviceUid != deviceUid
+            ) {
+                return
+            }
+
+            val failure = AqlWsConnectionState.Failed(
+                deviceUid = deviceUid,
+                message = error.message.orEmpty(),
+                cause = error
+            )
+            val current = detachConnectionLocked(nextState = failure)
+            publishEventLocked(
+                AqlWsEvent.Failure(
+                    deviceUid = deviceUid,
+                    message = error.message.orEmpty(),
+                    throwable = error
+                )
+            )
+            current
+        }
+        detached.job?.cancel()
+        detached.socket?.cancel()
     }
 
     private fun canSendLocked(message: AqlWsOutgoingMessage): Boolean {
@@ -261,66 +392,6 @@ class AqlWsClient(
         val deviceUid = activeDeviceUid ?: return false
         val state = _connectionState.value
         return state is AqlWsConnectionState.Authenticated && state.deviceUid == deviceUid
-    }
-
-    override fun markAuthRequired(
-        deviceUid: DeviceUid,
-        message: String
-    ) {
-        synchronized(lifecycleLock) {
-            if (closed || activeDeviceUid != deviceUid || activeSocket == null) {
-                return
-            }
-            _connectionState.value = AqlWsConnectionState.AuthRequired(
-                deviceUid = deviceUid,
-                message = message
-            )
-        }
-    }
-
-    override fun disconnect(
-        code: Int,
-        reason: String
-    ) {
-        val detached = synchronized(lifecycleLock) {
-            detachConnectionLocked(
-                nextState = AqlWsConnectionState.Disconnected
-            )
-        }
-        detached.job?.cancel()
-        detached.socket?.close(code, reason)
-    }
-
-    override fun close() {
-        val detached = synchronized(lifecycleLock) {
-            if (closed) {
-                return
-            }
-            closed = true
-            detachConnectionLocked(
-                nextState = AqlWsConnectionState.Disconnected
-            )
-        }
-        detached.job?.cancel()
-        detached.socket?.close(NORMAL_CLOSE_CODE, NORMAL_CLOSE_REASON)
-        clientJob.cancel()
-    }
-
-    private fun detachConnectionLocked(
-        nextState: AqlWsConnectionState
-    ): DetachedConnection {
-        val detached = DetachedConnection(
-            socket = activeSocket,
-            job = activeConnectionJob
-        )
-        connectionGeneration += 1L
-        activeSocket = null
-        activeDeviceUid = null
-        activeConnectionJob = null
-        activeConnectionScope = null
-        pendingTokenInvalidationCommandIds.clear()
-        _connectionState.value = nextState
-        return detached
     }
 
     private fun handleAuthMessage(
@@ -476,7 +547,7 @@ class AqlWsClient(
         return object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 if (!publishOpenedIfCurrent(webSocket, generation, deviceUid, url)) {
-                    webSocket.close(NORMAL_CLOSE_CODE, STALE_SOCKET_CLOSE_REASON)
+                    webSocket.cancel()
                 }
             }
 
@@ -551,7 +622,7 @@ class AqlWsClient(
                 url = url,
                 connectedAtMillis = clockMillis()
             )
-            _events.tryEmit(AqlWsEvent.Opened(deviceUid = deviceUid))
+            publishEventLocked(AqlWsEvent.Opened(deviceUid = deviceUid))
             true
         }
     }
@@ -566,13 +637,17 @@ class AqlWsClient(
             if (!isCurrentConnectionLocked(webSocket, generation, deviceUid)) {
                 return
             }
-            _events.tryEmit(
+            publishEventLocked(
                 AqlWsEvent.Message(
                     deviceUid = deviceUid,
                     parsed = parsed
                 )
             )
         }
+    }
+
+    private fun publishEventLocked(event: AqlWsEvent) {
+        eventChannel.trySend(event)
     }
 
     private fun claimOrVerifyCurrentConnectionLocked(
@@ -616,18 +691,15 @@ class AqlWsClient(
                 return
             }
             val current = detachConnectionLocked(nextState = nextState)
-            _events.tryEmit(event)
+            publishEventLocked(event)
             current
         }
         detached.job?.cancel()
     }
 
     companion object {
-        private const val EVENT_BUFFER_CAPACITY = 128
         private const val NORMAL_CLOSE_CODE = 1000
-        private const val NORMAL_CLOSE_REASON = "client closed"
         private const val RECONNECT_CLOSE_REASON = "client reconnecting"
-        private const val STALE_SOCKET_CLOSE_REASON = "stale socket"
         private const val AUTH_ID_PREFIX = "auth-"
         private const val AUTH_FIELD_TOKEN = "token"
         private val AUTH_FAILURE_STATUS_CODES = setOf(401, 403)
