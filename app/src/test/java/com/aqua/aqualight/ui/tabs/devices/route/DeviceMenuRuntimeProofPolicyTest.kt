@@ -30,6 +30,23 @@ class DeviceMenuRuntimeProofPolicyTest {
     }
 
     @Test
+    fun `current firmware response without echoed command fields proves liveness`() {
+        assertTrue(
+            DeviceMenuRuntimeProofPolicy.accepts(
+                event = responseEvent(
+                    deviceUid = requestedUid,
+                    id = requestId,
+                    ok = true,
+                    module = "",
+                    action = ""
+                ),
+                requestedDeviceUid = requestedUid,
+                expectedRequestId = requestId
+            )
+        )
+    }
+
+    @Test
     fun `cached or unrelated response cannot open device menu`() {
         assertFalse(
             DeviceMenuRuntimeProofPolicy.accepts(
@@ -56,7 +73,7 @@ class DeviceMenuRuntimeProofPolicyTest {
     }
 
     @Test
-    fun `failed or wrong-module response cannot open device menu`() {
+    fun `failed or explicitly contradictory response cannot open device menu`() {
         assertFalse(
             DeviceMenuRuntimeProofPolicy.accepts(
                 event = networkStatusResponse(
