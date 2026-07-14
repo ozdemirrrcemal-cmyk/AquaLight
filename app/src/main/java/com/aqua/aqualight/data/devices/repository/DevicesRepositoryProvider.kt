@@ -7,13 +7,14 @@ import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 
 /**
  * Process-level owner-bound device repository holder.
  *
  * A repository can never be created without Android context or authenticated
- * owner identity. Switching owners tears down runtime sessions and in-memory
- * registry state before the next repository is exposed.
+ * owner identity. Switching owners tears down runtime sessions, repository jobs,
+ * collectors and in-memory registry state before the next repository is exposed.
  */
 object DevicesRepositoryProvider {
 
@@ -21,7 +22,15 @@ object DevicesRepositoryProvider {
         val ownerUid: String,
         val scope: CoroutineScope,
         val repository: DevicesRepository
-    )
+    ) : AutoCloseable {
+        override fun close() {
+            try {
+                repository.close()
+            } finally {
+                scope.cancel()
+            }
+        }
+    }
 
     @Volatile
     private var entry: Entry? = null
@@ -42,7 +51,7 @@ object DevicesRepositoryProvider {
             if (synchronizedEntry?.ownerUid == ownerUid) {
                 synchronizedEntry.repository
             } else {
-                synchronizedEntry?.repository?.stop()
+                synchronizedEntry?.close()
 
                 val repositoryScope = CoroutineScope(
                     SupervisorJob() + Dispatchers.IO
@@ -88,8 +97,8 @@ object DevicesRepositoryProvider {
             ) {
                 false
             } else {
-                current?.repository?.stop()
                 entry = null
+                current?.close()
                 current != null
             }
         }
