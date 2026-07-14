@@ -9,11 +9,14 @@ import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsOutgoingMessage
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsTransport
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -25,6 +28,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -71,7 +75,7 @@ class DeviceRuntimeRepositoryLifecycleTest {
     }
 
     @Test
-    fun closingDeviceCancelsCollectorsAndClosesOnlyThatTransport() {
+    fun closingDeviceCancelsCollectorsAndClosesOnlyThatTransport() = runBlocking {
         val transports = CopyOnWriteArrayList<FakeWsTransport>()
         val repository = repositoryWith(transports)
         val first = snapshot("device-one")
@@ -92,7 +96,7 @@ class DeviceRuntimeRepositoryLifecycleTest {
         firstTransport.emit(AqlWsEvent.Opened(first.deviceUid))
         assertEquals(1, observedEvents.size)
 
-        repository.close(first.deviceUid)
+        repository.retire(first.deviceUid)
         firstTransport.emit(AqlWsEvent.Opened(first.deviceUid))
         secondTransport.emit(AqlWsEvent.Opened(second.deviceUid))
 
@@ -101,13 +105,60 @@ class DeviceRuntimeRepositoryLifecycleTest {
         assertEquals(1, firstTransport.closeCount.get())
         assertEquals(0, secondTransport.closeCount.get())
         assertNull(repository.currentConnectionState(first.deviceUid))
+        assertFalse(repository.connect(first).isSuccess)
+
+        repository.shutdown()
+        observerScope.cancel()
+    }
+
+    @Test
+    fun retiredDeviceCannotBeReopenedByProbeUntilExplicitActivation() = runBlocking {
+        val transports = CopyOnWriteArrayList<FakeWsTransport>()
+        val repository = repositoryWith(transports)
+        val target = snapshot("device-retired")
+
+        repository.connect(target).getOrThrow()
+        repository.retire(target.deviceUid)
+
+        assertFalse(repository.connect(target).isSuccess)
+        assertEquals(1, transports.size)
+
+        repository.activate(target.deviceUid)
+        assertTrue(repository.connect(target).isSuccess)
+        assertEquals(2, transports.size)
+
+        repository.shutdown()
+    }
+
+    @Test
+    fun synchronousEventDuringConnectIsNotLostBeforeCollectorsDispatch() {
+        val dispatcher = PausedDispatcher()
+        val transports = CopyOnWriteArrayList<FakeWsTransport>()
+        val repository = DeviceRuntimeRepository(
+            wsClientFactory = {
+                FakeWsTransport(emitOpenedDuringConnect = true).also(transports::add)
+            },
+            dispatcher = dispatcher
+        )
+        val target = snapshot("device-immediate-event")
+        val observedEvents = CopyOnWriteArrayList<AqlWsEvent>()
+        val observerScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        observerScope.launch {
+            repository.events.collect(observedEvents::add)
+        }
+
+        repository.connect(target).getOrThrow()
+        dispatcher.runAll()
+
+        assertEquals(1, observedEvents.size)
+        assertTrue(observedEvents.single() is AqlWsEvent.Opened)
 
         repository.close()
         observerScope.cancel()
     }
 
     @Test
-    fun closingOwnerRepositoryRejectsReconnectAndDropsOldOwnerEvents() {
+    fun closingOwnerRepositoryRejectsReconnectAndDropsOldOwnerEvents() = runBlocking {
         val oldOwnerTransports = CopyOnWriteArrayList<FakeWsTransport>()
         val newOwnerTransports = CopyOnWriteArrayList<FakeWsTransport>()
         val oldRepository = repositoryWith(oldOwnerTransports)
@@ -124,7 +175,7 @@ class DeviceRuntimeRepositoryLifecycleTest {
 
         oldRepository.connect(oldSnapshot).getOrThrow()
         val oldTransport = oldOwnerTransports.single()
-        oldRepository.close()
+        oldRepository.shutdown()
 
         assertEquals(1, oldTransport.closeCount.get())
         assertFalse(oldRepository.connect(oldSnapshot).isSuccess)
@@ -136,7 +187,7 @@ class DeviceRuntimeRepositoryLifecycleTest {
         assertEquals(1, newOwnerEvents.size)
         assertEquals(newSnapshot.deviceUid, newOwnerEvents.single().deviceUid)
 
-        newRepository.close()
+        newRepository.shutdown()
         observerScope.cancel()
     }
 
@@ -167,7 +218,24 @@ class DeviceRuntimeRepositoryLifecycleTest {
         )
     }
 
-    private class FakeWsTransport : AqlWsTransport {
+    private class PausedDispatcher : CoroutineDispatcher() {
+        private val tasks = ConcurrentLinkedQueue<Runnable>()
+
+        override fun dispatch(context: CoroutineContext, block: Runnable) {
+            tasks += block
+        }
+
+        fun runAll() {
+            while (true) {
+                val task = tasks.poll() ?: return
+                task.run()
+            }
+        }
+    }
+
+    private class FakeWsTransport(
+        private val emitOpenedDuringConnect: Boolean = false
+    ) : AqlWsTransport {
         private val _connectionState = MutableStateFlow<AqlWsConnectionState>(
             AqlWsConnectionState.Disconnected
         )
@@ -188,6 +256,9 @@ class DeviceRuntimeRepositoryLifecycleTest {
                 url = endpoint.toWebSocketUrl().orEmpty(),
                 connectedAtMillis = 1L
             )
+            if (emitOpenedDuringConnect) {
+                _events.tryEmit(AqlWsEvent.Opened(deviceUid))
+            }
             return Result.success(Unit)
         }
 
