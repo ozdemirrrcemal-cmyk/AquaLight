@@ -5,8 +5,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 class AqlWsAuthManager(
     private val tokenProvider: AqlWsTokenProvider
-) {
-    private val pendingAuthMessageIds = ConcurrentHashMap.newKeySet<String>()
+) : AutoCloseable {
+    private val pendingAuthOwners = ConcurrentHashMap<String, DeviceUid>()
 
     suspend fun authenticateIfTokenExists(
         deviceUid: DeviceUid,
@@ -20,21 +20,26 @@ class AqlWsAuthManager(
         val messageId = commandClient.authenticate(token)
             ?: return AqlWsAuthAttemptResult.SendFailed
 
-        pendingAuthMessageIds.add(messageId)
+        pendingAuthOwners[messageId] = deviceUid
         return AqlWsAuthAttemptResult.AuthMessageSent(messageId = messageId)
     }
 
     fun handleIncomingMessage(
         deviceUid: DeviceUid,
         message: AqlWsIncomingMessage?,
-        wsClient: AqlWsClient
+        wsClient: AqlWsTransport
     ): AqlWsAuthStateChange? {
         if (message == null) {
             return null
         }
 
         val messageId = message.id.trim()
-        if (messageId.isBlank() || !pendingAuthMessageIds.remove(messageId)) {
+        if (messageId.isBlank()) {
+            return null
+        }
+
+        val pendingOwner = pendingAuthOwners.remove(messageId) ?: return null
+        if (pendingOwner != deviceUid) {
             return null
         }
 
@@ -72,6 +77,14 @@ class AqlWsAuthManager(
         }
     }
 
+    fun clear(deviceUid: DeviceUid) {
+        pendingAuthOwners.entries.forEach { entry ->
+            if (entry.value == deviceUid) {
+                pendingAuthOwners.remove(entry.key, entry.value)
+            }
+        }
+    }
+
     suspend fun saveToken(
         deviceUid: DeviceUid,
         token: String
@@ -83,6 +96,10 @@ class AqlWsAuthManager(
 
     suspend fun clearToken(deviceUid: DeviceUid) {
         tokenProvider.clearToken(deviceUid)
+    }
+
+    override fun close() {
+        pendingAuthOwners.clear()
     }
 }
 
