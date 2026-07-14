@@ -25,7 +25,7 @@ object DevicesRepositoryProvider {
     ) : AutoCloseable {
         override fun close() {
             try {
-                repository.close()
+                repository.stop()
             } finally {
                 scope.cancel()
             }
