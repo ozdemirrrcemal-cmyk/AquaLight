@@ -108,13 +108,29 @@ class DeviceRuntimeRepository(
     fun connect(snapshot: DeviceSnapshot): Result<Unit> {
         val deviceUid = snapshot.deviceUid
         val session = runCatching {
-            sessionFor(deviceUid)
+            synchronized(lifecycleLock) {
+                check(!closed) { "Device runtime repository is closed." }
+                val current = sessions[deviceUid] ?: createSession(deviceUid).also { created ->
+                    sessions[deviceUid] = created
+                    observeSession(created)
+                }
+                lastActiveDeviceUid = deviceUid
+                current
+            }
         }.getOrElse { error ->
             return Result.failure(error)
         }
-        lastActiveDeviceUid = deviceUid
 
         return synchronized(session) {
+            val currentSession = synchronized(lifecycleLock) {
+                !closed && sessions[deviceUid] === session
+            }
+            if (!currentSession) {
+                return@synchronized Result.failure(
+                    IllegalStateException("Device runtime session is no longer active.")
+                )
+            }
+
             val endpointUrl = snapshot.endpoint.toWebSocketUrl()
             val endpointMatches = session.endpointUrl == endpointUrl
             val currentState = session.wsClient.connectionState.value
@@ -191,7 +207,11 @@ class DeviceRuntimeRepository(
         }
         authManager?.clear(deviceUid)
         timeSyncCoordinator.clearSessionMemory(deviceUid)
-        session?.close()
+        session?.let { removed ->
+            synchronized(removed) {
+                removed.close()
+            }
+        }
     }
 
     override fun close() {
@@ -209,23 +229,11 @@ class DeviceRuntimeRepository(
         repositoryScope.cancel()
         activeSessions.forEach { session ->
             timeSyncCoordinator.clearSessionMemory(session.deviceUid)
-            session.close()
+            synchronized(session) {
+                session.close()
+            }
         }
         authManager?.close()
-    }
-
-    private fun sessionFor(deviceUid: DeviceUid): RuntimeSession {
-        return synchronized(lifecycleLock) {
-            check(!closed) { "Device runtime repository is closed." }
-            sessions[deviceUid]?.let { existing ->
-                return@synchronized existing
-            }
-
-            val created = createSession(deviceUid)
-            sessions[deviceUid] = created
-            observeSession(created)
-            created
-        }
     }
 
     private fun createSession(deviceUid: DeviceUid): RuntimeSession {
