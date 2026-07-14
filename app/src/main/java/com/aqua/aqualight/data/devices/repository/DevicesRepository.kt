@@ -19,6 +19,7 @@ import com.aqua.aqualight.data.devices.store.DeviceSnapshotMerger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -74,6 +75,9 @@ class DevicesRepository(
                     _ready.value = false
                     val knownDevices = filterIgnoredDevices(knownStore?.loadSnapshots().orEmpty())
                     if (knownDevices.isNotEmpty()) {
+                        knownDevices.forEach { snapshot ->
+                            runtimeRepository?.activate(snapshot.deviceUid)
+                        }
                         registryStore.upsertAll(knownDevices)
                     }
 
@@ -124,16 +128,27 @@ class DevicesRepository(
     }
 
     fun stop() {
-        val job = synchronized(this) {
-            startJob.also {
-                startJob = null
-            }
-        }
-
+        val job = detachStartJob()
         _ready.value = false
         job?.cancel()
         runtimeRepository?.close()
         registryStore.clear()
+    }
+
+    suspend fun shutdown() {
+        val job = detachStartJob()
+        _ready.value = false
+        job?.cancelAndJoin()
+        runtimeRepository?.shutdown()
+        registryStore.clear()
+    }
+
+    private fun detachStartJob(): Job? {
+        return synchronized(this) {
+            startJob.also {
+                startJob = null
+            }
+        }
     }
 
     suspend fun refreshNow(): AqlDiscoveryRefreshSender.SendResult =
@@ -185,6 +200,7 @@ class DevicesRepository(
     }
 
     suspend fun stageProvisioningSnapshot(snapshot: DeviceSnapshot): DeviceSnapshot {
+        runtimeRepository?.activate(snapshot.deviceUid)
         val registered = registryStore.upsert(snapshot)
         if (registered.endpoint.hasWebSocketEndpoint) {
             runtimeRepository?.connect(registered)
@@ -206,6 +222,9 @@ class DevicesRepository(
             return
         }
 
+        mergedSnapshots.forEach { snapshot ->
+            runtimeRepository?.activate(snapshot.deviceUid)
+        }
         knownStore?.saveSnapshots(mergedSnapshots)
         registryStore.upsertAll(mergedSnapshots)
         mergedSnapshots
@@ -233,7 +252,7 @@ class DevicesRepository(
             )
         }
 
-        runtimeRepository?.close(deviceUid)
+        runtimeRepository?.retire(deviceUid)
         return registryStore.remove(deviceUid)
     }
 
@@ -252,7 +271,7 @@ class DevicesRepository(
             )
         }
 
-        runtimeRepository?.close(deviceUid)
+        runtimeRepository?.retire(deviceUid)
         return registryStore.remove(deviceUid)
     }
 
@@ -261,7 +280,11 @@ class DevicesRepository(
     }
 
     suspend fun clearKnownDevices() {
+        val deviceUids = registryStore.currentDevices().map(DeviceSnapshot::deviceUid)
         knownStore?.clearOwnerData()
+        deviceUids.forEach { deviceUid ->
+            runtimeRepository?.retire(deviceUid)
+        }
         registryStore.clear()
     }
 
@@ -273,6 +296,7 @@ class DevicesRepository(
             incoming = snapshot
         )
 
+        runtimeRepository?.activate(merged.deviceUid)
         knownStore?.saveSnapshot(merged)
         val registered = registryStore.upsert(merged)
 
