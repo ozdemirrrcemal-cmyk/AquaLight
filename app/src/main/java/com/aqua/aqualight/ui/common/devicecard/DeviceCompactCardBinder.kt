@@ -14,7 +14,11 @@ object DeviceCompactCardBinder {
         val name = item.displayName.trim().ifBlank { "Device" }
         val serial = item.serialText.trim().ifBlank { item.deviceUid.ifBlank { "Unknown" } }
         val supporting = item.supportingText.trim()
-        val presenceText = item.statusText.trim().ifBlank { "Offline" }
+        val presenceText = if (item.statusStyle == DeviceCompactStatusStyle.ONLINE) {
+            "Online"
+        } else {
+            "Offline"
+        }
 
         binding.tvDeviceName.text = name
         binding.tvSerialNumber.text = "Serial: $serial"
@@ -60,9 +64,9 @@ object DeviceCompactCardBinder {
         style: DeviceCompactStatusStyle
     ): Int {
         return when (style) {
-            DeviceCompactStatusStyle.ONLINE,
+            DeviceCompactStatusStyle.ONLINE -> Color.parseColor("#5FD6B4")
             DeviceCompactStatusStyle.CONNECTING,
-            DeviceCompactStatusStyle.WARNING -> Color.parseColor("#5FD6B4")
+            DeviceCompactStatusStyle.WARNING,
             DeviceCompactStatusStyle.OFFLINE -> Color.parseColor("#7B8794")
         }
     }
