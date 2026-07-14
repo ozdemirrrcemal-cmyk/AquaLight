@@ -7,6 +7,7 @@ import com.aqua.aqualight.data.care.reminder.CareTaskReminderScheduler
 import com.aqua.aqualight.data.care.smartcare.SmartCareDailyWorker
 import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.utils.NotificationHelper
 import java.util.concurrent.CancellationException
 import kotlinx.coroutines.flow.first
@@ -57,12 +58,17 @@ object SessionBoundServiceManager {
     )
 
     fun start(
-        context: Context
+        context: Context,
+        ownerUid: String
     ) {
-        val appContext = context.applicationContext
+        val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
+        if (normalizedOwnerUid.isBlank()) {
+            return
+        }
 
         SmartCareDailyWorker.schedule(
-            context = appContext
+            context = context.applicationContext,
+            ownerUid = normalizedOwnerUid
         )
     }
 
@@ -120,14 +126,18 @@ object SessionBoundServiceManager {
 
         runStep(StopStep.SMART_CARE) {
             SmartCareDailyWorker.cancel(
-                context = appContext
+                context = appContext,
+                ownerUid = ownerUid
             )
         }
 
-        runStep(StopStep.CARE_REMINDERS) {
-            cancelPendingCareTaskReminders(
-                context = appContext
-            )
+        if (ownerUid != null) {
+            runStep(StopStep.CARE_REMINDERS) {
+                cancelPendingCareTaskReminders(
+                    context = appContext,
+                    ownerUid = ownerUid
+                )
+            }
         }
 
         if (cancelNotifications) {
@@ -144,20 +154,22 @@ object SessionBoundServiceManager {
     }
 
     private suspend fun cancelPendingCareTaskReminders(
-        context: Context
+        context: Context,
+        ownerUid: String
     ) {
         val careTaskDataStoreManager = CareTaskDataStoreManager.create(
             context
         )
 
-        val pendingTasks = careTaskDataStoreManager.pendingTasksFlow
-            .first()
+        val pendingTasks = UserDataScope.withOwnerUid(ownerUid) {
+            careTaskDataStoreManager.pendingTasksFlow.first()
+        }
 
         pendingTasks.forEach { task ->
             CareTaskReminderScheduler.cancel(
                 context = context,
                 taskId = task.id,
-                ownerUid = task.ownerUid
+                ownerUid = task.ownerUid.ifBlank { ownerUid }
             )
         }
     }
