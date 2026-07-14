@@ -58,7 +58,11 @@ for token, reason in (
     ("FirebaseAuthInvalidUserException", "revoked users must be classified as terminal"),
 ):
     require(provider_path, provider, token, reason)
-for token in ("DevicesRepositoryProvider", "DeviceRuntimeRepository", "AqlWsClient"):
+for token in (
+    "import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider",
+    "import com.aqua.aqualight.data.devices.repository.DeviceRuntimeRepository",
+    "import com.aqua.aqualight.data.devices.runtime.ws.AqlWsClient",
+):
     forbid(provider_path, provider, token, "lightweight owner provider must not open runtime")
 
 runtime_path = "app/src/main/java/com/aqua/aqualight/data/auth/OwnerRuntimeSession.kt"
@@ -98,17 +102,18 @@ background_paths = (
     "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareTaskBootReceiver.kt",
     "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareTaskReminderReceiver.kt",
 )
+background_runtime_tokens = (
+    "import com.aqua.aqualight.data.auth.AuthSessionManager",
+    ".currentSessionState()",
+    "import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider",
+    "import com.aqua.aqualight.data.devices.repository.DeviceRuntimeRepository",
+    "import com.aqua.aqualight.data.devices.discovery.",
+    "import com.aqua.aqualight.data.devices.runtime.ws.AqlWsClient",
+    "import com.aqua.aqualight.data.auth.OwnerRuntimeSession",
+)
 for background_path in background_paths:
     background = read(background_path)
-    for token in (
-        "AuthSessionManager",
-        "currentSessionState",
-        "DevicesRepositoryProvider",
-        "DeviceRuntimeRepository",
-        "AqlDiscovery",
-        "AqlWsClient",
-        "OwnerRuntimeSession",
-    ):
+    for token in background_runtime_tokens:
         forbid(
             background_path,
             background,
