@@ -8,7 +8,6 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsOutgoingMessage
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsTokenProvider
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsTransport
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
@@ -42,7 +41,9 @@ class DeviceRuntimeRepositoryLifecycleTest {
         val observedEvents = CopyOnWriteArrayList<AqlWsEvent>()
         val observerScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         observerScope.launch {
-            repository.events.collect(observedEvents::add)
+            repository.events.collect { event ->
+                observedEvents += event
+            }
         }
 
         val workers = Executors.newFixedThreadPool(8)
@@ -78,7 +79,9 @@ class DeviceRuntimeRepositoryLifecycleTest {
         val observedEvents = CopyOnWriteArrayList<AqlWsEvent>()
         val observerScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         observerScope.launch {
-            repository.events.collect(observedEvents::add)
+            repository.events.collect { event ->
+                observedEvents += event
+            }
         }
 
         repository.connect(first).getOrThrow()
@@ -114,7 +117,9 @@ class DeviceRuntimeRepositoryLifecycleTest {
         val newOwnerEvents = CopyOnWriteArrayList<AqlWsEvent>()
         val observerScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         observerScope.launch {
-            newRepository.events.collect(newOwnerEvents::add)
+            newRepository.events.collect { event ->
+                newOwnerEvents += event
+            }
         }
 
         oldRepository.connect(oldSnapshot).getOrThrow()
@@ -140,7 +145,9 @@ class DeviceRuntimeRepositoryLifecycleTest {
     ): DeviceRuntimeRepository {
         return DeviceRuntimeRepository(
             wsClientFactory = {
-                FakeWsTransport().also(transports::add)
+                FakeWsTransport().also { transport ->
+                    transports += transport
+                }
             },
             dispatcher = Dispatchers.Unconfined
         )
@@ -171,13 +178,11 @@ class DeviceRuntimeRepositoryLifecycleTest {
         override val events: SharedFlow<AqlWsEvent> = _events.asSharedFlow()
 
         val closeCount = AtomicInteger(0)
-        private var activeDeviceUid: DeviceUid? = null
 
         override fun connect(
             deviceUid: DeviceUid,
             endpoint: DeviceRuntimeEndpoint
         ): Result<Unit> {
-            activeDeviceUid = deviceUid
             _connectionState.value = AqlWsConnectionState.Connected(
                 deviceUid = deviceUid,
                 url = endpoint.toWebSocketUrl().orEmpty(),
@@ -205,13 +210,12 @@ class DeviceRuntimeRepositoryLifecycleTest {
         }
 
         override fun disconnect(code: Int, reason: String) {
-            activeDeviceUid = null
             _connectionState.value = AqlWsConnectionState.Disconnected
         }
 
         override fun close() {
             closeCount.incrementAndGet()
-            disconnect()
+            disconnect(code = 1000, reason = "closed")
         }
 
         fun emit(event: AqlWsEvent) {
