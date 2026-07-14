@@ -156,7 +156,11 @@ class FirebaseAuthenticatedOwnerProvider private constructor(
         fun create(
             context: Context
         ): FirebaseAuthenticatedOwnerProvider {
-            context.applicationContext
+            val appContext = context.applicationContext
+            check(appContext.packageName.isNotBlank()) {
+                "Application context is unavailable."
+            }
+
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: FirebaseAuthenticatedOwnerProvider(
                     firebaseAuth = Firebase.auth
@@ -202,16 +206,25 @@ private suspend fun Task<GetTokenResult>.awaitTokenResult(): GetTokenResult {
                 return@addOnCompleteListener
             }
 
-            val error = task.exception
-            val result = task.result
-
-            when {
-                task.isSuccessful && result != null -> continuation.resume(result)
-                error != null -> continuation.resumeWithException(error)
-                else -> continuation.resumeWithException(
-                    IllegalStateException("Firebase token validation completed without a result.")
-                )
+            if (task.isSuccessful) {
+                val result = task.result
+                if (result != null) {
+                    continuation.resume(result)
+                } else {
+                    continuation.resumeWithException(
+                        IllegalStateException(
+                            "Firebase token validation completed without a result."
+                        )
+                    )
+                }
+                return@addOnCompleteListener
             }
+
+            continuation.resumeWithException(
+                task.exception ?: IllegalStateException(
+                    "Firebase token validation failed without an exception."
+                )
+            )
         }
     }
 }
