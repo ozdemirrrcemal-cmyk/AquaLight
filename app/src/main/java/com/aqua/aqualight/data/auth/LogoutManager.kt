@@ -20,7 +20,8 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 class LogoutManager private constructor(
     private val appContext: Context,
     private val firebaseAuth: FirebaseAuth,
-    private val userPrefs: UserPreferencesManager
+    private val userPrefs: UserPreferencesManager,
+    private val ownerSessionCoordinator: OwnerSessionCoordinator
 ) {
 
     data class LogoutResult(
@@ -44,18 +45,20 @@ class LogoutManager private constructor(
                 firebaseAuth = Firebase.auth,
                 userPrefs = UserPreferencesManager.create(
                     appContext
+                ),
+                ownerSessionCoordinator = OwnerSessionCoordinator.create(
+                    appContext
                 )
             )
         }
     }
 
     suspend fun logout(): LogoutResult {
-        val serviceCleanupError = runCatching {
-            SessionBoundServiceManager.stop(
-                context = appContext,
-                cancelNotifications = true
-            )
-        }.exceptionOrNull()
+        val ownerUid = firebaseAuth.currentUser?.uid.orEmpty()
+        val serviceCleanupError = stopSessionBoundServices(
+            ownerUid = ownerUid,
+            cancelNotifications = true
+        )
 
         val googleSignOutError = runCatching {
             GoogleSignInClientFactory.create(
@@ -82,12 +85,11 @@ class LogoutManager private constructor(
     suspend fun cleanupAfterLocalSensitiveAction(
         cancelNotifications: Boolean = true
     ): LogoutResult {
-        val serviceCleanupError = runCatching {
-            SessionBoundServiceManager.stop(
-                context = appContext,
-                cancelNotifications = cancelNotifications
-            )
-        }.exceptionOrNull()
+        val ownerUid = firebaseAuth.currentUser?.uid.orEmpty()
+        val serviceCleanupError = stopSessionBoundServices(
+            ownerUid = ownerUid,
+            cancelNotifications = cancelNotifications
+        )
 
         val googleSignOutError = runCatching {
             GoogleSignInClientFactory.create(
@@ -108,6 +110,29 @@ class LogoutManager private constructor(
             googleSignOutError = googleSignOutError,
             firebaseSignOutError = firebaseSignOutError,
             preferenceCleanupError = preferenceCleanupError
+        )
+    }
+
+    private suspend fun stopSessionBoundServices(
+        ownerUid: String,
+        cancelNotifications: Boolean
+    ): Throwable? {
+        return runCatching {
+            ownerSessionCoordinator.close(
+                expectedOwnerUid = ownerUid.ifBlank { null },
+                cancelNotifications = cancelNotifications
+            )
+        }.fold(
+            onSuccess = { result ->
+                when (result) {
+                    is OwnerSessionCoordinator.CloseResult.Closed -> {
+                        result.stopResult.exceptionOrNull()
+                    }
+
+                    is OwnerSessionCoordinator.CloseResult.StaleRequestIgnored -> null
+                }
+            },
+            onFailure = { error -> error }
         )
     }
 

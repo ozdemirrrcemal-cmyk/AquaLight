@@ -1,155 +1,219 @@
 package com.aqua.aqualight.data.aquarium.devices
 
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.dataStore
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import org.json.JSONArray
-import org.json.JSONObject
+import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
-data class TankDeviceAssignment(
-    val tankId: Long,
-    val deviceUid: DeviceUid,
-    val assignedAtMillis: Long
+private val Context.tankDeviceAssignmentsDataStore: DataStore<TankDeviceAssignmentsStore> by dataStore(
+    fileName = "tank_device_assignments.pb",
+    serializer = TankDeviceAssignmentsSerializer,
+    corruptionHandler = ReplaceFileCorruptionHandler {
+        LocalDataRecoveryTracker.markRecovered(
+            LocalDataRecoveryTracker.Area.TANK_DEVICE_ASSIGNMENTS
+        )
+        TankDeviceAssignmentsStore.getDefaultInstance()
+    }
 )
 
 class TankDeviceAssignmentStore private constructor(
     context: Context
 ) {
-    private val appContext = context.applicationContext
 
-    private val prefs = appContext.getSharedPreferences(
-        PREF_NAME,
-        Context.MODE_PRIVATE
-    )
+    private val dataStore = context.applicationContext.tankDeviceAssignmentsDataStore
+    private val mutationMutex = Mutex()
 
-    private val _assignments = MutableStateFlow(loadAssignments())
-    val assignments: StateFlow<List<TankDeviceAssignment>> = _assignments.asStateFlow()
+    fun assignmentsForOwner(
+        ownerUid: String
+    ): Flow<List<TankDeviceAssignment>> {
+        val normalizedOwnerUid = ownerUid.requireOwnerUid()
 
-    @Synchronized
-    fun assignDeviceToTank(
-        tankId: Long,
-        deviceUid: DeviceUid
-    ) {
-        if (tankId <= 0L || deviceUid.value.isBlank()) {
-            return
-        }
-
-        val now = System.currentTimeMillis()
-
-        val next = _assignments.value
-            .filterNot { assignment ->
-                assignment.deviceUid == deviceUid
-            }
-            .plus(
-                TankDeviceAssignment(
-                    tankId = tankId,
-                    deviceUid = deviceUid,
-                    assignedAtMillis = now
-                )
-            )
-
-        saveAssignments(next)
-        _assignments.value = next
-    }
-
-    @Synchronized
-    fun removeDeviceFromTank(
-        tankId: Long,
-        deviceUid: DeviceUid
-    ) {
-        val next = _assignments.value.filterNot { assignment ->
-            assignment.tankId == tankId && assignment.deviceUid == deviceUid
-        }
-
-        saveAssignments(next)
-        _assignments.value = next
-    }
-
-    @Synchronized
-    fun removeDeviceFromAnyTank(
-        deviceUid: DeviceUid
-    ) {
-        val next = _assignments.value.filterNot { assignment ->
-            assignment.deviceUid == deviceUid
-        }
-
-        saveAssignments(next)
-        _assignments.value = next
-    }
-
-    private fun loadAssignments(): List<TankDeviceAssignment> {
-        val raw = prefs.getString(KEY_ASSIGNMENTS_JSON, "").orEmpty()
-
-        if (raw.isBlank()) {
-            return emptyList()
-        }
-
-        return runCatching {
-            val array = JSONArray(raw)
-
-            buildList {
-                for (index in 0 until array.length()) {
-                    val item = array.optJSONObject(index) ?: continue
-                    val tankId = item.optLong(KEY_TANK_ID, 0L)
-                    val uid = item.optString(KEY_DEVICE_UID, "")
-                    val assignedAt = item.optLong(KEY_ASSIGNED_AT, 0L)
-
-                    if (tankId > 0L && uid.isNotBlank()) {
-                        add(
-                            TankDeviceAssignment(
-                                tankId = tankId,
-                                deviceUid = DeviceUid(uid),
-                                assignedAtMillis = assignedAt.takeIf { value -> value > 0L }
-                                    ?: System.currentTimeMillis()
-                            )
-                        )
-                    }
+        return dataStore.data.map { store ->
+            store.getAssignmentsList()
+                .asSequence()
+                .filter { assignment ->
+                    assignment.ownerUid == normalizedOwnerUid
                 }
-            }
-        }.getOrElse {
-            emptyList()
+                .map { assignment ->
+                    assignment.toDomain()
+                }
+                .sortedWith(
+                    compareBy<TankDeviceAssignment> { assignment ->
+                        assignment.assignedAtMillis
+                    }.thenBy { assignment ->
+                        assignment.deviceUid.value
+                    }
+                )
+                .toList()
         }
     }
 
-    private fun saveAssignments(
-        assignments: List<TankDeviceAssignment>
-    ) {
-        val array = JSONArray()
+    internal suspend fun assignDeviceToTank(
+        ownerUid: String,
+        tankId: Long,
+        deviceUid: DeviceUid,
+        assignedAtMillis: Long = System.currentTimeMillis()
+    ): TankDeviceStoreAssignDecision {
+        return mutationMutex.withLock {
+            var decision: TankDeviceStoreAssignDecision? = null
 
-        assignments.forEach { assignment ->
-            array.put(
-                JSONObject()
-                    .put(KEY_TANK_ID, assignment.tankId)
-                    .put(KEY_DEVICE_UID, assignment.deviceUid.value)
-                    .put(KEY_ASSIGNED_AT, assignment.assignedAtMillis)
-            )
+            dataStore.updateData { currentStore ->
+                val mutation = TankDeviceAssignmentRules.assign(
+                    store = currentStore,
+                    ownerUid = ownerUid,
+                    tankId = tankId,
+                    deviceUid = deviceUid.value,
+                    assignedAtMillis = assignedAtMillis
+                )
+
+                decision = mutation.decision
+                mutation.store
+            }
+
+            checkNotNull(decision) {
+                "Tank assignment mutation completed without a decision."
+            }
         }
+    }
 
-        prefs.edit()
-            .putString(KEY_ASSIGNMENTS_JSON, array.toString())
-            .apply()
+    suspend fun removeDeviceFromTank(
+        ownerUid: String,
+        tankId: Long,
+        deviceUid: DeviceUid
+    ): Boolean {
+        return mutationMutex.withLock {
+            var removed = false
+
+            dataStore.updateData { currentStore ->
+                val mutation = TankDeviceAssignmentRules.removeFromTank(
+                    store = currentStore,
+                    ownerUid = ownerUid,
+                    tankId = tankId,
+                    deviceUid = deviceUid.value
+                )
+
+                removed = mutation.second
+                mutation.first
+            }
+
+            removed
+        }
+    }
+
+    suspend fun removeDeviceFromAnyTank(
+        ownerUid: String,
+        deviceUid: DeviceUid
+    ): Boolean {
+        return mutationMutex.withLock {
+            var removed = false
+
+            dataStore.updateData { currentStore ->
+                val mutation = TankDeviceAssignmentRules.removeDevice(
+                    store = currentStore,
+                    ownerUid = ownerUid,
+                    deviceUid = deviceUid.value
+                )
+
+                removed = mutation.second
+                mutation.first
+            }
+
+            removed
+        }
+    }
+
+    suspend fun removeAssignmentsForTank(
+        ownerUid: String,
+        tankId: Long
+    ): Int {
+        return mutationMutex.withLock {
+            var removedCount = 0
+
+            dataStore.updateData { currentStore ->
+                val mutation = TankDeviceAssignmentRules.removeTank(
+                    store = currentStore,
+                    ownerUid = ownerUid,
+                    tankId = tankId
+                )
+
+                removedCount = mutation.second
+                mutation.first
+            }
+
+            removedCount
+        }
+    }
+
+    suspend fun clearOwnerAssignments(
+        ownerUid: String
+    ): Int {
+        return mutationMutex.withLock {
+            var removedCount = 0
+
+            dataStore.updateData { currentStore ->
+                val mutation = TankDeviceAssignmentRules.clearOwner(
+                    store = currentStore,
+                    ownerUid = ownerUid
+                )
+
+                removedCount = mutation.second
+                mutation.first
+            }
+
+            removedCount
+        }
+    }
+
+    suspend fun repairOwnerAssignments(
+        ownerUid: String,
+        validTankIds: Set<Long>,
+        validDeviceUids: Set<String>
+    ): List<TankDeviceAssignment> {
+        return mutationMutex.withLock {
+            var removedAssignments: List<TankDeviceAssignment> = emptyList()
+
+            dataStore.updateData { currentStore ->
+                val mutation = TankDeviceAssignmentRules.repairOwner(
+                    store = currentStore,
+                    ownerUid = ownerUid,
+                    validTankIds = validTankIds,
+                    validDeviceUids = validDeviceUids
+                )
+
+                removedAssignments = mutation.removedAssignments
+                mutation.store
+            }
+
+            removedAssignments
+        }
+    }
+
+    private fun String.requireOwnerUid(): String {
+        val normalized = trim()
+        require(normalized.isNotBlank()) {
+            "ownerUid must not be blank"
+        }
+        return normalized
     }
 
     companion object {
-        private const val PREF_NAME = "tank_device_assignments_v2"
-        private const val KEY_ASSIGNMENTS_JSON = "assignments_json"
-        private const val KEY_TANK_ID = "tankId"
-        private const val KEY_DEVICE_UID = "deviceUid"
-        private const val KEY_ASSIGNED_AT = "assignedAtMillis"
-
         @Volatile
-        private var INSTANCE: TankDeviceAssignmentStore? = null
+        private var instance: TankDeviceAssignmentStore? = null
 
         fun get(
             context: Context
         ): TankDeviceAssignmentStore {
-            return INSTANCE ?: synchronized(this) {
-                INSTANCE ?: TankDeviceAssignmentStore(
+            return instance ?: synchronized(this) {
+                instance ?: TankDeviceAssignmentStore(
                     context = context.applicationContext
                 ).also { store ->
-                    INSTANCE = store
+                    instance = store
                 }
             }
         }

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tank_device_assignment_conflict_title">Device Already Assigned</string>
+    <string name="tank_device_assignment_conflict_message">This device is assigned to another aquarium. Remove it from that aquarium before assigning it here.</string>
+    <string name="tank_device_assignment_failed_title">Assignment Failed</string>
+    <string name="tank_device_assignment_failed_message">The device could not be assigned. Your existing assignments were not changed. Please try again.</string>
+    <string name="tank_device_load_failed_title">Devices Unavailable</string>
+    <string name="tank_device_load_failed_message">Saved devices could not be loaded. Please close this screen and try again.</string>
+    <string name="tank_device_remove_failed_title">Remove Failed</string>
+</resources>

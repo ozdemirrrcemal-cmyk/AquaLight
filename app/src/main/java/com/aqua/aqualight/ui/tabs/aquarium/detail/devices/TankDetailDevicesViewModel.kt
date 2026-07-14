@@ -5,8 +5,8 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
-import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentStore
+import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
+import com.aqua.aqualight.data.aquarium.devices.TankDeviceRemovalResult
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactSnapshotMapper
@@ -19,8 +19,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class TankDetailDevicesViewModel(
@@ -29,10 +31,8 @@ class TankDetailDevicesViewModel(
 
     private val devicesRepository = DevicesRepositoryProvider.get(application)
     private val menuOpenGate = DeviceMenuOpenGate(devicesRepository)
-    private val assignmentRepository = TankDeviceAssignmentRepository(
-        devicesRepository = devicesRepository,
-        assignmentStore = TankDeviceAssignmentStore.get(application)
-    )
+    private val assignmentRepository =
+        TankDeviceAssignmentRepositoryProvider.get(application)
 
     private val _uiState = MutableStateFlow(TankDetailDevicesUiState())
     val uiState: StateFlow<TankDetailDevicesUiState> = _uiState.asStateFlow()
@@ -41,6 +41,7 @@ class TankDetailDevicesViewModel(
     val events: Flow<TankDetailDevicesEvent> = _events.receiveAsFlow()
 
     private val openingDeviceMenu = MutableStateFlow(false)
+    private val removingDevice = MutableStateFlow(false)
 
     private var boundTankId: Long = 0L
     private var observeJob: Job? = null
@@ -59,8 +60,9 @@ class TankDetailDevicesViewModel(
         observeJob = viewModelScope.launch {
             combine(
                 assignmentRepository.assignedDevicesForTank(tankId),
-                openingDeviceMenu
-            ) { snapshots, isOpeningDeviceMenu ->
+                openingDeviceMenu,
+                removingDevice
+            ) { snapshots, isOpeningDeviceMenu, isRemovingDevice ->
                 val items = snapshots.map { snapshot ->
                     TankAssignedDeviceItem(
                         deviceUid = snapshot.deviceUid.value,
@@ -74,18 +76,35 @@ class TankDetailDevicesViewModel(
                 TankDetailDevicesUiState(
                     devices = items,
                     isEmpty = items.isEmpty(),
-                    isOpeningDeviceMenu = isOpeningDeviceMenu
+                    isLoading = false,
+                    isOpeningDeviceMenu = isOpeningDeviceMenu,
+                    isRemovingDevice = isRemovingDevice
                 )
-            }.collect { state ->
-                _uiState.value = state
             }
+                .catch {
+                    _uiState.update { current ->
+                        current.copy(
+                            devices = emptyList(),
+                            isEmpty = true,
+                            isLoading = false
+                        )
+                    }
+                    _events.send(TankDetailDevicesEvent.ShowLoadFailed)
+                }
+                .collect { state ->
+                    _uiState.value = state
+                }
         }
     }
 
     fun onDeviceClicked(
         deviceUid: String
     ) {
-        if (deviceUid.isBlank() || openingDeviceMenu.value) {
+        if (
+            deviceUid.isBlank() ||
+            openingDeviceMenu.value ||
+            removingDevice.value
+        ) {
             return
         }
 
@@ -122,21 +141,44 @@ class TankDetailDevicesViewModel(
         deviceUid: String
     ) {
         val tankId = boundTankId
-        if (tankId <= 0L || deviceUid.isBlank()) {
+
+        if (
+            tankId <= 0L ||
+            deviceUid.isBlank() ||
+            removingDevice.value
+        ) {
             return
         }
 
-        assignmentRepository.removeDeviceFromTank(
-            tankId = tankId,
-            deviceUid = DeviceUid(deviceUid)
-        )
+        viewModelScope.launch {
+            removingDevice.value = true
+
+            val result = assignmentRepository.removeDeviceFromTank(
+                tankId = tankId,
+                deviceUid = DeviceUid(deviceUid)
+            )
+
+            removingDevice.value = false
+
+            when (result) {
+                TankDeviceRemovalResult.Removed,
+                TankDeviceRemovalResult.NotAssigned -> Unit
+
+                TankDeviceRemovalResult.InvalidRequest,
+                is TankDeviceRemovalResult.Failure -> {
+                    _events.send(TankDetailDevicesEvent.ShowRemoveFailed)
+                }
+            }
+        }
     }
 }
 
 data class TankDetailDevicesUiState(
     val devices: List<TankAssignedDeviceItem> = emptyList(),
     val isEmpty: Boolean = true,
-    val isOpeningDeviceMenu: Boolean = false
+    val isLoading: Boolean = true,
+    val isOpeningDeviceMenu: Boolean = false,
+    val isRemovingDevice: Boolean = false
 )
 
 sealed interface TankDetailDevicesEvent {
@@ -148,4 +190,8 @@ sealed interface TankDetailDevicesEvent {
         val title: String,
         @StringRes val messageRes: Int
     ) : TankDetailDevicesEvent
+
+    data object ShowRemoveFailed : TankDetailDevicesEvent
+
+    data object ShowLoadFailed : TankDetailDevicesEvent
 }

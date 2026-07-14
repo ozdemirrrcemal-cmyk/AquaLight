@@ -66,6 +66,26 @@ class DeviceRegistryStore {
         }
     }
 
+    /**
+     * Applies LAN discovery data only to devices already present in the registry.
+     *
+     * The membership check and merge happen inside one StateFlow update so an
+     * unknown LAN device cannot become registered and a concurrent deletion
+     * cannot be undone by a late UDP announcement.
+     */
+    fun updateExistingAll(devices: Iterable<DeviceSnapshot>) {
+        _snapshots.update { current ->
+            devices.fold(current) { acc, incoming ->
+                val previous = acc[incoming.deviceUid] ?: return@fold acc
+                val merged = DeviceSnapshotMerger.merge(
+                    previous = previous,
+                    incoming = incoming
+                )
+                acc + (incoming.deviceUid to merged)
+            }
+        }
+    }
+
     fun updateConnectionState(
         deviceUid: DeviceUid,
         update: (DeviceConnectionState) -> DeviceConnectionState

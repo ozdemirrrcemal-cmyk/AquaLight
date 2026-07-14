@@ -65,7 +65,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                     filledIconAction = AquaHeaderFilledIconAction(
                         iconRes = R.drawable.ic_delete_24,
                         contentDescription = getString(R.string.devices_delete_selected_content_description),
-                        enabled = state.selectedCount > 0,
+                        enabled = state.selectedCount > 0 && !state.isDeletingDevices,
                         onClick = {
                             showDeleteConfirmation()
                         }
@@ -75,10 +75,12 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                 AquaHeaderConfig(
                     showBackButton = false,
                     primaryAction = AquaHeaderPrimaryAction(
-                        text = "+ Add",
-                        contentDescription = "Add device",
+                        text = getString(R.string.devices_add_action),
+                        contentDescription = getString(R.string.devices_add_content_description),
                         onClick = {
-                            openAddDevice()
+                            if (!state.isDeletingDevices) {
+                                openAddDevice()
+                            }
                         }
                     )
                 )
@@ -87,6 +89,10 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     }
 
     private fun openAddDevice() {
+        if (viewModel.uiState.value.isDeletingDevices) {
+            return
+        }
+
         findNavController().navigate(
             DevicesFragmentDirections.actionDevicesFragmentToDeviceAddFragment()
         )
@@ -116,6 +122,12 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                         when (event) {
                             is DevicesEvent.OpenRoute -> openDeviceRoute(event.route)
                             is DevicesEvent.ShowDeviceUnavailable -> showDeviceUnavailable(event)
+                            is DevicesEvent.ShowDeletePartialSuccess -> {
+                                showDeletePartialSuccess(event)
+                            }
+                            is DevicesEvent.ShowDeleteFailed -> {
+                                showDeleteFailed(event)
+                            }
                         }
                     }
                 }
@@ -128,11 +140,13 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
         setupHeader(state)
         deviceAdapter.submitList(state.devices)
+        binding.rvSelectedDevices.isEnabled = !state.isDeletingDevices
+        binding.btnEmptyAddDevice.isEnabled = !state.isDeletingDevices
         binding.rvSelectedDevices.isVisible = state.devices.isNotEmpty()
         binding.tvEmptyState.isVisible = state.isEmpty
         baseActivity()?.setGlobalLoading(
-            ownerKey = DEVICE_MENU_LOADING_OWNER,
-            show = state.isOpeningDeviceMenu
+            ownerKey = DEVICE_OPERATION_LOADING_OWNER,
+            show = state.isOpeningDeviceMenu || state.isDeletingDevices
         )
     }
 
@@ -145,9 +159,47 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         )
     }
 
+    private fun showDeletePartialSuccess(
+        event: DevicesEvent.ShowDeletePartialSuccess
+    ) {
+        val removedSentence = resources.getQuantityString(
+            R.plurals.devices_delete_removed_sentence,
+            event.succeededCount,
+            event.succeededCount
+        )
+        val failedSentence = resources.getQuantityString(
+            R.plurals.devices_delete_remain_selected_sentence,
+            event.failedCount,
+            event.failedCount
+        )
+
+        DialogManager.showInfoDialog(
+            context = requireContext(),
+            type = DialogType.WARNING,
+            title = getString(R.string.devices_delete_partial_title),
+            message = "$removedSentence $failedSentence"
+        )
+    }
+
+    private fun showDeleteFailed(
+        event: DevicesEvent.ShowDeleteFailed
+    ) {
+        DialogManager.showInfoDialog(
+            context = requireContext(),
+            type = DialogType.ERROR,
+            title = getString(R.string.devices_delete_failed_title),
+            message = resources.getQuantityString(
+                R.plurals.devices_delete_failed_message,
+                event.failedCount,
+                event.failedCount
+            )
+        )
+    }
+
     private fun showDeleteConfirmation() {
-        val selectedCount = viewModel.uiState.value.selectedCount
-        if (selectedCount <= 0) return
+        val state = viewModel.uiState.value
+        val selectedCount = state.selectedCount
+        if (selectedCount <= 0 || state.isDeletingDevices) return
 
         DialogManager.showConfirmDialog(
             context = requireContext(),
@@ -210,13 +262,13 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     }
 
     override fun onDestroyView() {
-        baseActivity()?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
+        baseActivity()?.clearGlobalLoading(DEVICE_OPERATION_LOADING_OWNER)
         binding.rvSelectedDevices.adapter = null
         _binding = null
         super.onDestroyView()
     }
 
     private companion object {
-        const val DEVICE_MENU_LOADING_OWNER = "DevicesFragment.DeviceMenuOpenGate"
+        const val DEVICE_OPERATION_LOADING_OWNER = "DevicesFragment.DeviceOperation"
     }
 }

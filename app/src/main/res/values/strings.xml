@@ -195,6 +195,8 @@
     <string name="re_auth_unknown_error">Unknown error.</string>
     <string name="re_auth_delete_success_title">Account Deleted</string>
     <string name="re_auth_delete_success_message">Your account has been deleted successfully.</string>
+    <string name="re_auth_delete_cleanup_warning_title">Account Deleted</string>
+    <string name="re_auth_delete_cleanup_warning_message">Your account was deleted, but some local sign-in data could not be removed. Restart AquaLight before another person signs in. On a shared device, clear the app’s storage if this warning appears again.</string>
     <string name="re_auth_delete_failed_title">Delete Failed</string>
     <string name="user_info_title">User information</string>
     <string name="user_info_back_button_desc">Go back from user information screen</string>

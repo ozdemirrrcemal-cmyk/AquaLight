@@ -17,6 +17,7 @@
     <string name="tank_device_select_title">Select Device</string>
     <string name="tank_device_select_empty_title">No saved devices</string>
     <string name="tank_device_select_empty_subtitle">Add a device from the Devices screen first, then return here to assign it to this tank.</string>
+    <string name="tank_device_select_all_assigned_subtitle">All saved devices are already assigned to a tank. Remove a device from its current tank before assigning it here.</string>
 
     <!-- Aquarium and tank -->
     <string name="aquarium_action_complete">Complete</string>
@@ -152,6 +153,8 @@
     <string name="aquarium_delete_tank_title">Delete Tank?</string>
     <string name="aquarium_delete_tank_message">This will permanently delete "%1$s" and all saved tank data.</string>
     <string name="aquarium_error_tank_delete_failed">Tank could not be deleted.</string>
+    <string name="aquarium_delete_cleanup_warning_title">Tank Deleted</string>
+    <string name="aquarium_delete_cleanup_warning_message">The tank was deleted, but some related local data could not be cleaned up. AquaLight will retry the cleanup automatically.</string>
     <string name="aquarium_livestock_not_found_title">Livestock Not Found</string>
     <string name="aquarium_livestock_no_longer_exists_message">This livestock record no longer exists.</string>
     <string name="aquarium_validation_livestock_name_min">Livestock name must be at least 2 characters.</string>

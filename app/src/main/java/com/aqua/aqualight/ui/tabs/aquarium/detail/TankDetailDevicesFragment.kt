@@ -20,6 +20,8 @@ import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewM
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmBottomSheet
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmTone
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
+import com.aqua.aqualight.utils.DialogManager
+import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
 
 class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices) {
@@ -108,6 +110,20 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
                             is TankDetailDevicesEvent.ShowDeviceUnavailable -> {
                                 showDeviceUnavailable(event)
                             }
+
+                            TankDetailDevicesEvent.ShowRemoveFailed -> {
+                                showError(
+                                    title = getString(R.string.tank_device_remove_failed_title),
+                                    message = getString(R.string.aquarium_error_device_remove_failed)
+                                )
+                            }
+
+                            TankDetailDevicesEvent.ShowLoadFailed -> {
+                                showError(
+                                    title = getString(R.string.tank_device_load_failed_title),
+                                    message = getString(R.string.tank_device_load_failed_message)
+                                )
+                            }
                         }
                     }
                 }
@@ -118,12 +134,18 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     private fun renderState(
         state: TankDetailDevicesUiState
     ) {
+        val isBusy = state.isLoading ||
+            state.isOpeningDeviceMenu ||
+            state.isRemovingDevice
+
         adapter.submitList(state.devices)
-        binding.rvAssignedDevices.isVisible = state.isEmpty.not()
-        binding.cardDevicesEmpty.isVisible = state.isEmpty
+        binding.rvAssignedDevices.isEnabled = !isBusy
+        binding.btnAddDevice.isEnabled = !isBusy
+        binding.rvAssignedDevices.isVisible = !state.isLoading && state.isEmpty.not()
+        binding.cardDevicesEmpty.isVisible = !state.isLoading && state.isEmpty
         baseActivity()?.setGlobalLoading(
-            ownerKey = TANK_DEVICE_MENU_LOADING_OWNER,
-            show = state.isOpeningDeviceMenu
+            ownerKey = TANK_DEVICE_LOADING_OWNER,
+            show = isBusy
         )
     }
 
@@ -136,9 +158,25 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
         )
     }
 
+    private fun showError(
+        title: String,
+        message: String
+    ) {
+        DialogManager.showInfoDialog(
+            context = requireContext(),
+            type = DialogType.ERROR,
+            title = title,
+            message = message
+        )
+    }
+
     private fun confirmRemoveDevice(
         item: TankAssignedDeviceItem
     ) {
+        if (viewModel.uiState.value.isRemovingDevice) {
+            return
+        }
+
         DeviceConfirmBottomSheet
             .create(requireContext())
             .show(
@@ -162,7 +200,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     }
 
     override fun onDestroyView() {
-        baseActivity()?.clearGlobalLoading(TANK_DEVICE_MENU_LOADING_OWNER)
+        baseActivity()?.clearGlobalLoading(TANK_DEVICE_LOADING_OWNER)
         binding.rvAssignedDevices.adapter = null
         _binding = null
         super.onDestroyView()
@@ -171,7 +209,8 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     companion object {
 
         private const val ARG_TANK_ID = "tankId"
-        private const val TANK_DEVICE_MENU_LOADING_OWNER = "TankDetailDevicesFragment.DeviceMenuOpenGate"
+        private const val TANK_DEVICE_LOADING_OWNER =
+            "TankDetailDevicesFragment.DeviceOperation"
 
         fun newInstance(
             tankId: Long

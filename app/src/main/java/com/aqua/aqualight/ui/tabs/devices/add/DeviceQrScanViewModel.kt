@@ -56,15 +56,9 @@ class DeviceQrScanViewModel(
                 return
             }
 
-        if (repository.currentDevice(payload.deviceUid) != null) {
-            pendingPayload = null
-            showFailure(
-                titleRes = R.string.device_qr_preflight_already_added_title,
-                messageRes = R.string.device_qr_preflight_already_added_message
-            )
-            return
-        }
-
+        // Do not reject a locally registered UID here. Both QR and nearby-scan
+        // entries must reach the secure BLE verification flow. The verified
+        // runtime handoff then resolves new registration versus reconfiguration.
         pendingPayload = payload
 
         if (!hasBlePermissions) {
@@ -186,16 +180,30 @@ class DeviceQrScanViewModel(
                 return@launch
             }
 
-            if (bleScanner.candidates.value.isEmpty()) {
-                showFailure(
-                    titleRes = R.string.device_qr_preflight_not_found_title,
-                    messageRes = R.string.device_qr_preflight_not_found_message
-                )
-            } else {
-                showFailure(
-                    titleRes = R.string.device_qr_preflight_mismatch_title,
-                    messageRes = R.string.device_qr_preflight_mismatch_message
-                )
+            val hasNearbyCandidates = bleScanner.candidates.value.isNotEmpty()
+            val isAlreadyRegistered = repository.currentDevice(payload.deviceUid) != null
+
+            when {
+                hasNearbyCandidates -> {
+                    showFailure(
+                        titleRes = R.string.device_qr_preflight_mismatch_title,
+                        messageRes = R.string.device_qr_preflight_mismatch_message
+                    )
+                }
+
+                isAlreadyRegistered -> {
+                    showFailure(
+                        titleRes = R.string.device_qr_preflight_already_added_title,
+                        messageRes = R.string.device_qr_preflight_already_added_message
+                    )
+                }
+
+                else -> {
+                    showFailure(
+                        titleRes = R.string.device_qr_preflight_not_found_title,
+                        messageRes = R.string.device_qr_preflight_not_found_message
+                    )
+                }
             }
         }
     }
@@ -255,6 +263,8 @@ data class DeviceQrScanUiState(
 
 enum class DeviceQrScanPrimaryAction {
     SCAN_AGAIN,
+    REQUEST_CAMERA_PERMISSION,
+    OPEN_CAMERA_SETTINGS,
     REQUEST_BLE_PERMISSION,
     OPEN_BLUETOOTH_SETTINGS,
     OPEN_APP_SETTINGS

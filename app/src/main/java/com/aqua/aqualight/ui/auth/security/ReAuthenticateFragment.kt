@@ -394,6 +394,28 @@ class ReAuthenticateFragment :
                 return@launch
             }
 
+            if (result.hasPostDeleteCleanupErrors) {
+                result.localCleanupResult.issues.forEach { issue ->
+                    issue.error.printStackTrace()
+                }
+                result.googleRevokeError?.printStackTrace()
+                result.firebaseSignOutError?.printStackTrace()
+
+                DialogManager.showInfoDialog(
+                    context = requireContext(),
+                    type = DialogType.WARNING,
+                    title = getString(
+                        R.string.re_auth_delete_cleanup_warning_title
+                    ),
+                    message = getString(
+                        R.string.re_auth_delete_cleanup_warning_message
+                    ),
+                    onDismiss = ::navigateToLogin
+                )
+
+                return@launch
+            }
+
             baseActivity?.showSnackBar(
                 getString(
                     R.string.re_auth_delete_success_message

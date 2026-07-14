@@ -109,6 +109,7 @@
     <!-- Provisioning progress -->
     <string name="device_provisioning_title">Provisioning</string>
     <string name="device_provisioning_try_again">Try again</string>
+    <string name="device_provisioning_start_again">Start setup again</string>
     <string name="device_provisioning_unavailable">Unavailable</string>
     <string name="device_provisioning_saving">Saving...</string>
     <string name="device_provisioning_opening">Opening...</string>
@@ -207,4 +208,6 @@
     <string name="device_provisioning_error_start_session">The device rejected Wi-Fi details before the secure setup session was ready. Put the device in setup mode and try again.</string>
     <string name="device_provisioning_error_wifi_failed">Wi-Fi connection failed. Make sure the network is 2.4 GHz and the password is correct.</string>
     <string name="device_provisioning_error_unexpected">An unexpected setup problem occurred. Try again.</string>
+    <string name="device_provisioning_error_secure_session_ended">The secure Bluetooth setup session ended. Put the device in setup mode and start setup again.</string>
+    <string name="device_provisioning_error_runtime_confirmation">The device received the Wi-Fi details, but AquaLight could not securely confirm its runtime identity. Restore the phone connection and start setup again.</string>
 </resources>

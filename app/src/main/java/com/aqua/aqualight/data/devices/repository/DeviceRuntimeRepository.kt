@@ -26,14 +26,17 @@ import kotlinx.coroutines.launch
 
 class DeviceRuntimeRepository(
     private val tokenProvider: AqlWsTokenProvider? = null,
-    private val wsClientFactory: () -> AqlWsClient = { AqlWsClient() },
+    private val wsClientFactory: (AqlWsTokenProvider?) -> AqlWsClient = { provider ->
+        AqlWsClient(tokenProvider = provider)
+    },
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 ) {
 
     private data class RuntimeSession(
         val deviceUid: DeviceUid,
         val wsClient: AqlWsClient,
-        val commandClient: AqlWsCommandClient
+        val commandClient: AqlWsCommandClient,
+        @Volatile var endpointUrl: String? = null
     )
 
     private val sessions = ConcurrentHashMap<DeviceUid, RuntimeSession>()
@@ -68,10 +71,39 @@ class DeviceRuntimeRepository(
         val session = sessionFor(deviceUid)
         lastActiveDeviceUid = deviceUid
 
-        return session.wsClient.connect(
-            deviceUid = deviceUid,
-            endpoint = snapshot.endpoint
-        )
+        return synchronized(session) {
+            val endpointUrl = snapshot.endpoint.toWebSocketUrl()
+            val endpointMatches = session.endpointUrl == endpointUrl
+            val currentState = session.wsClient.connectionState.value
+
+            if (
+                !RuntimeConnectionReusePolicy.shouldReconnect(
+                    state = currentState,
+                    requestedDeviceUid = deviceUid,
+                    endpointMatches = endpointMatches
+                )
+            ) {
+                return@synchronized Result.success(Unit)
+            }
+
+            session.endpointUrl = endpointUrl
+            session.wsClient.connect(
+                deviceUid = deviceUid,
+                endpoint = snapshot.endpoint
+            )
+        }
+    }
+
+    fun currentConnectionState(deviceUid: DeviceUid): AqlWsConnectionState? =
+        sessions[deviceUid]?.wsClient?.connectionState?.value
+
+    fun disconnectForLocalNetworkLoss() {
+        lastActiveDeviceUid = null
+        sessions.values.forEach { session ->
+            synchronized(session) {
+                session.wsClient.close(reason = LOCAL_NETWORK_UNAVAILABLE_REASON)
+            }
+        }
     }
 
     fun commandClient(): AqlWsCommandClient? {
@@ -97,15 +129,12 @@ class DeviceRuntimeRepository(
         tokenProvider?.clearToken(deviceUid)
     }
 
-    fun clearTokenAsync(deviceUid: DeviceUid) {
-        scope.launch {
-            tokenProvider?.clearToken(deviceUid)
-        }
-    }
-
     fun close(deviceUid: DeviceUid) {
         timeSyncCoordinator.clearSessionMemory(deviceUid)
         sessions.remove(deviceUid)?.wsClient?.close()
+        if (lastActiveDeviceUid == deviceUid) {
+            lastActiveDeviceUid = null
+        }
     }
 
     fun close() {
@@ -124,7 +153,7 @@ class DeviceRuntimeRepository(
     }
 
     private fun createSession(deviceUid: DeviceUid): RuntimeSession {
-        val wsClient = wsClientFactory()
+        val wsClient = wsClientFactory(tokenProvider)
         val commandClient = AqlWsCommandClient(wsClient)
 
         val session = RuntimeSession(
@@ -141,9 +170,7 @@ class DeviceRuntimeRepository(
     private fun observeSession(session: RuntimeSession) {
         scope.launch {
             session.wsClient.connectionState.collect { state ->
-                if (state is AqlWsConnectionState.Failed) {
-                    _connectionState.emit(state)
-                }
+                _connectionState.emit(state)
             }
         }
 
@@ -214,13 +241,38 @@ class DeviceRuntimeRepository(
 
     companion object {
         private const val EVENT_BUFFER_CAPACITY = 256
+        private const val LOCAL_NETWORK_UNAVAILABLE_REASON = "local network unavailable"
 
         fun withCredentialStore(
-            context: Context
+            context: Context,
+            ownerUid: String
         ): DeviceRuntimeRepository {
             return DeviceRuntimeRepository(
-                tokenProvider = DeviceCredentialStore(context)
+                tokenProvider = DeviceCredentialStore(
+                    context = context,
+                    ownerUid = ownerUid
+                )
             )
+        }
+    }
+}
+
+internal object RuntimeConnectionReusePolicy {
+
+    fun shouldReconnect(
+        state: AqlWsConnectionState,
+        requestedDeviceUid: DeviceUid,
+        endpointMatches: Boolean
+    ): Boolean {
+        if (!endpointMatches) return true
+
+        return when (state) {
+            is AqlWsConnectionState.Connecting -> state.deviceUid != requestedDeviceUid
+            is AqlWsConnectionState.Connected -> state.deviceUid != requestedDeviceUid
+            is AqlWsConnectionState.Authenticated -> state.deviceUid != requestedDeviceUid
+            AqlWsConnectionState.Disconnected,
+            is AqlWsConnectionState.AuthRequired,
+            is AqlWsConnectionState.Failed -> true
         }
     }
 }

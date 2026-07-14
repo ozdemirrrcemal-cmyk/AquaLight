@@ -41,6 +41,21 @@ class AqlWsCommandClient(
         return wsClient.send(AqlWsCommandFactory.networkStatus())
     }
 
+    /**
+     * Sends an authenticated, read-only network status request and returns its correlation id.
+     *
+     * Callers that need proof of current device liveness must wait for the matching successful
+     * response instead of treating a queued WebSocket write as proof that the device is online.
+     */
+    fun requestNetworkStatus(): String? {
+        val message = AqlWsCommandFactory.networkStatus()
+        return if (wsClient.send(message)) {
+            message.id
+        } else {
+            null
+        }
+    }
+
     fun timeStatus(): Boolean {
         return wsClient.send(AqlWsCommandFactory.timeStatus())
     }

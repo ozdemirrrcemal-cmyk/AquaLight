@@ -3,40 +3,110 @@ package com.aqua.aqualight.data.devices.repository
 import android.content.Context
 import com.aqua.aqualight.data.devices.monitor.DeviceConnectivityObserver
 import com.aqua.aqualight.data.devices.store.DeviceKnownStore
+import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
 /**
- * Process-level Devices V2 repository holder.
+ * Process-level owner-bound device repository holder.
  *
- * All device UI surfaces observe the same repository instance. The repository is started from this
- * provider so device presence is not tied to a single screen such as DevicesFragment.
+ * A repository can never be created without Android context or authenticated
+ * owner identity. Switching owners tears down runtime sessions and in-memory
+ * registry state before the next repository is exposed.
  */
 object DevicesRepositoryProvider {
 
-    private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private data class Entry(
+        val ownerUid: String,
+        val scope: CoroutineScope,
+        val repository: DevicesRepository
+    )
 
     @Volatile
-    private var instance: DevicesRepository? = null
+    private var entry: Entry? = null
 
-    fun get(context: Context? = null): DevicesRepository = instance ?: synchronized(this) {
-        instance ?: createRepository(context).also { repository ->
-            repository.start(repositoryScope)
-            instance = repository
+    fun get(
+        context: Context
+    ): DevicesRepository {
+        val appContext = context.applicationContext
+        val ownerUid = UserDataScope.requireCurrentUid()
+        val current = entry
+
+        if (current?.ownerUid == ownerUid) {
+            return current.repository
+        }
+
+        return synchronized(this) {
+            val synchronizedEntry = entry
+            if (synchronizedEntry?.ownerUid == ownerUid) {
+                synchronizedEntry.repository
+            } else {
+                synchronizedEntry?.repository?.stop()
+
+                val repositoryScope = CoroutineScope(
+                    SupervisorJob() + Dispatchers.IO
+                )
+                val repository = DevicesRepository(
+                    knownStore = DeviceKnownStore(
+                        context = appContext,
+                        ownerUid = ownerUid
+                    ),
+                    runtimeRepository = DeviceRuntimeRepository.withCredentialStore(
+                        context = appContext,
+                        ownerUid = ownerUid
+                    ),
+                    connectivityObserver = DeviceConnectivityObserver(appContext)
+                )
+
+                repository.start(repositoryScope)
+
+                entry = Entry(
+                    ownerUid = ownerUid,
+                    scope = repositoryScope,
+                    repository = repository
+                )
+
+                repository
+            }
         }
     }
 
-    private fun createRepository(context: Context?): DevicesRepository {
-        val appContext = context?.applicationContext
-        return if (appContext != null) {
-            DevicesRepository(
-                knownStore = DeviceKnownStore(appContext),
-                runtimeRepository = DeviceRuntimeRepository.withCredentialStore(appContext),
-                connectivityObserver = DeviceConnectivityObserver(appContext)
-            )
-        } else {
-            DevicesRepository()
+    fun clear(
+        expectedOwnerUid: String? = null
+    ): Boolean {
+        val normalizedExpected = expectedOwnerUid
+            ?.trim()
+            ?.takeIf(String::isNotBlank)
+
+        return synchronized(this) {
+            val current = entry
+
+            if (
+                normalizedExpected != null &&
+                current?.ownerUid != normalizedExpected
+            ) {
+                false
+            } else {
+                current?.repository?.stop()
+                entry = null
+                current != null
+            }
         }
+    }
+
+    fun currentOwnerUid(): String? {
+        return entry?.ownerUid
+    }
+
+    fun currentRepository(
+        expectedOwnerUid: String
+    ): DevicesRepository? {
+        val normalizedOwnerUid = expectedOwnerUid.trim()
+        if (normalizedOwnerUid.isBlank()) return null
+
+        return entry?.takeIf { current ->
+            current.ownerUid == normalizedOwnerUid
+        }?.repository
     }
 }

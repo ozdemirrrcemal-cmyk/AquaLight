@@ -15,10 +15,14 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.auth.AuthSessionManager
 import com.aqua.aqualight.data.auth.SessionBoundServiceManager
+import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.databinding.ActivityMainBinding
 import com.aqua.aqualight.ui.navigation.AppDestinationContract
 import com.aqua.aqualight.ui.navigation.AppRouteNavigator
+import com.aqua.aqualight.utils.DialogManager
+import com.aqua.aqualight.utils.DialogType
+import java.util.concurrent.CancellationException
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
@@ -65,16 +69,22 @@ class MainActivity : BaseActivity() {
         captureCareTaskIntent(intent)
 
         lifecycleScope.launch {
-            isAuthenticated = isUserAuthenticated()
+            val sessionError = refreshAuthenticationState()
 
-            ensureRootGraphForCurrentSession(
-                startInApp = isAuthenticated
-            )
+            if (sessionError == null) {
+                ensureRootGraphForCurrentSession(
+                    startInApp = isAuthenticated
+                )
+            } else {
+                installRootGraph(startInApp = false)
+            }
 
             setupBottomBarIfNeeded(navController)
 
             binding.navHost.isVisible = true
 
+            showSessionStartupFailureIfNeeded(sessionError)
+            showLocalDataRecoveryIfNeeded()
             restoreSettingsRootAfterThemeChangeIfNeeded()
             startSessionBoundServicesIfNeeded()
             consumePendingCareTaskIfPossible()
@@ -90,12 +100,18 @@ class MainActivity : BaseActivity() {
         captureCareTaskIntent(intent)
 
         lifecycleScope.launch {
-            isAuthenticated = isUserAuthenticated()
+            val sessionError = refreshAuthenticationState()
 
-            ensureRootGraphForCurrentSession(
-                startInApp = isAuthenticated
-            )
+            if (sessionError == null) {
+                ensureRootGraphForCurrentSession(
+                    startInApp = isAuthenticated
+                )
+            } else {
+                installRootGraph(startInApp = false)
+            }
 
+            showSessionStartupFailureIfNeeded(sessionError)
+            showLocalDataRecoveryIfNeeded()
             restoreSettingsRootAfterThemeChangeIfNeeded()
             startSessionBoundServicesIfNeeded()
             consumePendingCareTaskIfPossible()
@@ -141,6 +157,64 @@ class MainActivity : BaseActivity() {
     private suspend fun isUserAuthenticated(): Boolean {
         return authSessionManager.currentSessionState() is
             AuthSessionManager.SessionState.Authenticated
+    }
+
+    private suspend fun refreshAuthenticationState(): Throwable? {
+        return try {
+            isAuthenticated = isUserAuthenticated()
+            null
+        } catch (error: Throwable) {
+            if (error is CancellationException) {
+                throw error
+            }
+
+            error.printStackTrace()
+            isAuthenticated = false
+            error
+        }
+    }
+
+    private fun showSessionStartupFailureIfNeeded(
+        error: Throwable?
+    ) {
+        if (error == null) return
+
+        DialogManager.showInfoDialog(
+            context = this,
+            type = DialogType.ERROR,
+            title = getString(R.string.session_startup_failed_title),
+            message = getString(R.string.session_startup_failed_message)
+        )
+    }
+
+    private fun showLocalDataRecoveryIfNeeded() {
+        if (!isAuthenticated) return
+
+        val recoveredAreas = LocalDataRecoveryTracker.consumeRecoveredAreas()
+        if (recoveredAreas.isEmpty()) return
+
+        val messageRes = when (recoveredAreas) {
+            setOf(LocalDataRecoveryTracker.Area.AQUARIUM_TANKS) ->
+                R.string.local_data_recovery_tanks_message
+
+            setOf(LocalDataRecoveryTracker.Area.CARE_TASKS) ->
+                R.string.local_data_recovery_care_tasks_message
+
+            setOf(LocalDataRecoveryTracker.Area.KNOWN_DEVICES) ->
+                R.string.local_data_recovery_devices_message
+
+            setOf(LocalDataRecoveryTracker.Area.TANK_DEVICE_ASSIGNMENTS) ->
+                R.string.local_data_recovery_assignments_message
+
+            else -> R.string.local_data_recovery_combined_message
+        }
+
+        DialogManager.showInfoDialog(
+            context = this,
+            type = DialogType.WARNING,
+            title = getString(R.string.local_data_recovery_title),
+            message = getString(messageRes)
+        )
     }
 
     private fun ensureRootGraphForCurrentSession(

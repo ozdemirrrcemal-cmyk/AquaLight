@@ -12,4 +12,13 @@ sealed class DevicesEvent {
         val title: String,
         @StringRes val messageRes: Int
     ) : DevicesEvent()
+
+    data class ShowDeletePartialSuccess(
+        val succeededCount: Int,
+        val failedCount: Int
+    ) : DevicesEvent()
+
+    data class ShowDeleteFailed(
+        val failedCount: Int
+    ) : DevicesEvent()
 }

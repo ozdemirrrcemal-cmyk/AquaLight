@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""AquaLight architecture guard.
+"""AquaLight architecture and owner-isolation guard.
 
-Fails CI when lower layers start depending on UI packages.
-This keeps persistence, background work, runtime device control and app bootstrap
-usable without Fragment/View/ViewModel dependencies.
+Fails CI when lower layers depend on UI packages or when removed legacy device
+persistence/session paths are reintroduced. The app is unreleased, therefore
+there is intentionally no migration, dual-read, fallback, or version-suffixed
+legacy storage path.
 """
 from pathlib import Path
 import re
@@ -20,6 +21,25 @@ FORBIDDEN_IMPORT = re.compile(r"^import\s+com\.aqua\.aqualight\.ui(?:\.|$)", re.
 
 errors: list[str] = []
 
+
+def read(relative_path: str) -> str:
+    path = ROOT / relative_path
+    if not path.exists():
+        errors.append(f"{relative_path}: required production architecture file is missing")
+        return ""
+    return path.read_text(encoding="utf-8", errors="ignore")
+
+
+def forbid(relative_path: str, text: str, token: str, reason: str) -> None:
+    if token in text:
+        errors.append(f"{relative_path}: {reason}: {token}")
+
+
+def require(relative_path: str, text: str, token: str, reason: str) -> None:
+    if token not in text:
+        errors.append(f"{relative_path}: {reason}: {token}")
+
+
 for guarded_dir in GUARDED_DIRS:
     if not guarded_dir.exists():
         continue
@@ -32,6 +52,10 @@ for guarded_dir in GUARDED_DIRS:
 manifest = ROOT / "app/src/main/AndroidManifest.xml"
 if manifest.exists():
     manifest_text = manifest.read_text(encoding="utf-8", errors="ignore")
+    if 'android:allowBackup="false"' not in manifest_text:
+        errors.append(
+            f"{manifest.relative_to(ROOT)}: Android cloud backup must remain disabled"
+        )
     old_receivers = [
         "com.aqua.aqualight.ui.tabs.maintenance.reminder.CareTaskReminderReceiver",
         "com.aqua.aqualight.ui.tabs.maintenance.reminder.CareTaskBootReceiver",
@@ -42,10 +66,399 @@ if manifest.exists():
                 f"{manifest.relative_to(ROOT)}: receiver still points to UI package: {receiver}"
             )
 
+assignment_path = (
+    "app/src/main/java/com/aqua/aqualight/data/aquarium/devices/"
+    "TankDeviceAssignmentStore.kt"
+)
+assignment_store = read(assignment_path)
+for token in (
+    "SharedPreferences",
+    "getSharedPreferences",
+    "org.json",
+    "JSONArray",
+    "JSONObject",
+    "tank_device_assignments_v2",
+    "KEY_ASSIGNMENTS_JSON",
+):
+    forbid(assignment_path, assignment_store, token, "legacy assignment persistence is forbidden")
+require(
+    assignment_path,
+    assignment_store,
+    'fileName = "tank_device_assignments.pb"',
+    "assignment Proto DataStore must remain authoritative",
+)
+require(
+    assignment_path,
+    assignment_store,
+    "ReplaceFileCorruptionHandler",
+    "corrupt assignment Proto must recover to an empty fail-closed authority",
+)
+
+known_path = "app/src/main/java/com/aqua/aqualight/data/devices/store/DeviceKnownStore.kt"
+known_store = read(known_path)
+for token in (
+    "androidx.datastore.preferences",
+    "preferencesDataStore",
+    "org.json",
+    "JSONArray",
+    "JSONObject",
+    "aql_known_devices_v2",
+):
+    forbid(known_path, known_store, token, "legacy known-device persistence is forbidden")
+require(
+    known_path,
+    known_store,
+    'fileName = "known_devices.pb"',
+    "known-device Proto DataStore must remain authoritative",
+)
+require(
+    known_path,
+    known_store,
+    "ownerUid: String",
+    "known-device storage must be owner-bound",
+)
+require(
+    known_path,
+    known_store,
+    "ReplaceFileCorruptionHandler",
+    "corrupt known-device Proto must recover to an empty fail-closed authority",
+)
+
+credential_path = (
+    "app/src/main/java/com/aqua/aqualight/data/devices/store/DeviceCredentialStore.kt"
+)
+credential_store = read(credential_path)
+for token in (
+    "aql_device_credentials_v2",
+    "fun clearAll(",
+    ".clear()",
+):
+    forbid(credential_path, credential_store, token, "global credential storage/cleanup is forbidden")
+require(
+    credential_path,
+    credential_store,
+    "ownerUid: String",
+    "credential storage must be owner-bound",
+)
+require(
+    credential_path,
+    credential_store,
+    "suspend fun clearOwner()",
+    "credential cleanup must target one owner",
+)
+for token, reason in (
+    ("suspend fun stageToken(", "provisioning credentials must use two-phase persistence"),
+    ("suspend fun commitStagedToken(", "staged credentials need an explicit commit boundary"),
+    ("suspend fun discardStagedTokens()", "process death must discard uncommitted credentials"),
+    ("suspend fun retainTokensFor(", "orphan credentials must be reconciled against durable devices"),
+):
+    require(credential_path, credential_store, token, reason)
+
+provider_path = (
+    "app/src/main/java/com/aqua/aqualight/data/devices/repository/"
+    "DevicesRepositoryProvider.kt"
+)
+provider = read(provider_path)
+for token in (
+    "Context?",
+    "context: Context?",
+    "DevicesRepository()",
+):
+    forbid(provider_path, provider, token, "context-free device repository fallback is forbidden")
+require(
+    provider_path,
+    provider,
+    "UserDataScope.requireCurrentUid()",
+    "device repository provider must resolve an authenticated owner",
+)
+
+app_path = "app/src/main/java/com/aqua/aqualight/app/AquaApp.kt"
+app_bootstrap = read(app_path)
+for token in (
+    "AqlWsTokenProvider.install",
+    "DeviceCredentialStore(this)",
+):
+    forbid(app_path, app_bootstrap, token, "process-global token provider is forbidden")
+
+repository_path = (
+    "app/src/main/java/com/aqua/aqualight/data/devices/repository/DevicesRepository.kt"
+)
+devices_repository = read(repository_path)
+for token in (
+    "clearTokenAsync",
+    "runCatching {\n                    repository.forgetDevice",
+    "registryStore.upsertAll(filterIgnoredDevices(discoveredDevices))",
+):
+    forbid(repository_path, devices_repository, token, "fire-and-forget or discovery registration is forbidden")
+require(
+    repository_path,
+    devices_repository,
+    "knownStore?.forgetDevice(deviceUid)",
+    "forgotten devices must be durably ignored before leaving the registry",
+)
+require(
+    repository_path,
+    devices_repository,
+    "registryStore.updateExistingAll(",
+    "LAN discovery must only update devices already registered for the owner",
+)
+
+registry_path = "app/src/main/java/com/aqua/aqualight/data/devices/store/DeviceRegistryStore.kt"
+registry_store = read(registry_path)
+require(
+    registry_path,
+    registry_store,
+    "fun updateExistingAll(",
+    "registry must expose an atomic registered-only discovery update",
+)
+require(
+    registry_path,
+    registry_store,
+    "val previous = acc[incoming.deviceUid] ?: return@fold acc",
+    "late discovery must not create or resurrect a device",
+)
+
+session_path = "app/src/main/java/com/aqua/aqualight/data/auth/OwnerSessionCoordinator.kt"
+session_coordinator = read(session_path)
+require(
+    session_path,
+    session_coordinator,
+    "OwnerSessionStateMachine",
+    "owner transitions must remain generation-controlled",
+)
+require(
+    session_path,
+    session_coordinator,
+    "repairOwnerAssignments()",
+    "stale assignment repair must run during owner startup",
+)
+require(
+    session_path,
+    session_coordinator,
+    "repairOrphanedTankTasks(normalizedOwnerUid)",
+    "stale tank care data must be reconciled during owner startup",
+)
+require(
+    session_path,
+    session_coordinator,
+    "rollbackPendingRegistrationsForOwner(normalizedOwnerUid)",
+    "owner startup must finish residual in-process provisioning rollback",
+)
+require(
+    session_path,
+    session_coordinator,
+    "credentialStore.discardStagedTokens()",
+    "owner startup must roll back process-killed credential staging",
+)
+require(
+    session_path,
+    session_coordinator,
+    "credentialStore.retainTokensFor(",
+    "owner startup must remove credentials without a durable device",
+)
+
+provisioning_saver_path = (
+    "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/repository/"
+    "AqlProvisioningHandoffSaver.kt"
+)
+provisioning_saver = read(provisioning_saver_path)
+for token, reason in (
+    ("rollbackPendingRegistrationsForOwner(", "session teardown must be able to roll back all provisioning transactions"),
+    ("credentialStore.stageToken(", "provisioning must not overwrite committed credentials before completion"),
+    ("credentialStore.commitStagedToken(", "provisioning must explicitly commit its verified credential"),
+    ("pendingRegistry.registerIfAbsent(", "duplicate provisioning transactions must be rejected atomically"),
+):
+    require(provisioning_saver_path, provisioning_saver, token, reason)
+
+transaction_registry_test_path = (
+    "app/src/test/java/com/aqua/aqualight/data/devices/provisioning/repository/"
+    "AqlProvisioningTransactionRegistryTest.kt"
+)
+transaction_registry_test = read(transaction_registry_test_path)
+for token, reason in (
+    (
+        "concurrent duplicate registration has exactly one winner",
+        "provisioning transaction registration needs a concurrency regression test",
+    ),
+    (
+        "stale transaction cannot remove current transaction",
+        "provisioning transaction removal must remain identity-safe",
+    ),
+    (
+        "same device uid is independent between owners",
+        "provisioning transactions must remain owner-isolated",
+    ),
+):
+    require(transaction_registry_test_path, transaction_registry_test, token, reason)
+
+provisioning_view_model_path = (
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/"
+    "DeviceProvisioningProgressViewModel.kt"
+)
+provisioning_view_model = read(provisioning_view_model_path)
+require(
+    provisioning_view_model_path,
+    provisioning_view_model,
+    "fun requestExit()",
+    "provisioning exit must be a rollback-aware operation",
+)
+
+provisioning_fragment_path = (
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/"
+    "DeviceProvisioningProgressFragment.kt"
+)
+provisioning_fragment = read(provisioning_fragment_path)
+require(
+    provisioning_fragment_path,
+    provisioning_fragment,
+    "viewModel.requestExit()",
+    "provisioning back navigation must pass through rollback",
+)
+
+for proto_store_path, reason in (
+    (
+        "app/src/main/java/com/aqua/aqualight/data/aquarium/store/"
+        "AquariumTankDataStoreManager.kt",
+        "corrupt aquarium Proto must recover to an empty fail-closed authority",
+    ),
+    (
+        "app/src/main/java/com/aqua/aqualight/data/care/"
+        "CareTaskDataStoreManager.kt",
+        "corrupt care-task Proto must recover to an empty fail-closed authority",
+    ),
+):
+    proto_store = read(proto_store_path)
+    require(proto_store_path, proto_store, "ReplaceFileCorruptionHandler", reason)
+
+user_cleaner_path = "app/src/main/java/com/aqua/aqualight/data/user/UserDataCleaner.kt"
+user_cleaner = read(user_cleaner_path)
+for token, reason in (
+    ("Step.DEVICE_ASSIGNMENTS", "account cleanup must attempt assignment removal independently"),
+    ("Step.KNOWN_DEVICES", "account cleanup must attempt known-device removal independently"),
+    ("Step.DEVICE_CREDENTIALS", "account cleanup must attempt credential removal independently"),
+):
+    require(user_cleaner_path, user_cleaner, token, reason)
+
+credential_instrumentation_path = (
+    "app/src/androidTest/java/com/aqua/aqualight/data/devices/store/"
+    "DeviceCredentialStoreInstrumentedTest.kt"
+)
+credential_instrumentation = read(credential_instrumentation_path)
+for token, reason in (
+    (
+        "stagedTokenDoesNotOverwriteCommittedTokenUntilCommit",
+        "two-phase credentials require an Android storage test",
+    ),
+    (
+        "processRestartCleanupDiscardsOnlyStagedTokens",
+        "process-restart credential recovery requires an Android storage test",
+    ),
+    (
+        "orphanReconciliationKeepsOnlyDurableDeviceCredentials",
+        "orphan credential reconciliation requires an Android storage test",
+    ),
+    (
+        "sameDeviceCredentialIsIsolatedBetweenOwners",
+        "credential owner isolation requires an Android storage test",
+    ),
+):
+    require(
+        credential_instrumentation_path,
+        credential_instrumentation,
+        token,
+        reason,
+    )
+
+corruption_instrumentation_path = (
+    "app/src/androidTest/java/com/aqua/aqualight/data/recovery/"
+    "ProtoCorruptionRecoveryInstrumentedTest.kt"
+)
+corruption_instrumentation = read(corruption_instrumentation_path)
+require(
+    corruption_instrumentation_path,
+    corruption_instrumentation,
+    "allAuthoritativeProtoStoresRecoverFailClosedAndReportRecovery",
+    "authoritative Proto corruption recovery requires an Android DataStore test",
+)
+
+emulator_workflow_path = ".github/workflows/android_instrumentation.yml"
+emulator_workflow = read(emulator_workflow_path)
+for token, reason in (
+    ("connectedDebugAndroidTest", "instrumentation tests must run in CI"),
+    (
+        "bash tools/verify_uninstall_clears_data.sh",
+        "emulator CI must verify uninstall/reinstall data removal",
+    ),
+    ("api-level: [27, 35]", "emulator CI must cover min and modern Android APIs"),
+    (
+        "android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d",
+        "emulator CI action must remain pinned to its reviewed v2.38.0 commit",
+    ),
+):
+    require(emulator_workflow_path, emulator_workflow, token, reason)
+
+uninstall_test_path = "tools/verify_uninstall_clears_data.sh"
+uninstall_test = read(uninstall_test_path)
+for token, reason in (
+    ("adb uninstall", "the uninstall smoke test must remove the application package"),
+    ("known_devices.pb", "the uninstall smoke test must cover durable known devices"),
+    ("device_credentials.xml", "the uninstall smoke test must cover encrypted credentials"),
+):
+    require(uninstall_test_path, uninstall_test, token, reason)
+
+for backup_rules_path in (
+    "app/src/main/res/xml/backup_rules.xml",
+    "app/src/main/res/xml/data_extraction_rules.xml",
+):
+    backup_rules = read(backup_rules_path)
+    for excluded_path in (
+        'domain="file" path="datastore/"',
+        'domain="sharedpref" path="device_credentials.xml"',
+    ):
+        require(
+            backup_rules_path,
+            backup_rules,
+            excluded_path,
+            "device registry and credential data must remain excluded from backup/transfer",
+        )
+
+pr_workflow_path = ".github/workflows/codeql.yml"
+pr_workflow = read(pr_workflow_path)
+for token, reason in (
+    ("python3 tools/navigation_guard.py", "PR validation must enforce navigation contracts"),
+    ("testReleaseUnitTest", "PR validation must compile and run Release unit tests"),
+    ("lintRelease", "PR validation must run Release lint"),
+    ("assembleRelease", "PR validation must exercise minification and release packaging"),
+):
+    require(pr_workflow_path, pr_workflow, token, reason)
+
+proto_dir = ROOT / "app/src/main/proto"
+for required_proto in ("tank_device_assignments.proto", "known_devices.proto"):
+    if not (proto_dir / required_proto).exists():
+        errors.append(f"app/src/main/proto/{required_proto}: required Proto source is missing")
+
+legacy_tokens = (
+    "tank_device_assignments_v2",
+    "aql_known_devices_v2",
+    "aql_device_credentials_v2",
+)
+for source_file in (ROOT / "app/src/main").rglob("*"):
+    if not source_file.is_file() or source_file.suffix not in {".kt", ".java", ".xml", ".proto"}:
+        continue
+    text = source_file.read_text(encoding="utf-8", errors="ignore")
+    for token in legacy_tokens:
+        if token in text:
+            errors.append(
+                f"{source_file.relative_to(ROOT)}: legacy storage identifier is forbidden: {token}"
+            )
+
 if errors:
     print("Architecture guard failed:", file=sys.stderr)
     for error in errors:
         print(f" - {error}", file=sys.stderr)
     sys.exit(1)
 
-print("Architecture guard passed: guarded layers do not depend on UI packages.")
+print(
+    "Architecture guard passed: layer boundaries, Proto authority, owner isolation, "
+    "registered-only discovery, and non-global credential/session rules are intact."
+)

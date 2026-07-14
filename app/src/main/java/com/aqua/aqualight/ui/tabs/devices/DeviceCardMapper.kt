@@ -7,11 +7,20 @@ object DeviceCardMapper {
 
     fun map(
         snapshot: DeviceSnapshot,
+        assignedTankName: String? = null,
         nowMillis: Long = System.currentTimeMillis()
     ): DeviceCardUi {
+        val supportingText = assignedTankName
+            ?.trim()
+            ?.takeIf(String::isNotBlank)
+            .orEmpty()
+
         return DeviceCardUi(
             deviceUid = snapshot.deviceUid.value,
-            card = DeviceCompactSnapshotMapper.map(snapshot = snapshot)
+            card = DeviceCompactSnapshotMapper.map(
+                snapshot = snapshot,
+                supportingText = supportingText
+            )
         )
     }
 }
