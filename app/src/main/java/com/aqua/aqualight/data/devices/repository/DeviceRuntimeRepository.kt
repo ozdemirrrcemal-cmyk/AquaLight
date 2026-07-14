@@ -14,11 +14,18 @@ import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsTokenProvider
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsTransport
 import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.CompletableJob
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -26,19 +33,48 @@ import kotlinx.coroutines.launch
 
 class DeviceRuntimeRepository(
     private val tokenProvider: AqlWsTokenProvider? = null,
-    private val wsClientFactory: (AqlWsTokenProvider?) -> AqlWsClient = { provider ->
+    private val wsClientFactory: (AqlWsTokenProvider?) -> AqlWsTransport = { provider ->
         AqlWsClient(tokenProvider = provider)
     },
-    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-) {
+    dispatcher: CoroutineDispatcher = Dispatchers.IO
+) : AutoCloseable {
 
-    private data class RuntimeSession(
+    private class RuntimeSession(
         val deviceUid: DeviceUid,
-        val wsClient: AqlWsClient,
+        val wsClient: AqlWsTransport,
         val commandClient: AqlWsCommandClient,
+        val sessionJob: CompletableJob,
+        val sessionScope: CoroutineScope,
         @Volatile var endpointUrl: String? = null
-    )
+    ) : AutoCloseable {
+        private val closed = AtomicBoolean(false)
+        private val collectorJobs = CopyOnWriteArrayList<Job>()
 
+        fun track(job: Job) {
+            if (closed.get()) {
+                job.cancel()
+                return
+            }
+            collectorJobs += job
+            if (closed.get() && collectorJobs.remove(job)) {
+                job.cancel()
+            }
+        }
+
+        override fun close() {
+            if (!closed.compareAndSet(false, true)) {
+                return
+            }
+            collectorJobs.forEach(Job::cancel)
+            collectorJobs.clear()
+            sessionJob.cancel()
+            wsClient.close()
+        }
+    }
+
+    private val lifecycleLock = Any()
+    private val repositoryJob = SupervisorJob()
+    private val repositoryScope = CoroutineScope(repositoryJob + dispatcher)
     private val sessions = ConcurrentHashMap<DeviceUid, RuntimeSession>()
 
     val runtimeModules: DeviceRuntimeModuleProvider = DeviceRuntimeModuleProvider { deviceUid ->
@@ -66,9 +102,16 @@ class DeviceRuntimeRepository(
     @Volatile
     private var lastActiveDeviceUid: DeviceUid? = null
 
+    @Volatile
+    private var closed: Boolean = false
+
     fun connect(snapshot: DeviceSnapshot): Result<Unit> {
         val deviceUid = snapshot.deviceUid
-        val session = sessionFor(deviceUid)
+        val session = runCatching {
+            sessionFor(deviceUid)
+        }.getOrElse { error ->
+            return Result.failure(error)
+        }
         lastActiveDeviceUid = deviceUid
 
         return synchronized(session) {
@@ -98,10 +141,16 @@ class DeviceRuntimeRepository(
         sessions[deviceUid]?.wsClient?.connectionState?.value
 
     fun disconnectForLocalNetworkLoss() {
-        lastActiveDeviceUid = null
-        sessions.values.forEach { session ->
+        val activeSessions = synchronized(lifecycleLock) {
+            if (closed) {
+                return
+            }
+            lastActiveDeviceUid = null
+            sessions.values.toList()
+        }
+        activeSessions.forEach { session ->
             synchronized(session) {
-                session.wsClient.close(reason = LOCAL_NETWORK_UNAVAILABLE_REASON)
+                session.wsClient.disconnect(reason = LOCAL_NETWORK_UNAVAILABLE_REASON)
             }
         }
     }
@@ -119,6 +168,7 @@ class DeviceRuntimeRepository(
         deviceUid: DeviceUid,
         token: String
     ) {
+        ensureOpen()
         tokenProvider?.saveToken(
             deviceUid = deviceUid,
             token = token
@@ -126,63 +176,111 @@ class DeviceRuntimeRepository(
     }
 
     suspend fun clearToken(deviceUid: DeviceUid) {
+        ensureOpen()
         tokenProvider?.clearToken(deviceUid)
     }
 
     fun close(deviceUid: DeviceUid) {
-        timeSyncCoordinator.clearSessionMemory(deviceUid)
-        sessions.remove(deviceUid)?.wsClient?.close()
-        if (lastActiveDeviceUid == deviceUid) {
-            lastActiveDeviceUid = null
+        val session = synchronized(lifecycleLock) {
+            val removed = sessions.remove(deviceUid)
+            if (lastActiveDeviceUid == deviceUid) {
+                lastActiveDeviceUid = null
+            }
+            removed
         }
+        authManager?.clear(deviceUid)
+        timeSyncCoordinator.clearSessionMemory(deviceUid)
+        session?.close()
     }
 
-    fun close() {
-        sessions.values.forEach { session ->
-            timeSyncCoordinator.clearSessionMemory(session.deviceUid)
-            session.wsClient.close()
+    override fun close() {
+        val activeSessions = synchronized(lifecycleLock) {
+            if (closed) {
+                return
+            }
+            closed = true
+            lastActiveDeviceUid = null
+            sessions.values.toList().also {
+                sessions.clear()
+            }
         }
-        sessions.clear()
-        lastActiveDeviceUid = null
+
+        repositoryScope.cancel()
+        activeSessions.forEach { session ->
+            timeSyncCoordinator.clearSessionMemory(session.deviceUid)
+            session.close()
+        }
+        authManager?.close()
     }
 
     private fun sessionFor(deviceUid: DeviceUid): RuntimeSession {
-        return sessions.getOrPut(deviceUid) {
-            createSession(deviceUid)
+        return synchronized(lifecycleLock) {
+            check(!closed) { "Device runtime repository is closed." }
+            sessions[deviceUid]?.let { existing ->
+                return@synchronized existing
+            }
+
+            val created = createSession(deviceUid)
+            sessions[deviceUid] = created
+            observeSession(created)
+            created
         }
     }
 
     private fun createSession(deviceUid: DeviceUid): RuntimeSession {
         val wsClient = wsClientFactory(tokenProvider)
         val commandClient = AqlWsCommandClient(wsClient)
-
-        val session = RuntimeSession(
-            deviceUid = deviceUid,
-            wsClient = wsClient,
-            commandClient = commandClient
+        val sessionJob = SupervisorJob(repositoryJob)
+        val sessionScope = CoroutineScope(
+            repositoryScope.coroutineContext + sessionJob
         )
 
-        observeSession(session)
-
-        return session
+        return RuntimeSession(
+            deviceUid = deviceUid,
+            wsClient = wsClient,
+            commandClient = commandClient,
+            sessionJob = sessionJob,
+            sessionScope = sessionScope
+        )
     }
 
     private fun observeSession(session: RuntimeSession) {
-        scope.launch {
-            session.wsClient.connectionState.collect { state ->
-                _connectionState.emit(state)
+        session.track(
+            session.sessionScope.launch {
+                session.wsClient.connectionState.collect { state ->
+                    if (isCurrentSession(session)) {
+                        _connectionState.emit(state)
+                    }
+                }
             }
-        }
+        )
 
-        scope.launch {
-            session.wsClient.events.collect { event ->
-                handleAuthLifecycle(
-                    session = session,
-                    event = event
-                )
-                _events.emit(event)
+        session.track(
+            session.sessionScope.launch {
+                session.wsClient.events.collect { event ->
+                    if (!isCurrentSession(session)) {
+                        return@collect
+                    }
+                    handleAuthLifecycle(
+                        session = session,
+                        event = event
+                    )
+                    if (isCurrentSession(session)) {
+                        _events.emit(event)
+                    }
+                }
             }
+        )
+    }
+
+    private fun isCurrentSession(session: RuntimeSession): Boolean {
+        return synchronized(lifecycleLock) {
+            !closed && sessions[session.deviceUid] === session
         }
+    }
+
+    private fun ensureOpen() {
+        check(!closed) { "Device runtime repository is closed." }
     }
 
     private suspend fun handleAuthLifecycle(
