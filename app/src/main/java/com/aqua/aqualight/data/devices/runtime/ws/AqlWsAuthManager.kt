@@ -34,12 +34,7 @@ class AqlWsAuthManager(
         }
 
         val messageId = message.id.trim()
-        if (messageId.isBlank()) {
-            return null
-        }
-
-        val pendingOwner = pendingAuthOwners.remove(messageId) ?: return null
-        if (pendingOwner != deviceUid) {
+        if (messageId.isBlank() || !pendingAuthOwners.remove(messageId, deviceUid)) {
             return null
         }
 
