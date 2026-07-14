@@ -37,7 +37,7 @@
     <dimen name="aqua_text_size_micro_label">10.6sp</dimen>
     <dimen name="aqua_text_size_micro_caption">10.5sp</dimen>
     <dimen name="aqua_text_size_micro_tight">10.4sp</dimen>
-    <dimen name="aqua_text_size_status_tiny">9sp</dimen>
-    <dimen name="aqua_text_size_status_micro">8sp</dimen>
-    <dimen name="aqua_text_size_status_nano">7sp</dimen>
+    <dimen name="aqua_text_size_status_tiny">11sp</dimen>
+    <dimen name="aqua_text_size_status_micro">10sp</dimen>
+    <dimen name="aqua_text_size_status_nano">9sp</dimen>
 </resources>
