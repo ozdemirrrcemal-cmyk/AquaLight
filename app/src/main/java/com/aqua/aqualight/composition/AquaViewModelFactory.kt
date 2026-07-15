@@ -11,6 +11,7 @@ import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.care.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.DefaultMaintenanceRepository
+import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.provisioning.ble.DefaultBleProvisioningScanner
 import com.aqua.aqualight.data.devices.provisioning.qr.AqlProvisioningQrParser
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
@@ -84,13 +85,16 @@ internal class AquaViewModelFactory(
             modelClass.isAssignableFrom(DevicesViewModel::class.java) -> {
                 val repository = devicesRepository()
                 val assignments = assignmentRepository()
-                DevicesViewModel(
-                    repository = repository,
+                val ownerDevicesOperations = DefaultOwnerDevicesOperations(
+                    devicesRepository = repository,
                     assignmentRepository = assignments,
                     deviceDataCleaner = OwnerDeviceDataCleaner.create(
                         devicesRepository = repository,
                         assignmentRepository = assignments
-                    ),
+                    )
+                )
+                DevicesViewModel(
+                    operations = ownerDevicesOperations,
                     menuOpenGate = DeviceMenuOpenGate(
                         devicesRepository = repository,
                         routeResolver = DeviceRouteResolver()
