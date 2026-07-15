@@ -89,6 +89,7 @@ jobs:
         run: |
           python3 tools/architecture_guard.py
           python3 tools/composition_root_guard.py
+          python3 tools/ui_dependency_construction_guard.py
           python3 tools/session_startup_guard.py
           python3 tools/navigation_guard.py
 
@@ -178,34 +179,30 @@ jobs:
                       file = loc.attrib.get("file", "") if loc is not None else ""
                       unused.append((file, msg))
 
-          for file, msg in sorted(set(unused)):
-              print(file)
-              print(f"  {msg}")
-              print()
-
-          print(f"TOTAL UNUSED RESOURCES: {len(set(unused))}")
+          if not unused:
+              print("No unused resource issues found.")
+          else:
+              for file, msg in unused:
+                  print(f"{file}: {msg}")
           PY
-
-          cat unused-resources.txt
-
-      - name: 📊 Upload Reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: QA-Reports-${{ github.run_number }}
-          path: |
-            **/build/reports/lint-results-*.html
-            **/build/reports/lint-results-*.xml
-            unused-resources.txt
-            **/build/reports/tests/testReleaseUnitTest/*
-          if-no-files-found: ignore
 
       - name: 📤 Upload Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: AquaLight-Release-${{ github.run_number }}
+          name: AquaLight-release
           path: app/build/outputs/apk/release/AquaLight.apk
 
-      - name: 🧹 Cleanup keystore
+      - name: 📤 Upload lint reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-lint-reports
+          path: |
+            app/build/reports/lint-results-release.html
+            app/build/reports/lint-results-release.xml
+            unused-resources.txt
+          if-no-files-found: warn
+
+      - name: 🧹 Remove release keystore
         if: always()
         run: rm -f release-key.jks
