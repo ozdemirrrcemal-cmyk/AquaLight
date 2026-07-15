@@ -7,7 +7,9 @@ import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.care.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
+import com.aqua.aqualight.data.care.DefaultMaintenanceRepository
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
@@ -18,6 +20,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewMo
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
+import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
 import com.aqua.aqualight.ui.tabs.settings.SettingsViewModel
 import com.aqua.aqualight.ui.tabs.settings.device.DeviceStatusViewModel
 
@@ -41,6 +44,15 @@ internal class AquaViewModelFactory(
     }
     private val careTaskStore by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         CareTaskDataStoreManager.create(appContext)
+    }
+    private val maintenanceRepository by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        DefaultMaintenanceRepository(
+            context = appContext,
+            manager = careTaskStore
+        )
+    }
+    private val maintenanceTextResolver by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        AndroidMaintenanceTextResolver(appContext)
     }
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -66,6 +78,12 @@ internal class AquaViewModelFactory(
                     tankDataStoreManager = aquariumTankStore,
                     careTaskDataStoreManager = careTaskStore,
                     assignmentRepository = assignmentRepository()
+                )
+
+            modelClass.isAssignableFrom(MaintenanceViewModel::class.java) ->
+                MaintenanceViewModel(
+                    repository = maintenanceRepository,
+                    textResolver = maintenanceTextResolver
                 )
 
             modelClass.isAssignableFrom(DeviceLightRootViewModel::class.java) ->
