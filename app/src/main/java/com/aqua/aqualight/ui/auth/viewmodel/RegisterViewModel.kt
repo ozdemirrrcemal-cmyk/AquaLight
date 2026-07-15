@@ -4,8 +4,8 @@ import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.auth.AuthOperations
 import com.aqua.aqualight.data.auth.AuthErrorMapper
-import com.aqua.aqualight.data.auth.AuthRepository
 import com.aqua.aqualight.data.auth.AuthUiText
 import com.aqua.aqualight.ui.auth.state.AuthActionState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class RegisterViewModel(
-    private val repository: AuthRepository
+    private val authOperations: AuthOperations
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<AuthActionState>(
@@ -66,7 +66,7 @@ class RegisterViewModel(
             _state.value = AuthActionState.Loading
 
             runCatching {
-                repository.registerWithEmail(
+                authOperations.registerWithEmail(
                     email = normalizedEmail,
                     password = normalizedPassword
                 )
