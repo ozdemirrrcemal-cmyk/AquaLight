@@ -71,7 +71,7 @@ class DefaultMaintenanceRepository(
 
     private val appContext = context.applicationContext
 
-    override val tasksFlow: Flow<List<CareTask>> = manager.allTasksFlow
+    override val tasksFlow: Flow<List<CareTask>> = manager.tasksFlow
 
     override fun taskFlow(taskId: Long): Flow<CareTask?> = manager.taskFlow(taskId)
 
