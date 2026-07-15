@@ -12,7 +12,6 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
-import com.aqua.aqualight.data.auth.LogoutManager
 import com.aqua.aqualight.databinding.FragmentChangeEmailBinding
 import com.aqua.aqualight.ui.auth.state.AuthActionState
 import com.aqua.aqualight.ui.auth.viewmodel.ChangeEmailViewModel
@@ -29,13 +28,16 @@ class ChangeEmailFragment :
     private var _binding: FragmentChangeEmailBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: ChangeEmailViewModel by viewModels {
-        requireContext().requireAppContainer().authViewModelFactory
+    private val appContainer by lazy {
+        requireContext().requireAppContainer()
     }
 
-    private val logoutManager by lazy {
-        LogoutManager.create(requireContext())
+    private val viewModel: ChangeEmailViewModel by viewModels {
+        appContainer.authViewModelFactory
     }
+
+    private val sessionExitOperations
+        get() = appContainer.sessionExitOperations
 
     private val baseActivity
         get() = activity as? BaseActivity
@@ -247,7 +249,7 @@ class ChangeEmailFragment :
                     ),
                     onDismiss = {
                         viewLifecycleOwner.lifecycleScope.launch {
-                            logoutManager.cleanupAfterLocalSensitiveAction()
+                            sessionExitOperations.cleanupAfterSensitiveAction()
                             viewModel.resetState()
                             navigateToLoginRoot()
                         }
