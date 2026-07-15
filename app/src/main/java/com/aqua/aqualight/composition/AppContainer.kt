@@ -3,7 +3,9 @@ package com.aqua.aqualight.composition
 import android.content.Context
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.app.AquaApp
+import com.aqua.aqualight.application.auth.AuthOperations
 import com.aqua.aqualight.data.auth.AuthRepository
+import com.aqua.aqualight.data.auth.FirebaseAuthOperations
 import com.aqua.aqualight.data.user.StartupAppearanceCache
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.ui.auth.viewmodel.AuthViewModelFactory
@@ -44,10 +46,16 @@ internal class DefaultAppContainer(
         AuthRepository.create(appContext)
     }
 
+    private val authOperations: AuthOperations by lazy(
+        LazyThreadSafetyMode.SYNCHRONIZED
+    ) {
+        FirebaseAuthOperations(authRepository)
+    }
+
     override val authViewModelFactory: ViewModelProvider.Factory by lazy(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
-        AuthViewModelFactory(authRepository)
+        AuthViewModelFactory(authOperations)
     }
 }
 
