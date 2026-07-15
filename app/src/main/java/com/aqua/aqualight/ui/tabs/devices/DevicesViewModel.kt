@@ -24,11 +24,8 @@ import kotlinx.coroutines.launch
 class DevicesViewModel(
     private val repository: DevicesRepository,
     private val assignmentRepository: TankDeviceAssignmentRepository,
-    private val deviceDataCleaner: OwnerDeviceDataCleaner = OwnerDeviceDataCleaner.create(
-        devicesRepository = repository,
-        assignmentRepository = assignmentRepository
-    ),
-    private val menuOpenGate: DeviceMenuOpenGate = DeviceMenuOpenGate(repository)
+    private val deviceDataCleaner: OwnerDeviceDataCleaner,
+    private val menuOpenGate: DeviceMenuOpenGate
 ) : ViewModel() {
 
     private val clockMillis = MutableStateFlow(System.currentTimeMillis())
