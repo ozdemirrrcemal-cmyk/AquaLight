@@ -9,10 +9,8 @@ import java.util.Locale
 
 object DeviceCardMapper {
 
-    @Suppress("UNUSED_PARAMETER")
     fun map(
-        device: OwnerDeviceListItem,
-        nowMillis: Long = System.currentTimeMillis()
+        device: OwnerDeviceListItem
     ): DeviceCardUi {
         val supportingText = device.assignedTankName
             .trim()
