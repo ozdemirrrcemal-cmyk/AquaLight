@@ -5,12 +5,14 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.application.user.UserProfileOperations
+import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.care.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.DefaultMaintenanceRepository
 import com.aqua.aqualight.data.devices.provisioning.ble.DefaultBleProvisioningScanner
+import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.platform.text.AndroidAppTextResolver
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
@@ -26,6 +28,8 @@ import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewMo
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceMenuOpenGate
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
 import com.aqua.aqualight.ui.tabs.settings.SettingsViewModel
 import com.aqua.aqualight.ui.tabs.settings.device.DeviceStatusViewModel
@@ -76,11 +80,22 @@ internal class AquaViewModelFactory(
             modelClass.isAssignableFrom(DeviceStatusViewModel::class.java) ->
                 DeviceStatusViewModel(devicesRepository())
 
-            modelClass.isAssignableFrom(DevicesViewModel::class.java) ->
+            modelClass.isAssignableFrom(DevicesViewModel::class.java) -> {
+                val repository = devicesRepository()
+                val assignments = assignmentRepository()
                 DevicesViewModel(
-                    repository = devicesRepository(),
-                    assignmentRepository = assignmentRepository()
+                    repository = repository,
+                    assignmentRepository = assignments,
+                    deviceDataCleaner = OwnerDeviceDataCleaner.create(
+                        devicesRepository = repository,
+                        assignmentRepository = assignments
+                    ),
+                    menuOpenGate = DeviceMenuOpenGate(
+                        devicesRepository = repository,
+                        routeResolver = DeviceRouteResolver()
+                    )
                 )
+            }
 
             modelClass.isAssignableFrom(DeviceAddViewModel::class.java) ->
                 DeviceAddViewModel(
@@ -104,12 +119,19 @@ internal class AquaViewModelFactory(
                 textResolver = appTextResolver
             )
 
-            modelClass.isAssignableFrom(AquariumTankViewModel::class.java) ->
+            modelClass.isAssignableFrom(AquariumTankViewModel::class.java) -> {
+                val assignments = assignmentRepository()
                 AquariumTankViewModel(
                     tankDataStoreManager = aquariumTankStore,
                     careTaskDataStoreManager = careTaskStore,
-                    assignmentRepository = assignmentRepository()
+                    assignmentRepository = assignments,
+                    tankDataCleaner = OwnerTankDataCleaner(
+                        deleteTankRecords = aquariumTankStore::deleteTanks,
+                        deleteCareTasksForTank = careTaskStore::deleteTasksForTank,
+                        removeDeviceAssignmentsForTank = assignments::removeAssignmentsForTank
+                    )
                 )
+            }
 
             modelClass.isAssignableFrom(TankDetailViewModel::class.java) ->
                 TankDetailViewModel()
@@ -135,11 +157,17 @@ internal class AquaViewModelFactory(
             modelClass.isAssignableFrom(DeviceRootOverviewViewModel::class.java) ->
                 DeviceRootOverviewViewModel(devicesRepository())
 
-            modelClass.isAssignableFrom(TankDetailDevicesViewModel::class.java) ->
+            modelClass.isAssignableFrom(TankDetailDevicesViewModel::class.java) -> {
+                val repository = devicesRepository()
                 TankDetailDevicesViewModel(
-                    devicesRepository = devicesRepository(),
-                    assignmentRepository = assignmentRepository()
+                    devicesRepository = repository,
+                    assignmentRepository = assignmentRepository(),
+                    menuOpenGate = DeviceMenuOpenGate(
+                        devicesRepository = repository,
+                        routeResolver = DeviceRouteResolver()
+                    )
                 )
+            }
 
             modelClass.isAssignableFrom(TankDeviceSelectViewModel::class.java) ->
                 TankDeviceSelectViewModel(
