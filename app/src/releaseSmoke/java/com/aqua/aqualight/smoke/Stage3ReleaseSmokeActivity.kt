@@ -119,7 +119,7 @@ class Stage3ReleaseSmokeActivity : BaseActivity() {
                     fragmentNavigator.createDestination().apply {
                         id = screen.destinationId
                         className = screen.fragmentClass.name
-                        label = screen.name
+                        setLabel(screen.name)
                     }
                 )
             }
