@@ -19,6 +19,7 @@ import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.care.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.DefaultMaintenanceRepository
+import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.user.StartupAppearanceCache
@@ -109,19 +110,23 @@ private class Stage3SmokeViewModelFactory(
                     devicesRepository = devicesRepository
                 )
 
-            modelClass.isAssignableFrom(DevicesViewModel::class.java) ->
-                DevicesViewModel(
-                    repository = devicesRepository,
+            modelClass.isAssignableFrom(DevicesViewModel::class.java) -> {
+                val ownerDevicesOperations = DefaultOwnerDevicesOperations(
+                    devicesRepository = devicesRepository,
                     assignmentRepository = assignmentRepository,
                     deviceDataCleaner = OwnerDeviceDataCleaner.create(
                         devicesRepository = devicesRepository,
                         assignmentRepository = assignmentRepository
-                    ),
+                    )
+                )
+                DevicesViewModel(
+                    operations = ownerDevicesOperations,
                     menuOpenGate = DeviceMenuOpenGate(
                         devicesRepository = devicesRepository,
                         routeResolver = DeviceRouteResolver()
                     )
                 )
+            }
 
             modelClass.isAssignableFrom(AquariumTankViewModel::class.java) ->
                 AquariumTankViewModel(
