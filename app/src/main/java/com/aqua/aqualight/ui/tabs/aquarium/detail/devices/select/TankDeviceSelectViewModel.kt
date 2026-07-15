@@ -2,10 +2,8 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
-import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentResult
-import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.repository.DevicesRepository
+import com.aqua.aqualight.application.devices.AssignDeviceToTankResult
+import com.aqua.aqualight.application.devices.TankDeviceAssignmentOperations
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactSnapshotMapper
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -13,14 +11,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class TankDeviceSelectViewModel(
-    private val assignmentRepository: TankDeviceAssignmentRepository,
-    private val devicesRepository: DevicesRepository
+    private val assignmentOperations: TankDeviceAssignmentOperations
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TankDeviceSelectUiState())
@@ -37,43 +33,40 @@ class TankDeviceSelectViewModel(
 
         boundTankId = tankId
         observeJob?.cancel()
-        devicesRepository.start(viewModelScope)
+        assignmentOperations.start(viewModelScope)
         observeJob = viewModelScope.launch {
-            combine(
-                assignmentRepository.availableDevicesForTank(tankId),
-                devicesRepository.devices
-            ) { availableDevices, registeredDevices ->
-                availableDevices to registeredDevices.isNotEmpty()
-            }.catch {
-                _uiState.update { current ->
-                    current.copy(
-                        devices = emptyList(),
-                        isEmpty = true,
-                        isLoading = false
-                    )
+            assignmentOperations.availableDevices(tankId)
+                .catch {
+                    _uiState.update { current ->
+                        current.copy(
+                            devices = emptyList(),
+                            isEmpty = true,
+                            isLoading = false
+                        )
+                    }
+                    _events.send(TankDeviceSelectEvent.ShowLoadFailed)
                 }
-                _events.send(TankDeviceSelectEvent.ShowLoadFailed)
-            }.collect { (snapshots, hasRegisteredDevices) ->
-                val items = snapshots.map { snapshot ->
-                    TankDeviceSelectItem(
-                        deviceUid = snapshot.deviceUid.value,
-                        card = DeviceCompactSnapshotMapper.map(snapshot)
-                    )
+                .collect { snapshot ->
+                    val items = snapshot.devices.map { device ->
+                        TankDeviceSelectItem(
+                            deviceUid = device.deviceUid,
+                            card = DeviceCompactSnapshotMapper.map(device)
+                        )
+                    }
+                    _uiState.update { current ->
+                        current.copy(
+                            devices = items,
+                            isEmpty = items.isEmpty(),
+                            emptyReason = when {
+                                items.isNotEmpty() -> TankDeviceSelectEmptyReason.NONE
+                                snapshot.hasRegisteredDevices ->
+                                    TankDeviceSelectEmptyReason.ALL_REGISTERED_DEVICES_ASSIGNED
+                                else -> TankDeviceSelectEmptyReason.NO_REGISTERED_DEVICES
+                            },
+                            isLoading = false
+                        )
+                    }
                 }
-                _uiState.update { current ->
-                    current.copy(
-                        devices = items,
-                        isEmpty = items.isEmpty(),
-                        emptyReason = when {
-                            items.isNotEmpty() -> TankDeviceSelectEmptyReason.NONE
-                            hasRegisteredDevices ->
-                                TankDeviceSelectEmptyReason.ALL_REGISTERED_DEVICES_ASSIGNED
-                            else -> TankDeviceSelectEmptyReason.NO_REGISTERED_DEVICES
-                        },
-                        isLoading = false
-                    )
-                }
-            }
         }
     }
 
@@ -84,28 +77,28 @@ class TankDeviceSelectViewModel(
 
         viewModelScope.launch {
             _uiState.update { current -> current.copy(isAssigning = true) }
-            val result = assignmentRepository.assignDeviceToTank(
-                tankId = tankId,
-                deviceUid = DeviceUid(item.deviceUid)
-            )
-            _uiState.update { current -> current.copy(isAssigning = false) }
+            val result = try {
+                assignmentOperations.assignDevice(tankId, item.deviceUid)
+            } finally {
+                _uiState.update { current -> current.copy(isAssigning = false) }
+            }
 
             when (result) {
-                is TankDeviceAssignmentResult.Assigned,
-                is TankDeviceAssignmentResult.AlreadyAssigned ->
+                AssignDeviceToTankResult.Assigned,
+                AssignDeviceToTankResult.AlreadyAssigned ->
                     _events.send(TankDeviceSelectEvent.DeviceAssigned)
-                is TankDeviceAssignmentResult.Conflict ->
+                is AssignDeviceToTankResult.Conflict ->
                     _events.send(
                         TankDeviceSelectEvent.ShowAssignmentConflict(
-                            existingTankId = result.existingAssignment.tankId
+                            existingTankId = result.existingTankId
                         )
                     )
-                TankDeviceAssignmentResult.TankNotFound ->
+                AssignDeviceToTankResult.TankNotFound ->
                     _events.send(TankDeviceSelectEvent.ShowTankNotFound)
-                TankDeviceAssignmentResult.DeviceNotFound ->
+                AssignDeviceToTankResult.DeviceNotFound ->
                     _events.send(TankDeviceSelectEvent.ShowDeviceNotFound)
-                TankDeviceAssignmentResult.InvalidRequest,
-                is TankDeviceAssignmentResult.Failure ->
+                AssignDeviceToTankResult.InvalidRequest,
+                AssignDeviceToTankResult.Failure ->
                     _events.send(TankDeviceSelectEvent.ShowAssignFailed)
             }
         }
