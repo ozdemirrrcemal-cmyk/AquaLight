@@ -8,10 +8,9 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
-import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.application.auth.AccountProvider
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentLogoutBinding
-import com.aqua.aqualight.ui.auth.security.ReAuthManager
 import com.aqua.aqualight.ui.auth.security.ReAuthenticateFragment
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
@@ -26,16 +25,15 @@ class LogoutFragment :
     private var _binding: FragmentLogoutBinding? = null
     private val binding get() = _binding!!
 
-    private val reAuthManager by lazy {
-        ReAuthManager()
+    private val appContainer by lazy {
+        requireContext().requireAppContainer()
     }
 
-    private val sessionExitOperations by lazy {
-        requireContext().requireAppContainer().sessionExitOperations
-    }
+    private val sessionExitOperations
+        get() = appContainer.sessionExitOperations
 
-    private val baseActivity
-        get() = activity as? BaseActivity
+    private val accountSecurityOperations
+        get() = appContainer.accountSecurityOperations
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -175,16 +173,13 @@ class LogoutFragment :
     }
 
     private fun performDeleteAccount() {
-        when {
-            reAuthManager.isGoogleUser() -> {
+        when (accountSecurityOperations.provider()) {
+            AccountProvider.GOOGLE,
+            AccountProvider.PASSWORD -> {
                 navigateToReAuthForDeleteAccount()
             }
 
-            reAuthManager.isPasswordUser() -> {
-                navigateToReAuthForDeleteAccount()
-            }
-
-            else -> {
+            AccountProvider.UNKNOWN -> {
                 DialogManager.showInfoDialog(
                     requireContext(),
                     DialogType.ERROR,
