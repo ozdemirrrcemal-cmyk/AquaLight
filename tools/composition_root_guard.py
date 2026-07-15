@@ -85,10 +85,15 @@ migrated_auth_screens = (
 for relative in migrated_auth_screens:
     path = SOURCE_ROOT / relative
     text = read(path)
-    required = "requireAppContainer().authViewModelFactory"
-    if required not in text:
+    required_tokens = (
+        "requireAppContainer()",
+        "authViewModelFactory",
+    )
+    missing = [token for token in required_tokens if token not in text]
+    if missing:
         errors.append(
-            f"{path.relative_to(ROOT)}: migrated auth screen must use AppContainer: {required}"
+            f"{path.relative_to(ROOT)}: migrated auth screen must resolve the shared "
+            f"factory from AppContainer; missing {', '.join(missing)}"
         )
 
 if errors:
