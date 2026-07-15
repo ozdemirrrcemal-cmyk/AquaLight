@@ -4,8 +4,11 @@ import android.content.Context
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.app.AquaApp
 import com.aqua.aqualight.application.auth.AuthOperations
+import com.aqua.aqualight.application.auth.SessionExitOperations
 import com.aqua.aqualight.data.auth.AuthRepository
+import com.aqua.aqualight.data.auth.DefaultSessionExitOperations
 import com.aqua.aqualight.data.auth.FirebaseAuthOperations
+import com.aqua.aqualight.data.auth.LogoutManager
 import com.aqua.aqualight.data.user.StartupAppearanceCache
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.ui.auth.viewmodel.AuthViewModelFactory
@@ -20,6 +23,7 @@ interface AppContainer {
     val startupAppearanceCache: StartupAppearanceCache
     val userPreferencesManager: UserPreferencesManager
     val authViewModelFactory: ViewModelProvider.Factory
+    val sessionExitOperations: SessionExitOperations
 }
 
 internal class DefaultAppContainer(
@@ -56,6 +60,18 @@ internal class DefaultAppContainer(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
         AuthViewModelFactory(authOperations)
+    }
+
+    private val logoutManager: LogoutManager by lazy(
+        LazyThreadSafetyMode.SYNCHRONIZED
+    ) {
+        LogoutManager.create(appContext)
+    }
+
+    override val sessionExitOperations: SessionExitOperations by lazy(
+        LazyThreadSafetyMode.SYNCHRONIZED
+    ) {
+        DefaultSessionExitOperations(logoutManager)
     }
 }
 
