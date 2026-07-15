@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.devices
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.OwnerDeviceListItem
+import com.aqua.aqualight.application.devices.OwnerDeviceStatusSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
@@ -13,13 +14,22 @@ internal fun DeviceSnapshot.toOwnerDeviceListItem(
     return OwnerDeviceListItem(
         deviceUid = deviceUid.value,
         displayName = title.ifBlank { deviceUid.value },
-        serialText = identity.serialNumber
-            .ifBlank { identity.firmwareSerial }
-            .ifBlank { identity.shortId }
-            .ifBlank { deviceUid.value },
+        serialText = serialText(),
         family = product.family.toOwnerDeviceFamily(),
         availability = connectionState.onlineState.toOwnerDeviceAvailability(),
         assignedTankName = assignedTankName.trim()
+    )
+}
+
+internal fun DeviceSnapshot.toOwnerDeviceStatusSnapshot(): OwnerDeviceStatusSnapshot {
+    return OwnerDeviceStatusSnapshot(
+        deviceUid = deviceUid.value,
+        displayName = title.ifBlank { deviceUid.value },
+        serialText = serialText(),
+        family = product.family.toOwnerDeviceFamily(),
+        availability = connectionState.onlineState.toOwnerDeviceAvailability(),
+        ipAddress = endpoint.ip.trim(),
+        lastSeenAtMillis = latestSeenAtMillis()
     )
 }
 
@@ -49,4 +59,20 @@ internal fun DeviceOnlineState.toOwnerDeviceAvailability(): OwnerDeviceAvailabil
         DeviceOnlineState.AUTH_REQUIRED,
         DeviceOnlineState.ERROR -> OwnerDeviceAvailability.UNREACHABLE
     }
+}
+
+private fun DeviceSnapshot.serialText(): String {
+    return identity.serialNumber
+        .ifBlank { identity.firmwareSerial }
+        .ifBlank { identity.shortId }
+        .ifBlank { deviceUid.value }
+}
+
+private fun DeviceSnapshot.latestSeenAtMillis(): Long {
+    return listOfNotNull(
+        connectionState.lastAuthenticatedAtMillis,
+        connectionState.lastWsConnectedAtMillis,
+        connectionState.lastUdpSeenAtMillis,
+        lastSeenAtMillis.takeIf { value -> value > 0L }
+    ).maxOrNull() ?: 0L
 }
