@@ -7,10 +7,8 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
-import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
-import com.aqua.aqualight.data.aquarium.devices.TankDeviceRemovalResult
-import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.repository.DevicesRepository
+import com.aqua.aqualight.application.devices.RemoveDeviceFromTankResult
+import com.aqua.aqualight.application.devices.TankDeviceAssignmentOperations
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactSnapshotMapper
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
@@ -28,8 +26,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class TankDetailDevicesViewModel(
-    private val devicesRepository: DevicesRepository,
-    private val assignmentRepository: TankDeviceAssignmentRepository,
+    private val assignmentOperations: TankDeviceAssignmentOperations,
     private val menuAccessOperations: DeviceMenuAccessOperations,
     private val routeResolver: DeviceRouteResolver
 ) : ViewModel() {
@@ -49,19 +46,19 @@ class TankDetailDevicesViewModel(
         if (tankId <= 0L || boundTankId == tankId) return
 
         boundTankId = tankId
-        devicesRepository.start(viewModelScope)
+        assignmentOperations.start(viewModelScope)
         observeJob?.cancel()
         observeJob = viewModelScope.launch {
             combine(
-                assignmentRepository.assignedDevicesForTank(tankId),
+                assignmentOperations.assignedDevices(tankId),
                 openingDeviceMenu,
                 removingDevice
-            ) { snapshots, isOpeningDeviceMenu, isRemovingDevice ->
-                val items = snapshots.map { snapshot ->
+            ) { devices, isOpeningDeviceMenu, isRemovingDevice ->
+                val items = devices.map { device ->
                     TankAssignedDeviceItem(
-                        deviceUid = snapshot.deviceUid.value,
-                        title = snapshot.title.ifBlank { "Device" },
-                        card = DeviceCompactSnapshotMapper.map(snapshot)
+                        deviceUid = device.deviceUid,
+                        title = device.displayName.ifBlank { "Device" },
+                        card = DeviceCompactSnapshotMapper.map(device)
                     )
                 }
                 TankDetailDevicesUiState(
@@ -127,17 +124,17 @@ class TankDetailDevicesViewModel(
 
         viewModelScope.launch {
             removingDevice.value = true
-            val result = assignmentRepository.removeDeviceFromTank(
-                tankId = tankId,
-                deviceUid = DeviceUid(deviceUid)
-            )
-            removingDevice.value = false
+            val result = try {
+                assignmentOperations.removeDevice(tankId, deviceUid)
+            } finally {
+                removingDevice.value = false
+            }
 
             when (result) {
-                TankDeviceRemovalResult.Removed,
-                TankDeviceRemovalResult.NotAssigned -> Unit
-                TankDeviceRemovalResult.InvalidRequest,
-                is TankDeviceRemovalResult.Failure ->
+                RemoveDeviceFromTankResult.REMOVED,
+                RemoveDeviceFromTankResult.NOT_ASSIGNED -> Unit
+                RemoveDeviceFromTankResult.INVALID_REQUEST,
+                RemoveDeviceFromTankResult.FAILURE ->
                     _events.send(TankDetailDevicesEvent.ShowRemoveFailed)
             }
         }
