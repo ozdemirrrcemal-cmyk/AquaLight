@@ -202,7 +202,7 @@ class MaintenanceViewModelBoundaryTest {
         override fun unknownAquarium() = "unknown"
     }
 
-    private class MainDispatcherRule(
+    class MainDispatcherRule(
         private val dispatcher: TestDispatcher = UnconfinedTestDispatcher()
     ) : TestWatcher() {
         override fun starting(description: Description) {
