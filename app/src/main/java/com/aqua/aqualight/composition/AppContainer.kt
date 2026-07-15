@@ -6,6 +6,7 @@ import com.aqua.aqualight.app.AquaApp
 import com.aqua.aqualight.application.auth.AccountSecurityOperations
 import com.aqua.aqualight.application.auth.AuthOperations
 import com.aqua.aqualight.application.auth.SessionExitOperations
+import com.aqua.aqualight.application.feedback.FeedbackSubmissionOperations
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.application.user.UserSettingsOperations
 import com.aqua.aqualight.data.auth.AuthRepository
@@ -13,6 +14,7 @@ import com.aqua.aqualight.data.auth.DefaultSessionExitOperations
 import com.aqua.aqualight.data.auth.FirebaseAccountSecurityOperations
 import com.aqua.aqualight.data.auth.FirebaseAuthOperations
 import com.aqua.aqualight.data.auth.LogoutManager
+import com.aqua.aqualight.data.feedback.FirebaseFeedbackSubmissionOperations
 import com.aqua.aqualight.data.user.DefaultUserProfileOperations
 import com.aqua.aqualight.data.user.DefaultUserSettingsOperations
 import com.aqua.aqualight.data.user.StartupAppearanceCache
@@ -32,6 +34,7 @@ interface AppContainer {
     val userPreferencesManager: UserPreferencesManager
     val userSettingsOperations: UserSettingsOperations
     val userProfileOperations: UserProfileOperations
+    val feedbackSubmissionOperations: FeedbackSubmissionOperations
     val authViewModelFactory: ViewModelProvider.Factory
     val sessionExitOperations: SessionExitOperations
     val accountSecurityOperations: AccountSecurityOperations
@@ -70,6 +73,12 @@ internal class DefaultAppContainer(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
         DefaultUserProfileOperations(userPreferencesManager)
+    }
+
+    override val feedbackSubmissionOperations: FeedbackSubmissionOperations by lazy(
+        LazyThreadSafetyMode.SYNCHRONIZED
+    ) {
+        FirebaseFeedbackSubmissionOperations.create()
     }
 
     private val authRepository: AuthRepository by lazy(
