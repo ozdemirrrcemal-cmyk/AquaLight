@@ -3,14 +3,18 @@ package com.aqua.aqualight.composition
 import android.content.Context
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.app.AquaApp
+import com.aqua.aqualight.application.auth.AccountSecurityOperations
 import com.aqua.aqualight.application.auth.AuthOperations
 import com.aqua.aqualight.application.auth.SessionExitOperations
 import com.aqua.aqualight.data.auth.AuthRepository
 import com.aqua.aqualight.data.auth.DefaultSessionExitOperations
+import com.aqua.aqualight.data.auth.FirebaseAccountSecurityOperations
 import com.aqua.aqualight.data.auth.FirebaseAuthOperations
 import com.aqua.aqualight.data.auth.LogoutManager
 import com.aqua.aqualight.data.user.StartupAppearanceCache
 import com.aqua.aqualight.data.user.UserPreferencesManager
+import com.aqua.aqualight.platform.auth.DefaultGoogleIdentityClient
+import com.aqua.aqualight.platform.auth.GoogleIdentityClient
 import com.aqua.aqualight.ui.auth.viewmodel.AuthViewModelFactory
 
 /**
@@ -24,6 +28,8 @@ interface AppContainer {
     val userPreferencesManager: UserPreferencesManager
     val authViewModelFactory: ViewModelProvider.Factory
     val sessionExitOperations: SessionExitOperations
+    val accountSecurityOperations: AccountSecurityOperations
+    val googleIdentityClient: GoogleIdentityClient
 }
 
 internal class DefaultAppContainer(
@@ -72,6 +78,18 @@ internal class DefaultAppContainer(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
         DefaultSessionExitOperations(logoutManager)
+    }
+
+    override val accountSecurityOperations: AccountSecurityOperations by lazy(
+        LazyThreadSafetyMode.SYNCHRONIZED
+    ) {
+        FirebaseAccountSecurityOperations.create(appContext)
+    }
+
+    override val googleIdentityClient: GoogleIdentityClient by lazy(
+        LazyThreadSafetyMode.SYNCHRONIZED
+    ) {
+        DefaultGoogleIdentityClient(appContext)
     }
 }
 
