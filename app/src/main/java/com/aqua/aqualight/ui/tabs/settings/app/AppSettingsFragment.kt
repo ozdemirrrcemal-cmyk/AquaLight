@@ -10,9 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.care.CareTaskDataStoreManager
-import com.aqua.aqualight.data.care.reminder.CareTaskReminderScheduler
-import com.aqua.aqualight.data.user.UserPreferencesManager
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentAppSettingsBinding
 import com.aqua.aqualight.ui.common.bottomsheet.ThemeBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -28,8 +26,8 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
     private var _binding: FragmentAppSettingsBinding? = null
     private val binding get() = _binding!!
 
-    private val userPrefs by lazy {
-        UserPreferencesManager.create(requireContext())
+    private val settingsOperations by lazy {
+        requireContext().requireAppContainer().userSettingsOperations
     }
 
     private var changingNotificationSwitchProgrammatically = false
@@ -50,14 +48,14 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
                 val shouldEnableNotifications =
                     granted && systemEnabled
 
-                userPrefs.updateNotificationsEnabled(
+                settingsOperations.updateNotificationsEnabled(
                     shouldEnableNotifications
                 )
 
                 if (shouldEnableNotifications) {
-                    reschedulePendingCareTaskReminders()
+                    settingsOperations.reschedulePendingCareTaskReminders()
                 } else {
-                    cancelPendingCareTaskReminders()
+                    settingsOperations.cancelPendingCareTaskReminders()
                 }
 
                 setNotificationSwitchChecked(
@@ -121,7 +119,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
             switchAutoUpdate.setOnCheckedChangeListener { _, enabled ->
                 viewLifecycleOwner.lifecycleScope.launch {
-                    userPrefs.updateAutoUpdateEnabled(
+                    settingsOperations.updateAutoUpdateEnabled(
                         enabled
                     )
                 }
@@ -187,7 +185,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
                 requireContext()
 
             val appEnabled =
-                userPrefs.notificationsEnabled.first()
+                settingsOperations.notificationsEnabled.first()
 
             val hasPermission =
                 NotificationHelper.hasSystemPermission(
@@ -275,11 +273,11 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             }
 
             viewLifecycleOwner.lifecycleScope.launch {
-                userPrefs.updateNotificationsEnabled(
+                settingsOperations.updateNotificationsEnabled(
                     true
                 )
 
-                reschedulePendingCareTaskReminders()
+                settingsOperations.reschedulePendingCareTaskReminders()
             }
 
             setNotificationSwitchChecked(
@@ -290,11 +288,11 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            userPrefs.updateNotificationsEnabled(
+            settingsOperations.updateNotificationsEnabled(
                 false
             )
 
-            cancelPendingCareTaskReminders()
+            settingsOperations.cancelPendingCareTaskReminders()
         }
 
         setNotificationSwitchChecked(
@@ -320,55 +318,9 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         )
     }
 
-    private suspend fun reschedulePendingCareTaskReminders() {
-        val context =
-            context?.applicationContext ?: return
-
-        val now =
-            System.currentTimeMillis()
-
-        val pendingTasks =
-            CareTaskDataStoreManager.create(
-                context
-            )
-                .pendingTasksFlow
-                .first()
-
-        pendingTasks
-            .filter { task ->
-                task.dueAtMillis > now
-            }
-            .forEach { task ->
-                CareTaskReminderScheduler.schedule(
-                    context = context,
-                    task = task
-                )
-            }
-    }
-
-    private suspend fun cancelPendingCareTaskReminders() {
-        val context =
-            context?.applicationContext ?: return
-
-        val pendingTasks =
-            CareTaskDataStoreManager.create(
-                context
-            )
-                .pendingTasksFlow
-                .first()
-
-        pendingTasks.forEach { task ->
-            CareTaskReminderScheduler.cancel(
-                context = context,
-                taskId = task.id,
-                ownerUid = task.ownerUid
-            )
-        }
-    }
-
     private fun observeThemeSummary() {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-            userPrefs.themeMode.collectLatest { mode ->
+            settingsOperations.themeMode.collectLatest { mode ->
                 binding.tvThemeSummary.text =
                     when (mode) {
                         "dark" -> getString(
@@ -389,7 +341,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
     private fun observeLanguageSummary() {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-            userPrefs.languageCode.collectLatest { code ->
+            settingsOperations.languageCode.collectLatest { code ->
                 binding.tvLanguageSubtitle.text =
                     when (code) {
                         "tr" -> getString(
@@ -422,7 +374,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
     private fun observeAutoUpdateState() {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-            userPrefs.autoUpdateEnabled.collectLatest { enabled ->
+            settingsOperations.autoUpdateEnabled.collectLatest { enabled ->
                 binding.switchAutoUpdate.isChecked =
                     enabled
             }
