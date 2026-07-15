@@ -150,15 +150,52 @@ jobs:
         run: rm -f release-key.jks
 
       - name: Perform CodeQL Analysis
+        id: codeql-analysis
+        continue-on-error: true
         uses: github/codeql-action/analyze@v3
         with:
           output: codeql-results
           upload-database: false
+          wait-for-processing: false
+
+      - name: Collect CodeQL diagnostics
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          {
+            echo "CodeQL step outcome: ${{ steps.codeql-analysis.outcome }}"
+            echo "Runner temp: ${RUNNER_TEMP}"
+            echo "CodeQL result files:"
+            find codeql-results -maxdepth 5 -type f -print 2>/dev/null
+            echo "CodeQL diagnostic files:"
+            find "${RUNNER_TEMP}" -maxdepth 8 -type f \
+              \( -path '*/codeql_databases/*/log/*' -o -iname '*codeql*.log' \) \
+              -print 2>/dev/null
+            while IFS= read -r file; do
+              echo "===== ${file} ====="
+              tail -n 500 "${file}" 2>/dev/null
+            done < <(
+              find "${RUNNER_TEMP}" -maxdepth 8 -type f \
+                \( -path '*/codeql_databases/*/log/*' -o -iname '*codeql*.log' \) \
+                -print 2>/dev/null
+            )
+          } > codeql-diagnostics.log 2>&1
+          cat codeql-diagnostics.log
 
       - name: Upload CodeQL result diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: codeql-results-${{ github.run_number }}
-          path: codeql-results/**
+          path: |
+            codeql-results/**
+            codeql-diagnostics.log
+            ${{ runner.temp }}/codeql_databases/*/log/**
           if-no-files-found: ignore
+
+      - name: Enforce CodeQL analysis result
+        if: always()
+        shell: bash
+        run: |
+          test "${{ steps.codeql-analysis.outcome }}" = "success"
