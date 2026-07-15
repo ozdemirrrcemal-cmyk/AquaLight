@@ -66,6 +66,8 @@ for kotlin_file in SOURCE_ROOT.rglob("*.kt"):
 
 if UI_ROOT.exists():
     for kotlin_file in UI_ROOT.rglob("*.kt"):
+        if kotlin_file == AUTH_FACTORY_PATH:
+            continue
         text = kotlin_file.read_text(encoding="utf-8", errors="ignore")
         if "AuthViewModelFactory(" in text:
             errors.append(
