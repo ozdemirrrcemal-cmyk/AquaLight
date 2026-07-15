@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
+import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.care.AndroidMaintenanceTextResolver
@@ -41,12 +42,6 @@ import com.aqua.aqualight.ui.tabs.settings.SettingsViewModel
 import com.aqua.aqualight.ui.tabs.settings.device.DeviceStatusViewModel
 import com.aqua.aqualight.ui.tabs.settings.device.SystemDeviceStatusClock
 
-/**
- * Process composition-root factory for non-auth feature ViewModels.
- *
- * Owner-bound repositories are resolved only when a ViewModel is requested, so
- * startup and unauthenticated screens do not open device runtime.
- */
 internal class AquaViewModelFactory(
     context: Context,
     private val userProfileOperations: UserProfileOperations
@@ -66,10 +61,7 @@ internal class AquaViewModelFactory(
         CareTaskDataStoreManager.create(appContext)
     }
     private val maintenanceRepository by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-        DefaultMaintenanceRepository(
-            context = appContext,
-            manager = careTaskStore
-        )
+        DefaultMaintenanceRepository(context = appContext, manager = careTaskStore)
     }
     private val maintenanceTextResolver by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         AndroidMaintenanceTextResolver(appContext)
@@ -77,12 +69,11 @@ internal class AquaViewModelFactory(
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val viewModel: ViewModel = when {
-            modelClass.isAssignableFrom(SettingsViewModel::class.java) -> {
+            modelClass.isAssignableFrom(SettingsViewModel::class.java) ->
                 SettingsViewModel(
                     userProfileOperations = userProfileOperations,
                     deviceStatusOperations = DefaultDeviceStatusOperations(devicesRepository())
                 )
-            }
 
             modelClass.isAssignableFrom(DeviceStatusViewModel::class.java) ->
                 DeviceStatusViewModel(
@@ -141,8 +132,7 @@ internal class AquaViewModelFactory(
                 )
             }
 
-            modelClass.isAssignableFrom(TankDetailViewModel::class.java) ->
-                TankDetailViewModel()
+            modelClass.isAssignableFrom(TankDetailViewModel::class.java) -> TankDetailViewModel()
 
             modelClass.isAssignableFrom(MaintenanceViewModel::class.java) ->
                 MaintenanceViewModel(
@@ -159,40 +149,38 @@ internal class AquaViewModelFactory(
             }
 
             modelClass.isAssignableFrom(DeviceCoolingRootViewModel::class.java) ->
-                DeviceCoolingRootViewModel(
-                    operations = DefaultDeviceRootOperations(devicesRepository())
-                )
+                DeviceCoolingRootViewModel(DefaultDeviceRootOperations(devicesRepository()))
 
             modelClass.isAssignableFrom(DeviceTimerRootViewModel::class.java) ->
-                DeviceTimerRootViewModel(
-                    operations = DefaultDeviceRootOperations(devicesRepository())
-                )
+                DeviceTimerRootViewModel(DefaultDeviceRootOperations(devicesRepository()))
 
             modelClass.isAssignableFrom(DeviceDosingRootViewModel::class.java) ->
-                DeviceDosingRootViewModel(
-                    operations = DefaultDeviceRootOperations(devicesRepository())
-                )
+                DeviceDosingRootViewModel(DefaultDeviceRootOperations(devicesRepository()))
 
             modelClass.isAssignableFrom(DeviceRootOverviewViewModel::class.java) ->
-                DeviceRootOverviewViewModel(
-                    operations = DefaultDeviceRootOperations(devicesRepository())
-                )
+                DeviceRootOverviewViewModel(DefaultDeviceRootOperations(devicesRepository()))
 
             modelClass.isAssignableFrom(TankDetailDevicesViewModel::class.java) -> {
                 val repository = devicesRepository()
                 TankDetailDevicesViewModel(
-                    devicesRepository = repository,
-                    assignmentRepository = assignmentRepository(),
+                    assignmentOperations = DefaultTankDeviceAssignmentOperations(
+                        assignmentRepository = assignmentRepository(),
+                        devicesRepository = repository
+                    ),
                     menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
                     routeResolver = DeviceRouteResolver()
                 )
             }
 
-            modelClass.isAssignableFrom(TankDeviceSelectViewModel::class.java) ->
+            modelClass.isAssignableFrom(TankDeviceSelectViewModel::class.java) -> {
+                val repository = devicesRepository()
                 TankDeviceSelectViewModel(
-                    assignmentRepository = assignmentRepository(),
-                    devicesRepository = devicesRepository()
+                    assignmentOperations = DefaultTankDeviceAssignmentOperations(
+                        assignmentRepository = assignmentRepository(),
+                        devicesRepository = repository
+                    )
                 )
+            }
 
             else -> return fallbackFactory.create(modelClass)
         }
