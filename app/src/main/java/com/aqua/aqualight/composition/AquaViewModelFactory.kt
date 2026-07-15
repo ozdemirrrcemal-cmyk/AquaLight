@@ -9,6 +9,7 @@ import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryPr
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectViewModel
+import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingRootViewModel
@@ -44,6 +45,12 @@ internal class AquaViewModelFactory(
 
             modelClass.isAssignableFrom(DeviceStatusViewModel::class.java) ->
                 DeviceStatusViewModel(devicesRepository())
+
+            modelClass.isAssignableFrom(DevicesViewModel::class.java) ->
+                DevicesViewModel(
+                    repository = devicesRepository(),
+                    assignmentRepository = assignmentRepository()
+                )
 
             modelClass.isAssignableFrom(DeviceLightRootViewModel::class.java) ->
                 DeviceLightRootViewModel(devicesRepository())
