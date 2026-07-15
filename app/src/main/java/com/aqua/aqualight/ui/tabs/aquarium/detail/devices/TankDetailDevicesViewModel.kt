@@ -1,14 +1,13 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.devices
 
-import android.app.Application
 import androidx.annotation.StringRes
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
+import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceRemovalResult
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactSnapshotMapper
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceMenuOpenGate
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceMenuOpenGateResult
@@ -26,13 +25,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class TankDetailDevicesViewModel(
-    application: Application
-) : AndroidViewModel(application) {
-
-    private val devicesRepository = DevicesRepositoryProvider.get(application)
-    private val menuOpenGate = DeviceMenuOpenGate(devicesRepository)
-    private val assignmentRepository =
-        TankDeviceAssignmentRepositoryProvider.get(application)
+    private val devicesRepository: DevicesRepository,
+    private val assignmentRepository: TankDeviceAssignmentRepository,
+    private val menuOpenGate: DeviceMenuOpenGate = DeviceMenuOpenGate(devicesRepository)
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TankDetailDevicesUiState())
     val uiState: StateFlow<TankDetailDevicesUiState> = _uiState.asStateFlow()
@@ -42,20 +38,14 @@ class TankDetailDevicesViewModel(
 
     private val openingDeviceMenu = MutableStateFlow(false)
     private val removingDevice = MutableStateFlow(false)
-
     private var boundTankId: Long = 0L
     private var observeJob: Job? = null
 
-    fun bind(
-        tankId: Long
-    ) {
-        if (tankId <= 0L || boundTankId == tankId) {
-            return
-        }
+    fun bind(tankId: Long) {
+        if (tankId <= 0L || boundTankId == tankId) return
 
         boundTankId = tankId
         devicesRepository.start(viewModelScope)
-
         observeJob?.cancel()
         observeJob = viewModelScope.launch {
             combine(
@@ -67,12 +57,9 @@ class TankDetailDevicesViewModel(
                     TankAssignedDeviceItem(
                         deviceUid = snapshot.deviceUid.value,
                         title = snapshot.title.ifBlank { "Device" },
-                        card = DeviceCompactSnapshotMapper.map(
-                            snapshot = snapshot
-                        )
+                        card = DeviceCompactSnapshotMapper.map(snapshot)
                     )
                 }
-
                 TankDetailDevicesUiState(
                     devices = items,
                     isEmpty = items.isEmpty(),
@@ -80,33 +67,23 @@ class TankDetailDevicesViewModel(
                     isOpeningDeviceMenu = isOpeningDeviceMenu,
                     isRemovingDevice = isRemovingDevice
                 )
+            }.catch {
+                _uiState.update { current ->
+                    current.copy(
+                        devices = emptyList(),
+                        isEmpty = true,
+                        isLoading = false
+                    )
+                }
+                _events.send(TankDetailDevicesEvent.ShowLoadFailed)
+            }.collect { state ->
+                _uiState.value = state
             }
-                .catch {
-                    _uiState.update { current ->
-                        current.copy(
-                            devices = emptyList(),
-                            isEmpty = true,
-                            isLoading = false
-                        )
-                    }
-                    _events.send(TankDetailDevicesEvent.ShowLoadFailed)
-                }
-                .collect { state ->
-                    _uiState.value = state
-                }
         }
     }
 
-    fun onDeviceClicked(
-        deviceUid: String
-    ) {
-        if (
-            deviceUid.isBlank() ||
-            openingDeviceMenu.value ||
-            removingDevice.value
-        ) {
-            return
-        }
+    fun onDeviceClicked(deviceUid: String) {
+        if (deviceUid.isBlank() || openingDeviceMenu.value || removingDevice.value) return
 
         viewModelScope.launch {
             openingDeviceMenu.value = true
@@ -121,53 +98,37 @@ class TankDetailDevicesViewModel(
             openingDeviceMenu.value = false
 
             when (result) {
-                is DeviceMenuOpenGateResult.OpenRoute -> {
+                is DeviceMenuOpenGateResult.OpenRoute ->
                     _events.send(TankDetailDevicesEvent.OpenDeviceRoute(result.route))
-                }
-
-                is DeviceMenuOpenGateResult.Blocked -> {
+                is DeviceMenuOpenGateResult.Blocked ->
                     _events.send(
                         TankDetailDevicesEvent.ShowDeviceUnavailable(
                             title = result.title,
                             messageRes = result.messageRes
                         )
                     )
-                }
             }
         }
     }
 
-    fun removeDeviceFromTank(
-        deviceUid: String
-    ) {
+    fun removeDeviceFromTank(deviceUid: String) {
         val tankId = boundTankId
-
-        if (
-            tankId <= 0L ||
-            deviceUid.isBlank() ||
-            removingDevice.value
-        ) {
-            return
-        }
+        if (tankId <= 0L || deviceUid.isBlank() || removingDevice.value) return
 
         viewModelScope.launch {
             removingDevice.value = true
-
             val result = assignmentRepository.removeDeviceFromTank(
                 tankId = tankId,
                 deviceUid = DeviceUid(deviceUid)
             )
-
             removingDevice.value = false
 
             when (result) {
                 TankDeviceRemovalResult.Removed,
                 TankDeviceRemovalResult.NotAssigned -> Unit
-
                 TankDeviceRemovalResult.InvalidRequest,
-                is TankDeviceRemovalResult.Failure -> {
+                is TankDeviceRemovalResult.Failure ->
                     _events.send(TankDetailDevicesEvent.ShowRemoveFailed)
-                }
             }
         }
     }
@@ -182,9 +143,7 @@ data class TankDetailDevicesUiState(
 )
 
 sealed interface TankDetailDevicesEvent {
-    data class OpenDeviceRoute(
-        val route: DeviceRoute
-    ) : TankDetailDevicesEvent
+    data class OpenDeviceRoute(val route: DeviceRoute) : TankDetailDevicesEvent
 
     data class ShowDeviceUnavailable(
         val title: String,
@@ -192,6 +151,5 @@ sealed interface TankDetailDevicesEvent {
     ) : TankDetailDevicesEvent
 
     data object ShowRemoveFailed : TankDetailDevicesEvent
-
     data object ShowLoadFailed : TankDetailDevicesEvent
 }
