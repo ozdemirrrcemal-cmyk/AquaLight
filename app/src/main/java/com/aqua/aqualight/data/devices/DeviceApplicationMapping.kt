@@ -7,6 +7,7 @@ import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.OwnerDeviceListItem
 import com.aqua.aqualight.application.devices.OwnerDeviceStatusSnapshot
+import com.aqua.aqualight.application.devices.TankDeviceListItem
 import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
@@ -33,6 +34,16 @@ internal fun DeviceSnapshot.toOwnerDeviceStatusSnapshot(): OwnerDeviceStatusSnap
         availability = connectionState.onlineState.toOwnerDeviceAvailability(),
         ipAddress = endpoint.ip.trim(),
         lastSeenAtMillis = latestSeenAtMillis()
+    )
+}
+
+internal fun DeviceSnapshot.toTankDeviceListItem(): TankDeviceListItem {
+    return TankDeviceListItem(
+        deviceUid = deviceUid.value,
+        displayName = title.ifBlank { deviceUid.value },
+        serialText = serialText(),
+        family = product.family.toOwnerDeviceFamily(),
+        availability = connectionState.onlineState.toOwnerDeviceAvailability()
     )
 }
 
