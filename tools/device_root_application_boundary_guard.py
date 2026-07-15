@@ -125,7 +125,6 @@ for path, text in view_models.items():
         "import com.aqua.aqualight.data.",
         "DevicesRepository",
         "DeviceSnapshot",
-        "DeviceUid",
         "runtimeModules()",
         "connectRuntime(",
     ):
