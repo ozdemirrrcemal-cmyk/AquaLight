@@ -11,11 +11,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
-import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentResetPasswordBinding
 import com.aqua.aqualight.ui.auth.state.AuthActionState
-import com.aqua.aqualight.ui.auth.viewmodel.AuthViewModelFactory
 import com.aqua.aqualight.ui.auth.viewmodel.ResetPasswordViewModel
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
@@ -26,9 +26,8 @@ class ResetPasswordFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: ResetPasswordViewModel by viewModels {
-        AuthViewModelFactory(requireContext())
+        requireContext().requireAppContainer().authViewModelFactory
     }
-
 
     override fun onCreateView(
         inflater: LayoutInflater,

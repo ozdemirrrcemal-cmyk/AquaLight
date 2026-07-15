@@ -6,14 +6,15 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import coil3.load
 import com.aqua.aqualight.R
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentUsageBinding
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class UsageFragment : Fragment(R.layout.fragment_usage) {
 
@@ -21,7 +22,7 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
     private val binding get() = _binding!!
 
     private val userPrefs by lazy {
-        UserPreferencesManager.create(requireContext())
+        requireContext().requireAppContainer().userPreferencesManager
     }
 
     override fun onViewCreated(

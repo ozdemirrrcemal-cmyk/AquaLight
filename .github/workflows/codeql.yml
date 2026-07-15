@@ -46,10 +46,15 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run architecture and navigation guards
+        shell: bash
         run: |
-          python3 tools/architecture_guard.py
-          python3 tools/session_startup_guard.py
-          python3 tools/navigation_guard.py
+          set -o pipefail
+          {
+            python3 tools/architecture_guard.py
+            python3 tools/session_startup_guard.py
+            python3 tools/composition_root_guard.py
+            python3 tools/navigation_guard.py
+          } 2>&1 | tee architecture-guards.log
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
@@ -124,6 +129,7 @@ jobs:
         with:
           name: codeql-validation-logs-${{ github.run_number }}
           path: |
+            architecture-guards.log
             unit-test.log
             unit-test-release.log
             lint-debug.log

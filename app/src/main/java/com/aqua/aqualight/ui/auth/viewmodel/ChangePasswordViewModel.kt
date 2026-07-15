@@ -3,8 +3,8 @@ package com.aqua.aqualight.ui.auth.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.auth.AuthOperations
 import com.aqua.aqualight.data.auth.AuthErrorMapper
-import com.aqua.aqualight.data.auth.AuthRepository
 import com.aqua.aqualight.data.auth.AuthUiText
 import com.aqua.aqualight.ui.auth.state.AuthActionState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class ChangePasswordViewModel(
-    private val repository: AuthRepository
+    private val authOperations: AuthOperations
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<AuthActionState>(
@@ -22,7 +22,7 @@ class ChangePasswordViewModel(
     val state: StateFlow<AuthActionState> = _state.asStateFlow()
 
     fun hasPasswordProvider(): Boolean {
-        return repository.hasPasswordProvider()
+        return authOperations.hasPasswordProvider()
     }
 
     fun changePassword(
@@ -67,7 +67,7 @@ class ChangePasswordViewModel(
             _state.value = AuthActionState.Loading
 
             runCatching {
-                repository.changePassword(
+                authOperations.changePassword(
                     currentPassword = current,
                     newPassword = new
                 )
