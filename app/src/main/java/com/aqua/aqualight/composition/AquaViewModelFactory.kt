@@ -5,10 +5,14 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.application.user.UserProfileOperations
+import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
 import com.aqua.aqualight.ui.tabs.settings.SettingsViewModel
 import com.aqua.aqualight.ui.tabs.settings.device.DeviceStatusViewModel
@@ -38,25 +42,35 @@ internal class AquaViewModelFactory(
                 )
             }
 
-            modelClass.isAssignableFrom(DeviceStatusViewModel::class.java) -> {
+            modelClass.isAssignableFrom(DeviceStatusViewModel::class.java) ->
                 DeviceStatusViewModel(devicesRepository())
-            }
 
-            modelClass.isAssignableFrom(DeviceCoolingRootViewModel::class.java) -> {
+            modelClass.isAssignableFrom(DeviceLightRootViewModel::class.java) ->
+                DeviceLightRootViewModel(devicesRepository())
+
+            modelClass.isAssignableFrom(DeviceCoolingRootViewModel::class.java) ->
                 DeviceCoolingRootViewModel(devicesRepository())
-            }
 
-            modelClass.isAssignableFrom(DeviceTimerRootViewModel::class.java) -> {
+            modelClass.isAssignableFrom(DeviceTimerRootViewModel::class.java) ->
                 DeviceTimerRootViewModel(devicesRepository())
-            }
 
-            modelClass.isAssignableFrom(DeviceDosingRootViewModel::class.java) -> {
+            modelClass.isAssignableFrom(DeviceDosingRootViewModel::class.java) ->
                 DeviceDosingRootViewModel(devicesRepository())
-            }
 
-            modelClass.isAssignableFrom(DeviceRootOverviewViewModel::class.java) -> {
+            modelClass.isAssignableFrom(DeviceRootOverviewViewModel::class.java) ->
                 DeviceRootOverviewViewModel(devicesRepository())
-            }
+
+            modelClass.isAssignableFrom(TankDetailDevicesViewModel::class.java) ->
+                TankDetailDevicesViewModel(
+                    devicesRepository = devicesRepository(),
+                    assignmentRepository = assignmentRepository()
+                )
+
+            modelClass.isAssignableFrom(TankDeviceSelectViewModel::class.java) ->
+                TankDeviceSelectViewModel(
+                    assignmentRepository = assignmentRepository(),
+                    devicesRepository = devicesRepository()
+                )
 
             else -> return fallbackFactory.create(modelClass)
         }
@@ -66,4 +80,7 @@ internal class AquaViewModelFactory(
     }
 
     private fun devicesRepository() = DevicesRepositoryProvider.get(appContext)
+
+    private fun assignmentRepository() =
+        TankDeviceAssignmentRepositoryProvider.get(appContext)
 }
