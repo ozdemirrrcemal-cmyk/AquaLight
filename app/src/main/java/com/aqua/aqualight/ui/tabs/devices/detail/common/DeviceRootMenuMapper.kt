@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.common
 
-import com.aqua.aqualight.data.devices.model.DeviceSnapshot
+import com.aqua.aqualight.application.devices.DeviceRootMenuFeature
+import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 
 data class DeviceRootMenuItemUi(
     val title: String,
@@ -17,17 +18,12 @@ data class DeviceRootMenuSections(
     fun secondaryText(emptyText: String): String = formatDeviceRootMenuItems(secondary, emptyText)
 }
 
-
 private fun formatDeviceRootMenuItems(
     items: List<DeviceRootMenuItemUi>,
     emptyText: String
 ): String {
-    val available = items.filter { item -> item.enabled }
-
-    if (available.isEmpty()) {
-        return emptyText
-    }
-
+    val available = items.filter(DeviceRootMenuItemUi::enabled)
+    if (available.isEmpty()) return emptyText
     return available.joinToString(separator = "\n\n") { item ->
         "• ${item.title}\n  ${item.subtitle}"
     }
@@ -35,223 +31,128 @@ private fun formatDeviceRootMenuItems(
 
 object DeviceRootMenuMapper {
 
-    fun light(snapshot: DeviceSnapshot): DeviceRootMenuSections {
-        val primary = listOf(
-            DeviceRootMenuItemUi(
-                title = "Manual control",
-                subtitle = "Direct channel control for supported light outputs.",
-                enabled = snapshot.capabilities.manualLight || snapshot.hasAnyScreen(
-                    "light.manual",
-                    "manual",
-                    "manualLight"
-                )
-            ),
-            DeviceRootMenuItemUi(
-                title = "Quick setup",
-                subtitle = "Fast setup from firmware-supported light presets and profiles.",
-                enabled = snapshot.hasAnyScreen(
-                    "light.quickSetup",
-                    "quickSetup",
-                    "quick_setup"
-                )
-            )
-        )
-
-        val secondary = listOf(
-            DeviceRootMenuItemUi(
-                title = "Programs",
-                subtitle = "Create and manage daily light programs.",
-                enabled = snapshot.capabilities.lightProgram || snapshot.hasAnyScreen(
-                    "light.programs",
-                    "programs",
-                    "programList",
-                    "program_list"
-                )
-            ),
-            DeviceRootMenuItemUi(
-                title = "Presets",
-                subtitle = "Use firmware-provided light presets.",
-                enabled = snapshot.capabilities.lightPresets || snapshot.hasAnyScreen(
-                    "light.presets",
-                    "presets"
-                )
-            ),
-            DeviceRootMenuItemUi(
-                title = "Simulation",
-                subtitle = "Sunrise, sunset and light simulation features.",
-                enabled = snapshot.capabilities.lightSimulation || snapshot.hasAnyScreen(
-                    "light.simulation",
-                    "simulation"
-                )
-            ),
-            DeviceRootMenuItemUi(
-                title = "Device settings",
-                subtitle = "Device identity, firmware and runtime settings.",
-                enabled = snapshot.hasAnyScreen(
-                    "device.settings",
-                    "settings"
-                ) || snapshot.capabilities.ota
-            )
-        )
-
+    fun light(snapshot: DeviceRootSnapshot): DeviceRootMenuSections {
         return DeviceRootMenuSections(
-            primary = primary,
-            secondary = secondary
+            primary = listOf(
+                item(
+                    title = "Manual control",
+                    subtitle = "Direct channel control for supported light outputs.",
+                    enabled = DeviceRootMenuFeature.LIGHT_MANUAL in snapshot.menuFeatures
+                ),
+                item(
+                    title = "Quick setup",
+                    subtitle = "Fast setup from firmware-supported light presets and profiles.",
+                    enabled = DeviceRootMenuFeature.LIGHT_QUICK_SETUP in snapshot.menuFeatures
+                )
+            ),
+            secondary = listOf(
+                item(
+                    title = "Programs",
+                    subtitle = "Create and manage daily light programs.",
+                    enabled = DeviceRootMenuFeature.LIGHT_PROGRAMS in snapshot.menuFeatures
+                ),
+                item(
+                    title = "Presets",
+                    subtitle = "Use firmware-provided light presets.",
+                    enabled = DeviceRootMenuFeature.LIGHT_PRESETS in snapshot.menuFeatures
+                ),
+                item(
+                    title = "Simulation",
+                    subtitle = "Sunrise, sunset and light simulation features.",
+                    enabled = DeviceRootMenuFeature.LIGHT_SIMULATION in snapshot.menuFeatures
+                ),
+                item(
+                    title = "Device settings",
+                    subtitle = "Device identity, firmware and runtime settings.",
+                    enabled = DeviceRootMenuFeature.DEVICE_SETTINGS in snapshot.menuFeatures
+                )
+            )
         )
     }
 
     fun overview(
         kind: DeviceRootKind,
-        snapshot: DeviceSnapshot
-    ): DeviceRootMenuSections {
-        return when (kind) {
-            DeviceRootKind.DOSING -> dosing(snapshot)
-            DeviceRootKind.TIMER -> timer(snapshot)
-            DeviceRootKind.COOLING -> cooling(snapshot)
-        }
+        snapshot: DeviceRootSnapshot
+    ): DeviceRootMenuSections = when (kind) {
+        DeviceRootKind.DOSING -> dosing(snapshot)
+        DeviceRootKind.TIMER -> timer(snapshot)
+        DeviceRootKind.COOLING -> cooling(snapshot)
     }
 
-    private fun dosing(snapshot: DeviceSnapshot): DeviceRootMenuSections {
-        return DeviceRootMenuSections(
-            primary = listOf(
-                DeviceRootMenuItemUi(
-                    title = "Channels",
-                    subtitle = "Configure dosing channels and pump parameters.",
-                    enabled = snapshot.capabilities.dosing || snapshot.hasAnyScreen(
-                        "dosing.channels",
-                        "channels",
-                        "dosing"
-                    )
-                ),
-                DeviceRootMenuItemUi(
-                    title = "Calibration",
-                    subtitle = "Calibrate dosing flow for accurate dosing.",
-                    enabled = snapshot.hasAnyScreen(
-                        "dosing.calibration",
-                        "calibration"
-                    )
-                )
+    private fun dosing(snapshot: DeviceRootSnapshot) = DeviceRootMenuSections(
+        primary = listOf(
+            item(
+                title = "Channels",
+                subtitle = "Configure dosing channels and pump parameters.",
+                enabled = DeviceRootMenuFeature.DOSING_CHANNELS in snapshot.menuFeatures
             ),
-            secondary = listOf(
-                DeviceRootMenuItemUi(
-                    title = "Schedules",
-                    subtitle = "Single dose, hourly, timer and custom dosing periods.",
-                    enabled = snapshot.hasAnyScreen(
-                        "dosing.schedules",
-                        "schedules",
-                        "singleDose",
-                        "hourly24",
-                        "customPeriods",
-                        "timerMode"
-                    )
-                ),
-                DeviceRootMenuItemUi(
-                    title = "Device settings",
-                    subtitle = "Firmware, runtime and device settings.",
-                    enabled = snapshot.capabilities.ota || snapshot.hasAnyScreen(
-                        "device.settings",
-                        "settings"
-                    )
-                )
+            item(
+                title = "Calibration",
+                subtitle = "Calibrate dosing flow for accurate dosing.",
+                enabled = DeviceRootMenuFeature.DOSING_CALIBRATION in snapshot.menuFeatures
+            )
+        ),
+        secondary = listOf(
+            item(
+                title = "Schedules",
+                subtitle = "Single dose, hourly, timer and custom dosing periods.",
+                enabled = DeviceRootMenuFeature.DOSING_SCHEDULES in snapshot.menuFeatures
+            ),
+            item(
+                title = "Device settings",
+                subtitle = "Firmware, runtime and device settings.",
+                enabled = DeviceRootMenuFeature.DEVICE_SETTINGS in snapshot.menuFeatures
             )
         )
-    }
+    )
 
-    private fun timer(snapshot: DeviceSnapshot): DeviceRootMenuSections {
-        return DeviceRootMenuSections(
-            primary = listOf(
-                DeviceRootMenuItemUi(
-                    title = "Timer channels",
-                    subtitle = "Configure timer relay channels.",
-                    enabled = snapshot.capabilities.standaloneTimer || snapshot.hasAnyScreen(
-                        "timer.channels",
-                        "channels",
-                        "timer"
-                    )
-                )
+    private fun timer(snapshot: DeviceRootSnapshot) = DeviceRootMenuSections(
+        primary = listOf(
+            item(
+                title = "Timer channels",
+                subtitle = "Configure timer relay channels.",
+                enabled = DeviceRootMenuFeature.TIMER_CHANNELS in snapshot.menuFeatures
+            )
+        ),
+        secondary = listOf(
+            item(
+                title = "Schedules",
+                subtitle = "Create and manage timer schedules.",
+                enabled = DeviceRootMenuFeature.TIMER_SCHEDULES in snapshot.menuFeatures
             ),
-            secondary = listOf(
-                DeviceRootMenuItemUi(
-                    title = "Schedules",
-                    subtitle = "Create and manage timer schedules.",
-                    enabled = snapshot.hasAnyScreen(
-                        "timer.schedules",
-                        "schedules"
-                    )
-                ),
-                DeviceRootMenuItemUi(
-                    title = "Device settings",
-                    subtitle = "Firmware, runtime and device settings.",
-                    enabled = snapshot.capabilities.ota || snapshot.hasAnyScreen(
-                        "device.settings",
-                        "settings"
-                    )
-                )
+            item(
+                title = "Device settings",
+                subtitle = "Firmware, runtime and device settings.",
+                enabled = DeviceRootMenuFeature.DEVICE_SETTINGS in snapshot.menuFeatures
             )
         )
-    }
+    )
 
-    private fun cooling(snapshot: DeviceSnapshot): DeviceRootMenuSections {
-        return DeviceRootMenuSections(
-            primary = listOf(
-                DeviceRootMenuItemUi(
-                    title = "Fan control",
-                    subtitle = "Manual fan control for supported cooling channels.",
-                    enabled = snapshot.capabilities.cooling ||
-                        snapshot.capabilities.fan ||
-                        snapshot.hasAnyScreen(
-                            "cooling.fans",
-                            "fan",
-                            "fans",
-                            "cooling"
-                        )
-                )
+    private fun cooling(snapshot: DeviceRootSnapshot) = DeviceRootMenuSections(
+        primary = listOf(
+            item(
+                title = "Fan control",
+                subtitle = "Manual fan control for supported cooling channels.",
+                enabled = DeviceRootMenuFeature.COOLING_FANS in snapshot.menuFeatures
+            )
+        ),
+        secondary = listOf(
+            item(
+                title = "Temperature automation",
+                subtitle = "Temperature-based cooling automation.",
+                enabled = DeviceRootMenuFeature.COOLING_TEMPERATURE in snapshot.menuFeatures
             ),
-            secondary = listOf(
-                DeviceRootMenuItemUi(
-                    title = "Temperature automation",
-                    subtitle = "Temperature-based cooling automation.",
-                    enabled = snapshot.capabilities.temperature || snapshot.hasAnyScreen(
-                        "cooling.temperature",
-                        "temperature"
-                    )
-                ),
-                DeviceRootMenuItemUi(
-                    title = "Device settings",
-                    subtitle = "Firmware, runtime and device settings.",
-                    enabled = snapshot.capabilities.ota || snapshot.hasAnyScreen(
-                        "device.settings",
-                        "settings"
-                    )
-                )
+            item(
+                title = "Device settings",
+                subtitle = "Firmware, runtime and device settings.",
+                enabled = DeviceRootMenuFeature.DEVICE_SETTINGS in snapshot.menuFeatures
             )
         )
-    }
+    )
 
-    private fun DeviceSnapshot.hasAnyScreen(
-        vararg names: String
-    ): Boolean {
-        val normalizedSupported = (supportedScreens + supportedFeatures)
-            .map { value -> value.trim().lowercase() }
-            .filter { value -> value.isNotBlank() }
-            .toSet()
-
-        return names.any { name ->
-            normalizedSupported.contains(name.trim().lowercase())
-        }
-    }
-
-    private fun List<DeviceRootMenuItemUi>.toDisplayText(
-        emptyText: String
-    ): String {
-        val available = filter { item -> item.enabled }
-
-        if (available.isEmpty()) {
-            return emptyText
-        }
-
-        return available.joinToString(separator = "\n\n") { item ->
-            "• ${item.title}\n  ${item.subtitle}"
-        }
-    }
+    private fun item(
+        title: String,
+        subtitle: String,
+        enabled: Boolean
+    ) = DeviceRootMenuItemUi(title = title, subtitle = subtitle, enabled = enabled)
 }
