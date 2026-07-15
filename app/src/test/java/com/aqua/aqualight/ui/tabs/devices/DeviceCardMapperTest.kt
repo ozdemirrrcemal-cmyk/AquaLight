@@ -1,10 +1,8 @@
 package com.aqua.aqualight.ui.tabs.devices
 
-import com.aqua.aqualight.data.devices.model.DeviceFamily
-import com.aqua.aqualight.data.devices.model.DeviceIdentity
-import com.aqua.aqualight.data.devices.model.DeviceProduct
-import com.aqua.aqualight.data.devices.model.DeviceSnapshot
-import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
+import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.devices.OwnerDeviceListItem
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -12,7 +10,7 @@ class DeviceCardMapperTest {
 
     @Test
     fun `unassigned device has no third line`() {
-        val card = DeviceCardMapper.map(snapshot())
+        val card = DeviceCardMapper.map(device())
 
         assertEquals("", card.card.supportingText)
     }
@@ -20,21 +18,30 @@ class DeviceCardMapperTest {
     @Test
     fun `assigned device third line is only trimmed tank name`() {
         val card = DeviceCardMapper.map(
-            snapshot = snapshot(),
-            assignedTankName = "  Tank 1  "
+            device = device(assignedTankName = "  Tank 1  ")
         )
 
         assertEquals("Tank 1", card.card.supportingText)
     }
 
-    private fun snapshot() = DeviceSnapshot(
-        identity = DeviceIdentity(
-            uid = DeviceUid("AQL-WPE-336172"),
-            serialNumber = "AQL-WPE-336172"
-        ),
-        product = DeviceProduct(
-            family = DeviceFamily.LIGHT,
-            displayName = "WRGB Pro Elite 120"
-        )
+    @Test
+    fun `application item preserves card identity and online presentation`() {
+        val card = DeviceCardMapper.map(device())
+
+        assertEquals("AQL-WPE-336172", card.deviceUid)
+        assertEquals("WRGB Pro Elite 120", card.card.displayName)
+        assertEquals("AQL-WPE-336172", card.card.serialText)
+        assertEquals("ONLINE", card.card.statusText)
+    }
+
+    private fun device(
+        assignedTankName: String = ""
+    ) = OwnerDeviceListItem(
+        deviceUid = "AQL-WPE-336172",
+        displayName = "WRGB Pro Elite 120",
+        serialText = "AQL-WPE-336172",
+        family = OwnerDeviceFamily.LIGHT,
+        availability = OwnerDeviceAvailability.REACHABLE,
+        assignedTankName = assignedTankName
     )
 }
