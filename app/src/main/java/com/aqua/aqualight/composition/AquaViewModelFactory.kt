@@ -6,7 +6,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
+import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectViewModel
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
@@ -33,6 +36,12 @@ internal class AquaViewModelFactory(
     private val fallbackFactory = ViewModelProvider.AndroidViewModelFactory.getInstance(
         appContext as Application
     )
+    private val aquariumTankStore by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        AquariumTankDataStoreManager(appContext)
+    }
+    private val careTaskStore by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        CareTaskDataStoreManager.create(appContext)
+    }
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val viewModel: ViewModel = when {
@@ -49,6 +58,13 @@ internal class AquaViewModelFactory(
             modelClass.isAssignableFrom(DevicesViewModel::class.java) ->
                 DevicesViewModel(
                     repository = devicesRepository(),
+                    assignmentRepository = assignmentRepository()
+                )
+
+            modelClass.isAssignableFrom(AquariumTankViewModel::class.java) ->
+                AquariumTankViewModel(
+                    tankDataStoreManager = aquariumTankStore,
+                    careTaskDataStoreManager = careTaskStore,
                     assignmentRepository = assignmentRepository()
                 )
 
