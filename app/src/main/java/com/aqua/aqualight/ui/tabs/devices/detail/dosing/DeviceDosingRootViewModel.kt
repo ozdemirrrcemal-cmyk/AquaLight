@@ -1,11 +1,10 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.ui.common.devicepresence.DevicePresencePresentationMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootMenuMapper
@@ -16,10 +15,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class DeviceDosingRootViewModel(
-    application: Application
-) : AndroidViewModel(application) {
-
-    private val repository = DevicesRepositoryProvider.get(application)
+    private val repository: DevicesRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceDosingRootUiState(title = DEFAULT_TITLE))
     val uiState: StateFlow<DeviceDosingRootUiState> = _uiState.asStateFlow()
@@ -33,7 +30,6 @@ class DeviceDosingRootViewModel(
     ) {
         if (deviceUidText.isBlank()) {
             observeJob?.cancel()
-
             _uiState.value = DeviceDosingRootUiState(
                 title = fallbackTitle.ifBlank { DEFAULT_TITLE },
                 deviceUid = "",
@@ -48,14 +44,11 @@ class DeviceDosingRootViewModel(
         }
 
         val deviceUid = DeviceUid(deviceUidText)
-        if (boundDeviceUid == deviceUid) {
-            return
-        }
+        if (boundDeviceUid == deviceUid) return
 
         boundDeviceUid = deviceUid
         observeJob?.cancel()
         repository.connectRuntime(deviceUid)
-
         _uiState.value = DeviceDosingRootUiState(
             title = fallbackTitle.ifBlank { DEFAULT_TITLE },
             deviceUid = deviceUid.value,
@@ -69,19 +62,16 @@ class DeviceDosingRootViewModel(
 
         observeJob = viewModelScope.launch {
             repository.observeDevice(deviceUid).collect { snapshot ->
-                _uiState.value = (
-                    snapshot
-                        ?.toRootUiState(fallbackTitle = fallbackTitle)
-                        ?: DeviceDosingRootUiState(
-                            title = fallbackTitle.ifBlank { DEFAULT_TITLE },
-                            deviceUid = deviceUid.value,
-                            connectionStatus = "Offline",
-                            primaryCountLabel = KIND.primaryCountLabel,
-                            primarySectionTitle = KIND.primarySectionTitle,
-                            primarySectionPlaceholder = KIND.primarySectionPlaceholder,
-                            secondarySectionTitle = KIND.secondarySectionTitle,
-                            secondarySectionPlaceholder = KIND.secondarySectionPlaceholder
-                        )
+                _uiState.value = snapshot?.toRootUiState(fallbackTitle)
+                    ?: DeviceDosingRootUiState(
+                        title = fallbackTitle.ifBlank { DEFAULT_TITLE },
+                        deviceUid = deviceUid.value,
+                        connectionStatus = "Offline",
+                        primaryCountLabel = KIND.primaryCountLabel,
+                        primarySectionTitle = KIND.primarySectionTitle,
+                        primarySectionPlaceholder = KIND.primarySectionPlaceholder,
+                        secondarySectionTitle = KIND.secondarySectionTitle,
+                        secondarySectionPlaceholder = KIND.secondarySectionPlaceholder
                     )
             }
         }
@@ -92,11 +82,7 @@ class DeviceDosingRootViewModel(
             .ifBlank { product.model }
             .ifBlank { fallbackTitle }
             .ifBlank { DEFAULT_TITLE }
-
-        val menuSections = DeviceRootMenuMapper.overview(
-            kind = KIND,
-            snapshot = this
-        )
+        val menuSections = DeviceRootMenuMapper.overview(kind = KIND, snapshot = this)
 
         return DeviceDosingRootUiState(
             title = productName,
@@ -131,20 +117,14 @@ class DeviceDosingRootViewModel(
         return listOf(
             firmwareVersion.ifBlank { null },
             firmwareBuild.ifBlank { null }
-        )
-            .filterNotNull()
-            .joinToString(separator = " / ")
-            .ifBlank { "Unknown" }
+        ).filterNotNull().joinToString(separator = " / ").ifBlank { "Unknown" }
     }
 
     private fun DeviceSnapshot.modelLabel(): String {
         return listOf(
             product.model.ifBlank { null },
             product.hardwareRevision.ifBlank { null }
-        )
-            .filterNotNull()
-            .joinToString(separator = " / ")
-            .ifBlank { "Unknown" }
+        ).filterNotNull().joinToString(separator = " / ").ifBlank { "Unknown" }
     }
 
     private fun DeviceSnapshot.featureLabel(): String {
@@ -158,25 +138,13 @@ class DeviceDosingRootViewModel(
                     if (capabilities.temperature) add("Temperature")
                 }
             }
-
             if (capabilities.timeSync) add("Time sync")
             if (capabilities.ota) add("OTA")
-
-            supportedFeatures
-                .filter { feature -> feature.isNotBlank() }
-                .forEach { feature -> add(feature) }
-
-            supportedScreens
-                .filter { screen -> screen.isNotBlank() }
-                .forEach { screen -> add(screen) }
+            supportedFeatures.filter { feature -> feature.isNotBlank() }.forEach { feature -> add(feature) }
+            supportedScreens.filter { screen -> screen.isNotBlank() }.forEach { screen -> add(screen) }
         }
-
-        return labels
-            .distinct()
-            .joinToString(separator = ", ")
-            .ifBlank { "Unknown" }
+        return labels.distinct().joinToString(separator = ", ").ifBlank { "Unknown" }
     }
-
 
     private companion object {
         val KIND = DeviceRootKind.DOSING
