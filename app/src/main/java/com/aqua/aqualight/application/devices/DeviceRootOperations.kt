@@ -22,9 +22,25 @@ data class DeviceRootSnapshot(
     val timerChannelCount: Int = 0,
     val dosingChannelCount: Int = 0,
     val fanOutputCount: Int = 0,
-    val featureLabels: List<String> = emptyList(),
+    val capabilities: Set<DeviceRootCapability> = emptySet(),
+    val supportedFeatures: List<String> = emptyList(),
+    val supportedScreens: List<String> = emptyList(),
     val menuFeatures: Set<DeviceRootMenuFeature> = emptySet()
 )
+
+enum class DeviceRootCapability {
+    MANUAL_LIGHT,
+    LIGHT_PROGRAM,
+    LIGHT_PRESETS,
+    LIGHT_SIMULATION,
+    DOSING,
+    STANDALONE_TIMER,
+    COOLING,
+    FAN,
+    TEMPERATURE,
+    TIME_SYNC,
+    OTA
+}
 
 enum class DeviceRootMenuFeature {
     LIGHT_MANUAL,
