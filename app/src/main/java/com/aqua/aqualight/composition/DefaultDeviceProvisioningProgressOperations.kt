@@ -1,6 +1,7 @@
 package com.aqua.aqualight.composition
 
 import android.content.Context
+import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningAddressResolver
@@ -10,6 +11,7 @@ import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningDraft
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningRuntimeHandoff
 import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
+import com.aqua.aqualight.data.devices.toOwnerDeviceFamily
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.ui.tabs.devices.add.DeviceProvisioningProgressOperations
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
@@ -76,8 +78,14 @@ internal class DefaultDeviceProvisioningProgressOperations(
     override fun resolveRoute(
         snapshot: DeviceSnapshot,
         requestedDeviceUid: String
-    ): DeviceRoute = routeResolver.resolve(
-        snapshot = snapshot,
-        requestedDeviceUid = requestedDeviceUid
-    )
+    ): DeviceRoute {
+        val deviceUid = snapshot.deviceUid.value.ifBlank { requestedDeviceUid.trim() }
+        return routeResolver.resolve(
+            DeviceMenuAccessResult.Available(
+                deviceUid = deviceUid,
+                title = snapshot.title.ifBlank { deviceUid },
+                family = snapshot.product.family.toOwnerDeviceFamily()
+            )
+        )
+    }
 }
