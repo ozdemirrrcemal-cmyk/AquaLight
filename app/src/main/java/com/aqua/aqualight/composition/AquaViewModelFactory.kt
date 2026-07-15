@@ -14,6 +14,7 @@ import com.aqua.aqualight.data.devices.provisioning.ble.DefaultBleProvisioningSc
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.platform.text.AndroidAppTextResolver
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectViewModel
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
@@ -99,6 +100,9 @@ internal class AquaViewModelFactory(
                     careTaskDataStoreManager = careTaskStore,
                     assignmentRepository = assignmentRepository()
                 )
+
+            modelClass.isAssignableFrom(TankDetailViewModel::class.java) ->
+                TankDetailViewModel()
 
             modelClass.isAssignableFrom(MaintenanceViewModel::class.java) ->
                 MaintenanceViewModel(
