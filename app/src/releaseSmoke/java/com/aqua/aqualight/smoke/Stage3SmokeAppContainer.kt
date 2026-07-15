@@ -19,6 +19,8 @@ import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.care.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.DefaultMaintenanceRepository
+import com.aqua.aqualight.data.devices.DefaultDeviceFirmwareUpdateOperations
+import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
@@ -29,6 +31,11 @@ import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.platform.auth.GoogleIdentityClient
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
 import com.aqua.aqualight.ui.tabs.settings.SettingsViewModel
@@ -143,6 +150,33 @@ private class Stage3SmokeViewModelFactory(
                 MaintenanceViewModel(
                     repository = maintenanceRepository,
                     textResolver = maintenanceTextResolver
+                )
+
+            modelClass.isAssignableFrom(DeviceLightRootViewModel::class.java) ->
+                DeviceLightRootViewModel(
+                    rootOperations = DefaultDeviceRootOperations(devicesRepository),
+                    firmwareUpdateOperations =
+                        DefaultDeviceFirmwareUpdateOperations(devicesRepository)
+                )
+
+            modelClass.isAssignableFrom(DeviceCoolingRootViewModel::class.java) ->
+                DeviceCoolingRootViewModel(
+                    operations = DefaultDeviceRootOperations(devicesRepository)
+                )
+
+            modelClass.isAssignableFrom(DeviceTimerRootViewModel::class.java) ->
+                DeviceTimerRootViewModel(
+                    operations = DefaultDeviceRootOperations(devicesRepository)
+                )
+
+            modelClass.isAssignableFrom(DeviceDosingRootViewModel::class.java) ->
+                DeviceDosingRootViewModel(
+                    operations = DefaultDeviceRootOperations(devicesRepository)
+                )
+
+            modelClass.isAssignableFrom(DeviceRootOverviewViewModel::class.java) ->
+                DeviceRootOverviewViewModel(
+                    operations = DefaultDeviceRootOperations(devicesRepository)
                 )
 
             else -> error(
