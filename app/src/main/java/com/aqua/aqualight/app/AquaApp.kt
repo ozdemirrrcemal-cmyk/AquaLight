@@ -4,8 +4,9 @@ import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import com.aqua.aqualight.base.theme.AppThemeController
+import com.aqua.aqualight.composition.AppContainer
+import com.aqua.aqualight.composition.DefaultAppContainer
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
-import com.aqua.aqualight.data.user.StartupAppearanceCache
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.utils.NotificationHelper
 import kotlinx.coroutines.CoroutineScope
@@ -21,12 +22,16 @@ class AquaApp : Application() {
         SupervisorJob() + Dispatchers.Default
     )
 
+    lateinit var appContainer: AppContainer
+        private set
+
     override fun onCreate() {
         super.onCreate()
 
+        appContainer = DefaultAppContainer(this)
         LocalDataRecoveryTracker.initialize(this)
 
-        val appearanceCache = StartupAppearanceCache.create(this)
+        val appearanceCache = appContainer.startupAppearanceCache
         val cachedAppearance = appearanceCache.read()
 
         // The first frame uses a tiny SharedPreferences mirror. Encrypted Proto
@@ -34,7 +39,7 @@ class AquaApp : Application() {
         applyTheme(cachedAppearance.themeMode)
         applyLanguage(cachedAppearance.languageCode)
 
-        val userPrefs = UserPreferencesManager.create(this)
+        val userPrefs = appContainer.userPreferencesManager
         applicationScope.launch {
             val preferences = userPrefs.userPrefsFlow.first()
             val resolvedThemeMode = preferences.themeMode.ifBlank {
