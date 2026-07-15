@@ -69,6 +69,15 @@ class AquaApp : Application() {
         NotificationHelper.createNotificationChannel(this)
     }
 
+    /**
+     * Process-local composition replacement used by the minified release-smoke build.
+     * The release-smoke source set is not packaged in the production Release APK, and
+     * R8 removes this method from production when there is no caller.
+     */
+    internal fun replaceAppContainerForProcess(container: AppContainer) {
+        appContainer = container
+    }
+
     private fun applyTheme(mode: String) {
         AppThemeController.apply(
             context = this,
