@@ -16,15 +16,9 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
     private var _binding: DialogThemeSelectionBinding? = null
     private val binding get() = _binding!!
 
-    private val appContainer by lazy {
-        requireContext().requireAppContainer()
+    private val settingsOperations by lazy {
+        requireContext().requireAppContainer().userSettingsOperations
     }
-
-    private val userPrefs
-        get() = appContainer.userPreferencesManager
-
-    private val startupAppearanceCache
-        get() = appContainer.startupAppearanceCache
 
     var onBeforeThemeApplied: (() -> Unit)? = null
     var onThemeChanged: (() -> Unit)? = null
@@ -56,10 +50,7 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
         )
 
         viewLifecycleOwner.lifecycleScope.launch {
-            userPrefs.updateThemeMode(
-                normalizedMode
-            )
-            startupAppearanceCache.writeThemeMode(
+            settingsOperations.updateThemeMode(
                 normalizedMode
             )
 
@@ -90,7 +81,7 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
 
     private fun refreshRadios() {
         viewLifecycleOwner.lifecycleScope.launch {
-            val mode = userPrefs.themeMode.first()
+            val mode = settingsOperations.themeMode.first()
 
             updateRadios(
                 mode
