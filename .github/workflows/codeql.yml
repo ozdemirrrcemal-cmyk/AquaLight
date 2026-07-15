@@ -53,6 +53,7 @@ jobs:
             python3 tools/architecture_guard.py
             python3 tools/session_startup_guard.py
             python3 tools/composition_root_guard.py
+            python3 tools/ui_dependency_construction_guard.py
             python3 tools/navigation_guard.py
           } 2>&1 | tee architecture-guards.log
 
