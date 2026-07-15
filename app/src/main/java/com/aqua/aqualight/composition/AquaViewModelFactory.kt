@@ -6,6 +6,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
 import com.aqua.aqualight.ui.tabs.settings.SettingsViewModel
 import com.aqua.aqualight.ui.tabs.settings.device.DeviceStatusViewModel
 
@@ -30,14 +34,28 @@ internal class AquaViewModelFactory(
             modelClass.isAssignableFrom(SettingsViewModel::class.java) -> {
                 SettingsViewModel(
                     userProfileOperations = userProfileOperations,
-                    devicesRepository = DevicesRepositoryProvider.get(appContext)
+                    devicesRepository = devicesRepository()
                 )
             }
 
             modelClass.isAssignableFrom(DeviceStatusViewModel::class.java) -> {
-                DeviceStatusViewModel(
-                    devicesRepository = DevicesRepositoryProvider.get(appContext)
-                )
+                DeviceStatusViewModel(devicesRepository())
+            }
+
+            modelClass.isAssignableFrom(DeviceCoolingRootViewModel::class.java) -> {
+                DeviceCoolingRootViewModel(devicesRepository())
+            }
+
+            modelClass.isAssignableFrom(DeviceTimerRootViewModel::class.java) -> {
+                DeviceTimerRootViewModel(devicesRepository())
+            }
+
+            modelClass.isAssignableFrom(DeviceDosingRootViewModel::class.java) -> {
+                DeviceDosingRootViewModel(devicesRepository())
+            }
+
+            modelClass.isAssignableFrom(DeviceRootOverviewViewModel::class.java) -> {
+                DeviceRootOverviewViewModel(devicesRepository())
             }
 
             else -> return fallbackFactory.create(modelClass)
@@ -46,4 +64,6 @@ internal class AquaViewModelFactory(
         @Suppress("UNCHECKED_CAST")
         return viewModel as T
     }
+
+    private fun devicesRepository() = DevicesRepositoryProvider.get(appContext)
 }
