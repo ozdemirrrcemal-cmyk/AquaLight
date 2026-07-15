@@ -34,7 +34,7 @@ interface AppContainer {
     val userPreferencesManager: UserPreferencesManager
     val userSettingsOperations: UserSettingsOperations
     val userProfileOperations: UserProfileOperations
-    val feedbackSubmissionUseCase: FeedbackSubmissionUseCase
+    val feedbackSubmissionOperations: FeedbackSubmissionUseCase
     val authViewModelFactory: ViewModelProvider.Factory
     val sessionExitOperations: SessionExitOperations
     val accountSecurityOperations: AccountSecurityOperations
@@ -75,7 +75,7 @@ internal class DefaultAppContainer(
         DefaultUserProfileOperations(userPreferencesManager)
     }
 
-    override val feedbackSubmissionUseCase: FeedbackSubmissionUseCase by lazy(
+    override val feedbackSubmissionOperations: FeedbackSubmissionUseCase by lazy(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
         FeedbackSubmissionUseCase(
