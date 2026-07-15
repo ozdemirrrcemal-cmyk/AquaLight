@@ -123,6 +123,7 @@ jobs:
           set -o pipefail
           ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee assemble-release.log
           test -s app/build/outputs/apk/release/AquaLight.apk
+          test -s app/build/outputs/mapping/release/mapping.txt
 
       - name: Upload validation logs
         if: always()
@@ -137,6 +138,7 @@ jobs:
             lint-release.log
             assemble-debug.log
             assemble-release.log
+            app/build/outputs/mapping/release/mapping.txt
             app/build/reports/tests/testDebugUnitTest/**
             app/build/reports/tests/testReleaseUnitTest/**
             app/build/reports/lint-results-debug.*
