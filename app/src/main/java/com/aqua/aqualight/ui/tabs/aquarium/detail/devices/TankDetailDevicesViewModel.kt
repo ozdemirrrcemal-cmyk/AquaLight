@@ -4,14 +4,17 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
+import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
+import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceRemovalResult
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactSnapshotMapper
-import com.aqua.aqualight.ui.tabs.devices.route.DeviceMenuOpenGate
-import com.aqua.aqualight.ui.tabs.devices.route.DeviceMenuOpenGateResult
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
+import java.util.concurrent.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -27,7 +30,8 @@ import kotlinx.coroutines.launch
 class TankDetailDevicesViewModel(
     private val devicesRepository: DevicesRepository,
     private val assignmentRepository: TankDeviceAssignmentRepository,
-    private val menuOpenGate: DeviceMenuOpenGate
+    private val menuAccessOperations: DeviceMenuAccessOperations,
+    private val routeResolver: DeviceRouteResolver
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TankDetailDevicesUiState())
@@ -87,24 +91,30 @@ class TankDetailDevicesViewModel(
 
         viewModelScope.launch {
             openingDeviceMenu.value = true
-            val result = runCatching {
-                menuOpenGate.resolve(deviceUid)
-            }.getOrElse {
-                DeviceMenuOpenGateResult.Blocked(
+            val result = try {
+                menuAccessOperations.resolve(deviceUid)
+            } catch (error: Throwable) {
+                if (error is CancellationException) throw error
+                DeviceMenuAccessResult.Unavailable(
                     title = "",
-                    messageRes = R.string.device_menu_offline_message
+                    reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
                 )
+            } finally {
+                openingDeviceMenu.value = false
             }
-            openingDeviceMenu.value = false
 
             when (result) {
-                is DeviceMenuOpenGateResult.OpenRoute ->
-                    _events.send(TankDetailDevicesEvent.OpenDeviceRoute(result.route))
-                is DeviceMenuOpenGateResult.Blocked ->
+                is DeviceMenuAccessResult.Available ->
+                    _events.send(
+                        TankDetailDevicesEvent.OpenDeviceRoute(
+                            route = routeResolver.resolve(result)
+                        )
+                    )
+                is DeviceMenuAccessResult.Unavailable ->
                     _events.send(
                         TankDetailDevicesEvent.ShowDeviceUnavailable(
                             title = result.title,
-                            messageRes = result.messageRes
+                            messageRes = R.string.device_menu_offline_message
                         )
                     )
             }
