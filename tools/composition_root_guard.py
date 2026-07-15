@@ -20,6 +20,7 @@ AUTH_FACTORY_TEST_PATH = (
     ROOT
     / "app/src/test/java/com/aqua/aqualight/ui/auth/viewmodel/AuthViewModelFactoryTest.kt"
 )
+PLAN_PATH = ROOT / "docs/stage-3-dependency-boundaries-plan.md"
 
 errors: list[str] = []
 
@@ -35,6 +36,7 @@ container = read(CONTAINER_PATH)
 aqua_app = read(AQUA_APP_PATH)
 auth_factory = read(AUTH_FACTORY_PATH)
 auth_factory_test = read(AUTH_FACTORY_TEST_PATH)
+plan = read(PLAN_PATH)
 
 for token, reason in (
     ("interface AppContainer", "composition root contract must remain explicit"),
@@ -43,10 +45,14 @@ for token, reason in (
     ("val sessionExitOperations: SessionExitOperations", "logout must use an application boundary"),
     ("val accountSecurityOperations: AccountSecurityOperations", "account security must use an application boundary"),
     ("val googleIdentityClient: GoogleIdentityClient", "Google identity platform access must be centralized"),
+    ("val userSettingsOperations: UserSettingsOperations", "settings must use an application boundary"),
+    ("val userProfileOperations: UserProfileOperations", "profile persistence must use an application boundary"),
     ("AuthRepository.create(appContext)", "AuthRepository construction must remain centralized"),
     ("LogoutManager.create(appContext)", "logout manager construction must remain centralized"),
     ("FirebaseAccountSecurityOperations.create(appContext)", "account security construction must remain centralized"),
     ("DefaultGoogleIdentityClient(appContext)", "Google identity client construction must remain centralized"),
+    ("DefaultUserSettingsOperations(", "settings implementation construction must remain centralized"),
+    ("DefaultUserProfileOperations(", "profile implementation construction must remain centralized"),
     ("LazyThreadSafetyMode.SYNCHRONIZED", "process-scoped dependencies must be initialized safely"),
 ):
     if token not in container:
@@ -56,10 +62,18 @@ for token, reason in (
     ("lateinit var appContainer: AppContainer", "Application must own the process composition root"),
     ("appContainer = DefaultAppContainer(this)", "container must be initialized before app services"),
     ("appContainer.startupAppearanceCache", "startup cache must be resolved by the container"),
-    ("appContainer.userPreferencesManager", "preferences must be resolved by the container"),
+    ("appContainer.userPreferencesManager", "startup preferences must be resolved by the container"),
 ):
     if token not in aqua_app:
         errors.append(f"{AQUA_APP_PATH.relative_to(ROOT)}: {reason}: {token}")
+
+for token, reason in (
+    ("UI -> application contracts/use cases", "migration plan must define dependency direction"),
+    ("Definition of done", "migration plan must retain its commercial completion gate"),
+    ("Feedback vendor isolation", "remaining Firebase UI removal must stay visible"),
+):
+    if token not in plan:
+        errors.append(f"{PLAN_PATH.relative_to(ROOT)}: {reason}: {token}")
 
 for forbidden, reason in (
     ("android.content.Context", "ViewModel factory must not construct dependencies from Context"),
@@ -83,14 +97,20 @@ if APPLICATION_ROOT.exists():
                 f"Android/Firebase/data/platform/UI independent: {match.group(0)}"
             )
 
+central_construction_tokens = (
+    "AuthRepository.create(",
+    "DefaultUserSettingsOperations(",
+    "DefaultUserProfileOperations(",
+)
 for kotlin_file in SOURCE_ROOT.rglob("*.kt"):
     if kotlin_file == CONTAINER_PATH:
         continue
     text = kotlin_file.read_text(encoding="utf-8", errors="ignore")
-    if "AuthRepository.create(" in text:
-        errors.append(
-            f"{kotlin_file.relative_to(ROOT)}: AuthRepository may only be constructed in AppContainer"
-        )
+    for token in central_construction_tokens:
+        if token in text:
+            errors.append(
+                f"{kotlin_file.relative_to(ROOT)}: {token} may only be constructed in AppContainer"
+            )
 
 if UI_ROOT.exists():
     for kotlin_file in UI_ROOT.rglob("*.kt"):
@@ -170,6 +190,37 @@ for relative, required_tokens in migrated_screen_requirements.items():
             errors.append(
                 f"{path.relative_to(ROOT)}: migrated UI must not access concrete auth/platform "
                 f"implementations: {forbidden}"
+            )
+
+settings_screen_requirements = {
+    "ui/common/bottomsheet/ThemeBottomSheet.kt": "userSettingsOperations",
+    "ui/tabs/settings/app/LanguageSettingsFragment.kt": "userSettingsOperations",
+    "ui/tabs/settings/app/AppSettingsFragment.kt": "userSettingsOperations",
+    "ui/tabs/settings/usage/UsageFragment.kt": "userSettingsOperations",
+    "ui/tabs/settings/profile/EditProfileFragment.kt": "userProfileOperations",
+}
+settings_ui_forbidden = (
+    "import com.aqua.aqualight.data.user.UserPreferencesManager",
+    "UserPreferencesManager.create(",
+    "import com.aqua.aqualight.data.care.CareTaskDataStoreManager",
+    "CareTaskDataStoreManager.create(",
+    "import com.aqua.aqualight.data.care.reminder.CareTaskReminderScheduler",
+    ".startupAppearanceCache",
+)
+for relative, required_token in settings_screen_requirements.items():
+    path = SOURCE_ROOT / relative
+    text = read(path)
+    for token in ("requireAppContainer()", required_token):
+        if token not in text:
+            errors.append(
+                f"{path.relative_to(ROOT)}: settings/profile UI must resolve {required_token} "
+                f"from AppContainer; missing {token}"
+            )
+    for forbidden in settings_ui_forbidden:
+        if forbidden in text:
+            errors.append(
+                f"{path.relative_to(ROOT)}: settings/profile UI must not access concrete "
+                f"DataStore/reminder implementations: {forbidden}"
             )
 
 for token, reason in (
