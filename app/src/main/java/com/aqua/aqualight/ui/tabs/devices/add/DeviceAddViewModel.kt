@@ -1,12 +1,12 @@
 package com.aqua.aqualight.ui.tabs.devices.add
 
-import android.app.Application
-import androidx.annotation.StringRes
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.text.AppTextResolver
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningCandidate
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningScanner
+import com.aqua.aqualight.data.devices.provisioning.ble.BleProvisioningScanner
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -18,10 +18,9 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 class DeviceAddViewModel(
-    application: Application
-) : AndroidViewModel(application) {
-
-    private val bleScanner = AqlBleProvisioningScanner(application)
+    private val bleScanner: BleProvisioningScanner,
+    private val textResolver: AppTextResolver
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(readyState())
     val uiState: StateFlow<DeviceAddUiState> = _uiState.asStateFlow()
@@ -117,9 +116,7 @@ class DeviceAddViewModel(
     private fun observeBleCandidates() {
         scanCollectJob = viewModelScope.launch {
             bleScanner.candidates.collect { candidates ->
-                val uiCandidates = candidates.map { candidate ->
-                    candidate.toUi()
-                }
+                val uiCandidates = candidates.map(AqlBleProvisioningCandidate::toUi)
 
                 if (uiCandidates.isEmpty()) {
                     _uiState.value = _uiState.value.copy(
@@ -150,9 +147,7 @@ class DeviceAddViewModel(
     private fun startScanTimeout() {
         scanTimeoutJob = viewModelScope.launch {
             delay(SCAN_TIMEOUT_MS)
-
-            val hasCandidates = _uiState.value.candidates.isNotEmpty()
-            if (!hasCandidates) {
+            if (_uiState.value.candidates.isEmpty()) {
                 bleScanner.stopScan()
                 _uiState.value = DeviceAddUiState(
                     mode = DeviceAddScanMode.EMPTY,
@@ -199,7 +194,9 @@ class DeviceAddViewModel(
             heroSubtitle = string(R.string.device_add_scan_failed_message),
             scanBadge = string(R.string.device_add_scan_badge_error),
             emptyTitle = string(R.string.device_add_scan_failed_empty_title),
-            emptyMessage = message.ifBlank { string(R.string.device_add_scan_failed_fallback) }
+            emptyMessage = message.ifBlank {
+                string(R.string.device_add_scan_failed_fallback)
+            }
         )
     }
 
@@ -223,7 +220,9 @@ class DeviceAddViewModel(
             title = displayTitle,
             serial = displaySerial,
             model = modelLabel,
-            status = displayStatus.ifBlank { string(R.string.device_add_status_ready) },
+            status = displayStatus.ifBlank {
+                string(R.string.device_add_status_ready)
+            },
             rssiLabel = string(R.string.device_add_rssi_value_format, rssi),
             bleAddress = address,
             bleName = name
@@ -242,12 +241,8 @@ class DeviceAddViewModel(
         )
     }
 
-    private fun string(
-        @StringRes resId: Int,
-        vararg args: Any
-    ): String {
-        return getApplication<Application>().getString(resId, *args)
-    }
+    private fun string(resId: Int, vararg args: Any): String =
+        textResolver.get(resId, *args)
 
     override fun onCleared() {
         stopBleScan()
