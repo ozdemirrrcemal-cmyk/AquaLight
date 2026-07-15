@@ -16,7 +16,9 @@ import android.widget.TextView
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.R
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.snackbar.Snackbar
@@ -26,6 +28,9 @@ import kotlinx.coroutines.SupervisorJob
 
 open class BaseActivity : AppCompatActivity() {
 
+    override val defaultViewModelProviderFactory: ViewModelProvider.Factory
+        get() = requireAppContainer().defaultViewModelFactory
+
     enum class SnackType {
         NORMAL,
         SUCCESS,
@@ -33,29 +38,22 @@ open class BaseActivity : AppCompatActivity() {
         WARNING
     }
 
-    private val activityJob =
-    SupervisorJob()
+    private val activityJob = SupervisorJob()
 
-    protected val uiScope: CoroutineScope =
-    CoroutineScope(
+    protected val uiScope: CoroutineScope = CoroutineScope(
         Dispatchers.Main.immediate + activityJob
     )
 
     private var loadingDialog: Dialog? = null
     private var loadingLogo: ImageView? = null
 
-    private val loadingOwners: MutableSet<String> =
-        linkedSetOf()
+    private val loadingOwners: MutableSet<String> = linkedSetOf()
 
     private val legacyLoadingOwner =
         "${BaseActivity::class.java.name}.LegacyLoadingOwner"
 
-    override fun onCreate(
-        savedInstanceState: Bundle?
-    ) {
-        super.onCreate(
-            savedInstanceState
-        )
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
     }
 
     fun setGlobalLoading(
@@ -72,22 +70,15 @@ open class BaseActivity : AppCompatActivity() {
         ownerKey: String,
         show: Boolean
     ) {
-        val normalizedOwnerKey =
-            ownerKey.trim()
-                .ifBlank {
-                    legacyLoadingOwner
-                }
+        val normalizedOwnerKey = ownerKey.trim().ifBlank {
+            legacyLoadingOwner
+        }
 
-        val changed =
-            if (show) {
-                loadingOwners.add(
-                    normalizedOwnerKey
-                )
-            } else {
-                loadingOwners.remove(
-                    normalizedOwnerKey
-                )
-            }
+        val changed = if (show) {
+            loadingOwners.add(normalizedOwnerKey)
+        } else {
+            loadingOwners.remove(normalizedOwnerKey)
+        }
 
         if (!changed) {
             return
@@ -100,26 +91,18 @@ open class BaseActivity : AppCompatActivity() {
         }
     }
 
-    fun clearGlobalLoading(
-        owner: Any
-    ) {
-        clearGlobalLoading(
-            ownerKey = owner.toLoadingOwnerKey()
-        )
+    fun clearGlobalLoading(owner: Any) {
+        clearGlobalLoading(ownerKey = owner.toLoadingOwnerKey())
     }
 
-    fun clearGlobalLoading(
-        ownerKey: String
-    ) {
+    fun clearGlobalLoading(ownerKey: String) {
         setGlobalLoading(
             ownerKey = ownerKey,
             show = false
         )
     }
 
-    fun showLoading(
-        show: Boolean
-    ) {
+    fun showLoading(show: Boolean) {
         setGlobalLoading(
             ownerKey = legacyLoadingOwner,
             show = show
@@ -130,23 +113,16 @@ open class BaseActivity : AppCompatActivity() {
         deviceTitle: String,
         @StringRes messageRes: Int = R.string.device_menu_offline_message
     ) {
-        if (
-            isFinishing ||
-            isDestroyed
-        ) {
+        if (isFinishing || isDestroyed) {
             return
         }
 
-        val safeTitle = deviceTitle.trim()
-            .ifBlank {
-                getString(R.string.device_menu_default_title)
-            }
-
-        val safeMessage = getString(messageRes)
-            .trim()
-            .ifBlank {
-                getString(R.string.device_menu_offline_message)
-            }
+        val safeTitle = deviceTitle.trim().ifBlank {
+            getString(R.string.device_menu_default_title)
+        }
+        val safeMessage = getString(messageRes).trim().ifBlank {
+            getString(R.string.device_menu_offline_message)
+        }
 
         DialogManager.showInfoDialog(
             context = this,
@@ -166,13 +142,9 @@ open class BaseActivity : AppCompatActivity() {
     }
 
     private fun showLoadingDialog() {
-        if (
-            isFinishing ||
-            isDestroyed
-        ) {
+        if (isFinishing || isDestroyed) {
             return
         }
-
         if (loadingDialog?.isShowing == true) {
             return
         }
@@ -181,21 +153,12 @@ open class BaseActivity : AppCompatActivity() {
             this,
             android.R.style.Theme_Translucent_NoTitleBar
         ).apply {
-            requestWindowFeature(
-                Window.FEATURE_NO_TITLE
-            )
-
-            setCancelable(
-                false
-            )
-
-            setCanceledOnTouchOutside(
-                false
-            )
+            requestWindowFeature(Window.FEATURE_NO_TITLE)
+            setCancelable(false)
+            setCanceledOnTouchOutside(false)
         }
 
-        val overlay = LayoutInflater.from(this)
-        .inflate(
+        val overlay = LayoutInflater.from(this).inflate(
             R.layout.loading_overlay,
             null,
             false
@@ -205,9 +168,7 @@ open class BaseActivity : AppCompatActivity() {
         overlay.isClickable = true
         overlay.isFocusable = true
 
-        val logo = overlay.findViewById<ImageView>(
-            R.id.loadingLogo
-        )
+        val logo = overlay.findViewById<ImageView>(R.id.loadingLogo)
 
         dialog.setContentView(
             overlay,
@@ -219,7 +180,6 @@ open class BaseActivity : AppCompatActivity() {
 
         loadingDialog = dialog
         loadingLogo = logo
-
         dialog.show()
 
         dialog.window?.apply {
@@ -227,21 +187,9 @@ open class BaseActivity : AppCompatActivity() {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
-
-            setBackgroundDrawable(
-                ColorDrawable(
-                    Color.TRANSPARENT
-                )
-            )
-
-            clearFlags(
-                WindowManager.LayoutParams.FLAG_DIM_BEHIND
-            )
-
-            setDimAmount(
-                0f
-            )
-
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            setDimAmount(0f)
             attributes = attributes.apply {
                 width = ViewGroup.LayoutParams.MATCH_PARENT
                 height = ViewGroup.LayoutParams.MATCH_PARENT
@@ -253,17 +201,12 @@ open class BaseActivity : AppCompatActivity() {
             this,
             R.anim.rotate_pulse_logo
         )
-
-        logo.startAnimation(
-            anim
-        )
+        logo.startAnimation(anim)
     }
 
     private fun hideLoadingDialog() {
         loadingLogo?.clearAnimation()
-
         loadingDialog?.dismiss()
-
         loadingDialog = null
         loadingLogo = null
     }
@@ -272,104 +215,57 @@ open class BaseActivity : AppCompatActivity() {
         message: String,
         type: SnackType = SnackType.NORMAL
     ) {
-        val root =
-        findViewById<View>(
-            android.R.id.content
-        ) ?: return
-
-        val snackbar =
-        Snackbar.make(
+        val root = findViewById<View>(android.R.id.content) ?: return
+        val snackbar = Snackbar.make(
             root,
             message,
             Snackbar.LENGTH_LONG
         )
 
-        val backgroundColor =
-        when (type) {
-            SnackType.SUCCESS -> {
-                ContextCompat.getColor(
-                    this,
-                    R.color.snackbar_success
-                )
-            }
-
-            SnackType.ERROR -> {
-                ContextCompat.getColor(
-                    this,
-                    R.color.snackbar_error
-                )
-            }
-
-            SnackType.WARNING -> {
-                ContextCompat.getColor(
-                    this,
-                    R.color.snackbar_warning
-                )
-            }
-
-            SnackType.NORMAL -> {
-                ContextCompat.getColor(
-                    this,
-                    R.color.aqua_button_blue
-                )
-            }
+        val backgroundColor = when (type) {
+            SnackType.SUCCESS -> ContextCompat.getColor(
+                this,
+                R.color.snackbar_success
+            )
+            SnackType.ERROR -> ContextCompat.getColor(
+                this,
+                R.color.snackbar_error
+            )
+            SnackType.WARNING -> ContextCompat.getColor(
+                this,
+                R.color.snackbar_warning
+            )
+            SnackType.NORMAL -> ContextCompat.getColor(
+                this,
+                R.color.aqua_button_blue
+            )
         }
 
-        snackbar.setBackgroundTint(
-            backgroundColor
-        )
-
+        snackbar.setBackgroundTint(backgroundColor)
         snackbar.setTextColor(
-            ContextCompat.getColor(
-                this,
-                android.R.color.white
-            )
+            ContextCompat.getColor(this, android.R.color.white)
         )
+        snackbar.animationMode = Snackbar.ANIMATION_MODE_FADE
 
-        snackbar.animationMode =
-        Snackbar.ANIMATION_MODE_FADE
-
-        val snackView =
-        snackbar.view
-
-        val textView =
-        snackView.findViewById<TextView>(
+        val snackView = snackbar.view
+        val textView = snackView.findViewById<TextView>(
             com.google.android.material.R.id.snackbar_text
         )
-
         textView.textSize = 15f
         textView.maxLines = 2
+        textView.setPadding(0, 0, 0, 0)
 
-        textView.setPadding(
-            0,
-            0,
-            0,
-            0
-        )
-
-        val params =
-        snackView.layoutParams
-
+        val params = snackView.layoutParams
         if (params is ViewGroup.MarginLayoutParams) {
-            params.setMargins(
-                24,
-                0,
-                24,
-                24
-            )
-
-            snackView.layoutParams =
-            params
+            params.setMargins(24, 0, 24, 24)
+            snackView.layoutParams = params
         }
 
         snackView.elevation = 8f
-
-        snackView.background =
-        ContextCompat.getDrawable(
+        snackView.background = ContextCompat.getDrawable(
             this,
             R.drawable.bg_snackbar
         )
-
         snackbar.show()
     }
 
@@ -387,11 +283,8 @@ open class BaseActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         activityJob.cancel()
-
         loadingOwners.clear()
-
         hideLoadingDialog()
-
         super.onDestroy()
     }
 }
