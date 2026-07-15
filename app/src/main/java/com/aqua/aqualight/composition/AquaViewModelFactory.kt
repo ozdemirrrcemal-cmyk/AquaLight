@@ -10,11 +10,14 @@ import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.care.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.DefaultMaintenanceRepository
+import com.aqua.aqualight.data.devices.provisioning.ble.DefaultBleProvisioningScanner
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.platform.text.AndroidAppTextResolver
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectViewModel
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
+import com.aqua.aqualight.ui.tabs.devices.add.DeviceAddViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingRootViewModel
@@ -39,6 +42,9 @@ internal class AquaViewModelFactory(
     private val fallbackFactory = ViewModelProvider.AndroidViewModelFactory.getInstance(
         appContext as Application
     )
+    private val appTextResolver by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        AndroidAppTextResolver(appContext)
+    }
     private val aquariumTankStore by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         AquariumTankDataStoreManager(appContext)
     }
@@ -71,6 +77,12 @@ internal class AquaViewModelFactory(
                 DevicesViewModel(
                     repository = devicesRepository(),
                     assignmentRepository = assignmentRepository()
+                )
+
+            modelClass.isAssignableFrom(DeviceAddViewModel::class.java) ->
+                DeviceAddViewModel(
+                    bleScanner = DefaultBleProvisioningScanner(appContext),
+                    textResolver = appTextResolver
                 )
 
             modelClass.isAssignableFrom(AquariumTankViewModel::class.java) ->
