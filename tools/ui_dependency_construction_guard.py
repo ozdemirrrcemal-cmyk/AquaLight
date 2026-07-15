@@ -57,6 +57,12 @@ FORBIDDEN = {
     "FieldValue.serverTimestamp()": "Firestore values must stay behind an adapter",
 }
 
+VIEWMODEL_WORKFLOW_CONSTRUCTION = {
+    "OwnerDeviceDataCleaner.create(": "device deletion coordinator must be injected",
+    "OwnerTankDataCleaner(": "tank deletion coordinator must be injected",
+    "DeviceMenuOpenGate(": "device menu gate must be injected",
+}
+
 FIREBASE_IMPORT = re.compile(r"^import\s+com\.google\.firebase\.", re.MULTILINE)
 ANDROID_VIEWMODEL = re.compile(r"\bclass\s+\w+ViewModel\b[\s\S]{0,250}:\s*AndroidViewModel\b")
 APPLICATION_CTOR = re.compile(r"\bclass\s+\w+ViewModel\s*\([^)]*\bApplication\b")
@@ -93,6 +99,9 @@ for path in sorted(UI_ROOT.rglob("*.kt")):
             errors.append(f"{relative}: ViewModel must receive constructor dependencies from a factory")
         if "getApplication<" in text:
             errors.append(f"{relative}: ViewModel must not resolve Android Application")
+        for token, reason in VIEWMODEL_WORKFLOW_CONSTRUCTION.items():
+            if token in text:
+                errors.append(f"{relative}: {reason}: {token}")
 
 container = read_required(APP_CONTAINER_PATH)
 wifi_fragment = read_required(WIFI_FRAGMENT_PATH)
