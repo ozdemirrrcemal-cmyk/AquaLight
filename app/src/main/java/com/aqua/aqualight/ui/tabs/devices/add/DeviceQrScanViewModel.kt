@@ -27,7 +27,7 @@ class DeviceQrScanViewModel(
     private val bleScanner: BleProvisioningScanner,
     private val repository: DevicesRepository,
     private val textResolver: AppTextResolver,
-    private val qrParser: AqlProvisioningQrParser = AqlProvisioningQrParser()
+    private val qrParser: AqlProvisioningQrParser
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceQrScanUiState())
