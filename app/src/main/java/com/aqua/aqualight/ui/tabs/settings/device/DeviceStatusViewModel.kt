@@ -3,37 +3,34 @@ package com.aqua.aqualight.ui.tabs.settings.device
 import androidx.annotation.DrawableRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.data.devices.repository.DevicesRepository
-import kotlinx.coroutines.delay
+import com.aqua.aqualight.application.devices.DeviceStatusOperations
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class DeviceStatusViewModel(
-    private val devicesRepository: DevicesRepository
+    private val operations: DeviceStatusOperations,
+    private val clock: DeviceStatusClock
 ) : ViewModel() {
 
-    private val clockMillis = MutableStateFlow(System.currentTimeMillis())
     private val _uiState = MutableStateFlow(DeviceStatusUiState())
     val uiState: StateFlow<DeviceStatusUiState> = _uiState.asStateFlow()
 
     init {
-        devicesRepository.start(viewModelScope)
+        operations.start(viewModelScope)
         observeDeviceStatus()
-        startLastSeenTicker()
     }
 
     private fun observeDeviceStatus() {
         viewModelScope.launch {
             combine(
-                devicesRepository.devices,
-                clockMillis
-            ) { snapshots, nowMillis ->
+                operations.statuses,
+                clock.ticks
+            ) { statuses, nowMillis ->
                 val items = DeviceStatusSnapshotMapper.items(
-                    snapshots = snapshots,
+                    statuses = statuses,
                     nowMillis = nowMillis
                 )
                 DeviceStatusUiState(
@@ -44,19 +41,6 @@ class DeviceStatusViewModel(
                 _uiState.value = state
             }
         }
-    }
-
-    private fun startLastSeenTicker() {
-        viewModelScope.launch {
-            while (isActive) {
-                delay(LAST_SEEN_TICK_MS)
-                clockMillis.value = System.currentTimeMillis()
-            }
-        }
-    }
-
-    private companion object {
-        const val LAST_SEEN_TICK_MS = 15_000L
     }
 }
 
