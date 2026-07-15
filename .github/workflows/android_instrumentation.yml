@@ -11,6 +11,7 @@ on:
       - "gradlew"
       - "gradle.properties"
       - "settings.gradle"
+      - "tools/run_stage3_release_smoke.sh"
 
 concurrency:
   group: android-emulator-${{ github.event.pull_request.number || github.ref }}
@@ -97,75 +98,7 @@ jobs:
           emulator-options: >-
             -no-window -gpu swiftshader_indirect -no-snapshot-save
             -noaudio -no-boot-anim -camera-back none
-          script: |
-            set -euo pipefail
-
-            capture_smoke_diagnostics() {
-              adb shell uiautomator dump /sdcard/stage3-release-smoke-window.xml \
-                >/dev/null 2>&1 || true
-              adb pull /sdcard/stage3-release-smoke-window.xml \
-                stage3-release-smoke-window.xml >/dev/null 2>&1 || true
-              adb logcat -d > stage3-release-smoke-logcat.txt 2>&1 || true
-              adb shell dumpsys activity activities \
-                > stage3-release-smoke-activities.txt 2>&1 || true
-              adb shell dumpsys package com.aqua.aqualight \
-                > stage3-release-smoke-package.txt 2>&1 || true
-            }
-
-            trap capture_smoke_diagnostics EXIT
-
-            ./gradlew connectedDebugAndroidTest --no-daemon --stacktrace
-            bash tools/verify_uninstall_clears_data.sh
-
-            adb uninstall com.aqua.aqualight >/dev/null 2>&1 || true
-            SMOKE_APK="$(cat release-smoke-apk-path.txt)"
-            adb install "$SMOKE_APK" 2>&1 | tee stage3-release-smoke-install.txt
-            adb shell pm path com.aqua.aqualight \
-              2>&1 | tee stage3-release-smoke-package-path.txt
-            adb logcat -c
-            adb shell am force-stop com.aqua.aqualight
-
-            set +e
-            adb shell am start -W -S \
-              -n com.aqua.aqualight/com.aqua.aqualight.smoke.Stage3ReleaseSmokeActivity \
-              2>&1 | tee stage3-release-smoke-start.txt
-            START_STATUS=${PIPESTATUS[0]}
-            set -e
-
-            if [ "$START_STATUS" -ne 0 ]; then
-              capture_smoke_diagnostics
-              tail -n 500 stage3-release-smoke-logcat.txt || true
-              exit "$START_STATUS"
-            fi
-
-            rm -f stage3-release-smoke-window.xml
-            for attempt in $(seq 1 40); do
-              adb shell uiautomator dump /sdcard/stage3-release-smoke-window.xml \
-                >/dev/null 2>&1 || true
-              adb pull /sdcard/stage3-release-smoke-window.xml \
-                stage3-release-smoke-window.xml >/dev/null 2>&1 || true
-
-              if grep -q "STAGE3_RELEASE_SMOKE_PASS" \
-                stage3-release-smoke-window.xml 2>/dev/null; then
-                echo "Minified release smoke passed on API ${{ matrix.api-level }}."
-                exit 0
-              fi
-
-              if grep -q "STAGE3_RELEASE_SMOKE_FAIL" \
-                stage3-release-smoke-window.xml 2>/dev/null; then
-                capture_smoke_diagnostics
-                cat stage3-release-smoke-window.xml || true
-                tail -n 500 stage3-release-smoke-logcat.txt || true
-                exit 1
-              fi
-
-              sleep 1
-            done
-
-            capture_smoke_diagnostics
-            cat stage3-release-smoke-window.xml 2>/dev/null || true
-            tail -n 500 stage3-release-smoke-logcat.txt || true
-            exit 1
+          script: bash tools/run_stage3_release_smoke.sh "${{ matrix.api-level }}"
 
       - name: Upload instrumentation and smoke reports
         if: always()
@@ -176,6 +109,7 @@ jobs:
             app/build/reports/androidTests/connected/**
             app/build/outputs/androidTest-results/connected/**
             assemble-release-smoke.log
+            stage3-release-smoke-run.txt
             stage3-release-smoke-window.xml
             stage3-release-smoke-logcat.txt
             stage3-release-smoke-activities.txt
