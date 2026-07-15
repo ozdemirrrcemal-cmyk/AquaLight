@@ -33,8 +33,8 @@ for token in ("runBlocking", ".first()\n        applyTheme"):
 require(
     app_path,
     app,
-    "StartupAppearanceCache",
-    "startup theme/language must use the nonblocking mirror",
+    "appContainer.startupAppearanceCache",
+    "startup theme/language mirror must be resolved through the composition root",
 )
 
 splash_path = "app/src/main/java/com/aqua/aqualight/ui/splash/SplashActivity.kt"
