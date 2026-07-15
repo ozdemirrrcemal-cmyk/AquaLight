@@ -9,6 +9,7 @@ import java.util.Locale
 
 object DeviceCardMapper {
 
+    @Suppress("UNUSED_PARAMETER")
     fun map(
         device: OwnerDeviceListItem,
         nowMillis: Long = System.currentTimeMillis()
@@ -27,7 +28,8 @@ object DeviceCardMapper {
                 serialText = device.serialText.ifBlank { device.deviceUid },
                 supportingText = supportingText,
                 iconRes = DeviceFamilyIconMapper.iconFor(device.family),
-                statusText = if (isReachable) "Online" else "Offline",
+                statusText = (if (isReachable) "Online" else "Offline")
+                    .uppercase(Locale.US),
                 statusStyle = if (isReachable) {
                     DeviceCompactStatusStyle.ONLINE
                 } else {
@@ -35,8 +37,6 @@ object DeviceCardMapper {
                 },
                 actionText = "",
                 showAction = false
-            ).copy(
-                statusText = if (isReachable) "Online" else "Offline"
             )
         )
     }
