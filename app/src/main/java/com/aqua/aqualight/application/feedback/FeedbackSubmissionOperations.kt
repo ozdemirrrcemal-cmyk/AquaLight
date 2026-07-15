@@ -10,6 +10,22 @@ interface FeedbackSubmissionOperations {
     )
 }
 
+class FeedbackSubmissionUseCase(
+    private val operations: FeedbackSubmissionOperations
+) {
+    fun submit(
+        request: FeedbackSubmissionRequest,
+        screenshotFile: File?,
+        callback: FeedbackSubmissionCallback
+    ) {
+        operations.submit(
+            request = request,
+            screenshotFile = screenshotFile,
+            callback = callback
+        )
+    }
+}
+
 data class FeedbackSubmissionRequest(
     val category: String,
     val email: String,
