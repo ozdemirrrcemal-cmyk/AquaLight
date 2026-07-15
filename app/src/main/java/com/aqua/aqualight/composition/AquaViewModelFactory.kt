@@ -11,6 +11,7 @@ import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.care.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.DefaultMaintenanceRepository
+import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.provisioning.ble.DefaultBleProvisioningScanner
@@ -36,6 +37,7 @@ import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
 import com.aqua.aqualight.ui.tabs.settings.SettingsViewModel
 import com.aqua.aqualight.ui.tabs.settings.device.DeviceStatusViewModel
+import com.aqua.aqualight.ui.tabs.settings.device.SystemDeviceStatusClock
 
 /**
  * Process composition-root factory for non-auth feature ViewModels.
@@ -76,12 +78,15 @@ internal class AquaViewModelFactory(
             modelClass.isAssignableFrom(SettingsViewModel::class.java) -> {
                 SettingsViewModel(
                     userProfileOperations = userProfileOperations,
-                    devicesRepository = devicesRepository()
+                    deviceStatusOperations = DefaultDeviceStatusOperations(devicesRepository())
                 )
             }
 
             modelClass.isAssignableFrom(DeviceStatusViewModel::class.java) ->
-                DeviceStatusViewModel(devicesRepository())
+                DeviceStatusViewModel(
+                    operations = DefaultDeviceStatusOperations(devicesRepository()),
+                    clock = SystemDeviceStatusClock()
+                )
 
             modelClass.isAssignableFrom(DevicesViewModel::class.java) -> {
                 val repository = devicesRepository()
