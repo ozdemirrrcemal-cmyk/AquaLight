@@ -2,12 +2,11 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.data.devices.model.DeviceSnapshot
-import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.repository.DevicesRepository
-import com.aqua.aqualight.ui.common.devicepresence.DevicePresencePresentationMapper
+import com.aqua.aqualight.application.devices.DeviceRootOperations
+import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootMenuMapper
+import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootPresentationMapper
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,135 +14,68 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class DeviceDosingRootViewModel(
-    private val repository: DevicesRepository
+    private val operations: DeviceRootOperations
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceDosingRootUiState(title = DEFAULT_TITLE))
     val uiState: StateFlow<DeviceDosingRootUiState> = _uiState.asStateFlow()
 
-    private var boundDeviceUid: DeviceUid? = null
+    private var boundDeviceUid: String = ""
     private var observeJob: Job? = null
 
     fun bind(
         deviceUidText: String,
         fallbackTitle: String
     ) {
-        if (deviceUidText.isBlank()) {
+        val deviceUid = deviceUidText.trim()
+        if (deviceUid.isBlank()) {
             observeJob?.cancel()
-            _uiState.value = DeviceDosingRootUiState(
-                title = fallbackTitle.ifBlank { DEFAULT_TITLE },
-                deviceUid = "",
-                connectionStatus = "Offline",
-                primaryCountLabel = KIND.primaryCountLabel,
-                primarySectionTitle = KIND.primarySectionTitle,
-                primarySectionPlaceholder = KIND.primarySectionPlaceholder,
-                secondarySectionTitle = KIND.secondarySectionTitle,
-                secondarySectionPlaceholder = KIND.secondarySectionPlaceholder
-            )
+            boundDeviceUid = ""
+            _uiState.value = emptyState(fallbackTitle.ifBlank { DEFAULT_TITLE }, "")
             return
         }
-
-        val deviceUid = DeviceUid(deviceUidText)
         if (boundDeviceUid == deviceUid) return
 
         boundDeviceUid = deviceUid
         observeJob?.cancel()
-        repository.connectRuntime(deviceUid)
-        _uiState.value = DeviceDosingRootUiState(
-            title = fallbackTitle.ifBlank { DEFAULT_TITLE },
-            deviceUid = deviceUid.value,
-            connectionStatus = "Offline",
-            primaryCountLabel = KIND.primaryCountLabel,
-            primarySectionTitle = KIND.primarySectionTitle,
-            primarySectionPlaceholder = KIND.primarySectionPlaceholder,
-            secondarySectionTitle = KIND.secondarySectionTitle,
-            secondarySectionPlaceholder = KIND.secondarySectionPlaceholder
-        )
-
+        operations.connect(deviceUid)
+        _uiState.value = emptyState(fallbackTitle.ifBlank { DEFAULT_TITLE }, deviceUid)
         observeJob = viewModelScope.launch {
-            repository.observeDevice(deviceUid).collect { snapshot ->
+            operations.observe(deviceUid).collect { snapshot ->
                 _uiState.value = snapshot?.toRootUiState(fallbackTitle)
-                    ?: DeviceDosingRootUiState(
-                        title = fallbackTitle.ifBlank { DEFAULT_TITLE },
-                        deviceUid = deviceUid.value,
-                        connectionStatus = "Offline",
-                        primaryCountLabel = KIND.primaryCountLabel,
-                        primarySectionTitle = KIND.primarySectionTitle,
-                        primarySectionPlaceholder = KIND.primarySectionPlaceholder,
-                        secondarySectionTitle = KIND.secondarySectionTitle,
-                        secondarySectionPlaceholder = KIND.secondarySectionPlaceholder
-                    )
+                    ?: emptyState(fallbackTitle.ifBlank { DEFAULT_TITLE }, deviceUid)
             }
         }
     }
 
-    private fun DeviceSnapshot.toRootUiState(fallbackTitle: String): DeviceDosingRootUiState {
-        val productName = product.displayName
-            .ifBlank { product.model }
-            .ifBlank { fallbackTitle }
-            .ifBlank { DEFAULT_TITLE }
+    private fun emptyState(title: String, deviceUid: String) = DeviceDosingRootUiState(
+        title = title,
+        deviceUid = deviceUid,
+        connectionStatus = "Offline",
+        primaryCountLabel = KIND.primaryCountLabel,
+        primarySectionTitle = KIND.primarySectionTitle,
+        primarySectionPlaceholder = KIND.primarySectionPlaceholder,
+        secondarySectionTitle = KIND.secondarySectionTitle,
+        secondarySectionPlaceholder = KIND.secondarySectionPlaceholder
+    )
+
+    private fun DeviceRootSnapshot.toRootUiState(fallbackTitle: String): DeviceDosingRootUiState {
         val menuSections = DeviceRootMenuMapper.overview(kind = KIND, snapshot = this)
-
         return DeviceDosingRootUiState(
-            title = productName,
-            deviceUid = deviceUid.value,
-            connectionStatus = DevicePresencePresentationMapper.availabilityLabel(connectionState.onlineState),
-            ipText = endpoint.ip.ifBlank { "Unknown" },
-            firmwareText = firmwareLabel(),
-            modelText = modelLabel(),
+            title = title.ifBlank { fallbackTitle }.ifBlank { DEFAULT_TITLE },
+            deviceUid = deviceUid,
+            connectionStatus = DeviceRootPresentationMapper.availabilityLabel(this),
+            ipText = ipAddress.ifBlank { "Unknown" },
+            firmwareText = firmwareLabel.ifBlank { "Unknown" },
+            modelText = modelLabel.ifBlank { "Unknown" },
             primaryCountLabel = KIND.primaryCountLabel,
-            primaryCountText = primaryCount().takeIf { count -> count > 0 }?.toString() ?: "Unknown",
-            featuresText = featureLabel(),
+            primaryCountText = dosingChannelCount.takeIf { it > 0 }?.toString() ?: "Unknown",
+            featuresText = DeviceRootPresentationMapper.overviewFeatureLabel(this, KIND),
             primarySectionTitle = KIND.primarySectionTitle,
-            primarySectionPlaceholder = menuSections.primaryText(
-                emptyText = KIND.primarySectionPlaceholder
-            ),
+            primarySectionPlaceholder = menuSections.primaryText(KIND.primarySectionPlaceholder),
             secondarySectionTitle = KIND.secondarySectionTitle,
-            secondarySectionPlaceholder = menuSections.secondaryText(
-                emptyText = KIND.secondarySectionPlaceholder
-            )
+            secondarySectionPlaceholder = menuSections.secondaryText(KIND.secondarySectionPlaceholder)
         )
-    }
-
-    private fun DeviceSnapshot.primaryCount(): Int {
-        return when (KIND) {
-            DeviceRootKind.DOSING -> limits.dosingChannelCount
-            DeviceRootKind.TIMER -> limits.timerChannelCount
-            DeviceRootKind.COOLING -> limits.fanOutputCount
-        }
-    }
-
-    private fun DeviceSnapshot.firmwareLabel(): String {
-        return listOf(
-            firmwareVersion.ifBlank { null },
-            firmwareBuild.ifBlank { null }
-        ).filterNotNull().joinToString(separator = " / ").ifBlank { "Unknown" }
-    }
-
-    private fun DeviceSnapshot.modelLabel(): String {
-        return listOf(
-            product.model.ifBlank { null },
-            product.hardwareRevision.ifBlank { null }
-        ).filterNotNull().joinToString(separator = " / ").ifBlank { "Unknown" }
-    }
-
-    private fun DeviceSnapshot.featureLabel(): String {
-        val labels = buildList {
-            when (KIND) {
-                DeviceRootKind.DOSING -> if (capabilities.dosing) add("Dosing")
-                DeviceRootKind.TIMER -> if (capabilities.standaloneTimer) add("Timer")
-                DeviceRootKind.COOLING -> {
-                    if (capabilities.cooling) add("Cooling")
-                    if (capabilities.fan) add("Fan")
-                    if (capabilities.temperature) add("Temperature")
-                }
-            }
-            if (capabilities.timeSync) add("Time sync")
-            if (capabilities.ota) add("OTA")
-            supportedFeatures.filter { feature -> feature.isNotBlank() }.forEach { feature -> add(feature) }
-            supportedScreens.filter { screen -> screen.isNotBlank() }.forEach { screen -> add(screen) }
-        }
-        return labels.distinct().joinToString(separator = ", ").ifBlank { "Unknown" }
     }
 
     private companion object {
