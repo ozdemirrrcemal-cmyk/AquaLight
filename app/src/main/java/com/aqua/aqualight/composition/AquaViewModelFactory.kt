@@ -18,6 +18,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewM
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectViewModel
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
 import com.aqua.aqualight.ui.tabs.devices.add.DeviceAddViewModel
+import com.aqua.aqualight.ui.tabs.devices.add.DeviceQrScanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingRootViewModel
@@ -82,6 +83,13 @@ internal class AquaViewModelFactory(
             modelClass.isAssignableFrom(DeviceAddViewModel::class.java) ->
                 DeviceAddViewModel(
                     bleScanner = DefaultBleProvisioningScanner(appContext),
+                    textResolver = appTextResolver
+                )
+
+            modelClass.isAssignableFrom(DeviceQrScanViewModel::class.java) ->
+                DeviceQrScanViewModel(
+                    bleScanner = DefaultBleProvisioningScanner(appContext),
+                    repository = devicesRepository(),
                     textResolver = appTextResolver
                 )
 
