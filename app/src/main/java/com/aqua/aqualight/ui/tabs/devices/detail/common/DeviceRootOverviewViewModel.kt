@@ -1,11 +1,10 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.common
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.ui.common.devicepresence.DevicePresencePresentationMapper
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,10 +13,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class DeviceRootOverviewViewModel(
-    application: Application
-) : AndroidViewModel(application) {
-
-    private val repository = DevicesRepositoryProvider.get(application)
+    private val repository: DevicesRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceRootOverviewUiState())
     val uiState: StateFlow<DeviceRootOverviewUiState> = _uiState.asStateFlow()
@@ -45,13 +42,10 @@ class DeviceRootOverviewViewModel(
         }
 
         val deviceUid = DeviceUid(deviceUidText)
-        if (boundDeviceUid == deviceUid) {
-            return
-        }
+        if (boundDeviceUid == deviceUid) return
 
         boundDeviceUid = deviceUid
         observeJob?.cancel()
-
         _uiState.value = DeviceRootOverviewUiState(
             title = fallbackTitle.ifBlank { kind.defaultTitle },
             deviceUid = deviceUid.value,
@@ -65,21 +59,19 @@ class DeviceRootOverviewViewModel(
 
         observeJob = viewModelScope.launch {
             repository.observeDevice(deviceUid).collect { snapshot ->
-                _uiState.value = snapshot
-                    ?.toOverviewState(
-                        kind = kind,
-                        fallbackTitle = fallbackTitle
-                    )
-                    ?: DeviceRootOverviewUiState(
-                        title = fallbackTitle.ifBlank { kind.defaultTitle },
-                        deviceUid = deviceUid.value,
-                        connectionStatus = "Offline",
-                        primaryCountLabel = kind.primaryCountLabel,
-                        primarySectionTitle = kind.primarySectionTitle,
-                        primarySectionPlaceholder = kind.primarySectionPlaceholder,
-                        secondarySectionTitle = kind.secondarySectionTitle,
-                        secondarySectionPlaceholder = kind.secondarySectionPlaceholder
-                    )
+                _uiState.value = snapshot?.toOverviewState(
+                    kind = kind,
+                    fallbackTitle = fallbackTitle
+                ) ?: DeviceRootOverviewUiState(
+                    title = fallbackTitle.ifBlank { kind.defaultTitle },
+                    deviceUid = deviceUid.value,
+                    connectionStatus = "Offline",
+                    primaryCountLabel = kind.primaryCountLabel,
+                    primarySectionTitle = kind.primarySectionTitle,
+                    primarySectionPlaceholder = kind.primarySectionPlaceholder,
+                    secondarySectionTitle = kind.secondarySectionTitle,
+                    secondarySectionPlaceholder = kind.secondarySectionPlaceholder
+                )
             }
         }
     }
@@ -92,12 +84,10 @@ class DeviceRootOverviewViewModel(
             .ifBlank { product.model }
             .ifBlank { fallbackTitle }
             .ifBlank { kind.defaultTitle }
-
         val menuSections = DeviceRootMenuMapper.overview(
             kind = kind,
             snapshot = this
         )
-
         return DeviceRootOverviewUiState(
             title = productName,
             deviceUid = deviceUid.value,
@@ -131,20 +121,14 @@ class DeviceRootOverviewViewModel(
         return listOf(
             firmwareVersion.ifBlank { null },
             firmwareBuild.ifBlank { null }
-        )
-            .filterNotNull()
-            .joinToString(separator = " / ")
-            .ifBlank { "Unknown" }
+        ).filterNotNull().joinToString(separator = " / ").ifBlank { "Unknown" }
     }
 
     private fun DeviceSnapshot.modelLabel(): String {
         return listOf(
             product.model.ifBlank { null },
             product.hardwareRevision.ifBlank { null }
-        )
-            .filterNotNull()
-            .joinToString(separator = " / ")
-            .ifBlank { "Unknown" }
+        ).filterNotNull().joinToString(separator = " / ").ifBlank { "Unknown" }
     }
 
     private fun DeviceSnapshot.featureLabel(kind: DeviceRootKind): String {
@@ -158,23 +142,12 @@ class DeviceRootOverviewViewModel(
                     if (capabilities.temperature) add("Temperature")
                 }
             }
-
             if (capabilities.timeSync) add("Time sync")
             if (capabilities.ota) add("OTA")
-
-            supportedFeatures
-                .filter { feature -> feature.isNotBlank() }
-                .forEach { feature -> add(feature) }
-
-            supportedScreens
-                .filter { screen -> screen.isNotBlank() }
-                .forEach { screen -> add(screen) }
+            supportedFeatures.filter { feature -> feature.isNotBlank() }.forEach { feature -> add(feature) }
+            supportedScreens.filter { screen -> screen.isNotBlank() }.forEach { screen -> add(screen) }
         }
-
-        return labels
-            .distinct()
-            .joinToString(separator = ", ")
-            .ifBlank { "Unknown" }
+        return labels.distinct().joinToString(separator = ", ").ifBlank { "Unknown" }
     }
 }
 
