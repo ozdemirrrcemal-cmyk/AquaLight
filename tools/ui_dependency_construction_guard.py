@@ -69,6 +69,26 @@ VIEWMODEL_WORKFLOW_CONSTRUCTION = {
     "AqlProvisioningQrParser(": "QR parser must be injected",
 }
 
+# These ViewModels have required constructor collaborators. A Fragment-scoped
+# plain `by viewModels()` delegate falls back to reflection/no-arg construction
+# and crashes in Release. Every such callsite must explicitly resolve the
+# process composition-root factory.
+INJECTED_FRAGMENT_VIEWMODELS = (
+    "SettingsViewModel",
+    "DeviceStatusViewModel",
+    "DevicesViewModel",
+    "DeviceAddViewModel",
+    "DeviceQrScanViewModel",
+    "DeviceProvisioningProgressViewModel",
+    "TankDetailDevicesViewModel",
+    "TankDeviceSelectViewModel",
+    "DeviceLightRootViewModel",
+    "DeviceCoolingRootViewModel",
+    "DeviceTimerRootViewModel",
+    "DeviceDosingRootViewModel",
+    "DeviceRootOverviewViewModel",
+)
+
 FIREBASE_IMPORT = re.compile(r"^import\s+com\.google\.firebase\.", re.MULTILINE)
 ANDROID_VIEWMODEL = re.compile(r"\bclass\s+\w+ViewModel\b[\s\S]{0,250}:\s*AndroidViewModel\b")
 APPLICATION_CTOR = re.compile(r"\bclass\s+\w+ViewModel\s*\([^)]*\bApplication\b")
@@ -95,6 +115,24 @@ for path in sorted(UI_ROOT.rglob("*.kt")):
 
     if FIREBASE_IMPORT.search(text):
         errors.append(f"{relative}: Firebase SDK imports are forbidden in UI")
+
+    for view_model in INJECTED_FRAGMENT_VIEWMODELS:
+        plain_delegate = f": {view_model} by viewModels()"
+        typed_delegate = f": {view_model} by viewModels"
+        if plain_delegate in text:
+            errors.append(
+                f"{relative}: injected Fragment ViewModel must not use no-arg factory: "
+                f"{plain_delegate}"
+            )
+        if typed_delegate in text:
+            if "requireAppContainer()" not in text:
+                errors.append(
+                    f"{relative}: injected Fragment ViewModel must resolve AppContainer"
+                )
+            if "defaultViewModelFactory" not in text:
+                errors.append(
+                    f"{relative}: injected Fragment ViewModel must use defaultViewModelFactory"
+                )
 
     if path.name.endswith("ViewModel.kt"):
         if "import android.app.Application" in text:
