@@ -23,7 +23,7 @@ jobs:
   instrumentation:
     name: Emulator API ${{ matrix.api-level }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 55
 
     strategy:
       fail-fast: false
@@ -52,6 +52,32 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Generate CI-only release keystore
+        run: |
+          keytool -genkeypair -noprompt \
+            -keystore release-key.jks \
+            -storepass aqualight-ci \
+            -alias aqualight-ci \
+            -keypass aqualight-ci \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 1 \
+            -dname "CN=AquaLight CI,O=AquaLight,C=TR"
+
+      - name: Build minified release-smoke APK
+        env:
+          RELEASE_KEYSTORE_PASSWORD: aqualight-ci
+          RELEASE_KEY_ALIAS: aqualight-ci
+          RELEASE_KEY_PASSWORD: aqualight-ci
+        run: |
+          set -o pipefail
+          ./gradlew assembleReleaseSmoke --no-daemon --stacktrace \
+            2>&1 | tee assemble-release-smoke.log
+          SMOKE_APK="$(find app/build/outputs/apk/releaseSmoke -type f -name '*.apk' | head -n 1)"
+          test -n "$SMOKE_APK"
+          test -s "$SMOKE_APK"
+          printf '%s\n' "$SMOKE_APK" > release-smoke-apk-path.txt
+
       - name: Enable KVM group permissions
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
@@ -59,7 +85,7 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Run Android instrumentation tests
+      - name: Run instrumentation and minified release smoke
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: ${{ matrix.api-level }}
@@ -72,10 +98,47 @@ jobs:
             -no-window -gpu swiftshader_indirect -no-snapshot-save
             -noaudio -no-boot-anim -camera-back none
           script: |
+            set -euo pipefail
             ./gradlew connectedDebugAndroidTest --no-daemon --stacktrace
             bash tools/verify_uninstall_clears_data.sh
 
-      - name: Upload instrumentation reports
+            adb uninstall com.aqua.aqualight >/dev/null 2>&1 || true
+            SMOKE_APK="$(cat release-smoke-apk-path.txt)"
+            adb install "$SMOKE_APK"
+            adb logcat -c
+            adb shell am force-stop com.aqua.aqualight
+            adb shell am start -W \
+              -n com.aqua.aqualight/com.aqua.aqualight.smoke.Stage3ReleaseSmokeActivity
+
+            rm -f stage3-release-smoke-window.xml
+            for attempt in $(seq 1 40); do
+              adb shell uiautomator dump /sdcard/stage3-release-smoke-window.xml \
+                >/dev/null 2>&1 || true
+              adb pull /sdcard/stage3-release-smoke-window.xml \
+                stage3-release-smoke-window.xml >/dev/null 2>&1 || true
+
+              if grep -q "STAGE3_RELEASE_SMOKE_PASS" \
+                stage3-release-smoke-window.xml 2>/dev/null; then
+                echo "Minified release smoke passed on API ${{ matrix.api-level }}."
+                exit 0
+              fi
+
+              if grep -q "STAGE3_RELEASE_SMOKE_FAIL" \
+                stage3-release-smoke-window.xml 2>/dev/null; then
+                cat stage3-release-smoke-window.xml
+                adb logcat -d > stage3-release-smoke-logcat.txt
+                exit 1
+              fi
+
+              sleep 1
+            done
+
+            adb logcat -d > stage3-release-smoke-logcat.txt
+            cat stage3-release-smoke-window.xml 2>/dev/null || true
+            tail -n 500 stage3-release-smoke-logcat.txt || true
+            exit 1
+
+      - name: Upload instrumentation and smoke reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -83,4 +146,11 @@ jobs:
           path: |
             app/build/reports/androidTests/connected/**
             app/build/outputs/androidTest-results/connected/**
+            assemble-release-smoke.log
+            stage3-release-smoke-window.xml
+            stage3-release-smoke-logcat.txt
           if-no-files-found: ignore
+
+      - name: Remove CI-only release keystore
+        if: always()
+        run: rm -f release-key.jks
