@@ -11,7 +11,19 @@ import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-UI_ROOT = ROOT / "app/src/main/java/com/aqua/aqualight/ui"
+SOURCE_ROOT = ROOT / "app/src/main/java/com/aqua/aqualight"
+UI_ROOT = SOURCE_ROOT / "ui"
+APP_CONTAINER_PATH = SOURCE_ROOT / "composition/AppContainer.kt"
+WIFI_FRAGMENT_PATH = SOURCE_ROOT / "ui/tabs/devices/add/DeviceWifiProvisioningFragment.kt"
+WIFI_DRAFT_FACTORY_PATH = SOURCE_ROOT / "ui/tabs/devices/add/DeviceWifiProvisioningDraftFactory.kt"
+DRAFT_CONTRACT_PATH = (
+    SOURCE_ROOT
+    / "application/devices/provisioning/ProvisioningDraftOperations.kt"
+)
+DRAFT_IMPLEMENTATION_PATH = (
+    SOURCE_ROOT
+    / "data/devices/provisioning/repository/DefaultProvisioningDraftOperations.kt"
+)
 
 if not UI_ROOT.exists():
     raise SystemExit(f"UI source root is missing: {UI_ROOT}")
@@ -34,6 +46,8 @@ FORBIDDEN = {
     "AqlBleProvisioningGattClient(": "GATT client must resolve through composition",
     "AqlProvisioningHandoffSaver(": "provisioning transaction saver must resolve through composition",
     "AqlProvisioningDraftStore.": "provisioning draft storage must use an injected boundary",
+    "AqlProvisioningBleAddressCache.": "BLE address cache must use an injected boundary",
+    "DefaultProvisioningDraftOperations(": "provisioning draft implementation must be built by AppContainer",
     "UserDataScope.requireCurrentUid(": "owner identity must be injected",
     "UserDataScope.currentUid(": "owner identity must be injected",
     "FirebaseAuth.getInstance()": "Firebase Auth must stay behind an adapter",
@@ -49,6 +63,14 @@ APPLICATION_CTOR = re.compile(r"\bclass\s+\w+ViewModel\s*\([^)]*\bApplication\b"
 
 errors: list[str] = []
 scanned = 0
+
+
+def read_required(path: Path) -> str:
+    if not path.exists():
+        errors.append(f"{path.relative_to(ROOT)}: required Stage 3 boundary file is missing")
+        return ""
+    return path.read_text(encoding="utf-8", errors="ignore")
+
 
 for path in sorted(UI_ROOT.rglob("*.kt")):
     scanned += 1
@@ -71,6 +93,65 @@ for path in sorted(UI_ROOT.rglob("*.kt")):
             errors.append(f"{relative}: ViewModel must receive constructor dependencies from a factory")
         if "getApplication<" in text:
             errors.append(f"{relative}: ViewModel must not resolve Android Application")
+
+container = read_required(APP_CONTAINER_PATH)
+wifi_fragment = read_required(WIFI_FRAGMENT_PATH)
+wifi_draft_factory = read_required(WIFI_DRAFT_FACTORY_PATH)
+draft_contract = read_required(DRAFT_CONTRACT_PATH)
+draft_implementation = read_required(DRAFT_IMPLEMENTATION_PATH)
+
+for token, reason in (
+    (
+        "val provisioningDraftOperations: ProvisioningDraftOperations",
+        "AppContainer must expose the provisioning draft boundary",
+    ),
+    (
+        "DefaultProvisioningDraftOperations()",
+        "AppContainer must own provisioning draft implementation construction",
+    ),
+):
+    if token not in container:
+        errors.append(f"{APP_CONTAINER_PATH.relative_to(ROOT)}: {reason}: {token}")
+
+for token, reason in (
+    ("requireAppContainer()", "Wi-Fi provisioning must resolve dependencies from AppContainer"),
+    ("provisioningDraftOperations", "Wi-Fi provisioning must use the injected draft boundary"),
+):
+    if token not in wifi_fragment:
+        errors.append(f"{WIFI_FRAGMENT_PATH.relative_to(ROOT)}: {reason}: {token}")
+
+for token, reason in (
+    ("ProvisioningDraftOperations", "draft factory must receive an application boundary"),
+    ("ProvisioningDraftRequest", "draft factory must create a primitive application request"),
+):
+    if token not in wifi_draft_factory:
+        errors.append(f"{WIFI_DRAFT_FACTORY_PATH.relative_to(ROOT)}: {reason}: {token}")
+
+for forbidden in (
+    "AqlProvisioningDraftStore",
+    "AqlProvisioningBleAddressCache",
+    "AqlWifiCredentials",
+):
+    if forbidden in wifi_draft_factory:
+        errors.append(
+            f"{WIFI_DRAFT_FACTORY_PATH.relative_to(ROOT)}: UI draft factory contains concrete data access: {forbidden}"
+        )
+
+for token, reason in (
+    ("interface ProvisioningDraftOperations", "application draft contract must remain explicit"),
+    ("data class ProvisioningDraftRequest", "application draft input must remain primitive"),
+    ("data class ProvisioningDraftSession", "application draft result must expose only the session"),
+):
+    if token not in draft_contract:
+        errors.append(f"{DRAFT_CONTRACT_PATH.relative_to(ROOT)}: {reason}: {token}")
+
+for token, reason in (
+    ("AqlProvisioningDraftStore.create", "draft persistence must remain in the data implementation"),
+    ("AqlProvisioningBleAddressCache.get", "cached BLE resolution must remain in the data implementation"),
+    ("AqlWifiCredentials(", "data implementation must own the provisioning data model"),
+):
+    if token not in draft_implementation:
+        errors.append(f"{DRAFT_IMPLEMENTATION_PATH.relative_to(ROOT)}: {reason}: {token}")
 
 if errors:
     print("UI dependency construction guard failed:", file=sys.stderr)
