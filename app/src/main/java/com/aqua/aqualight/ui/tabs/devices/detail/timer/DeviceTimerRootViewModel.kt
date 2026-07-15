@@ -1,11 +1,10 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.timer
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.ui.common.devicepresence.DevicePresencePresentationMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootMenuMapper
@@ -15,9 +14,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class DeviceTimerRootViewModel(application: Application) : AndroidViewModel(application) {
+class DeviceTimerRootViewModel(
+    private val repository: DevicesRepository
+) : ViewModel() {
 
-    private val repository = DevicesRepositoryProvider.get(application)
     private val _uiState = MutableStateFlow(DeviceTimerRootUiState())
     val uiState: StateFlow<DeviceTimerRootUiState> = _uiState.asStateFlow()
 
