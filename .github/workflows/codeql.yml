@@ -63,6 +63,17 @@ jobs:
           languages: java-kotlin
           build-mode: manual
 
+      - name: Build uncached Debug APK for CodeQL extraction
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew clean assembleDebug \
+            --no-daemon \
+            --no-build-cache \
+            --rerun-tasks \
+            --stacktrace \
+            2>&1 | tee codeql-extraction-build.log
+
       - name: Run Debug unit tests
         shell: bash
         run: |
@@ -132,6 +143,7 @@ jobs:
           name: codeql-validation-logs-${{ github.run_number }}
           path: |
             architecture-guards.log
+            codeql-extraction-build.log
             unit-test.log
             unit-test-release.log
             lint-debug.log
@@ -150,8 +162,6 @@ jobs:
         run: rm -f release-key.jks
 
       - name: Perform CodeQL Analysis
-        id: codeql-analysis
-        continue-on-error: true
         uses: github/codeql-action/analyze@v3
         with:
           output: codeql-results
@@ -164,7 +174,6 @@ jobs:
         run: |
           set +e
           {
-            echo "CodeQL step outcome: ${{ steps.codeql-analysis.outcome }}"
             echo "Runner temp: ${RUNNER_TEMP}"
             echo "CodeQL result files:"
             find codeql-results -maxdepth 5 -type f -print 2>/dev/null
@@ -193,9 +202,3 @@ jobs:
             codeql-diagnostics.log
             ${{ runner.temp }}/codeql_databases/*/log/**
           if-no-files-found: ignore
-
-      - name: Enforce CodeQL analysis result
-        if: always()
-        shell: bash
-        run: |
-          test "${{ steps.codeql-analysis.outcome }}" = "success"
