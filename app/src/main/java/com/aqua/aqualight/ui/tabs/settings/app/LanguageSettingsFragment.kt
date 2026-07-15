@@ -8,8 +8,8 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.user.UserSettingsOperations
 import com.aqua.aqualight.composition.requireAppContainer
-import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentLanguageSettingsBinding
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import kotlinx.coroutines.flow.collectLatest
@@ -20,15 +20,9 @@ class LanguageSettingsFragment : Fragment(R.layout.fragment_language_settings) {
     private var _binding: FragmentLanguageSettingsBinding? = null
     private val binding get() = _binding!!
 
-    private val appContainer by lazy {
-        requireContext().requireAppContainer()
+    private val settingsOperations by lazy {
+        requireContext().requireAppContainer().userSettingsOperations
     }
-
-    private val userPrefs
-        get() = appContainer.userPreferencesManager
-
-    private val startupAppearanceCache
-        get() = appContainer.startupAppearanceCache
 
     override fun onViewCreated(
         view: View,
@@ -55,7 +49,7 @@ class LanguageSettingsFragment : Fragment(R.layout.fragment_language_settings) {
 
     private fun observeSelectedLanguage() {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-            userPrefs.languageCode.collectLatest { code ->
+            settingsOperations.languageCode.collectLatest { code ->
                 updateLanguageSelection(
                     code
                 )
@@ -70,10 +64,7 @@ class LanguageSettingsFragment : Fragment(R.layout.fragment_language_settings) {
                 code: String
             ) {
                 viewLifecycleOwner.lifecycleScope.launch {
-                    userPrefs.updateLanguage(
-                        code
-                    )
-                    startupAppearanceCache.writeLanguageCode(
+                    settingsOperations.updateLanguage(
                         code
                     )
 
@@ -172,7 +163,7 @@ class LanguageSettingsFragment : Fragment(R.layout.fragment_language_settings) {
     ) {
         val safeCode =
             code.ifBlank {
-                UserPreferencesManager.DEFAULT_LANGUAGE_CODE
+                UserSettingsOperations.DEFAULT_LANGUAGE_CODE
             }
 
         val localeList =
