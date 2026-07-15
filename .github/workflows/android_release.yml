@@ -88,6 +88,7 @@ jobs:
       - name: Run Architecture Guard
         run: |
           python3 tools/architecture_guard.py
+          python3 tools/session_startup_guard.py
           python3 tools/navigation_guard.py
 
       - name: 🔄 Force refresh dependencies optional

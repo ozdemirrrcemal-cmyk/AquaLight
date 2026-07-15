@@ -48,6 +48,7 @@ jobs:
       - name: Run architecture and navigation guards
         run: |
           python3 tools/architecture_guard.py
+          python3 tools/session_startup_guard.py
           python3 tools/navigation_guard.py
 
       - name: Initialize CodeQL

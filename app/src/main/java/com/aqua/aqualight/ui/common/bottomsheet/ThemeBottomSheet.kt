@@ -5,6 +5,7 @@ import android.view.View
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.theme.AppThemeController
+import com.aqua.aqualight.data.user.StartupAppearanceCache
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.DialogThemeSelectionBinding
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -18,6 +19,10 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
 
     private val userPrefs by lazy {
         UserPreferencesManager.create(requireContext())
+    }
+
+    private val startupAppearanceCache by lazy {
+        StartupAppearanceCache.create(requireContext())
     }
 
     var onBeforeThemeApplied: (() -> Unit)? = null
@@ -51,6 +56,9 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
 
         viewLifecycleOwner.lifecycleScope.launch {
             userPrefs.updateThemeMode(
+                normalizedMode
+            )
+            startupAppearanceCache.writeThemeMode(
                 normalizedMode
             )
 

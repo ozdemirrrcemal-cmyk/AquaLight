@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
+import com.aqua.aqualight.data.user.StartupAppearanceCache
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentLanguageSettingsBinding
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -21,6 +22,10 @@ class LanguageSettingsFragment : Fragment(R.layout.fragment_language_settings) {
 
     private val userPrefs by lazy {
         UserPreferencesManager.create(requireContext())
+    }
+
+    private val startupAppearanceCache by lazy {
+        StartupAppearanceCache.create(requireContext())
     }
 
     override fun onViewCreated(
@@ -64,6 +69,9 @@ class LanguageSettingsFragment : Fragment(R.layout.fragment_language_settings) {
             ) {
                 viewLifecycleOwner.lifecycleScope.launch {
                     userPrefs.updateLanguage(
+                        code
+                    )
+                    startupAppearanceCache.writeLanguageCode(
                         code
                     )
 
@@ -162,7 +170,7 @@ class LanguageSettingsFragment : Fragment(R.layout.fragment_language_settings) {
     ) {
         val safeCode =
             code.ifBlank {
-                "en"
+                UserPreferencesManager.DEFAULT_LANGUAGE_CODE
             }
 
         val localeList =

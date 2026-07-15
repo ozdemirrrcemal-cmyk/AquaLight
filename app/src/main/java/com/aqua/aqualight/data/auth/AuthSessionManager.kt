@@ -9,16 +9,17 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
 
 /**
- * Single source of truth for authentication/session state.
+ * Foreground authentication/session synchronizer.
  *
- * Local preferences are treated as a cache only. The real auth decision is
- * always based on FirebaseAuth.currentUser.
+ * Local preferences are a cache only. Firebase is the authentication source of
+ * truth. Heavy device runtime is opened exclusively through [OwnerRuntimeSession]
+ * and this manager must never be used by workers or broadcast receivers.
  */
 class AuthSessionManager private constructor(
     private val firebaseAuth: FirebaseAuth,
     private val userPrefs: UserPreferencesManager,
     private val ownershipMigrator: UserDataOwnershipMigrator,
-    private val ownerSessionCoordinator: OwnerSessionCoordinator
+    private val ownerRuntimeSession: OwnerRuntimeSession
 ) {
 
     data class Session(
@@ -51,7 +52,7 @@ class AuthSessionManager private constructor(
                 ownershipMigrator = UserDataOwnershipMigrator.create(
                     appContext
                 ),
-                ownerSessionCoordinator = OwnerSessionCoordinator.create(
+                ownerRuntimeSession = OwnerRuntimeSession.create(
                     appContext
                 )
             )
@@ -104,10 +105,10 @@ class AuthSessionManager private constructor(
     }
 
     private suspend fun closeResidualOwnerSession() {
-        val snapshot = ownerSessionCoordinator.snapshot()
+        val snapshot = ownerRuntimeSession.snapshot()
         val ownerUid = snapshot.pendingOwnerUid ?: snapshot.activeOwnerUid ?: return
 
-        ownerSessionCoordinator.close(
+        ownerRuntimeSession.close(
             expectedOwnerUid = ownerUid,
             cancelNotifications = true
         )
@@ -117,7 +118,7 @@ class AuthSessionManager private constructor(
         ownerUid: String
     ) {
         when (
-            val result = ownerSessionCoordinator.open(ownerUid)
+            val result = ownerRuntimeSession.open(ownerUid)
         ) {
             is OwnerSessionCoordinator.OpenResult.Active,
             is OwnerSessionCoordinator.OpenResult.AlreadyActive -> Unit

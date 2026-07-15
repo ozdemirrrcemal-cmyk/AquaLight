@@ -13,15 +13,15 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 /**
  * Centralized logout flow for every sign-out path.
  *
- * Logout must tear down session-bound work before opening the auth graph again,
- * otherwise stale reminders, device scans, or pending navigation can survive the
- * user session boundary.
+ * Logout tears down the foreground owner runtime before Firebase changes owner,
+ * preventing stale reminders, device scans, sockets or navigation from crossing
+ * the session boundary.
  */
 class LogoutManager private constructor(
     private val appContext: Context,
     private val firebaseAuth: FirebaseAuth,
     private val userPrefs: UserPreferencesManager,
-    private val ownerSessionCoordinator: OwnerSessionCoordinator
+    private val ownerRuntimeSession: OwnerRuntimeSession
 ) {
 
     data class LogoutResult(
@@ -46,7 +46,7 @@ class LogoutManager private constructor(
                 userPrefs = UserPreferencesManager.create(
                     appContext
                 ),
-                ownerSessionCoordinator = OwnerSessionCoordinator.create(
+                ownerRuntimeSession = OwnerRuntimeSession.create(
                     appContext
                 )
             )
@@ -118,7 +118,7 @@ class LogoutManager private constructor(
         cancelNotifications: Boolean
     ): Throwable? {
         return runCatching {
-            ownerSessionCoordinator.close(
+            ownerRuntimeSession.close(
                 expectedOwnerUid = ownerUid.ifBlank { null },
                 cancelNotifications = cancelNotifications
             )

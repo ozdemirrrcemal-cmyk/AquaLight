@@ -13,8 +13,7 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.auth.AuthSessionManager
-import com.aqua.aqualight.data.auth.SessionBoundServiceManager
+import com.aqua.aqualight.data.auth.AppSessionCoordinator
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.databinding.ActivityMainBinding
@@ -22,13 +21,13 @@ import com.aqua.aqualight.ui.navigation.AppDestinationContract
 import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
-import java.util.concurrent.CancellationException
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 class MainActivity : BaseActivity() {
 
     companion object {
+        @Deprecated("Startup graph selection is owned by AppSessionCoordinator.")
         const val EXTRA_START_IN_APP = "EXTRA_START_IN_APP"
         const val EXTRA_OPEN_CARE_TASK_ID = "EXTRA_OPEN_CARE_TASK_ID"
         const val EXTRA_OWNER_UID = "EXTRA_OWNER_UID"
@@ -39,11 +38,14 @@ class MainActivity : BaseActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var navController: NavController
 
-    private val authSessionManager by lazy {
-        AuthSessionManager.create(this)
+    private val appSessionCoordinator by lazy {
+        AppSessionCoordinator.create(applicationContext)
     }
 
     private var isAuthenticated: Boolean = false
+    private var activeOwnerUid: String = ""
+    private var renderedSessionKey: String? = null
+    private var lastShownStartupFailure: Throwable? = null
     private var pendingCareTaskId: Long = -1L
     private var pendingCareTaskOwnerUid: String = ""
     private var bottomBarSetup: Boolean = false
@@ -67,28 +69,18 @@ class MainActivity : BaseActivity() {
         binding.bottomNav.isVisible = false
 
         captureCareTaskIntent(intent)
+        observeSessionState()
+        appSessionCoordinator.start()
+    }
 
-        lifecycleScope.launch {
-            val sessionError = refreshAuthenticationState()
+    override fun onStart() {
+        super.onStart()
+        appSessionCoordinator.enterForeground()
+    }
 
-            if (sessionError == null) {
-                ensureRootGraphForCurrentSession(
-                    startInApp = isAuthenticated
-                )
-            } else {
-                installRootGraph(startInApp = false)
-            }
-
-            setupBottomBarIfNeeded(navController)
-
-            binding.navHost.isVisible = true
-
-            showSessionStartupFailureIfNeeded(sessionError)
-            showLocalDataRecoveryIfNeeded()
-            restoreSettingsRootAfterThemeChangeIfNeeded()
-            startSessionBoundServicesIfNeeded()
-            consumePendingCareTaskIfPossible()
-        }
+    override fun onStop() {
+        appSessionCoordinator.leaveForeground()
+        super.onStop()
     }
 
     override fun onNewIntent(
@@ -98,24 +90,8 @@ class MainActivity : BaseActivity() {
 
         setIntent(intent)
         captureCareTaskIntent(intent)
-
-        lifecycleScope.launch {
-            val sessionError = refreshAuthenticationState()
-
-            if (sessionError == null) {
-                ensureRootGraphForCurrentSession(
-                    startInApp = isAuthenticated
-                )
-            } else {
-                installRootGraph(startInApp = false)
-            }
-
-            showSessionStartupFailureIfNeeded(sessionError)
-            showLocalDataRecoveryIfNeeded()
-            restoreSettingsRootAfterThemeChangeIfNeeded()
-            startSessionBoundServicesIfNeeded()
-            consumePendingCareTaskIfPossible()
-        }
+        appSessionCoordinator.requestReconcile()
+        consumePendingCareTaskIfPossible()
     }
 
     override fun onPostResume() {
@@ -138,6 +114,8 @@ class MainActivity : BaseActivity() {
 
     fun clearSessionNavigationState() {
         isAuthenticated = false
+        activeOwnerUid = ""
+        renderedSessionKey = null
         pendingCareTaskId = -1L
         pendingCareTaskOwnerUid = ""
 
@@ -154,30 +132,93 @@ class MainActivity : BaseActivity() {
         )
     }
 
-    private suspend fun isUserAuthenticated(): Boolean {
-        return authSessionManager.currentSessionState() is
-            AuthSessionManager.SessionState.Authenticated
+    private fun observeSessionState() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+                appSessionCoordinator.state.collect { state ->
+                    renderSessionState(state)
+                }
+            }
+        }
     }
 
-    private suspend fun refreshAuthenticationState(): Throwable? {
-        return try {
-            isAuthenticated = isUserAuthenticated()
-            null
-        } catch (error: Throwable) {
-            if (error is CancellationException) {
-                throw error
+    private fun renderSessionState(
+        state: AppSessionCoordinator.State
+    ) {
+        when (state) {
+            AppSessionCoordinator.State.Starting -> {
+                binding.navHost.isVisible = false
+                binding.bottomNav.isVisible = false
             }
 
-            error.printStackTrace()
-            isAuthenticated = false
-            error
+            is AppSessionCoordinator.State.Authenticated -> {
+                val sessionKey = "authenticated:${state.ownerUid}"
+                val graphMustBeReplaced =
+                    renderedSessionKey != sessionKey ||
+                        !AppDestinationContract.isInsideAppGraph(
+                            navController.currentDestination
+                        )
+
+                isAuthenticated = true
+                activeOwnerUid = state.ownerUid
+                lastShownStartupFailure = null
+
+                if (graphMustBeReplaced) {
+                    installRootGraph(startInApp = true)
+                    renderedSessionKey = sessionKey
+                }
+
+                setupBottomBarIfNeeded(navController)
+                binding.navHost.isVisible = true
+                showLocalDataRecoveryIfNeeded()
+                restoreSettingsRootAfterThemeChangeIfNeeded()
+                consumePendingCareTaskIfPossible()
+                syncBottomBarState(navController.currentDestination)
+            }
+
+            AppSessionCoordinator.State.Unauthenticated -> {
+                val sessionKey = "unauthenticated"
+                isAuthenticated = false
+                activeOwnerUid = ""
+                lastShownStartupFailure = null
+
+                if (renderedSessionKey != sessionKey) {
+                    installRootGraph(startInApp = false)
+                    renderedSessionKey = sessionKey
+                }
+
+                setupBottomBarIfNeeded(navController)
+                binding.navHost.isVisible = true
+                binding.bottomNav.isVisible = false
+                syncBottomBarState(navController.currentDestination)
+            }
+
+            is AppSessionCoordinator.State.Failure -> {
+                isAuthenticated = false
+                activeOwnerUid = ""
+
+                if (renderedSessionKey != "startup-failure") {
+                    installRootGraph(startInApp = false)
+                    renderedSessionKey = "startup-failure"
+                }
+
+                setupBottomBarIfNeeded(navController)
+                binding.navHost.isVisible = true
+                binding.bottomNav.isVisible = false
+                showSessionStartupFailureIfNeeded(state.error)
+            }
         }
     }
 
     private fun showSessionStartupFailureIfNeeded(
-        error: Throwable?
+        error: Throwable
     ) {
-        if (error == null) return
+        if (lastShownStartupFailure === error) {
+            return
+        }
+        lastShownStartupFailure = error
 
         DialogManager.showInfoDialog(
             context = this,
@@ -217,18 +258,6 @@ class MainActivity : BaseActivity() {
         )
     }
 
-    private fun ensureRootGraphForCurrentSession(
-        startInApp: Boolean
-    ) {
-        if (navController.currentDestination != null) {
-            return
-        }
-
-        installRootGraph(
-            startInApp = startInApp
-        )
-    }
-
     private fun installRootGraph(
         startInApp: Boolean
     ) {
@@ -262,10 +291,6 @@ class MainActivity : BaseActivity() {
         )
 
         binding.root.post {
-            ensureRootGraphForCurrentSession(
-                startInApp = true
-            )
-
             val currentDestination = navController.currentDestination
             val restored = if (currentDestination?.id == R.id.settingsFragment) {
                 true
@@ -338,13 +363,11 @@ class MainActivity : BaseActivity() {
             return
         }
 
-        val activeUid = authSessionManager.currentUser()?.uid.orEmpty()
-
         if (
             ownerUid.isNotBlank() &&
             !UserDataScope.belongsToOwner(
                 recordOwnerUid = ownerUid,
-                ownerUid = activeUid,
+                ownerUid = activeOwnerUid,
                 includeLegacy = false
             )
         ) {
@@ -371,16 +394,6 @@ class MainActivity : BaseActivity() {
                 pendingCareTaskOwnerUid = ownerUid
             }
         }
-    }
-
-    private fun startSessionBoundServicesIfNeeded() {
-        if (!isAuthenticated) {
-            return
-        }
-
-        SessionBoundServiceManager.start(
-            context = applicationContext
-        )
     }
 
     private fun setupBottomBarIfNeeded(
@@ -444,7 +457,8 @@ class MainActivity : BaseActivity() {
         destination: NavDestination?
     ) {
         val shouldShowBottomBar =
-            AppDestinationContract.shouldShowBottomBar(destination)
+            isAuthenticated &&
+                AppDestinationContract.shouldShowBottomBar(destination)
 
         binding.bottomNav.isVisible =
             shouldShowBottomBar
@@ -461,10 +475,7 @@ class MainActivity : BaseActivity() {
                 ) == true
 
         if (AppDestinationContract.isInsideAppGraph(destination)) {
-            isAuthenticated = authSessionManager.isAuthenticated()
-            startSessionBoundServicesIfNeeded()
             consumePendingCareTaskIfPossible()
         }
     }
-
 }

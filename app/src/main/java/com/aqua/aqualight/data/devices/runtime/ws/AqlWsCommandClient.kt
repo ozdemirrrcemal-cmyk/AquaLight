@@ -3,7 +3,7 @@ package com.aqua.aqualight.data.devices.runtime.ws
 import org.json.JSONObject
 
 class AqlWsCommandClient(
-    private val wsClient: AqlWsClient
+    private val wsClient: AqlWsTransport
 ) {
     fun authenticate(token: String): String? {
         val normalizedToken = token.trim()
