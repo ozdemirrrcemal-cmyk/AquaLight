@@ -5,8 +5,7 @@ import android.view.View
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.theme.AppThemeController
-import com.aqua.aqualight.data.user.StartupAppearanceCache
-import com.aqua.aqualight.data.user.UserPreferencesManager
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.DialogThemeSelectionBinding
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.flow.first
@@ -17,13 +16,15 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
     private var _binding: DialogThemeSelectionBinding? = null
     private val binding get() = _binding!!
 
-    private val userPrefs by lazy {
-        UserPreferencesManager.create(requireContext())
+    private val appContainer by lazy {
+        requireContext().requireAppContainer()
     }
 
-    private val startupAppearanceCache by lazy {
-        StartupAppearanceCache.create(requireContext())
-    }
+    private val userPrefs
+        get() = appContainer.userPreferencesManager
+
+    private val startupAppearanceCache
+        get() = appContainer.startupAppearanceCache
 
     var onBeforeThemeApplied: (() -> Unit)? = null
     var onThemeChanged: (() -> Unit)? = null
