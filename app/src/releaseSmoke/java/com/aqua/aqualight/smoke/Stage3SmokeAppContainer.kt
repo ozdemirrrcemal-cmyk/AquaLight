@@ -19,6 +19,7 @@ import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.care.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.DefaultMaintenanceRepository
+import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
@@ -107,7 +108,7 @@ private class Stage3SmokeViewModelFactory(
             modelClass.isAssignableFrom(SettingsViewModel::class.java) ->
                 SettingsViewModel(
                     userProfileOperations = profileOperations,
-                    devicesRepository = devicesRepository
+                    deviceStatusOperations = DefaultDeviceStatusOperations(devicesRepository)
                 )
 
             modelClass.isAssignableFrom(DevicesViewModel::class.java) ->
