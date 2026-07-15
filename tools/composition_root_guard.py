@@ -20,6 +20,10 @@ AUTH_FACTORY_TEST_PATH = (
     ROOT
     / "app/src/test/java/com/aqua/aqualight/ui/auth/viewmodel/AuthViewModelFactoryTest.kt"
 )
+FEEDBACK_TEST_PATH = (
+    ROOT
+    / "app/src/test/java/com/aqua/aqualight/application/feedback/FeedbackSubmissionUseCaseTest.kt"
+)
 PLAN_PATH = ROOT / "docs/stage-3-dependency-boundaries-plan.md"
 SETTINGS_IMPL_PATH = SOURCE_ROOT / "data/user/DefaultUserSettingsOperations.kt"
 PROFILE_IMPL_PATH = SOURCE_ROOT / "data/user/DefaultUserProfileOperations.kt"
@@ -38,6 +42,7 @@ container = read(CONTAINER_PATH)
 aqua_app = read(AQUA_APP_PATH)
 auth_factory = read(AUTH_FACTORY_PATH)
 auth_factory_test = read(AUTH_FACTORY_TEST_PATH)
+feedback_test = read(FEEDBACK_TEST_PATH)
 plan = read(PLAN_PATH)
 
 for token, reason in (
@@ -49,12 +54,15 @@ for token, reason in (
     ("val googleIdentityClient: GoogleIdentityClient", "Google identity platform access must be centralized"),
     ("val userSettingsOperations: UserSettingsOperations", "settings must use an application boundary"),
     ("val userProfileOperations: UserProfileOperations", "profile persistence must use an application boundary"),
+    ("val feedbackSubmissionOperations: FeedbackSubmissionUseCase", "feedback UI must receive an application use case"),
     ("AuthRepository.create(appContext)", "AuthRepository construction must remain centralized"),
     ("LogoutManager.create(appContext)", "logout manager construction must remain centralized"),
     ("FirebaseAccountSecurityOperations.create(appContext)", "account security construction must remain centralized"),
     ("DefaultGoogleIdentityClient(appContext)", "Google identity client construction must remain centralized"),
     ("DefaultUserSettingsOperations(", "settings implementation construction must remain centralized"),
     ("DefaultUserProfileOperations(", "profile implementation construction must remain centralized"),
+    ("FirebaseFeedbackSubmissionOperations.create()", "Firebase feedback construction must remain centralized"),
+    ("FeedbackSubmissionUseCase(", "feedback adapter must be wrapped by an application use case"),
     ("LazyThreadSafetyMode.SYNCHRONIZED", "process-scoped dependencies must be initialized safely"),
 ):
     if token not in container:
@@ -103,6 +111,7 @@ central_construction_tokens = {
     "AuthRepository.create(": set(),
     "DefaultUserSettingsOperations(": {SETTINGS_IMPL_PATH},
     "DefaultUserProfileOperations(": {PROFILE_IMPL_PATH},
+    "FirebaseFeedbackSubmissionOperations.create(": set(),
 }
 for kotlin_file in SOURCE_ROOT.rglob("*.kt"):
     if kotlin_file == CONTAINER_PATH:
@@ -227,6 +236,27 @@ for relative, required_token in settings_screen_requirements.items():
                 f"DataStore/reminder implementations: {forbidden}"
             )
 
+feedback_path = SOURCE_ROOT / "ui/tabs/settings/feedback/FeedbackFragment.kt"
+feedback = read(feedback_path)
+for token, reason in (
+    ("requireAppContainer()", "feedback must resolve dependencies from AppContainer"),
+    ("feedbackSubmissionOperations", "feedback must use the application use case"),
+    ("FeedbackSubmissionRequest", "feedback UI must submit an application request"),
+):
+    if token not in feedback:
+        errors.append(f"{feedback_path.relative_to(ROOT)}: {reason}: {token}")
+for forbidden in (
+    "import com.google.firebase.",
+    "FirebaseAuth.getInstance()",
+    "FirebaseFirestore",
+    "Firebase.storage",
+    "FieldValue.serverTimestamp()",
+):
+    if forbidden in feedback:
+        errors.append(
+            f"{feedback_path.relative_to(ROOT)}: feedback UI must not access Firebase directly: {forbidden}"
+        )
+
 for token, reason in (
     ("FakeAuthOperations", "auth ViewModels need a deterministic fake boundary"),
     ("createsEveryAuthViewModelFromOneFakeBoundary", "factory wiring needs regression coverage"),
@@ -235,6 +265,14 @@ for token, reason in (
 ):
     if token not in auth_factory_test:
         errors.append(f"{AUTH_FACTORY_TEST_PATH.relative_to(ROOT)}: {reason}: {token}")
+
+for token, reason in (
+    ("FakeFeedbackSubmissionOperations", "feedback requires a deterministic fake adapter"),
+    ("forwardsRequestFileAndSuccessThroughOneFakeBoundary", "feedback request forwarding needs regression coverage"),
+    ("forwardsTypedFailureWithoutFirebaseOrAndroidDependencies", "feedback failure mapping needs pure application coverage"),
+):
+    if token not in feedback_test:
+        errors.append(f"{FEEDBACK_TEST_PATH.relative_to(ROOT)}: {reason}: {token}")
 
 if errors:
     print("Composition root guard failed:", file=sys.stderr)
