@@ -17,6 +17,7 @@ import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceProvisioningProgressBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -30,7 +31,9 @@ import kotlinx.coroutines.launch
 class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_provisioning_progress) {
 
     private val args: DeviceProvisioningProgressFragmentArgs by navArgs()
-    private val viewModel: DeviceProvisioningProgressViewModel by viewModels()
+    private val viewModel: DeviceProvisioningProgressViewModel by viewModels {
+        requireContext().requireAppContainer().defaultViewModelFactory
+    }
     private val permissionController = DeviceAddPermissionController()
 
     private var _binding: FragmentDeviceProvisioningProgressBinding? = null

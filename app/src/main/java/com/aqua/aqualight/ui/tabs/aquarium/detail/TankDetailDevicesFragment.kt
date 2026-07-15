@@ -10,6 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentTankDetailDevicesBinding
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDeviceItem
@@ -36,7 +37,9 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
         )
     }
 
-    private val viewModel: TankDetailDevicesViewModel by viewModels()
+    private val viewModel: TankDetailDevicesViewModel by viewModels {
+        requireContext().requireAppContainer().defaultViewModelFactory
+    }
 
     private var _binding: FragmentTankDetailDevicesBinding? = null
     private val binding get() = _binding!!

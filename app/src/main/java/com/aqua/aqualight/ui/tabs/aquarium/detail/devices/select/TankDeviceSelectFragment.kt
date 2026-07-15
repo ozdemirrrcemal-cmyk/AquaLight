@@ -12,6 +12,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentTankDeviceSelectBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -23,7 +24,9 @@ import kotlinx.coroutines.launch
 class TankDeviceSelectFragment : Fragment(R.layout.fragment_tank_device_select) {
 
     private val args: TankDeviceSelectFragmentArgs by navArgs()
-    private val viewModel: TankDeviceSelectViewModel by viewModels()
+    private val viewModel: TankDeviceSelectViewModel by viewModels {
+        requireContext().requireAppContainer().defaultViewModelFactory
+    }
 
     private var _binding: FragmentTankDeviceSelectBinding? = null
     private val binding get() = _binding!!
