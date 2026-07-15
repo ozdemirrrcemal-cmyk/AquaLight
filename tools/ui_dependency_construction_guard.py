@@ -61,6 +61,7 @@ VIEWMODEL_WORKFLOW_CONSTRUCTION = {
     "OwnerDeviceDataCleaner.create(": "device deletion coordinator must be injected",
     "OwnerTankDataCleaner(": "tank deletion coordinator must be injected",
     "DeviceMenuOpenGate(": "device menu gate must be injected",
+    "AqlProvisioningQrParser(": "QR parser must be injected",
 }
 
 FIREBASE_IMPORT = re.compile(r"^import\s+com\.google\.firebase\.", re.MULTILINE)
