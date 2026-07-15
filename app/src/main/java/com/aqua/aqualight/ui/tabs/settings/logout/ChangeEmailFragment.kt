@@ -10,15 +10,15 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
-import com.aqua.aqualight.ui.navigation.RootNavigator
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.data.auth.LogoutManager
 import com.aqua.aqualight.databinding.FragmentChangeEmailBinding
 import com.aqua.aqualight.ui.auth.state.AuthActionState
-import com.aqua.aqualight.ui.auth.viewmodel.AuthViewModelFactory
 import com.aqua.aqualight.ui.auth.viewmodel.ChangeEmailViewModel
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
+import com.aqua.aqualight.ui.navigation.RootNavigator
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
@@ -30,7 +30,7 @@ class ChangeEmailFragment :
     private val binding get() = _binding!!
 
     private val viewModel: ChangeEmailViewModel by viewModels {
-        AuthViewModelFactory(requireContext())
+        requireContext().requireAppContainer().authViewModelFactory
     }
 
     private val logoutManager by lazy {
@@ -280,6 +280,7 @@ class ChangeEmailFragment :
     private fun navigateToLoginRoot() {
         RootNavigator.openAuthGraph(this)
     }
+
     override fun onDestroyView() {
         super.onDestroyView()
 
