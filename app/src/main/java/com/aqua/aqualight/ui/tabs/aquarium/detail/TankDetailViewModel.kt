@@ -1,8 +1,5 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 
-class TankDetailViewModel(
-    application: Application
-) : AndroidViewModel(application)
+class TankDetailViewModel : ViewModel()
