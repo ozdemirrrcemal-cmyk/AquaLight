@@ -138,12 +138,29 @@ for token, reason in (
 
 boot_path = background_paths[1]
 boot = read(boot_path)
-require(
-    boot_path,
-    boot,
-    "UserDataScope.withOwnerUid",
-    "boot reminder restore must read an explicit owner scope",
+for token, reason in (
+    ("CareTaskBootRuntime(", "boot receiver must delegate to the testable process-safe boundary"),
+    ("UserDataScope.withOwnerUid", "boot reminder restore must read an explicit owner scope"),
+):
+    require(boot_path, boot, token, reason)
+
+boot_runtime_path = (
+    "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareTaskBootRuntime.kt"
 )
+boot_runtime = read(boot_runtime_path)
+require(
+    boot_runtime_path,
+    boot_runtime,
+    "class CareTaskBootRuntime",
+    "boot maintenance needs a runtime-free test boundary",
+)
+for token in background_runtime_tokens:
+    forbid(
+        boot_runtime_path,
+        boot_runtime,
+        token,
+        "boot maintenance boundary must not accept foreground runtime dependencies",
+    )
 
 user_scope_path = "app/src/main/java/com/aqua/aqualight/data/user/UserDataScope.kt"
 user_scope = read(user_scope_path)
@@ -166,6 +183,38 @@ for token, reason in (
 ):
     require(session_tests_path, session_tests, token, reason)
 
+boot_tests_path = (
+    "app/src/test/java/com/aqua/aqualight/data/care/reminder/CareTaskBootRuntimeTest.kt"
+)
+boot_tests = read(boot_tests_path)
+for token, reason in (
+    (
+        "authenticatedBootRestoresOnlyOwnerScopedMaintenanceWithoutDeviceRuntime",
+        "authenticated boot must prove owner-scoped maintenance without device runtime",
+    ),
+    (
+        "accountSwitchDuringBootDropsOldOwnerReminders",
+        "boot restoration must reject stale owner reminders",
+    ),
+    (
+        "unauthenticatedBootDoesNotStartMaintenanceOrReadStores",
+        "unauthenticated boot must remain inert",
+    ),
+):
+    require(boot_tests_path, boot_tests, token, reason)
+
+process_death_tests_path = (
+    "app/src/test/java/com/aqua/aqualight/data/devices/repository/"
+    "DeviceRuntimeProcessDeathContractTest.kt"
+)
+process_death_tests = read(process_death_tests_path)
+require(
+    process_death_tests_path,
+    process_death_tests,
+    "processDeathEquivalentTerminalShutdownLeavesNoJobsCollectorsSocketsOrTokenAccess",
+    "terminal process cleanup needs an explicit leak regression test",
+)
+
 if errors:
     print("Session/startup architecture guard failed:", file=sys.stderr)
     for error in errors:
@@ -173,6 +222,6 @@ if errors:
     sys.exit(1)
 
 print(
-    "Session/startup guard passed: foreground runtime, auth coordination and "
-    "owner-scoped background maintenance boundaries are intact."
+    "Session/startup guard passed: foreground runtime, auth coordination, "
+    "owner-scoped background maintenance and terminal cleanup tests are intact."
 )
