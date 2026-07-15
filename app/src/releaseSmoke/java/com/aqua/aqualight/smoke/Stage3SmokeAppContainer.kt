@@ -13,6 +13,7 @@ import com.aqua.aqualight.application.user.UserProfileSnapshot
 import com.aqua.aqualight.application.user.UserSettingsOperations
 import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
+import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentStore
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
@@ -30,6 +31,8 @@ import com.aqua.aqualight.data.user.StartupAppearanceCache
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.platform.auth.GoogleIdentityClient
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectViewModel
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
@@ -42,58 +45,41 @@ import com.aqua.aqualight.ui.tabs.settings.SettingsViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
-internal class Stage3SmokeAppContainer(
-    context: Context
-) : AppContainer {
-
+internal class Stage3SmokeAppContainer(context: Context) : AppContainer {
     private val profileOperations = SmokeUserProfileOperations()
 
     override val defaultViewModelFactory: ViewModelProvider.Factory =
-        Stage3SmokeViewModelFactory(
-            context = context.applicationContext,
-            profileOperations = profileOperations
-        )
+        Stage3SmokeViewModelFactory(context.applicationContext, profileOperations)
 
     override val authViewModelFactory: ViewModelProvider.Factory
         get() = defaultViewModelFactory
-
     override val userProfileOperations: UserProfileOperations
         get() = profileOperations
-
     override val startupAppearanceCache: StartupAppearanceCache
         get() = unused("startupAppearanceCache")
-
     override val userPreferencesManager: UserPreferencesManager
         get() = unused("userPreferencesManager")
-
     override val userSettingsOperations: UserSettingsOperations
         get() = unused("userSettingsOperations")
-
     override val feedbackSubmissionOperations: FeedbackSubmissionUseCase
         get() = unused("feedbackSubmissionOperations")
-
     override val provisioningDraftOperations: ProvisioningDraftOperations
         get() = unused("provisioningDraftOperations")
-
     override val sessionExitOperations: SessionExitOperations
         get() = unused("sessionExitOperations")
-
     override val accountSecurityOperations: AccountSecurityOperations
         get() = unused("accountSecurityOperations")
-
     override val googleIdentityClient: GoogleIdentityClient
         get() = unused("googleIdentityClient")
 
-    private fun <T> unused(name: String): T {
+    private fun <T> unused(name: String): T =
         error("Release smoke dependency was not expected: $name")
-    }
 }
 
 private class Stage3SmokeViewModelFactory(
     context: Context,
     private val profileOperations: UserProfileOperations
 ) : ViewModelProvider.Factory {
-
     private val appContext = context.applicationContext
     private val devicesRepository = DevicesRepository()
     private val tankStore = AquariumTankDataStoreManager(appContext)
@@ -160,28 +146,37 @@ private class Stage3SmokeViewModelFactory(
                 )
 
             modelClass.isAssignableFrom(DeviceCoolingRootViewModel::class.java) ->
-                DeviceCoolingRootViewModel(
-                    operations = DefaultDeviceRootOperations(devicesRepository)
-                )
+                DeviceCoolingRootViewModel(DefaultDeviceRootOperations(devicesRepository))
 
             modelClass.isAssignableFrom(DeviceTimerRootViewModel::class.java) ->
-                DeviceTimerRootViewModel(
-                    operations = DefaultDeviceRootOperations(devicesRepository)
-                )
+                DeviceTimerRootViewModel(DefaultDeviceRootOperations(devicesRepository))
 
             modelClass.isAssignableFrom(DeviceDosingRootViewModel::class.java) ->
-                DeviceDosingRootViewModel(
-                    operations = DefaultDeviceRootOperations(devicesRepository)
-                )
+                DeviceDosingRootViewModel(DefaultDeviceRootOperations(devicesRepository))
 
             modelClass.isAssignableFrom(DeviceRootOverviewViewModel::class.java) ->
-                DeviceRootOverviewViewModel(
-                    operations = DefaultDeviceRootOperations(devicesRepository)
+                DeviceRootOverviewViewModel(DefaultDeviceRootOperations(devicesRepository))
+
+            modelClass.isAssignableFrom(TankDetailDevicesViewModel::class.java) ->
+                TankDetailDevicesViewModel(
+                    assignmentOperations = DefaultTankDeviceAssignmentOperations(
+                        assignmentRepository = assignmentRepository,
+                        devicesRepository = devicesRepository
+                    ),
+                    menuAccessOperations =
+                        DefaultDeviceMenuAccessOperations.create(devicesRepository),
+                    routeResolver = DeviceRouteResolver()
                 )
 
-            else -> error(
-                "Release smoke factory has no binding for ${modelClass.name}"
-            )
+            modelClass.isAssignableFrom(TankDeviceSelectViewModel::class.java) ->
+                TankDeviceSelectViewModel(
+                    assignmentOperations = DefaultTankDeviceAssignmentOperations(
+                        assignmentRepository = assignmentRepository,
+                        devicesRepository = devicesRepository
+                    )
+                )
+
+            else -> error("Release smoke factory has no binding for ${modelClass.name}")
         }
 
         @Suppress("UNCHECKED_CAST")
@@ -202,8 +197,6 @@ private class SmokeUserProfileOperations : UserProfileOperations {
     )
 
     override suspend fun updateProfilePhoto(photoUri: String) = Unit
-
     override suspend fun updateUsername(username: String) = Unit
-
     override suspend fun saveAddress(address: UserAddressInput) = Unit
 }
