@@ -3,10 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
-import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
-import com.aqua.aqualight.data.devices.repository.DevicesRepository
+import com.aqua.aqualight.application.devices.OwnerDevicesOperations
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceMenuOpenGate
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceMenuOpenGateResult
 import java.util.concurrent.CancellationException
@@ -22,9 +19,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class DevicesViewModel(
-    private val repository: DevicesRepository,
-    private val assignmentRepository: TankDeviceAssignmentRepository,
-    private val deviceDataCleaner: OwnerDeviceDataCleaner,
+    private val operations: OwnerDevicesOperations,
     private val menuOpenGate: DeviceMenuOpenGate
 ) : ViewModel() {
 
@@ -39,14 +34,14 @@ class DevicesViewModel(
     val events: Flow<DevicesEvent> = _events.receiveAsFlow()
 
     init {
-        repository.start(viewModelScope)
+        operations.start(viewModelScope)
         observeDevices()
         startUiClockTicker()
-        repository.refreshVisibleDevices()
+        operations.refreshVisibleDevices()
     }
 
     fun onScreenVisible() {
-        repository.refreshVisibleDevices()
+        operations.refreshVisibleDevices()
         clockMillis.value = System.currentTimeMillis()
     }
 
@@ -101,11 +96,8 @@ class DevicesViewModel(
         viewModelScope.launch {
             deletingDevices.value = true
             try {
-                val result = deviceDataCleaner.deleteDevices(selected.map(::DeviceUid))
-                val failedUids = result.failures
-                    .map { failure -> failure.deviceUid.value }
-                    .toSet()
-                selectedDeviceUids.value = failedUids
+                val result = operations.deleteDevices(selected)
+                selectedDeviceUids.value = result.failedDeviceUids
                 clockMillis.value = System.currentTimeMillis()
 
                 when {
@@ -157,16 +149,14 @@ class DevicesViewModel(
 
         viewModelScope.launch {
             combine(
-                repository.devices,
-                assignmentRepository.assignedTankNamesByDevice(),
+                operations.devices,
                 clockMillis,
                 selectedDeviceUids,
                 operationState
-            ) { snapshots, tankNamesByDevice, now, selectedUids, operation ->
-                val cards = snapshots.map { snapshot ->
+            ) { devices, now, selectedUids, operation ->
+                val cards = devices.map { device ->
                     val card = DeviceCardMapper.map(
-                        snapshot = snapshot,
-                        assignedTankName = tankNamesByDevice[snapshot.deviceUid],
+                        device = device,
                         nowMillis = now
                     )
                     card.copy(isSelected = card.deviceUid in selectedUids)
