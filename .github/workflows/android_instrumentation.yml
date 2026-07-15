@@ -53,6 +53,13 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Verify release-smoke runner contract
+        run: |
+          grep -Fq "connectedDebugAndroidTest" tools/run_stage3_release_smoke.sh
+          grep -Fq "bash tools/verify_uninstall_clears_data.sh" tools/run_stage3_release_smoke.sh
+          grep -Fq "STAGE3_RELEASE_SMOKE_PASS" tools/run_stage3_release_smoke.sh
+          grep -Fq "Stage3ReleaseSmokeActivity" tools/run_stage3_release_smoke.sh
+
       - name: Generate CI-only release keystore
         run: |
           keytool -genkeypair -noprompt \
