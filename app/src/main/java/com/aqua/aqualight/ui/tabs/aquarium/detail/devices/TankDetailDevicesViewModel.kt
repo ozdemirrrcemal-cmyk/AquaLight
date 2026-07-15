@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
 class TankDetailDevicesViewModel(
     private val devicesRepository: DevicesRepository,
     private val assignmentRepository: TankDeviceAssignmentRepository,
-    private val menuOpenGate: DeviceMenuOpenGate = DeviceMenuOpenGate(devicesRepository)
+    private val menuOpenGate: DeviceMenuOpenGate
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TankDetailDevicesUiState())
