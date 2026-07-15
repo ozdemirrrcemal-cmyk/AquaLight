@@ -11,10 +11,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -126,7 +124,7 @@ class DevicesViewModelBoundaryTest {
 
         override fun start(scope: CoroutineScope): Job {
             startCalls += 1
-            return scope.launch { awaitCancellation() }
+            return Job().apply { complete() }
         }
 
         override fun refreshVisibleDevices() {
