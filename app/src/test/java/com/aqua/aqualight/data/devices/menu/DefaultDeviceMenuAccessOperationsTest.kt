@@ -15,14 +15,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DefaultDeviceMenuAccessOperationsTest {
 
     @Test
     fun `fresh LAN proof returns typed available result`() = runTest {
-        val snapshot = snapshot(lastUdpSeenAtMillis = Long.MAX_VALUE)
+        val snapshot = snapshot(
+            lastUdpSeenAtMillis = System.currentTimeMillis() + FRESH_PROOF_TOLERANCE_MS
+        )
         val port = FakeDeviceMenuRuntimePort(snapshot = snapshot)
         val operations = DefaultDeviceMenuAccessOperations(port)
 
@@ -122,5 +123,9 @@ class DefaultDeviceMenuAccessOperationsTest {
         override fun runtimeEvents(): Flow<AqlWsEvent>? = null
 
         override suspend fun requestNetworkStatus(deviceUid: DeviceUid): String? = null
+    }
+
+    private companion object {
+        const val FRESH_PROOF_TOLERANCE_MS = 60_000L
     }
 }
