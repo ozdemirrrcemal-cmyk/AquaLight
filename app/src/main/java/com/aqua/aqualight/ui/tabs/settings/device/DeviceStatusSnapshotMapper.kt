@@ -1,9 +1,8 @@
 package com.aqua.aqualight.ui.tabs.settings.device
 
-import com.aqua.aqualight.data.devices.model.DeviceOnlineState
-import com.aqua.aqualight.data.devices.model.DeviceSnapshot
+import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
+import com.aqua.aqualight.application.devices.OwnerDeviceStatusSnapshot
 import com.aqua.aqualight.ui.common.devicecard.DeviceFamilyIconMapper
-import com.aqua.aqualight.ui.common.devicepresence.DevicePresencePresentationMapper
 import java.util.Locale
 import kotlin.math.max
 
@@ -15,14 +14,14 @@ data class DeviceSettingsDeviceOverviewUi(
 object DeviceStatusSnapshotMapper {
 
     fun overview(
-        snapshots: List<DeviceSnapshot>
+        statuses: List<OwnerDeviceStatusSnapshot>
     ): DeviceSettingsDeviceOverviewUi {
-        val onlineCount = snapshots.count { snapshot ->
-            snapshot.connectionState.onlineState.isOnlineForSettings()
+        val onlineCount = statuses.count { status ->
+            status.availability == OwnerDeviceAvailability.REACHABLE
         }
 
         val text = when {
-            snapshots.isEmpty() -> "No active devices"
+            statuses.isEmpty() -> "No active devices"
             onlineCount == 1 -> "1 Online Device"
             else -> "$onlineCount Online Devices"
         }
@@ -34,51 +33,39 @@ object DeviceStatusSnapshotMapper {
     }
 
     fun items(
-        snapshots: List<DeviceSnapshot>,
+        statuses: List<OwnerDeviceStatusSnapshot>,
         nowMillis: Long
     ): List<DeviceStatusItem> {
-        return snapshots
+        return statuses
             .sortedWith(
-                compareBy<DeviceSnapshot> { snapshot -> snapshot.title.lowercase(Locale.US) }
-                    .thenBy { snapshot -> snapshot.deviceUid.value }
+                compareBy<OwnerDeviceStatusSnapshot> { status ->
+                    status.displayName.lowercase(Locale.US)
+                }.thenBy { status -> status.deviceUid }
             )
-            .map { snapshot ->
-                snapshot.toStatusItem(nowMillis)
-            }
+            .map { status -> status.toStatusItem(nowMillis) }
     }
 
-    private fun DeviceSnapshot.toStatusItem(
+    private fun OwnerDeviceStatusSnapshot.toStatusItem(
         nowMillis: Long
     ): DeviceStatusItem {
-        val online = connectionState.onlineState.isOnlineForSettings()
-
         return DeviceStatusItem(
-            displayName = title.ifBlank { "Device" },
-            iconRes = DeviceFamilyIconMapper.iconFor(product.family),
-            ip = endpoint.ip.ifBlank { "Unknown" },
-            serialText = serialText(),
+            displayName = displayName.ifBlank { "Device" },
+            iconRes = DeviceFamilyIconMapper.iconFor(family),
+            ip = ipAddress.ifBlank { "Unknown" },
+            serialText = serialText.ifBlank { deviceUid.ifBlank { "Unknown" } },
             lastSeenText = lastSeenText(nowMillis),
-            isOnline = online
+            isOnline = availability == OwnerDeviceAvailability.REACHABLE
         )
     }
 
-    private fun DeviceSnapshot.serialText(): String {
-        return identity.serialNumber
-            .ifBlank { identity.firmwareSerial }
-            .ifBlank { identity.shortId }
-            .ifBlank { identity.uid.value }
-            .ifBlank { "Unknown" }
-    }
-
-    private fun DeviceSnapshot.lastSeenText(
+    private fun OwnerDeviceStatusSnapshot.lastSeenText(
         nowMillis: Long
     ): String {
-        val lastSeen = latestSeenMillis()
-        if (lastSeen <= 0L) {
+        if (lastSeenAtMillis <= 0L) {
             return "-"
         }
 
-        val diffMillis = max(0L, nowMillis - lastSeen)
+        val diffMillis = max(0L, nowMillis - lastSeenAtMillis)
         val seconds = diffMillis / 1_000L
         val minutes = seconds / 60L
         val hours = minutes / 60L
@@ -92,16 +79,4 @@ object DeviceStatusSnapshotMapper {
             else -> "${days}d ago"
         }
     }
-
-    private fun DeviceSnapshot.latestSeenMillis(): Long {
-        return listOfNotNull(
-            connectionState.lastAuthenticatedAtMillis,
-            connectionState.lastWsConnectedAtMillis,
-            connectionState.lastUdpSeenAtMillis,
-            lastSeenAtMillis.takeIf { value -> value > 0L }
-        ).maxOrNull() ?: 0L
-    }
-
-    private fun DeviceOnlineState.isOnlineForSettings(): Boolean =
-        DevicePresencePresentationMapper.isReachable(this)
 }
