@@ -21,6 +21,8 @@ AUTH_FACTORY_TEST_PATH = (
     / "app/src/test/java/com/aqua/aqualight/ui/auth/viewmodel/AuthViewModelFactoryTest.kt"
 )
 PLAN_PATH = ROOT / "docs/stage-3-dependency-boundaries-plan.md"
+SETTINGS_IMPL_PATH = SOURCE_ROOT / "data/user/DefaultUserSettingsOperations.kt"
+PROFILE_IMPL_PATH = SOURCE_ROOT / "data/user/DefaultUserProfileOperations.kt"
 
 errors: list[str] = []
 
@@ -97,16 +99,18 @@ if APPLICATION_ROOT.exists():
                 f"Android/Firebase/data/platform/UI independent: {match.group(0)}"
             )
 
-central_construction_tokens = (
-    "AuthRepository.create(",
-    "DefaultUserSettingsOperations(",
-    "DefaultUserProfileOperations(",
-)
+central_construction_tokens = {
+    "AuthRepository.create(": set(),
+    "DefaultUserSettingsOperations(": {SETTINGS_IMPL_PATH},
+    "DefaultUserProfileOperations(": {PROFILE_IMPL_PATH},
+}
 for kotlin_file in SOURCE_ROOT.rglob("*.kt"):
     if kotlin_file == CONTAINER_PATH:
         continue
     text = kotlin_file.read_text(encoding="utf-8", errors="ignore")
-    for token in central_construction_tokens:
+    for token, declaration_paths in central_construction_tokens.items():
+        if kotlin_file in declaration_paths:
+            continue
         if token in text:
             errors.append(
                 f"{kotlin_file.relative_to(ROOT)}: {token} may only be constructed in AppContainer"
