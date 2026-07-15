@@ -17,11 +17,7 @@ class AquariumTankViewModel(
     private val tankDataStoreManager: AquariumTankDataStoreManager,
     private val careTaskDataStoreManager: CareTaskDataStoreManager,
     private val assignmentRepository: TankDeviceAssignmentRepository,
-    private val tankDataCleaner: OwnerTankDataCleaner = OwnerTankDataCleaner(
-        deleteTankRecords = tankDataStoreManager::deleteTanks,
-        deleteCareTasksForTank = careTaskDataStoreManager::deleteTasksForTank,
-        removeDeviceAssignmentsForTank = assignmentRepository::removeAssignmentsForTank
-    )
+    private val tankDataCleaner: OwnerTankDataCleaner
 ) : ViewModel() {
 
     val tanks: LiveData<List<SavedAquariumTank>> =
