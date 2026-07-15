@@ -11,6 +11,8 @@ import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.care.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.DefaultMaintenanceRepository
+import com.aqua.aqualight.data.devices.DefaultDeviceFirmwareUpdateOperations
+import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
@@ -119,14 +121,11 @@ internal class AquaViewModelFactory(
                     qrParser = AqlProvisioningQrParser()
                 )
 
-            modelClass.isAssignableFrom(
-                DeviceProvisioningProgressViewModel::class.java
-            ) -> DeviceProvisioningProgressViewModel(
-                operations = DefaultDeviceProvisioningProgressOperations(
-                    appContext
-                ),
-                textResolver = appTextResolver
-            )
+            modelClass.isAssignableFrom(DeviceProvisioningProgressViewModel::class.java) ->
+                DeviceProvisioningProgressViewModel(
+                    operations = DefaultDeviceProvisioningProgressOperations(appContext),
+                    textResolver = appTextResolver
+                )
 
             modelClass.isAssignableFrom(AquariumTankViewModel::class.java) -> {
                 val assignments = assignmentRepository()
@@ -151,20 +150,33 @@ internal class AquaViewModelFactory(
                     textResolver = maintenanceTextResolver
                 )
 
-            modelClass.isAssignableFrom(DeviceLightRootViewModel::class.java) ->
-                DeviceLightRootViewModel(devicesRepository())
+            modelClass.isAssignableFrom(DeviceLightRootViewModel::class.java) -> {
+                val repository = devicesRepository()
+                DeviceLightRootViewModel(
+                    rootOperations = DefaultDeviceRootOperations(repository),
+                    firmwareUpdateOperations = DefaultDeviceFirmwareUpdateOperations(repository)
+                )
+            }
 
             modelClass.isAssignableFrom(DeviceCoolingRootViewModel::class.java) ->
-                DeviceCoolingRootViewModel(devicesRepository())
+                DeviceCoolingRootViewModel(
+                    operations = DefaultDeviceRootOperations(devicesRepository())
+                )
 
             modelClass.isAssignableFrom(DeviceTimerRootViewModel::class.java) ->
-                DeviceTimerRootViewModel(devicesRepository())
+                DeviceTimerRootViewModel(
+                    operations = DefaultDeviceRootOperations(devicesRepository())
+                )
 
             modelClass.isAssignableFrom(DeviceDosingRootViewModel::class.java) ->
-                DeviceDosingRootViewModel(devicesRepository())
+                DeviceDosingRootViewModel(
+                    operations = DefaultDeviceRootOperations(devicesRepository())
+                )
 
             modelClass.isAssignableFrom(DeviceRootOverviewViewModel::class.java) ->
-                DeviceRootOverviewViewModel(devicesRepository())
+                DeviceRootOverviewViewModel(
+                    operations = DefaultDeviceRootOperations(devicesRepository())
+                )
 
             modelClass.isAssignableFrom(TankDetailDevicesViewModel::class.java) -> {
                 val repository = devicesRepository()
