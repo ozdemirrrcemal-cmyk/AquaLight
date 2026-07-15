@@ -13,13 +13,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
-import com.aqua.aqualight.ui.navigation.RootNavigator
-import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.data.auth.GoogleSignInClientFactory
 import com.aqua.aqualight.databinding.FragmentLoginBinding
 import com.aqua.aqualight.ui.auth.state.AuthActionState
-import com.aqua.aqualight.ui.auth.viewmodel.AuthViewModelFactory
 import com.aqua.aqualight.ui.auth.viewmodel.LoginViewModel
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
+import com.aqua.aqualight.ui.navigation.RootNavigator
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -35,9 +35,8 @@ class LoginFragment : Fragment() {
     private lateinit var googleSignInClient: GoogleSignInClient
 
     private val viewModel: LoginViewModel by viewModels {
-        AuthViewModelFactory(requireContext())
+        requireContext().requireAppContainer().authViewModelFactory
     }
-
 
     private val googleSignInLauncher =
         registerForActivityResult(
@@ -71,7 +70,7 @@ class LoginFragment : Fragment() {
 
                     return@googleResult
                 }
-				
+
                 viewModel.signInWithGoogleToken(
                     idToken = token
                 )
