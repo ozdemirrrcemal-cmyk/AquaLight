@@ -116,7 +116,9 @@ class DeviceAddViewModel(
     private fun observeBleCandidates() {
         scanCollectJob = viewModelScope.launch {
             bleScanner.candidates.collect { candidates ->
-                val uiCandidates = candidates.map(AqlBleProvisioningCandidate::toUi)
+                val uiCandidates = candidates.map { candidate ->
+                    candidate.toUi()
+                }
 
                 if (uiCandidates.isEmpty()) {
                     _uiState.value = _uiState.value.copy(
