@@ -8,14 +8,14 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
-import com.aqua.aqualight.ui.navigation.RootNavigator
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
-import com.aqua.aqualight.data.auth.LogoutManager
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentLogoutBinding
 import com.aqua.aqualight.ui.auth.security.ReAuthManager
 import com.aqua.aqualight.ui.auth.security.ReAuthenticateFragment
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
+import com.aqua.aqualight.ui.navigation.RootNavigator
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
@@ -30,8 +30,8 @@ class LogoutFragment :
         ReAuthManager()
     }
 
-    private val logoutManager by lazy {
-        LogoutManager.create(requireContext())
+    private val sessionExitOperations by lazy {
+        requireContext().requireAppContainer().sessionExitOperations
     }
 
     private val baseActivity
@@ -128,7 +128,7 @@ class LogoutFragment :
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val result = logoutManager.logout()
+                val result = sessionExitOperations.logout()
 
                 if (result.hasBlockingError) {
                     DialogManager.showInfoDialog(
@@ -137,7 +137,7 @@ class LogoutFragment :
                         title = getString(
                             R.string.logout_dialog_title
                         ),
-                        message = result.preferenceCleanupError
+                        message = result.blockingError
                             ?.localizedMessage
                             ?: getString(
                                 R.string.auth_provider_error_message
@@ -210,6 +210,7 @@ class LogoutFragment :
     private fun navigateToLogin() {
         RootNavigator.openAuthGraph(this)
     }
+
     override fun onDestroyView() {
         super.onDestroyView()
 
