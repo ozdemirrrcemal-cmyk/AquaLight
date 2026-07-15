@@ -36,6 +36,7 @@ interface AppContainer {
     val userProfileOperations: UserProfileOperations
     val feedbackSubmissionOperations: FeedbackSubmissionUseCase
     val authViewModelFactory: ViewModelProvider.Factory
+    val defaultViewModelFactory: ViewModelProvider.Factory
     val sessionExitOperations: SessionExitOperations
     val accountSecurityOperations: AccountSecurityOperations
     val googleIdentityClient: GoogleIdentityClient
@@ -99,6 +100,15 @@ internal class DefaultAppContainer(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
         AuthViewModelFactory(authOperations)
+    }
+
+    override val defaultViewModelFactory: ViewModelProvider.Factory by lazy(
+        LazyThreadSafetyMode.SYNCHRONIZED
+    ) {
+        AquaViewModelFactory(
+            context = appContext,
+            userProfileOperations = userProfileOperations
+        )
     }
 
     private val logoutManager: LogoutManager by lazy(
