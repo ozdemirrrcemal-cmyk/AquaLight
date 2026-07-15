@@ -75,10 +75,14 @@ internal class DefaultGoogleIdentityClient(
                 }
 
                 val error = task.exception
-                if (task.isSuccessful || error == null) {
+                if (task.isSuccessful && error == null) {
                     continuation.resume(Unit)
                 } else {
-                    continuation.resumeWithException(error)
+                    continuation.resumeWithException(
+                        error ?: IllegalStateException(
+                            "Google identity task failed."
+                        )
+                    )
                 }
             }
         }
