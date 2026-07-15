@@ -12,9 +12,11 @@ import com.aqua.aqualight.data.care.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.DefaultMaintenanceRepository
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
+import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.provisioning.ble.DefaultBleProvisioningScanner
 import com.aqua.aqualight.data.devices.provisioning.qr.AqlProvisioningQrParser
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
+import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.platform.text.AndroidAppTextResolver
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
@@ -30,7 +32,6 @@ import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewMo
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
-import com.aqua.aqualight.ui.tabs.devices.route.DeviceMenuOpenGate
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
 import com.aqua.aqualight.ui.tabs.settings.SettingsViewModel
@@ -85,20 +86,17 @@ internal class AquaViewModelFactory(
             modelClass.isAssignableFrom(DevicesViewModel::class.java) -> {
                 val repository = devicesRepository()
                 val assignments = assignmentRepository()
-                val ownerDevicesOperations = DefaultOwnerDevicesOperations(
-                    devicesRepository = repository,
-                    assignmentRepository = assignments,
-                    deviceDataCleaner = OwnerDeviceDataCleaner.create(
-                        devicesRepository = repository,
-                        assignmentRepository = assignments
-                    )
-                )
                 DevicesViewModel(
-                    operations = ownerDevicesOperations,
-                    menuOpenGate = DeviceMenuOpenGate(
+                    operations = DefaultOwnerDevicesOperations(
                         devicesRepository = repository,
-                        routeResolver = DeviceRouteResolver()
-                    )
+                        assignmentRepository = assignments,
+                        deviceDataCleaner = OwnerDeviceDataCleaner.create(
+                            devicesRepository = repository,
+                            assignmentRepository = assignments
+                        )
+                    ),
+                    menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
+                    routeResolver = DeviceRouteResolver()
                 )
             }
 
@@ -168,10 +166,8 @@ internal class AquaViewModelFactory(
                 TankDetailDevicesViewModel(
                     devicesRepository = repository,
                     assignmentRepository = assignmentRepository(),
-                    menuOpenGate = DeviceMenuOpenGate(
-                        devicesRepository = repository,
-                        routeResolver = DeviceRouteResolver()
-                    )
+                    menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
+                    routeResolver = DeviceRouteResolver()
                 )
             }
 
@@ -188,7 +184,7 @@ internal class AquaViewModelFactory(
         return viewModel as T
     }
 
-    private fun devicesRepository() = DevicesRepositoryProvider.get(appContext)
+    private fun devicesRepository(): DevicesRepository = DevicesRepositoryProvider.get(appContext)
 
     private fun assignmentRepository() =
         TankDeviceAssignmentRepositoryProvider.get(appContext)
