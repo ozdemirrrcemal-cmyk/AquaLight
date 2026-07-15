@@ -12,6 +12,7 @@ import com.aqua.aqualight.data.care.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.DefaultMaintenanceRepository
 import com.aqua.aqualight.data.devices.provisioning.ble.DefaultBleProvisioningScanner
+import com.aqua.aqualight.data.devices.provisioning.qr.AqlProvisioningQrParser
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.platform.text.AndroidAppTextResolver
@@ -107,7 +108,8 @@ internal class AquaViewModelFactory(
                 DeviceQrScanViewModel(
                     bleScanner = DefaultBleProvisioningScanner(appContext),
                     repository = devicesRepository(),
-                    textResolver = appTextResolver
+                    textResolver = appTextResolver,
+                    qrParser = AqlProvisioningQrParser()
                 )
 
             modelClass.isAssignableFrom(
