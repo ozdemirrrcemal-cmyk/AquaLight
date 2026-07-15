@@ -14,6 +14,142 @@ permissions:
   security-events: write
 
 jobs:
+  factory-callsite-hotfix:
+    name: Patch injected Fragment ViewModel factories
+    if: github.event_name == 'pull_request' && github.head_ref == 'agent/stage-3-dependency-boundaries-v1'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Stage 3 branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/stage-3-dependency-boundaries-v1
+          fetch-depth: 0
+
+      - name: Patch callsites and guard
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          root = Path("app/src/main/java/com/aqua/aqualight/ui")
+          injected = {
+              "SettingsViewModel",
+              "DeviceStatusViewModel",
+              "DevicesViewModel",
+              "DeviceAddViewModel",
+              "DeviceQrScanViewModel",
+              "DeviceProvisioningProgressViewModel",
+              "TankDetailDevicesViewModel",
+              "TankDeviceSelectViewModel",
+              "DeviceLightRootViewModel",
+              "DeviceCoolingRootViewModel",
+              "DeviceTimerRootViewModel",
+              "DeviceDosingRootViewModel",
+              "DeviceRootOverviewViewModel",
+          }
+          vm_union = "|".join(sorted(injected, key=len, reverse=True))
+          pattern = re.compile(
+              rf"(?P<indent>^[ \t]*)private val (?P<name>[A-Za-z_][A-Za-z0-9_]*): "
+              rf"(?P<vm>{vm_union}) by viewModels\(\)",
+              re.MULTILINE,
+          )
+
+          changed = []
+          for path in sorted(root.rglob("*.kt")):
+              text = path.read_text(encoding="utf-8")
+
+              def replace(match: re.Match[str]) -> str:
+                  indent = match.group("indent")
+                  return (
+                      f'{indent}private val {match.group("name")}: {match.group("vm")} by viewModels {{\n'
+                      f'{indent}    requireContext().requireAppContainer().defaultViewModelFactory\n'
+                      f'{indent}}}'
+                  )
+
+              updated, count = pattern.subn(replace, text)
+              if count == 0:
+                  continue
+
+              import_line = "import com.aqua.aqualight.composition.requireAppContainer\n"
+              if import_line not in updated:
+                  marker = "import com.aqua.aqualight.R\n"
+                  if marker not in updated:
+                      raise SystemExit(f"Import marker missing in {path}")
+                  updated = updated.replace(marker, marker + import_line, 1)
+
+              path.write_text(updated, encoding="utf-8")
+              changed.append((str(path), count))
+
+          for path, count in changed:
+              print(f"Patched {count} delegate(s): {path}")
+
+          guard = Path("tools/ui_dependency_construction_guard.py")
+          guard_text = guard.read_text(encoding="utf-8")
+          marker = "VIEWMODEL_WORKFLOW_CONSTRUCTION = {\n"
+          guard_block = '''INJECTED_FRAGMENT_VIEWMODELS = (
+              "SettingsViewModel",
+              "DeviceStatusViewModel",
+              "DevicesViewModel",
+              "DeviceAddViewModel",
+              "DeviceQrScanViewModel",
+              "DeviceProvisioningProgressViewModel",
+              "TankDetailDevicesViewModel",
+              "TankDeviceSelectViewModel",
+              "DeviceLightRootViewModel",
+              "DeviceCoolingRootViewModel",
+              "DeviceTimerRootViewModel",
+              "DeviceDosingRootViewModel",
+              "DeviceRootOverviewViewModel",
+          )
+
+          '''
+          if "INJECTED_FRAGMENT_VIEWMODELS = (" not in guard_text:
+              if marker not in guard_text:
+                  raise SystemExit("Guard insertion marker missing")
+              guard_text = guard_text.replace(marker, guard_block + marker, 1)
+
+          scan_marker = "    if FIREBASE_IMPORT.search(text):\n        errors.append(f\"{relative}: Firebase SDK imports are forbidden in UI\")\n\n"
+          scan_block = '''    for injected_view_model in INJECTED_FRAGMENT_VIEWMODELS:
+              plain_delegate = f": {injected_view_model} by viewModels()"
+              if plain_delegate in text:
+                  errors.append(
+                      f"{relative}: injected Fragment ViewModel must use AppContainer factory: "
+                      f"{plain_delegate}"
+                  )
+              typed_delegate = f": {injected_view_model} by viewModels"
+              if typed_delegate in text and "defaultViewModelFactory" not in text:
+                  errors.append(
+                      f"{relative}: injected Fragment ViewModel is missing defaultViewModelFactory"
+                  )
+
+          '''
+          if "plain_delegate = f\": {injected_view_model} by viewModels()\"" not in guard_text:
+              if scan_marker not in guard_text:
+                  raise SystemExit("Guard scan marker missing")
+              guard_text = guard_text.replace(scan_marker, scan_marker + scan_block, 1)
+
+          guard.write_text(guard_text, encoding="utf-8")
+          PY
+
+      - name: Verify UI factory guard
+        run: python3 tools/ui_dependency_construction_guard.py
+
+      - name: Commit hotfix
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No hotfix changes remain."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/java/com/aqua/aqualight/ui tools/ui_dependency_construction_guard.py
+          git commit -m "fix: wire injected fragment ViewModels [factory-callsite-hotfix]"
+          git push origin HEAD:agent/stage-3-dependency-boundaries-v1
+
   analyze:
     name: Analyze Kotlin/Java
     runs-on: ubuntu-latest
