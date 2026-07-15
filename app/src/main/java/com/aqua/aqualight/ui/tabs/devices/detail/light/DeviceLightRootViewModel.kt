@@ -1,16 +1,13 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
-import com.aqua.aqualight.ui.common.devicepresence.DevicePresencePresentationMapper
+import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareOtaSnapshot
-import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareRuntimeContract
-import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareStatusParser
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareUpdatePlan
+import com.aqua.aqualight.ui.common.devicepresence.DevicePresencePresentationMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootMenuMapper
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,10 +16,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class DeviceLightRootViewModel(
-    application: Application
-) : AndroidViewModel(application) {
-
-    private val repository = DevicesRepositoryProvider.get(application)
+    private val repository: DevicesRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceLightRootUiState())
     val uiState: StateFlow<DeviceLightRootUiState> = _uiState.asStateFlow()
@@ -42,29 +37,25 @@ class DeviceLightRootViewModel(
     ) {
         if (deviceUidText.isBlank()) {
             observeJob?.cancel()
-
             _uiState.value = DeviceLightRootUiState(
                 title = fallbackTitle.ifBlank { DEFAULT_TITLE },
                 deviceUid = "",
-                connectionStatus = "Offline",
+                connectionStatus = "Offline"
             )
             return
         }
 
         val deviceUid = DeviceUid(deviceUidText)
-        if (boundDeviceUid == deviceUid) {
-            return
-        }
+        if (boundDeviceUid == deviceUid) return
 
         boundDeviceUid = deviceUid
         observeJob?.cancel()
         clearOtaTestState()
         repository.connectRuntime(deviceUid)
-
         _uiState.value = DeviceLightRootUiState(
             title = fallbackTitle.ifBlank { DEFAULT_TITLE },
             deviceUid = deviceUid.value,
-            connectionStatus = "Offline",
+            connectionStatus = "Offline"
         )
 
         observeJob = viewModelScope.launch {
@@ -72,15 +63,11 @@ class DeviceLightRootViewModel(
                 if (snapshot != null) {
                     lastSnapshot = snapshot
                 }
-
-                _uiState.value = (
-                    snapshot
-                        ?.toLightRootUiState(fallbackTitle = fallbackTitle)
-                        ?: DeviceLightRootUiState(
-                            title = fallbackTitle.ifBlank { DEFAULT_TITLE },
-                            deviceUid = deviceUid.value,
-                            connectionStatus = "Offline",
-                        )
+                _uiState.value = snapshot?.toLightRootUiState(fallbackTitle)
+                    ?: DeviceLightRootUiState(
+                        title = fallbackTitle.ifBlank { DEFAULT_TITLE },
+                        deviceUid = deviceUid.value,
+                        connectionStatus = "Offline"
                     )
             }
         }
@@ -111,15 +98,12 @@ class DeviceLightRootViewModel(
                 "Checking signed beta manifest...\n" +
                     "URL: $OTA_TEST_BETA_MANIFEST_URL"
             )
-
             repository.connectRuntime(deviceUid)
-
             val result = firmwareUpdate.fetchAndPlanUpdate(
                 snapshot = snapshot,
                 manifestUrl = OTA_TEST_BETA_MANIFEST_URL,
                 applyNow = true
             )
-
             result.fold(
                 onSuccess = { plan ->
                     lastOtaPlan = plan
@@ -141,7 +125,6 @@ class DeviceLightRootViewModel(
             updateOtaTestText("OTA start failed: deviceUid is missing.")
             return
         }
-
         val plan = lastOtaPlan
         if (plan == null) {
             updateOtaTestText("Run Check Beta Manifest first. No OTA plan is ready.")
@@ -149,11 +132,9 @@ class DeviceLightRootViewModel(
         }
 
         repository.connectRuntime(deviceUid)
-
         val result = repository.runtimeModules()
             ?.firmwareUpdate
             ?.startUpdate(plan)
-
         pendingOtaStartRequestId = result?.messageId.orEmpty()
 
         if (result?.isSuccess == true && pendingOtaStartRequestId.isNotBlank()) {
@@ -179,11 +160,9 @@ class DeviceLightRootViewModel(
         }
 
         repository.connectRuntime(deviceUid)
-
         val result = repository.runtimeModules()
             ?.firmwareUpdate
             ?.requestOtaStatus(deviceUid)
-
         pendingOtaStatusRequestId = result?.messageId.orEmpty()
 
         if (result?.isSuccess == true && pendingOtaStatusRequestId.isNotBlank()) {
@@ -204,11 +183,9 @@ class DeviceLightRootViewModel(
         }
 
         repository.connectRuntime(deviceUid)
-
         val result = repository.runtimeModules()
             ?.firmwareUpdate
             ?.clearOtaStatus(deviceUid)
-
         pendingOtaClearRequestId = result?.messageId.orEmpty()
 
         if (result?.isSuccess == true && pendingOtaClearRequestId.isNotBlank()) {
@@ -234,13 +211,11 @@ class DeviceLightRootViewModel(
         otaTestOverlayText = null
     }
 
-
     private fun DeviceSnapshot.toLightRootUiState(fallbackTitle: String): DeviceLightRootUiState {
         val productName = product.displayName
             .ifBlank { product.model }
             .ifBlank { fallbackTitle }
             .ifBlank { DEFAULT_TITLE }
-
         val menuSections = DeviceRootMenuMapper.light(this)
 
         return DeviceLightRootUiState(
@@ -269,20 +244,14 @@ class DeviceLightRootViewModel(
         return listOf(
             firmwareVersion.ifBlank { null },
             firmwareBuild.ifBlank { null }
-        )
-            .filterNotNull()
-            .joinToString(separator = " / ")
-            .ifBlank { "Unknown" }
+        ).filterNotNull().joinToString(separator = " / ").ifBlank { "Unknown" }
     }
 
     private fun DeviceSnapshot.modelLabel(): String {
         return listOf(
             product.model.ifBlank { null },
             product.hardwareRevision.ifBlank { null }
-        )
-            .filterNotNull()
-            .joinToString(separator = " / ")
-            .ifBlank { "Unknown" }
+        ).filterNotNull().joinToString(separator = " / ").ifBlank { "Unknown" }
     }
 
     private fun DeviceSnapshot.featureLabel(): String {
@@ -293,18 +262,10 @@ class DeviceLightRootViewModel(
             if (capabilities.lightSimulation) add("Simulation")
             if (capabilities.temperature) add("Temperature")
             if (capabilities.ota) add("OTA")
-            supportedFeatures
-                .filter { feature -> feature.isNotBlank() }
-                .forEach { feature -> add(feature) }
-            supportedScreens
-                .filter { screen -> screen.isNotBlank() }
-                .forEach { screen -> add(screen) }
+            supportedFeatures.filter { feature -> feature.isNotBlank() }.forEach { feature -> add(feature) }
+            supportedScreens.filter { screen -> screen.isNotBlank() }.forEach { screen -> add(screen) }
         }
-
-        return labels
-            .distinct()
-            .joinToString(separator = ", ")
-            .ifBlank { "Unknown" }
+        return labels.distinct().joinToString(separator = ", ").ifBlank { "Unknown" }
     }
 
     private fun formatPlan(plan: DeviceFirmwareUpdatePlan): String {
@@ -337,28 +298,14 @@ class DeviceLightRootViewModel(
             appendLine("failed: ${snapshot.failed}")
             appendLine("progress: ${snapshot.progressPercent}%")
             appendLine("bytes: ${snapshot.bytesWritten}/${snapshot.contentLength}")
-            if (snapshot.targetVersion.isNotBlank()) {
-                appendLine("target: ${snapshot.targetVersion}")
-            }
-            if (snapshot.httpStatus != 0) {
-                appendLine("http: ${snapshot.httpStatus}")
-            }
-            if (snapshot.lastError.isNotBlank()) {
-                appendLine("error: ${snapshot.lastError}")
-            }
-            if (snapshot.lastErrorField.isNotBlank()) {
-                appendLine("field: ${snapshot.lastErrorField}")
-            }
-            if (snapshot.restartRequired) {
-                appendLine("restartRequired: true")
-            }
-            if (snapshot.restartScheduled) {
-                appendLine("restartScheduled: true")
-            }
+            if (snapshot.targetVersion.isNotBlank()) appendLine("target: ${snapshot.targetVersion}")
+            if (snapshot.httpStatus != 0) appendLine("http: ${snapshot.httpStatus}")
+            if (snapshot.lastError.isNotBlank()) appendLine("error: ${snapshot.lastError}")
+            if (snapshot.lastErrorField.isNotBlank()) appendLine("field: ${snapshot.lastErrorField}")
+            if (snapshot.restartRequired) appendLine("restartRequired: true")
+            if (snapshot.restartScheduled) appendLine("restartScheduled: true")
         }.trim()
     }
-
-
 
     private companion object {
         const val DEFAULT_TITLE = "Light"
