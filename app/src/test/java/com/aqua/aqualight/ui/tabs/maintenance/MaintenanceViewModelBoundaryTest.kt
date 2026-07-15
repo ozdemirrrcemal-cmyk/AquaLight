@@ -74,7 +74,7 @@ class MaintenanceViewModelBoundaryTest {
             tankId = 12L,
             title = "Updated task",
             description = "Updated description",
-            type = CareTaskType.FILTER_CLEANING,
+            type = CareTaskType.FILTER_MAINTENANCE,
             dueAtMillis = 2000L,
             repeatEnabled = false,
             repeatIntervalDays = 1,
@@ -91,7 +91,7 @@ class MaintenanceViewModelBoundaryTest {
         assertEquals(25, repository.addedWaterChangePercent)
         assertEquals(9L, repository.updatedManualTaskId)
         assertEquals(12L, repository.updatedManualTankId)
-        assertEquals(CareTaskType.FILTER_CLEANING, repository.updatedManualType)
+        assertEquals(CareTaskType.FILTER_MAINTENANCE, repository.updatedManualType)
         assertNull(repository.updatedWaterChangePercent)
     }
 
