@@ -20,11 +20,21 @@ AUTH_FACTORY_PATH = SOURCE_ROOT / "ui/auth/viewmodel/AuthViewModelFactory.kt"
 PROFILE_CONTRACT_PATH = SOURCE_ROOT / "application/user/UserProfileOperations.kt"
 SETTINGS_IMPL_PATH = SOURCE_ROOT / "data/user/DefaultUserSettingsOperations.kt"
 PROFILE_IMPL_PATH = SOURCE_ROOT / "data/user/DefaultUserProfileOperations.kt"
+PROVISIONING_OPERATIONS_PATH = (
+    SOURCE_ROOT / "ui/tabs/devices/add/DeviceProvisioningProgressOperations.kt"
+)
+PROVISIONING_DEFAULT_PATH = (
+    SOURCE_ROOT / "composition/DefaultDeviceProvisioningProgressOperations.kt"
+)
 AUTH_FACTORY_TEST_PATH = (
     ROOT / "app/src/test/java/com/aqua/aqualight/ui/auth/viewmodel/AuthViewModelFactoryTest.kt"
 )
 FEEDBACK_TEST_PATH = (
     ROOT / "app/src/test/java/com/aqua/aqualight/application/feedback/FeedbackSubmissionUseCaseTest.kt"
+)
+PROVISIONING_TEST_PATH = (
+    ROOT
+    / "app/src/test/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceProvisioningProgressViewModelBoundaryTest.kt"
 )
 PLAN_PATH = ROOT / "docs/stage-3-dependency-boundaries-plan.md"
 
@@ -44,7 +54,10 @@ aqua_app = read(AQUA_APP_PATH)
 auth_factory = read(AUTH_FACTORY_PATH)
 auth_factory_test = read(AUTH_FACTORY_TEST_PATH)
 feedback_test = read(FEEDBACK_TEST_PATH)
+provisioning_test = read(PROVISIONING_TEST_PATH)
 profile_contract = read(PROFILE_CONTRACT_PATH)
+provisioning_operations = read(PROVISIONING_OPERATIONS_PATH)
+provisioning_default = read(PROVISIONING_DEFAULT_PATH)
 plan = read(PLAN_PATH)
 
 for token, reason in (
@@ -96,6 +109,35 @@ for token, reason in (
 ):
     if token not in profile_contract:
         errors.append(f"{PROFILE_CONTRACT_PATH.relative_to(ROOT)}: {reason}: {token}")
+
+for token, reason in (
+    ("interface DeviceProvisioningProgressOperations", "provisioning needs a fakeable operations boundary"),
+    ("val ownerUid: String", "owner identity must be injected"),
+    ("val gattEvents: Flow<AqlBleProvisioningGattEvent>", "GATT events must be injected"),
+    ("suspend fun prepareAndConnect", "registration prepare must cross the boundary"),
+    ("suspend fun commitPreparedRegistration", "registration commit must cross the boundary"),
+    ("suspend fun rollbackProvisioningRegistrationForOwner", "owner rollback must cross the boundary"),
+):
+    if token not in provisioning_operations:
+        errors.append(f"{PROVISIONING_OPERATIONS_PATH.relative_to(ROOT)}: {reason}: {token}")
+
+for token, reason in (
+    ("AqlBleProvisioningAddressResolver(appContext)", "address resolver construction must remain in composition"),
+    ("AqlBleProvisioningGattClient(appContext)", "GATT client construction must remain in composition"),
+    ("AqlProvisioningHandoffSaver(appContext)", "handoff saver construction must remain in composition"),
+    ("AqlProvisioningDraftStore.get", "draft store access must remain behind the boundary"),
+    ("UserDataScope.requireCurrentUid()", "owner scope resolution must remain in composition"),
+    ("DeviceRouteResolver()", "route resolver construction must remain in composition"),
+):
+    if token not in provisioning_default:
+        errors.append(f"{PROVISIONING_DEFAULT_PATH.relative_to(ROOT)}: {reason}: {token}")
+
+for token, reason in (
+    ("DefaultDeviceProvisioningProgressOperations(", "provisioning operations must be created by the feature factory"),
+    ("DeviceProvisioningProgressViewModel(", "provisioning ViewModel must be created by the feature factory"),
+):
+    if token not in factory:
+        errors.append(f"{FACTORY_PATH.relative_to(ROOT)}: {reason}: {token}")
 
 for forbidden, reason in (
     ("android.content.Context", "auth factory must not construct dependencies from Context"),
@@ -187,6 +229,7 @@ migrated_settings_screens = {
     "ui/tabs/settings/profile/EditProfileFragment.kt": "userProfileOperations",
     "ui/tabs/settings/userinfo/UserInfoFragment.kt": "userProfileOperations",
     "ui/tabs/settings/userinfo/UserAddressFragment.kt": "userProfileOperations",
+    "ui/tabs/maintenance/AddCareTaskFragment.kt": "userSettingsOperations",
 }
 settings_ui_forbidden = (
     "import com.aqua.aqualight.data.user.UserPreferencesManager",
@@ -227,6 +270,7 @@ migrated_viewmodels = (
     "ui/tabs/devices/DevicesViewModel.kt",
     "ui/tabs/devices/add/DeviceAddViewModel.kt",
     "ui/tabs/devices/add/DeviceQrScanViewModel.kt",
+    "ui/tabs/devices/add/DeviceProvisioningProgressViewModel.kt",
     "ui/tabs/aquarium/AquariumTankViewModel.kt",
     "ui/tabs/aquarium/detail/TankDetailViewModel.kt",
     "ui/tabs/aquarium/detail/devices/TankDetailDevicesViewModel.kt",
@@ -247,6 +291,12 @@ viewmodel_forbidden = (
     "CareTaskDataStoreManager.create(",
     "AquariumTankDataStoreManager(",
     "UserPreferencesManager.create(",
+    "AqlBleProvisioningAddressResolver(",
+    "AqlBleProvisioningGattClient(",
+    "AqlProvisioningHandoffSaver(",
+    "AqlProvisioningDraftStore.",
+    "UserDataScope.",
+    "DeviceRouteResolver(",
 )
 for relative in migrated_viewmodels:
     path = SOURCE_ROOT / relative
@@ -273,6 +323,15 @@ for token, reason in (
 ):
     if token not in feedback_test:
         errors.append(f"{FEEDBACK_TEST_PATH.relative_to(ROOT)}: {reason}: {token}")
+
+for token, reason in (
+    ("FakeProvisioningOperations", "provisioning requires a deterministic fake operations boundary"),
+    ("missing draft renders expired state without opening device runtime", "expired session behavior needs pure coverage"),
+    ("existing draft renders ready state through one fake boundary", "ready state needs pure coverage"),
+    ("binding the same session twice remains idempotent", "bind idempotency needs regression coverage"),
+):
+    if token not in provisioning_test:
+        errors.append(f"{PROVISIONING_TEST_PATH.relative_to(ROOT)}: {reason}: {token}")
 
 if errors:
     print("Composition root guard failed:", file=sys.stderr)
