@@ -1,17 +1,12 @@
 package com.aqua.aqualight.ui.auth.viewmodel
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.data.auth.AuthRepository
 
-class AuthViewModelFactory(
-    context: Context
+internal class AuthViewModelFactory(
+    private val repository: AuthRepository
 ) : ViewModelProvider.Factory {
-
-    private val repository: AuthRepository = AuthRepository.create(
-        context.applicationContext
-    )
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(
