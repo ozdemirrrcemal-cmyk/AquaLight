@@ -2,10 +2,10 @@ package com.aqua.aqualight.ui.auth.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.aqua.aqualight.data.auth.AuthRepository
+import com.aqua.aqualight.application.auth.AuthOperations
 
 internal class AuthViewModelFactory(
-    private val repository: AuthRepository
+    private val authOperations: AuthOperations
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
@@ -14,27 +14,27 @@ internal class AuthViewModelFactory(
     ): T {
         return when {
             modelClass.isAssignableFrom(LoginViewModel::class.java) -> {
-                LoginViewModel(repository) as T
+                LoginViewModel(authOperations) as T
             }
 
             modelClass.isAssignableFrom(SignInViewModel::class.java) -> {
-                SignInViewModel(repository) as T
+                SignInViewModel(authOperations) as T
             }
 
             modelClass.isAssignableFrom(RegisterViewModel::class.java) -> {
-                RegisterViewModel(repository) as T
+                RegisterViewModel(authOperations) as T
             }
 
             modelClass.isAssignableFrom(ResetPasswordViewModel::class.java) -> {
-                ResetPasswordViewModel(repository) as T
+                ResetPasswordViewModel(authOperations) as T
             }
 
             modelClass.isAssignableFrom(ChangeEmailViewModel::class.java) -> {
-                ChangeEmailViewModel(repository) as T
+                ChangeEmailViewModel(authOperations) as T
             }
 
             modelClass.isAssignableFrom(ChangePasswordViewModel::class.java) -> {
-                ChangePasswordViewModel(repository) as T
+                ChangePasswordViewModel(authOperations) as T
             }
 
             else -> throw IllegalArgumentException(
