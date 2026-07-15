@@ -1,12 +1,15 @@
 package com.aqua.aqualight.ui.tabs.devices
 
 import com.aqua.aqualight.application.devices.DeleteOwnerDevicesResult
+import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
+import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
+import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.OwnerDeviceListItem
 import com.aqua.aqualight.application.devices.OwnerDevicesOperations
-import com.aqua.aqualight.data.devices.repository.DevicesRepository
-import com.aqua.aqualight.ui.tabs.devices.route.DeviceMenuOpenGate
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteTarget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -62,6 +65,29 @@ class DevicesViewModelBoundaryTest {
     }
 
     @Test
+    fun `available device menu result is mapped to UI route`() = runTest {
+        val menuOperations = FakeDeviceMenuAccessOperations(
+            result = DeviceMenuAccessResult.Available(
+                deviceUid = "device-1",
+                title = "AquaLight One",
+                family = OwnerDeviceFamily.LIGHT
+            )
+        )
+        val viewModel = createViewModel(
+            operations = FakeOwnerDevicesOperations(listOf(device("device-1"))),
+            menuOperations = menuOperations
+        )
+
+        viewModel.onDeviceClicked("device-1")
+        val event = viewModel.events.first() as DevicesEvent.OpenRoute
+
+        assertEquals("device-1", menuOperations.lastRequest)
+        assertEquals("device-1", event.route.deviceUid)
+        assertEquals("AquaLight One", event.route.title)
+        assertEquals(DeviceRouteTarget.LIGHT_ROOT, event.route.target)
+    }
+
+    @Test
     fun `partial delete keeps only failed devices selected`() = runTest {
         val operations = FakeOwnerDevicesOperations(
             initialDevices = listOf(
@@ -93,11 +119,13 @@ class DevicesViewModelBoundaryTest {
     }
 
     private fun createViewModel(
-        operations: OwnerDevicesOperations
+        operations: OwnerDevicesOperations,
+        menuOperations: DeviceMenuAccessOperations = FakeDeviceMenuAccessOperations()
     ): DevicesViewModel {
         return DevicesViewModel(
             operations = operations,
-            menuOpenGate = DeviceMenuOpenGate(DevicesRepository())
+            menuAccessOperations = menuOperations,
+            routeResolver = DeviceRouteResolver()
         )
     }
 
@@ -136,6 +164,20 @@ class DevicesViewModelBoundaryTest {
         ): DeleteOwnerDevicesResult {
             lastDeleteRequest = deviceUids
             return deleteResult
+        }
+    }
+
+    private class FakeDeviceMenuAccessOperations(
+        var result: DeviceMenuAccessResult = DeviceMenuAccessResult.Unavailable(
+            title = "",
+            reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+        )
+    ) : DeviceMenuAccessOperations {
+        var lastRequest: String = ""
+
+        override suspend fun resolve(deviceUid: String): DeviceMenuAccessResult {
+            lastRequest = deviceUid
+            return result
         }
     }
 
