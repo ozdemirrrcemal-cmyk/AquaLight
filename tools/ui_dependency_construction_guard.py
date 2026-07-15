@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ROOT = ROOT / "app/src/main/java/com/aqua/aqualight"
 UI_ROOT = SOURCE_ROOT / "ui"
 APP_CONTAINER_PATH = SOURCE_ROOT / "composition/AppContainer.kt"
+FEATURE_FACTORY_PATH = SOURCE_ROOT / "composition/AquaViewModelFactory.kt"
 WIFI_FRAGMENT_PATH = SOURCE_ROOT / "ui/tabs/devices/add/DeviceWifiProvisioningFragment.kt"
 WIFI_DRAFT_FACTORY_PATH = SOURCE_ROOT / "ui/tabs/devices/add/DeviceWifiProvisioningDraftFactory.kt"
 DRAFT_CONTRACT_PATH = (
@@ -23,6 +24,10 @@ DRAFT_CONTRACT_PATH = (
 DRAFT_IMPLEMENTATION_PATH = (
     SOURCE_ROOT
     / "data/devices/provisioning/repository/DefaultProvisioningDraftOperations.kt"
+)
+MAINTENANCE_BOUNDARY_TEST_PATH = (
+    ROOT
+    / "app/src/test/java/com/aqua/aqualight/ui/tabs/maintenance/MaintenanceViewModelBoundaryTest.kt"
 )
 
 if not UI_ROOT.exists():
@@ -105,10 +110,12 @@ for path in sorted(UI_ROOT.rglob("*.kt")):
                 errors.append(f"{relative}: {reason}: {token}")
 
 container = read_required(APP_CONTAINER_PATH)
+feature_factory = read_required(FEATURE_FACTORY_PATH)
 wifi_fragment = read_required(WIFI_FRAGMENT_PATH)
 wifi_draft_factory = read_required(WIFI_DRAFT_FACTORY_PATH)
 draft_contract = read_required(DRAFT_CONTRACT_PATH)
 draft_implementation = read_required(DRAFT_IMPLEMENTATION_PATH)
+maintenance_boundary_test = read_required(MAINTENANCE_BOUNDARY_TEST_PATH)
 
 for token, reason in (
     (
@@ -162,6 +169,27 @@ for token, reason in (
 ):
     if token not in draft_implementation:
         errors.append(f"{DRAFT_IMPLEMENTATION_PATH.relative_to(ROOT)}: {reason}: {token}")
+
+for token, reason in (
+    ("qrParser = AqlProvisioningQrParser()", "feature factory must own QR parser construction"),
+    ("DeviceQrScanViewModel(", "feature factory must create the QR ViewModel"),
+):
+    if token not in feature_factory:
+        errors.append(f"{FEATURE_FACTORY_PATH.relative_to(ROOT)}: {reason}: {token}")
+
+for token, reason in (
+    ("FakeMaintenanceRepository", "maintenance needs a deterministic fake repository"),
+    (
+        "empty tank input does not start Smart Care synchronization",
+        "empty tank behavior needs regression coverage",
+    ),
+    (
+        "manual mutations delegate through the injected repository",
+        "manual maintenance mutations need boundary coverage",
+    ),
+):
+    if token not in maintenance_boundary_test:
+        errors.append(f"{MAINTENANCE_BOUNDARY_TEST_PATH.relative_to(ROOT)}: {reason}: {token}")
 
 if errors:
     print("UI dependency construction guard failed:", file=sys.stderr)
