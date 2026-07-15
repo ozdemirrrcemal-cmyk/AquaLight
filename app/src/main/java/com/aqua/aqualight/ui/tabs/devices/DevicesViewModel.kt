@@ -8,14 +8,12 @@ import com.aqua.aqualight.ui.tabs.devices.route.DeviceMenuOpenGate
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceMenuOpenGateResult
 import java.util.concurrent.CancellationException
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class DevicesViewModel(
@@ -23,7 +21,6 @@ class DevicesViewModel(
     private val menuOpenGate: DeviceMenuOpenGate
 ) : ViewModel() {
 
-    private val clockMillis = MutableStateFlow(System.currentTimeMillis())
     private val selectedDeviceUids = MutableStateFlow<Set<String>>(emptySet())
     private val openingDeviceMenu = MutableStateFlow(false)
     private val deletingDevices = MutableStateFlow(false)
@@ -36,13 +33,11 @@ class DevicesViewModel(
     init {
         operations.start(viewModelScope)
         observeDevices()
-        startUiClockTicker()
         operations.refreshVisibleDevices()
     }
 
     fun onScreenVisible() {
         operations.refreshVisibleDevices()
-        clockMillis.value = System.currentTimeMillis()
     }
 
     fun onDeviceClicked(deviceUid: String) {
@@ -64,7 +59,6 @@ class DevicesViewModel(
                 )
             }
             openingDeviceMenu.value = false
-            clockMillis.value = System.currentTimeMillis()
 
             when (result) {
                 is DeviceMenuOpenGateResult.OpenRoute ->
@@ -98,7 +92,6 @@ class DevicesViewModel(
             try {
                 val result = operations.deleteDevices(selected)
                 selectedDeviceUids.value = result.failedDeviceUids
-                clockMillis.value = System.currentTimeMillis()
 
                 when {
                     result.isCompleteSuccess -> Unit
@@ -150,16 +143,12 @@ class DevicesViewModel(
         viewModelScope.launch {
             combine(
                 operations.devices,
-                clockMillis,
                 selectedDeviceUids,
                 operationState
-            ) { devices, now, selectedUids, operation ->
+            ) { devices, selectedUids, operation ->
                 val cards = devices.map { device ->
-                    val card = DeviceCardMapper.map(
-                        device = device,
-                        nowMillis = now
-                    )
-                    card.copy(isSelected = card.deviceUid in selectedUids)
+                    DeviceCardMapper.map(device = device)
+                        .copy(isSelected = device.deviceUid in selectedUids)
                 }
                 val visibleSelectedCount = cards.count { card -> card.isSelected }
                 DevicesUiState(
@@ -173,15 +162,6 @@ class DevicesViewModel(
                 )
             }.collect { state ->
                 _uiState.value = state
-            }
-        }
-    }
-
-    private fun startUiClockTicker() {
-        viewModelScope.launch {
-            while (isActive) {
-                delay(UI_CLOCK_TICK_INTERVAL_MS)
-                clockMillis.value = System.currentTimeMillis()
             }
         }
     }
@@ -200,8 +180,4 @@ class DevicesViewModel(
         val isOpeningDeviceMenu: Boolean = false,
         val isDeletingDevices: Boolean = false
     )
-
-    private companion object {
-        const val UI_CLOCK_TICK_INTERVAL_MS = 5_000L
-    }
 }
