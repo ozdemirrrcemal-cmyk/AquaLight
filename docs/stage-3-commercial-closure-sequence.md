@@ -17,12 +17,17 @@ This document is the authoritative execution order for completing AquaLight Stag
 
 ### 1. `feature/stage-3-device-application-boundaries`
 
-Scope:
+Status: code-complete in PR #34; automated commercial gate passed; targeted physical-device regression remains required before merge.
 
-- Introduce application/domain contracts for owner device observation, refresh, deletion, assignment access and device-menu availability.
-- Remove concrete device repository, assignment repository, cleaner and provider dependencies from device-related ViewModels.
-- Add deterministic fakes and ViewModel/use-case tests.
-- Extend guards so migrated device UI cannot import or construct concrete device data infrastructure.
+Completed scope:
+
+- Owner-device observation, refresh and transactional deletion application boundary.
+- Typed device-menu availability and current-liveness proof boundary.
+- Read-only device status and Settings overview boundary with deterministic clock tests.
+- Device-root read boundary for Light, Cooling, Timer and Dosing screens.
+- Separate typed firmware-update command boundary for the Light OTA test surface.
+- Tank-device assigned/available list, assignment, conflict and removal boundary.
+- Production/release-smoke composition parity, deterministic fakes and dedicated CI guards for every migrated slice.
 
 Merge gate:
 
@@ -30,6 +35,8 @@ Merge gate:
 - Device delete remains transactional and assignment-safe.
 - Offline menu access remains blocked and online routing remains unchanged.
 - Owner/account isolation and runtime lifecycle tests remain green.
+- Debug/Release unit tests and lint, minified Release, CodeQL, API 27/API 35 instrumentation pass.
+- Targeted physical regression passes before PR #34 leaves draft state.
 
 ### 2. `feature/stage-3-aquarium-care-boundaries`
 
