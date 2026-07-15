@@ -20,6 +20,7 @@ import com.aqua.aqualight.data.care.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.DefaultMaintenanceRepository
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
+import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.user.StartupAppearanceCache
@@ -27,7 +28,6 @@ import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.platform.auth.GoogleIdentityClient
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
-import com.aqua.aqualight.ui.tabs.devices.route.DeviceMenuOpenGate
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
 import com.aqua.aqualight.ui.tabs.settings.SettingsViewModel
@@ -110,23 +110,20 @@ private class Stage3SmokeViewModelFactory(
                     devicesRepository = devicesRepository
                 )
 
-            modelClass.isAssignableFrom(DevicesViewModel::class.java) -> {
-                val ownerDevicesOperations = DefaultOwnerDevicesOperations(
-                    devicesRepository = devicesRepository,
-                    assignmentRepository = assignmentRepository,
-                    deviceDataCleaner = OwnerDeviceDataCleaner.create(
-                        devicesRepository = devicesRepository,
-                        assignmentRepository = assignmentRepository
-                    )
-                )
+            modelClass.isAssignableFrom(DevicesViewModel::class.java) ->
                 DevicesViewModel(
-                    operations = ownerDevicesOperations,
-                    menuOpenGate = DeviceMenuOpenGate(
+                    operations = DefaultOwnerDevicesOperations(
                         devicesRepository = devicesRepository,
-                        routeResolver = DeviceRouteResolver()
-                    )
+                        assignmentRepository = assignmentRepository,
+                        deviceDataCleaner = OwnerDeviceDataCleaner.create(
+                            devicesRepository = devicesRepository,
+                            assignmentRepository = assignmentRepository
+                        )
+                    ),
+                    menuAccessOperations =
+                        DefaultDeviceMenuAccessOperations.create(devicesRepository),
+                    routeResolver = DeviceRouteResolver()
                 )
-            }
 
             modelClass.isAssignableFrom(AquariumTankViewModel::class.java) ->
                 AquariumTankViewModel(
