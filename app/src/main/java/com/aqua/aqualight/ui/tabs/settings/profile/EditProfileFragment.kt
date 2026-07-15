@@ -18,24 +18,24 @@ import coil3.request.crossfade
 import coil3.request.error
 import coil3.request.placeholder
 import com.aqua.aqualight.R
-import com.aqua.aqualight.utils.DialogManager
-import com.aqua.aqualight.utils.DialogType
-import com.aqua.aqualight.data.user.UserPreferencesManager
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentEditProfileBinding
 import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.utils.DialogManager
+import com.aqua.aqualight.utils.DialogType
 import com.yalantis.ucrop.UCrop
+import java.io.File
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.io.File
 
 class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
 
     private var _binding: FragmentEditProfileBinding? = null
     private val binding get() = _binding!!
 
-    private val userPrefs by lazy {
-        UserPreferencesManager.create(requireContext())
+    private val profileOperations by lazy {
+        requireContext().requireAppContainer().userProfileOperations
     }
 
     private var cameraImageUri: Uri? = null
@@ -120,11 +120,10 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
 
     private fun observeCurrentPhoto() {
         viewLifecycleOwner.lifecycleScope.launch {
-            userPrefs.userPrefsFlow.collectLatest { prefs ->
+            profileOperations.profile.collectLatest { profile ->
                 if (selectedPhotoUri != null) return@collectLatest
 
-                val url =
-                    prefs.profilePhotoUrl
+                val url = profile.profilePhotoUrl
 
                 if (url.isNotBlank()) {
                     binding.ivEditProfilePhoto.load(url) {
@@ -192,7 +191,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
 
                 viewLifecycleOwner.lifecycleScope.launch {
                     try {
-                        userPrefs.updateProfilePhoto(
+                        profileOperations.updateProfilePhoto(
                             uriToSave.toString()
                         )
 

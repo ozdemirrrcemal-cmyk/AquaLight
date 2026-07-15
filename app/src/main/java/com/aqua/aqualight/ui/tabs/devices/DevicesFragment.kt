@@ -12,6 +12,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDevicesBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderFilledIconAction
@@ -28,7 +29,9 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     private var _binding: FragmentDevicesBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: DevicesViewModel by viewModels()
+    private val viewModel: DevicesViewModel by viewModels {
+        requireContext().requireAppContainer().defaultViewModelFactory
+    }
     private val deviceAdapter = DeviceCardAdapter(
         onDeviceClick = { item ->
             viewModel.onDeviceClicked(item.deviceUid)

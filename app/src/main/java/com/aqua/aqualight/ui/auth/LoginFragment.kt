@@ -13,18 +13,15 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
-import com.aqua.aqualight.ui.navigation.RootNavigator
-import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
-import com.aqua.aqualight.data.auth.GoogleSignInClientFactory
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentLoginBinding
+import com.aqua.aqualight.platform.auth.GoogleIdentityTokenResult
 import com.aqua.aqualight.ui.auth.state.AuthActionState
-import com.aqua.aqualight.ui.auth.viewmodel.AuthViewModelFactory
 import com.aqua.aqualight.ui.auth.viewmodel.LoginViewModel
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
+import com.aqua.aqualight.ui.navigation.RootNavigator
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.common.api.ApiException
 import kotlinx.coroutines.launch
 
 class LoginFragment : Fragment() {
@@ -32,32 +29,31 @@ class LoginFragment : Fragment() {
     private var _binding: FragmentLoginBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var googleSignInClient: GoogleSignInClient
-
-    private val viewModel: LoginViewModel by viewModels {
-        AuthViewModelFactory(requireContext())
+    private val appContainer by lazy {
+        requireContext().requireAppContainer()
     }
 
+    private val viewModel: LoginViewModel by viewModels {
+        appContainer.authViewModelFactory
+    }
+
+    private val googleIdentityClient
+        get() = appContainer.googleIdentityClient
 
     private val googleSignInLauncher =
         registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) googleResult@{ result ->
-
-            val task =
-                GoogleSignIn.getSignedInAccountFromIntent(
-                    result.data
-                )
-
-            try {
-                val account =
-                    task.getResult(
-                        ApiException::class.java
+            when (
+                val tokenResult = googleIdentityClient.parseIdToken(result.data)
+            ) {
+                is GoogleIdentityTokenResult.Success -> {
+                    viewModel.signInWithGoogleToken(
+                        idToken = tokenResult.idToken
                     )
+                }
 
-                val token = account.idToken
-
-                if (token.isNullOrBlank()) {
+                GoogleIdentityTokenResult.MissingToken -> {
                     DialogManager.showInfoDialog(
                         requireContext(),
                         DialogType.ERROR,
@@ -68,31 +64,27 @@ class LoginFragment : Fragment() {
                             R.string.login_google_account_not_selected
                         )
                     )
-
-                    return@googleResult
                 }
-				
-                viewModel.signInWithGoogleToken(
-                    idToken = token
-                )
-            } catch (e: Exception) {
-                Log.e(
-                    "LoginFragment",
-                    "Google Sign-In failed",
-                    e
-                )
 
-                DialogManager.showInfoDialog(
-                    requireContext(),
-                    DialogType.ERROR,
-                    title = getString(
-                        R.string.login_google_failed
-                    ),
-                    message = getString(
-                        R.string.login_google_failed_with_reason,
-                        e.localizedMessage ?: ""
+                is GoogleIdentityTokenResult.Failure -> {
+                    Log.e(
+                        "LoginFragment",
+                        "Google Sign-In failed",
+                        tokenResult.error
                     )
-                )
+
+                    DialogManager.showInfoDialog(
+                        requireContext(),
+                        DialogType.ERROR,
+                        title = getString(
+                            R.string.login_google_failed
+                        ),
+                        message = getString(
+                            R.string.login_google_failed_with_reason,
+                            tokenResult.error.localizedMessage ?: ""
+                        )
+                    )
+                }
             }
         }
 
@@ -117,16 +109,8 @@ class LoginFragment : Fragment() {
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        setupGoogleSignIn()
         setupButtonActions()
         observeState()
-    }
-
-    private fun setupGoogleSignIn() {
-        googleSignInClient =
-            GoogleSignInClientFactory.create(
-                requireContext()
-            )
     }
 
     private fun setupButtonActions() =
@@ -162,11 +146,8 @@ class LoginFragment : Fragment() {
     }
 
     private fun signInWithGoogle() {
-        val signInIntent =
-            googleSignInClient.signInIntent
-
         googleSignInLauncher.launch(
-            signInIntent
+            googleIdentityClient.signInIntent()
         )
 
         requireActivity()

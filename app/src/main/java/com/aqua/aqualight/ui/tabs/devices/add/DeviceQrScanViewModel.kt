@@ -1,15 +1,15 @@
 package com.aqua.aqualight.ui.tabs.devices.add
 
-import android.app.Application
-import androidx.annotation.StringRes
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.text.AppTextResolver
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningCandidate
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningScanner
+import com.aqua.aqualight.data.devices.provisioning.ble.BleProvisioningScanner
 import com.aqua.aqualight.data.devices.provisioning.qr.AqlProvisioningQrParser
 import com.aqua.aqualight.data.devices.provisioning.qr.AqlProvisioningQrPayload
-import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -24,12 +24,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
 class DeviceQrScanViewModel(
-    application: Application
-) : AndroidViewModel(application) {
-
-    private val qrParser = AqlProvisioningQrParser()
-    private val bleScanner = AqlBleProvisioningScanner(application)
-    private val repository = DevicesRepositoryProvider.get(application)
+    private val bleScanner: BleProvisioningScanner,
+    private val repository: DevicesRepository,
+    private val textResolver: AppTextResolver,
+    private val qrParser: AqlProvisioningQrParser
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceQrScanUiState())
     val uiState: StateFlow<DeviceQrScanUiState> = _uiState.asStateFlow()
@@ -40,27 +39,19 @@ class DeviceQrScanViewModel(
     private var pendingPayload: AqlProvisioningQrPayload? = null
     private var scanJob: Job? = null
 
-    fun onQrDetected(
-        rawValue: String,
-        hasBlePermissions: Boolean
-    ) {
+    fun onQrDetected(rawValue: String, hasBlePermissions: Boolean) {
         if (scanJob?.isActive == true) return
 
-        val payload = qrParser.parse(rawValue)
-            .getOrElse {
-                pendingPayload = null
-                showFailure(
-                    titleRes = R.string.device_qr_preflight_invalid_title,
-                    messageRes = R.string.device_qr_preflight_invalid_message
-                )
-                return
-            }
+        val payload = qrParser.parse(rawValue).getOrElse {
+            pendingPayload = null
+            showFailure(
+                titleRes = R.string.device_qr_preflight_invalid_title,
+                messageRes = R.string.device_qr_preflight_invalid_message
+            )
+            return
+        }
 
-        // Do not reject a locally registered UID here. Both QR and nearby-scan
-        // entries must reach the secure BLE verification flow. The verified
-        // runtime handoff then resolves new registration versus reconfiguration.
         pendingPayload = payload
-
         if (!hasBlePermissions) {
             _uiState.value = DeviceQrScanUiState(
                 title = string(R.string.device_qr_preflight_bluetooth_permission_title),
@@ -75,7 +66,6 @@ class DeviceQrScanViewModel(
 
     fun onBlePermissionResult(granted: Boolean) {
         val payload = pendingPayload
-
         if (!granted || payload == null) {
             showFailure(
                 titleRes = R.string.device_qr_preflight_bluetooth_permission_title,
@@ -84,7 +74,6 @@ class DeviceQrScanViewModel(
             )
             return
         }
-
         startQrBleScan(payload)
     }
 
@@ -126,7 +115,6 @@ class DeviceQrScanViewModel(
                     )
                     return@launch
                 }
-
                 AqlBleProvisioningScanner.StartResult.BluetoothOff -> {
                     showFailure(
                         titleRes = R.string.device_add_bluetooth_off_title,
@@ -135,7 +123,6 @@ class DeviceQrScanViewModel(
                     )
                     return@launch
                 }
-
                 AqlBleProvisioningScanner.StartResult.BluetoothUnavailable -> {
                     showFailure(
                         titleRes = R.string.device_add_bluetooth_unavailable_title,
@@ -143,7 +130,6 @@ class DeviceQrScanViewModel(
                     )
                     return@launch
                 }
-
                 is AqlBleProvisioningScanner.StartResult.Failed -> {
                     showFailure(
                         titleRes = R.string.device_add_scan_failed_title,
@@ -182,28 +168,19 @@ class DeviceQrScanViewModel(
 
             val hasNearbyCandidates = bleScanner.candidates.value.isNotEmpty()
             val isAlreadyRegistered = repository.currentDevice(payload.deviceUid) != null
-
             when {
-                hasNearbyCandidates -> {
-                    showFailure(
-                        titleRes = R.string.device_qr_preflight_mismatch_title,
-                        messageRes = R.string.device_qr_preflight_mismatch_message
-                    )
-                }
-
-                isAlreadyRegistered -> {
-                    showFailure(
-                        titleRes = R.string.device_qr_preflight_already_added_title,
-                        messageRes = R.string.device_qr_preflight_already_added_message
-                    )
-                }
-
-                else -> {
-                    showFailure(
-                        titleRes = R.string.device_qr_preflight_not_found_title,
-                        messageRes = R.string.device_qr_preflight_not_found_message
-                    )
-                }
+                hasNearbyCandidates -> showFailure(
+                    titleRes = R.string.device_qr_preflight_mismatch_title,
+                    messageRes = R.string.device_qr_preflight_mismatch_message
+                )
+                isAlreadyRegistered -> showFailure(
+                    titleRes = R.string.device_qr_preflight_already_added_title,
+                    messageRes = R.string.device_qr_preflight_already_added_message
+                )
+                else -> showFailure(
+                    titleRes = R.string.device_qr_preflight_not_found_title,
+                    messageRes = R.string.device_qr_preflight_not_found_message
+                )
             }
         }
     }
@@ -227,8 +204,8 @@ class DeviceQrScanViewModel(
     }
 
     private fun showFailure(
-        @StringRes titleRes: Int,
-        @StringRes messageRes: Int,
+        titleRes: Int,
+        messageRes: Int,
         primaryAction: DeviceQrScanPrimaryAction = DeviceQrScanPrimaryAction.SCAN_AGAIN
     ) {
         bleScanner.stopScan()
@@ -239,9 +216,7 @@ class DeviceQrScanViewModel(
         )
     }
 
-    private fun string(
-        @StringRes resId: Int
-    ): String = getApplication<Application>().getString(resId)
+    private fun string(resId: Int): String = textResolver.get(resId)
 
     override fun onCleared() {
         scanJob?.cancel()

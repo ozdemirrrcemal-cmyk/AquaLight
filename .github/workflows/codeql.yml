@@ -46,16 +46,33 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run architecture and navigation guards
+        shell: bash
         run: |
-          python3 tools/architecture_guard.py
-          python3 tools/session_startup_guard.py
-          python3 tools/navigation_guard.py
+          set -o pipefail
+          {
+            python3 tools/architecture_guard.py
+            python3 tools/session_startup_guard.py
+            python3 tools/composition_root_guard.py
+            python3 tools/ui_dependency_construction_guard.py
+            python3 tools/navigation_guard.py
+          } 2>&1 | tee architecture-guards.log
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: java-kotlin
           build-mode: manual
+
+      - name: Build uncached Debug APK for CodeQL extraction
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew clean assembleDebug \
+            --no-daemon \
+            --no-build-cache \
+            --rerun-tasks \
+            --stacktrace \
+            2>&1 | tee codeql-extraction-build.log
 
       - name: Run Debug unit tests
         shell: bash
@@ -117,6 +134,7 @@ jobs:
           set -o pipefail
           ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee assemble-release.log
           test -s app/build/outputs/apk/release/AquaLight.apk
+          test -s app/build/outputs/mapping/release/mapping.txt
 
       - name: Upload validation logs
         if: always()
@@ -124,12 +142,15 @@ jobs:
         with:
           name: codeql-validation-logs-${{ github.run_number }}
           path: |
+            architecture-guards.log
+            codeql-extraction-build.log
             unit-test.log
             unit-test-release.log
             lint-debug.log
             lint-release.log
             assemble-debug.log
             assemble-release.log
+            app/build/outputs/mapping/release/mapping.txt
             app/build/reports/tests/testDebugUnitTest/**
             app/build/reports/tests/testReleaseUnitTest/**
             app/build/reports/lint-results-debug.*
@@ -142,3 +163,42 @@ jobs:
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
+        with:
+          output: codeql-results
+          upload-database: false
+          wait-for-processing: false
+
+      - name: Collect CodeQL diagnostics
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          {
+            echo "Runner temp: ${RUNNER_TEMP}"
+            echo "CodeQL result files:"
+            find codeql-results -maxdepth 5 -type f -print 2>/dev/null
+            echo "CodeQL diagnostic files:"
+            find "${RUNNER_TEMP}" -maxdepth 8 -type f \
+              \( -path '*/codeql_databases/*/log/*' -o -iname '*codeql*.log' \) \
+              -print 2>/dev/null
+            while IFS= read -r file; do
+              echo "===== ${file} ====="
+              tail -n 500 "${file}" 2>/dev/null
+            done < <(
+              find "${RUNNER_TEMP}" -maxdepth 8 -type f \
+                \( -path '*/codeql_databases/*/log/*' -o -iname '*codeql*.log' \) \
+                -print 2>/dev/null
+            )
+          } > codeql-diagnostics.log 2>&1
+          cat codeql-diagnostics.log
+
+      - name: Upload CodeQL result diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-results-${{ github.run_number }}
+          path: |
+            codeql-results/**
+            codeql-diagnostics.log
+            ${{ runner.temp }}/codeql_databases/*/log/**
+          if-no-files-found: ignore

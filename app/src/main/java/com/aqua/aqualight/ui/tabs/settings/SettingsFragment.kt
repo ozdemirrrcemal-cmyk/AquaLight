@@ -19,6 +19,7 @@ import coil3.request.error
 import coil3.request.placeholder
 import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.R
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentSettingsBinding
 import com.aqua.aqualight.ui.tabs.settings.device.DeviceSettingsDeviceOverviewUi
 import kotlinx.coroutines.flow.collectLatest
@@ -29,7 +30,9 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: SettingsViewModel by viewModels()
+    private val viewModel: SettingsViewModel by viewModels {
+        requireContext().requireAppContainer().defaultViewModelFactory
+    }
 
     override fun onViewCreated(
         view: View,

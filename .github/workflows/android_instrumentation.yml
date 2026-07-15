@@ -11,6 +11,7 @@ on:
       - "gradlew"
       - "gradle.properties"
       - "settings.gradle"
+      - "tools/run_stage3_release_smoke.sh"
 
 concurrency:
   group: android-emulator-${{ github.event.pull_request.number || github.ref }}
@@ -23,7 +24,7 @@ jobs:
   instrumentation:
     name: Emulator API ${{ matrix.api-level }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 55
 
     strategy:
       fail-fast: false
@@ -52,6 +53,39 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Verify release-smoke runner contract
+        run: |
+          grep -Fq "connectedDebugAndroidTest" tools/run_stage3_release_smoke.sh
+          grep -Fq "bash tools/verify_uninstall_clears_data.sh" tools/run_stage3_release_smoke.sh
+          grep -Fq "STAGE3_RELEASE_SMOKE_PASS" tools/run_stage3_release_smoke.sh
+          grep -Fq "Stage3ReleaseSmokeActivity" tools/run_stage3_release_smoke.sh
+
+      - name: Generate CI-only release keystore
+        run: |
+          keytool -genkeypair -noprompt \
+            -keystore release-key.jks \
+            -storepass aqualight-ci \
+            -alias aqualight-ci \
+            -keypass aqualight-ci \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 1 \
+            -dname "CN=AquaLight CI,O=AquaLight,C=TR"
+
+      - name: Build minified release-smoke APK
+        env:
+          RELEASE_KEYSTORE_PASSWORD: aqualight-ci
+          RELEASE_KEY_ALIAS: aqualight-ci
+          RELEASE_KEY_PASSWORD: aqualight-ci
+        run: |
+          set -o pipefail
+          ./gradlew assembleReleaseSmoke --no-daemon --stacktrace \
+            2>&1 | tee assemble-release-smoke.log
+          SMOKE_APK="$(find app/build/outputs/apk/releaseSmoke -type f -name '*.apk' | head -n 1)"
+          test -n "$SMOKE_APK"
+          test -s "$SMOKE_APK"
+          printf '%s\n' "$SMOKE_APK" > release-smoke-apk-path.txt
+
       - name: Enable KVM group permissions
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
@@ -59,7 +93,7 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Run Android instrumentation tests
+      - name: Run instrumentation and minified release smoke
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: ${{ matrix.api-level }}
@@ -71,11 +105,9 @@ jobs:
           emulator-options: >-
             -no-window -gpu swiftshader_indirect -no-snapshot-save
             -noaudio -no-boot-anim -camera-back none
-          script: |
-            ./gradlew connectedDebugAndroidTest --no-daemon --stacktrace
-            bash tools/verify_uninstall_clears_data.sh
+          script: bash tools/run_stage3_release_smoke.sh "${{ matrix.api-level }}"
 
-      - name: Upload instrumentation reports
+      - name: Upload instrumentation and smoke reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -83,4 +115,17 @@ jobs:
           path: |
             app/build/reports/androidTests/connected/**
             app/build/outputs/androidTest-results/connected/**
+            assemble-release-smoke.log
+            stage3-release-smoke-run.txt
+            stage3-release-smoke-window.xml
+            stage3-release-smoke-logcat.txt
+            stage3-release-smoke-activities.txt
+            stage3-release-smoke-package.txt
+            stage3-release-smoke-install.txt
+            stage3-release-smoke-package-path.txt
+            stage3-release-smoke-start.txt
           if-no-files-found: ignore
+
+      - name: Remove CI-only release keystore
+        if: always()
+        run: rm -f release-key.jks

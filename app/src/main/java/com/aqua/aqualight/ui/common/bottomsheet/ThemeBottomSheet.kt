@@ -5,8 +5,7 @@ import android.view.View
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.theme.AppThemeController
-import com.aqua.aqualight.data.user.StartupAppearanceCache
-import com.aqua.aqualight.data.user.UserPreferencesManager
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.DialogThemeSelectionBinding
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.flow.first
@@ -17,12 +16,8 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
     private var _binding: DialogThemeSelectionBinding? = null
     private val binding get() = _binding!!
 
-    private val userPrefs by lazy {
-        UserPreferencesManager.create(requireContext())
-    }
-
-    private val startupAppearanceCache by lazy {
-        StartupAppearanceCache.create(requireContext())
+    private val settingsOperations by lazy {
+        requireContext().requireAppContainer().userSettingsOperations
     }
 
     var onBeforeThemeApplied: (() -> Unit)? = null
@@ -55,10 +50,7 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
         )
 
         viewLifecycleOwner.lifecycleScope.launch {
-            userPrefs.updateThemeMode(
-                normalizedMode
-            )
-            startupAppearanceCache.writeThemeMode(
+            settingsOperations.updateThemeMode(
                 normalizedMode
             )
 
@@ -89,7 +81,7 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
 
     private fun refreshRadios() {
         viewLifecycleOwner.lifecycleScope.launch {
-            val mode = userPrefs.themeMode.first()
+            val mode = settingsOperations.themeMode.first()
 
             updateRadios(
                 mode

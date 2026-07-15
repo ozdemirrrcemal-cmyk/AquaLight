@@ -25,6 +25,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceQrScanBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -39,7 +40,9 @@ import kotlinx.coroutines.launch
 
 class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
 
-    private val viewModel: DeviceQrScanViewModel by viewModels()
+    private val viewModel: DeviceQrScanViewModel by viewModels {
+        requireContext().requireAppContainer().defaultViewModelFactory
+    }
     private val permissionController = DeviceAddPermissionController()
 
     private var _binding: FragmentDeviceQrScanBinding? = null

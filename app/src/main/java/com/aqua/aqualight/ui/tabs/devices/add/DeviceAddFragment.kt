@@ -16,6 +16,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceAddBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -23,7 +24,9 @@ import kotlinx.coroutines.launch
 
 class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
 
-    private val viewModel: DeviceAddViewModel by viewModels()
+    private val viewModel: DeviceAddViewModel by viewModels {
+        requireContext().requireAppContainer().defaultViewModelFactory
+    }
     private val permissionController = DeviceAddPermissionController()
 
     private var _binding: FragmentDeviceAddBinding? = null

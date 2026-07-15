@@ -10,6 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceStatusBinding
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import kotlinx.coroutines.flow.collectLatest
@@ -20,7 +21,9 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
     private var _binding: FragmentDeviceStatusBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: DeviceStatusViewModel by viewModels()
+    private val viewModel: DeviceStatusViewModel by viewModels {
+        requireContext().requireAppContainer().defaultViewModelFactory
+    }
 
     private lateinit var adapter: DeviceStatusAdapter
 

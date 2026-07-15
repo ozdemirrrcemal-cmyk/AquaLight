@@ -10,6 +10,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceCoolingRootBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -18,7 +19,9 @@ import kotlinx.coroutines.launch
 class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root) {
 
     private val args: DeviceCoolingRootFragmentArgs by navArgs()
-    private val viewModel: DeviceCoolingRootViewModel by viewModels()
+    private val viewModel: DeviceCoolingRootViewModel by viewModels {
+        requireContext().requireAppContainer().defaultViewModelFactory
+    }
 
     private var _binding: FragmentDeviceCoolingRootBinding? = null
     private val binding get() = _binding!!

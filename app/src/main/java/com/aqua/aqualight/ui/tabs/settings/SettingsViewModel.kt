@@ -1,10 +1,9 @@
 package com.aqua.aqualight.ui.tabs.settings
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
-import com.aqua.aqualight.data.user.UserPreferencesManager
+import com.aqua.aqualight.application.user.UserProfileOperations
+import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.ui.tabs.settings.device.DeviceSettingsDeviceOverviewUi
 import com.aqua.aqualight.ui.tabs.settings.device.DeviceStatusSnapshotMapper
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,30 +13,24 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class SettingsViewModel(
-    application: Application
-) : AndroidViewModel(application) {
-
-    private val userPrefs = UserPreferencesManager.create(application.applicationContext)
-    private val devicesRepository = DevicesRepositoryProvider.get(application)
+    userProfileOperations: UserProfileOperations,
+    private val devicesRepository: DevicesRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
     init {
         devicesRepository.start(viewModelScope)
-        observeSettingsOverview()
-    }
-
-    private fun observeSettingsOverview() {
         viewModelScope.launch {
             combine(
-                userPrefs.userPrefsFlow,
+                userProfileOperations.profile,
                 devicesRepository.devices
-            ) { prefs, snapshots ->
+            ) { profile, snapshots ->
                 SettingsUiState(
-                    username = prefs.username,
-                    email = prefs.email,
-                    profilePhotoUrl = prefs.profilePhotoUrl,
+                    username = profile.username,
+                    email = profile.email,
+                    profilePhotoUrl = profile.profilePhotoUrl,
                     deviceOverview = DeviceStatusSnapshotMapper.overview(snapshots)
                 )
             }.collect { state ->

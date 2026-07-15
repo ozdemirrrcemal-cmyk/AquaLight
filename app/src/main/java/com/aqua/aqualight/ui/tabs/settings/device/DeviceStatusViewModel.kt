@@ -1,10 +1,9 @@
 package com.aqua.aqualight.ui.tabs.settings.device
 
-import android.app.Application
 import androidx.annotation.DrawableRes
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,12 +13,10 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class DeviceStatusViewModel(
-    application: Application
-) : AndroidViewModel(application) {
+    private val devicesRepository: DevicesRepository
+) : ViewModel() {
 
-    private val devicesRepository = DevicesRepositoryProvider.get(application)
     private val clockMillis = MutableStateFlow(System.currentTimeMillis())
-
     private val _uiState = MutableStateFlow(DeviceStatusUiState())
     val uiState: StateFlow<DeviceStatusUiState> = _uiState.asStateFlow()
 
@@ -39,7 +36,6 @@ class DeviceStatusViewModel(
                     snapshots = snapshots,
                     nowMillis = nowMillis
                 )
-
                 DeviceStatusUiState(
                     devices = items,
                     isEmpty = items.isEmpty()

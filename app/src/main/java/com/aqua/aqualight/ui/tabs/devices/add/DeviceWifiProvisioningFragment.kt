@@ -18,6 +18,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
 import com.aqua.aqualight.databinding.FragmentDeviceWifiProvisioningBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -31,6 +32,10 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
     private val binding get() = _binding!!
 
     private var waitingForWifiSettingsReturn = false
+
+    private val provisioningDraftOperations by lazy {
+        requireContext().requireAppContainer().provisioningDraftOperations
+    }
 
     private val wifiSettingsLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -306,7 +311,8 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
                 val draft = DeviceWifiProvisioningDraftFactory.create(
                     args = args,
                     ssid = ssid,
-                    networkKey = networkKey
+                    networkKey = networkKey,
+                    operations = provisioningDraftOperations
                 ).getOrElse { error ->
                     Toast.makeText(
                         requireContext(),
