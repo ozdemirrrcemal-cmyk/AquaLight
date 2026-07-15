@@ -16,41 +16,40 @@ import android.widget.GridLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.view.isVisible
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
-import com.aqua.aqualight.data.user.UserPreferencesManager
+import com.aqua.aqualight.composition.requireAppContainer
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.data.care.catalog.CareTaskTypeCatalog
+import com.aqua.aqualight.data.care.model.CareTaskSource
+import com.aqua.aqualight.data.care.model.CareTaskStatus
+import com.aqua.aqualight.data.care.model.CareTaskType
 import com.aqua.aqualight.databinding.FragmentAddCareTaskBinding
 import com.aqua.aqualight.ui.common.bottomsheet.CareTaskTypeBottomSheetFragment
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
-import com.aqua.aqualight.data.care.model.CareTaskSource
-import com.aqua.aqualight.data.care.model.CareTaskStatus
-import com.aqua.aqualight.data.care.model.CareTaskType
-import com.aqua.aqualight.data.care.catalog.CareTaskTypeCatalog
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.ui.tabs.settings.app.NotificationsBottomSheet
 import com.aqua.aqualight.utils.NotificationHelper
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
-import androidx.navigation.fragment.navArgs
+import kotlinx.coroutines.launch
 
-class AddCareTaskFragment :
-    Fragment(R.layout.fragment_add_care_task) {
+class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
 
     private val args: AddCareTaskFragmentArgs by navArgs()
 
@@ -60,49 +59,48 @@ class AddCareTaskFragment :
     private val maintenanceViewModel: MaintenanceViewModel by activityViewModels()
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
+    private val userSettingsOperations by lazy {
+        requireContext().requireAppContainer().userSettingsOperations
+    }
+
     private var taskId: Long = -1L
     private val isEditMode: Boolean
         get() = taskId > 0L
 
     private var hasLoadedEditTask = false
     private var currentEditTask: CareTaskUi? = null
-
     private var selectedType: CareTaskType? = null
     private var selectedTankId: Long = 0L
     private var selectedWaterChangePercent: Int? = null
-
     private var latestTanks: List<SavedAquariumTank> = emptyList()
-
-    private val userPrefs by lazy {
-        UserPreferencesManager.create(requireContext())
-    }
-
     private var pendingSaveAfterNotificationPermission = false
 
-    private val notificationPermissionLauncher =
-        registerForActivityResult(
-            ActivityResultContracts.RequestPermission()
-        ) { granted ->
-            if (_binding == null) {
-                return@registerForActivityResult
-            }
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (_binding == null) {
+            return@registerForActivityResult
+        }
 
-            val ctx = requireContext()
-            val systemEnabled = NotificationHelper.areSystemNotificationsEnabled(ctx)
-            val canUseNotifications = granted && systemEnabled
+        val systemEnabled = NotificationHelper.areSystemNotificationsEnabled(
+            requireContext()
+        )
+        val canUseNotifications = granted && systemEnabled
 
-            viewLifecycleOwner.lifecycleScope.launch {
-                userPrefs.updateNotificationsEnabled(canUseNotifications)
+        viewLifecycleOwner.lifecycleScope.launch {
+            userSettingsOperations.updateNotificationsEnabled(
+                canUseNotifications
+            )
 
-                if (canUseNotifications && pendingSaveAfterNotificationPermission) {
-                    pendingSaveAfterNotificationPermission = false
-                    saveTaskInternal()
-                } else {
-                    pendingSaveAfterNotificationPermission = false
-                    openNotificationPermissionSheet()
-                }
+            if (canUseNotifications && pendingSaveAfterNotificationPermission) {
+                pendingSaveAfterNotificationPermission = false
+                saveTaskInternal()
+            } else {
+                pendingSaveAfterNotificationPermission = false
+                openNotificationPermissionSheet()
             }
         }
+    }
 
     private val selectedCalendar: Calendar = Calendar.getInstance().apply {
         add(Calendar.HOUR_OF_DAY, 1)
@@ -115,13 +113,8 @@ class AddCareTaskFragment :
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
-
+        super.onViewCreated(view, savedInstanceState)
         _binding = FragmentAddCareTaskBinding.bind(view)
-
         taskId = args.taskId
 
         setupInitialUi()
@@ -142,68 +135,55 @@ class AddCareTaskFragment :
 
     private fun setupInitialUi() {
         setupHeader(
-            title = if (isEditMode) {
+            if (isEditMode) {
                 getString(R.string.maintenance_edit_care_task_title)
             } else {
                 getString(R.string.maintenance_add_care_task_title)
             }
         )
-
         binding.btnSaveTask.text = if (isEditMode) {
             getString(R.string.maintenance_update_task)
         } else {
             getString(R.string.maintenance_save_task)
         }
-
         binding.switchReminder.isChecked = true
         binding.switchMissedReminder.isChecked = true
         binding.switchRepeat.isChecked = false
     }
 
-    private fun setupHeader(
-        title: String
-    ) {
+    private fun setupHeader(title: String) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
                 titleOverride = title,
-                onBackClick = {
-                    closeForm()
-                }
+                onBackClick = ::closeForm
             )
         )
     }
 
-    private fun setupClickListeners() {
-        binding.rowTaskType.setOnClickListener {
+    private fun setupClickListeners() = with(binding) {
+        rowTaskType.setOnClickListener {
             showTaskTypeBottomSheet()
         }
-
-        binding.rowAquarium.setOnClickListener {
+        rowAquarium.setOnClickListener {
             showAquariumBottomSheet()
         }
-
-        binding.rowDueDate.setOnClickListener {
+        rowDueDate.setOnClickListener {
             showDatePicker()
         }
-
-        binding.rowDueTime.setOnClickListener {
+        rowDueTime.setOnClickListener {
             showTimePicker()
         }
-
-        binding.switchRepeat.setOnCheckedChangeListener { _, _ ->
+        switchRepeat.setOnCheckedChangeListener { _, _ ->
             updateDynamicSections()
         }
-
-        binding.switchReminder.setOnCheckedChangeListener { _, _ ->
+        switchReminder.setOnCheckedChangeListener { _, _ ->
             updateDynamicSections()
         }
-
-        binding.switchMissedReminder.setOnCheckedChangeListener { _, _ ->
+        switchMissedReminder.setOnCheckedChangeListener { _, _ ->
             updateDynamicSections()
         }
-
-        binding.btnSaveTask.setOnClickListener {
+        btnSaveTask.setOnClickListener {
             saveTask()
         }
     }
@@ -213,7 +193,10 @@ class AddCareTaskFragment :
             latestTanks = tanks
             maintenanceViewModel.setTanks(tanks)
 
-            if (selectedTankId != 0L && tanks.none { tank -> tank.id == selectedTankId }) {
+            if (
+                selectedTankId != 0L &&
+                tanks.none { tank -> tank.id == selectedTankId }
+            ) {
                 selectedTankId = 0L
             }
 
@@ -229,21 +212,21 @@ class AddCareTaskFragment :
                     if (task == null) {
                         return@collect
                     }
-
                     if (
                         task.source != CareTaskSource.MANUAL ||
                         task.status != CareTaskStatus.PENDING
                     ) {
                         showSnackBar(
-                            message = getString(R.string.maintenance_only_pending_manual_tasks_editable),
-                            type = BaseActivity.SnackType.WARNING
+                            getString(
+                                R.string.maintenance_only_pending_manual_tasks_editable
+                            ),
+                            BaseActivity.SnackType.WARNING
                         )
                         closeForm()
                         return@collect
                     }
 
                     currentEditTask = task
-
                     if (!hasLoadedEditTask) {
                         hasLoadedEditTask = true
                         populateEditForm(task)
@@ -253,33 +236,25 @@ class AddCareTaskFragment :
         }
     }
 
-    private fun populateEditForm(
-        task: CareTaskUi
-    ) {
+    private fun populateEditForm(task: CareTaskUi) {
         selectedType = task.type
         selectedTankId = task.tankId
         selectedWaterChangePercent = task.waterChangePercent
-
         selectedCalendar.timeInMillis = task.dueAtMillis
 
         binding.switchRepeat.isChecked = task.repeatEnabled
         binding.etRepeatDays.setText(
             task.repeatIntervalDays.coerceAtLeast(1).toString()
         )
-
         binding.switchReminder.isChecked = task.reminderEnabled
         binding.switchMissedReminder.isChecked = task.missedReminderEnabled
         binding.etMissedReminderDays.setText(
             task.missedReminderDays.coerceAtLeast(1).toString()
         )
-
         binding.etNote.setText(task.note)
-
-        if (task.type == CareTaskType.CUSTOM) {
-            binding.etCustomTitle.setText(task.title)
-        } else {
-            binding.etCustomTitle.setText("")
-        }
+        binding.etCustomTitle.setText(
+            if (task.type == CareTaskType.CUSTOM) task.title else ""
+        )
 
         updateDateTimeText()
         updateSelectedTaskTypeUi()
@@ -292,7 +267,8 @@ class AddCareTaskFragment :
         CareTaskTypeBottomSheetFragment.show(
             fragmentManager = childFragmentManager,
             title = getString(R.string.maintenance_select_task_type),
-            resultRequestKey = CareTaskTypeBottomSheetFragment.REQUEST_KEY_SELECT_TASK_TYPE,
+            resultRequestKey =
+                CareTaskTypeBottomSheetFragment.REQUEST_KEY_SELECT_TASK_TYPE,
             selectedType = selectedType
         )
     }
@@ -302,28 +278,22 @@ class AddCareTaskFragment :
             CareTaskTypeBottomSheetFragment.REQUEST_KEY_SELECT_TASK_TYPE,
             viewLifecycleOwner
         ) { _, bundle ->
-
-            val typeName = bundle.getString(
-                CareTaskTypeBottomSheetFragment.RESULT_TASK_TYPE
-            ).orEmpty()
-
             val type = runCatching {
-                CareTaskType.valueOf(typeName)
+                CareTaskType.valueOf(
+                    bundle.getString(
+                        CareTaskTypeBottomSheetFragment.RESULT_TASK_TYPE
+                    ).orEmpty()
+                )
             }.getOrNull() ?: return@setFragmentResultListener
-
             applySelectedTaskType(type)
         }
     }
 
-    private fun applySelectedTaskType(
-        type: CareTaskType
-    ) {
+    private fun applySelectedTaskType(type: CareTaskType) {
         selectedType = type
-
         if (type != CareTaskType.WATER_CHANGE) {
             selectedWaterChangePercent = null
         }
-
         if (type != CareTaskType.CUSTOM) {
             binding.etCustomTitle.setText("")
         }
@@ -340,55 +310,33 @@ class AddCareTaskFragment :
     }
 
     private fun showWaterChangePercentBottomSheet() {
-        val dialog = BottomSheetDialog(requireContext(), R.style.AquaBottomSheetDialogTheme)
-
+        val dialog = BottomSheetDialog(
+            requireContext(),
+            R.style.AquaBottomSheetDialogTheme
+        )
         val contentView = LayoutInflater.from(requireContext()).inflate(
             R.layout.bottom_sheet_water_change_percent,
             null,
             false
         )
-
         val container = contentView.findViewById<LinearLayout>(
             R.id.percentOptionsContainer
         )
-
-        renderWaterChangePercentOptionsIntoContainer(
-            container = container,
-            dialog = dialog
-        )
-
+        renderWaterChangePercentOptions(container, dialog)
         dialog.setContentView(contentView)
-
         dialog.setOnShowListener {
-            val bottomSheet = dialog.findViewById<View>(
+            dialog.findViewById<View>(
                 com.google.android.material.R.id.design_bottom_sheet
-            )
-
-            bottomSheet?.setBackgroundColor(Color.TRANSPARENT)
+            )?.setBackgroundColor(Color.TRANSPARENT)
         }
-
         dialog.show()
     }
 
-    private fun renderWaterChangePercentOptionsIntoContainer(
+    private fun renderWaterChangePercentOptions(
         container: LinearLayout,
         dialog: BottomSheetDialog
     ) {
         container.removeAllViews()
-
-        val percentages = listOf(
-            10,
-            20,
-            30,
-            40,
-            50,
-            60,
-            70,
-            80,
-            90,
-            100
-        )
-
         val grid = GridLayout(requireContext()).apply {
             columnCount = 4
             layoutParams = LinearLayout.LayoutParams(
@@ -396,16 +344,10 @@ class AddCareTaskFragment :
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
         }
-
-        percentages.forEach { percent ->
-            grid.addView(
-                createPercentChip(
-                    percent = percent,
-                    dialog = dialog
-                )
-            )
-        }
-
+        listOf(10, 20, 30, 40, 50, 60, 70, 80, 90, 100)
+            .forEach { percent ->
+                grid.addView(createPercentChip(percent, dialog))
+            }
         container.addView(grid)
     }
 
@@ -414,7 +356,6 @@ class AddCareTaskFragment :
         dialog: BottomSheetDialog
     ): View {
         val selected = percent == selectedWaterChangePercent
-
         return TextView(requireContext()).apply {
             text = getString(R.string.maintenance_percent_value, percent)
             gravity = Gravity.CENTER
@@ -436,31 +377,15 @@ class AddCareTaskFragment :
             )
             setTypeface(
                 null,
-                if (selected) {
-                    Typeface.BOLD
-                } else {
-                    Typeface.NORMAL
-                }
+                if (selected) Typeface.BOLD else Typeface.NORMAL
             )
             includeFontPadding = false
-
-            val params = GridLayout.LayoutParams().apply {
+            layoutParams = GridLayout.LayoutParams().apply {
                 width = 0
                 height = 42.dp()
-                columnSpec = GridLayout.spec(
-                    GridLayout.UNDEFINED,
-                    1f
-                )
-                setMargins(
-                    0,
-                    0,
-                    8.dp(),
-                    8.dp()
-                )
+                columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
+                setMargins(0, 0, 8.dp(), 8.dp())
             }
-
-            layoutParams = params
-
             setOnClickListener {
                 selectedWaterChangePercent = percent
                 updateSelectedTaskTypeUi()
@@ -473,56 +398,35 @@ class AddCareTaskFragment :
     private fun showAquariumBottomSheet() {
         if (latestTanks.isEmpty()) {
             showSnackBar(
-                message = getString(R.string.maintenance_create_aquarium_first),
-                type = BaseActivity.SnackType.WARNING
+                getString(R.string.maintenance_create_aquarium_first),
+                BaseActivity.SnackType.WARNING
             )
             return
         }
 
-        val dialog = BottomSheetDialog(requireContext(), R.style.AquaBottomSheetDialogTheme)
-
+        val dialog = BottomSheetDialog(
+            requireContext(),
+            R.style.AquaBottomSheetDialogTheme
+        )
         val contentView = LayoutInflater.from(requireContext()).inflate(
             R.layout.bottom_sheet_select_aquarium,
             null,
             false
         )
-
         val container = contentView.findViewById<LinearLayout>(
             R.id.aquariumOptionsContainer
         )
-
-        renderAquariumOptionsIntoContainer(
-            container = container,
-            dialog = dialog
-        )
-
-        dialog.setContentView(contentView)
-
-        dialog.setOnShowListener {
-            val bottomSheet = dialog.findViewById<View>(
-                com.google.android.material.R.id.design_bottom_sheet
-            )
-
-            bottomSheet?.setBackgroundColor(Color.TRANSPARENT)
-        }
-
-        dialog.show()
-    }
-
-    private fun renderAquariumOptionsIntoContainer(
-        container: LinearLayout,
-        dialog: BottomSheetDialog
-    ) {
         container.removeAllViews()
-
         latestTanks.forEach { tank ->
-            container.addView(
-                createAquariumOptionCard(
-                    tank = tank,
-                    dialog = dialog
-                )
-            )
+            container.addView(createAquariumOptionCard(tank, dialog))
         }
+        dialog.setContentView(contentView)
+        dialog.setOnShowListener {
+            dialog.findViewById<View>(
+                com.google.android.material.R.id.design_bottom_sheet
+            )?.setBackgroundColor(Color.TRANSPARENT)
+        }
+        dialog.show()
     }
 
     private fun createAquariumOptionCard(
@@ -530,7 +434,6 @@ class AddCareTaskFragment :
         dialog: BottomSheetDialog
     ): View {
         val selected = tank.id == selectedTankId
-
         val row = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -541,21 +444,13 @@ class AddCareTaskFragment :
                 requireContext(),
                 R.drawable.bg_aqua_selection_row_compact
             )
-
-            setPadding(
-                14.dp(),
-                8.dp(),
-                14.dp(),
-                8.dp()
-            )
-
-            val params = LinearLayout.LayoutParams(
+            setPadding(14.dp(), 8.dp(), 14.dp(), 8.dp())
+            layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 52.dp()
-            )
-            params.bottomMargin = 9.dp()
-            layoutParams = params
-
+            ).apply {
+                bottomMargin = 9.dp()
+            }
             setOnClickListener {
                 selectedTankId = tank.id
                 updateSelectedAquariumUi()
@@ -581,15 +476,10 @@ class AddCareTaskFragment :
             )
             setTypeface(
                 null,
-                if (selected) {
-                    Typeface.BOLD
-                } else {
-                    Typeface.NORMAL
-                }
+                if (selected) Typeface.BOLD else Typeface.NORMAL
             )
             includeFontPadding = false
             maxLines = 1
-
             layoutParams = LinearLayout.LayoutParams(
                 0,
                 LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -616,18 +506,20 @@ class AddCareTaskFragment :
 
         row.addView(title)
         row.addView(check)
-
         return row
     }
 
     private fun updateSelectedTaskTypeUi() {
         val type = selectedType
-
         if (type == null) {
             binding.taskTypeIconContainer.isVisible = false
-            binding.tvTaskTypeTitle.text = getString(R.string.maintenance_select_care_task_type)
+            binding.tvTaskTypeTitle.text = getString(
+                R.string.maintenance_select_care_task_type
+            )
             binding.tvTaskTypeTitle.setTextColor(Color.parseColor("#8FA4BE"))
-            binding.tvTaskTypeSubtitle.text = getString(R.string.maintenance_required)
+            binding.tvTaskTypeSubtitle.text = getString(
+                R.string.maintenance_required
+            )
             binding.tvTaskTypeSubtitle.setTextColor(Color.parseColor("#6F829B"))
             return
         }
@@ -639,35 +531,35 @@ class AddCareTaskFragment :
 
         binding.taskTypeIconContainer.isVisible = true
         binding.taskTypeIconContainer.background = createIconBackground(
-            color = accentColor,
+            accentColor,
             selected = true
         )
-
         binding.ivTaskTypeIcon.setImageResource(typeUi.iconRes)
         binding.ivTaskTypeIcon.setColorFilter(Color.WHITE)
 
-        val title = if (type == CareTaskType.WATER_CHANGE) {
-            val percent = selectedWaterChangePercent
-
-            if (percent == null) {
-                typeTitle
-            } else {
-                getString(
-                    R.string.maintenance_task_title_with_percent,
-                    typeTitle,
-                    percent
-                )
-            }
+        binding.tvTaskTypeTitle.text = if (
+            type == CareTaskType.WATER_CHANGE &&
+            selectedWaterChangePercent != null
+        ) {
+            getString(
+                R.string.maintenance_task_title_with_percent,
+                typeTitle,
+                selectedWaterChangePercent
+            )
         } else {
             typeTitle
         }
+        binding.tvTaskTypeTitle.setTextColor(Color.WHITE)
 
-        val subtitle = when {
-            type == CareTaskType.WATER_CHANGE && selectedWaterChangePercent == null -> {
-                getString(R.string.maintenance_select_water_change_percentage)
+        binding.tvTaskTypeSubtitle.text = when {
+            type == CareTaskType.WATER_CHANGE &&
+                selectedWaterChangePercent == null -> {
+                getString(
+                    R.string.maintenance_select_water_change_percentage
+                )
             }
 
-            type == CareTaskType.WATER_CHANGE && selectedWaterChangePercent != null -> {
+            type == CareTaskType.WATER_CHANGE -> {
                 getString(
                     R.string.maintenance_task_category_with_percent,
                     category,
@@ -675,14 +567,8 @@ class AddCareTaskFragment :
                 )
             }
 
-            else -> {
-                category
-            }
+            else -> category
         }
-
-        binding.tvTaskTypeTitle.text = title
-        binding.tvTaskTypeTitle.setTextColor(Color.WHITE)
-        binding.tvTaskTypeSubtitle.text = subtitle
         binding.tvTaskTypeSubtitle.setTextColor(Color.parseColor("#8FA4BE"))
     }
 
@@ -690,11 +576,14 @@ class AddCareTaskFragment :
         val selectedTank = latestTanks.firstOrNull { tank ->
             tank.id == selectedTankId
         }
-
         if (selectedTank == null) {
-            binding.tvAquariumTitle.text = getString(R.string.maintenance_select_aquarium)
+            binding.tvAquariumTitle.text = getString(
+                R.string.maintenance_select_aquarium
+            )
             binding.tvAquariumTitle.setTextColor(Color.parseColor("#8FA4BE"))
-            binding.tvAquariumSubtitle.text = getString(R.string.maintenance_required)
+            binding.tvAquariumSubtitle.text = getString(
+                R.string.maintenance_required
+            )
             binding.tvAquariumSubtitle.setTextColor(Color.parseColor("#6F829B"))
             return
         }
@@ -703,58 +592,32 @@ class AddCareTaskFragment :
             getString(R.string.maintenance_unnamed_aquarium)
         }
         binding.tvAquariumTitle.setTextColor(Color.WHITE)
-        binding.tvAquariumSubtitle.text = getString(R.string.maintenance_selected_aquarium)
+        binding.tvAquariumSubtitle.text = getString(
+            R.string.maintenance_selected_aquarium
+        )
         binding.tvAquariumSubtitle.setTextColor(Color.parseColor("#5FD6B4"))
     }
 
-    private fun updateDynamicSections() {
-        binding.customTitleSection.isVisible =
-            selectedType == CareTaskType.CUSTOM
-
-        binding.repeatDaysContainer.isVisible =
-            binding.switchRepeat.isChecked
-
-        binding.missedReminderSection.isVisible =
-            binding.switchReminder.isChecked
-
-        binding.missedReminderDaysContainer.isVisible =
-            binding.switchReminder.isChecked &&
-                binding.switchMissedReminder.isChecked
-
+    private fun updateDynamicSections() = with(binding) {
+        customTitleSection.isVisible = selectedType == CareTaskType.CUSTOM
+        repeatDaysContainer.isVisible = switchRepeat.isChecked
+        missedReminderSection.isVisible = switchReminder.isChecked
+        missedReminderDaysContainer.isVisible =
+            switchReminder.isChecked && switchMissedReminder.isChecked
         updateSaveButtonState()
     }
 
     private fun updateSaveButtonState() {
         val type = selectedType
-
-        val hasTaskType = type != null
-        val hasAquarium = selectedTankId != 0L
-        val hasWaterPercent = type != CareTaskType.WATER_CHANGE ||
-            selectedWaterChangePercent != null
-
-        val canSave = hasTaskType && hasAquarium && hasWaterPercent
-
+        val canSave = type != null &&
+            selectedTankId != 0L &&
+            (
+                type != CareTaskType.WATER_CHANGE ||
+                    selectedWaterChangePercent != null
+                )
         binding.btnSaveTask.isEnabled = canSave
         binding.btnSaveTask.backgroundTintList = ColorStateList.valueOf(
-            Color.parseColor(
-                if (canSave) {
-                    "#2196F3"
-                } else {
-                    "#35506D"
-                }
-            )
-        )
-    }
-
-    private fun colorRes(colorRes: Int): Int {
-        return ContextCompat.getColor(requireContext(), colorRes)
-    }
-
-    private fun colorHex(colorRes: Int): String {
-        return String.format(
-            Locale.US,
-            "#%06X",
-            0xFFFFFF and colorRes(colorRes)
+            Color.parseColor(if (canSave) "#2196F3" else "#35506D")
         )
     }
 
@@ -794,7 +657,6 @@ class AddCareTaskFragment :
             "dd MMM yyyy",
             Locale.getDefault()
         ).format(Date(selectedCalendar.timeInMillis))
-
         binding.tvDueTimeValue.text = SimpleDateFormat(
             "HH:mm",
             Locale.getDefault()
@@ -806,20 +668,20 @@ class AddCareTaskFragment :
             return true
         }
 
-        val ctx = requireContext()
-        val hasPermission = NotificationHelper.hasSystemPermission(ctx)
-        val systemEnabled = NotificationHelper.areSystemNotificationsEnabled(ctx)
+        val context = requireContext()
+        val hasPermission = NotificationHelper.hasSystemPermission(context)
+        val systemEnabled = NotificationHelper.areSystemNotificationsEnabled(
+            context
+        )
 
         if (
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             !hasPermission
         ) {
             pendingSaveAfterNotificationPermission = true
-
             notificationPermissionLauncher.launch(
                 Manifest.permission.POST_NOTIFICATIONS
             )
-
             return false
         }
 
@@ -833,99 +695,85 @@ class AddCareTaskFragment :
     }
 
     private fun openNotificationPermissionSheet() {
-        val sheet = NotificationsBottomSheet(
+        NotificationsBottomSheet(
             NotificationsBottomSheet.PermissionType.NOTIFICATION
-        )
-
-        sheet.show(
+        ).show(
             parentFragmentManager,
             "care_task_notification_sheet"
         )
     }
 
     private fun saveTask() {
-        if (!ensureNotificationPermissionBeforeSave()) {
-            return
+        if (ensureNotificationPermissionBeforeSave()) {
+            saveTaskInternal()
         }
-
-        saveTaskInternal()
     }
 
     private fun saveTaskInternal() {
         val type = selectedType
-
         if (type == null) {
             showSnackBar(
-                message = getString(R.string.maintenance_validation_select_task_type),
-                type = BaseActivity.SnackType.WARNING
+                getString(R.string.maintenance_validation_select_task_type),
+                BaseActivity.SnackType.WARNING
             )
             return
         }
-
         if (selectedTankId == 0L) {
             showSnackBar(
-                message = getString(R.string.maintenance_validation_select_aquarium),
-                type = BaseActivity.SnackType.WARNING
+                getString(R.string.maintenance_validation_select_aquarium),
+                BaseActivity.SnackType.WARNING
             )
             return
         }
-
-        if (type == CareTaskType.WATER_CHANGE && selectedWaterChangePercent == null) {
+        if (
+            type == CareTaskType.WATER_CHANGE &&
+            selectedWaterChangePercent == null
+        ) {
             showSnackBar(
-                message = getString(R.string.maintenance_validation_select_water_change_percentage),
-                type = BaseActivity.SnackType.WARNING
+                getString(
+                    R.string.maintenance_validation_select_water_change_percentage
+                ),
+                BaseActivity.SnackType.WARNING
             )
             return
         }
 
         val typeUi = CareTaskTypeCatalog.get(type)
-
-        val customTitle = binding.etCustomTitle.text
-            .toString()
-            .trim()
-
+        val customTitle = binding.etCustomTitle.text.toString().trim()
         if (type == CareTaskType.CUSTOM && customTitle.length < 2) {
             showSnackBar(
-                message = getString(R.string.maintenance_validation_custom_title_short),
-                type = BaseActivity.SnackType.WARNING
+                getString(R.string.maintenance_validation_custom_title_short),
+                BaseActivity.SnackType.WARNING
             )
             return
         }
 
-        val repeatDays = binding.etRepeatDays.text
-            .toString()
+        val repeatDays = binding.etRepeatDays.text.toString()
             .toIntOrNull()
             ?.coerceAtLeast(1)
             ?: getString(R.string.maintenance_default_repeat_days).toInt()
-
-        val missedDays = binding.etMissedReminderDays.text
-            .toString()
+        val missedDays = binding.etMissedReminderDays.text.toString()
             .toIntOrNull()
             ?.coerceAtLeast(1)
-            ?: getString(R.string.maintenance_default_missed_reminder_days).toInt()
-
+            ?: getString(
+                R.string.maintenance_default_missed_reminder_days
+            ).toInt()
         val title = if (type == CareTaskType.CUSTOM) {
             customTitle
         } else {
             typeUi.title(requireContext())
         }
-
         val description = typeUi.defaultDescription(requireContext())
-
-        val waterPercent = if (type == CareTaskType.WATER_CHANGE) {
-            selectedWaterChangePercent
-        } else {
-            null
+        val waterPercent = selectedWaterChangePercent.takeIf {
+            type == CareTaskType.WATER_CHANGE
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
             var savedSuccessfully = false
-
             try {
                 showGlobalLoading(true)
-
                 if (binding.switchReminder.isChecked) {
-                    userPrefs.updateNotificationsEnabled(true)
+                    userSettingsOperations.updateNotificationsEnabled(true)
                 }
 
                 if (isEditMode) {
@@ -939,13 +787,12 @@ class AddCareTaskFragment :
                         repeatEnabled = binding.switchRepeat.isChecked,
                         repeatIntervalDays = repeatDays,
                         reminderEnabled = binding.switchReminder.isChecked,
-                        missedReminderEnabled = binding.switchReminder.isChecked &&
-                            binding.switchMissedReminder.isChecked,
+                        missedReminderEnabled =
+                            binding.switchReminder.isChecked &&
+                                binding.switchMissedReminder.isChecked,
                         missedReminderDays = missedDays,
                         waterChangePercent = waterPercent,
-                        note = binding.etNote.text
-                            .toString()
-                            .trim()
+                        note = binding.etNote.text.toString().trim()
                     )
                 } else {
                     maintenanceViewModel.addManualTask(
@@ -957,16 +804,14 @@ class AddCareTaskFragment :
                         repeatEnabled = binding.switchRepeat.isChecked,
                         repeatIntervalDays = repeatDays,
                         reminderEnabled = binding.switchReminder.isChecked,
-                        missedReminderEnabled = binding.switchReminder.isChecked &&
-                            binding.switchMissedReminder.isChecked,
+                        missedReminderEnabled =
+                            binding.switchReminder.isChecked &&
+                                binding.switchMissedReminder.isChecked,
                         missedReminderDays = missedDays,
                         waterChangePercent = waterPercent,
-                        note = binding.etNote.text
-                            .toString()
-                            .trim()
+                        note = binding.etNote.text.toString().trim()
                     )
                 }
-
                 savedSuccessfully = true
             } finally {
                 showGlobalLoading(false)
@@ -978,7 +823,6 @@ class AddCareTaskFragment :
         }
     }
 
-
     private fun closeForm() {
         findNavController().navigateUp()
     }
@@ -987,10 +831,7 @@ class AddCareTaskFragment :
         message: String,
         type: BaseActivity.SnackType
     ) {
-        (activity as? BaseActivity)?.showSnackBar(
-            message = message,
-            type = type
-        )
+        (activity as? BaseActivity)?.showSnackBar(message, type)
     }
 
     private fun createIconBackground(
@@ -1001,56 +842,20 @@ class AddCareTaskFragment :
             shape = GradientDrawable.RECTANGLE
             cornerRadius = 13.dp().toFloat()
             setColor(
-                applyAlpha(
-                    color = color,
-                    alpha = if (selected) {
-                        0.34f
-                    } else {
-                        0.22f
-                    }
-                )
+                applyAlpha(color, if (selected) 0.34f else 0.22f)
             )
             setStroke(
                 1.dp(),
-                applyAlpha(
-                    color = color,
-                    alpha = if (selected) {
-                        0.9f
-                    } else {
-                        0.55f
-                    }
-                )
+                applyAlpha(color, if (selected) 0.9f else 0.55f)
             )
         }
     }
 
-    private fun createRoundedDrawable(
-        color: String,
-        radiusPx: Int,
-        strokeColor: String,
-        strokeWidthPx: Int
-    ): GradientDrawable {
-        return GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            setColor(Color.parseColor(color))
-            cornerRadius = radiusPx.toFloat()
-            setStroke(
-                strokeWidthPx,
-                Color.parseColor(strokeColor)
-            )
-        }
-    }
-
-    private fun showGlobalLoading(
-        show: Boolean
-    ) {
+    private fun showGlobalLoading(show: Boolean) {
         setFragmentGlobalLoading(show)
     }
 
-    private fun applyAlpha(
-        color: Int,
-        alpha: Float
-    ): Int {
+    private fun applyAlpha(color: Int, alpha: Float): Int {
         return Color.argb(
             (255 * alpha).toInt(),
             Color.red(color),
