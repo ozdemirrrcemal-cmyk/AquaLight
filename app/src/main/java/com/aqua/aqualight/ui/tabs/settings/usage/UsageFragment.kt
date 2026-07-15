@@ -6,8 +6,8 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import coil3.load
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.user.UsageAnalyticsSnapshot
 import com.aqua.aqualight.composition.requireAppContainer
-import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentUsageBinding
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import java.text.SimpleDateFormat
@@ -21,8 +21,8 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
     private var _binding: FragmentUsageBinding? = null
     private val binding get() = _binding!!
 
-    private val userPrefs by lazy {
-        requireContext().requireAppContainer().userPreferencesManager
+    private val settingsOperations by lazy {
+        requireContext().requireAppContainer().userSettingsOperations
     }
 
     override fun onViewCreated(
@@ -50,7 +50,7 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
 
     private fun observeUsageAnalytics() {
         viewLifecycleOwner.lifecycleScope.launch {
-            userPrefs.usageAnalyticsFlow.collectLatest { usage ->
+            settingsOperations.usageAnalytics.collectLatest { usage ->
                 bindUsageToUi(
                     usage
                 )
@@ -59,7 +59,7 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
     }
 
     private fun bindUsageToUi(
-        usage: UserPreferencesManager.UsageAnalytics
+        usage: UsageAnalyticsSnapshot
     ) {
         binding.tvTotalSessionsValue.text =
             usage.weeklyAutomationCount.toString()
