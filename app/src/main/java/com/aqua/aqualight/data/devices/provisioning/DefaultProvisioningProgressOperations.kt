@@ -25,22 +25,28 @@ import kotlinx.coroutines.flow.map
 
 class DefaultProvisioningProgressOperations internal constructor(
     context: Context,
+    override val ownerUid: String,
     private val draftStore: ProvisioningDraftStorage
 ) : ProvisioningProgressOperations {
 
     private val appContext = context.applicationContext
-    override val ownerUid: String = UserDataScope.requireCurrentUid()
     private val addressResolver = AqlBleProvisioningAddressResolver(appContext)
     private val gattClient = AqlBleProvisioningGattClient(appContext)
     private val handoffSaver = AqlProvisioningHandoffSaver(appContext)
     private val preparedSnapshots = ConcurrentHashMap<String, DeviceSnapshot>()
 
+    private constructor(
+        context: Context,
+        ownerScope: OwnerProvisioningScope
+    ) : this(
+        context = context.applicationContext,
+        ownerUid = ownerScope.ownerUid,
+        draftStore = ownerScope.draftStore
+    )
+
     constructor(context: Context) : this(
         context = context.applicationContext,
-        draftStore = AqlProvisioningDraftStore(
-            context = context.applicationContext,
-            ownerUidProvider = { UserDataScope.requireCurrentUid() }
-        )
+        ownerScope = OwnerProvisioningScope.create(context.applicationContext)
     )
 
     override val events: Flow<ProvisioningTransportEvent> =
@@ -88,10 +94,12 @@ class DefaultProvisioningProgressOperations internal constructor(
     ): Result<PreparedProvisioningRegistration> {
         val draft = draftStore.get(sessionId)
             ?: return Result.failure(IllegalStateException("Provisioning session is unavailable."))
-        return handoffSaver.prepareAndConnect(
-            draft = draft.withVerifiedInfo(verifiedDeviceInfo),
-            handoff = handoff.toDataHandoff()
-        ).map { snapshot ->
+        return UserDataScope.withOwnerUid(ownerUid) {
+            handoffSaver.prepareAndConnect(
+                draft = draft.withVerifiedInfo(verifiedDeviceInfo),
+                handoff = handoff.toDataHandoff()
+            )
+        }.map { snapshot ->
             val registrationId = UUID.randomUUID().toString()
             preparedSnapshots[registrationId] = snapshot
             PreparedProvisioningRegistration(
@@ -117,8 +125,9 @@ class DefaultProvisioningProgressOperations internal constructor(
                 IllegalStateException("Prepared provisioning registration identity changed.")
             )
         }
-        return handoffSaver.commitPreparedRegistration(snapshot)
-            .map { Unit }
+        return UserDataScope.withOwnerUid(ownerUid) {
+            handoffSaver.commitPreparedRegistration(snapshot)
+        }.map { Unit }
             .onSuccess { preparedSnapshots.remove(registration.registrationId) }
     }
 
@@ -126,18 +135,25 @@ class DefaultProvisioningProgressOperations internal constructor(
         deviceUid: String
     ): Result<Unit> {
         removePreparedSnapshot(deviceUid)
-        return handoffSaver.rollbackProvisioningRegistration(DeviceUid(deviceUid))
+        return UserDataScope.withOwnerUid(ownerUid) {
+            handoffSaver.rollbackProvisioningRegistration(DeviceUid(deviceUid))
+        }
     }
 
     override suspend fun rollbackProvisioningRegistrationForOwner(
         ownerUid: String,
         deviceUid: String
     ): Result<Unit> {
+        require(ownerUid == this.ownerUid) {
+            "Provisioning rollback owner does not match the captured transaction owner."
+        }
         removePreparedSnapshot(deviceUid)
-        return handoffSaver.rollbackProvisioningRegistrationForOwner(
-            ownerUid = ownerUid,
-            deviceUid = DeviceUid(deviceUid)
-        )
+        return UserDataScope.withOwnerUid(this.ownerUid) {
+            handoffSaver.rollbackProvisioningRegistrationForOwner(
+                ownerUid = this@DefaultProvisioningProgressOperations.ownerUid,
+                deviceUid = DeviceUid(deviceUid)
+            )
+        }
     }
 
     private fun removePreparedSnapshot(deviceUid: String) {
@@ -146,5 +162,23 @@ class DefaultProvisioningProgressOperations internal constructor(
             .forEach { (registrationId, _) ->
                 preparedSnapshots.remove(registrationId)
             }
+    }
+
+    private data class OwnerProvisioningScope(
+        val ownerUid: String,
+        val draftStore: ProvisioningDraftStorage
+    ) {
+        companion object {
+            fun create(context: Context): OwnerProvisioningScope {
+                val ownerUid = UserDataScope.requireCurrentUid()
+                return OwnerProvisioningScope(
+                    ownerUid = ownerUid,
+                    draftStore = AqlProvisioningDraftStore(
+                        context = context.applicationContext,
+                        ownerUidProvider = { ownerUid }
+                    )
+                )
+            }
+        }
     }
 }
