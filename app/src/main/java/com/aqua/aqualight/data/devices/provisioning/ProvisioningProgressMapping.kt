@@ -10,7 +10,6 @@ import com.aqua.aqualight.application.devices.provisioning.ProvisioningTransport
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningVerifiedDeviceInfo
 import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
-import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningGattEvent
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningStatusMessage
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningDraft
@@ -41,32 +40,34 @@ internal fun AqlProvisioningDraft.withVerifiedInfo(
     )
 }
 
-internal fun AqlBleProvisioningGattEvent.toApplicationEvent(): ProvisioningTransportEvent =
-    when (this) {
-        is AqlBleProvisioningGattEvent.Connecting ->
-            ProvisioningTransportEvent.Connecting(address)
-        is AqlBleProvisioningGattEvent.Connected ->
-            ProvisioningTransportEvent.Connected(address)
-        AqlBleProvisioningGattEvent.ServicesDiscovered ->
-            ProvisioningTransportEvent.ServicesDiscovered
-        is AqlBleProvisioningGattEvent.DeviceInfoVerified ->
-            ProvisioningTransportEvent.DeviceInfoVerified(
-                ProvisioningVerifiedDeviceInfo(deviceTitle, deviceSerial, deviceModel)
-            )
-        AqlBleProvisioningGattEvent.StartSessionWritten ->
-            ProvisioningTransportEvent.StartSessionWritten
-        AqlBleProvisioningGattEvent.WifiCredentialsWritten ->
-            ProvisioningTransportEvent.WifiCredentialsWritten
-        is AqlBleProvisioningGattEvent.StatusReceived ->
-            ProvisioningTransportEvent.StatusReceived(statusMessage.toApplicationMessage())
-        is AqlBleProvisioningGattEvent.RuntimeHandoffReceived ->
-            ProvisioningTransportEvent.RuntimeHandoffReceived(handoff.toApplicationHandoff())
-        AqlBleProvisioningGattEvent.FinalizeSetupWritten ->
-            ProvisioningTransportEvent.FinalizeSetupWritten
-        AqlBleProvisioningGattEvent.Completed -> ProvisioningTransportEvent.Completed
-        is AqlBleProvisioningGattEvent.Failed -> ProvisioningTransportEvent.Failed(message)
-        AqlBleProvisioningGattEvent.Disconnected -> ProvisioningTransportEvent.Disconnected
-    }
+internal fun AqlBleProvisioningGattEvent.toApplicationEvent(
+    runtimeHandoffMapper: (AqlProvisioningRuntimeHandoff) -> ProvisioningRuntimeHandoff =
+        { handoff -> handoff.toApplicationReference(TEST_HANDOFF_REFERENCE) }
+): ProvisioningTransportEvent = when (this) {
+    is AqlBleProvisioningGattEvent.Connecting ->
+        ProvisioningTransportEvent.Connecting(address)
+    is AqlBleProvisioningGattEvent.Connected ->
+        ProvisioningTransportEvent.Connected(address)
+    AqlBleProvisioningGattEvent.ServicesDiscovered ->
+        ProvisioningTransportEvent.ServicesDiscovered
+    is AqlBleProvisioningGattEvent.DeviceInfoVerified ->
+        ProvisioningTransportEvent.DeviceInfoVerified(
+            ProvisioningVerifiedDeviceInfo(deviceTitle, deviceSerial, deviceModel)
+        )
+    AqlBleProvisioningGattEvent.StartSessionWritten ->
+        ProvisioningTransportEvent.StartSessionWritten
+    AqlBleProvisioningGattEvent.WifiCredentialsWritten ->
+        ProvisioningTransportEvent.WifiCredentialsWritten
+    is AqlBleProvisioningGattEvent.StatusReceived ->
+        ProvisioningTransportEvent.StatusReceived(statusMessage.toApplicationMessage())
+    is AqlBleProvisioningGattEvent.RuntimeHandoffReceived ->
+        ProvisioningTransportEvent.RuntimeHandoffReceived(runtimeHandoffMapper(handoff))
+    AqlBleProvisioningGattEvent.FinalizeSetupWritten ->
+        ProvisioningTransportEvent.FinalizeSetupWritten
+    AqlBleProvisioningGattEvent.Completed -> ProvisioningTransportEvent.Completed
+    is AqlBleProvisioningGattEvent.Failed -> ProvisioningTransportEvent.Failed(message)
+    AqlBleProvisioningGattEvent.Disconnected -> ProvisioningTransportEvent.Disconnected
+}
 
 private fun AqlBleProvisioningStatusMessage.toApplicationMessage(): ProvisioningStatusMessage =
     ProvisioningStatusMessage(
@@ -94,12 +95,15 @@ private fun String.toApplicationErrorCode(): ProvisioningErrorCode = when (this)
     else -> ProvisioningErrorCode.UNKNOWN
 }
 
-private fun AqlProvisioningRuntimeHandoff.toApplicationHandoff(): ProvisioningRuntimeHandoff =
-    ProvisioningRuntimeHandoff(
-        deviceUid = deviceUid.value,
-        endpoint = endpoint.toApplicationEndpoint(),
-        webSocketToken = webSocketToken
-    )
+internal fun AqlProvisioningRuntimeHandoff.toApplicationReference(
+    handoffId: String
+): ProvisioningRuntimeHandoff = ProvisioningRuntimeHandoff(
+    handoffId = handoffId.trim().also { reference ->
+        require(reference.isNotBlank()) { "Provisioning handoff reference is unavailable." }
+    },
+    deviceUid = deviceUid.value,
+    endpoint = endpoint.toApplicationEndpoint()
+)
 
 private fun DeviceRuntimeEndpoint.toApplicationEndpoint(): ProvisioningRuntimeEndpoint =
     ProvisioningRuntimeEndpoint(
@@ -115,20 +119,4 @@ private fun DeviceRuntimeEndpoint.toApplicationEndpoint(): ProvisioningRuntimeEn
         discoveryPort = discoveryPort
     )
 
-internal fun ProvisioningRuntimeHandoff.toDataHandoff(): AqlProvisioningRuntimeHandoff =
-    AqlProvisioningRuntimeHandoff(
-        deviceUid = DeviceUid(deviceUid),
-        endpoint = DeviceRuntimeEndpoint(
-            ip = endpoint.ip,
-            wifiMode = endpoint.wifiMode,
-            wifiConnected = endpoint.wifiConnected,
-            setupApActive = endpoint.setupApActive,
-            runtimeTransport = endpoint.runtimeTransport,
-            wsPort = endpoint.webSocketPort,
-            wsPath = endpoint.webSocketPath,
-            wsProtocol = endpoint.webSocketProtocol,
-            wsProtocolVersion = endpoint.webSocketProtocolVersion,
-            discoveryPort = endpoint.discoveryPort
-        ),
-        webSocketToken = webSocketToken
-    )
+private const val TEST_HANDOFF_REFERENCE = "mapping-only-handoff-reference"
