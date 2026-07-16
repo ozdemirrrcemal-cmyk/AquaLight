@@ -13,7 +13,7 @@ import org.junit.Test
 class DefaultProvisioningDraftOperationsTest {
 
     @Test
-    fun `creates encrypted-storage draft and retains short-lived QR secret for retry`() {
+    fun `creates encrypted-storage draft from primitive application request`() {
         val storage = FakeProvisioningDraftStorage()
         val secretStorage = FakeProvisioningQrSecretStorage().apply {
             secrets["secret-reference-1"] = ProvisioningQrSecret(
