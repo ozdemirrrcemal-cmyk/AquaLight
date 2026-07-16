@@ -82,10 +82,11 @@ data class ProvisioningRuntimeEndpoint(
     val discoveryPort: Int
 )
 
+/** Opaque reference to a data-owned runtime handoff; no credential crosses into UI. */
 data class ProvisioningRuntimeHandoff(
+    val handoffId: String,
     val deviceUid: String,
-    val endpoint: ProvisioningRuntimeEndpoint,
-    val webSocketToken: String
+    val endpoint: ProvisioningRuntimeEndpoint
 )
 
 data class PreparedProvisioningRegistration(
