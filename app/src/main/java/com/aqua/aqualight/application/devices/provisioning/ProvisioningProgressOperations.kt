@@ -23,9 +23,11 @@ interface ProvisioningProgressOperations {
     fun startTransport(
         sessionId: String,
         bleAddress: String
-    )
+    ): Result<Unit>
 
-    fun finalizeSetup(handoff: ProvisioningRuntimeHandoff)
+    fun finalizeSetup(
+        handoff: ProvisioningRuntimeHandoff
+    ): Result<Unit>
 
     fun closeTransport()
 
