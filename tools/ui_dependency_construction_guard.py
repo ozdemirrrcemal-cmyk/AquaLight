@@ -209,7 +209,11 @@ for token, reason in (
         errors.append(f"{DRAFT_IMPLEMENTATION_PATH.relative_to(ROOT)}: {reason}: {token}")
 
 for token, reason in (
-    ("qrParser = AqlProvisioningQrParser()", "feature factory must own QR parser construction"),
+    (
+        "DefaultProvisioningDiscoveryOperations.create(",
+        "feature factory must own provisioning discovery adapter construction",
+    ),
+    ("DeviceAddViewModel(", "feature factory must create the Nearby Scan ViewModel"),
     ("DeviceQrScanViewModel(", "feature factory must create the QR ViewModel"),
 ):
     if token not in feature_factory:
