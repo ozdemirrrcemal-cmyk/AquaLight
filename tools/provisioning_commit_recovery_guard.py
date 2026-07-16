@@ -72,11 +72,13 @@ if user_data_cleaner.is_file():
     text = user_data_cleaner.read_text(encoding="utf-8")
     for token in (
         "PROVISIONING_SESSIONS",
-        "rollbackPendingRegistrationsForOwner(targetOwnerUid)",
+        "clearProvisioningData(targetOwnerUid)",
+        "rollbackPendingRegistrationsForOwner(ownerUid)",
         "AqlProvisioningDraftStore(",
         ").clearOwner()",
         "ProvisioningCommitRecoveryStore(appContext)",
-        ".clearOwner(targetOwnerUid)",
+        ".clearOwner(ownerUid)",
+        "One or more provisioning data cleanup operations failed.",
     ):
         if token not in text:
             errors.append(f"account deletion does not clear provisioning data: {token}")
