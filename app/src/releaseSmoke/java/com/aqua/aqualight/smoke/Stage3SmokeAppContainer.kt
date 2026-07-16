@@ -34,6 +34,8 @@ import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.platform.auth.GoogleIdentityClient
 import com.aqua.aqualight.platform.text.AndroidAppTextResolver
 import com.aqua.aqualight.platform.text.AndroidMaintenanceTextResolver
+import com.aqua.aqualight.platform.vision.MlKitProvisioningQrFrameDecoderFactory
+import com.aqua.aqualight.platform.vision.ProvisioningQrFrameDecoderFactory
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectViewModel
@@ -72,6 +74,8 @@ internal class Stage3SmokeAppContainer(context: Context) : AppContainer {
         get() = unused("feedbackSubmissionOperations")
     override val provisioningDraftOperations: ProvisioningDraftOperations
         get() = unused("provisioningDraftOperations")
+    override val provisioningQrFrameDecoderFactory: ProvisioningQrFrameDecoderFactory =
+        MlKitProvisioningQrFrameDecoderFactory()
     override val sessionExitOperations: SessionExitOperations
         get() = unused("sessionExitOperations")
     override val accountSecurityOperations: AccountSecurityOperations
