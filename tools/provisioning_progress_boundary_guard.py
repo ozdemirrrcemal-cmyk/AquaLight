@@ -17,7 +17,7 @@ view_model = APP / "ui/tabs/devices/add/DeviceProvisioningProgressViewModel.kt"
 presentation = APP / "ui/tabs/devices/add/ProvisioningProgressPresentation.kt"
 event_contract = APP / "ui/tabs/devices/add/DeviceProvisioningProgressContract.kt"
 fragment = APP / "ui/tabs/devices/add/DeviceProvisioningProgressFragment.kt"
-production = APP / "composition/AquaViewModelFactory.kt"
+production = APP / "composition/OwnerViewModelFactory.kt"
 smoke = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/Stage3SmokeAppContainer.kt"
 view_model_test = TESTS / "ui/tabs/devices/add/DeviceProvisioningProgressViewModelBoundaryTest.kt"
 cancellation_test = TESTS / "ui/tabs/devices/add/DeviceProvisioningCancellationBoundaryTest.kt"
@@ -208,13 +208,30 @@ if fragment.is_file():
         if token in text:
             errors.append(f"progress fragment contains obsolete/credential model: {token}")
 
-for path in (production, smoke):
-    if path.is_file():
-        text = path.read_text(encoding="utf-8")
-        if "DefaultProvisioningProgressOperations(appContext)" not in text:
-            errors.append(f"missing provisioning progress binding in {path.relative_to(ROOT)}")
-        if "DefaultDeviceProvisioningProgressOperations" in text:
-            errors.append(f"obsolete provisioning progress binding in {path.relative_to(ROOT)}")
+if production.is_file():
+    text = production.read_text(encoding="utf-8")
+    for token in (
+        "DefaultProvisioningProgressOperations(",
+        "ownerUid = graph.ownerUid",
+        "ownerUidProvider = { graph.ownerUid }",
+    ):
+        if token not in text:
+            errors.append(f"missing owner-scoped provisioning progress binding: {token}")
+    for forbidden in (
+        "DefaultProvisioningProgressOperations(appContext)",
+        "DevicesRepositoryProvider.get(",
+    ):
+        if forbidden in text:
+            errors.append(f"owner production progress may not open runtime through: {forbidden}")
+    if "DefaultDeviceProvisioningProgressOperations" in text:
+        errors.append(f"obsolete provisioning progress binding in {production.relative_to(ROOT)}")
+
+if smoke.is_file():
+    text = smoke.read_text(encoding="utf-8")
+    if "DefaultProvisioningProgressOperations(appContext)" not in text:
+        errors.append(f"missing release-smoke provisioning progress binding in {smoke.relative_to(ROOT)}")
+    if "DefaultDeviceProvisioningProgressOperations" in text:
+        errors.append(f"obsolete provisioning progress binding in {smoke.relative_to(ROOT)}")
 
 if view_model_test.is_file():
     text = view_model_test.read_text(encoding="utf-8")
