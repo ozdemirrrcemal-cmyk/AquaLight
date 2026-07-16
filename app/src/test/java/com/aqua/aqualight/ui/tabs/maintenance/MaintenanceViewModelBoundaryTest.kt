@@ -1,6 +1,6 @@
 package com.aqua.aqualight.ui.tabs.maintenance
 
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.data.care.CareTaskTypePresentation
 import com.aqua.aqualight.data.care.MaintenanceRepository
 import com.aqua.aqualight.data.care.MaintenanceTextResolver
@@ -110,7 +110,7 @@ class MaintenanceViewModelBoundaryTest {
 
         override fun taskFlow(taskId: Long): Flow<CareTask?> = flowOf(null)
 
-        override suspend fun syncSmartCareTasks(tanks: List<SavedAquariumTank>) {
+        override suspend fun syncSmartCareTasks(tanks: List<AquariumTankSnapshot>) {
             syncSmartCareCalls += 1
         }
 

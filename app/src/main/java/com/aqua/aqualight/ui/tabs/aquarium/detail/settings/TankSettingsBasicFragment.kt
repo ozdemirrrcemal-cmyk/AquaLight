@@ -31,7 +31,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDatePolicy
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDimensionFormatter
 import com.aqua.aqualight.ui.tabs.aquarium.photo.TankPhotoFlowCoordinator
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.yalantis.ucrop.UCrop
 import kotlinx.coroutines.launch
@@ -44,7 +44,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
     private var tankId: Long = 0L
-    private var currentTank: SavedAquariumTank? = null
+    private var currentTank: AquariumTankSnapshot? = null
 
     private val photoFlowCoordinator by lazy(LazyThreadSafetyMode.NONE) {
         TankPhotoFlowCoordinator(
@@ -205,7 +205,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     }
 
     private fun bindTank(
-        tank: SavedAquariumTank
+        tank: AquariumTankSnapshot
     ) {
         currentTank = tank
 
@@ -662,7 +662,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     }
 
     private fun getSizeTitleText(
-        tank: SavedAquariumTank
+        tank: AquariumTankSnapshot
     ): String {
         return AquariumDimensionFormatter.sizeTitle(
             context = requireContext(),
@@ -671,7 +671,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     }
 
     private fun getSizeText(
-        tank: SavedAquariumTank
+        tank: AquariumTankSnapshot
     ): String {
         return AquariumDimensionFormatter.sizeText(
             widthCm = tank.widthCm,
@@ -683,7 +683,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     }
 
     private fun getVolumeText(
-        tank: SavedAquariumTank
+        tank: AquariumTankSnapshot
     ): String {
         return AquariumDimensionFormatter.volumeText(
             widthCm = tank.widthCm,

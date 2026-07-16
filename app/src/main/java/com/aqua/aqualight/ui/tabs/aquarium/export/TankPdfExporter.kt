@@ -17,8 +17,8 @@ import android.net.Uri
 import androidx.core.content.FileProvider
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
+import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import java.util.concurrent.TimeUnit
 import java.io.File
 import java.io.FileOutputStream
@@ -42,7 +42,7 @@ object TankPdfExporter {
 
   fun createTankReportPdf(
     context: Context,
-    tank: SavedAquariumTank
+    tank: AquariumTankSnapshot
   ): Uri {
     val document = PdfDocument()
     val texts = TankPdfTexts.from(context)
@@ -273,7 +273,7 @@ object TankPdfExporter {
 
   private fun getSizeText(
     context: Context,
-    tank: SavedAquariumTank
+    tank: AquariumTankSnapshot
   ): String {
     return context.getString(
       R.string.tank_pdf_size_format,
@@ -284,7 +284,7 @@ object TankPdfExporter {
   }
 
   private fun getVolumeText(
-    tank: SavedAquariumTank
+    tank: AquariumTankSnapshot
   ): String {
     val liter = (
       tank.widthCm *
@@ -314,7 +314,7 @@ object TankPdfExporter {
   }
 
   private fun formatMaterial(
-    material: SavedAquariumMaterial,
+    material: AquariumMaterialSelection,
     unnamedMaterialText: String
   ): String {
     val name = material.name.ifBlank {
@@ -960,7 +960,7 @@ object TankPdfExporter {
 
     fun drawMaterialCategory(
       title: String,
-      materials: List<SavedAquariumMaterial>
+      materials: List<AquariumMaterialSelection>
     ) {
       ensureSpace(26f)
 

@@ -16,8 +16,8 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
+import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.databinding.FragmentTankDetailTankBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDatePolicy
@@ -38,7 +38,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
     private var tankId: Long = 0L
-    private var currentTank: SavedAquariumTank? = null
+    private var currentTank: AquariumTankSnapshot? = null
     private var isOpeningSettings: Boolean = false
     private var isUpdatingVolumeUnit: Boolean = false
 
@@ -156,7 +156,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
         }
     }
 
-    private fun renderTankSection(tank: SavedAquariumTank) {
+    private fun renderTankSection(tank: AquariumTankSnapshot) {
         binding.tvTankDaysValue.text = getTankDaysText(tank.setupDateMillis)
         binding.tvTankVolumeValue.text = getTankVolumeText(tank, tank.volumeUnit)
         binding.tvTankSizeValue.text = getTankSizeText(tank)
@@ -167,7 +167,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
         renderTankComponents(tank)
     }
 
-    private fun renderTankComponents(tank: SavedAquariumTank) {
+    private fun renderTankComponents(tank: AquariumTankSnapshot) {
         binding.tankBioComponentsContainer.removeAllViews()
         binding.tankHardwareComponentsContainer.removeAllViews()
 
@@ -203,7 +203,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
     private fun createTankComponentCard(
         shortCode: String,
         title: String,
-        materials: List<SavedAquariumMaterial>
+        materials: List<AquariumMaterialSelection>
     ): View {
         val card = MaterialCardView(requireContext()).apply {
             radius = 16.dp().toFloat()
@@ -305,7 +305,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
         return card
     }
 
-    private fun getComponentSummary(materials: List<SavedAquariumMaterial>): String {
+    private fun getComponentSummary(materials: List<AquariumMaterialSelection>): String {
         return MaterialSummaryFormatter.summaryForSavedMaterials(
             context = requireContext(),
             materials = materials
@@ -329,7 +329,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
     }
 
     private fun getTankVolumeText(
-        tank: SavedAquariumTank,
+        tank: AquariumTankSnapshot,
         volumeUnit: String
     ): String {
         return AquariumDimensionFormatter.volumeText(
@@ -341,7 +341,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
         )
     }
 
-    private fun getTankSizeText(tank: SavedAquariumTank): String {
+    private fun getTankSizeText(tank: AquariumTankSnapshot): String {
         return AquariumDimensionFormatter.sizeText(
             widthCm = tank.widthCm,
             lengthCm = tank.lengthCm,

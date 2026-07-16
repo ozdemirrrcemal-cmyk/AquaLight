@@ -1,6 +1,6 @@
 package com.aqua.aqualight.ui.tabs.aquarium.create.materials
 
-import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
+import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.aquarium.catalog.material.AquariumMaterial
 import android.graphics.Color
@@ -29,7 +29,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.materials.CustomMaterialSheet
 import com.aqua.aqualight.ui.tabs.aquarium.materials.MaterialSelectionMapper
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCatalog
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
@@ -63,7 +63,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
 
     private var pickerMode: String = MODE_CREATE
     private var tankId: Long = 0L
-    private var currentTank: SavedAquariumTank? = null
+    private var currentTank: AquariumTankSnapshot? = null
     private var hasLoadedSettingsSelections: Boolean = false
     private var isSavingSelections: Boolean = false
 
@@ -171,7 +171,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
                     material.categoryKey == categoryKey
                 }
                 .map { material ->
-                    TankMaterialSelection(
+                    AquariumMaterialSelection(
                         id = material.id,
                         productId = material.productId,
                         categoryKey = material.categoryKey,
@@ -189,7 +189,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
     }
 
     private fun refreshPickerContent(
-        currentSelections: List<TankMaterialSelection>
+        currentSelections: List<AquariumMaterialSelection>
     ) {
         allProducts = buildProductList(currentSelections)
 
@@ -210,7 +210,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
     }
 
     private fun buildProductList(
-        currentSelections: List<TankMaterialSelection>
+        currentSelections: List<AquariumMaterialSelection>
     ): List<AquariumMaterial> {
         return MaterialSelectionMapper.productsForCategory(
             categoryKey = categoryKey,
@@ -623,7 +623,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
         }
     }
 
-    private fun getCurrentMaterialSelections(): List<TankMaterialSelection> {
+    private fun getCurrentMaterialSelections(): List<AquariumMaterialSelection> {
         if (pickerMode == MODE_SETTINGS) {
             val tank = currentTank ?: return emptyList()
 
@@ -632,7 +632,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
                     material.categoryKey == categoryKey
                 }
                 .map { material ->
-                    TankMaterialSelection(
+                    AquariumMaterialSelection(
                         id = material.id,
                         productId = material.productId,
                         categoryKey = material.categoryKey,
@@ -648,7 +648,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
     }
 
     private fun saveCreateSelections(
-        selectedMaterials: List<TankMaterialSelection>
+        selectedMaterials: List<AquariumMaterialSelection>
     ) {
         createTankViewModel.updateTankMaterialsForCategory(
             categoryKey = categoryKey,
@@ -667,7 +667,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
     }
 
     private fun saveSettingsSelections(
-        selectedMaterials: List<TankMaterialSelection>
+        selectedMaterials: List<AquariumMaterialSelection>
     ) {
         viewLifecycleOwner.lifecycleScope.launch {
             try {

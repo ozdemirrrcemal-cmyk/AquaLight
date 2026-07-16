@@ -36,7 +36,7 @@ import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.careprofile.CareProfileCalculator
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.ui.tabs.maintenance.model.MaintenanceTab
 import com.aqua.aqualight.utils.DialogManager
@@ -59,7 +59,7 @@ class AquariumMaintenanceFragment :
     private lateinit var adapter: CareTaskAdapter
 
     private var currentSelectedTab: MaintenanceTab = MaintenanceTab.ALL
-    private var latestTanks: List<SavedAquariumTank> = emptyList()
+    private var latestTanks: List<AquariumTankSnapshot> = emptyList()
     private var careProfileTargetTankId: Long = 0L
 
     override fun onViewCreated(

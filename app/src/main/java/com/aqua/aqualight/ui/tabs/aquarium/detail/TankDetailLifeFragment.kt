@@ -17,7 +17,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankDetailLifeBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCategories
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
+import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.google.android.material.card.MaterialCardView
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -108,7 +108,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
     }
 
     private fun renderLivestock(
-        livestock: List<SavedAquariumLivestock>
+        livestock: List<AquariumLivestock>
     ) {
         binding.tankLifeListContainer.removeAllViews()
 
@@ -139,7 +139,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
     }
 
     private fun createLivestockCard(
-        livestock: SavedAquariumLivestock
+        livestock: AquariumLivestock
     ): View {
         val card = MaterialCardView(requireContext()).apply {
             radius = 18.dp().toFloat()

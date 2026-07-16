@@ -13,7 +13,7 @@ import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.databinding.FragmentTankSettingsOthersBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.export.TankPdfExporter
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import java.util.concurrent.CancellationException
@@ -30,7 +30,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
 
 
     private var tankId: Long = 0L
-    private var currentTank: SavedAquariumTank? = null
+    private var currentTank: AquariumTankSnapshot? = null
 
     private var isDeletingTank: Boolean = false
     private var isDuplicatingTank: Boolean = false
@@ -134,7 +134,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
     }
 
     private fun updateSwitchesFromTank(
-        tank: SavedAquariumTank
+        tank: AquariumTankSnapshot
     ) {
         isUpdatingSwitchesProgrammatically = true
 

@@ -2,7 +2,7 @@ package com.aqua.aqualight.ui.tabs.maintenance
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.data.care.MaintenanceRepository
 import com.aqua.aqualight.data.care.MaintenanceTextResolver
 import com.aqua.aqualight.data.care.model.CareTask
@@ -54,9 +54,9 @@ class MaintenanceViewModel(
 ) : ViewModel() {
 
     private val selectedTabFlow = MutableStateFlow(MaintenanceTab.ALL)
-    private val tanksFlow = MutableStateFlow<List<SavedAquariumTank>>(emptyList())
+    private val tanksFlow = MutableStateFlow<List<AquariumTankSnapshot>>(emptyList())
 
-    val tanks: StateFlow<List<SavedAquariumTank>> = tanksFlow
+    val tanks: StateFlow<List<AquariumTankSnapshot>> = tanksFlow
     val selectedTab: StateFlow<MaintenanceTab> = selectedTabFlow
 
     val tankCareSummaryItems: StateFlow<Map<Long, TankCareSummaryUi>> =
@@ -139,7 +139,7 @@ class MaintenanceViewModel(
         }
     }
 
-    fun setTanks(tanks: List<SavedAquariumTank>) {
+    fun setTanks(tanks: List<AquariumTankSnapshot>) {
         tanksFlow.value = tanks
         if (tanks.isNotEmpty()) {
             viewModelScope.launch {
@@ -460,7 +460,7 @@ class MaintenanceViewModel(
 
     private fun getTankName(
         tankId: Long,
-        tanks: List<SavedAquariumTank>
+        tanks: List<AquariumTankSnapshot>
     ): String = tanks.firstOrNull { tank -> tank.id == tankId }?.name
         ?: textResolver.unknownAquarium()
 

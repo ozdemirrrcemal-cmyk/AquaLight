@@ -6,8 +6,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
+import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.databinding.FragmentTankSettingsDetailsBinding
 import com.aqua.aqualight.ui.common.material.AquaMaterialCategoryRowFactory
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
@@ -47,7 +47,7 @@ class TankSettingsDetailsFragment : Fragment(R.layout.fragment_tank_settings_det
     }
 
     private fun renderMaterials(
-        tank: SavedAquariumTank
+        tank: AquariumTankSnapshot
     ) {
         binding.bioMaterialsContainer.removeAllViews()
         binding.hardwareMaterialsContainer.removeAllViews()
@@ -94,7 +94,7 @@ class TankSettingsDetailsFragment : Fragment(R.layout.fragment_tank_settings_det
     }
 
     private fun getMaterialSummary(
-        materials: List<SavedAquariumMaterial>
+        materials: List<AquariumMaterialSelection>
     ): String {
         return MaterialSummaryFormatter.summaryForSavedMaterials(
             context = requireContext(),

@@ -14,7 +14,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.databinding.DialogCareProfileBinding
 import com.aqua.aqualight.databinding.FragmentTankSettingsBinding
 import com.aqua.aqualight.databinding.ItemCareProfileRowBinding
@@ -44,7 +44,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
 
     private var tankId: Long = 0L
     private var selectedTab: SettingsTab = SettingsTab.BASIC
-    private var currentTank: SavedAquariumTank? = null
+    private var currentTank: AquariumTankSnapshot? = null
     private var isDeletingTank: Boolean = false
     private var tabHost: AquaSwipeTabHost<SettingsTab>? = null
 
@@ -224,7 +224,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     }
 
     private fun bindTank(
-        tank: SavedAquariumTank
+        tank: AquariumTankSnapshot
     ) {
         currentTank = tank
         renderCareProfileScore(tank)
@@ -250,7 +250,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     }
 
     private fun renderCareProfileScore(
-        tank: SavedAquariumTank
+        tank: AquariumTankSnapshot
     ) {
         val result = CareProfileCalculator.calculate(requireContext(), tank)
         val color = getCareProfileColor(result.percent)
@@ -262,7 +262,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     }
 
     private fun showCareProfileSheet(
-        tank: SavedAquariumTank
+        tank: AquariumTankSnapshot
     ) {
         val result = CareProfileCalculator.calculate(requireContext(), tank)
         val dialog = BottomSheetDialog(requireContext())
