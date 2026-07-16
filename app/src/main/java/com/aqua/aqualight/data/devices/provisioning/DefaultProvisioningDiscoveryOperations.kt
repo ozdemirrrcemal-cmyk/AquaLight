@@ -64,6 +64,10 @@ class DefaultProvisioningDiscoveryOperations(
             payload.toApplicationPayload(secretReference)
         }
 
+    override fun discardQrPayload(payload: ProvisioningQrPayload) {
+        qrSecretStore.remove(payload.secretReference)
+    }
+
     override suspend fun awaitQrCandidate(
         payload: ProvisioningQrPayload,
         timeoutMillis: Long
