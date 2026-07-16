@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Protect the Stage 3 device-root and firmware-update application boundaries."""
+"""Protect the device-root and firmware-update application boundaries."""
 from pathlib import Path
 import re
 import sys
@@ -15,7 +15,7 @@ MAPPING = SOURCE / "data/devices/DeviceApplicationMapping.kt"
 MENU_MAPPER = SOURCE / "ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt"
 PRESENTATION_MAPPER = SOURCE / "ui/tabs/devices/detail/common/DeviceRootPresentationMapper.kt"
 FACTORY = SOURCE / "composition/OwnerViewModelFactory.kt"
-SMOKE_FACTORY = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/Stage3SmokeAppContainer.kt"
+SMOKE_FACTORY = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeAppContainer.kt"
 TEST = ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/devices/detail/DeviceRootViewModelBoundaryTest.kt"
 ROOT_VIEW_MODELS = (
     SOURCE / "ui/tabs/devices/detail/common/DeviceRootOverviewViewModel.kt",
