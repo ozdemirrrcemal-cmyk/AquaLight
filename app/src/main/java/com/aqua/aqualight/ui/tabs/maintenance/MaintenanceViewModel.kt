@@ -3,14 +3,16 @@ package com.aqua.aqualight.ui.tabs.maintenance
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
-import com.aqua.aqualight.application.care.MaintenanceOperations
-import com.aqua.aqualight.ui.tabs.maintenance.text.MaintenanceTextResolver
 import com.aqua.aqualight.application.care.CareTaskSnapshot
-import com.aqua.aqualight.application.care.CareTaskSnapshotSource
-import com.aqua.aqualight.application.care.CareTaskSnapshotStatus
-import com.aqua.aqualight.application.care.CareTaskSnapshotType
+import com.aqua.aqualight.application.care.CareTaskSource
+import com.aqua.aqualight.application.care.CareTaskStatus
+import com.aqua.aqualight.application.care.CareTaskType
+import com.aqua.aqualight.application.care.CompletedCareActivityInput
+import com.aqua.aqualight.application.care.MaintenanceOperations
+import com.aqua.aqualight.application.care.ManualCareTaskInput
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.ui.tabs.maintenance.model.MaintenanceTab
+import com.aqua.aqualight.ui.tabs.maintenance.text.MaintenanceTextResolver
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -49,7 +51,7 @@ data class TankCareSummaryUi(
 )
 
 class MaintenanceViewModel(
-    private val repository: MaintenanceOperations,
+    private val operations: MaintenanceOperations,
     private val textResolver: MaintenanceTextResolver
 ) : ViewModel() {
 
@@ -60,7 +62,7 @@ class MaintenanceViewModel(
     val selectedTab: StateFlow<MaintenanceTab> = selectedTabFlow
 
     val tankCareSummaryItems: StateFlow<Map<Long, TankCareSummaryUi>> =
-        combine(repository.tasksFlow, tanksFlow) { tasks, tanks ->
+        combine(operations.tasks, tanksFlow) { tasks, tanks ->
             tanks.associate { tank ->
                 tank.id to buildTankCareSummary(
                     tankId = tank.id,
@@ -75,7 +77,7 @@ class MaintenanceViewModel(
 
     val taskItems: StateFlow<List<CareTaskUi>> =
         combine(
-            repository.tasksFlow,
+            operations.tasks,
             tanksFlow,
             selectedTabFlow
         ) { tasks, tanks, selectedTab ->
@@ -92,7 +94,7 @@ class MaintenanceViewModel(
 
     fun taskByIdFlow(taskId: Long): Flow<CareTaskUi?> {
         return combine(
-            repository.taskFlow(taskId),
+            operations.task(taskId),
             tanksFlow
         ) { task, tanks ->
             task?.toCareTaskUi(
@@ -102,7 +104,7 @@ class MaintenanceViewModel(
     }
 
     fun tankActivityStateFlow(tankId: Long): Flow<TankActivityUiState> {
-        return combine(repository.tasksFlow, tanksFlow) { tasks, tanks ->
+        return combine(operations.tasks, tanksFlow) { tasks, tanks ->
             val tankName = getTankName(tankId, tanks)
             val tankTasks = tasks.filter { task -> task.tankId == tankId }
             val completedTasks = tankTasks
@@ -143,7 +145,7 @@ class MaintenanceViewModel(
         tanksFlow.value = tanks
         if (tanks.isNotEmpty()) {
             viewModelScope.launch {
-                repository.syncSmartCareTasks(tanks)
+                operations.syncSmartCareTasks(tanks)
             }
         }
     }
@@ -153,18 +155,18 @@ class MaintenanceViewModel(
     }
 
     fun completeTask(taskId: Long): Job = viewModelScope.launch {
-        repository.completeTask(taskId)
+        operations.completeTask(taskId)
     }
 
     fun deleteTask(taskId: Long): Job = viewModelScope.launch {
-        repository.deleteTask(taskId)
+        operations.deleteTask(taskId)
     }
 
     fun updateCompletedTaskDate(
         taskId: Long,
         completedAtMillis: Long
     ): Job = viewModelScope.launch {
-        repository.updateCompletedTaskDate(taskId, completedAtMillis)
+        operations.updateCompletedTaskDate(taskId, completedAtMillis)
     }
 
     fun addCompletedActivity(
@@ -174,17 +176,19 @@ class MaintenanceViewModel(
         waterChangePercent: Int? = null,
         note: String = ""
     ): Job = viewModelScope.launch {
-        repository.addCompletedActivity(
-            tankId = tankId,
-            type = type,
-            completedAtMillis = completedAtMillis,
-            waterChangePercent = waterChangePercent,
-            note = note
+        operations.addCompletedActivity(
+            CompletedCareActivityInput(
+                tankId = tankId,
+                type = type,
+                completedAtMillis = completedAtMillis,
+                waterChangePercent = waterChangePercent,
+                note = note
+            )
         )
     }
 
     suspend fun deleteManualTask(taskId: Long) {
-        repository.deleteManualTask(taskId)
+        operations.deleteManualTask(taskId)
     }
 
     suspend fun addManualTask(
@@ -201,19 +205,21 @@ class MaintenanceViewModel(
         waterChangePercent: Int?,
         note: String
     ) {
-        repository.addManualTask(
-            tankId = tankId,
-            title = title,
-            description = description,
-            type = type,
-            dueAtMillis = dueAtMillis,
-            repeatEnabled = repeatEnabled,
-            repeatIntervalDays = repeatIntervalDays,
-            reminderEnabled = reminderEnabled,
-            missedReminderEnabled = missedReminderEnabled,
-            missedReminderDays = missedReminderDays,
-            waterChangePercent = waterChangePercent,
-            note = note
+        operations.addManualTask(
+            ManualCareTaskInput(
+                tankId = tankId,
+                title = title,
+                description = description,
+                type = type,
+                dueAtMillis = dueAtMillis,
+                repeatEnabled = repeatEnabled,
+                repeatIntervalDays = repeatIntervalDays,
+                reminderEnabled = reminderEnabled,
+                missedReminderEnabled = missedReminderEnabled,
+                missedReminderDays = missedReminderDays,
+                waterChangePercent = waterChangePercent,
+                note = note
+            )
         )
     }
 
@@ -232,20 +238,22 @@ class MaintenanceViewModel(
         waterChangePercent: Int?,
         note: String
     ) {
-        repository.updateManualTask(
+        operations.updateManualTask(
             taskId = taskId,
-            tankId = tankId,
-            title = title,
-            description = description,
-            type = type,
-            dueAtMillis = dueAtMillis,
-            repeatEnabled = repeatEnabled,
-            repeatIntervalDays = repeatIntervalDays,
-            reminderEnabled = reminderEnabled,
-            missedReminderEnabled = missedReminderEnabled,
-            missedReminderDays = missedReminderDays,
-            waterChangePercent = waterChangePercent,
-            note = note
+            input = ManualCareTaskInput(
+                tankId = tankId,
+                title = title,
+                description = description,
+                type = type,
+                dueAtMillis = dueAtMillis,
+                repeatEnabled = repeatEnabled,
+                repeatIntervalDays = repeatIntervalDays,
+                reminderEnabled = reminderEnabled,
+                missedReminderEnabled = missedReminderEnabled,
+                missedReminderDays = missedReminderDays,
+                waterChangePercent = waterChangePercent,
+                note = note
+            )
         )
     }
 
@@ -330,7 +338,10 @@ class MaintenanceViewModel(
         )
     }
 
-    private fun getTaskTitle(task: CareTaskSnapshot, typeTitle: String): String {
+    private fun getTaskTitle(
+        task: CareTaskSnapshot,
+        typeTitle: String
+    ): String {
         val percent = task.waterChangePercent
         if (
             task.type == CareTaskType.WATER_CHANGE &&
@@ -406,7 +417,9 @@ class MaintenanceViewModel(
         CareTaskType.HOSE_CLEANING
     )
 
-    private fun selectNextCareTask(tasks: List<CareTaskSnapshot>): CareTaskSnapshot? {
+    private fun selectNextCareTask(
+        tasks: List<CareTaskSnapshot>
+    ): CareTaskSnapshot? {
         if (tasks.isEmpty()) return null
 
         val now = System.currentTimeMillis()
@@ -423,7 +436,9 @@ class MaintenanceViewModel(
             ?: tasks.minByOrNull(CareTaskSnapshot::dueAtMillis)
     }
 
-    private fun getNextCareStatus(task: CareTaskSnapshot): TankNextCareStatus {
+    private fun getNextCareStatus(
+        task: CareTaskSnapshot
+    ): TankNextCareStatus {
         val daysUntil = TimeUnit.MILLISECONDS.toDays(
             getStartOfDayMillis(task.dueAtMillis) - getTodayStartMillis()
         )
