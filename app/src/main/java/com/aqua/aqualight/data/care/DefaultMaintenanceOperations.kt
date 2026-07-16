@@ -16,13 +16,12 @@ import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.care.catalog.CareTaskTypeCatalog
 import com.aqua.aqualight.data.care.model.CareTask
 import com.aqua.aqualight.data.care.smartcare.SmartCareTaskGenerator
+import com.aqua.aqualight.data.user.withCurrentOwnerScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import com.aqua.aqualight.application.care.CareTaskSource as AppCareTaskSource
 import com.aqua.aqualight.application.care.CareTaskStatus as AppCareTaskStatus
 import com.aqua.aqualight.application.care.CareTaskType as AppCareTaskType
-import com.aqua.aqualight.data.care.model.CareTaskSource as DataCareTaskSource
-import com.aqua.aqualight.data.care.model.CareTaskStatus as DataCareTaskStatus
 import com.aqua.aqualight.data.care.model.CareTaskType as DataCareTaskType
 
 class DefaultMaintenanceOperations(
@@ -41,30 +40,37 @@ class DefaultMaintenanceOperations(
 
     override suspend fun syncSmartCareTasks(tanks: List<AquariumTankSnapshot>) {
         if (tanks.isEmpty()) return
-        manager.syncAutomaticTasks(
-            generatedTasks = SmartCareTaskGenerator.generateForTanks(
-                context = appContext,
-                tanks = tanks.map(AquariumTankSnapshot::toDataTank)
+
+        withCurrentOwnerScope { ownerUid ->
+            manager.syncAutomaticTasks(
+                generatedTasks = SmartCareTaskGenerator.generateForTanks(
+                    context = appContext,
+                    tanks = tanks.map { tank ->
+                        tank.toDataTank(ownerUid)
+                    }
+                )
             )
-        )
+        }
     }
 
-    override suspend fun completeTask(taskId: Long) {
+    override suspend fun completeTask(taskId: Long) = withCurrentOwnerScope {
         manager.completeTask(taskId)
     }
 
-    override suspend fun deleteTask(taskId: Long) {
+    override suspend fun deleteTask(taskId: Long) = withCurrentOwnerScope {
         manager.deleteTask(taskId)
     }
 
     override suspend fun updateCompletedTaskDate(
         taskId: Long,
         completedAtMillis: Long
-    ) {
+    ) = withCurrentOwnerScope {
         manager.updateCompletedTaskDate(taskId, completedAtMillis)
     }
 
-    override suspend fun addCompletedActivity(input: CompletedCareActivityInput) {
+    override suspend fun addCompletedActivity(
+        input: CompletedCareActivityInput
+    ) = withCurrentOwnerScope {
         val dataType = input.type.toDataType()
         val typeDefinition = CareTaskTypeCatalog.get(dataType)
         manager.addCompletedActivity(
@@ -78,11 +84,13 @@ class DefaultMaintenanceOperations(
         )
     }
 
-    override suspend fun deleteManualTask(taskId: Long) {
+    override suspend fun deleteManualTask(taskId: Long) = withCurrentOwnerScope {
         manager.deleteManualTask(taskId)
     }
 
-    override suspend fun addManualTask(input: ManualCareTaskInput) {
+    override suspend fun addManualTask(
+        input: ManualCareTaskInput
+    ) = withCurrentOwnerScope {
         manager.addManualTask(
             tankId = input.tankId,
             title = input.title,
@@ -102,7 +110,7 @@ class DefaultMaintenanceOperations(
     override suspend fun updateManualTask(
         taskId: Long,
         input: ManualCareTaskInput
-    ) {
+    ) = withCurrentOwnerScope {
         manager.updateManualTask(
             taskId = taskId,
             tankId = input.tankId,
@@ -144,9 +152,11 @@ private fun CareTask.toApplicationSnapshot(): CareTaskSnapshot = CareTaskSnapsho
 private fun AppCareTaskType.toDataType(): DataCareTaskType =
     DataCareTaskType.valueOf(name)
 
-private fun AquariumTankSnapshot.toDataTank(): SavedAquariumTank = SavedAquariumTank(
+private fun AquariumTankSnapshot.toDataTank(
+    ownerUid: String
+): SavedAquariumTank = SavedAquariumTank(
     id = id,
-    ownerUid = "",
+    ownerUid = ownerUid,
     name = name,
     description = description,
     photoUri = photoUri,
