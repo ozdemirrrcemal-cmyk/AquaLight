@@ -17,6 +17,50 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
+internal interface ProvisioningCommitRecoveryTarget {
+    suspend fun saveSnapshot(
+        ownerUid: String,
+        snapshot: DeviceSnapshot
+    )
+
+    suspend fun saveRuntimeToken(
+        ownerUid: String,
+        deviceUid: DeviceUid,
+        runtimeToken: String
+    )
+}
+
+private class DefaultProvisioningCommitRecoveryTarget(
+    context: Context
+) : ProvisioningCommitRecoveryTarget {
+
+    private val appContext = context.applicationContext
+
+    override suspend fun saveSnapshot(
+        ownerUid: String,
+        snapshot: DeviceSnapshot
+    ) {
+        DeviceKnownStore(
+            context = appContext,
+            ownerUid = ownerUid
+        ).saveSnapshot(snapshot)
+    }
+
+    override suspend fun saveRuntimeToken(
+        ownerUid: String,
+        deviceUid: DeviceUid,
+        runtimeToken: String
+    ) {
+        DeviceCredentialStore(
+            context = appContext,
+            ownerUid = ownerUid
+        ).saveToken(
+            deviceUid = deviceUid,
+            token = runtimeToken
+        )
+    }
+}
+
 /**
  * Durable, encrypted commit journal for the final provisioning transaction.
  *
@@ -26,9 +70,17 @@ import org.json.JSONObject
  * session completes the same commit idempotently instead of leaving a token and
  * snapshot from different generations.
  */
-class ProvisioningCommitRecoveryStore(
-    context: Context
+class ProvisioningCommitRecoveryStore internal constructor(
+    context: Context,
+    private val recoveryTarget: ProvisioningCommitRecoveryTarget
 ) {
+
+    constructor(context: Context) : this(
+        context = context.applicationContext,
+        recoveryTarget = DefaultProvisioningCommitRecoveryTarget(
+            context.applicationContext
+        )
+    )
 
     private val appContext = context.applicationContext
     private val preferences: SharedPreferences by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
@@ -106,8 +158,6 @@ class ProvisioningCommitRecoveryStore(
         val records = readOwnerRecords(owner)
         if (records.isEmpty()) return 0
 
-        val knownStore = DeviceKnownStore(appContext, owner)
-        val credentialStore = DeviceCredentialStore(appContext, owner)
         var recoveredCount = 0
 
         records.forEach { record ->
@@ -118,8 +168,15 @@ class ProvisioningCommitRecoveryStore(
                 "Provisioning commit journal device identity changed."
             }
 
-            knownStore.saveSnapshot(record.snapshot)
-            credentialStore.saveToken(record.deviceUid, record.runtimeToken)
+            recoveryTarget.saveSnapshot(
+                ownerUid = owner,
+                snapshot = record.snapshot
+            )
+            recoveryTarget.saveRuntimeToken(
+                ownerUid = owner,
+                deviceUid = record.deviceUid,
+                runtimeToken = record.runtimeToken
+            )
             clear(owner, record.deviceUid)
             recoveredCount += 1
         }
