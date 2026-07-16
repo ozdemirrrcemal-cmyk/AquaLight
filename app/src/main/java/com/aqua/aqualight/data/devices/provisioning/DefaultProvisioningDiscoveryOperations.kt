@@ -12,6 +12,8 @@ import com.aqua.aqualight.data.devices.provisioning.ble.BleProvisioningScanner
 import com.aqua.aqualight.data.devices.provisioning.ble.DefaultBleProvisioningScanner
 import com.aqua.aqualight.data.devices.provisioning.qr.AqlProvisioningQrParser
 import com.aqua.aqualight.data.devices.provisioning.qr.AqlProvisioningQrPayload
+import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecretStore
+import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningQrSecretStorage
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
@@ -22,7 +24,8 @@ import kotlinx.coroutines.withTimeoutOrNull
 class DefaultProvisioningDiscoveryOperations(
     private val scanner: BleProvisioningScanner,
     private val repository: DevicesRepository,
-    private val qrParser: AqlProvisioningQrParser
+    private val qrParser: AqlProvisioningQrParser,
+    private val qrSecretStore: ProvisioningQrSecretStorage
 ) : ProvisioningDiscoveryOperations {
 
     override val candidates: Flow<List<ProvisioningCandidateSnapshot>> =
@@ -53,7 +56,13 @@ class DefaultProvisioningDiscoveryOperations(
     }
 
     override fun parseQr(rawValue: String): Result<ProvisioningQrPayload> =
-        qrParser.parse(rawValue).map(AqlProvisioningQrPayload::toApplicationPayload)
+        qrParser.parse(rawValue).map { payload ->
+            val secretReference = qrSecretStore.create(
+                claimCode = payload.claimCode,
+                rawPayload = payload.raw
+            )
+            payload.toApplicationPayload(secretReference)
+        }
 
     override suspend fun awaitQrCandidate(
         payload: ProvisioningQrPayload,
@@ -90,7 +99,8 @@ class DefaultProvisioningDiscoveryOperations(
             DefaultProvisioningDiscoveryOperations(
                 scanner = DefaultBleProvisioningScanner(context.applicationContext),
                 repository = repository,
-                qrParser = AqlProvisioningQrParser()
+                qrParser = AqlProvisioningQrParser(),
+                qrSecretStore = AqlProvisioningQrSecretStore(context.applicationContext)
             )
     }
 }
@@ -108,17 +118,17 @@ internal fun AqlBleProvisioningCandidate.toApplicationSnapshot():
         rawAdvertisementPayload = rawAdvertisementPayload
     )
 
-internal fun AqlProvisioningQrPayload.toApplicationPayload(): ProvisioningQrPayload =
-    ProvisioningQrPayload(
-        deviceUid = deviceUid.value,
-        serialNumber = serialNumber,
-        productId = productId,
-        model = model,
-        displayName = displayName,
-        hardwareRevision = hardwareRevision,
-        skuCode = skuCode,
-        provisioningId = provisioningId,
-        claimCode = claimCode,
-        bleName = bleName,
-        rawPayload = raw
-    )
+internal fun AqlProvisioningQrPayload.toApplicationPayload(
+    secretReference: String
+): ProvisioningQrPayload = ProvisioningQrPayload(
+    deviceUid = deviceUid.value,
+    serialNumber = serialNumber,
+    productId = productId,
+    model = model,
+    displayName = displayName,
+    hardwareRevision = hardwareRevision,
+    skuCode = skuCode,
+    provisioningId = provisioningId,
+    secretReference = secretReference,
+    bleName = bleName
+)
