@@ -102,9 +102,18 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
                 val tanks = UserDataScope.withOwnerUid(activeUid) {
                     tankManager.tanksFlow.firstOrNull().orEmpty()
                 }
-                val aquariumName = tanks.firstOrNull { tank ->
-                    tank.id == task.tankId
-                }?.name.orEmpty()
+                val tank = tanks.firstOrNull { candidate ->
+                    candidate.id == task.tankId
+                }
+
+                if (tank == null || !tank.careRemindersEnabled) {
+                    CareTaskReminderScheduler.cancel(
+                        context = appContext,
+                        taskId = task.id,
+                        ownerUid = task.ownerUid.ifBlank { activeUid }
+                    )
+                    return@launch
+                }
 
                 // Owner can change while stores are being read. Never render an
                 // old owner's reminder into the new owner's foreground session.
@@ -141,10 +150,10 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
                     )
                 }
 
-                val message = if (aquariumName.isNotBlank()) {
+                val message = if (tank.name.isNotBlank()) {
                     appContext.getString(
                         R.string.maintenance_notification_message_with_aquarium,
-                        aquariumName,
+                        tank.name,
                         bodyText
                     )
                 } else {
