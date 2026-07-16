@@ -1,13 +1,13 @@
 package com.aqua.aqualight.ui.tabs.aquarium.create
 
 import androidx.lifecycle.ViewModel
-import com.aqua.aqualight.data.aquarium.model.TankDraft
-import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
-import com.aqua.aqualight.data.aquarium.model.TankPlantTag
+import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
+import com.aqua.aqualight.application.aquarium.AquariumPlantTag
+import com.aqua.aqualight.application.aquarium.AquariumTankDraft
 
 class CreateTankViewModel : ViewModel() {
 
-  var tankDraft = TankDraft()
+  var tankDraft = AquariumTankDraft()
     private set
 
   fun updateTankName(name: String) {
@@ -22,17 +22,17 @@ class CreateTankViewModel : ViewModel() {
     tankDraft = tankDraft.copy(photoUri = photoUri)
   }
 
-  fun updateTankPlants(plants: List<TankPlantTag>) {
+  fun updateTankPlants(plants: List<AquariumPlantTag>) {
     tankDraft = tankDraft.copy(plants = plants.toList())
   }
 
-  fun updateTankMaterials(materials: List<TankMaterialSelection>) {
+  fun updateTankMaterials(materials: List<AquariumMaterialSelection>) {
     tankDraft = tankDraft.copy(materials = materials.toList())
   }
 
   fun updateTankMaterialsForCategory(
     categoryKey: String,
-    materials: List<TankMaterialSelection>
+    materials: List<AquariumMaterialSelection>
   ) {
     val otherMaterials = tankDraft.materials.filterNot {
       it.categoryKey == categoryKey
@@ -45,7 +45,7 @@ class CreateTankViewModel : ViewModel() {
 
   fun getMaterialsByCategory(
     categoryKey: String
-  ): List<TankMaterialSelection> {
+  ): List<AquariumMaterialSelection> {
     return tankDraft.materials.filter {
       it.categoryKey == categoryKey
     }
@@ -69,19 +69,13 @@ class CreateTankViewModel : ViewModel() {
       widthCm = widthCm,
       lengthCm = lengthCm,
       heightCm = heightCm,
-      sizeUnit = sizeUnit.ifBlank {
-        "cm"
-      }
+      sizeUnit = sizeUnit.ifBlank { "cm" }
     )
   }
 
-  fun updateSizeUnit(
-    sizeUnit: String
-  ) {
+  fun updateSizeUnit(sizeUnit: String) {
     tankDraft = tankDraft.copy(
-      sizeUnit = sizeUnit.ifBlank {
-        "cm"
-      }
+      sizeUnit = sizeUnit.ifBlank { "cm" }
     )
   }
 
@@ -97,30 +91,5 @@ class CreateTankViewModel : ViewModel() {
     tankDraft = tankDraft.copy(tankStyle = tankStyle)
   }
 
-  fun completeTank() {
-    /*
-      Step 1:
-      tankDraft.name
-
-      Step 2:
-      tankDraft.description
-
-      Step 3:
-      tankDraft.photoUri
-      tankDraft.plants
-
-      Step 4:
-      tankDraft.materials
-
-      Step 5:
-      tankDraft.setupDateMillis
-      tankDraft.widthCm
-      tankDraft.lengthCm
-      tankDraft.heightCm
-      tankDraft.sizeUnit
-      tankDraft.volumeUnit
-      tankDraft.tankType
-      tankDraft.tankStyle
-    */
-  }
+  fun completeTank() = Unit
 }
