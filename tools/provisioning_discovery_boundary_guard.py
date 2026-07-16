@@ -10,6 +10,9 @@ contract = APP / "application/devices/provisioning/ProvisioningDiscoveryOperatio
 adapter = APP / "data/devices/provisioning/DefaultProvisioningDiscoveryOperations.kt"
 nearby_vm = APP / "ui/tabs/devices/add/DeviceAddViewModel.kt"
 qr_vm = APP / "ui/tabs/devices/add/DeviceQrScanViewModel.kt"
+qr_fragment = APP / "ui/tabs/devices/add/DeviceQrScanFragment.kt"
+qr_decoder = APP / "platform/vision/ProvisioningQrFrameDecoder.kt"
+app_container = APP / "composition/AppContainer.kt"
 production = APP / "composition/AquaViewModelFactory.kt"
 smoke = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/Stage3SmokeAppContainer.kt"
 view_model_test = TESTS / "ui/tabs/devices/add/ProvisioningDiscoveryViewModelBoundaryTest.kt"
@@ -20,6 +23,9 @@ required = (
     adapter,
     nearby_vm,
     qr_vm,
+    qr_fragment,
+    qr_decoder,
+    app_container,
     production,
     smoke,
     view_model_test,
@@ -78,6 +84,50 @@ for path in (nearby_vm, qr_vm):
         if token in text:
             errors.append(f"{path.relative_to(ROOT)} contains forbidden discovery dependency: {token}")
 
+if qr_decoder.is_file():
+    text = qr_decoder.read_text(encoding="utf-8")
+    for token in (
+        "package com.aqua.aqualight.platform.vision",
+        "interface ProvisioningQrFrameDecoder",
+        "interface ProvisioningQrFrameDecoderFactory",
+        "class MlKitProvisioningQrFrameDecoderFactory",
+        "BarcodeScanning.getClient",
+        "Barcode.FORMAT_QR_CODE",
+        "imageProxy.close()",
+    ):
+        if token not in text:
+            errors.append(f"QR platform decoder is incomplete: {token}")
+
+if qr_fragment.is_file():
+    text = qr_fragment.read_text(encoding="utf-8")
+    for token in (
+        "ProvisioningQrFrameDecoder",
+        "provisioningQrFrameDecoderFactory",
+        ".decode(imageProxy)",
+        "qrFrameDecoder?.close()",
+    ):
+        if token not in text:
+            errors.append(f"QR Fragment is missing platform decoder behavior: {token}")
+    for token in (
+        "com.google.mlkit",
+        "BarcodeScanner",
+        "BarcodeScannerOptions",
+        "BarcodeScanning",
+        "InputImage",
+        "ExperimentalGetImage",
+    ):
+        if token in text:
+            errors.append(f"QR Fragment contains forbidden ML Kit implementation dependency: {token}")
+
+if app_container.is_file():
+    text = app_container.read_text(encoding="utf-8")
+    for token in (
+        "val provisioningQrFrameDecoderFactory: ProvisioningQrFrameDecoderFactory",
+        "MlKitProvisioningQrFrameDecoderFactory()",
+    ):
+        if token not in text:
+            errors.append(f"production QR decoder composition is incomplete: {token}")
+
 for path in (production, smoke):
     if path.is_file():
         text = path.read_text(encoding="utf-8")
@@ -85,6 +135,15 @@ for path in (production, smoke):
             errors.append(
                 f"production/smoke discovery bindings are incomplete in {path.relative_to(ROOT)}"
             )
+
+if smoke.is_file():
+    text = smoke.read_text(encoding="utf-8")
+    for token in (
+        "override val provisioningQrFrameDecoderFactory",
+        "MlKitProvisioningQrFrameDecoderFactory()",
+    ):
+        if token not in text:
+            errors.append(f"release-smoke QR decoder parity is incomplete: {token}")
 
 if view_model_test.is_file():
     text = view_model_test.read_text(encoding="utf-8")
