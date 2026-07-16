@@ -10,6 +10,23 @@ Branch: `feature/stage-3-aquarium-care-boundaries`
 - Remove DataStore managers and concrete care/assignment repositories from aquarium and maintenance ViewModels.
 - Enforce production/release-smoke parity with fake-backed tests and CI guards.
 
+## Completed aquarium slice
+
+- `AquariumTankOperations` is the owner-scoped application contract for observation and mutations.
+- Tank, draft, plant, material and livestock values crossing into UI are application DTOs.
+- Authoritative deletion and dependent care-task/device-assignment cleanup remain behind the data adapter.
+- `AquariumTankViewModel` receives a single application dependency.
+- Production and release-smoke use the same adapter binding.
+- Aquarium list, create, detail, settings, export and care-profile UI call-sites no longer consume data aquarium models.
+- Fake-backed ViewModel tests and the aquarium CI boundary guard are present.
+
+## Remaining care slice
+
+- Introduce application care task models and operations.
+- Move Smart Care synchronization and manual/automatic task commands behind the application adapter.
+- Remove data care repository/models from `MaintenanceViewModel` and maintenance UI.
+- Add deterministic fakes, behavior tests and a dedicated care boundary guard.
+
 ## Non-negotiable behavior
 
 - Tank create, update, duplicate and delete behavior remains unchanged.
