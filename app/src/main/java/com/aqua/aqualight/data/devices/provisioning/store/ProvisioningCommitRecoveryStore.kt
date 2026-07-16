@@ -89,7 +89,9 @@ class ProvisioningCommitRecoveryStore(
         val prefix = ownerPrefix(owner)
         withContext(Dispatchers.IO) {
             synchronized(LOCK) {
-                val matchingKeys = preferences.all.keys.filter(String::startsWith.bind(prefix))
+                val matchingKeys = preferences.all.keys.filter { key ->
+                    key.startsWith(prefix)
+                }
                 if (matchingKeys.isEmpty()) return@withContext
                 val editor = preferences.edit()
                 matchingKeys.forEach(editor::remove)
@@ -167,7 +169,9 @@ class ProvisioningCommitRecoveryStore(
         runtimeToken.trim().also { token ->
             require(
                 token.length == AqlBleProvisioningContract.RUNTIME_TOKEN_HEX_LENGTH &&
-                    token.all { character -> character.isDigit() || character.lowercaseChar() in 'a'..'f' }
+                    token.all { character ->
+                        character.isDigit() || character.lowercaseChar() in 'a'..'f'
+                    }
             ) {
                 "Provisioning runtime token is malformed."
             }
@@ -204,8 +208,4 @@ class ProvisioningCommitRecoveryStore(
         const val FIELD_SNAPSHOT = "snapshot"
         const val FIELD_RUNTIME_TOKEN = "runtime_token"
     }
-}
-
-private fun String.Companion.startsWith.bind(prefix: String): (String) -> Boolean = { value ->
-    value.startsWith(prefix)
 }
