@@ -15,6 +15,7 @@ import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningGattCl
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningGattEvent
 import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
+import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningCommitRecoveryStore
 import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningDraftStorage
 import com.aqua.aqualight.data.devices.toOwnerDeviceFamily
 import com.aqua.aqualight.data.user.UserDataScope
@@ -33,7 +34,9 @@ class DefaultProvisioningProgressOperations internal constructor(
     private val addressResolver = AqlBleProvisioningAddressResolver(appContext)
     private val gattClient = AqlBleProvisioningGattClient(appContext)
     private val handoffSaver = AqlProvisioningHandoffSaver(appContext)
+    private val commitRecoveryStore = ProvisioningCommitRecoveryStore(appContext)
     private val preparedSnapshots = ConcurrentHashMap<String, DeviceSnapshot>()
+    private val preparedRuntimeTokens = ConcurrentHashMap<String, String>()
 
     private constructor(
         context: Context,
@@ -102,6 +105,7 @@ class DefaultProvisioningProgressOperations internal constructor(
         }.map { snapshot ->
             val registrationId = UUID.randomUUID().toString()
             preparedSnapshots[registrationId] = snapshot
+            preparedRuntimeTokens[registrationId] = handoff.webSocketToken
             PreparedProvisioningRegistration(
                 registrationId = registrationId,
                 device = ProvisionedDevice(
@@ -120,23 +124,45 @@ class DefaultProvisioningProgressOperations internal constructor(
             ?: return Result.failure(
                 IllegalStateException("Prepared provisioning registration is unavailable.")
             )
+        val runtimeToken = preparedRuntimeTokens[registration.registrationId]
+            ?: return Result.failure(
+                IllegalStateException("Prepared provisioning runtime token is unavailable.")
+            )
         if (snapshot.deviceUid.value != registration.device.deviceUid) {
             return Result.failure(
                 IllegalStateException("Prepared provisioning registration identity changed.")
             )
         }
+
+        try {
+            commitRecoveryStore.record(
+                ownerUid = ownerUid,
+                snapshot = snapshot,
+                runtimeToken = runtimeToken
+            )
+        } catch (error: Throwable) {
+            return Result.failure(error)
+        }
+
         return UserDataScope.withOwnerUid(ownerUid) {
             handoffSaver.commitPreparedRegistration(snapshot)
         }.map { Unit }
-            .onSuccess { preparedSnapshots.remove(registration.registrationId) }
+            .onSuccess {
+                preparedSnapshots.remove(registration.registrationId)
+                preparedRuntimeTokens.remove(registration.registrationId)
+                clearCommitRecoveryRecord(snapshot.deviceUid)
+            }
     }
 
     override suspend fun rollbackProvisioningRegistration(
         deviceUid: String
     ): Result<Unit> {
+        val normalizedDeviceUid = DeviceUid(deviceUid)
         removePreparedSnapshot(deviceUid)
         return UserDataScope.withOwnerUid(ownerUid) {
-            handoffSaver.rollbackProvisioningRegistration(DeviceUid(deviceUid))
+            handoffSaver.rollbackProvisioningRegistration(normalizedDeviceUid)
+        }.onSuccess {
+            clearCommitRecoveryRecord(normalizedDeviceUid)
         }
     }
 
@@ -147,12 +173,15 @@ class DefaultProvisioningProgressOperations internal constructor(
         require(ownerUid == this.ownerUid) {
             "Provisioning rollback owner does not match the captured transaction owner."
         }
+        val normalizedDeviceUid = DeviceUid(deviceUid)
         removePreparedSnapshot(deviceUid)
         return UserDataScope.withOwnerUid(this.ownerUid) {
             handoffSaver.rollbackProvisioningRegistrationForOwner(
                 ownerUid = this@DefaultProvisioningProgressOperations.ownerUid,
-                deviceUid = DeviceUid(deviceUid)
+                deviceUid = normalizedDeviceUid
             )
+        }.onSuccess {
+            clearCommitRecoveryRecord(normalizedDeviceUid)
         }
     }
 
@@ -161,7 +190,16 @@ class DefaultProvisioningProgressOperations internal constructor(
             .filter { (_, snapshot) -> snapshot.deviceUid.value == deviceUid }
             .forEach { (registrationId, _) ->
                 preparedSnapshots.remove(registrationId)
+                preparedRuntimeTokens.remove(registrationId)
             }
+    }
+
+    private suspend fun clearCommitRecoveryRecord(deviceUid: DeviceUid) {
+        try {
+            commitRecoveryStore.clear(ownerUid, deviceUid)
+        } catch (error: Throwable) {
+            error.printStackTrace()
+        }
     }
 
     private data class OwnerProvisioningScope(
