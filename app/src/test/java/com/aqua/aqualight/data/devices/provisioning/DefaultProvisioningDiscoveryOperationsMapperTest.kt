@@ -4,6 +4,7 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningCandidate
 import com.aqua.aqualight.data.devices.provisioning.qr.AqlProvisioningQrPayload
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 
 class DefaultProvisioningDiscoveryOperationsMapperTest {
@@ -36,8 +37,8 @@ class DefaultProvisioningDiscoveryOperationsMapperTest {
     }
 
     @Test
-    fun `QR payload maps identity and claim fields without data types`() {
-        val mapped = AqlProvisioningQrPayload(
+    fun `QR payload maps identity and encrypted secret reference without claim data`() {
+        val source = AqlProvisioningQrPayload(
             version = 1,
             brand = "AquaLight",
             deviceUid = DeviceUid("device-1"),
@@ -51,7 +52,8 @@ class DefaultProvisioningDiscoveryOperationsMapperTest {
             claimCode = "claim-1",
             bleName = "AQL-SETUP-0001",
             raw = "raw-qr"
-        ).toApplicationPayload()
+        )
+        val mapped = source.toApplicationPayload("secret-reference-1")
 
         assertEquals("device-1", mapped.deviceUid)
         assertEquals("AQL-0001", mapped.serialNumber)
@@ -61,8 +63,9 @@ class DefaultProvisioningDiscoveryOperationsMapperTest {
         assertEquals("rev-a", mapped.hardwareRevision)
         assertEquals("sku-1", mapped.skuCode)
         assertEquals("provisioning-1", mapped.provisioningId)
-        assertEquals("claim-1", mapped.claimCode)
+        assertEquals("secret-reference-1", mapped.secretReference)
         assertEquals("AQL-SETUP-0001", mapped.bleName)
-        assertEquals("raw-qr", mapped.rawPayload)
+        assertFalse(mapped.toString().contains(source.claimCode))
+        assertFalse(mapped.toString().contains(source.raw))
     }
 }
