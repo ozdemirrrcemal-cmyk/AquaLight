@@ -7,14 +7,13 @@ import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningDraftStora
 import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningQrSecret
 import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningQrSecretStorage
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DefaultProvisioningDraftOperationsTest {
 
     @Test
-    fun `creates encrypted-storage draft from primitive application request`() {
+    fun `creates encrypted-storage draft and retains short-lived QR secret for retry`() {
         val storage = FakeProvisioningDraftStorage()
         val secretStorage = FakeProvisioningQrSecretStorage().apply {
             secrets["secret-reference-1"] = ProvisioningQrSecret(
@@ -45,7 +44,49 @@ class DefaultProvisioningDraftOperationsTest {
         assertEquals("secret-password", draft.wifiCredentials.password)
         assertEquals("Europe/Istanbul|180", draft.wifiCredentials.timezone)
         assertEquals(180, draft.wifiCredentials.utcOffsetMinutes)
-        assertFalse(secretStorage.secrets.containsKey("secret-reference-1"))
+        assertTrue(secretStorage.secrets.containsKey("secret-reference-1"))
+    }
+
+    @Test
+    fun `same QR secret creates replacement draft after Wi-Fi credential rejection`() {
+        val storage = FakeProvisioningDraftStorage()
+        val secretStorage = FakeProvisioningQrSecretStorage().apply {
+            secrets["secret-reference-1"] = ProvisioningQrSecret(
+                claimCode = "claim-1",
+                rawPayload = "raw-qr-secret"
+            )
+        }
+        val operations = DefaultProvisioningDraftOperations(
+            draftStore = storage,
+            qrSecretStore = secretStorage,
+            cachedBleAddress = { "" }
+        )
+
+        val rejectedSession = operations.createDraft(
+            request(
+                bleAddress = "AA:BB:CC:DD:EE:FF",
+                qrSecretReference = "secret-reference-1",
+                wifiPassword = "wrong-password"
+            )
+        ).getOrThrow()
+        val retrySession = operations.createDraft(
+            request(
+                bleAddress = "AA:BB:CC:DD:EE:FF",
+                qrSecretReference = "secret-reference-1",
+                wifiPassword = "correct-password"
+            )
+        ).getOrThrow()
+
+        assertEquals(
+            "wrong-password",
+            storage.get(rejectedSession.sessionId)?.wifiCredentials?.password
+        )
+        assertEquals(
+            "correct-password",
+            storage.get(retrySession.sessionId)?.wifiCredentials?.password
+        )
+        assertTrue(secretStorage.secrets.containsKey("secret-reference-1"))
+        assertEquals(2, storage.size)
     }
 
     @Test
@@ -90,7 +131,8 @@ class DefaultProvisioningDraftOperationsTest {
 
     private fun request(
         bleAddress: String,
-        qrSecretReference: String
+        qrSecretReference: String,
+        wifiPassword: String = "secret-password"
     ): ProvisioningDraftRequest = ProvisioningDraftRequest(
         candidateId = "candidate-1",
         bleAddress = bleAddress,
@@ -100,7 +142,7 @@ class DefaultProvisioningDraftOperationsTest {
         deviceSerial = "AQL-0001",
         deviceModel = "AQL-Pro",
         wifiSsid = "Home WiFi",
-        wifiPassword = "secret-password",
+        wifiPassword = wifiPassword,
         timezone = "Europe/Istanbul|180",
         utcOffsetMinutes = 180
     )
