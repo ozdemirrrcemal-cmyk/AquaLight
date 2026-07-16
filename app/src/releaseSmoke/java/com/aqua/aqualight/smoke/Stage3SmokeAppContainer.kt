@@ -26,6 +26,7 @@ import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscoveryOperations
+import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningProgressOperations
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.user.StartupAppearanceCache
@@ -38,6 +39,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewM
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectViewModel
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
 import com.aqua.aqualight.ui.tabs.devices.add.DeviceAddViewModel
+import com.aqua.aqualight.ui.tabs.devices.add.DeviceProvisioningProgressViewModel
 import com.aqua.aqualight.ui.tabs.devices.add.DeviceQrScanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
@@ -140,6 +142,12 @@ private class Stage3SmokeViewModelFactory(
                         context = appContext,
                         repository = devicesRepository
                     ),
+                    textResolver = appTextResolver
+                )
+
+            modelClass.isAssignableFrom(DeviceProvisioningProgressViewModel::class.java) ->
+                DeviceProvisioningProgressViewModel(
+                    operations = DefaultProvisioningProgressOperations(appContext),
                     textResolver = appTextResolver
                 )
 
