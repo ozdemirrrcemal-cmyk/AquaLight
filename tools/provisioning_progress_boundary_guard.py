@@ -75,17 +75,22 @@ if contract.is_file():
         "DeviceUid",
         "AqlProvisioning",
         "DeviceRoute",
+        "webSocketToken: String",
+        "val webSocketToken",
     ):
         if token in text:
-            errors.append(f"application progress contract leaks implementation type: {token}")
+            errors.append(f"application progress contract leaks implementation/credential: {token}")
     for token in (
         "interface ProvisioningProgressOperations",
         "data class ProvisioningSessionSnapshot",
+        "data class ProvisioningRuntimeHandoff",
+        "val handoffId: String",
         "data class PreparedProvisioningRegistration",
         "sealed interface ProvisioningTransportEvent",
         "suspend fun prepareRegistration",
         "suspend fun commitPreparedRegistration",
         "suspend fun rollbackProvisioningRegistrationForOwner",
+        "no credential crosses into UI",
     ):
         if token not in text:
             errors.append(f"application progress contract is incomplete: {token}")
@@ -99,7 +104,13 @@ if adapter.is_file():
         "draftStore.get",
         "OwnerProvisioningScope.create",
         "UserDataScope.withOwnerUid(ownerUid)",
+        "ConcurrentHashMap<String, AqlProvisioningRuntimeHandoff>",
         "ConcurrentHashMap<String, DeviceSnapshot>",
+        "preparedRuntimeTokens",
+        "preparedHandoffIds",
+        "registerRuntimeHandoff",
+        "requireDataHandoff",
+        "dataHandoff.webSocketToken",
         "registration.device.deviceUid",
         "removePreparedSnapshot",
     ):
@@ -111,11 +122,17 @@ if mapping.is_file():
     for token in (
         "toApplicationSession",
         "toApplicationEvent",
-        "toDataHandoff",
+        "toApplicationReference",
         "ProvisioningStatus.valueOf(status.name)",
     ):
         if token not in text:
             errors.append(f"provisioning progress mapping is missing: {token}")
+    for forbidden in (
+        "toDataHandoff",
+        "webSocketToken = webSocketToken",
+    ):
+        if forbidden in text:
+            errors.append(f"provisioning mapping exposes runtime credential: {forbidden}")
 
 if storage_port.is_file():
     text = storage_port.read_text(encoding="utf-8")
@@ -170,9 +187,10 @@ if view_model.is_file():
         "AqlProvisioningRuntimeHandoff",
         "DeviceSnapshot",
         "DeviceUid(",
+        "webSocketToken",
     ):
         if token in text:
-            errors.append(f"progress ViewModel contains forbidden implementation dependency: {token}")
+            errors.append(f"progress ViewModel contains forbidden implementation/credential: {token}")
 
 if event_contract.is_file():
     text = event_contract.read_text(encoding="utf-8")
@@ -186,9 +204,9 @@ if fragment.is_file():
     for token in ("ProvisionedDevice", "OwnerDeviceFamily"):
         if token not in text:
             errors.append(f"progress fragment is missing application navigation input: {token}")
-    for token in ("DeviceRoute", "DeviceRouteTarget"):
+    for token in ("DeviceRoute", "DeviceRouteTarget", "webSocketToken"):
         if token in text:
-            errors.append(f"progress fragment contains obsolete route model: {token}")
+            errors.append(f"progress fragment contains obsolete/credential model: {token}")
 
 for path in (production, smoke):
     if path.is_file():
@@ -206,6 +224,7 @@ if view_model_test.is_file():
         "start delegates session id and resolved BLE address",
         "runtime handoff and completion commit prepared registration",
         "transport failure after prepare rolls back pending registration",
+        "handoffId = \"handoff-1\"",
     ):
         if token not in text:
             errors.append(f"provisioning progress behavior coverage is missing: {token}")
@@ -217,6 +236,7 @@ if cancellation_test.is_file():
         "back after prepared handoff rolls back captured owner before exit",
         "rollbackProvisioningRegistrationForOwner",
         "assertEquals(0, operations.commitCalls)",
+        "handoffId = \"handoff-1\"",
     ):
         if token not in text:
             errors.append(f"provisioning cancellation coverage is missing: {token}")
@@ -236,7 +256,8 @@ if mapping_test.is_file():
     for token in (
         "draft session mapping hides WiFi password and claim data",
         "all provisioning statuses map with exact enum parity",
-        "runtime handoff round trip preserves endpoint and identity",
+        "runtime handoff exposes endpoint and identity without credential",
+        "assertFalse(mappedEvent.handoff.toString().contains(original.webSocketToken))",
         "device info event maps verified identity fields",
     ):
         if token not in text:
