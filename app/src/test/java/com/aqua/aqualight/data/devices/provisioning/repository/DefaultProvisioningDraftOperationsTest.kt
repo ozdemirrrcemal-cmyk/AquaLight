@@ -8,6 +8,7 @@ import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningQrSecret
 import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningQrSecretStorage
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DefaultProvisioningDraftOperationsTest {
