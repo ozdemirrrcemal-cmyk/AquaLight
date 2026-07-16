@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.application.user.UserProfileOperations
+import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
@@ -121,13 +122,14 @@ internal class AquaViewModelFactory(
             modelClass.isAssignableFrom(AquariumTankViewModel::class.java) -> {
                 val assignments = assignmentRepository()
                 AquariumTankViewModel(
-                    tankDataStoreManager = aquariumTankStore,
-                    careTaskDataStoreManager = careTaskStore,
-                    assignmentRepository = assignments,
-                    tankDataCleaner = OwnerTankDataCleaner(
-                        deleteTankRecords = aquariumTankStore::deleteTanks,
-                        deleteCareTasksForTank = careTaskStore::deleteTasksForTank,
-                        removeDeviceAssignmentsForTank = assignments::removeAssignmentsForTank
+                    operations = DefaultAquariumTankOperations(
+                        tankStore = aquariumTankStore,
+                        careTaskStore = careTaskStore,
+                        tankDataCleaner = OwnerTankDataCleaner(
+                            deleteTankRecords = aquariumTankStore::deleteTanks,
+                            deleteCareTasksForTank = careTaskStore::deleteTasksForTank,
+                            removeDeviceAssignmentsForTank = assignments::removeAssignmentsForTank
+                        )
                     )
                 )
             }
