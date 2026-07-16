@@ -90,7 +90,7 @@ internal class DefaultAppContainer(
     override val provisioningDraftOperations: ProvisioningDraftOperations by lazy(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
-        DefaultProvisioningDraftOperations()
+        DefaultProvisioningDraftOperations(appContext)
     }
 
     private val authRepository: AuthRepository by lazy(
