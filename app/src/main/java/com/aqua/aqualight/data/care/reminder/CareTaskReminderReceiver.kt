@@ -8,7 +8,6 @@ import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.auth.FirebaseAuthenticatedOwnerProvider
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.catalog.CareTaskTypeCatalog
-import com.aqua.aqualight.data.care.model.CareTaskStatus
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.utils.NotificationHelper
@@ -87,18 +86,6 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
                     return@launch
                 }
 
-                if (
-                    task.status != CareTaskStatus.PENDING ||
-                    !task.reminderEnabled
-                ) {
-                    CareTaskReminderScheduler.cancel(
-                        context = appContext,
-                        taskId = task.id,
-                        ownerUid = task.ownerUid.ifBlank { activeUid }
-                    )
-                    return@launch
-                }
-
                 val tanks = UserDataScope.withOwnerUid(activeUid) {
                     tankManager.tanksFlow.firstOrNull().orEmpty()
                 }
@@ -106,7 +93,7 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
                     candidate.id == task.tankId
                 }
 
-                if (tank == null || !tank.careRemindersEnabled) {
+                if (!CareReminderDeliveryPolicy.shouldDeliver(task, tank)) {
                     CareTaskReminderScheduler.cancel(
                         context = appContext,
                         taskId = task.id,
@@ -150,7 +137,7 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
                     )
                 }
 
-                val message = if (tank.name.isNotBlank()) {
+                val message = if (tank?.name?.isNotBlank() == true) {
                     appContext.getString(
                         R.string.maintenance_notification_message_with_aquarium,
                         tank.name,
