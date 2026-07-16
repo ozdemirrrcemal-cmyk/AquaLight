@@ -3,49 +3,36 @@ package com.aqua.aqualight.ui.tabs.aquarium
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
-import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
-import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
-import com.aqua.aqualight.data.aquarium.model.TankDraft
-import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
-import com.aqua.aqualight.data.aquarium.model.TankPlantTag
-import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
-import com.aqua.aqualight.data.care.CareTaskDataStoreManager
+import com.aqua.aqualight.application.aquarium.AquariumLivestock
+import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
+import com.aqua.aqualight.application.aquarium.AquariumPlantTag
+import com.aqua.aqualight.application.aquarium.AquariumTankDraft
+import com.aqua.aqualight.application.aquarium.AquariumTankOperations
+import com.aqua.aqualight.application.aquarium.AquariumTankSize
+import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
+import com.aqua.aqualight.application.aquarium.DeleteAquariumTanksResult
 
 class AquariumTankViewModel(
-    private val tankDataStoreManager: AquariumTankDataStoreManager,
-    private val careTaskDataStoreManager: CareTaskDataStoreManager,
-    private val assignmentRepository: TankDeviceAssignmentRepository,
-    private val tankDataCleaner: OwnerTankDataCleaner
+    private val operations: AquariumTankOperations
 ) : ViewModel() {
 
-    val tanks: LiveData<List<SavedAquariumTank>> =
-        tankDataStoreManager.tanksFlow.asLiveData()
+    val tanks: LiveData<List<AquariumTankSnapshot>> = operations.tanks.asLiveData()
 
-    suspend fun addTankFromDraft(draft: TankDraft): Long {
-        return tankDataStoreManager.addTankFromDraft(draft)
-    }
+    suspend fun addTankFromDraft(draft: AquariumTankDraft): Long = operations.addTank(draft)
 
-    suspend fun duplicateTank(tankId: Long): Long {
-        return tankDataStoreManager.duplicateTank(tankId)
-    }
+    suspend fun duplicateTank(tankId: Long): Long = operations.duplicateTank(tankId)
 
-    suspend fun deleteTanks(tankIds: List<Long>): OwnerTankDataCleaner.Result {
-        return tankDataCleaner.deleteTanks(tankIds)
-    }
+    suspend fun deleteTanks(tankIds: List<Long>): DeleteAquariumTanksResult =
+        operations.deleteTanks(tankIds)
 
-    suspend fun updateTankPhoto(tankId: Long, photoUri: String?) {
-        tankDataStoreManager.updateTankPhoto(tankId, photoUri)
-    }
+    suspend fun updateTankPhoto(tankId: Long, photoUri: String?) =
+        operations.updateTankPhoto(tankId, photoUri)
 
-    suspend fun updateTankName(tankId: Long, name: String) {
-        tankDataStoreManager.updateTankName(tankId, name)
-    }
+    suspend fun updateTankName(tankId: Long, name: String) =
+        operations.updateTankName(tankId, name)
 
-    suspend fun updateTankType(tankId: Long, tankType: String) {
-        tankDataStoreManager.updateTankType(tankId, tankType)
-    }
+    suspend fun updateTankType(tankId: Long, tankType: String) =
+        operations.updateTankType(tankId, tankType)
 
     suspend fun updateTankSize(
         tankId: Long,
@@ -53,85 +40,49 @@ class AquariumTankViewModel(
         lengthCm: Int,
         heightCm: Int,
         sizeUnit: String
-    ) {
-        tankDataStoreManager.updateTankSize(
-            tankId = tankId,
+    ) = operations.updateTankSize(
+        tankId = tankId,
+        size = AquariumTankSize(
             widthCm = widthCm,
             lengthCm = lengthCm,
             heightCm = heightCm,
             sizeUnit = sizeUnit
         )
-    }
+    )
 
-    suspend fun updateTankVolumeUnit(tankId: Long, volumeUnit: String) {
-        tankDataStoreManager.updateTankVolumeUnit(tankId, volumeUnit)
-    }
+    suspend fun updateTankVolumeUnit(tankId: Long, volumeUnit: String) =
+        operations.updateTankVolumeUnit(tankId, volumeUnit)
 
-    suspend fun updateTankSetupDate(tankId: Long, setupDateMillis: Long) {
-        tankDataStoreManager.updateTankSetupDate(tankId, setupDateMillis)
-    }
+    suspend fun updateTankSetupDate(tankId: Long, setupDateMillis: Long) =
+        operations.updateTankSetupDate(tankId, setupDateMillis)
 
-    suspend fun updateTankStyle(tankId: Long, tankStyle: String) {
-        tankDataStoreManager.updateTankStyle(tankId, tankStyle)
-    }
+    suspend fun updateTankStyle(tankId: Long, tankStyle: String) =
+        operations.updateTankStyle(tankId, tankStyle)
 
-    suspend fun updateTankDescription(tankId: Long, description: String) {
-        tankDataStoreManager.updateTankDescription(tankId, description)
-    }
+    suspend fun updateTankDescription(tankId: Long, description: String) =
+        operations.updateTankDescription(tankId, description)
 
     suspend fun updateTankMaterialsForCategory(
         tankId: Long,
         categoryKey: String,
-        materials: List<TankMaterialSelection>
-    ) {
-        tankDataStoreManager.updateTankMaterialsForCategory(
-            tankId = tankId,
-            categoryKey = categoryKey,
-            materials = materials
-        )
-    }
+        materials: List<AquariumMaterialSelection>
+    ) = operations.updateTankMaterials(tankId, categoryKey, materials)
 
-    suspend fun updateTankPlants(
-        tankId: Long,
-        plants: List<TankPlantTag>
-    ) {
-        tankDataStoreManager.updateTankPlants(
-            tankId = tankId,
-            plants = plants
-        )
-    }
+    suspend fun updateTankPlants(tankId: Long, plants: List<AquariumPlantTag>) =
+        operations.updateTankPlants(tankId, plants)
 
-    suspend fun addLivestockToTank(
-        tankId: Long,
-        livestock: SavedAquariumLivestock
-    ) {
-        tankDataStoreManager.addLivestockToTank(tankId, livestock)
-    }
+    suspend fun addLivestockToTank(tankId: Long, livestock: AquariumLivestock) =
+        operations.addLivestock(tankId, livestock)
 
-    suspend fun updateLivestockInTank(
-        tankId: Long,
-        livestock: SavedAquariumLivestock
-    ) {
-        tankDataStoreManager.updateLivestockInTank(tankId, livestock)
-    }
+    suspend fun updateLivestockInTank(tankId: Long, livestock: AquariumLivestock) =
+        operations.updateLivestock(tankId, livestock)
 
-    suspend fun removeLivestockFromTank(
-        tankId: Long,
-        livestockId: Long
-    ) {
-        tankDataStoreManager.removeLivestockFromTank(tankId, livestockId)
-    }
+    suspend fun removeLivestockFromTank(tankId: Long, livestockId: Long) =
+        operations.removeLivestock(tankId, livestockId)
 
-    suspend fun updateSmartCareEnabled(tankId: Long, enabled: Boolean) {
-        tankDataStoreManager.updateSmartCareEnabled(tankId, enabled)
-    }
+    suspend fun updateSmartCareEnabled(tankId: Long, enabled: Boolean) =
+        operations.updateSmartCareEnabled(tankId, enabled)
 
-    suspend fun updateCareRemindersEnabled(tankId: Long, enabled: Boolean) {
-        tankDataStoreManager.updateCareRemindersEnabled(tankId, enabled)
-        if (enabled) {
-            careTaskDataStoreManager.reschedulePendingRemindersForTank(tankId)
-        } else {
-            careTaskDataStoreManager.cancelPendingRemindersForTank(tankId)
-        }
-    }
+    suspend fun updateCareRemindersEnabled(tankId: Long, enabled: Boolean) =
+        operations.updateCareRemindersEnabled(tankId, enabled)
 }
