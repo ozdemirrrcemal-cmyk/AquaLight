@@ -8,6 +8,7 @@ TESTS = ROOT / "app/src/test/java/com/aqua/aqualight"
 
 contract = APP / "application/aquarium/AquariumTankOperations.kt"
 adapter = APP / "data/aquarium/DefaultAquariumTankOperations.kt"
+adapter_test = TESTS / "data/aquarium/DefaultAquariumTankOperationsMapperTest.kt"
 owner_scope = APP / "data/user/OwnerScopedDataOperation.kt"
 owner_scope_test = TESTS / "data/user/UserDataScopeTest.kt"
 view_model = APP / "ui/tabs/aquarium/AquariumTankViewModel.kt"
@@ -23,6 +24,7 @@ errors = []
 for path in (
     contract,
     adapter,
+    adapter_test,
     owner_scope,
     owner_scope_test,
     view_model,
@@ -45,6 +47,23 @@ if adapter.is_file():
         errors.append(
             "aquarium deletion and reminder mutation must remain pinned to one owner scope"
         )
+    for token in (
+        "toApplicationSnapshot",
+        "toDataDraft",
+        "toApplicationResult",
+    ):
+        if token not in text:
+            errors.append(f"aquarium adapter mapping is missing: {token}")
+
+if adapter_test.is_file():
+    text = read(adapter_test)
+    for token in (
+        "saved tank maps every UI-facing field without owner leakage",
+        "application draft maps nested values to persistence draft",
+        "delete result keeps public stages and hides throwable details",
+    ):
+        if token not in text:
+            errors.append(f"aquarium adapter mapping test is missing: {token}")
 
 if owner_scope.is_file():
     text = read(owner_scope)
