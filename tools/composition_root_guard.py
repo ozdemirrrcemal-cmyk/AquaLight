@@ -127,6 +127,9 @@ require(
     "modelClass in OWNER_BINDINGS",
     "val graph = ownerGraphResolver.requireActive()",
     "ownerUidProvider = { graph.ownerUid }",
+    "val currentGraph = ownerGraphResolver.requireActive()",
+    "currentGraph.devicesRepository === graph.devicesRepository",
+    "currentGraph.assignmentRepository === graph.assignmentRepository",
     "No owner-scoped ViewModel binding",
     "Authenticated owner changed while constructing",
 )
