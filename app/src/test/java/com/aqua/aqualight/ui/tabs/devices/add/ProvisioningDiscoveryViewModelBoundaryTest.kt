@@ -17,6 +17,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -51,7 +52,7 @@ class ProvisioningDiscoveryViewModelBoundaryTest {
     }
 
     @Test
-    fun `verified QR opens WiFi with application payload and candidate`() = runTest {
+    fun `verified QR opens WiFi with encrypted secret reference and candidate`() = runTest {
         val operations = FakeProvisioningDiscoveryOperations().apply {
             parsedPayload = qrPayload()
             awaitedCandidate = candidate()
@@ -69,8 +70,9 @@ class ProvisioningDiscoveryViewModelBoundaryTest {
         assertEquals(1, operations.awaitCalls)
         assertEquals("device-1", event.result.deviceUid)
         assertEquals("AA:BB:CC:DD:EE:FF", event.result.bleAddress)
-        assertEquals("claim-1", event.result.claimCode)
-        assertEquals("raw-qr", event.result.rawQrPayload)
+        assertEquals("secret-reference-1", event.result.qrSecretReference)
+        assertFalse(event.result.toString().contains("claim-1"))
+        assertFalse(event.result.toString().contains("raw-qr"))
     }
 
     @Test
@@ -172,9 +174,8 @@ class ProvisioningDiscoveryViewModelBoundaryTest {
         hardwareRevision = "rev-a",
         skuCode = "sku-1",
         provisioningId = "provisioning-1",
-        claimCode = "claim-1",
-        bleName = "AQL-SETUP-0001",
-        rawPayload = "raw-qr"
+        secretReference = "secret-reference-1",
+        bleName = "AQL-SETUP-0001"
     )
 
     class MainDispatcherRule(
