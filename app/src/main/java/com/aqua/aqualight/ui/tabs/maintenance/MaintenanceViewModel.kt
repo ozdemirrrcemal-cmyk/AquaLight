@@ -23,7 +23,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -60,6 +62,18 @@ class MaintenanceViewModel(
 
     val tanks: StateFlow<List<AquariumTankSnapshot>> = tanksFlow
     val selectedTab: StateFlow<MaintenanceTab> = selectedTabFlow
+
+    init {
+        viewModelScope.launch {
+            tanksFlow
+                .distinctUntilChanged()
+                .collectLatest { tanks ->
+                    if (tanks.isNotEmpty()) {
+                        operations.syncSmartCareTasks(tanks)
+                    }
+                }
+        }
+    }
 
     val tankCareSummaryItems: StateFlow<Map<Long, TankCareSummaryUi>> =
         combine(operations.tasks, tanksFlow) { tasks, tanks ->
@@ -143,11 +157,6 @@ class MaintenanceViewModel(
 
     fun setTanks(tanks: List<AquariumTankSnapshot>) {
         tanksFlow.value = tanks
-        if (tanks.isNotEmpty()) {
-            viewModelScope.launch {
-                operations.syncSmartCareTasks(tanks)
-            }
-        }
     }
 
     fun selectTab(tab: MaintenanceTab) {
