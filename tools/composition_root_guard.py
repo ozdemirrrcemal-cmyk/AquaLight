@@ -21,6 +21,7 @@ paths = {
     "aqua_app": SOURCE_ROOT / "app/AquaApp.kt",
     "auth_factory": SOURCE_ROOT / "ui/auth/viewmodel/AuthViewModelFactory.kt",
     "factory_test": ROOT / "app/src/test/java/com/aqua/aqualight/composition/AquaViewModelFactoryTest.kt",
+    "owner_session_test": ROOT / "app/src/test/java/com/aqua/aqualight/composition/OwnerDependencyGraphSessionTest.kt",
     "plan": ROOT / "docs/stage-3-dependency-boundaries-plan.md",
     "matrix": ROOT / "docs/stage-3-final-dependency-matrix.md",
 }
@@ -107,11 +108,21 @@ forbid("process_factory", "UserDataScope", "RepositoryProvider")
 require(
     "owner_graph",
     "internal data class OwnerDependencyGraph",
+    "val sessionGeneration: Long",
     "internal fun interface OwnerDependencyGraphResolver",
+    "internal fun requireActiveOwnerGeneration(",
+    "snapshot.activeOwnerUid == ownerUid",
+    "snapshot.pendingOwnerUid == null",
+    "OwnerSessionCoordinator.create(appContext)",
     "DevicesRepositoryProvider.currentRepository(ownerUid)",
     "TankDeviceAssignmentRepositoryProvider.currentRepository(ownerUid)",
+    "Authenticated owner session is not committed.",
     "Authenticated owner device runtime is not active.",
     "Authenticated owner assignment repository is not active.",
+    "confirmedGeneration == initialGeneration",
+    "sessionGeneration = synchronizedGeneration",
+    "DevicesRepositoryProvider.currentRepository(ownerUid) === devicesRepository",
+    "assignmentRepository",
     "ownerUidProvider = ownerUidProvider",
     "ResolvingProvisioningDraftOperations",
 )
@@ -127,11 +138,8 @@ require(
     "modelClass in OWNER_BINDINGS",
     "val graph = ownerGraphResolver.requireActive()",
     "ownerUidProvider = { graph.ownerUid }",
-    "val currentGraph = ownerGraphResolver.requireActive()",
-    "currentGraph.devicesRepository === graph.devicesRepository",
-    "currentGraph.assignmentRepository === graph.assignmentRepository",
     "No owner-scoped ViewModel binding",
-    "Authenticated owner changed while constructing",
+    "pending session is",
 )
 forbid(
     "owner_factory",
@@ -140,6 +148,8 @@ forbid(
     "DevicesRepositoryProvider",
     "TankDeviceAssignmentRepositoryProvider",
     "DefaultProvisioningProgressOperations(appContext)",
+    "val currentGraph = ownerGraphResolver.requireActive()",
+    "Authenticated owner changed while constructing",
 )
 
 require(
@@ -159,6 +169,13 @@ require(
     "routes exact process and owner bindings",
     "unknown ViewModel fails closed",
     "duplicate scope binding fails closed",
+)
+require(
+    "owner_session_test",
+    "committed matching owner exposes generation",
+    "pending transition fails before dependency construction",
+    "different active owner fails closed",
+    "signed out session fails closed",
 )
 require(
     "matrix",
