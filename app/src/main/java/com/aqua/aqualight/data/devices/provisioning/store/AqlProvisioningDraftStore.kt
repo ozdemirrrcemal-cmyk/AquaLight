@@ -21,7 +21,7 @@ class AqlProvisioningDraftStore(
     context: Context,
     private val ownerUidProvider: () -> String = UserDataScope::requireCurrentUid,
     private val clock: () -> Long = System::currentTimeMillis
-) {
+) : ProvisioningDraftStorage {
 
     private val preferences = EncryptedSharedPreferences.create(
         context.applicationContext,
@@ -33,17 +33,17 @@ class AqlProvisioningDraftStore(
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
     )
 
-    fun create(
+    override fun create(
         candidateId: String,
         bleAddress: String,
-        bleName: String = "",
-        claimCode: String = "",
-        rawQrPayload: String = "",
+        bleName: String,
+        claimCode: String,
+        rawQrPayload: String,
         deviceTitle: String,
         deviceSerial: String,
         deviceModel: String,
         wifiCredentials: AqlWifiCredentials,
-        createdAtMillis: Long = clock()
+        createdAtMillis: Long
     ): AqlProvisioningDraft {
         val ownerUid = requireOwnerUid()
         val draft = AqlProvisioningDraft(
@@ -76,7 +76,7 @@ class AqlProvisioningDraftStore(
         return draft
     }
 
-    fun get(sessionId: String): AqlProvisioningDraft? {
+    override fun get(sessionId: String): AqlProvisioningDraft? {
         if (sessionId.isBlank()) return null
         val ownerUid = requireOwnerUid()
         return synchronized(LOCK) {
@@ -94,7 +94,7 @@ class AqlProvisioningDraftStore(
         }
     }
 
-    fun remove(sessionId: String) {
+    override fun remove(sessionId: String) {
         if (sessionId.isBlank()) return
         val ownerUid = requireOwnerUid()
         synchronized(LOCK) {
@@ -106,7 +106,7 @@ class AqlProvisioningDraftStore(
         }
     }
 
-    fun clearOwner() {
+    override fun clearOwner() {
         val ownerUid = requireOwnerUid()
         synchronized(LOCK) {
             val editor = preferences.edit()
