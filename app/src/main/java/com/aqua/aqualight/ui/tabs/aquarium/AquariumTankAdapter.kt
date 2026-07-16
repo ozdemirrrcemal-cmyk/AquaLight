@@ -12,7 +12,7 @@ import coil3.load
 import coil3.request.crossfade
 import coil3.request.error
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.databinding.ItemAquariumTankBinding
 import com.aqua.aqualight.ui.tabs.maintenance.TankCareSummaryUi
 import java.text.SimpleDateFormat
@@ -21,9 +21,9 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 class AquariumTankAdapter(
-  private val onTankClick: (SavedAquariumTank) -> Unit,
-  private val onTankLongClick: (SavedAquariumTank) -> Unit
-) : ListAdapter<SavedAquariumTank, AquariumTankAdapter.TankViewHolder>(DiffCallback) {
+  private val onTankClick: (AquariumTankSnapshot) -> Unit,
+  private val onTankLongClick: (AquariumTankSnapshot) -> Unit
+) : ListAdapter<AquariumTankSnapshot, AquariumTankAdapter.TankViewHolder>(DiffCallback) {
 
   private var isDeleteMode: Boolean = false
   private var selectedTankIds: Set<Long> = emptySet()
@@ -79,12 +79,12 @@ class AquariumTankAdapter(
 
   class TankViewHolder(
     private val binding: ItemAquariumTankBinding,
-    private val onTankClick: (SavedAquariumTank) -> Unit,
-    private val onTankLongClick: (SavedAquariumTank) -> Unit
+    private val onTankClick: (AquariumTankSnapshot) -> Unit,
+    private val onTankLongClick: (AquariumTankSnapshot) -> Unit
   ) : RecyclerView.ViewHolder(binding.root) {
 
     fun bind(
-      tank: SavedAquariumTank,
+      tank: AquariumTankSnapshot,
       careSummary: TankCareSummaryUi?,
       isDeleteMode: Boolean,
       isSelected: Boolean
@@ -148,7 +148,7 @@ class AquariumTankAdapter(
     }
 
     private fun bindTankPhoto(
-      tank: SavedAquariumTank
+      tank: AquariumTankSnapshot
     ) {
       val photoUri = tank.photoUri
         ?.trim()
@@ -197,7 +197,7 @@ class AquariumTankAdapter(
 
     private fun getTankSizeText(
       context: Context,
-      tank: SavedAquariumTank
+      tank: AquariumTankSnapshot
     ): String {
       return context.getString(
         R.string.aquarium_tank_size_card_format,
@@ -248,18 +248,18 @@ class AquariumTankAdapter(
     }
   }
 
-  private object DiffCallback : DiffUtil.ItemCallback<SavedAquariumTank>() {
+  private object DiffCallback : DiffUtil.ItemCallback<AquariumTankSnapshot>() {
 
     override fun areItemsTheSame(
-      oldItem: SavedAquariumTank,
-      newItem: SavedAquariumTank
+      oldItem: AquariumTankSnapshot,
+      newItem: AquariumTankSnapshot
     ): Boolean {
       return oldItem.id == newItem.id
     }
 
     override fun areContentsTheSame(
-      oldItem: SavedAquariumTank,
-      newItem: SavedAquariumTank
+      oldItem: AquariumTankSnapshot,
+      newItem: AquariumTankSnapshot
     ): Boolean {
       return oldItem == newItem
     }
