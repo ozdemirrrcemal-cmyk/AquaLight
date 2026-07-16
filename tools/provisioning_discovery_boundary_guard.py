@@ -64,6 +64,7 @@ if contract.is_file():
             errors.append(f"application discovery contract leaks implementation/secret: {token}")
     for token in (
         "interface ProvisioningDiscoveryOperations",
+        "fun discardQrPayload(payload: ProvisioningQrPayload)",
         "data class ProvisioningCandidateSnapshot",
         "data class ProvisioningQrPayload",
         "val secretReference: String",
@@ -82,6 +83,8 @@ if adapter.is_file():
         "ProvisioningQrSecretStorage",
         "AqlProvisioningQrSecretStore",
         "qrSecretStore.create",
+        "override fun discardQrPayload",
+        "qrSecretStore.remove(payload.secretReference)",
         "payload.toApplicationPayload(secretReference)",
         "toApplicationSnapshot",
     ):
@@ -139,6 +142,16 @@ for path in (nearby_vm, qr_vm):
     ):
         if token in text:
             errors.append(f"{path.relative_to(ROOT)} contains forbidden discovery/secret dependency: {token}")
+
+if qr_vm.is_file():
+    text = qr_vm.read_text(encoding="utf-8")
+    for token in (
+        "discardPendingPayload()",
+        "pendingPayload?.let(discoveryOperations::discardQrPayload)",
+        "override fun onCleared()",
+    ):
+        if token not in text:
+            errors.append(f"QR ViewModel secret cleanup is incomplete: {token}")
 
 if qr_decoder.is_file():
     text = qr_decoder.read_text(encoding="utf-8")
@@ -222,7 +235,10 @@ if view_model_test.is_file():
         "nearby scan renders application candidates through one discovery boundary",
         "verified QR opens WiFi with encrypted secret reference and candidate",
         "assertFalse(event.result.toString().contains(\"claim-1\"))",
-        "registered QR without setup candidate remains blocked",
+        "registered QR without setup candidate discards secret and remains blocked",
+        "scan again discards pending QR secret before resetting",
+        "override fun discardQrPayload",
+        "discardedReferences",
     ):
         if token not in text:
             errors.append(f"provisioning discovery ViewModel coverage is missing: {token}")
