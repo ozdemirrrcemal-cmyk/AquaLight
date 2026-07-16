@@ -20,6 +20,8 @@ fragment = APP / "ui/tabs/devices/add/DeviceProvisioningProgressFragment.kt"
 production = APP / "composition/AquaViewModelFactory.kt"
 smoke = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/Stage3SmokeAppContainer.kt"
 view_model_test = TESTS / "ui/tabs/devices/add/DeviceProvisioningProgressViewModelBoundaryTest.kt"
+cancellation_test = TESTS / "ui/tabs/devices/add/DeviceProvisioningCancellationBoundaryTest.kt"
+presenter_test = TESTS / "ui/tabs/devices/add/ProvisioningProgressPresenterTest.kt"
 mapping_test = TESTS / "data/devices/provisioning/ProvisioningProgressMappingTest.kt"
 draft_test = TESTS / "data/devices/provisioning/repository/DefaultProvisioningDraftOperationsTest.kt"
 process_test = (
@@ -43,6 +45,8 @@ required = (
     production,
     smoke,
     view_model_test,
+    cancellation_test,
+    presenter_test,
     mapping_test,
     draft_test,
     process_test,
@@ -205,6 +209,27 @@ if view_model_test.is_file():
     ):
         if token not in text:
             errors.append(f"provisioning progress behavior coverage is missing: {token}")
+
+if cancellation_test.is_file():
+    text = cancellation_test.read_text(encoding="utf-8")
+    for token in (
+        "back before runtime handoff closes transport removes session and exits",
+        "back after prepared handoff rolls back captured owner before exit",
+        "rollbackProvisioningRegistrationForOwner",
+        "assertEquals(0, operations.commitCalls)",
+    ):
+        if token not in text:
+            errors.append(f"provisioning cancellation coverage is missing: {token}")
+
+if presenter_test.is_file():
+    text = presenter_test.read_text(encoding="utf-8")
+    for token in (
+        "wrong WiFi password returns password correction without progress",
+        "missing WiFi network returns SSID correction",
+        "device network save failure remains on progress recovery instead of blaming credentials",
+    ):
+        if token not in text:
+            errors.append(f"provisioning WiFi recovery coverage is missing: {token}")
 
 if mapping_test.is_file():
     text = mapping_test.read_text(encoding="utf-8")
