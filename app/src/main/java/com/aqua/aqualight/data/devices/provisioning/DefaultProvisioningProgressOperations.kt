@@ -131,8 +131,10 @@ class DefaultProvisioningProgressOperations(
     }
 
     private fun removePreparedSnapshot(deviceUid: String) {
-        preparedSnapshots.entries.removeIf { (_, snapshot) ->
-            snapshot.deviceUid.value == deviceUid
-        }
+        preparedSnapshots.entries
+            .filter { (_, snapshot) -> snapshot.deviceUid.value == deviceUid }
+            .forEach { (registrationId, _) ->
+                preparedSnapshots.remove(registrationId)
+            }
     }
 }
