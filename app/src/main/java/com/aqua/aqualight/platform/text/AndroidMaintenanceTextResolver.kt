@@ -4,8 +4,7 @@ import android.content.Context
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.care.CareTaskSource
 import com.aqua.aqualight.application.care.CareTaskType
-import com.aqua.aqualight.data.care.catalog.CareTaskTypeCatalog
-import com.aqua.aqualight.data.care.model.CareTaskType as DataCareTaskType
+import com.aqua.aqualight.ui.tabs.maintenance.text.CareTaskTypeCatalog
 import com.aqua.aqualight.ui.tabs.maintenance.text.CareTaskTypePresentation
 import com.aqua.aqualight.ui.tabs.maintenance.text.MaintenanceTextResolver
 
@@ -16,7 +15,7 @@ class AndroidMaintenanceTextResolver(
     private val appContext = context.applicationContext
 
     override fun typePresentation(type: CareTaskType): CareTaskTypePresentation {
-        val definition = CareTaskTypeCatalog.get(DataCareTaskType.valueOf(type.name))
+        val definition = CareTaskTypeCatalog.get(type)
         return CareTaskTypePresentation(
             title = definition.title(appContext),
             defaultDescription = definition.defaultDescription(appContext),
