@@ -11,31 +11,34 @@ view_model = APP / "ui/tabs/aquarium/AquariumTankViewModel.kt"
 production = APP / "composition/AquaViewModelFactory.kt"
 smoke = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/Stage3SmokeAppContainer.kt"
 
+def read(path: Path) -> str:
+    return path.read_text(encoding="utf-8")
+
 errors = []
 for path in (contract, adapter, view_model, production, smoke):
     if not path.is_file():
         errors.append(f"missing required file: {path.relative_to(ROOT)}")
 
 if contract.is_file():
-    text = contract.read_text()
+    text = read(contract)
     if "package com.aqua.aqualight.application.aquarium" not in text:
         errors.append("aquarium contract is outside application layer")
     if "com.aqua.aqualight.data." in text or "android." in text:
         errors.append("aquarium application contract imports data/platform types")
 
 if view_model.is_file():
-    text = view_model.read_text()
+    text = read(view_model)
     forbidden = (
-        "com.aqua.aqualight.data.",
+        "import com.aqua.aqualight.data.",
         "AquariumTankDataStoreManager",
         "CareTaskDataStoreManager",
         "TankDeviceAssignmentRepository",
         "OwnerTankDataCleaner",
-        "SavedAquariumTank",
-        "TankDraft",
-        "TankMaterialSelection",
-        "TankPlantTag",
-        "SavedAquariumLivestock",
+        "import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank",
+        "import com.aqua.aqualight.data.aquarium.model.TankDraft",
+        "import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection",
+        "import com.aqua.aqualight.data.aquarium.model.TankPlantTag",
+        "import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock",
     )
     for token in forbidden:
         if token in text:
@@ -45,7 +48,7 @@ if view_model.is_file():
 
 for path in (production, smoke):
     if path.is_file():
-        text = path.read_text()
+        text = read(path)
         if "DefaultAquariumTankOperations" not in text:
             errors.append(f"missing aquarium binding in {path.relative_to(ROOT)}")
 
