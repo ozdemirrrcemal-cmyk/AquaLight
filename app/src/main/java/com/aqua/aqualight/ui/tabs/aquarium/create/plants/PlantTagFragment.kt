@@ -6,18 +6,18 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navGraphViewModels
-import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
-import com.aqua.aqualight.ui.tabs.aquarium.plants.PlantTagUiRenderer
 import coil3.load
 import coil3.request.crossfade
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.aquarium.model.TankPlantTag
+import com.aqua.aqualight.application.aquarium.AquariumPlantTag
 import com.aqua.aqualight.databinding.FragmentPlantTagBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderCardIconAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderCardIconTone
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
+import com.aqua.aqualight.ui.tabs.aquarium.plants.PlantTagUiRenderer
 
 class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
 
@@ -25,28 +25,17 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
     private val binding get() = _binding!!
 
     private val viewModel: CreateTankViewModel by navGraphViewModels(R.id.nav_create_tank)
-
-    private val selectedPlants = mutableListOf<TankPlantTag>()
+    private val selectedPlants = mutableListOf<AquariumPlantTag>()
 
     private var pendingMarkerX: Float = 0.5f
     private var pendingMarkerY: Float = 0.5f
-
     private var hasInitializedSelectedPlants: Boolean = false
     private var isOpeningPlantPicker: Boolean = false
 
-    override fun onViewCreated(
-        view: View,
-        savedInstanceState: Bundle?
-    ) {
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
-
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         _binding = FragmentPlantTagBinding.bind(view)
-
         initializeSelectedPlantsIfNeeded()
-
         setupHeader()
         setupImage()
         setupResultListener()
@@ -61,10 +50,7 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
     }
 
     private fun initializeSelectedPlantsIfNeeded() {
-        if (hasInitializedSelectedPlants) {
-            return
-        }
-
+        if (hasInitializedSelectedPlants) return
         selectedPlants.clear()
         selectedPlants.addAll(viewModel.tankDraft.plants)
         hasInitializedSelectedPlants = true
@@ -75,16 +61,12 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
             fragment = this,
             config = AquaHeaderConfig(
                 titleOverride = getString(R.string.aquarium_tag_plants_title),
-                onBackClick = {
-                    closePlantTagFlow()
-                },
+                onBackClick = ::closePlantTagFlow,
                 cardIconAction = AquaHeaderCardIconAction(
                     iconRes = R.drawable.ic_check_24,
                     contentDescription = getString(R.string.aquarium_confirm),
                     tone = AquaHeaderCardIconTone.SUCCESS,
-                    onClick = {
-                        confirmPlantTags()
-                    }
+                    onClick = ::confirmPlantTags
                 )
             )
         )
@@ -92,11 +74,8 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
 
     private fun setupImage() {
         val photoUri = viewModel.tankDraft.photoUri
-
         if (!photoUri.isNullOrBlank()) {
-            binding.imgAquariumPhoto.load(photoUri) {
-                crossfade(true)
-            }
+            binding.imgAquariumPhoto.load(photoUri) { crossfade(true) }
         } else {
             binding.imgAquariumPhoto.setImageResource(R.drawable.nature_aquarium)
         }
@@ -111,9 +90,7 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
         savedStateHandle.getLiveData<Bundle?>(
             PlantPickerFragment.RESULT_BUNDLE_KEY
         ).observe(viewLifecycleOwner) { bundle ->
-            if (bundle == null) {
-                return@observe
-            }
+            if (bundle == null) return@observe
 
             savedStateHandle.set<Bundle?>(
                 PlantPickerFragment.RESULT_BUNDLE_KEY,
@@ -123,20 +100,18 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
             val plantName = bundle.getString(
                 PlantPickerFragment.RESULT_PLANT_NAME
             ) ?: return@observe
-
             val category = bundle.getString(
                 PlantPickerFragment.RESULT_PLANT_CATEGORY
             ) ?: return@observe
 
             selectedPlants.add(
-                TankPlantTag(
+                AquariumPlantTag(
                     plantName = plantName,
                     category = category,
                     markerX = pendingMarkerX,
                     markerY = pendingMarkerY
                 )
             )
-
             renderPlants()
             renderMarkers()
         }
@@ -149,36 +124,26 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
                 pendingMarkerY = event.y / view.height.toFloat()
 
                 if (!isOpeningPlantPicker) {
-                    val didNavigate = findNavController().navigateSafelyFrom(
+                    isOpeningPlantPicker = findNavController().navigateSafelyFrom(
                         sourceDestinationId = R.id.createPlantTagFragment,
                         directions = PlantTagFragmentDirections
                             .actionCreatePlantTagFragmentToCreatePlantPickerFragment(
                                 useNavResult = true
                             )
                     )
-
-                    isOpeningPlantPicker = didNavigate
                 }
-
                 view.performClick()
-                true
-            } else {
-                true
             }
+            true
         }
     }
 
     private fun confirmPlantTags() {
         viewModel.updateTankPlants(selectedPlants)
-
         findNavController()
             .previousBackStackEntry
             ?.savedStateHandle
-            ?.set(
-                RESULT_KEY,
-                true
-            )
-
+            ?.set(RESULT_KEY, true)
         closePlantTagFlow()
     }
 

@@ -12,14 +12,14 @@ import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.application.user.UserProfileSnapshot
 import com.aqua.aqualight.application.user.UserSettingsOperations
 import com.aqua.aqualight.composition.AppContainer
+import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentStore
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
-import com.aqua.aqualight.data.care.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
-import com.aqua.aqualight.data.care.DefaultMaintenanceRepository
+import com.aqua.aqualight.data.care.DefaultMaintenanceOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceFirmwareUpdateOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
@@ -30,6 +30,7 @@ import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.user.StartupAppearanceCache
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.platform.auth.GoogleIdentityClient
+import com.aqua.aqualight.platform.text.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectViewModel
@@ -90,7 +91,7 @@ private class Stage3SmokeViewModelFactory(
         assignmentStore = TankDeviceAssignmentStore.get(appContext),
         tankStore = tankStore
     )
-    private val maintenanceRepository = DefaultMaintenanceRepository(
+    private val maintenanceOperations = DefaultMaintenanceOperations(
         context = appContext,
         manager = careTaskStore
     )
@@ -121,20 +122,21 @@ private class Stage3SmokeViewModelFactory(
 
             modelClass.isAssignableFrom(AquariumTankViewModel::class.java) ->
                 AquariumTankViewModel(
-                    tankDataStoreManager = tankStore,
-                    careTaskDataStoreManager = careTaskStore,
-                    assignmentRepository = assignmentRepository,
-                    tankDataCleaner = OwnerTankDataCleaner(
-                        deleteTankRecords = tankStore::deleteTanks,
-                        deleteCareTasksForTank = careTaskStore::deleteTasksForTank,
-                        removeDeviceAssignmentsForTank =
-                            assignmentRepository::removeAssignmentsForTank
+                    operations = DefaultAquariumTankOperations(
+                        tankStore = tankStore,
+                        careTaskStore = careTaskStore,
+                        tankDataCleaner = OwnerTankDataCleaner(
+                            deleteTankRecords = tankStore::deleteTanks,
+                            deleteCareTasksForTank = careTaskStore::deleteTasksForTank,
+                            removeDeviceAssignmentsForTank =
+                                assignmentRepository::removeAssignmentsForTank
+                        )
                     )
                 )
 
             modelClass.isAssignableFrom(MaintenanceViewModel::class.java) ->
                 MaintenanceViewModel(
-                    repository = maintenanceRepository,
+                    operations = maintenanceOperations,
                     textResolver = maintenanceTextResolver
                 )
 

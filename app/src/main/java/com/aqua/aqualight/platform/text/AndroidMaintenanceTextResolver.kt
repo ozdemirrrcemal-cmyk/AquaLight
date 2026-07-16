@@ -1,49 +1,12 @@
-package com.aqua.aqualight.data.care
+package com.aqua.aqualight.platform.text
 
 import android.content.Context
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.care.catalog.CareTaskTypeCatalog
-import com.aqua.aqualight.data.care.model.CareTaskSource
-import com.aqua.aqualight.data.care.model.CareTaskType
-
-interface MaintenanceTextResolver {
-    fun typePresentation(type: CareTaskType): CareTaskTypePresentation
-
-    fun waterChangeTitle(typeTitle: String, percent: Int): String
-
-    fun sourceLabel(source: CareTaskSource): String
-
-    fun completedStatus(): String
-
-    fun completedTime(timeText: String): String
-
-    fun repeatTime(timeText: String, repeatDays: Int): String
-
-    fun reminderWithMissedDays(days: Int): String
-
-    fun reminderActive(): String
-
-    fun overdue(): String
-
-    fun today(): String
-
-    fun tomorrow(): String
-
-    fun daysLater(days: Long): String
-
-    fun oneDayAgo(): String
-
-    fun daysAgo(days: Long): String
-
-    fun unknownAquarium(): String
-}
-
-data class CareTaskTypePresentation(
-    val title: String,
-    val defaultDescription: String,
-    val iconRes: Int,
-    val accentColor: String
-)
+import com.aqua.aqualight.application.care.CareTaskSource
+import com.aqua.aqualight.application.care.CareTaskType
+import com.aqua.aqualight.ui.tabs.maintenance.text.CareTaskTypeCatalog
+import com.aqua.aqualight.ui.tabs.maintenance.text.CareTaskTypePresentation
+import com.aqua.aqualight.ui.tabs.maintenance.text.MaintenanceTextResolver
 
 class AndroidMaintenanceTextResolver(
     context: Context
@@ -68,11 +31,9 @@ class AndroidMaintenanceTextResolver(
             percent
         )
 
-    override fun sourceLabel(source: CareTaskSource): String {
-        return when (source) {
-            CareTaskSource.MANUAL -> appContext.getString(R.string.maintenance_manual_source)
-            CareTaskSource.AUTOMATIC -> appContext.getString(R.string.maintenance_smart_source)
-        }
+    override fun sourceLabel(source: CareTaskSource): String = when (source) {
+        CareTaskSource.MANUAL -> appContext.getString(R.string.maintenance_manual_source)
+        CareTaskSource.AUTOMATIC -> appContext.getString(R.string.maintenance_smart_source)
     }
 
     override fun completedStatus(): String =

@@ -22,7 +22,7 @@ import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentTankLivestockFormBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCategories
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
+import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.data.aquarium.util.AquariumIdGenerator
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
@@ -146,7 +146,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
     }
 
     private fun bindEditingLivestock(
-        livestock: SavedAquariumLivestock
+        livestock: AquariumLivestock
     ) {
         selectedCategory = livestock.category.ifBlank {
             LivestockCategories.FISH
@@ -411,7 +411,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
             return
         }
 
-        val livestock = SavedAquariumLivestock(
+        val livestock = AquariumLivestock(
             id = if (editingLivestockId > 0L) {
                 editingLivestockId
             } else {

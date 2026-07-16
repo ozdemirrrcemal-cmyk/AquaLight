@@ -17,7 +17,7 @@ import coil3.request.crossfade
 import coil3.request.error
 import coil3.request.placeholder
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.databinding.FragmentTankDetailBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -45,7 +45,7 @@ class TankDetailFragment :
 
     private var tankId: Long = 0L
     private var selectedTab: TankDetailTab = TankDetailTab.DEVICES
-    private var currentTank: SavedAquariumTank? = null
+    private var currentTank: AquariumTankSnapshot? = null
     private var tabHost: AquaSwipeTabHost<TankDetailTab>? = null
 
     override fun onCreate(
@@ -439,7 +439,7 @@ class TankDetailFragment :
     }
 
     private fun bindTank(
-        tank: SavedAquariumTank
+        tank: AquariumTankSnapshot
     ) {
         currentTank =
             tank

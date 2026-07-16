@@ -33,7 +33,7 @@ import com.aqua.aqualight.ui.common.timeline.TimelineDayStatus
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
 import com.aqua.aqualight.ui.tabs.maintenance.TankActivityUiState
 import com.aqua.aqualight.ui.tabs.maintenance.TankNextCareStatus
-import com.aqua.aqualight.data.care.model.CareTaskType
+import com.aqua.aqualight.application.care.CareTaskType
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType

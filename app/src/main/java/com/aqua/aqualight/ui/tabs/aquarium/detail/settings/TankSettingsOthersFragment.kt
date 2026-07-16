@@ -7,13 +7,13 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
+import com.aqua.aqualight.application.aquarium.DeleteAquariumTanksResult
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
-import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.databinding.FragmentTankSettingsOthersBinding
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.export.TankPdfExporter
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import java.util.concurrent.CancellationException
@@ -28,9 +28,8 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
 
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
-
     private var tankId: Long = 0L
-    private var currentTank: SavedAquariumTank? = null
+    private var currentTank: AquariumTankSnapshot? = null
 
     private var isDeletingTank: Boolean = false
     private var isDuplicatingTank: Boolean = false
@@ -63,11 +62,11 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
     private fun setupClickListeners() {
         binding.rowSmartCareSuggestions.setOnClickListener {
             binding.switchSmartCareSuggestions.isChecked =
-            !binding.switchSmartCareSuggestions.isChecked
+                !binding.switchSmartCareSuggestions.isChecked
         }
 
         binding.switchSmartCareSuggestions.setOnCheckedChangeListener {
-            _, isChecked ->
+                _, isChecked ->
             if (!isUpdatingSwitchesProgrammatically) {
                 updateSmartCareEnabled(
                     enabled = isChecked
@@ -77,11 +76,11 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
 
         binding.rowCareReminderNotifications.setOnClickListener {
             binding.switchCareReminderNotifications.isChecked =
-            !binding.switchCareReminderNotifications.isChecked
+                !binding.switchCareReminderNotifications.isChecked
         }
 
         binding.switchCareReminderNotifications.setOnCheckedChangeListener {
-            _, isChecked ->
+                _, isChecked ->
             if (!isUpdatingSwitchesProgrammatically) {
                 updateCareRemindersEnabled(
                     enabled = isChecked
@@ -104,9 +103,9 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
 
     private fun observeTank() {
         aquariumTankViewModel.tanks.observe(viewLifecycleOwner) {
-            tanks ->
+                tanks ->
             val tank = tanks.firstOrNull {
-                savedTank ->
+                    savedTank ->
                 savedTank.id == tankId
             }
 
@@ -134,15 +133,15 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
     }
 
     private fun updateSwitchesFromTank(
-        tank: SavedAquariumTank
+        tank: AquariumTankSnapshot
     ) {
         isUpdatingSwitchesProgrammatically = true
 
         binding.switchSmartCareSuggestions.isChecked =
-        tank.smartCareEnabled
+            tank.smartCareEnabled
 
         binding.switchCareReminderNotifications.isChecked =
-        tank.careRemindersEnabled
+            tank.careRemindersEnabled
 
         isUpdatingSwitchesProgrammatically = false
     }
@@ -232,7 +231,6 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
 
         isDuplicatingTank = true
 
-        val baseActivity = activity as? BaseActivity
         setFragmentGlobalLoading(true)
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -279,7 +277,6 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
         isExportingTank = true
 
         val appContext = requireContext().applicationContext
-        val baseActivity = activity as? BaseActivity
 
         setFragmentGlobalLoading(true)
 
@@ -344,7 +341,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
         isDeletingTank = true
 
         (parentFragment as? TankSettingsFragment)
-        ?.markTankDeletionInProgress()
+            ?.markTankDeletionInProgress()
 
         setFragmentGlobalLoading(true)
 
@@ -355,22 +352,18 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
                         tankIds = listOf(tankId)
                     )
                 ) {
-                    OwnerTankDataCleaner.Result.NoOp -> {
+                    DeleteAquariumTanksResult.NoOp -> {
                         throw IllegalArgumentException(
                             "Tank deletion requires a valid tank id."
                         )
                     }
 
-                    is OwnerTankDataCleaner.Result.DeleteFailed -> {
-                        throw result.error
+                    DeleteAquariumTanksResult.DeleteFailed -> {
+                        throw IllegalStateException("Tank deletion failed.")
                     }
 
-                    is OwnerTankDataCleaner.Result.Deleted -> {
+                    is DeleteAquariumTanksResult.Deleted -> {
                         if (result.hasCleanupIssues) {
-                            result.cleanupIssues.forEach { issue ->
-                                issue.error.printStackTrace()
-                            }
-
                             showSnackBar(
                                 message = getString(
                                     R.string.aquarium_delete_cleanup_warning_message

@@ -8,7 +8,6 @@ import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.auth.FirebaseAuthenticatedOwnerProvider
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.catalog.CareTaskTypeCatalog
-import com.aqua.aqualight.data.care.model.CareTaskStatus
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.utils.NotificationHelper
@@ -87,10 +86,14 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
                     return@launch
                 }
 
-                if (
-                    task.status != CareTaskStatus.PENDING ||
-                    !task.reminderEnabled
-                ) {
+                val tanks = UserDataScope.withOwnerUid(activeUid) {
+                    tankManager.tanksFlow.firstOrNull().orEmpty()
+                }
+                val tank = tanks.firstOrNull { candidate ->
+                    candidate.id == task.tankId
+                }
+
+                if (!CareReminderDeliveryPolicy.shouldDeliver(task, tank)) {
                     CareTaskReminderScheduler.cancel(
                         context = appContext,
                         taskId = task.id,
@@ -98,13 +101,6 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
                     )
                     return@launch
                 }
-
-                val tanks = UserDataScope.withOwnerUid(activeUid) {
-                    tankManager.tanksFlow.firstOrNull().orEmpty()
-                }
-                val aquariumName = tanks.firstOrNull { tank ->
-                    tank.id == task.tankId
-                }?.name.orEmpty()
 
                 // Owner can change while stores are being read. Never render an
                 // old owner's reminder into the new owner's foreground session.
@@ -141,10 +137,10 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
                     )
                 }
 
-                val message = if (aquariumName.isNotBlank()) {
+                val message = if (tank?.name?.isNotBlank() == true) {
                     appContext.getString(
                         R.string.maintenance_notification_message_with_aquarium,
-                        aquariumName,
+                        tank.name,
                         bodyText
                     )
                 } else {

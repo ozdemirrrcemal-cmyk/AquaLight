@@ -14,8 +14,8 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemCareTaskBinding
-import com.aqua.aqualight.data.care.model.CareTaskSource
-import com.aqua.aqualight.data.care.model.CareTaskStatus
+import com.aqua.aqualight.application.care.CareTaskSource
+import com.aqua.aqualight.application.care.CareTaskStatus
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import java.text.SimpleDateFormat
 import java.util.Calendar

@@ -216,14 +216,22 @@ for token, reason in (
         errors.append(f"{FEATURE_FACTORY_PATH.relative_to(ROOT)}: {reason}: {token}")
 
 for token, reason in (
-    ("FakeMaintenanceRepository", "maintenance needs a deterministic fake repository"),
+    ("FakeMaintenanceOperations", "maintenance needs deterministic application-operation fakes"),
     (
         "empty tank input does not start Smart Care synchronization",
         "empty tank behavior needs regression coverage",
     ),
     (
-        "manual mutations delegate through the injected repository",
-        "manual maintenance mutations need boundary coverage",
+        "non-empty tank input delegates Smart Care synchronization",
+        "Smart Care synchronization needs application-boundary coverage",
+    ),
+    (
+        "manual mutations delegate typed application inputs",
+        "manual maintenance mutations need typed boundary coverage",
+    ),
+    (
+        "completed activity delegates typed application input",
+        "completed activity needs typed boundary coverage",
     ),
 ):
     if token not in maintenance_boundary_test:

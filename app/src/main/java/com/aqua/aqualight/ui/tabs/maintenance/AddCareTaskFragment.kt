@@ -28,11 +28,11 @@ import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
-import com.aqua.aqualight.data.care.catalog.CareTaskTypeCatalog
-import com.aqua.aqualight.data.care.model.CareTaskSource
-import com.aqua.aqualight.data.care.model.CareTaskStatus
-import com.aqua.aqualight.data.care.model.CareTaskType
+import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
+import com.aqua.aqualight.ui.tabs.maintenance.text.CareTaskTypeCatalog
+import com.aqua.aqualight.application.care.CareTaskSource
+import com.aqua.aqualight.application.care.CareTaskStatus
+import com.aqua.aqualight.application.care.CareTaskType
 import com.aqua.aqualight.databinding.FragmentAddCareTaskBinding
 import com.aqua.aqualight.ui.common.bottomsheet.CareTaskTypeBottomSheetFragment
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -72,7 +72,7 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
     private var selectedType: CareTaskType? = null
     private var selectedTankId: Long = 0L
     private var selectedWaterChangePercent: Int? = null
-    private var latestTanks: List<SavedAquariumTank> = emptyList()
+    private var latestTanks: List<AquariumTankSnapshot> = emptyList()
     private var pendingSaveAfterNotificationPermission = false
 
     private val notificationPermissionLauncher = registerForActivityResult(
@@ -430,7 +430,7 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
     }
 
     private fun createAquariumOptionCard(
-        tank: SavedAquariumTank,
+        tank: AquariumTankSnapshot,
         dialog: BottomSheetDialog
     ): View {
         val selected = tank.id == selectedTankId
