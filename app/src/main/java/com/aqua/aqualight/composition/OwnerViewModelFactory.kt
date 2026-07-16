@@ -40,11 +40,12 @@ import com.aqua.aqualight.ui.tabs.settings.device.DeviceStatusViewModel
 import com.aqua.aqualight.ui.tabs.settings.device.SystemDeviceStatusClock
 
 /**
- * Exact ViewModel bindings that require one authenticated owner graph.
+ * Exact ViewModel bindings that require one committed authenticated-owner graph.
  *
  * Resolving the graph is deliberately deferred until create(). This keeps the
  * process container owner-neutral and prevents it from retaining old-account
- * repositories after navigation/session replacement.
+ * repositories after navigation/session replacement. A pending session is
+ * rejected before a ViewModel constructor can start collectors.
  */
 internal class OwnerViewModelFactory(
     context: Context,
@@ -200,15 +201,6 @@ internal class OwnerViewModelFactory(
                 )
 
             else -> error("Unreachable owner ViewModel binding: ${modelClass.name}")
-        }
-
-        val currentGraph = ownerGraphResolver.requireActive()
-        check(
-            currentGraph.ownerUid == graph.ownerUid &&
-                currentGraph.devicesRepository === graph.devicesRepository &&
-                currentGraph.assignmentRepository === graph.assignmentRepository
-        ) {
-            "Authenticated owner changed while constructing ${modelClass.name}."
         }
 
         @Suppress("UNCHECKED_CAST")
