@@ -25,16 +25,24 @@ import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
+import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscoveryOperations
+import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningProgressOperations
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.user.StartupAppearanceCache
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.platform.auth.GoogleIdentityClient
+import com.aqua.aqualight.platform.text.AndroidAppTextResolver
 import com.aqua.aqualight.platform.text.AndroidMaintenanceTextResolver
+import com.aqua.aqualight.platform.vision.MlKitProvisioningQrFrameDecoderFactory
+import com.aqua.aqualight.platform.vision.ProvisioningQrFrameDecoderFactory
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectViewModel
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
+import com.aqua.aqualight.ui.tabs.devices.add.DeviceAddViewModel
+import com.aqua.aqualight.ui.tabs.devices.add.DeviceProvisioningProgressViewModel
+import com.aqua.aqualight.ui.tabs.devices.add.DeviceQrScanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingRootViewModel
@@ -66,6 +74,8 @@ internal class Stage3SmokeAppContainer(context: Context) : AppContainer {
         get() = unused("feedbackSubmissionOperations")
     override val provisioningDraftOperations: ProvisioningDraftOperations
         get() = unused("provisioningDraftOperations")
+    override val provisioningQrFrameDecoderFactory: ProvisioningQrFrameDecoderFactory =
+        MlKitProvisioningQrFrameDecoderFactory()
     override val sessionExitOperations: SessionExitOperations
         get() = unused("sessionExitOperations")
     override val accountSecurityOperations: AccountSecurityOperations
@@ -96,6 +106,7 @@ private class Stage3SmokeViewModelFactory(
         manager = careTaskStore
     )
     private val maintenanceTextResolver = AndroidMaintenanceTextResolver(appContext)
+    private val appTextResolver = AndroidAppTextResolver(appContext)
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val viewModel: ViewModel = when {
@@ -118,6 +129,30 @@ private class Stage3SmokeViewModelFactory(
                     menuAccessOperations =
                         DefaultDeviceMenuAccessOperations.create(devicesRepository),
                     routeResolver = DeviceRouteResolver()
+                )
+
+            modelClass.isAssignableFrom(DeviceAddViewModel::class.java) ->
+                DeviceAddViewModel(
+                    discoveryOperations = DefaultProvisioningDiscoveryOperations.create(
+                        context = appContext,
+                        repository = devicesRepository
+                    ),
+                    textResolver = appTextResolver
+                )
+
+            modelClass.isAssignableFrom(DeviceQrScanViewModel::class.java) ->
+                DeviceQrScanViewModel(
+                    discoveryOperations = DefaultProvisioningDiscoveryOperations.create(
+                        context = appContext,
+                        repository = devicesRepository
+                    ),
+                    textResolver = appTextResolver
+                )
+
+            modelClass.isAssignableFrom(DeviceProvisioningProgressViewModel::class.java) ->
+                DeviceProvisioningProgressViewModel(
+                    operations = DefaultProvisioningProgressOperations(appContext),
+                    textResolver = appTextResolver
                 )
 
             modelClass.isAssignableFrom(AquariumTankViewModel::class.java) ->

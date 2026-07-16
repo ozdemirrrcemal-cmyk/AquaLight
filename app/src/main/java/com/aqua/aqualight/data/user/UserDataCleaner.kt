@@ -3,9 +3,13 @@ package com.aqua.aqualight.data.user
 import android.content.Context
 import android.net.Uri
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentStore
+import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.auth.SessionBoundServiceManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
-import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
+import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
+import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecretStore
+import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningCommitRecoveryStore
 import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
 import com.aqua.aqualight.data.devices.store.DeviceKnownStore
 import java.io.File
@@ -26,6 +30,7 @@ class UserDataCleaner private constructor(
         CARE_TASKS,
         AQUARIUM_TANKS,
         DEVICE_ASSIGNMENTS,
+        PROVISIONING_SESSIONS,
         KNOWN_DEVICES,
         DEVICE_CREDENTIALS,
         APP_OWNED_FILES,
@@ -161,6 +166,12 @@ class UserDataCleaner private constructor(
         }
 
         runStep(
+            step = Step.PROVISIONING_SESSIONS
+        ) {
+            clearProvisioningData(targetOwnerUid)
+        }
+
+        runStep(
             step = Step.KNOWN_DEVICES
         ) {
             DeviceKnownStore(
@@ -200,6 +211,49 @@ class UserDataCleaner private constructor(
         return CleanupResult(
             issues = issues.toList()
         )
+    }
+
+    private suspend fun clearProvisioningData(ownerUid: String) {
+        val failures = mutableListOf<Throwable>()
+
+        suspend fun attempt(block: suspend () -> Unit) {
+            runCatching {
+                block()
+            }.onFailure { error ->
+                error.throwIfCancellation()
+                failures += error
+            }
+        }
+
+        attempt {
+            AqlProvisioningHandoffSaver(appContext)
+                .rollbackPendingRegistrationsForOwner(ownerUid)
+                .getOrThrow()
+        }
+        attempt {
+            AqlProvisioningDraftStore(
+                context = appContext,
+                ownerUidProvider = { ownerUid }
+            ).clearOwner()
+        }
+        attempt {
+            AqlProvisioningQrSecretStore(
+                context = appContext,
+                ownerUidProvider = { ownerUid }
+            ).clearOwner()
+        }
+        attempt {
+            ProvisioningCommitRecoveryStore(appContext)
+                .clearOwner(ownerUid)
+        }
+
+        if (failures.isNotEmpty()) {
+            val combined = IllegalStateException(
+                "One or more provisioning data cleanup operations failed."
+            )
+            failures.forEach(combined::addSuppressed)
+            throw combined
+        }
     }
 
     private fun String?.orCurrentOwnerUidOrReturn(): String {

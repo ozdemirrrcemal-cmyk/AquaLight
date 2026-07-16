@@ -18,8 +18,9 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningWifiInputError
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningWifiInputPolicy
 import com.aqua.aqualight.composition.requireAppContainer
-import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
 import com.aqua.aqualight.databinding.FragmentDeviceWifiProvisioningBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -96,7 +97,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
     }
 
     private fun setupMethodLabel(): String {
-        return if (args.claimCode.isNotBlank()) {
+        return if (args.qrSecretReference.isNotBlank()) {
             "Secure QR Setup"
         } else {
             "Manual BLE Setup"
@@ -279,8 +280,8 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
         val ssid = binding.etWifiSsid.text?.toString()?.trim().orEmpty()
         val networkKey = binding.etWifiPassword.text?.toString().orEmpty()
 
-        when {
-            ssid.isBlank() -> {
+        when (ProvisioningWifiInputPolicy.validate(ssid, networkKey)) {
+            ProvisioningWifiInputError.EMPTY_SSID -> {
                 binding.etWifiSsid.requestFocus()
                 Toast.makeText(
                     requireContext(),
@@ -289,7 +290,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
                 ).show()
             }
 
-            ssid.utf8ByteSize() > AqlBleProvisioningContract.WIFI_SSID_MAX_LENGTH -> {
+            ProvisioningWifiInputError.SSID_TOO_LONG -> {
                 binding.etWifiSsid.requestFocus()
                 Toast.makeText(
                     requireContext(),
@@ -298,7 +299,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
                 ).show()
             }
 
-            networkKey.utf8ByteSize() > AqlBleProvisioningContract.WIFI_PASSWORD_MAX_LENGTH -> {
+            ProvisioningWifiInputError.PASSWORD_TOO_LONG -> {
                 binding.etWifiPassword.requestFocus()
                 Toast.makeText(
                     requireContext(),
@@ -307,7 +308,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
                 ).show()
             }
 
-            else -> {
+            null -> {
                 val draft = DeviceWifiProvisioningDraftFactory.create(
                     args = args,
                     ssid = ssid,
@@ -331,8 +332,6 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
             }
         }
     }
-
-    private fun String.utf8ByteSize(): Int = toByteArray(Charsets.UTF_8).size
 
     private fun String.isLikelyBleAddress(): Boolean {
         return matches(Regex("(?i)^([0-9a-f]{2}:){5}[0-9a-f]{2}$"))

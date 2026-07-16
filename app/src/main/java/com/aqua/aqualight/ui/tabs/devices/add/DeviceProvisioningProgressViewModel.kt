@@ -3,16 +3,14 @@ package com.aqua.aqualight.ui.tabs.devices.add
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.provisioning.PreparedProvisioningRegistration
+import com.aqua.aqualight.application.devices.provisioning.ProvisionedDevice
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningProgressOperations
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningRuntimeHandoff
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningSessionSnapshot
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningTransportEvent
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningVerifiedDeviceInfo
 import com.aqua.aqualight.application.text.AppTextResolver
-import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
-import com.aqua.aqualight.data.devices.model.DeviceSnapshot
-import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningGattEvent
-import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningStatusMessage
-import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningDraft
-import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningRuntimeHandoff
-import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningStatus
-import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -26,26 +24,24 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 class DeviceProvisioningProgressViewModel(
-    private val operations: DeviceProvisioningProgressOperations,
+    private val operations: ProvisioningProgressOperations,
     private val textResolver: AppTextResolver
 ) : ViewModel() {
 
     private val ownerUid = operations.ownerUid
+    private val presenter = ProvisioningProgressPresenter(textResolver)
 
     private val _uiState = MutableStateFlow(initialState())
-    val uiState: StateFlow<DeviceProvisioningProgressUiState> =
-        _uiState.asStateFlow()
+    val uiState: StateFlow<DeviceProvisioningProgressUiState> = _uiState.asStateFlow()
 
-    private val _events = Channel<DeviceProvisioningProgressEvent>(
-        Channel.BUFFERED
-    )
+    private val _events = Channel<DeviceProvisioningProgressEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
     private var boundSessionId: String? = null
-    private var activeDraft: AqlProvisioningDraft? = null
-    private var gattEventsJob: Job? = null
+    private var activeSession: ProvisioningSessionSnapshot? = null
+    private var verifiedDeviceInfo: ProvisioningVerifiedDeviceInfo? = null
+    private var transportEventsJob: Job? = null
     private var handoffSaved = false
-    private var handoffReceived = false
     private var provisioningStopped = false
     private var setupCompleted = false
     private var startJob: Job? = null
@@ -55,20 +51,18 @@ class DeviceProvisioningProgressViewModel(
     private var exitJob: Job? = null
     private var exitRequested = false
     private var registrationCommitted = false
-    private var pendingAddedRoute: DeviceRoute? = null
-    private var pendingPreparedSnapshot: DeviceSnapshot? = null
-    private var pendingSavedDeviceUid: DeviceUid? = null
+    private var pendingAddedDevice: ProvisionedDevice? = null
+    private var pendingPreparedRegistration: PreparedProvisioningRegistration? = null
+    private var pendingSavedDeviceUid: String? = null
 
     fun bind(sessionId: String) {
-        if (sessionId.isBlank() || boundSessionId == sessionId) {
-            return
-        }
+        if (sessionId.isBlank() || boundSessionId == sessionId) return
 
         boundSessionId = sessionId
-        val draft = operations.getDraft(sessionId)
-        activeDraft = draft
+        val session = operations.getSession(sessionId)
+        activeSession = session
 
-        if (draft == null) {
+        if (session == null) {
             _uiState.value = DeviceProvisioningProgressUiState(
                 title = string(R.string.device_provisioning_session_expired_title),
                 message = string(R.string.device_provisioning_session_expired_message),
@@ -89,20 +83,18 @@ class DeviceProvisioningProgressViewModel(
         _uiState.value = DeviceProvisioningProgressUiState(
             title = string(R.string.device_provisioning_ready_title),
             message = string(R.string.device_provisioning_ready_message),
-            deviceName = draft.deviceTitle.ifBlank {
+            deviceName = session.deviceTitle.ifBlank {
                 string(R.string.device_wifi_default_device_name)
             },
-            deviceSerial = draft.deviceSerial.ifBlank {
+            deviceSerial = session.deviceSerial.ifBlank {
                 string(R.string.device_provisioning_unknown)
             },
-            bleAddress = draft.bleAddress.ifBlank {
-                draft.bleName.ifBlank {
-                    string(
-                        R.string.device_provisioning_qr_device_will_be_located
-                    )
+            bleAddress = session.bleAddress.ifBlank {
+                session.bleName.ifBlank {
+                    string(R.string.device_provisioning_qr_device_will_be_located)
                 }
             },
-            wifiSsid = draft.wifiCredentials.ssid,
+            wifiSsid = session.wifiSsid,
             stepOne = string(R.string.device_provisioning_step_device_selected),
             stepTwo = string(R.string.device_provisioning_step_wifi_prepared),
             stepThree = string(R.string.device_provisioning_step_preparing_secure),
@@ -114,15 +106,9 @@ class DeviceProvisioningProgressViewModel(
 
     fun onBlePermissionDenied() {
         _uiState.value = _uiState.value.copy(
-            title = string(
-                R.string.device_provisioning_bluetooth_permission_title
-            ),
-            message = string(
-                R.string.device_provisioning_bluetooth_permission_message
-            ),
-            stepThree = string(
-                R.string.device_provisioning_waiting_bluetooth_permission
-            ),
+            title = string(R.string.device_provisioning_bluetooth_permission_title),
+            message = string(R.string.device_provisioning_bluetooth_permission_message),
+            stepThree = string(R.string.device_provisioning_waiting_bluetooth_permission),
             canStart = true,
             buttonText = string(R.string.device_provisioning_try_again),
             showProgress = false,
@@ -131,14 +117,10 @@ class DeviceProvisioningProgressViewModel(
     }
 
     fun requestExit() {
-        if (exitJob?.isActive == true || registrationCommitted) {
-            return
-        }
+        if (exitJob?.isActive == true || registrationCommitted) return
 
         exitRequested = true
-        if (commitJob?.isActive == true) {
-            return
-        }
+        if (commitJob?.isActive == true) return
 
         provisioningStopped = true
         _uiState.value = _uiState.value.copy(
@@ -155,28 +137,23 @@ class DeviceProvisioningProgressViewModel(
             startJob?.cancelAndJoin()
             handoffSaveJob?.cancelAndJoin()
             rollbackJob?.join()
-            gattEventsJob?.cancelAndJoin()
-            runCatching(operations::closeGatt)
+            transportEventsJob?.cancelAndJoin()
+            runCatching(operations::closeTransport)
                 .exceptionOrNull()
                 ?.printStackTrace()
 
-            val pendingDeviceUid = pendingSavedDeviceUid
-            val rollbackResult = if (pendingDeviceUid == null) {
+            val deviceUid = pendingSavedDeviceUid
+            val rollbackResult = if (deviceUid == null) {
                 Result.success(Unit)
             } else {
-                operations.rollbackProvisioningRegistrationForOwner(
-                    ownerUid = ownerUid,
-                    deviceUid = pendingDeviceUid
-                )
+                operations.rollbackProvisioningRegistrationForOwner(ownerUid, deviceUid)
             }
 
             rollbackResult
                 .onSuccess {
                     clearPendingRegistrationState()
-                    boundSessionId?.let(operations::removeDraft)
-                    _events.send(
-                        DeviceProvisioningProgressEvent.ExitProvisioning
-                    )
+                    boundSessionId?.let(operations::removeSession)
+                    _events.send(DeviceProvisioningProgressEvent.ExitProvisioning)
                 }
                 .onFailure {
                     exitRequested = false
@@ -190,134 +167,85 @@ class DeviceProvisioningProgressViewModel(
             requestExit()
             return
         }
-
         if (
             exitJob?.isActive == true ||
             rollbackJob?.isActive == true ||
             commitJob?.isActive == true
-        ) {
-            return
-        }
+        ) return
 
-        val draft = activeDraft ?: run {
-            _uiState.value = _uiState.value.copy(
-                title = string(
-                    R.string.device_provisioning_session_expired_title
-                ),
-                message = string(
-                    R.string.device_provisioning_session_expired_message
-                ),
-                canStart = false,
-                buttonText = string(R.string.device_provisioning_unavailable),
-                showProgress = false,
-                wifiCredentialFailure = null
-            )
+        val session = activeSession ?: run {
+            renderExpiredSession()
             return
         }
 
         startJob?.cancel()
         handoffSaved = false
-        handoffReceived = false
         provisioningStopped = false
         setupCompleted = false
-        pendingAddedRoute = null
-        pendingPreparedSnapshot = null
+        verifiedDeviceInfo = null
+        pendingAddedDevice = null
+        pendingPreparedRegistration = null
         pendingSavedDeviceUid = null
         exitRequested = false
         registrationCommitted = false
-        observeGattEvents()
+        observeTransportEvents()
 
         startJob = viewModelScope.launch {
-            val readyDraft = resolveBleAddressIfNeeded(draft) ?: return@launch
-            activeDraft = readyDraft
-
+            val bleAddress = resolveBleAddressIfNeeded(session) ?: return@launch
             _uiState.value = _uiState.value.copy(
                 title = string(R.string.device_provisioning_connecting_title),
-                message = string(
-                    R.string.device_provisioning_connecting_message
-                ),
-                bleAddress = readyDraft.bleAddress,
-                stepThree = string(
-                    R.string.device_provisioning_connecting_step
-                ),
+                message = string(R.string.device_provisioning_connecting_message),
+                bleAddress = bleAddress,
+                stepThree = string(R.string.device_provisioning_connecting_step),
                 canStart = false,
                 buttonText = string(R.string.device_provisioning_running),
                 showProgress = true,
                 wifiCredentialFailure = null
             )
-            operations.startGatt(readyDraft)
+            operations.startTransport(session.sessionId, bleAddress)
+                .onFailure(::renderTransportStartFailure)
         }
     }
 
     private suspend fun resolveBleAddressIfNeeded(
-        draft: AqlProvisioningDraft
-    ): AqlProvisioningDraft? {
-        val existingAddress = draft.bleAddress.trim()
-        val bleName = draft.bleName.trim()
+        session: ProvisioningSessionSnapshot
+    ): String? {
+        val existingAddress = session.bleAddress.trim()
+        val bleName = session.bleName.trim()
 
         if (bleName.isNotBlank()) {
             _uiState.value = _uiState.value.copy(
-                title = string(
-                    R.string.device_provisioning_locating_qr_title
-                ),
+                title = string(R.string.device_provisioning_locating_qr_title),
                 message = string(
                     R.string.device_provisioning_locating_qr_message_format,
                     bleName
                 ),
                 bleAddress = bleName,
-                stepThree = string(
-                    R.string.device_provisioning_locating_qr_step
-                ),
+                stepThree = string(R.string.device_provisioning_locating_qr_step),
                 canStart = false,
                 buttonText = string(R.string.device_provisioning_finding),
                 showProgress = true,
                 wifiCredentialFailure = null
             )
 
-            operations.resolveQrAddress(draft)
-                .onSuccess { resolvedAddress ->
-                    if (resolvedAddress.isNotBlank()) {
-                        return draft.copy(bleAddress = resolvedAddress)
-                    }
+            operations.resolveBleAddress(session.sessionId)
+                .onSuccess { address ->
+                    if (address.isNotBlank()) return address
                 }
                 .onFailure {
                     if (existingAddress.isBlank()) {
-                        _uiState.value = _uiState.value.copy(
-                            title = string(
-                                R.string.device_provisioning_qr_not_found_title
-                            ),
-                            message = string(
-                                R.string.device_provisioning_qr_not_found_message
-                            ),
-                            stepThree = string(
-                                R.string.device_provisioning_device_not_found_title
-                            ),
-                            canStart = true,
-                            buttonText = string(
-                                R.string.device_provisioning_try_again
-                            ),
-                            showProgress = false,
-                            wifiCredentialFailure = null
-                        )
+                        renderQrDeviceNotFound()
                         return null
                     }
                 }
         }
 
-        if (existingAddress.isNotBlank()) {
-            return draft.copy(bleAddress = existingAddress)
-        }
+        if (existingAddress.isNotBlank()) return existingAddress
 
         _uiState.value = _uiState.value.copy(
-            title = string(
-                R.string.device_provisioning_device_not_found_title
-            ),
-            message = string(
-                R.string.device_provisioning_qr_missing_ble_message
-            ),
-            stepThree = string(
-                R.string.device_provisioning_device_not_found_title
-            ),
+            title = string(R.string.device_provisioning_device_not_found_title),
+            message = string(R.string.device_provisioning_qr_missing_ble_message),
+            stepThree = string(R.string.device_provisioning_device_not_found_title),
             canStart = true,
             buttonText = string(R.string.device_provisioning_try_again),
             showProgress = false,
@@ -326,66 +254,47 @@ class DeviceProvisioningProgressViewModel(
         return null
     }
 
-    private fun observeGattEvents() {
-        if (gattEventsJob != null) {
-            return
-        }
-        gattEventsJob = viewModelScope.launch {
-            operations.gattEvents.collect(::handleGattEvent)
+    private fun observeTransportEvents() {
+        if (transportEventsJob != null) return
+        transportEventsJob = viewModelScope.launch {
+            operations.events.collect(::handleTransportEvent)
         }
     }
 
-    private fun handleGattEvent(event: AqlBleProvisioningGattEvent) {
+    private fun handleTransportEvent(event: ProvisioningTransportEvent) {
         when (event) {
-            AqlBleProvisioningGattEvent.FinalizeSetupWritten -> {
+            ProvisioningTransportEvent.FinalizeSetupWritten -> {
                 _uiState.value = _uiState.value.copy(
-                    title = string(
-                        R.string.device_provisioning_setup_complete_title
-                    ),
-                    message = string(
-                        R.string.device_provisioning_details_received_message
-                    ),
-                    stepThree = string(
-                        R.string.device_provisioning_step_setup_complete
-                    ),
+                    title = string(R.string.device_provisioning_setup_complete_title),
+                    message = string(R.string.device_provisioning_details_received_message),
+                    stepThree = string(R.string.device_provisioning_step_setup_complete),
                     canStart = false,
-                    buttonText = string(
-                        R.string.device_provisioning_opening
-                    ),
+                    buttonText = string(R.string.device_provisioning_opening),
                     showProgress = true,
                     wifiCredentialFailure = null
                 )
             }
-
-            is AqlBleProvisioningGattEvent.RuntimeHandoffReceived -> {
-                handoffReceived = true
+            is ProvisioningTransportEvent.RuntimeHandoffReceived -> {
                 renderRuntimeHandoffReceived()
                 saveRuntimeHandoff(event.handoff)
             }
-
-            is AqlBleProvisioningGattEvent.DeviceInfoVerified -> {
-                renderDeviceInfoVerified(event)
+            is ProvisioningTransportEvent.DeviceInfoVerified -> {
+                verifiedDeviceInfo = event.info
+                _uiState.value = _uiState.value.copy(
+                    deviceName = event.info.title.ifBlank { _uiState.value.deviceName },
+                    deviceSerial = event.info.serial.ifBlank { _uiState.value.deviceSerial }
+                )
             }
-
-            is AqlBleProvisioningGattEvent.Failed -> {
+            is ProvisioningTransportEvent.Failed -> {
                 markProvisioningStopped()
-                _uiState.value = reduceGattEvent(event)
+                _uiState.value = reduceTransportEvent(event)
             }
-
-            AqlBleProvisioningGattEvent.Disconnected -> {
-                if (!setupCompleted) {
-                    markProvisioningStopped()
-                }
-                _uiState.value = reduceGattEvent(event)
+            ProvisioningTransportEvent.Disconnected -> {
+                if (!setupCompleted) markProvisioningStopped()
+                _uiState.value = reduceTransportEvent(event)
             }
-
-            AqlBleProvisioningGattEvent.Completed -> {
-                handleCompletedEvent()
-            }
-
-            else -> {
-                _uiState.value = reduceGattEvent(event)
-            }
+            ProvisioningTransportEvent.Completed -> handleCompletedEvent()
+            else -> _uiState.value = reduceTransportEvent(event)
         }
     }
 
@@ -394,25 +303,21 @@ class DeviceProvisioningProgressViewModel(
             commitJob?.isActive == true ||
             rollbackJob?.isActive == true ||
             registrationCommitted
-        ) {
-            return
-        }
+        ) return
 
         setupCompleted = true
         provisioningStopped = false
-        val route = pendingAddedRoute
-        val preparedSnapshot = pendingPreparedSnapshot
+        val device = pendingAddedDevice
+        val registration = pendingPreparedRegistration
 
-        if (handoffSaved && route != null && preparedSnapshot != null) {
+        if (handoffSaved && device != null && registration != null) {
             _uiState.value = _uiState.value.copy(
                 title = string(R.string.device_provisioning_added_title),
                 message = string(
                     R.string.device_provisioning_added_message_format,
                     _uiState.value.deviceName
                 ),
-                stepThree = string(
-                    R.string.device_provisioning_opening_menu_step
-                ),
+                stepThree = string(R.string.device_provisioning_opening_menu_step),
                 canStart = false,
                 buttonText = string(R.string.device_provisioning_opening),
                 showProgress = true,
@@ -420,23 +325,17 @@ class DeviceProvisioningProgressViewModel(
             )
 
             commitJob = viewModelScope.launch {
-                operations.commitPreparedRegistration(preparedSnapshot)
+                operations.commitPreparedRegistration(registration)
                     .onSuccess {
                         registrationCommitted = true
-                        boundSessionId?.let(operations::removeDraft)
+                        boundSessionId?.let(operations::removeSession)
                         pendingSavedDeviceUid = null
-                        pendingPreparedSnapshot = null
-                        pendingAddedRoute = null
+                        pendingPreparedRegistration = null
+                        pendingAddedDevice = null
                         if (exitRequested) {
-                            _events.send(
-                                DeviceProvisioningProgressEvent.ExitProvisioning
-                            )
+                            _events.send(DeviceProvisioningProgressEvent.ExitProvisioning)
                         } else {
-                            _events.send(
-                                DeviceProvisioningProgressEvent.OpenAddedDevice(
-                                    route
-                                )
-                            )
+                            _events.send(DeviceProvisioningProgressEvent.OpenAddedDevice(device))
                         }
                     }
                     .onFailure { error ->
@@ -444,17 +343,11 @@ class DeviceProvisioningProgressViewModel(
                         exitRequested = false
                         rollbackPendingProvisioningRegistration()
                         _uiState.value = _uiState.value.copy(
-                            title = string(
-                                R.string.device_provisioning_save_failed_title
-                            ),
-                            message = error.message.toFriendlySaveError(),
-                            stepThree = string(
-                                R.string.device_provisioning_save_failed_step
-                            ),
+                            title = string(R.string.device_provisioning_save_failed_title),
+                            message = presenter.friendlySaveError(error.message),
+                            stepThree = string(R.string.device_provisioning_save_failed_step),
                             canStart = true,
-                            buttonText = string(
-                                R.string.device_provisioning_start_again
-                            ),
+                            buttonText = string(R.string.device_provisioning_start_again),
                             showProgress = false,
                             requiresFreshDeviceSelection = true,
                             wifiCredentialFailure = null
@@ -463,15 +356,9 @@ class DeviceProvisioningProgressViewModel(
             }
         } else if (!handoffSaved) {
             _uiState.value = _uiState.value.copy(
-                title = string(
-                    R.string.device_provisioning_setup_complete_title
-                ),
-                message = string(
-                    R.string.device_provisioning_details_received_message
-                ),
-                stepThree = string(
-                    R.string.device_provisioning_preparing_menu_step
-                ),
+                title = string(R.string.device_provisioning_setup_complete_title),
+                message = string(R.string.device_provisioning_details_received_message),
+                stepThree = string(R.string.device_provisioning_preparing_menu_step),
                 canStart = false,
                 buttonText = string(R.string.device_provisioning_saving),
                 showProgress = true,
@@ -480,191 +367,95 @@ class DeviceProvisioningProgressViewModel(
         }
     }
 
-    private fun reduceGattEvent(
-        event: AqlBleProvisioningGattEvent
-    ): DeviceProvisioningProgressUiState {
-        return when (event) {
-            is AqlBleProvisioningGattEvent.Connecting ->
+    private fun reduceTransportEvent(
+        event: ProvisioningTransportEvent
+    ): DeviceProvisioningProgressUiState = when (event) {
+        is ProvisioningTransportEvent.Connecting -> _uiState.value.copy(
+            title = string(R.string.device_provisioning_connecting_title),
+            message = string(R.string.device_provisioning_connecting_message),
+            stepThree = string(R.string.device_provisioning_connecting_step),
+            canStart = false,
+            buttonText = string(R.string.device_provisioning_running),
+            showProgress = true,
+            wifiCredentialFailure = null
+        )
+        is ProvisioningTransportEvent.Connected -> _uiState.value.copy(
+            title = string(R.string.device_provisioning_device_found_title),
+            message = string(R.string.device_provisioning_prepare_service_message),
+            stepThree = string(R.string.device_provisioning_bluetooth_connected_step),
+            showProgress = true,
+            wifiCredentialFailure = null
+        )
+        ProvisioningTransportEvent.ServicesDiscovered -> _uiState.value.copy(
+            title = string(R.string.device_provisioning_secure_session_title),
+            message = string(R.string.device_provisioning_secure_session_message),
+            stepThree = string(R.string.device_provisioning_secure_session_step),
+            showProgress = true,
+            wifiCredentialFailure = null
+        )
+        ProvisioningTransportEvent.StartSessionWritten -> _uiState.value.copy(
+            title = string(R.string.device_provisioning_session_started_title),
+            message = string(R.string.device_provisioning_sending_wifi_message),
+            stepThree = string(R.string.device_provisioning_sending_wifi_step),
+            showProgress = true,
+            wifiCredentialFailure = null
+        )
+        ProvisioningTransportEvent.WifiCredentialsWritten -> _uiState.value.copy(
+            title = string(R.string.device_provisioning_wifi_sent_title),
+            message = string(R.string.device_provisioning_wifi_connecting_message),
+            stepThree = string(R.string.device_provisioning_wifi_connecting_step),
+            showProgress = true,
+            wifiCredentialFailure = null
+        )
+        is ProvisioningTransportEvent.StatusReceived -> {
+            val presentation = presenter.status(event.statusMessage)
+            _uiState.value.copy(
+                title = presentation.title,
+                message = presentation.message,
+                stepThree = presentation.step,
+                showProgress = presentation.showProgress,
+                canStart = presentation.canRetry,
+                buttonText = string(R.string.device_provisioning_try_again),
+                wifiCredentialFailure = presentation.wifiCredentialFailure
+            )
+        }
+        is ProvisioningTransportEvent.DeviceInfoVerified,
+        is ProvisioningTransportEvent.RuntimeHandoffReceived,
+        ProvisioningTransportEvent.Completed,
+        ProvisioningTransportEvent.FinalizeSetupWritten -> _uiState.value
+        is ProvisioningTransportEvent.Failed -> _uiState.value.copy(
+            title = string(R.string.device_provisioning_failed_title),
+            message = presenter.friendlyTransportError(event.message),
+            stepThree = string(R.string.device_provisioning_setup_stopped),
+            canStart = true,
+            buttonText = string(R.string.device_provisioning_start_again),
+            showProgress = false,
+            requiresFreshDeviceSelection = true,
+            wifiCredentialFailure = null
+        )
+        ProvisioningTransportEvent.Disconnected -> {
+            if (setupCompleted) {
+                _uiState.value.copy(wifiCredentialFailure = null)
+            } else {
                 _uiState.value.copy(
-                    title = string(
-                        R.string.device_provisioning_connecting_title
-                    ),
-                    message = string(
-                        R.string.device_provisioning_connecting_message
-                    ),
-                    stepThree = string(
-                        R.string.device_provisioning_connecting_step
-                    ),
-                    canStart = false,
-                    buttonText = string(
-                        R.string.device_provisioning_running
-                    ),
-                    showProgress = true,
-                    wifiCredentialFailure = null
-                )
-
-            is AqlBleProvisioningGattEvent.Connected ->
-                _uiState.value.copy(
-                    title = string(
-                        R.string.device_provisioning_device_found_title
-                    ),
-                    message = string(
-                        R.string.device_provisioning_prepare_service_message
-                    ),
-                    stepThree = string(
-                        R.string.device_provisioning_bluetooth_connected_step
-                    ),
-                    showProgress = true,
-                    wifiCredentialFailure = null
-                )
-
-            AqlBleProvisioningGattEvent.ServicesDiscovered ->
-                _uiState.value.copy(
-                    title = string(
-                        R.string.device_provisioning_secure_session_title
-                    ),
-                    message = string(
-                        R.string.device_provisioning_secure_session_message
-                    ),
-                    stepThree = string(
-                        R.string.device_provisioning_secure_session_step
-                    ),
-                    showProgress = true,
-                    wifiCredentialFailure = null
-                )
-
-            AqlBleProvisioningGattEvent.StartSessionWritten ->
-                _uiState.value.copy(
-                    title = string(
-                        R.string.device_provisioning_session_started_title
-                    ),
-                    message = string(
-                        R.string.device_provisioning_sending_wifi_message
-                    ),
-                    stepThree = string(
-                        R.string.device_provisioning_sending_wifi_step
-                    ),
-                    showProgress = true,
-                    wifiCredentialFailure = null
-                )
-
-            AqlBleProvisioningGattEvent.WifiCredentialsWritten ->
-                _uiState.value.copy(
-                    title = string(
-                        R.string.device_provisioning_wifi_sent_title
-                    ),
-                    message = string(
-                        R.string.device_provisioning_wifi_connecting_message
-                    ),
-                    stepThree = string(
-                        R.string.device_provisioning_wifi_connecting_step
-                    ),
-                    showProgress = true,
-                    wifiCredentialFailure = null
-                )
-
-            is AqlBleProvisioningGattEvent.StatusReceived ->
-                _uiState.value.copy(
-                    title = event.statusMessage.status.toProgressTitle(),
-                    message = event.statusMessage.toProgressMessage(),
-                    stepThree = event.statusMessage.status.toProgressStep(),
-                    showProgress =
-                        event.statusMessage.status !in terminalStatuses,
-                    canStart = event.statusMessage.status in retryStatuses,
-                    buttonText = string(
-                        R.string.device_provisioning_try_again
-                    ),
-                    wifiCredentialFailure =
-                        event.statusMessage.toWifiCredentialFailure()
-                )
-
-            is AqlBleProvisioningGattEvent.DeviceInfoVerified,
-            is AqlBleProvisioningGattEvent.RuntimeHandoffReceived,
-            AqlBleProvisioningGattEvent.Completed,
-            AqlBleProvisioningGattEvent.FinalizeSetupWritten -> _uiState.value
-
-            is AqlBleProvisioningGattEvent.Failed ->
-                _uiState.value.copy(
-                    title = string(
-                        R.string.device_provisioning_failed_title
-                    ),
-                    message = event.message.toFriendlyError(),
-                    stepThree = string(
-                        R.string.device_provisioning_setup_stopped
-                    ),
+                    title = string(R.string.device_provisioning_connection_closed_title),
+                    message = string(R.string.device_provisioning_connection_closed_message),
+                    stepThree = string(R.string.device_provisioning_connection_closed_step),
                     canStart = true,
-                    buttonText = string(
-                        R.string.device_provisioning_start_again
-                    ),
+                    buttonText = string(R.string.device_provisioning_start_again),
                     showProgress = false,
                     requiresFreshDeviceSelection = true,
                     wifiCredentialFailure = null
                 )
-
-            AqlBleProvisioningGattEvent.Disconnected -> {
-                if (setupCompleted) {
-                    _uiState.value.copy(wifiCredentialFailure = null)
-                } else {
-                    _uiState.value.copy(
-                        title = string(
-                            R.string.device_provisioning_connection_closed_title
-                        ),
-                        message = string(
-                            R.string.device_provisioning_connection_closed_message
-                        ),
-                        stepThree = string(
-                            R.string.device_provisioning_connection_closed_step
-                        ),
-                        canStart = true,
-                        buttonText = string(
-                            R.string.device_provisioning_start_again
-                        ),
-                        showProgress = false,
-                        requiresFreshDeviceSelection = true,
-                        wifiCredentialFailure = null
-                    )
-                }
             }
         }
-    }
-
-    private fun renderDeviceInfoVerified(
-        event: AqlBleProvisioningGattEvent.DeviceInfoVerified
-    ) {
-        activeDraft = activeDraft?.let { currentDraft ->
-            currentDraft.copy(
-                deviceTitle = event.deviceTitle.ifBlank {
-                    currentDraft.deviceTitle
-                },
-                deviceSerial = event.deviceSerial.ifBlank {
-                    currentDraft.deviceSerial
-                },
-                deviceModel = event.deviceModel.ifBlank {
-                    currentDraft.deviceModel
-                }
-            )
-        }
-        _uiState.value = _uiState.value.copy(
-            deviceName = event.deviceTitle.ifBlank {
-                _uiState.value.deviceName
-            },
-            deviceSerial = event.deviceSerial.ifBlank {
-                _uiState.value.deviceSerial
-            }
-        )
     }
 
     private fun renderRuntimeHandoffReceived() {
         _uiState.value = _uiState.value.copy(
-            title = string(
-                R.string.device_provisioning_device_online_title
-            ),
-            message = string(
-                R.string.device_provisioning_device_online_message
-            ),
-            stepThree = string(
-                R.string.device_provisioning_preparing_menu_step
-            ),
+            title = string(R.string.device_provisioning_device_online_title),
+            message = string(R.string.device_provisioning_device_online_message),
+            stepThree = string(R.string.device_provisioning_preparing_menu_step),
             canStart = false,
             buttonText = string(R.string.device_provisioning_saving),
             showProgress = true,
@@ -672,28 +463,16 @@ class DeviceProvisioningProgressViewModel(
         )
     }
 
-    private fun saveRuntimeHandoff(
-        handoff: AqlProvisioningRuntimeHandoff
-    ) {
-        if (handoffSaveJob?.isActive == true || handoffSaved) {
-            return
-        }
+    private fun saveRuntimeHandoff(handoff: ProvisioningRuntimeHandoff) {
+        if (handoffSaveJob?.isActive == true || handoffSaved) return
 
-        val draft = activeDraft ?: run {
+        val session = activeSession ?: run {
             _uiState.value = _uiState.value.copy(
-                title = string(
-                    R.string.device_provisioning_session_expired_title
-                ),
-                message = string(
-                    R.string.device_provisioning_save_missing_session_message
-                ),
-                stepThree = string(
-                    R.string.device_provisioning_save_failed_step
-                ),
+                title = string(R.string.device_provisioning_session_expired_title),
+                message = string(R.string.device_provisioning_save_missing_session_message),
+                stepThree = string(R.string.device_provisioning_save_failed_step),
                 canStart = true,
-                buttonText = string(
-                    R.string.device_provisioning_try_again
-                ),
+                buttonText = string(R.string.device_provisioning_try_again),
                 showProgress = false,
                 wifiCredentialFailure = null
             )
@@ -702,357 +481,108 @@ class DeviceProvisioningProgressViewModel(
 
         handoffSaveJob = viewModelScope.launch {
             pendingSavedDeviceUid = handoff.deviceUid
-            operations.prepareAndConnect(draft, handoff)
-                .onSuccess { snapshot ->
-                    if (provisioningStopped || setupCompleted) {
-                        operations.rollbackProvisioningRegistration(
-                            snapshot.deviceUid
-                        ).onSuccess {
-                            clearPendingRegistrationState()
-                        }.onFailure {
-                            renderRollbackFailure()
-                        }
-                        return@onSuccess
-                    }
-
-                    handoffSaved = true
-                    pendingPreparedSnapshot = snapshot
-                    pendingSavedDeviceUid = snapshot.deviceUid
-                    pendingAddedRoute = operations.resolveRoute(
-                        snapshot = snapshot,
-                        requestedDeviceUid = snapshot.deviceUid.value
-                    )
-
-                    _uiState.value = _uiState.value.copy(
-                        title = string(
-                            R.string.device_provisioning_setup_complete_title
-                        ),
-                        message = string(
-                            R.string.device_provisioning_details_received_message
-                        ),
-                        stepThree = string(
-                            R.string.device_provisioning_preparing_menu_step
-                        ),
-                        canStart = false,
-                        buttonText = string(
-                            R.string.device_provisioning_saving
-                        ),
-                        showProgress = true,
-                        wifiCredentialFailure = null
-                    )
-                    operations.finalizeSetup(handoff)
-                }
-                .onFailure { error ->
-                    val cleanupResult =
-                        operations.rollbackProvisioningRegistrationForOwner(
-                            ownerUid = ownerUid,
-                            deviceUid = handoff.deviceUid
-                        )
-                    if (cleanupResult.isFailure) {
-                        renderRollbackFailure()
-                        return@launch
-                    }
-                    cleanupResult.onSuccess {
+            operations.prepareRegistration(
+                sessionId = session.sessionId,
+                verifiedDeviceInfo = verifiedDeviceInfo,
+                handoff = handoff
+            ).onSuccess { registration ->
+                if (provisioningStopped || setupCompleted) {
+                    operations.rollbackProvisioningRegistration(
+                        registration.device.deviceUid
+                    ).onSuccess {
                         clearPendingRegistrationState()
+                    }.onFailure {
+                        renderRollbackFailure()
                     }
-                    _uiState.value = _uiState.value.copy(
-                        title = string(
-                            R.string.device_provisioning_save_failed_title
-                        ),
-                        message = error.message.toFriendlySaveError(),
-                        stepThree = string(
-                            R.string.device_provisioning_save_failed_step
-                        ),
-                        canStart = true,
-                        buttonText = string(
-                            R.string.device_provisioning_start_again
-                        ),
-                        showProgress = false,
-                        requiresFreshDeviceSelection = true,
-                        wifiCredentialFailure = null
-                    )
+                    return@onSuccess
                 }
-        }
-    }
 
-    private fun AqlProvisioningStatus.toProgressTitle(): String {
-        return when (this) {
-            AqlProvisioningStatus.IDLE,
-            AqlProvisioningStatus.FACTORY,
-            AqlProvisioningStatus.PHYSICAL_RESET -> string(
-                R.string.device_provisioning_status_setup_mode_title
-            )
-
-            AqlProvisioningStatus.PROVISIONING_IN_PROGRESS,
-            AqlProvisioningStatus.CLAIM_VALIDATING -> string(
-                R.string.device_provisioning_status_verifying_title
-            )
-
-            AqlProvisioningStatus.WIFI_CREDENTIALS_RECEIVED -> string(
-                R.string.device_provisioning_status_wifi_received_title
-            )
-
-            AqlProvisioningStatus.WIFI_CONNECTING -> string(
-                R.string.device_provisioning_status_wifi_connecting_title
-            )
-
-            AqlProvisioningStatus.WIFI_CONNECTED -> string(
-                R.string.device_provisioning_status_wifi_connected_title
-            )
-
-            AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY -> string(
-                R.string.device_provisioning_device_online_title
-            )
-
-            AqlProvisioningStatus.FINALIZING,
-            AqlProvisioningStatus.COMPLETED -> string(
-                R.string.device_provisioning_setup_complete_title
-            )
-
-            AqlProvisioningStatus.WIFI_FAILED -> string(
-                R.string.device_provisioning_status_wifi_failed_title
-            )
-
-            AqlProvisioningStatus.CLAIM_REJECTED -> string(
-                R.string.device_provisioning_status_claim_rejected_title
-            )
-
-            AqlProvisioningStatus.TIMEOUT -> string(
-                R.string.device_provisioning_status_timeout_title
-            )
-
-            AqlProvisioningStatus.ERROR,
-            AqlProvisioningStatus.UNKNOWN -> string(
-                R.string.device_provisioning_status_waiting_title
-            )
-        }
-    }
-
-    private fun AqlBleProvisioningStatusMessage.toProgressMessage(): String {
-        if (status == AqlProvisioningStatus.WIFI_FAILED) {
-            return when (errorCode) {
-                AqlBleProvisioningContract.ErrorCode.WIFI_AUTH_FAILED ->
-                    string(
-                        R.string.device_provisioning_status_wifi_auth_failed_message
-                    )
-
-                AqlBleProvisioningContract.ErrorCode.WIFI_NETWORK_NOT_FOUND ->
-                    string(
-                        R.string.device_provisioning_status_wifi_network_not_found_message
-                    )
-
-                AqlBleProvisioningContract.ErrorCode.WIFI_HANDSHAKE_FAILED,
-                AqlBleProvisioningContract.ErrorCode.WIFI_ASSOCIATION_FAILED ->
-                    string(
-                        R.string.device_provisioning_status_wifi_router_rejected_message
-                    )
-
-                AqlBleProvisioningContract.ErrorCode.WIFI_TIMEOUT ->
-                    string(
-                        R.string.device_provisioning_status_wifi_timeout_message
-                    )
-
-                AqlBleProvisioningContract.ErrorCode.NETWORK_SAVE_FAILED ->
-                    string(
-                        R.string.device_provisioning_status_wifi_save_failed_message
-                    )
-
-                else -> message.ifBlank {
-                    string(
-                        R.string.device_provisioning_status_wifi_failed_message
-                    )
+                handoffSaved = true
+                pendingPreparedRegistration = registration
+                pendingSavedDeviceUid = registration.device.deviceUid
+                pendingAddedDevice = registration.device
+                _uiState.value = _uiState.value.copy(
+                    title = string(R.string.device_provisioning_setup_complete_title),
+                    message = string(R.string.device_provisioning_details_received_message),
+                    stepThree = string(R.string.device_provisioning_preparing_menu_step),
+                    canStart = false,
+                    buttonText = string(R.string.device_provisioning_saving),
+                    showProgress = true,
+                    wifiCredentialFailure = null
+                )
+                operations.finalizeSetup(handoff)
+                    .onFailure { error ->
+                        markProvisioningStopped()
+                        _uiState.value = _uiState.value.copy(
+                            title = string(R.string.device_provisioning_failed_title),
+                            message = presenter.friendlyTransportError(error.message.orEmpty()),
+                            stepThree = string(R.string.device_provisioning_setup_stopped),
+                            canStart = true,
+                            buttonText = string(R.string.device_provisioning_start_again),
+                            showProgress = false,
+                            requiresFreshDeviceSelection = true,
+                            wifiCredentialFailure = null
+                        )
+                    }
+            }.onFailure { error ->
+                val cleanupResult = operations.rollbackProvisioningRegistrationForOwner(
+                    ownerUid = ownerUid,
+                    deviceUid = handoff.deviceUid
+                )
+                if (cleanupResult.isFailure) {
+                    renderRollbackFailure()
+                    return@launch
                 }
-            }
-        }
-        return status.toProgressMessage(fallback = message)
-    }
-
-    private fun AqlBleProvisioningStatusMessage
-        .toWifiCredentialFailure(): DeviceProvisioningWifiCredentialFailure? {
-        if (status != AqlProvisioningStatus.WIFI_FAILED) {
-            return null
-        }
-        return when (errorCode) {
-            AqlBleProvisioningContract.ErrorCode.WIFI_AUTH_FAILED ->
-                DeviceProvisioningWifiCredentialFailure(
-                    message = string(
-                        R.string.device_wifi_password_incorrect_error
-                    ),
-                    field = DeviceProvisioningWifiCredentialField.PASSWORD
+                clearPendingRegistrationState()
+                _uiState.value = _uiState.value.copy(
+                    title = string(R.string.device_provisioning_save_failed_title),
+                    message = presenter.friendlySaveError(error.message),
+                    stepThree = string(R.string.device_provisioning_save_failed_step),
+                    canStart = true,
+                    buttonText = string(R.string.device_provisioning_start_again),
+                    showProgress = false,
+                    requiresFreshDeviceSelection = true,
+                    wifiCredentialFailure = null
                 )
-
-            AqlBleProvisioningContract.ErrorCode.WIFI_NETWORK_NOT_FOUND ->
-                DeviceProvisioningWifiCredentialFailure(
-                    message = string(
-                        R.string.device_wifi_network_not_found_error
-                    ),
-                    field = DeviceProvisioningWifiCredentialField.SSID
-                )
-
-            AqlBleProvisioningContract.ErrorCode.WIFI_HANDSHAKE_FAILED,
-            AqlBleProvisioningContract.ErrorCode.WIFI_ASSOCIATION_FAILED ->
-                DeviceProvisioningWifiCredentialFailure(
-                    message = string(
-                        R.string.device_wifi_router_rejected_error
-                    ),
-                    field = DeviceProvisioningWifiCredentialField.PASSWORD
-                )
-
-            AqlBleProvisioningContract.ErrorCode.WIFI_TIMEOUT ->
-                DeviceProvisioningWifiCredentialFailure(
-                    message = string(
-                        R.string.device_wifi_connection_timeout_error
-                    ),
-                    field = DeviceProvisioningWifiCredentialField.PASSWORD
-                )
-
-            AqlBleProvisioningContract.ErrorCode.NETWORK_SAVE_FAILED -> null
-            else -> DeviceProvisioningWifiCredentialFailure(
-                message = string(
-                    R.string.device_wifi_provisioning_failed_error
-                ),
-                field = DeviceProvisioningWifiCredentialField.PASSWORD
-            )
-        }
-    }
-
-    private fun AqlProvisioningStatus.toProgressMessage(
-        fallback: String
-    ): String {
-        return when (this) {
-            AqlProvisioningStatus.IDLE,
-            AqlProvisioningStatus.FACTORY,
-            AqlProvisioningStatus.PHYSICAL_RESET -> string(
-                R.string.device_provisioning_status_setup_mode_message
-            )
-
-            AqlProvisioningStatus.PROVISIONING_IN_PROGRESS,
-            AqlProvisioningStatus.CLAIM_VALIDATING -> string(
-                R.string.device_provisioning_status_verifying_message
-            )
-
-            AqlProvisioningStatus.WIFI_CREDENTIALS_RECEIVED -> string(
-                R.string.device_provisioning_status_wifi_received_message
-            )
-
-            AqlProvisioningStatus.WIFI_CONNECTING -> string(
-                R.string.device_provisioning_status_wifi_connecting_message
-            )
-
-            AqlProvisioningStatus.WIFI_CONNECTED -> string(
-                R.string.device_provisioning_status_wifi_connected_message
-            )
-
-            AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY -> string(
-                R.string.device_provisioning_status_runtime_ready_message
-            )
-
-            AqlProvisioningStatus.FINALIZING -> string(
-                R.string.device_provisioning_details_received_message
-            )
-
-            AqlProvisioningStatus.COMPLETED -> string(
-                R.string.device_provisioning_status_setup_complete_message
-            )
-
-            AqlProvisioningStatus.WIFI_FAILED -> string(
-                R.string.device_provisioning_status_wifi_failed_message
-            )
-
-            AqlProvisioningStatus.CLAIM_REJECTED -> string(
-                R.string.device_provisioning_status_claim_rejected_message
-            )
-
-            AqlProvisioningStatus.TIMEOUT -> string(
-                R.string.device_provisioning_status_timeout_message
-            )
-
-            AqlProvisioningStatus.ERROR,
-            AqlProvisioningStatus.UNKNOWN -> fallback.ifBlank {
-                string(R.string.device_provisioning_status_unknown_message)
             }
         }
     }
 
-    private fun AqlProvisioningStatus.toProgressStep(): String {
-        return when (this) {
-            AqlProvisioningStatus.WIFI_CREDENTIALS_RECEIVED -> string(
-                R.string.device_provisioning_step_wifi_delivered
-            )
-
-            AqlProvisioningStatus.WIFI_CONNECTING -> string(
-                R.string.device_provisioning_wifi_connecting_step
-            )
-
-            AqlProvisioningStatus.WIFI_CONNECTED -> string(
-                R.string.device_provisioning_step_wifi_success
-            )
-
-            AqlProvisioningStatus.WEB_SOCKET_TOKEN_READY,
-            AqlProvisioningStatus.FINALIZING -> string(
-                R.string.device_provisioning_preparing_menu_step
-            )
-
-            AqlProvisioningStatus.COMPLETED -> string(
-                R.string.device_provisioning_step_setup_complete
-            )
-
-            AqlProvisioningStatus.WIFI_FAILED -> string(
-                R.string.device_provisioning_step_wifi_failed
-            )
-
-            AqlProvisioningStatus.CLAIM_REJECTED -> string(
-                R.string.device_provisioning_step_verification_failed
-            )
-
-            AqlProvisioningStatus.TIMEOUT -> string(
-                R.string.device_provisioning_step_timeout
-            )
-
-            AqlProvisioningStatus.ERROR -> string(
-                R.string.device_provisioning_setup_stopped
-            )
-
-            else -> string(R.string.device_provisioning_step_in_progress)
-        }
+    private fun renderExpiredSession() {
+        _uiState.value = _uiState.value.copy(
+            title = string(R.string.device_provisioning_session_expired_title),
+            message = string(R.string.device_provisioning_session_expired_message),
+            canStart = false,
+            buttonText = string(R.string.device_provisioning_unavailable),
+            showProgress = false,
+            wifiCredentialFailure = null
+        )
     }
 
-    private fun String.toFriendlyError(): String {
-        val normalized = trim()
-        return when {
-            ProvisioningFailurePolicy.isSecureSessionFailure(normalized) ->
-                string(
-                    R.string.device_provisioning_error_secure_session_ended
-                )
-
-            normalized.contains(
-                "StartSession is required",
-                ignoreCase = true
-            ) -> string(R.string.device_provisioning_error_start_session)
-
-            normalized.contains("WiFi", ignoreCase = true) ||
-                normalized.contains("wifi", ignoreCase = true) ->
-                string(R.string.device_provisioning_error_wifi_failed)
-
-            else -> string(R.string.device_provisioning_error_unexpected)
-        }
+    private fun renderQrDeviceNotFound() {
+        _uiState.value = _uiState.value.copy(
+            title = string(R.string.device_provisioning_qr_not_found_title),
+            message = string(R.string.device_provisioning_qr_not_found_message),
+            stepThree = string(R.string.device_provisioning_device_not_found_title),
+            canStart = true,
+            buttonText = string(R.string.device_provisioning_try_again),
+            showProgress = false,
+            wifiCredentialFailure = null
+        )
     }
 
-    private fun String?.toFriendlySaveError(): String {
-        val normalized = orEmpty().trim()
-        return when {
-            ProvisioningFailurePolicy.isSecureSessionFailure(normalized) ->
-                string(
-                    R.string.device_provisioning_error_secure_session_ended
-                )
-
-            ProvisioningFailurePolicy.isRuntimeConfirmationFailure(normalized) ->
-                string(
-                    R.string.device_provisioning_error_runtime_confirmation
-                )
-
-            else -> string(R.string.device_provisioning_save_failed_message)
-        }
+    private fun renderTransportStartFailure(error: Throwable) {
+        markProvisioningStopped()
+        _uiState.value = _uiState.value.copy(
+            title = string(R.string.device_provisioning_failed_title),
+            message = presenter.friendlyTransportError(error.message.orEmpty()),
+            stepThree = string(R.string.device_provisioning_setup_stopped),
+            canStart = true,
+            buttonText = string(R.string.device_provisioning_start_again),
+            showProgress = false,
+            requiresFreshDeviceSelection = true,
+            wifiCredentialFailure = null
+        )
     }
 
     private fun markProvisioningStopped() {
@@ -1062,76 +592,55 @@ class DeviceProvisioningProgressViewModel(
 
     private fun rollbackPendingProvisioningRegistration() {
         val deviceUid = pendingSavedDeviceUid ?: return
-        if (rollbackJob?.isActive == true) {
-            return
-        }
+        if (rollbackJob?.isActive == true) return
 
         rollbackJob = viewModelScope.launch {
             operations.rollbackProvisioningRegistration(deviceUid)
-                .onSuccess {
-                    clearPendingRegistrationState()
-                }
+                .onSuccess { clearPendingRegistrationState() }
                 .onFailure {
-                    if (!exitRequested) {
-                        renderRollbackFailure()
-                    }
+                    if (!exitRequested) renderRollbackFailure()
                 }
         }
     }
 
     private suspend fun renderRollbackFailure() {
         _uiState.value = _uiState.value.copy(
-            title = string(
-                R.string.device_provisioning_cancel_failed_title
-            ),
-            message = string(
-                R.string.device_provisioning_cancel_failed_message
-            ),
-            stepThree = string(
-                R.string.device_provisioning_save_failed_step
-            ),
+            title = string(R.string.device_provisioning_cancel_failed_title),
+            message = string(R.string.device_provisioning_cancel_failed_message),
+            stepThree = string(R.string.device_provisioning_save_failed_step),
             canStart = false,
             showProgress = false,
             isCancelling = false,
             wifiCredentialFailure = null
         )
-        _events.send(
-            DeviceProvisioningProgressEvent.ShowCancellationFailed
-        )
+        _events.send(DeviceProvisioningProgressEvent.ShowCancellationFailed)
     }
 
     private fun clearPendingRegistrationState() {
         pendingSavedDeviceUid = null
-        pendingAddedRoute = null
-        pendingPreparedSnapshot = null
+        pendingAddedDevice = null
+        pendingPreparedRegistration = null
         handoffSaved = false
     }
 
-    private fun initialState(): DeviceProvisioningProgressUiState {
-        return DeviceProvisioningProgressUiState(
+    private fun initialState(): DeviceProvisioningProgressUiState =
+        DeviceProvisioningProgressUiState(
             title = string(R.string.device_provisioning_default_title),
             message = string(R.string.device_provisioning_default_message),
-            stepOne = string(
-                R.string.device_provisioning_step_device_selected
-            ),
-            stepTwo = string(
-                R.string.device_provisioning_step_wifi_prepared
-            ),
-            stepThree = string(
-                R.string.device_provisioning_step_preparing_secure
-            ),
+            stepOne = string(R.string.device_provisioning_step_device_selected),
+            stepTwo = string(R.string.device_provisioning_step_wifi_prepared),
+            stepThree = string(R.string.device_provisioning_step_preparing_secure),
             buttonText = string(R.string.device_provisioning_try_again)
         )
-    }
 
     private fun string(resId: Int, vararg args: Any): String =
         textResolver.get(resId, *args)
 
     override fun onCleared() {
         startJob?.cancel()
-        gattEventsJob?.cancel()
+        transportEventsJob?.cancel()
         handoffSaveJob?.cancel()
-        runCatching(operations::closeGatt)
+        runCatching(operations::closeTransport)
             .exceptionOrNull()
             ?.printStackTrace()
 
@@ -1139,9 +648,9 @@ class DeviceProvisioningProgressViewModel(
         val pendingCommitJob = commitJob
         val pendingRollbackJob = rollbackJob
         val pendingExitJob = exitJob
-        val cleanupOwnerUid = ownerUid
-        val cleanupOperations = operations
         val cleanupDeviceUid = pendingSavedDeviceUid
+        val cleanupOperations = operations
+        val cleanupOwnerUid = ownerUid
 
         PROCESS_CLEANUP_SCOPE.launch {
             pendingHandoffJob?.join()
@@ -1160,50 +669,6 @@ class DeviceProvisioningProgressViewModel(
     }
 
     private companion object {
-        val PROCESS_CLEANUP_SCOPE = CoroutineScope(
-            SupervisorJob() + Dispatchers.IO
-        )
-
-        val terminalStatuses = setOf(
-            AqlProvisioningStatus.COMPLETED,
-            AqlProvisioningStatus.WIFI_FAILED,
-            AqlProvisioningStatus.CLAIM_REJECTED,
-            AqlProvisioningStatus.TIMEOUT,
-            AqlProvisioningStatus.ERROR
-        )
-
-        val retryStatuses = setOf(
-            AqlProvisioningStatus.WIFI_FAILED,
-            AqlProvisioningStatus.CLAIM_REJECTED,
-            AqlProvisioningStatus.TIMEOUT,
-            AqlProvisioningStatus.ERROR
-        )
-    }
-}
-
-internal object ProvisioningFailurePolicy {
-    fun isSecureSessionFailure(message: String): Boolean {
-        return message.contains("status 147", ignoreCase = true) ||
-            message.contains("ECDH", ignoreCase = true) ||
-            message.contains("BAD_DECRYPT", ignoreCase = true) ||
-            message.contains("decrypt", ignoreCase = true) ||
-            message.contains(
-                "secure BLE provisioning session is not active",
-                ignoreCase = true
-            ) ||
-            message.contains(
-                "GATT connection is not active",
-                ignoreCase = true
-            )
-    }
-
-    fun isRuntimeConfirmationFailure(message: String): Boolean {
-        return message.contains(
-            "identity and capabilities",
-            ignoreCase = true
-        ) || message.contains(
-            "supported product family",
-            ignoreCase = true
-        )
+        val PROCESS_CLEANUP_SCOPE = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     }
 }

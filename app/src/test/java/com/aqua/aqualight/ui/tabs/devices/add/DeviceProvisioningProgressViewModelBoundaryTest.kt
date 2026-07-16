@@ -1,159 +1,278 @@
 package com.aqua.aqualight.ui.tabs.devices.add
 
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.devices.provisioning.PreparedProvisioningRegistration
+import com.aqua.aqualight.application.devices.provisioning.ProvisionedDevice
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningProgressOperations
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningRuntimeEndpoint
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningRuntimeHandoff
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningSessionSnapshot
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningTransportEvent
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningVerifiedDeviceInfo
 import com.aqua.aqualight.application.text.AppTextResolver
-import com.aqua.aqualight.data.devices.model.DeviceSnapshot
-import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningGattEvent
-import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningDraft
-import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningRuntimeHandoff
-import com.aqua.aqualight.data.devices.provisioning.model.AqlWifiCredentials
-import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.TestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestWatcher
+import org.junit.runner.Description
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class DeviceProvisioningProgressViewModelBoundaryTest {
 
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
     @Test
-    fun `missing draft renders expired state without opening device runtime`() {
-        val operations = FakeProvisioningOperations(draft = null)
-        val viewModel = DeviceProvisioningProgressViewModel(
-            operations = operations,
-            textResolver = FakeTextResolver
-        )
+    fun `missing session renders expired state without opening transport`() {
+        val operations = FakeProvisioningOperations(session = null)
+        val viewModel = viewModel(operations)
 
         viewModel.bind("missing-session")
 
-        assertEquals(1, operations.getDraftCalls)
+        assertEquals(1, operations.getSessionCalls)
         assertEquals(
             text(R.string.device_provisioning_session_expired_title),
             viewModel.uiState.value.title
         )
         assertFalse(viewModel.uiState.value.canStart)
-        assertEquals(0, operations.startGattCalls)
+        assertEquals(0, operations.startTransportCalls)
         assertEquals(0, operations.prepareCalls)
     }
 
     @Test
-    fun `existing draft renders ready state through one fake boundary`() {
-        val draft = draft()
-        val operations = FakeProvisioningOperations(draft)
-        val viewModel = DeviceProvisioningProgressViewModel(
-            operations = operations,
-            textResolver = FakeTextResolver
-        )
+    fun `existing session renders ready state through one application boundary`() {
+        val session = session()
+        val operations = FakeProvisioningOperations(session)
+        val viewModel = viewModel(operations)
 
-        viewModel.bind(draft.sessionId)
+        viewModel.bind(session.sessionId)
 
         val state = viewModel.uiState.value
-        assertEquals(1, operations.getDraftCalls)
-        assertEquals(draft.deviceTitle, state.deviceName)
-        assertEquals(draft.deviceSerial, state.deviceSerial)
-        assertEquals(draft.bleAddress, state.bleAddress)
-        assertEquals(draft.wifiCredentials.ssid, state.wifiSsid)
+        assertEquals(1, operations.getSessionCalls)
+        assertEquals(session.deviceTitle, state.deviceName)
+        assertEquals(session.deviceSerial, state.deviceSerial)
+        assertEquals(session.bleAddress, state.bleAddress)
+        assertEquals(session.wifiSsid, state.wifiSsid)
         assertTrue(state.canStart)
         assertFalse(state.showProgress)
-        assertEquals(0, operations.startGattCalls)
-        assertEquals(0, operations.prepareCalls)
     }
 
     @Test
     fun `binding the same session twice remains idempotent`() {
-        val draft = draft()
-        val operations = FakeProvisioningOperations(draft)
-        val viewModel = DeviceProvisioningProgressViewModel(
+        val operations = FakeProvisioningOperations(session())
+        val viewModel = viewModel(operations)
+
+        viewModel.bind("session-1")
+        viewModel.bind("session-1")
+
+        assertEquals(1, operations.getSessionCalls)
+        assertEquals(0, operations.startTransportCalls)
+    }
+
+    @Test
+    fun `start delegates session id and resolved BLE address`() {
+        val operations = FakeProvisioningOperations(session())
+        val viewModel = viewModel(operations)
+        viewModel.bind("session-1")
+
+        viewModel.startProvisioning()
+
+        assertEquals(1, operations.startTransportCalls)
+        assertEquals("session-1", operations.startedSessionId)
+        assertEquals("AA:BB:CC:DD:EE:FF", operations.startedBleAddress)
+    }
+
+    @Test
+    fun `runtime handoff and completion commit prepared registration`() = runTest {
+        val operations = FakeProvisioningOperations(session())
+        val viewModel = viewModel(operations)
+        viewModel.bind("session-1")
+        viewModel.startProvisioning()
+
+        operations.emit(ProvisioningTransportEvent.RuntimeHandoffReceived(handoff()))
+        operations.emit(ProvisioningTransportEvent.Completed)
+        val event = viewModel.events.first() as DeviceProvisioningProgressEvent.OpenAddedDevice
+
+        assertEquals(1, operations.prepareCalls)
+        assertEquals(1, operations.finalizeCalls)
+        assertEquals(1, operations.commitCalls)
+        assertEquals("device-1", event.device.deviceUid)
+        assertEquals(OwnerDeviceFamily.LIGHT, event.device.family)
+        assertTrue(operations.removedSessions.contains("session-1"))
+    }
+
+    @Test
+    fun `transport failure after prepare rolls back pending registration`() = runTest {
+        val operations = FakeProvisioningOperations(session())
+        val viewModel = viewModel(operations)
+        viewModel.bind("session-1")
+        viewModel.startProvisioning()
+
+        operations.emit(ProvisioningTransportEvent.RuntimeHandoffReceived(handoff()))
+        operations.emit(ProvisioningTransportEvent.Failed("GATT connection is not active"))
+
+        assertEquals(listOf("device-1"), operations.rollbackDeviceUids)
+        assertTrue(viewModel.uiState.value.requiresFreshDeviceSelection)
+        assertFalse(viewModel.uiState.value.showProgress)
+    }
+
+    private fun viewModel(operations: FakeProvisioningOperations) =
+        DeviceProvisioningProgressViewModel(
             operations = operations,
             textResolver = FakeTextResolver
         )
 
-        viewModel.bind(draft.sessionId)
-        viewModel.bind(draft.sessionId)
-
-        assertEquals(1, operations.getDraftCalls)
-        assertEquals(0, operations.startGattCalls)
-    }
-
-    private fun draft(): AqlProvisioningDraft = AqlProvisioningDraft(
+    private fun session() = ProvisioningSessionSnapshot(
         sessionId = "session-1",
         candidateId = "candidate-1",
         bleAddress = "AA:BB:CC:DD:EE:FF",
         bleName = "AquaLight-Setup",
-        claimCode = "claim",
-        rawQrPayload = "raw",
         deviceTitle = "AquaLight Test",
         deviceSerial = "AQL-TEST-001",
         deviceModel = "AQL-Light",
-        wifiCredentials = AqlWifiCredentials(
-            ssid = "Test WiFi",
-            password = "password"
-        ),
+        wifiSsid = "Test WiFi",
         createdAtMillis = 1L
     )
 
+    private fun handoff() = ProvisioningRuntimeHandoff(
+        handoffId = "handoff-1",
+        deviceUid = "device-1",
+        endpoint = ProvisioningRuntimeEndpoint(
+            ip = "192.168.1.44",
+            wifiMode = "station",
+            wifiConnected = true,
+            setupApActive = false,
+            runtimeTransport = "websocket",
+            webSocketPort = 81,
+            webSocketPath = "/aql",
+            webSocketProtocol = "aql.v1",
+            webSocketProtocolVersion = 1,
+            discoveryPort = 4210
+        )
+    )
+
     private class FakeProvisioningOperations(
-        private val draft: AqlProvisioningDraft?
-    ) : DeviceProvisioningProgressOperations {
+        private val session: ProvisioningSessionSnapshot?
+    ) : ProvisioningProgressOperations {
         override val ownerUid: String = "owner-a"
-        override val gattEvents: Flow<AqlBleProvisioningGattEvent> = emptyFlow()
+        private val eventFlow = MutableSharedFlow<ProvisioningTransportEvent>(
+            extraBufferCapacity = 16
+        )
+        override val events: Flow<ProvisioningTransportEvent> = eventFlow
 
-        var getDraftCalls = 0
-        var startGattCalls = 0
+        var getSessionCalls = 0
+        var startTransportCalls = 0
         var prepareCalls = 0
+        var finalizeCalls = 0
+        var commitCalls = 0
+        var startedSessionId = ""
+        var startedBleAddress = ""
+        val removedSessions = mutableListOf<String>()
+        val rollbackDeviceUids = mutableListOf<String>()
 
-        override fun getDraft(sessionId: String): AqlProvisioningDraft? {
-            getDraftCalls += 1
-            return draft?.takeIf { it.sessionId == sessionId }
+        override fun getSession(sessionId: String): ProvisioningSessionSnapshot? {
+            getSessionCalls += 1
+            return session?.takeIf { it.sessionId == sessionId }
         }
 
-        override fun removeDraft(sessionId: String) = Unit
-
-        override suspend fun resolveQrAddress(
-            draft: AqlProvisioningDraft
-        ): Result<String> = Result.success(draft.bleAddress)
-
-        override fun startGatt(draft: AqlProvisioningDraft) {
-            startGattCalls += 1
+        override fun removeSession(sessionId: String) {
+            removedSessions += sessionId
         }
 
-        override fun finalizeSetup(handoff: AqlProvisioningRuntimeHandoff) = Unit
+        override suspend fun resolveBleAddress(sessionId: String): Result<String> =
+            Result.success(requireNotNull(session).bleAddress)
 
-        override fun closeGatt() = Unit
+        override fun startTransport(
+            sessionId: String,
+            bleAddress: String
+        ): Result<Unit> {
+            startTransportCalls += 1
+            startedSessionId = sessionId
+            startedBleAddress = bleAddress
+            return Result.success(Unit)
+        }
 
-        override suspend fun prepareAndConnect(
-            draft: AqlProvisioningDraft,
-            handoff: AqlProvisioningRuntimeHandoff
-        ): Result<DeviceSnapshot> {
+        override fun finalizeSetup(
+            handoff: ProvisioningRuntimeHandoff
+        ): Result<Unit> {
+            finalizeCalls += 1
+            return Result.success(Unit)
+        }
+
+        override fun closeTransport() = Unit
+
+        override suspend fun prepareRegistration(
+            sessionId: String,
+            verifiedDeviceInfo: ProvisioningVerifiedDeviceInfo?,
+            handoff: ProvisioningRuntimeHandoff
+        ): Result<PreparedProvisioningRegistration> {
             prepareCalls += 1
-            return Result.failure(IllegalStateException("Not expected in this test."))
+            return Result.success(
+                PreparedProvisioningRegistration(
+                    registrationId = "registration-1",
+                    device = ProvisionedDevice(
+                        deviceUid = handoff.deviceUid,
+                        title = verifiedDeviceInfo?.title ?: "AquaLight Test",
+                        family = OwnerDeviceFamily.LIGHT
+                    )
+                )
+            )
         }
 
         override suspend fun commitPreparedRegistration(
-            snapshot: DeviceSnapshot
-        ): Result<DeviceSnapshot> =
-            Result.failure(IllegalStateException("Not expected in this test."))
+            registration: PreparedProvisioningRegistration
+        ): Result<Unit> {
+            commitCalls += 1
+            return Result.success(Unit)
+        }
 
         override suspend fun rollbackProvisioningRegistration(
-            deviceUid: DeviceUid
-        ): Result<Unit> = Result.success(Unit)
+            deviceUid: String
+        ): Result<Unit> {
+            rollbackDeviceUids += deviceUid
+            return Result.success(Unit)
+        }
 
         override suspend fun rollbackProvisioningRegistrationForOwner(
             ownerUid: String,
-            deviceUid: DeviceUid
-        ): Result<Unit> = Result.success(Unit)
+            deviceUid: String
+        ): Result<Unit> {
+            rollbackDeviceUids += deviceUid
+            return Result.success(Unit)
+        }
 
-        override fun resolveRoute(
-            snapshot: DeviceSnapshot,
-            requestedDeviceUid: String
-        ): DeviceRoute = error("Not expected in this test.")
+        suspend fun emit(event: ProvisioningTransportEvent) {
+            eventFlow.emit(event)
+        }
     }
 
     private object FakeTextResolver : AppTextResolver {
-        override fun get(resId: Int, vararg args: Any): String =
-            text(resId, *args)
+        override fun get(resId: Int, vararg args: Any): String = text(resId, *args)
+    }
+
+    class MainDispatcherRule(
+        private val dispatcher: TestDispatcher = UnconfinedTestDispatcher()
+    ) : TestWatcher() {
+        override fun starting(description: Description) {
+            Dispatchers.setMain(dispatcher)
+        }
+
+        override fun finished(description: Description) {
+            Dispatchers.resetMain()
+        }
     }
 
     private companion object {

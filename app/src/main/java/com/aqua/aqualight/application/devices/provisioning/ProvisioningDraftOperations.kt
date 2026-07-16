@@ -1,10 +1,11 @@
 package com.aqua.aqualight.application.devices.provisioning
 
 /**
- * Application boundary for creating an in-process provisioning session.
+ * Application boundary for creating a provisioning session.
  *
- * The UI supplies validated primitive values. Data-store models, BLE address
- * cache access and draft persistence remain behind the implementation.
+ * The UI supplies validated primitive values and, for QR setup, only an opaque
+ * reference to encrypted claim material. Data models, secrets, BLE cache access
+ * and draft persistence remain behind the implementation.
  */
 interface ProvisioningDraftOperations {
     fun createDraft(
@@ -16,8 +17,7 @@ data class ProvisioningDraftRequest(
     val candidateId: String,
     val bleAddress: String,
     val bleName: String,
-    val claimCode: String,
-    val rawQrPayload: String,
+    val qrSecretReference: String,
     val deviceTitle: String,
     val deviceSerial: String,
     val deviceModel: String,

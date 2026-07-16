@@ -5,6 +5,7 @@ import com.aqua.aqualight.data.aquarium.devices.TankAssignmentRepairResult
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
+import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningCommitRecoveryStore
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
 import com.aqua.aqualight.data.user.UserDataScope
@@ -110,6 +111,9 @@ class OwnerSessionCoordinator private constructor(
                 AqlProvisioningHandoffSaver(appContext)
                     .rollbackPendingRegistrationsForOwner(normalizedOwnerUid)
                     .getOrThrow()
+
+                ProvisioningCommitRecoveryStore(appContext)
+                    .recoverOwner(normalizedOwnerUid)
 
                 val credentialStore = DeviceCredentialStore(
                     context = appContext,
