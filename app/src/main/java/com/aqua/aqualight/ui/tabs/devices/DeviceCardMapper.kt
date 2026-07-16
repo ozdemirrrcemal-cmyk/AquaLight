@@ -1,25 +1,40 @@
 package com.aqua.aqualight.ui.tabs.devices
 
-import com.aqua.aqualight.data.devices.model.DeviceSnapshot
-import com.aqua.aqualight.ui.common.devicecard.DeviceCompactSnapshotMapper
+import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
+import com.aqua.aqualight.application.devices.OwnerDeviceListItem
+import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardUi
+import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
+import com.aqua.aqualight.ui.common.devicecard.DeviceFamilyIconMapper
+import java.util.Locale
 
 object DeviceCardMapper {
 
     fun map(
-        snapshot: DeviceSnapshot,
-        assignedTankName: String? = null,
-        nowMillis: Long = System.currentTimeMillis()
+        device: OwnerDeviceListItem
     ): DeviceCardUi {
-        val supportingText = assignedTankName
-            ?.trim()
-            ?.takeIf(String::isNotBlank)
+        val supportingText = device.assignedTankName
+            .trim()
+            .takeIf(String::isNotBlank)
             .orEmpty()
+        val isReachable = device.availability == OwnerDeviceAvailability.REACHABLE
 
         return DeviceCardUi(
-            deviceUid = snapshot.deviceUid.value,
-            card = DeviceCompactSnapshotMapper.map(
-                snapshot = snapshot,
-                supportingText = supportingText
+            deviceUid = device.deviceUid,
+            card = DeviceCompactCardUi(
+                deviceUid = device.deviceUid,
+                displayName = device.displayName.ifBlank { device.deviceUid },
+                serialText = device.serialText.ifBlank { device.deviceUid },
+                supportingText = supportingText,
+                iconRes = DeviceFamilyIconMapper.iconFor(device.family),
+                statusText = (if (isReachable) "Online" else "Offline")
+                    .uppercase(Locale.US),
+                statusStyle = if (isReachable) {
+                    DeviceCompactStatusStyle.ONLINE
+                } else {
+                    DeviceCompactStatusStyle.OFFLINE
+                },
+                actionText = "",
+                showAction = false
             )
         )
     }

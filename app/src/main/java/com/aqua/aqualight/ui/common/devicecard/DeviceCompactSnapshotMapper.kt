@@ -1,87 +1,50 @@
 package com.aqua.aqualight.ui.common.devicecard
 
-import com.aqua.aqualight.data.devices.model.DeviceFamily
-import com.aqua.aqualight.data.devices.model.DeviceOnlineState
-import com.aqua.aqualight.data.devices.model.DeviceSnapshot
-import com.aqua.aqualight.ui.common.devicepresence.DevicePresencePresentationMapper
+import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
+import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.devices.TankDeviceListItem
 import java.util.Locale
 
 object DeviceCompactSnapshotMapper {
 
     fun map(
-        snapshot: DeviceSnapshot,
+        device: TankDeviceListItem,
         supportingText: String = "",
         showAction: Boolean = false,
         actionText: String = ""
     ): DeviceCompactCardUi {
+        val isReachable = device.availability == OwnerDeviceAvailability.REACHABLE
         return DeviceCompactCardUi(
-            deviceUid = snapshot.deviceUid.value,
-            displayName = snapshot.title.ifBlank { snapshot.deviceUid.value },
-            serialText = serialText(snapshot),
+            deviceUid = device.deviceUid,
+            displayName = device.displayName.ifBlank { device.deviceUid },
+            serialText = device.serialText.ifBlank { device.deviceUid },
             supportingText = supportingText,
-            iconRes = DeviceFamilyIconMapper.iconFor(snapshot.product.family),
-            statusText = statusText(snapshot.connectionState.onlineState),
-            statusStyle = statusStyle(snapshot.connectionState.onlineState),
+            iconRes = DeviceFamilyIconMapper.iconFor(device.family),
+            statusText = (if (isReachable) "Online" else "Offline")
+                .uppercase(Locale.US),
+            statusStyle = if (isReachable) {
+                DeviceCompactStatusStyle.ONLINE
+            } else {
+                DeviceCompactStatusStyle.OFFLINE
+            },
             actionText = actionText,
             showAction = showAction
         )
     }
 
-    fun familyLabel(
-        family: DeviceFamily
-    ): String {
+    fun familyLabel(family: OwnerDeviceFamily): String {
         return when (family) {
-            DeviceFamily.LIGHT -> "Light"
-            DeviceFamily.TIMER -> "Timer"
-            DeviceFamily.DOSING -> "Dosing"
-            DeviceFamily.COOLING -> "Cooling"
-            DeviceFamily.UNKNOWN -> "Device"
+            OwnerDeviceFamily.LIGHT -> "Light"
+            OwnerDeviceFamily.TIMER -> "Timer"
+            OwnerDeviceFamily.DOSING -> "Dosing"
+            OwnerDeviceFamily.COOLING -> "Cooling"
+            OwnerDeviceFamily.UNKNOWN -> "Device"
         }
     }
 
-    fun defaultSupportingText(
-        snapshot: DeviceSnapshot
-    ): String {
-        val family = familyLabel(snapshot.product.family)
-
-        val product = snapshot.product.displayName
-            .ifBlank { snapshot.product.model }
-            .ifBlank { snapshot.product.productId }
-
-        return listOf(
-            family,
-            product
-        )
-            .filter { value -> value.isNotBlank() }
-            .distinct()
-            .joinToString(separator = " • ")
-            .ifBlank { "AquaLight device" }
-    }
-
-    private fun serialText(
-        snapshot: DeviceSnapshot
-    ): String {
-        return snapshot.identity.serialNumber
-            .ifBlank { snapshot.identity.firmwareSerial }
-            .ifBlank { snapshot.identity.shortId }
-            .ifBlank { snapshot.deviceUid.value }
-    }
-
-    private fun statusText(
-        onlineState: DeviceOnlineState
-    ): String {
-        return DevicePresencePresentationMapper
-            .availabilityLabel(onlineState)
-            .uppercase(Locale.US)
-    }
-
-    private fun statusStyle(
-        onlineState: DeviceOnlineState
-    ): DeviceCompactStatusStyle {
-        return if (DevicePresencePresentationMapper.isReachable(onlineState)) {
-            DeviceCompactStatusStyle.ONLINE
-        } else {
-            DeviceCompactStatusStyle.OFFLINE
-        }
+    fun defaultSupportingText(device: TankDeviceListItem): String {
+        return familyLabel(device.family)
+            .takeIf(String::isNotBlank)
+            ?: "AquaLight device"
     }
 }

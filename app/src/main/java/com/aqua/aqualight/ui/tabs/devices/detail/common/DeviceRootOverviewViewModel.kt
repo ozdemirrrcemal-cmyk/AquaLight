@@ -2,10 +2,8 @@ package com.aqua.aqualight.ui.tabs.devices.detail.common
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.data.devices.model.DeviceSnapshot
-import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.repository.DevicesRepository
-import com.aqua.aqualight.ui.common.devicepresence.DevicePresencePresentationMapper
+import com.aqua.aqualight.application.devices.DeviceRootOperations
+import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,13 +11,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class DeviceRootOverviewViewModel(
-    private val repository: DevicesRepository
+    private val operations: DeviceRootOperations
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceRootOverviewUiState())
     val uiState: StateFlow<DeviceRootOverviewUiState> = _uiState.asStateFlow()
 
-    private var boundDeviceUid: DeviceUid? = null
+    private var boundDeviceUid: String = ""
     private var observeJob: Job? = null
 
     fun bind(
@@ -27,128 +25,63 @@ class DeviceRootOverviewViewModel(
         deviceUidText: String,
         fallbackTitle: String
     ) {
-        if (deviceUidText.isBlank()) {
-            _uiState.value = DeviceRootOverviewUiState(
-                title = fallbackTitle.ifBlank { kind.defaultTitle },
-                deviceUid = "",
-                connectionStatus = "Offline",
-                primaryCountLabel = kind.primaryCountLabel,
-                primarySectionTitle = kind.primarySectionTitle,
-                primarySectionPlaceholder = kind.primarySectionPlaceholder,
-                secondarySectionTitle = kind.secondarySectionTitle,
-                secondarySectionPlaceholder = kind.secondarySectionPlaceholder
-            )
+        val deviceUid = deviceUidText.trim()
+        if (deviceUid.isBlank()) {
+            observeJob?.cancel()
+            boundDeviceUid = ""
+            _uiState.value = emptyState(kind, fallbackTitle, "")
             return
         }
-
-        val deviceUid = DeviceUid(deviceUidText)
         if (boundDeviceUid == deviceUid) return
 
         boundDeviceUid = deviceUid
         observeJob?.cancel()
-        _uiState.value = DeviceRootOverviewUiState(
-            title = fallbackTitle.ifBlank { kind.defaultTitle },
-            deviceUid = deviceUid.value,
-            connectionStatus = "Offline",
-            primaryCountLabel = kind.primaryCountLabel,
-            primarySectionTitle = kind.primarySectionTitle,
-            primarySectionPlaceholder = kind.primarySectionPlaceholder,
-            secondarySectionTitle = kind.secondarySectionTitle,
-            secondarySectionPlaceholder = kind.secondarySectionPlaceholder
-        )
-
+        _uiState.value = emptyState(kind, fallbackTitle, deviceUid)
         observeJob = viewModelScope.launch {
-            repository.observeDevice(deviceUid).collect { snapshot ->
-                _uiState.value = snapshot?.toOverviewState(
-                    kind = kind,
-                    fallbackTitle = fallbackTitle
-                ) ?: DeviceRootOverviewUiState(
-                    title = fallbackTitle.ifBlank { kind.defaultTitle },
-                    deviceUid = deviceUid.value,
-                    connectionStatus = "Offline",
-                    primaryCountLabel = kind.primaryCountLabel,
-                    primarySectionTitle = kind.primarySectionTitle,
-                    primarySectionPlaceholder = kind.primarySectionPlaceholder,
-                    secondarySectionTitle = kind.secondarySectionTitle,
-                    secondarySectionPlaceholder = kind.secondarySectionPlaceholder
-                )
+            operations.observe(deviceUid).collect { snapshot ->
+                _uiState.value = snapshot?.toOverviewState(kind, fallbackTitle)
+                    ?: emptyState(kind, fallbackTitle, deviceUid)
             }
         }
     }
 
-    private fun DeviceSnapshot.toOverviewState(
+    private fun DeviceRootSnapshot.toOverviewState(
         kind: DeviceRootKind,
         fallbackTitle: String
     ): DeviceRootOverviewUiState {
-        val productName = product.displayName
-            .ifBlank { product.model }
-            .ifBlank { fallbackTitle }
-            .ifBlank { kind.defaultTitle }
-        val menuSections = DeviceRootMenuMapper.overview(
-            kind = kind,
-            snapshot = this
-        )
+        val menuSections = DeviceRootMenuMapper.overview(kind = kind, snapshot = this)
+        val count = DeviceRootPresentationMapper.primaryCount(this, kind)
         return DeviceRootOverviewUiState(
-            title = productName,
-            deviceUid = deviceUid.value,
-            connectionStatus = DevicePresencePresentationMapper.availabilityLabel(connectionState.onlineState),
-            ipText = endpoint.ip.ifBlank { "Unknown" },
-            firmwareText = firmwareLabel(),
-            modelText = modelLabel(),
+            title = title.ifBlank { fallbackTitle }.ifBlank { kind.defaultTitle },
+            deviceUid = deviceUid,
+            connectionStatus = DeviceRootPresentationMapper.availabilityLabel(this),
+            ipText = ipAddress.ifBlank { "Unknown" },
+            firmwareText = firmwareLabel.ifBlank { "Unknown" },
+            modelText = modelLabel.ifBlank { "Unknown" },
             primaryCountLabel = kind.primaryCountLabel,
-            primaryCountText = primaryCount(kind).takeIf { count -> count > 0 }?.toString() ?: "Unknown",
-            featuresText = featureLabel(kind),
+            primaryCountText = count.takeIf { it > 0 }?.toString() ?: "Unknown",
+            featuresText = DeviceRootPresentationMapper.overviewFeatureLabel(this, kind),
             primarySectionTitle = kind.primarySectionTitle,
-            primarySectionPlaceholder = menuSections.primaryText(
-                emptyText = kind.primarySectionPlaceholder
-            ),
+            primarySectionPlaceholder = menuSections.primaryText(kind.primarySectionPlaceholder),
             secondarySectionTitle = kind.secondarySectionTitle,
-            secondarySectionPlaceholder = menuSections.secondaryText(
-                emptyText = kind.secondarySectionPlaceholder
-            )
+            secondarySectionPlaceholder = menuSections.secondaryText(kind.secondarySectionPlaceholder)
         )
     }
 
-    private fun DeviceSnapshot.primaryCount(kind: DeviceRootKind): Int {
-        return when (kind) {
-            DeviceRootKind.DOSING -> limits.dosingChannelCount
-            DeviceRootKind.TIMER -> limits.timerChannelCount
-            DeviceRootKind.COOLING -> limits.fanOutputCount
-        }
-    }
-
-    private fun DeviceSnapshot.firmwareLabel(): String {
-        return listOf(
-            firmwareVersion.ifBlank { null },
-            firmwareBuild.ifBlank { null }
-        ).filterNotNull().joinToString(separator = " / ").ifBlank { "Unknown" }
-    }
-
-    private fun DeviceSnapshot.modelLabel(): String {
-        return listOf(
-            product.model.ifBlank { null },
-            product.hardwareRevision.ifBlank { null }
-        ).filterNotNull().joinToString(separator = " / ").ifBlank { "Unknown" }
-    }
-
-    private fun DeviceSnapshot.featureLabel(kind: DeviceRootKind): String {
-        val labels = buildList {
-            when (kind) {
-                DeviceRootKind.DOSING -> if (capabilities.dosing) add("Dosing")
-                DeviceRootKind.TIMER -> if (capabilities.standaloneTimer) add("Timer")
-                DeviceRootKind.COOLING -> {
-                    if (capabilities.cooling) add("Cooling")
-                    if (capabilities.fan) add("Fan")
-                    if (capabilities.temperature) add("Temperature")
-                }
-            }
-            if (capabilities.timeSync) add("Time sync")
-            if (capabilities.ota) add("OTA")
-            supportedFeatures.filter { feature -> feature.isNotBlank() }.forEach { feature -> add(feature) }
-            supportedScreens.filter { screen -> screen.isNotBlank() }.forEach { screen -> add(screen) }
-        }
-        return labels.distinct().joinToString(separator = ", ").ifBlank { "Unknown" }
-    }
+    private fun emptyState(
+        kind: DeviceRootKind,
+        fallbackTitle: String,
+        deviceUid: String
+    ) = DeviceRootOverviewUiState(
+        title = fallbackTitle.ifBlank { kind.defaultTitle },
+        deviceUid = deviceUid,
+        connectionStatus = "Offline",
+        primaryCountLabel = kind.primaryCountLabel,
+        primarySectionTitle = kind.primarySectionTitle,
+        primarySectionPlaceholder = kind.primarySectionPlaceholder,
+        secondarySectionTitle = kind.secondarySectionTitle,
+        secondarySectionPlaceholder = kind.secondarySectionPlaceholder
+    )
 }
 
 enum class DeviceRootKind(

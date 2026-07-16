@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.route
+package com.aqua.aqualight.data.devices.menu
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState

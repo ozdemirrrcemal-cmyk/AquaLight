@@ -1,57 +1,46 @@
 package com.aqua.aqualight.ui.tabs.devices.route
 
-import com.aqua.aqualight.data.devices.model.DeviceFamily
-import com.aqua.aqualight.data.devices.model.DeviceSnapshot
+import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
+import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 
 /**
- * Resolves device detail destinations from firmware-provided metadata.
+ * Maps an application-approved device-menu decision to a UI navigation destination.
  *
- * Commercial rule: Android does not infer device type from display name, SSID, IP, SKU text or a
- * hard-coded local catalog. The route is derived from product.family first, then each destination
- * can decide visible controls from capabilities, limits and supportedScreens.
+ * Liveness and repository access are resolved before this mapper is called. UI routing depends only
+ * on firmware-provided family metadata carried by the application result.
  */
 class DeviceRouteResolver {
 
     fun resolve(
-        snapshot: DeviceSnapshot?,
-        requestedDeviceUid: String
+        access: DeviceMenuAccessResult.Available
     ): DeviceRoute {
-        val deviceUid = snapshot?.deviceUid?.value ?: requestedDeviceUid
-        val title = snapshot?.title
-            ?.ifBlank { deviceUid }
-            ?: deviceUid.ifBlank { DEFAULT_DEVICE_TITLE }
-
-        if (snapshot == null) {
-            return DeviceRoute(
-                deviceUid = deviceUid,
-                title = title,
-                target = DeviceRouteTarget.UNSUPPORTED,
-                message = "Device information is not available yet. Refresh discovery and try again."
-            )
+        val deviceUid = access.deviceUid
+        val title = access.title.ifBlank {
+            deviceUid.ifBlank { DEFAULT_DEVICE_TITLE }
         }
 
-        return when (snapshot.product.family) {
-            DeviceFamily.LIGHT -> DeviceRoute(
+        return when (access.family) {
+            OwnerDeviceFamily.LIGHT -> DeviceRoute(
                 deviceUid = deviceUid,
                 title = title,
                 target = DeviceRouteTarget.LIGHT_ROOT
             )
-            DeviceFamily.DOSING -> DeviceRoute(
+            OwnerDeviceFamily.DOSING -> DeviceRoute(
                 deviceUid = deviceUid,
                 title = title,
                 target = DeviceRouteTarget.DOSING_ROOT
             )
-            DeviceFamily.TIMER -> DeviceRoute(
+            OwnerDeviceFamily.TIMER -> DeviceRoute(
                 deviceUid = deviceUid,
                 title = title,
                 target = DeviceRouteTarget.TIMER_ROOT
             )
-            DeviceFamily.COOLING -> DeviceRoute(
+            OwnerDeviceFamily.COOLING -> DeviceRoute(
                 deviceUid = deviceUid,
                 title = title,
                 target = DeviceRouteTarget.COOLING_ROOT
             )
-            DeviceFamily.UNKNOWN -> DeviceRoute(
+            OwnerDeviceFamily.UNKNOWN -> DeviceRoute(
                 deviceUid = deviceUid,
                 title = title,
                 target = DeviceRouteTarget.UNSUPPORTED,
@@ -60,7 +49,7 @@ class DeviceRouteResolver {
         }
     }
 
-    companion object {
-        private const val DEFAULT_DEVICE_TITLE = "Device"
+    private companion object {
+        const val DEFAULT_DEVICE_TITLE = "Device"
     }
 }

@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.route
+package com.aqua.aqualight.data.devices.menu
 
 import com.aqua.aqualight.data.devices.contract.AqlWsContract
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -130,8 +130,6 @@ class DeviceMenuRuntimeProofPolicyTest {
         module: String,
         action: String
     ): AqlWsEvent {
-        // Android's JVM stub throws from JSONObject.put(). The policy only consumes the typed
-        // response fields, so an empty object keeps this a plain unit test without Robolectric.
         val json = JSONObject()
 
         return AqlWsEvent.Message(

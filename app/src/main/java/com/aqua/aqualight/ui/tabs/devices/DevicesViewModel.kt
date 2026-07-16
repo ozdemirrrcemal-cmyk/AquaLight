@@ -3,32 +3,27 @@ package com.aqua.aqualight.ui.tabs.devices
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
-import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
-import com.aqua.aqualight.data.devices.repository.DevicesRepository
-import com.aqua.aqualight.ui.tabs.devices.route.DeviceMenuOpenGate
-import com.aqua.aqualight.ui.tabs.devices.route.DeviceMenuOpenGateResult
+import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
+import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
+import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
+import com.aqua.aqualight.application.devices.OwnerDevicesOperations
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import java.util.concurrent.CancellationException
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class DevicesViewModel(
-    private val repository: DevicesRepository,
-    private val assignmentRepository: TankDeviceAssignmentRepository,
-    private val deviceDataCleaner: OwnerDeviceDataCleaner,
-    private val menuOpenGate: DeviceMenuOpenGate
+    private val operations: OwnerDevicesOperations,
+    private val menuAccessOperations: DeviceMenuAccessOperations,
+    private val routeResolver: DeviceRouteResolver
 ) : ViewModel() {
 
-    private val clockMillis = MutableStateFlow(System.currentTimeMillis())
     private val selectedDeviceUids = MutableStateFlow<Set<String>>(emptySet())
     private val openingDeviceMenu = MutableStateFlow(false)
     private val deletingDevices = MutableStateFlow(false)
@@ -39,15 +34,13 @@ class DevicesViewModel(
     val events: Flow<DevicesEvent> = _events.receiveAsFlow()
 
     init {
-        repository.start(viewModelScope)
+        operations.start(viewModelScope)
         observeDevices()
-        startUiClockTicker()
-        repository.refreshVisibleDevices()
+        operations.refreshVisibleDevices()
     }
 
     fun onScreenVisible() {
-        repository.refreshVisibleDevices()
-        clockMillis.value = System.currentTimeMillis()
+        operations.refreshVisibleDevices()
     }
 
     fun onDeviceClicked(deviceUid: String) {
@@ -60,25 +53,30 @@ class DevicesViewModel(
 
         viewModelScope.launch {
             openingDeviceMenu.value = true
-            val result = runCatching {
-                menuOpenGate.resolve(deviceUid)
-            }.getOrElse {
-                DeviceMenuOpenGateResult.Blocked(
+            val result = try {
+                menuAccessOperations.resolve(deviceUid)
+            } catch (error: Throwable) {
+                if (error is CancellationException) throw error
+                DeviceMenuAccessResult.Unavailable(
                     title = "",
-                    messageRes = R.string.device_menu_offline_message
+                    reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
                 )
+            } finally {
+                openingDeviceMenu.value = false
             }
-            openingDeviceMenu.value = false
-            clockMillis.value = System.currentTimeMillis()
 
             when (result) {
-                is DeviceMenuOpenGateResult.OpenRoute ->
-                    _events.send(DevicesEvent.OpenRoute(result.route))
-                is DeviceMenuOpenGateResult.Blocked ->
+                is DeviceMenuAccessResult.Available ->
+                    _events.send(
+                        DevicesEvent.OpenRoute(
+                            route = routeResolver.resolve(result)
+                        )
+                    )
+                is DeviceMenuAccessResult.Unavailable ->
                     _events.send(
                         DevicesEvent.ShowDeviceUnavailable(
                             title = result.title,
-                            messageRes = result.messageRes
+                            messageRes = R.string.device_menu_offline_message
                         )
                     )
             }
@@ -101,12 +99,8 @@ class DevicesViewModel(
         viewModelScope.launch {
             deletingDevices.value = true
             try {
-                val result = deviceDataCleaner.deleteDevices(selected.map(::DeviceUid))
-                val failedUids = result.failures
-                    .map { failure -> failure.deviceUid.value }
-                    .toSet()
-                selectedDeviceUids.value = failedUids
-                clockMillis.value = System.currentTimeMillis()
+                val result = operations.deleteDevices(selected)
+                selectedDeviceUids.value = result.failedDeviceUids
 
                 when {
                     result.isCompleteSuccess -> Unit
@@ -157,19 +151,13 @@ class DevicesViewModel(
 
         viewModelScope.launch {
             combine(
-                repository.devices,
-                assignmentRepository.assignedTankNamesByDevice(),
-                clockMillis,
+                operations.devices,
                 selectedDeviceUids,
                 operationState
-            ) { snapshots, tankNamesByDevice, now, selectedUids, operation ->
-                val cards = snapshots.map { snapshot ->
-                    val card = DeviceCardMapper.map(
-                        snapshot = snapshot,
-                        assignedTankName = tankNamesByDevice[snapshot.deviceUid],
-                        nowMillis = now
-                    )
-                    card.copy(isSelected = card.deviceUid in selectedUids)
+            ) { devices, selectedUids, operation ->
+                val cards = devices.map { device ->
+                    DeviceCardMapper.map(device = device)
+                        .copy(isSelected = device.deviceUid in selectedUids)
                 }
                 val visibleSelectedCount = cards.count { card -> card.isSelected }
                 DevicesUiState(
@@ -183,15 +171,6 @@ class DevicesViewModel(
                 )
             }.collect { state ->
                 _uiState.value = state
-            }
-        }
-    }
-
-    private fun startUiClockTicker() {
-        viewModelScope.launch {
-            while (isActive) {
-                delay(UI_CLOCK_TICK_INTERVAL_MS)
-                clockMillis.value = System.currentTimeMillis()
             }
         }
     }
@@ -210,8 +189,4 @@ class DevicesViewModel(
         val isOpeningDeviceMenu: Boolean = false,
         val isDeletingDevices: Boolean = false
     )
-
-    private companion object {
-        const val UI_CLOCK_TICK_INTERVAL_MS = 5_000L
-    }
 }
