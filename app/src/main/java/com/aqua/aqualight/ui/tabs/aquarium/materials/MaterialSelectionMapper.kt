@@ -1,17 +1,17 @@
 package com.aqua.aqualight.ui.tabs.aquarium.materials
 
+import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
 import com.aqua.aqualight.data.aquarium.catalog.material.AquariumMaterial
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCatalog
-import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
-import com.aqua.aqualight.data.aquarium.util.AquariumIdGenerator
+import java.util.UUID
 
 object MaterialSelectionMapper {
     fun productsForCategory(
         categoryKey: String,
-        currentSelections: List<TankMaterialSelection>
+        currentSelections: List<AquariumMaterialSelection>
     ): List<AquariumMaterial> {
         val catalogProducts = MaterialCatalog.getByCategory(categoryKey)
-        val catalogIds = catalogProducts.map { product -> product.id }.toSet()
+        val catalogIds = catalogProducts.map(AquariumMaterial::id).toSet()
 
         val customProducts = currentSelections
             .filterNot { selection -> catalogIds.contains(selection.productId) }
@@ -37,8 +37,8 @@ object MaterialSelectionMapper {
     fun selectedMaterials(
         products: List<AquariumMaterial>,
         selectedProductIds: Set<String>,
-        currentSelections: List<TankMaterialSelection>
-    ): List<TankMaterialSelection> {
+        currentSelections: List<AquariumMaterialSelection>
+    ): List<AquariumMaterialSelection> {
         return products
             .filter { product -> selectedProductIds.contains(product.id) }
             .map { product ->
@@ -46,8 +46,8 @@ object MaterialSelectionMapper {
                     selection.productId == product.id
                 }
 
-                TankMaterialSelection(
-                    id = existingSelection?.id ?: AquariumIdGenerator.newLong(),
+                AquariumMaterialSelection(
+                    id = existingSelection?.id ?: newPositiveId(),
                     productId = product.id,
                     categoryKey = product.categoryKey,
                     categoryTitle = product.categoryTitle,
@@ -64,19 +64,30 @@ object MaterialSelectionMapper {
         materialName: String
     ): AquariumMaterial {
         return AquariumMaterial(
-            id = AquariumIdGenerator.newCustomProductId(
-                categoryKey = categoryKey,
-                materialName = materialName
-            ),
+            id = newCustomProductId(categoryKey, materialName),
             name = materialName,
             brand = "",
             categoryKey = categoryKey,
             categoryTitle = categoryTitle,
-            keywords = listOf(
-                categoryTitle,
-                materialName,
-                "custom"
-            )
+            keywords = listOf(categoryTitle, materialName, "custom")
         )
+    }
+
+    private fun newPositiveId(): Long {
+        var candidate = UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE
+        if (candidate == 0L) candidate = 1L
+        return candidate
+    }
+
+    private fun newCustomProductId(
+        categoryKey: String,
+        materialName: String
+    ): String {
+        val safeName = materialName
+            .lowercase()
+            .replace(Regex("[^a-z0-9]+"), "_")
+            .trim('_')
+            .ifBlank { "custom" }
+        return "custom_${categoryKey}_${safeName}_${UUID.randomUUID()}"
     }
 }
