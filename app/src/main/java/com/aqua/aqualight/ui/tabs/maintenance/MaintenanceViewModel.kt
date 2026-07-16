@@ -3,12 +3,12 @@ package com.aqua.aqualight.ui.tabs.maintenance
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
-import com.aqua.aqualight.data.care.MaintenanceRepository
-import com.aqua.aqualight.data.care.MaintenanceTextResolver
-import com.aqua.aqualight.data.care.model.CareTask
-import com.aqua.aqualight.data.care.model.CareTaskSource
-import com.aqua.aqualight.data.care.model.CareTaskStatus
-import com.aqua.aqualight.data.care.model.CareTaskType
+import com.aqua.aqualight.application.care.MaintenanceOperations
+import com.aqua.aqualight.ui.tabs.maintenance.text.MaintenanceTextResolver
+import com.aqua.aqualight.application.care.CareTaskSnapshot
+import com.aqua.aqualight.application.care.CareTaskSnapshotSource
+import com.aqua.aqualight.application.care.CareTaskSnapshotStatus
+import com.aqua.aqualight.application.care.CareTaskSnapshotType
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.ui.tabs.maintenance.model.MaintenanceTab
 import java.text.SimpleDateFormat
@@ -49,7 +49,7 @@ data class TankCareSummaryUi(
 )
 
 class MaintenanceViewModel(
-    private val repository: MaintenanceRepository,
+    private val repository: MaintenanceOperations,
     private val textResolver: MaintenanceTextResolver
 ) : ViewModel() {
 
@@ -112,7 +112,7 @@ class MaintenanceViewModel(
                 }
             val pendingTasks = tankTasks
                 .filter { task -> task.status == CareTaskStatus.PENDING }
-                .sortedBy(CareTask::dueAtMillis)
+                .sortedBy(CareTaskSnapshot::dueAtMillis)
             val nextCareTask = selectNextCareTask(pendingTasks)
 
             TankActivityUiState(
@@ -250,28 +250,28 @@ class MaintenanceViewModel(
     }
 
     private fun filterTasksByTab(
-        tasks: List<CareTask>,
+        tasks: List<CareTaskSnapshot>,
         tab: MaintenanceTab
-    ): List<CareTask> {
+    ): List<CareTaskSnapshot> {
         val tomorrowStartMillis = getTomorrowStartMillis()
         return when (tab) {
             MaintenanceTab.ALL -> tasks
                 .filter { task -> task.status == CareTaskStatus.PENDING }
-                .sortedBy(CareTask::dueAtMillis)
+                .sortedBy(CareTaskSnapshot::dueAtMillis)
 
             MaintenanceTab.TODAY -> tasks
                 .filter { task ->
                     task.status == CareTaskStatus.PENDING &&
                         task.dueAtMillis < tomorrowStartMillis
                 }
-                .sortedBy(CareTask::dueAtMillis)
+                .sortedBy(CareTaskSnapshot::dueAtMillis)
 
             MaintenanceTab.UPCOMING -> tasks
                 .filter { task ->
                     task.status == CareTaskStatus.PENDING &&
                         task.dueAtMillis >= tomorrowStartMillis
                 }
-                .sortedBy(CareTask::dueAtMillis)
+                .sortedBy(CareTaskSnapshot::dueAtMillis)
 
             MaintenanceTab.HISTORY -> tasks
                 .filter { task -> task.status == CareTaskStatus.COMPLETED }
@@ -281,7 +281,7 @@ class MaintenanceViewModel(
 
     private fun buildTankCareSummary(
         tankId: Long,
-        tasks: List<CareTask>
+        tasks: List<CareTaskSnapshot>
     ): TankCareSummaryUi {
         val completedTasks = tasks.filter { task ->
             task.tankId == tankId && task.status == CareTaskStatus.COMPLETED
@@ -298,7 +298,7 @@ class MaintenanceViewModel(
         )
     }
 
-    private fun CareTask.toCareTaskUi(tankName: String): CareTaskUi {
+    private fun CareTaskSnapshot.toCareTaskUi(tankName: String): CareTaskUi {
         val presentation = textResolver.typePresentation(type)
         return CareTaskUi(
             id = id,
@@ -330,7 +330,7 @@ class MaintenanceViewModel(
         )
     }
 
-    private fun getTaskTitle(task: CareTask, typeTitle: String): String {
+    private fun getTaskTitle(task: CareTaskSnapshot, typeTitle: String): String {
         val percent = task.waterChangePercent
         if (
             task.type == CareTaskType.WATER_CHANGE &&
@@ -342,7 +342,7 @@ class MaintenanceViewModel(
         return task.title.ifBlank { typeTitle }
     }
 
-    private fun getPrimaryTimeText(task: CareTask): String {
+    private fun getPrimaryTimeText(task: CareTaskSnapshot): String {
         if (task.status == CareTaskStatus.COMPLETED) {
             val completedAt = task.completedAtMillis
             return if (completedAt == null || completedAt <= 0L) {
@@ -363,7 +363,7 @@ class MaintenanceViewModel(
         }
     }
 
-    private fun getSecondaryText(task: CareTask): String {
+    private fun getSecondaryText(task: CareTaskSnapshot): String {
         if (
             task.source == CareTaskSource.AUTOMATIC &&
             task.description.isNotBlank()
@@ -383,7 +383,7 @@ class MaintenanceViewModel(
     }
 
     private fun getLastCompletedTaskText(
-        tasks: List<CareTask>,
+        tasks: List<CareTaskSnapshot>,
         types: Set<CareTaskType>
     ): String {
         val lastTask = tasks
@@ -406,24 +406,24 @@ class MaintenanceViewModel(
         CareTaskType.HOSE_CLEANING
     )
 
-    private fun selectNextCareTask(tasks: List<CareTask>): CareTask? {
+    private fun selectNextCareTask(tasks: List<CareTaskSnapshot>): CareTaskSnapshot? {
         if (tasks.isEmpty()) return null
 
         val now = System.currentTimeMillis()
         val tomorrowStartMillis = getTomorrowStartMillis()
         return tasks
             .filter { task -> task.dueAtMillis < now }
-            .minByOrNull(CareTask::dueAtMillis)
+            .minByOrNull(CareTaskSnapshot::dueAtMillis)
             ?: tasks
                 .filter { task -> task.dueAtMillis < tomorrowStartMillis }
-                .minByOrNull(CareTask::dueAtMillis)
+                .minByOrNull(CareTaskSnapshot::dueAtMillis)
             ?: tasks
                 .filter { task -> task.source == CareTaskSource.AUTOMATIC }
-                .minByOrNull(CareTask::dueAtMillis)
-            ?: tasks.minByOrNull(CareTask::dueAtMillis)
+                .minByOrNull(CareTaskSnapshot::dueAtMillis)
+            ?: tasks.minByOrNull(CareTaskSnapshot::dueAtMillis)
     }
 
-    private fun getNextCareStatus(task: CareTask): TankNextCareStatus {
+    private fun getNextCareStatus(task: CareTaskSnapshot): TankNextCareStatus {
         val daysUntil = TimeUnit.MILLISECONDS.toDays(
             getStartOfDayMillis(task.dueAtMillis) - getTodayStartMillis()
         )
@@ -435,7 +435,7 @@ class MaintenanceViewModel(
         }
     }
 
-    private fun getNextCareSummaryText(task: CareTask): String {
+    private fun getNextCareSummaryText(task: CareTaskSnapshot): String {
         val daysUntil = TimeUnit.MILLISECONDS.toDays(
             getStartOfDayMillis(task.dueAtMillis) - getTodayStartMillis()
         )

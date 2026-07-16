@@ -1,8 +1,8 @@
 package com.aqua.aqualight.ui.tabs.maintenance.model
 
-import com.aqua.aqualight.data.care.model.CareTaskSource
-import com.aqua.aqualight.data.care.model.CareTaskStatus
-import com.aqua.aqualight.data.care.model.CareTaskType
+import com.aqua.aqualight.application.care.CareTaskSnapshotSource
+import com.aqua.aqualight.application.care.CareTaskSnapshotStatus
+import com.aqua.aqualight.application.care.CareTaskSnapshotType
 
 data class CareTaskUi(
   val id: Long,

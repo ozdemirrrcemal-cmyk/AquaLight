@@ -18,7 +18,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.FragmentManager
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.care.model.CareTaskType
+import com.aqua.aqualight.application.care.CareTaskSnapshotType
 import com.aqua.aqualight.data.care.catalog.CareTaskTypeCatalog
 import com.aqua.aqualight.data.care.catalog.CareTaskTypeDefinition
 import com.google.android.material.bottomsheet.BottomSheetBehavior

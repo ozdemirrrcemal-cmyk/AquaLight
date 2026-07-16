@@ -2,11 +2,11 @@ package com.aqua.aqualight.ui.tabs.maintenance
 
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.data.care.CareTaskTypePresentation
-import com.aqua.aqualight.data.care.MaintenanceRepository
-import com.aqua.aqualight.data.care.MaintenanceTextResolver
-import com.aqua.aqualight.data.care.model.CareTask
-import com.aqua.aqualight.data.care.model.CareTaskSource
-import com.aqua.aqualight.data.care.model.CareTaskType
+import com.aqua.aqualight.application.care.MaintenanceOperations
+import com.aqua.aqualight.ui.tabs.maintenance.text.MaintenanceTextResolver
+import com.aqua.aqualight.application.care.CareTaskSnapshot
+import com.aqua.aqualight.application.care.CareTaskSnapshotSource
+import com.aqua.aqualight.application.care.CareTaskSnapshotType
 import com.aqua.aqualight.ui.tabs.maintenance.model.MaintenanceTab
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -95,8 +95,8 @@ class MaintenanceViewModelBoundaryTest {
         assertNull(repository.updatedWaterChangePercent)
     }
 
-    private class FakeMaintenanceRepository : MaintenanceRepository {
-        override val tasksFlow = MutableStateFlow<List<CareTask>>(emptyList())
+    private class FakeMaintenanceRepository : MaintenanceOperations {
+        override val tasksFlow = MutableStateFlow<List<CareTaskSnapshot>>(emptyList())
 
         var syncSmartCareCalls = 0
         var deletedManualTaskId: Long? = null
@@ -108,7 +108,7 @@ class MaintenanceViewModelBoundaryTest {
         var updatedManualType: CareTaskType? = null
         var updatedWaterChangePercent: Int? = null
 
-        override fun taskFlow(taskId: Long): Flow<CareTask?> = flowOf(null)
+        override fun taskFlow(taskId: Long): Flow<CareTaskSnapshot?> = flowOf(null)
 
         override suspend fun syncSmartCareTasks(tanks: List<AquariumTankSnapshot>) {
             syncSmartCareCalls += 1
