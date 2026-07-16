@@ -148,6 +148,7 @@ class DeviceProvisioningProgressViewModelBoundaryTest {
     )
 
     private fun handoff() = ProvisioningRuntimeHandoff(
+        handoffId = "handoff-1",
         deviceUid = "device-1",
         endpoint = ProvisioningRuntimeEndpoint(
             ip = "192.168.1.44",
@@ -160,8 +161,7 @@ class DeviceProvisioningProgressViewModelBoundaryTest {
             webSocketProtocol = "aql.v1",
             webSocketProtocolVersion = 1,
             discoveryPort = 4210
-        ),
-        webSocketToken = "a".repeat(64)
+        )
     )
 
     private class FakeProvisioningOperations(
