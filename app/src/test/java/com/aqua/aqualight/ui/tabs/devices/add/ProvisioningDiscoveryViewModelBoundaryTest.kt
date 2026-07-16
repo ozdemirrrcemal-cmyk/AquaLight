@@ -46,6 +46,8 @@ class ProvisioningDiscoveryViewModelBoundaryTest {
         assertEquals("AquaLight One", rendered.title)
         assertEquals("AQL-0001", rendered.serial)
         assertEquals("AA:BB:CC:DD:EE:FF", rendered.bleAddress)
+
+        viewModel.onCandidateClicked(rendered)
     }
 
     @Test
@@ -121,8 +123,12 @@ class ProvisioningDiscoveryViewModelBoundaryTest {
 
         override fun parseQr(rawValue: String): Result<ProvisioningQrPayload> {
             parseCalls += 1
-            return parsedPayload?.let(Result.Companion::success)
-                ?: Result.failure(IllegalArgumentException("invalid QR"))
+            val payload = parsedPayload
+            return if (payload == null) {
+                Result.failure(IllegalArgumentException("invalid QR"))
+            } else {
+                Result.success(payload)
+            }
         }
 
         override suspend fun awaitQrCandidate(
