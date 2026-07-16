@@ -152,8 +152,7 @@ class DeviceQrScanViewModel(
                             deviceModel = SECURE_QR_SETUP_LABEL,
                             bleAddress = candidate.address,
                             bleName = payload.bleName,
-                            claimCode = payload.claimCode,
-                            rawQrPayload = payload.rawPayload
+                            qrSecretReference = payload.secretReference
                         )
                     )
                 )
@@ -234,6 +233,5 @@ data class DeviceQrPreflightSuccess(
     val deviceModel: String,
     val bleAddress: String,
     val bleName: String,
-    val claimCode: String,
-    val rawQrPayload: String
+    val qrSecretReference: String
 )
