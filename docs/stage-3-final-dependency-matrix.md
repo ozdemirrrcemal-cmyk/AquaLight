@@ -3,7 +3,7 @@
 ## Commercial closure objective
 
 The process composition root is owner-neutral. Authenticated owner runtime is opened
-only by the session coordinator. UI and ViewModel factories may consume an active
+only by the session coordinator. UI and ViewModel factories may consume a committed
 owner graph, but they may never create a device repository, socket runtime, assignment
 repository, DataStore manager provider or Firebase client.
 
@@ -29,7 +29,7 @@ authenticated owner UID.
 | --- | --- | --- | --- |
 | `DevicesRepository` and device runtime | `OwnerSessionCoordinator` through `DevicesRepositoryProvider.get` | `OwnerDependencyGraph` via `currentRepository(ownerUid)` | awaited `DevicesRepositoryProvider.clear` barrier |
 | tank-device assignment repository | `OwnerSessionCoordinator` through `TankDeviceAssignmentRepositoryProvider.get` | `OwnerDependencyGraph` via `currentRepository(ownerUid)` | `TankDeviceAssignmentRepositoryProvider.clear` |
-| aquarium/care stores used by foreground ViewModels | `OwnerDependencyGraph` after session activation | owner ViewModels | navigation owner replacement; all writes remain owner-scoped |
+| aquarium/care stores used by foreground ViewModels | `OwnerDependencyGraph` after committed session activation | owner ViewModels | navigation owner replacement; all writes remain owner-scoped |
 | provisioning QR secret/draft stores | `OwnerDependencyGraph` with an immutable owner UID provider | provisioning application boundaries | encrypted TTL/removal and owner session replacement |
 | provisioning progress adapter | `OwnerViewModelFactory` with captured `graph.ownerUid` | one progress ViewModel | ViewModel transport close/cancellation contract |
 
@@ -37,6 +37,12 @@ The `currentRepository(ownerUid)` methods are read-only dependency handoff point
 They must never create or start runtime work. A missing or mismatched repository is a
 hard failure because an owner screen must not repair session ordering by opening a
 second runtime.
+
+`OwnerDependencyGraph` also captures the committed owner-session generation. A graph
+is resolved only when `activeOwnerUid` matches, `pendingOwnerUid` is empty, and the
+session generation and repository identities remain stable through dependency
+composition. This rejects startup/logout/account-switch transition windows before any
+ViewModel constructor can start a collector.
 
 ## ViewModel factory matrix
 
@@ -64,9 +70,11 @@ barrier and can be performed without changing UI or ViewModel construction.
 
 1. Unknown ViewModel classes throw; Android default fallback is forbidden.
 2. A class bound in both process and owner scopes throws.
-3. Owner ViewModel creation requires the authenticated UID, active device repository
-   and active assignment repository to match.
-4. Owner changes during ViewModel construction throw before the instance is returned.
+3. Owner ViewModel creation requires a committed session whose authenticated UID,
+   generation, device repository and assignment repository match.
+4. Pending startup, logout or account-switch sessions fail before a ViewModel
+   constructor can start collectors; committed-session teardown remains the single
+   authority for already-created ViewModels.
 5. Provisioning storage captures the immutable graph owner UID.
 6. Owner dependency resolution never calls a provider `get` method and therefore can
    never open UDP discovery, collectors or WebSockets.
@@ -76,6 +84,8 @@ barrier and can be performed without changing UI or ViewModel construction.
 - `composition_root_guard.py` enforces the matrix and forbidden construction sites.
 - `AquaViewModelFactoryTest` verifies exact routing, unknown-binding rejection and
   duplicate-scope rejection.
+- `OwnerDependencyGraphSessionTest` verifies committed, pending, mismatched and signed-
+  out session behavior before dependency construction.
 - Existing architecture, session, provisioning and UI construction guards remain in
   the CI chain.
 - Debug/Release unit tests, lint, minified Release, CodeQL and API 27/API 35 emulator
