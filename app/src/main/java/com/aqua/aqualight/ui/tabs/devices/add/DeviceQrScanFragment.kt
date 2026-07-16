@@ -10,7 +10,6 @@ import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
-import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
@@ -27,13 +26,9 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceQrScanBinding
+import com.aqua.aqualight.platform.vision.ProvisioningQrFrameDecoder
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import com.google.mlkit.vision.barcode.BarcodeScanner
-import com.google.mlkit.vision.barcode.BarcodeScannerOptions
-import com.google.mlkit.vision.barcode.BarcodeScanning
-import com.google.mlkit.vision.barcode.common.Barcode
-import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlinx.coroutines.launch
@@ -50,7 +45,7 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
 
     private val cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
 
-    private var barcodeScanner: BarcodeScanner? = null
+    private var qrFrameDecoder: ProvisioningQrFrameDecoder? = null
     private var cameraProvider: ProcessCameraProvider? = null
     private var activeCamera: Camera? = null
     private var isTorchEnabled = false
@@ -276,15 +271,13 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
 
         primaryAction = null
         stopCamera()
+        qrFrameDecoder = requireContext()
+            .requireAppContainer()
+            .provisioningQrFrameDecoderFactory
+            .create()
         binding.btnRequestCamera.isVisible = false
         binding.tvScanTitle.text = getString(R.string.device_qr_align_title)
         binding.tvScanStatus.text = getString(R.string.device_qr_align_message)
-
-        val options = BarcodeScannerOptions.Builder()
-            .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
-            .build()
-
-        barcodeScanner = BarcodeScanning.getClient(options)
 
         val providerFuture = ProcessCameraProvider.getInstance(requireContext())
 
@@ -321,7 +314,9 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
                 }.onFailure { error ->
                     clearTorchControl()
                     if (_binding != null) {
-                        binding.tvScanTitle.text = getString(R.string.device_qr_camera_unavailable_title)
+                        binding.tvScanTitle.text = getString(
+                            R.string.device_qr_camera_unavailable_title
+                        )
                         binding.tvScanStatus.text = error.message
                             ?: getString(R.string.device_qr_camera_unavailable_message)
                     }
@@ -404,54 +399,32 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         }
     }
 
-    @OptIn(ExperimentalGetImage::class)
     private fun analyzeQrFrame(imageProxy: ImageProxy) {
         if (isProcessingFrame || hasResult || _binding == null) {
             imageProxy.close()
             return
         }
 
-        val mediaImage = imageProxy.image
-        if (mediaImage == null) {
+        val decoder = qrFrameDecoder
+        if (decoder == null) {
             imageProxy.close()
             return
         }
 
         isProcessingFrame = true
-
-        val image = InputImage.fromMediaImage(
-            mediaImage,
-            imageProxy.imageInfo.rotationDegrees
-        )
-
-        val scanner = barcodeScanner
-        if (scanner == null) {
-            imageProxy.close()
+        decoder.decode(imageProxy) { result ->
             isProcessingFrame = false
-            return
-        }
-
-        scanner.process(image)
-            .addOnSuccessListener { barcodes ->
-                val rawValue = barcodes
-                    .asSequence()
-                    .mapNotNull { barcode -> barcode.rawValue }
-                    .firstOrNull { raw -> raw.isNotBlank() }
-
-                if (rawValue != null) {
+            result.onSuccess { rawValue ->
+                if (rawValue != null && _binding != null && !hasResult) {
                     handleQrPayload(rawValue)
                 }
-            }
-            .addOnFailureListener { error ->
+            }.onFailure { error ->
                 if (_binding != null && !hasResult) {
                     binding.tvScanStatus.text = error.message
                         ?: getString(R.string.device_qr_read_failed)
                 }
             }
-            .addOnCompleteListener {
-                imageProxy.close()
-                isProcessingFrame = false
-            }
+        }
     }
 
     private fun handleQrPayload(rawValue: String) {
@@ -502,8 +475,9 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         clearTorchControl()
         cameraProvider?.unbindAll()
         cameraProvider = null
-        barcodeScanner?.close()
-        barcodeScanner = null
+        qrFrameDecoder?.close()
+        qrFrameDecoder = null
+        isProcessingFrame = false
     }
 
     override fun onDestroyView() {
