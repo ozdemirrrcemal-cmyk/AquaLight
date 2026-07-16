@@ -57,6 +57,7 @@ jobs:
             python3 tools/device_application_boundary_guard.py
             python3 tools/device_root_application_boundary_guard.py
             python3 tools/tank_device_assignment_boundary_guard.py
+            python3 tools/aquarium_application_boundary_guard.py
             python3 tools/navigation_guard.py
           } 2>&1 | tee architecture-guards.log
 
@@ -197,7 +198,7 @@ jobs:
 
       - name: Upload CodeQL result diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: github/actions/upload-artifact@v4
         with:
           name: codeql-results-${{ github.run_number }}
           path: |
