@@ -9,13 +9,14 @@ ANDROID_TESTS = ROOT / "app/src/androidTest/java/com/aqua/aqualight"
 store = APP / "data/devices/provisioning/store/ProvisioningCommitRecoveryStore.kt"
 progress = APP / "data/devices/provisioning/DefaultProvisioningProgressOperations.kt"
 owner_session = APP / "data/auth/OwnerSessionCoordinator.kt"
+user_data_cleaner = APP / "data/user/UserDataCleaner.kt"
 test = (
     ANDROID_TESTS
     / "data/devices/provisioning/store/ProvisioningCommitRecoveryStoreInstrumentedTest.kt"
 )
 
 errors: list[str] = []
-for path in (store, progress, owner_session, test):
+for path in (store, progress, owner_session, user_data_cleaner, test):
     if not path.is_file():
         errors.append(f"missing provisioning commit recovery file: {path.relative_to(ROOT)}")
 
@@ -66,6 +67,19 @@ if owner_session.is_file():
             "owner startup must roll back RAM-only work, recover durable commits, "
             "then discard unrelated staged tokens"
         )
+
+if user_data_cleaner.is_file():
+    text = user_data_cleaner.read_text(encoding="utf-8")
+    for token in (
+        "PROVISIONING_SESSIONS",
+        "rollbackPendingRegistrationsForOwner(targetOwnerUid)",
+        "AqlProvisioningDraftStore(",
+        ").clearOwner()",
+        "ProvisioningCommitRecoveryStore(appContext)",
+        ".clearOwner(targetOwnerUid)",
+    ):
+        if token not in text:
+            errors.append(f"account deletion does not clear provisioning data: {token}")
 
 if test.is_file():
     text = test.read_text(encoding="utf-8")
