@@ -40,24 +40,7 @@ class DefaultAquariumTankOperations(
     override suspend fun deleteTanks(
         tankIds: Collection<Long>
     ): DeleteAquariumTanksResult = withCurrentOwnerScope {
-        when (val result = tankDataCleaner.deleteTanks(tankIds)) {
-            OwnerTankDataCleaner.Result.NoOp -> DeleteAquariumTanksResult.NoOp
-            is OwnerTankDataCleaner.Result.DeleteFailed -> DeleteAquariumTanksResult.DeleteFailed
-            is OwnerTankDataCleaner.Result.Deleted -> DeleteAquariumTanksResult.Deleted(
-                tankIds = result.tankIds,
-                cleanupIssues = result.cleanupIssues.map { issue ->
-                    AquariumTankCleanupIssue(
-                        tankId = issue.tankId,
-                        stage = when (issue.stage) {
-                            OwnerTankDataCleaner.CleanupStage.CARE_TASKS ->
-                                AquariumTankCleanupStage.CARE_TASKS
-                            OwnerTankDataCleaner.CleanupStage.DEVICE_ASSIGNMENTS ->
-                                AquariumTankCleanupStage.DEVICE_ASSIGNMENTS
-                        }
-                    )
-                }
-            )
-        }
+        tankDataCleaner.deleteTanks(tankIds).toApplicationResult()
     }
 
     override suspend fun updateTankPhoto(tankId: Long, photoUri: String?) =
@@ -128,7 +111,27 @@ class DefaultAquariumTankOperations(
     }
 }
 
-private fun SavedAquariumTank.toApplicationSnapshot(): AquariumTankSnapshot =
+internal fun OwnerTankDataCleaner.Result.toApplicationResult(): DeleteAquariumTanksResult =
+    when (this) {
+        OwnerTankDataCleaner.Result.NoOp -> DeleteAquariumTanksResult.NoOp
+        is OwnerTankDataCleaner.Result.DeleteFailed -> DeleteAquariumTanksResult.DeleteFailed
+        is OwnerTankDataCleaner.Result.Deleted -> DeleteAquariumTanksResult.Deleted(
+            tankIds = tankIds,
+            cleanupIssues = cleanupIssues.map { issue ->
+                AquariumTankCleanupIssue(
+                    tankId = issue.tankId,
+                    stage = when (issue.stage) {
+                        OwnerTankDataCleaner.CleanupStage.CARE_TASKS ->
+                            AquariumTankCleanupStage.CARE_TASKS
+                        OwnerTankDataCleaner.CleanupStage.DEVICE_ASSIGNMENTS ->
+                            AquariumTankCleanupStage.DEVICE_ASSIGNMENTS
+                    }
+                )
+            }
+        )
+    }
+
+internal fun SavedAquariumTank.toApplicationSnapshot(): AquariumTankSnapshot =
     AquariumTankSnapshot(
         id = id,
         name = name,
@@ -177,7 +180,7 @@ private fun SavedAquariumTank.toApplicationSnapshot(): AquariumTankSnapshot =
         }
     )
 
-private fun AquariumTankDraft.toDataDraft(): TankDraft = TankDraft(
+internal fun AquariumTankDraft.toDataDraft(): TankDraft = TankDraft(
     name = name,
     description = description,
     photoUri = photoUri,
