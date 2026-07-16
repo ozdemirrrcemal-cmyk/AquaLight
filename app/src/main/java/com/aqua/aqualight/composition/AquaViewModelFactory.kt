@@ -18,6 +18,7 @@ import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscoveryOperations
+import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningProgressOperations
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
@@ -118,7 +119,7 @@ internal class AquaViewModelFactory(
 
             modelClass.isAssignableFrom(DeviceProvisioningProgressViewModel::class.java) ->
                 DeviceProvisioningProgressViewModel(
-                    operations = DefaultDeviceProvisioningProgressOperations(appContext),
+                    operations = DefaultProvisioningProgressOperations(appContext),
                     textResolver = appTextResolver
                 )
 
