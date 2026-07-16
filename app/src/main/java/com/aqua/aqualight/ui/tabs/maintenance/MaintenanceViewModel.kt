@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -65,13 +64,11 @@ class MaintenanceViewModel(
 
     init {
         viewModelScope.launch {
-            tanksFlow
-                .distinctUntilChanged()
-                .collectLatest { tanks ->
-                    if (tanks.isNotEmpty()) {
-                        operations.syncSmartCareTasks(tanks)
-                    }
+            tanksFlow.collectLatest { tanks ->
+                if (tanks.isNotEmpty()) {
+                    operations.syncSmartCareTasks(tanks)
                 }
+            }
         }
     }
 
