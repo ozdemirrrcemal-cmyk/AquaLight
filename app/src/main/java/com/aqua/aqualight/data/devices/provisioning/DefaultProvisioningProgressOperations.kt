@@ -15,6 +15,7 @@ import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningGattCl
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningGattEvent
 import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
+import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningDraftStorage
 import com.aqua.aqualight.data.devices.toOwnerDeviceFamily
 import com.aqua.aqualight.data.user.UserDataScope
 import java.util.UUID
@@ -22,29 +23,38 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class DefaultProvisioningProgressOperations(
-    context: Context
+class DefaultProvisioningProgressOperations internal constructor(
+    context: Context,
+    private val draftStore: ProvisioningDraftStorage
 ) : ProvisioningProgressOperations {
 
     private val appContext = context.applicationContext
+    override val ownerUid: String = UserDataScope.requireCurrentUid()
     private val addressResolver = AqlBleProvisioningAddressResolver(appContext)
     private val gattClient = AqlBleProvisioningGattClient(appContext)
     private val handoffSaver = AqlProvisioningHandoffSaver(appContext)
     private val preparedSnapshots = ConcurrentHashMap<String, DeviceSnapshot>()
 
-    override val ownerUid: String = UserDataScope.requireCurrentUid()
+    constructor(context: Context) : this(
+        context = context.applicationContext,
+        draftStore = AqlProvisioningDraftStore(
+            context = context.applicationContext,
+            ownerUidProvider = { UserDataScope.requireCurrentUid() }
+        )
+    )
+
     override val events: Flow<ProvisioningTransportEvent> =
         gattClient.events.map(AqlBleProvisioningGattEvent::toApplicationEvent)
 
     override fun getSession(sessionId: String): ProvisioningSessionSnapshot? =
-        AqlProvisioningDraftStore.get(sessionId)?.toApplicationSession()
+        draftStore.get(sessionId)?.toApplicationSession()
 
     override fun removeSession(sessionId: String) {
-        AqlProvisioningDraftStore.remove(sessionId)
+        draftStore.remove(sessionId)
     }
 
     override suspend fun resolveBleAddress(sessionId: String): Result<String> {
-        val draft = AqlProvisioningDraftStore.get(sessionId)
+        val draft = draftStore.get(sessionId)
             ?: return Result.failure(IllegalStateException("Provisioning session is unavailable."))
         return addressResolver.resolveQrAddress(draft)
     }
@@ -53,7 +63,7 @@ class DefaultProvisioningProgressOperations(
         sessionId: String,
         bleAddress: String
     ): Result<Unit> = runCatching {
-        val draft = requireNotNull(AqlProvisioningDraftStore.get(sessionId)) {
+        val draft = requireNotNull(draftStore.get(sessionId)) {
             "Provisioning session is unavailable."
         }
         val address = bleAddress.trim()
@@ -76,7 +86,7 @@ class DefaultProvisioningProgressOperations(
         verifiedDeviceInfo: ProvisioningVerifiedDeviceInfo?,
         handoff: ProvisioningRuntimeHandoff
     ): Result<PreparedProvisioningRegistration> {
-        val draft = AqlProvisioningDraftStore.get(sessionId)
+        val draft = draftStore.get(sessionId)
             ?: return Result.failure(IllegalStateException("Provisioning session is unavailable."))
         return handoffSaver.prepareAndConnect(
             draft = draft.withVerifiedInfo(verifiedDeviceInfo),
