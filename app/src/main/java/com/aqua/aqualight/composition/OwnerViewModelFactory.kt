@@ -202,7 +202,12 @@ internal class OwnerViewModelFactory(
             else -> error("Unreachable owner ViewModel binding: ${modelClass.name}")
         }
 
-        check(ownerGraphResolver.requireActive().ownerUid == graph.ownerUid) {
+        val currentGraph = ownerGraphResolver.requireActive()
+        check(
+            currentGraph.ownerUid == graph.ownerUid &&
+                currentGraph.devicesRepository === graph.devicesRepository &&
+                currentGraph.assignmentRepository === graph.assignmentRepository
+        ) {
             "Authenticated owner changed while constructing ${modelClass.name}."
         }
 
