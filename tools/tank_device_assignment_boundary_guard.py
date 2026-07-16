@@ -13,7 +13,7 @@ MAPPING = SOURCE / "data/devices/DeviceApplicationMapping.kt"
 DETAIL_VM = SOURCE / "ui/tabs/aquarium/detail/devices/TankDetailDevicesViewModel.kt"
 SELECT_VM = SOURCE / "ui/tabs/aquarium/detail/devices/select/TankDeviceSelectViewModel.kt"
 CARD_MAPPER = SOURCE / "ui/common/devicecard/DeviceCompactSnapshotMapper.kt"
-FACTORY = SOURCE / "composition/AquaViewModelFactory.kt"
+FACTORY = SOURCE / "composition/OwnerViewModelFactory.kt"
 SMOKE_FACTORY = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/Stage3SmokeAppContainer.kt"
 TEST = ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/aquarium/detail/devices/TankDeviceAssignmentViewModelBoundaryTest.kt"
 
