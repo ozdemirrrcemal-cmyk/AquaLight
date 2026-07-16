@@ -10,9 +10,8 @@ import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
-import com.aqua.aqualight.data.care.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
-import com.aqua.aqualight.data.care.DefaultMaintenanceRepository
+import com.aqua.aqualight.data.care.DefaultMaintenanceOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceFirmwareUpdateOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
@@ -24,6 +23,7 @@ import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.platform.text.AndroidAppTextResolver
+import com.aqua.aqualight.platform.text.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
@@ -61,8 +61,8 @@ internal class AquaViewModelFactory(
     private val careTaskStore by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         CareTaskDataStoreManager.create(appContext)
     }
-    private val maintenanceRepository by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-        DefaultMaintenanceRepository(context = appContext, manager = careTaskStore)
+    private val maintenanceOperations by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        DefaultMaintenanceOperations(context = appContext, manager = careTaskStore)
     }
     private val maintenanceTextResolver by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         AndroidMaintenanceTextResolver(appContext)
@@ -138,7 +138,7 @@ internal class AquaViewModelFactory(
 
             modelClass.isAssignableFrom(MaintenanceViewModel::class.java) ->
                 MaintenanceViewModel(
-                    repository = maintenanceRepository,
+                    operations = maintenanceOperations,
                     textResolver = maintenanceTextResolver
                 )
 
