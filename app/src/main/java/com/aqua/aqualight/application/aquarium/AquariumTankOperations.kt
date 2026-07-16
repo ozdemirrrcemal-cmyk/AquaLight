@@ -1,5 +1,6 @@
 package com.aqua.aqualight.application.aquarium
 
+import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 
 /** Application boundary for owner-scoped aquarium tank operations. */
@@ -76,30 +77,30 @@ data class AquariumTankSize(
 )
 
 data class AquariumPlantTag(
-    val id: Long,
+    val id: Long = AquariumEntityIdGenerator.newLong(),
     val plantName: String,
     val category: String,
-    val markerX: Float,
-    val markerY: Float
+    val markerX: Float = 0.5f,
+    val markerY: Float = 0.5f
 )
 
 data class AquariumMaterialSelection(
-    val id: Long,
+    val id: Long = AquariumEntityIdGenerator.newLong(),
     val productId: String,
     val categoryKey: String,
     val categoryTitle: String,
     val name: String,
-    val brand: String,
-    val note: String
+    val brand: String = "",
+    val note: String = ""
 )
 
 data class AquariumLivestock(
-    val id: Long,
-    val name: String,
-    val category: String,
-    val quantity: Int,
-    val addedDateMillis: Long?,
-    val note: String
+    val id: Long = AquariumEntityIdGenerator.newLong(),
+    val name: String = "",
+    val category: String = "",
+    val quantity: Int = 1,
+    val addedDateMillis: Long? = null,
+    val note: String = ""
 )
 
 sealed interface DeleteAquariumTanksResult {
@@ -122,4 +123,12 @@ data class AquariumTankCleanupIssue(
 enum class AquariumTankCleanupStage {
     CARE_TASKS,
     DEVICE_ASSIGNMENTS
+}
+
+private object AquariumEntityIdGenerator {
+    fun newLong(): Long {
+        var candidate = UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE
+        if (candidate == 0L) candidate = 1L
+        return candidate
+    }
 }
