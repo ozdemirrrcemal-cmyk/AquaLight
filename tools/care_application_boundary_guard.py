@@ -9,6 +9,7 @@ TESTS = ROOT / "app/src/test/java/com/aqua/aqualight"
 
 contract = APP / "application/care/MaintenanceOperations.kt"
 adapter = APP / "data/care/DefaultMaintenanceOperations.kt"
+adapter_test = TESTS / "data/care/DefaultMaintenanceOperationsMapperTest.kt"
 owner_scope = APP / "data/user/OwnerScopedDataOperation.kt"
 owner_scope_test = TESTS / "data/user/UserDataScopeTest.kt"
 view_model = APP / "ui/tabs/maintenance/MaintenanceViewModel.kt"
@@ -25,6 +26,7 @@ obsolete_text = APP / "data/care/MaintenanceTextResolver.kt"
 required = (
     contract,
     adapter,
+    adapter_test,
     owner_scope,
     owner_scope_test,
     view_model,
@@ -62,6 +64,23 @@ if adapter.is_file():
         errors.append("Smart Care generation must carry the captured owner UID")
     if "ownerUid = \"\"" in text:
         errors.append("Smart Care adapter must not create ownerless tank models")
+    for token in (
+        "toApplicationSnapshot",
+        "toDataType",
+        "toDataTank",
+    ):
+        if token not in text:
+            errors.append(f"maintenance adapter mapping is missing: {token}")
+
+if adapter_test.is_file():
+    text = adapter_test.read_text(encoding="utf-8")
+    for token in (
+        "data care task maps all presentation fields without owner metadata",
+        "application and persistence task enums stay exactly aligned",
+        "Smart Care tank mapping carries captured owner and nested values",
+    ):
+        if token not in text:
+            errors.append(f"maintenance adapter mapping test is missing: {token}")
 
 if owner_scope.is_file():
     text = owner_scope.read_text(encoding="utf-8")
@@ -98,6 +117,8 @@ if view_model.is_file():
         errors.append("MaintenanceViewModel does not depend on MaintenanceOperations")
     if "CompletedCareActivityInput" not in text or "ManualCareTaskInput" not in text:
         errors.append("MaintenanceViewModel does not use typed care command inputs")
+    if "collectLatest" not in text:
+        errors.append("Smart Care synchronization must remain single-flight")
 
 ui_root = APP / "ui"
 if ui_root.is_dir():
@@ -132,6 +153,7 @@ if test_file.is_file():
         "CompletedCareActivityInput",
         "ManualCareTaskInput",
         "syncSmartCareTasks",
+        "identical tank snapshots synchronize only once",
     ):
         if token not in text:
             errors.append(f"maintenance fake test is missing coverage token: {token}")
