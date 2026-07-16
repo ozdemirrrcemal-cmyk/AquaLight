@@ -167,15 +167,7 @@ class UserDataCleaner private constructor(
         runStep(
             step = Step.PROVISIONING_SESSIONS
         ) {
-            AqlProvisioningHandoffSaver(appContext)
-                .rollbackPendingRegistrationsForOwner(targetOwnerUid)
-                .getOrThrow()
-            AqlProvisioningDraftStore(
-                context = appContext,
-                ownerUidProvider = { targetOwnerUid }
-            ).clearOwner()
-            ProvisioningCommitRecoveryStore(appContext)
-                .clearOwner(targetOwnerUid)
+            clearProvisioningData(targetOwnerUid)
         }
 
         runStep(
@@ -218,6 +210,43 @@ class UserDataCleaner private constructor(
         return CleanupResult(
             issues = issues.toList()
         )
+    }
+
+    private suspend fun clearProvisioningData(ownerUid: String) {
+        val failures = mutableListOf<Throwable>()
+
+        suspend fun attempt(block: suspend () -> Unit) {
+            runCatching {
+                block()
+            }.onFailure { error ->
+                error.throwIfCancellation()
+                failures += error
+            }
+        }
+
+        attempt {
+            AqlProvisioningHandoffSaver(appContext)
+                .rollbackPendingRegistrationsForOwner(ownerUid)
+                .getOrThrow()
+        }
+        attempt {
+            AqlProvisioningDraftStore(
+                context = appContext,
+                ownerUidProvider = { ownerUid }
+            ).clearOwner()
+        }
+        attempt {
+            ProvisioningCommitRecoveryStore(appContext)
+                .clearOwner(ownerUid)
+        }
+
+        if (failures.isNotEmpty()) {
+            val combined = IllegalStateException(
+                "One or more provisioning data cleanup operations failed."
+            )
+            failures.forEach(combined::addSuppressed)
+            throw combined
+        }
     }
 
     private fun String?.orCurrentOwnerUidOrReturn(): String {
