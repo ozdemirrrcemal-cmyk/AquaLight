@@ -8,6 +8,7 @@ import com.aqua.aqualight.data.auth.SessionBoundServiceManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
+import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecretStore
 import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningCommitRecoveryStore
 import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
 import com.aqua.aqualight.data.devices.store.DeviceKnownStore
@@ -231,6 +232,12 @@ class UserDataCleaner private constructor(
         }
         attempt {
             AqlProvisioningDraftStore(
+                context = appContext,
+                ownerUidProvider = { ownerUid }
+            ).clearOwner()
+        }
+        attempt {
+            AqlProvisioningQrSecretStore(
                 context = appContext,
                 ownerUidProvider = { ownerUid }
             ).clearOwner()
