@@ -80,17 +80,21 @@ class AqlProvisioningDraftStore(
         if (sessionId.isBlank()) return null
         val ownerUid = requireOwnerUid()
         return synchronized(LOCK) {
-            val record = preferences.getString(key(sessionId), null) ?: return@synchronized null
+            val storedKey = key(sessionId)
+            val record = preferences.getString(storedKey, null) ?: return@synchronized null
             val decoded = runCatching { decode(record) }.getOrNull()
-            if (
-                decoded == null ||
-                decoded.ownerUid != ownerUid ||
-                decoded.expiresAtMillis <= clock()
-            ) {
-                preferences.edit().remove(key(sessionId)).commitOrThrow()
-                return@synchronized null
+            when {
+                decoded == null -> {
+                    preferences.edit().remove(storedKey).commitOrThrow()
+                    null
+                }
+                decoded.expiresAtMillis <= clock() -> {
+                    preferences.edit().remove(storedKey).commitOrThrow()
+                    null
+                }
+                decoded.ownerUid != ownerUid -> null
+                else -> decoded.draft
             }
-            decoded.draft
         }
     }
 
@@ -98,10 +102,11 @@ class AqlProvisioningDraftStore(
         if (sessionId.isBlank()) return
         val ownerUid = requireOwnerUid()
         synchronized(LOCK) {
-            val stored = preferences.getString(key(sessionId), null) ?: return
+            val storedKey = key(sessionId)
+            val stored = preferences.getString(storedKey, null) ?: return
             val decoded = runCatching { decode(stored) }.getOrNull()
             if (decoded == null || decoded.ownerUid == ownerUid) {
-                preferences.edit().remove(key(sessionId)).commitOrThrow()
+                preferences.edit().remove(storedKey).commitOrThrow()
             }
         }
     }
