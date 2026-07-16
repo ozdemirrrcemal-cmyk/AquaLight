@@ -9,8 +9,6 @@ import com.aqua.aqualight.data.devices.model.DeviceProduct
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
-import com.aqua.aqualight.data.devices.store.DeviceKnownStore
 import java.io.File
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -27,7 +25,26 @@ class ProvisioningCommitRecoveryStoreInstrumentedTest {
     private lateinit var context: Context
     private lateinit var ownerUid: String
     private lateinit var otherOwnerUid: String
-    private var deviceUid: DeviceUid = DeviceUid("uninitialized-device")
+    private var deviceUid = DeviceUid("uninitialized-device")
+    private val recoveredSnapshots = mutableMapOf<Pair<String, DeviceUid>, DeviceSnapshot>()
+    private val recoveredTokens = mutableMapOf<Pair<String, DeviceUid>, String>()
+
+    private val recoveryTarget = object : ProvisioningCommitRecoveryTarget {
+        override suspend fun saveSnapshot(
+            ownerUid: String,
+            snapshot: DeviceSnapshot
+        ) {
+            recoveredSnapshots[ownerUid to snapshot.deviceUid] = snapshot
+        }
+
+        override suspend fun saveRuntimeToken(
+            ownerUid: String,
+            deviceUid: DeviceUid,
+            runtimeToken: String
+        ) {
+            recoveredTokens[ownerUid to deviceUid] = runtimeToken
+        }
+    }
 
     @Before
     fun setUp() = runBlocking {
@@ -35,19 +52,23 @@ class ProvisioningCommitRecoveryStoreInstrumentedTest {
         ownerUid = "commit-recovery-${System.nanoTime()}"
         otherOwnerUid = "other-$ownerUid"
         deviceUid = DeviceUid("device-${System.nanoTime()}")
-        clearOwner(ownerUid)
-        clearOwner(otherOwnerUid)
+        recoveredSnapshots.clear()
+        recoveredTokens.clear()
+        clearJournal(ownerUid)
+        clearJournal(otherOwnerUid)
     }
 
     @After
     fun tearDown() = runBlocking {
-        clearOwner(ownerUid)
-        clearOwner(otherOwnerUid)
+        clearJournal(ownerUid)
+        clearJournal(otherOwnerUid)
+        recoveredSnapshots.clear()
+        recoveredTokens.clear()
     }
 
     @Test
     fun journalRecoversVerifiedSnapshotAndTokenIdempotently() = runBlocking {
-        val recoveryStore = ProvisioningCommitRecoveryStore(context)
+        val recoveryStore = recoveryStore()
         val expectedSnapshot = snapshot()
 
         recoveryStore.record(
@@ -56,24 +77,18 @@ class ProvisioningCommitRecoveryStoreInstrumentedTest {
             runtimeToken = RUNTIME_TOKEN
         )
 
-        assertNull(
-            DeviceKnownStore(context, ownerUid)
-                .loadSnapshots()
-                .firstOrNull { stored -> stored.deviceUid == deviceUid }
-        )
-        assertNull(DeviceCredentialStore(context, ownerUid).getCommittedToken(deviceUid))
+        assertNull(recoveredSnapshots[ownerUid to deviceUid])
+        assertNull(recoveredTokens[ownerUid to deviceUid])
 
         assertEquals(1, recoveryStore.recoverOwner(ownerUid))
 
-        val restored = DeviceKnownStore(context, ownerUid)
-            .loadSnapshots()
-            .single { stored -> stored.deviceUid == deviceUid }
+        val restored = recoveredSnapshots.getValue(ownerUid to deviceUid)
         assertEquals(expectedSnapshot.identity.serialNumber, restored.identity.serialNumber)
         assertEquals(expectedSnapshot.product.family, restored.product.family)
         assertEquals(expectedSnapshot.endpoint.ip, restored.endpoint.ip)
         assertEquals(
             RUNTIME_TOKEN,
-            DeviceCredentialStore(context, ownerUid).getCommittedToken(deviceUid)
+            recoveredTokens[ownerUid to deviceUid]
         )
         assertEquals(0, recoveryStore.recoverOwner(ownerUid))
 
@@ -89,7 +104,7 @@ class ProvisioningCommitRecoveryStoreInstrumentedTest {
 
     @Test
     fun anotherOwnerCannotRecoverOrConsumeTheJournal() = runBlocking {
-        val recoveryStore = ProvisioningCommitRecoveryStore(context)
+        val recoveryStore = recoveryStore()
         recoveryStore.record(
             ownerUid = ownerUid,
             snapshot = snapshot(),
@@ -97,18 +112,24 @@ class ProvisioningCommitRecoveryStoreInstrumentedTest {
         )
 
         assertEquals(0, recoveryStore.recoverOwner(otherOwnerUid))
-        assertNull(DeviceCredentialStore(context, otherOwnerUid).getCommittedToken(deviceUid))
+        assertNull(recoveredSnapshots[otherOwnerUid to deviceUid])
+        assertNull(recoveredTokens[otherOwnerUid to deviceUid])
+
         assertEquals(1, recoveryStore.recoverOwner(ownerUid))
         assertEquals(
             RUNTIME_TOKEN,
-            DeviceCredentialStore(context, ownerUid).getCommittedToken(deviceUid)
+            recoveredTokens[ownerUid to deviceUid]
         )
     }
 
-    private suspend fun clearOwner(owner: String) {
-        ProvisioningCommitRecoveryStore(context).clearOwner(owner)
-        DeviceKnownStore(context, owner).clearOwnerData()
-        DeviceCredentialStore(context, owner).clearOwner()
+    private fun recoveryStore(): ProvisioningCommitRecoveryStore =
+        ProvisioningCommitRecoveryStore(
+            context = context,
+            recoveryTarget = recoveryTarget
+        )
+
+    private suspend fun clearJournal(owner: String) {
+        recoveryStore().clearOwner(owner)
     }
 
     private fun snapshot() = DeviceSnapshot(
