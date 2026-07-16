@@ -13,7 +13,7 @@ owner_scope = APP / "data/user/OwnerScopedDataOperation.kt"
 owner_scope_test = TESTS / "data/user/UserDataScopeTest.kt"
 view_model = APP / "ui/tabs/aquarium/AquariumTankViewModel.kt"
 production = APP / "composition/OwnerViewModelFactory.kt"
-smoke = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/Stage3SmokeAppContainer.kt"
+smoke = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeAppContainer.kt"
 
 
 def read(path: Path) -> str:
