@@ -25,7 +25,7 @@ import kotlinx.coroutines.launch
 
 /**
  * CI-only Activity packaged exclusively in the minified releaseSmoke variant.
- * It exercises the real Fragment lifecycle, navigation environment and Stage 3
+ * It exercises the real Fragment lifecycle, navigation environment and release-smoke
  * ViewModel factory callsites without opening Firebase, BLE or WebSocket infrastructure.
  */
 class Stage3ReleaseSmokeActivity : BaseActivity() {
@@ -36,7 +36,7 @@ class Stage3ReleaseSmokeActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         (application as AquaApp).replaceAppContainerForProcess(
-            Stage3SmokeAppContainer(applicationContext)
+            ReleaseSmokeAppContainer(applicationContext)
         )
         super.onCreate(savedInstanceState)
 
