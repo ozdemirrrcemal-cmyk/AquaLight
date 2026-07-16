@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Protect the Stage 3 tank-device assignment application boundary."""
+"""Protect the tank-device assignment application boundary."""
 from pathlib import Path
 import re
 import sys
@@ -14,7 +14,7 @@ DETAIL_VM = SOURCE / "ui/tabs/aquarium/detail/devices/TankDetailDevicesViewModel
 SELECT_VM = SOURCE / "ui/tabs/aquarium/detail/devices/select/TankDeviceSelectViewModel.kt"
 CARD_MAPPER = SOURCE / "ui/common/devicecard/DeviceCompactSnapshotMapper.kt"
 FACTORY = SOURCE / "composition/OwnerViewModelFactory.kt"
-SMOKE_FACTORY = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/Stage3SmokeAppContainer.kt"
+SMOKE_FACTORY = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeAppContainer.kt"
 TEST = ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/aquarium/detail/devices/TankDeviceAssignmentViewModelBoundaryTest.kt"
 
 errors: list[str] = []
