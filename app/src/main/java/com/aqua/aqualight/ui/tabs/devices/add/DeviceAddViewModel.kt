@@ -3,10 +3,10 @@ package com.aqua.aqualight.ui.tabs.devices.add
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningCandidateSnapshot
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningDiscoveryOperations
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningScanStartResult
 import com.aqua.aqualight.application.text.AppTextResolver
-import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningCandidate
-import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningScanner
-import com.aqua.aqualight.data.devices.provisioning.ble.BleProvisioningScanner
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 class DeviceAddViewModel(
-    private val bleScanner: BleProvisioningScanner,
+    private val discoveryOperations: ProvisioningDiscoveryOperations,
     private val textResolver: AppTextResolver
 ) : ViewModel() {
 
@@ -36,7 +36,7 @@ class DeviceAddViewModel(
         if (!resetScanStateOnReturn) return
         resetScanStateOnReturn = false
         stopBleScan()
-        bleScanner.clearCandidates()
+        discoveryOperations.clearCandidates()
         _uiState.value = readyState()
     }
 
@@ -72,25 +72,25 @@ class DeviceAddViewModel(
             emptyMessage = string(R.string.device_add_scanning_empty_message)
         )
 
-        when (val result = bleScanner.startScan()) {
-            AqlBleProvisioningScanner.StartResult.Started -> {
+        when (val result = discoveryOperations.startScan()) {
+            ProvisioningScanStartResult.Started -> {
                 observeBleCandidates()
                 startScanTimeout()
             }
 
-            AqlBleProvisioningScanner.StartResult.MissingPermission -> {
+            ProvisioningScanStartResult.MissingPermission -> {
                 onBlePermissionDenied()
             }
 
-            AqlBleProvisioningScanner.StartResult.BluetoothOff -> {
+            ProvisioningScanStartResult.BluetoothOff -> {
                 showBluetoothOff()
             }
 
-            AqlBleProvisioningScanner.StartResult.BluetoothUnavailable -> {
+            ProvisioningScanStartResult.BluetoothUnavailable -> {
                 showBluetoothUnavailable()
             }
 
-            is AqlBleProvisioningScanner.StartResult.Failed -> {
+            is ProvisioningScanStartResult.Failed -> {
                 showBleError(result.message)
             }
         }
@@ -115,7 +115,7 @@ class DeviceAddViewModel(
 
     private fun observeBleCandidates() {
         scanCollectJob = viewModelScope.launch {
-            bleScanner.candidates.collect { candidates ->
+            discoveryOperations.candidates.collect { candidates ->
                 val uiCandidates = candidates.map { candidate ->
                     candidate.toUi()
                 }
@@ -150,7 +150,7 @@ class DeviceAddViewModel(
         scanTimeoutJob = viewModelScope.launch {
             delay(SCAN_TIMEOUT_MS)
             if (_uiState.value.candidates.isEmpty()) {
-                bleScanner.stopScan()
+                discoveryOperations.stopScan()
                 _uiState.value = DeviceAddUiState(
                     mode = DeviceAddScanMode.EMPTY,
                     heroTitle = string(R.string.device_add_no_setup_window_title),
@@ -207,10 +207,10 @@ class DeviceAddViewModel(
         scanCollectJob = null
         scanTimeoutJob?.cancel()
         scanTimeoutJob = null
-        bleScanner.stopScan()
+        discoveryOperations.stopScan()
     }
 
-    private fun AqlBleProvisioningCandidate.toUi(): DeviceAddCandidateUi {
+    private fun ProvisioningCandidateSnapshot.toUi(): DeviceAddCandidateUi {
         val modelLabel = buildList {
             if (model.isNotBlank()) add(model)
             add(string(R.string.device_add_setup_mode_label))
@@ -227,7 +227,7 @@ class DeviceAddViewModel(
             },
             rssiLabel = string(R.string.device_add_rssi_value_format, rssi),
             bleAddress = address,
-            bleName = name
+            bleName = bleName
         )
     }
 
@@ -279,7 +279,7 @@ enum class DeviceAddScanMode {
 sealed interface DeviceAddEvent {
     data class ShowMessage(val message: String) : DeviceAddEvent
 
-    object OpenQrScanner : DeviceAddEvent
+    data object OpenQrScanner : DeviceAddEvent
 
     data class OpenWifiProvisioning(
         val candidate: DeviceAddCandidateUi
