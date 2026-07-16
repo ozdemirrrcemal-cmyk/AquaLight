@@ -5,8 +5,8 @@ import com.aqua.aqualight.data.care.CareTaskTypePresentation
 import com.aqua.aqualight.application.care.MaintenanceOperations
 import com.aqua.aqualight.ui.tabs.maintenance.text.MaintenanceTextResolver
 import com.aqua.aqualight.application.care.CareTaskSnapshot
-import com.aqua.aqualight.application.care.CareTaskSnapshotSource
-import com.aqua.aqualight.application.care.CareTaskSnapshotType
+import com.aqua.aqualight.application.care.CareTaskSource
+import com.aqua.aqualight.application.care.CareTaskType
 import com.aqua.aqualight.ui.tabs.maintenance.model.MaintenanceTab
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
