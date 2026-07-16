@@ -17,7 +17,7 @@ qr_fragment = APP / "ui/tabs/devices/add/DeviceQrScanFragment.kt"
 qr_decoder = APP / "platform/vision/ProvisioningQrFrameDecoder.kt"
 nav_graph = ROOT / "app/src/main/res/navigation/nav_devices.xml"
 app_container = APP / "composition/AppContainer.kt"
-production = APP / "composition/AquaViewModelFactory.kt"
+production = APP / "composition/OwnerViewModelFactory.kt"
 smoke = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/Stage3SmokeAppContainer.kt"
 view_model_test = TESTS / "ui/tabs/devices/add/ProvisioningDiscoveryViewModelBoundaryTest.kt"
 mapper_test = TESTS / "data/devices/provisioning/DefaultProvisioningDiscoveryOperationsMapperTest.kt"
@@ -211,16 +211,31 @@ if app_container.is_file():
         if token not in text:
             errors.append(f"production QR decoder composition is incomplete: {token}")
 
-for path in (production, smoke):
-    if path.is_file():
-        text = path.read_text(encoding="utf-8")
-        if text.count("DefaultProvisioningDiscoveryOperations.create") < 2:
-            errors.append(
-                f"production/smoke discovery bindings are incomplete in {path.relative_to(ROOT)}"
-            )
+if production.is_file():
+    text = production.read_text(encoding="utf-8")
+    if text.count("DefaultProvisioningDiscoveryOperations(") < 2:
+        errors.append(
+            f"owner-scoped production discovery bindings are incomplete in {production.relative_to(ROOT)}"
+        )
+    for token in (
+        "repository = repository",
+        "ownerUidProvider = { graph.ownerUid }",
+    ):
+        if token not in text:
+            errors.append(f"owner-scoped production discovery binding is missing: {token}")
+    for forbidden in (
+        "DefaultProvisioningDiscoveryOperations.create(",
+        "DevicesRepositoryProvider.get(",
+    ):
+        if forbidden in text:
+            errors.append(f"owner production discovery may not open runtime through: {forbidden}")
 
 if smoke.is_file():
     text = smoke.read_text(encoding="utf-8")
+    if text.count("DefaultProvisioningDiscoveryOperations.create") < 2:
+        errors.append(
+            f"release-smoke discovery bindings are incomplete in {smoke.relative_to(ROOT)}"
+        )
     for token in (
         "override val provisioningQrFrameDecoderFactory",
         "MlKitProvisioningQrFrameDecoderFactory()",
