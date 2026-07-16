@@ -32,6 +32,9 @@ object TankDeviceAssignmentRepositoryProvider {
             if (synchronizedEntry?.ownerUid == ownerUid) {
                 synchronizedEntry.repository
             } else {
+                check(synchronizedEntry == null) {
+                    "Owner assignment repository must be cleared before switching owners."
+                }
                 TankDeviceAssignmentRepository(
                     ownerUid = ownerUid,
                     devicesRepository = DevicesRepositoryProvider.get(appContext),
@@ -71,5 +74,16 @@ object TankDeviceAssignmentRepositoryProvider {
 
     fun currentOwnerUid(): String? {
         return entry?.ownerUid
+    }
+
+    fun currentRepository(
+        expectedOwnerUid: String
+    ): TankDeviceAssignmentRepository? {
+        val normalizedOwnerUid = expectedOwnerUid.trim()
+        if (normalizedOwnerUid.isBlank()) return null
+
+        return entry?.takeIf { current ->
+            current.ownerUid == normalizedOwnerUid
+        }?.repository
     }
 }

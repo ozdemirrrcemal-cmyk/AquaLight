@@ -15,7 +15,6 @@ import com.aqua.aqualight.data.auth.DefaultSessionExitOperations
 import com.aqua.aqualight.data.auth.FirebaseAccountSecurityOperations
 import com.aqua.aqualight.data.auth.FirebaseAuthOperations
 import com.aqua.aqualight.data.auth.LogoutManager
-import com.aqua.aqualight.data.devices.provisioning.repository.DefaultProvisioningDraftOperations
 import com.aqua.aqualight.data.feedback.FirebaseFeedbackSubmissionOperations
 import com.aqua.aqualight.data.user.DefaultUserProfileOperations
 import com.aqua.aqualight.data.user.DefaultUserSettingsOperations
@@ -28,10 +27,11 @@ import com.aqua.aqualight.platform.vision.ProvisioningQrFrameDecoderFactory
 import com.aqua.aqualight.ui.auth.viewmodel.AuthViewModelFactory
 
 /**
- * Application composition root.
+ * Process composition root.
  *
- * Object construction belongs here rather than in Fragments or ViewModels. The
- * container is process-scoped and only exposes already-wired dependencies.
+ * The container itself is owner-neutral. Authenticated-owner repositories are
+ * opened only by OwnerSessionCoordinator and consumed through the fail-closed
+ * OwnerDependencyGraphResolver after that session barrier has completed.
  */
 interface AppContainer {
     val startupAppearanceCache: StartupAppearanceCache
@@ -90,10 +90,16 @@ internal class DefaultAppContainer(
         )
     }
 
+    private val ownerGraphResolver: OwnerDependencyGraphResolver by lazy(
+        LazyThreadSafetyMode.SYNCHRONIZED
+    ) {
+        ActiveOwnerDependencyGraphResolver(appContext)
+    }
+
     override val provisioningDraftOperations: ProvisioningDraftOperations by lazy(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
-        DefaultProvisioningDraftOperations(appContext)
+        ResolvingProvisioningDraftOperations(ownerGraphResolver)
     }
 
     override val provisioningQrFrameDecoderFactory: ProvisioningQrFrameDecoderFactory by lazy(
@@ -124,8 +130,12 @@ internal class DefaultAppContainer(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
         AquaViewModelFactory(
-            context = appContext,
-            userProfileOperations = userProfileOperations
+            processFactory = ProcessViewModelFactory(),
+            ownerFactory = OwnerViewModelFactory(
+                context = appContext,
+                userProfileOperations = userProfileOperations,
+                ownerGraphResolver = ownerGraphResolver
+            )
         )
     }
 

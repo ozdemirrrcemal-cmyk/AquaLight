@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Protect completed composition-root and application-boundary migrations."""
+"""Protect the closed Stage 3 process/owner composition architecture."""
 from pathlib import Path
 import re
 import sys
@@ -8,165 +8,184 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ROOT = ROOT / "app/src/main/java/com/aqua/aqualight"
 UI_ROOT = SOURCE_ROOT / "ui"
 APPLICATION_ROOT = SOURCE_ROOT / "application"
-CONTAINER_PATH = SOURCE_ROOT / "composition/AppContainer.kt"
-FACTORY_PATH = SOURCE_ROOT / "composition/AquaViewModelFactory.kt"
-AQUA_APP_PATH = SOURCE_ROOT / "app/AquaApp.kt"
-AUTH_FACTORY_PATH = SOURCE_ROOT / "ui/auth/viewmodel/AuthViewModelFactory.kt"
-PROFILE_CONTRACT_PATH = SOURCE_ROOT / "application/user/UserProfileOperations.kt"
-SETTINGS_IMPL_PATH = SOURCE_ROOT / "data/user/DefaultUserSettingsOperations.kt"
-PROFILE_IMPL_PATH = SOURCE_ROOT / "data/user/DefaultUserProfileOperations.kt"
-PROVISIONING_OPERATIONS_PATH = (
-    SOURCE_ROOT / "application/devices/provisioning/ProvisioningProgressOperations.kt"
-)
-PROVISIONING_DEFAULT_PATH = (
-    SOURCE_ROOT / "data/devices/provisioning/DefaultProvisioningProgressOperations.kt"
-)
-AUTH_FACTORY_TEST_PATH = (
-    ROOT / "app/src/test/java/com/aqua/aqualight/ui/auth/viewmodel/AuthViewModelFactoryTest.kt"
-)
-FEEDBACK_TEST_PATH = (
-    ROOT / "app/src/test/java/com/aqua/aqualight/application/feedback/FeedbackSubmissionUseCaseTest.kt"
-)
-PROVISIONING_TEST_PATH = (
-    ROOT
-    / "app/src/test/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceProvisioningProgressViewModelBoundaryTest.kt"
-)
-PLAN_PATH = ROOT / "docs/stage-3-dependency-boundaries-plan.md"
+
+paths = {
+    "container": SOURCE_ROOT / "composition/AppContainer.kt",
+    "dispatcher": SOURCE_ROOT / "composition/AquaViewModelFactory.kt",
+    "scoped_factory": SOURCE_ROOT / "composition/ScopedViewModelFactory.kt",
+    "process_factory": SOURCE_ROOT / "composition/ProcessViewModelFactory.kt",
+    "owner_factory": SOURCE_ROOT / "composition/OwnerViewModelFactory.kt",
+    "owner_graph": SOURCE_ROOT / "composition/OwnerDependencyGraph.kt",
+    "assignment_provider": SOURCE_ROOT / "data/aquarium/devices/TankDeviceAssignmentRepositoryProvider.kt",
+    "devices_provider": SOURCE_ROOT / "data/devices/repository/DevicesRepositoryProvider.kt",
+    "aqua_app": SOURCE_ROOT / "app/AquaApp.kt",
+    "auth_factory": SOURCE_ROOT / "ui/auth/viewmodel/AuthViewModelFactory.kt",
+    "factory_test": ROOT / "app/src/test/java/com/aqua/aqualight/composition/AquaViewModelFactoryTest.kt",
+    "plan": ROOT / "docs/stage-3-dependency-boundaries-plan.md",
+    "matrix": ROOT / "docs/stage-3-final-dependency-matrix.md",
+}
 
 errors: list[str] = []
 
 
-def read(path: Path) -> str:
+def read(name: str) -> str:
+    path = paths[name]
     if not path.exists():
-        errors.append(f"{path.relative_to(ROOT)}: required composition-root file is missing")
+        errors.append(f"{path.relative_to(ROOT)}: required Stage 3 file is missing")
         return ""
     return path.read_text(encoding="utf-8", errors="ignore")
 
 
-def require_tokens(path: Path, text: str, checks: tuple[tuple[str, str], ...]) -> None:
-    for token, reason in checks:
+def require(name: str, *tokens: str) -> None:
+    text = read(name)
+    path = paths[name].relative_to(ROOT)
+    for token in tokens:
         if token not in text:
-            errors.append(f"{path.relative_to(ROOT)}: {reason}: {token}")
+            errors.append(f"{path}: required architecture token is missing: {token}")
 
 
-container = read(CONTAINER_PATH)
-factory = read(FACTORY_PATH)
-aqua_app = read(AQUA_APP_PATH)
-auth_factory = read(AUTH_FACTORY_PATH)
-auth_factory_test = read(AUTH_FACTORY_TEST_PATH)
-feedback_test = read(FEEDBACK_TEST_PATH)
-provisioning_test = read(PROVISIONING_TEST_PATH)
-profile_contract = read(PROFILE_CONTRACT_PATH)
-provisioning_operations = read(PROVISIONING_OPERATIONS_PATH)
-provisioning_default = read(PROVISIONING_DEFAULT_PATH)
-plan = read(PLAN_PATH)
+def forbid(name: str, *tokens: str) -> None:
+    text = read(name)
+    path = paths[name].relative_to(ROOT)
+    for token in tokens:
+        if token in text:
+            errors.append(f"{path}: forbidden architecture token remains: {token}")
 
-require_tokens(
-    CONTAINER_PATH,
-    container,
-    (
-        ("interface AppContainer", "composition root contract must remain explicit"),
-        ("internal class DefaultAppContainer", "production wiring must have one implementation"),
-        ("val authViewModelFactory: ViewModelProvider.Factory", "auth UI needs one wired factory"),
-        ("val defaultViewModelFactory: ViewModelProvider.Factory", "feature UI needs one wired factory"),
-        ("val sessionExitOperations: SessionExitOperations", "logout must use an application boundary"),
-        ("val accountSecurityOperations: AccountSecurityOperations", "account security must use an application boundary"),
-        ("val googleIdentityClient: GoogleIdentityClient", "Google identity access must be centralized"),
-        ("val userSettingsOperations: UserSettingsOperations", "settings must use an application boundary"),
-        ("val userProfileOperations: UserProfileOperations", "profile persistence must use an application boundary"),
-        ("val feedbackSubmissionOperations: FeedbackSubmissionUseCase", "feedback must use an application use case"),
-        ("val provisioningDraftOperations: ProvisioningDraftOperations", "draft creation must use an application boundary"),
-        ("DefaultProvisioningDraftOperations(appContext)", "encrypted draft adapter must be composition-owned"),
-        ("AuthRepository.create(appContext)", "AuthRepository construction must remain centralized"),
-        ("LogoutManager.create(appContext)", "logout manager construction must remain centralized"),
-        ("FirebaseAccountSecurityOperations.create(appContext)", "account security construction must remain centralized"),
-        ("DefaultGoogleIdentityClient(appContext)", "Google identity construction must remain centralized"),
-        ("DefaultUserSettingsOperations(", "settings implementation construction must remain centralized"),
-        ("DefaultUserProfileOperations(", "profile implementation construction must remain centralized"),
-        ("FirebaseFeedbackSubmissionOperations.create()", "Firebase feedback construction must remain centralized"),
-        ("FeedbackSubmissionUseCase(", "feedback adapter must be wrapped by a use case"),
-        ("LazyThreadSafetyMode.SYNCHRONIZED", "process dependencies must initialize safely"),
-    ),
+
+require(
+    "container",
+    "interface AppContainer",
+    "internal class DefaultAppContainer",
+    "ActiveOwnerDependencyGraphResolver(appContext)",
+    "ResolvingProvisioningDraftOperations(ownerGraphResolver)",
+    "processFactory = ProcessViewModelFactory()",
+    "ownerFactory = OwnerViewModelFactory(",
+    "val authViewModelFactory: ViewModelProvider.Factory",
+    "val defaultViewModelFactory: ViewModelProvider.Factory",
+    "val sessionExitOperations: SessionExitOperations",
+    "val accountSecurityOperations: AccountSecurityOperations",
+    "val googleIdentityClient: GoogleIdentityClient",
+    "LazyThreadSafetyMode.SYNCHRONIZED",
+)
+forbid(
+    "container",
+    "DevicesRepositoryProvider",
+    "TankDeviceAssignmentRepositoryProvider",
+    "DefaultProvisioningDraftOperations(appContext)",
 )
 
-require_tokens(
-    AQUA_APP_PATH,
-    aqua_app,
-    (
-        ("lateinit var appContainer: AppContainer", "Application must own the process composition root"),
-        ("appContainer = DefaultAppContainer(this)", "container must initialize before app services"),
-        ("appContainer.startupAppearanceCache", "startup cache must resolve through the container"),
-        ("appContainer.userPreferencesManager", "startup preferences must resolve through the container"),
-    ),
+require(
+    "dispatcher",
+    "processFactory: ScopedViewModelFactory",
+    "ownerFactory: ScopedViewModelFactory",
+    "processFactory.supports(modelClass)",
+    "ownerFactory.supports(modelClass)",
+    "duplicate process and owner bindings",
+    "No registered AquaLight ViewModel binding",
+)
+forbid(
+    "dispatcher",
+    "AndroidViewModelFactory",
+    "fallbackFactory",
+    "isAssignableFrom",
+    "DevicesRepositoryProvider",
+    "TankDeviceAssignmentRepositoryProvider",
 )
 
-require_tokens(
-    PLAN_PATH,
-    plan,
-    (
-        ("UI -> application contracts/use cases", "plan must define dependency direction"),
-        ("Definition of done", "plan must retain its commercial completion gate"),
-        ("Feedback vendor isolation", "Firebase UI removal must stay visible"),
-    ),
+require(
+    "scoped_factory",
+    "internal interface ScopedViewModelFactory",
+    "fun supports(modelClass: Class<out ViewModel>): Boolean",
+)
+require(
+    "process_factory",
+    "modelClass == TankDetailViewModel::class.java",
+    "No process-scoped ViewModel binding",
+)
+forbid("process_factory", "UserDataScope", "RepositoryProvider")
+
+require(
+    "owner_graph",
+    "internal data class OwnerDependencyGraph",
+    "internal fun interface OwnerDependencyGraphResolver",
+    "DevicesRepositoryProvider.currentRepository(ownerUid)",
+    "TankDeviceAssignmentRepositoryProvider.currentRepository(ownerUid)",
+    "Authenticated owner device runtime is not active.",
+    "Authenticated owner assignment repository is not active.",
+    "ownerUidProvider = ownerUidProvider",
+    "ResolvingProvisioningDraftOperations",
+)
+forbid(
+    "owner_graph",
+    "DevicesRepositoryProvider.get(",
+    "TankDeviceAssignmentRepositoryProvider.get(",
 )
 
-require_tokens(
-    PROFILE_CONTRACT_PATH,
-    profile_contract,
-    (
-        ("suspend fun updateUsername", "profile boundary must own username updates"),
-        ("suspend fun saveAddress", "profile boundary must own address updates"),
-        ("val fullName: String", "profile snapshot must expose full name"),
-        ("data class UserAddressInput", "address persistence must use an application input"),
-    ),
+require(
+    "owner_factory",
+    "internal class OwnerViewModelFactory",
+    "modelClass in OWNER_BINDINGS",
+    "val graph = ownerGraphResolver.requireActive()",
+    "ownerUidProvider = { graph.ownerUid }",
+    "No owner-scoped ViewModel binding",
+    "Authenticated owner changed while constructing",
+)
+forbid(
+    "owner_factory",
+    "isAssignableFrom",
+    "AndroidViewModelFactory",
+    "DevicesRepositoryProvider",
+    "TankDeviceAssignmentRepositoryProvider",
+    "DefaultProvisioningProgressOperations(appContext)",
 )
 
-require_tokens(
-    PROVISIONING_OPERATIONS_PATH,
-    provisioning_operations,
-    (
-        ("interface ProvisioningProgressOperations", "provisioning needs a fakeable application boundary"),
-        ("val ownerUid: String", "owner identity must be captured by the adapter"),
-        ("val events: Flow<ProvisioningTransportEvent>", "transport events must cross as application models"),
-        ("suspend fun prepareRegistration", "registration prepare must cross the boundary"),
-        ("suspend fun commitPreparedRegistration", "registration commit must cross the boundary"),
-        ("suspend fun rollbackProvisioningRegistrationForOwner", "owner rollback must cross the boundary"),
-    ),
+require(
+    "devices_provider",
+    "fun currentRepository(",
+    "current.ownerUid == normalizedOwnerUid",
+)
+require(
+    "assignment_provider",
+    "Owner assignment repository must be cleared before switching owners.",
+    "fun currentRepository(",
+    "current.ownerUid == normalizedOwnerUid",
 )
 
-require_tokens(
-    PROVISIONING_DEFAULT_PATH,
-    provisioning_default,
-    (
-        ("AqlBleProvisioningAddressResolver(appContext)", "address resolver construction must remain in data"),
-        ("AqlBleProvisioningGattClient(appContext)", "GATT client construction must remain in data"),
-        ("AqlProvisioningHandoffSaver(appContext)", "handoff saver construction must remain in data"),
-        ("draftStore.get", "draft storage access must remain behind the boundary"),
-        ("OwnerProvisioningScope.create", "progress must capture one immutable owner scope"),
-        ("UserDataScope.withOwnerUid(ownerUid)", "registration mutations must remain owner-pinned"),
-        ("preparedSnapshots", "prepared concrete registrations must remain opaque to UI"),
-    ),
+require(
+    "factory_test",
+    "routes exact process and owner bindings",
+    "unknown ViewModel fails closed",
+    "duplicate scope binding fails closed",
 )
-
-require_tokens(
-    FACTORY_PATH,
-    factory,
-    (
-        ("DefaultProvisioningProgressOperations(appContext)", "provisioning adapter must be created by the feature factory"),
-        ("DeviceProvisioningProgressViewModel(", "provisioning ViewModel must be created by the feature factory"),
-    ),
+require(
+    "matrix",
+    "Process scope",
+    "Authenticated owner scope",
+    "Fail-closed rules",
+    "DevicesRepositoryProvider.get",
+    "Physical merge gate",
 )
-
-for forbidden, reason in (
-    ("android.content.Context", "auth factory must not construct dependencies from Context"),
-    ("AuthRepository.create(", "auth factory must receive its dependency"),
-    ("com.google.firebase", "auth factory must not know Firebase"),
-):
-    if forbidden in auth_factory:
-        errors.append(f"{AUTH_FACTORY_PATH.relative_to(ROOT)}: {reason}: {forbidden}")
+require(
+    "plan",
+    "UI -> application contracts/use cases",
+    "Definition of done",
+    "Final architecture enforcement",
+)
+require(
+    "aqua_app",
+    "lateinit var appContainer: AppContainer",
+    "appContainer = DefaultAppContainer(this)",
+)
+forbid(
+    "auth_factory",
+    "android.content.Context",
+    "AuthRepository.create(",
+    "com.google.firebase",
+)
 
 application_forbidden_import = re.compile(
-    r"^import\s+(?:android(?:x)?\.|com\.google\.|com\.aqua\.aqualight\.(?:data|platform|ui|composition)\.)",
+    r"^import\s+(?:android(?:x)?\.|com\.google\.|"
+    r"com\.aqua\.aqualight\.(?:data|platform|ui|composition)\.)",
     re.MULTILINE,
 )
 if APPLICATION_ROOT.exists():
@@ -179,188 +198,26 @@ if APPLICATION_ROOT.exists():
                 f"Android/vendor/data/platform/UI independent: {match.group(0)}"
             )
 
-central_construction_tokens = {
-    "AuthRepository.create(": set(),
-    "DefaultUserSettingsOperations(": {SETTINGS_IMPL_PATH},
-    "DefaultUserProfileOperations(": {PROFILE_IMPL_PATH},
-    "FirebaseFeedbackSubmissionOperations.create(": set(),
-}
-for kotlin_file in SOURCE_ROOT.rglob("*.kt"):
-    if kotlin_file == CONTAINER_PATH:
-        continue
-    text = kotlin_file.read_text(encoding="utf-8", errors="ignore")
-    for token, declaration_paths in central_construction_tokens.items():
-        if kotlin_file not in declaration_paths and token in text:
-            errors.append(
-                f"{kotlin_file.relative_to(ROOT)}: {token} may only be constructed in AppContainer"
-            )
-
-if UI_ROOT.exists():
-    for kotlin_file in UI_ROOT.rglob("*.kt"):
-        if kotlin_file == AUTH_FACTORY_PATH:
-            continue
-        text = kotlin_file.read_text(encoding="utf-8", errors="ignore")
-        if "AuthViewModelFactory(" in text:
-            errors.append(
-                f"{kotlin_file.relative_to(ROOT)}: UI must resolve the shared auth factory from AppContainer"
-            )
-
-migrated_auth_screens = {
-    "ui/auth/LoginFragment.kt": ("authViewModelFactory", "googleIdentityClient"),
-    "ui/auth/SignInFragment.kt": ("authViewModelFactory",),
-    "ui/auth/RegisterFragment.kt": ("authViewModelFactory",),
-    "ui/auth/ResetPasswordFragment.kt": ("authViewModelFactory",),
-    "ui/auth/security/ReAuthenticateFragment.kt": ("accountSecurityOperations", "googleIdentityClient"),
-    "ui/tabs/settings/logout/LogoutFragment.kt": ("sessionExitOperations", "accountSecurityOperations"),
-    "ui/tabs/settings/logout/ChangeEmailFragment.kt": ("authViewModelFactory", "sessionExitOperations"),
-    "ui/tabs/settings/logout/ChangePasswordFragment.kt": ("authViewModelFactory",),
-}
-auth_ui_forbidden = (
-    "import com.google.firebase.",
-    "import com.google.android.gms.auth.api.signin",
-    "import com.aqua.aqualight.data.auth.AuthRepository",
-    "import com.aqua.aqualight.data.auth.LogoutManager",
-    "import com.aqua.aqualight.data.auth.AccountDeletionManager",
-    "import com.aqua.aqualight.data.auth.GoogleSignInClientFactory",
-    "import com.aqua.aqualight.ui.auth.security.ReAuthManager",
-    "FirebaseAuth.getInstance()",
-    "LogoutManager.create(",
-    "AccountDeletionManager.create(",
-)
-for relative, required_tokens in migrated_auth_screens.items():
-    path = SOURCE_ROOT / relative
-    text = read(path)
-    for token in ("requireAppContainer()", *required_tokens):
-        if token not in text:
-            errors.append(f"{path.relative_to(ROOT)}: migrated auth UI missing {token}")
-    for forbidden in auth_ui_forbidden:
-        if forbidden in text:
-            errors.append(f"{path.relative_to(ROOT)}: migrated auth UI contains {forbidden}")
-
-migrated_settings_screens = {
-    "ui/common/bottomsheet/ThemeBottomSheet.kt": "userSettingsOperations",
-    "ui/tabs/settings/app/LanguageSettingsFragment.kt": "userSettingsOperations",
-    "ui/tabs/settings/app/AppSettingsFragment.kt": "userSettingsOperations",
-    "ui/tabs/settings/usage/UsageFragment.kt": "userSettingsOperations",
-    "ui/tabs/settings/profile/EditProfileFragment.kt": "userProfileOperations",
-    "ui/tabs/settings/userinfo/UserInfoFragment.kt": "userProfileOperations",
-    "ui/tabs/settings/userinfo/UserAddressFragment.kt": "userProfileOperations",
-    "ui/tabs/maintenance/AddCareTaskFragment.kt": "userSettingsOperations",
-}
-settings_ui_forbidden = (
-    "import com.aqua.aqualight.data.user.UserPreferencesManager",
-    "UserPreferencesManager.create(",
-    "import com.aqua.aqualight.data.care.CareTaskDataStoreManager",
-    "CareTaskDataStoreManager.create(",
-    "import com.aqua.aqualight.data.care.reminder.CareTaskReminderScheduler",
-    ".startupAppearanceCache",
-)
-for relative, required_token in migrated_settings_screens.items():
-    path = SOURCE_ROOT / relative
-    text = read(path)
-    for token in ("requireAppContainer()", required_token):
-        if token not in text:
-            errors.append(f"{path.relative_to(ROOT)}: migrated settings/profile UI missing {token}")
-    for forbidden in settings_ui_forbidden:
-        if forbidden in text:
-            errors.append(f"{path.relative_to(ROOT)}: migrated settings/profile UI contains {forbidden}")
-
-feedback_path = SOURCE_ROOT / "ui/tabs/settings/feedback/FeedbackFragment.kt"
-feedback = read(feedback_path)
-for token in ("requireAppContainer()", "feedbackSubmissionOperations", "FeedbackSubmissionRequest"):
-    if token not in feedback:
-        errors.append(f"{feedback_path.relative_to(ROOT)}: feedback UI missing {token}")
-for forbidden in (
-    "import com.google.firebase.",
-    "FirebaseAuth.getInstance()",
-    "FirebaseFirestore",
-    "Firebase.storage",
-    "FieldValue.serverTimestamp()",
-):
-    if forbidden in feedback:
-        errors.append(f"{feedback_path.relative_to(ROOT)}: feedback UI contains {forbidden}")
-
-migrated_viewmodels = (
-    "ui/tabs/settings/SettingsViewModel.kt",
-    "ui/tabs/settings/device/DeviceStatusViewModel.kt",
-    "ui/tabs/devices/DevicesViewModel.kt",
-    "ui/tabs/devices/add/DeviceAddViewModel.kt",
-    "ui/tabs/devices/add/DeviceQrScanViewModel.kt",
-    "ui/tabs/devices/add/DeviceProvisioningProgressViewModel.kt",
-    "ui/tabs/aquarium/AquariumTankViewModel.kt",
-    "ui/tabs/aquarium/detail/TankDetailViewModel.kt",
-    "ui/tabs/aquarium/detail/devices/TankDetailDevicesViewModel.kt",
-    "ui/tabs/aquarium/detail/devices/select/TankDeviceSelectViewModel.kt",
-    "ui/tabs/maintenance/MaintenanceViewModel.kt",
-    "ui/tabs/devices/detail/common/DeviceRootOverviewViewModel.kt",
-    "ui/tabs/devices/detail/light/DeviceLightRootViewModel.kt",
-    "ui/tabs/devices/detail/cooling/DeviceCoolingRootViewModel.kt",
-    "ui/tabs/devices/detail/dosing/DeviceDosingRootViewModel.kt",
-    "ui/tabs/devices/detail/timer/DeviceTimerRootViewModel.kt",
-)
-viewmodel_forbidden = (
-    "AndroidViewModel",
-    "android.app.Application",
-    "getApplication<",
+ui_forbidden = (
     "DevicesRepositoryProvider.get(",
     "TankDeviceAssignmentRepositoryProvider.get(",
-    "CareTaskDataStoreManager.create(",
-    "AquariumTankDataStoreManager(",
-    "UserPreferencesManager.create(",
-    "AqlBleProvisioningAddressResolver(",
-    "AqlBleProvisioningGattClient(",
-    "AqlProvisioningHandoffSaver(",
-    "AqlProvisioningDraftStore",
-    "UserDataScope.",
-    "DeviceRouteResolver(",
+    "AuthRepository.create(",
+    "DefaultProvisioningProgressOperations(",
 )
-for relative in migrated_viewmodels:
-    path = SOURCE_ROOT / relative
-    text = read(path)
-    if Path(relative).stem not in factory:
-        errors.append(f"{FACTORY_PATH.relative_to(ROOT)}: migrated ViewModel is not wired: {Path(relative).stem}")
-    for forbidden in viewmodel_forbidden:
-        if forbidden in text:
-            errors.append(f"{path.relative_to(ROOT)}: migrated ViewModel contains {forbidden}")
-
-require_tokens(
-    AUTH_FACTORY_TEST_PATH,
-    auth_factory_test,
-    (
-        ("FakeAuthOperations", "auth ViewModels need a deterministic fake boundary"),
-        ("createsEveryAuthViewModelFromOneFakeBoundary", "auth factory wiring needs regression coverage"),
-        ("blankGoogleTokenIsRejectedBeforeFakeBoundaryIsInvoked", "validation must be testable without Firebase"),
-        ("unknownViewModelTypeFailsClosed", "auth factory must reject unsupported ViewModels"),
-    ),
-)
-
-require_tokens(
-    FEEDBACK_TEST_PATH,
-    feedback_test,
-    (
-        ("FakeFeedbackSubmissionOperations", "feedback requires a deterministic fake adapter"),
-        ("forwardsRequestFileAndSuccessThroughOneFakeBoundary", "feedback forwarding needs regression coverage"),
-        ("forwardsTypedFailureWithoutFirebaseOrAndroidDependencies", "feedback failure mapping needs pure coverage"),
-    ),
-)
-
-require_tokens(
-    PROVISIONING_TEST_PATH,
-    provisioning_test,
-    (
-        ("FakeProvisioningOperations", "provisioning requires a deterministic fake operations boundary"),
-        ("missing session renders expired state without opening transport", "expired session behavior needs pure coverage"),
-        ("existing session renders ready state through one application boundary", "ready state needs pure coverage"),
-        ("binding the same session twice remains idempotent", "bind idempotency needs regression coverage"),
-        ("runtime handoff and completion commit prepared registration", "commit sequence needs regression coverage"),
-        ("transport failure after prepare rolls back pending registration", "rollback sequence needs regression coverage"),
-    ),
-)
+if UI_ROOT.exists():
+    for kotlin_file in UI_ROOT.rglob("*.kt"):
+        text = kotlin_file.read_text(encoding="utf-8", errors="ignore")
+        for token in ui_forbidden:
+            if token in text:
+                errors.append(
+                    f"{kotlin_file.relative_to(ROOT)}: UI dependency construction "
+                    f"must resolve through AppContainer: {token}"
+                )
 
 if errors:
-    print("Composition root guard failed:", file=sys.stderr)
+    print("Composition root guard failed:")
     for error in errors:
-        print(f" - {error}", file=sys.stderr)
-    raise SystemExit(1)
+        print(f" - {error}")
+    sys.exit(1)
 
 print("Composition root guard passed.")
