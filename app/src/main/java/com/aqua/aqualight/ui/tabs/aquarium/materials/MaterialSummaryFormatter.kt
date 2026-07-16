@@ -2,27 +2,26 @@ package com.aqua.aqualight.ui.tabs.aquarium.materials
 
 import android.content.Context
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
-import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
+import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
 
 object MaterialSummaryFormatter {
     fun summaryForSelections(
         context: Context,
-        selections: List<TankMaterialSelection>
+        selections: List<AquariumMaterialSelection>
     ): String {
         return summary(
             context = context,
-            names = selections.map { selection -> selection.name }
+            names = selections.map(AquariumMaterialSelection::name)
         )
     }
 
     fun summaryForSavedMaterials(
         context: Context,
-        materials: List<SavedAquariumMaterial>
+        materials: List<AquariumMaterialSelection>
     ): String {
         return summary(
             context = context,
-            names = materials.map { material -> material.name }
+            names = materials.map(AquariumMaterialSelection::name)
         )
     }
 
@@ -30,8 +29,7 @@ object MaterialSummaryFormatter {
         context: Context,
         names: List<String>
     ): String {
-        val cleanNames = names.filter { name -> name.isNotBlank() }
-
+        val cleanNames = names.filter(String::isNotBlank)
         return when (cleanNames.size) {
             0 -> context.getString(R.string.material_picker_not_selected)
             1 -> cleanNames.first()
