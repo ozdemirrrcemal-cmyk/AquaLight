@@ -73,10 +73,11 @@ class ProvisioningDiscoveryViewModelBoundaryTest {
         assertEquals("secret-reference-1", event.result.qrSecretReference)
         assertFalse(event.result.toString().contains("claim-1"))
         assertFalse(event.result.toString().contains("raw-qr"))
+        assertTrue(operations.discardedReferences.isEmpty())
     }
 
     @Test
-    fun `registered QR without setup candidate remains blocked`() {
+    fun `registered QR without setup candidate discards secret and remains blocked`() {
         val operations = FakeProvisioningDiscoveryOperations().apply {
             parsedPayload = qrPayload()
             awaitedCandidate = null
@@ -96,6 +97,24 @@ class ProvisioningDiscoveryViewModelBoundaryTest {
         )
         assertEquals(DeviceQrScanPrimaryAction.SCAN_AGAIN, viewModel.uiState.value.primaryAction)
         assertTrue(operations.registrationChecks.contains("device-1"))
+        assertEquals(listOf("secret-reference-1"), operations.discardedReferences)
+    }
+
+    @Test
+    fun `scan again discards pending QR secret before resetting`() {
+        val operations = FakeProvisioningDiscoveryOperations().apply {
+            parsedPayload = qrPayload()
+        }
+        val viewModel = DeviceQrScanViewModel(
+            discoveryOperations = operations,
+            textResolver = FakeTextResolver
+        )
+
+        viewModel.onQrDetected(rawValue = "raw-qr", hasBlePermissions = false)
+        viewModel.onScanAgain()
+
+        assertEquals(listOf("secret-reference-1"), operations.discardedReferences)
+        assertEquals(DeviceQrScanUiState(), viewModel.uiState.value)
     }
 
     private class FakeProvisioningDiscoveryOperations : ProvisioningDiscoveryOperations {
@@ -111,6 +130,7 @@ class ProvisioningDiscoveryViewModelBoundaryTest {
         var parseCalls: Int = 0
         var awaitCalls: Int = 0
         val registrationChecks = mutableListOf<String>()
+        val discardedReferences = mutableListOf<String>()
 
         override fun startScan(): ProvisioningScanStartResult {
             startCalls += 1
@@ -131,6 +151,10 @@ class ProvisioningDiscoveryViewModelBoundaryTest {
             } else {
                 Result.success(payload)
             }
+        }
+
+        override fun discardQrPayload(payload: ProvisioningQrPayload) {
+            discardedReferences += payload.secretReference
         }
 
         override suspend fun awaitQrCandidate(
