@@ -13,6 +13,7 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningAddressResolver
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningGattClient
 import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningGattEvent
+import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningRuntimeHandoff
 import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
 import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningCommitRecoveryStore
@@ -35,8 +36,10 @@ class DefaultProvisioningProgressOperations internal constructor(
     private val gattClient = AqlBleProvisioningGattClient(appContext)
     private val handoffSaver = AqlProvisioningHandoffSaver(appContext)
     private val commitRecoveryStore = ProvisioningCommitRecoveryStore(appContext)
+    private val runtimeHandoffs = ConcurrentHashMap<String, AqlProvisioningRuntimeHandoff>()
     private val preparedSnapshots = ConcurrentHashMap<String, DeviceSnapshot>()
     private val preparedRuntimeTokens = ConcurrentHashMap<String, String>()
+    private val preparedHandoffIds = ConcurrentHashMap<String, String>()
 
     private constructor(
         context: Context,
@@ -53,7 +56,9 @@ class DefaultProvisioningProgressOperations internal constructor(
     )
 
     override val events: Flow<ProvisioningTransportEvent> =
-        gattClient.events.map(AqlBleProvisioningGattEvent::toApplicationEvent)
+        gattClient.events.map { event ->
+            event.toApplicationEvent(::registerRuntimeHandoff)
+        }
 
     override fun getSession(sessionId: String): ProvisioningSessionSnapshot? =
         draftStore.get(sessionId)?.toApplicationSession()
@@ -77,13 +82,14 @@ class DefaultProvisioningProgressOperations internal constructor(
         }
         val address = bleAddress.trim()
         require(address.isNotBlank()) { "Provisioning BLE address is unavailable." }
+        clearTransientHandoffState()
         gattClient.start(draft.copy(bleAddress = address))
     }
 
     override fun finalizeSetup(
         handoff: ProvisioningRuntimeHandoff
     ): Result<Unit> = runCatching {
-        gattClient.finalizeSetup(handoff.toDataHandoff())
+        gattClient.finalizeSetup(requireDataHandoff(handoff))
     }
 
     override fun closeTransport() {
@@ -97,15 +103,22 @@ class DefaultProvisioningProgressOperations internal constructor(
     ): Result<PreparedProvisioningRegistration> {
         val draft = draftStore.get(sessionId)
             ?: return Result.failure(IllegalStateException("Provisioning session is unavailable."))
+        val dataHandoff = try {
+            requireDataHandoff(handoff)
+        } catch (error: Throwable) {
+            return Result.failure(error)
+        }
+
         return UserDataScope.withOwnerUid(ownerUid) {
             handoffSaver.prepareAndConnect(
                 draft = draft.withVerifiedInfo(verifiedDeviceInfo),
-                handoff = handoff.toDataHandoff()
+                handoff = dataHandoff
             )
         }.map { snapshot ->
             val registrationId = UUID.randomUUID().toString()
             preparedSnapshots[registrationId] = snapshot
-            preparedRuntimeTokens[registrationId] = handoff.webSocketToken
+            preparedRuntimeTokens[registrationId] = dataHandoff.webSocketToken
+            preparedHandoffIds[registrationId] = handoff.handoffId
             PreparedProvisioningRegistration(
                 registrationId = registrationId,
                 device = ProvisionedDevice(
@@ -148,8 +161,7 @@ class DefaultProvisioningProgressOperations internal constructor(
             handoffSaver.commitPreparedRegistration(snapshot)
         }.map { Unit }
             .onSuccess {
-                preparedSnapshots.remove(registration.registrationId)
-                preparedRuntimeTokens.remove(registration.registrationId)
+                removePreparedRegistration(registration.registrationId)
                 clearCommitRecoveryRecord(snapshot.deviceUid)
             }
     }
@@ -185,13 +197,47 @@ class DefaultProvisioningProgressOperations internal constructor(
         }
     }
 
+    private fun registerRuntimeHandoff(
+        dataHandoff: AqlProvisioningRuntimeHandoff
+    ): ProvisioningRuntimeHandoff {
+        val handoffId = UUID.randomUUID().toString()
+        runtimeHandoffs[handoffId] = dataHandoff
+        return dataHandoff.toApplicationReference(handoffId)
+    }
+
+    private fun requireDataHandoff(
+        handoff: ProvisioningRuntimeHandoff
+    ): AqlProvisioningRuntimeHandoff {
+        val stored = runtimeHandoffs[handoff.handoffId]
+            ?: error("Provisioning runtime handoff is unavailable.")
+        require(stored.toApplicationReference(handoff.handoffId) == handoff) {
+            "Provisioning runtime handoff identity changed."
+        }
+        return stored
+    }
+
+    private fun removePreparedRegistration(registrationId: String) {
+        preparedSnapshots.remove(registrationId)
+        preparedRuntimeTokens.remove(registrationId)
+        preparedHandoffIds.remove(registrationId)?.let(runtimeHandoffs::remove)
+    }
+
     private fun removePreparedSnapshot(deviceUid: String) {
         preparedSnapshots.entries
             .filter { (_, snapshot) -> snapshot.deviceUid.value == deviceUid }
             .forEach { (registrationId, _) ->
-                preparedSnapshots.remove(registrationId)
-                preparedRuntimeTokens.remove(registrationId)
+                removePreparedRegistration(registrationId)
             }
+        runtimeHandoffs.entries
+            .filter { (_, handoff) -> handoff.deviceUid.value == deviceUid }
+            .forEach { (handoffId, _) -> runtimeHandoffs.remove(handoffId) }
+    }
+
+    private fun clearTransientHandoffState() {
+        runtimeHandoffs.clear()
+        preparedHandoffIds.clear()
+        preparedRuntimeTokens.clear()
+        preparedSnapshots.clear()
     }
 
     private suspend fun clearCommitRecoveryRecord(deviceUid: DeviceUid) {
