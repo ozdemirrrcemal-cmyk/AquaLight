@@ -61,6 +61,7 @@ jobs:
             python3 tools/care_application_boundary_guard.py
             python3 tools/provisioning_discovery_boundary_guard.py
             python3 tools/provisioning_progress_boundary_guard.py
+            python3 tools/provisioning_commit_recovery_guard.py
             python3 tools/navigation_guard.py
           } 2>&1 | tee architecture-guards.log
 
