@@ -1,10 +1,10 @@
 package com.aqua.aqualight.ui.tabs.devices.add
 
-import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
+import com.aqua.aqualight.application.devices.provisioning.ProvisionedDevice
 
 sealed interface DeviceProvisioningProgressEvent {
     data class OpenAddedDevice(
-        val route: DeviceRoute
+        val device: ProvisionedDevice
     ) : DeviceProvisioningProgressEvent
 
     data object ExitProvisioning : DeviceProvisioningProgressEvent
