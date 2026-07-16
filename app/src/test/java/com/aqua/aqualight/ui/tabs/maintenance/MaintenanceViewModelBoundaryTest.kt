@@ -64,6 +64,22 @@ class MaintenanceViewModelBoundaryTest {
     }
 
     @Test
+    fun `identical tank snapshots synchronize only once`() = runTest {
+        val operations = FakeMaintenanceOperations()
+        val viewModel = MaintenanceViewModel(
+            operations = operations,
+            textResolver = FakeMaintenanceTextResolver
+        )
+        val tanks = listOf(tank(id = 11L, name = "Tank 1"))
+
+        viewModel.setTanks(tanks)
+        viewModel.setTanks(tanks.toList())
+
+        assertEquals(1, operations.syncSmartCareCalls)
+        assertEquals(listOf(11L), operations.lastSyncedTankIds)
+    }
+
+    @Test
     fun `manual mutations delegate typed application inputs`() = runTest {
         val operations = FakeMaintenanceOperations()
         val viewModel = MaintenanceViewModel(
