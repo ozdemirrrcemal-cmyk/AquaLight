@@ -36,6 +36,7 @@ data class ProvisioningCandidateSnapshot(
     val rawAdvertisementPayload: String
 )
 
+/** QR identity plus an opaque reference to encrypted claim material. */
 data class ProvisioningQrPayload(
     val deviceUid: String,
     val serialNumber: String,
@@ -45,9 +46,8 @@ data class ProvisioningQrPayload(
     val hardwareRevision: String,
     val skuCode: String,
     val provisioningId: String,
-    val claimCode: String,
-    val bleName: String,
-    val rawPayload: String
+    val secretReference: String,
+    val bleName: String
 )
 
 sealed interface ProvisioningScanStartResult {
