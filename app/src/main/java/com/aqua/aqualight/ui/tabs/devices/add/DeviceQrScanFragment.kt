@@ -447,8 +447,7 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
                 deviceModel = result.deviceModel,
                 bleAddress = result.bleAddress,
                 bleName = result.bleName,
-                claimCode = result.claimCode,
-                rawQrPayload = result.rawQrPayload
+                qrSecretReference = result.qrSecretReference
             )
         )
     }
