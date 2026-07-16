@@ -43,7 +43,7 @@ class ProvisioningProgressMappingTest {
     }
 
     @Test
-    fun `runtime handoff round trip preserves endpoint and identity`() {
+    fun `runtime handoff exposes endpoint and identity without credential`() {
         val original = AqlProvisioningRuntimeHandoff(
             deviceUid = DeviceUid("device-1"),
             endpoint = DeviceRuntimeEndpoint(
@@ -62,12 +62,14 @@ class ProvisioningProgressMappingTest {
         )
 
         val mappedEvent = AqlBleProvisioningGattEvent.RuntimeHandoffReceived(original)
-            .toApplicationEvent() as ProvisioningTransportEvent.RuntimeHandoffReceived
-        val roundTrip = mappedEvent.handoff.toDataHandoff()
+            .toApplicationEvent { handoff ->
+                handoff.toApplicationReference("handoff-1")
+            } as ProvisioningTransportEvent.RuntimeHandoffReceived
 
-        assertEquals(original.deviceUid, roundTrip.deviceUid)
-        assertEquals(original.endpoint, roundTrip.endpoint)
-        assertEquals(original.webSocketToken, roundTrip.webSocketToken)
+        assertEquals("handoff-1", mappedEvent.handoff.handoffId)
+        assertEquals(original.deviceUid.value, mappedEvent.handoff.deviceUid)
+        assertEquals(original.endpoint.ip, mappedEvent.handoff.endpoint.ip)
+        assertFalse(mappedEvent.handoff.toString().contains(original.webSocketToken))
     }
 
     @Test
