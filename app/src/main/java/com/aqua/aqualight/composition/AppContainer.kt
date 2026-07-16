@@ -23,6 +23,8 @@ import com.aqua.aqualight.data.user.StartupAppearanceCache
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.platform.auth.DefaultGoogleIdentityClient
 import com.aqua.aqualight.platform.auth.GoogleIdentityClient
+import com.aqua.aqualight.platform.vision.MlKitProvisioningQrFrameDecoderFactory
+import com.aqua.aqualight.platform.vision.ProvisioningQrFrameDecoderFactory
 import com.aqua.aqualight.ui.auth.viewmodel.AuthViewModelFactory
 
 /**
@@ -38,6 +40,7 @@ interface AppContainer {
     val userProfileOperations: UserProfileOperations
     val feedbackSubmissionOperations: FeedbackSubmissionUseCase
     val provisioningDraftOperations: ProvisioningDraftOperations
+    val provisioningQrFrameDecoderFactory: ProvisioningQrFrameDecoderFactory
     val authViewModelFactory: ViewModelProvider.Factory
     val defaultViewModelFactory: ViewModelProvider.Factory
     val sessionExitOperations: SessionExitOperations
@@ -91,6 +94,12 @@ internal class DefaultAppContainer(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
         DefaultProvisioningDraftOperations(appContext)
+    }
+
+    override val provisioningQrFrameDecoderFactory: ProvisioningQrFrameDecoderFactory by lazy(
+        LazyThreadSafetyMode.SYNCHRONIZED
+    ) {
+        MlKitProvisioningQrFrameDecoderFactory()
     }
 
     private val authRepository: AuthRepository by lazy(
