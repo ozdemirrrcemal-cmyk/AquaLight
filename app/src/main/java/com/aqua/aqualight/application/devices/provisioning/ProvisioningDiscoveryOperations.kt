@@ -14,6 +14,8 @@ interface ProvisioningDiscoveryOperations {
 
     fun parseQr(rawValue: String): Result<ProvisioningQrPayload>
 
+    fun discardQrPayload(payload: ProvisioningQrPayload)
+
     suspend fun awaitQrCandidate(
         payload: ProvisioningQrPayload,
         timeoutMillis: Long
