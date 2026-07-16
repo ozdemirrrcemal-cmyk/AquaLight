@@ -9,6 +9,8 @@ TESTS = ROOT / "app/src/test/java/com/aqua/aqualight"
 
 contract = APP / "application/care/MaintenanceOperations.kt"
 adapter = APP / "data/care/DefaultMaintenanceOperations.kt"
+owner_scope = APP / "data/user/OwnerScopedDataOperation.kt"
+owner_scope_test = TESTS / "data/user/UserDataScopeTest.kt"
 view_model = APP / "ui/tabs/maintenance/MaintenanceViewModel.kt"
 ui_model = APP / "ui/tabs/maintenance/model/CareTaskUi.kt"
 text_contract = APP / "ui/tabs/maintenance/text/MaintenanceTextResolver.kt"
@@ -23,6 +25,8 @@ obsolete_text = APP / "data/care/MaintenanceTextResolver.kt"
 required = (
     contract,
     adapter,
+    owner_scope,
+    owner_scope_test,
     view_model,
     ui_model,
     text_contract,
@@ -49,6 +53,29 @@ if contract.is_file():
         errors.append("maintenance contract is outside application layer")
     if "com.aqua.aqualight.data." in text or "import android." in text:
         errors.append("maintenance application contract imports data/platform types")
+
+if adapter.is_file():
+    text = adapter.read_text(encoding="utf-8")
+    if text.count("withCurrentOwnerScope") < 9:
+        errors.append("every maintenance command must remain pinned to one owner scope")
+    if "tank.toDataTank(ownerUid)" not in text:
+        errors.append("Smart Care generation must carry the captured owner UID")
+    if "ownerUid = \"\"" in text:
+        errors.append("Smart Care adapter must not create ownerless tank models")
+
+if owner_scope.is_file():
+    text = owner_scope.read_text(encoding="utf-8")
+    for token in (
+        "UserDataScope.requireCurrentUid()",
+        "UserDataScope.withOwnerUid(ownerUid)",
+    ):
+        if token not in text:
+            errors.append(f"owner scope implementation is missing: {token}")
+
+if owner_scope_test.is_file():
+    text = owner_scope_test.read_text(encoding="utf-8")
+    if "currentOwnerOperationCapturesAndPropagatesOneOwner" not in text:
+        errors.append("immutable owner operation scope lacks regression coverage")
 
 for path in (view_model, ui_model):
     if not path.is_file():
@@ -121,6 +148,7 @@ def enum_values(path: Path, enum_name: str) -> set[str]:
         token
         for token in re.findall(r"\b[A-Z][A-Z0-9_]*\b", match.group(1))
     }
+
 
 application_types = enum_values(contract, "CareTaskType")
 data_types = enum_values(data_model, "CareTaskType")
