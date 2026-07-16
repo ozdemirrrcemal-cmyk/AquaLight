@@ -129,7 +129,7 @@ class DefaultMaintenanceOperations(
     }
 }
 
-private fun CareTask.toApplicationSnapshot(): CareTaskSnapshot = CareTaskSnapshot(
+internal fun CareTask.toApplicationSnapshot(): CareTaskSnapshot = CareTaskSnapshot(
     id = id,
     tankId = tankId,
     title = title,
@@ -149,10 +149,10 @@ private fun CareTask.toApplicationSnapshot(): CareTaskSnapshot = CareTaskSnapsho
     createdAtMillis = createdAtMillis
 )
 
-private fun AppCareTaskType.toDataType(): DataCareTaskType =
+internal fun AppCareTaskType.toDataType(): DataCareTaskType =
     DataCareTaskType.valueOf(name)
 
-private fun AquariumTankSnapshot.toDataTank(
+internal fun AquariumTankSnapshot.toDataTank(
     ownerUid: String
 ): SavedAquariumTank = SavedAquariumTank(
     id = id,
