@@ -16,12 +16,10 @@ PROFILE_CONTRACT_PATH = SOURCE_ROOT / "application/user/UserProfileOperations.kt
 SETTINGS_IMPL_PATH = SOURCE_ROOT / "data/user/DefaultUserSettingsOperations.kt"
 PROFILE_IMPL_PATH = SOURCE_ROOT / "data/user/DefaultUserProfileOperations.kt"
 PROVISIONING_OPERATIONS_PATH = (
-    SOURCE_ROOT
-    / "application/devices/provisioning/ProvisioningProgressOperations.kt"
+    SOURCE_ROOT / "application/devices/provisioning/ProvisioningProgressOperations.kt"
 )
 PROVISIONING_DEFAULT_PATH = (
-    SOURCE_ROOT
-    / "data/devices/provisioning/DefaultProvisioningProgressOperations.kt"
+    SOURCE_ROOT / "data/devices/provisioning/DefaultProvisioningProgressOperations.kt"
 )
 AUTH_FACTORY_TEST_PATH = (
     ROOT / "app/src/test/java/com/aqua/aqualight/ui/auth/viewmodel/AuthViewModelFactoryTest.kt"
@@ -77,6 +75,8 @@ require_tokens(
         ("val userSettingsOperations: UserSettingsOperations", "settings must use an application boundary"),
         ("val userProfileOperations: UserProfileOperations", "profile persistence must use an application boundary"),
         ("val feedbackSubmissionOperations: FeedbackSubmissionUseCase", "feedback must use an application use case"),
+        ("val provisioningDraftOperations: ProvisioningDraftOperations", "draft creation must use an application boundary"),
+        ("DefaultProvisioningDraftOperations(appContext)", "encrypted draft adapter must be composition-owned"),
         ("AuthRepository.create(appContext)", "AuthRepository construction must remain centralized"),
         ("LogoutManager.create(appContext)", "logout manager construction must remain centralized"),
         ("FirebaseAccountSecurityOperations.create(appContext)", "account security construction must remain centralized"),
@@ -141,8 +141,9 @@ require_tokens(
         ("AqlBleProvisioningAddressResolver(appContext)", "address resolver construction must remain in data"),
         ("AqlBleProvisioningGattClient(appContext)", "GATT client construction must remain in data"),
         ("AqlProvisioningHandoffSaver(appContext)", "handoff saver construction must remain in data"),
-        ("AqlProvisioningDraftStore.get", "draft store access must remain behind the boundary"),
-        ("UserDataScope.requireCurrentUid()", "owner scope resolution must remain behind the boundary"),
+        ("draftStore.get", "draft storage access must remain behind the boundary"),
+        ("OwnerProvisioningScope.create", "progress must capture one immutable owner scope"),
+        ("UserDataScope.withOwnerUid(ownerUid)", "registration mutations must remain owner-pinned"),
         ("preparedSnapshots", "prepared concrete registrations must remain opaque to UI"),
     ),
 )
@@ -151,7 +152,7 @@ require_tokens(
     FACTORY_PATH,
     factory,
     (
-        ("DefaultProvisioningProgressOperations(", "provisioning adapter must be created by the feature factory"),
+        ("DefaultProvisioningProgressOperations(appContext)", "provisioning adapter must be created by the feature factory"),
         ("DeviceProvisioningProgressViewModel(", "provisioning ViewModel must be created by the feature factory"),
     ),
 )
@@ -309,7 +310,7 @@ viewmodel_forbidden = (
     "AqlBleProvisioningAddressResolver(",
     "AqlBleProvisioningGattClient(",
     "AqlProvisioningHandoffSaver(",
-    "AqlProvisioningDraftStore.",
+    "AqlProvisioningDraftStore",
     "UserDataScope.",
     "DeviceRouteResolver(",
 )
