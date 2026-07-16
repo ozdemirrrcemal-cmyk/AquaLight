@@ -18,6 +18,7 @@ import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
 import com.aqua.aqualight.data.aquarium.model.TankPlantTag
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
+import com.aqua.aqualight.data.user.withCurrentOwnerScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -36,8 +37,10 @@ class DefaultAquariumTankOperations(
 
     override suspend fun duplicateTank(tankId: Long): Long = tankStore.duplicateTank(tankId)
 
-    override suspend fun deleteTanks(tankIds: Collection<Long>): DeleteAquariumTanksResult {
-        return when (val result = tankDataCleaner.deleteTanks(tankIds)) {
+    override suspend fun deleteTanks(
+        tankIds: Collection<Long>
+    ): DeleteAquariumTanksResult = withCurrentOwnerScope {
+        when (val result = tankDataCleaner.deleteTanks(tankIds)) {
             OwnerTankDataCleaner.Result.NoOp -> DeleteAquariumTanksResult.NoOp
             is OwnerTankDataCleaner.Result.DeleteFailed -> DeleteAquariumTanksResult.DeleteFailed
             is OwnerTankDataCleaner.Result.Deleted -> DeleteAquariumTanksResult.Deleted(
@@ -112,7 +115,10 @@ class DefaultAquariumTankOperations(
     override suspend fun updateSmartCareEnabled(tankId: Long, enabled: Boolean) =
         tankStore.updateSmartCareEnabled(tankId, enabled)
 
-    override suspend fun updateCareRemindersEnabled(tankId: Long, enabled: Boolean) {
+    override suspend fun updateCareRemindersEnabled(
+        tankId: Long,
+        enabled: Boolean
+    ) = withCurrentOwnerScope {
         tankStore.updateCareRemindersEnabled(tankId, enabled)
         if (enabled) {
             careTaskStore.reschedulePendingRemindersForTank(tankId)
