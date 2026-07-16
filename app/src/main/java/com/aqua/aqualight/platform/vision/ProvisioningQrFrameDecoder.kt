@@ -53,13 +53,12 @@ private class MlKitProvisioningQrFrameDecoder : ProvisioningQrFrameDecoder {
                     .asSequence()
                     .mapNotNull(Barcode::getRawValue)
                     .firstOrNull(String::isNotBlank)
+                imageProxy.close()
                 onResult(Result.success(rawValue))
             }
             .addOnFailureListener { error ->
-                onResult(Result.failure(error))
-            }
-            .addOnCompleteListener {
                 imageProxy.close()
+                onResult(Result.failure(error))
             }
     }
 
