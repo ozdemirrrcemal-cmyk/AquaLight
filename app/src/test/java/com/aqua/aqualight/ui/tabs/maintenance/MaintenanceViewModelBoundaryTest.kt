@@ -1,13 +1,16 @@
 package com.aqua.aqualight.ui.tabs.maintenance
 
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
-import com.aqua.aqualight.data.care.CareTaskTypePresentation
-import com.aqua.aqualight.application.care.MaintenanceOperations
-import com.aqua.aqualight.ui.tabs.maintenance.text.MaintenanceTextResolver
 import com.aqua.aqualight.application.care.CareTaskSnapshot
 import com.aqua.aqualight.application.care.CareTaskSource
+import com.aqua.aqualight.application.care.CareTaskStatus
 import com.aqua.aqualight.application.care.CareTaskType
+import com.aqua.aqualight.application.care.CompletedCareActivityInput
+import com.aqua.aqualight.application.care.MaintenanceOperations
+import com.aqua.aqualight.application.care.ManualCareTaskInput
 import com.aqua.aqualight.ui.tabs.maintenance.model.MaintenanceTab
+import com.aqua.aqualight.ui.tabs.maintenance.text.CareTaskTypePresentation
+import com.aqua.aqualight.ui.tabs.maintenance.text.MaintenanceTextResolver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -33,24 +36,38 @@ class MaintenanceViewModelBoundaryTest {
 
     @Test
     fun `empty tank input does not start Smart Care synchronization`() {
-        val repository = FakeMaintenanceRepository()
+        val operations = FakeMaintenanceOperations()
         val viewModel = MaintenanceViewModel(
-            repository = repository,
+            operations = operations,
             textResolver = FakeMaintenanceTextResolver
         )
 
         viewModel.setTanks(emptyList())
         viewModel.selectTab(MaintenanceTab.TODAY)
 
-        assertEquals(0, repository.syncSmartCareCalls)
+        assertEquals(0, operations.syncSmartCareCalls)
         assertEquals(MaintenanceTab.TODAY, viewModel.selectedTab.value)
     }
 
     @Test
-    fun `manual mutations delegate through the injected repository`() = runTest {
-        val repository = FakeMaintenanceRepository()
+    fun `non-empty tank input delegates Smart Care synchronization`() = runTest {
+        val operations = FakeMaintenanceOperations()
         val viewModel = MaintenanceViewModel(
-            repository = repository,
+            operations = operations,
+            textResolver = FakeMaintenanceTextResolver
+        )
+
+        viewModel.setTanks(listOf(tank(id = 11L, name = "Tank 1")))
+
+        assertEquals(1, operations.syncSmartCareCalls)
+        assertEquals(listOf(11L), operations.lastSyncedTankIds)
+    }
+
+    @Test
+    fun `manual mutations delegate typed application inputs`() = runTest {
+        val operations = FakeMaintenanceOperations()
+        val viewModel = MaintenanceViewModel(
+            operations = operations,
             textResolver = FakeMaintenanceTextResolver
         )
 
@@ -85,33 +102,60 @@ class MaintenanceViewModelBoundaryTest {
             note = "Updated note"
         )
 
-        assertEquals(7L, repository.deletedManualTaskId)
-        assertEquals(11L, repository.addedManualTankId)
-        assertEquals(CareTaskType.WATER_CHANGE, repository.addedManualType)
-        assertEquals(25, repository.addedWaterChangePercent)
-        assertEquals(9L, repository.updatedManualTaskId)
-        assertEquals(12L, repository.updatedManualTankId)
-        assertEquals(CareTaskType.FILTER_MAINTENANCE, repository.updatedManualType)
-        assertNull(repository.updatedWaterChangePercent)
+        assertEquals(7L, operations.deletedManualTaskId)
+        assertEquals(11L, operations.addedManualInput?.tankId)
+        assertEquals(CareTaskType.WATER_CHANGE, operations.addedManualInput?.type)
+        assertEquals(25, operations.addedManualInput?.waterChangePercent)
+        assertEquals(9L, operations.updatedManualTaskId)
+        assertEquals(12L, operations.updatedManualInput?.tankId)
+        assertEquals(CareTaskType.FILTER_MAINTENANCE, operations.updatedManualInput?.type)
+        assertNull(operations.updatedManualInput?.waterChangePercent)
     }
 
-    private class FakeMaintenanceRepository : MaintenanceOperations {
-        override val tasksFlow = MutableStateFlow<List<CareTaskSnapshot>>(emptyList())
+    @Test
+    fun `completed activity delegates typed application input`() = runTest {
+        val operations = FakeMaintenanceOperations()
+        val viewModel = MaintenanceViewModel(
+            operations = operations,
+            textResolver = FakeMaintenanceTextResolver
+        )
+
+        viewModel.addCompletedActivity(
+            tankId = 21L,
+            type = CareTaskType.WATER_CHANGE,
+            completedAtMillis = 5000L,
+            waterChangePercent = 30,
+            note = "Done"
+        ).join()
+
+        assertEquals(
+            CompletedCareActivityInput(
+                tankId = 21L,
+                type = CareTaskType.WATER_CHANGE,
+                completedAtMillis = 5000L,
+                waterChangePercent = 30,
+                note = "Done"
+            ),
+            operations.completedActivityInput
+        )
+    }
+
+    private class FakeMaintenanceOperations : MaintenanceOperations {
+        override val tasks = MutableStateFlow<List<CareTaskSnapshot>>(emptyList())
 
         var syncSmartCareCalls = 0
+        var lastSyncedTankIds: List<Long> = emptyList()
         var deletedManualTaskId: Long? = null
-        var addedManualTankId: Long? = null
-        var addedManualType: CareTaskType? = null
-        var addedWaterChangePercent: Int? = null
+        var addedManualInput: ManualCareTaskInput? = null
         var updatedManualTaskId: Long? = null
-        var updatedManualTankId: Long? = null
-        var updatedManualType: CareTaskType? = null
-        var updatedWaterChangePercent: Int? = null
+        var updatedManualInput: ManualCareTaskInput? = null
+        var completedActivityInput: CompletedCareActivityInput? = null
 
-        override fun taskFlow(taskId: Long): Flow<CareTaskSnapshot?> = flowOf(null)
+        override fun task(taskId: Long): Flow<CareTaskSnapshot?> = flowOf(null)
 
         override suspend fun syncSmartCareTasks(tanks: List<AquariumTankSnapshot>) {
             syncSmartCareCalls += 1
+            lastSyncedTankIds = tanks.map(AquariumTankSnapshot::id)
         }
 
         override suspend fun completeTask(taskId: Long) = Unit
@@ -123,56 +167,24 @@ class MaintenanceViewModelBoundaryTest {
             completedAtMillis: Long
         ) = Unit
 
-        override suspend fun addCompletedActivity(
-            tankId: Long,
-            type: CareTaskType,
-            completedAtMillis: Long,
-            waterChangePercent: Int?,
-            note: String
-        ) = Unit
+        override suspend fun addCompletedActivity(input: CompletedCareActivityInput) {
+            completedActivityInput = input
+        }
 
         override suspend fun deleteManualTask(taskId: Long) {
             deletedManualTaskId = taskId
         }
 
-        override suspend fun addManualTask(
-            tankId: Long,
-            title: String,
-            description: String,
-            type: CareTaskType,
-            dueAtMillis: Long,
-            repeatEnabled: Boolean,
-            repeatIntervalDays: Int,
-            reminderEnabled: Boolean,
-            missedReminderEnabled: Boolean,
-            missedReminderDays: Int,
-            waterChangePercent: Int?,
-            note: String
-        ) {
-            addedManualTankId = tankId
-            addedManualType = type
-            addedWaterChangePercent = waterChangePercent
+        override suspend fun addManualTask(input: ManualCareTaskInput) {
+            addedManualInput = input
         }
 
         override suspend fun updateManualTask(
             taskId: Long,
-            tankId: Long,
-            title: String,
-            description: String,
-            type: CareTaskType,
-            dueAtMillis: Long,
-            repeatEnabled: Boolean,
-            repeatIntervalDays: Int,
-            reminderEnabled: Boolean,
-            missedReminderEnabled: Boolean,
-            missedReminderDays: Int,
-            waterChangePercent: Int?,
-            note: String
+            input: ManualCareTaskInput
         ) {
             updatedManualTaskId = taskId
-            updatedManualTankId = tankId
-            updatedManualType = type
-            updatedWaterChangePercent = waterChangePercent
+            updatedManualInput = input
         }
     }
 
@@ -201,6 +213,27 @@ class MaintenanceViewModelBoundaryTest {
         override fun daysAgo(days: Long) = days.toString()
         override fun unknownAquarium() = "unknown"
     }
+
+    private fun tank(id: Long, name: String): AquariumTankSnapshot = AquariumTankSnapshot(
+        id = id,
+        name = name,
+        description = "",
+        photoUri = null,
+        setupDateMillis = null,
+        widthCm = 10,
+        lengthCm = 10,
+        heightCm = 10,
+        sizeUnit = "cm",
+        volumeUnit = "L",
+        tankType = "",
+        tankStyle = "",
+        createdAtMillis = 1L,
+        smartCareEnabled = true,
+        careRemindersEnabled = true,
+        plants = emptyList(),
+        materials = emptyList(),
+        livestock = emptyList()
+    )
 
     class MainDispatcherRule(
         private val dispatcher: TestDispatcher = UnconfinedTestDispatcher()
