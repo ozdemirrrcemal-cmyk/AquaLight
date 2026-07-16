@@ -27,7 +27,7 @@ class ProvisioningCommitRecoveryStoreInstrumentedTest {
     private lateinit var context: Context
     private lateinit var ownerUid: String
     private lateinit var otherOwnerUid: String
-    private lateinit var deviceUid: DeviceUid
+    private var deviceUid: DeviceUid = DeviceUid("uninitialized-device")
 
     @Before
     fun setUp() = runBlocking {
