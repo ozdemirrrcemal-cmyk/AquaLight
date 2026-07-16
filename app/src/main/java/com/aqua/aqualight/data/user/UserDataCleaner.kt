@@ -3,9 +3,12 @@ package com.aqua.aqualight.data.user
 import android.content.Context
 import android.net.Uri
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentStore
+import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.auth.SessionBoundServiceManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
-import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
+import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
+import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningCommitRecoveryStore
 import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
 import com.aqua.aqualight.data.devices.store.DeviceKnownStore
 import java.io.File
@@ -26,6 +29,7 @@ class UserDataCleaner private constructor(
         CARE_TASKS,
         AQUARIUM_TANKS,
         DEVICE_ASSIGNMENTS,
+        PROVISIONING_SESSIONS,
         KNOWN_DEVICES,
         DEVICE_CREDENTIALS,
         APP_OWNED_FILES,
@@ -158,6 +162,20 @@ class UserDataCleaner private constructor(
                 .clearOwnerAssignments(
                     ownerUid = targetOwnerUid
                 )
+        }
+
+        runStep(
+            step = Step.PROVISIONING_SESSIONS
+        ) {
+            AqlProvisioningHandoffSaver(appContext)
+                .rollbackPendingRegistrationsForOwner(targetOwnerUid)
+                .getOrThrow()
+            AqlProvisioningDraftStore(
+                context = appContext,
+                ownerUidProvider = { targetOwnerUid }
+            ).clearOwner()
+            ProvisioningCommitRecoveryStore(appContext)
+                .clearOwner(targetOwnerUid)
         }
 
         runStep(
