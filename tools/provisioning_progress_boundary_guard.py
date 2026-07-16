@@ -5,10 +5,14 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "app/src/main/java/com/aqua/aqualight"
 TESTS = ROOT / "app/src/test/java/com/aqua/aqualight"
+ANDROID_TESTS = ROOT / "app/src/androidTest/java/com/aqua/aqualight"
 
 contract = APP / "application/devices/provisioning/ProvisioningProgressOperations.kt"
 adapter = APP / "data/devices/provisioning/DefaultProvisioningProgressOperations.kt"
 mapping = APP / "data/devices/provisioning/ProvisioningProgressMapping.kt"
+storage_port = APP / "data/devices/provisioning/store/ProvisioningDraftStorage.kt"
+encrypted_store = APP / "data/devices/provisioning/store/AqlProvisioningDraftStore.kt"
+draft_adapter = APP / "data/devices/provisioning/repository/DefaultProvisioningDraftOperations.kt"
 view_model = APP / "ui/tabs/devices/add/DeviceProvisioningProgressViewModel.kt"
 presentation = APP / "ui/tabs/devices/add/ProvisioningProgressPresentation.kt"
 event_contract = APP / "ui/tabs/devices/add/DeviceProvisioningProgressContract.kt"
@@ -17,6 +21,11 @@ production = APP / "composition/AquaViewModelFactory.kt"
 smoke = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/Stage3SmokeAppContainer.kt"
 view_model_test = TESTS / "ui/tabs/devices/add/DeviceProvisioningProgressViewModelBoundaryTest.kt"
 mapping_test = TESTS / "data/devices/provisioning/ProvisioningProgressMappingTest.kt"
+draft_test = TESTS / "data/devices/provisioning/repository/DefaultProvisioningDraftOperationsTest.kt"
+process_test = (
+    ANDROID_TESTS
+    / "data/devices/provisioning/store/AqlProvisioningDraftStoreProcessRecreationTest.kt"
+)
 obsolete_contract = APP / "ui/tabs/devices/add/DeviceProvisioningProgressOperations.kt"
 obsolete_adapter = APP / "composition/DefaultDeviceProvisioningProgressOperations.kt"
 
@@ -24,6 +33,9 @@ required = (
     contract,
     adapter,
     mapping,
+    storage_port,
+    encrypted_store,
+    draft_adapter,
     view_model,
     presentation,
     event_contract,
@@ -32,6 +44,8 @@ required = (
     smoke,
     view_model_test,
     mapping_test,
+    draft_test,
+    process_test,
 )
 errors: list[str] = []
 
@@ -78,8 +92,9 @@ if adapter.is_file():
         "AqlBleProvisioningAddressResolver(appContext)",
         "AqlBleProvisioningGattClient(appContext)",
         "AqlProvisioningHandoffSaver(appContext)",
-        "AqlProvisioningDraftStore.get",
-        "UserDataScope.requireCurrentUid()",
+        "draftStore.get",
+        "OwnerProvisioningScope.create",
+        "UserDataScope.withOwnerUid(ownerUid)",
         "ConcurrentHashMap<String, DeviceSnapshot>",
         "registration.device.deviceUid",
         "removePreparedSnapshot",
@@ -97,6 +112,41 @@ if mapping.is_file():
     ):
         if token not in text:
             errors.append(f"provisioning progress mapping is missing: {token}")
+
+if storage_port.is_file():
+    text = storage_port.read_text(encoding="utf-8")
+    if "interface ProvisioningDraftStorage" not in text:
+        errors.append("provisioning draft storage port is missing")
+
+if encrypted_store.is_file():
+    text = encrypted_store.read_text(encoding="utf-8")
+    for token in (
+        "EncryptedSharedPreferences.create",
+        "MasterKey.KeyScheme.AES256_GCM",
+        "PrefKeyEncryptionScheme.AES256_SIV",
+        "PrefValueEncryptionScheme.AES256_GCM",
+        "SESSION_TTL_MILLIS",
+        "decoded.ownerUid != ownerUid -> null",
+        "Encrypted provisioning session storage write failed.",
+    ):
+        if token not in text:
+            errors.append(f"encrypted provisioning session invariant is missing: {token}")
+    for forbidden in (
+        "context.getSharedPreferences(",
+        "PreferenceManager.getDefaultSharedPreferences",
+    ):
+        if forbidden in text:
+            errors.append(f"plaintext provisioning persistence is forbidden: {forbidden}")
+
+if draft_adapter.is_file():
+    text = draft_adapter.read_text(encoding="utf-8")
+    for token in (
+        "ProvisioningDraftStorage",
+        "AqlProvisioningDraftStore(context.applicationContext)",
+        "draftStore.create",
+    ):
+        if token not in text:
+            errors.append(f"draft adapter storage binding is missing: {token}")
 
 if view_model.is_file():
     text = view_model.read_text(encoding="utf-8")
@@ -166,6 +216,27 @@ if mapping_test.is_file():
     ):
         if token not in text:
             errors.append(f"provisioning progress mapping coverage is missing: {token}")
+
+if draft_test.is_file():
+    text = draft_test.read_text(encoding="utf-8")
+    for token in (
+        "FakeProvisioningDraftStorage",
+        "creates encrypted-storage draft from primitive application request",
+        "uses injected BLE cache when navigation carries no address",
+    ):
+        if token not in text:
+            errors.append(f"provisioning draft adapter coverage is missing: {token}")
+
+if process_test.is_file():
+    text = process_test.read_text(encoding="utf-8")
+    for token in (
+        "encryptedSessionSurvivesStoreRecreationWithoutPlaintextSecrets",
+        "anotherOwnerCannotReadOrDeleteTheSession",
+        "expiredSessionFailsClosedAfterProcessRecreation",
+        "aql_provisioning_sessions.xml",
+    ):
+        if token not in text:
+            errors.append(f"encrypted process recreation coverage is missing: {token}")
 
 if errors:
     print("Provisioning progress application boundary guard failed:")
