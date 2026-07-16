@@ -108,7 +108,7 @@ internal fun AqlBleProvisioningCandidate.toApplicationSnapshot():
         rawAdvertisementPayload = rawAdvertisementPayload
     )
 
-private fun AqlProvisioningQrPayload.toApplicationPayload(): ProvisioningQrPayload =
+internal fun AqlProvisioningQrPayload.toApplicationPayload(): ProvisioningQrPayload =
     ProvisioningQrPayload(
         deviceUid = deviceUid.value,
         serialNumber = serialNumber,
