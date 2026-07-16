@@ -220,8 +220,7 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
                 deviceModel = candidate.model,
                 bleAddress = candidate.bleAddress,
                 bleName = candidate.bleName,
-                claimCode = "",
-                rawQrPayload = ""
+                qrSecretReference = ""
             )
         )
     }
