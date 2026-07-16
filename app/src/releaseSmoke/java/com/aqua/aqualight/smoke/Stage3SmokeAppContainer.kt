@@ -4,9 +4,9 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.application.auth.AccountSecurityOperations
+import com.aqua.aqualight.application.auth.SessionExitOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionUseCase
-import com.aqua.aqualight.application.auth.SessionExitOperations
 import com.aqua.aqualight.application.user.UserAddressInput
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.application.user.UserProfileSnapshot
@@ -18,9 +18,8 @@ import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOpera
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentStore
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
-import com.aqua.aqualight.data.care.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
-import com.aqua.aqualight.data.care.DefaultMaintenanceRepository
+import com.aqua.aqualight.data.care.DefaultMaintenanceOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceFirmwareUpdateOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
@@ -31,6 +30,7 @@ import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.user.StartupAppearanceCache
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.platform.auth.GoogleIdentityClient
+import com.aqua.aqualight.platform.text.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectViewModel
@@ -91,7 +91,7 @@ private class Stage3SmokeViewModelFactory(
         assignmentStore = TankDeviceAssignmentStore.get(appContext),
         tankStore = tankStore
     )
-    private val maintenanceRepository = DefaultMaintenanceRepository(
+    private val maintenanceOperations = DefaultMaintenanceOperations(
         context = appContext,
         manager = careTaskStore
     )
@@ -136,7 +136,7 @@ private class Stage3SmokeViewModelFactory(
 
             modelClass.isAssignableFrom(MaintenanceViewModel::class.java) ->
                 MaintenanceViewModel(
-                    repository = maintenanceRepository,
+                    operations = maintenanceOperations,
                     textResolver = maintenanceTextResolver
                 )
 
