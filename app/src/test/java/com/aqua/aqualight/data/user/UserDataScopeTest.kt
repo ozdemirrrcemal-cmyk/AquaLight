@@ -22,6 +22,20 @@ class UserDataScopeTest {
     }
 
     @Test
+    fun currentOwnerOperationCapturesAndPropagatesOneOwner() = runBlocking {
+        val observed = UserDataScope.withOwnerUid("owner-a") {
+            withCurrentOwnerScope { capturedOwnerUid ->
+                val ownerAfterDispatcherSwitch = withContext(Dispatchers.Default) {
+                    UserDataScope.currentUid()
+                }
+                capturedOwnerUid to ownerAfterDispatcherSwitch
+            }
+        }
+
+        assertEquals("owner-a" to "owner-a", observed)
+    }
+
+    @Test
     fun concurrentBackgroundOwnersDoNotLeakIntoEachOther() = runBlocking {
         val ownerA = async(Dispatchers.Default) {
             UserDataScope.withOwnerUid("owner-a") {
