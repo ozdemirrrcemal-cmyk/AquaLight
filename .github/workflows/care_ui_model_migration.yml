@@ -1,0 +1,37 @@
+name: One-shot Care UI Model Migration
+
+on:
+  push:
+    branches:
+      - feature/stage-3-aquarium-care-boundaries
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/stage-3-aquarium-care-boundaries
+          fetch-depth: 0
+
+      - name: Migrate care UI model references
+        run: python3 tools/care_ui_model_migration.py
+
+      - name: Commit migrated sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "No migration changes were required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Migrate care UI models to application contracts"
+          git push origin HEAD:feature/stage-3-aquarium-care-boundaries
