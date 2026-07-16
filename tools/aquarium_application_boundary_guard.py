@@ -4,18 +4,31 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "app/src/main/java/com/aqua/aqualight"
+TESTS = ROOT / "app/src/test/java/com/aqua/aqualight"
 
 contract = APP / "application/aquarium/AquariumTankOperations.kt"
 adapter = APP / "data/aquarium/DefaultAquariumTankOperations.kt"
+owner_scope = APP / "data/user/OwnerScopedDataOperation.kt"
+owner_scope_test = TESTS / "data/user/UserDataScopeTest.kt"
 view_model = APP / "ui/tabs/aquarium/AquariumTankViewModel.kt"
 production = APP / "composition/AquaViewModelFactory.kt"
 smoke = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/Stage3SmokeAppContainer.kt"
 
+
 def read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
+
 errors = []
-for path in (contract, adapter, view_model, production, smoke):
+for path in (
+    contract,
+    adapter,
+    owner_scope,
+    owner_scope_test,
+    view_model,
+    production,
+    smoke,
+):
     if not path.is_file():
         errors.append(f"missing required file: {path.relative_to(ROOT)}")
 
@@ -25,6 +38,27 @@ if contract.is_file():
         errors.append("aquarium contract is outside application layer")
     if "com.aqua.aqualight.data." in text or "android." in text:
         errors.append("aquarium application contract imports data/platform types")
+
+if adapter.is_file():
+    text = read(adapter)
+    if text.count("withCurrentOwnerScope") < 2:
+        errors.append(
+            "aquarium deletion and reminder mutation must remain pinned to one owner scope"
+        )
+
+if owner_scope.is_file():
+    text = read(owner_scope)
+    for token in (
+        "UserDataScope.requireCurrentUid()",
+        "UserDataScope.withOwnerUid(ownerUid)",
+    ):
+        if token not in text:
+            errors.append(f"owner scope implementation is missing: {token}")
+
+if owner_scope_test.is_file():
+    text = read(owner_scope_test)
+    if "currentOwnerOperationCapturesAndPropagatesOneOwner" not in text:
+        errors.append("immutable owner operation scope lacks regression coverage")
 
 if view_model.is_file():
     text = read(view_model)
