@@ -97,7 +97,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
     }
 
     private fun setupMethodLabel(): String {
-        return if (args.claimCode.isNotBlank()) {
+        return if (args.qrSecretReference.isNotBlank()) {
             "Secure QR Setup"
         } else {
             "Manual BLE Setup"
