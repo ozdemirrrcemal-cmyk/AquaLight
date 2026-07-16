@@ -33,8 +33,8 @@ class DeviceQrScanViewModel(
     fun onQrDetected(rawValue: String, hasBlePermissions: Boolean) {
         if (scanJob?.isActive == true) return
 
+        discardPendingPayload()
         val payload = discoveryOperations.parseQr(rawValue).getOrElse {
-            pendingPayload = null
             showFailure(
                 titleRes = R.string.device_qr_preflight_invalid_title,
                 messageRes = R.string.device_qr_preflight_invalid_message
@@ -79,7 +79,7 @@ class DeviceQrScanViewModel(
         scanJob = null
         discoveryOperations.stopScan()
         discoveryOperations.clearCandidates()
-        pendingPayload = null
+        discardPendingPayload()
         _uiState.value = DeviceQrScanUiState()
     }
 
@@ -115,6 +115,7 @@ class DeviceQrScanViewModel(
                     return@launch
                 }
                 ProvisioningScanStartResult.BluetoothUnavailable -> {
+                    discardPendingPayload()
                     showFailure(
                         titleRes = R.string.device_add_bluetooth_unavailable_title,
                         messageRes = R.string.device_add_bluetooth_unavailable_message
@@ -122,6 +123,7 @@ class DeviceQrScanViewModel(
                     return@launch
                 }
                 is ProvisioningScanStartResult.Failed -> {
+                    discardPendingPayload()
                     showFailure(
                         titleRes = R.string.device_add_scan_failed_title,
                         messageRes = R.string.device_add_scan_failed_message
@@ -161,6 +163,7 @@ class DeviceQrScanViewModel(
 
             val hasNearbyCandidates = discoveryOperations.hasCandidates()
             val isAlreadyRegistered = discoveryOperations.isRegistered(payload.deviceUid)
+            discardPendingPayload()
             when {
                 hasNearbyCandidates -> showFailure(
                     titleRes = R.string.device_qr_preflight_mismatch_title,
@@ -176,6 +179,11 @@ class DeviceQrScanViewModel(
                 )
             }
         }
+    }
+
+    private fun discardPendingPayload() {
+        pendingPayload?.let(discoveryOperations::discardQrPayload)
+        pendingPayload = null
     }
 
     private fun showFailure(
@@ -196,6 +204,7 @@ class DeviceQrScanViewModel(
     override fun onCleared() {
         scanJob?.cancel()
         discoveryOperations.stopScan()
+        discardPendingPayload()
         super.onCleared()
     }
 
