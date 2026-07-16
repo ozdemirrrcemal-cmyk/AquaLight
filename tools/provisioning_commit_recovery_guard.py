@@ -75,6 +75,7 @@ if user_data_cleaner.is_file():
         "clearProvisioningData(targetOwnerUid)",
         "rollbackPendingRegistrationsForOwner(ownerUid)",
         "AqlProvisioningDraftStore(",
+        "AqlProvisioningQrSecretStore(",
         ").clearOwner()",
         "ProvisioningCommitRecoveryStore(appContext)",
         ".clearOwner(ownerUid)",
