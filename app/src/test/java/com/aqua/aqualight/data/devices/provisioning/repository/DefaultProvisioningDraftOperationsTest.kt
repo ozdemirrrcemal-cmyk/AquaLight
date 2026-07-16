@@ -4,7 +4,10 @@ import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftRequ
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningDraft
 import com.aqua.aqualight.data.devices.provisioning.model.AqlWifiCredentials
 import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningDraftStorage
+import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningQrSecret
+import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningQrSecretStorage
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 
 class DefaultProvisioningDraftOperationsTest {
@@ -12,13 +15,23 @@ class DefaultProvisioningDraftOperationsTest {
     @Test
     fun `creates encrypted-storage draft from primitive application request`() {
         val storage = FakeProvisioningDraftStorage()
+        val secretStorage = FakeProvisioningQrSecretStorage().apply {
+            secrets["secret-reference-1"] = ProvisioningQrSecret(
+                claimCode = "claim-1",
+                rawPayload = "raw-qr-secret"
+            )
+        }
         val operations = DefaultProvisioningDraftOperations(
             draftStore = storage,
+            qrSecretStore = secretStorage,
             cachedBleAddress = { "" }
         )
 
         val session = operations.createDraft(
-            request(bleAddress = "AA:BB:CC:DD:EE:FF")
+            request(
+                bleAddress = "AA:BB:CC:DD:EE:FF",
+                qrSecretReference = "secret-reference-1"
+            )
         ).getOrThrow()
 
         val draft = requireNotNull(storage.get(session.sessionId))
@@ -26,10 +39,12 @@ class DefaultProvisioningDraftOperationsTest {
         assertEquals("AA:BB:CC:DD:EE:FF", draft.bleAddress)
         assertEquals("AQL-SETUP-123456", draft.bleName)
         assertEquals("claim-1", draft.claimCode)
+        assertEquals("raw-qr-secret", draft.rawQrPayload)
         assertEquals("Home WiFi", draft.wifiCredentials.ssid)
         assertEquals("secret-password", draft.wifiCredentials.password)
         assertEquals("Europe/Istanbul|180", draft.wifiCredentials.timezone)
         assertEquals(180, draft.wifiCredentials.utcOffsetMinutes)
+        assertFalse(secretStorage.secrets.containsKey("secret-reference-1"))
     }
 
     @Test
@@ -37,6 +52,7 @@ class DefaultProvisioningDraftOperationsTest {
         val storage = FakeProvisioningDraftStorage()
         val operations = DefaultProvisioningDraftOperations(
             draftStore = storage,
+            qrSecretStore = FakeProvisioningQrSecretStorage(),
             cachedBleAddress = { bleName ->
                 assertEquals("AQL-SETUP-123456", bleName)
                 "11:22:33:44:55:66"
@@ -44,31 +60,55 @@ class DefaultProvisioningDraftOperationsTest {
         )
 
         val session = operations.createDraft(
-            request(bleAddress = "")
+            request(bleAddress = "", qrSecretReference = "")
         ).getOrThrow()
 
         assertEquals("11:22:33:44:55:66", storage.get(session.sessionId)?.bleAddress)
+        assertEquals("", storage.get(session.sessionId)?.claimCode)
     }
 
-    private fun request(bleAddress: String): ProvisioningDraftRequest =
-        ProvisioningDraftRequest(
-            candidateId = "candidate-1",
-            bleAddress = bleAddress,
-            bleName = "AQL-SETUP-123456",
-            claimCode = "claim-1",
-            rawQrPayload = "aql://setup",
-            deviceTitle = "AquaLight",
-            deviceSerial = "AQL-0001",
-            deviceModel = "AQL-Pro",
-            wifiSsid = "Home WiFi",
-            wifiPassword = "secret-password",
-            timezone = "Europe/Istanbul|180",
-            utcOffsetMinutes = 180
+    @Test
+    fun `expired or foreign QR secret reference fails closed before draft creation`() {
+        val storage = FakeProvisioningDraftStorage()
+        val operations = DefaultProvisioningDraftOperations(
+            draftStore = storage,
+            qrSecretStore = FakeProvisioningQrSecretStorage(),
+            cachedBleAddress = { "" }
         )
+
+        val result = operations.createDraft(
+            request(
+                bleAddress = "AA:BB:CC:DD:EE:FF",
+                qrSecretReference = "missing-reference"
+            )
+        )
+
+        assertTrue(result.isFailure)
+        assertEquals(0, storage.size)
+    }
+
+    private fun request(
+        bleAddress: String,
+        qrSecretReference: String
+    ): ProvisioningDraftRequest = ProvisioningDraftRequest(
+        candidateId = "candidate-1",
+        bleAddress = bleAddress,
+        bleName = "AQL-SETUP-123456",
+        qrSecretReference = qrSecretReference,
+        deviceTitle = "AquaLight",
+        deviceSerial = "AQL-0001",
+        deviceModel = "AQL-Pro",
+        wifiSsid = "Home WiFi",
+        wifiPassword = "secret-password",
+        timezone = "Europe/Istanbul|180",
+        utcOffsetMinutes = 180
+    )
 
     private class FakeProvisioningDraftStorage : ProvisioningDraftStorage {
         private val drafts = linkedMapOf<String, AqlProvisioningDraft>()
         private var nextId = 1
+        val size: Int
+            get() = drafts.size
 
         override fun create(
             candidateId: String,
@@ -107,6 +147,26 @@ class DefaultProvisioningDraftOperationsTest {
 
         override fun clearOwner() {
             drafts.clear()
+        }
+    }
+
+    private class FakeProvisioningQrSecretStorage : ProvisioningQrSecretStorage {
+        val secrets = linkedMapOf<String, ProvisioningQrSecret>()
+
+        override fun create(
+            claimCode: String,
+            rawPayload: String,
+            createdAtMillis: Long
+        ): String = error("not used")
+
+        override fun get(reference: String): ProvisioningQrSecret? = secrets[reference]
+
+        override fun remove(reference: String) {
+            secrets.remove(reference)
+        }
+
+        override fun clearOwner() {
+            secrets.clear()
         }
     }
 }
