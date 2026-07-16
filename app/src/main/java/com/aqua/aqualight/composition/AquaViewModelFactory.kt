@@ -17,8 +17,7 @@ import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
-import com.aqua.aqualight.data.devices.provisioning.ble.DefaultBleProvisioningScanner
-import com.aqua.aqualight.data.devices.provisioning.qr.AqlProvisioningQrParser
+import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscoveryOperations
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
@@ -101,16 +100,20 @@ internal class AquaViewModelFactory(
 
             modelClass.isAssignableFrom(DeviceAddViewModel::class.java) ->
                 DeviceAddViewModel(
-                    bleScanner = DefaultBleProvisioningScanner(appContext),
+                    discoveryOperations = DefaultProvisioningDiscoveryOperations.create(
+                        context = appContext,
+                        repository = devicesRepository()
+                    ),
                     textResolver = appTextResolver
                 )
 
             modelClass.isAssignableFrom(DeviceQrScanViewModel::class.java) ->
                 DeviceQrScanViewModel(
-                    bleScanner = DefaultBleProvisioningScanner(appContext),
-                    repository = devicesRepository(),
-                    textResolver = appTextResolver,
-                    qrParser = AqlProvisioningQrParser()
+                    discoveryOperations = DefaultProvisioningDiscoveryOperations.create(
+                        context = appContext,
+                        repository = devicesRepository()
+                    ),
+                    textResolver = appTextResolver
                 )
 
             modelClass.isAssignableFrom(DeviceProvisioningProgressViewModel::class.java) ->
