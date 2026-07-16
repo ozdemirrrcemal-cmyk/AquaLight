@@ -17,6 +17,9 @@ ui_model = APP / "ui/tabs/maintenance/model/CareTaskUi.kt"
 text_contract = APP / "ui/tabs/maintenance/text/MaintenanceTextResolver.kt"
 presentation_catalog = APP / "ui/tabs/maintenance/text/CareTaskTypeCatalog.kt"
 data_model = APP / "data/care/model/CareTask.kt"
+reminder_receiver = APP / "data/care/reminder/CareTaskReminderReceiver.kt"
+reminder_policy = APP / "data/care/reminder/CareReminderDeliveryPolicy.kt"
+reminder_policy_test = TESTS / "data/care/reminder/CareReminderDeliveryPolicyTest.kt"
 production = APP / "composition/AquaViewModelFactory.kt"
 smoke = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/Stage3SmokeAppContainer.kt"
 test_file = TESTS / "ui/tabs/maintenance/MaintenanceViewModelBoundaryTest.kt"
@@ -34,6 +37,9 @@ required = (
     text_contract,
     presentation_catalog,
     data_model,
+    reminder_receiver,
+    reminder_policy,
+    reminder_policy_test,
     production,
     smoke,
     test_file,
@@ -119,6 +125,31 @@ if view_model.is_file():
         errors.append("MaintenanceViewModel does not use typed care command inputs")
     if "collectLatest" not in text:
         errors.append("Smart Care synchronization must remain single-flight")
+
+if reminder_receiver.is_file():
+    text = reminder_receiver.read_text(encoding="utf-8")
+    if "CareReminderDeliveryPolicy.shouldDeliver(task, tank)" not in text:
+        errors.append("reminder receiver must revalidate task and tank state at delivery time")
+
+if reminder_policy.is_file():
+    text = reminder_policy.read_text(encoding="utf-8")
+    for token in (
+        "task.status == CareTaskStatus.PENDING",
+        "task.reminderEnabled",
+        "tank?.careRemindersEnabled == true",
+    ):
+        if token not in text:
+            errors.append(f"reminder delivery policy is missing: {token}")
+
+if reminder_policy_test.is_file():
+    text = reminder_policy_test.read_text(encoding="utf-8")
+    for token in (
+        "disabled tank suppresses an already scheduled reminder",
+        "deleted tank suppresses an already scheduled reminder",
+        "completed or disabled task is never delivered",
+    ):
+        if token not in text:
+            errors.append(f"reminder delivery policy test is missing: {token}")
 
 ui_root = APP / "ui"
 if ui_root.is_dir():
