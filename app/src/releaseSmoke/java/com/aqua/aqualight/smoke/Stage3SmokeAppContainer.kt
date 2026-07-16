@@ -4,14 +4,15 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.application.auth.AccountSecurityOperations
-import com.aqua.aqualight.application.auth.SessionExitOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionUseCase
+import com.aqua.aqualight.application.auth.SessionExitOperations
 import com.aqua.aqualight.application.user.UserAddressInput
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.application.user.UserProfileSnapshot
 import com.aqua.aqualight.application.user.UserSettingsOperations
 import com.aqua.aqualight.composition.AppContainer
+import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
@@ -121,14 +122,15 @@ private class Stage3SmokeViewModelFactory(
 
             modelClass.isAssignableFrom(AquariumTankViewModel::class.java) ->
                 AquariumTankViewModel(
-                    tankDataStoreManager = tankStore,
-                    careTaskDataStoreManager = careTaskStore,
-                    assignmentRepository = assignmentRepository,
-                    tankDataCleaner = OwnerTankDataCleaner(
-                        deleteTankRecords = tankStore::deleteTanks,
-                        deleteCareTasksForTank = careTaskStore::deleteTasksForTank,
-                        removeDeviceAssignmentsForTank =
-                            assignmentRepository::removeAssignmentsForTank
+                    operations = DefaultAquariumTankOperations(
+                        tankStore = tankStore,
+                        careTaskStore = careTaskStore,
+                        tankDataCleaner = OwnerTankDataCleaner(
+                            deleteTankRecords = tankStore::deleteTanks,
+                            deleteCareTasksForTank = careTaskStore::deleteTasksForTank,
+                            removeDeviceAssignmentsForTank =
+                                assignmentRepository::removeAssignmentsForTank
+                        )
                     )
                 )
 
