@@ -15,17 +15,32 @@ Branch: `feature/stage-3-aquarium-care-boundaries`
 - `AquariumTankOperations` is the owner-scoped application contract for observation and mutations.
 - Tank, draft, plant, material and livestock values crossing into UI are application DTOs.
 - Authoritative deletion and dependent care-task/device-assignment cleanup remain behind the data adapter.
+- Tank deletion and reminder mutations are pinned to the immutable owner captured at operation start.
 - `AquariumTankViewModel` receives a single application dependency.
 - Production and release-smoke use the same adapter binding.
 - Aquarium list, create, detail, settings, export and care-profile UI call-sites no longer consume data aquarium models.
-- Fake-backed ViewModel tests and the aquarium CI boundary guard are present.
+- ViewModel behavior, adapter mappings, cleanup stages and owner-scope propagation have deterministic tests.
+- The aquarium CI guard rejects data-layer regressions, missing bindings, missing mapping tests or removal of owner pinning.
 
-## Remaining care slice
+## Completed care slice
 
-- Introduce application care task models and operations.
-- Move Smart Care synchronization and manual/automatic task commands behind the application adapter.
-- Remove data care repository/models from `MaintenanceViewModel` and maintenance UI.
-- Add deterministic fakes, behavior tests and a dedicated care boundary guard.
+- `MaintenanceOperations` is the owner-scoped application contract for Smart Care and manual task commands.
+- Maintenance UI consumes application task models and typed command inputs only.
+- The old data-layer maintenance repository and presentation contract are removed; no dual path remains.
+- Android text/icon resolution stays in the presentation/platform boundary.
+- Every care command is pinned to one immutable owner scope, including Smart Care generation and persistence.
+- Smart Care synchronization uses a single `collectLatest` stream; equal tank snapshots do not create duplicate work and newer state cancels stale work.
+- Delivery-time reminder policy revalidates task state, tank existence and the tank reminder setting before showing a notification.
+- Adapter mappings, enum parity, owner propagation, single-flight synchronization and reminder suppression have deterministic tests.
+- The care CI guard rejects obsolete paths, data-model leakage, ownerless Smart Care models, missing tests, missing delivery policy or production/smoke divergence.
+
+## Commercial audit findings closed in this branch
+
+- No UI service-locator fallback, temporary runtime bridge or parallel repository constructor remains.
+- Account changes cannot split one multi-step aquarium/care operation across two owners.
+- Already-scheduled alarms cannot notify after a tank is deleted or its reminder setting is disabled.
+- Application DTO conversion is directly tested rather than inferred only through ViewModel tests.
+- One-shot migration workflows/scripts are absent from the final tree.
 
 ## Non-negotiable behavior
 
@@ -42,4 +57,4 @@ Branch: `feature/stage-3-aquarium-care-boundaries`
 - Uncached Debug and minified signed Release builds.
 - CodeQL.
 - API 27 and API 35 minified release-smoke instrumentation.
-- Targeted physical regression for tank lifecycle, assignment cleanup and care reminders.
+- Targeted physical regression for tank lifecycle, assignment cleanup, Smart Care, care commands and reminders.
