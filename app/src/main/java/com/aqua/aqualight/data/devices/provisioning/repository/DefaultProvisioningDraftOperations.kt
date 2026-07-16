@@ -53,11 +53,11 @@ class DefaultProvisioningDraftOperations internal constructor(
             deviceModel = request.deviceModel,
             wifiCredentials = credentials
         )
-        if (secretReference.isNotBlank()) {
-            runCatching {
-                qrSecretStore.remove(secretReference)
-            }.exceptionOrNull()?.printStackTrace()
-        }
+
+        // Read without consuming the encrypted QR material. A rejected Wi-Fi
+        // credential returns the user to the same form, which creates a replacement
+        // draft from the original QR reference. The owner-scoped secret store already
+        // limits exposure with encryption, a 15-minute TTL and bounded record count.
         ProvisioningDraftSession(sessionId = draft.sessionId)
     }
 }
