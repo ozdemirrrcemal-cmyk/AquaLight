@@ -93,6 +93,10 @@ if qr_decoder.is_file():
         "class MlKitProvisioningQrFrameDecoderFactory",
         "BarcodeScanning.getClient",
         "Barcode.FORMAT_QR_CODE",
+        "AtomicBoolean(false)",
+        "runCatching {",
+        "scanner.process(inputImage)",
+        "closed.compareAndSet(false, true)",
         "imageProxy.close()",
     ):
         if token not in text:
