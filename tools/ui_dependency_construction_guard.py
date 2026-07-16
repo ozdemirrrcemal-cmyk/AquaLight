@@ -8,7 +8,8 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ROOT = ROOT / "app/src/main/java/com/aqua/aqualight"
 UI_ROOT = SOURCE_ROOT / "ui"
 APP_CONTAINER_PATH = SOURCE_ROOT / "composition/AppContainer.kt"
-FEATURE_FACTORY_PATH = SOURCE_ROOT / "composition/AquaViewModelFactory.kt"
+FEATURE_FACTORY_PATH = SOURCE_ROOT / "composition/OwnerViewModelFactory.kt"
+OWNER_GRAPH_PATH = SOURCE_ROOT / "composition/OwnerDependencyGraph.kt"
 WIFI_FRAGMENT_PATH = SOURCE_ROOT / "ui/tabs/devices/add/DeviceWifiProvisioningFragment.kt"
 WIFI_DRAFT_FACTORY_PATH = SOURCE_ROOT / "ui/tabs/devices/add/DeviceWifiProvisioningDraftFactory.kt"
 DRAFT_CONTRACT_PATH = SOURCE_ROOT / "application/devices/provisioning/ProvisioningDraftOperations.kt"
@@ -41,7 +42,7 @@ FORBIDDEN = {
     "AqlProvisioningDraftStore(": "encrypted provisioning store must resolve through data/composition",
     "AqlProvisioningDraftStore.": "provisioning storage must use an injected boundary",
     "AqlProvisioningBleAddressCache.": "BLE address cache must use an injected boundary",
-    "DefaultProvisioningDraftOperations(": "provisioning draft implementation must be built by AppContainer",
+    "DefaultProvisioningDraftOperations(": "provisioning draft implementation must be built by composition",
     "DefaultProvisioningProgressOperations(": "provisioning progress implementation must be built by composition",
     "UserDataScope.requireCurrentUid(": "owner identity must be injected",
     "UserDataScope.currentUid(": "owner identity must be injected",
@@ -130,6 +131,7 @@ for path in sorted(UI_ROOT.rglob("*.kt")):
 
 container = read_required(APP_CONTAINER_PATH)
 feature_factory = read_required(FEATURE_FACTORY_PATH)
+owner_graph = read_required(OWNER_GRAPH_PATH)
 wifi_fragment = read_required(WIFI_FRAGMENT_PATH)
 wifi_draft_factory = read_required(WIFI_DRAFT_FACTORY_PATH)
 draft_contract = read_required(DRAFT_CONTRACT_PATH)
@@ -142,12 +144,42 @@ for token, reason in (
         "AppContainer must expose the provisioning draft boundary",
     ),
     (
-        "DefaultProvisioningDraftOperations(appContext)",
-        "AppContainer must construct the encrypted provisioning draft adapter",
+        "ResolvingProvisioningDraftOperations(ownerGraphResolver)",
+        "AppContainer must resolve provisioning through the active owner graph",
     ),
 ):
     if token not in container:
         errors.append(f"{APP_CONTAINER_PATH.relative_to(ROOT)}: {reason}: {token}")
+
+for token, reason in (
+    (
+        "DefaultProvisioningDraftOperations(",
+        "owner graph must construct the encrypted provisioning draft adapter",
+    ),
+    (
+        "DevicesRepositoryProvider.currentRepository(ownerUid)",
+        "owner graph must consume an already-open device repository",
+    ),
+    (
+        "TankDeviceAssignmentRepositoryProvider.currentRepository(ownerUid)",
+        "owner graph must consume an already-open assignment repository",
+    ),
+    (
+        "ownerUidProvider = ownerUidProvider",
+        "owner storage must capture one immutable owner identity",
+    ),
+):
+    if token not in owner_graph:
+        errors.append(f"{OWNER_GRAPH_PATH.relative_to(ROOT)}: {reason}: {token}")
+
+for forbidden in (
+    "DevicesRepositoryProvider.get(",
+    "TankDeviceAssignmentRepositoryProvider.get(",
+):
+    if forbidden in owner_graph:
+        errors.append(
+            f"{OWNER_GRAPH_PATH.relative_to(ROOT)}: owner dependency resolution must not open runtime: {forbidden}"
+        )
 
 for token, reason in (
     ("requireAppContainer()", "Wi-Fi provisioning must resolve dependencies from AppContainer"),
@@ -192,16 +224,34 @@ for token, reason in (
 
 for token, reason in (
     (
-        "DefaultProvisioningDiscoveryOperations.create(",
-        "feature factory must own provisioning discovery adapter construction",
+        "DefaultProvisioningDiscoveryOperations(",
+        "owner feature factory must own provisioning discovery adapter construction",
     ),
-    ("DefaultProvisioningProgressOperations(appContext)", "feature factory must own progress adapter construction"),
-    ("DeviceAddViewModel(", "feature factory must create the Nearby Scan ViewModel"),
-    ("DeviceQrScanViewModel(", "feature factory must create the QR ViewModel"),
-    ("DeviceProvisioningProgressViewModel(", "feature factory must create the progress ViewModel"),
+    (
+        "DefaultProvisioningProgressOperations(",
+        "owner feature factory must own progress adapter construction",
+    ),
+    ("ownerUid = graph.ownerUid", "progress adapter must capture the active owner"),
+    ("DeviceAddViewModel(", "owner feature factory must create the Nearby Scan ViewModel"),
+    ("DeviceQrScanViewModel(", "owner feature factory must create the QR ViewModel"),
+    (
+        "DeviceProvisioningProgressViewModel(",
+        "owner feature factory must create the progress ViewModel",
+    ),
 ):
     if token not in feature_factory:
         errors.append(f"{FEATURE_FACTORY_PATH.relative_to(ROOT)}: {reason}: {token}")
+
+for forbidden in (
+    "DevicesRepositoryProvider.get(",
+    "TankDeviceAssignmentRepositoryProvider.get(",
+    "AndroidViewModelFactory",
+    "isAssignableFrom",
+):
+    if forbidden in feature_factory:
+        errors.append(
+            f"{FEATURE_FACTORY_PATH.relative_to(ROOT)}: owner feature factory must fail closed: {forbidden}"
+        )
 
 for token, reason in (
     ("FakeMaintenanceOperations", "maintenance needs deterministic application-operation fakes"),
