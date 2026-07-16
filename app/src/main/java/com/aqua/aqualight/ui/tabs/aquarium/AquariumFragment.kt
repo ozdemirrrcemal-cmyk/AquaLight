@@ -14,13 +14,13 @@ import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
-import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
+import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
+import com.aqua.aqualight.application.aquarium.DeleteAquariumTanksResult
 import com.aqua.aqualight.databinding.FragmentAquariumBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
@@ -53,14 +53,8 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
-
-        _binding =
-            FragmentAquariumBinding.bind(view)
-
+        super.onViewCreated(view, savedInstanceState)
+        _binding = FragmentAquariumBinding.bind(view)
         setupHeader()
         setupRecyclerView()
         setupEmptyStateActions()
@@ -100,22 +94,13 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
                 )
             )
         )
-
         applyPrimaryActionStyle()
     }
 
     private fun setupRecyclerView() {
-        binding.rvTanks.layoutManager =
-            LinearLayoutManager(
-                requireContext()
-            )
-
-        binding.rvTanks.adapter =
-            tankAdapter
-
-        binding.rvTanks.setHasFixedSize(
-            false
-        )
+        binding.rvTanks.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvTanks.adapter = tankAdapter
+        binding.rvTanks.setHasFixedSize(false)
     }
 
     private fun setupEmptyStateActions() {
@@ -131,42 +116,21 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
     }
 
     private fun observeTanks() {
-        aquariumTankViewModel.tanks.observe(
-            viewLifecycleOwner
-        ) { tanks ->
-
-            maintenanceViewModel.setTanks(
-                tanks
-            )
-
-            tankAdapter.submitList(
-                tanks
-            )
-
-            binding.rvTanks.isVisible =
-                tanks.isNotEmpty()
-
-            binding.tvEmptyState.isVisible =
-                tanks.isEmpty()
+        aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
+            maintenanceViewModel.setTanks(tanks)
+            tankAdapter.submitList(tanks)
+            binding.rvTanks.isVisible = tanks.isNotEmpty()
+            binding.tvEmptyState.isVisible = tanks.isEmpty()
 
             if (tanks.isEmpty()) {
                 exitDeleteMode()
                 return@observe
             }
 
-            val existingTankIds =
-                tanks.map { tank ->
-                    tank.id
-                }.toSet()
+            val existingTankIds = tanks.map(AquariumTankSnapshot::id).toSet()
+            selectedTankIds.retainAll(existingTankIds)
 
-            selectedTankIds.retainAll(
-                existingTankIds
-            )
-
-            if (
-                isDeleteMode &&
-                selectedTankIds.isEmpty()
-            ) {
+            if (isDeleteMode && selectedTankIds.isEmpty()) {
                 exitDeleteMode()
             } else {
                 updateDeleteModeUi()
@@ -176,25 +140,17 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
 
     private fun observeCareSummary() {
         viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(
-                Lifecycle.State.STARTED
-            ) {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 maintenanceViewModel.tankCareSummaryItems.collect { summaries ->
-                    tankAdapter.setCareSummaryByTankId(
-                        summaries
-                    )
+                    tankAdapter.setCareSummaryByTankId(summaries)
                 }
             }
         }
     }
 
-    private fun handleTankClick(
-        tank: SavedAquariumTank
-    ) {
+    private fun handleTankClick(tank: AquariumTankSnapshot) {
         if (isDeleteMode) {
-            toggleTankSelection(
-                tank.id
-            )
+            toggleTankSelection(tank.id)
         } else {
             navigateFromAquarium(
                 AquariumFragmentDirections.actionAquariumFragmentToTankDetailFragment(
@@ -204,49 +160,33 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
         }
     }
 
-    private fun handleTankLongClick(
-        tank: SavedAquariumTank
-    ) {
+    private fun handleTankLongClick(tank: AquariumTankSnapshot) {
         if (!isDeleteMode) {
             enterDeleteMode()
         }
 
         if (!selectedTankIds.contains(tank.id)) {
-            selectedTankIds.add(
-                tank.id
-            )
-
+            selectedTankIds.add(tank.id)
             updateDeleteModeUi()
         }
     }
 
     private fun enterDeleteMode() {
-        isDeleteMode =
-            true
-
+        isDeleteMode = true
         updateDeleteModeUi()
     }
 
     private fun exitDeleteMode() {
-        isDeleteMode =
-            false
-
+        isDeleteMode = false
         selectedTankIds.clear()
-
         updateDeleteModeUi()
     }
 
-    private fun toggleTankSelection(
-        tankId: Long
-    ) {
+    private fun toggleTankSelection(tankId: Long) {
         if (selectedTankIds.contains(tankId)) {
-            selectedTankIds.remove(
-                tankId
-            )
+            selectedTankIds.remove(tankId)
         } else {
-            selectedTankIds.add(
-                tankId
-            )
+            selectedTankIds.add(tankId)
         }
 
         if (selectedTankIds.isEmpty()) {
@@ -262,7 +202,6 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
         }
 
         setupHeader()
-
         tankAdapter.setDeleteMode(
             enabled = isDeleteMode,
             selectedIds = selectedTankIds
@@ -270,55 +209,26 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
     }
 
     private fun applyPrimaryActionStyle() {
-        val button =
-            binding.appHeader.btnPrimaryAction
-
+        val button = binding.appHeader.btnPrimaryAction
         if (isDeleteMode) {
-            button.setTextColor(
-                Color.parseColor("#FF8A8A")
-            )
-
-            button.backgroundTintList =
-                ColorStateList.valueOf(
-                    Color.parseColor("#321E2A")
-                )
-
-            button.strokeWidth =
-                1.dp()
-
-            button.strokeColor =
-                ColorStateList.valueOf(
-                    Color.parseColor("#7A3344")
-                )
+            button.setTextColor(Color.parseColor("#FF8A8A"))
+            button.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#321E2A"))
+            button.strokeWidth = 1.dp()
+            button.strokeColor = ColorStateList.valueOf(Color.parseColor("#7A3344"))
         } else {
-            button.setTextColor(
-                Color.WHITE
-            )
-
-            button.backgroundTintList =
-                ColorStateList.valueOf(
-                    Color.parseColor("#1C3252")
-                )
-
-            button.strokeWidth =
-                0
-
-            button.strokeColor =
-                ColorStateList.valueOf(
-                    Color.TRANSPARENT
-                )
+            button.setTextColor(Color.WHITE)
+            button.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#1C3252"))
+            button.strokeWidth = 0
+            button.strokeColor = ColorStateList.valueOf(Color.TRANSPARENT)
         }
     }
 
-    private fun navigateFromAquarium(
-        directions: NavDirections
-    ) {
+    private fun navigateFromAquarium(directions: NavDirections) {
         if (isOpeningAquariumDestination) {
             return
         }
 
         val navController = findNavController()
-
         if (navController.currentDestination?.id != R.id.aquariumFragment) {
             return
         }
@@ -337,29 +247,22 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
             return
         }
 
-        val tankIdsToDelete =
-            selectedTankIds.toSet()
-
-        val selectedCount =
-            tankIdsToDelete.size
-
-        val title =
-            if (selectedCount == 1) {
-                getString(R.string.aquarium_delete_aquarium_title_single)
-            } else {
-                getString(R.string.aquarium_delete_aquarium_title_multi)
-            }
-
-        val message =
-            if (selectedCount == 1) {
-                getString(R.string.aquarium_delete_aquarium_message_single)
-            } else {
-                resources.getQuantityString(
-                    R.plurals.aquarium_selected_aquariums_delete_message,
-                    selectedCount,
-                    selectedCount
-                )
-            }
+        val tankIdsToDelete = selectedTankIds.toSet()
+        val selectedCount = tankIdsToDelete.size
+        val title = if (selectedCount == 1) {
+            getString(R.string.aquarium_delete_aquarium_title_single)
+        } else {
+            getString(R.string.aquarium_delete_aquarium_title_multi)
+        }
+        val message = if (selectedCount == 1) {
+            getString(R.string.aquarium_delete_aquarium_message_single)
+        } else {
+            resources.getQuantityString(
+                R.plurals.aquarium_selected_aquariums_delete_message,
+                selectedCount,
+                selectedCount
+            )
+        }
 
         DialogManager.showConfirmDialog(
             context = requireContext(),
@@ -368,20 +271,12 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
             message = message,
             confirmTextResId = R.string.confirm,
             cancelTextResId = R.string.cancel,
-            onConfirm = {
-                deleteSelectedTanks(
-                    tankIdsToDelete
-                )
-            },
-            onCancel = {
-                exitDeleteMode()
-            }
+            onConfirm = { deleteSelectedTanks(tankIdsToDelete) },
+            onCancel = { exitDeleteMode() }
         )
     }
 
-    private fun deleteSelectedTanks(
-        tankIdsToDelete: Set<Long>
-    ) {
+    private fun deleteSelectedTanks(tankIdsToDelete: Set<Long>) {
         if (isDeletingTanks) {
             return
         }
@@ -391,12 +286,8 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
             return
         }
 
-        isDeletingTanks =
-            true
-
-        setFragmentGlobalLoading(
-            true
-        )
+        isDeletingTanks = true
+        setFragmentGlobalLoading(true)
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
@@ -405,38 +296,32 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
                         tankIds = tankIdsToDelete.toList()
                     )
                 ) {
-                    OwnerTankDataCleaner.Result.NoOp -> Unit
-
-                    is OwnerTankDataCleaner.Result.DeleteFailed -> {
-                        throw result.error
+                    DeleteAquariumTanksResult.NoOp -> Unit
+                    DeleteAquariumTanksResult.DeleteFailed -> {
+                        DialogManager.showInfoDialog(
+                            context = requireContext(),
+                            type = DialogType.ERROR,
+                            title = getString(R.string.aquarium_delete_failed_title),
+                            message = getString(R.string.aquarium_error_selected_tanks_delete_failed)
+                        )
+                        return@launch
                     }
-
-                    is OwnerTankDataCleaner.Result.Deleted -> {
+                    is DeleteAquariumTanksResult.Deleted -> {
                         if (result.hasCleanupIssues) {
-                            result.cleanupIssues.forEach { issue ->
-                                issue.error.printStackTrace()
-                            }
-
                             DialogManager.showInfoDialog(
                                 context = requireContext(),
                                 type = DialogType.WARNING,
-                                title = getString(
-                                    R.string.aquarium_delete_cleanup_warning_title
-                                ),
-                                message = getString(
-                                    R.string.aquarium_delete_cleanup_warning_message
-                                )
+                                title = getString(R.string.aquarium_delete_cleanup_warning_title),
+                                message = getString(R.string.aquarium_delete_cleanup_warning_message)
                             )
                         }
                     }
                 }
-
                 exitDeleteMode()
             } catch (exception: CancellationException) {
                 throw exception
             } catch (exception: Exception) {
                 exception.printStackTrace()
-
                 DialogManager.showInfoDialog(
                     context = requireContext(),
                     type = DialogType.ERROR,
@@ -444,29 +329,17 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
                     message = getString(R.string.aquarium_error_selected_tanks_delete_failed)
                 )
             } finally {
-                isDeletingTanks =
-                    false
-
-                setFragmentGlobalLoading(
-                    false
-                )
+                isDeletingTanks = false
+                setFragmentGlobalLoading(false)
             }
         }
     }
 
-    private fun Int.dp(): Int {
-        return (
-            this * resources.displayMetrics.density
-            ).toInt()
-    }
+    private fun Int.dp(): Int = (this * resources.displayMetrics.density).toInt()
 
     override fun onDestroyView() {
-        binding.rvTanks.adapter =
-            null
-
-        _binding =
-            null
-
+        binding.rvTanks.adapter = null
+        _binding = null
         super.onDestroyView()
     }
 }
