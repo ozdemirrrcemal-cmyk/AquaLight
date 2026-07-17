@@ -26,6 +26,7 @@ import com.aqua.aqualight.ui.main.MainActivity
 object NotificationHelper {
 
   private const val NOTIFICATION_ID_MOD = 10000
+  private const val CARE_NOTIFICATION_ID = 1
 
   fun createNotificationChannel(context: Context) {
     NotificationChannelRegistry.ensureChannels(context)
@@ -97,15 +98,19 @@ object NotificationHelper {
       return
     }
 
-    val notificationId = getTaskNotificationId(
+    val requestCode = getTaskPendingIntentRequestCode(
       taskId = taskId,
       ownerUid = normalizedOwnerUid
     )
 
     showNotificationInternal(
       context = context,
-      notificationId = notificationId,
-      requestCode = notificationId,
+      notificationId = CARE_NOTIFICATION_ID,
+      notificationTag = CareReminderIdentity.stableKey(
+        ownerUid = normalizedOwnerUid,
+        taskId = taskId
+      ),
+      requestCode = requestCode,
       title = title,
       message = message,
       taskId = taskId,
@@ -126,10 +131,11 @@ object NotificationHelper {
     }
 
     NotificationManagerCompat.from(context).cancel(
-      getTaskNotificationId(
-        taskId = taskId,
-        ownerUid = normalizedOwnerUid
-      )
+      CareReminderIdentity.stableKey(
+        ownerUid = normalizedOwnerUid,
+        taskId = taskId
+      ),
+      CARE_NOTIFICATION_ID
     )
   }
 
@@ -153,6 +159,7 @@ object NotificationHelper {
   private fun showNotificationInternal(
     context: Context,
     notificationId: Int,
+    notificationTag: String? = null,
     requestCode: Int,
     title: String,
     message: String,
@@ -226,10 +233,12 @@ object NotificationHelper {
       builder.setContentIntent(pendingIntent)
     }
 
-    NotificationManagerCompat.from(context).notify(
-      notificationId,
-      builder.build()
-    )
+    val manager = NotificationManagerCompat.from(context)
+    if (notificationTag == null) {
+      manager.notify(notificationId, builder.build())
+    } else {
+      manager.notify(notificationTag, notificationId, builder.build())
+    }
   }
 
   private fun createLargeIconBitmap(
@@ -304,7 +313,7 @@ object NotificationHelper {
     return (this * context.resources.displayMetrics.density).toInt()
   }
 
-  private fun getTaskNotificationId(
+  private fun getTaskPendingIntentRequestCode(
     taskId: Long,
     ownerUid: String
   ): Int {
