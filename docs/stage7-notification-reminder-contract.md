@@ -11,9 +11,13 @@ Stage 6 remains the sole owner of Android runtime notification-permission decisi
 - The AquaLight notification switch is an application preference, separate from Android runtime permission and system/channel blocking.
 - The preference is stored per authenticated owner. Account A enabling notifications must not enable them for Account B.
 - A missing owner preference means disabled.
+- The owner-scoped Stage 7 store is the only source of truth.
+- The former `user_prefs.notifications_enabled` value is only an active-session compatibility projection for existing care-task write paths; it is never consulted by a reminder receiver as authority.
+- The active projection is refreshed from the committed owner's store during reconciliation and cleared to `false` during logout/account switch before a new owner is exposed.
+- Only `ActiveNotificationPreferenceProjection` may write the compatibility field.
 - Disabling the preference cancels that owner's alarms and visible care-task notifications.
 - Logging out or switching account cancels the previous owner's reminder work without deleting that owner's saved preference.
-- Enabling the preference reconciles all eligible pending reminders for that owner.
+- Enabling the preference reconciles all eligible reminders for that owner.
 
 ## System and channel state
 
@@ -45,9 +49,9 @@ Stage 6 remains the sole owner of Android runtime notification-permission decisi
 
 - Android cancels AlarmManager alarms when the device shuts down, so boot/package replacement triggers owner-scoped reconciliation from persisted care tasks.
 - Broadcast receivers enqueue durable WorkManager reconciliation rather than performing the full DataStore scan inside `onReceive`.
-- Reconciliation verifies the authenticated owner before and immediately before scheduling.
+- Reconciliation verifies the authenticated owner before preference projection, before scheduling, and after scheduling.
 - Session startup enqueues reconciliation for the committed owner.
-- Session shutdown cancels reconciliation work, alarms, and visible notifications for the outgoing owner.
+- Session shutdown cancels reconciliation work, alarms, the active preference projection, and visible notifications for the outgoing owner.
 
 ## Notification delivery
 
@@ -67,11 +71,13 @@ A care notification is delivered only when all conditions are true:
 - owner A/B preference isolation;
 - owner-specific PendingIntent and notification ID isolation;
 - disable, logout, and account-switch cancellation;
+- active projection clear/refresh without cross-owner leakage;
 - due/missed/past schedule matrix;
 - idempotent rescheduling;
 - channel missing/blocked/enabled state matrix;
 - boot and package-replacement reconciliation;
 - process death during receiver/worker execution;
 - notification tap owner validation;
+- owner-preference corruption recovery;
 - API 27 and API 35 instrumentation plus minified release smoke;
 - architecture guard preventing UI or receivers from bypassing the Stage 6 permission boundary or Stage 7 reminder coordinator.
