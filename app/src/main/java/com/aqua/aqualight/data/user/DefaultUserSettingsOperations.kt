@@ -3,27 +3,29 @@ package com.aqua.aqualight.data.user
 import android.content.Context
 import com.aqua.aqualight.application.user.UsageAnalyticsSnapshot
 import com.aqua.aqualight.application.user.UserSettingsOperations
-import com.aqua.aqualight.data.care.CareTaskDataStoreManager
-import com.aqua.aqualight.data.care.reminder.CareTaskReminderScheduler
+import com.aqua.aqualight.data.care.reminder.CareReminderCoordinator
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 
-/** Existing DataStore/reminder behavior wired behind the application contract. */
+/** Existing DataStore/settings behavior wired behind the application contract. */
 class DefaultUserSettingsOperations(
     context: Context,
     private val preferences: UserPreferencesManager,
     private val startupAppearanceCache: StartupAppearanceCache
 ) : UserSettingsOperations {
 
-    private val appContext = context.applicationContext
-    private val careTasks by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-        CareTaskDataStoreManager.create(appContext)
-    }
+    private val reminderCoordinator = CareReminderCoordinator.create(
+        context.applicationContext
+    )
 
     override val themeMode: Flow<String> = preferences.themeMode
     override val languageCode: Flow<String> = preferences.languageCode
-    override val notificationsEnabled: Flow<Boolean> = preferences.notificationsEnabled
+    override val notificationsEnabled: Flow<Boolean> = flow {
+        val ownerUid = UserDataScope.requireCurrentUid()
+        emitAll(reminderCoordinator.preferenceFlow(ownerUid))
+    }
     override val autoUpdateEnabled: Flow<Boolean> = preferences.autoUpdateEnabled
     override val usageAnalytics: Flow<UsageAnalyticsSnapshot> =
         preferences.usageAnalyticsFlow.map { usage ->
@@ -48,6 +50,14 @@ class DefaultUserSettingsOperations(
     }
 
     override suspend fun updateNotificationsEnabled(enabled: Boolean) {
+        val ownerUid = UserDataScope.requireCurrentUid()
+        reminderCoordinator.setPreference(
+            ownerUid = ownerUid,
+            enabled = enabled
+        )
+
+        // Temporary active-session projection for existing non-notification
+        // consumers. The owner-scoped Stage 7 store is the source of truth.
         preferences.updateNotificationsEnabled(enabled)
     }
 
@@ -56,27 +66,14 @@ class DefaultUserSettingsOperations(
     }
 
     override suspend fun reschedulePendingCareTaskReminders() {
-        val now = System.currentTimeMillis()
-        careTasks.pendingTasksFlow
-            .first()
-            .filter { task -> task.dueAtMillis > now }
-            .forEach { task ->
-                CareTaskReminderScheduler.schedule(
-                    context = appContext,
-                    task = task
-                )
-            }
+        reminderCoordinator.reconcileOwner(
+            UserDataScope.requireCurrentUid()
+        )
     }
 
     override suspend fun cancelPendingCareTaskReminders() {
-        careTasks.pendingTasksFlow
-            .first()
-            .forEach { task ->
-                CareTaskReminderScheduler.cancel(
-                    context = appContext,
-                    taskId = task.id,
-                    ownerUid = task.ownerUid
-                )
-            }
+        reminderCoordinator.cancelOwner(
+            UserDataScope.requireCurrentUid()
+        )
     }
 }
