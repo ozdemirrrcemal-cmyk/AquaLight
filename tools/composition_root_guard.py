@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Protect the closed Stage 3 process/owner composition architecture."""
+"""Protect the closed process/owner composition architecture."""
 from pathlib import Path
 import re
 import sys
@@ -22,8 +22,8 @@ paths = {
     "auth_factory": SOURCE_ROOT / "ui/auth/viewmodel/AuthViewModelFactory.kt",
     "factory_test": ROOT / "app/src/test/java/com/aqua/aqualight/composition/AquaViewModelFactoryTest.kt",
     "owner_session_test": ROOT / "app/src/test/java/com/aqua/aqualight/composition/OwnerDependencyGraphSessionTest.kt",
-    "plan": ROOT / "docs/stage-3-dependency-boundaries-plan.md",
-    "matrix": ROOT / "docs/stage-3-final-dependency-matrix.md",
+    "plan": ROOT / "docs/dependency-boundaries-and-composition-root.md",
+    "matrix": ROOT / "docs/final-dependency-matrix.md",
 }
 
 errors: list[str] = []
@@ -32,7 +32,7 @@ errors: list[str] = []
 def read(name: str) -> str:
     path = paths[name]
     if not path.exists():
-        errors.append(f"{path.relative_to(ROOT)}: required Stage 3 file is missing")
+        errors.append(f"{path.relative_to(ROOT)}: required architecture file is missing")
         return ""
     return path.read_text(encoding="utf-8", errors="ignore")
 
@@ -183,12 +183,12 @@ require(
     "Authenticated owner scope",
     "Fail-closed rules",
     "DevicesRepositoryProvider.get",
-    "Physical merge gate",
+    "Physical validation baseline",
 )
 require(
     "plan",
     "UI -> application contracts/use cases",
-    "Definition of done",
+    "Completion baseline",
     "Final architecture enforcement",
 )
 require(
