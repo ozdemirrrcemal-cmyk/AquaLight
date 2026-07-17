@@ -1,14 +1,11 @@
 package com.aqua.aqualight.ui.tabs.aquarium.create.steps
 
-import android.Manifest
 import android.app.Activity
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navGraphViewModels
@@ -17,14 +14,16 @@ import coil3.request.crossfade
 import coil3.request.error
 import coil3.request.placeholder
 import com.aqua.aqualight.R
-import com.aqua.aqualight.utils.DialogManager
-import com.aqua.aqualight.utils.DialogType
 import com.aqua.aqualight.databinding.FragmentTankPhotoBinding
-import com.aqua.aqualight.ui.tabs.aquarium.photo.TankPhotoFlowCoordinator
-import com.aqua.aqualight.ui.tabs.aquarium.plants.PlantTagUiRenderer
+import com.aqua.aqualight.platform.permissions.AppCapability
 import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
+import com.aqua.aqualight.ui.common.permission.CapabilityPermissionCoordinator
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantTagFragment
+import com.aqua.aqualight.ui.tabs.aquarium.photo.TankPhotoFlowCoordinator
+import com.aqua.aqualight.ui.tabs.aquarium.plants.PlantTagUiRenderer
+import com.aqua.aqualight.utils.DialogManager
+import com.aqua.aqualight.utils.DialogType
 import com.yalantis.ucrop.UCrop
 
 class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragment {
@@ -42,20 +41,14 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
             ownerTokenProvider = { "draft" }
         )
     }
-    private var isOpeningNextStep: Boolean = false
 
-    private val requestCameraPermission = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            startCameraCapture()
-        } else {
-            showInfoDialog(
-                title = getString(R.string.aquarium_permission_required_title),
-                message = getString(R.string.aquarium_camera_permission_required)
-            )
+    private val permissionCoordinator = CapabilityPermissionCoordinator(this) { action ->
+        when (action) {
+            ACTION_CAPTURE_TANK_PHOTO -> startCameraCapture()
         }
     }
+
+    private var isOpeningNextStep: Boolean = false
 
     private val takePictureLauncher = registerForActivityResult(
         ActivityResultContracts.TakePicture()
@@ -123,8 +116,7 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
             savedInstanceState
         )
 
-        _binding =
-            FragmentTankPhotoBinding.bind(view)
+        _binding = FragmentTankPhotoBinding.bind(view)
 
         setupExistingPhoto()
         setupPhotoSourceResultListener()
@@ -240,16 +232,10 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
     }
 
     private fun checkCameraPermissionAndOpen() {
-        val granted = ContextCompat.checkSelfPermission(
-            requireContext(),
-            Manifest.permission.CAMERA
-        ) == PackageManager.PERMISSION_GRANTED
-
-        if (granted) {
-            startCameraCapture()
-        } else {
-            requestCameraPermission.launch(Manifest.permission.CAMERA)
-        }
+        permissionCoordinator.runWhenGranted(
+            capability = AppCapability.CAMERA_PHOTO,
+            actionToken = ACTION_CAPTURE_TANK_PHOTO
+        )
     }
 
     private fun startCameraCapture() {
@@ -291,7 +277,6 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
 
     private fun handleCroppedImage(croppedFileUri: Uri) {
         val contentUri = photoFlowCoordinator.toContentUri(croppedFileUri)
-
         val previousPhotoUri = selectedPhotoUri
 
         binding.imgAquariumPhoto.load(contentUri) {
@@ -361,5 +346,9 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
         photoFlowCoordinator.cleanupAllPending()
         super.onDestroyView()
         _binding = null
+    }
+
+    private companion object {
+        const val ACTION_CAPTURE_TANK_PHOTO = "capture_tank_photo"
     }
 }
