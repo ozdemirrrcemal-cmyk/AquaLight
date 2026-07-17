@@ -28,13 +28,14 @@ import okio.ByteString
 
 class AqlWsClient(
     private val okHttpClient: OkHttpClient = defaultOkHttpClient(),
-    private val wireCodec: AqlWsWireCodec = AqlWsWireCodec(),
     private val clockMillis: () -> Long = { System.currentTimeMillis() },
     private val tokenProvider: AqlWsTokenProvider? = null,
     private val webSocketFactory: WebSocket.Factory? = null,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val handshakeTimeoutMillis: Long = DEFAULT_HANDSHAKE_TIMEOUT_MILLIS
 ) : AqlWsTransport {
+
+    private val wireCodec = AqlWsWireCodec()
 
     private data class DetachedConnection(
         val socket: WebSocket?,
