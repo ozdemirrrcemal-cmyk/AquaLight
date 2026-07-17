@@ -50,21 +50,56 @@ class CommercialStoreSerializerTest {
     }
 
     @Test
-    fun unsupportedSchemaVersionFailsClosed() {
-        val unversionedTankBytes = TankStoreRules.defaultStore()
+    fun unversionedStoresWithDataFailClosed() {
+        val tankBytes = TankStoreRules.defaultStore()
             .toBuilder()
             .setSchemaVersion(0)
             .addTanks(validTank())
             .build()
             .toByteArray()
+        val careBytes = CareTaskStoreRules.defaultStore()
+            .toBuilder()
+            .setSchemaVersion(0)
+            .addTasks(validCareTask())
+            .build()
+            .toByteArray()
+        val preferenceBytes = UserPreferencesStoreRules.defaultPreferences()
+            .toBuilder()
+            .setSchemaVersion(0)
+            .setUid("owner-a")
+            .setIsLoggedIn(true)
+            .build()
+            .toByteArray()
 
-        assertThrows(CorruptionException::class.java) {
-            runBlocking {
-                AquariumTanksSerializer.readFrom(
-                    ByteArrayInputStream(unversionedTankBytes)
-                )
-            }
-        }
+        assertCorruption(AquariumTanksSerializer, tankBytes)
+        assertCorruption(CareTasksCommercialSerializer, careBytes)
+        assertCorruption(UserPreferencesSerializer, preferenceBytes)
+    }
+
+    @Test
+    fun futureStoreVersionsFailClosedUntilExplicitlySupported() {
+        val futureVersion = CommercialStoreSchema.CURRENT_VERSION + 1
+        val tankBytes = TankStoreRules.defaultStore()
+            .toBuilder()
+            .setSchemaVersion(futureVersion)
+            .addTanks(validTank())
+            .build()
+            .toByteArray()
+        val careBytes = CareTaskStoreRules.defaultStore()
+            .toBuilder()
+            .setSchemaVersion(futureVersion)
+            .addTasks(validCareTask())
+            .build()
+            .toByteArray()
+        val preferenceBytes = UserPreferencesStoreRules.defaultPreferences()
+            .toBuilder()
+            .setSchemaVersion(futureVersion)
+            .build()
+            .toByteArray()
+
+        assertCorruption(AquariumTanksSerializer, tankBytes)
+        assertCorruption(CareTasksCommercialSerializer, careBytes)
+        assertCorruption(UserPreferencesSerializer, preferenceBytes)
     }
 
     @Test
@@ -79,11 +114,35 @@ class CommercialStoreSerializerTest {
             .build()
             .toByteArray()
 
+        assertCorruption(CareTasksCommercialSerializer, invalidCareBytes)
+    }
+
+    @Test
+    fun duplicatePersistedIdsFailClosed() {
+        val duplicateTankBytes = TankStoreRules.defaultStore()
+            .toBuilder()
+            .addTanks(validTank())
+            .addTanks(validTank().toBuilder().setName("Duplicate").build())
+            .build()
+            .toByteArray()
+        val duplicateTaskBytes = CareTaskStoreRules.defaultStore()
+            .toBuilder()
+            .addTasks(validCareTask())
+            .addTasks(validCareTask().toBuilder().setTitle("Duplicate").build())
+            .build()
+            .toByteArray()
+
+        assertCorruption(AquariumTanksSerializer, duplicateTankBytes)
+        assertCorruption(CareTasksCommercialSerializer, duplicateTaskBytes)
+    }
+
+    private fun <T> assertCorruption(
+        serializer: androidx.datastore.core.Serializer<T>,
+        bytes: ByteArray
+    ) {
         assertThrows(CorruptionException::class.java) {
             runBlocking {
-                CareTasksCommercialSerializer.readFrom(
-                    ByteArrayInputStream(invalidCareBytes)
-                )
+                serializer.readFrom(ByteArrayInputStream(bytes))
             }
         }
     }
