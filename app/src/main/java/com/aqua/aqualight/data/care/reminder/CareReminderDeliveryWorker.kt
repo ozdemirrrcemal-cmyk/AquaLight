@@ -209,7 +209,7 @@ class CareReminderDeliveryWorker(
         private const val MAX_ATTEMPTS = 3
         private const val BACKOFF_SECONDS = 30L
 
-        fun enqueue(
+        internal fun enqueue(
             context: Context,
             taskId: Long,
             ownerUid: String,
@@ -248,7 +248,7 @@ class CareReminderDeliveryWorker(
                 )
         }
 
-        fun cancelOwner(
+        internal fun cancelOwner(
             context: Context,
             ownerUid: String?
         ) {
