@@ -50,7 +50,7 @@ class CareReminderCoordinator private constructor(
         val owner = requireOwnerUid(ownerUid)
         val appPreferenceEnabled = preferences.isEnabled(owner)
         val ownerTasks = UserDataScope.withOwnerUid(owner) {
-            careTasks.pendingTasksFlow.first()
+            careTasks.tasksFlow.first()
         }
         val tanksById = tanks.tanksSnapshotForOwner(owner)
             .associateBy { tank -> tank.id }
