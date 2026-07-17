@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+option java_package = "com.aqua.aqualight.data.notifications";
+option java_multiple_files = true;
+
+message OwnerCareReminderSchedule {
+  string owner_uid = 1;
+  repeated int64 task_ids = 2;
+}
+
+message NotificationScheduleStateStore {
+  uint32 schema_version = 1;
+  repeated OwnerCareReminderSchedule owner_schedules = 2;
+}
