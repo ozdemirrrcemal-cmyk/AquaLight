@@ -111,7 +111,9 @@ jobs:
           fi
 
       - name: Run Android Lint
-        run: ./gradlew lintDebug --no-daemon --stacktrace
+        run: |
+          set -o pipefail
+          ./gradlew lintDebug --no-daemon --stacktrace 2>&1 | tee lint-debug.log
 
       - name: Upload Lint Reports
         if: always()
@@ -119,6 +121,7 @@ jobs:
         with:
           name: lint-reports-${{ github.run_number }}
           path: |
+            lint-debug.log
             **/build/reports/lint-results-*.html
             **/build/reports/lint-results-*.xml
           if-no-files-found: ignore

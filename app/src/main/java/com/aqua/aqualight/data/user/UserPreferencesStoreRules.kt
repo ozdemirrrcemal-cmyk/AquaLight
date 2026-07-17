@@ -51,16 +51,18 @@ object UserPreferencesStoreRules {
         requireTextLength("phoneNumber", preferences.phoneNumber, MAX_PHONE_CHARS)
         requireTextLength("country", preferences.country, MAX_ADDRESS_CHARS)
 
-        val theme = preferences.themeMode.ifBlank {
-            UserPreferencesManager.DEFAULT_THEME_MODE
-        }
+        val theme = requireCanonicalRequiredSetting(
+            field = "themeMode",
+            value = preferences.themeMode
+        )
         if (theme !in allowedThemeModes) {
             violation("themeMode contains an unsupported value.")
         }
 
-        val language = preferences.languageCode.ifBlank {
-            UserPreferencesManager.DEFAULT_LANGUAGE_CODE
-        }
+        val language = requireCanonicalRequiredSetting(
+            field = "languageCode",
+            value = preferences.languageCode
+        )
         if (!localePattern.matches(language)) {
             violation("languageCode is not a supported locale identifier.")
         }
@@ -109,6 +111,17 @@ object UserPreferencesStoreRules {
         }
         if (canonical.length > MAX_UID_CHARS) {
             violation("uid exceeds $MAX_UID_CHARS characters.")
+        }
+        return canonical
+    }
+
+    private fun requireCanonicalRequiredSetting(
+        field: String,
+        value: String
+    ): String {
+        val canonical = value.trim()
+        if (canonical.isBlank() || canonical != value) {
+            violation("$field must be non-blank and canonical.")
         }
         return canonical
     }

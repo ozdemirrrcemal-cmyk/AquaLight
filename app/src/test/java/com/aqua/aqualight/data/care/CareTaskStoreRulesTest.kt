@@ -66,6 +66,28 @@ class CareTaskStoreRulesTest {
     }
 
     @Test
+    fun completedTimestampCannotBeLaterThanTheLastUpdate() {
+        val invalidStored = validStoredTask(id = 42L, ownerUid = "owner-a")
+            .toBuilder()
+            .setStatus(CareTaskStatus.COMPLETED.name)
+            .setCompletedAtMillis(UPDATED_MILLIS + 1L)
+            .build()
+
+        assertThrows(StoreInvariantViolation::class.java) {
+            CareTaskStoreRules.validateStoredTask(invalidStored)
+        }
+
+        val invalidDomain = validDomainTask(id = 43L, ownerUid = "owner-a").copy(
+            status = CareTaskStatus.COMPLETED,
+            completedAtMillis = UPDATED_MILLIS + 1L
+        )
+
+        assertThrows(StoreInvariantViolation::class.java) {
+            CareTaskStoreRules.validateTask(invalidDomain)
+        }
+    }
+
+    @Test
     fun activeOwnerMismatchIsRejected() {
         val task = validDomainTask(id = 50L, ownerUid = "owner-a")
 
@@ -115,8 +137,8 @@ class CareTaskStoreRulesTest {
         .setWaterChangePercent(0)
         .setNote("")
         .setGeneratedRuleKey("")
-        .setCreatedAtMillis(1_767_225_600_000L)
-        .setUpdatedAtMillis(1_767_225_600_000L)
+        .setCreatedAtMillis(UPDATED_MILLIS)
+        .setUpdatedAtMillis(UPDATED_MILLIS)
         .build()
 
     private fun validDomainTask(
@@ -141,7 +163,11 @@ class CareTaskStoreRulesTest {
         waterChangePercent = null,
         note = "",
         generatedRuleKey = "",
-        createdAtMillis = 1_767_225_600_000L,
-        updatedAtMillis = 1_767_225_600_000L
+        createdAtMillis = UPDATED_MILLIS,
+        updatedAtMillis = UPDATED_MILLIS
     )
+
+    private companion object {
+        const val UPDATED_MILLIS = 1_767_225_600_000L
+    }
 }

@@ -71,6 +71,31 @@ class UserPreferencesStoreRulesTest {
         }
     }
 
+    @Test
+    fun blankOrNonCanonicalThemeAndLanguageValuesAreRejected() {
+        listOf("", " ", " dark ").forEach { invalidTheme ->
+            val preferences = UserPreferencesStoreRules.defaultPreferences()
+                .toBuilder()
+                .setThemeMode(invalidTheme)
+                .build()
+
+            assertThrows(StoreInvariantViolation::class.java) {
+                UserPreferencesStoreRules.validate(preferences)
+            }
+        }
+
+        listOf("", " ", " en ", "EN").forEach { invalidLanguage ->
+            val preferences = UserPreferencesStoreRules.defaultPreferences()
+                .toBuilder()
+                .setLanguageCode(invalidLanguage)
+                .build()
+
+            assertThrows(StoreInvariantViolation::class.java) {
+                UserPreferencesStoreRules.validate(preferences)
+            }
+        }
+    }
+
     private fun profile(
         ownerUid: String,
         email: String

@@ -20,6 +20,8 @@ import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentStore
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.DefaultMaintenanceOperations
+import com.aqua.aqualight.data.care.integrity.restoreTaskSnapshotsForIntegrity
+import com.aqua.aqualight.data.care.integrity.snapshotTasksForIntegrity
 import com.aqua.aqualight.data.devices.DefaultDeviceFirmwareUpdateOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
@@ -162,9 +164,19 @@ private class ReleaseSmokeViewModelFactory(
                         careTaskStore = careTaskStore,
                         tankDataCleaner = OwnerTankDataCleaner(
                             deleteTankRecords = tankStore::deleteTanks,
+                            snapshotCareTasksForTank = { tankId ->
+                                careTaskStore.snapshotTasksForIntegrity(tankId)
+                            },
                             deleteCareTasksForTank = careTaskStore::deleteTasksForTank,
+                            restoreCareTasksForTank = { tankId, snapshots ->
+                                careTaskStore.restoreTaskSnapshotsForIntegrity(
+                                    tankId = tankId,
+                                    snapshots = snapshots
+                                )
+                            },
                             removeDeviceAssignmentsForTank =
-                                assignmentRepository::removeAssignmentsForTank
+                                assignmentRepository::removeAssignmentsForTank,
+                            ownerUidProvider = { SMOKE_OWNER_UID }
                         )
                     )
                 )
