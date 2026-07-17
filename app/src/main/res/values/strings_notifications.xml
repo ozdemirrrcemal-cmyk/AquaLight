@@ -4,6 +4,6 @@
     <string name="notification_channel_care_reminders_description">Maintenance, feeding, water testing and other aquarium care reminders.</string>
     <string name="settings_notifications_subtitle_enabled">Receive aquarium care reminders and important alerts.</string>
     <string name="settings_notifications_subtitle_disabled">AquaLight notifications are turned off for this account.</string>
-    <string name="settings_notifications_subtitle_system_blocked">Enabled in AquaLight, but blocked by Android notification settings.</string>
-    <string name="settings_notifications_subtitle_channel_blocked">Enabled in AquaLight, but the aquarium care reminder category is blocked.</string>
+    <string name="settings_notifications_subtitle_system_blocked">Enabled in AquaLight, but blocked by Android. Tap this card to open notification settings.</string>
+    <string name="settings_notifications_subtitle_channel_blocked">Enabled in AquaLight, but aquarium care reminders are blocked. Tap this card to open the category settings.</string>
 </resources>
