@@ -6,97 +6,72 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import com.aqua.aqualight.data.care.model.CareTask
-import com.aqua.aqualight.data.care.model.CareTaskStatus
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.utils.NotificationHelper
-import java.util.concurrent.TimeUnit
 
 object CareTaskReminderScheduler {
 
   const val ACTION_CARE_TASK_REMINDER =
-  "com.aqua.aqualight.action.CARE_TASK_REMINDER"
+    "com.aqua.aqualight.action.CARE_TASK_REMINDER"
 
   const val EXTRA_TASK_ID = "extra_task_id"
   const val EXTRA_OWNER_UID = "extra_owner_uid"
+  const val EXTRA_OCCURRENCE = "extra_occurrence"
 
+  /**
+   * Replaces the task alarm with the deterministic next occurrence.
+   *
+   * This intentionally uses an inexact alarm. Aquarium care reminders are
+   * user-facing but do not require alarm-clock precision, so AquaLight avoids
+   * exact-alarm special access and its additional policy surface.
+   */
   fun schedule(
     context: Context,
-    task: CareTask
-  ) {
-    if (
-      task.status != CareTaskStatus.PENDING ||
-      !task.reminderEnabled
-    ) {
-      cancel(
-        context = context,
-        taskId = task.id,
-        ownerUid = task.ownerUid
-      )
-      return
+    task: CareTask,
+    nowMillis: Long = System.currentTimeMillis()
+  ): CareReminderSchedulePlan? {
+    val ownerUid = requireOwnerUid(task.ownerUid)
+    require(task.id > 0L) {
+      "taskId must be positive"
     }
 
-    val now = System.currentTimeMillis()
+    cancelAlarm(
+      context = context,
+      taskId = task.id,
+      ownerUid = ownerUid
+    )
 
-    if (task.dueAtMillis <= now) {
-      return
-    }
+    val plan = CareReminderSchedulePolicy.plan(
+      task = task.copy(ownerUid = ownerUid),
+      nowMillis = nowMillis
+    ) ?: return null
 
     scheduleAt(
       context = context,
       taskId = task.id,
-      ownerUid = task.ownerUid,
-      triggerAtMillis = task.dueAtMillis
+      ownerUid = ownerUid,
+      occurrence = plan.occurrence,
+      triggerAtMillis = plan.triggerAtMillis
     )
-  }
 
-  fun scheduleMissedReminder(
-    context: Context,
-    task: CareTask
-  ) {
-    if (
-      task.status != CareTaskStatus.PENDING ||
-      !task.reminderEnabled ||
-      !task.missedReminderEnabled
-    ) {
-      return
-    }
-
-    val triggerAtMillis = System.currentTimeMillis() +
-      TimeUnit.DAYS.toMillis(task.missedReminderDays.toLong())
-
-    scheduleAt(
-      context = context,
-      taskId = task.id,
-      ownerUid = task.ownerUid,
-      triggerAtMillis = triggerAtMillis
-    )
+    return plan
   }
 
   fun cancel(
     context: Context,
     taskId: Long,
-    ownerUid: String = UserDataScope.currentUid()
+    ownerUid: String
   ) {
-    val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
+    val normalizedOwnerUid = requireOwnerUid(ownerUid)
     require(taskId > 0L) {
       "taskId must be positive"
     }
-    require(normalizedOwnerUid.isNotBlank()) {
-      "ownerUid must not be blank"
-    }
 
-    val alarmManager = context.getSystemService(
-      Context.ALARM_SERVICE
-    ) as AlarmManager
-
-    val pendingIntent = createPendingIntent(
+    cancelAlarm(
       context = context,
       taskId = taskId,
       ownerUid = normalizedOwnerUid
     )
-
-    alarmManager.cancel(pendingIntent)
-    pendingIntent.cancel()
 
     NotificationHelper.cancelCareTaskNotification(
       context = context,
@@ -105,10 +80,31 @@ object CareTaskReminderScheduler {
     )
   }
 
+  private fun cancelAlarm(
+    context: Context,
+    taskId: Long,
+    ownerUid: String
+  ) {
+    val alarmManager = context.getSystemService(
+      Context.ALARM_SERVICE
+    ) as AlarmManager
+
+    val pendingIntent = createPendingIntent(
+      context = context,
+      taskId = taskId,
+      ownerUid = ownerUid,
+      occurrence = null
+    )
+
+    alarmManager.cancel(pendingIntent)
+    pendingIntent.cancel()
+  }
+
   private fun scheduleAt(
     context: Context,
     taskId: Long,
     ownerUid: String,
+    occurrence: CareReminderOccurrence,
     triggerAtMillis: Long
   ) {
     require(triggerAtMillis > 0L) {
@@ -122,10 +118,9 @@ object CareTaskReminderScheduler {
     val pendingIntent = createPendingIntent(
       context = context,
       taskId = taskId,
-      ownerUid = ownerUid
+      ownerUid = ownerUid,
+      occurrence = occurrence
     )
-
-    alarmManager.cancel(pendingIntent)
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
       alarmManager.setAndAllowWhileIdle(
@@ -145,14 +140,12 @@ object CareTaskReminderScheduler {
   private fun createPendingIntent(
     context: Context,
     taskId: Long,
-    ownerUid: String
+    ownerUid: String,
+    occurrence: CareReminderOccurrence?
   ): PendingIntent {
-    val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
+    val normalizedOwnerUid = requireOwnerUid(ownerUid)
     require(taskId > 0L) {
       "taskId must be positive"
-    }
-    require(normalizedOwnerUid.isNotBlank()) {
-      "ownerUid must not be blank"
     }
 
     val intent = Intent(
@@ -160,14 +153,11 @@ object CareTaskReminderScheduler {
       CareTaskReminderReceiver::class.java
     ).apply {
       action = ACTION_CARE_TASK_REMINDER
-      putExtra(
-        EXTRA_TASK_ID,
-        taskId
-      )
-      putExtra(
-        EXTRA_OWNER_UID,
-        normalizedOwnerUid
-      )
+      putExtra(EXTRA_TASK_ID, taskId)
+      putExtra(EXTRA_OWNER_UID, normalizedOwnerUid)
+      occurrence?.let { value ->
+        putExtra(EXTRA_OCCURRENCE, value.name)
+      }
     }
 
     return PendingIntent.getBroadcast(
@@ -180,5 +170,13 @@ object CareTaskReminderScheduler {
       PendingIntent.FLAG_UPDATE_CURRENT or
         PendingIntent.FLAG_IMMUTABLE
     )
+  }
+
+  private fun requireOwnerUid(ownerUid: String): String {
+    return UserDataScope.normalizeOwnerUid(ownerUid).also { normalized ->
+      require(normalized.isNotBlank()) {
+        "ownerUid must not be blank"
+      }
+    }
   }
 }
