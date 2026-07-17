@@ -4,6 +4,7 @@ import android.content.Context
 import com.aqua.aqualight.application.user.UsageAnalyticsSnapshot
 import com.aqua.aqualight.application.user.UserSettingsOperations
 import com.aqua.aqualight.data.care.reminder.CareReminderCoordinator
+import com.aqua.aqualight.data.notifications.ActiveNotificationPreferenceProjection
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
@@ -16,9 +17,10 @@ class DefaultUserSettingsOperations(
     private val startupAppearanceCache: StartupAppearanceCache
 ) : UserSettingsOperations {
 
-    private val reminderCoordinator = CareReminderCoordinator.create(
-        context.applicationContext
-    )
+    private val appContext = context.applicationContext
+    private val reminderCoordinator = CareReminderCoordinator.create(appContext)
+    private val activeNotificationProjection =
+        ActiveNotificationPreferenceProjection.create(appContext)
 
     override val themeMode: Flow<String> = preferences.themeMode
     override val languageCode: Flow<String> = preferences.languageCode
@@ -55,10 +57,10 @@ class DefaultUserSettingsOperations(
             ownerUid = ownerUid,
             enabled = enabled
         )
-
-        // Temporary active-session projection for existing non-notification
-        // consumers. The owner-scoped Stage 7 store is the source of truth.
-        preferences.updateNotificationsEnabled(enabled)
+        activeNotificationProjection.publishForActiveOwner(
+            ownerUid = ownerUid,
+            enabled = enabled
+        )
     }
 
     override suspend fun updateAutoUpdateEnabled(enabled: Boolean) {
