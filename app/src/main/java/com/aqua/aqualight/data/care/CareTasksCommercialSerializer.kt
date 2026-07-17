@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.care
 
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.Serializer
+import com.aqua.aqualight.data.care.integrity.TankCareIntegrityJournal
 import com.aqua.aqualight.data.store.StoreInvariantViolation
 import com.google.protobuf.InvalidProtocolBufferException
 import java.io.InputStream
@@ -36,6 +37,7 @@ object CareTasksCommercialSerializer : Serializer<CareTasksStore> {
         t: CareTasksStore,
         output: OutputStream
     ) {
+        TankCareIntegrityJournal.requireNoBlockedReferences(t.tasksList)
         CareTaskStoreRules.validateStore(t).writeTo(output)
     }
 }
