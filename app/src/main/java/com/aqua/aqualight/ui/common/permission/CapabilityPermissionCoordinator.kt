@@ -96,6 +96,20 @@ class CapabilityPermissionCoordinator(
         dispatchCurrentDecision()
     }
 
+    /**
+     * Presents the same central settings explanation for a system-level capability
+     * block that is not represented by a missing runtime permission (for example,
+     * notifications disabled at Android app level).
+     */
+    fun openSettingsFor(capability: AppCapability, actionToken: String) {
+        require(actionToken.isNotBlank()) { "Permission action token must not be blank." }
+
+        pendingCapability = capability
+        pendingActionToken = actionToken
+        waitingForSettings = false
+        showSheet(CapabilityPermissionBottomSheet.Mode.OPEN_SETTINGS)
+    }
+
     fun isGranted(capability: AppCapability): Boolean = policy().isGranted(capability)
 
     fun cancelPending() {
