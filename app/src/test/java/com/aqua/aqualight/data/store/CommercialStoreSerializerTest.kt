@@ -78,22 +78,21 @@ class CommercialStoreSerializerTest {
 
     @Test
     fun futureStoreVersionsFailClosedUntilExplicitlySupported() {
-        val futureVersion = CommercialStoreSchema.CURRENT_VERSION + 1
         val tankBytes = TankStoreRules.defaultStore()
             .toBuilder()
-            .setSchemaVersion(futureVersion)
+            .setSchemaVersion(CommercialStoreSchema.AQUARIUM_TANKS_VERSION + 1)
             .addTanks(validTank())
             .build()
             .toByteArray()
         val careBytes = CareTaskStoreRules.defaultStore()
             .toBuilder()
-            .setSchemaVersion(futureVersion)
+            .setSchemaVersion(CommercialStoreSchema.CARE_TASKS_VERSION + 1)
             .addTasks(validCareTask())
             .build()
             .toByteArray()
         val preferenceBytes = UserPreferencesStoreRules.defaultPreferences()
             .toBuilder()
-            .setSchemaVersion(futureVersion)
+            .setSchemaVersion(CommercialStoreSchema.USER_PREFERENCES_VERSION + 1)
             .build()
             .toByteArray()
 
