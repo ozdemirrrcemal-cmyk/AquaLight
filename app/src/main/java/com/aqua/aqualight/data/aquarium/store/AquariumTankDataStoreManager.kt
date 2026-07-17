@@ -535,8 +535,16 @@ class AquariumTankDataStoreManager(
             .setCreatedAtMillis(createdAtMillis)
             .setSmartCareDisabled(false)
             .setCareRemindersDisabled(false)
-            .addAllPlants(plants.map(TankPlantTag::toStoredPlantTag))
-            .addAllMaterials(materials.map(TankMaterialSelection::toStoredMaterial))
+            .addAllPlants(
+                plants.map { plant ->
+                    plant.toStoredPlantTag()
+                }
+            )
+            .addAllMaterials(
+                materials.map { material ->
+                    material.toStoredMaterial()
+                }
+            )
             .build()
     }
 
