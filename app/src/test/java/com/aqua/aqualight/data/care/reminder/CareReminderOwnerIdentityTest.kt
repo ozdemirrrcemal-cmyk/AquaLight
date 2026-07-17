@@ -9,43 +9,60 @@ class CareReminderOwnerIdentityTest {
 
     @Test
     fun sameOwnerAndTaskProduceStableIdentity() {
-        val first = UserDataScope.notificationRequestCode(
+        val firstKey = CareReminderIdentity.stableKey(
+            ownerUid = "owner-a",
+            taskId = 42L
+        )
+        val secondKey = CareReminderIdentity.stableKey(
+            ownerUid = "owner-a",
+            taskId = 42L
+        )
+        val firstRequestCode = UserDataScope.notificationRequestCode(
             taskId = 42L,
             ownerUid = "owner-a"
         )
-        val second = UserDataScope.notificationRequestCode(
+        val secondRequestCode = UserDataScope.notificationRequestCode(
             taskId = 42L,
             ownerUid = "owner-a"
         )
 
-        assertEquals(first, second)
+        assertEquals(firstKey, secondKey)
+        assertEquals(firstRequestCode, secondRequestCode)
     }
 
     @Test
-    fun sameTaskIdAcrossOwnersDoesNotShareAlarmOrNotificationIdentity() {
-        val ownerA = UserDataScope.notificationRequestCode(
-            taskId = 42L,
-            ownerUid = "owner-a"
+    fun sameTaskIdAcrossOwnersHasDistinctPendingIntentDataEvenIfHashesEverCollide() {
+        val ownerA = CareReminderIdentity.stableKey(
+            ownerUid = "owner-a",
+            taskId = 42L
         )
-        val ownerB = UserDataScope.notificationRequestCode(
-            taskId = 42L,
-            ownerUid = "owner-b"
+        val ownerB = CareReminderIdentity.stableKey(
+            ownerUid = "owner-b",
+            taskId = 42L
         )
 
         assertNotEquals(ownerA, ownerB)
     }
 
     @Test
-    fun sameOwnerDifferentTasksDoNotShareIdentity() {
-        val firstTask = UserDataScope.notificationRequestCode(
-            taskId = 42L,
-            ownerUid = "owner-a"
+    fun sameOwnerDifferentTasksHaveDistinctPendingIntentData() {
+        val firstTask = CareReminderIdentity.stableKey(
+            ownerUid = "owner-a",
+            taskId = 42L
         )
-        val secondTask = UserDataScope.notificationRequestCode(
-            taskId = 43L,
-            ownerUid = "owner-a"
+        val secondTask = CareReminderIdentity.stableKey(
+            ownerUid = "owner-a",
+            taskId = 43L
         )
 
         assertNotEquals(firstTask, secondTask)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun blankOwnerFailsClosed() {
+        CareReminderIdentity.stableKey(
+            ownerUid = " ",
+            taskId = 42L
+        )
     }
 }
