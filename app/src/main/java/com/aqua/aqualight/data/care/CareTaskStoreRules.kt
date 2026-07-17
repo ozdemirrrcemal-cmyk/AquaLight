@@ -83,6 +83,7 @@ object CareTaskStoreRules {
             source = task.source,
             status = task.status,
             completedAtMillis = task.completedAtMillis ?: 0L,
+            updatedAtMillis = task.updatedAtMillis,
             repeatEnabled = task.repeatEnabled,
             repeatIntervalDays = task.repeatIntervalDays,
             reminderEnabled = task.reminderEnabled,
@@ -123,6 +124,7 @@ object CareTaskStoreRules {
             source = CareTaskSource.valueOf(task.source),
             status = CareTaskStatus.valueOf(task.status),
             completedAtMillis = task.completedAtMillis,
+            updatedAtMillis = task.updatedAtMillis,
             repeatEnabled = task.repeatEnabled,
             repeatIntervalDays = task.repeatIntervalDays,
             reminderEnabled = task.reminderEnabled,
@@ -155,6 +157,7 @@ object CareTaskStoreRules {
         source: CareTaskSource,
         status: CareTaskStatus,
         completedAtMillis: Long,
+        updatedAtMillis: Long,
         repeatEnabled: Boolean,
         repeatIntervalDays: Int,
         reminderEnabled: Boolean,
@@ -195,6 +198,11 @@ object CareTaskStoreRules {
 
             CareTaskStatus.COMPLETED -> {
                 requireDate("task.completedAtMillis", completedAtMillis)
+                if (completedAtMillis > updatedAtMillis) {
+                    violation(
+                        "task.completedAtMillis must not be later than task.updatedAtMillis."
+                    )
+                }
             }
         }
 
