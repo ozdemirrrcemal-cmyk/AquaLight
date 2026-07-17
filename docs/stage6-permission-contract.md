@@ -39,6 +39,9 @@ The decision combines the current API level, current grants, Android rationale s
 - Pending capability/action/settings state is saved through `SavedStateRegistry`.
 - Returning from Android settings resumes the pending action only when access is actually granted.
 - Returning without granting access clears the pending action and never loops the user back into settings.
+- Configuration recreation inside the same process restores the current screen, bottom sheet, and pending token normally.
+- A runtime-permission revocation can terminate the application process. UI state saved by that previous process must not restore an owner-scoped Fragment graph before the new owner runtime is committed.
+- After process death, AquaLight rebuilds the authenticated session first and installs a clean navigation graph. An externally interrupted camera/BLE/Wi-Fi action is cancelled rather than being replayed automatically.
 
 ## API matrix
 
