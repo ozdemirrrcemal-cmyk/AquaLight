@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Enforce the Stage 7 owner-scoped notification and reminder contract."""
+"""Enforce AquaLight Stage 7 notification/reminder architecture."""
 
 from pathlib import Path
 import sys
@@ -9,7 +9,7 @@ APP = ROOT / "app/src/main/java/com/aqua/aqualight"
 errors: list[str] = []
 
 
-def read(relative: str) -> str:
+def load(relative: str) -> str:
     path = ROOT / relative
     if not path.is_file():
         errors.append(f"missing required Stage 7 file: {relative}")
@@ -17,12 +17,14 @@ def read(relative: str) -> str:
     return path.read_text(encoding="utf-8", errors="ignore")
 
 
-def require(relative: str, text: str, token: str, reason: str) -> None:
+def require(relative: str, token: str, reason: str) -> None:
+    text = load(relative)
     if token not in text:
         errors.append(f"{relative}: {reason}: missing {token}")
 
 
-def forbid(relative: str, text: str, token: str, reason: str) -> None:
+def forbid(relative: str, token: str, reason: str) -> None:
+    text = load(relative)
     if token in text:
         errors.append(f"{relative}: {reason}: forbidden {token}")
 
@@ -36,8 +38,8 @@ required_files = (
     "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareReminderCoordinator.kt",
     "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareReminderSchedulePolicy.kt",
     "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareReminderIdentity.kt",
-    "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareReminderReconcileRuntime.kt",
     "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareReminderReconcileWorker.kt",
+    "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareReminderDeliveryWorker.kt",
     "app/src/main/java/com/aqua/aqualight/ui/navigation/CareTaskNotificationRoutePolicy.kt",
     "app/src/test/java/com/aqua/aqualight/data/notifications/NotificationPreferenceStoreRulesTest.kt",
     "app/src/test/java/com/aqua/aqualight/data/care/reminder/CareReminderSchedulePolicyTest.kt",
@@ -50,200 +52,135 @@ required_files = (
     "app/src/androidTest/java/com/aqua/aqualight/data/recovery/NotificationPreferencesCorruptionRecoveryInstrumentedTest.kt",
 )
 for relative in required_files:
-    read(relative)
+    load(relative)
 
-scheduler_path = (
-    "app/src/main/java/com/aqua/aqualight/data/care/reminder/"
-    "CareTaskReminderScheduler.kt"
-)
-scheduler = read(scheduler_path)
+scheduler = "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareTaskReminderScheduler.kt"
 for token, reason in (
-    ("CareReminderSchedulePolicy.plan", "scheduler must use deterministic persisted-time planning"),
-    ("EXTRA_OWNER_UID", "alarm identity must carry an immutable owner"),
-    ("EXTRA_OCCURRENCE", "alarm identity must carry due/missed occurrence"),
-    ("data = CareReminderIdentity.alarmData", "PendingIntent identity must include owner + task URI data"),
-    ("setAndAllowWhileIdle", "commercial care reminders use supported inexact idle scheduling"),
+    ("CareReminderSchedulePolicy.plan", "deterministic persisted-time planning is required"),
+    ("EXTRA_OWNER_UID", "alarm must carry immutable owner identity"),
+    ("EXTRA_OCCURRENCE", "alarm must carry due/missed occurrence"),
+    ("CareReminderIdentity.alarmData", "alarm PendingIntent must include owner/task URI data"),
+    ("setAndAllowWhileIdle", "care reminders must remain inexact and idle-compatible"),
 ):
-    require(scheduler_path, scheduler, token, reason)
-for token, reason in (
-    ("UserDataScope.currentUid()", "scheduler APIs must never infer the current user"),
-    ("setExact(", "care reminders must not request alarm-clock precision"),
-    ("setExactAndAllowWhileIdle(", "care reminders must not request exact-alarm special access"),
-    ("scheduleMissedReminder", "missed timing must be derived by the central policy"),
+    require(scheduler, token, reason)
+for token in (
+    "UserDataScope.currentUid()",
+    "setExact(",
+    "setExactAndAllowWhileIdle(",
+    "scheduleMissedReminder",
 ):
-    forbid(scheduler_path, scheduler, token, reason)
+    forbid(scheduler, token, "scheduler bypasses the Stage 7 alarm policy")
 
-receiver_path = (
-    "app/src/main/java/com/aqua/aqualight/data/care/reminder/"
-    "CareTaskReminderReceiver.kt"
-)
-receiver = read(receiver_path)
-for token, reason in (
-    ("OwnerNotificationPreferences", "delivery must re-check the owner app preference"),
-    ("FirebaseAuthenticatedOwnerProvider", "delivery must validate the active owner"),
-    ("CareReminderDeliveryPolicy.shouldDeliver(task, tank)", "delivery must revalidate persisted task and tank state"),
-    ("CareTaskReminderScheduler.schedule", "delivery must reconcile the deterministic next occurrence"),
+receiver = "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareTaskReminderReceiver.kt"
+require(receiver, "CareReminderDeliveryWorker.enqueue", "alarm receiver must enqueue durable delivery")
+for token in (
+    "goAsync()",
+    "FirebaseAuthenticatedOwnerProvider",
+    "CareTaskDataStoreManager",
+    "OwnerNotificationPreferences",
+    "CoroutineScope",
+    "NotificationHelper",
 ):
-    require(receiver_path, receiver, token, reason)
+    forbid(receiver, token, "alarm receiver must remain enqueue-only")
+
+delivery = "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareReminderDeliveryWorker.kt"
+for token, reason in (
+    ("OwnerNotificationPreferences", "delivery must re-check owner preference"),
+    ("FirebaseAuthenticatedOwnerProvider", "delivery must validate active owner"),
+    ("CareReminderDeliveryPolicy.shouldDeliver(task, tank)", "delivery must revalidate task/tank"),
+    ("ExistingWorkPolicy.KEEP", "duplicate broadcasts must not duplicate in-flight work"),
+    ("addTag(ownerTag(owner))", "outgoing-owner delivery must be cancellable"),
+    ("BackoffPolicy.EXPONENTIAL", "transient failure requires backoff"),
+    ("MAX_ATTEMPTS", "delivery retries must be bounded"),
+):
+    require(delivery, token, reason)
 for token in ("UserPreferencesManager", "scheduleMissedReminder"):
-    forbid(
-        receiver_path,
-        receiver,
-        token,
-        "receiver must not depend on the active projection or relative missed timers",
-    )
+    forbid(delivery, token, "delivery must not use legacy preference authority or relative missed timing")
 
-boot_path = (
-    "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareTaskBootReceiver.kt"
-)
-boot = read(boot_path)
-require(
-    boot_path,
-    boot,
-    "CareReminderReconcileWorker.enqueue",
-    "boot/package replacement must enqueue durable owner reconciliation",
-)
+boot = "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareTaskBootReceiver.kt"
+require(boot, "CareReminderReconcileWorker.enqueue", "boot/package restore must enqueue durable work")
 for token in ("goAsync()", "CareTaskDataStoreManager", "AlarmManager"):
-    forbid(
-        boot_path,
-        boot,
-        token,
-        "boot receiver must remain a lightweight enqueue-only boundary",
-    )
+    forbid(boot, token, "boot receiver must remain enqueue-only")
 
-worker_path = (
-    "app/src/main/java/com/aqua/aqualight/data/care/reminder/"
-    "CareReminderReconcileWorker.kt"
-)
-worker = read(worker_path)
+reconcile = "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareReminderReconcileWorker.kt"
 for token, reason in (
-    ("enqueueUniqueWork", "owner restore must be idempotent durable work"),
-    ("KEY_OWNER_UID", "work must carry an immutable owner UID"),
-    ("CareReminderReconcileRuntime", "worker must use a testable owner-stability boundary"),
-    ("BackoffPolicy.EXPONENTIAL", "transient restore failures require bounded backoff"),
-    ("MAX_ATTEMPTS", "durable restore must not retry forever"),
+    ("enqueueUniqueWork", "owner reconciliation must be unique"),
+    ("CareReminderReconcileRuntime", "owner stability boundary is required"),
+    ("BackoffPolicy.EXPONENTIAL", "restore failure requires backoff"),
+    ("MAX_ATTEMPTS", "restore retries must be bounded"),
 ):
-    require(worker_path, worker, token, reason)
+    require(reconcile, token, reason)
 
-coordinator_path = (
-    "app/src/main/java/com/aqua/aqualight/data/care/reminder/"
-    "CareReminderCoordinator.kt"
-)
-coordinator = read(coordinator_path)
+coordinator = "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareReminderCoordinator.kt"
 for token, reason in (
-    ("OwnerNotificationPreferences", "coordinator must own the owner-scoped app preference"),
-    ("ActiveNotificationPreferenceProjection", "coordinator must publish the active compatibility projection"),
-    ("UserDataScope.withOwnerUid", "task reads must remain pinned to one owner"),
-    ("careTasks.tasksFlow.first()", "reconciliation must inspect all tasks so stale completed alarms are removed"),
-    ("CareTaskReminderScheduler.cancel", "reconciliation must remove ineligible owner alarms"),
-    ("CareTaskReminderScheduler.schedule", "reconciliation must schedule eligible owner alarms"),
+    ("OwnerNotificationPreferences", "owner preference source must remain central"),
+    ("ActiveNotificationPreferenceProjection", "legacy active projection must remain central"),
+    ("UserDataScope.withOwnerUid", "task reads must be owner-pinned"),
+    ("careTasks.tasksFlow.first()", "reconcile must remove stale non-pending alarms"),
+    ("CareTaskReminderScheduler.cancel", "ineligible alarms must be cancelled"),
+    ("CareTaskReminderScheduler.schedule", "eligible alarms must be scheduled"),
 ):
-    require(coordinator_path, coordinator, token, reason)
+    require(coordinator, token, reason)
 
-projection_path = (
-    "app/src/main/java/com/aqua/aqualight/data/notifications/"
-    "ActiveNotificationPreferenceProjection.kt"
-)
-projection = read(projection_path)
+projection = "app/src/main/java/com/aqua/aqualight/data/notifications/ActiveNotificationPreferenceProjection.kt"
 for token, reason in (
-    ("OwnerNotificationPreferences", "projection must refresh only from the owner store"),
-    ("legacyPreferences.updateNotificationsEnabled", "projection must be the only legacy-field writer"),
-    ("suspend fun clear()", "outgoing session projection must be explicitly cleared"),
+    ("OwnerNotificationPreferences", "projection must refresh from owner store"),
+    ("legacyPreferences.updateNotificationsEnabled", "legacy field writer must remain centralized"),
+    ("suspend fun clear()", "session shutdown requires explicit clear"),
 ):
-    require(projection_path, projection, token, reason)
+    require(projection, token, reason)
 
-session_services_path = (
-    "app/src/main/java/com/aqua/aqualight/data/auth/SessionBoundServiceManager.kt"
-)
-session_services = read(session_services_path)
-require(
-    session_services_path,
-    session_services,
-    "ActiveNotificationPreferenceProjection.create(appContext).clear()",
-    "session shutdown must clear the outgoing owner's active projection",
-)
+session_services = "app/src/main/java/com/aqua/aqualight/data/auth/SessionBoundServiceManager.kt"
+require(session_services, "ActiveNotificationPreferenceProjection.create(appContext).clear()", "logout must clear active projection")
+require(session_services, "CareReminderDeliveryWorker.cancelOwner", "logout must cancel queued deliveries")
 
-# The legacy protobuf field remains temporarily for existing care-task write paths,
-# but no other class may obtain UserPreferencesManager and mutate that field directly.
 for source in APP.rglob("*.kt"):
     if source in {
-        ROOT / projection_path,
+        ROOT / projection,
         ROOT / "app/src/main/java/com/aqua/aqualight/data/user/UserPreferencesManager.kt",
     }:
         continue
     text = source.read_text(encoding="utf-8", errors="ignore")
     if "UserPreferencesManager" in text and ".updateNotificationsEnabled(" in text:
         errors.append(
-            f"{source.relative_to(ROOT)}: only ActiveNotificationPreferenceProjection may "
-            "write the legacy notification compatibility field"
+            f"{source.relative_to(ROOT)}: only ActiveNotificationPreferenceProjection may write the legacy notification field"
         )
 
-channel_path = (
-    "app/src/main/java/com/aqua/aqualight/data/notifications/"
-    "NotificationChannelRegistry.kt"
-)
-channel = read(channel_path)
+channel = "app/src/main/java/com/aqua/aqualight/data/notifications/NotificationChannelRegistry.kt"
 for token, reason in (
-    ("CARE_REMINDERS_CHANNEL_ID", "care channel ID must be versioned and centralized"),
-    ("getNotificationChannel", "channel block state must be observable"),
-    ("IMPORTANCE_NONE", "channel-level blocking must be represented"),
+    ("CARE_REMINDERS_CHANNEL_ID", "channel ID must be versioned and central"),
+    ("getNotificationChannel", "channel block state must be readable"),
+    ("IMPORTANCE_NONE", "blocked channel state must be represented"),
     ("createNotificationChannel", "channel creation must be idempotent"),
 ):
-    require(channel_path, channel, token, reason)
+    require(channel, token, reason)
 for token in ("channelCreated", "deleteNotificationChannel"):
-    forbid(
-        channel_path,
-        channel,
-        token,
-        "process memory and channel recreation must not override Android user choices",
-    )
+    forbid(channel, token, "app must not override Android channel/user state")
 
-helper_path = "app/src/main/java/com/aqua/aqualight/utils/NotificationHelper.kt"
-helper = read(helper_path)
+helper = "app/src/main/java/com/aqua/aqualight/utils/NotificationHelper.kt"
 for token in (
     "ActivityCompat.requestPermissions",
     "Settings.ACTION_APP_NOTIFICATION_SETTINGS",
     "Settings.ACTION_APPLICATION_DETAILS_SETTINGS",
     "android.app.Activity",
 ):
-    forbid(
-        helper_path,
-        helper,
-        token,
-        "Stage 6 owns runtime permission and settings UI",
-    )
+    forbid(helper, token, "Stage 6 owns permission/settings UI")
 for token, reason in (
-    ("NotificationChannelRegistry.CARE_REMINDERS_CHANNEL_ID", "notification rendering must use the Stage 7 channel registry"),
-    ("CareReminderIdentity.contentData", "notification content PendingIntent must include owner + task URI data"),
+    ("NotificationChannelRegistry.CARE_REMINDERS_CHANNEL_ID", "rendering must use central channel"),
+    ("CareReminderIdentity.contentData", "content PendingIntent must include owner/task URI"),
+    ("manager.notify(notificationTag", "care notifications must use owner/task tags"),
+    ("CareReminderIdentity.stableKey", "show/cancel must share stable owner/task tag"),
 ):
-    require(helper_path, helper, token, reason)
+    require(helper, token, reason)
 
-main_path = "app/src/main/java/com/aqua/aqualight/ui/main/MainActivity.kt"
-main = read(main_path)
-require(
-    main_path,
-    main,
-    "CareTaskNotificationRoutePolicy.canOpen",
-    "notification deep links must fail closed on blank or cross-owner identity",
-)
+main = "app/src/main/java/com/aqua/aqualight/ui/main/MainActivity.kt"
+require(main, "CareTaskNotificationRoutePolicy.canOpen", "notification deep links must fail closed")
 
-manifest_path = "app/src/main/AndroidManifest.xml"
-manifest = read(manifest_path)
-for token in (
-    "android.permission.SCHEDULE_EXACT_ALARM",
-    "android.permission.USE_EXACT_ALARM",
-):
-    forbid(
-        manifest_path,
-        manifest,
-        token,
-        "AquaLight care reminders do not qualify for exact-alarm special access",
-    )
-for token, reason in (
-    ("android.permission.RECEIVE_BOOT_COMPLETED", "boot restore requires the boot permission"),
-    ("CareTaskBootReceiver", "boot restore receiver must remain registered"),
-):
-    require(manifest_path, manifest, token, reason)
+manifest = "app/src/main/AndroidManifest.xml"
+for token in ("android.permission.SCHEDULE_EXACT_ALARM", "android.permission.USE_EXACT_ALARM"):
+    forbid(manifest, token, "AquaLight care reminders do not qualify for exact-alarm access")
+require(manifest, "android.permission.RECEIVE_BOOT_COMPLETED", "boot restore permission is required")
+require(manifest, "CareTaskBootReceiver", "boot restore receiver must remain registered")
 
 ui_root = APP / "ui"
 if ui_root.is_dir():
@@ -257,17 +194,14 @@ if ui_root.is_dir():
             "CareTaskReminderScheduler",
         ):
             if token in text:
-                errors.append(
-                    f"{path.relative_to(ROOT)}: UI bypasses the Stage 7 application boundary: {token}"
-                )
+                errors.append(f"{path.relative_to(ROOT)}: UI bypasses Stage 7 boundary: {token}")
 
-obsolete_paths = (
-    ROOT / "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareTaskBootRuntime.kt",
-    ROOT / "app/src/test/java/com/aqua/aqualight/data/care/reminder/CareTaskBootRuntimeTest.kt",
-)
-for path in obsolete_paths:
-    if path.exists():
-        errors.append(f"obsolete synchronous boot reminder path remains: {path.relative_to(ROOT)}")
+for obsolete in (
+    "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareTaskBootRuntime.kt",
+    "app/src/test/java/com/aqua/aqualight/data/care/reminder/CareTaskBootRuntimeTest.kt",
+):
+    if (ROOT / obsolete).exists():
+        errors.append(f"obsolete synchronous boot reminder path remains: {obsolete}")
 
 if errors:
     print("Notification/reminder architecture guard failed:", file=sys.stderr)
@@ -276,7 +210,6 @@ if errors:
     sys.exit(1)
 
 print(
-    "Notification/reminder guard passed: owner preference, projection isolation, "
-    "channel state, collision-resistant inexact alarms, durable restore and Stage 6 "
-    "permission boundaries remain centralized."
+    "Notification/reminder guard passed: owner preference, channel state, inexact alarms, "
+    "durable delivery/restore, projection isolation and Stage 6 settings boundaries are central."
 )
