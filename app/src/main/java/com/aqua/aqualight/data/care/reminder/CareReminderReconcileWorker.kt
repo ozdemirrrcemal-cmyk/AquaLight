@@ -13,6 +13,7 @@ import com.aqua.aqualight.data.notifications.ActiveNotificationPreferenceProject
 import com.aqua.aqualight.data.notifications.OwnerNotificationPreferences
 import com.aqua.aqualight.data.user.UserDataScope
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CancellationException
 
 /** Durable owner-scoped reconciliation after boot, package update, or session start. */
 class CareReminderReconcileWorker(
@@ -54,6 +55,8 @@ class CareReminderReconcileWorker(
             ).run(ownerUid)
 
             Result.success()
+        } catch (exception: CancellationException) {
+            throw exception
         } catch (exception: Exception) {
             exception.printStackTrace()
             if (runAttemptCount + 1 >= MAX_ATTEMPTS) {
