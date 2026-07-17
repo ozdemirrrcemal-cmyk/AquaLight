@@ -1,28 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-  <!-- 🌐 İzinler -->
-<uses-permission android:name="android.permission.INTERNET" />
+  <!-- Network access -->
+  <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+  <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
-<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-<uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+  <!-- Connected Wi-Fi SSID and BLE scan on API 27-30 -->
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
-<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-<uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-<uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
-
-<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-
-<uses-permission
-    android:name="android.permission.NEARBY_WIFI_DEVICES"
-    android:usesPermissionFlags="neverForLocation" />
-
-  <!-- 📸 Kamera izni -->
+  <!-- Camera -->
   <uses-permission android:name="android.permission.CAMERA" />
   <uses-permission android:name="android.permission.VIBRATE" />
 
-  <!-- 🟦 BLE provisioning izinleri -->
+  <!-- BLE provisioning -->
   <uses-permission
     android:name="android.permission.BLUETOOTH"
     android:maxSdkVersion="30" />
@@ -34,7 +25,6 @@
     android:usesPermissionFlags="neverForLocation" />
   <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
-  <!-- 📸 Kamera donanımı: zorunlu değil -->
   <uses-feature
     android:name="android.hardware.camera.any"
     android:required="false" />
@@ -43,7 +33,7 @@
     android:name="android.hardware.bluetooth_le"
     android:required="false" />
 
-  <!-- Android 13+ için bildirim izni -->
+  <!-- Android 13+ notification permission and reminder restoration -->
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
@@ -60,7 +50,6 @@
     android:usesCleartextTraffic="false"
     android:theme="@style/AppTheme">
 
-    <!-- 📂 FileProvider (kamera fotoğrafı için geçici dosya URI) -->
     <provider
       android:name="androidx.core.content.FileProvider"
       android:authorities="${applicationId}.fileprovider"
@@ -71,7 +60,6 @@
         android:resource="@xml/file_paths" />
     </provider>
 
-    <!-- 🚀 Launcher (Splash) -->
     <activity
       android:name="com.aqua.aqualight.ui.splash.SplashActivity"
       android:exported="true"
@@ -83,7 +71,6 @@
       </intent-filter>
     </activity>
 
-    <!-- 🧭 Ana Activity -->
     <activity
       android:name="com.aqua.aqualight.ui.main.MainActivity"
       android:exported="false"
