@@ -18,15 +18,17 @@ class DefaultNotificationScheduler(
     context: Context,
     private val preferences: OwnerNotificationPreferences =
         OwnerNotificationPreferences.create(context),
-    private val careTasks: CareTaskDataStoreManager =
-        CareTaskDataStoreManager.create(context),
-    private val tanks: AquariumTankDataStoreManager =
-        AquariumTankDataStoreManager(context),
     private val renderer: AndroidNotificationRenderer =
         AndroidNotificationRenderer(context)
 ) : NotificationScheduler {
 
     private val appContext = context.applicationContext
+    private val careTasks by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        CareTaskDataStoreManager.create(appContext)
+    }
+    private val tanks by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        AquariumTankDataStoreManager(appContext)
+    }
 
     override suspend fun scheduleCareTask(ownerUid: String, taskId: Long) {
         val owner = requireOwnerUid(ownerUid)
@@ -76,8 +78,7 @@ class DefaultNotificationScheduler(
     }
 
     private suspend fun scheduleOrCancel(ownerUid: String, task: CareTask) {
-        val eligible = isEligible(ownerUid, task)
-        if (eligible) {
+        if (isEligible(ownerUid, task)) {
             CareTaskReminderScheduler.schedule(appContext, task)
         } else {
             CareTaskReminderScheduler.cancel(appContext, task.id, ownerUid)
