@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.care.reminder
 import android.content.Context
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
+import com.aqua.aqualight.data.notifications.ActiveNotificationPreferenceProjection
 import com.aqua.aqualight.data.notifications.NotificationChannelRegistry
 import com.aqua.aqualight.data.notifications.OwnerNotificationPreferences
 import com.aqua.aqualight.data.user.UserDataScope
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.first
 class CareReminderCoordinator private constructor(
     context: Context,
     private val preferences: OwnerNotificationPreferences,
+    private val activeProjection: ActiveNotificationPreferenceProjection,
     private val careTasks: CareTaskDataStoreManager,
     private val tanks: AquariumTankDataStoreManager
 ) {
@@ -31,6 +33,14 @@ class CareReminderCoordinator private constructor(
     ) {
         val owner = requireOwnerUid(ownerUid)
         preferences.setEnabled(
+            ownerUid = owner,
+            enabled = enabled
+        )
+
+        // Existing care-task write paths still consume the active-session
+        // projection. Publish before reconciliation so a task created concurrently
+        // with this setting change sees the same owner preference immediately.
+        activeProjection.publishForActiveOwner(
             ownerUid = owner,
             enabled = enabled
         )
@@ -109,6 +119,7 @@ class CareReminderCoordinator private constructor(
             return CareReminderCoordinator(
                 context = appContext,
                 preferences = OwnerNotificationPreferences.create(appContext),
+                activeProjection = ActiveNotificationPreferenceProjection.create(appContext),
                 careTasks = CareTaskDataStoreManager.create(appContext),
                 tanks = AquariumTankDataStoreManager(appContext)
             )
