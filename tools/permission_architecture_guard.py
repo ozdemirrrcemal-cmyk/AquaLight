@@ -12,6 +12,7 @@ UI_SPEC_PATH = (
     ALLOWED_ROOT / "CapabilityPermissionUiSpecResolver.kt"
 )
 SHEET_PATH = ALLOWED_ROOT / "CapabilityPermissionBottomSheet.kt"
+COORDINATOR_PATH = ALLOWED_ROOT / "CapabilityPermissionCoordinator.kt"
 
 FORBIDDEN_TOKENS = {
     "ActivityResultContracts.RequestPermission(": (
@@ -31,6 +32,9 @@ FORBIDDEN_TOKENS = {
     ),
     "Settings.ACTION_APP_NOTIFICATION_SETTINGS": (
         "notification permission settings must be opened by CapabilityPermissionCoordinator"
+    ),
+    "Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS": (
+        "notification channel settings must be opened by CapabilityPermissionCoordinator"
     ),
     "Manifest.permission.CAMERA": (
         "camera access must be requested as CAMERA_PHOTO or CAMERA_QR"
@@ -110,6 +114,31 @@ if SHEET_PATH.is_file():
             "CapabilityPermissionUiSpecResolver"
         )
 
+if COORDINATOR_PATH.is_file():
+    coordinator_text = COORDINATOR_PATH.read_text(encoding="utf-8", errors="ignore")
+    for token, reason in (
+        (
+            "fun openNotificationChannelSettingsFor(",
+            "blocked notification categories require one central settings entry point",
+        ),
+        (
+            "Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS",
+            "channel Settings Intent construction must remain central",
+        ),
+        (
+            "STATE_NOTIFICATION_CHANNEL_ID",
+            "channel settings destination must survive rotation/process recreation",
+        ),
+        (
+            "STATE_NOTIFICATION_CHANNEL_ID to pendingNotificationChannelId",
+            "channel ID must be persisted through SavedStateRegistry",
+        ),
+    ):
+        if token not in coordinator_text:
+            errors.append(
+                f"{COORDINATOR_PATH.relative_to(ROOT)}: {reason}: missing {token}"
+            )
+
 if errors:
     print("Central permission architecture guard failed:")
     for error in errors:
@@ -117,6 +146,6 @@ if errors:
     sys.exit(1)
 
 print(
-    "Central permission architecture guard passed: policy, launchers, copy and artwork "
-    "remain capability-driven and centrally owned."
+    "Central permission architecture guard passed: policy, launchers, copy, artwork "
+    "and process-safe app/channel settings routing remain capability-driven and central."
 )
