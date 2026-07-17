@@ -8,6 +8,7 @@ import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.composition.requireAppContainer
+import com.aqua.aqualight.data.notifications.NotificationChannelState
 import com.aqua.aqualight.databinding.FragmentAppSettingsBinding
 import com.aqua.aqualight.platform.permissions.AppCapability
 import com.aqua.aqualight.ui.common.bottomsheet.ThemeBottomSheet
@@ -41,11 +42,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
-
+        super.onViewCreated(view, savedInstanceState)
         _binding = FragmentAppSettingsBinding.bind(view)
 
         setupHeader()
@@ -53,12 +50,12 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         observeThemeSummary()
         observeLanguageSummary()
         observeAutoUpdateState()
-        refreshNotificationSwitchState()
+        refreshNotificationState()
     }
 
     override fun onResume() {
         super.onResume()
-        refreshNotificationSwitchState()
+        refreshNotificationState()
     }
 
     private fun setupHeader() {
@@ -70,37 +67,33 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         )
     }
 
-    private fun setupClicks() =
-        with(binding) {
-
-            switchNotifications.setOnCheckedChangeListener { _, isChecked ->
-                if (!changingNotificationSwitchProgrammatically) {
-                    handleNotificationToggle(isChecked)
-                }
-            }
-
-            switchAutoUpdate.setOnCheckedChangeListener { _, enabled ->
-                viewLifecycleOwner.lifecycleScope.launch {
-                    settingsOperations.updateAutoUpdateEnabled(enabled)
-                }
-            }
-
-            cardThemeMode.setOnClickListener {
-                openThemeSheet()
-            }
-
-            cardLanguage.setOnClickListener {
-                safeNavigate(
-                    AppSettingsFragmentDirections.actionAppSettingsFragmentToLanguageSettingsFragment()
-                )
-            }
-
-            cardAbout.setOnClickListener {
-                safeNavigate(
-                    AppSettingsFragmentDirections.actionAppSettingsFragmentToAboutAppFragment()
-                )
+    private fun setupClicks() = with(binding) {
+        switchNotifications.setOnCheckedChangeListener { _, isChecked ->
+            if (!changingNotificationSwitchProgrammatically) {
+                handleNotificationToggle(isChecked)
             }
         }
+
+        switchAutoUpdate.setOnCheckedChangeListener { _, enabled ->
+            viewLifecycleOwner.lifecycleScope.launch {
+                settingsOperations.updateAutoUpdateEnabled(enabled)
+            }
+        }
+
+        cardThemeMode.setOnClickListener {
+            openThemeSheet()
+        }
+        cardLanguage.setOnClickListener {
+            safeNavigate(
+                AppSettingsFragmentDirections.actionAppSettingsFragmentToLanguageSettingsFragment()
+            )
+        }
+        cardAbout.setOnClickListener {
+            safeNavigate(
+                AppSettingsFragmentDirections.actionAppSettingsFragmentToAboutAppFragment()
+            )
+        }
+    }
 
     private fun openThemeSheet() {
         val sheet = ThemeBottomSheet().apply {
@@ -117,15 +110,10 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             }
         }
 
-        sheet.show(
-            parentFragmentManager,
-            "theme_sheet"
-        )
+        sheet.show(parentFragmentManager, "theme_sheet")
     }
 
-    private fun safeNavigate(
-        directions: NavDirections
-    ) {
+    private fun safeNavigate(directions: NavDirections) {
         val navController = runCatching {
             findNavController()
         }.getOrNull() ?: return
@@ -134,36 +122,46 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             return
         }
 
-        runCatching {
-            navController.navigate(directions)
-        }
+        runCatching { navController.navigate(directions) }
     }
 
-    private fun refreshNotificationSwitchState() {
+    private fun refreshNotificationState() {
         viewLifecycleOwner.lifecycleScope.launch {
             val context = requireContext()
-            val appEnabled = settingsOperations.notificationsEnabled.first()
-            val hasPermission = permissionCoordinator.isGranted(
+            NotificationHelper.createNotificationChannel(context)
+
+            val ownerPreferenceEnabled = settingsOperations.notificationsEnabled.first()
+            val runtimePermissionGranted = permissionCoordinator.isGranted(
                 AppCapability.NOTIFICATIONS
             )
-            val systemEnabled = NotificationHelper.areSystemNotificationsEnabled(context)
-            val finalState = appEnabled && hasPermission && systemEnabled
+            val systemState = NotificationHelper.notificationSystemState(context)
 
-            setNotificationSwitchChecked(finalState)
+            setNotificationSwitchChecked(ownerPreferenceEnabled)
+            binding.tvNotificationsSubtitle.setText(
+                when {
+                    !ownerPreferenceEnabled -> {
+                        R.string.settings_notifications_subtitle_disabled
+                    }
+                    !runtimePermissionGranted || !systemState.appNotificationsEnabled -> {
+                        R.string.settings_notifications_subtitle_system_blocked
+                    }
+                    systemState.careReminderChannelState == NotificationChannelState.BLOCKED ||
+                        systemState.careReminderChannelState == NotificationChannelState.MISSING -> {
+                        R.string.settings_notifications_subtitle_channel_blocked
+                    }
+                    else -> R.string.settings_notifications_subtitle_enabled
+                }
+            )
         }
     }
 
-    private fun setNotificationSwitchChecked(
-        value: Boolean
-    ) {
+    private fun setNotificationSwitchChecked(value: Boolean) {
         changingNotificationSwitchProgrammatically = true
         binding.switchNotifications.isChecked = value
         changingNotificationSwitchProgrammatically = false
     }
 
-    private fun handleNotificationToggle(
-        enable: Boolean
-    ) {
+    private fun handleNotificationToggle(enable: Boolean) {
         if (!enable) {
             disableNotifications()
             return
@@ -179,7 +177,9 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             return
         }
 
-        if (!NotificationHelper.areSystemNotificationsEnabled(requireContext())) {
+        NotificationHelper.createNotificationChannel(requireContext())
+        val systemState = NotificationHelper.notificationSystemState(requireContext())
+        if (!systemState.canDeliverCareReminders) {
             permissionCoordinator.openSettingsFor(
                 capability = AppCapability.NOTIFICATIONS,
                 actionToken = ACTION_ENABLE_NOTIFICATIONS
@@ -193,21 +193,23 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
     private fun completeNotificationEnableFlow() {
         if (_binding == null) return
 
-        val systemEnabled = NotificationHelper.areSystemNotificationsEnabled(
-            requireContext()
-        )
-        if (!systemEnabled) {
+        val context = requireContext()
+        NotificationHelper.createNotificationChannel(context)
+        val canDeliver = permissionCoordinator.isGranted(AppCapability.NOTIFICATIONS) &&
+            NotificationHelper.notificationSystemState(context).canDeliverCareReminders
+
+        if (!canDeliver) {
             setNotificationSwitchChecked(false)
+            refreshNotificationState()
             return
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
             settingsOperations.updateNotificationsEnabled(true)
-            settingsOperations.reschedulePendingCareTaskReminders()
             setNotificationSwitchChecked(true)
 
             _binding?.root?.postDelayed(
-                ::refreshNotificationSwitchState,
+                ::refreshNotificationState,
                 NOTIFICATION_STATE_REFRESH_DELAY_MS
             )
         }
@@ -216,7 +218,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
     private fun disableNotifications() {
         viewLifecycleOwner.lifecycleScope.launch {
             settingsOperations.updateNotificationsEnabled(false)
-            settingsOperations.cancelPendingCareTaskReminders()
+            refreshNotificationState()
         }
         setNotificationSwitchChecked(false)
     }
@@ -224,20 +226,11 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
     private fun observeThemeSummary() {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             settingsOperations.themeMode.collectLatest { mode ->
-                binding.tvThemeSummary.text =
-                    when (mode) {
-                        "dark" -> getString(
-                            R.string.app_settings_theme_dark
-                        )
-
-                        "system" -> getString(
-                            R.string.app_settings_theme_system
-                        )
-
-                        else -> getString(
-                            R.string.app_settings_theme_light
-                        )
-                    }
+                binding.tvThemeSummary.text = when (mode) {
+                    "dark" -> getString(R.string.app_settings_theme_dark)
+                    "system" -> getString(R.string.app_settings_theme_system)
+                    else -> getString(R.string.app_settings_theme_light)
+                }
             }
         }
     }
@@ -245,32 +238,14 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
     private fun observeLanguageSummary() {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             settingsOperations.languageCode.collectLatest { code ->
-                binding.tvLanguageSubtitle.text =
-                    when (code) {
-                        "tr" -> getString(
-                            R.string.language_turkish
-                        )
-
-                        "de" -> getString(
-                            R.string.language_german
-                        )
-
-                        "fr" -> getString(
-                            R.string.language_french
-                        )
-
-                        "ru" -> getString(
-                            R.string.language_russian
-                        )
-
-                        "zh" -> getString(
-                            R.string.language_chinese
-                        )
-
-                        else -> getString(
-                            R.string.language_english
-                        )
-                    }
+                binding.tvLanguageSubtitle.text = when (code) {
+                    "tr" -> getString(R.string.language_turkish)
+                    "de" -> getString(R.string.language_german)
+                    "fr" -> getString(R.string.language_french)
+                    "ru" -> getString(R.string.language_russian)
+                    "zh" -> getString(R.string.language_chinese)
+                    else -> getString(R.string.language_english)
+                }
             }
         }
     }
