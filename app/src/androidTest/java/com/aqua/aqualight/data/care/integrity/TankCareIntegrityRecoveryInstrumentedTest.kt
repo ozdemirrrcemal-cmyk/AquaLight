@@ -8,7 +8,6 @@ import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.CareTaskStoreRules
 import com.aqua.aqualight.data.care.CareTasksCommercialSerializer
-import com.aqua.aqualight.data.care.CareTasksStore
 import com.aqua.aqualight.data.care.StoredCareTask
 import com.aqua.aqualight.data.care.model.CareTask
 import com.aqua.aqualight.data.care.model.CareTaskSource
@@ -108,35 +107,37 @@ class TankCareIntegrityRecoveryInstrumentedTest {
     }
 
     @Test
-    fun completedDeletionRejectsAStaleCareWriterForTheRestOfTheProcess() = runBlocking {
-        val ownerUid = "care-stale-${UUID.randomUUID()}"
-        val tankId = 700L
-        val task = validDomainTask(ownerUid, tankId)
-        TankCareIntegrityJournal.initialize(context)
+    fun completedDeletionRejectsAStaleCareWriterForTheRestOfTheProcess() {
+        runBlocking {
+            val ownerUid = "care-stale-${UUID.randomUUID()}"
+            val tankId = 700L
+            val task = validDomainTask(ownerUid, tankId)
+            TankCareIntegrityJournal.initialize(context)
 
-        try {
-            TankCareIntegrityJournal.clearOwner(ownerUid)
-            TankCareIntegrityJournal.begin(ownerUid, listOf(tankId))
-            TankCareIntegrityJournal.captureSnapshots(
-                ownerUid = ownerUid,
-                snapshotsByTank = mapOf(tankId to listOf(task))
-            )
-            TankCareIntegrityJournal.complete(ownerUid, tankId)
+            try {
+                TankCareIntegrityJournal.clearOwner(ownerUid)
+                TankCareIntegrityJournal.begin(ownerUid, listOf(tankId))
+                TankCareIntegrityJournal.captureSnapshots(
+                    ownerUid = ownerUid,
+                    snapshotsByTank = mapOf(tankId to listOf(task))
+                )
+                TankCareIntegrityJournal.complete(ownerUid, tankId)
 
-            val store = CareTaskStoreRules.defaultStore().toBuilder()
-                .addTasks(task.toStoredTask())
-                .build()
+                val store = CareTaskStoreRules.defaultStore().toBuilder()
+                    .addTasks(task.toStoredTask())
+                    .build()
 
-            assertThrows(StoreInvariantViolation::class.java) {
-                runBlocking {
-                    CareTasksCommercialSerializer.writeTo(
-                        store,
-                        ByteArrayOutputStream()
-                    )
+                assertThrows(StoreInvariantViolation::class.java) {
+                    runBlocking {
+                        CareTasksCommercialSerializer.writeTo(
+                            store,
+                            ByteArrayOutputStream()
+                        )
+                    }
                 }
+            } finally {
+                TankCareIntegrityJournal.clearOwner(ownerUid)
             }
-        } finally {
-            TankCareIntegrityJournal.clearOwner(ownerUid)
         }
     }
 
