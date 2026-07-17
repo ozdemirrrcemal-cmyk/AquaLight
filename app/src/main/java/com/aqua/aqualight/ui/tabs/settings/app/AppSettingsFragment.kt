@@ -7,10 +7,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.notifications.NotificationCategory
+import com.aqua.aqualight.application.notifications.NotificationChannelState
+import com.aqua.aqualight.application.notifications.NotificationPreferenceSnapshot
 import com.aqua.aqualight.composition.requireAppContainer
-import com.aqua.aqualight.data.notifications.NotificationChannelRegistry
-import com.aqua.aqualight.data.notifications.NotificationChannelState
-import com.aqua.aqualight.data.notifications.NotificationSystemState
+import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.databinding.FragmentAppSettingsBinding
 import com.aqua.aqualight.platform.permissions.AppCapability
 import com.aqua.aqualight.ui.common.bottomsheet.ThemeBottomSheet
@@ -18,9 +19,7 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.permission.CapabilityPermissionCoordinator
 import com.aqua.aqualight.ui.main.MainActivity
-import com.aqua.aqualight.utils.NotificationHelper
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
@@ -31,25 +30,20 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
     private val settingsOperations by lazy {
         requireContext().requireAppContainer().userSettingsOperations
     }
+    private val notificationPreferences by lazy {
+        requireContext().requireAppContainer().notificationPreferenceUseCase
+    }
 
     private val permissionCoordinator = CapabilityPermissionCoordinator(this) { action ->
-        when (action) {
-            ACTION_ENABLE_NOTIFICATIONS -> completeNotificationEnableFlow()
+        if (action == ACTION_ENABLE_NOTIFICATIONS) {
+            repairAndEnableNotifications()
         }
     }
 
     private var changingNotificationSwitchProgrammatically = false
-    private var ownerNotificationPreferenceEnabled = false
-    private var notificationRuntimePermissionGranted = false
-    private var notificationSystemState = NotificationSystemState(
-        appNotificationsEnabled = false,
-        careReminderChannelState = NotificationChannelState.MISSING
-    )
+    private var notificationSnapshot: NotificationPreferenceSnapshot? = null
 
-    override fun onViewCreated(
-        view: View,
-        savedInstanceState: Bundle?
-    ) {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentAppSettingsBinding.bind(view)
 
@@ -78,16 +72,19 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
     private fun setupClicks() = with(binding) {
         switchNotifications.setOnCheckedChangeListener { _, isChecked ->
             if (!changingNotificationSwitchProgrammatically) {
-                handleNotificationToggle(isChecked)
+                if (isChecked) {
+                    setNotificationSwitchChecked(false)
+                    repairAndEnableNotifications()
+                } else {
+                    disableNotifications()
+                }
             }
         }
 
         cardNotifications.setOnClickListener {
-            if (
-                ownerNotificationPreferenceEnabled &&
-                !canCurrentlyDeliverNotifications()
-            ) {
-                openNotificationRepairFlow()
+            val snapshot = notificationSnapshot
+            if (snapshot?.ownerPreferenceEnabled == true && !snapshot.allCategoriesDeliverable) {
+                repairAndEnableNotifications()
             }
         }
 
@@ -97,9 +94,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             }
         }
 
-        cardThemeMode.setOnClickListener {
-            openThemeSheet()
-        }
+        cardThemeMode.setOnClickListener { openThemeSheet() }
         cardLanguage.setOnClickListener {
             safeNavigate(
                 AppSettingsFragmentDirections.actionAppSettingsFragmentToLanguageSettingsFragment()
@@ -112,67 +107,81 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         }
     }
 
-    private fun openThemeSheet() {
-        val sheet = ThemeBottomSheet().apply {
-            onBeforeThemeApplied = {
-                (activity as? MainActivity)
-                    ?.markSettingsRootRestoreAfterThemeChange()
-
-                runCatching {
-                    findNavController().popBackStack(
-                        R.id.settingsFragment,
-                        false
-                    )
-                }
-            }
-        }
-
-        sheet.show(parentFragmentManager, "theme_sheet")
-    }
-
-    private fun safeNavigate(directions: NavDirections) {
-        val navController = runCatching {
-            findNavController()
-        }.getOrNull() ?: return
-
-        if (navController.currentDestination?.id != R.id.appSettingsFragment) {
-            return
-        }
-
-        runCatching { navController.navigate(directions) }
-    }
-
     private fun refreshNotificationState() {
+        if (_binding == null) return
         viewLifecycleOwner.lifecycleScope.launch {
-            val context = requireContext()
-            NotificationHelper.createNotificationChannel(context)
-
-            ownerNotificationPreferenceEnabled =
-                settingsOperations.notificationsEnabled.first()
-            notificationRuntimePermissionGranted = permissionCoordinator.isGranted(
-                AppCapability.NOTIFICATIONS
-            )
-            notificationSystemState = NotificationHelper.notificationSystemState(context)
-
-            setNotificationSwitchChecked(ownerNotificationPreferenceEnabled)
+            val snapshot = notificationPreferences.snapshot(UserDataScope.requireCurrentUid())
+            notificationSnapshot = snapshot
+            setNotificationSwitchChecked(snapshot.ownerPreferenceEnabled)
             binding.tvNotificationsSubtitle.setText(
                 when {
-                    !ownerNotificationPreferenceEnabled -> {
+                    !snapshot.ownerPreferenceEnabled -> {
                         R.string.settings_notifications_subtitle_disabled
                     }
-                    !notificationRuntimePermissionGranted ||
-                        !notificationSystemState.appNotificationsEnabled -> {
+                    snapshot.delivery.values.any { !it.runtimePermissionGranted || !it.appNotificationsEnabled } -> {
                         R.string.settings_notifications_subtitle_system_blocked
                     }
-                    notificationSystemState.careReminderChannelState ==
-                        NotificationChannelState.BLOCKED ||
-                        notificationSystemState.careReminderChannelState ==
-                        NotificationChannelState.MISSING -> {
+                    snapshot.delivery.values.any {
+                        it.channelState == NotificationChannelState.BLOCKED ||
+                            it.channelState == NotificationChannelState.MISSING
+                    } -> {
                         R.string.settings_notifications_subtitle_channel_blocked
                     }
                     else -> R.string.settings_notifications_subtitle_enabled
                 }
             )
+        }
+    }
+
+    private fun repairAndEnableNotifications() {
+        if (_binding == null) return
+        viewLifecycleOwner.lifecycleScope.launch {
+            val ownerUid = UserDataScope.requireCurrentUid()
+            val snapshot = notificationPreferences.snapshot(ownerUid)
+            notificationSnapshot = snapshot
+
+            val anyRuntimePermissionMissing = snapshot.delivery.values.any {
+                !it.runtimePermissionGranted
+            }
+            if (anyRuntimePermissionMissing) {
+                permissionCoordinator.runWhenGranted(
+                    capability = AppCapability.NOTIFICATIONS,
+                    actionToken = ACTION_ENABLE_NOTIFICATIONS
+                )
+                return@launch
+            }
+
+            if (snapshot.delivery.values.any { !it.appNotificationsEnabled }) {
+                permissionCoordinator.openSettingsFor(
+                    capability = AppCapability.NOTIFICATIONS,
+                    actionToken = ACTION_ENABLE_NOTIFICATIONS
+                )
+                return@launch
+            }
+
+            val blockedCategory = NotificationCategory.entries.firstOrNull { category ->
+                val state = snapshot.readiness(category).channelState
+                state == NotificationChannelState.BLOCKED ||
+                    state == NotificationChannelState.MISSING
+            }
+            if (blockedCategory != null) {
+                permissionCoordinator.openNotificationChannelSettingsFor(
+                    channelId = notificationPreferences.channelId(blockedCategory),
+                    actionToken = ACTION_ENABLE_NOTIFICATIONS
+                )
+                return@launch
+            }
+
+            notificationPreferences.setEnabled(ownerUid, true)
+            refreshNotificationState()
+        }
+    }
+
+    private fun disableNotifications() {
+        setNotificationSwitchChecked(false)
+        viewLifecycleOwner.lifecycleScope.launch {
+            notificationPreferences.setEnabled(UserDataScope.requireCurrentUid(), false)
+            refreshNotificationState()
         }
     }
 
@@ -182,93 +191,22 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         changingNotificationSwitchProgrammatically = false
     }
 
-    private fun handleNotificationToggle(enable: Boolean) {
-        if (!enable) {
-            disableNotifications()
-            return
-        }
-
-        setNotificationSwitchChecked(false)
-        openNotificationRepairFlow()
-    }
-
-    private fun openNotificationRepairFlow() {
-        notificationRuntimePermissionGranted = permissionCoordinator.isGranted(
-            AppCapability.NOTIFICATIONS
-        )
-
-        if (!notificationRuntimePermissionGranted) {
-            permissionCoordinator.runWhenGranted(
-                capability = AppCapability.NOTIFICATIONS,
-                actionToken = ACTION_ENABLE_NOTIFICATIONS
-            )
-            return
-        }
-
-        NotificationHelper.createNotificationChannel(requireContext())
-        notificationSystemState = NotificationHelper.notificationSystemState(requireContext())
-
-        when {
-            !notificationSystemState.appNotificationsEnabled -> {
-                permissionCoordinator.openSettingsFor(
-                    capability = AppCapability.NOTIFICATIONS,
-                    actionToken = ACTION_ENABLE_NOTIFICATIONS
-                )
+    private fun openThemeSheet() {
+        val sheet = ThemeBottomSheet().apply {
+            onBeforeThemeApplied = {
+                (activity as? MainActivity)?.markSettingsRootRestoreAfterThemeChange()
+                runCatching {
+                    findNavController().popBackStack(R.id.settingsFragment, false)
+                }
             }
-
-            notificationSystemState.careReminderChannelState ==
-                NotificationChannelState.BLOCKED ||
-                notificationSystemState.careReminderChannelState ==
-                NotificationChannelState.MISSING -> {
-                permissionCoordinator.openNotificationChannelSettingsFor(
-                    channelId = NotificationChannelRegistry.CARE_REMINDERS_CHANNEL_ID,
-                    actionToken = ACTION_ENABLE_NOTIFICATIONS
-                )
-            }
-
-            else -> completeNotificationEnableFlow()
         }
+        sheet.show(parentFragmentManager, "theme_sheet")
     }
 
-    private fun completeNotificationEnableFlow() {
-        if (_binding == null) return
-
-        val context = requireContext()
-        NotificationHelper.createNotificationChannel(context)
-        notificationRuntimePermissionGranted = permissionCoordinator.isGranted(
-            AppCapability.NOTIFICATIONS
-        )
-        notificationSystemState = NotificationHelper.notificationSystemState(context)
-
-        if (!canCurrentlyDeliverNotifications()) {
-            refreshNotificationState()
-            return
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            settingsOperations.updateNotificationsEnabled(true)
-            ownerNotificationPreferenceEnabled = true
-            setNotificationSwitchChecked(true)
-
-            _binding?.root?.postDelayed(
-                ::refreshNotificationState,
-                NOTIFICATION_STATE_REFRESH_DELAY_MS
-            )
-        }
-    }
-
-    private fun canCurrentlyDeliverNotifications(): Boolean {
-        return notificationRuntimePermissionGranted &&
-            notificationSystemState.canDeliverCareReminders
-    }
-
-    private fun disableNotifications() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            settingsOperations.updateNotificationsEnabled(false)
-            ownerNotificationPreferenceEnabled = false
-            refreshNotificationState()
-        }
-        setNotificationSwitchChecked(false)
+    private fun safeNavigate(directions: NavDirections) {
+        val navController = runCatching { findNavController() }.getOrNull() ?: return
+        if (navController.currentDestination?.id != R.id.appSettingsFragment) return
+        runCatching { navController.navigate(directions) }
     }
 
     private fun observeThemeSummary() {
@@ -313,6 +251,5 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
     private companion object {
         const val ACTION_ENABLE_NOTIFICATIONS = "enable_notifications"
-        const val NOTIFICATION_STATE_REFRESH_DELAY_MS = 150L
     }
 }
