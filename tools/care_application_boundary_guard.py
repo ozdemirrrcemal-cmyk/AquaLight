@@ -17,7 +17,7 @@ ui_model = APP / "ui/tabs/maintenance/model/CareTaskUi.kt"
 text_contract = APP / "ui/tabs/maintenance/text/MaintenanceTextResolver.kt"
 presentation_catalog = APP / "ui/tabs/maintenance/text/CareTaskTypeCatalog.kt"
 data_model = APP / "data/care/model/CareTask.kt"
-reminder_receiver = APP / "data/care/reminder/CareTaskReminderReceiver.kt"
+reminder_delivery_worker = APP / "data/care/reminder/CareReminderDeliveryWorker.kt"
 reminder_policy = APP / "data/care/reminder/CareReminderDeliveryPolicy.kt"
 reminder_policy_test = TESTS / "data/care/reminder/CareReminderDeliveryPolicyTest.kt"
 production = APP / "composition/OwnerViewModelFactory.kt"
@@ -37,7 +37,7 @@ required = (
     text_contract,
     presentation_catalog,
     data_model,
-    reminder_receiver,
+    reminder_delivery_worker,
     reminder_policy,
     reminder_policy_test,
     production,
@@ -126,10 +126,12 @@ if view_model.is_file():
     if "collectLatest" not in text:
         errors.append("Smart Care synchronization must remain single-flight")
 
-if reminder_receiver.is_file():
-    text = reminder_receiver.read_text(encoding="utf-8")
+if reminder_delivery_worker.is_file():
+    text = reminder_delivery_worker.read_text(encoding="utf-8")
     if "CareReminderDeliveryPolicy.shouldDeliver(task, tank)" not in text:
-        errors.append("reminder receiver must revalidate task and tank state at delivery time")
+        errors.append(
+            "durable reminder delivery worker must revalidate task and tank state at delivery time"
+        )
 
 if reminder_policy.is_file():
     text = reminder_policy.read_text(encoding="utf-8")
