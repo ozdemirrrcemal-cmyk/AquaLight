@@ -59,12 +59,12 @@ class EncryptedUserPreferencesSerializer(
         val readCount = buffered.read(iv)
 
         if (readCount == -1) {
-            throw@withContext CorruptionException(
+            throw CorruptionException(
                 "Encrypted user preferences payload is empty."
             )
         }
         if (readCount != IV_SIZE) {
-            throw@withContext CorruptionException(
+            throw CorruptionException(
                 "Encrypted user preferences IV is incomplete."
             )
         }
