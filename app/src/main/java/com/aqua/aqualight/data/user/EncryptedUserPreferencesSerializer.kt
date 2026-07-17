@@ -1,8 +1,9 @@
 package com.aqua.aqualight.data.user
 
 import android.content.Context
+import androidx.datastore.core.CorruptionException
+import androidx.datastore.core.Serializer
 import androidx.security.crypto.MasterKey
-import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.aqua.aqualight.data.security.KeyStoreUtils
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
@@ -23,14 +24,14 @@ import kotlinx.coroutines.withContext
  * AES-GCM wrapper serializer.
  * On-disk format: [12 bytes IV][ciphertext].
  *
- * Decryption, authentication, schema, or invariant failures are reported through
- * LocalDataRecoveryTracker and recover to the first commercial default store.
- * No raw exception or preference content is written to logs.
+ * Authentication, decryption, schema, and invariant failures are surfaced as
+ * [CorruptionException]. The DataStore corruption handler owns replacement and
+ * recovery reporting, so no serializer path can silently return default data.
  */
 class EncryptedUserPreferencesSerializer(
     private val context: Context,
-    private val delegate: androidx.datastore.core.Serializer<UserPreferences>
-) : androidx.datastore.core.Serializer<UserPreferences> {
+    private val delegate: Serializer<UserPreferences>
+) : Serializer<UserPreferences> {
 
     companion object {
         private const val ALGORITHM = "AES/GCM/NoPadding"
@@ -50,42 +51,53 @@ class EncryptedUserPreferencesSerializer(
         return SecretKeySpec(rawKey, "AES")
     }
 
-    override suspend fun readFrom(input: InputStream): UserPreferences =
-        withContext(Dispatchers.IO) {
-            val buffered = BufferedInputStream(input)
-            val iv = ByteArray(IV_SIZE)
-            val readCount = buffered.read(iv)
+    override suspend fun readFrom(
+        input: InputStream
+    ): UserPreferences = withContext(Dispatchers.IO) {
+        val buffered = BufferedInputStream(input)
+        val iv = ByteArray(IV_SIZE)
+        val readCount = buffered.read(iv)
 
-            if (readCount == -1) {
-                return@withContext defaultValue
-            }
-
-            if (readCount != IV_SIZE) {
-                return@withContext recoverCorruptedPreferences()
-            }
-
-            try {
-                val cipher = Cipher.getInstance(ALGORITHM)
-                cipher.init(
-                    Cipher.DECRYPT_MODE,
-                    getSecretKey(),
-                    GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv)
-                )
-
-                CipherInputStream(buffered, cipher).use { cipherInput ->
-                    delegate.readFrom(cipherInput)
-                }
-            } catch (exception: CancellationException) {
-                throw exception
-            } catch (_: Exception) {
-                recoverCorruptedPreferences()
-            }
+        if (readCount == -1) {
+            throw@withContext CorruptionException(
+                "Encrypted user preferences payload is empty."
+            )
         }
+        if (readCount != IV_SIZE) {
+            throw@withContext CorruptionException(
+                "Encrypted user preferences IV is incomplete."
+            )
+        }
+
+        try {
+            val cipher = Cipher.getInstance(ALGORITHM)
+            cipher.init(
+                Cipher.DECRYPT_MODE,
+                getSecretKey(),
+                GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv)
+            )
+
+            CipherInputStream(buffered, cipher).use { cipherInput ->
+                delegate.readFrom(cipherInput)
+            }
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (exception: CorruptionException) {
+            throw exception
+        } catch (exception: Exception) {
+            throw CorruptionException(
+                "Cannot authenticate or decrypt user preferences.",
+                exception
+            )
+        }
+    }
 
     override suspend fun writeTo(
         t: UserPreferences,
         output: OutputStream
     ) = withContext(Dispatchers.IO) {
+        UserPreferencesStoreRules.validate(t)
+
         val iv = ByteArray(IV_SIZE).also { bytes ->
             SecureRandom().nextBytes(bytes)
         }
@@ -105,12 +117,5 @@ class EncryptedUserPreferencesSerializer(
             cipherOutput.flush()
         }
         buffered.flush()
-    }
-
-    private fun recoverCorruptedPreferences(): UserPreferences {
-        LocalDataRecoveryTracker.markRecovered(
-            LocalDataRecoveryTracker.Area.USER_PREFERENCES
-        )
-        return defaultValue
     }
 }
