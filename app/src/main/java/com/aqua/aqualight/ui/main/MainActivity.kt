@@ -15,10 +15,10 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.auth.AppSessionCoordinator
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
-import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.databinding.ActivityMainBinding
 import com.aqua.aqualight.ui.navigation.AppDestinationContract
 import com.aqua.aqualight.ui.navigation.AppRouteNavigator
+import com.aqua.aqualight.ui.navigation.CareTaskNotificationRoutePolicy
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.flow.collect
@@ -364,11 +364,11 @@ class MainActivity : BaseActivity() {
         }
 
         if (
-            ownerUid.isNotBlank() &&
-            !UserDataScope.belongsToOwner(
-                recordOwnerUid = ownerUid,
-                ownerUid = activeOwnerUid,
-                includeLegacy = false
+            !CareTaskNotificationRoutePolicy.canOpen(
+                taskId = taskId,
+                notificationOwnerUid = ownerUid,
+                activeOwnerUid = activeOwnerUid,
+                isAuthenticated = true
             )
         ) {
             pendingCareTaskId = -1L
