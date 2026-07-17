@@ -63,8 +63,13 @@ object UserDataScope {
 
     fun belongsToOwner(
         recordOwnerUid: String,
-        ownerUid: String
+        ownerUid: String,
+        includeLegacy: Boolean = false
     ): Boolean {
+        require(!includeLegacy) {
+            "Ownerless legacy records are not supported by the commercial store contract."
+        }
+
         val normalizedOwnerUid = normalizeOwnerUid(ownerUid)
         if (normalizedOwnerUid.isBlank()) {
             return false
@@ -76,11 +81,13 @@ object UserDataScope {
     }
 
     fun belongsToCurrentUser(
-        recordOwnerUid: String
+        recordOwnerUid: String,
+        includeLegacy: Boolean = false
     ): Boolean {
         return belongsToOwner(
             recordOwnerUid = recordOwnerUid,
-            ownerUid = currentUid()
+            ownerUid = currentUid(),
+            includeLegacy = includeLegacy
         )
     }
 
