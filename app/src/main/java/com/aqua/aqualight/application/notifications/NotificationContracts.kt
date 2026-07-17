@@ -1,12 +1,35 @@
 package com.aqua.aqualight.application.notifications
 
-import com.aqua.aqualight.application.care.CareTaskType
 import kotlinx.coroutines.flow.Flow
 
 enum class NotificationCategory {
     CARE_REMINDERS,
     DEVICE_ALERTS,
     DEVICE_UPDATES
+}
+
+enum class CareReminderKind {
+    WATER_CHANGE,
+    FEEDING,
+    FILTER_MAINTENANCE,
+    FILTER_CHANGE,
+    PRE_FILTER_CLEANING,
+    PIPE_CLEANING,
+    DIFFUSER_CLEANING,
+    HOSE_CLEANING,
+    GLASS_CLEANING,
+    ALGAE_CLEANING,
+    PLANT_TRIM,
+    FERTILIZER_DOSING,
+    PLANT_HEALTH_CHECK,
+    CO2_CHECK,
+    LIGHT_CHECK,
+    WATER_TEST,
+    TEMPERATURE_CHECK,
+    SUBSTRATE_CLEANING,
+    LIVESTOCK_CHECK,
+    DEVICE_CHECK,
+    CUSTOM
 }
 
 enum class NotificationChannelState {
@@ -43,7 +66,7 @@ data class NotificationPreferenceSnapshot(
 data class CareReminderNotification(
     val ownerUid: String,
     val taskId: Long,
-    val careTaskType: CareTaskType,
+    val kind: CareReminderKind,
     val title: String,
     val message: String
 )
