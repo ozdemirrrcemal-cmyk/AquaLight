@@ -8,7 +8,9 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.aqua.aqualight.data.auth.FirebaseAuthenticatedOwnerProvider
+import com.aqua.aqualight.data.notifications.OwnerNotificationPreferences
 import com.aqua.aqualight.data.user.UserDataScope
+import com.aqua.aqualight.data.user.UserPreferencesManager
 
 /** Durable owner-scoped reconciliation after boot, package update, or session start. */
 class CareReminderReconcileWorker(
@@ -33,6 +35,16 @@ class CareReminderReconcileWorker(
 
         val coordinator = CareReminderCoordinator.create(applicationContext)
         return try {
+            val ownerPreference = OwnerNotificationPreferences.create(
+                applicationContext
+            ).isEnabled(ownerUid)
+
+            // Keep the active-session legacy projection synchronized until all
+            // older care-task write paths are removed. The owner store remains
+            // the source of truth and every receiver re-checks it explicitly.
+            UserPreferencesManager.create(applicationContext)
+                .updateNotificationsEnabled(ownerPreference)
+
             coordinator.reconcileOwner(ownerUid)
 
             // A fast account switch can happen while DataStore is read. Remove
