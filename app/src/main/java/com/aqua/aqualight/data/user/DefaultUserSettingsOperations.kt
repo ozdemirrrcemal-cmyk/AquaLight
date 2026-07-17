@@ -1,31 +1,18 @@
 package com.aqua.aqualight.data.user
 
-import android.content.Context
 import com.aqua.aqualight.application.user.UsageAnalyticsSnapshot
 import com.aqua.aqualight.application.user.UserSettingsOperations
-import com.aqua.aqualight.data.care.reminder.CareReminderCoordinator
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 
-/** Existing DataStore/settings behavior wired behind the application contract. */
+/** Existing non-notification settings behavior wired behind the application contract. */
 class DefaultUserSettingsOperations(
-    context: Context,
     private val preferences: UserPreferencesManager,
     private val startupAppearanceCache: StartupAppearanceCache
 ) : UserSettingsOperations {
 
-    private val reminderCoordinator = CareReminderCoordinator.create(
-        context.applicationContext
-    )
-
     override val themeMode: Flow<String> = preferences.themeMode
     override val languageCode: Flow<String> = preferences.languageCode
-    override val notificationsEnabled: Flow<Boolean> = flow {
-        val ownerUid = UserDataScope.requireCurrentUid()
-        emitAll(reminderCoordinator.preferenceFlow(ownerUid))
-    }
     override val autoUpdateEnabled: Flow<Boolean> = preferences.autoUpdateEnabled
     override val usageAnalytics: Flow<UsageAnalyticsSnapshot> =
         preferences.usageAnalyticsFlow.map { usage ->
@@ -49,26 +36,7 @@ class DefaultUserSettingsOperations(
         startupAppearanceCache.writeLanguageCode(code)
     }
 
-    override suspend fun updateNotificationsEnabled(enabled: Boolean) {
-        reminderCoordinator.setPreference(
-            ownerUid = UserDataScope.requireCurrentUid(),
-            enabled = enabled
-        )
-    }
-
     override suspend fun updateAutoUpdateEnabled(enabled: Boolean) {
         preferences.updateAutoUpdateEnabled(enabled)
-    }
-
-    override suspend fun reschedulePendingCareTaskReminders() {
-        reminderCoordinator.reconcileOwner(
-            UserDataScope.requireCurrentUid()
-        )
-    }
-
-    override suspend fun cancelPendingCareTaskReminders() {
-        reminderCoordinator.cancelOwner(
-            UserDataScope.requireCurrentUid()
-        )
     }
 }
