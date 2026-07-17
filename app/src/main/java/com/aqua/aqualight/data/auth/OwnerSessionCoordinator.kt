@@ -4,6 +4,7 @@ import android.content.Context
 import com.aqua.aqualight.data.aquarium.devices.TankAssignmentRepairResult
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
+import com.aqua.aqualight.data.care.integrity.TankCareIntegrityRecovery
 import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
 import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningCommitRecoveryStore
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
@@ -157,9 +158,13 @@ class OwnerSessionCoordinator private constructor(
                     }
                 }
 
-                val repairedCareTaskCount = CareTaskDataStoreManager
+                val tankCareRecovery = TankCareIntegrityRecovery
                     .create(appContext)
-                    .repairOrphanedTankTasks(normalizedOwnerUid)
+                    .recover(normalizedOwnerUid)
+                val repairedCareTaskCount = tankCareRecovery.removedTaskCount +
+                    CareTaskDataStoreManager
+                        .create(appContext)
+                        .repairOrphanedTankTasks(normalizedOwnerUid)
 
                 SessionBoundServiceManager.start(
                     context = appContext,
