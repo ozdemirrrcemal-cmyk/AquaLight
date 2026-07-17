@@ -93,6 +93,7 @@ jobs:
           python3 tools/session_startup_guard.py
           python3 tools/navigation_guard.py
           python3 tools/ws_protocol_guard.py
+          python3 tools/permission_architecture_guard.py
 
       - name: 🔄 Force refresh dependencies optional
         if: contains(github.event.head_commit.message, 'refresh-deps')
