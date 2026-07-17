@@ -8,9 +8,11 @@ import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.auth.FirebaseAuthenticatedOwnerProvider
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.catalog.CareTaskTypeCatalog
+import com.aqua.aqualight.data.care.model.CareTask
+import com.aqua.aqualight.data.notifications.OwnerNotificationPreferences
 import com.aqua.aqualight.data.user.UserDataScope
-import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.utils.NotificationHelper
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,9 +35,14 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
         )
         val intentOwnerUid = intent.getStringExtra(
             CareTaskReminderScheduler.EXTRA_OWNER_UID
-        ).orEmpty()
+        ).orEmpty().trim()
+        val occurrence = intent.getStringExtra(
+            CareTaskReminderScheduler.EXTRA_OCCURRENCE
+        )?.let { raw ->
+            runCatching { CareReminderOccurrence.valueOf(raw) }.getOrNull()
+        }
 
-        if (taskId <= 0L) {
+        if (taskId <= 0L || intentOwnerUid.isBlank() || occurrence == null) {
             return
         }
 
@@ -47,24 +54,16 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
                 val ownerProvider = FirebaseAuthenticatedOwnerProvider.create(
                     appContext
                 )
-                val activeUid = ownerProvider.currentOwnerUid().orEmpty()
+                val activeUid = ownerProvider.currentOwnerUid().orEmpty().trim()
 
-                if (activeUid.isBlank()) {
+                if (activeUid.isBlank() || intentOwnerUid != activeUid) {
                     return@launch
                 }
 
-                if (
-                    intentOwnerUid.isNotBlank() &&
-                    intentOwnerUid != activeUid
-                ) {
-                    return@launch
-                }
-
-                val userPrefs = UserPreferencesManager.create(appContext)
-                val appNotificationsEnabled = userPrefs.notificationsEnabled
-                    .firstOrNull() ?: false
-
-                if (!appNotificationsEnabled) {
+                val notificationPreferences = OwnerNotificationPreferences.create(
+                    appContext
+                )
+                if (!notificationPreferences.isEnabled(activeUid)) {
                     return@launch
                 }
 
@@ -75,14 +74,19 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
                     careTaskManager.taskFlow(taskId).firstOrNull()
                 } ?: return@launch
 
-                if (
-                    task.ownerUid.isNotBlank() &&
-                    !UserDataScope.belongsToOwner(
-                        recordOwnerUid = task.ownerUid,
-                        ownerUid = activeUid,
-                        includeLegacy = false
+                if (task.ownerUid != activeUid) {
+                    return@launch
+                }
+
+                val ownerTask = task.copy(ownerUid = activeUid)
+                val nowMillis = System.currentTimeMillis()
+
+                if (!matchesScheduledOccurrence(ownerTask, occurrence, nowMillis)) {
+                    CareTaskReminderScheduler.schedule(
+                        context = appContext,
+                        task = ownerTask,
+                        nowMillis = nowMillis
                     )
-                ) {
                     return@launch
                 }
 
@@ -90,14 +94,14 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
                     tankManager.tanksFlow.firstOrNull().orEmpty()
                 }
                 val tank = tanks.firstOrNull { candidate ->
-                    candidate.id == task.tankId
+                    candidate.id == ownerTask.tankId
                 }
 
-                if (!CareReminderDeliveryPolicy.shouldDeliver(task, tank)) {
+                if (!CareReminderDeliveryPolicy.shouldDeliver(ownerTask, tank)) {
                     CareTaskReminderScheduler.cancel(
                         context = appContext,
-                        taskId = task.id,
-                        ownerUid = task.ownerUid.ifBlank { activeUid }
+                        taskId = ownerTask.id,
+                        ownerUid = activeUid
                     )
                     return@launch
                 }
@@ -108,27 +112,27 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
                     return@launch
                 }
 
-                val typeUi = CareTaskTypeCatalog.get(task.type)
-                val baseTitle = task.title.ifBlank {
+                val typeUi = CareTaskTypeCatalog.get(ownerTask.type)
+                val baseTitle = ownerTask.title.ifBlank {
                     typeUi.title(appContext)
                 }
                 val title = if (
-                    task.waterChangePercent != null &&
-                    task.waterChangePercent > 0 &&
+                    ownerTask.waterChangePercent != null &&
+                    ownerTask.waterChangePercent > 0 &&
                     !baseTitle.contains("%")
                 ) {
                     appContext.getString(
                         R.string.maintenance_task_title_with_percent,
                         baseTitle,
-                        task.waterChangePercent
+                        ownerTask.waterChangePercent
                     )
                 } else {
                     baseTitle
                 }
 
                 val bodyText = when {
-                    task.note.isNotBlank() -> task.note
-                    task.description.isNotBlank() -> task.description
+                    ownerTask.note.isNotBlank() -> ownerTask.note
+                    ownerTask.description.isNotBlank() -> ownerTask.description
                     typeUi.defaultDescription(appContext).isNotBlank() -> {
                         typeUi.defaultDescription(appContext)
                     }
@@ -149,24 +153,48 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
 
                 NotificationHelper.showCareTaskReminderNotification(
                     context = appContext,
-                    taskId = task.id,
+                    taskId = ownerTask.id,
                     title = title,
                     message = message,
                     largeIconRes = typeUi.iconRes,
                     largeIconColor = typeUi.accentColor,
-                    ownerUid = task.ownerUid.ifBlank { activeUid }
+                    ownerUid = activeUid
                 )
 
-                if (task.missedReminderEnabled) {
-                    CareTaskReminderScheduler.scheduleMissedReminder(
-                        context = appContext,
-                        task = task.copy(
-                            ownerUid = task.ownerUid.ifBlank { activeUid }
-                        )
-                    )
-                }
+                // The same deterministic policy decides whether a missed
+                // occurrence remains. No receiver-local relative timer is used.
+                CareTaskReminderScheduler.schedule(
+                    context = appContext,
+                    task = ownerTask,
+                    nowMillis = nowMillis
+                )
             } finally {
                 pendingResult.finish()
+            }
+        }
+    }
+
+    private fun matchesScheduledOccurrence(
+        task: CareTask,
+        occurrence: CareReminderOccurrence,
+        nowMillis: Long
+    ): Boolean {
+        return when (occurrence) {
+            CareReminderOccurrence.DUE -> task.dueAtMillis <= nowMillis
+            CareReminderOccurrence.MISSED -> {
+                if (!task.missedReminderEnabled) {
+                    false
+                } else {
+                    val missedAt = runCatching {
+                        Math.addExact(
+                            task.dueAtMillis,
+                            TimeUnit.DAYS.toMillis(
+                                task.missedReminderDays.toLong()
+                            )
+                        )
+                    }.getOrNull()
+                    missedAt != null && missedAt <= nowMillis
+                }
             }
         }
     }
