@@ -5,6 +5,10 @@ option java_multiple_files = true;
 
 message AquariumTanksStore {
   repeated StoredTank tanks = 1;
+
+  // First commercial local-store schema. Unsupported values are corruption;
+  // AquaLight has no shipped legacy tank-store compatibility contract.
+  uint32 schema_version = 100;
 }
 
 message StoredTank {
