@@ -85,21 +85,21 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
                 PREFERENCES_NAME,
                 Context.MODE_PRIVATE
             )
-            val persisted = loadedPreferences
+            val loadedEntries = linkedMapOf<Key, PendingDeletion>()
+
+            loadedPreferences
                 .getStringSet(KEY_PENDING_DELETIONS, emptySet())
                 .orEmpty()
-                .toSet()
-
-            val loadedEntries = linkedMapOf<Key, PendingDeletion>()
-            persisted.forEach { encoded ->
-                val entry = decodeEntry(encoded)
-                val key = Key(entry.ownerUid, entry.tankId)
-                if (loadedEntries.put(key, entry) != null) {
-                    throw StoreInvariantViolation(
-                        "Duplicate tank-care integrity journal entry for ${entry.ownerUid}/${entry.tankId}."
-                    )
+                .forEach { encoded ->
+                    val entry = decodeEntry(encoded)
+                    val key = entry.key()
+                    if (loadedEntries.put(key, entry) != null) {
+                        violation(
+                            "Duplicate tank-care integrity journal entry for " +
+                                "${entry.ownerUid}/${entry.tankId}."
+                        )
+                    }
                 }
-            }
 
             preferences = loadedPreferences
             entries.clear()
@@ -125,12 +125,12 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
             normalizedIds.forEach { tankId ->
                 val key = Key(owner, tankId)
                 if (key in processTombstones) {
-                    throw StoreInvariantViolation(
+                    violation(
                         "A deleted tank id cannot start another care integrity transaction."
                     )
                 }
                 if (key in next) {
-                    throw StoreInvariantViolation(
+                    violation(
                         "A tank-care integrity transaction is already pending."
                     )
                 }
@@ -162,30 +162,18 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
             snapshotsByTank.forEach { (tankId, snapshots) ->
                 CareTaskStoreRules.requireValidTankId(tankId)
                 val key = Key(owner, tankId)
-                val current = next[key] ?: throw StoreInvariantViolation(
+                val current = next[key] ?: violation(
                     "Tank-care snapshot capture has no matching blocked transaction."
                 )
                 if (current.state != State.BLOCKED) {
-                    throw StoreInvariantViolation(
-                        "Tank-care snapshots may only be captured once."
-                    )
+                    violation("Tank-care snapshots may only be captured once.")
                 }
 
-                val snapshotIds = mutableSetOf<Long>()
-                snapshots.forEach { task ->
-                    CareTaskStoreRules.validateTask(task, expectedOwnerUid = owner)
-                    if (task.tankId != tankId) {
-                        throw StoreInvariantViolation(
-                            "A tank-care snapshot contains a task from another tank."
-                        )
-                    }
-                    if (!snapshotIds.add(task.id)) {
-                        throw StoreInvariantViolation(
-                            "A tank-care snapshot contains duplicate task ids."
-                        )
-                    }
-                }
-
+                validateSnapshots(
+                    ownerUid = owner,
+                    tankId = tankId,
+                    snapshots = snapshots
+                )
                 next[key] = current.copy(
                     state = State.SNAPSHOTS_CAPTURED,
                     taskSnapshots = snapshots.toList()
@@ -201,13 +189,12 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
         tankId: Long,
         block: suspend () -> T
     ): T {
-        val key = Key(canonicalOwnerUid(ownerUid), tankId)
-        CareTaskStoreRules.requireValidTankId(tankId)
+        val key = validatedKey(ownerUid, tankId)
 
         synchronized(lock) {
             requireInitialized()
             if (key !in entries) {
-                throw StoreInvariantViolation(
+                violation(
                     "Rollback writes require a pending tank-care integrity transaction."
                 )
             }
@@ -227,23 +214,19 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
         ownerUid: String,
         tankId: Long
     ) {
-        val key = Key(canonicalOwnerUid(ownerUid), tankId)
-        CareTaskStoreRules.requireValidTankId(tankId)
+        val key = validatedKey(ownerUid, tankId)
 
         synchronized(lock) {
             requireInitialized()
             if (key !in entries) {
-                throw StoreInvariantViolation(
-                    "Cannot complete a missing tank-care integrity transaction."
-                )
+                violation("Cannot complete a missing tank-care integrity transaction.")
             }
 
-            // Add the in-process tombstone before the durable entry is removed. Even if
-            // SharedPreferences commit fails, stale writers remain blocked.
+            // Install the in-process tombstone before removing the durable entry. A stale
+            // writer therefore remains blocked even if the preference commit itself fails.
             processTombstones += key
-            val next = LinkedHashMap(entries).apply {
-                remove(key)
-            }
+            val next = LinkedHashMap(entries)
+            next.remove(key)
             persistAndReplace(next)
         }
     }
@@ -252,14 +235,12 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
         ownerUid: String,
         tankId: Long
     ) {
-        val key = Key(canonicalOwnerUid(ownerUid), tankId)
-        CareTaskStoreRules.requireValidTankId(tankId)
+        val key = validatedKey(ownerUid, tankId)
 
         synchronized(lock) {
             requireInitialized()
-            val next = LinkedHashMap(entries).apply {
-                remove(key)
-            }
+            val next = LinkedHashMap(entries)
+            next.remove(key)
             persistAndReplace(next)
             rollbackWritesAllowed -= key
         }
@@ -279,11 +260,14 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
         val owner = canonicalOwnerUid(ownerUid)
         synchronized(lock) {
             requireInitialized()
-            val next = LinkedHashMap(entries).apply {
-                entries.keys
-                    .filter { key -> key.ownerUid == owner }
-                    .forEach(::remove)
+
+            val keysToRemove = entries.keys
+                .filter { key -> key.ownerUid == owner }
+            val next = LinkedHashMap(entries)
+            keysToRemove.forEach { key ->
+                next.remove(key)
             }
+
             persistAndReplace(next)
             processTombstones.removeAll { key -> key.ownerUid == owner }
             rollbackWritesAllowed.removeAll { key -> key.ownerUid == owner }
@@ -296,7 +280,7 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
                 val key = Key(task.ownerUid, task.tankId)
                 val blocked = key in entries || key in processTombstones
                 if (blocked && key !in rollbackWritesAllowed) {
-                    throw StoreInvariantViolation(
+                    violation(
                         "Care-task write targets a tank with an active deletion transaction."
                     )
                 }
@@ -305,9 +289,10 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
     }
 
     fun isWriteBlocked(ownerUid: String, tankId: Long): Boolean {
-        val key = Key(canonicalOwnerUid(ownerUid), tankId)
+        val key = validatedKey(ownerUid, tankId)
         return synchronized(lock) {
-            (key in entries || key in processTombstones) && key !in rollbackWritesAllowed
+            (key in entries || key in processTombstones) &&
+                key !in rollbackWritesAllowed
         }
     }
 
@@ -337,11 +322,11 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
             State.BLOCKED -> "B"
             State.SNAPSHOTS_CAPTURED -> "S"
         }
-        val ownerToken = base64Encoder.encodeToString(
+        val ownerToken = encodeBytes(
             entry.ownerUid.toByteArray(Charsets.UTF_8)
         )
         val taskToken = entry.taskSnapshots.joinToString(",") { task ->
-            base64Encoder.encodeToString(task.toStoredTask().toByteArray())
+            encodeBytes(task.toStoredTask().toByteArray())
         }
         return listOf(
             FORMAT_VERSION,
@@ -355,27 +340,25 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
     private fun decodeEntry(encoded: String): PendingDeletion {
         val parts = encoded.split('|', limit = 5)
         if (parts.size != 5 || parts[0] != FORMAT_VERSION) {
-            throw StoreInvariantViolation(
-                "Tank-care integrity journal contains an unsupported entry."
-            )
+            violation("Tank-care integrity journal contains an unsupported entry.")
         }
 
         val state = when (parts[1]) {
             "B" -> State.BLOCKED
             "S" -> State.SNAPSHOTS_CAPTURED
-            else -> throw StoreInvariantViolation(
+            else -> violation(
                 "Tank-care integrity journal contains an invalid state."
             )
         }
         val ownerUid = runCatching {
-            String(base64Decoder.decode(parts[2]), Charsets.UTF_8)
+            String(decodeBytes(parts[2]), Charsets.UTF_8)
         }.getOrElse { error ->
-            throw StoreInvariantViolation(
+            violation(
                 "Tank-care integrity journal owner is unreadable: ${error.message}"
             )
         }.let(::canonicalOwnerUid)
         val tankId = parts[3].toLongOrNull()
-            ?: throw StoreInvariantViolation(
+            ?: violation(
                 "Tank-care integrity journal contains an invalid tank id."
             )
         CareTaskStoreRules.requireValidTankId(tankId)
@@ -384,17 +367,10 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
             emptyList()
         } else {
             parts[4].split(',').map { taskToken ->
-                val bytes = runCatching {
-                    base64Decoder.decode(taskToken)
-                }.getOrElse { error ->
-                    throw StoreInvariantViolation(
-                        "Tank-care integrity task snapshot is unreadable: ${error.message}"
-                    )
-                }
                 val stored = runCatching {
-                    StoredCareTask.parseFrom(bytes)
+                    StoredCareTask.parseFrom(decodeBytes(taskToken))
                 }.getOrElse { error ->
-                    throw StoreInvariantViolation(
+                    violation(
                         "Tank-care integrity task snapshot is corrupt: ${error.message}"
                     )
                 }
@@ -403,23 +379,13 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
         }
 
         if (state == State.BLOCKED && snapshots.isNotEmpty()) {
-            throw StoreInvariantViolation(
-                "A blocked tank-care transaction must not contain snapshots."
-            )
+            violation("A blocked tank-care transaction must not contain snapshots.")
         }
-        snapshots.forEach { task ->
-            CareTaskStoreRules.validateTask(task, expectedOwnerUid = ownerUid)
-            if (task.tankId != tankId) {
-                throw StoreInvariantViolation(
-                    "Tank-care integrity journal snapshot references another tank."
-                )
-            }
-        }
-        if (snapshots.map { task -> task.id }.toSet().size != snapshots.size) {
-            throw StoreInvariantViolation(
-                "Tank-care integrity journal contains duplicate task snapshots."
-            )
-        }
+        validateSnapshots(
+            ownerUid = ownerUid,
+            tankId = tankId,
+            snapshots = snapshots
+        )
 
         return PendingDeletion(
             ownerUid = ownerUid,
@@ -427,6 +393,27 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
             state = state,
             taskSnapshots = snapshots
         )
+    }
+
+    private fun validateSnapshots(
+        ownerUid: String,
+        tankId: Long,
+        snapshots: List<CareTask>
+    ) {
+        val taskIds = mutableSetOf<Long>()
+        snapshots.forEach { task ->
+            CareTaskStoreRules.validateTask(task, expectedOwnerUid = ownerUid)
+            if (task.tankId != tankId) {
+                violation(
+                    "Tank-care integrity snapshot references another tank."
+                )
+            }
+            if (!taskIds.add(task.id)) {
+                violation(
+                    "Tank-care integrity snapshot contains duplicate task ids."
+                )
+            }
+        }
     }
 
     private fun CareTask.toStoredTask(): StoredCareTask {
@@ -482,14 +469,31 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
         ).also(CareTaskStoreRules::validateTask)
     }
 
+    private fun PendingDeletion.key(): Key = Key(ownerUid, tankId)
+
+    private fun validatedKey(ownerUid: String, tankId: Long): Key {
+        CareTaskStoreRules.requireValidTankId(tankId)
+        return Key(canonicalOwnerUid(ownerUid), tankId)
+    }
+
     private fun canonicalOwnerUid(value: String): String {
         val canonical = value.trim()
         if (canonical.isBlank() || canonical != value || canonical.length > 128) {
-            throw StoreInvariantViolation(
+            violation(
                 "Tank-care integrity owner uid must be canonical and non-blank."
             )
         }
         return canonical
+    }
+
+    private fun encodeBytes(bytes: ByteArray): String =
+        base64Encoder.encodeToString(bytes)
+
+    private fun decodeBytes(value: String): ByteArray =
+        base64Decoder.decode(value)
+
+    private fun violation(message: String): Nothing {
+        throw StoreInvariantViolation(message)
     }
 
     private const val PREFERENCES_NAME = "tank_care_integrity_journal"
