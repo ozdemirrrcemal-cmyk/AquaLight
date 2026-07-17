@@ -1,20 +1,32 @@
 package com.aqua.aqualight.data.aquarium.delete
 
 import com.aqua.aqualight.data.aquarium.devices.TankAssignmentCleanupResult
+import com.aqua.aqualight.data.care.integrity.TankCareIntegrityJournal
+import com.aqua.aqualight.data.care.integrity.TankCareIntegrityTransactions
+import com.aqua.aqualight.data.care.model.CareTask
+import com.aqua.aqualight.data.user.UserDataScope
 import java.util.concurrent.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 
 /**
- * Coordinates authoritative tank deletion with best-effort dependent cleanup.
+ * Coordinates authoritative tank deletion with a crash-safe compensating transaction.
  *
- * The tank store is the primary record. Once it is durably deleted, cleanup
- * failures must never be reported as if the tank still exists. Instead every
- * dependent cleanup is attempted and explicit recovery diagnostics are returned.
+ * Care-task writes are blocked before snapshots are captured. Care tasks are deleted
+ * before the tank record, so an orphan reference is never committed. If the tank write
+ * fails or the operation is cancelled, task snapshots are restored before the failure
+ * is returned. A durable journal allows owner-session recovery after process death.
  */
 class OwnerTankDataCleaner internal constructor(
     private val deleteTankRecords: suspend (List<Long>) -> Unit,
+    private val snapshotCareTasksForTank: suspend (Long) -> List<CareTask>,
     private val deleteCareTasksForTank: suspend (Long) -> Unit,
+    private val restoreCareTasksForTank: suspend (Long, List<CareTask>) -> Unit,
     private val removeDeviceAssignmentsForTank:
-        suspend (Long) -> TankAssignmentCleanupResult
+        suspend (Long) -> TankAssignmentCleanupResult,
+    private val integrityTransactions: TankCareIntegrityTransactions =
+        TankCareIntegrityJournal,
+    private val ownerUidProvider: () -> String = UserDataScope::requireCurrentUid
 ) {
 
     enum class CleanupStage {
@@ -55,9 +67,50 @@ class OwnerTankDataCleaner internal constructor(
             return Result.NoOp
         }
 
+        val ownerUid = ownerUidProvider().trim().also { owner ->
+            require(owner.isNotBlank()) {
+                "Tank deletion requires a non-blank owner uid."
+            }
+        }
+
         try {
+            integrityTransactions.begin(ownerUid, normalizedTankIds)
+        } catch (error: Throwable) {
+            error.throwIfCancellation()
+            return Result.DeleteFailed(error)
+        }
+
+        val snapshotsByTank = linkedMapOf<Long, List<CareTask>>()
+        try {
+            normalizedTankIds.forEach { tankId ->
+                snapshotsByTank[tankId] = snapshotCareTasksForTank(tankId)
+            }
+            integrityTransactions.captureSnapshots(
+                ownerUid = ownerUid,
+                snapshotsByTank = snapshotsByTank
+            )
+        } catch (error: Throwable) {
+            val abortError = withContext(NonCancellable) {
+                abortTransactions(ownerUid, normalizedTankIds)
+            }
+            abortError?.let(error::addSuppressed)
+            error.throwIfCancellation()
+            return Result.DeleteFailed(error)
+        }
+
+        try {
+            normalizedTankIds.forEach { tankId ->
+                deleteCareTasksForTank(tankId)
+            }
             deleteTankRecords(normalizedTankIds)
         } catch (error: Throwable) {
+            val rollbackError = withContext(NonCancellable) {
+                rollbackCareTasks(
+                    ownerUid = ownerUid,
+                    snapshotsByTank = snapshotsByTank
+                )
+            }
+            rollbackError?.let(error::addSuppressed)
             error.throwIfCancellation()
             return Result.DeleteFailed(error)
         }
@@ -66,7 +119,7 @@ class OwnerTankDataCleaner internal constructor(
 
         normalizedTankIds.forEach { tankId ->
             try {
-                deleteCareTasksForTank(tankId)
+                integrityTransactions.complete(ownerUid, tankId)
             } catch (error: Throwable) {
                 error.throwIfCancellation()
                 cleanupIssues += CleanupIssue(
@@ -114,6 +167,52 @@ class OwnerTankDataCleaner internal constructor(
             tankIds = normalizedTankIds,
             cleanupIssues = cleanupIssues.toList()
         )
+    }
+
+    private suspend fun rollbackCareTasks(
+        ownerUid: String,
+        snapshotsByTank: Map<Long, List<CareTask>>
+    ): Throwable? {
+        var rollbackFailure: Throwable? = null
+
+        snapshotsByTank.forEach { (tankId, snapshots) ->
+            try {
+                integrityTransactions.withRollbackWritesAllowed(
+                    ownerUid = ownerUid,
+                    tankId = tankId
+                ) {
+                    restoreCareTasksForTank(tankId, snapshots)
+                }
+                integrityTransactions.abort(ownerUid, tankId)
+            } catch (error: Throwable) {
+                if (rollbackFailure == null) {
+                    rollbackFailure = error
+                } else {
+                    rollbackFailure?.addSuppressed(error)
+                }
+            }
+        }
+
+        return rollbackFailure
+    }
+
+    private fun abortTransactions(
+        ownerUid: String,
+        tankIds: List<Long>
+    ): Throwable? {
+        var abortFailure: Throwable? = null
+        tankIds.forEach { tankId ->
+            try {
+                integrityTransactions.abort(ownerUid, tankId)
+            } catch (error: Throwable) {
+                if (abortFailure == null) {
+                    abortFailure = error
+                } else {
+                    abortFailure?.addSuppressed(error)
+                }
+            }
+        }
+        return abortFailure
     }
 
     private fun Throwable.throwIfCancellation() {
