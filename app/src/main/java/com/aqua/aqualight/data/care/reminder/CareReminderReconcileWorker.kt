@@ -8,9 +8,9 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.aqua.aqualight.data.auth.FirebaseAuthenticatedOwnerProvider
+import com.aqua.aqualight.data.notifications.ActiveNotificationPreferenceProjection
 import com.aqua.aqualight.data.notifications.OwnerNotificationPreferences
 import com.aqua.aqualight.data.user.UserDataScope
-import com.aqua.aqualight.data.user.UserPreferencesManager
 
 /** Durable owner-scoped reconciliation after boot, package update, or session start. */
 class CareReminderReconcileWorker(
@@ -33,13 +33,20 @@ class CareReminderReconcileWorker(
         val ownerPreferences = OwnerNotificationPreferences.create(
             applicationContext
         )
-        val legacyProjection = UserPreferencesManager.create(applicationContext)
+        val activeProjection = ActiveNotificationPreferenceProjection.create(
+            applicationContext
+        )
 
         return try {
             CareReminderReconcileRuntime(
                 currentOwnerUid = ownerProvider::currentOwnerUid,
                 loadOwnerPreference = ownerPreferences::isEnabled,
-                syncActiveProjection = legacyProjection::updateNotificationsEnabled,
+                syncActiveProjection = { enabled ->
+                    activeProjection.publishForActiveOwner(
+                        ownerUid = ownerUid,
+                        enabled = enabled
+                    )
+                },
                 reconcileOwner = coordinator::reconcileOwner,
                 cancelOwner = coordinator::cancelOwner
             ).run(ownerUid)
