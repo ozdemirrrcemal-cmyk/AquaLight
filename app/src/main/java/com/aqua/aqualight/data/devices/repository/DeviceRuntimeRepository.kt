@@ -5,14 +5,11 @@ import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeSyncCoordinator
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsAuthManager
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsAuthAttemptResult
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsAuthStateChange
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsClient
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
+import com.aqua.aqualight.data.devices.runtime.ws.AqlPrivateLanEndpoint
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsTokenProvider
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsTransport
 import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
@@ -114,10 +111,6 @@ class DeviceRuntimeRepository(
         repository = runtimeModules.time
     )
 
-    private val authManager = tokenProvider?.let { provider ->
-        AqlWsAuthManager(provider)
-    }
-
     private val _connectionState = MutableSharedFlow<AqlWsConnectionState>(
         extraBufferCapacity = EVENT_BUFFER_CAPACITY
     )
@@ -166,7 +159,10 @@ class DeviceRuntimeRepository(
                 )
             }
 
-            val endpointUrl = snapshot.endpoint.toWebSocketUrl()
+            val endpointUrl = AqlPrivateLanEndpoint.route(
+                deviceUid = deviceUid,
+                endpoint = snapshot.endpoint
+            )?.url
             val endpointMatches = session.endpointUrl == endpointUrl
             val currentState = session.wsClient.connectionState.value
 
@@ -207,7 +203,6 @@ class DeviceRuntimeRepository(
             sessions.values.toList()
         }
         activeSessions.forEach { session ->
-            authManager?.clear(session.deviceUid)
             synchronized(session) {
                 session.wsClient.disconnect(reason = LOCAL_NETWORK_UNAVAILABLE_REASON)
             }
@@ -253,7 +248,6 @@ class DeviceRuntimeRepository(
      */
     suspend fun retire(deviceUid: DeviceUid) {
         val session = detachSessionForRetirement(deviceUid)
-        authManager?.clear(deviceUid)
         timeSyncCoordinator.clearSessionMemory(deviceUid)
         session?.shutdown()
     }
@@ -261,7 +255,6 @@ class DeviceRuntimeRepository(
     /** Immediate terminal fallback; deletion flows should prefer [retire]. */
     fun close(deviceUid: DeviceUid) {
         val session = detachSessionForRetirement(deviceUid)
-        authManager?.clear(deviceUid)
         timeSyncCoordinator.clearSessionMemory(deviceUid)
         session?.close()
     }
@@ -273,7 +266,6 @@ class DeviceRuntimeRepository(
             timeSyncCoordinator.clearSessionMemory(session.deviceUid)
             session.close()
         }
-        authManager?.close()
     }
 
     /**
@@ -294,7 +286,6 @@ class DeviceRuntimeRepository(
         tokenLifecycleMutex.withLock {
             // Waiting for the mutex is the owner-token access barrier.
         }
-        authManager?.close()
         repositoryJob.join()
     }
 
@@ -391,41 +382,19 @@ class DeviceRuntimeRepository(
         when (event) {
             is AqlWsEvent.Opened -> Unit
 
-            is AqlWsEvent.Message -> {
-                if (event.parsed is AqlWsIncomingMessage.Hello) {
-                    sendFirmwarePublicBootstrap(session.commandClient)
-                    when (authManager?.authenticateIfTokenExists(
-                        deviceUid = event.deviceUid,
-                        commandClient = session.commandClient
-                    )) {
-                        is AqlWsAuthAttemptResult.AuthMessageSent -> Unit
-                        AqlWsAuthAttemptResult.NoToken -> Unit
-                        AqlWsAuthAttemptResult.SendFailed -> Unit
-                        null -> Unit
-                    }
-                }
-
-                val authStateChange = authManager?.handleIncomingMessage(
-                    deviceUid = event.deviceUid,
-                    message = event.parsed,
-                    wsClient = session.wsClient
-                )
-
-                if (authStateChange is AqlWsAuthStateChange.Authenticated) {
-                    session.commandClient.deviceIdentity()
-                    session.commandClient.networkStatus()
-                    timeSyncCoordinator.syncPhoneNowIfNeeded(
-                        deviceUid = event.deviceUid
-                    )
-                }
+            is AqlWsEvent.Authenticated -> {
+                sendAuthenticatedBootstrap(session.commandClient)
+                timeSyncCoordinator.syncPhoneNowIfNeeded(deviceUid = event.deviceUid)
             }
 
+            is AqlWsEvent.Message -> Unit
+
             is AqlWsEvent.Closed,
-            is AqlWsEvent.Failure -> authManager?.clear(event.deviceUid)
+            is AqlWsEvent.Failure -> Unit
         }
     }
 
-    private fun sendFirmwarePublicBootstrap(commandClient: AqlWsCommandClient) {
+    private fun sendAuthenticatedBootstrap(commandClient: AqlWsCommandClient) {
         commandClient.securityStatus()
         commandClient.deviceIdentity()
         commandClient.deviceStatus()

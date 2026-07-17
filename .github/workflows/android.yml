@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    paths:
+      - "app/**"
+      - "protocol/**"
+      - "tools/**"
+      - ".github/workflows/android.yml"
 
 concurrency:
   group: android-ci-${{ github.ref }}
@@ -67,6 +73,7 @@ jobs:
         run: |
           python3 tools/architecture_guard.py
           python3 tools/navigation_guard.py
+          python3 tools/ws_protocol_guard.py
 
       # İsteğe bağlı: bağımlılık modül cache’lerini temizle (refresh-deps)
       - name: 🔄 Force refresh dependencies (optional)

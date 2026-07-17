@@ -253,7 +253,7 @@ class DeviceRuntimeRepositoryLifecycleTest {
         ): Result<Unit> {
             _connectionState.value = AqlWsConnectionState.Connected(
                 deviceUid = deviceUid,
-                url = endpoint.toWebSocketUrl().orEmpty(),
+                url = "ws://test.device.aql.local${endpoint.wsPath}",
                 connectedAtMillis = 1L
             )
             if (emitOpenedDuringConnect) {
@@ -263,22 +263,6 @@ class DeviceRuntimeRepositoryLifecycleTest {
         }
 
         override fun send(message: AqlWsOutgoingMessage): Boolean = true
-
-        override fun sendRaw(raw: String): Boolean = true
-
-        override fun markAuthenticated(deviceUid: DeviceUid) {
-            _connectionState.value = AqlWsConnectionState.Authenticated(
-                deviceUid = deviceUid,
-                authenticatedAtMillis = 2L
-            )
-        }
-
-        override fun markAuthRequired(deviceUid: DeviceUid, message: String) {
-            _connectionState.value = AqlWsConnectionState.AuthRequired(
-                deviceUid = deviceUid,
-                message = message
-            )
-        }
 
         override fun disconnect(code: Int, reason: String) {
             _connectionState.value = AqlWsConnectionState.Disconnected

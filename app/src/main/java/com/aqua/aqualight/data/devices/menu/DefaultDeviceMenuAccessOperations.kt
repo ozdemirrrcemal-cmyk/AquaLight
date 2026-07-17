@@ -361,11 +361,7 @@ internal object DeviceMenuRuntimeProofPolicy {
             return false
         }
 
-        val moduleMatches = response.module.isBlank() ||
-            response.module == AqlWsContract.MODULE_NETWORK
-        val actionMatches = response.action.isBlank() ||
+        return response.module == AqlWsContract.MODULE_NETWORK &&
             response.action == AqlWsContract.ACTION_NETWORK_STATUS_GET
-
-        return moduleMatches && actionMatches
     }
 }

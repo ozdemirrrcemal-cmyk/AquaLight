@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+
+    <!--
+      The runtime client resolves only app-generated *.device.aql.local names to
+      a previously validated RFC1918/link-local IPv4 literal. No system DNS result
+      is accepted for this namespace. HMAC v2 authenticates the device and every
+      post-handshake frame while commercial device certificates are not deployed.
+    -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">device.aql.local</domain>
+    </domain-config>
+</network-security-config>

@@ -5,22 +5,6 @@ import org.json.JSONObject
 class AqlWsCommandClient(
     private val wsClient: AqlWsTransport
 ) {
-    fun authenticate(token: String): String? {
-        val normalizedToken = token.trim()
-        if (normalizedToken.isBlank()) return null
-
-        val message = AqlWsOutgoingMessage.Auth(token = normalizedToken)
-        return if (wsClient.send(message)) {
-            message.id
-        } else {
-            null
-        }
-    }
-
-    fun ping(): Boolean {
-        return wsClient.send(AqlWsOutgoingMessage.Ping())
-    }
-
     fun securityStatus(): Boolean {
         return wsClient.send(AqlWsCommandFactory.securityStatus())
     }
