@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
  * It exercises the real Fragment lifecycle, navigation environment and release-smoke
  * ViewModel factory callsites without opening Firebase, BLE or WebSocket infrastructure.
  */
-class Stage3ReleaseSmokeActivity : BaseActivity() {
+class ReleaseSmokeActivity : BaseActivity() {
 
     private lateinit var navHostFragment: NavHostFragment
     private lateinit var navController: NavController
@@ -179,9 +179,9 @@ class Stage3ReleaseSmokeActivity : BaseActivity() {
         const val DESTINATION_MAINTENANCE = 0x5A030102
         const val DESTINATION_DEVICES = 0x5A030103
         const val DESTINATION_SETTINGS = 0x5A030104
-        const val SMOKE_NAV_HOST_TAG = "stage3_release_smoke_nav_host"
+        const val SMOKE_NAV_HOST_TAG = "release_smoke_nav_host"
         const val SCREEN_SETTLE_MILLIS = 700L
-        const val PASS_MARKER = "STAGE3_RELEASE_SMOKE_PASS"
-        const val FAIL_MARKER = "STAGE3_RELEASE_SMOKE_FAIL"
+        const val PASS_MARKER = "RELEASE_SMOKE_PASS"
+        const val FAIL_MARKER = "RELEASE_SMOKE_FAIL"
     }
 }

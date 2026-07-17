@@ -23,7 +23,7 @@ paths = {
     "factory_test": ROOT / "app/src/test/java/com/aqua/aqualight/composition/AquaViewModelFactoryTest.kt",
     "owner_session_test": ROOT / "app/src/test/java/com/aqua/aqualight/composition/OwnerDependencyGraphSessionTest.kt",
     "plan": ROOT / "docs/dependency-boundaries-and-composition-root.md",
-    "matrix": ROOT / "docs/final-dependency-matrix.md",
+    "matrix": ROOT / "docs/composition-dependency-matrix.md",
 }
 
 errors: list[str] = []

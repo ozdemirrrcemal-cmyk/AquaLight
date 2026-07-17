@@ -1,4 +1,4 @@
-# Final Dependency Matrix
+# Composition Dependency Matrix
 
 ## Commercial architecture objective
 
