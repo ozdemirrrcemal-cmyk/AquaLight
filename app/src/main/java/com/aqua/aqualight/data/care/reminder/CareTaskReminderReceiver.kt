@@ -97,7 +97,7 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
                     candidate.id == ownerTask.tankId
                 }
 
-                if (!CareReminderDeliveryPolicy.shouldDeliver(ownerTask, tank)) {
+                if (!CareReminderDeliveryPolicy.shouldDeliver(task, tank)) {
                     CareTaskReminderScheduler.cancel(
                         context = appContext,
                         taskId = ownerTask.id,
