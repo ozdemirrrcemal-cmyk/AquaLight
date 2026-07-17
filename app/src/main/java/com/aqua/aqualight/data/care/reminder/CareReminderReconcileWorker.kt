@@ -29,29 +29,20 @@ class CareReminderReconcileWorker(
         val ownerProvider = FirebaseAuthenticatedOwnerProvider.create(
             applicationContext
         )
-        if (ownerProvider.currentOwnerUid() != ownerUid) {
-            return Result.success()
-        }
-
         val coordinator = CareReminderCoordinator.create(applicationContext)
+        val ownerPreferences = OwnerNotificationPreferences.create(
+            applicationContext
+        )
+        val legacyProjection = UserPreferencesManager.create(applicationContext)
+
         return try {
-            val ownerPreference = OwnerNotificationPreferences.create(
-                applicationContext
-            ).isEnabled(ownerUid)
-
-            // Keep the active-session legacy projection synchronized until all
-            // older care-task write paths are removed. The owner store remains
-            // the source of truth and every receiver re-checks it explicitly.
-            UserPreferencesManager.create(applicationContext)
-                .updateNotificationsEnabled(ownerPreference)
-
-            coordinator.reconcileOwner(ownerUid)
-
-            // A fast account switch can happen while DataStore is read. Remove
-            // anything just reconciled for an owner that is no longer active.
-            if (ownerProvider.currentOwnerUid() != ownerUid) {
-                coordinator.cancelOwner(ownerUid)
-            }
+            CareReminderReconcileRuntime(
+                currentOwnerUid = ownerProvider::currentOwnerUid,
+                loadOwnerPreference = ownerPreferences::isEnabled,
+                syncActiveProjection = legacyProjection::updateNotificationsEnabled,
+                reconcileOwner = coordinator::reconcileOwner,
+                cancelOwner = coordinator::cancelOwner
+            ).run(ownerUid)
 
             Result.success()
         } catch (exception: Exception) {
