@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.care.reminder
 
 import android.content.Context
+import androidx.work.BackoffPolicy
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
@@ -11,6 +12,7 @@ import com.aqua.aqualight.data.auth.FirebaseAuthenticatedOwnerProvider
 import com.aqua.aqualight.data.notifications.ActiveNotificationPreferenceProjection
 import com.aqua.aqualight.data.notifications.OwnerNotificationPreferences
 import com.aqua.aqualight.data.user.UserDataScope
+import java.util.concurrent.TimeUnit
 
 /** Durable owner-scoped reconciliation after boot, package update, or session start. */
 class CareReminderReconcileWorker(
@@ -54,13 +56,19 @@ class CareReminderReconcileWorker(
             Result.success()
         } catch (exception: Exception) {
             exception.printStackTrace()
-            Result.retry()
+            if (runAttemptCount + 1 >= MAX_ATTEMPTS) {
+                Result.failure()
+            } else {
+                Result.retry()
+            }
         }
     }
 
     companion object {
         internal const val KEY_OWNER_UID = "owner_uid"
         private const val WORK_NAME_PREFIX = "care_reminder_reconcile_owner_"
+        private const val MAX_ATTEMPTS = 3
+        private const val BACKOFF_SECONDS = 30L
 
         fun enqueue(
             context: Context,
@@ -74,6 +82,11 @@ class CareReminderReconcileWorker(
             val request = OneTimeWorkRequestBuilder<CareReminderReconcileWorker>()
                 .setInputData(
                     workDataOf(KEY_OWNER_UID to owner)
+                )
+                .setBackoffCriteria(
+                    BackoffPolicy.EXPONENTIAL,
+                    BACKOFF_SECONDS,
+                    TimeUnit.SECONDS
                 )
                 .build()
 
