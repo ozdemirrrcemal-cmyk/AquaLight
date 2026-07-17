@@ -209,21 +209,20 @@ object NotificationHelper {
     taskId: Long,
     ownerUid: String = UserDataScope.currentUid()
   ) {
-    val notificationManager = NotificationManagerCompat.from(context)
+    val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
+    require(taskId > 0L) {
+      "taskId must be positive"
+    }
+    require(normalizedOwnerUid.isNotBlank()) {
+      "ownerUid must not be blank"
+    }
 
-    listOf(
-      UserDataScope.LEGACY_OWNER_UID,
-      UserDataScope.normalizeOwnerUid(ownerUid)
+    NotificationManagerCompat.from(context).cancel(
+      getTaskNotificationId(
+        taskId = taskId,
+        ownerUid = normalizedOwnerUid
+      )
     )
-      .distinct()
-      .forEach { candidateOwnerUid ->
-        notificationManager.cancel(
-          getTaskNotificationId(
-            taskId = taskId,
-            ownerUid = candidateOwnerUid
-          )
-        )
-      }
   }
 
   fun cancelAllAppNotifications(
@@ -247,6 +246,11 @@ object NotificationHelper {
     largeIconColor: String? = null
   ) {
     val launchIntent = if (taskId != null && taskId > 0L) {
+      val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
+      require(normalizedOwnerUid.isNotBlank()) {
+        "ownerUid must not be blank"
+      }
+
       Intent(
         context,
         MainActivity::class.java
@@ -267,7 +271,7 @@ object NotificationHelper {
 
         putExtra(
           MainActivity.EXTRA_OWNER_UID,
-          UserDataScope.normalizeOwnerUid(ownerUid)
+          normalizedOwnerUid
         )
       }
     } else {
