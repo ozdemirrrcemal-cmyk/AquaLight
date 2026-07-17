@@ -23,8 +23,8 @@ class OwnerNotificationPreferencesInstrumentedTest {
         val ownerA = "notification-owner-a-$suffix"
         val ownerB = "notification-owner-b-$suffix"
 
-        store.setEnabled(ownerA, enabled = true, updatedAtMillis = 10L)
-        store.setEnabled(ownerB, enabled = false, updatedAtMillis = 20L)
+        store.setEnabledAt(ownerA, enabled = true, updatedAtMillis = 10L)
+        store.setEnabledAt(ownerB, enabled = false, updatedAtMillis = 20L)
 
         assertTrue(store.enabledFlow(ownerA).first())
         assertFalse(store.enabledFlow(ownerB).first())
