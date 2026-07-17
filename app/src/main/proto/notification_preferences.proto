@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option java_package = "com.aqua.aqualight.data.notifications";
+option java_multiple_files = true;
+
+message OwnerNotificationPreference {
+  string owner_uid = 1;
+  bool enabled = 2;
+  int64 updated_at_millis = 3;
+}
+
+message NotificationPreferencesStore {
+  uint32 schema_version = 1;
+  repeated OwnerNotificationPreference owner_preferences = 2;
+}
