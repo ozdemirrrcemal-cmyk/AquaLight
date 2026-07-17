@@ -9,6 +9,7 @@ import com.aqua.aqualight.application.care.CareTaskSnapshot
 import com.aqua.aqualight.application.care.CompletedCareActivityInput
 import com.aqua.aqualight.application.care.MaintenanceOperations
 import com.aqua.aqualight.application.care.ManualCareTaskInput
+import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumPlant
@@ -26,7 +27,8 @@ import com.aqua.aqualight.data.care.model.CareTaskType as DataCareTaskType
 
 class DefaultMaintenanceOperations(
     context: Context,
-    private val manager: CareTaskDataStoreManager
+    private val manager: CareTaskDataStoreManager,
+    private val notificationPreferences: NotificationPreferenceUseCase
 ) : MaintenanceOperations {
 
     private val appContext = context.applicationContext
@@ -50,15 +52,18 @@ class DefaultMaintenanceOperations(
                     }
                 )
             )
+            notificationPreferences.reconcileOwner(ownerUid)
         }
     }
 
-    override suspend fun completeTask(taskId: Long) = withCurrentOwnerScope {
+    override suspend fun completeTask(taskId: Long) = withCurrentOwnerScope { ownerUid ->
         manager.completeTask(taskId)
+        notificationPreferences.reconcileOwner(ownerUid)
     }
 
-    override suspend fun deleteTask(taskId: Long) = withCurrentOwnerScope {
+    override suspend fun deleteTask(taskId: Long) = withCurrentOwnerScope { ownerUid ->
         manager.deleteTask(taskId)
+        notificationPreferences.cancelCareTask(ownerUid, taskId)
     }
 
     override suspend fun updateCompletedTaskDate(
@@ -84,14 +89,16 @@ class DefaultMaintenanceOperations(
         )
     }
 
-    override suspend fun deleteManualTask(taskId: Long) = withCurrentOwnerScope {
-        manager.deleteManualTask(taskId)
-    }
+    override suspend fun deleteManualTask(taskId: Long) =
+        withCurrentOwnerScope { ownerUid ->
+            manager.deleteManualTask(taskId)
+            notificationPreferences.cancelCareTask(ownerUid, taskId)
+        }
 
     override suspend fun addManualTask(
         input: ManualCareTaskInput
-    ) = withCurrentOwnerScope {
-        manager.addManualTask(
+    ) = withCurrentOwnerScope { ownerUid ->
+        val taskId = manager.addManualTask(
             tankId = input.tankId,
             title = input.title,
             description = input.description,
@@ -105,12 +112,13 @@ class DefaultMaintenanceOperations(
             waterChangePercent = input.waterChangePercent,
             note = input.note
         )
+        notificationPreferences.scheduleCareTask(ownerUid, taskId)
     }
 
     override suspend fun updateManualTask(
         taskId: Long,
         input: ManualCareTaskInput
-    ) = withCurrentOwnerScope {
+    ) = withCurrentOwnerScope { ownerUid ->
         manager.updateManualTask(
             taskId = taskId,
             tankId = input.tankId,
@@ -126,6 +134,7 @@ class DefaultMaintenanceOperations(
             waterChangePercent = input.waterChangePercent,
             note = input.note
         )
+        notificationPreferences.scheduleCareTask(ownerUid, taskId)
     }
 }
 
