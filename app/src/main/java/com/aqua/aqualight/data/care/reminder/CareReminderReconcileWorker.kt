@@ -9,8 +9,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.aqua.aqualight.data.auth.FirebaseAuthenticatedOwnerProvider
-import com.aqua.aqualight.data.notifications.ActiveNotificationPreferenceProjection
-import com.aqua.aqualight.data.notifications.OwnerNotificationPreferences
+import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.user.UserDataScope
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
@@ -22,48 +21,24 @@ class CareReminderReconcileWorker(
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
-        val ownerUid = UserDataScope.normalizeOwnerUid(
-            inputData.getString(KEY_OWNER_UID)
-        )
-        if (ownerUid.isBlank()) {
-            return Result.success()
-        }
+        val ownerUid = UserDataScope.normalizeOwnerUid(inputData.getString(KEY_OWNER_UID))
+        if (ownerUid.isBlank()) return Result.success()
 
-        val ownerProvider = FirebaseAuthenticatedOwnerProvider.create(
-            applicationContext
-        )
-        val coordinator = CareReminderCoordinator.create(applicationContext)
-        val ownerPreferences = OwnerNotificationPreferences.create(
-            applicationContext
-        )
-        val activeProjection = ActiveNotificationPreferenceProjection.create(
-            applicationContext
-        )
+        val ownerProvider = FirebaseAuthenticatedOwnerProvider.create(applicationContext)
+        val useCase = NotificationPlatform.get(applicationContext).preferenceUseCase
 
         return try {
             CareReminderReconcileRuntime(
                 currentOwnerUid = ownerProvider::currentOwnerUid,
-                loadOwnerPreference = ownerPreferences::isEnabled,
-                syncActiveProjection = { enabled ->
-                    activeProjection.publishForActiveOwner(
-                        ownerUid = ownerUid,
-                        enabled = enabled
-                    )
-                },
-                reconcileOwner = coordinator::reconcileOwner,
-                cancelOwner = coordinator::cancelOwner
+                reconcileOwner = useCase::reconcileOwner,
+                cancelOwner = useCase::cancelOwner
             ).run(ownerUid)
-
             Result.success()
         } catch (exception: CancellationException) {
             throw exception
         } catch (exception: Exception) {
             exception.printStackTrace()
-            if (runAttemptCount + 1 >= MAX_ATTEMPTS) {
-                Result.failure()
-            } else {
-                Result.retry()
-            }
+            if (runAttemptCount + 1 >= MAX_ATTEMPTS) Result.failure() else Result.retry()
         }
     }
 
@@ -73,19 +48,12 @@ class CareReminderReconcileWorker(
         private const val MAX_ATTEMPTS = 3
         private const val BACKOFF_SECONDS = 30L
 
-        fun enqueue(
-            context: Context,
-            ownerUid: String
-        ) {
+        fun enqueue(context: Context, ownerUid: String) {
             val owner = UserDataScope.normalizeOwnerUid(ownerUid)
-            if (owner.isBlank()) {
-                return
-            }
+            if (owner.isBlank()) return
 
             val request = OneTimeWorkRequestBuilder<CareReminderReconcileWorker>()
-                .setInputData(
-                    workDataOf(KEY_OWNER_UID to owner)
-                )
+                .setInputData(workDataOf(KEY_OWNER_UID to owner))
                 .setBackoffCriteria(
                     BackoffPolicy.EXPONENTIAL,
                     BACKOFF_SECONDS,
@@ -93,23 +61,16 @@ class CareReminderReconcileWorker(
                 )
                 .build()
 
-            WorkManager.getInstance(context.applicationContext)
-                .enqueueUniqueWork(
-                    workName(owner),
-                    ExistingWorkPolicy.REPLACE,
-                    request
-                )
+            WorkManager.getInstance(context.applicationContext).enqueueUniqueWork(
+                workName(owner),
+                ExistingWorkPolicy.REPLACE,
+                request
+            )
         }
 
-        fun cancel(
-            context: Context,
-            ownerUid: String?
-        ) {
+        fun cancel(context: Context, ownerUid: String?) {
             val owner = UserDataScope.normalizeOwnerUid(ownerUid)
-            if (owner.isBlank()) {
-                return
-            }
-
+            if (owner.isBlank()) return
             WorkManager.getInstance(context.applicationContext)
                 .cancelUniqueWork(workName(owner))
         }
