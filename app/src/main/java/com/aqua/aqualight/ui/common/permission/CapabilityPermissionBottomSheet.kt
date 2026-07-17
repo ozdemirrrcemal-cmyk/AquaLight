@@ -3,8 +3,8 @@ package com.aqua.aqualight.ui.common.permission
 import android.content.DialogInterface
 import android.os.Bundle
 import android.view.View
-import androidx.annotation.StringRes
 import androidx.core.os.bundleOf
+import androidx.core.view.isVisible
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.BottomSheetCapabilityPermissionBinding
 import com.aqua.aqualight.platform.permissions.AppCapability
@@ -14,7 +14,8 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
  * Process-safe rationale/settings sheet shared by every runtime-permission flow.
  *
  * The sheet accepts arguments only and returns the selected action through Fragment
- * Result. It intentionally has no constructor parameters or callback fields.
+ * Result. It intentionally has no constructor parameters or callback fields. All
+ * capability-specific visual content is resolved by [CapabilityPermissionUiSpecResolver].
  */
 class CapabilityPermissionBottomSheet : BottomSheetDialogFragment(
     R.layout.bottom_sheet_capability_permission
@@ -30,17 +31,15 @@ class CapabilityPermissionBottomSheet : BottomSheetDialogFragment(
 
         val capability = requireCapability()
         val mode = requireMode()
-        val copy = copyFor(capability, mode)
+        val uiSpec = CapabilityPermissionUiSpecResolver.resolve(capability, mode)
 
-        binding.tvPermissionTitle.setText(copy.titleRes)
-        binding.tvPermissionMessage.setText(copy.messageRes)
-        binding.btnPermissionPrimary.setText(
-            if (mode == Mode.RATIONALE) {
-                R.string.permission_sheet_allow
-            } else {
-                R.string.permission_sheet_open_settings
-            }
-        )
+        binding.imgPermissionIcon.setImageResource(uiSpec.iconRes)
+        binding.tvPermissionTitle.setText(uiSpec.titleRes)
+        binding.tvPermissionMessage.setText(uiSpec.messageRes)
+        binding.btnPermissionPrimary.setText(uiSpec.primaryActionRes)
+
+        binding.permissionStatusBadge.isVisible = uiSpec.statusBadgeRes != null
+        uiSpec.statusBadgeRes?.let(binding.imgPermissionStatus::setImageResource)
 
         binding.btnPermissionPrimary.setOnClickListener {
             sendResult(
@@ -79,76 +78,6 @@ class CapabilityPermissionBottomSheet : BottomSheetDialogFragment(
             requireArguments().getString(ARG_REQUEST_KEY).orEmpty(),
             bundleOf(RESULT_KEY to result)
         )
-    }
-
-    private fun copyFor(capability: AppCapability, mode: Mode): Copy {
-        return when (capability) {
-            AppCapability.CAMERA_PHOTO -> Copy(
-                rationaleTitle = R.string.permission_camera_photo_rationale_title,
-                rationaleMessage = R.string.permission_camera_photo_rationale_message,
-                settingsTitle = R.string.permission_camera_photo_settings_title,
-                settingsMessage = R.string.permission_camera_photo_settings_message,
-                mode = mode
-            )
-            AppCapability.CAMERA_QR -> Copy(
-                rationaleTitle = R.string.permission_camera_qr_rationale_title,
-                rationaleMessage = R.string.permission_camera_qr_rationale_message,
-                settingsTitle = R.string.permission_camera_qr_settings_title,
-                settingsMessage = R.string.permission_camera_qr_settings_message,
-                mode = mode
-            )
-            AppCapability.BLE_SCAN -> Copy(
-                rationaleTitle = R.string.permission_ble_scan_rationale_title,
-                rationaleMessage = R.string.permission_ble_scan_rationale_message,
-                settingsTitle = R.string.permission_ble_scan_settings_title,
-                settingsMessage = R.string.permission_ble_scan_settings_message,
-                mode = mode
-            )
-            AppCapability.BLE_CONNECT -> Copy(
-                rationaleTitle = R.string.permission_ble_connect_rationale_title,
-                rationaleMessage = R.string.permission_ble_connect_rationale_message,
-                settingsTitle = R.string.permission_ble_connect_settings_title,
-                settingsMessage = R.string.permission_ble_connect_settings_message,
-                mode = mode
-            )
-            AppCapability.BLE_PROVISIONING -> Copy(
-                rationaleTitle = R.string.permission_ble_provisioning_rationale_title,
-                rationaleMessage = R.string.permission_ble_provisioning_rationale_message,
-                settingsTitle = R.string.permission_ble_provisioning_settings_title,
-                settingsMessage = R.string.permission_ble_provisioning_settings_message,
-                mode = mode
-            )
-            AppCapability.WIFI_SSID -> Copy(
-                rationaleTitle = R.string.permission_wifi_ssid_rationale_title,
-                rationaleMessage = R.string.permission_wifi_ssid_rationale_message,
-                settingsTitle = R.string.permission_wifi_ssid_settings_title,
-                settingsMessage = R.string.permission_wifi_ssid_settings_message,
-                mode = mode
-            )
-            AppCapability.NOTIFICATIONS -> Copy(
-                rationaleTitle = R.string.permission_notifications_rationale_title,
-                rationaleMessage = R.string.permission_notifications_rationale_message,
-                settingsTitle = R.string.permission_notifications_settings_title,
-                settingsMessage = R.string.permission_notifications_settings_message,
-                mode = mode
-            )
-        }
-    }
-
-    private data class Copy(
-        @StringRes val rationaleTitle: Int,
-        @StringRes val rationaleMessage: Int,
-        @StringRes val settingsTitle: Int,
-        @StringRes val settingsMessage: Int,
-        val mode: Mode
-    ) {
-        @get:StringRes
-        val titleRes: Int
-            get() = if (mode == Mode.RATIONALE) rationaleTitle else settingsTitle
-
-        @get:StringRes
-        val messageRes: Int
-            get() = if (mode == Mode.RATIONALE) rationaleMessage else settingsMessage
     }
 
     enum class Mode {
