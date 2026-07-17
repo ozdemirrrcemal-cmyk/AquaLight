@@ -158,6 +158,10 @@ class NotificationPreferenceUseCaseTest {
     private class FakeRenderer(
         private val events: MutableList<String>
     ) : NotificationRenderer {
+        override fun renderCareReminder(notification: CareReminderNotification) = Unit
+        override fun renderDeviceAlert(notification: DeviceAlertNotification) = Unit
+        override fun renderDeviceUpdate(notification: DeviceUpdateNotification) = Unit
+
         override fun cancelCareReminder(ownerUid: String, taskId: Long) {
             events += "cancel-care-visible:$ownerUid:$taskId"
         }
