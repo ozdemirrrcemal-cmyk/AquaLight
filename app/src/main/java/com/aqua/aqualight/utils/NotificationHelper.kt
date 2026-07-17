@@ -16,6 +16,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import com.aqua.aqualight.R
+import com.aqua.aqualight.data.care.reminder.CareReminderIdentity
 import com.aqua.aqualight.data.notifications.NotificationChannelRegistry
 import com.aqua.aqualight.data.notifications.NotificationSystemState
 import com.aqua.aqualight.data.user.UserDataScope
@@ -170,6 +171,10 @@ object NotificationHelper {
         flags = Intent.FLAG_ACTIVITY_NEW_TASK or
           Intent.FLAG_ACTIVITY_CLEAR_TOP or
           Intent.FLAG_ACTIVITY_SINGLE_TOP
+        data = CareReminderIdentity.contentData(
+          ownerUid = normalizedOwnerUid,
+          taskId = taskId
+        )
 
         putExtra(MainActivity.EXTRA_START_IN_APP, true)
         putExtra(MainActivity.EXTRA_OPEN_CARE_TASK_ID, taskId)
