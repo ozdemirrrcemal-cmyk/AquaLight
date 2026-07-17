@@ -2,19 +2,16 @@ package com.aqua.aqualight.data.auth
 
 import android.content.Context
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
-import com.aqua.aqualight.data.care.CareTaskDataStoreManager
-import com.aqua.aqualight.data.care.reminder.CareTaskReminderScheduler
+import com.aqua.aqualight.data.care.reminder.CareReminderCoordinator
+import com.aqua.aqualight.data.care.reminder.CareReminderReconcileWorker
 import com.aqua.aqualight.data.care.smartcare.SmartCareDailyWorker
 import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.utils.NotificationHelper
 import java.util.concurrent.CancellationException
-import kotlinx.coroutines.flow.first
 
-/**
- * Starts and stops services that are valid only for one authenticated owner.
- */
+/** Starts and stops services that are valid only for one authenticated owner. */
 object SessionBoundServiceManager {
 
     enum class StopStep {
@@ -66,8 +63,13 @@ object SessionBoundServiceManager {
             return
         }
 
+        val appContext = context.applicationContext
         SmartCareDailyWorker.schedule(
-            context = context.applicationContext,
+            context = appContext,
+            ownerUid = normalizedOwnerUid
+        )
+        CareReminderReconcileWorker.enqueue(
+            context = appContext,
             ownerUid = normalizedOwnerUid
         )
     }
@@ -84,17 +86,13 @@ object SessionBoundServiceManager {
             step: StopStep,
             block: suspend () -> Unit
         ) {
-            runCatching {
-                block()
-            }.onFailure { error ->
-                if (error is CancellationException) {
-                    throw error
+            runCatching { block() }
+                .onFailure { error ->
+                    if (error is CancellationException) {
+                        throw error
+                    }
+                    issues += StopIssue(step, error)
                 }
-                issues += StopIssue(
-                    step = step,
-                    error = error
-                )
-            }
         }
 
         val ownerUid = expectedOwnerUid
@@ -133,10 +131,12 @@ object SessionBoundServiceManager {
 
         if (ownerUid != null) {
             runStep(StopStep.CARE_REMINDERS) {
-                cancelPendingCareTaskReminders(
+                CareReminderReconcileWorker.cancel(
                     context = appContext,
                     ownerUid = ownerUid
                 )
+                CareReminderCoordinator.create(appContext)
+                    .cancelOwner(ownerUid)
             }
         }
 
@@ -148,29 +148,6 @@ object SessionBoundServiceManager {
             }
         }
 
-        return StopResult(
-            issues = issues.toList()
-        )
-    }
-
-    private suspend fun cancelPendingCareTaskReminders(
-        context: Context,
-        ownerUid: String
-    ) {
-        val careTaskDataStoreManager = CareTaskDataStoreManager.create(
-            context
-        )
-
-        val pendingTasks = UserDataScope.withOwnerUid(ownerUid) {
-            careTaskDataStoreManager.pendingTasksFlow.first()
-        }
-
-        pendingTasks.forEach { task ->
-            CareTaskReminderScheduler.cancel(
-                context = context,
-                taskId = task.id,
-                ownerUid = task.ownerUid.ifBlank { ownerUid }
-            )
-        }
+        return StopResult(issues.toList())
     }
 }
