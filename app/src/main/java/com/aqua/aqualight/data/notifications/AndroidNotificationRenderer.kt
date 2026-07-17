@@ -15,118 +15,134 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.notifications.CareReminderNotification
+import com.aqua.aqualight.application.notifications.DeviceAlertNotification
+import com.aqua.aqualight.application.notifications.DeviceUpdateNotification
 import com.aqua.aqualight.application.notifications.NotificationCategory
 import com.aqua.aqualight.application.notifications.NotificationRenderer
+import com.aqua.aqualight.data.care.catalog.CareTaskTypeCatalog
+import com.aqua.aqualight.data.care.model.CareTaskType
 import com.aqua.aqualight.data.care.reminder.CareReminderIdentity
 import com.aqua.aqualight.ui.main.MainActivity
 
 /** The only component allowed to build, post, update or cancel visible notifications. */
 class AndroidNotificationRenderer(
-    context: Context,
-    private val permissionPolicy: AndroidNotificationPermissionPolicy =
-        AndroidNotificationPermissionPolicy(context)
+    context: Context
 ) : NotificationRenderer {
 
     private val appContext = context.applicationContext
     private val manager = appContext.getSystemService(NotificationManager::class.java)
 
     @SuppressLint("MissingPermission")
-    fun renderCareReminder(
-        ownerUid: String,
-        taskId: Long,
-        title: String,
-        message: String,
-        @DrawableRes largeIconRes: Int? = null,
-        largeIconColor: String? = null
-    ) {
-        require(taskId > 0L) { "taskId must be positive" }
+    override fun renderCareReminder(notification: CareReminderNotification) {
+        require(notification.taskId > 0L) { "taskId must be positive" }
         val category = NotificationCategory.CARE_REMINDERS
-        if (!permissionPolicy.evaluate(category).canDeliver) return
-
-        val entityId = taskId.toString()
+        val entityId = notification.taskId.toString()
         val launchIntent = Intent(appContext, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                 Intent.FLAG_ACTIVITY_CLEAR_TOP or
                 Intent.FLAG_ACTIVITY_SINGLE_TOP
-            data = CareReminderIdentity.contentData(ownerUid, taskId)
+            data = CareReminderIdentity.contentData(
+                notification.ownerUid,
+                notification.taskId
+            )
             putExtra(MainActivity.EXTRA_START_IN_APP, true)
-            putExtra(MainActivity.EXTRA_OPEN_CARE_TASK_ID, taskId)
-            putExtra(MainActivity.EXTRA_OWNER_UID, ownerUid)
+            putExtra(MainActivity.EXTRA_OPEN_CARE_TASK_ID, notification.taskId)
+            putExtra(MainActivity.EXTRA_OWNER_UID, notification.ownerUid)
         }
 
         val builder = baseBuilder(
             category = category,
-            title = title,
-            message = message,
-            contentIntent = contentIntent(category, ownerUid, entityId, launchIntent)
-        )
-
-        createLargeIconBitmap(largeIconRes, largeIconColor)?.let(builder::setLargeIcon)
-        notify(category, ownerUid, entityId, CARE_NOTIFICATION_ID, builder.build())
-    }
-
-    @SuppressLint("MissingPermission")
-    fun renderDeviceAlert(
-        ownerUid: String,
-        deviceUid: String,
-        title: String,
-        message: String
-    ) {
-        val category = NotificationCategory.DEVICE_ALERTS
-        if (!permissionPolicy.evaluate(category).canDeliver) return
-
-        val entityId = deviceUid.trim().also {
-            require(it.isNotBlank()) { "deviceUid must not be blank" }
-        }
-        val launchIntent = genericLaunchIntent(category, ownerUid, entityId)
-        val notification = baseBuilder(
-            category = category,
-            title = title,
-            message = message,
-            contentIntent = contentIntent(category, ownerUid, entityId, launchIntent)
-        ).setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .build()
-
-        notify(category, ownerUid, entityId, DEVICE_ALERT_NOTIFICATION_ID, notification)
-    }
-
-    @SuppressLint("MissingPermission")
-    fun renderDeviceUpdate(
-        ownerUid: String,
-        deviceUid: String,
-        title: String,
-        message: String,
-        progressPercent: Int? = null,
-        ongoing: Boolean = false
-    ) {
-        val category = NotificationCategory.DEVICE_UPDATES
-        if (!permissionPolicy.evaluate(category).canDeliver) return
-
-        val entityId = deviceUid.trim().also {
-            require(it.isNotBlank()) { "deviceUid must not be blank" }
-        }
-        progressPercent?.let { require(it in 0..100) { "progressPercent must be 0..100" } }
-
-        val builder = baseBuilder(
-            category = category,
-            title = title,
-            message = message,
+            title = notification.title,
+            message = notification.message,
             contentIntent = contentIntent(
                 category,
-                ownerUid,
+                notification.ownerUid,
                 entityId,
-                genericLaunchIntent(category, ownerUid, entityId)
+                launchIntent
             )
-        ).setOnlyAlertOnce(true)
-            .setOngoing(ongoing)
-            .setCategory(NotificationCompat.CATEGORY_PROGRESS)
+        )
 
-        if (progressPercent != null) {
-            builder.setProgress(100, progressPercent, false)
+        val typeUi = CareTaskTypeCatalog.get(
+            CareTaskType.valueOf(notification.kind.name)
+        )
+        createLargeIconBitmap(typeUi.iconRes, typeUi.accentColor)
+            ?.let(builder::setLargeIcon)
+
+        notify(
+            category = category,
+            ownerUid = notification.ownerUid,
+            entityId = entityId,
+            id = CARE_NOTIFICATION_ID,
+            notification = builder.build()
+        )
+    }
+
+    @SuppressLint("MissingPermission")
+    override fun renderDeviceAlert(notification: DeviceAlertNotification) {
+        val category = NotificationCategory.DEVICE_ALERTS
+        val entityId = requireDeviceUid(notification.deviceUid)
+        val launchIntent = genericLaunchIntent(
+            category,
+            notification.ownerUid,
+            entityId
+        )
+        val rendered = baseBuilder(
+            category = category,
+            title = notification.title,
+            message = notification.message,
+            contentIntent = contentIntent(
+                category,
+                notification.ownerUid,
+                entityId,
+                launchIntent
+            )
+        ).setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ERROR)
+            .build()
+
+        notify(
+            category,
+            notification.ownerUid,
+            entityId,
+            DEVICE_ALERT_NOTIFICATION_ID,
+            rendered
+        )
+    }
+
+    @SuppressLint("MissingPermission")
+    override fun renderDeviceUpdate(notification: DeviceUpdateNotification) {
+        val category = NotificationCategory.DEVICE_UPDATES
+        val entityId = requireDeviceUid(notification.deviceUid)
+        notification.progressPercent?.let { progress ->
+            require(progress in 0..100) { "progressPercent must be 0..100" }
         }
 
-        notify(category, ownerUid, entityId, DEVICE_UPDATE_NOTIFICATION_ID, builder.build())
+        val builder = baseBuilder(
+            category = category,
+            title = notification.title,
+            message = notification.message,
+            contentIntent = contentIntent(
+                category,
+                notification.ownerUid,
+                entityId,
+                genericLaunchIntent(category, notification.ownerUid, entityId)
+            )
+        ).setOnlyAlertOnce(true)
+            .setOngoing(notification.ongoing)
+            .setCategory(NotificationCompat.CATEGORY_PROGRESS)
+
+        notification.progressPercent?.let { progress ->
+            builder.setProgress(100, progress, false)
+        }
+
+        notify(
+            category,
+            notification.ownerUid,
+            entityId,
+            DEVICE_UPDATE_NOTIFICATION_ID,
+            builder.build()
+        )
     }
 
     override fun cancelCareReminder(ownerUid: String, taskId: Long) {
@@ -145,7 +161,9 @@ class AndroidNotificationRenderer(
         val prefix = NotificationIdentity.ownerTagPrefix(ownerUid)
         manager?.activeNotifications
             ?.filter { notification -> notification.tag?.startsWith(prefix) == true }
-            ?.forEach { notification -> manager.cancel(notification.tag, notification.id) }
+            ?.forEach { notification ->
+                manager.cancel(notification.tag, notification.id)
+            }
     }
 
     private fun baseBuilder(
@@ -154,8 +172,10 @@ class AndroidNotificationRenderer(
         message: String,
         contentIntent: PendingIntent
     ): NotificationCompat.Builder {
-        permissionPolicy.ensureChannels()
-        return NotificationCompat.Builder(appContext, permissionPolicy.channelId(category))
+        return NotificationCompat.Builder(
+            appContext,
+            NotificationChannelRegistry.channelId(category)
+        )
             .setSmallIcon(R.drawable.ic_stat_aqualight_soft)
             .setContentTitle(title)
             .setContentText(message)
@@ -200,14 +220,18 @@ class AndroidNotificationRenderer(
         id: Int,
         notification: Notification
     ) {
-        manager?.notify(NotificationIdentity.tag(category, ownerUid, entityId), id, notification)
+        manager?.notify(
+            NotificationIdentity.tag(category, ownerUid, entityId),
+            id,
+            notification
+        )
     }
 
     private fun createLargeIconBitmap(
-        @DrawableRes iconRes: Int?,
-        color: String?
+        @DrawableRes iconRes: Int,
+        color: String
     ): Bitmap? {
-        if (iconRes == null || iconRes <= 0) return null
+        if (iconRes <= 0) return null
 
         val size = 48.dp()
         val iconSize = 25.dp()
@@ -228,6 +252,12 @@ class AndroidNotificationRenderer(
         wrapped.setBounds(left, top, left + iconSize, top + iconSize)
         wrapped.draw(canvas)
         return bitmap
+    }
+
+    private fun requireDeviceUid(deviceUid: String): String {
+        return deviceUid.trim().also { normalized ->
+            require(normalized.isNotBlank()) { "deviceUid must not be blank" }
+        }
     }
 
     private fun Int.dp(): Int =
