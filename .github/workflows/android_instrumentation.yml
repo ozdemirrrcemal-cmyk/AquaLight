@@ -10,7 +10,7 @@ on:
       - "gradlew"
       - "gradle.properties"
       - "settings.gradle"
-      - "tools/run_stage3_release_smoke.sh"
+      - "tools/run_release_smoke.sh"
 
 concurrency:
   group: android-emulator-${{ github.event.pull_request.number || github.ref }}
@@ -54,10 +54,10 @@ jobs:
 
       - name: Verify release-smoke runner contract
         run: |
-          grep -Fq "connectedDebugAndroidTest" tools/run_stage3_release_smoke.sh
-          grep -Fq "bash tools/verify_uninstall_clears_data.sh" tools/run_stage3_release_smoke.sh
-          grep -Fq "STAGE3_RELEASE_SMOKE_PASS" tools/run_stage3_release_smoke.sh
-          grep -Fq "Stage3ReleaseSmokeActivity" tools/run_stage3_release_smoke.sh
+          grep -Fq "connectedDebugAndroidTest" tools/run_release_smoke.sh
+          grep -Fq "bash tools/verify_uninstall_clears_data.sh" tools/run_release_smoke.sh
+          grep -Fq "RELEASE_SMOKE_PASS" tools/run_release_smoke.sh
+          grep -Fq "ReleaseSmokeActivity" tools/run_release_smoke.sh
 
       - name: Generate CI-only release keystore
         run: |
@@ -104,7 +104,7 @@ jobs:
           emulator-options: >-
             -no-window -gpu swiftshader_indirect -no-snapshot-save
             -noaudio -no-boot-anim -camera-back none
-          script: bash tools/run_stage3_release_smoke.sh "${{ matrix.api-level }}"
+          script: bash tools/run_release_smoke.sh "${{ matrix.api-level }}"
 
       - name: Upload instrumentation and smoke reports
         if: always()
@@ -115,14 +115,14 @@ jobs:
             app/build/reports/androidTests/connected/**
             app/build/outputs/androidTest-results/connected/**
             assemble-release-smoke.log
-            stage3-release-smoke-run.txt
-            stage3-release-smoke-window.xml
-            stage3-release-smoke-logcat.txt
-            stage3-release-smoke-activities.txt
-            stage3-release-smoke-package.txt
-            stage3-release-smoke-install.txt
-            stage3-release-smoke-package-path.txt
-            stage3-release-smoke-start.txt
+            release-smoke-run.txt
+            release-smoke-window.xml
+            release-smoke-logcat.txt
+            release-smoke-activities.txt
+            release-smoke-package.txt
+            release-smoke-install.txt
+            release-smoke-package-path.txt
+            release-smoke-start.txt
           if-no-files-found: ignore
 
       - name: Remove CI-only release keystore
