@@ -1,30 +1,52 @@
 package com.aqua.aqualight.data.user
 
+import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.Serializer
-import java.io.IOException
+import com.aqua.aqualight.data.store.StoreInvariantViolation
+import com.google.protobuf.InvalidProtocolBufferException
 import java.io.InputStream
 import java.io.OutputStream
 
 object UserPreferencesSerializer : Serializer<UserPreferences> {
 
     override val defaultValue: UserPreferences =
-        UserPreferences.getDefaultInstance()
+        UserPreferencesStoreRules.defaultPreferences()
 
     override suspend fun readFrom(input: InputStream): UserPreferences {
-        return try {
+        val parsed = try {
             UserPreferences.parseFrom(input)
-        } catch (e: IOException) {
-            // IO / parse hatası -> default
-            e.printStackTrace()
-            defaultValue
-        } catch (e: Exception) {
-            // Beklenmeyen başka hata -> yine default
-            e.printStackTrace()
-            defaultValue
+        } catch (exception: InvalidProtocolBufferException) {
+            throw CorruptionException(
+                "Cannot read user preferences proto.",
+                exception
+            )
+        }
+
+        return try {
+            UserPreferencesStoreRules.validate(parsed)
+        } catch (exception: StoreInvariantViolation) {
+            throw CorruptionException(
+                "User preferences violate the commercial store contract.",
+                exception
+            )
         }
     }
 
-    override suspend fun writeTo(t: UserPreferences, output: OutputStream) {
-        t.writeTo(output)
+    override suspend fun writeTo(
+        t: UserPreferences,
+        output: OutputStream
+    ) {
+        val canonicalPreferences = if (
+            t.schemaVersion == 0 &&
+            !t.isLoggedIn &&
+            t.uid.isBlank() &&
+            t.profileCachesCount == 0
+        ) {
+            defaultValue
+        } else {
+            t
+        }
+
+        UserPreferencesStoreRules.validate(canonicalPreferences).writeTo(output)
     }
 }
