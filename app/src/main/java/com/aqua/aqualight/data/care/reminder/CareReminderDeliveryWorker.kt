@@ -9,6 +9,8 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.notifications.CareReminderKind
+import com.aqua.aqualight.application.notifications.CareReminderNotification
 import com.aqua.aqualight.application.notifications.NotificationCategory
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.auth.FirebaseAuthenticatedOwnerProvider
@@ -127,13 +129,14 @@ class CareReminderDeliveryWorker(
             bodyText
         }
 
-        platform.renderer.renderCareReminder(
-            ownerUid = ownerUid,
-            taskId = ownerTask.id,
-            title = title,
-            message = message,
-            largeIconRes = typeUi.iconRes,
-            largeIconColor = typeUi.accentColor
+        platform.dispatchUseCase.dispatchCareReminder(
+            CareReminderNotification(
+                ownerUid = ownerUid,
+                taskId = ownerTask.id,
+                kind = CareReminderKind.valueOf(ownerTask.type.name),
+                title = title,
+                message = message
+            )
         )
         platform.scheduler.scheduleCareTask(ownerUid, ownerTask.id)
     }
