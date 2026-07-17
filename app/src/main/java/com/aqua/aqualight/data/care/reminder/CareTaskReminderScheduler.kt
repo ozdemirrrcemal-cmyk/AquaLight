@@ -61,10 +61,8 @@ object CareTaskReminderScheduler {
       return
     }
 
-    val intervalDays = task.missedReminderDays.coerceAtLeast(1)
-
     val triggerAtMillis = System.currentTimeMillis() +
-    TimeUnit.DAYS.toMillis(intervalDays.toLong())
+      TimeUnit.DAYS.toMillis(task.missedReminderDays.toLong())
 
     scheduleAt(
       context = context,
@@ -79,33 +77,32 @@ object CareTaskReminderScheduler {
     taskId: Long,
     ownerUid: String = UserDataScope.currentUid()
   ) {
+    val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
+    require(taskId > 0L) {
+      "taskId must be positive"
+    }
+    require(normalizedOwnerUid.isNotBlank()) {
+      "ownerUid must not be blank"
+    }
+
     val alarmManager = context.getSystemService(
       Context.ALARM_SERVICE
     ) as AlarmManager
 
-    val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
-
-    listOf(
-      UserDataScope.LEGACY_OWNER_UID,
-      normalizedOwnerUid
+    val pendingIntent = createPendingIntent(
+      context = context,
+      taskId = taskId,
+      ownerUid = normalizedOwnerUid
     )
-      .distinct()
-      .forEach { candidateOwnerUid ->
-        val pendingIntent = createPendingIntent(
-          context = context,
-          taskId = taskId,
-          ownerUid = candidateOwnerUid
-        )
 
-        alarmManager.cancel(pendingIntent)
-        pendingIntent.cancel()
+    alarmManager.cancel(pendingIntent)
+    pendingIntent.cancel()
 
-        NotificationHelper.cancelCareTaskNotification(
-          context = context,
-          taskId = taskId,
-          ownerUid = candidateOwnerUid
-        )
-      }
+    NotificationHelper.cancelCareTaskNotification(
+      context = context,
+      taskId = taskId,
+      ownerUid = normalizedOwnerUid
+    )
   }
 
   private fun scheduleAt(
@@ -114,6 +111,10 @@ object CareTaskReminderScheduler {
     ownerUid: String,
     triggerAtMillis: Long
   ) {
+    require(triggerAtMillis > 0L) {
+      "triggerAtMillis must be positive"
+    }
+
     val alarmManager = context.getSystemService(
       Context.ALARM_SERVICE
     ) as AlarmManager
@@ -147,6 +148,12 @@ object CareTaskReminderScheduler {
     ownerUid: String
   ): PendingIntent {
     val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
+    require(taskId > 0L) {
+      "taskId must be positive"
+    }
+    require(normalizedOwnerUid.isNotBlank()) {
+      "ownerUid must not be blank"
+    }
 
     val intent = Intent(
       context,
@@ -165,23 +172,13 @@ object CareTaskReminderScheduler {
 
     return PendingIntent.getBroadcast(
       context,
-      getRequestCode(
+      UserDataScope.notificationRequestCode(
         taskId = taskId,
         ownerUid = normalizedOwnerUid
       ),
       intent,
       PendingIntent.FLAG_UPDATE_CURRENT or
-      PendingIntent.FLAG_IMMUTABLE
-    )
-  }
-
-  private fun getRequestCode(
-    taskId: Long,
-    ownerUid: String
-  ): Int {
-    return UserDataScope.notificationRequestCode(
-      taskId = taskId,
-      ownerUid = ownerUid
+        PendingIntent.FLAG_IMMUTABLE
     )
   }
 }
