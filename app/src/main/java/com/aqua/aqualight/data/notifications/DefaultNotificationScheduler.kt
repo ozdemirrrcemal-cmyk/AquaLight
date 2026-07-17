@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.notifications
 
 import android.content.Context
+import com.aqua.aqualight.application.notifications.NotificationRenderer
 import com.aqua.aqualight.application.notifications.NotificationScheduler
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
@@ -16,10 +17,8 @@ import kotlinx.coroutines.flow.firstOrNull
 /** Single owner-explicit authority for care-reminder alarms and durable work. */
 class DefaultNotificationScheduler(
     context: Context,
-    private val preferences: OwnerNotificationPreferences =
-        OwnerNotificationPreferences.create(context),
-    private val renderer: AndroidNotificationRenderer =
-        AndroidNotificationRenderer(context)
+    private val preferences: OwnerNotificationPreferences,
+    private val renderer: NotificationRenderer
 ) : NotificationScheduler {
 
     private val appContext = context.applicationContext
@@ -74,7 +73,6 @@ class DefaultNotificationScheduler(
         ownerTasks.forEach { task ->
             CareTaskReminderScheduler.cancel(appContext, task.id, owner)
         }
-        renderer.cancelOwner(owner)
     }
 
     private suspend fun scheduleOrCancel(ownerUid: String, task: CareTask) {
