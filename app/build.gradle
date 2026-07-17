@@ -95,6 +95,10 @@ android {
     }
 
     buildFeatures { buildConfig true; viewBinding true }
+
+    sourceSets {
+        test.resources.srcDir rootProject.file("protocol/fixtures")
+    }
 }
 
 dependencies {

@@ -1,0 +1,226 @@
+{
+  "fixtureVersion": 1,
+  "contract": {
+    "schema": "aql.ws.v2",
+    "schemaVersion": 2,
+    "protocolVersion": 2,
+    "path": "/aql/v2/ws",
+    "authScheme": "hmac-sha256",
+    "maxMessageBytes": 8192,
+    "maxDataBytes": 4096
+  },
+  "testInputs": {
+    "runtimeToken": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    "credentialKeySha256": "a8ae6e6ee929abea3afcfc5258c8ccd6f85273e0d4626d26c7279f3250f77c8e",
+    "deviceUid": "AQL-WPE-336172",
+    "sessionId": "session-00000001",
+    "serverNonce": "1111111111111111111111111111111111111111111111111111111111111111",
+    "clientNonce": "2222222222222222222222222222222222222222222222222222222222222222",
+    "authRequestId": "auth-fixture-1"
+  },
+  "handshake": {
+    "hello": {
+      "id": "hello-1",
+      "type": "hello",
+      "module": "security",
+      "action": "session.challenge",
+      "data": {
+        "schema": "aql.ws.v2",
+        "protocolVersion": 2,
+        "deviceUid": "AQL-WPE-336172",
+        "sessionId": "session-00000001",
+        "serverNonce": "1111111111111111111111111111111111111111111111111111111111111111",
+        "authScheme": "hmac-sha256",
+        "maxMessageBytes": 8192
+      },
+      "meta": {
+        "schema": "aql.ws.v2",
+        "schemaVersion": 2,
+        "protocolVersion": 2,
+        "firmwareVersion": "2.0.0"
+      }
+    },
+    "authRequest": {
+      "id": "auth-fixture-1",
+      "type": "auth",
+      "module": "security",
+      "action": "session.authenticate",
+      "data": {
+        "authScheme": "hmac-sha256",
+        "deviceUid": "AQL-WPE-336172",
+        "sessionId": "session-00000001",
+        "serverNonce": "1111111111111111111111111111111111111111111111111111111111111111",
+        "clientNonce": "2222222222222222222222222222222222222222222222222222222222222222",
+        "clientProof": "8b1f8da61c004bcf8ede49bd267f722f1c4069cf915ee0427c7100b4e947bead"
+      }
+    },
+    "authResponse": {
+      "id": "auth-fixture-1",
+      "type": "res",
+      "module": "security",
+      "action": "session.authenticate",
+      "ok": true,
+      "status": 200,
+      "data": {
+        "authScheme": "hmac-sha256",
+        "deviceUid": "AQL-WPE-336172",
+        "sessionId": "session-00000001",
+        "serverNonce": "1111111111111111111111111111111111111111111111111111111111111111",
+        "clientNonce": "2222222222222222222222222222222222222222222222222222222222222222",
+        "serverProof": "b23b35a027dd34d30142739356ad5dc9a54b264e83b21872c2485398a62fbdd4"
+      },
+      "meta": {
+        "schema": "aql.ws.v2",
+        "schemaVersion": 2,
+        "protocolVersion": 2,
+        "firmwareVersion": "2.0.0"
+      }
+    },
+    "expectedClientProof": "8b1f8da61c004bcf8ede49bd267f722f1c4069cf915ee0427c7100b4e947bead",
+    "expectedServerProof": "b23b35a027dd34d30142739356ad5dc9a54b264e83b21872c2485398a62fbdd4",
+    "expectedSessionKey": "7e069a7d001403380e73ff6857b7053636d71763cc9c1f6fd32a2bbe06e1b9ac"
+  },
+  "runtime": {
+    "clientCommand": {
+      "id": "android-command-1",
+      "type": "cmd",
+      "module": "network",
+      "action": "status.get",
+      "data": "e30",
+      "security": {
+        "sessionId": "session-00000001",
+        "seq": 1,
+        "mac": "d44caffcbbb6258e350ca670b637026ad5dedd63ccf67c3b84297b1e3543fa66"
+      }
+    },
+    "deviceResponse": {
+      "id": "android-command-1",
+      "type": "res",
+      "module": "network",
+      "action": "status.get",
+      "data": "eyJjb25uZWN0ZWQiOnRydWUsImlwIjoiMTkyLjE2OC4xLjQyIn0",
+      "ok": true,
+      "status": 200,
+      "security": {
+        "sessionId": "session-00000001",
+        "seq": 1,
+        "mac": "eed84db8af56b467862859f5045bf8d0dbc3be074a56142947a17ad46b95db6e"
+      },
+      "meta": {
+        "schema": "aql.ws.v2",
+        "schemaVersion": 2,
+        "protocolVersion": 2,
+        "firmwareVersion": "2.0.0"
+      }
+    },
+    "deviceEvent": {
+      "id": "evt-1",
+      "type": "evt",
+      "module": "firmware",
+      "action": "ota.progress",
+      "data": "eyJwcm9ncmVzcyI6NDJ9",
+      "security": {
+        "sessionId": "session-00000001",
+        "seq": 2,
+        "mac": "f596805fe685e160863113306e3569114434be87e8ec218a16982e40397c19d2"
+      },
+      "meta": {
+        "schema": "aql.ws.v2",
+        "schemaVersion": 2,
+        "protocolVersion": 2,
+        "firmwareVersion": "2.0.0"
+      }
+    },
+    "deviceError": {
+      "id": "android-command-2",
+      "type": "err",
+      "module": "light",
+      "action": "manual.set",
+      "data": "e30",
+      "ok": false,
+      "status": 422,
+      "error": {
+        "code": "invalid_field",
+        "field": "level",
+        "message": "Command rejected."
+      },
+      "security": {
+        "sessionId": "session-00000001",
+        "seq": 3,
+        "mac": "9af635c8f7c9910a4c13e462ce435b7c06090109afa0a2ff026fcff821b8ca83"
+      },
+      "meta": {
+        "schema": "aql.ws.v2",
+        "schemaVersion": 2,
+        "protocolVersion": 2,
+        "firmwareVersion": "2.0.0"
+      }
+    }
+  },
+  "commandAccess": {
+    "public": [],
+    "authenticated": [
+      "cooling.config.apply",
+      "cooling.status.get",
+      "device.capabilities.get",
+      "device.identity.get",
+      "device.status.get",
+      "dosing.calibration.cancel",
+      "dosing.calibration.confirm",
+      "dosing.calibration.finish",
+      "dosing.calibration.start",
+      "dosing.config.apply",
+      "dosing.dose.now",
+      "dosing.dose.stop",
+      "dosing.prime.start",
+      "dosing.prime.stop",
+      "dosing.reservoir.refill",
+      "dosing.status.get",
+      "firmware.ota.clear",
+      "firmware.ota.start",
+      "firmware.ota.status",
+      "firmware.status.get",
+      "light.channel.regime.set",
+      "light.manual.set",
+      "light.program.apply",
+      "light.program.delete",
+      "light.status.get",
+      "network.status.get",
+      "security.pair",
+      "security.reset",
+      "security.status.get",
+      "security.unpair",
+      "time.config.apply",
+      "time.ntp.sync",
+      "time.phone.sync",
+      "time.rtc.set",
+      "time.status.get",
+      "timer.channel.set",
+      "timer.config.apply",
+      "timer.status.get"
+    ]
+  },
+  "invalid": {
+    "fakeDeviceHello": {
+      "id": "hello-1",
+      "type": "hello",
+      "module": "security",
+      "action": "session.challenge",
+      "data": {
+        "schema": "aql.ws.v2",
+        "protocolVersion": 2,
+        "deviceUid": "AQL-FAKE-DEVICE",
+        "sessionId": "session-00000001",
+        "serverNonce": "1111111111111111111111111111111111111111111111111111111111111111",
+        "authScheme": "hmac-sha256",
+        "maxMessageBytes": 8192
+      },
+      "meta": {
+        "schema": "aql.ws.v2",
+        "schemaVersion": 2,
+        "protocolVersion": 2,
+        "firmwareVersion": "2.0.0"
+      }
+    }
+  }
+}

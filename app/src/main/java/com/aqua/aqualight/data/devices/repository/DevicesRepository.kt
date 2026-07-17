@@ -368,6 +368,7 @@ class DevicesRepository(
             is AqlWsEvent.Message -> applyRuntimeMetadataMessage(event)
             is AqlWsEvent.Closed -> applyRuntimeClosed(event)
             is AqlWsEvent.Opened,
+            is AqlWsEvent.Authenticated,
             is AqlWsEvent.Failure -> Unit
         }
     }

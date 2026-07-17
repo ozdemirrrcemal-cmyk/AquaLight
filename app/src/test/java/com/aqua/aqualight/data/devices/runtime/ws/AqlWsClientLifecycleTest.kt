@@ -95,7 +95,8 @@ class AqlWsClientLifecycleTest {
 
         val state = client.connectionState.value as AqlWsConnectionState.Connected
         assertEquals(deviceUid, state.deviceUid)
-        assertTrue(state.url.contains("192.168.1.11"))
+        assertTrue(state.url.endsWith(":80/aql/v2/ws"))
+        assertFalse(state.url.contains("192.168.1.11"))
         assertEquals(1, observedEvents.size)
         assertTrue(observedEvents.single() is AqlWsEvent.Opened)
         assertEquals(1, firstConnection.socket.closeCount.get())
@@ -106,7 +107,7 @@ class AqlWsClientLifecycleTest {
     }
 
     @Test
-    fun lifecycleEventsAreQueuedUntilCollectorStarts() = runBlocking {
+    fun malformedFrameIsRejectedAndLifecycleEventsRemainQueuedUntilCollectorStarts() = runBlocking {
         val factory = RecordingWebSocketFactory()
         val client = AqlWsClient(webSocketFactory = factory)
         val deviceUid = DeviceUid("device-queued-events")
@@ -124,7 +125,7 @@ class AqlWsClientLifecycleTest {
         }
 
         assertTrue(events[0] is AqlWsEvent.Opened)
-        assertTrue(events[1] is AqlWsEvent.Message)
+        assertTrue(events[1] is AqlWsEvent.Failure)
         client.shutdown()
     }
 

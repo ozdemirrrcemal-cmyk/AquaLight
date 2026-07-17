@@ -7,20 +7,25 @@ data class DeviceRuntimeEndpoint(
     val wifiMode: String = "",
     val wifiConnected: Boolean = false,
     val setupApActive: Boolean = false,
-    val runtimeTransport: String = "",
+    val runtimeTransport: String = RUNTIME_TRANSPORT_WEBSOCKET,
     val wsPort: Int = 0,
     val wsPath: String = AqlWsContract.DEFAULT_PATH,
     val wsProtocol: String = AqlWsContract.DEFAULT_PROTOCOL,
-    val wsProtocolVersion: Int = 0,
+    val wsProtocolVersion: Int = AqlWsContract.PROTOCOL_VERSION,
     val discoveryPort: Int = 0
 ) {
     val hasWebSocketEndpoint: Boolean
-        get() = ip.isPrivateLanIpv4Literal() && wsPort in MIN_PORT..MAX_PORT && wsPath.isValidWsPath()
+        get() = ip.isPrivateLanIpv4Literal() &&
+            wsPort in MIN_PORT..MAX_PORT &&
+            wsPath == AqlWsContract.DEFAULT_PATH &&
+            wsPath.isValidWsPath() &&
+            wsProtocol == AqlWsContract.DEFAULT_PROTOCOL &&
+            wsProtocolVersion == AqlWsContract.PROTOCOL_VERSION &&
+            runtimeTransport == RUNTIME_TRANSPORT_WEBSOCKET
 
-    fun toWebSocketUrl(): String? = if (hasWebSocketEndpoint) {
-        "ws://${ip.trim()}:$wsPort${wsPath.trim()}"
-    } else {
-        null
+    internal fun privateLanAddressBytes(): ByteArray? {
+        if (!ip.isPrivateLanIpv4Literal()) return null
+        return ip.trim().split('.').map { octet -> octet.toInt().toByte() }.toByteArray()
     }
 
     private fun String.isValidWsPath(): Boolean {
@@ -55,6 +60,7 @@ data class DeviceRuntimeEndpoint(
         const val MAX_PORT = 65_535
         const val IPV4_OCTET_COUNT = 4
         const val IPV4_MAX_OCTET_DIGITS = 3
+        const val RUNTIME_TRANSPORT_WEBSOCKET = "websocket"
         val IPV4_OCTET_RANGE = 0..255
     }
 }

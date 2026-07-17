@@ -22,8 +22,8 @@ object DeviceFirmwareRuntimeContract {
     }
 
     object Event {
-        const val OTA_PROGRESS = "firmware.ota.progress"
-        const val OTA_COMPLETED = "firmware.ota.completed"
+        const val OTA_PROGRESS = "ota.progress"
+        const val OTA_COMPLETED = "ota.completed"
     }
 
     object Manifest {

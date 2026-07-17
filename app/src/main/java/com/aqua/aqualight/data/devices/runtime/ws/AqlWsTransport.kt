@@ -28,16 +28,8 @@ interface AqlWsTransport : AutoCloseable {
         endpoint: DeviceRuntimeEndpoint
     ): Result<Unit>
 
+    /** Sends only typed messages through the v2 codec. Raw JSON bypasses are forbidden. */
     fun send(message: AqlWsOutgoingMessage): Boolean
-
-    fun sendRaw(raw: String): Boolean
-
-    fun markAuthenticated(deviceUid: DeviceUid)
-
-    fun markAuthRequired(
-        deviceUid: DeviceUid,
-        message: String
-    )
 
     fun disconnect(
         code: Int = 1000,
