@@ -8,6 +8,7 @@ import com.aqua.aqualight.application.auth.AuthOperations
 import com.aqua.aqualight.application.auth.SessionExitOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionUseCase
+import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.application.user.UserSettingsOperations
@@ -40,6 +41,7 @@ interface AppContainer {
     val userPreferencesManager: UserPreferencesManager
     val userSettingsOperations: UserSettingsOperations
     val notificationPreferenceUseCase: NotificationPreferenceUseCase
+    val notificationDispatchUseCase: NotificationDispatchUseCase
     val userProfileOperations: UserProfileOperations
     val feedbackSubmissionOperations: FeedbackSubmissionUseCase
     val provisioningDraftOperations: ProvisioningDraftOperations
@@ -82,6 +84,12 @@ internal class DefaultAppContainer(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
         NotificationPlatform.get(appContext).preferenceUseCase
+    }
+
+    override val notificationDispatchUseCase: NotificationDispatchUseCase by lazy(
+        LazyThreadSafetyMode.SYNCHRONIZED
+    ) {
+        NotificationPlatform.get(appContext).dispatchUseCase
     }
 
     override val userProfileOperations: UserProfileOperations by lazy(
