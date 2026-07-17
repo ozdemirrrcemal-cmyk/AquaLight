@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Protect completed Stage 3 device application boundaries."""
+"""Protect completed device application boundaries."""
 from pathlib import Path
 import re
 import sys
@@ -24,13 +24,13 @@ STATUS_MAPPER = SOURCE / "ui/tabs/settings/device/DeviceStatusSnapshotMapper.kt"
 ROUTE_RESOLVER = SOURCE / "ui/tabs/devices/route/DeviceRouteResolver.kt"
 OBSOLETE_UI_GATE = SOURCE / "ui/tabs/devices/route/DeviceMenuOpenGate.kt"
 FACTORY = SOURCE / "composition/OwnerViewModelFactory.kt"
-SMOKE_FACTORY = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/Stage3SmokeAppContainer.kt"
+SMOKE_FACTORY = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeAppContainer.kt"
 DEVICES_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/devices/DevicesViewModelBoundaryTest.kt"
 STATUS_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/settings/device/DeviceStatusViewModelBoundaryTest.kt"
 SETTINGS_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/settings/SettingsViewModelBoundaryTest.kt"
 AUTH_POLICY_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/data/devices/menu/DeviceMenuAuthenticationPolicyTest.kt"
 PROOF_POLICY_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/data/devices/menu/DeviceMenuRuntimeProofPolicyTest.kt"
-SEQUENCE = ROOT / "docs/stage-3-commercial-closure-sequence.md"
+SEQUENCE = ROOT / "docs/commercial-architecture-closure-record.md"
 
 errors: list[str] = []
 
@@ -321,15 +321,15 @@ for path, text, token in (
     if token not in text:
         errors.append(f"{path.relative_to(ROOT)}: migrated menu policy coverage is missing: {token}")
 
-for branch_name in (
-    "feature/stage-3-device-application-boundaries",
-    "feature/stage-3-aquarium-care-boundaries",
-    "feature/stage-3-provisioning-platform-boundaries",
-    "feature/stage-3-composition-root-closure",
+for workstream_name in (
+    "Device application boundaries",
+    "Aquarium and care boundaries",
+    "Provisioning platform boundaries",
+    "Composition-root closure",
 ):
-    if branch_name not in sequence:
+    if workstream_name not in sequence:
         errors.append(
-            f"{SEQUENCE.relative_to(ROOT)}: locked Stage 3 sequence is missing {branch_name}"
+            f"{SEQUENCE.relative_to(ROOT)}: commercial closure record is missing {workstream_name}"
         )
 
 if errors:
