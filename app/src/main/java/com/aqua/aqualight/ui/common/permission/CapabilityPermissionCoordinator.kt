@@ -119,7 +119,12 @@ class CapabilityPermissionCoordinator(
     private fun dispatchCurrentDecision() {
         val capability = pendingCapability ?: return
 
-        when (policy().evaluate(fragment, capability)) {
+        when (
+            policy().evaluate(
+                capability = capability,
+                shouldShowRationale = fragment::shouldShowRequestPermissionRationale
+            )
+        ) {
             PermissionDecision.GRANTED -> complete()
             PermissionDecision.REQUEST -> launchPermissionRequest()
             PermissionDecision.RATIONALE -> showSheet(
