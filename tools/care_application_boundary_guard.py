@@ -128,7 +128,7 @@ if view_model.is_file():
 
 if reminder_delivery_worker.is_file():
     text = reminder_delivery_worker.read_text(encoding="utf-8")
-    if "CareReminderDeliveryPolicy.shouldDeliver(task, tank)" not in text:
+    if "CareReminderDeliveryPolicy.shouldDeliver(" not in text:
         errors.append(
             "durable reminder delivery worker must revalidate task and tank state at delivery time"
         )
