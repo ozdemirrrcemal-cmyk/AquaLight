@@ -17,7 +17,6 @@ import com.aqua.aqualight.data.care.model.CareTask
 import com.aqua.aqualight.data.notifications.OwnerNotificationPreferences
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.utils.NotificationHelper
-import java.util.UUID
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.firstOrNull
@@ -207,8 +206,6 @@ class CareReminderDeliveryWorker(
         private const val KEY_TASK_ID = "task_id"
         private const val KEY_OWNER_UID = "owner_uid"
         private const val KEY_OCCURRENCE = "occurrence"
-        private const val WORK_NAME_PREFIX = "care_reminder_delivery_"
-        private const val OWNER_TAG_PREFIX = "care_reminder_owner_"
         private const val MAX_ATTEMPTS = 3
         private const val BACKOFF_SECONDS = 30L
 
@@ -231,7 +228,7 @@ class CareReminderDeliveryWorker(
                         KEY_OCCURRENCE to occurrence.name
                     )
                 )
-                .addTag(ownerTag(owner))
+                .addTag(CareReminderIdentity.ownerWorkTag(owner))
                 .setBackoffCriteria(
                     BackoffPolicy.EXPONENTIAL,
                     BACKOFF_SECONDS,
@@ -241,7 +238,11 @@ class CareReminderDeliveryWorker(
 
             WorkManager.getInstance(context.applicationContext)
                 .enqueueUniqueWork(
-                    workName(owner, taskId, occurrence),
+                    CareReminderIdentity.deliveryWorkName(
+                        ownerUid = owner,
+                        taskId = taskId,
+                        occurrence = occurrence
+                    ),
                     ExistingWorkPolicy.KEEP,
                     request
                 )
@@ -257,26 +258,7 @@ class CareReminderDeliveryWorker(
             }
 
             WorkManager.getInstance(context.applicationContext)
-                .cancelAllWorkByTag(ownerTag(owner))
-        }
-
-        internal fun workName(
-            ownerUid: String,
-            taskId: Long,
-            occurrence: CareReminderOccurrence
-        ): String {
-            val stableIdentity = CareReminderIdentity.stableKey(ownerUid, taskId) +
-                "\u001F${occurrence.name}"
-            val uuid = UUID.nameUUIDFromBytes(stableIdentity.toByteArray())
-            return WORK_NAME_PREFIX + uuid
-        }
-
-        internal fun ownerTag(ownerUid: String): String {
-            val owner = UserDataScope.normalizeOwnerUid(ownerUid)
-            require(owner.isNotBlank()) {
-                "ownerUid must not be blank"
-            }
-            return OWNER_TAG_PREFIX + UUID.nameUUIDFromBytes(owner.toByteArray())
+                .cancelAllWorkByTag(CareReminderIdentity.ownerWorkTag(owner))
         }
     }
 }
