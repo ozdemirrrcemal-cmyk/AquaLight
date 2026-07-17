@@ -26,6 +26,13 @@ intentionally provides no legacy compatibility or downgrade path.
 10. Serializer, corruption, owner-isolation, migration-version, and
     concurrent-write tests are release gates.
 
+## Care schedule product limits
+
+- Repeat interval: `1..365` days.
+- Missed-reminder duration: `1..30` days.
+- Blank, zero, malformed, or out-of-range values are rejected; they are never silently coerced.
+- UI input parsing and persistent-store validation use the same application contract.
+
 ## Delivery rule
 
 The branch remains draft until every read and write path uses the same store

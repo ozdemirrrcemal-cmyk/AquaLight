@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.care
 
+import com.aqua.aqualight.application.care.CareTaskInputLimits
 import com.aqua.aqualight.data.care.model.CareTask
 import com.aqua.aqualight.data.care.model.CareTaskSource
 import com.aqua.aqualight.data.care.model.CareTaskStatus
@@ -10,10 +11,14 @@ import com.aqua.aqualight.data.store.StoreInvariantViolation
 /** Authoritative invariant rules for the commercial care-task store. */
 object CareTaskStoreRules {
 
-    const val MIN_REPEAT_INTERVAL_DAYS = 1
-    const val MAX_REPEAT_INTERVAL_DAYS = 3_650
-    const val MIN_MISSED_REMINDER_DAYS = 1
-    const val MAX_MISSED_REMINDER_DAYS = 365
+    const val MIN_REPEAT_INTERVAL_DAYS =
+        CareTaskInputLimits.MIN_REPEAT_INTERVAL_DAYS
+    const val MAX_REPEAT_INTERVAL_DAYS =
+        CareTaskInputLimits.MAX_REPEAT_INTERVAL_DAYS
+    const val MIN_MISSED_REMINDER_DAYS =
+        CareTaskInputLimits.MIN_MISSED_REMINDER_DAYS
+    const val MAX_MISSED_REMINDER_DAYS =
+        CareTaskInputLimits.MAX_MISSED_REMINDER_DAYS
     const val MIN_WATER_CHANGE_PERCENT = 1
     const val MAX_WATER_CHANGE_PERCENT = 100
 
