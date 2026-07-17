@@ -43,21 +43,24 @@ class NotificationPreferenceUseCaseTest {
     @Test
     fun snapshotKeepsPreferencePermissionAppAndEachChannelIndependent() = runTest {
         val fixture = Fixture(initialEnabled = true)
-        fixture.policy.readiness[NotificationCategory.CARE_REMINDERS] = readiness(
-            runtime = true,
-            app = true,
-            channel = NotificationChannelState.ENABLED
-        )
-        fixture.policy.readiness[NotificationCategory.DEVICE_ALERTS] = readiness(
-            runtime = true,
-            app = true,
-            channel = NotificationChannelState.BLOCKED
-        )
-        fixture.policy.readiness[NotificationCategory.DEVICE_UPDATES] = readiness(
-            runtime = false,
-            app = true,
-            channel = NotificationChannelState.ENABLED
-        )
+        fixture.policy.readinessByCategory[NotificationCategory.CARE_REMINDERS] =
+            deliveryReadiness(
+                runtime = true,
+                app = true,
+                channel = NotificationChannelState.ENABLED
+            )
+        fixture.policy.readinessByCategory[NotificationCategory.DEVICE_ALERTS] =
+            deliveryReadiness(
+                runtime = true,
+                app = true,
+                channel = NotificationChannelState.BLOCKED
+            )
+        fixture.policy.readinessByCategory[NotificationCategory.DEVICE_UPDATES] =
+            deliveryReadiness(
+                runtime = false,
+                app = true,
+                channel = NotificationChannelState.ENABLED
+            )
 
         val snapshot = fixture.useCase.snapshot("owner-a")
 
@@ -117,8 +120,8 @@ class NotificationPreferenceUseCaseTest {
     private class FakePolicy(
         private val events: MutableList<String>
     ) : NotificationPermissionPolicy {
-        val readiness = NotificationCategory.entries.associateWith {
-            readiness(true, true, NotificationChannelState.ENABLED)
+        val readinessByCategory = NotificationCategory.entries.associateWith {
+            deliveryReadiness(true, true, NotificationChannelState.ENABLED)
         }.toMutableMap()
 
         override fun ensureChannels() {
@@ -126,7 +129,7 @@ class NotificationPreferenceUseCaseTest {
         }
 
         override fun evaluate(category: NotificationCategory): NotificationDeliveryReadiness {
-            return readiness.getValue(category)
+            return readinessByCategory.getValue(category)
         }
 
         override fun channelId(category: NotificationCategory): String = category.name.lowercase()
@@ -165,7 +168,7 @@ class NotificationPreferenceUseCaseTest {
     }
 
     private companion object {
-        fun readiness(
+        fun deliveryReadiness(
             runtime: Boolean,
             app: Boolean,
             channel: NotificationChannelState
