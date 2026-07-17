@@ -16,6 +16,13 @@
     <color name="aqua_bottom_sheet_primary">#6489C9</color>
     <color name="aqua_bottom_sheet_on_primary">#F4F8FC</color>
 
+    <!-- Shared permission capability icon language -->
+    <color name="aqua_permission_icon_surface">#0D2432</color>
+    <color name="aqua_permission_icon_outline">#285462</color>
+    <color name="aqua_permission_icon_foreground">#55C7B3</color>
+    <color name="aqua_permission_icon_badge_surface">#6489C9</color>
+    <color name="aqua_permission_icon_badge_foreground">#F4F8FC</color>
+
     <!-- Cancel / neutral action -->
     <color name="aqua_bottom_sheet_neutral">#162638</color>
     <color name="aqua_bottom_sheet_on_neutral">#F4F8FC</color>
