@@ -20,14 +20,18 @@ object UserPreferencesSessionRules {
             "ownerUid must not be blank"
         }
 
-        val builder = current.toBuilder()
         val previousOwnerUid = current.uid.takeIf { uid ->
             current.isLoggedIn && uid.isNotBlank()
         }
 
+        if (previousOwnerUid == nextOwnerUid) {
+            return current
+        }
+
+        val builder = current.toBuilder()
+
         if (
             previousOwnerUid != null &&
-            previousOwnerUid != nextOwnerUid &&
             current.hasActiveProfileData()
         ) {
             builder.replaceProfileCache(
