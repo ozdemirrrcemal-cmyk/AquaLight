@@ -38,3 +38,34 @@ The `currentRepository(ownerUid)` methods are read-only dependency handoff point
 | --- | --- | --- |
 | `AuthViewModelFactory` | authentication ViewModels using `AuthOperations` | Context/Firebase/repository construction |
 | `ProcessViewModelFactory` | owner-independent ViewModels only | owner UID, repositories, providers |
+| `OwnerViewModelFactory` | authenticated aquarium, care, device and provisioning ViewModels | provider `get`, assignable matching, fallback construction |
+| `AquaViewModelFactory` | exact dispatch between process and owner factories | Android fallback, duplicate binding, unknown binding |
+
+## Provider and service-locator containment
+
+`DevicesRepositoryProvider.get` and `TankDeviceAssignmentRepositoryProvider.get` remain contained inside the foreground owner-session data boundary because they implement the validated awaited shutdown barrier. They are forbidden in UI, ViewModels, `AppContainer` and all ViewModel factories.
+
+The composition root consumes only `currentRepository(ownerUid)`. This preserves one runtime instance and avoids rewriting an already validated lifecycle barrier during composition closure. A later replacement of the two lifecycle holders must keep the same open/clear barrier and can be performed without changing UI or ViewModel construction.
+
+## Fail-closed rules
+
+1. Unknown ViewModel classes throw; Android default fallback is forbidden.
+2. A class bound in both process and owner scopes throws.
+3. Owner ViewModel creation requires a committed session whose authenticated UID, generation, device repository and assignment repository match.
+4. Pending startup, logout or account-switch sessions fail before a ViewModel constructor can start collectors; committed-session teardown remains the single authority for already-created ViewModels.
+5. Provisioning storage captures the immutable graph owner UID.
+6. Owner dependency resolution never calls a provider `get` method and therefore can never open UDP discovery, collectors or WebSockets.
+
+## Automated evidence
+
+- `composition_root_guard.py` enforces the matrix and forbidden construction sites.
+- `AquaViewModelFactoryTest` verifies exact routing, unknown-binding rejection and duplicate-scope rejection.
+- `OwnerDependencyGraphSessionTest` verifies committed, pending, mismatched and signed-out session behavior before dependency construction.
+- Existing architecture, session, provisioning and UI construction guards remain in the CI chain.
+- Debug/Release unit tests, lint, minified Release, CodeQL and API 27/API 35 emulator workflows remain mandatory for affected release candidates.
+
+## Physical validation baseline
+
+Code-level commercial approval does not replace physical provisioning regression. QR, Nearby Scan, cancellation, rollback, Wi-Fi failure, process recreation and owner-switch scenarios must pass on each affected final Release Candidate.
+
+The closure release candidate passed this baseline through physical tests T01–T18 before merge to `main`.
