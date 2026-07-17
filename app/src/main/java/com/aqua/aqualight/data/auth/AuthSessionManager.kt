@@ -1,7 +1,6 @@
 package com.aqua.aqualight.data.auth
 
 import android.content.Context
-import com.aqua.aqualight.data.user.UserDataOwnershipMigrator
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
@@ -14,11 +13,13 @@ import com.google.firebase.auth.auth
  * Local preferences are a cache only. Firebase is the authentication source of
  * truth. Heavy device runtime is opened exclusively through [OwnerRuntimeSession]
  * and this manager must never be used by workers or broadcast receivers.
+ *
+ * AquaLight has no released ownerless local-data contract. Session startup never
+ * adopts records that do not already belong to the authenticated owner.
  */
 class AuthSessionManager private constructor(
     private val firebaseAuth: FirebaseAuth,
     private val userPrefs: UserPreferencesManager,
-    private val ownershipMigrator: UserDataOwnershipMigrator,
     private val ownerRuntimeSession: OwnerRuntimeSession
 ) {
 
@@ -49,9 +50,6 @@ class AuthSessionManager private constructor(
                 userPrefs = UserPreferencesManager.create(
                     appContext
                 ),
-                ownershipMigrator = UserDataOwnershipMigrator.create(
-                    appContext
-                ),
                 ownerRuntimeSession = OwnerRuntimeSession.create(
                     appContext
                 )
@@ -78,9 +76,6 @@ class AuthSessionManager private constructor(
 
         syncLocalSession(user)
         restoreCachedProfile(user)
-        ownershipMigrator.migrateLegacyRecordsToOwner(
-            ownerUid = user.uid
-        )
         openOwnerSession(user.uid)
 
         return SessionState.Authenticated(
@@ -93,9 +88,6 @@ class AuthSessionManager private constructor(
     ): Session {
         syncLocalSession(user)
         restoreCachedProfile(user)
-        ownershipMigrator.migrateLegacyRecordsToOwner(
-            ownerUid = user.uid
-        )
         openOwnerSession(user.uid)
         return user.toSession()
     }
