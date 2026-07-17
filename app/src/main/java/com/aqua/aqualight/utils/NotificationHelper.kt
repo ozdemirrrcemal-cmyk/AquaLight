@@ -45,8 +45,13 @@ object NotificationHelper {
     return NotificationChannelRegistry.readState(context)
   }
 
+  /**
+   * Compatibility query used by care-task forms. It intentionally includes the
+   * care-reminder channel, not only the app-wide Android toggle.
+   */
   fun areSystemNotificationsEnabled(context: Context): Boolean {
-    return notificationSystemState(context).appNotificationsEnabled
+    NotificationChannelRegistry.ensureChannels(context)
+    return notificationSystemState(context).canDeliverCareReminders
   }
 
   @SuppressLint("MissingPermission")
