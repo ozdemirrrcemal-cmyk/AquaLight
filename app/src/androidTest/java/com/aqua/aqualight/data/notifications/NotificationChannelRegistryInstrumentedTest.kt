@@ -5,7 +5,10 @@ import android.content.Context
 import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.aqua.aqualight.application.notifications.NotificationCategory
+import com.aqua.aqualight.application.notifications.NotificationChannelState
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -15,40 +18,47 @@ class NotificationChannelRegistryInstrumentedTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
 
     @Test
-    fun channelStateIsDeterministicAcrossApiLevelsAndRecreation() {
+    fun allPermanentChannelsAreIdempotentAndUnversioned() {
+        assertEquals("care_reminders", NotificationChannelRegistry.CARE_REMINDERS)
+        assertEquals("device_alerts", NotificationChannelRegistry.DEVICE_ALERTS)
+        assertEquals("device_updates", NotificationChannelRegistry.DEVICE_UPDATES)
+        assertFalse(NotificationChannelRegistry.CARE_REMINDERS.contains("_v"))
+        assertFalse(NotificationChannelRegistry.DEVICE_ALERTS.contains("_v"))
+        assertFalse(NotificationChannelRegistry.DEVICE_UPDATES.contains("_v"))
+
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-            assertEquals(
-                NotificationChannelState.NOT_REQUIRED,
-                NotificationChannelRegistry.readState(context)
-                    .careReminderChannelState
-            )
+            NotificationCategory.entries.forEach { category ->
+                assertEquals(
+                    NotificationChannelState.NOT_REQUIRED,
+                    NotificationChannelRegistry.readState(context, category)
+                )
+            }
             return
         }
 
         val manager = context.getSystemService(NotificationManager::class.java)
-        manager.deleteNotificationChannel(
-            NotificationChannelRegistry.CARE_REMINDERS_CHANNEL_ID
-        )
+        NotificationCategory.entries.forEach { category ->
+            manager.deleteNotificationChannel(NotificationChannelRegistry.channelId(category))
+            assertEquals(
+                NotificationChannelState.MISSING,
+                NotificationChannelRegistry.readState(context, category)
+            )
+        }
 
-        assertEquals(
-            NotificationChannelState.MISSING,
-            NotificationChannelRegistry.readState(context)
-                .careReminderChannelState
-        )
+        NotificationChannelRegistry.ensureAll(context)
+        NotificationCategory.entries.forEach { category ->
+            assertEquals(
+                NotificationChannelState.ENABLED,
+                NotificationChannelRegistry.readState(context, category)
+            )
+        }
 
-        NotificationChannelRegistry.ensureChannels(context)
-        assertEquals(
-            NotificationChannelState.ENABLED,
-            NotificationChannelRegistry.readState(context)
-                .careReminderChannelState
-        )
-
-        // Repeated startup calls must be harmless and must not create a second ID.
-        NotificationChannelRegistry.ensureChannels(context)
-        assertEquals(
-            NotificationChannelState.ENABLED,
-            NotificationChannelRegistry.readState(context)
-                .careReminderChannelState
-        )
+        NotificationChannelRegistry.ensureAll(context)
+        NotificationCategory.entries.forEach { category ->
+            assertEquals(
+                NotificationChannelState.ENABLED,
+                NotificationChannelRegistry.readState(context, category)
+            )
+        }
     }
 }
