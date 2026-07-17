@@ -1,8 +1,6 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.settings
 
-import android.Manifest
 import android.app.Activity
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -17,21 +15,23 @@ import coil3.request.crossfade
 import coil3.request.error
 import coil3.request.placeholder
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.ContentSheetIdeaBinding
 import com.aqua.aqualight.databinding.ContentSheetTankNameBinding
 import com.aqua.aqualight.databinding.FragmentTankSettingsBasicBinding
+import com.aqua.aqualight.platform.permissions.AppCapability
 import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.SettingsContentBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.SetupDateBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.TankSizeBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.TankStyleBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.TankTypeBottomSheet
+import com.aqua.aqualight.ui.common.permission.CapabilityPermissionCoordinator
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDatePolicy
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDimensionFormatter
 import com.aqua.aqualight.ui.tabs.aquarium.photo.TankPhotoFlowCoordinator
-import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.yalantis.ucrop.UCrop
 import kotlinx.coroutines.launch
@@ -53,24 +53,17 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
         )
     }
 
+    private val permissionCoordinator = CapabilityPermissionCoordinator(this) { action ->
+        when (action) {
+            ACTION_CAPTURE_TANK_SETTINGS_PHOTO -> openCamera()
+        }
+    }
+
     private val galleryLauncher = registerForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         if (uri != null) {
             startImageCrop(uri)
-        }
-    }
-
-    private val cameraPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            openCamera()
-        } else {
-            showSnackBar(
-                message = getString(R.string.aquarium_camera_permission_required),
-                type = BaseActivity.SnackType.WARNING
-            )
         }
     }
 
@@ -313,16 +306,10 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     }
 
     private fun checkCameraPermissionAndOpen() {
-        val granted = ContextCompat.checkSelfPermission(
-            requireContext(),
-            Manifest.permission.CAMERA
-        ) == PackageManager.PERMISSION_GRANTED
-
-        if (granted) {
-            openCamera()
-        } else {
-            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-        }
+        permissionCoordinator.runWhenGranted(
+            capability = AppCapability.CAMERA_PHOTO,
+            actionToken = ACTION_CAPTURE_TANK_SETTINGS_PHOTO
+        )
     }
 
     private fun openCamera() {
@@ -711,6 +698,8 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
 
     companion object {
         private const val ARG_TANK_ID = "tankId"
+        private const val ACTION_CAPTURE_TANK_SETTINGS_PHOTO =
+            "capture_tank_settings_photo"
 
         const val ACTION_TANK_NAME = "tank_name"
         const val ACTION_TANK_TYPE = "tank_type"
