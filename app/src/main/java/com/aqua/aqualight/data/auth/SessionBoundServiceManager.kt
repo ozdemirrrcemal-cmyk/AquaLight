@@ -7,6 +7,7 @@ import com.aqua.aqualight.data.care.reminder.CareReminderReconcileWorker
 import com.aqua.aqualight.data.care.smartcare.SmartCareDailyWorker
 import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.data.notifications.ActiveNotificationPreferenceProjection
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.utils.NotificationHelper
 import java.util.concurrent.CancellationException
@@ -20,6 +21,7 @@ object SessionBoundServiceManager {
         ASSIGNMENT_REPOSITORY,
         SMART_CARE,
         CARE_REMINDERS,
+        NOTIFICATION_PREFERENCE_PROJECTION,
         NOTIFICATIONS
     }
 
@@ -138,6 +140,10 @@ object SessionBoundServiceManager {
                 CareReminderCoordinator.create(appContext)
                     .cancelOwner(ownerUid)
             }
+        }
+
+        runStep(StopStep.NOTIFICATION_PREFERENCE_PROJECTION) {
+            ActiveNotificationPreferenceProjection.create(appContext).clear()
         }
 
         if (cancelNotifications) {
