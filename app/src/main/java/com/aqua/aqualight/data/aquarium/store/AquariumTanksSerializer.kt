@@ -35,6 +35,12 @@ object AquariumTanksSerializer : Serializer<AquariumTanksStore> {
         t: AquariumTanksStore,
         output: OutputStream
     ) {
-        TankStoreRules.validateStore(t).writeTo(output)
+        val canonicalStore = if (t.schemaVersion == 0 && t.tanksCount == 0) {
+            defaultValue
+        } else {
+            t
+        }
+
+        TankStoreRules.validateStore(canonicalStore).writeTo(output)
     }
 }
