@@ -1,11 +1,8 @@
 package com.aqua.aqualight.data.user
 
 import android.content.Context
-import android.util.Log
-import androidx.datastore.core.Serializer
 import androidx.security.crypto.MasterKey
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.aqua.aqualight.data.security.KeyStoreUtils
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
@@ -18,25 +15,31 @@ import javax.crypto.CipherOutputStream
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * AES-GCM wrapper serializer.
- * On-disk format: [12 bytes IV][ciphertext]
+ * On-disk format: [12 bytes IV][ciphertext].
+ *
+ * Decryption, authentication, schema, or invariant failures are reported through
+ * LocalDataRecoveryTracker and recover to the first commercial default store.
+ * No raw exception or preference content is written to logs.
  */
 class EncryptedUserPreferencesSerializer(
     private val context: Context,
-    private val delegate: Serializer<UserPreferences>
-) : Serializer<UserPreferences> {
+    private val delegate: androidx.datastore.core.Serializer<UserPreferences>
+) : androidx.datastore.core.Serializer<UserPreferences> {
 
     companion object {
-        private const val TAG = "UserPrefsSerializer"
-        private const val ALGO = "AES/GCM/NoPadding"
-        private const val IV_SIZE = 12 // 96 bits
-        private const val GCM_TAG_LENGTH = 128
+        private const val ALGORITHM = "AES/GCM/NoPadding"
+        private const val IV_SIZE = 12
+        private const val GCM_TAG_LENGTH_BITS = 128
     }
 
     override val defaultValue: UserPreferences
-        get() = UserPreferences.getDefaultInstance()
+        get() = delegate.defaultValue
 
     private fun getSecretKey(): SecretKey {
         val masterKey = MasterKey.Builder(context)
@@ -50,54 +53,64 @@ class EncryptedUserPreferencesSerializer(
     override suspend fun readFrom(input: InputStream): UserPreferences =
         withContext(Dispatchers.IO) {
             val buffered = BufferedInputStream(input)
-
-            // Dosya boşsa (hiç byte yok) -> default
-            buffered.mark(IV_SIZE)
             val iv = ByteArray(IV_SIZE)
-            val read = buffered.read(iv)
+            val readCount = buffered.read(iv)
 
-            if (read == -1) {
-                // tamamen boş dosya
+            if (readCount == -1) {
                 return@withContext defaultValue
             }
 
-            if (read != IV_SIZE) {
-                // Yarım yazılmış / bozuk dosya: logla, default dön
-                Log.e(TAG, "Corrupted prefs file: IV incomplete (read=$read)")
-                return@withContext defaultValue
+            if (readCount != IV_SIZE) {
+                return@withContext recoverCorruptedPreferences()
             }
 
-            return@withContext try {
-                val cipher = Cipher.getInstance(ALGO)
-                val key = getSecretKey()
-                val spec = GCMParameterSpec(GCM_TAG_LENGTH, iv)
-                cipher.init(Cipher.DECRYPT_MODE, key, spec)
+            try {
+                val cipher = Cipher.getInstance(ALGORITHM)
+                cipher.init(
+                    Cipher.DECRYPT_MODE,
+                    getSecretKey(),
+                    GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv)
+                )
 
-                CipherInputStream(buffered, cipher).use { cis ->
-                    delegate.readFrom(cis)
+                CipherInputStream(buffered, cipher).use { cipherInput ->
+                    delegate.readFrom(cipherInput)
                 }
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to decrypt prefs, returning default.", e)
-                defaultValue
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (_: Exception) {
+                recoverCorruptedPreferences()
             }
         }
 
-    override suspend fun writeTo(t: UserPreferences, output: OutputStream) =
-        withContext(Dispatchers.IO) {
-            val iv = ByteArray(IV_SIZE).also { SecureRandom().nextBytes(it) }
-            val cipher = Cipher.getInstance(ALGO)
-            val key = getSecretKey()
-            val spec = GCMParameterSpec(GCM_TAG_LENGTH, iv)
-            cipher.init(Cipher.ENCRYPT_MODE, key, spec)
-
-            val buffered = BufferedOutputStream(output)
-            buffered.write(iv)
-            buffered.flush()
-
-            CipherOutputStream(buffered, cipher).use { cos ->
-                delegate.writeTo(t, cos)
-                cos.flush()
-            }
-            buffered.flush()
+    override suspend fun writeTo(
+        t: UserPreferences,
+        output: OutputStream
+    ) = withContext(Dispatchers.IO) {
+        val iv = ByteArray(IV_SIZE).also { bytes ->
+            SecureRandom().nextBytes(bytes)
         }
+        val cipher = Cipher.getInstance(ALGORITHM)
+        cipher.init(
+            Cipher.ENCRYPT_MODE,
+            getSecretKey(),
+            GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv)
+        )
+
+        val buffered = BufferedOutputStream(output)
+        buffered.write(iv)
+        buffered.flush()
+
+        CipherOutputStream(buffered, cipher).use { cipherOutput ->
+            delegate.writeTo(t, cipherOutput)
+            cipherOutput.flush()
+        }
+        buffered.flush()
+    }
+
+    private fun recoverCorruptedPreferences(): UserPreferences {
+        LocalDataRecoveryTracker.markRecovered(
+            LocalDataRecoveryTracker.Area.USER_PREFERENCES
+        )
+        return defaultValue
+    }
 }
