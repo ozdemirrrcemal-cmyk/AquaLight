@@ -9,9 +9,14 @@ sealed interface AqlWsEvent {
         override val deviceUid: DeviceUid
     ) : AqlWsEvent
 
+    /** Emitted only after the device's HMAC server proof has been verified. */
+    data class Authenticated(
+        override val deviceUid: DeviceUid
+    ) : AqlWsEvent
+
     data class Message(
         override val deviceUid: DeviceUid,
-        val parsed: AqlWsIncomingMessage?
+        val parsed: AqlWsIncomingMessage
     ) : AqlWsEvent
 
     data class Closed(

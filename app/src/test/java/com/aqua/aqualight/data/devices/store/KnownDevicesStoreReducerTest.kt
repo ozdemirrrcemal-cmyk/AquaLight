@@ -204,7 +204,7 @@ class KnownDevicesStoreReducerTest {
                 wsPort = 81,
                 wsPath = "/ws",
                 wsProtocol = "aqualight",
-                wsProtocolVersion = 2,
+                wsProtocolVersion = 1,
                 discoveryPort = 4210
             ),
             capabilities = DeviceCapabilities(

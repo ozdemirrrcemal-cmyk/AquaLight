@@ -30,8 +30,8 @@ class DeviceMenuRuntimeProofPolicyTest {
     }
 
     @Test
-    fun `current firmware response without echoed command fields proves liveness`() {
-        assertTrue(
+    fun `response without typed command fields cannot prove liveness`() {
+        assertFalse(
             DeviceMenuRuntimeProofPolicy.accepts(
                 event = responseEvent(
                     deviceUid = requestedUid,
@@ -130,18 +130,15 @@ class DeviceMenuRuntimeProofPolicyTest {
         module: String,
         action: String
     ): AqlWsEvent {
-        val json = JSONObject()
-
         return AqlWsEvent.Message(
             deviceUid = deviceUid,
             parsed = AqlWsIncomingMessage.Response(
-                raw = "",
                 id = id,
                 type = AqlWsContract.TYPE_RESPONSE,
-                json = json,
-                ok = ok,
                 module = module,
                 action = action,
+                data = JSONObject(),
+                ok = ok,
                 statusCode = if (ok) 200 else 500
             )
         )

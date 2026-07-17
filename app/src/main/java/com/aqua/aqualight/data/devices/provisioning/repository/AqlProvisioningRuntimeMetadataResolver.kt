@@ -31,8 +31,6 @@ class AqlProvisioningRuntimeMetadataResolver(
                 coroutineScope {
                     val resolved = CompletableDeferred<DeviceSnapshot>()
 
-                    var identityRequestId = ""
-                    var capabilitiesRequestId = ""
                     var identityData: JSONObject? = null
                     var capabilitiesData: JSONObject? = null
 
@@ -68,26 +66,6 @@ class AqlProvisioningRuntimeMetadataResolver(
                             }
 
                             when (event) {
-                                is AqlWsEvent.Opened -> {
-                                    val commandClient = repository.commandClient(
-                                        provisionalSnapshot.deviceUid
-                                    ) ?: return@collect
-
-                                    if (identityRequestId.isBlank()) {
-                                        identityRequestId = commandClient.command(
-                                            module = AqlWsContract.MODULE_DEVICE,
-                                            action = AqlWsContract.ACTION_DEVICE_IDENTITY_GET
-                                        ).orEmpty()
-                                    }
-
-                                    if (capabilitiesRequestId.isBlank()) {
-                                        capabilitiesRequestId = commandClient.command(
-                                            module = AqlWsContract.MODULE_DEVICE,
-                                            action = AqlWsContract.ACTION_DEVICE_CAPABILITIES_GET
-                                        ).orEmpty()
-                                    }
-                                }
-
                                 is AqlWsEvent.Message -> {
                                     val response = event.parsed as? AqlWsIncomingMessage.Response
                                         ?: return@collect
@@ -96,18 +74,15 @@ class AqlProvisioningRuntimeMetadataResolver(
                                         return@collect
                                     }
 
-                                    val data = response.json.optJSONObject("data")
-                                        ?: JSONObject()
+                                    val data = response.data
 
                                     when {
-                                        response.id == identityRequestId ||
-                                            response.isDeviceAction(AqlWsContract.ACTION_DEVICE_IDENTITY_GET) -> {
+                                        response.isDeviceAction(AqlWsContract.ACTION_DEVICE_IDENTITY_GET) -> {
                                             identityData = data
                                             completeIfReady()
                                         }
 
-                                        response.id == capabilitiesRequestId ||
-                                            response.isDeviceAction(AqlWsContract.ACTION_DEVICE_CAPABILITIES_GET) -> {
+                                        response.isDeviceAction(AqlWsContract.ACTION_DEVICE_CAPABILITIES_GET) -> {
                                             capabilitiesData = data
                                             completeIfReady()
                                         }

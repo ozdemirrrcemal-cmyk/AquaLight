@@ -27,7 +27,7 @@ class DeviceRuntimeMetadataReducer {
     ): DeviceSnapshot? {
         if (!response.ok) return null
 
-        val data = response.json.optJSONObject("data") ?: response.json
+        val data = response.data
         return when {
             response.isDeviceAction(AqlWsContract.ACTION_DEVICE_IDENTITY_GET) ->
                 applyDeviceIdentity(snapshot, data)

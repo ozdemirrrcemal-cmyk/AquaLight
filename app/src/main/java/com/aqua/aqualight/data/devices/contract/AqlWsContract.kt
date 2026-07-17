@@ -1,15 +1,22 @@
 package com.aqua.aqualight.data.devices.contract
 
+/**
+ * Authoritative Android mirror of the first commercial AquaLight WebSocket contract.
+ *
+ * The application is unreleased, so this is its single v1 baseline. Runtime
+ * credentials are used only as input to the HMAC handshake and are never
+ * serialized to the wire.
+ */
 object AqlWsContract {
     const val SCHEMA = "aql.ws.v1"
+    const val SCHEMA_VERSION = 1
     const val DEFAULT_PATH = "/aql/v1/ws"
-    const val DEFAULT_PROTOCOL = "aql.ws.v1"
+    const val DEFAULT_PROTOCOL = SCHEMA
     const val PROTOCOL_VERSION = 1
+    const val AUTH_SCHEME = "hmac-sha256"
 
     const val TYPE_HELLO = "hello"
     const val TYPE_AUTH = "auth"
-    const val TYPE_PING = "ping"
-    const val TYPE_PONG = "pong"
     const val TYPE_COMMAND = "cmd"
     const val TYPE_RESPONSE = "res"
     const val TYPE_EVENT = "evt"
@@ -26,6 +33,8 @@ object AqlWsContract {
     const val MODULE_FIRMWARE = "firmware"
     const val MODULE_SYSTEM = "system"
 
+    const val ACTION_SESSION_CHALLENGE = "session.challenge"
+    const val ACTION_SESSION_AUTHENTICATE = "session.authenticate"
     const val ACTION_STATUS_GET = "status.get"
     const val ACTION_CONFIG_APPLY = "config.apply"
 
@@ -76,24 +85,70 @@ object AqlWsContract {
     const val ACTION_DOSING_DOSE_STOP = "dose.stop"
     const val ACTION_DOSING_RESERVOIR_REFILL = "reservoir.refill"
 
-    private val publicCommands = setOf(
+    object Field {
+        const val ID = "id"
+        const val TYPE = "type"
+        const val MODULE = "module"
+        const val ACTION = "action"
+        const val DATA = "data"
+        const val ERROR = "error"
+        const val OK = "ok"
+        const val STATUS = "status"
+        const val META = "meta"
+        const val SECURITY = "security"
+
+        const val SCHEMA = "schema"
+        const val SCHEMA_VERSION = "schemaVersion"
+        const val PROTOCOL_VERSION = "protocolVersion"
+        const val FIRMWARE_VERSION = "firmwareVersion"
+        const val DEVICE_UID = "deviceUid"
+        const val SESSION_ID = "sessionId"
+        const val SERVER_NONCE = "serverNonce"
+        const val CLIENT_NONCE = "clientNonce"
+        const val AUTH_SCHEME = "authScheme"
+        const val CLIENT_PROOF = "clientProof"
+        const val SERVER_PROOF = "serverProof"
+        const val MAX_MESSAGE_BYTES = "maxMessageBytes"
+        const val SEQUENCE = "seq"
+        const val MAC = "mac"
+        const val CODE = "code"
+        const val MESSAGE = "message"
+        const val ERROR_FIELD = "field"
+    }
+
+    object Limit {
+        const val MESSAGE_BYTES = 8_192
+        const val DATA_BYTES = 4_096
+        const val ID_CHARS = 96
+        const val TYPE_CHARS = 16
+        const val MODULE_CHARS = 32
+        const val ACTION_CHARS = 64
+        const val DEVICE_UID_CHARS = 96
+        const val SESSION_ID_CHARS = 96
+        const val FIRMWARE_VERSION_CHARS = 64
+        const val ERROR_CODE_CHARS = 64
+        const val ERROR_FIELD_CHARS = 64
+        const val ERROR_MESSAGE_CHARS = 256
+        const val NONCE_HEX_CHARS = 64
+        const val MAC_HEX_CHARS = 64
+        const val MAX_SEQUENCE = 9_007_199_254_740_991L
+    }
+
+    // The commercial WebSocket contract has no unauthenticated application
+    // command surface. Public onboarding metadata remains on the bounded UDP/BLE
+    // provisioning contracts.
+    private val publicCommands = emptySet<String>()
+
+    private val authenticatedCommands = setOf(
         commandKey(MODULE_DEVICE, ACTION_DEVICE_IDENTITY_GET),
         commandKey(MODULE_DEVICE, ACTION_DEVICE_STATUS_GET),
         commandKey(MODULE_DEVICE, ACTION_DEVICE_CAPABILITIES_GET),
         commandKey(MODULE_SECURITY, ACTION_SECURITY_STATUS_GET),
-        commandKey(MODULE_TIME, ACTION_TIME_STATUS_GET),
-        commandKey(MODULE_FIRMWARE, ACTION_FIRMWARE_STATUS_GET),
-        commandKey(MODULE_LIGHT, ACTION_LIGHT_STATUS_GET),
-        commandKey(MODULE_COOLING, ACTION_COOLING_STATUS_GET),
-        commandKey(MODULE_TIMER, ACTION_TIMER_STATUS_GET),
-        commandKey(MODULE_DOSING, ACTION_DOSING_STATUS_GET)
-    )
-
-    private val authenticatedCommands = setOf(
         commandKey(MODULE_SECURITY, ACTION_SECURITY_PAIR),
         commandKey(MODULE_SECURITY, ACTION_SECURITY_UNPAIR),
         commandKey(MODULE_SECURITY, ACTION_SECURITY_RESET),
         commandKey(MODULE_NETWORK, ACTION_NETWORK_STATUS_GET),
+        commandKey(MODULE_TIME, ACTION_TIME_STATUS_GET),
         commandKey(MODULE_TIME, ACTION_TIME_CONFIG_APPLY),
         commandKey(MODULE_TIME, ACTION_TIME_PHONE_SYNC),
         commandKey(MODULE_TIME, ACTION_TIME_NTP_SYNC),
@@ -101,14 +156,19 @@ object AqlWsContract {
         commandKey(MODULE_FIRMWARE, ACTION_FIRMWARE_OTA_STATUS),
         commandKey(MODULE_FIRMWARE, ACTION_FIRMWARE_OTA_START),
         commandKey(MODULE_FIRMWARE, ACTION_FIRMWARE_OTA_CLEAR),
+        commandKey(MODULE_FIRMWARE, ACTION_FIRMWARE_STATUS_GET),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_STATUS_GET),
         commandKey(MODULE_LIGHT, ACTION_LIGHT_MANUAL_SET),
         commandKey(MODULE_LIGHT, ACTION_LIGHT_CHANNEL_REGIME_SET),
         commandKey(MODULE_LIGHT, ACTION_LIGHT_PROGRAM_APPLY),
         commandKey(MODULE_LIGHT, ACTION_LIGHT_PROGRAM_DELETE),
         commandKey(MODULE_COOLING, ACTION_COOLING_CONFIG_APPLY),
+        commandKey(MODULE_COOLING, ACTION_COOLING_STATUS_GET),
+        commandKey(MODULE_TIMER, ACTION_TIMER_STATUS_GET),
         commandKey(MODULE_TIMER, ACTION_TIMER_CONFIG_APPLY),
         commandKey(MODULE_TIMER, ACTION_TIMER_CHANNEL_SET),
         commandKey(MODULE_DOSING, ACTION_DOSING_CONFIG_APPLY),
+        commandKey(MODULE_DOSING, ACTION_DOSING_STATUS_GET),
         commandKey(MODULE_DOSING, ACTION_DOSING_PRIME_START),
         commandKey(MODULE_DOSING, ACTION_DOSING_PRIME_STOP),
         commandKey(MODULE_DOSING, ACTION_DOSING_CALIBRATION_START),
@@ -120,27 +180,19 @@ object AqlWsContract {
         commandKey(MODULE_DOSING, ACTION_DOSING_RESERVOIR_REFILL)
     )
 
-    fun isRegisteredCommand(
-        module: String,
-        action: String
-    ): Boolean = isPublicCommand(module, action) || isAuthenticatedCommand(module, action)
+    fun isRegisteredCommand(module: String, action: String): Boolean =
+        isPublicCommand(module, action) || isAuthenticatedCommand(module, action)
 
-    fun isPublicCommand(
-        module: String,
-        action: String
-    ): Boolean = commandKey(module, action) in publicCommands
+    fun isPublicCommand(module: String, action: String): Boolean =
+        commandKey(module, action) in publicCommands
 
-    fun isAuthenticatedCommand(
-        module: String,
-        action: String
-    ): Boolean = commandKey(module, action) in authenticatedCommands
+    fun isAuthenticatedCommand(module: String, action: String): Boolean =
+        commandKey(module, action) in authenticatedCommands
 
-    private fun commandKey(
-        module: String,
-        action: String
-    ): String {
-        val normalizedModule = module.trim()
-        val normalizedAction = action.trim()
-        return "$normalizedModule.$normalizedAction"
-    }
+    fun publicCommandKeys(): Set<String> = publicCommands.toSet()
+
+    fun authenticatedCommandKeys(): Set<String> = authenticatedCommands.toSet()
+
+    private fun commandKey(module: String, action: String): String =
+        "${module.trim()}.${action.trim()}"
 }
