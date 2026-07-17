@@ -7,6 +7,8 @@ import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
 import com.aqua.aqualight.data.care.DefaultMaintenanceOperations
+import com.aqua.aqualight.data.care.integrity.restoreTaskSnapshotsForIntegrity
+import com.aqua.aqualight.data.care.integrity.snapshotTasksForIntegrity
 import com.aqua.aqualight.data.devices.DefaultDeviceFirmwareUpdateOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
@@ -149,8 +151,18 @@ internal class OwnerViewModelFactory(
                         careTaskStore = graph.careTaskStore,
                         tankDataCleaner = OwnerTankDataCleaner(
                             deleteTankRecords = graph.aquariumTankStore::deleteTanks,
+                            snapshotCareTasksForTank = { tankId ->
+                                graph.careTaskStore.snapshotTasksForIntegrity(tankId)
+                            },
                             deleteCareTasksForTank = graph.careTaskStore::deleteTasksForTank,
-                            removeDeviceAssignmentsForTank = assignments::removeAssignmentsForTank
+                            restoreCareTasksForTank = { tankId, snapshots ->
+                                graph.careTaskStore.restoreTaskSnapshotsForIntegrity(
+                                    tankId = tankId,
+                                    snapshots = snapshots
+                                )
+                            },
+                            removeDeviceAssignmentsForTank =
+                                assignments::removeAssignmentsForTank
                         )
                     )
                 )
