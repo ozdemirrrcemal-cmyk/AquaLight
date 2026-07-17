@@ -36,6 +36,7 @@ class CapabilityPermissionCoordinator(
 
     private var pendingCapability: AppCapability? = null
     private var pendingActionToken: String? = null
+    private var pendingNotificationChannelId: String? = null
     private var waitingForSettings = false
     private var stateProviderRegistered = false
 
@@ -92,6 +93,7 @@ class CapabilityPermissionCoordinator(
 
         pendingCapability = capability
         pendingActionToken = actionToken
+        pendingNotificationChannelId = null
         waitingForSettings = false
         dispatchCurrentDecision()
     }
@@ -106,6 +108,25 @@ class CapabilityPermissionCoordinator(
 
         pendingCapability = capability
         pendingActionToken = actionToken
+        pendingNotificationChannelId = null
+        waitingForSettings = false
+        showSheet(CapabilityPermissionBottomSheet.Mode.OPEN_SETTINGS)
+    }
+
+    /**
+     * Routes a blocked notification category through the same process-safe sheet and
+     * Activity Result lifecycle while keeping Settings Intent construction central.
+     */
+    fun openNotificationChannelSettingsFor(
+        channelId: String,
+        actionToken: String
+    ) {
+        require(channelId.isNotBlank()) { "Notification channel ID must not be blank." }
+        require(actionToken.isNotBlank()) { "Permission action token must not be blank." }
+
+        pendingCapability = AppCapability.NOTIFICATIONS
+        pendingActionToken = actionToken
+        pendingNotificationChannelId = channelId.trim()
         waitingForSettings = false
         showSheet(CapabilityPermissionBottomSheet.Mode.OPEN_SETTINGS)
     }
@@ -204,18 +225,31 @@ class CapabilityPermissionCoordinator(
 
     private fun settingsIntent(capability: AppCapability): Intent {
         val context = fragment.requireContext()
-        return if (
+        val notificationChannelId = pendingNotificationChannelId
+
+        return when {
             capability == AppCapability.NOTIFICATIONS &&
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-        ) {
-            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                notificationChannelId != null &&
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O -> {
+                Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).apply {
+                    putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                    putExtra(Settings.EXTRA_CHANNEL_ID, notificationChannelId)
+                }
             }
-        } else {
-            Intent(
-                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                Uri.fromParts("package", context.packageName, null)
-            )
+
+            capability == AppCapability.NOTIFICATIONS &&
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O -> {
+                Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                    putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                }
+            }
+
+            else -> {
+                Intent(
+                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.fromParts("package", context.packageName, null)
+                )
+            }
         }
     }
 
@@ -228,6 +262,7 @@ class CapabilityPermissionCoordinator(
     private fun clearPending() {
         pendingCapability = null
         pendingActionToken = null
+        pendingNotificationChannelId = null
         waitingForSettings = false
     }
 
@@ -243,6 +278,7 @@ class CapabilityPermissionCoordinator(
         return bundleOf(
             STATE_CAPABILITY to pendingCapability?.name,
             STATE_ACTION to pendingActionToken,
+            STATE_NOTIFICATION_CHANNEL_ID to pendingNotificationChannelId,
             STATE_WAITING_FOR_SETTINGS to waitingForSettings
         )
     }
@@ -252,6 +288,10 @@ class CapabilityPermissionCoordinator(
             ?.getString(STATE_CAPABILITY)
             ?.let { name -> runCatching { AppCapability.valueOf(name) }.getOrNull() }
         pendingActionToken = bundle?.getString(STATE_ACTION)
+        pendingNotificationChannelId = bundle
+            ?.getString(STATE_NOTIFICATION_CHANNEL_ID)
+            ?.trim()
+            ?.takeIf(String::isNotBlank)
         waitingForSettings = bundle?.getBoolean(STATE_WAITING_FOR_SETTINGS) == true
 
         if (pendingCapability == null || pendingActionToken.isNullOrBlank()) {
@@ -263,6 +303,7 @@ class CapabilityPermissionCoordinator(
         const val DEFAULT_INSTANCE_KEY = "default"
         const val STATE_CAPABILITY = "capability"
         const val STATE_ACTION = "action"
+        const val STATE_NOTIFICATION_CHANNEL_ID = "notification_channel_id"
         const val STATE_WAITING_FOR_SETTINGS = "waiting_for_settings"
     }
 }
