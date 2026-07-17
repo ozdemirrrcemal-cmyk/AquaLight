@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.auth
 import android.content.Context
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
 import com.aqua.aqualight.data.care.reminder.CareReminderCoordinator
+import com.aqua.aqualight.data.care.reminder.CareReminderDeliveryWorker
 import com.aqua.aqualight.data.care.reminder.CareReminderReconcileWorker
 import com.aqua.aqualight.data.care.smartcare.SmartCareDailyWorker
 import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
@@ -134,6 +135,10 @@ object SessionBoundServiceManager {
         if (ownerUid != null) {
             runStep(StopStep.CARE_REMINDERS) {
                 CareReminderReconcileWorker.cancel(
+                    context = appContext,
+                    ownerUid = ownerUid
+                )
+                CareReminderDeliveryWorker.cancelOwner(
                     context = appContext,
                     ownerUid = ownerUid
                 )
