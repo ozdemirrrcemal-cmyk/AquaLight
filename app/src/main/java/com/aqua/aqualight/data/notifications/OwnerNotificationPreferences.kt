@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStore
+import com.aqua.aqualight.application.notifications.NotificationPreferenceRepository
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.flow.Flow
@@ -21,12 +22,12 @@ private val Context.notificationPreferencesDataStore: DataStore<NotificationPref
     }
 )
 
-/** Owner-isolated AquaLight notification preference store. */
+/** Sole owner-isolated source of truth for the AquaLight notification preference. */
 class OwnerNotificationPreferences private constructor(
     private val context: Context
-) {
+) : NotificationPreferenceRepository {
 
-    fun enabledFlow(ownerUid: String): Flow<Boolean> {
+    override fun enabledFlow(ownerUid: String): Flow<Boolean> {
         val normalizedOwnerUid = requireOwnerUid(ownerUid)
         return context.notificationPreferencesDataStore.data.map { store ->
             NotificationPreferenceStoreRules.validateStore(store)
@@ -38,14 +39,25 @@ class OwnerNotificationPreferences private constructor(
         }
     }
 
-    suspend fun isEnabled(ownerUid: String): Boolean {
+    override suspend fun isEnabled(ownerUid: String): Boolean {
         return enabledFlow(ownerUid).first()
     }
 
-    suspend fun setEnabled(
+    override suspend fun setEnabled(
+        ownerUid: String,
+        enabled: Boolean
+    ) {
+        setEnabledAt(
+            ownerUid = ownerUid,
+            enabled = enabled,
+            updatedAtMillis = System.currentTimeMillis()
+        )
+    }
+
+    internal suspend fun setEnabledAt(
         ownerUid: String,
         enabled: Boolean,
-        updatedAtMillis: Long = System.currentTimeMillis()
+        updatedAtMillis: Long
     ) {
         val normalizedOwnerUid = requireOwnerUid(ownerUid)
         require(updatedAtMillis > 0L) {
