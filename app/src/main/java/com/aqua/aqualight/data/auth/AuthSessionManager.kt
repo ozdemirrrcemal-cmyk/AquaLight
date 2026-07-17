@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.auth
 
 import android.content.Context
 import com.aqua.aqualight.data.user.UserPreferencesManager
+import com.aqua.aqualight.data.user.UserPreferencesSessionRules
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -70,7 +71,7 @@ class AuthSessionManager private constructor(
 
         if (user == null) {
             closeResidualOwnerSession()
-            userPrefs.logout()
+            userPrefs.update(UserPreferencesSessionRules::deactivateOwner)
             return SessionState.Unauthenticated
         }
 
@@ -93,7 +94,7 @@ class AuthSessionManager private constructor(
     }
 
     suspend fun markLoggedOut() {
-        userPrefs.logout()
+        userPrefs.update(UserPreferencesSessionRules::deactivateOwner)
     }
 
     private suspend fun closeResidualOwnerSession() {
@@ -130,10 +131,12 @@ class AuthSessionManager private constructor(
     private suspend fun syncLocalSession(
         user: FirebaseUser
     ) {
-        userPrefs.saveUserSession(
-            uid = user.uid,
-            isLoggedIn = true
-        )
+        userPrefs.update { current ->
+            UserPreferencesSessionRules.activateOwner(
+                current = current,
+                ownerUid = user.uid
+            )
+        }
     }
 
     private suspend fun restoreCachedProfile(
