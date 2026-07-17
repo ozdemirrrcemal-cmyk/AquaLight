@@ -29,7 +29,7 @@ object CareTaskReminderScheduler {
     context: Context,
     task: CareTask,
     nowMillis: Long = System.currentTimeMillis()
-  ): CareReminderSchedulePlan? {
+  ) {
     val ownerUid = requireOwnerUid(task.ownerUid)
     require(task.id > 0L) {
       "taskId must be positive"
@@ -44,7 +44,7 @@ object CareTaskReminderScheduler {
     val plan = CareReminderSchedulePolicy.plan(
       task = task.copy(ownerUid = ownerUid),
       nowMillis = nowMillis
-    ) ?: return null
+    ) ?: return
 
     scheduleAt(
       context = context,
@@ -53,8 +53,6 @@ object CareTaskReminderScheduler {
       occurrence = plan.occurrence,
       triggerAtMillis = plan.triggerAtMillis
     )
-
-    return plan
   }
 
   fun cancel(
