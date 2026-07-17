@@ -7,6 +7,11 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 UI_ROOT = ROOT / "app/src/main/java/com/aqua/aqualight/ui"
 ALLOWED_ROOT = UI_ROOT / "common/permission"
+RES_LAYOUT_ROOT = ROOT / "app/src/main/res/layout"
+UI_SPEC_PATH = (
+    ALLOWED_ROOT / "CapabilityPermissionUiSpecResolver.kt"
+)
+SHEET_PATH = ALLOWED_ROOT / "CapabilityPermissionBottomSheet.kt"
 
 FORBIDDEN_TOKENS = {
     "ActivityResultContracts.RequestPermission(": (
@@ -59,15 +64,51 @@ else:
             if token in text:
                 errors.append(f"{relative}: {reason}: {token}")
 
+# Capability-specific artwork is part of the same central contract as copy and actions.
+# No screen, Fragment or XML layout may choose a permission icon independently.
+if ALLOWED_ROOT.exists():
+    for source in ALLOWED_ROOT.rglob("*.kt"):
+        if source == UI_SPEC_PATH:
+            continue
+        text = source.read_text(encoding="utf-8", errors="ignore")
+        if "R.drawable.ic_permission_" in text:
+            errors.append(
+                f"{source.relative_to(ROOT)}: permission artwork must be selected only "
+                "by CapabilityPermissionUiSpecResolver"
+            )
+
+if RES_LAYOUT_ROOT.exists():
+    for layout in RES_LAYOUT_ROOT.rglob("*.xml"):
+        text = layout.read_text(encoding="utf-8", errors="ignore")
+        if "@drawable/ic_permission_" in text:
+            errors.append(
+                f"{layout.relative_to(ROOT)}: layouts must render the icon resource "
+                "provided by the central permission UI resolver"
+            )
+
 required_files = (
     "app/src/main/java/com/aqua/aqualight/platform/permissions/AppCapability.kt",
     "app/src/main/java/com/aqua/aqualight/platform/permissions/PermissionPolicy.kt",
     "app/src/main/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionCoordinator.kt",
     "app/src/main/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionBottomSheet.kt",
+    "app/src/main/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionUiSpecResolver.kt",
+    "app/src/test/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionUiSpecResolverTest.kt",
 )
 for relative_path in required_files:
     if not (ROOT / relative_path).is_file():
         errors.append(f"{relative_path}: required central permission component is missing")
+
+if SHEET_PATH.is_file():
+    sheet_text = SHEET_PATH.read_text(encoding="utf-8", errors="ignore")
+    if "CapabilityPermissionUiSpecResolver.resolve" not in sheet_text:
+        errors.append(
+            f"{SHEET_PATH.relative_to(ROOT)}: shared sheet must render the central UI spec"
+        )
+    if "when (capability)" in sheet_text:
+        errors.append(
+            f"{SHEET_PATH.relative_to(ROOT)}: capability copy/artwork decisions belong in "
+            "CapabilityPermissionUiSpecResolver"
+        )
 
 if errors:
     print("Central permission architecture guard failed:")
@@ -75,4 +116,7 @@ if errors:
         print(f" - {error}")
     sys.exit(1)
 
-print("Central permission architecture guard passed.")
+print(
+    "Central permission architecture guard passed: policy, launchers, copy and artwork "
+    "remain capability-driven and centrally owned."
+)
