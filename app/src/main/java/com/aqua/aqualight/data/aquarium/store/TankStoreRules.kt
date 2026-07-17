@@ -64,8 +64,8 @@ object TankStoreRules {
         requirePositiveId("tank.id", tank.id)
         canonicalOwnerUid(tank.ownerUid)
         requireCanonicalRequiredText("tank.name", tank.name, MAX_NAME_CHARS)
-        requireTextLength("tank.description", tank.description, MAX_DESCRIPTION_CHARS)
-        requireTextLength("tank.photoUri", tank.photoUri, MAX_URI_CHARS)
+        requireCanonicalOptionalText("tank.description", tank.description, MAX_DESCRIPTION_CHARS)
+        requireCanonicalOptionalText("tank.photoUri", tank.photoUri, MAX_URI_CHARS)
         requireOptionalDate("tank.setupDateMillis", tank.setupDateMillis)
         requireDate("tank.createdAtMillis", tank.createdAtMillis)
         requireDimension("tank.widthCm", tank.widthCm)
@@ -81,7 +81,7 @@ object TankStoreRules {
         if (tank.tankType !in allowedTankTypes) {
             violation("tank.tankType is not a supported commercial value.")
         }
-        requireCanonicalRequiredText("tank.tankStyle", tank.tankStyle, MAX_STYLE_CHARS)
+        requireCanonicalOptionalText("tank.tankStyle", tank.tankStyle, MAX_STYLE_CHARS)
 
         validatePlants(tank)
         validateMaterials(tank)
@@ -143,8 +143,12 @@ object TankStoreRules {
                 material.name,
                 MAX_ENTITY_NAME_CHARS
             )
-            requireTextLength("material.brand", material.brand, MAX_ENTITY_NAME_CHARS)
-            requireTextLength("material.note", material.note, MAX_NOTE_CHARS)
+            requireCanonicalOptionalText(
+                "material.brand",
+                material.brand,
+                MAX_ENTITY_NAME_CHARS
+            )
+            requireCanonicalOptionalText("material.note", material.note, MAX_NOTE_CHARS)
         }
     }
 
@@ -169,7 +173,7 @@ object TankStoreRules {
                 violation("livestock.quantity must be between 1 and 100000.")
             }
             requireOptionalDate("livestock.addedDateMillis", livestock.addedDateMillis)
-            requireTextLength("livestock.note", livestock.note, MAX_NOTE_CHARS)
+            requireCanonicalOptionalText("livestock.note", livestock.note, MAX_NOTE_CHARS)
         }
     }
 
@@ -206,6 +210,17 @@ object TankStoreRules {
             violation("$field must be non-blank and canonical.")
         }
         requireTextLength(field, canonical, maxChars)
+    }
+
+    private fun requireCanonicalOptionalText(
+        field: String,
+        value: String,
+        maxChars: Int
+    ) {
+        if (value != value.trim()) {
+            violation("$field must be canonical.")
+        }
+        requireTextLength(field, value, maxChars)
     }
 
     private fun requireTextLength(field: String, value: String, maxChars: Int) {
