@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -30,6 +30,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Apply Stage 5 commercial care schedule limits
+        if: github.event_name == 'pull_request'
+        run: |
+          python3 tools/stage5_apply_care_schedule_limits.py
+          if ! git diff --quiet || ! git diff --cached --quiet; then
+            git config user.name "AquaLight Stage 5 Automation"
+            git config user.email "actions@users.noreply.github.com"
+            git add app/src/main app/src/test docs/stage5-data-integrity-contract.md
+            git commit -m "Enforce commercial care schedule limits"
+            git push origin HEAD:"${GITHUB_HEAD_REF}"
+          fi
 
       - name: Validate Gradle Wrapper
         uses: gradle/wrapper-validation-action@v2
