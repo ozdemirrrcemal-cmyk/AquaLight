@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/capabilityPermissionSheetRoot"
+    style="@style/Widget.Aqua.BottomSheet.Root"
+    android:gravity="center_horizontal">
+
+    <View
+        style="@style/Widget.Aqua.BottomSheet.Handle"
+        android:layout_marginBottom="18dp" />
+
+    <TextView
+        android:id="@+id/tvPermissionTitle"
+        style="@style/TextAppearance.Aqua.BottomSheet.Title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:labelFor="@id/tvPermissionMessage" />
+
+    <TextView
+        android:id="@+id/tvPermissionMessage"
+        style="@style/TextAppearance.Aqua.BottomSheet.Subtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="9dp"
+        android:layout_marginBottom="20dp"
+        android:gravity="center" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnPermissionPrimary"
+        style="@style/Widget.Aqua.BottomSheet.Button.Primary"
+        android:layout_width="match_parent"
+        android:layout_height="52dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnPermissionCancel"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="4dp"
+        android:text="@string/permission_sheet_not_now" />
+
+</LinearLayout>
