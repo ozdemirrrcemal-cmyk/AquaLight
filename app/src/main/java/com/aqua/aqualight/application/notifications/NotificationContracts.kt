@@ -34,6 +34,9 @@ data class NotificationPreferenceSnapshot(
     fun readiness(category: NotificationCategory): NotificationDeliveryReadiness {
         return delivery.getValue(category)
     }
+
+    val allCategoriesDeliverable: Boolean
+        get() = delivery.values.all(NotificationDeliveryReadiness::canDeliver)
 }
 
 interface NotificationPreferenceRepository {
@@ -68,7 +71,12 @@ class NotificationPreferenceUseCase(
 ) {
     fun observe(ownerUid: String): Flow<Boolean> = repository.enabledFlow(ownerUid)
 
+    fun channelId(category: NotificationCategory): String {
+        return permissionPolicy.channelId(category)
+    }
+
     suspend fun snapshot(ownerUid: String): NotificationPreferenceSnapshot {
+        permissionPolicy.ensureChannels()
         val enabled = repository.isEnabled(ownerUid)
         val readiness = NotificationCategory.entries.associateWith(permissionPolicy::evaluate)
         return NotificationPreferenceSnapshot(
