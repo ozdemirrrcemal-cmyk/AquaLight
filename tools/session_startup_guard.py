@@ -99,6 +99,7 @@ for token, reason in (
 
 background_paths = (
     "app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareDailyWorker.kt",
+    "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareReminderReconcileWorker.kt",
     "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareTaskBootReceiver.kt",
     "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareTaskReminderReceiver.kt",
 )
@@ -127,39 +128,39 @@ for background_path in background_paths:
         "background maintenance must use the lightweight owner provider",
     )
 
-worker_path = background_paths[0]
-worker = read(worker_path)
+smart_worker_path = background_paths[0]
+smart_worker = read(smart_worker_path)
 for token, reason in (
     ("KEY_OWNER_UID", "scheduled work must carry an immutable owner UID"),
     ("tanksSnapshotForOwner", "Smart Care must read only the scheduled owner's tanks"),
     ("UserDataScope.withOwnerUid", "Smart Care writes must remain owner-stable during account changes"),
 ):
-    require(worker_path, worker, token, reason)
+    require(smart_worker_path, smart_worker, token, reason)
 
-boot_path = background_paths[1]
-boot = read(boot_path)
+reminder_worker_path = background_paths[1]
+reminder_worker = read(reminder_worker_path)
 for token, reason in (
-    ("CareTaskBootRuntime(", "boot receiver must delegate to the testable process-safe boundary"),
-    ("UserDataScope.withOwnerUid", "boot reminder restore must read an explicit owner scope"),
+    ("KEY_OWNER_UID", "reminder reconciliation work must carry an immutable owner UID"),
+    ("CareReminderReconcileRuntime", "reminder worker must use the testable owner-stability boundary"),
+    ("CareReminderCoordinator", "reminder worker must delegate alarm reconciliation centrally"),
+    ("OwnerNotificationPreferences", "reminder worker must load the owner-scoped app preference"),
 ):
-    require(boot_path, boot, token, reason)
+    require(reminder_worker_path, reminder_worker, token, reason)
 
-boot_runtime_path = (
-    "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareTaskBootRuntime.kt"
-)
-boot_runtime = read(boot_runtime_path)
+boot_path = background_paths[2]
+boot = read(boot_path)
 require(
-    boot_runtime_path,
-    boot_runtime,
-    "class CareTaskBootRuntime",
-    "boot maintenance needs a runtime-free test boundary",
+    boot_path,
+    boot,
+    "CareReminderReconcileWorker.enqueue",
+    "boot receiver must enqueue durable reminder reconciliation",
 )
-for token in background_runtime_tokens:
+for token in ("goAsync()", "CareTaskDataStoreManager", "UserDataScope.withOwnerUid"):
     forbid(
-        boot_runtime_path,
-        boot_runtime,
+        boot_path,
+        boot,
         token,
-        "boot maintenance boundary must not accept foreground runtime dependencies",
+        "boot receiver must not scan owner stores directly",
     )
 
 user_scope_path = "app/src/main/java/com/aqua/aqualight/data/user/UserDataScope.kt"
@@ -183,25 +184,30 @@ for token, reason in (
 ):
     require(session_tests_path, session_tests, token, reason)
 
-boot_tests_path = (
-    "app/src/test/java/com/aqua/aqualight/data/care/reminder/CareTaskBootRuntimeTest.kt"
+reminder_runtime_tests_path = (
+    "app/src/test/java/com/aqua/aqualight/data/care/reminder/"
+    "CareReminderReconcileRuntimeTest.kt"
 )
-boot_tests = read(boot_tests_path)
+reminder_runtime_tests = read(reminder_runtime_tests_path)
 for token, reason in (
     (
-        "authenticatedBootRestoresOnlyOwnerScopedMaintenanceWithoutDeviceRuntime",
-        "authenticated boot must prove owner-scoped maintenance without device runtime",
+        "authenticatedOwnerSynchronizesPreferenceAndReconciles",
+        "authenticated restore must synchronize and reconcile only its owner",
     ),
     (
-        "accountSwitchDuringBootDropsOldOwnerReminders",
-        "boot restoration must reject stale owner reminders",
+        "accountSwitchDuringPreferenceProjectionCancelsOldOwner",
+        "account switching during restore must cancel stale owner alarms",
     ),
     (
-        "unauthenticatedBootDoesNotStartMaintenanceOrReadStores",
+        "accountSwitchAfterReconcileCancelsOldOwnerAlarms",
+        "post-reconcile account switching must remove stale owner alarms",
+    ),
+    (
+        "unauthenticatedOrDifferentOwnerDoesNotReadStores",
         "unauthenticated boot must remain inert",
     ),
 ):
-    require(boot_tests_path, boot_tests, token, reason)
+    require(reminder_runtime_tests_path, reminder_runtime_tests, token, reason)
 
 process_death_tests_path = (
     "app/src/test/java/com/aqua/aqualight/data/devices/repository/"
@@ -223,5 +229,5 @@ if errors:
 
 print(
     "Session/startup guard passed: foreground runtime, auth coordination, "
-    "owner-scoped background maintenance and terminal cleanup tests are intact."
+    "owner-scoped durable background maintenance and terminal cleanup tests are intact."
 )
