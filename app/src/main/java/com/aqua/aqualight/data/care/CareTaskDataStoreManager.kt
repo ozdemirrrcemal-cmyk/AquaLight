@@ -11,7 +11,6 @@ import com.aqua.aqualight.data.care.model.CareTaskStatus
 import com.aqua.aqualight.data.care.model.CareTaskType
 import com.aqua.aqualight.data.care.smartcare.SmartCareGeneratedTask
 import com.aqua.aqualight.data.care.smartcare.SmartCareTaskType
-import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.aqua.aqualight.data.store.StoreInvariantViolation
 import com.aqua.aqualight.data.user.UserDataScope
@@ -29,39 +28,46 @@ private val Context.careTasksDataStore: DataStore<CareTasksStore> by dataStore(
     }
 )
 
+/**
+ * Pure owner-scoped care-task persistence.
+ *
+ * This class never schedules alarms, reads notification preferences, renders
+ * notifications, or resolves the notification composition root. Application
+ * operations reconcile notification state after a successful mutation.
+ */
 class CareTaskDataStoreManager private constructor(
     private val context: Context
 ) {
     private val tankDataStoreManager = AquariumTankDataStoreManager(context)
-    private val notificationPreferences =
-        NotificationPlatform.get(context).preferenceUseCase
 
     val tasksFlow: Flow<List<CareTask>> = context.careTasksDataStore.data.map { store ->
         CareTaskStoreRules.validateStore(store)
             .tasksList
-            .filter(StoredCareTask::belongsToCurrentUser)
-            .map(StoredCareTask::toCareTaskStrict)
+            .filter { storedTask -> storedTask.belongsToCurrentUser() }
+            .map { storedTask -> storedTask.toCareTaskStrict() }
     }
 
     val pendingTasksFlow: Flow<List<CareTask>> = tasksFlow.map { tasks ->
-        tasks.filter { it.status == CareTaskStatus.PENDING }.sortedBy(CareTask::dueAtMillis)
+        tasks.filter { task -> task.status == CareTaskStatus.PENDING }
+            .sortedBy { task -> task.dueAtMillis }
     }
 
     val historyTasksFlow: Flow<List<CareTask>> = tasksFlow.map { tasks ->
-        tasks.filter { it.status == CareTaskStatus.COMPLETED }
-            .sortedByDescending { it.completedAtMillis ?: 0L }
+        tasks.filter { task -> task.status == CareTaskStatus.COMPLETED }
+            .sortedByDescending { task -> task.completedAtMillis ?: 0L }
     }
 
     fun tasksForTankFlow(tankId: Long): Flow<List<CareTask>> {
         CareTaskStoreRules.requireValidTankId(tankId)
         return tasksFlow.map { tasks ->
-            tasks.filter { it.tankId == tankId }.sortedBy(CareTask::dueAtMillis)
+            tasks.filter { task -> task.tankId == tankId }
+                .sortedBy { task -> task.dueAtMillis }
         }
     }
 
     fun taskFlow(taskId: Long): Flow<CareTask?> {
         requirePositiveTaskId(taskId)
-        return tasksFlow.map { tasks -> tasks.firstOrNull { it.id == taskId } }
+        return tasksFlow.map { tasks -> tasks.firstOrNull { task -> task.id == taskId } }
     }
 
     suspend fun addTask(task: CareTask) {
@@ -75,7 +81,6 @@ class CareTaskDataStoreManager private constructor(
             requireUniqueTaskId(currentStore.tasksList, ownerUid, scopedTask.id)
             currentStore.appendValidated(scopedTask)
         }
-        scheduleTaskReminder(scopedTask)
     }
 
     suspend fun addManualTask(
@@ -91,10 +96,10 @@ class CareTaskDataStoreManager private constructor(
         missedReminderDays: Int,
         waterChangePercent: Int?,
         note: String
-    ) {
+    ): Long {
         val ownerUid = UserDataScope.requireCurrentUid()
         requireTankExistsForOwner(ownerUid, tankId)
-        var taskToSchedule: CareTask? = null
+        var createdTaskId = 0L
 
         context.careTasksDataStore.updateData { currentStore ->
             requireOwnerScope(ownerUid)
@@ -111,8 +116,11 @@ class CareTaskDataStoreManager private constructor(
                 dueAtMillis = dueAtMillis,
                 completedAtMillis = null,
                 repeatEnabled = repeatEnabled,
-                repeatIntervalDays = if (repeatEnabled) repeatIntervalDays
-                else CareTaskStoreRules.MIN_REPEAT_INTERVAL_DAYS,
+                repeatIntervalDays = if (repeatEnabled) {
+                    repeatIntervalDays
+                } else {
+                    CareTaskStoreRules.MIN_REPEAT_INTERVAL_DAYS
+                },
                 reminderEnabled = reminderEnabled,
                 missedReminderEnabled = reminderEnabled && missedReminderEnabled,
                 missedReminderDays = if (reminderEnabled && missedReminderEnabled) {
@@ -129,10 +137,14 @@ class CareTaskDataStoreManager private constructor(
                 updatedAtMillis = now
             )
             CareTaskStoreRules.validateTask(task, ownerUid)
-            taskToSchedule = task
+            createdTaskId = task.id
             currentStore.appendValidated(task)
         }
-        taskToSchedule?.let { scheduleTaskReminder(it) }
+
+        check(createdTaskId > 0L) {
+            "Care task creation completed without a generated task id."
+        }
+        return createdTaskId
     }
 
     suspend fun addCompletedActivity(
@@ -187,7 +199,6 @@ class CareTaskDataStoreManager private constructor(
         requireTankExistsForOwner(ownerUid, task.tankId)
         if (!isSmartCareEnabledForTank(ownerUid, task.tankId)) return
 
-        var taskToSchedule: CareTask? = null
         context.careTasksDataStore.updateData { currentStore ->
             requireOwnerScope(ownerUid)
             val currentTasks = currentStore.tasksList
@@ -246,22 +257,21 @@ class CareTaskDataStoreManager private constructor(
                 )
             }
             CareTaskStoreRules.validateTask(persisted, ownerUid)
-            taskToSchedule = persisted
-            if (existing == null) currentStore.appendValidated(persisted)
-            else currentStore.replaceValidatedTask(ownerUid, persisted)
+            if (existing == null) {
+                currentStore.appendValidated(persisted)
+            } else {
+                currentStore.replaceValidatedTask(ownerUid, persisted)
+            }
         }
-        taskToSchedule?.let { scheduleTaskReminder(it) }
     }
 
     suspend fun syncAutomaticTasks(generatedTasks: List<SmartCareGeneratedTask>) {
         val ownerUid = UserDataScope.requireCurrentUid()
         val allowed = filterGeneratedTasksBySmartCareSettings(ownerUid, generatedTasks)
         if (allowed.isEmpty()) return
-        val tasksToSchedule = mutableListOf<CareTask>()
 
         context.careTasksDataStore.updateData { currentStore ->
             requireOwnerScope(ownerUid)
-            tasksToSchedule.clear()
             val now = System.currentTimeMillis()
             val updatedTasks = currentStore.tasksList.toMutableList()
 
@@ -294,7 +304,6 @@ class CareTaskDataStoreManager private constructor(
                     )
                     CareTaskStoreRules.validateTask(updated, ownerUid)
                     updatedTasks[exactIndex] = updated.toStoredCareTaskStrict()
-                    tasksToSchedule += updated
                     return@forEach
                 }
 
@@ -309,10 +318,7 @@ class CareTaskDataStoreManager private constructor(
                         stored.status == CareTaskStatus.PENDING.name &&
                         stored.generatedRuleKey.startsWith(rulePrefix)
                 }
-                if (sameRuleIndex >= 0) {
-                    tasksToSchedule += updatedTasks[sameRuleIndex].toCareTaskStrict()
-                    return@forEach
-                }
+                if (sameRuleIndex >= 0) return@forEach
 
                 val newTask = generated.toAutomaticCareTask(
                     ownerUid = ownerUid,
@@ -322,18 +328,14 @@ class CareTaskDataStoreManager private constructor(
                 )
                 CareTaskStoreRules.validateTask(newTask, ownerUid)
                 updatedTasks += newTask.toStoredCareTaskStrict()
-                tasksToSchedule += newTask
             }
             currentStore.replaceAllValidated(updatedTasks)
         }
-
-        tasksToSchedule.distinctBy(CareTask::id).forEach { scheduleTaskReminder(it) }
     }
 
     suspend fun updateTask(task: CareTask) {
         val ownerUid = resolveActiveOwner(task.ownerUid)
         requireTankExistsForOwner(ownerUid, task.tankId)
-        var taskToSchedule: CareTask? = null
 
         context.careTasksDataStore.updateData { currentStore ->
             requireOwnerScope(ownerUid)
@@ -355,10 +357,8 @@ class CareTaskDataStoreManager private constructor(
                 updatedAtMillis = System.currentTimeMillis()
             )
             CareTaskStoreRules.validateTask(updated, ownerUid)
-            taskToSchedule = updated
             currentStore.replaceValidatedTask(ownerUid, updated)
         }
-        taskToSchedule?.let { scheduleTaskReminder(it) }
     }
 
     suspend fun updateManualTask(
@@ -379,7 +379,6 @@ class CareTaskDataStoreManager private constructor(
         requirePositiveTaskId(taskId)
         val ownerUid = UserDataScope.requireCurrentUid()
         requireTankExistsForOwner(ownerUid, tankId)
-        var taskToSchedule: CareTask? = null
 
         context.careTasksDataStore.updateData { currentStore ->
             requireOwnerScope(ownerUid)
@@ -398,8 +397,11 @@ class CareTaskDataStoreManager private constructor(
                 type = type,
                 dueAtMillis = dueAtMillis,
                 repeatEnabled = repeatEnabled,
-                repeatIntervalDays = if (repeatEnabled) repeatIntervalDays
-                else CareTaskStoreRules.MIN_REPEAT_INTERVAL_DAYS,
+                repeatIntervalDays = if (repeatEnabled) {
+                    repeatIntervalDays
+                } else {
+                    CareTaskStoreRules.MIN_REPEAT_INTERVAL_DAYS
+                },
                 reminderEnabled = reminderEnabled,
                 missedReminderEnabled = reminderEnabled && missedReminderEnabled,
                 missedReminderDays = if (reminderEnabled && missedReminderEnabled) {
@@ -414,17 +416,13 @@ class CareTaskDataStoreManager private constructor(
                 updatedAtMillis = System.currentTimeMillis()
             )
             CareTaskStoreRules.validateTask(updated, ownerUid)
-            taskToSchedule = updated
             currentStore.replaceValidatedTask(ownerUid, updated)
         }
-        taskToSchedule?.let { scheduleTaskReminder(it) }
     }
 
     suspend fun completeTask(taskId: Long) {
         requirePositiveTaskId(taskId)
         val ownerUid = UserDataScope.requireCurrentUid()
-        var completedTaskId: Long? = null
-        var nextTaskToSchedule: CareTask? = null
 
         context.careTasksDataStore.updateData { currentStore ->
             requireOwnerScope(ownerUid)
@@ -443,7 +441,9 @@ class CareTaskDataStoreManager private constructor(
             val updatedTasks = currentStore.tasksList.map { stored ->
                 if (stored.id == taskId && stored.belongsToOwner(ownerUid)) {
                     completed.toStoredCareTaskStrict()
-                } else stored
+                } else {
+                    stored
+                }
             }.toMutableList()
 
             if (target.repeatEnabled) {
@@ -459,15 +459,10 @@ class CareTaskDataStoreManager private constructor(
                 )
                 CareTaskStoreRules.validateTask(next, ownerUid)
                 updatedTasks += next.toStoredCareTaskStrict()
-                nextTaskToSchedule = next
             }
 
-            completedTaskId = completed.id
             currentStore.replaceAllValidated(updatedTasks)
         }
-
-        completedTaskId?.let { notificationPreferences.cancelCareTask(ownerUid, it) }
-        nextTaskToSchedule?.let { scheduleTaskReminder(it) }
     }
 
     suspend fun updateCompletedTaskDate(taskId: Long, completedAtMillis: Long) {
@@ -496,7 +491,6 @@ class CareTaskDataStoreManager private constructor(
     suspend fun deleteManualTask(taskId: Long) {
         requirePositiveTaskId(taskId)
         val ownerUid = UserDataScope.requireCurrentUid()
-        var deletedTaskId: Long? = null
         context.careTasksDataStore.updateData { currentStore ->
             requireOwnerScope(ownerUid)
             val target = currentStore.tasksList.firstOrNull { stored ->
@@ -505,119 +499,77 @@ class CareTaskDataStoreManager private constructor(
             require(target.source == CareTaskSource.MANUAL) {
                 "Only manual tasks can be removed through deleteManualTask."
             }
-            deletedTaskId = target.id
             currentStore.removeValidatedTask(ownerUid, taskId)
         }
-        deletedTaskId?.let { notificationPreferences.cancelCareTask(ownerUid, it) }
     }
 
     suspend fun deleteTask(taskId: Long) {
         requirePositiveTaskId(taskId)
         val ownerUid = UserDataScope.requireCurrentUid()
-        var deleted = false
         context.careTasksDataStore.updateData { currentStore ->
             requireOwnerScope(ownerUid)
-            deleted = currentStore.tasksList.any { stored ->
-                stored.id == taskId && stored.belongsToOwner(ownerUid)
+            if (currentStore.tasksList.any { stored ->
+                    stored.id == taskId && stored.belongsToOwner(ownerUid)
+                }
+            ) {
+                currentStore.removeValidatedTask(ownerUid, taskId)
+            } else {
+                currentStore
             }
-            if (deleted) currentStore.removeValidatedTask(ownerUid, taskId)
-            else currentStore
         }
-        if (deleted) notificationPreferences.cancelCareTask(ownerUid, taskId)
     }
 
     suspend fun deleteTasksForTank(tankId: Long) {
         CareTaskStoreRules.requireValidTankId(tankId)
         val ownerUid = UserDataScope.requireCurrentUid()
-        val deletedTaskIds = mutableListOf<Long>()
         context.careTasksDataStore.updateData { currentStore ->
             requireOwnerScope(ownerUid)
-            deletedTaskIds.clear()
-            currentStore.tasksList.forEach { stored ->
-                if (stored.tankId == tankId && stored.belongsToOwner(ownerUid)) {
-                    deletedTaskIds += stored.id
-                }
-            }
-            if (deletedTaskIds.isEmpty()) currentStore else currentStore.replaceAllValidated(
+            currentStore.replaceAllValidated(
                 currentStore.tasksList.filterNot { stored ->
                     stored.tankId == tankId && stored.belongsToOwner(ownerUid)
                 }
             )
         }
-        deletedTaskIds.forEach { notificationPreferences.cancelCareTask(ownerUid, it) }
     }
 
     suspend fun repairOrphanedTankTasks(ownerUid: String): Int {
         val targetOwnerUid = requireOwnerUid(ownerUid)
         val validTankIds = tankDataStoreManager.tanksSnapshotForOwner(targetOwnerUid)
-            .map { it.id }
-            .toSet()
-        val removedTasks = mutableListOf<CareTask>()
+            .mapTo(mutableSetOf()) { tank -> tank.id }
+        var removedCount = 0
 
         context.careTasksDataStore.updateData { currentStore ->
-            removedTasks.clear()
-            currentStore.tasksList.forEach { stored ->
-                if (stored.belongsToOwner(targetOwnerUid) && stored.tankId !in validTankIds) {
-                    removedTasks += stored.toCareTaskStrict()
-                }
+            val retained = currentStore.tasksList.filterNot { stored ->
+                val remove = stored.belongsToOwner(targetOwnerUid) &&
+                    stored.tankId !in validTankIds
+                if (remove) removedCount += 1
+                remove
             }
-            if (removedTasks.isEmpty()) currentStore else currentStore.replaceAllValidated(
-                currentStore.tasksList.filterNot { stored ->
-                    stored.belongsToOwner(targetOwnerUid) && stored.tankId !in validTankIds
-                }
-            )
+            if (removedCount == 0) {
+                currentStore
+            } else {
+                currentStore.replaceAllValidated(retained)
+            }
         }
-        removedTasks.forEach {
-            notificationPreferences.cancelCareTask(targetOwnerUid, it.id)
-        }
-        return removedTasks.size
+        return removedCount
     }
 
-    suspend fun clearAllTasks(
-        ownerUid: String? = null,
-        cancelReminders: Boolean = true
-    ) {
+    suspend fun clearAllTasks(ownerUid: String? = null) {
         val targetOwnerUid = ownerUid?.let(::requireOwnerUid)
             ?: UserDataScope.requireCurrentUid()
-        val deletedTasks = if (cancelReminders) {
-            context.careTasksDataStore.data.first().tasksList
-                .filter { it.belongsToOwner(targetOwnerUid) }
-                .map(StoredCareTask::toCareTaskStrict)
-        } else emptyList()
-
         context.careTasksDataStore.updateData { currentStore ->
             currentStore.replaceAllValidated(
-                currentStore.tasksList.filterNot { it.belongsToOwner(targetOwnerUid) }
+                currentStore.tasksList.filterNot { stored ->
+                    stored.belongsToOwner(targetOwnerUid)
+                }
             )
         }
-        deletedTasks.forEach {
-            notificationPreferences.cancelCareTask(targetOwnerUid, it.id)
-        }
-    }
-
-    suspend fun cancelPendingRemindersForTank(tankId: Long) {
-        CareTaskStoreRules.requireValidTankId(tankId)
-        pendingTasksFlow.first()
-            .filter { it.tankId == tankId }
-            .forEach { notificationPreferences.cancelCareTask(it.ownerUid, it.id) }
-    }
-
-    suspend fun reschedulePendingRemindersForTank(tankId: Long) {
-        CareTaskStoreRules.requireValidTankId(tankId)
-        pendingTasksFlow.first()
-            .filter { it.tankId == tankId }
-            .forEach { scheduleTaskReminder(it) }
-    }
-
-    private suspend fun scheduleTaskReminder(task: CareTask) {
-        CareTaskStoreRules.validateTask(task)
-        notificationPreferences.scheduleCareTask(task.ownerUid, task.id)
     }
 
     private suspend fun isSmartCareEnabledForTank(ownerUid: String, tankId: Long): Boolean {
         CareTaskStoreRules.requireValidTankId(tankId)
         return tankDataStoreManager.tanksSnapshotForOwner(ownerUid)
-            .firstOrNull { it.id == tankId }
+            .firstOrNull { tank -> tank.id == tankId }
             ?.smartCareEnabled == true
     }
 
@@ -627,7 +579,7 @@ class CareTaskDataStoreManager private constructor(
     ): List<SmartCareGeneratedTask> {
         if (generatedTasks.isEmpty()) return emptyList()
         val tanksById = tankDataStoreManager.tanksSnapshotForOwner(ownerUid)
-            .associateBy { it.id }
+            .associateBy { tank -> tank.id }
         return generatedTasks.filter { generated ->
             val generatedOwner = UserDataScope.normalizeOwnerUid(generated.ownerUid)
             if (generatedOwner.isNotBlank() && generatedOwner != ownerUid) {
@@ -641,7 +593,10 @@ class CareTaskDataStoreManager private constructor(
 
     private suspend fun requireTankExistsForOwner(ownerUid: String, tankId: Long) {
         CareTaskStoreRules.requireValidTankId(tankId)
-        if (tankDataStoreManager.tanksSnapshotForOwner(ownerUid).none { it.id == tankId }) {
+        if (tankDataStoreManager.tanksSnapshotForOwner(ownerUid).none { tank ->
+                tank.id == tankId
+            }
+        ) {
             throw StoreInvariantViolation(
                 "Care task references a tank that does not exist for the active owner."
             )
@@ -682,7 +637,10 @@ class CareTaskDataStoreManager private constructor(
         ownerUid: String,
         taskId: Long
     ) {
-        if (currentTasks.any { it.id == taskId && it.belongsToOwner(ownerUid) }) {
+        if (currentTasks.any { stored ->
+                stored.id == taskId && stored.belongsToOwner(ownerUid)
+            }
+        ) {
             throw StoreInvariantViolation(
                 "Duplicate care-task id $taskId for the active owner."
             )
@@ -704,11 +662,15 @@ class CareTaskDataStoreManager private constructor(
             if (stored.id == task.id && stored.belongsToOwner(ownerUid)) {
                 replaced = true
                 task.toStoredCareTaskStrict()
-            } else stored
+            } else {
+                stored
+            }
         }
-        if (!replaced) throw IllegalArgumentException(
-            "Care task not found for the active owner."
-        )
+        if (!replaced) {
+            throw IllegalArgumentException(
+                "Care task not found for the active owner."
+            )
+        }
         return replaceAllValidated(updatedTasks)
     }
 
@@ -717,7 +679,9 @@ class CareTaskDataStoreManager private constructor(
         taskId: Long
     ): CareTasksStore {
         return replaceAllValidated(
-            tasksList.filterNot { it.id == taskId && it.belongsToOwner(ownerUid) }
+            tasksList.filterNot { stored ->
+                stored.id == taskId && stored.belongsToOwner(ownerUid)
+            }
         )
     }
 
@@ -741,13 +705,13 @@ class CareTaskDataStoreManager private constructor(
             source = CareTaskSource.valueOf(source),
             status = CareTaskStatus.valueOf(status),
             dueAtMillis = dueAtMillis,
-            completedAtMillis = completedAtMillis.takeIf { it > 0L },
+            completedAtMillis = completedAtMillis.takeIf { value -> value > 0L },
             repeatEnabled = repeatEnabled,
             repeatIntervalDays = repeatIntervalDays,
             reminderEnabled = reminderEnabled,
             missedReminderEnabled = missedReminderEnabled,
             missedReminderDays = missedReminderDays,
-            waterChangePercent = waterChangePercent.takeIf { it > 0 },
+            waterChangePercent = waterChangePercent.takeIf { value -> value > 0 },
             note = note,
             generatedRuleKey = generatedRuleKey,
             createdAtMillis = createdAtMillis,
@@ -821,7 +785,9 @@ class CareTaskDataStoreManager private constructor(
     }
 
     private fun SmartCareGeneratedTask.waterChangePercentForType(): Int? {
-        return waterChangePercent.takeIf { taskType == SmartCareTaskType.WATER_CHANGE }
+        return waterChangePercent.takeIf {
+            taskType == SmartCareTaskType.WATER_CHANGE
+        }
     }
 
     private fun SmartCareTaskType.toCareTaskType(): CareTaskType {
@@ -843,7 +809,9 @@ class CareTaskDataStoreManager private constructor(
 
     private fun getAutomaticRulePrefix(tankId: Long, ruleId: String): String {
         CareTaskStoreRules.requireValidTankId(tankId)
-        require(ruleId.isNotBlank()) { "Automatic care rule id must not be blank." }
+        require(ruleId.isNotBlank()) {
+            "Automatic care rule id must not be blank."
+        }
         return "smart_${tankId}_${ruleId}_"
     }
 
