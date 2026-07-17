@@ -89,7 +89,8 @@ for token, reason in (
     ("FirebaseAuthenticatedOwnerProvider", "delivery must validate active owner"),
     ("CareReminderDeliveryPolicy.shouldDeliver(task, tank)", "delivery must revalidate task/tank"),
     ("ExistingWorkPolicy.KEEP", "duplicate broadcasts must not duplicate in-flight work"),
-    ("addTag(ownerTag(owner))", "outgoing-owner delivery must be cancellable"),
+    ("CareReminderIdentity.ownerWorkTag", "outgoing-owner delivery must be cancellable"),
+    ("CareReminderIdentity.deliveryWorkName", "delivery work identity must be centralized"),
     ("BackoffPolicy.EXPONENTIAL", "transient failure requires backoff"),
     ("MAX_ATTEMPTS", "delivery retries must be bounded"),
 ):
