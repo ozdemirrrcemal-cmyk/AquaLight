@@ -112,6 +112,19 @@ class CommercialStoreArchitectureTest {
         assertFalse(preferenceManager.contains("emit(UserPreferences"))
     }
 
+    @Test
+    fun careTaskFormUsesSharedLimitsWithoutSilentCoercion() {
+        val form = File(
+            repositoryRoot,
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/" +
+                "AddCareTaskFragment.kt"
+        ).readText()
+
+        assertTrue(form.contains("CareTaskInputLimits.parseRepeatIntervalDays"))
+        assertTrue(form.contains("CareTaskInputLimits.parseMissedReminderDays"))
+        assertFalse(form.contains("coerceAtLeast(1)"))
+    }
+
     private fun assertOnlyFilesContain(
         token: String,
         expectedRelativePaths: Set<String>
