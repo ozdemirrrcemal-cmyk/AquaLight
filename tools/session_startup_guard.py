@@ -101,7 +101,7 @@ background_paths = (
     "app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareDailyWorker.kt",
     "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareReminderReconcileWorker.kt",
     "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareTaskBootReceiver.kt",
-    "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareTaskReminderReceiver.kt",
+    "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareReminderDeliveryWorker.kt",
 )
 background_runtime_tokens = (
     "import com.aqua.aqualight.data.auth.AuthSessionManager",
@@ -161,6 +161,41 @@ for token in ("goAsync()", "CareTaskDataStoreManager", "UserDataScope.withOwnerU
         boot,
         token,
         "boot receiver must not scan owner stores directly",
+    )
+
+delivery_worker_path = background_paths[3]
+delivery_worker = read(delivery_worker_path)
+for token, reason in (
+    ("OwnerNotificationPreferences", "delivery must re-check the owner app preference"),
+    ("CareReminderDeliveryPolicy.shouldDeliver(task, tank)", "delivery must revalidate persisted task and tank state"),
+    ("UserDataScope.withOwnerUid", "delivery reads must remain owner-pinned"),
+    ("ExistingWorkPolicy.KEEP", "duplicate alarm broadcasts must not duplicate in-flight delivery"),
+):
+    require(delivery_worker_path, delivery_worker, token, reason)
+
+alarm_receiver_path = (
+    "app/src/main/java/com/aqua/aqualight/data/care/reminder/"
+    "CareTaskReminderReceiver.kt"
+)
+alarm_receiver = read(alarm_receiver_path)
+require(
+    alarm_receiver_path,
+    alarm_receiver,
+    "CareReminderDeliveryWorker.enqueue",
+    "alarm receiver must enqueue durable delivery",
+)
+for token in (
+    "goAsync()",
+    "FirebaseAuthenticatedOwnerProvider",
+    "CareTaskDataStoreManager",
+    "OwnerNotificationPreferences",
+    "CoroutineScope",
+):
+    forbid(
+        alarm_receiver_path,
+        alarm_receiver,
+        token,
+        "alarm receiver must remain a lightweight enqueue-only boundary",
     )
 
 user_scope_path = "app/src/main/java/com/aqua/aqualight/data/user/UserDataScope.kt"
