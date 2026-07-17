@@ -1,5 +1,6 @@
 package com.aqua.aqualight.application.notifications
 
+import com.aqua.aqualight.application.care.CareTaskType
 import kotlinx.coroutines.flow.Flow
 
 enum class NotificationCategory {
@@ -39,6 +40,36 @@ data class NotificationPreferenceSnapshot(
         get() = delivery.values.all(NotificationDeliveryReadiness::canDeliver)
 }
 
+data class CareReminderNotification(
+    val ownerUid: String,
+    val taskId: Long,
+    val careTaskType: CareTaskType,
+    val title: String,
+    val message: String
+)
+
+data class DeviceAlertNotification(
+    val ownerUid: String,
+    val deviceUid: String,
+    val title: String,
+    val message: String
+)
+
+data class DeviceUpdateNotification(
+    val ownerUid: String,
+    val deviceUid: String,
+    val title: String,
+    val message: String,
+    val progressPercent: Int? = null,
+    val ongoing: Boolean = false
+)
+
+enum class NotificationDispatchResult {
+    POSTED,
+    OWNER_PREFERENCE_DISABLED,
+    SYSTEM_BLOCKED
+}
+
 interface NotificationPreferenceRepository {
     fun enabledFlow(ownerUid: String): Flow<Boolean>
     suspend fun isEnabled(ownerUid: String): Boolean
@@ -59,8 +90,68 @@ interface NotificationScheduler {
 }
 
 interface NotificationRenderer {
+    fun renderCareReminder(notification: CareReminderNotification)
+    fun renderDeviceAlert(notification: DeviceAlertNotification)
+    fun renderDeviceUpdate(notification: DeviceUpdateNotification)
     fun cancelCareReminder(ownerUid: String, taskId: Long)
     fun cancelOwner(ownerUid: String)
+}
+
+class NotificationDispatchUseCase(
+    private val repository: NotificationPreferenceRepository,
+    private val permissionPolicy: NotificationPermissionPolicy,
+    private val renderer: NotificationRenderer
+) {
+    suspend fun dispatchCareReminder(
+        notification: CareReminderNotification
+    ): NotificationDispatchResult {
+        return dispatch(
+            ownerUid = notification.ownerUid,
+            category = NotificationCategory.CARE_REMINDERS
+        ) {
+            renderer.renderCareReminder(notification)
+        }
+    }
+
+    suspend fun dispatchDeviceAlert(
+        notification: DeviceAlertNotification
+    ): NotificationDispatchResult {
+        return dispatch(
+            ownerUid = notification.ownerUid,
+            category = NotificationCategory.DEVICE_ALERTS
+        ) {
+            renderer.renderDeviceAlert(notification)
+        }
+    }
+
+    suspend fun dispatchDeviceUpdate(
+        notification: DeviceUpdateNotification
+    ): NotificationDispatchResult {
+        return dispatch(
+            ownerUid = notification.ownerUid,
+            category = NotificationCategory.DEVICE_UPDATES
+        ) {
+            renderer.renderDeviceUpdate(notification)
+        }
+    }
+
+    private suspend fun dispatch(
+        ownerUid: String,
+        category: NotificationCategory,
+        render: () -> Unit
+    ): NotificationDispatchResult {
+        if (!repository.isEnabled(ownerUid)) {
+            return NotificationDispatchResult.OWNER_PREFERENCE_DISABLED
+        }
+
+        permissionPolicy.ensureChannels()
+        if (!permissionPolicy.evaluate(category).canDeliver) {
+            return NotificationDispatchResult.SYSTEM_BLOCKED
+        }
+
+        render()
+        return NotificationDispatchResult.POSTED
+    }
 }
 
 class NotificationPreferenceUseCase(
