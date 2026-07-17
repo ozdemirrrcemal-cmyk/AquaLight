@@ -1,9 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.add
 
-import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
@@ -26,9 +23,11 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceQrScanBinding
+import com.aqua.aqualight.platform.permissions.AppCapability
 import com.aqua.aqualight.platform.vision.ProvisioningQrFrameDecoder
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.permission.CapabilityPermissionCoordinator
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlinx.coroutines.launch
@@ -38,7 +37,17 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
     private val viewModel: DeviceQrScanViewModel by viewModels {
         requireContext().requireAppContainer().defaultViewModelFactory
     }
-    private val permissionController = DeviceAddPermissionController()
+
+    private val permissionCoordinator = CapabilityPermissionCoordinator(this) { action ->
+        when (action) {
+            ACTION_START_CAMERA -> restartScanner()
+            ACTION_RESUME_BLE_PREFLIGHT -> {
+                if (!viewModel.retryPendingBleScan()) {
+                    restartScanner()
+                }
+            }
+        }
+    }
 
     private var _binding: FragmentDeviceQrScanBinding? = null
     private val binding get() = _binding!!
@@ -52,25 +61,13 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
     private var isProcessingFrame = false
     private var hasResult = false
     private var primaryAction: DeviceQrScanPrimaryAction? = null
-    private var retryBlePreflightOnResume = false
-    private var retryCameraOnResume = false
 
-    private val cameraPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
+    private val bluetoothSettingsLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        if (!viewModel.retryPendingBleScan()) {
             restartScanner()
-        } else {
-            showCameraPermissionRequired()
         }
-    }
-
-    private val blePermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { result ->
-        viewModel.onBlePermissionResult(
-            permissionController.hasBlePermissionsFromResult(requireContext(), result)
-        )
     }
 
     override fun onViewCreated(
@@ -83,31 +80,11 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         hasResult = false
         isProcessingFrame = false
         primaryAction = null
-        retryBlePreflightOnResume = false
-        retryCameraOnResume = false
 
         setupHeader()
         setupActions()
         observeViewModel()
-        ensureCameraPermission()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (retryCameraOnResume) {
-            retryCameraOnResume = false
-            if (hasCameraPermission()) {
-                restartScanner()
-            } else {
-                showCameraPermissionRequired()
-            }
-        }
-        if (retryBlePreflightOnResume) {
-            retryBlePreflightOnResume = false
-            if (!viewModel.retryPendingBleScan()) {
-                restartScanner()
-            }
-        }
+        requestQrCameraAccess()
     }
 
     private fun setupHeader() {
@@ -130,18 +107,12 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         binding.btnRequestCamera.setOnClickListener {
             when (primaryAction) {
                 DeviceQrScanPrimaryAction.SCAN_AGAIN -> restartScanner()
-                DeviceQrScanPrimaryAction.REQUEST_CAMERA_PERMISSION -> requestCameraPermission()
-                DeviceQrScanPrimaryAction.OPEN_CAMERA_SETTINGS -> openCameraSettings()
-                DeviceQrScanPrimaryAction.REQUEST_BLE_PERMISSION -> requestBlePermission()
+                DeviceQrScanPrimaryAction.REQUEST_CAMERA_PERMISSION,
+                DeviceQrScanPrimaryAction.OPEN_CAMERA_SETTINGS -> requestQrCameraAccess()
+                DeviceQrScanPrimaryAction.REQUEST_BLE_PERMISSION,
+                DeviceQrScanPrimaryAction.OPEN_APP_SETTINGS -> requestBleProvisioningAccess()
                 DeviceQrScanPrimaryAction.OPEN_BLUETOOTH_SETTINGS -> openBluetoothSettings()
-                DeviceQrScanPrimaryAction.OPEN_APP_SETTINGS -> openAppSettings()
-                null -> {
-                    if (!hasCameraPermission()) {
-                        requestCameraPermission()
-                    } else {
-                        restartScanner()
-                    }
-                }
+                null -> requestQrCameraAccess()
             }
         }
     }
@@ -184,74 +155,37 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         }
     }
 
-    private fun ensureCameraPermission() {
-        if (hasCameraPermission()) {
-            startCamera()
-        } else {
-            showCameraPermissionRequired()
-        }
+    private fun requestQrCameraAccess() {
+        showCameraPermissionRequired()
+        permissionCoordinator.runWhenGranted(
+            capability = AppCapability.CAMERA_QR,
+            actionToken = ACTION_START_CAMERA
+        )
     }
 
-    private fun requestCameraPermission() {
-        permissionController.markCameraPermissionRequested(requireContext())
-        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-    }
-
-    private fun requestBlePermission() {
-        permissionController.markBlePermissionRequested(requireContext())
-        blePermissionLauncher.launch(
-            permissionController.blePermissions()
+    private fun requestBleProvisioningAccess() {
+        permissionCoordinator.runWhenGranted(
+            capability = AppCapability.BLE_PROVISIONING,
+            actionToken = ACTION_RESUME_BLE_PREFLIGHT
         )
     }
 
     private fun openBluetoothSettings() {
-        retryBlePreflightOnResume = true
         runCatching {
-            startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
+            bluetoothSettingsLauncher.launch(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
+        }.recoverCatching {
+            bluetoothSettingsLauncher.launch(Intent(Settings.ACTION_SETTINGS))
         }.onFailure {
-            startActivity(Intent(Settings.ACTION_SETTINGS))
+            if (!viewModel.retryPendingBleScan()) {
+                restartScanner()
+            }
         }
-    }
-
-    private fun openAppSettings() {
-        retryBlePreflightOnResume = true
-        openApplicationDetailsSettings()
-    }
-
-    private fun openCameraSettings() {
-        retryCameraOnResume = true
-        openApplicationDetailsSettings()
-    }
-
-    private fun openApplicationDetailsSettings() {
-        val packageUri = Uri.fromParts("package", requireContext().packageName, null)
-        runCatching {
-            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, packageUri))
-        }.onFailure {
-            startActivity(Intent(Settings.ACTION_SETTINGS))
-        }
-    }
-
-    private fun hasCameraPermission(): Boolean {
-        return ContextCompat.checkSelfPermission(
-            requireContext(),
-            Manifest.permission.CAMERA
-        ) == PackageManager.PERMISSION_GRANTED
     }
 
     private fun showCameraPermissionRequired() {
         if (_binding == null) return
 
-        primaryAction = when (permissionController.cameraNextAction(this)) {
-            DeviceAddPermissionController.NextAction.GRANTED -> {
-                restartScanner()
-                return
-            }
-            DeviceAddPermissionController.NextAction.REQUEST_PERMISSION ->
-                DeviceQrScanPrimaryAction.REQUEST_CAMERA_PERMISSION
-            DeviceAddPermissionController.NextAction.OPEN_APP_SETTINGS ->
-                DeviceQrScanPrimaryAction.OPEN_CAMERA_SETTINGS
-        }
+        primaryAction = DeviceQrScanPrimaryAction.REQUEST_CAMERA_PERMISSION
         binding.btnRequestCamera.isVisible = true
         binding.btnRequestCamera.text = primaryAction?.buttonText()
         binding.tvScanTitle.text = getString(R.string.device_qr_camera_permission_title)
@@ -434,7 +368,9 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         stopCamera()
         viewModel.onQrDetected(
             rawValue = rawValue,
-            hasBlePermissions = permissionController.hasBlePermissions(requireContext())
+            hasBlePermissions = permissionCoordinator.isGranted(
+                AppCapability.BLE_PROVISIONING
+            )
         )
     }
 
@@ -456,16 +392,14 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         return when (this) {
             DeviceQrScanPrimaryAction.SCAN_AGAIN ->
                 getString(R.string.device_qr_preflight_scan_again)
-            DeviceQrScanPrimaryAction.REQUEST_CAMERA_PERMISSION ->
-                getString(R.string.device_qr_allow_camera)
+            DeviceQrScanPrimaryAction.REQUEST_CAMERA_PERMISSION,
             DeviceQrScanPrimaryAction.OPEN_CAMERA_SETTINGS ->
-                getString(R.string.device_qr_preflight_open_app_settings)
-            DeviceQrScanPrimaryAction.REQUEST_BLE_PERMISSION ->
+                getString(R.string.device_qr_allow_camera)
+            DeviceQrScanPrimaryAction.REQUEST_BLE_PERMISSION,
+            DeviceQrScanPrimaryAction.OPEN_APP_SETTINGS ->
                 getString(R.string.device_qr_preflight_allow_bluetooth_permission)
             DeviceQrScanPrimaryAction.OPEN_BLUETOOTH_SETTINGS ->
                 getString(R.string.device_qr_preflight_open_bluetooth_settings)
-            DeviceQrScanPrimaryAction.OPEN_APP_SETTINGS ->
-                getString(R.string.device_qr_preflight_open_app_settings)
         }
     }
 
@@ -488,5 +422,10 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
     override fun onDestroy() {
         cameraExecutor.shutdown()
         super.onDestroy()
+    }
+
+    private companion object {
+        const val ACTION_START_CAMERA = "start_qr_camera"
+        const val ACTION_RESUME_BLE_PREFLIGHT = "resume_qr_ble_preflight"
     }
 }

@@ -1,10 +1,7 @@
 package com.aqua.aqualight.ui.tabs.settings.app
 
-import android.Manifest
-import android.os.Build
 import android.os.Bundle
 import android.view.View
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavDirections
@@ -12,9 +9,11 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentAppSettingsBinding
+import com.aqua.aqualight.platform.permissions.AppCapability
 import com.aqua.aqualight.ui.common.bottomsheet.ThemeBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.permission.CapabilityPermissionCoordinator
 import com.aqua.aqualight.ui.main.MainActivity
 import com.aqua.aqualight.utils.NotificationHelper
 import kotlinx.coroutines.flow.collectLatest
@@ -30,46 +29,13 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         requireContext().requireAppContainer().userSettingsOperations
     }
 
-    private var changingNotificationSwitchProgrammatically = false
-
-    private val notificationPermissionLauncher =
-        registerForActivityResult(
-            ActivityResultContracts.RequestPermission()
-        ) { granted ->
-            viewLifecycleOwner.lifecycleScope.launch {
-                val context =
-                    requireContext()
-
-                val systemEnabled =
-                    NotificationHelper.areSystemNotificationsEnabled(
-                        context
-                    )
-
-                val shouldEnableNotifications =
-                    granted && systemEnabled
-
-                settingsOperations.updateNotificationsEnabled(
-                    shouldEnableNotifications
-                )
-
-                if (shouldEnableNotifications) {
-                    settingsOperations.reschedulePendingCareTaskReminders()
-                } else {
-                    settingsOperations.cancelPendingCareTaskReminders()
-                }
-
-                setNotificationSwitchChecked(
-                    shouldEnableNotifications
-                )
-
-                _binding?.root?.postDelayed(
-                    {
-                        refreshNotificationSwitchState()
-                    },
-                    150
-                )
-            }
+    private val permissionCoordinator = CapabilityPermissionCoordinator(this) { action ->
+        when (action) {
+            ACTION_ENABLE_NOTIFICATIONS -> completeNotificationEnableFlow()
         }
+    }
+
+    private var changingNotificationSwitchProgrammatically = false
 
     override fun onViewCreated(
         view: View,
@@ -80,8 +46,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             savedInstanceState
         )
 
-        _binding =
-            FragmentAppSettingsBinding.bind(view)
+        _binding = FragmentAppSettingsBinding.bind(view)
 
         setupHeader()
         setupClicks()
@@ -93,7 +58,6 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
     override fun onResume() {
         super.onResume()
-
         refreshNotificationSwitchState()
     }
 
@@ -111,17 +75,13 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
             switchNotifications.setOnCheckedChangeListener { _, isChecked ->
                 if (!changingNotificationSwitchProgrammatically) {
-                    handleNotificationToggle(
-                        isChecked
-                    )
+                    handleNotificationToggle(isChecked)
                 }
             }
 
             switchAutoUpdate.setOnCheckedChangeListener { _, enabled ->
                 viewLifecycleOwner.lifecycleScope.launch {
-                    settingsOperations.updateAutoUpdateEnabled(
-                        enabled
-                    )
+                    settingsOperations.updateAutoUpdateEnabled(enabled)
                 }
             }
 
@@ -181,141 +141,84 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
     private fun refreshNotificationSwitchState() {
         viewLifecycleOwner.lifecycleScope.launch {
-            val context =
-                requireContext()
-
-            val appEnabled =
-                settingsOperations.notificationsEnabled.first()
-
-            val hasPermission =
-                NotificationHelper.hasSystemPermission(
-                    context
-                )
-
-            val systemEnabled =
-                NotificationHelper.areSystemNotificationsEnabled(
-                    context
-                )
-
-            val finalState =
-                appEnabled && hasPermission && systemEnabled
-
-            setNotificationSwitchChecked(
-                finalState
+            val context = requireContext()
+            val appEnabled = settingsOperations.notificationsEnabled.first()
+            val hasPermission = permissionCoordinator.isGranted(
+                AppCapability.NOTIFICATIONS
             )
+            val systemEnabled = NotificationHelper.areSystemNotificationsEnabled(context)
+            val finalState = appEnabled && hasPermission && systemEnabled
+
+            setNotificationSwitchChecked(finalState)
         }
     }
 
     private fun setNotificationSwitchChecked(
         value: Boolean
     ) {
-        changingNotificationSwitchProgrammatically =
-            true
-
-        binding.switchNotifications.isChecked =
-            value
-
-        changingNotificationSwitchProgrammatically =
-            false
+        changingNotificationSwitchProgrammatically = true
+        binding.switchNotifications.isChecked = value
+        changingNotificationSwitchProgrammatically = false
     }
 
     private fun handleNotificationToggle(
         enable: Boolean
     ) {
-        val context =
+        if (!enable) {
+            disableNotifications()
+            return
+        }
+
+        setNotificationSwitchChecked(false)
+
+        if (!permissionCoordinator.isGranted(AppCapability.NOTIFICATIONS)) {
+            permissionCoordinator.runWhenGranted(
+                capability = AppCapability.NOTIFICATIONS,
+                actionToken = ACTION_ENABLE_NOTIFICATIONS
+            )
+            return
+        }
+
+        if (!NotificationHelper.areSystemNotificationsEnabled(requireContext())) {
+            permissionCoordinator.openSettingsFor(
+                capability = AppCapability.NOTIFICATIONS,
+                actionToken = ACTION_ENABLE_NOTIFICATIONS
+            )
+            return
+        }
+
+        completeNotificationEnableFlow()
+    }
+
+    private fun completeNotificationEnableFlow() {
+        if (_binding == null) return
+
+        val systemEnabled = NotificationHelper.areSystemNotificationsEnabled(
             requireContext()
-
-        val hasPermission =
-            NotificationHelper.hasSystemPermission(
-                context
-            )
-
-        val systemEnabled =
-            NotificationHelper.areSystemNotificationsEnabled(
-                context
-            )
-
-        if (enable) {
-            if (
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                !hasPermission
-            ) {
-                if (
-                    shouldShowRequestPermissionRationale(
-                        Manifest.permission.POST_NOTIFICATIONS
-                    )
-                ) {
-                    openNotificationSheet()
-                } else {
-                    notificationPermissionLauncher.launch(
-                        Manifest.permission.POST_NOTIFICATIONS
-                    )
-                }
-
-                setNotificationSwitchChecked(
-                    false
-                )
-
-                return
-            }
-
-            if (
-                hasPermission &&
-                !systemEnabled
-            ) {
-                setNotificationSwitchChecked(
-                    false
-                )
-
-                openNotificationSheet()
-
-                return
-            }
-
-            viewLifecycleOwner.lifecycleScope.launch {
-                settingsOperations.updateNotificationsEnabled(
-                    true
-                )
-
-                settingsOperations.reschedulePendingCareTaskReminders()
-            }
-
-            setNotificationSwitchChecked(
-                true
-            )
-
+        )
+        if (!systemEnabled) {
+            setNotificationSwitchChecked(false)
             return
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            settingsOperations.updateNotificationsEnabled(
-                false
+            settingsOperations.updateNotificationsEnabled(true)
+            settingsOperations.reschedulePendingCareTaskReminders()
+            setNotificationSwitchChecked(true)
+
+            _binding?.root?.postDelayed(
+                ::refreshNotificationSwitchState,
+                NOTIFICATION_STATE_REFRESH_DELAY_MS
             )
-
-            settingsOperations.cancelPendingCareTaskReminders()
         }
-
-        setNotificationSwitchChecked(
-            false
-        )
     }
 
-    private fun openNotificationSheet() {
-        val sheet =
-            NotificationsBottomSheet(
-                NotificationsBottomSheet.PermissionType.NOTIFICATION
-            )
-
-        sheet.onSettingsOpened = {
-            _binding?.root?.post {
-                refreshNotificationSwitchState()
-            }
+    private fun disableNotifications() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            settingsOperations.updateNotificationsEnabled(false)
+            settingsOperations.cancelPendingCareTaskReminders()
         }
-
-        sheet.show(
-            parentFragmentManager,
-            "notifications_sheet"
-        )
+        setNotificationSwitchChecked(false)
     }
 
     private fun observeThemeSummary() {
@@ -375,16 +278,18 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
     private fun observeAutoUpdateState() {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             settingsOperations.autoUpdateEnabled.collectLatest { enabled ->
-                binding.switchAutoUpdate.isChecked =
-                    enabled
+                binding.switchAutoUpdate.isChecked = enabled
             }
         }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        _binding = null
+    }
 
-        _binding =
-            null
+    private companion object {
+        const val ACTION_ENABLE_NOTIFICATIONS = "enable_notifications"
+        const val NOTIFICATION_STATE_REFRESH_DELAY_MS = 150L
     }
 }

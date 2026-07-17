@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.tabs.settings.profile
 
-import android.Manifest
 import android.app.Activity
 import android.graphics.Color
 import android.net.Uri
@@ -20,8 +19,10 @@ import coil3.request.placeholder
 import com.aqua.aqualight.R
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentEditProfileBinding
+import com.aqua.aqualight.platform.permissions.AppCapability
 import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.permission.CapabilityPermissionCoordinator
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.yalantis.ucrop.UCrop
@@ -38,21 +39,14 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         requireContext().requireAppContainer().userProfileOperations
     }
 
-    private var cameraImageUri: Uri? = null
-    private var selectedPhotoUri: Uri? = null
-
-    private val requestCameraPermission = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            startCameraCapture()
-        } else {
-            showInfoDialog(
-                title = getString(R.string.edit_profile_permission_denied_title),
-                message = getString(R.string.edit_profile_camera_permission_denied_message)
-            )
+    private val permissionCoordinator = CapabilityPermissionCoordinator(this) { action ->
+        when (action) {
+            ACTION_CAPTURE_PROFILE_PHOTO -> startCameraCapture()
         }
     }
+
+    private var cameraImageUri: Uri? = null
+    private var selectedPhotoUri: Uri? = null
 
     private val takePictureLauncher = registerForActivityResult(
         ActivityResultContracts.TakePicture()
@@ -103,8 +97,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
             savedInstanceState
         )
 
-        _binding =
-            FragmentEditProfileBinding.bind(view)
+        _binding = FragmentEditProfileBinding.bind(view)
 
         setupHeader()
         observeCurrentPhoto()
@@ -179,13 +172,10 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
             )
 
             btnSave.setOnClickListener {
-                val uriToSave =
-                    selectedPhotoUri
+                val uriToSave = selectedPhotoUri
 
                 if (uriToSave == null) {
-                    findNavController()
-                        .popBackStack()
-
+                    findNavController().popBackStack()
                     return@setOnClickListener
                 }
 
@@ -195,9 +185,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
                             uriToSave.toString()
                         )
 
-                        findNavController()
-                            .popBackStack()
-
+                        findNavController().popBackStack()
                     } catch (e: Exception) {
                         e.printStackTrace()
 
@@ -220,34 +208,28 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     }
 
     private fun checkCameraPermissionAndOpen() {
-        requestCameraPermission.launch(
-            Manifest.permission.CAMERA
+        permissionCoordinator.runWhenGranted(
+            capability = AppCapability.CAMERA_PHOTO,
+            actionToken = ACTION_CAPTURE_PROFILE_PHOTO
         )
     }
 
     private fun startCameraCapture() {
-        val uri =
-            createImageUri()
-                ?: run {
-                    showInfoDialog(
-                        title = getString(R.string.edit_profile_error_title),
-                        message = getString(R.string.edit_profile_temp_file_error)
-                    )
+        val uri = createImageUri()
+            ?: run {
+                showInfoDialog(
+                    title = getString(R.string.edit_profile_error_title),
+                    message = getString(R.string.edit_profile_temp_file_error)
+                )
+                return
+            }
 
-                    return
-                }
-
-        cameraImageUri =
-            uri
-
-        takePictureLauncher.launch(
-            uri
-        )
+        cameraImageUri = uri
+        takePictureLauncher.launch(uri)
     }
 
     private fun getProfilePhotosDir(): File {
-        val context =
-            requireContext()
+        val context = requireContext()
 
         return File(
             context.filesDir,
@@ -261,15 +243,12 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
 
     private fun createImageUri(): Uri? {
         return try {
-            val dir =
-                getProfilePhotosDir()
-
-            val file =
-                File.createTempFile(
-                    "profile_",
-                    ".jpg",
-                    dir
-                )
+            val dir = getProfilePhotosDir()
+            val file = File.createTempFile(
+                "profile_",
+                ".jpg",
+                dir
+            )
 
             FileProvider.getUriForFile(
                 requireContext(),
@@ -285,51 +264,34 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     private fun onPhotoSelected(
         sourceUri: Uri
     ) {
-        val context =
-            requireContext()
+        val context = requireContext()
+        val destFile = File(
+            getProfilePhotosDir(),
+            "profile_cropped_${System.currentTimeMillis()}.jpg"
+        )
+        val destUri = Uri.fromFile(destFile)
 
-        val destFile =
-            File(
-                getProfilePhotosDir(),
-                "profile_cropped_${System.currentTimeMillis()}.jpg"
+        val options = UCrop.Options().apply {
+            setCircleDimmedLayer(true)
+            withAspectRatio(1f, 1f)
+
+            setShowCropGrid(true)
+            setShowCropFrame(false)
+            setHideBottomControls(true)
+
+            setToolbarTitle(
+                getString(R.string.edit_profile_crop_title)
             )
 
-        val destUri =
-            Uri.fromFile(
-                destFile
+            val toolbarColor = ContextCompat.getColor(
+                context,
+                R.color.crop_toolbar_bg
             )
 
-        val options =
-            UCrop.Options().apply {
-                setCircleDimmedLayer(true)
-                withAspectRatio(1f, 1f)
-
-                setShowCropGrid(true)
-                setShowCropFrame(false)
-                setHideBottomControls(true)
-
-                setToolbarTitle(
-                    getString(R.string.edit_profile_crop_title)
-                )
-
-                val toolbarColor =
-                    ContextCompat.getColor(
-                        context,
-                        R.color.crop_toolbar_bg
-                    )
-
-                setToolbarColor(
-                    toolbarColor
-                )
-
-                setToolbarWidgetColor(
-                    Color.WHITE
-                )
-
-                setToolbarCancelDrawable(
-                    R.drawable.ic_back
-                )
-            }
+            setToolbarColor(toolbarColor)
+            setToolbarWidgetColor(Color.WHITE)
+            setToolbarCancelDrawable(R.drawable.ic_back)
+        }
 
         UCrop.of(
             sourceUri,
@@ -346,20 +308,16 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     private fun handleCroppedImage(
         croppedFileUri: Uri
     ) {
-        val context =
-            requireContext()
+        val context = requireContext()
+        val file = File(
+            croppedFileUri.path ?: return
+        )
 
-        val file =
-            File(
-                croppedFileUri.path ?: return
-            )
-
-        val contentUri =
-            FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                file
-            )
+        val contentUri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
 
         binding.ivEditProfilePhoto.load(
             contentUri
@@ -369,8 +327,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
             crossfade(true)
         }
 
-        selectedPhotoUri =
-            contentUri
+        selectedPhotoUri = contentUri
     }
 
     private fun showInfoDialog(
@@ -392,7 +349,10 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
 
     override fun onDestroyView() {
         super.onDestroyView()
-
         _binding = null
+    }
+
+    private companion object {
+        const val ACTION_CAPTURE_PROFILE_PHOTO = "capture_profile_photo"
     }
 }

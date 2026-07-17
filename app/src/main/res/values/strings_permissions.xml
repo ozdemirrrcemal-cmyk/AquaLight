@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="permission_sheet_allow">Allow</string>
+    <string name="permission_sheet_open_settings">Open settings</string>
+    <string name="permission_sheet_not_now">Not now</string>
+
+    <string name="permission_camera_photo_rationale_title">Camera access for photos</string>
+    <string name="permission_camera_photo_rationale_message">Allow camera access to take an aquarium or profile photo. AquaLight only uses the camera when you start photo capture.</string>
+    <string name="permission_camera_photo_settings_title">Enable camera access</string>
+    <string name="permission_camera_photo_settings_message">Camera access is currently blocked. Open AquaLight settings and enable Camera to continue taking photos.</string>
+
+    <string name="permission_camera_qr_rationale_title">Camera access for QR setup</string>
+    <string name="permission_camera_qr_rationale_message">Allow camera access so AquaLight can read the setup QR code. Camera frames are processed only for device setup.</string>
+    <string name="permission_camera_qr_settings_title">Enable QR camera access</string>
+    <string name="permission_camera_qr_settings_message">Camera access is currently blocked. Open AquaLight settings and enable Camera to scan the device QR code.</string>
+
+    <string name="permission_ble_scan_rationale_title">Nearby-device access</string>
+    <string name="permission_ble_scan_rationale_message">Allow nearby-device access so AquaLight can find compatible devices during setup.</string>
+    <string name="permission_ble_scan_settings_title">Enable nearby-device access</string>
+    <string name="permission_ble_scan_settings_message">Nearby-device access is currently blocked. Open AquaLight settings and enable the required permission to scan for devices.</string>
+
+    <string name="permission_ble_connect_rationale_title">Bluetooth connection access</string>
+    <string name="permission_ble_connect_rationale_message">Allow Bluetooth connection access so AquaLight can securely configure the selected device.</string>
+    <string name="permission_ble_connect_settings_title">Enable Bluetooth connection access</string>
+    <string name="permission_ble_connect_settings_message">Bluetooth connection access is currently blocked. Open AquaLight settings and enable the required permission to continue setup.</string>
+
+    <string name="permission_ble_provisioning_rationale_title">Nearby-device access</string>
+    <string name="permission_ble_provisioning_rationale_message">Allow nearby-device access so AquaLight can find and securely configure your device.</string>
+    <string name="permission_ble_provisioning_settings_title">Enable nearby-device access</string>
+    <string name="permission_ble_provisioning_settings_message">The permissions required for device setup are currently blocked. Open AquaLight settings and enable Nearby devices.</string>
+
+    <string name="permission_wifi_ssid_rationale_title">Current Wi-Fi network</string>
+    <string name="permission_wifi_ssid_rationale_message">Android requires location permission to read the name of the Wi-Fi network currently connected to this phone. AquaLight uses it only to fill the network name during device setup.</string>
+    <string name="permission_wifi_ssid_settings_title">Enable Wi-Fi network access</string>
+    <string name="permission_wifi_ssid_settings_message">Access to the current Wi-Fi network name is blocked. Open AquaLight settings and enable Location permission to fill the network automatically.</string>
+
+    <string name="permission_notifications_rationale_title">Allow notifications</string>
+    <string name="permission_notifications_rationale_message">Allow notifications to receive aquarium-care reminders and important device alerts. You can change this later in App Settings.</string>
+    <string name="permission_notifications_settings_title">Enable notifications</string>
+    <string name="permission_notifications_settings_message">Notifications are currently blocked by Android. Open notification settings and allow AquaLight notifications.</string>
+</resources>

@@ -43,6 +43,34 @@
         <item name="android:background">@drawable/bg_bottomsheet_handle</item>
     </style>
 
+    <style name="Widget.Aqua.BottomSheet.PermissionIconSurface" parent="">
+        <item name="android:layout_width">64dp</item>
+        <item name="android:layout_height">64dp</item>
+        <item name="android:layout_gravity">center_horizontal</item>
+        <item name="android:background">@drawable/bg_permission_icon_surface</item>
+    </style>
+
+    <style name="Widget.Aqua.BottomSheet.PermissionIcon" parent="">
+        <item name="android:layout_width">30dp</item>
+        <item name="android:layout_height">30dp</item>
+        <item name="android:layout_gravity">center</item>
+        <item name="android:importantForAccessibility">no</item>
+    </style>
+
+    <style name="Widget.Aqua.BottomSheet.PermissionStatusBadge" parent="">
+        <item name="android:layout_width">22dp</item>
+        <item name="android:layout_height">22dp</item>
+        <item name="android:layout_gravity">end|bottom</item>
+        <item name="android:background">@drawable/bg_permission_icon_badge</item>
+        <item name="android:padding">5dp</item>
+    </style>
+
+    <style name="Widget.Aqua.BottomSheet.PermissionStatusIcon" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:importantForAccessibility">no</item>
+    </style>
+
     <style name="TextAppearance.Aqua.BottomSheet.Title"
         parent="TextAppearance.Material3.TitleLarge">
         <item name="fontFamily">@font/inter_semibold</item>

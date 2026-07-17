@@ -1,9 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.add
 
-import android.Manifest
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.provider.Settings
@@ -12,7 +10,6 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
@@ -22,8 +19,10 @@ import com.aqua.aqualight.application.devices.provisioning.ProvisioningWifiInput
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningWifiInputPolicy
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceWifiProvisioningBinding
+import com.aqua.aqualight.platform.permissions.AppCapability
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.permission.CapabilityPermissionCoordinator
 
 class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_provisioning) {
 
@@ -38,16 +37,16 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
         requireContext().requireAppContainer().provisioningDraftOperations
     }
 
+    private val permissionCoordinator = CapabilityPermissionCoordinator(this) { action ->
+        when (action) {
+            ACTION_OPEN_WIFI_SETTINGS -> openWifiSettings()
+        }
+    }
+
     private val wifiSettingsLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
         refreshWifiNetworkFieldAfterSettings()
-    }
-
-    private val locationPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) {
-        openWifiSettings()
     }
 
     override fun onViewCreated(
@@ -201,12 +200,10 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
     }
 
     private fun openWifiSettingsWithPermissionCheck() {
-        if (hasWifiSsidPermission()) {
-            openWifiSettings()
-            return
-        }
-
-        locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        permissionCoordinator.runWhenGranted(
+            capability = AppCapability.WIFI_SSID,
+            actionToken = ACTION_OPEN_WIFI_SETTINGS
+        )
     }
 
     private fun openWifiSettings() {
@@ -244,7 +241,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
 
     @Suppress("DEPRECATION")
     private fun currentWifiSsid(): String? {
-        if (!hasWifiSsidPermission()) {
+        if (!permissionCoordinator.isGranted(AppCapability.WIFI_SSID)) {
             return null
         }
 
@@ -265,13 +262,6 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
             .removePrefix("\"")
             .removeSuffix("\"")
             .takeIf { value -> value.isNotBlank() && value != UNKNOWN_SSID }
-    }
-
-    private fun hasWifiSsidPermission(): Boolean {
-        return ContextCompat.checkSelfPermission(
-            requireContext(),
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
     }
 
     private fun onContinueClicked() {
@@ -343,6 +333,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
     }
 
     private companion object {
+        const val ACTION_OPEN_WIFI_SETTINGS = "open_wifi_settings"
         const val WIFI_REFRESH_DELAY_MS = 700L
         const val UNKNOWN_SSID = "<unknown ssid>"
     }

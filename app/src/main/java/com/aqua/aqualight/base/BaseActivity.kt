@@ -53,7 +53,28 @@ open class BaseActivity : AppCompatActivity() {
         "${BaseActivity::class.java.name}.LegacyLoadingOwner"
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+        val stateFromCurrentProcess = savedInstanceState?.takeIf { state ->
+            ProcessUiStateRestorePolicy.canRestore(
+                savedProcessToken = state.getString(
+                    ProcessUiStateRestorePolicy.STATE_PROCESS_TOKEN
+                ),
+                currentProcessToken = AppProcessIdentity.token
+            )
+        }
+
+        // Android can terminate the app process when a runtime permission is revoked.
+        // In-memory owner repositories do not survive that event, so an owner Fragment
+        // graph saved by the previous process must not be restored before session commit.
+        // Configuration changes inside the current process keep their normal restoration.
+        super.onCreate(stateFromCurrentProcess)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString(
+            ProcessUiStateRestorePolicy.STATE_PROCESS_TOKEN,
+            AppProcessIdentity.token
+        )
+        super.onSaveInstanceState(outState)
     }
 
     fun setGlobalLoading(

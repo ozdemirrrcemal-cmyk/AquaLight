@@ -1,13 +1,11 @@
 package com.aqua.aqualight.ui.tabs.maintenance
 
-import android.Manifest
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
-import android.os.Build
 import android.os.Bundle
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -15,7 +13,6 @@ import android.view.View
 import android.widget.GridLayout
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -26,22 +23,23 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
-import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.application.care.CareTaskInputLimits
-import com.aqua.aqualight.ui.tabs.maintenance.text.CareTaskTypeCatalog
 import com.aqua.aqualight.application.care.CareTaskSource
 import com.aqua.aqualight.application.care.CareTaskStatus
 import com.aqua.aqualight.application.care.CareTaskType
+import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentAddCareTaskBinding
+import com.aqua.aqualight.platform.permissions.AppCapability
 import com.aqua.aqualight.ui.common.bottomsheet.CareTaskTypeBottomSheetFragment
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
+import com.aqua.aqualight.ui.common.permission.CapabilityPermissionCoordinator
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
-import com.aqua.aqualight.ui.tabs.settings.app.NotificationsBottomSheet
+import com.aqua.aqualight.ui.tabs.maintenance.text.CareTaskTypeCatalog
 import com.aqua.aqualight.utils.NotificationHelper
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import java.text.SimpleDateFormat
@@ -64,6 +62,10 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
         requireContext().requireAppContainer().userSettingsOperations
     }
 
+    private val permissionCoordinator = CapabilityPermissionCoordinator(this) { action ->
+        continueSaveAfterNotificationAccess(action)
+    }
+
     private var taskId: Long = -1L
     private val isEditMode: Boolean
         get() = taskId > 0L
@@ -74,34 +76,6 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
     private var selectedTankId: Long = 0L
     private var selectedWaterChangePercent: Int? = null
     private var latestTanks: List<AquariumTankSnapshot> = emptyList()
-    private var pendingSaveAfterNotificationPermission = false
-
-    private val notificationPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (_binding == null) {
-            return@registerForActivityResult
-        }
-
-        val systemEnabled = NotificationHelper.areSystemNotificationsEnabled(
-            requireContext()
-        )
-        val canUseNotifications = granted && systemEnabled
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            userSettingsOperations.updateNotificationsEnabled(
-                canUseNotifications
-            )
-
-            if (canUseNotifications && pendingSaveAfterNotificationPermission) {
-                pendingSaveAfterNotificationPermission = false
-                saveTaskInternal()
-            } else {
-                pendingSaveAfterNotificationPermission = false
-                openNotificationPermissionSheet()
-            }
-        }
-    }
 
     private val selectedCalendar: Calendar = Calendar.getInstance().apply {
         add(Calendar.HOUR_OF_DAY, 1)
@@ -669,39 +643,42 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
             return true
         }
 
-        val context = requireContext()
-        val hasPermission = NotificationHelper.hasSystemPermission(context)
-        val systemEnabled = NotificationHelper.areSystemNotificationsEnabled(
-            context
-        )
-
-        if (
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            !hasPermission
-        ) {
-            pendingSaveAfterNotificationPermission = true
-            notificationPermissionLauncher.launch(
-                Manifest.permission.POST_NOTIFICATIONS
+        if (!permissionCoordinator.isGranted(AppCapability.NOTIFICATIONS)) {
+            permissionCoordinator.runWhenGranted(
+                capability = AppCapability.NOTIFICATIONS,
+                actionToken = ACTION_SAVE_TASK_WITH_NOTIFICATIONS
             )
             return false
         }
 
-        if (!systemEnabled) {
-            pendingSaveAfterNotificationPermission = false
-            openNotificationPermissionSheet()
+        if (!NotificationHelper.areSystemNotificationsEnabled(requireContext())) {
+            permissionCoordinator.openSettingsFor(
+                capability = AppCapability.NOTIFICATIONS,
+                actionToken = ACTION_RECHECK_NOTIFICATION_SETTINGS
+            )
             return false
         }
 
         return true
     }
 
-    private fun openNotificationPermissionSheet() {
-        NotificationsBottomSheet(
-            NotificationsBottomSheet.PermissionType.NOTIFICATION
-        ).show(
-            parentFragmentManager,
-            "care_task_notification_sheet"
+    private fun continueSaveAfterNotificationAccess(action: String) {
+        if (_binding == null) return
+
+        val systemEnabled = NotificationHelper.areSystemNotificationsEnabled(
+            requireContext()
         )
+        if (systemEnabled) {
+            saveTaskInternal()
+            return
+        }
+
+        if (action == ACTION_SAVE_TASK_WITH_NOTIFICATIONS) {
+            permissionCoordinator.openSettingsFor(
+                capability = AppCapability.NOTIFICATIONS,
+                actionToken = ACTION_RECHECK_NOTIFICATION_SETTINGS
+            )
+        }
     }
 
     private fun saveTask() {
@@ -918,5 +895,12 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private companion object {
+        const val ACTION_SAVE_TASK_WITH_NOTIFICATIONS =
+            "save_task_with_notifications"
+        const val ACTION_RECHECK_NOTIFICATION_SETTINGS =
+            "recheck_notification_settings"
     }
 }

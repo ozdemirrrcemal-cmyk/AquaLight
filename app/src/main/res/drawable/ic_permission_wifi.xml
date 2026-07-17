@@ -1,0 +1,9 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@color/aqua_permission_icon_foreground"
+        android:pathData="M12,3C7.41,3 3.07,5.07 0,8.44l2.83,2.83C5.17,8.83 8.48,7.5 12,7.5s6.83,1.33 9.17,3.77L24,8.44C20.93,5.07 16.59,3 12,3zM12,11c-2.21,0 -4.21,0.9 -5.66,2.34l2.83,2.83C9.9,15.45 10.9,15 12,15s2.1,0.45 2.83,1.17l2.83,-2.83C16.21,11.9 14.21,11 12,11zM12,17.5a2,2 0,1 0,0 4a2,2 0,0 0,0 -4z" />
+</vector>
