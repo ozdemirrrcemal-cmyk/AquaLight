@@ -7,6 +7,7 @@ import com.aqua.aqualight.application.auth.AccountSecurityOperations
 import com.aqua.aqualight.application.auth.SessionExitOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionUseCase
+import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.application.user.UserAddressInput
 import com.aqua.aqualight.application.user.UserProfileOperations
@@ -75,6 +76,8 @@ internal class ReleaseSmokeAppContainer(context: Context) : AppContainer {
         get() = unused("userSettingsOperations")
     override val notificationPreferenceUseCase: NotificationPreferenceUseCase
         get() = unused("notificationPreferenceUseCase")
+    override val notificationDispatchUseCase: NotificationDispatchUseCase
+        get() = unused("notificationDispatchUseCase")
     override val feedbackSubmissionOperations: FeedbackSubmissionUseCase
         get() = unused("feedbackSubmissionOperations")
     override val provisioningDraftOperations: ProvisioningDraftOperations
