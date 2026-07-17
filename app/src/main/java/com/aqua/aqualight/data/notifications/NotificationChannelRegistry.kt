@@ -4,82 +4,85 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
-import androidx.core.app.NotificationManagerCompat
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.notifications.NotificationCategory
+import com.aqua.aqualight.application.notifications.NotificationChannelState
 
 /**
- * Central registry and state reader for AquaLight notification channels.
+ * Permanent central registry for every AquaLight notification category.
  *
- * Channel creation is intentionally idempotent. Android preserves user-selected
- * sound, vibration and importance after the first creation, while allowing the app
- * to refresh the localized channel name and description.
+ * IDs are intentionally semantic and unversioned because AquaLight has not shipped
+ * a legacy channel contract. IDs must remain stable after release unless a genuinely
+ * incompatible channel migration is required.
  */
 object NotificationChannelRegistry {
 
-    const val CARE_REMINDERS_CHANNEL_ID = "care_reminders_v1"
+    const val CARE_REMINDERS = "care_reminders"
+    const val DEVICE_ALERTS = "device_alerts"
+    const val DEVICE_UPDATES = "device_updates"
 
-    fun ensureChannels(context: Context) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-            return
-        }
-
-        val appContext = context.applicationContext
-        val manager = appContext.getSystemService(NotificationManager::class.java)
-            ?: return
-
-        val careReminders = NotificationChannel(
-            CARE_REMINDERS_CHANNEL_ID,
-            appContext.getString(R.string.notification_channel_care_reminders_name),
-            NotificationManager.IMPORTANCE_DEFAULT
-        ).apply {
-            description = appContext.getString(
-                R.string.notification_channel_care_reminders_description
-            )
-        }
-
-        manager.createNotificationChannel(careReminders)
+    fun channelId(category: NotificationCategory): String = when (category) {
+        NotificationCategory.CARE_REMINDERS -> CARE_REMINDERS
+        NotificationCategory.DEVICE_ALERTS -> DEVICE_ALERTS
+        NotificationCategory.DEVICE_UPDATES -> DEVICE_UPDATES
     }
 
-    fun readState(context: Context): NotificationSystemState {
+    fun ensureAll(context: Context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+
         val appContext = context.applicationContext
-        val appEnabled = NotificationManagerCompat.from(appContext)
-            .areNotificationsEnabled()
-
-        val channelState = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-            NotificationChannelState.NOT_REQUIRED
-        } else {
-            val manager = appContext.getSystemService(NotificationManager::class.java)
-            val channel = manager?.getNotificationChannel(CARE_REMINDERS_CHANNEL_ID)
-
-            when {
-                channel == null -> NotificationChannelState.MISSING
-                channel.importance == NotificationManager.IMPORTANCE_NONE -> {
-                    NotificationChannelState.BLOCKED
+        val manager = appContext.getSystemService(NotificationManager::class.java) ?: return
+        manager.createNotificationChannels(
+            listOf(
+                NotificationChannel(
+                    CARE_REMINDERS,
+                    appContext.getString(R.string.notification_channel_care_reminders_name),
+                    NotificationManager.IMPORTANCE_DEFAULT
+                ).apply {
+                    description = appContext.getString(
+                        R.string.notification_channel_care_reminders_description
+                    )
+                },
+                NotificationChannel(
+                    DEVICE_ALERTS,
+                    appContext.getString(R.string.notification_channel_device_alerts_name),
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = appContext.getString(
+                        R.string.notification_channel_device_alerts_description
+                    )
+                },
+                NotificationChannel(
+                    DEVICE_UPDATES,
+                    appContext.getString(R.string.notification_channel_device_updates_name),
+                    NotificationManager.IMPORTANCE_DEFAULT
+                ).apply {
+                    description = appContext.getString(
+                        R.string.notification_channel_device_updates_description
+                    )
                 }
-                else -> NotificationChannelState.ENABLED
-            }
-        }
-
-        return NotificationSystemState(
-            appNotificationsEnabled = appEnabled,
-            careReminderChannelState = channelState
+            )
         )
     }
-}
 
-data class NotificationSystemState(
-    val appNotificationsEnabled: Boolean,
-    val careReminderChannelState: NotificationChannelState
-) {
-    val canDeliverCareReminders: Boolean
-        get() = appNotificationsEnabled &&
-            careReminderChannelState != NotificationChannelState.MISSING &&
-            careReminderChannelState != NotificationChannelState.BLOCKED
-}
+    fun readState(
+        context: Context,
+        category: NotificationCategory
+    ): NotificationChannelState {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return NotificationChannelState.NOT_REQUIRED
+        }
 
-enum class NotificationChannelState {
-    NOT_REQUIRED,
-    MISSING,
-    BLOCKED,
-    ENABLED
+        val manager = context.applicationContext
+            .getSystemService(NotificationManager::class.java)
+        val channel = manager?.getNotificationChannel(channelId(category))
+
+        return when {
+            channel == null -> NotificationChannelState.MISSING
+            channel.importance == NotificationManager.IMPORTANCE_NONE -> {
+                NotificationChannelState.BLOCKED
+            }
+            else -> NotificationChannelState.ENABLED
+        }
+    }
 }
