@@ -8,7 +8,9 @@ import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.composition.requireAppContainer
+import com.aqua.aqualight.data.notifications.NotificationChannelRegistry
 import com.aqua.aqualight.data.notifications.NotificationChannelState
+import com.aqua.aqualight.data.notifications.NotificationSystemState
 import com.aqua.aqualight.databinding.FragmentAppSettingsBinding
 import com.aqua.aqualight.platform.permissions.AppCapability
 import com.aqua.aqualight.ui.common.bottomsheet.ThemeBottomSheet
@@ -37,6 +39,12 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
     }
 
     private var changingNotificationSwitchProgrammatically = false
+    private var ownerNotificationPreferenceEnabled = false
+    private var notificationRuntimePermissionGranted = false
+    private var notificationSystemState = NotificationSystemState(
+        appNotificationsEnabled = false,
+        careReminderChannelState = NotificationChannelState.MISSING
+    )
 
     override fun onViewCreated(
         view: View,
@@ -71,6 +79,15 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         switchNotifications.setOnCheckedChangeListener { _, isChecked ->
             if (!changingNotificationSwitchProgrammatically) {
                 handleNotificationToggle(isChecked)
+            }
+        }
+
+        cardNotifications.setOnClickListener {
+            if (
+                ownerNotificationPreferenceEnabled &&
+                !canCurrentlyDeliverNotifications()
+            ) {
+                openNotificationRepairFlow()
             }
         }
 
@@ -130,23 +147,27 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             val context = requireContext()
             NotificationHelper.createNotificationChannel(context)
 
-            val ownerPreferenceEnabled = settingsOperations.notificationsEnabled.first()
-            val runtimePermissionGranted = permissionCoordinator.isGranted(
+            ownerNotificationPreferenceEnabled =
+                settingsOperations.notificationsEnabled.first()
+            notificationRuntimePermissionGranted = permissionCoordinator.isGranted(
                 AppCapability.NOTIFICATIONS
             )
-            val systemState = NotificationHelper.notificationSystemState(context)
+            notificationSystemState = NotificationHelper.notificationSystemState(context)
 
-            setNotificationSwitchChecked(ownerPreferenceEnabled)
+            setNotificationSwitchChecked(ownerNotificationPreferenceEnabled)
             binding.tvNotificationsSubtitle.setText(
                 when {
-                    !ownerPreferenceEnabled -> {
+                    !ownerNotificationPreferenceEnabled -> {
                         R.string.settings_notifications_subtitle_disabled
                     }
-                    !runtimePermissionGranted || !systemState.appNotificationsEnabled -> {
+                    !notificationRuntimePermissionGranted ||
+                        !notificationSystemState.appNotificationsEnabled -> {
                         R.string.settings_notifications_subtitle_system_blocked
                     }
-                    systemState.careReminderChannelState == NotificationChannelState.BLOCKED ||
-                        systemState.careReminderChannelState == NotificationChannelState.MISSING -> {
+                    notificationSystemState.careReminderChannelState ==
+                        NotificationChannelState.BLOCKED ||
+                        notificationSystemState.careReminderChannelState ==
+                        NotificationChannelState.MISSING -> {
                         R.string.settings_notifications_subtitle_channel_blocked
                     }
                     else -> R.string.settings_notifications_subtitle_enabled
@@ -168,8 +189,15 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         }
 
         setNotificationSwitchChecked(false)
+        openNotificationRepairFlow()
+    }
 
-        if (!permissionCoordinator.isGranted(AppCapability.NOTIFICATIONS)) {
+    private fun openNotificationRepairFlow() {
+        notificationRuntimePermissionGranted = permissionCoordinator.isGranted(
+            AppCapability.NOTIFICATIONS
+        )
+
+        if (!notificationRuntimePermissionGranted) {
             permissionCoordinator.runWhenGranted(
                 capability = AppCapability.NOTIFICATIONS,
                 actionToken = ACTION_ENABLE_NOTIFICATIONS
@@ -178,16 +206,28 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         }
 
         NotificationHelper.createNotificationChannel(requireContext())
-        val systemState = NotificationHelper.notificationSystemState(requireContext())
-        if (!systemState.canDeliverCareReminders) {
-            permissionCoordinator.openSettingsFor(
-                capability = AppCapability.NOTIFICATIONS,
-                actionToken = ACTION_ENABLE_NOTIFICATIONS
-            )
-            return
-        }
+        notificationSystemState = NotificationHelper.notificationSystemState(requireContext())
 
-        completeNotificationEnableFlow()
+        when {
+            !notificationSystemState.appNotificationsEnabled -> {
+                permissionCoordinator.openSettingsFor(
+                    capability = AppCapability.NOTIFICATIONS,
+                    actionToken = ACTION_ENABLE_NOTIFICATIONS
+                )
+            }
+
+            notificationSystemState.careReminderChannelState ==
+                NotificationChannelState.BLOCKED ||
+                notificationSystemState.careReminderChannelState ==
+                NotificationChannelState.MISSING -> {
+                permissionCoordinator.openNotificationChannelSettingsFor(
+                    channelId = NotificationChannelRegistry.CARE_REMINDERS_CHANNEL_ID,
+                    actionToken = ACTION_ENABLE_NOTIFICATIONS
+                )
+            }
+
+            else -> completeNotificationEnableFlow()
+        }
     }
 
     private fun completeNotificationEnableFlow() {
@@ -195,17 +235,19 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
         val context = requireContext()
         NotificationHelper.createNotificationChannel(context)
-        val canDeliver = permissionCoordinator.isGranted(AppCapability.NOTIFICATIONS) &&
-            NotificationHelper.notificationSystemState(context).canDeliverCareReminders
+        notificationRuntimePermissionGranted = permissionCoordinator.isGranted(
+            AppCapability.NOTIFICATIONS
+        )
+        notificationSystemState = NotificationHelper.notificationSystemState(context)
 
-        if (!canDeliver) {
-            setNotificationSwitchChecked(false)
+        if (!canCurrentlyDeliverNotifications()) {
             refreshNotificationState()
             return
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
             settingsOperations.updateNotificationsEnabled(true)
+            ownerNotificationPreferenceEnabled = true
             setNotificationSwitchChecked(true)
 
             _binding?.root?.postDelayed(
@@ -215,9 +257,15 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         }
     }
 
+    private fun canCurrentlyDeliverNotifications(): Boolean {
+        return notificationRuntimePermissionGranted &&
+            notificationSystemState.canDeliverCareReminders
+    }
+
     private fun disableNotifications() {
         viewLifecycleOwner.lifecycleScope.launch {
             settingsOperations.updateNotificationsEnabled(false)
+            ownerNotificationPreferenceEnabled = false
             refreshNotificationState()
         }
         setNotificationSwitchChecked(false)
