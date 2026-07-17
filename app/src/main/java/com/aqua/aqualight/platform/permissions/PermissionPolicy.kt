@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
 
 /**
  * Single source of truth for AquaLight runtime-permission decisions.
@@ -20,19 +19,20 @@ class PermissionPolicy(
         PermissionRequestHistoryStore(context)
 ) {
 
-    fun evaluate(fragment: Fragment, capability: AppCapability): PermissionDecision {
+    fun evaluate(
+        capability: AppCapability,
+        shouldShowRationale: (permission: String) -> Boolean
+    ): PermissionDecision {
         val missing = missingPermissions(capability)
         if (missing.isEmpty()) return PermissionDecision.GRANTED
 
-        val shouldShowRationale = missing.any(
-            fragment::shouldShowRequestPermissionRationale
-        )
+        val hasRationale = missing.any(shouldShowRationale)
         val requestedBefore = historyStore.wereAllRequested(missing)
 
         return decide(
             allGranted = false,
             requestedBefore = requestedBefore,
-            shouldShowRationale = shouldShowRationale
+            shouldShowRationale = hasRationale
         )
     }
 
