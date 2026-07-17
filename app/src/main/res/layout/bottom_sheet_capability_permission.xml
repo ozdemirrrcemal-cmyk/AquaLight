@@ -7,13 +7,35 @@
 
     <View
         style="@style/Widget.Aqua.BottomSheet.Handle"
-        android:layout_marginBottom="18dp" />
+        android:layout_marginBottom="16dp" />
+
+    <FrameLayout
+        android:id="@+id/permissionIconSurface"
+        style="@style/Widget.Aqua.BottomSheet.PermissionIconSurface">
+
+        <ImageView
+            android:id="@+id/imgPermissionIcon"
+            style="@style/Widget.Aqua.BottomSheet.PermissionIcon"
+            android:contentDescription="@null" />
+
+        <FrameLayout
+            android:id="@+id/permissionStatusBadge"
+            style="@style/Widget.Aqua.BottomSheet.PermissionStatusBadge"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/imgPermissionStatus"
+                style="@style/Widget.Aqua.BottomSheet.PermissionStatusIcon"
+                android:contentDescription="@null" />
+        </FrameLayout>
+    </FrameLayout>
 
     <TextView
         android:id="@+id/tvPermissionTitle"
         style="@style/TextAppearance.Aqua.BottomSheet.Title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
         android:gravity="center"
         android:labelFor="@id/tvPermissionMessage" />
 
@@ -23,7 +45,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="9dp"
-        android:layout_marginBottom="20dp"
+        android:layout_marginBottom="22dp"
         android:gravity="center" />
 
     <com.google.android.material.button.MaterialButton
@@ -37,7 +59,7 @@
         style="@style/Widget.Material3.Button.TextButton"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="2dp"
         android:text="@string/permission_sheet_not_now" />
 
 </LinearLayout>
