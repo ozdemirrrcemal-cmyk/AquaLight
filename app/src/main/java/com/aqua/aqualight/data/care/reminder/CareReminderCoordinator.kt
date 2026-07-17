@@ -37,19 +37,24 @@ class CareReminderCoordinator private constructor(
             enabled = enabled
         )
 
-        // Existing care-task write paths still consume the active-session
-        // projection. Publish before reconciliation so a task created concurrently
-        // with this setting change sees the same owner preference immediately.
-        activeProjection.publishForActiveOwner(
-            ownerUid = owner,
-            enabled = enabled
-        )
+        // The owner store is already committed. Projection failure must not leave
+        // alarms in the opposite state, especially when the user disables alerts.
+        val projectionFailure = runCatching {
+            activeProjection.publishForActiveOwner(
+                ownerUid = owner,
+                enabled = enabled
+            )
+        }.exceptionOrNull()
 
         if (enabled) {
             NotificationChannelRegistry.ensureChannels(appContext)
             reconcileOwner(owner)
         } else {
             cancelOwner(owner)
+        }
+
+        projectionFailure?.let { error ->
+            throw error
         }
     }
 
