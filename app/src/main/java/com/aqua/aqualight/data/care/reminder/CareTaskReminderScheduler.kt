@@ -151,6 +151,10 @@ object CareTaskReminderScheduler {
       CareTaskReminderReceiver::class.java
     ).apply {
       action = ACTION_CARE_TASK_REMINDER
+      data = CareReminderIdentity.alarmData(
+        ownerUid = normalizedOwnerUid,
+        taskId = taskId
+      )
       putExtra(EXTRA_TASK_ID, taskId)
       putExtra(EXTRA_OWNER_UID, normalizedOwnerUid)
       occurrence?.let { value ->
