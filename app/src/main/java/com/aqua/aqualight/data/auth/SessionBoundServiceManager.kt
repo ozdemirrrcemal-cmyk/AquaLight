@@ -2,15 +2,12 @@ package com.aqua.aqualight.data.auth
 
 import android.content.Context
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
-import com.aqua.aqualight.data.care.reminder.CareReminderCoordinator
-import com.aqua.aqualight.data.care.reminder.CareReminderDeliveryWorker
 import com.aqua.aqualight.data.care.reminder.CareReminderReconcileWorker
 import com.aqua.aqualight.data.care.smartcare.SmartCareDailyWorker
 import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
-import com.aqua.aqualight.data.notifications.ActiveNotificationPreferenceProjection
+import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.user.UserDataScope
-import com.aqua.aqualight.utils.NotificationHelper
 import java.util.concurrent.CancellationException
 
 /** Starts and stops services that are valid only for one authenticated owner. */
@@ -21,8 +18,7 @@ object SessionBoundServiceManager {
         DEVICES_REPOSITORY,
         ASSIGNMENT_REPOSITORY,
         SMART_CARE,
-        CARE_REMINDERS,
-        NOTIFICATION_PREFERENCE_PROJECTION,
+        NOTIFICATION_SCHEDULES,
         NOTIFICATIONS
     }
 
@@ -38,11 +34,7 @@ object SessionBoundServiceManager {
             get() = issues.isNotEmpty()
 
         fun exceptionOrNull(): Throwable? {
-            return if (issues.isEmpty()) {
-                null
-            } else {
-                SessionBoundStopException(issues)
-            }
+            return if (issues.isEmpty()) null else SessionBoundStopException(issues)
         }
     }
 
@@ -52,29 +44,16 @@ object SessionBoundServiceManager {
         issues.joinToString(
             prefix = "Session shutdown failed in ",
             separator = ", "
-        ) { issue ->
-            issue.step.name
-        }
+        ) { issue -> issue.step.name }
     )
 
-    fun start(
-        context: Context,
-        ownerUid: String
-    ) {
+    fun start(context: Context, ownerUid: String) {
         val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
-        if (normalizedOwnerUid.isBlank()) {
-            return
-        }
+        if (normalizedOwnerUid.isBlank()) return
 
         val appContext = context.applicationContext
-        SmartCareDailyWorker.schedule(
-            context = appContext,
-            ownerUid = normalizedOwnerUid
-        )
-        CareReminderReconcileWorker.enqueue(
-            context = appContext,
-            ownerUid = normalizedOwnerUid
-        )
+        SmartCareDailyWorker.schedule(appContext, normalizedOwnerUid)
+        CareReminderReconcileWorker.enqueue(appContext, normalizedOwnerUid)
     }
 
     suspend fun stop(
@@ -85,17 +64,11 @@ object SessionBoundServiceManager {
         val appContext = context.applicationContext
         val issues = mutableListOf<StopIssue>()
 
-        suspend fun runStep(
-            step: StopStep,
-            block: suspend () -> Unit
-        ) {
-            runCatching { block() }
-                .onFailure { error ->
-                    if (error is CancellationException) {
-                        throw error
-                    }
-                    issues += StopIssue(step, error)
-                }
+        suspend fun runStep(step: StopStep, block: suspend () -> Unit) {
+            runCatching { block() }.onFailure { error ->
+                if (error is CancellationException) throw error
+                issues += StopIssue(step, error)
+            }
         }
 
         val ownerUid = expectedOwnerUid
@@ -114,48 +87,24 @@ object SessionBoundServiceManager {
         // Stop runtime collectors, sockets and owner token access before clearing
         // other owner-bound repositories or scheduling state.
         runStep(StopStep.DEVICES_REPOSITORY) {
-            DevicesRepositoryProvider.clear(
-                expectedOwnerUid = expectedOwnerUid
-            )
+            DevicesRepositoryProvider.clear(expectedOwnerUid = expectedOwnerUid)
         }
-
         runStep(StopStep.ASSIGNMENT_REPOSITORY) {
-            TankDeviceAssignmentRepositoryProvider.clear(
-                expectedOwnerUid = expectedOwnerUid
-            )
+            TankDeviceAssignmentRepositoryProvider.clear(expectedOwnerUid = expectedOwnerUid)
         }
-
         runStep(StopStep.SMART_CARE) {
-            SmartCareDailyWorker.cancel(
-                context = appContext,
-                ownerUid = ownerUid
-            )
+            SmartCareDailyWorker.cancel(appContext, ownerUid)
         }
 
         if (ownerUid != null) {
-            runStep(StopStep.CARE_REMINDERS) {
-                CareReminderReconcileWorker.cancel(
-                    context = appContext,
-                    ownerUid = ownerUid
-                )
-                CareReminderDeliveryWorker.cancelOwner(
-                    context = appContext,
-                    ownerUid = ownerUid
-                )
-                CareReminderCoordinator.create(appContext)
-                    .cancelOwner(ownerUid)
+            val platform = NotificationPlatform.get(appContext)
+            runStep(StopStep.NOTIFICATION_SCHEDULES) {
+                platform.scheduler.cancelOwner(ownerUid)
             }
-        }
-
-        runStep(StopStep.NOTIFICATION_PREFERENCE_PROJECTION) {
-            ActiveNotificationPreferenceProjection.create(appContext).clear()
-        }
-
-        if (cancelNotifications) {
-            runStep(StopStep.NOTIFICATIONS) {
-                NotificationHelper.cancelAllAppNotifications(
-                    context = appContext
-                )
+            if (cancelNotifications) {
+                runStep(StopStep.NOTIFICATIONS) {
+                    platform.renderer.cancelOwner(ownerUid)
+                }
             }
         }
 
