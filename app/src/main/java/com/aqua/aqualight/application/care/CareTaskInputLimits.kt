@@ -16,12 +16,8 @@ object CareTaskInputLimits {
         value in MIN_MISSED_REMINDER_DAYS..MAX_MISSED_REMINDER_DAYS
 
     fun parseRepeatIntervalDays(rawValue: String): Int? =
-        rawValue.trim().toIntOrNull()?.takeIf { value ->
-            isValidRepeatIntervalDays(value)
-        }
+        rawValue.trim().toIntOrNull()?.takeIf(::isValidRepeatIntervalDays)
 
     fun parseMissedReminderDays(rawValue: String): Int? =
-        rawValue.trim().toIntOrNull()?.takeIf { value ->
-            isValidMissedReminderDays(value)
-        }
+        rawValue.trim().toIntOrNull()?.takeIf(::isValidMissedReminderDays)
 }
