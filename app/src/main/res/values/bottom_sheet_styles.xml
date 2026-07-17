@@ -33,7 +33,7 @@
         <item name="android:paddingStart">22dp</item>
         <item name="android:paddingTop">14dp</item>
         <item name="android:paddingEnd">22dp</item>
-        <item name="android:paddingBottom">20dp</item>
+        <item name="android:paddingBottom">24dp</item>
     </style>
 
     <style name="Widget.Aqua.BottomSheet.Handle" parent="">
