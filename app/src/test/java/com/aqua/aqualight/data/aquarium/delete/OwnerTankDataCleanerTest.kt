@@ -67,9 +67,34 @@ class OwnerTankDataCleanerTest {
     }
 
     @Test
-    fun `tank deletion failure restores care snapshots and aborts the journal`() = runBlocking {
+    fun `successful deletion cancels every deleted task reminder for the same owner`() = runBlocking {
+        val cancelled = mutableListOf<String>()
+        val cleaner = cleaner(
+            snapshotCareTasksForTank = { tankId ->
+                listOf(
+                    validTask(tankId = tankId).copy(id = 101L),
+                    validTask(tankId = tankId).copy(id = 102L)
+                )
+            },
+            cancelCareTaskReminder = { ownerUid, taskId ->
+                cancelled += "$ownerUid:$taskId"
+            }
+        )
+
+        val result = cleaner.deleteTanks(listOf(7L))
+
+        assertTrue(result is OwnerTankDataCleaner.Result.Deleted)
+        assertEquals(
+            listOf("$OWNER_UID:101", "$OWNER_UID:102"),
+            cancelled
+        )
+    }
+
+    @Test
+    fun `tank deletion failure restores care snapshots and reconciles owner reminders`() = runBlocking {
         val integrity = RecordingIntegrityTransactions()
         val restored = mutableListOf<CareTask>()
+        val reconciledOwners = mutableListOf<String>()
         val primaryError = IllegalStateException("tank write failed")
         val cleaner = cleaner(
             integrity = integrity,
@@ -77,7 +102,8 @@ class OwnerTankDataCleanerTest {
                 listOf(validTask(tankId = tankId))
             },
             deleteTankRecords = { throw primaryError },
-            restoreCareTasksForTank = { _, tasks -> restored += tasks }
+            restoreCareTasksForTank = { _, tasks -> restored += tasks },
+            reconcileCareReminders = { ownerUid -> reconciledOwners += ownerUid }
         )
 
         val result = cleaner.deleteTanks(listOf(7L))
@@ -87,6 +113,7 @@ class OwnerTankDataCleanerTest {
             (result as OwnerTankDataCleaner.Result.DeleteFailed).error
         )
         assertEquals(1, restored.size)
+        assertEquals(listOf(OWNER_UID), reconciledOwners)
         assertEquals(listOf(7L), integrity.rollbackAllowedTankIds)
         assertEquals(listOf(7L), integrity.abortedTankIds)
         assertTrue(integrity.completedTankIds.isEmpty())
@@ -193,7 +220,9 @@ class OwnerTankDataCleanerTest {
         restoreCareTasksForTank: suspend (Long, List<CareTask>) -> Unit = { _, _ -> },
         removeAssignmentsForTank: suspend (Long) -> TankAssignmentCleanupResult = {
             TankAssignmentCleanupResult.Completed(0)
-        }
+        },
+        cancelCareTaskReminder: suspend (String, Long) -> Unit = { _, _ -> },
+        reconcileCareReminders: suspend (String) -> Unit = {}
     ): OwnerTankDataCleaner {
         return OwnerTankDataCleaner(
             deleteTankRecords = deleteTankRecords,
@@ -201,6 +230,8 @@ class OwnerTankDataCleanerTest {
             deleteCareTasksForTank = deleteCareTasksForTank,
             restoreCareTasksForTank = restoreCareTasksForTank,
             removeDeviceAssignmentsForTank = removeAssignmentsForTank,
+            cancelCareTaskReminder = cancelCareTaskReminder,
+            reconcileCareReminders = reconcileCareReminders,
             integrityTransactions = integrity,
             ownerUidProvider = { OWNER_UID }
         )
