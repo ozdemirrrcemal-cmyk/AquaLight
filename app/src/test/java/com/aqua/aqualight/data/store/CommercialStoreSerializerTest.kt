@@ -1,15 +1,19 @@
 package com.aqua.aqualight.data.store
 
 import androidx.datastore.core.CorruptionException
+import androidx.datastore.core.Serializer
 import com.aqua.aqualight.data.aquarium.store.AquariumTanksSerializer
+import com.aqua.aqualight.data.aquarium.store.AquariumTanksStore
 import com.aqua.aqualight.data.aquarium.store.StoredTank
 import com.aqua.aqualight.data.aquarium.store.TankStoreRules
 import com.aqua.aqualight.data.care.CareTaskStoreRules
 import com.aqua.aqualight.data.care.CareTasksCommercialSerializer
+import com.aqua.aqualight.data.care.CareTasksStore
 import com.aqua.aqualight.data.care.StoredCareTask
 import com.aqua.aqualight.data.care.model.CareTaskSource
 import com.aqua.aqualight.data.care.model.CareTaskStatus
 import com.aqua.aqualight.data.care.model.CareTaskType
+import com.aqua.aqualight.data.user.UserPreferences
 import com.aqua.aqualight.data.user.UserPreferencesSerializer
 import com.aqua.aqualight.data.user.UserPreferencesStoreRules
 import java.io.ByteArrayInputStream
@@ -47,6 +51,21 @@ class CommercialStoreSerializerTest {
             preferences,
             roundTrip(UserPreferencesSerializer, preferences)
         )
+    }
+
+    @Test
+    fun everyEmptyUnversionedStoreFailsClosedOnReadAndWrite() {
+        val tankStore = AquariumTanksStore.getDefaultInstance()
+        val careStore = CareTasksStore.getDefaultInstance()
+        val preferences = UserPreferences.getDefaultInstance()
+
+        assertCorruption(AquariumTanksSerializer, tankStore.toByteArray())
+        assertCorruption(CareTasksCommercialSerializer, careStore.toByteArray())
+        assertCorruption(UserPreferencesSerializer, preferences.toByteArray())
+
+        assertWriteRejected(AquariumTanksSerializer, tankStore)
+        assertWriteRejected(CareTasksCommercialSerializer, careStore)
+        assertWriteRejected(UserPreferencesSerializer, preferences)
     }
 
     @Test
@@ -136,7 +155,7 @@ class CommercialStoreSerializerTest {
     }
 
     private fun <T> assertCorruption(
-        serializer: androidx.datastore.core.Serializer<T>,
+        serializer: Serializer<T>,
         bytes: ByteArray
     ) {
         assertThrows(CorruptionException::class.java) {
@@ -146,8 +165,19 @@ class CommercialStoreSerializerTest {
         }
     }
 
+    private fun <T> assertWriteRejected(
+        serializer: Serializer<T>,
+        value: T
+    ) {
+        assertThrows(StoreInvariantViolation::class.java) {
+            runBlocking {
+                serializer.writeTo(value, ByteArrayOutputStream())
+            }
+        }
+    }
+
     private suspend fun <T> roundTrip(
-        serializer: androidx.datastore.core.Serializer<T>,
+        serializer: Serializer<T>,
         value: T
     ): T {
         val output = ByteArrayOutputStream()
