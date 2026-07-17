@@ -1,92 +1,169 @@
-# Stage 7 — Notification and reminder commercial contract
+# Stage 7 — Central notification commercial contract
 
-## Product boundaries
+## Scope and ownership
 
-Stage 7 owns AquaLight's app-level notification preference, notification-channel state, care-reminder scheduling, owner-specific cancellation, deterministic delivery, and restore after boot/package replacement.
+Stage 7 owns AquaLight's central notification platform:
 
-Stage 6 remains the sole owner of Android runtime notification-permission decisions and app/channel settings routing. Stage 7 consumes the resulting system state but must not create another runtime-permission flow.
+- owner-scoped application preference;
+- Android delivery-readiness evaluation;
+- permanent notification-channel registry;
+- care-reminder alarm and durable-work scheduling;
+- visible notification rendering;
+- owner-specific cancellation;
+- boot, package-replacement and account lifecycle reconciliation.
 
-## Owner-scoped application preference
+Stage 6 remains the sole owner of runtime permission requests, rationale/settings sheets and process-safe settings navigation. Stage 7 evaluates delivery readiness but never launches a permission dialog or Android settings intent directly.
 
-- The AquaLight notification switch is an application preference, separate from Android runtime permission and system/channel blocking.
-- The preference is stored per authenticated owner. Account A enabling notifications must not enable them for Account B.
-- A missing owner preference means disabled.
-- The owner-scoped Stage 7 store is the only source of truth.
-- The former `user_prefs.notifications_enabled` value is only an active-session compatibility projection for existing care-task write paths; it is never consulted by reminder delivery as authority.
-- The active projection is refreshed from the committed owner's store during reconciliation and cleared to `false` during logout/account switch before a new owner is exposed.
-- Only `ActiveNotificationPreferenceProjection` may write the compatibility field.
-- Disabling the preference cancels that owner's alarms, queued deliveries, and visible care-task notifications.
-- Logging out or switching account cancels the previous owner's reminder work without deleting that owner's saved preference.
-- Enabling the preference reconciles all eligible reminders for that owner.
+## Permanent notification categories
 
-## System and channel state
+AquaLight has exactly three commercial notification categories:
 
-- Android app notification availability, runtime permission, and channel importance are independent inputs.
-- The care-reminder channel is created idempotently on every relevant startup; no process-local `channelCreated` flag is authoritative.
-- The channel ID and behavioral defaults are versioned constants.
-- The app may update a channel name/description, but it never attempts to override user-selected sound, vibration, or importance after channel creation.
-- Channel state is one of `NOT_REQUIRED`, `MISSING`, `BLOCKED`, or `ENABLED`.
-- The App Settings switch represents AquaLight's owner preference. When Android or the channel blocks delivery, the preference remains intact and the UI shows the system-blocked state separately.
-- App-level blocking opens the application notification settings; care-channel blocking opens that exact channel through the process-safe Stage 6 coordinator.
+| Category | Permanent ID | Purpose | Default importance |
+|---|---|---|---|
+| Care reminders | `care_reminders` | Feeding, maintenance, water testing and other aquarium care reminders | Default |
+| Device alerts | `device_alerts` | Important device connectivity, operating and safety alerts | High |
+| Device updates | `device_updates` | Device firmware availability, transfer/progress, restart, success and failure | Default |
 
-## Alarm and PendingIntent policy
+These IDs are semantic and intentionally unversioned because AquaLight has not shipped a legacy channel contract. After release, IDs remain stable across normal app versions. A new ID is permitted only for a deliberate, genuinely incompatible channel migration.
 
-- Care reminders use inexact `AlarmManager` scheduling. AquaLight does not request exact-alarm special access.
-- Reminder delivery must never occur before the persisted trigger time, but Android may defer an inexact alarm for battery optimization.
-- Every alarm identity contains both owner UID and task ID.
-- Alarm and notification-content PendingIntents include collision-resistant owner + task URI data because extras alone are not part of PendingIntent identity.
-- Visible care notifications use the same owner + task value as a NotificationManager tag, so hash collisions cannot replace another task's notification.
-- Scheduler APIs require an explicit owner UID; no default current-user argument is allowed.
-- Scheduling is idempotent: the existing PendingIntent is cancelled before replacement.
-- Completed, deleted, disabled, owner-mismatched, tank-disabled, or past-ineligible tasks are cancelled rather than scheduled.
+`device_updates` means AquaLight hardware/firmware updates. It is not an application-update channel.
+
+Channel creation is idempotent. AquaLight may refresh localized names and descriptions, but it never deletes channels or attempts to overwrite user-selected importance, sound or vibration after Android has created them.
+
+## One owner preference source
+
+- `notification_preferences.pb` is the only notification-preference store.
+- The preference is keyed by authenticated owner UID.
+- A missing owner record means disabled.
+- Owner A's preference cannot enable or disable Owner B.
+- The removed global `UserPreferences.notificationsEnabled` field number and name are permanently reserved and cannot be reused.
+- There is no legacy projection, compatibility adapter, dual write, fallback or secondary notification boolean.
+- Disabling the preference cancels that owner's alarm/work and visible notifications without deleting the saved preference record.
+- Account logout/switch cancels only the outgoing owner's runtime state.
+
+## Central application boundary
+
+The product boundary consists of:
+
+- `NotificationPermissionPolicy`
+- `NotificationChannelRegistry`
+- `NotificationPreferenceUseCase`
+- `NotificationScheduler`
+- `NotificationRenderer`
+
+`NotificationPreferenceUseCase` is the application-facing orchestration boundary. App Settings and Add Care Task use the same instance from `AppContainer`.
+
+UI code must not use:
+
+- `AlarmManager`;
+- `WorkManager`;
+- `NotificationManager` or `NotificationManagerCompat`;
+- `NotificationChannelRegistry`;
+- notification renderer/scheduler implementations;
+- owner notification DataStore;
+- raw channel IDs.
+
+`NotificationHelper` does not exist. Channel management, readiness checks, scheduling, rendering and cancellation are separate responsibilities.
+
+## Preference, permission and channel state
+
+The following states are independent:
+
+1. AquaLight owner preference;
+2. Android 13+ `POST_NOTIFICATIONS` runtime grant;
+3. Android app-level notification enablement;
+4. each category channel's state.
+
+A category channel is `NOT_REQUIRED`, `MISSING`, `BLOCKED` or `ENABLED`.
+
+The App Settings switch represents only the owner preference. If Android or a channel is later blocked, the switch remains enabled and the UI shows the delivery problem separately. Repair navigation is delegated to the Stage 6 coordinator:
+
+- missing runtime permission → central runtime permission flow;
+- app-level block → app notification settings;
+- category block → exact category channel settings.
+
+Add Care Task evaluates only the care-reminder category before saving a reminder-enabled task, but uses the same use-case as App Settings.
+
+## Rendering contract
+
+`AndroidNotificationRenderer` is the only production component allowed to build, post, update or cancel visible notifications.
+
+- Care reminders use an owner + task identity and fail-closed care-task deep link.
+- Device alerts use an owner + device identity and high-priority alert rendering.
+- Device updates use an owner + device identity, stable progress updates and `onlyAlertOnce` behavior.
+- Visible notifications use stable owner/category/entity tags rather than relying only on integer IDs.
+- Owner-specific cancellation enumerates active notifications and removes only tags belonging to the requested owner.
+- No account transition uses app-wide `cancelAll()`.
+
+Device alert and device-update screens/services will call the central application boundary when those product flows are connected. They will not select channel IDs or construct notifications.
+
+## Scheduler and alarm contract
+
+Care reminders use inexact `AlarmManager` scheduling. AquaLight does not request `SCHEDULE_EXACT_ALARM` or `USE_EXACT_ALARM`, because care reminders do not require alarm-clock-level exactness.
+
+- Scheduler APIs require explicit owner UID and task ID.
+- Alarm PendingIntent identity includes owner + task URI data; extras alone are not treated as identity.
+- Scheduling is idempotent and replaces the same owner/task occurrence safely.
+- Eligibility is evaluated centrally from owner preference, task status, task reminder setting, referenced tank and tank care-reminder setting.
+- Completed, deleted, disabled, owner-mismatched or tank-disabled tasks have their alarms cancelled.
+- Care persistence never calls AlarmManager or the alarm backend directly; it asks `NotificationPreferenceUseCase` to schedule/cancel the task.
 
 ## Deterministic due and missed reminders
 
-- A future pending task with reminders enabled schedules its due reminder at `dueAtMillis`.
-- A past-due pending task schedules a missed reminder only when missed reminders are enabled and `dueAtMillis + missedReminderDays` is still in the future.
-- Missed reminder time is derived from the persisted due date, not from process uptime or the moment the first notification happened.
-- When both due and missed timestamps are in the past, no alarm is scheduled automatically; this prevents duplicate reminders after every boot.
-- After any reminder is delivered, the same scheduling policy computes whether another occurrence remains.
+- A future pending task schedules the persisted `dueAtMillis` occurrence.
+- A past-due task schedules a missed occurrence only when missed reminders are enabled and `dueAtMillis + missedReminderDays` remains in the future.
+- Missed timing is derived from persisted task data, never process uptime or previous notification time.
+- If due and missed times are both past, boot/reconcile does not repeatedly recreate an old notification.
+- After delivery, the same deterministic policy computes whether another occurrence remains.
 
-## Durable delivery, boot, and session restore
+## Durable delivery and restore
 
-- The AlarmManager receiver parses owner/task/occurrence only and enqueues a unique WorkManager delivery job. It performs no Firebase, DataStore, coroutine, or notification work itself.
-- The delivery worker uses `KEEP` for the same owner/task/occurrence, rechecks the active owner, owner preference, task, tank, channel, and runtime permission, then reconciles the deterministic next occurrence.
-- Delivery and restore use bounded exponential retry; normal WorkManager cancellation is rethrown rather than retried.
-- Android cancels AlarmManager alarms when the device shuts down, so boot/package replacement triggers owner-scoped reconciliation from persisted care tasks.
-- The boot receiver enqueues durable WorkManager reconciliation rather than performing the full DataStore scan inside `onReceive`.
-- Reconciliation verifies the authenticated owner before preference projection, before scheduling, and after scheduling.
-- Session startup enqueues reconciliation for the committed owner.
-- Session shutdown cancels reconciliation work, owner-tagged delivery work, alarms, the active preference projection, and visible notifications for the outgoing owner.
+The AlarmManager receiver is enqueue-only. It parses owner/task/occurrence and enqueues unique WorkManager delivery; it performs no Firebase, DataStore, coroutine or notification rendering work.
 
-## Notification delivery
+The delivery worker:
 
-A care notification is delivered only when all conditions are true:
+1. validates the active authenticated owner;
+2. reads the owner preference through the central use-case;
+3. evaluates care-channel delivery readiness;
+4. revalidates task, tank and occurrence;
+5. renders through the central renderer;
+6. reconciles the next occurrence through the central scheduler.
 
-1. authenticated owner equals the alarm owner;
-2. owner application preference is enabled;
-3. Android runtime notification permission is granted where required;
-4. app notifications are enabled by Android;
-5. the care-reminder channel is enabled where channels exist;
-6. task remains pending and reminder-enabled;
-7. task belongs to the owner;
-8. referenced tank exists and care reminders are enabled.
+Duplicate owner/task/occurrence delivery uses unique work with `KEEP`. Transient failures use bounded exponential backoff. WorkManager cancellation is propagated rather than retried.
 
-Notification deep links require a positive task ID, a nonblank notification owner, an authenticated session, and exact equality with the committed active owner. Ownerless and cross-owner intents fail closed.
+Boot and `MY_PACKAGE_REPLACED` receivers enqueue owner-scoped reconciliation only. The worker verifies owner identity before and after reconciliation. Session startup enqueues reconciliation for the committed owner. Account shutdown cancels the outgoing owner's reconciliation, delivery work, alarms and visible notifications.
 
-## Commercial test gates
+## Fail-closed rules
 
-- owner A/B preference isolation;
-- owner-specific PendingIntent URI and notification-tag isolation;
-- disable, logout, and account-switch cancellation;
-- active projection clear/refresh without cross-owner leakage;
-- due/missed/past schedule matrix;
-- idempotent rescheduling;
-- channel missing/blocked/enabled state matrix;
-- app-level and exact-channel settings return;
-- boot and package-replacement reconciliation;
-- process death during alarm receiver, delivery worker, and reconciliation worker execution;
-- notification tap owner validation;
-- owner-preference corruption recovery;
-- API 27 and API 35 instrumentation plus minified release smoke;
-- architecture guards preventing UI or receivers from bypassing the Stage 6 permission boundary or Stage 7 reminder coordinator.
+- Blank owner IDs and invalid task IDs are rejected.
+- Ownerless or cross-owner care notification intents do not open a task.
+- An owner change during reconciliation cancels the outgoing owner's newly reconciled state.
+- A delivery worker does nothing when the authenticated owner no longer matches.
+- A missing/blocked permission or channel prevents posting without changing the owner preference.
+- Store corruption uses the existing recovery path and defaults to notifications disabled.
+
+## Commercial verification gates
+
+Stage 7 is not complete until all of the following pass:
+
+- owner A/B preference isolation and persistence;
+- removed global field/projection/helper absence;
+- exact permanent channel-ID contract for all three categories;
+- API 27 channel-not-required behavior;
+- API 35 channel creation and blocked/enabled behavior;
+- app preference, runtime permission, app-level block and per-channel block separation;
+- App Settings and Add Care Task common-use-case verification;
+- due/missed/future/past deterministic schedule matrix;
+- idempotent scheduling and duplicate delivery prevention;
+- owner-specific alarm, work and visible-notification cancellation;
+- account switch during reconciliation and delivery;
+- boot/package-replacement restore for the authenticated owner only;
+- process death during settings, receiver, delivery and reconciliation flows;
+- notification deep-link owner validation;
+- notification-preference corruption recovery;
+- device-alert and device-update renderer/category contract tests;
+- architecture guards in Android CI, CodeQL and release workflows;
+- API 27/API 35 instrumentation and minified release smoke;
+- real-device acceptance for permission denial/settings return, category blocking, reminder delivery, reboot and account switch.
+
+The PR remains draft and unmerged until automated gates and physical acceptance are complete.
