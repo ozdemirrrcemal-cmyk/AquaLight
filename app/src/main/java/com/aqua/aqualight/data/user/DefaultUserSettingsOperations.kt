@@ -4,7 +4,6 @@ import android.content.Context
 import com.aqua.aqualight.application.user.UsageAnalyticsSnapshot
 import com.aqua.aqualight.application.user.UserSettingsOperations
 import com.aqua.aqualight.data.care.reminder.CareReminderCoordinator
-import com.aqua.aqualight.data.notifications.ActiveNotificationPreferenceProjection
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
@@ -17,10 +16,9 @@ class DefaultUserSettingsOperations(
     private val startupAppearanceCache: StartupAppearanceCache
 ) : UserSettingsOperations {
 
-    private val appContext = context.applicationContext
-    private val reminderCoordinator = CareReminderCoordinator.create(appContext)
-    private val activeNotificationProjection =
-        ActiveNotificationPreferenceProjection.create(appContext)
+    private val reminderCoordinator = CareReminderCoordinator.create(
+        context.applicationContext
+    )
 
     override val themeMode: Flow<String> = preferences.themeMode
     override val languageCode: Flow<String> = preferences.languageCode
@@ -52,13 +50,8 @@ class DefaultUserSettingsOperations(
     }
 
     override suspend fun updateNotificationsEnabled(enabled: Boolean) {
-        val ownerUid = UserDataScope.requireCurrentUid()
         reminderCoordinator.setPreference(
-            ownerUid = ownerUid,
-            enabled = enabled
-        )
-        activeNotificationProjection.publishForActiveOwner(
-            ownerUid = ownerUid,
+            ownerUid = UserDataScope.requireCurrentUid(),
             enabled = enabled
         )
     }
