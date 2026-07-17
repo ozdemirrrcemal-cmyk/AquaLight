@@ -37,18 +37,23 @@ REGISTRY = "app/src/main/java/com/aqua/aqualight/data/notifications/Notification
 POLICY = "app/src/main/java/com/aqua/aqualight/data/notifications/AndroidNotificationPermissionPolicy.kt"
 REPOSITORY = "app/src/main/java/com/aqua/aqualight/data/notifications/OwnerNotificationPreferences.kt"
 SCHEDULER = "app/src/main/java/com/aqua/aqualight/data/notifications/DefaultNotificationScheduler.kt"
-RENDERER = "app/src/main/java/com/aqua/aqualight/data/notifications/AndroidNotificationRenderer.kt"
+RENDERER = "app/src/main/java/com/aqua/aqualight/platform/notifications/AndroidNotificationRenderer.kt"
 PLATFORM = "app/src/main/java/com/aqua/aqualight/data/notifications/NotificationPlatform.kt"
 IDENTITY = "app/src/main/java/com/aqua/aqualight/data/notifications/NotificationIdentity.kt"
 APP_SETTINGS = "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/app/AppSettingsFragment.kt"
 ADD_CARE = "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt"
 CARE_STORE = "app/src/main/java/com/aqua/aqualight/data/care/CareTaskDataStoreManager.kt"
+MAINTENANCE_OPS = "app/src/main/java/com/aqua/aqualight/data/care/DefaultMaintenanceOperations.kt"
+TANK_OPS = "app/src/main/java/com/aqua/aqualight/data/aquarium/DefaultAquariumTankOperations.kt"
+TANK_CLEANER = "app/src/main/java/com/aqua/aqualight/data/aquarium/delete/OwnerTankDataCleaner.kt"
+SMART_CARE_WORKER = "app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareDailyWorker.kt"
 ALARM_BACKEND = "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareTaskReminderScheduler.kt"
 ALARM_RECEIVER = "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareTaskReminderReceiver.kt"
 DELIVERY_WORKER = "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareReminderDeliveryWorker.kt"
 BOOT_RECEIVER = "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareTaskBootReceiver.kt"
 RECONCILE_WORKER = "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareReminderReconcileWorker.kt"
 SESSION_MANAGER = "app/src/main/java/com/aqua/aqualight/data/auth/SessionBoundServiceManager.kt"
+USER_CLEANER = "app/src/main/java/com/aqua/aqualight/data/user/UserDataCleaner.kt"
 USER_PROTO = "app/src/main/proto/user_prefs.proto"
 USER_MANAGER = "app/src/main/java/com/aqua/aqualight/data/user/UserPreferencesManager.kt"
 MANIFEST = "app/src/main/AndroidManifest.xml"
@@ -66,23 +71,33 @@ required_files = (
     APP_SETTINGS,
     ADD_CARE,
     CARE_STORE,
+    MAINTENANCE_OPS,
+    TANK_OPS,
+    TANK_CLEANER,
+    SMART_CARE_WORKER,
     ALARM_BACKEND,
     ALARM_RECEIVER,
     DELIVERY_WORKER,
     BOOT_RECEIVER,
     RECONCILE_WORKER,
     SESSION_MANAGER,
+    USER_CLEANER,
     USER_PROTO,
     USER_MANAGER,
     MANIFEST,
     DOC,
     "app/src/main/proto/notification_preferences.proto",
     "app/src/test/java/com/aqua/aqualight/application/notifications/NotificationPreferenceUseCaseTest.kt",
+    "app/src/test/java/com/aqua/aqualight/application/notifications/NotificationDispatchUseCaseTest.kt",
+    "app/src/test/java/com/aqua/aqualight/application/notifications/CareReminderKindContractTest.kt",
+    "app/src/test/java/com/aqua/aqualight/data/notifications/NotificationIdentityTest.kt",
     "app/src/test/java/com/aqua/aqualight/data/care/reminder/CareReminderSchedulePolicyTest.kt",
     "app/src/test/java/com/aqua/aqualight/data/care/reminder/CareReminderReconcileRuntimeTest.kt",
     "app/src/test/java/com/aqua/aqualight/ui/navigation/CareTaskNotificationRoutePolicyTest.kt",
+    "app/src/test/java/com/aqua/aqualight/data/aquarium/delete/OwnerTankDataCleanerTest.kt",
     "app/src/androidTest/java/com/aqua/aqualight/data/notifications/OwnerNotificationPreferencesInstrumentedTest.kt",
     "app/src/androidTest/java/com/aqua/aqualight/data/notifications/NotificationChannelRegistryInstrumentedTest.kt",
+    "app/src/androidTest/java/com/aqua/aqualight/data/notifications/OwnerNotificationCancellationInstrumentedTest.kt",
     "app/src/androidTest/java/com/aqua/aqualight/data/recovery/NotificationPreferencesCorruptionRecoveryInstrumentedTest.kt",
 )
 for relative in required_files:
@@ -90,6 +105,7 @@ for relative in required_files:
 
 for obsolete in (
     "app/src/main/java/com/aqua/aqualight/utils/NotificationHelper.kt",
+    "app/src/main/java/com/aqua/aqualight/data/notifications/AndroidNotificationRenderer.kt",
     "app/src/main/java/com/aqua/aqualight/data/notifications/ActiveNotificationPreferenceProjection.kt",
     "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareReminderCoordinator.kt",
     "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareTaskBootRuntime.kt",
@@ -104,16 +120,21 @@ for token in (
     "CARE_REMINDERS",
     "DEVICE_ALERTS",
     "DEVICE_UPDATES",
+    "enum class CareReminderKind",
     "interface NotificationPermissionPolicy",
     "interface NotificationScheduler",
     "interface NotificationRenderer",
     "class NotificationPreferenceUseCase",
+    "class NotificationDispatchUseCase",
+    "dispatchCareReminder",
+    "dispatchDeviceAlert",
+    "dispatchDeviceUpdate",
 ):
     require(CONTRACT, token, "central application notification contract is incomplete")
-for token in ("APP_UPDATES", "Application update"):
+for token in ("APP_UPDATES", "app_updates", "Application update"):
     forbid(CONTRACT, token, "third category is device firmware updates, not app updates")
 
-channel_contract = {
+for token, reason in {
     'const val CARE_REMINDERS = "care_reminders"': "care channel ID must be permanent",
     'const val DEVICE_ALERTS = "device_alerts"': "device alert channel ID must be permanent",
     'const val DEVICE_UPDATES = "device_updates"': "device update channel ID must be permanent",
@@ -121,8 +142,7 @@ channel_contract = {
     "IMPORTANCE_HIGH": "device alerts require a high-importance category",
     "getNotificationChannel": "user channel state must be readable",
     "IMPORTANCE_NONE": "blocked channels must be represented",
-}
-for token, reason in channel_contract.items():
+}.items():
     require(REGISTRY, token, reason)
 for token in ("_v1", "APP_UPDATES", "app_updates", "deleteNotificationChannel"):
     forbid(REGISTRY, token, "unreleased product uses semantic stable channel IDs without legacy migration")
@@ -142,12 +162,14 @@ for token in ("UserPreferencesManager", "SharedPreferences", "fallback", "legacy
     forbid(REPOSITORY, token, "owner preference store must be the sole authority")
 
 for token, reason in (
+    ("NotificationRenderer", "platform renderer must implement the application contract"),
     ("NotificationCompat.Builder", "visible notification construction belongs only in renderer"),
     ("renderCareReminder", "care rendering contract is required"),
     ("renderDeviceAlert", "device alert rendering contract is required"),
     ("renderDeviceUpdate", "device firmware update rendering contract is required"),
     ("NotificationIdentity.tag", "visible notifications require stable owner/category/entity tags"),
     ("activeNotifications", "owner-specific visible cancellation is required"),
+    ("MainActivity", "notification navigation belongs in the Android platform adapter"),
 ):
     require(RENDERER, token, reason)
 for token in ("AlarmManager", "WorkManager", "OwnerNotificationPreferences"):
@@ -155,6 +177,7 @@ for token in ("AlarmManager", "WorkManager", "OwnerNotificationPreferences"):
 
 for token, reason in (
     ("NotificationScheduler", "scheduler must implement the application contract"),
+    ("NotificationRenderer", "scheduler depends only on the application renderer contract"),
     ("CareTaskReminderScheduler.schedule", "care alarms must use the internal backend"),
     ("CareTaskReminderScheduler.cancel", "care alarm cancellation must be central"),
     ("CareReminderDeliveryWorker.cancelOwner", "queued delivery must be owner-cancellable"),
@@ -162,19 +185,26 @@ for token, reason in (
     ("preferences.isEnabled", "scheduler eligibility must use owner preference"),
 ):
     require(SCHEDULER, token, reason)
-for token in ("NotificationCompat.Builder", "NotificationManager.notify"):
-    forbid(SCHEDULER, token, "scheduler must delegate visible rendering")
+for token in (
+    "NotificationCompat.Builder",
+    "NotificationManager.notify",
+    "AndroidNotificationRenderer(",
+    "platform.notifications.AndroidNotificationRenderer",
+):
+    forbid(SCHEDULER, token, "scheduler must not construct a platform renderer or visible notification")
 
 for token, reason in (
     ("NotificationPlatform", "process composition must be explicit"),
-    ("preferenceUseCase", "one application use-case must be exposed"),
+    ("preferenceUseCase", "one preference use-case must be exposed"),
+    ("dispatchUseCase", "one dispatch use-case must be exposed"),
     ("scheduler", "one scheduler instance must be exposed"),
     ("renderer", "one renderer instance must be exposed"),
+    ("platform.notifications.AndroidNotificationRenderer", "renderer implementation must be platform-owned"),
 ):
     require(PLATFORM, token, reason)
 
 for screen in (APP_SETTINGS, ADD_CARE):
-    require(screen, "notificationPreferenceUseCase", "screen must use the same application use-case")
+    require(screen, "notificationPreferenceUseCase", "screen must use the same application preference use-case")
     for token in (
         "NotificationChannelRegistry",
         "AndroidNotificationPermissionPolicy",
@@ -190,15 +220,35 @@ for screen in (APP_SETTINGS, ADD_CARE):
     ):
         forbid(screen, token, "UI must not bypass the notification application boundary")
 
-require(CARE_STORE, "notificationPreferenceUseCase", "care writes must use the central use-case")
 for token in (
+    "NotificationPlatform",
+    "NotificationPreferenceUseCase",
+    "NotificationScheduler",
     "CareTaskReminderScheduler",
     "OwnerNotificationPreferences",
     "UserPreferencesManager",
     "notificationsEnabled",
     "NotificationHelper",
+    "AlarmManager",
+    "WorkManager",
 ):
-    forbid(CARE_STORE, token, "care persistence must not own notification infrastructure")
+    forbid(CARE_STORE, token, "care persistence must remain notification-neutral")
+require(CARE_STORE, "Pure owner-scoped care-task persistence", "care store must document its notification-neutral contract")
+
+for token in (
+    "notificationPreferences.scheduleCareTask",
+    "notificationPreferences.cancelCareTask",
+    "notificationPreferences.reconcileOwner",
+):
+    require(MAINTENANCE_OPS, token, "maintenance commands must reconcile through the notification use-case")
+for token in ("CareTaskReminderScheduler", "NotificationPlatform", "AlarmManager"):
+    forbid(MAINTENANCE_OPS, token, "maintenance application adapter must not bypass central contracts")
+
+require(TANK_OPS, "notificationPreferences.reconcileOwner", "tank reminder setting changes must reconcile centrally")
+require(TANK_CLEANER, "cancelCareTaskReminder", "tank deletion must cancel deleted task reminders by owner and task")
+require(TANK_CLEANER, "reconcileCareReminders", "tank rollback must restore reminder state")
+require(SMART_CARE_WORKER, ".preferenceUseCase", "Smart Care persistence must reconcile through the central use-case")
+require(SMART_CARE_WORKER, ".reconcileOwner(scheduledOwnerUid)", "Smart Care must reconcile the captured owner")
 
 for token, reason in (
     ("CareReminderSchedulePolicy.plan", "alarm timing must come from deterministic persisted-time policy"),
@@ -221,7 +271,8 @@ for token in (
     forbid(ALARM_RECEIVER, token, "alarm receiver must remain enqueue-only")
 
 for token, reason in (
-    ("NotificationPlatform.get", "delivery must use the central platform"),
+    ("NotificationPlatform.get", "delivery must use the central composition"),
+    ("dispatchUseCase.dispatchCareReminder", "delivery must pass final posting through the dispatch use-case"),
     ("FirebaseAuthenticatedOwnerProvider", "delivery must verify the active owner"),
     ("CareReminderDeliveryPolicy.shouldDeliver", "delivery must revalidate task and tank"),
     ("ExistingWorkPolicy.KEEP", "duplicate alarm broadcasts must not duplicate delivery"),
@@ -230,14 +281,14 @@ for token, reason in (
 ):
     require(DELIVERY_WORKER, token, reason)
 for token in ("NotificationHelper", "OwnerNotificationPreferences", "UserPreferencesManager"):
-    forbid(DELIVERY_WORKER, token, "worker must use the central platform instead of parallel authorities")
+    forbid(DELIVERY_WORKER, token, "worker must use central use-cases instead of parallel authorities")
 
 require(BOOT_RECEIVER, "CareReminderReconcileWorker.enqueue", "boot/package replacement must enqueue durable reconciliation")
 for token in ("goAsync()", "CareTaskDataStoreManager", "AlarmManager", "NotificationPlatform"):
     forbid(BOOT_RECEIVER, token, "boot receiver must remain enqueue-only")
 
 for token, reason in (
-    ("NotificationPlatform.get", "reconciliation must use the central platform"),
+    ("NotificationPlatform.get", "reconciliation must use central composition"),
     ("CareReminderReconcileRuntime", "owner stability must be checked"),
     ("enqueueUniqueWork", "owner reconciliation must be unique"),
     ("BackoffPolicy.EXPONENTIAL", "transient restore failure requires backoff"),
@@ -247,10 +298,12 @@ for token, reason in (
 for token in ("ActiveNotificationPreferenceProjection", "CareReminderCoordinator"):
     forbid(RECONCILE_WORKER, token, "temporary/parallel reconciliation authority is forbidden")
 
-require(SESSION_MANAGER, "NotificationPlatform.get", "account shutdown must use central notification platform")
+require(SESSION_MANAGER, "NotificationPlatform.get", "account shutdown must use central composition")
 require(SESSION_MANAGER, "cancelOwner", "account shutdown must cancel only the outgoing owner")
 for token in ("cancelAll", "NotificationHelper", "ActiveNotificationPreferenceProjection"):
     forbid(SESSION_MANAGER, token, "account change must not use app-wide or temporary notification cleanup")
+require(USER_CLEANER, ".preferenceUseCase", "destructive account cleanup must cancel owner notification state")
+require(USER_CLEANER, ".cancelOwner(targetOwnerUid)", "destructive cleanup must target only the selected owner")
 
 require(USER_PROTO, "reserved 9;", "removed global notification field number must never be reused")
 require(USER_PROTO, 'reserved "notificationsEnabled";', "removed global notification field name must never be reused")
@@ -267,7 +320,6 @@ for token in ("android.permission.RECEIVE_BOOT_COMPLETED", "CareTaskBootReceiver
     if token not in manifest_text:
         errors.append(f"{MANIFEST}: boot restore contract missing {token}")
 
-# Enforce exclusive platform ownership across all production Kotlin sources.
 for source in APP.rglob("*.kt"):
     text = source.read_text(encoding="utf-8", errors="ignore")
     relative = source.relative_to(ROOT)
@@ -277,7 +329,7 @@ for source in APP.rglob("*.kt"):
     if "createNotificationChannel" in text or "createNotificationChannels" in text:
         if source != path(REGISTRY):
             errors.append(f"{relative}: only NotificationChannelRegistry may create channels")
-    if "NotificationManagerCompat.from" in text and source not in {path(POLICY)}:
+    if "NotificationManagerCompat.from" in text and source != path(POLICY):
         errors.append(f"{relative}: app notification state belongs in NotificationPermissionPolicy")
 
 if UI.is_dir():
@@ -309,5 +361,6 @@ if errors:
 
 print(
     "Central notification guard passed: one owner preference source, three permanent "
-    "channels, one permission policy, one scheduler, one renderer and UI use-case boundary."
+    "channels, pure care persistence, one policy, one scheduler, one platform renderer, "
+    "central preference/dispatch use-cases and owner-scoped lifecycle cleanup."
 )
