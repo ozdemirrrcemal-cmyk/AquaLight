@@ -31,7 +31,7 @@ class CareReminderOwnerIdentityTest {
     }
 
     @Test
-    fun sameTaskIdAcrossOwnersHasDistinctPendingIntentDataEvenIfHashesEverCollide() {
+    fun sameTaskIdAcrossOwnersHasDistinctIdentityEvenIfRequestCodeHashesCollide() {
         val ownerA = CareReminderIdentity.stableKey(
             ownerUid = "owner-a",
             taskId = 42L
@@ -42,20 +42,52 @@ class CareReminderOwnerIdentityTest {
         )
 
         assertNotEquals(ownerA, ownerB)
+        assertNotEquals(
+            CareReminderIdentity.ownerWorkTag("owner-a"),
+            CareReminderIdentity.ownerWorkTag("owner-b")
+        )
     }
 
     @Test
-    fun sameOwnerDifferentTasksHaveDistinctPendingIntentData() {
-        val firstTask = CareReminderIdentity.stableKey(
+    fun sameOwnerDifferentTasksAndOccurrencesHaveDistinctWorkIdentity() {
+        val firstTask = CareReminderIdentity.deliveryWorkName(
             ownerUid = "owner-a",
-            taskId = 42L
+            taskId = 42L,
+            occurrence = CareReminderOccurrence.DUE
         )
-        val secondTask = CareReminderIdentity.stableKey(
+        val secondTask = CareReminderIdentity.deliveryWorkName(
             ownerUid = "owner-a",
-            taskId = 43L
+            taskId = 43L,
+            occurrence = CareReminderOccurrence.DUE
+        )
+        val missedOccurrence = CareReminderIdentity.deliveryWorkName(
+            ownerUid = "owner-a",
+            taskId = 42L,
+            occurrence = CareReminderOccurrence.MISSED
         )
 
         assertNotEquals(firstTask, secondTask)
+        assertNotEquals(firstTask, missedOccurrence)
+    }
+
+    @Test
+    fun ownerWorkTagAndDeliveryNameAreStable() {
+        assertEquals(
+            CareReminderIdentity.ownerWorkTag(" owner-a "),
+            CareReminderIdentity.ownerWorkTag("owner-a")
+        )
+        assertEquals(
+            CareReminderIdentity.deliveryWorkName(
+                ownerUid = "owner-a",
+                taskId = 42L,
+                occurrence = CareReminderOccurrence.DUE
+            ),
+            CareReminderIdentity.deliveryWorkName(
+                ownerUid = " owner-a ",
+                taskId = 42L,
+                occurrence = CareReminderOccurrence.DUE
+            )
+        )
     }
 
     @Test(expected = IllegalArgumentException::class)
