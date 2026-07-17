@@ -36,17 +36,6 @@ object UserPreferencesSerializer : Serializer<UserPreferences> {
         t: UserPreferences,
         output: OutputStream
     ) {
-        val canonicalPreferences = if (
-            t.schemaVersion == 0 &&
-            !t.isLoggedIn &&
-            t.uid.isBlank() &&
-            t.profileCachesCount == 0
-        ) {
-            defaultValue
-        } else {
-            t
-        }
-
-        UserPreferencesStoreRules.validate(canonicalPreferences).writeTo(output)
+        UserPreferencesStoreRules.validate(t).writeTo(output)
     }
 }
