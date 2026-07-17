@@ -2,7 +2,7 @@
 
 ## Product rule
 
-A screen may know only which product action should run after access is granted. It must not derive API-level permission requirements, permanent-denial state, rationale state, or settings destinations.
+A screen may know only which product action should run after access is granted. It must not derive API-level permission requirements, permanent-denial state, rationale state, settings destinations, permission copy, icons, or visual states.
 
 Normal feature controls keep their product meaning. For example, the nearby-device button remains **Scan**. A permanent denial opens the common capability sheet; the feature button itself does not mutate into an unrelated settings-navigation control.
 
@@ -28,6 +28,18 @@ Normal feature controls keep their product meaning. For example, the nearby-devi
 4. `OPEN_SETTINGS`
 
 The decision combines the current API level, current grants, Android rationale state, and installation-scoped request history.
+
+## Central visual-language contract
+
+- `CapabilityPermissionUiSpecResolver` is the only authority allowed to map an `AppCapability` to an icon, rationale/settings title, message, primary action label, or blocked-state badge.
+- Feature Fragments provide only the capability and the action token. They never provide drawable IDs, custom text, colors, or per-screen permission-sheet styles.
+- `CapabilityPermissionBottomSheet` renders the resolved UI spec and contains no capability-specific `when` branch.
+- Every capability has one explicit commercial icon: photo camera, QR scanner, BLE scan, BLE connection, BLE provisioning, Wi-Fi, and notifications.
+- Every icon uses the same AquaLight permission surface, outline, scale, spacing, and turquoise technology accent.
+- `OPEN_SETTINGS` uses the same capability icon plus one shared lock badge. `RATIONALE` uses the capability icon without the blocked badge.
+- Permission colors and dimensions are centralized in shared bottom-sheet resource files. Existing non-permission bottom sheets keep their established root spacing and styles.
+- Permission artwork is decorative because the adjacent title fully describes the capability; TalkBack does not announce duplicate icon labels.
+- CI fails when a screen or XML layout references capability-permission artwork directly.
 
 ## UI and lifecycle contract
 
@@ -58,4 +70,4 @@ Bluetooth or Wi-Fi being switched off is a capability-readiness issue, not a run
 
 ## Stage closure gate
 
-Stage 6 is complete only when every current camera, QR, BLE, Wi-Fi SSID, and notification runtime-permission path uses this contract; legacy per-screen permission controllers and constructor/callback permission sheets are removed; manifest permissions are audited; and API 27/API 35 instrumentation plus process-recreation/settings-return tests pass.
+Stage 6 is complete only when every current camera, QR, BLE, Wi-Fi SSID, and notification runtime-permission path uses this contract; legacy per-screen permission controllers and constructor/callback permission sheets are removed; manifest permissions are audited; the visual resolver covers every capability and both sheet modes; and API 27/API 35 instrumentation plus process-recreation/settings-return tests pass.
