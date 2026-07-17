@@ -36,12 +36,6 @@ object CareTasksCommercialSerializer : Serializer<CareTasksStore> {
         t: CareTasksStore,
         output: OutputStream
     ) {
-        val canonicalStore = if (t.schemaVersion == 0 && t.tasksCount == 0) {
-            defaultValue
-        } else {
-            t
-        }
-
-        CareTaskStoreRules.validateStore(canonicalStore).writeTo(output)
+        CareTaskStoreRules.validateStore(t).writeTo(output)
     }
 }
