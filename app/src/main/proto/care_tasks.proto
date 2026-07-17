@@ -5,6 +5,10 @@ option java_multiple_files = true;
 
 message CareTasksStore {
   repeated StoredCareTask tasks = 1;
+
+  // First commercial local-store schema. Unsupported values are corruption;
+  // AquaLight has no shipped legacy care-task compatibility contract.
+  uint32 schema_version = 100;
 }
 
 message StoredCareTask {

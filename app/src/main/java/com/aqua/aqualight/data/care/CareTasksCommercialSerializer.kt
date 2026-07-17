@@ -1,4 +1,4 @@
-package com.aqua.aqualight.data.user
+package com.aqua.aqualight.data.care
 
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.Serializer
@@ -7,35 +7,35 @@ import com.google.protobuf.InvalidProtocolBufferException
 import java.io.InputStream
 import java.io.OutputStream
 
-object UserPreferencesSerializer : Serializer<UserPreferences> {
+/** Strict serializer for the first commercial Care Tasks store schema. */
+object CareTasksCommercialSerializer : Serializer<CareTasksStore> {
 
-    override val defaultValue: UserPreferences =
-        UserPreferencesStoreRules.defaultPreferences()
+    override val defaultValue: CareTasksStore = CareTaskStoreRules.defaultStore()
 
-    override suspend fun readFrom(input: InputStream): UserPreferences {
+    override suspend fun readFrom(input: InputStream): CareTasksStore {
         val parsed = try {
-            UserPreferences.parseFrom(input)
+            CareTasksStore.parseFrom(input)
         } catch (exception: InvalidProtocolBufferException) {
             throw CorruptionException(
-                "Cannot read user preferences proto.",
+                "Cannot read care tasks proto.",
                 exception
             )
         }
 
         return try {
-            UserPreferencesStoreRules.validate(parsed)
+            CareTaskStoreRules.validateStore(parsed)
         } catch (exception: StoreInvariantViolation) {
             throw CorruptionException(
-                "User preferences violate the commercial store contract.",
+                "Care tasks proto violates the commercial store contract.",
                 exception
             )
         }
     }
 
     override suspend fun writeTo(
-        t: UserPreferences,
+        t: CareTasksStore,
         output: OutputStream
     ) {
-        UserPreferencesStoreRules.validate(t).writeTo(output)
+        CareTaskStoreRules.validateStore(t).writeTo(output)
     }
 }

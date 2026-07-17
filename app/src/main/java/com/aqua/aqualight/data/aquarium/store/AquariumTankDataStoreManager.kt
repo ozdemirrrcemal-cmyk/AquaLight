@@ -4,848 +4,721 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStore
-import com.aqua.aqualight.data.aquarium.model.TankDraft
-import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
-import com.aqua.aqualight.data.aquarium.model.TankPlantTag
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumPlant
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.data.aquarium.model.TankDraft
+import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
+import com.aqua.aqualight.data.aquarium.model.TankPlantTag
 import com.aqua.aqualight.data.aquarium.photo.TankPhotoStorage
 import com.aqua.aqualight.data.aquarium.util.AquariumIdGenerator
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
+import com.aqua.aqualight.data.store.StoreInvariantViolation
 import com.aqua.aqualight.data.user.UserDataScope
+import java.util.Locale
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
-
 private val Context.aquariumTanksDataStore: DataStore<AquariumTanksStore> by dataStore(
-  fileName = "aquarium_tanks.pb",
-  serializer = AquariumTanksSerializer,
-  corruptionHandler = ReplaceFileCorruptionHandler {
-    LocalDataRecoveryTracker.markRecovered(
-      LocalDataRecoveryTracker.Area.AQUARIUM_TANKS
-    )
-    AquariumTanksStore.getDefaultInstance()
-  }
+    fileName = "aquarium_tanks.pb",
+    serializer = AquariumTanksSerializer,
+    corruptionHandler = ReplaceFileCorruptionHandler {
+        LocalDataRecoveryTracker.markRecovered(
+            LocalDataRecoveryTracker.Area.AQUARIUM_TANKS
+        )
+        TankStoreRules.defaultStore()
+    }
 )
 
 class AquariumTankDataStoreManager(
-  private val context: Context
+    private val context: Context
 ) {
 
-  val tanksFlow: Flow<List<SavedAquariumTank>> =
-    context.aquariumTanksDataStore.data.map { store ->
-      store.getTanksList()
-        .filter { storedTank ->
-          storedTank.belongsToCurrentUser()
-        }
-        .map { storedTank ->
-          storedTank.toSavedAquariumTank()
-        }
-        .asReversed()
-    }
-
-  suspend fun addTankFromDraft(
-    draft: TankDraft
-  ): Long {
-    val ownerUid = UserDataScope.requireCurrentUid()
-    var newTankId = 0L
-
-    context.aquariumTanksDataStore.updateData { currentStore ->
-      val existingIds = currentStore.getTanksList()
-        .map { storedTank ->
-          storedTank.id
-        }
-        .toSet()
-
-      newTankId = AquariumIdGenerator.newLong(
-        existingIds = existingIds
-      )
-
-      val nowMillis = System.currentTimeMillis()
-
-      val storedTank = draft.toStoredTank(
-        tankId = newTankId,
-        ownerUid = ownerUid,
-        createdAtMillis = nowMillis
-      )
-
-      currentStore.toBuilder()
-        .addTanks(storedTank)
-        .build()
-    }
-
-    return newTankId
-  }
-
-  suspend fun duplicateTank(
-    tankId: Long
-  ): Long {
-    val ownerUid = UserDataScope.requireCurrentUid()
-    var newTankId = 0L
-
-    context.aquariumTanksDataStore.updateData { currentStore ->
-      val sourceTank = currentStore.getTanksList().firstOrNull { storedTank ->
-        storedTank.id == tankId && storedTank.belongsToOwner(ownerUid)
-      } ?: throw IllegalArgumentException("Tank not found.")
-
-      val existingIds = currentStore.getTanksList()
-        .map { storedTank ->
-          storedTank.id
-        }
-        .toSet()
-
-      newTankId = AquariumIdGenerator.newLong(
-        existingIds = existingIds
-      )
-
-      val existingNames = currentStore.getTanksList()
-        .filter { storedTank ->
-          storedTank.belongsToOwner(ownerUid)
-        }
-        .map { storedTank ->
-          storedTank.name
-        }.toSet()
-
-      val duplicatedPhotoUri = TankPhotoStorage.copyInternalPhotoForTank(
-        context = context,
-        sourceUriString = sourceTank.photoUri,
-        tankId = newTankId
-      )
-
-      val duplicatedTank = sourceTank.toBuilder()
-        .setId(newTankId)
-        .setOwnerUid(ownerUid)
-        .setName(
-          createDuplicateTankName(
-            originalName = sourceTank.name,
-            existingNames = existingNames
-          )
-        )
-        .setPhotoUri(duplicatedPhotoUri.orEmpty())
-        .setCreatedAtMillis(System.currentTimeMillis())
-        .build()
-
-      currentStore.toBuilder()
-        .addTanks(duplicatedTank)
-        .build()
-    }
-
-    return newTankId
-  }
-
-  suspend fun deleteTanks(
-    tankIds: List<Long>
-  ) {
-    if (tankIds.isEmpty()) {
-      return
-    }
-
-    val ownerUid = UserDataScope.requireCurrentUid()
-    val idsToDelete = tankIds.toSet()
-    val photoUrisToDelete = mutableSetOf<String>()
-
-    context.aquariumTanksDataStore.updateData { currentStore ->
-      val updatedTanks = currentStore.getTanksList()
-        .filterNot { storedTank ->
-          val shouldDelete = storedTank.id in idsToDelete &&
-            storedTank.belongsToOwner(ownerUid)
-
-          if (shouldDelete && storedTank.photoUri.isNotBlank()) {
-            photoUrisToDelete.add(storedTank.photoUri)
-          }
-
-          shouldDelete
+    val tanksFlow: Flow<List<SavedAquariumTank>> =
+        context.aquariumTanksDataStore.data.map { store ->
+            TankStoreRules.validateStore(store)
+                .tanksList
+                .filter { storedTank ->
+                    storedTank.belongsToCurrentUser()
+                }
+                .map { storedTank ->
+                    storedTank.toSavedAquariumTankStrict()
+                }
+                .asReversed()
         }
 
-      currentStore.toBuilder()
-        .clearTanks()
-        .addAllTanks(updatedTanks)
-        .build()
-    }
+    suspend fun addTankFromDraft(
+        draft: TankDraft
+    ): Long {
+        val ownerUid = UserDataScope.requireCurrentUid()
+        var newTankId = 0L
 
-    TankPhotoStorage.deleteInternalPhotos(
-      context = context,
-      uriStrings = photoUrisToDelete
-    )
+        context.aquariumTanksDataStore.updateData { currentStore ->
+            requireOwnerScope(ownerUid)
 
-    idsToDelete.forEach { deletedTankId ->
-      TankPhotoStorage.deleteTankOwnedTemporaryFiles(
-        context = context,
-        tankId = deletedTankId
-      )
-    }
-  }
+            val existingIds = currentStore.tanksList
+                .filter { tank -> tank.belongsToOwner(ownerUid) }
+                .mapTo(mutableSetOf()) { tank -> tank.id }
+            newTankId = AquariumIdGenerator.newLong(existingIds)
 
-  suspend fun clearAllTanks(
-    ownerUid: String? = null
-  ) {
-    val targetOwnerUid = ownerUid.orCurrentOwnerUidOrReturn()
-    val deletedPhotoUris = mutableSetOf<String>()
-    val deletedTankIds = mutableSetOf<Long>()
-
-    context.aquariumTanksDataStore.updateData { currentStore ->
-      val remainingTanks = currentStore.getTanksList()
-        .filterNot { storedTank ->
-          val shouldDelete = storedTank.belongsToOwner(targetOwnerUid)
-
-          if (shouldDelete) {
-            deletedTankIds.add(storedTank.id)
-
-            if (storedTank.photoUri.isNotBlank()) {
-              deletedPhotoUris.add(storedTank.photoUri)
-            }
-          }
-
-          shouldDelete
-        }
-
-      currentStore.toBuilder()
-        .clearTanks()
-        .addAllTanks(remainingTanks)
-        .build()
-    }
-
-    TankPhotoStorage.deleteInternalPhotos(
-      context = context,
-      uriStrings = deletedPhotoUris
-    )
-
-    deletedTankIds.forEach { deletedTankId ->
-      TankPhotoStorage.deleteTankOwnedTemporaryFiles(
-        context = context,
-        tankId = deletedTankId
-      )
-    }
-  }
-
-  suspend fun assignLegacyTanksToOwner(
-    ownerUid: String
-  ) {
-    val targetOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
-
-    if (targetOwnerUid.isBlank()) {
-      return
-    }
-
-    context.aquariumTanksDataStore.updateData { currentStore ->
-      val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.ownerUid.isBlank()) {
-          storedTank.toBuilder()
-            .setOwnerUid(targetOwnerUid)
-            .build()
-        } else {
-          storedTank
-        }
-      }
-
-      currentStore.toBuilder()
-        .clearTanks()
-        .addAllTanks(updatedTanks)
-        .build()
-    }
-  }
-
-  suspend fun tanksSnapshotForOwner(
-    ownerUid: String
-  ): List<SavedAquariumTank> {
-    val targetOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
-
-    if (targetOwnerUid.isBlank()) {
-      return emptyList()
-    }
-
-    return context.aquariumTanksDataStore.data
-      .map { store ->
-        store.getTanksList()
-          .filter { storedTank ->
-            storedTank.belongsToOwner(targetOwnerUid)
-          }
-          .map { storedTank ->
-            storedTank.toSavedAquariumTank()
-          }
-      }
-      .first()
-  }
-
-  suspend fun updateTankPhoto(
-    tankId: Long,
-    photoUri: String?
-  ) {
-    val normalizedPhotoUri = photoUri.orEmpty()
-    var previousPhotoUri: String? = null
-
-    context.aquariumTanksDataStore.updateData { currentStore ->
-      val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
-          previousPhotoUri = storedTank.photoUri.takeIf { uri ->
-            uri.isNotBlank() && uri != normalizedPhotoUri
-          }
-
-          storedTank.toBuilder()
-            .setPhotoUri(normalizedPhotoUri)
-            .build()
-        } else {
-          storedTank
-        }
-      }
-
-      currentStore.toBuilder()
-        .clearTanks()
-        .addAllTanks(updatedTanks)
-        .build()
-    }
-
-    TankPhotoStorage.deleteInternalPhoto(
-      context = context,
-      uriString = previousPhotoUri
-    )
-  }
-
-  suspend fun updateTankStyle(
-    tankId: Long,
-    tankStyle: String
-  ) {
-    context.aquariumTanksDataStore.updateData { currentStore ->
-      val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
-          storedTank.toBuilder()
-            .setTankStyle(tankStyle)
-            .build()
-        } else {
-          storedTank
-        }
-      }
-
-      currentStore.toBuilder()
-        .clearTanks()
-        .addAllTanks(updatedTanks)
-        .build()
-    }
-  }
-
-  suspend fun updateTankDescription(
-    tankId: Long,
-    description: String
-  ) {
-    context.aquariumTanksDataStore.updateData { currentStore ->
-      val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
-          storedTank.toBuilder()
-            .setDescription(description)
-            .build()
-        } else {
-          storedTank
-        }
-      }
-
-      currentStore.toBuilder()
-        .clearTanks()
-        .addAllTanks(updatedTanks)
-        .build()
-    }
-  }
-
-  suspend fun updateTankName(
-    tankId: Long,
-    name: String
-  ) {
-    context.aquariumTanksDataStore.updateData { currentStore ->
-      val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
-          storedTank.toBuilder()
-            .setName(
-              name.ifBlank {
-                "Unnamed Aquarium"
-              }
+            val storedTank = draft.toStoredTank(
+                tankId = newTankId,
+                ownerUid = ownerUid,
+                createdAtMillis = System.currentTimeMillis()
             )
-            .build()
-        } else {
-          storedTank
+            TankStoreRules.validateTank(storedTank)
+            currentStore.appendValidated(storedTank)
         }
-      }
 
-      currentStore.toBuilder()
-        .clearTanks()
-        .addAllTanks(updatedTanks)
-        .build()
+        return newTankId
     }
-  }
 
-  suspend fun updateTankType(
-    tankId: Long,
-    tankType: String
-  ) {
-    context.aquariumTanksDataStore.updateData { currentStore ->
-      val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
-          storedTank.toBuilder()
-            .setTankType(tankType)
-            .build()
-        } else {
-          storedTank
+    suspend fun duplicateTank(
+        tankId: Long
+    ): Long {
+        TankStoreRules.requireValidTankId(tankId)
+        val ownerUid = UserDataScope.requireCurrentUid()
+        var newTankId = 0L
+
+        context.aquariumTanksDataStore.updateData { currentStore ->
+            requireOwnerScope(ownerUid)
+
+            val sourceTank = currentStore.tanksList.firstOrNull { storedTank ->
+                storedTank.id == tankId && storedTank.belongsToOwner(ownerUid)
+            } ?: throw IllegalArgumentException(
+                "Tank not found for the active owner."
+            )
+            TankStoreRules.validateTank(sourceTank)
+
+            val existingIds = currentStore.tanksList
+                .filter { tank -> tank.belongsToOwner(ownerUid) }
+                .mapTo(mutableSetOf()) { tank -> tank.id }
+            newTankId = AquariumIdGenerator.newLong(existingIds)
+
+            val existingNames = currentStore.tanksList
+                .filter { storedTank -> storedTank.belongsToOwner(ownerUid) }
+                .mapTo(mutableSetOf()) { storedTank -> storedTank.name }
+
+            val duplicatedPhotoUri = TankPhotoStorage.copyInternalPhotoForTank(
+                context = context,
+                sourceUriString = sourceTank.photoUri,
+                tankId = newTankId
+            )
+
+            val duplicatedTank = sourceTank.toBuilder()
+                .setId(newTankId)
+                .setOwnerUid(ownerUid)
+                .setName(
+                    createDuplicateTankName(
+                        originalName = sourceTank.name,
+                        existingNames = existingNames
+                    )
+                )
+                .setPhotoUri(duplicatedPhotoUri.orEmpty().trim())
+                .setCreatedAtMillis(System.currentTimeMillis())
+                .build()
+            TankStoreRules.validateTank(duplicatedTank)
+            currentStore.appendValidated(duplicatedTank)
         }
-      }
 
-      currentStore.toBuilder()
-        .clearTanks()
-        .addAllTanks(updatedTanks)
-        .build()
+        return newTankId
     }
-  }
 
-  suspend fun updateTankSize(
-    tankId: Long,
-    widthCm: Int,
-    lengthCm: Int,
-    heightCm: Int,
-    sizeUnit: String
-  ) {
-    context.aquariumTanksDataStore.updateData { currentStore ->
-      val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
-          storedTank.toBuilder()
+    suspend fun deleteTanks(
+        tankIds: List<Long>
+    ) {
+        if (tankIds.isEmpty()) {
+            return
+        }
+
+        val normalizedIds = tankIds.distinct()
+        normalizedIds.forEach(TankStoreRules::requireValidTankId)
+
+        val ownerUid = UserDataScope.requireCurrentUid()
+        val idsToDelete = normalizedIds.toSet()
+        val photoUrisToDelete = mutableSetOf<String>()
+        val deletedTankIds = mutableSetOf<Long>()
+
+        context.aquariumTanksDataStore.updateData { currentStore ->
+            requireOwnerScope(ownerUid)
+
+            val remainingTanks = currentStore.tanksList.filterNot { storedTank ->
+                val shouldDelete = storedTank.id in idsToDelete &&
+                    storedTank.belongsToOwner(ownerUid)
+                if (shouldDelete) {
+                    deletedTankIds += storedTank.id
+                    if (storedTank.photoUri.isNotBlank()) {
+                        photoUrisToDelete += storedTank.photoUri
+                    }
+                }
+                shouldDelete
+            }
+
+            currentStore.replaceAllValidated(remainingTanks)
+        }
+
+        TankPhotoStorage.deleteInternalPhotos(
+            context = context,
+            uriStrings = photoUrisToDelete
+        )
+        deletedTankIds.forEach { deletedTankId ->
+            TankPhotoStorage.deleteTankOwnedTemporaryFiles(
+                context = context,
+                tankId = deletedTankId
+            )
+        }
+    }
+
+    suspend fun clearAllTanks(
+        ownerUid: String? = null
+    ) {
+        val targetOwnerUid = ownerUid
+            ?.let(::requireOwnerUid)
+            ?: UserDataScope.requireCurrentUid()
+        val deletedPhotoUris = mutableSetOf<String>()
+        val deletedTankIds = mutableSetOf<Long>()
+
+        context.aquariumTanksDataStore.updateData { currentStore ->
+            val remainingTanks = currentStore.tanksList.filterNot { storedTank ->
+                val shouldDelete = storedTank.belongsToOwner(targetOwnerUid)
+                if (shouldDelete) {
+                    deletedTankIds += storedTank.id
+                    if (storedTank.photoUri.isNotBlank()) {
+                        deletedPhotoUris += storedTank.photoUri
+                    }
+                }
+                shouldDelete
+            }
+            currentStore.replaceAllValidated(remainingTanks)
+        }
+
+        TankPhotoStorage.deleteInternalPhotos(
+            context = context,
+            uriStrings = deletedPhotoUris
+        )
+        deletedTankIds.forEach { deletedTankId ->
+            TankPhotoStorage.deleteTankOwnedTemporaryFiles(
+                context = context,
+                tankId = deletedTankId
+            )
+        }
+    }
+
+    suspend fun tanksSnapshotForOwner(
+        ownerUid: String
+    ): List<SavedAquariumTank> {
+        val targetOwnerUid = requireOwnerUid(ownerUid)
+        return context.aquariumTanksDataStore.data
+            .map { store ->
+                TankStoreRules.validateStore(store)
+                    .tanksList
+                    .filter { storedTank ->
+                        storedTank.belongsToOwner(targetOwnerUid)
+                    }
+                    .map { storedTank ->
+                        storedTank.toSavedAquariumTankStrict()
+                    }
+            }
+            .first()
+    }
+
+    suspend fun updateTankPhoto(
+        tankId: Long,
+        photoUri: String?
+    ) {
+        val normalizedPhotoUri = photoUri.orEmpty().trim()
+        var previousPhotoUri: String? = null
+
+        updateCurrentOwnerTank(tankId) { storedTank ->
+            previousPhotoUri = storedTank.photoUri.takeIf { uri ->
+                uri.isNotBlank() && uri != normalizedPhotoUri
+            }
+            storedTank.toBuilder()
+                .setPhotoUri(normalizedPhotoUri)
+                .build()
+        }
+
+        TankPhotoStorage.deleteInternalPhoto(
+            context = context,
+            uriString = previousPhotoUri
+        )
+    }
+
+    suspend fun updateTankStyle(
+        tankId: Long,
+        tankStyle: String
+    ) {
+        updateCurrentOwnerTank(tankId) { storedTank ->
+            storedTank.toBuilder()
+                .setTankStyle(tankStyle.trim())
+                .build()
+        }
+    }
+
+    suspend fun updateTankDescription(
+        tankId: Long,
+        description: String
+    ) {
+        updateCurrentOwnerTank(tankId) { storedTank ->
+            storedTank.toBuilder()
+                .setDescription(description.trim())
+                .build()
+        }
+    }
+
+    suspend fun updateTankName(
+        tankId: Long,
+        name: String
+    ) {
+        updateCurrentOwnerTank(tankId) { storedTank ->
+            storedTank.toBuilder()
+                .setName(name.trim())
+                .build()
+        }
+    }
+
+    suspend fun updateTankType(
+        tankId: Long,
+        tankType: String
+    ) {
+        updateCurrentOwnerTank(tankId) { storedTank ->
+            storedTank.toBuilder()
+                .setTankType(tankType.trim())
+                .build()
+        }
+    }
+
+    suspend fun updateTankSize(
+        tankId: Long,
+        widthCm: Int,
+        lengthCm: Int,
+        heightCm: Int,
+        sizeUnit: String
+    ) {
+        val canonicalSizeUnit = sizeUnit.trim().lowercase(Locale.US)
+        updateCurrentOwnerTank(tankId) { storedTank ->
+            storedTank.toBuilder()
+                .setWidthCm(widthCm)
+                .setLengthCm(lengthCm)
+                .setHeightCm(heightCm)
+                .setSizeUnit(canonicalSizeUnit)
+                .build()
+        }
+    }
+
+    suspend fun updateTankVolumeUnit(
+        tankId: Long,
+        volumeUnit: String
+    ) {
+        val canonicalVolumeUnit = when (volumeUnit.trim().lowercase(Locale.US)) {
+            "l" -> "L"
+            "gal" -> "gal"
+            else -> volumeUnit.trim()
+        }
+        updateCurrentOwnerTank(tankId) { storedTank ->
+            storedTank.toBuilder()
+                .setVolumeUnit(canonicalVolumeUnit)
+                .build()
+        }
+    }
+
+    suspend fun updateTankSetupDate(
+        tankId: Long,
+        setupDateMillis: Long
+    ) {
+        updateCurrentOwnerTank(tankId) { storedTank ->
+            storedTank.toBuilder()
+                .setSetupDateMillis(setupDateMillis)
+                .build()
+        }
+    }
+
+    suspend fun updateTankPlants(
+        tankId: Long,
+        plants: List<TankPlantTag>
+    ) {
+        updateCurrentOwnerTank(tankId) { storedTank ->
+            storedTank.toBuilder()
+                .clearPlants()
+                .addAllPlants(
+                    plants.map { plant ->
+                        plant.toStoredPlantTag()
+                    }
+                )
+                .build()
+        }
+    }
+
+    suspend fun updateTankMaterialsForCategory(
+        tankId: Long,
+        categoryKey: String,
+        materials: List<TankMaterialSelection>
+    ) {
+        val canonicalCategoryKey = categoryKey.trim()
+        require(canonicalCategoryKey.isNotBlank()) {
+            "categoryKey must not be blank"
+        }
+        if (materials.any { material -> material.categoryKey.trim() != canonicalCategoryKey }) {
+            throw StoreInvariantViolation(
+                "Every material must belong to the category being replaced."
+            )
+        }
+
+        updateCurrentOwnerTank(tankId) { storedTank ->
+            val otherMaterials = storedTank.materialsList.filterNot { material ->
+                material.categoryKey == canonicalCategoryKey
+            }
+            val updatedCategoryMaterials = materials.map { material ->
+                material.toStoredMaterial()
+            }
+
+            storedTank.toBuilder()
+                .clearMaterials()
+                .addAllMaterials(otherMaterials)
+                .addAllMaterials(updatedCategoryMaterials)
+                .build()
+        }
+    }
+
+    suspend fun addLivestockToTank(
+        tankId: Long,
+        livestock: SavedAquariumLivestock
+    ) {
+        val storedLivestock = livestock.toStoredLivestockStrict()
+        updateCurrentOwnerTank(tankId) { storedTank ->
+            if (storedTank.livestockList.any { item -> item.id == storedLivestock.id }) {
+                throw StoreInvariantViolation(
+                    "Duplicate livestock id ${storedLivestock.id} in tank ${storedTank.id}."
+                )
+            }
+            storedTank.toBuilder()
+                .addLivestock(storedLivestock)
+                .build()
+        }
+    }
+
+    suspend fun updateLivestockInTank(
+        tankId: Long,
+        livestock: SavedAquariumLivestock
+    ) {
+        val storedReplacement = livestock.toStoredLivestockStrict()
+        updateCurrentOwnerTank(tankId) { storedTank ->
+            var replaced = false
+            val updatedLivestock = storedTank.livestockList.map { storedLivestock ->
+                if (storedLivestock.id == storedReplacement.id) {
+                    replaced = true
+                    storedReplacement
+                } else {
+                    storedLivestock
+                }
+            }
+            if (!replaced) {
+                throw IllegalArgumentException(
+                    "Livestock record not found in the selected tank."
+                )
+            }
+            storedTank.toBuilder()
+                .clearLivestock()
+                .addAllLivestock(updatedLivestock)
+                .build()
+        }
+    }
+
+    suspend fun removeLivestockFromTank(
+        tankId: Long,
+        livestockId: Long
+    ) {
+        require(livestockId > 0L) {
+            "livestockId must be positive"
+        }
+        updateCurrentOwnerTank(tankId) { storedTank ->
+            val exists = storedTank.livestockList.any { item -> item.id == livestockId }
+            if (!exists) {
+                throw IllegalArgumentException(
+                    "Livestock record not found in the selected tank."
+                )
+            }
+            storedTank.toBuilder()
+                .clearLivestock()
+                .addAllLivestock(
+                    storedTank.livestockList.filterNot { item ->
+                        item.id == livestockId
+                    }
+                )
+                .build()
+        }
+    }
+
+    suspend fun updateSmartCareEnabled(
+        tankId: Long,
+        enabled: Boolean
+    ) {
+        updateCurrentOwnerTank(tankId) { storedTank ->
+            storedTank.toBuilder()
+                .setSmartCareDisabled(!enabled)
+                .build()
+        }
+    }
+
+    suspend fun updateCareRemindersEnabled(
+        tankId: Long,
+        enabled: Boolean
+    ) {
+        updateCurrentOwnerTank(tankId) { storedTank ->
+            storedTank.toBuilder()
+                .setCareRemindersDisabled(!enabled)
+                .build()
+        }
+    }
+
+    private suspend fun updateCurrentOwnerTank(
+        tankId: Long,
+        transform: (StoredTank) -> StoredTank
+    ) {
+        TankStoreRules.requireValidTankId(tankId)
+        val ownerUid = UserDataScope.requireCurrentUid()
+
+        context.aquariumTanksDataStore.updateData { currentStore ->
+            requireOwnerScope(ownerUid)
+            var replaced = false
+            val updatedTanks = currentStore.tanksList.map { storedTank ->
+                if (storedTank.id == tankId && storedTank.belongsToOwner(ownerUid)) {
+                    replaced = true
+                    val updatedTank = transform(storedTank)
+                    if (updatedTank.id != storedTank.id || updatedTank.ownerUid != ownerUid) {
+                        throw StoreInvariantViolation(
+                            "Tank mutations must preserve record identity and owner."
+                        )
+                    }
+                    TankStoreRules.validateTank(updatedTank)
+                } else {
+                    storedTank
+                }
+            }
+
+            if (!replaced) {
+                throw IllegalArgumentException(
+                    "Tank not found for the active owner."
+                )
+            }
+            currentStore.replaceAllValidated(updatedTanks)
+        }
+    }
+
+    private fun TankDraft.toStoredTank(
+        tankId: Long,
+        ownerUid: String,
+        createdAtMillis: Long
+    ): StoredTank {
+        return StoredTank.newBuilder()
+            .setId(tankId)
+            .setOwnerUid(ownerUid)
+            .setName(name.trim())
+            .setDescription(description.trim())
+            .setPhotoUri(photoUri.orEmpty().trim())
+            .setSetupDateMillis(setupDateMillis ?: 0L)
             .setWidthCm(widthCm)
             .setLengthCm(lengthCm)
             .setHeightCm(heightCm)
-            .setSizeUnit(
-              sizeUnit.ifBlank {
-                "cm"
-              }
+            .setSizeUnit(sizeUnit.trim().lowercase(Locale.US))
+            .setVolumeUnit(
+                when (volumeUnit.trim().lowercase(Locale.US)) {
+                    "l" -> "L"
+                    "gal" -> "gal"
+                    else -> volumeUnit.trim()
+                }
             )
-            .build()
-        } else {
-          storedTank
-        }
-      }
-
-      currentStore.toBuilder()
-        .clearTanks()
-        .addAllTanks(updatedTanks)
-        .build()
-    }
-  }
-
-  suspend fun updateTankVolumeUnit(
-    tankId: Long,
-    volumeUnit: String
-  ) {
-    context.aquariumTanksDataStore.updateData { currentStore ->
-      val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
-          storedTank.toBuilder()
-            .setVolumeUnit(volumeUnit)
-            .build()
-        } else {
-          storedTank
-        }
-      }
-
-      currentStore.toBuilder()
-        .clearTanks()
-        .addAllTanks(updatedTanks)
-        .build()
-    }
-  }
-
-  suspend fun updateTankSetupDate(
-    tankId: Long,
-    setupDateMillis: Long
-  ) {
-    context.aquariumTanksDataStore.updateData { currentStore ->
-      val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
-          storedTank.toBuilder()
-            .setSetupDateMillis(setupDateMillis)
-            .build()
-        } else {
-          storedTank
-        }
-      }
-
-      currentStore.toBuilder()
-        .clearTanks()
-        .addAllTanks(updatedTanks)
-        .build()
-    }
-  }
-
-  suspend fun updateTankPlants(
-    tankId: Long,
-    plants: List<TankPlantTag>
-  ) {
-    context.aquariumTanksDataStore.updateData { currentStore ->
-      val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
-          storedTank.toBuilder()
-            .clearPlants()
+            .setTankType(tankType.trim())
+            .setTankStyle(tankStyle.trim())
+            .setCreatedAtMillis(createdAtMillis)
+            .setSmartCareDisabled(false)
+            .setCareRemindersDisabled(false)
             .addAllPlants(
-              plants.map { plant ->
-                StoredPlantTag.newBuilder()
-                  .setId(plant.id)
-                  .setPlantName(plant.plantName)
-                  .setCategory(plant.category)
-                  .setMarkerX(plant.markerX)
-                  .setMarkerY(plant.markerY)
-                  .build()
-              }
+                plants.map { plant ->
+                    plant.toStoredPlantTag()
+                }
+            )
+            .addAllMaterials(
+                materials.map { material ->
+                    material.toStoredMaterial()
+                }
             )
             .build()
-        } else {
-          storedTank
-        }
-      }
-
-      currentStore.toBuilder()
-        .clearTanks()
-        .addAllTanks(updatedTanks)
-        .build()
     }
-  }
 
-  suspend fun updateTankMaterialsForCategory(
-    tankId: Long,
-    categoryKey: String,
-    materials: List<TankMaterialSelection>
-  ) {
-    context.aquariumTanksDataStore.updateData { currentStore ->
-      val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
-          val otherMaterials = storedTank.getMaterialsList()
-            .filterNot { material ->
-              material.categoryKey == categoryKey
+    private fun TankPlantTag.toStoredPlantTag(): StoredPlantTag {
+        return StoredPlantTag.newBuilder()
+            .setId(id)
+            .setPlantName(plantName.trim())
+            .setCategory(category.trim())
+            .setMarkerX(markerX)
+            .setMarkerY(markerY)
+            .build()
+    }
+
+    private fun TankMaterialSelection.toStoredMaterial(): StoredMaterial {
+        return StoredMaterial.newBuilder()
+            .setId(id)
+            .setProductId(productId.trim())
+            .setCategoryKey(categoryKey.trim())
+            .setCategoryTitle(categoryTitle.trim())
+            .setName(name.trim())
+            .setBrand(brand.trim())
+            .setNote(note.trim())
+            .build()
+    }
+
+    private fun SavedAquariumLivestock.toStoredLivestockStrict(): StoredLivestock {
+        return StoredLivestock.newBuilder()
+            .setId(id)
+            .setName(name.trim())
+            .setCategory(category.trim())
+            .setQuantity(quantity)
+            .setAddedDateMillis(addedDateMillis ?: 0L)
+            .setNote(note.trim())
+            .build()
+    }
+
+    private fun StoredTank.toSavedAquariumTankStrict(): SavedAquariumTank {
+        TankStoreRules.validateTank(this)
+        return SavedAquariumTank(
+            id = id,
+            ownerUid = ownerUid,
+            name = name,
+            description = description,
+            photoUri = photoUri.takeIf(String::isNotBlank),
+            setupDateMillis = setupDateMillis.takeIf { value -> value > 0L },
+            widthCm = widthCm,
+            lengthCm = lengthCm,
+            heightCm = heightCm,
+            sizeUnit = sizeUnit,
+            volumeUnit = volumeUnit,
+            tankType = tankType,
+            tankStyle = tankStyle,
+            createdAtMillis = createdAtMillis,
+            smartCareEnabled = !smartCareDisabled,
+            careRemindersEnabled = !careRemindersDisabled,
+            plants = plantsList.map { plant ->
+                SavedAquariumPlant(
+                    id = plant.id,
+                    plantName = plant.plantName,
+                    category = plant.category,
+                    markerX = plant.markerX,
+                    markerY = plant.markerY
+                )
+            },
+            materials = materialsList.map { material ->
+                SavedAquariumMaterial(
+                    id = material.id,
+                    productId = material.productId,
+                    categoryKey = material.categoryKey,
+                    categoryTitle = material.categoryTitle,
+                    name = material.name,
+                    brand = material.brand,
+                    note = material.note
+                )
+            },
+            livestock = livestockList.map { livestock ->
+                SavedAquariumLivestock(
+                    id = livestock.id,
+                    name = livestock.name,
+                    category = livestock.category,
+                    quantity = livestock.quantity,
+                    addedDateMillis = livestock.addedDateMillis.takeIf { value -> value > 0L },
+                    note = livestock.note
+                )
             }
-
-          val updatedCategoryMaterials = materials.map { material ->
-            StoredMaterial.newBuilder()
-              .setId(material.id)
-              .setProductId(material.productId)
-              .setCategoryKey(material.categoryKey)
-              .setCategoryTitle(material.categoryTitle)
-              .setName(material.name)
-              .setBrand(material.brand)
-              .setNote(material.note)
-              .build()
-          }
-
-          storedTank.toBuilder()
-            .clearMaterials()
-            .addAllMaterials(otherMaterials)
-            .addAllMaterials(updatedCategoryMaterials)
-            .build()
-        } else {
-          storedTank
-        }
-      }
-
-      currentStore.toBuilder()
-        .clearTanks()
-        .addAllTanks(updatedTanks)
-        .build()
+        )
     }
-  }
 
-  suspend fun addLivestockToTank(
-    tankId: Long,
-    livestock: SavedAquariumLivestock
-  ) {
-    context.aquariumTanksDataStore.updateData { currentStore ->
-      val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
-          storedTank.toBuilder()
-            .addLivestock(
-              livestock.toStoredLivestock()
+    private fun AquariumTanksStore.appendValidated(
+        tank: StoredTank
+    ): AquariumTanksStore {
+        TankStoreRules.validateTank(tank)
+        return TankStoreRules.validateStore(
+            toBuilder()
+                .addTanks(tank)
+                .build()
+        )
+    }
+
+    private fun AquariumTanksStore.replaceAllValidated(
+        tanks: Iterable<StoredTank>
+    ): AquariumTanksStore {
+        return TankStoreRules.validateStore(
+            toBuilder()
+                .clearTanks()
+                .addAllTanks(tanks)
+                .build()
+        )
+    }
+
+    private fun StoredTank.belongsToCurrentUser(): Boolean {
+        return UserDataScope.belongsToCurrentUser(
+            recordOwnerUid = ownerUid
+        )
+    }
+
+    private fun StoredTank.belongsToOwner(
+        ownerUid: String
+    ): Boolean {
+        return UserDataScope.belongsToOwner(
+            recordOwnerUid = this.ownerUid,
+            ownerUid = ownerUid
+        )
+    }
+
+    private fun requireOwnerScope(
+        expectedOwnerUid: String
+    ) {
+        if (UserDataScope.requireCurrentUid() != expectedOwnerUid) {
+            throw StoreInvariantViolation(
+                "The active owner changed while a tank write was in progress."
             )
-            .build()
-        } else {
-          storedTank
         }
-      }
-
-      currentStore.toBuilder()
-        .clearTanks()
-        .addAllTanks(updatedTanks)
-        .build()
     }
-  }
 
-  suspend fun updateLivestockInTank(
-    tankId: Long,
-    livestock: SavedAquariumLivestock
-  ) {
-    context.aquariumTanksDataStore.updateData { currentStore ->
-      val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
-          val updatedLivestock = storedTank.getLivestockList().map { storedLivestock ->
-            if (storedLivestock.id == livestock.id) {
-              livestock.toStoredLivestock()
+    private fun requireOwnerUid(
+        value: String
+    ): String {
+        val ownerUid = UserDataScope.normalizeOwnerUid(value)
+        require(ownerUid.isNotBlank()) {
+            "ownerUid must not be blank"
+        }
+        return ownerUid
+    }
+
+    private fun createDuplicateTankName(
+        originalName: String,
+        existingNames: Set<String>
+    ): String {
+        val baseName = originalName.trim()
+        require(baseName.isNotBlank()) {
+            "Source tank name must not be blank."
+        }
+
+        var copyNumber = 1
+        while (true) {
+            val suffix = if (copyNumber == 1) {
+                " Copy"
             } else {
-              storedLivestock
+                " Copy $copyNumber"
             }
-          }
-
-          storedTank.toBuilder()
-            .clearLivestock()
-            .addAllLivestock(updatedLivestock)
-            .build()
-        } else {
-          storedTank
-        }
-      }
-
-      currentStore.toBuilder()
-        .clearTanks()
-        .addAllTanks(updatedTanks)
-        .build()
-    }
-  }
-
-  suspend fun removeLivestockFromTank(
-    tankId: Long,
-    livestockId: Long
-  ) {
-    context.aquariumTanksDataStore.updateData { currentStore ->
-      val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
-          val updatedLivestock = storedTank.getLivestockList()
-            .filterNot { storedLivestock ->
-              storedLivestock.id == livestockId
+            val maxBaseLength = TankStoreRules.MAX_NAME_CHARS - suffix.length
+            if (maxBaseLength <= 0) {
+                throw StoreInvariantViolation(
+                    "Tank duplicate suffix exceeds the commercial name limit."
+                )
             }
-
-          storedTank.toBuilder()
-            .clearLivestock()
-            .addAllLivestock(updatedLivestock)
-            .build()
-        } else {
-          storedTank
+            val candidate = baseName
+                .take(maxBaseLength)
+                .trimEnd() + suffix
+            if (candidate !in existingNames) {
+                return candidate
+            }
+            copyNumber += 1
         }
-      }
-
-      currentStore.toBuilder()
-        .clearTanks()
-        .addAllTanks(updatedTanks)
-        .build()
     }
-  }
-
-  suspend fun updateSmartCareEnabled(
-    tankId: Long,
-    enabled: Boolean
-  ) {
-    context.aquariumTanksDataStore.updateData { currentStore ->
-      val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
-          storedTank.toBuilder()
-            .setSmartCareDisabled(!enabled)
-            .build()
-        } else {
-          storedTank
-        }
-      }
-
-      currentStore.toBuilder()
-        .clearTanks()
-        .addAllTanks(updatedTanks)
-        .build()
-    }
-  }
-
-  suspend fun updateCareRemindersEnabled(
-    tankId: Long,
-    enabled: Boolean
-  ) {
-    context.aquariumTanksDataStore.updateData { currentStore ->
-      val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
-          storedTank.toBuilder()
-            .setCareRemindersDisabled(!enabled)
-            .build()
-        } else {
-          storedTank
-        }
-      }
-
-      currentStore.toBuilder()
-        .clearTanks()
-        .addAllTanks(updatedTanks)
-        .build()
-    }
-  }
-
-  private fun TankDraft.toStoredTank(
-    tankId: Long,
-    ownerUid: String,
-    createdAtMillis: Long
-  ): StoredTank {
-    return StoredTank.newBuilder()
-      .setId(tankId)
-      .setOwnerUid(ownerUid)
-      .setName(
-        name.ifBlank {
-          "Unnamed Aquarium"
-        }
-      )
-      .setDescription(description)
-      .setPhotoUri(photoUri.orEmpty())
-      .setSetupDateMillis(setupDateMillis ?: 0L)
-      .setWidthCm(widthCm)
-      .setLengthCm(lengthCm)
-      .setHeightCm(heightCm)
-      .setSizeUnit(
-        sizeUnit.ifBlank {
-          "cm"
-        }
-      )
-      .setVolumeUnit(volumeUnit)
-      .setTankType(tankType)
-      .setTankStyle(tankStyle)
-      .setCreatedAtMillis(createdAtMillis)
-      .setSmartCareDisabled(false)
-      .setCareRemindersDisabled(false)
-      .addAllPlants(
-        plants.map { plant ->
-          StoredPlantTag.newBuilder()
-            .setId(plant.id)
-            .setPlantName(plant.plantName)
-            .setCategory(plant.category)
-            .setMarkerX(plant.markerX)
-            .setMarkerY(plant.markerY)
-            .build()
-        }
-      )
-      .addAllMaterials(
-        materials.map { material ->
-          StoredMaterial.newBuilder()
-            .setId(material.id)
-            .setProductId(material.productId)
-            .setCategoryKey(material.categoryKey)
-            .setCategoryTitle(material.categoryTitle)
-            .setName(material.name)
-            .setBrand(material.brand)
-            .setNote(material.note)
-            .build()
-        }
-      )
-      .build()
-  }
-
-  private fun SavedAquariumLivestock.toStoredLivestock(): StoredLivestock {
-    return StoredLivestock.newBuilder()
-      .setId(id)
-      .setName(name)
-      .setCategory(category)
-      .setQuantity(quantity.coerceAtLeast(1))
-      .setAddedDateMillis(addedDateMillis ?: 0L)
-      .setNote(note)
-      .build()
-  }
-
-  private fun StoredTank.toSavedAquariumTank(): SavedAquariumTank {
-    return SavedAquariumTank(
-      id = id,
-      ownerUid = ownerUid,
-      name = name,
-      description = description,
-      photoUri = photoUri.ifBlank {
-        null
-      },
-      setupDateMillis = setupDateMillis.takeIf {
-        it > 0L
-      },
-      widthCm = widthCm,
-      lengthCm = lengthCm,
-      heightCm = heightCm,
-      sizeUnit = sizeUnit.ifBlank {
-        "cm"
-      },
-      volumeUnit = volumeUnit,
-      tankType = tankType,
-      tankStyle = tankStyle,
-      createdAtMillis = createdAtMillis,
-      smartCareEnabled = !smartCareDisabled,
-      careRemindersEnabled = !careRemindersDisabled,
-      plants = getPlantsList().map { plant ->
-        SavedAquariumPlant(
-          id = plant.id,
-          plantName = plant.plantName,
-          category = plant.category,
-          markerX = plant.markerX,
-          markerY = plant.markerY
-        )
-      },
-      materials = getMaterialsList().map { material ->
-        SavedAquariumMaterial(
-          id = material.id,
-          productId = material.productId,
-          categoryKey = material.categoryKey,
-          categoryTitle = material.categoryTitle,
-          name = material.name,
-          brand = material.brand,
-          note = material.note
-        )
-      },
-      livestock = getLivestockList().map { livestock ->
-        SavedAquariumLivestock(
-          id = livestock.id,
-          name = livestock.name,
-          category = livestock.category,
-          quantity = livestock.quantity,
-          addedDateMillis = livestock.addedDateMillis.takeIf {
-            it > 0L
-          },
-          note = livestock.note
-        )
-      }
-    )
-  }
-
-  private fun String?.orCurrentOwnerUidOrReturn(): String {
-    val explicitOwnerUid = UserDataScope.normalizeOwnerUid(this)
-
-    if (explicitOwnerUid.isNotBlank()) {
-      return explicitOwnerUid
-    }
-
-    return UserDataScope.currentUid()
-  }
-
-  private fun StoredTank.belongsToCurrentUser(): Boolean {
-    return UserDataScope.belongsToCurrentUser(
-      recordOwnerUid = ownerUid
-    )
-  }
-
-  private fun StoredTank.belongsToOwner(
-    ownerUid: String
-  ): Boolean {
-    return UserDataScope.belongsToOwner(
-      recordOwnerUid = this.ownerUid,
-      ownerUid = ownerUid
-    )
-  }
-
-  private fun createDuplicateTankName(
-    originalName: String,
-    existingNames: Set<String>
-  ): String {
-    val baseName = originalName.ifBlank {
-      "Unnamed Aquarium"
-    }
-
-    val firstCopyName = "$baseName Copy"
-
-    if (!existingNames.contains(firstCopyName)) {
-      return firstCopyName
-    }
-
-    var copyNumber = 2
-
-    while (existingNames.contains("$baseName Copy $copyNumber")) {
-      copyNumber++
-    }
-
-    return "$baseName Copy $copyNumber"
-  }
 }

@@ -29,6 +29,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
+import com.aqua.aqualight.application.care.CareTaskInputLimits
 import com.aqua.aqualight.ui.tabs.maintenance.text.CareTaskTypeCatalog
 import com.aqua.aqualight.application.care.CareTaskSource
 import com.aqua.aqualight.application.care.CareTaskStatus
@@ -244,12 +245,12 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
 
         binding.switchRepeat.isChecked = task.repeatEnabled
         binding.etRepeatDays.setText(
-            task.repeatIntervalDays.coerceAtLeast(1).toString()
+            task.repeatIntervalDays.toString()
         )
         binding.switchReminder.isChecked = task.reminderEnabled
         binding.switchMissedReminder.isChecked = task.missedReminderEnabled
         binding.etMissedReminderDays.setText(
-            task.missedReminderDays.coerceAtLeast(1).toString()
+            task.missedReminderDays.toString()
         )
         binding.etNote.setText(task.note)
         binding.etCustomTitle.setText(
@@ -704,6 +705,9 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
     }
 
     private fun saveTask() {
+        if (readScheduleValues() == null) {
+            return
+        }
         if (ensureNotificationPermissionBeforeSave()) {
             saveTaskInternal()
         }
@@ -748,16 +752,9 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
             return
         }
 
-        val repeatDays = binding.etRepeatDays.text.toString()
-            .toIntOrNull()
-            ?.coerceAtLeast(1)
-            ?: getString(R.string.maintenance_default_repeat_days).toInt()
-        val missedDays = binding.etMissedReminderDays.text.toString()
-            .toIntOrNull()
-            ?.coerceAtLeast(1)
-            ?: getString(
-                R.string.maintenance_default_missed_reminder_days
-            ).toInt()
+        val scheduleValues = readScheduleValues() ?: return
+        val repeatDays = scheduleValues.repeatIntervalDays
+        val missedDays = scheduleValues.missedReminderDays
         val title = if (type == CareTaskType.CUSTOM) {
             customTitle
         } else {
@@ -823,6 +820,51 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
         }
     }
 
+    private fun readScheduleValues(): CareTaskScheduleValues? {
+        val repeatIntervalDays = if (binding.switchRepeat.isChecked) {
+            CareTaskInputLimits.parseRepeatIntervalDays(
+                binding.etRepeatDays.text.toString()
+            ) ?: run {
+                showSnackBar(
+                    getString(
+                        R.string.maintenance_validation_repeat_days_range,
+                        CareTaskInputLimits.MIN_REPEAT_INTERVAL_DAYS,
+                        CareTaskInputLimits.MAX_REPEAT_INTERVAL_DAYS
+                    ),
+                    BaseActivity.SnackType.WARNING
+                )
+                return null
+            }
+        } else {
+            CareTaskInputLimits.MIN_REPEAT_INTERVAL_DAYS
+        }
+
+        val missedReminderEnabled =
+            binding.switchReminder.isChecked && binding.switchMissedReminder.isChecked
+        val missedReminderDays = if (missedReminderEnabled) {
+            CareTaskInputLimits.parseMissedReminderDays(
+                binding.etMissedReminderDays.text.toString()
+            ) ?: run {
+                showSnackBar(
+                    getString(
+                        R.string.maintenance_validation_missed_reminder_days_range,
+                        CareTaskInputLimits.MIN_MISSED_REMINDER_DAYS,
+                        CareTaskInputLimits.MAX_MISSED_REMINDER_DAYS
+                    ),
+                    BaseActivity.SnackType.WARNING
+                )
+                return null
+            }
+        } else {
+            CareTaskInputLimits.MIN_MISSED_REMINDER_DAYS
+        }
+
+        return CareTaskScheduleValues(
+            repeatIntervalDays = repeatIntervalDays,
+            missedReminderDays = missedReminderDays
+        )
+    }
+
     private fun closeForm() {
         findNavController().navigateUp()
     }
@@ -863,6 +905,11 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
             Color.blue(color)
         )
     }
+
+    private data class CareTaskScheduleValues(
+        val repeatIntervalDays: Int,
+        val missedReminderDays: Int
+    )
 
     private fun Int.dp(): Int {
         return (this * resources.displayMetrics.density).toInt()

@@ -8,13 +8,11 @@ import kotlinx.coroutines.withContext
 /**
  * Central ownership rules for local user-scoped data.
  *
- * Empty ownerUid values are legacy records created before UID scoping existed.
- * They are temporarily treated as belonging to the active user and migrated to
- * that user's uid as soon as the session is opened.
+ * AquaLight has no released ownerless local-data format. Every persisted record
+ * must carry the exact authenticated owner UID; blank owner values are invalid
+ * data and are never adopted by a later account.
  */
 object UserDataScope {
-
-    const val LEGACY_OWNER_UID = ""
 
     private val explicitOwnerUid = ThreadLocal<String?>()
 
@@ -25,7 +23,7 @@ object UserDataScope {
         if (scopedOwnerUid.isNotBlank()) {
             return scopedOwnerUid
         }
-        return Firebase.auth.currentUser?.uid.orEmpty()
+        return Firebase.auth.currentUser?.uid.orEmpty().trim()
     }
 
     fun requireCurrentUid(): String {
@@ -66,23 +64,25 @@ object UserDataScope {
     fun belongsToOwner(
         recordOwnerUid: String,
         ownerUid: String,
-        includeLegacy: Boolean = true
+        includeLegacy: Boolean = false
     ): Boolean {
-        val normalizedOwnerUid = normalizeOwnerUid(ownerUid)
+        require(!includeLegacy) {
+            "Ownerless legacy records are not supported by the commercial store contract."
+        }
 
+        val normalizedOwnerUid = normalizeOwnerUid(ownerUid)
         if (normalizedOwnerUid.isBlank()) {
             return false
         }
 
         val normalizedRecordOwnerUid = normalizeOwnerUid(recordOwnerUid)
-
-        return normalizedRecordOwnerUid == normalizedOwnerUid ||
-            (includeLegacy && normalizedRecordOwnerUid.isBlank())
+        return normalizedRecordOwnerUid.isNotBlank() &&
+            normalizedRecordOwnerUid == normalizedOwnerUid
     }
 
     fun belongsToCurrentUser(
         recordOwnerUid: String,
-        includeLegacy: Boolean = true
+        includeLegacy: Boolean = false
     ): Boolean {
         return belongsToOwner(
             recordOwnerUid = recordOwnerUid,
@@ -95,10 +95,13 @@ object UserDataScope {
         taskId: Long,
         ownerUid: String
     ): Int {
-        val normalizedOwnerUid = normalizeOwnerUid(ownerUid)
+        require(taskId > 0L) {
+            "taskId must be positive"
+        }
 
-        if (normalizedOwnerUid.isBlank()) {
-            return legacyNotificationRequestCode(taskId)
+        val normalizedOwnerUid = normalizeOwnerUid(ownerUid)
+        require(normalizedOwnerUid.isNotBlank()) {
+            "ownerUid must not be blank"
         }
 
         val mixed = 31L * taskId + normalizedOwnerUid.hashCode().toLong()
@@ -108,18 +111,6 @@ object UserDataScope {
             1
         } else {
             safe
-        }
-    }
-
-    fun legacyNotificationRequestCode(
-        taskId: Long
-    ): Int {
-        val value = positiveRequestCode(taskId)
-
-        return if (value == 0) {
-            1
-        } else {
-            value
         }
     }
 

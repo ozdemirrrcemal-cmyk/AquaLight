@@ -1,11 +1,9 @@
 package com.aqua.aqualight.data.user
 
 import android.content.Context
-import android.util.Log
+import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.Serializer
 import androidx.security.crypto.MasterKey
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import com.aqua.aqualight.data.security.KeyStoreUtils
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
@@ -18,10 +16,17 @@ import javax.crypto.CipherOutputStream
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * AES-GCM wrapper serializer.
- * On-disk format: [12 bytes IV][ciphertext]
+ * On-disk format: [12 bytes IV][ciphertext].
+ *
+ * Authentication, decryption, schema, and invariant failures are surfaced as
+ * [CorruptionException]. The DataStore corruption handler owns replacement and
+ * recovery reporting, so no serializer path can silently return default data.
  */
 class EncryptedUserPreferencesSerializer(
     private val context: Context,
@@ -29,14 +34,13 @@ class EncryptedUserPreferencesSerializer(
 ) : Serializer<UserPreferences> {
 
     companion object {
-        private const val TAG = "UserPrefsSerializer"
-        private const val ALGO = "AES/GCM/NoPadding"
-        private const val IV_SIZE = 12 // 96 bits
-        private const val GCM_TAG_LENGTH = 128
+        private const val ALGORITHM = "AES/GCM/NoPadding"
+        private const val IV_SIZE = 12
+        private const val GCM_TAG_LENGTH_BITS = 128
     }
 
     override val defaultValue: UserPreferences
-        get() = UserPreferences.getDefaultInstance()
+        get() = delegate.defaultValue
 
     private fun getSecretKey(): SecretKey {
         val masterKey = MasterKey.Builder(context)
@@ -47,57 +51,71 @@ class EncryptedUserPreferencesSerializer(
         return SecretKeySpec(rawKey, "AES")
     }
 
-    override suspend fun readFrom(input: InputStream): UserPreferences =
-        withContext(Dispatchers.IO) {
-            val buffered = BufferedInputStream(input)
+    override suspend fun readFrom(
+        input: InputStream
+    ): UserPreferences = withContext(Dispatchers.IO) {
+        val buffered = BufferedInputStream(input)
+        val iv = ByteArray(IV_SIZE)
+        val readCount = buffered.read(iv)
 
-            // Dosya boşsa (hiç byte yok) -> default
-            buffered.mark(IV_SIZE)
-            val iv = ByteArray(IV_SIZE)
-            val read = buffered.read(iv)
-
-            if (read == -1) {
-                // tamamen boş dosya
-                return@withContext defaultValue
-            }
-
-            if (read != IV_SIZE) {
-                // Yarım yazılmış / bozuk dosya: logla, default dön
-                Log.e(TAG, "Corrupted prefs file: IV incomplete (read=$read)")
-                return@withContext defaultValue
-            }
-
-            return@withContext try {
-                val cipher = Cipher.getInstance(ALGO)
-                val key = getSecretKey()
-                val spec = GCMParameterSpec(GCM_TAG_LENGTH, iv)
-                cipher.init(Cipher.DECRYPT_MODE, key, spec)
-
-                CipherInputStream(buffered, cipher).use { cis ->
-                    delegate.readFrom(cis)
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to decrypt prefs, returning default.", e)
-                defaultValue
-            }
+        if (readCount == -1) {
+            throw CorruptionException(
+                "Encrypted user preferences payload is empty."
+            )
+        }
+        if (readCount != IV_SIZE) {
+            throw CorruptionException(
+                "Encrypted user preferences IV is incomplete."
+            )
         }
 
-    override suspend fun writeTo(t: UserPreferences, output: OutputStream) =
-        withContext(Dispatchers.IO) {
-            val iv = ByteArray(IV_SIZE).also { SecureRandom().nextBytes(it) }
-            val cipher = Cipher.getInstance(ALGO)
-            val key = getSecretKey()
-            val spec = GCMParameterSpec(GCM_TAG_LENGTH, iv)
-            cipher.init(Cipher.ENCRYPT_MODE, key, spec)
+        try {
+            val cipher = Cipher.getInstance(ALGORITHM)
+            cipher.init(
+                Cipher.DECRYPT_MODE,
+                getSecretKey(),
+                GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv)
+            )
 
-            val buffered = BufferedOutputStream(output)
-            buffered.write(iv)
-            buffered.flush()
-
-            CipherOutputStream(buffered, cipher).use { cos ->
-                delegate.writeTo(t, cos)
-                cos.flush()
+            CipherInputStream(buffered, cipher).use { cipherInput ->
+                delegate.readFrom(cipherInput)
             }
-            buffered.flush()
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (exception: CorruptionException) {
+            throw exception
+        } catch (exception: Exception) {
+            throw CorruptionException(
+                "Cannot authenticate or decrypt user preferences.",
+                exception
+            )
         }
+    }
+
+    override suspend fun writeTo(
+        t: UserPreferences,
+        output: OutputStream
+    ) = withContext(Dispatchers.IO) {
+        UserPreferencesStoreRules.validate(t)
+
+        val iv = ByteArray(IV_SIZE).also { bytes ->
+            SecureRandom().nextBytes(bytes)
+        }
+        val cipher = Cipher.getInstance(ALGORITHM)
+        cipher.init(
+            Cipher.ENCRYPT_MODE,
+            getSecretKey(),
+            GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv)
+        )
+
+        val buffered = BufferedOutputStream(output)
+        buffered.write(iv)
+        buffered.flush()
+
+        CipherOutputStream(buffered, cipher).use { cipherOutput ->
+            delegate.writeTo(t, cipherOutput)
+            cipherOutput.flush()
+        }
+        buffered.flush()
+    }
 }
