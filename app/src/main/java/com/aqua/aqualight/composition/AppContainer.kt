@@ -150,6 +150,7 @@ internal class DefaultAppContainer(
             ownerFactory = OwnerViewModelFactory(
                 context = appContext,
                 userProfileOperations = userProfileOperations,
+                notificationPreferenceUseCase = notificationPreferenceUseCase,
                 ownerGraphResolver = ownerGraphResolver
             )
         )
