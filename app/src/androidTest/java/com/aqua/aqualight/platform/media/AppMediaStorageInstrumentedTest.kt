@@ -33,6 +33,64 @@ class AppMediaStorageInstrumentedTest {
     }
 
     @Test
+    fun failedRollbackRetainsJournalUntilRecoveryCanDeleteCandidate() {
+        val pending = pendingSavedMedia("owner-rollback", "retry")
+
+        assertFalse(
+            AppMediaStorage.rollbackPendingMedia(context, pending) { false }
+        )
+        assertTrue(AppMediaStorage.isAppOwned(context, pending))
+
+        AppMediaStorage.reconcilePendingMedia(
+            context = context,
+            ownerUid = "owner-rollback",
+            referencedUris = emptyList(),
+            nowMillis = System.currentTimeMillis() + TWO_DAYS_MILLIS
+        )
+
+        assertFalse(AppMediaStorage.isAppOwned(context, pending))
+    }
+
+    @Test
+    fun failedPostCommitDeletionIsRetriedFromDurableDeletionJournal() {
+        val committed = pendingSavedMedia("owner-delete", "old")
+        AppMediaStorage.commitPendingMedia(context, committed)
+
+        assertFalse(
+            AppMediaStorage.deleteAfterCommit(
+                context = context,
+                ownerUid = "owner-delete",
+                uriString = committed
+            ) { false }
+        )
+        assertTrue(AppMediaStorage.isAppOwned(context, committed))
+
+        AppMediaStorage.reconcilePendingDeletions(
+            context = context,
+            ownerUid = "owner-delete",
+            referencedUris = emptyList()
+        )
+
+        assertFalse(AppMediaStorage.isAppOwned(context, committed))
+    }
+
+    @Test
+    fun ownerScopedCommittedSweepCleansOrphanWhenDeletionJournalCouldNotBeWritten() {
+        val committed = pendingSavedMedia("owner-sweep", "orphan")
+        AppMediaStorage.commitPendingMedia(context, committed)
+        val file = requireNotNull(AppMediaStorage.resolveInternalMediaFile(context, committed))
+        check(file.setLastModified(System.currentTimeMillis() - TWO_DAYS_MILLIS))
+
+        AppMediaStorage.reconcileUnreferencedCommittedMedia(
+            context = context,
+            ownerUid = "owner-sweep",
+            referencedUris = emptyList()
+        )
+
+        assertFalse(AppMediaStorage.isAppOwned(context, committed))
+    }
+
+    @Test
     fun committedCandidateIsNeverRemovedByLaterReconciliation() {
         val committed = pendingSavedMedia("owner-a", "committed")
         AppMediaStorage.commitPendingMedia(context, committed)
