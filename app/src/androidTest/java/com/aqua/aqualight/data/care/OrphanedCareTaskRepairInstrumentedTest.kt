@@ -60,10 +60,7 @@ class OrphanedCareTaskRepairInstrumentedTest {
             }
         } finally {
             UserDataScope.withOwnerUid(ownerUid) {
-                careStore.clearAllTasks(
-                    ownerUid = ownerUid,
-                    cancelReminders = false
-                )
+                careStore.clearAllTasks(ownerUid = ownerUid)
                 tankStore.clearAllTanks(ownerUid)
             }
         }

@@ -10,6 +10,7 @@ import com.aqua.aqualight.application.aquarium.AquariumTankOperations
 import com.aqua.aqualight.application.aquarium.AquariumTankSize
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.application.aquarium.DeleteAquariumTanksResult
+import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
@@ -17,15 +18,14 @@ import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
 import com.aqua.aqualight.data.aquarium.model.TankPlantTag
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
-import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.user.withCurrentOwnerScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class DefaultAquariumTankOperations(
     private val tankStore: AquariumTankDataStoreManager,
-    private val careTaskStore: CareTaskDataStoreManager,
-    private val tankDataCleaner: OwnerTankDataCleaner
+    private val tankDataCleaner: OwnerTankDataCleaner,
+    private val notificationPreferences: NotificationPreferenceUseCase
 ) : AquariumTankOperations {
 
     override val tanks: Flow<List<AquariumTankSnapshot>> = tankStore.tanksFlow.map { tanks ->
@@ -101,13 +101,9 @@ class DefaultAquariumTankOperations(
     override suspend fun updateCareRemindersEnabled(
         tankId: Long,
         enabled: Boolean
-    ) = withCurrentOwnerScope {
+    ) = withCurrentOwnerScope { ownerUid ->
         tankStore.updateCareRemindersEnabled(tankId, enabled)
-        if (enabled) {
-            careTaskStore.reschedulePendingRemindersForTank(tankId)
-        } else {
-            careTaskStore.cancelPendingRemindersForTank(tankId)
-        }
+        notificationPreferences.reconcileOwner(ownerUid)
     }
 }
 

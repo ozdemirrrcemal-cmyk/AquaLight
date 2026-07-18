@@ -5,9 +5,12 @@ import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.app.AquaApp
 import com.aqua.aqualight.application.auth.AccountSecurityOperations
 import com.aqua.aqualight.application.auth.AuthOperations
+import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
 import com.aqua.aqualight.application.auth.SessionExitOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionUseCase
+import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
+import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.application.user.UserSettingsOperations
 import com.aqua.aqualight.data.auth.AuthRepository
@@ -16,6 +19,7 @@ import com.aqua.aqualight.data.auth.FirebaseAccountSecurityOperations
 import com.aqua.aqualight.data.auth.FirebaseAuthOperations
 import com.aqua.aqualight.data.auth.LogoutManager
 import com.aqua.aqualight.data.feedback.FirebaseFeedbackSubmissionOperations
+import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.user.DefaultUserProfileOperations
 import com.aqua.aqualight.data.user.DefaultUserSettingsOperations
 import com.aqua.aqualight.data.user.StartupAppearanceCache
@@ -37,6 +41,9 @@ interface AppContainer {
     val startupAppearanceCache: StartupAppearanceCache
     val userPreferencesManager: UserPreferencesManager
     val userSettingsOperations: UserSettingsOperations
+    val notificationPreferenceUseCase: NotificationPreferenceUseCase
+    val notificationDispatchUseCase: NotificationDispatchUseCase
+    val authenticatedOwnerIdentity: AuthenticatedOwnerIdentity
     val userProfileOperations: UserProfileOperations
     val feedbackSubmissionOperations: FeedbackSubmissionUseCase
     val provisioningDraftOperations: ProvisioningDraftOperations
@@ -70,10 +77,21 @@ internal class DefaultAppContainer(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
         DefaultUserSettingsOperations(
-            context = appContext,
             preferences = userPreferencesManager,
             startupAppearanceCache = startupAppearanceCache
         )
+    }
+
+    override val notificationPreferenceUseCase: NotificationPreferenceUseCase by lazy(
+        LazyThreadSafetyMode.SYNCHRONIZED
+    ) {
+        NotificationPlatform.get(appContext).preferenceUseCase
+    }
+
+    override val notificationDispatchUseCase: NotificationDispatchUseCase by lazy(
+        LazyThreadSafetyMode.SYNCHRONIZED
+    ) {
+        NotificationPlatform.get(appContext).dispatchUseCase
     }
 
     override val userProfileOperations: UserProfileOperations by lazy(
@@ -94,6 +112,12 @@ internal class DefaultAppContainer(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
         ActiveOwnerDependencyGraphResolver(appContext)
+    }
+
+    override val authenticatedOwnerIdentity: AuthenticatedOwnerIdentity by lazy(
+        LazyThreadSafetyMode.SYNCHRONIZED
+    ) {
+        ResolvingAuthenticatedOwnerIdentity(ownerGraphResolver)
     }
 
     override val provisioningDraftOperations: ProvisioningDraftOperations by lazy(
@@ -134,6 +158,7 @@ internal class DefaultAppContainer(
             ownerFactory = OwnerViewModelFactory(
                 context = appContext,
                 userProfileOperations = userProfileOperations,
+                notificationPreferenceUseCase = notificationPreferenceUseCase,
                 ownerGraphResolver = ownerGraphResolver
             )
         )

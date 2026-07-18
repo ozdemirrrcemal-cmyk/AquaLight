@@ -33,8 +33,9 @@
     android:name="android.hardware.bluetooth_le"
     android:required="false" />
 
-  <!-- Android 13+ notification permission and reminder restoration -->
+  <!-- Notification delivery, precise user-scheduled reminders and reboot restore -->
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+  <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
   <application
@@ -94,6 +95,7 @@
       <intent-filter>
         <action android:name="android.intent.action.BOOT_COMPLETED" />
         <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+        <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
       </intent-filter>
 
     </receiver>

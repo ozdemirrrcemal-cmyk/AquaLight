@@ -24,11 +24,12 @@ class OwnerTankDataCleaner internal constructor(
     private val restoreCareTasksForTank: suspend (Long, List<CareTask>) -> Unit,
     private val removeDeviceAssignmentsForTank:
         suspend (Long) -> TankAssignmentCleanupResult,
+    private val cancelCareTaskReminder: suspend (String, Long) -> Unit,
+    private val reconcileCareReminders: suspend (String) -> Unit,
     private val integrityTransactions: TankCareIntegrityTransactions =
         TankCareIntegrityJournal,
     private val ownerUidProvider: () -> String = UserDataScope::requireCurrentUid
 ) {
-
     enum class CleanupStage {
         CARE_TASKS,
         DEVICE_ASSIGNMENTS
@@ -56,16 +57,12 @@ class OwnerTankDataCleaner internal constructor(
         }
     }
 
-    suspend fun deleteTanks(
-        tankIds: Iterable<Long>
-    ): Result {
+    suspend fun deleteTanks(tankIds: Iterable<Long>): Result {
         val normalizedTankIds = tankIds
             .filter { tankId -> tankId > 0L }
             .distinct()
 
-        if (normalizedTankIds.isEmpty()) {
-            return Result.NoOp
-        }
+        if (normalizedTankIds.isEmpty()) return Result.NoOp
 
         val ownerUid = ownerUidProvider().trim().also { owner ->
             require(owner.isNotBlank()) {
@@ -118,6 +115,19 @@ class OwnerTankDataCleaner internal constructor(
         val cleanupIssues = mutableListOf<CleanupIssue>()
 
         normalizedTankIds.forEach { tankId ->
+            snapshotsByTank[tankId].orEmpty().forEach { task ->
+                try {
+                    cancelCareTaskReminder(ownerUid, task.id)
+                } catch (error: Throwable) {
+                    error.throwIfCancellation()
+                    cleanupIssues += CleanupIssue(
+                        tankId = tankId,
+                        stage = CleanupStage.CARE_TASKS,
+                        error = error
+                    )
+                }
+            }
+
             try {
                 integrityTransactions.complete(ownerUid, tankId)
             } catch (error: Throwable) {
@@ -130,11 +140,8 @@ class OwnerTankDataCleaner internal constructor(
             }
 
             try {
-                when (
-                    val result = removeDeviceAssignmentsForTank(tankId)
-                ) {
+                when (val result = removeDeviceAssignmentsForTank(tankId)) {
                     is TankAssignmentCleanupResult.Completed -> Unit
-
                     TankAssignmentCleanupResult.InvalidRequest -> {
                         cleanupIssues += CleanupIssue(
                             tankId = tankId,
@@ -144,7 +151,6 @@ class OwnerTankDataCleaner internal constructor(
                             )
                         )
                     }
-
                     is TankAssignmentCleanupResult.Failure -> {
                         cleanupIssues += CleanupIssue(
                             tankId = tankId,
@@ -193,6 +199,16 @@ class OwnerTankDataCleaner internal constructor(
             }
         }
 
+        try {
+            reconcileCareReminders(ownerUid)
+        } catch (error: Throwable) {
+            if (rollbackFailure == null) {
+                rollbackFailure = error
+            } else {
+                rollbackFailure?.addSuppressed(error)
+            }
+        }
+
         return rollbackFailure
     }
 
@@ -216,8 +232,6 @@ class OwnerTankDataCleaner internal constructor(
     }
 
     private fun Throwable.throwIfCancellation() {
-        if (this is CancellationException) {
-            throw this
-        }
+        if (this is CancellationException) throw this
     }
 }

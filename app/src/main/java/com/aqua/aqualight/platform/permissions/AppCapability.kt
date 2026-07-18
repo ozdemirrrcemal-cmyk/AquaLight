@@ -1,11 +1,10 @@
 package com.aqua.aqualight.platform.permissions
 
 /**
- * Product capabilities that may require one or more Android runtime permissions.
+ * Product capabilities whose Android access requirements are centrally evaluated.
  *
- * Capabilities deliberately describe user intent rather than raw permission names so
- * the UI can present context-specific rationale while [PermissionPolicy] owns the API
- * level permission matrix.
+ * Capabilities describe user intent rather than raw platform permission names so
+ * screens remain independent from API-level access rules.
  */
 enum class AppCapability {
     CAMERA_PHOTO,
@@ -14,5 +13,6 @@ enum class AppCapability {
     BLE_CONNECT,
     BLE_PROVISIONING,
     WIFI_SSID,
-    NOTIFICATIONS
+    NOTIFICATIONS,
+    PRECISE_REMINDERS
 }

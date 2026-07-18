@@ -4,9 +4,12 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.application.auth.AccountSecurityOperations
+import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
 import com.aqua.aqualight.application.auth.SessionExitOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionUseCase
+import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
+import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.application.user.UserAddressInput
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.application.user.UserProfileSnapshot
@@ -31,6 +34,7 @@ import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscovery
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningProgressOperations
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
+import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.user.StartupAppearanceCache
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.platform.auth.GoogleIdentityClient
@@ -72,6 +76,12 @@ internal class ReleaseSmokeAppContainer(context: Context) : AppContainer {
         get() = unused("userPreferencesManager")
     override val userSettingsOperations: UserSettingsOperations
         get() = unused("userSettingsOperations")
+    override val notificationPreferenceUseCase: NotificationPreferenceUseCase
+        get() = unused("notificationPreferenceUseCase")
+    override val notificationDispatchUseCase: NotificationDispatchUseCase
+        get() = unused("notificationDispatchUseCase")
+    override val authenticatedOwnerIdentity: AuthenticatedOwnerIdentity =
+        AuthenticatedOwnerIdentity { SMOKE_OWNER_UID }
     override val feedbackSubmissionOperations: FeedbackSubmissionUseCase
         get() = unused("feedbackSubmissionOperations")
     override val provisioningDraftOperations: ProvisioningDraftOperations
@@ -87,6 +97,10 @@ internal class ReleaseSmokeAppContainer(context: Context) : AppContainer {
 
     private fun <T> unused(name: String): T =
         error("Release smoke dependency was not expected: $name")
+
+    private companion object {
+        const val SMOKE_OWNER_UID = "release-smoke-owner"
+    }
 }
 
 private class ReleaseSmokeViewModelFactory(
@@ -94,6 +108,7 @@ private class ReleaseSmokeViewModelFactory(
     private val profileOperations: UserProfileOperations
 ) : ViewModelProvider.Factory {
     private val appContext = context.applicationContext
+    private val notificationPreferences = NotificationPlatform.get(appContext).preferenceUseCase
     private val devicesRepository = DevicesRepository()
     private val tankStore = AquariumTankDataStoreManager(appContext)
     private val careTaskStore = CareTaskDataStoreManager.create(appContext)
@@ -105,7 +120,8 @@ private class ReleaseSmokeViewModelFactory(
     )
     private val maintenanceOperations = DefaultMaintenanceOperations(
         context = appContext,
-        manager = careTaskStore
+        manager = careTaskStore,
+        notificationPreferences = notificationPreferences
     )
     private val maintenanceTextResolver = AndroidMaintenanceTextResolver(appContext)
     private val appTextResolver = AndroidAppTextResolver(appContext)
@@ -161,7 +177,6 @@ private class ReleaseSmokeViewModelFactory(
                 AquariumTankViewModel(
                     operations = DefaultAquariumTankOperations(
                         tankStore = tankStore,
-                        careTaskStore = careTaskStore,
                         tankDataCleaner = OwnerTankDataCleaner(
                             deleteTankRecords = tankStore::deleteTanks,
                             snapshotCareTasksForTank = { tankId ->
@@ -176,8 +191,11 @@ private class ReleaseSmokeViewModelFactory(
                             },
                             removeDeviceAssignmentsForTank =
                                 assignmentRepository::removeAssignmentsForTank,
+                            cancelCareTaskReminder = notificationPreferences::cancelCareTask,
+                            reconcileCareReminders = notificationPreferences::reconcileOwner,
                             ownerUidProvider = { SMOKE_OWNER_UID }
-                        )
+                        ),
+                        notificationPreferences = notificationPreferences
                     )
                 )
 

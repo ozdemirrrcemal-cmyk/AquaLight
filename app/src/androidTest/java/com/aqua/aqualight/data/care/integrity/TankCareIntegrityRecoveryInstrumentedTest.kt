@@ -61,7 +61,7 @@ class TankCareIntegrityRecoveryInstrumentedTest {
             }
         } finally {
             UserDataScope.withOwnerUid(ownerUid) {
-                careStore.clearAllTasks(ownerUid, cancelReminders = false)
+                careStore.clearAllTasks(ownerUid)
                 tankStore.clearAllTanks(ownerUid)
                 TankCareIntegrityJournal.clearOwner(ownerUid)
             }
@@ -99,7 +99,7 @@ class TankCareIntegrityRecoveryInstrumentedTest {
             }
         } finally {
             UserDataScope.withOwnerUid(ownerUid) {
-                careStore.clearAllTasks(ownerUid, cancelReminders = false)
+                careStore.clearAllTasks(ownerUid)
                 tankStore.clearAllTanks(ownerUid)
                 TankCareIntegrityJournal.clearOwner(ownerUid)
             }

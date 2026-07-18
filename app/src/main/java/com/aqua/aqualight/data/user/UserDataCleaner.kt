@@ -12,19 +12,14 @@ import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecre
 import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningCommitRecoveryStore
 import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
 import com.aqua.aqualight.data.devices.store.DeviceKnownStore
+import com.aqua.aqualight.data.notifications.NotificationPlatform
 import java.io.File
 import java.util.concurrent.CancellationException
 
-/**
- * Clears local data that belongs to the active user account.
- *
- * Records are removed only for the target Firebase uid. Normal logout
- * intentionally does not call this cleaner.
- */
+/** Clears local data that belongs to the active user account. */
 class UserDataCleaner private constructor(
     private val appContext: Context
 ) {
-
     enum class Step {
         SESSION_BOUND_SERVICES,
         CARE_TASKS,
@@ -49,19 +44,13 @@ class UserDataCleaner private constructor(
             get() = issues.isNotEmpty()
 
         companion object {
-            val Success = CleanupResult(
-                issues = emptyList()
-            )
+            val Success = CleanupResult(issues = emptyList())
         }
     }
 
     companion object {
-        fun create(
-            context: Context
-        ): UserDataCleaner {
-            return UserDataCleaner(
-                appContext = context.applicationContext
-            )
+        fun create(context: Context): UserDataCleaner {
+            return UserDataCleaner(context.applicationContext)
         }
     }
 
@@ -72,29 +61,16 @@ class UserDataCleaner private constructor(
     ): CleanupResult {
         val targetOwnerUid = ownerUid.orCurrentOwnerUidOrReturn()
         val issues = mutableListOf<CleanupIssue>()
-        val tankDataStoreManager = AquariumTankDataStoreManager(
-            appContext
-        )
-        val userPreferencesManager = UserPreferencesManager.create(
-            appContext
-        )
+        val tankDataStoreManager = AquariumTankDataStoreManager(appContext)
+        val userPreferencesManager = UserPreferencesManager.create(appContext)
 
-        fun recordIssue(
-            step: Step,
-            error: Throwable
-        ) {
+        fun recordIssue(step: Step, error: Throwable) {
             error.throwIfCancellation()
-            issues += CleanupIssue(
-                step = step,
-                error = error
-            )
+            issues += CleanupIssue(step = step, error = error)
         }
 
         val tankPhotoUris = runCatching {
-            tankDataStoreManager
-                .tanksSnapshotForOwner(
-                    ownerUid = targetOwnerUid
-                )
+            tankDataStoreManager.tanksSnapshotForOwner(targetOwnerUid)
                 .mapNotNull { tank -> tank.photoUri }
         }.getOrElse { error ->
             recordIssue(Step.AQUARIUM_TANKS, error)
@@ -102,96 +78,67 @@ class UserDataCleaner private constructor(
         }
 
         val profilePhotoUri = runCatching {
-            userPreferencesManager.profilePhotoUrlForOwner(
-                ownerUid = targetOwnerUid
-            )
+            userPreferencesManager.profilePhotoUrlForOwner(targetOwnerUid)
         }.getOrElse { error ->
             recordIssue(Step.USER_PREFERENCES, error)
             ""
         }
 
-        suspend fun runStep(
-            step: Step,
-            block: suspend () -> Unit
-        ) {
-            runCatching {
-                block()
-            }.onFailure { error ->
+        suspend fun runStep(step: Step, block: suspend () -> Unit) {
+            runCatching { block() }.onFailure { error ->
                 recordIssue(step, error)
             }
         }
 
         if (stopSessionBoundServices) {
-            runStep(
-                step = Step.SESSION_BOUND_SERVICES
-            ) {
+            runStep(Step.SESSION_BOUND_SERVICES) {
                 val stopResult = SessionBoundServiceManager.stop(
                     context = appContext,
                     cancelNotifications = true,
                     expectedOwnerUid = targetOwnerUid
                 )
-
-                stopResult.exceptionOrNull()?.let { error ->
-                    throw error
-                }
+                stopResult.exceptionOrNull()?.let { error -> throw error }
             }
         }
 
-        runStep(
-            step = Step.CARE_TASKS
-        ) {
-            CareTaskDataStoreManager.create(
-                appContext
-            ).clearAllTasks(
-                ownerUid = targetOwnerUid,
-                cancelReminders = true
-            )
+        runStep(Step.CARE_TASKS) {
+            // Always repeat owner-scoped cancellation before destructive deletion.
+            // This remains correct even when a previous session-stop step partially failed.
+            NotificationPlatform.get(appContext)
+                .preferenceUseCase
+                .cancelOwner(targetOwnerUid)
+            CareTaskDataStoreManager.create(appContext)
+                .clearAllTasks(ownerUid = targetOwnerUid)
         }
 
-        runStep(
-            step = Step.AQUARIUM_TANKS
-        ) {
-            tankDataStoreManager.clearAllTanks(
-                ownerUid = targetOwnerUid
-            )
+        runStep(Step.AQUARIUM_TANKS) {
+            tankDataStoreManager.clearAllTanks(ownerUid = targetOwnerUid)
         }
 
-        runStep(
-            step = Step.DEVICE_ASSIGNMENTS
-        ) {
+        runStep(Step.DEVICE_ASSIGNMENTS) {
             TankDeviceAssignmentStore.get(appContext)
-                .clearOwnerAssignments(
-                    ownerUid = targetOwnerUid
-                )
+                .clearOwnerAssignments(ownerUid = targetOwnerUid)
         }
 
-        runStep(
-            step = Step.PROVISIONING_SESSIONS
-        ) {
+        runStep(Step.PROVISIONING_SESSIONS) {
             clearProvisioningData(targetOwnerUid)
         }
 
-        runStep(
-            step = Step.KNOWN_DEVICES
-        ) {
+        runStep(Step.KNOWN_DEVICES) {
             DeviceKnownStore(
                 context = appContext,
                 ownerUid = targetOwnerUid
             ).clearOwnerData()
         }
 
-        runStep(
-            step = Step.DEVICE_CREDENTIALS
-        ) {
+        runStep(Step.DEVICE_CREDENTIALS) {
             DeviceCredentialStore(
                 context = appContext,
                 ownerUid = targetOwnerUid
             ).clearOwner()
         }
 
-        runStep(
-            step = Step.APP_OWNED_FILES
-        ) {
+        runStep(Step.APP_OWNED_FILES) {
             clearAppOwnedUserFiles(
                 profilePhotoUri = profilePhotoUri,
                 tankPhotoUris = tankPhotoUris
@@ -199,27 +146,21 @@ class UserDataCleaner private constructor(
         }
 
         if (clearUserPreferences) {
-            runStep(
-                step = Step.USER_PREFERENCES
-            ) {
+            runStep(Step.USER_PREFERENCES) {
                 userPreferencesManager.clearUserDataForOwner(
                     ownerUid = targetOwnerUid
                 )
             }
         }
 
-        return CleanupResult(
-            issues = issues.toList()
-        )
+        return CleanupResult(issues = issues.toList())
     }
 
     private suspend fun clearProvisioningData(ownerUid: String) {
         val failures = mutableListOf<Throwable>()
 
         suspend fun attempt(block: suspend () -> Unit) {
-            runCatching {
-                block()
-            }.onFailure { error ->
+            runCatching { block() }.onFailure { error ->
                 error.throwIfCancellation()
                 failures += error
             }
@@ -243,8 +184,7 @@ class UserDataCleaner private constructor(
             ).clearOwner()
         }
         attempt {
-            ProvisioningCommitRecoveryStore(appContext)
-                .clearOwner(ownerUid)
+            ProvisioningCommitRecoveryStore(appContext).clearOwner(ownerUid)
         }
 
         if (failures.isNotEmpty()) {
@@ -258,18 +198,12 @@ class UserDataCleaner private constructor(
 
     private fun String?.orCurrentOwnerUidOrReturn(): String {
         val explicitOwnerUid = UserDataScope.normalizeOwnerUid(this)
-
-        if (explicitOwnerUid.isNotBlank()) {
-            return explicitOwnerUid
-        }
-
+        if (explicitOwnerUid.isNotBlank()) return explicitOwnerUid
         return UserDataScope.currentUid()
     }
 
     private fun Throwable.throwIfCancellation() {
-        if (this is CancellationException) {
-            throw this
-        }
+        if (this is CancellationException) throw this
     }
 
     private fun clearAppOwnedUserFiles(
@@ -277,33 +211,18 @@ class UserDataCleaner private constructor(
         tankPhotoUris: List<String>
     ) {
         (tankPhotoUris + profilePhotoUri)
-            .filter { uri ->
-                uri.isNotBlank()
-            }
-            .forEach { uri ->
-                deleteAppOwnedUri(uri)
-            }
+            .filter(String::isNotBlank)
+            .forEach(::deleteAppOwnedUri)
 
-        File(
-            appContext.cacheDir,
-            "feedback_temp.jpg"
-        ).delete()
+        File(appContext.cacheDir, "feedback_temp.jpg").delete()
     }
 
-    private fun deleteAppOwnedUri(
-        value: String
-    ) {
-        val uri = runCatching {
-            Uri.parse(value)
-        }.getOrNull() ?: return
+    private fun deleteAppOwnedUri(value: String) {
+        val uri = runCatching { Uri.parse(value) }.getOrNull() ?: return
 
         if (uri.scheme == "content") {
             runCatching {
-                appContext.contentResolver.delete(
-                    uri,
-                    null,
-                    null
-                )
+                appContext.contentResolver.delete(uri, null, null)
             }
             return
         }
@@ -315,18 +234,11 @@ class UserDataCleaner private constructor(
             else -> null
         } ?: return
 
-        if (!file.isAppOwnedFile()) {
-            return
-        }
-
-        file.deleteRecursively()
+        if (file.isAppOwnedFile()) file.deleteRecursively()
     }
 
     private fun File.isAppOwnedFile(): Boolean {
-        val canonicalFile = runCatching {
-            canonicalFile
-        }.getOrNull() ?: return false
-
+        val canonicalFile = runCatching { canonicalFile }.getOrNull() ?: return false
         val allowedRoots = listOf(
             File(appContext.filesDir, "profile_photos"),
             File(appContext.filesDir, "tank_photos"),
@@ -334,10 +246,8 @@ class UserDataCleaner private constructor(
         )
 
         return allowedRoots.any { root ->
-            val canonicalRoot = runCatching {
-                root.canonicalFile
-            }.getOrNull() ?: return@any false
-
+            val canonicalRoot = runCatching { root.canonicalFile }.getOrNull()
+                ?: return@any false
             canonicalFile.path == canonicalRoot.path ||
                 canonicalFile.path.startsWith(canonicalRoot.path + File.separator)
         }

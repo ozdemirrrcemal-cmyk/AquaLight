@@ -2,6 +2,7 @@ package com.aqua.aqualight.composition
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
+import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
@@ -41,17 +42,11 @@ import com.aqua.aqualight.ui.tabs.settings.SettingsViewModel
 import com.aqua.aqualight.ui.tabs.settings.device.DeviceStatusViewModel
 import com.aqua.aqualight.ui.tabs.settings.device.SystemDeviceStatusClock
 
-/**
- * Exact ViewModel bindings that require one committed authenticated-owner graph.
- *
- * Resolving the graph is deliberately deferred until create(). This keeps the
- * process container owner-neutral and prevents it from retaining old-account
- * repositories after navigation/session replacement. A pending session is
- * rejected before a ViewModel constructor can start collectors.
- */
+/** Exact ViewModel bindings that require one committed authenticated-owner graph. */
 internal class OwnerViewModelFactory(
     context: Context,
     private val userProfileOperations: UserProfileOperations,
+    private val notificationPreferenceUseCase: NotificationPreferenceUseCase,
     private val ownerGraphResolver: OwnerDependencyGraphResolver
 ) : ScopedViewModelFactory {
 
@@ -148,7 +143,6 @@ internal class OwnerViewModelFactory(
                 AquariumTankViewModel(
                     operations = DefaultAquariumTankOperations(
                         tankStore = graph.aquariumTankStore,
-                        careTaskStore = graph.careTaskStore,
                         tankDataCleaner = OwnerTankDataCleaner(
                             deleteTankRecords = graph.aquariumTankStore::deleteTanks,
                             snapshotCareTasksForTank = { tankId ->
@@ -162,8 +156,13 @@ internal class OwnerViewModelFactory(
                                 )
                             },
                             removeDeviceAssignmentsForTank =
-                                assignments::removeAssignmentsForTank
-                        )
+                                assignments::removeAssignmentsForTank,
+                            cancelCareTaskReminder =
+                                notificationPreferenceUseCase::cancelCareTask,
+                            reconcileCareReminders =
+                                notificationPreferenceUseCase::reconcileOwner
+                        ),
+                        notificationPreferences = notificationPreferenceUseCase
                     )
                 )
 
@@ -171,7 +170,8 @@ internal class OwnerViewModelFactory(
                 MaintenanceViewModel(
                     operations = DefaultMaintenanceOperations(
                         context = appContext,
-                        manager = graph.careTaskStore
+                        manager = graph.careTaskStore,
+                        notificationPreferences = notificationPreferenceUseCase
                     ),
                     textResolver = maintenanceTextResolver
                 )

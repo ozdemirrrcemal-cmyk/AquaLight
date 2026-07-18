@@ -6,9 +6,9 @@ import androidx.core.os.LocaleListCompat
 import com.aqua.aqualight.base.theme.AppThemeController
 import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.composition.DefaultAppContainer
+import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.aqua.aqualight.data.user.UserPreferencesManager
-import com.aqua.aqualight.utils.NotificationHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -65,8 +65,8 @@ class AquaApp : Application() {
             }
         }
 
-        // Runtime token providers are installed only inside owner-bound device repositories.
-        NotificationHelper.createNotificationChannel(this)
+        // Channel creation is idempotent and preserves every user-controlled setting.
+        NotificationPlatform.get(this).permissionPolicy.ensureChannels()
     }
 
     /**

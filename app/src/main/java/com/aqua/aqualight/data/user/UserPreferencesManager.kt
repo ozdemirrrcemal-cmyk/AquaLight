@@ -27,21 +27,15 @@ class UserPreferencesManager private constructor(
         const val DEFAULT_THEME_MODE = "dark"
         const val DEFAULT_LANGUAGE_CODE = "en"
 
-        fun create(
-            context: Context
-        ): UserPreferencesManager {
+        fun create(context: Context): UserPreferencesManager {
             return INSTANCE ?: synchronized(this) {
-                INSTANCE ?: buildDataStore(
-                    appContext = context.applicationContext
-                ).also { manager ->
+                INSTANCE ?: buildDataStore(context.applicationContext).also { manager ->
                     INSTANCE = manager
                 }
             }
         }
 
-        private fun buildDataStore(
-            appContext: Context
-        ): UserPreferencesManager {
+        private fun buildDataStore(appContext: Context): UserPreferencesManager {
             val encryptedSerializer = EncryptedUserPreferencesSerializer(
                 context = appContext,
                 delegate = UserPreferencesSerializer
@@ -55,12 +49,8 @@ class UserPreferencesManager private constructor(
                     )
                     UserPreferencesStoreRules.defaultPreferences()
                 },
-                scope = CoroutineScope(
-                    SupervisorJob() + Dispatchers.IO
-                ),
-                produceFile = {
-                    appContext.dataStoreFile("user_prefs.pb")
-                }
+                scope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
+                produceFile = { appContext.dataStoreFile("user_prefs.pb") }
             )
 
             return UserPreferencesManager(dataStore)
@@ -71,13 +61,8 @@ class UserPreferencesManager private constructor(
         UserPreferencesStoreRules.validate(preferences)
     }
 
-    val isLoggedIn: Flow<Boolean> = userPrefsFlow.map { prefs ->
-        prefs.isLoggedIn
-    }
-
-    val uid: Flow<String> = userPrefsFlow.map { prefs ->
-        prefs.uid
-    }
+    val isLoggedIn: Flow<Boolean> = userPrefsFlow.map { prefs -> prefs.isLoggedIn }
+    val uid: Flow<String> = userPrefsFlow.map { prefs -> prefs.uid }
 
     @Deprecated(
         message = "Use uid instead. This value was never a Firebase ID token.",
@@ -85,73 +70,28 @@ class UserPreferencesManager private constructor(
     )
     val idToken: Flow<String> = uid
 
-    val email: Flow<String> = userPrefsFlow.map { prefs ->
-        prefs.email
-    }
-
-    val username: Flow<String> = userPrefsFlow.map { prefs ->
-        prefs.username
-    }
-
-    val fullName: Flow<String> = userPrefsFlow.map { prefs ->
-        prefs.fullName
-    }
-
-    val profilePhotoUrl: Flow<String> = userPrefsFlow.map { prefs ->
-        prefs.profilePhotoUrl
-    }
-
-    val themeMode: Flow<String> = userPrefsFlow.map { prefs ->
-        prefs.themeMode
-    }
-
-    val languageCode: Flow<String> = userPrefsFlow.map { prefs ->
-        prefs.languageCode
-    }
-
-    val notificationsEnabled: Flow<Boolean> = userPrefsFlow.map { prefs ->
-        prefs.notificationsEnabled
-    }
-
+    val email: Flow<String> = userPrefsFlow.map { prefs -> prefs.email }
+    val username: Flow<String> = userPrefsFlow.map { prefs -> prefs.username }
+    val fullName: Flow<String> = userPrefsFlow.map { prefs -> prefs.fullName }
+    val profilePhotoUrl: Flow<String> = userPrefsFlow.map { prefs -> prefs.profilePhotoUrl }
+    val themeMode: Flow<String> = userPrefsFlow.map { prefs -> prefs.themeMode }
+    val languageCode: Flow<String> = userPrefsFlow.map { prefs -> prefs.languageCode }
     val autoUpdateEnabled: Flow<Boolean> = userPrefsFlow.map { prefs ->
         prefs.autoUpdateEnabled
     }
-
     val loginAlertsEnabled: Flow<Boolean> = userPrefsFlow.map { prefs ->
         prefs.loginAlertsEnabled
     }
-
     val twoFactorEnabled: Flow<Boolean> = userPrefsFlow.map { prefs ->
         prefs.twoFactorEnabled
     }
-
-    val firstName: Flow<String> = userPrefsFlow.map { prefs ->
-        prefs.firstName
-    }
-
-    val lastName: Flow<String> = userPrefsFlow.map { prefs ->
-        prefs.lastName
-    }
-
-    val city: Flow<String> = userPrefsFlow.map { prefs ->
-        prefs.city
-    }
-
-    val addressLine: Flow<String> = userPrefsFlow.map { prefs ->
-        prefs.addressLine
-    }
-
-    val postCode: Flow<String> = userPrefsFlow.map { prefs ->
-        prefs.postCode
-    }
-
-    val phoneNumber: Flow<String> = userPrefsFlow.map { prefs ->
-        prefs.phoneNumber
-    }
-
-    val country: Flow<String> = userPrefsFlow.map { prefs ->
-        prefs.country
-    }
+    val firstName: Flow<String> = userPrefsFlow.map { prefs -> prefs.firstName }
+    val lastName: Flow<String> = userPrefsFlow.map { prefs -> prefs.lastName }
+    val city: Flow<String> = userPrefsFlow.map { prefs -> prefs.city }
+    val addressLine: Flow<String> = userPrefsFlow.map { prefs -> prefs.addressLine }
+    val postCode: Flow<String> = userPrefsFlow.map { prefs -> prefs.postCode }
+    val phoneNumber: Flow<String> = userPrefsFlow.map { prefs -> prefs.phoneNumber }
+    val country: Flow<String> = userPrefsFlow.map { prefs -> prefs.country }
 
     data class UsageAnalytics(
         val weeklyAutomationCount: Int,
@@ -173,16 +113,11 @@ class UserPreferencesManager private constructor(
         )
     }
 
-    suspend fun update(
-        transform: (UserPreferences) -> UserPreferences
-    ) {
+    suspend fun update(transform: (UserPreferences) -> UserPreferences) {
         updateValidated(transform)
     }
 
-    suspend fun saveUserSession(
-        uid: String,
-        isLoggedIn: Boolean
-    ) {
+    suspend fun saveUserSession(uid: String, isLoggedIn: Boolean) {
         val normalizedUid = UserDataScope.normalizeOwnerUid(uid)
 
         updateValidated { prefs ->
@@ -213,26 +148,14 @@ class UserPreferencesManager private constructor(
         val normalizedOwnerUid = requireOwnerUid(ownerUid)
 
         updateValidated { prefs ->
-            val source = prefs.profileCacheFor(
-                ownerUid = normalizedOwnerUid
-            )
+            val source = prefs.profileCacheFor(normalizedOwnerUid)
             val restoredProfile = UserProfileCache.newBuilder()
                 .setOwnerUid(normalizedOwnerUid)
-                .setEmail(
-                    email.ifBlank {
-                        source?.email.orEmpty()
-                    }
-                )
+                .setEmail(email.ifBlank { source?.email.orEmpty() })
                 .setUsername(source?.username.orEmpty())
-                .setFullName(
-                    source?.fullName?.ifBlank {
-                        fullName
-                    } ?: fullName
-                )
+                .setFullName(source?.fullName?.ifBlank { fullName } ?: fullName)
                 .setProfilePhotoUrl(
-                    source?.profilePhotoUrl?.ifBlank {
-                        photoUrl
-                    } ?: photoUrl
+                    source?.profilePhotoUrl?.ifBlank { photoUrl } ?: photoUrl
                 )
                 .setFirstName(source?.firstName.orEmpty())
                 .setLastName(source?.lastName.orEmpty())
@@ -265,11 +188,8 @@ class UserPreferencesManager private constructor(
 
             val ownerUid = activeOwnerUidOrNull(prefs)
             if (ownerUid != null) {
-                builder.replaceProfileCache(
-                    builder.build().toActiveProfileCache(ownerUid)
-                )
+                builder.replaceProfileCache(builder.build().toActiveProfileCache(ownerUid))
             }
-
             builder.build()
         }
     }
@@ -282,7 +202,6 @@ class UserPreferencesManager private constructor(
     ) {
         updateValidated { prefs ->
             val builder = prefs.toBuilder()
-
             email?.let(builder::setEmail)
             username?.let(builder::setUsername)
             fullName?.let(builder::setFullName)
@@ -290,11 +209,8 @@ class UserPreferencesManager private constructor(
 
             val ownerUid = activeOwnerUidOrNull(prefs)
             if (ownerUid != null) {
-                builder.replaceProfileCache(
-                    builder.build().toActiveProfileCache(ownerUid)
-                )
+                builder.replaceProfileCache(builder.build().toActiveProfileCache(ownerUid))
             }
-
             builder.build()
         }
     }
@@ -316,15 +232,11 @@ class UserPreferencesManager private constructor(
         )
     }
 
-    suspend fun updateUsername(
-        username: String
-    ) {
+    suspend fun updateUsername(username: String) {
         patchProfile(username = username)
     }
 
-    suspend fun updateProfilePhoto(
-        photoUrl: String
-    ) {
+    suspend fun updateProfilePhoto(photoUrl: String) {
         patchProfile(photoUrl = photoUrl)
     }
 
@@ -334,9 +246,7 @@ class UserPreferencesManager private constructor(
             val ownerUid = activeOwnerUidOrNull(prefs)
 
             if (ownerUid != null && prefs.hasActiveProfileData()) {
-                builder.replaceProfileCache(
-                    prefs.toActiveProfileCache(ownerUid)
-                )
+                builder.replaceProfileCache(prefs.toActiveProfileCache(ownerUid))
             }
 
             builder
@@ -347,63 +257,33 @@ class UserPreferencesManager private constructor(
         }
     }
 
-    suspend fun updateThemeMode(
-        mode: String
-    ) {
+    suspend fun updateThemeMode(mode: String) {
         updateValidated { prefs ->
-            prefs.toBuilder()
-                .setThemeMode(mode)
-                .build()
+            prefs.toBuilder().setThemeMode(mode).build()
         }
     }
 
-    suspend fun updateLanguage(
-        code: String
-    ) {
+    suspend fun updateLanguage(code: String) {
         updateValidated { prefs ->
-            prefs.toBuilder()
-                .setLanguageCode(code)
-                .build()
+            prefs.toBuilder().setLanguageCode(code).build()
         }
     }
 
-    suspend fun updateNotificationsEnabled(
-        enabled: Boolean
-    ) {
+    suspend fun updateAutoUpdateEnabled(enabled: Boolean) {
         updateValidated { prefs ->
-            prefs.toBuilder()
-                .setNotificationsEnabled(enabled)
-                .build()
+            prefs.toBuilder().setAutoUpdateEnabled(enabled).build()
         }
     }
 
-    suspend fun updateAutoUpdateEnabled(
-        enabled: Boolean
-    ) {
+    suspend fun updateLoginAlertsEnabled(enabled: Boolean) {
         updateValidated { prefs ->
-            prefs.toBuilder()
-                .setAutoUpdateEnabled(enabled)
-                .build()
+            prefs.toBuilder().setLoginAlertsEnabled(enabled).build()
         }
     }
 
-    suspend fun updateLoginAlertsEnabled(
-        enabled: Boolean
-    ) {
+    suspend fun updateTwoFactorEnabled(enabled: Boolean) {
         updateValidated { prefs ->
-            prefs.toBuilder()
-                .setLoginAlertsEnabled(enabled)
-                .build()
-        }
-    }
-
-    suspend fun updateTwoFactorEnabled(
-        enabled: Boolean
-    ) {
-        updateValidated { prefs ->
-            prefs.toBuilder()
-                .setTwoFactorEnabled(enabled)
-                .build()
+            prefs.toBuilder().setTwoFactorEnabled(enabled).build()
         }
     }
 
@@ -429,9 +309,7 @@ class UserPreferencesManager private constructor(
 
             prefs.toBuilder()
                 .setWeeklyAutomationCount(weeklyAutomationCount + 1)
-                .setWeeklyAlertCount(
-                    weeklyAlertCount + if (isAlert) 1 else 0
-                )
+                .setWeeklyAlertCount(weeklyAlertCount + if (isAlert) 1 else 0)
                 .setTodayAutomationCount(
                     todayAutomationCount + if (isManual) 0 else 1
                 )
@@ -472,18 +350,13 @@ class UserPreferencesManager private constructor(
 
             val ownerUid = activeOwnerUidOrNull(prefs)
             if (ownerUid != null) {
-                builder.replaceProfileCache(
-                    builder.build().toActiveProfileCache(ownerUid)
-                )
+                builder.replaceProfileCache(builder.build().toActiveProfileCache(ownerUid))
             }
-
             builder.build()
         }
     }
 
-    suspend fun profilePhotoUrlForOwner(
-        ownerUid: String
-    ): String {
+    suspend fun profilePhotoUrlForOwner(ownerUid: String): String {
         val normalizedOwnerUid = requireOwnerUid(ownerUid)
         val prefs = userPrefsFlow.first()
 
@@ -496,30 +369,23 @@ class UserPreferencesManager private constructor(
             .orEmpty()
     }
 
-    suspend fun clearUserDataForOwner(
-        ownerUid: String
-    ) {
+    suspend fun clearUserDataForOwner(ownerUid: String) {
         val normalizedOwnerUid = requireOwnerUid(ownerUid)
 
         updateValidated { prefs ->
-            val builder = prefs.toBuilder()
-                .removeProfileCache(normalizedOwnerUid)
-
+            val builder = prefs.toBuilder().removeProfileCache(normalizedOwnerUid)
             if (prefs.uid == normalizedOwnerUid) {
                 builder
                     .clearUid()
                     .setIsLoggedIn(false)
                     .clearActiveProfile()
             }
-
             builder.build()
         }
     }
 
     suspend fun clearAllUserData() {
-        updateValidated {
-            UserPreferencesStoreRules.defaultPreferences()
-        }
+        updateValidated { UserPreferencesStoreRules.defaultPreferences() }
     }
 
     private suspend fun updateValidated(
@@ -531,30 +397,20 @@ class UserPreferencesManager private constructor(
         }
     }
 
-    private fun activeOwnerUidOrNull(
-        preferences: UserPreferences
-    ): String? {
+    private fun activeOwnerUidOrNull(preferences: UserPreferences): String? {
         return preferences.uid.takeIf { uid ->
             preferences.isLoggedIn && uid.isNotBlank()
         }
     }
 
-    private fun requireOwnerUid(
-        ownerUid: String
-    ): String {
+    private fun requireOwnerUid(ownerUid: String): String {
         val normalized = UserDataScope.normalizeOwnerUid(ownerUid)
-        require(normalized.isNotBlank()) {
-            "ownerUid must not be blank"
-        }
+        require(normalized.isNotBlank()) { "ownerUid must not be blank" }
         return normalized
     }
 
-    private fun UserPreferences.profileCacheFor(
-        ownerUid: String
-    ): UserProfileCache? {
-        return profileCachesList.firstOrNull { cache ->
-            cache.ownerUid == ownerUid
-        }
+    private fun UserPreferences.profileCacheFor(ownerUid: String): UserProfileCache? {
+        return profileCachesList.firstOrNull { cache -> cache.ownerUid == ownerUid }
     }
 
     private fun UserPreferences.hasActiveProfileData(): Boolean {
@@ -573,9 +429,7 @@ class UserPreferencesManager private constructor(
         ).any(String::isNotBlank)
     }
 
-    private fun UserPreferences.toActiveProfileCache(
-        ownerUid: String
-    ): UserProfileCache {
+    private fun UserPreferences.toActiveProfileCache(ownerUid: String): UserProfileCache {
         return UserProfileCache.newBuilder()
             .setOwnerUid(ownerUid)
             .setEmail(email)
@@ -626,8 +480,7 @@ class UserPreferencesManager private constructor(
         profile: UserProfileCache
     ): UserPreferences.Builder {
         val ownerUid = requireOwnerUid(profile.ownerUid)
-        return removeProfileCache(ownerUid)
-            .addProfileCaches(profile)
+        return removeProfileCache(ownerUid).addProfileCaches(profile)
     }
 
     private fun UserPreferences.Builder.removeProfileCache(

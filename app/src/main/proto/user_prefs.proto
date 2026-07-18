@@ -27,7 +27,8 @@ message UserPreferences {
   string fullName = 6;
   string themeMode = 7;
   string languageCode = 8;
-  bool notificationsEnabled = 9;
+  reserved 9;
+  reserved "notificationsEnabled";
   bool autoUpdateEnabled = 10;
 
   // Address
