@@ -8,6 +8,20 @@
     <!-- Catalog picker shared UI -->
     <string name="catalog_search_hint">Type here to search...</string>
 
+    <!-- Material category titles -->
+    <string name="catalog_category_fertilizer">Fertilizer</string>
+    <string name="catalog_category_decoration">Decoration</string>
+    <string name="catalog_category_gravel">Gravel</string>
+    <string name="catalog_category_substrate">Substrate</string>
+    <string name="catalog_category_aquarium">Aquarium</string>
+    <string name="catalog_category_co2">CO2</string>
+    <string name="catalog_category_light">Light</string>
+    <string name="catalog_category_filter">Filter</string>
+    <string name="catalog_category_heater">Heater</string>
+    <string name="catalog_category_cooler">Cooler</string>
+    <string name="catalog_category_dosing">Dosing</string>
+    <string name="catalog_category_led_background">LED Background</string>
+
     <!-- Material catalog picker -->
     <string name="material_picker_no_materials_found">No materials found</string>
     <string name="material_picker_new_title">New %1$s</string>
