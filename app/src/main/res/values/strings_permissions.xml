@@ -43,4 +43,5 @@
     <string name="permission_precise_reminders_rationale_message">Allow AquaLight to schedule alarms and reminders so care notifications can arrive at the time you choose, even while the app is closed.</string>
     <string name="permission_precise_reminders_settings_title">Allow alarms and reminders</string>
     <string name="permission_precise_reminders_settings_message">Android is currently allowing only approximate reminder timing. Open Alarms &amp; reminders and allow AquaLight to deliver care reminders at the selected time.</string>
+    <string name="settings_notifications_subtitle_precise_reminders_blocked">Alarms &amp; reminders access is required for on-time care notifications.</string>
 </resources>
