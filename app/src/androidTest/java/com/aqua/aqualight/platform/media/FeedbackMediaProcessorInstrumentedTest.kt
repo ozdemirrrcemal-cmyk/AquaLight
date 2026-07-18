@@ -28,20 +28,25 @@ class FeedbackMediaProcessorInstrumentedTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
 
     @Test
-    fun largeProviderImageIsSampledAndCompressedWithinCommercialLimits() = runBlocking {
-        val source = providerFile("feedback_large_${UUID.randomUUID()}.png")
-        val bitmap = Bitmap.createBitmap(2_400, 1_800, Bitmap.Config.ARGB_8888).apply {
+    fun oversizedProviderImageUsesSampledDecodeAndCompressesWithinCommercialLimits() = runBlocking {
+        val sourceWidth = 3_600
+        val sourceHeight = 3_400
+        val expectedSample = FeedbackImagePolicy.calculateInSampleSize(sourceWidth, sourceHeight)
+        assertTrue("Fixture must exercise sampled decode", expectedSample > 1)
+
+        val source = providerFile("feedback_sampled_${UUID.randomUUID()}.jpg")
+        val bitmap = Bitmap.createBitmap(sourceWidth, sourceHeight, Bitmap.Config.RGB_565).apply {
             eraseColor(Color.rgb(32, 112, 176))
         }
         try {
             source.outputStream().buffered().use { output ->
-                assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG, 100, output))
+                assertTrue(bitmap.compress(Bitmap.CompressFormat.JPEG, 92, output))
             }
             assertTrue("Generated source image is empty", source.length() > 0L)
             val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
             BitmapFactory.decodeFile(source.path, bounds)
-            assertEquals(2_400, bounds.outWidth)
-            assertEquals(1_800, bounds.outHeight)
+            assertEquals(sourceWidth, bounds.outWidth)
+            assertEquals(sourceHeight, bounds.outHeight)
 
             val contentUri = FileProvider.getUriForFile(
                 context,
