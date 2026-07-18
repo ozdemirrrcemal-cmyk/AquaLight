@@ -63,8 +63,12 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
         ActivityResultContracts.TakePicture()
     ) { success ->
         val uri = mediaFlow.currentCameraUri()
+        if (_binding == null) {
+            mediaFlow.cancelCamera()
+            return@registerForActivityResult
+        }
         if (success && uri != null) {
-            viewLifecycleOwner.lifecycleScope.launch { openCropScreen(uri) }
+            lifecycleScope.launch { openCropScreen(uri) }
         } else {
             mediaFlow.cancelCamera()
         }
@@ -73,16 +77,20 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { uri ->
-        if (uri != null) {
-            viewLifecycleOwner.lifecycleScope.launch { openCropScreen(uri) }
+        if (_binding != null && uri != null) {
+            lifecycleScope.launch { openCropScreen(uri) }
         }
     }
 
     private val cropLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
+        if (_binding == null) {
+            mediaFlow.cancelCrop()
+            return@registerForActivityResult
+        }
         val data = result.data
-        viewLifecycleOwner.lifecycleScope.launch {
+        lifecycleScope.launch {
             when {
                 result.resultCode == Activity.RESULT_OK && data != null -> {
                     val output = UCrop.getOutput(data)
@@ -210,6 +218,10 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
     }
 
     private suspend fun openCropScreen(sourceUri: Uri) {
+        if (_binding == null) {
+            mediaFlow.cancelCamera()
+            return
+        }
         setFragmentGlobalLoading(true)
         try {
             when (
@@ -218,7 +230,14 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
                     title = getString(R.string.aquarium_photo_crop_title)
                 )
             ) {
-                is MediaCropPreparationResult.Ready -> cropLauncher.launch(preparation.intent)
+                is MediaCropPreparationResult.Ready -> {
+                    if (_binding != null) {
+                        cropLauncher.launch(preparation.intent)
+                    } else {
+                        mediaFlow.cancelCrop()
+                    }
+                }
+
                 is MediaCropPreparationResult.Failure,
                 MediaCropPreparationResult.StorageFailure -> {
                     mediaFlow.cancelCamera()
@@ -236,6 +255,10 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
     }
 
     private fun acceptDraftPhoto(contentUri: Uri) {
+        if (_binding == null) {
+            mediaFlow.rollbackSelection()
+            return
+        }
         val previous = viewModel.tankDraft.photoUri
         val newValue = contentUri.toString()
         viewModel.updateTankPhoto(newValue)
@@ -266,6 +289,7 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
     }
 
     private fun renderSelectedPlants() {
+        if (_binding == null) return
         PlantTagUiRenderer.renderSelectedPlantList(
             container = binding.selectedPlantsContainer,
             plants = viewModel.tankDraft.plants,
@@ -283,7 +307,7 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
         title: String,
         message: String
     ) {
-        if (!isAdded) return
+        if (!isAdded || _binding == null) return
         DialogManager.showInfoDialog(
             context = requireContext(),
             type = DialogType.WARNING,
