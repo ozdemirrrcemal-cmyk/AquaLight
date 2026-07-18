@@ -9,6 +9,7 @@ import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHa
 import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningCommitRecoveryStore
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
+import com.aqua.aqualight.data.media.AppMediaRecoveryManager
 import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
@@ -59,13 +60,9 @@ class OwnerSessionCoordinator private constructor(
         ) : CloseResult
     }
 
-    suspend fun open(
-        ownerUid: String
-    ): OpenResult {
+    suspend fun open(ownerUid: String): OpenResult {
         val normalizedOwnerUid = ownerUid.trim().also { normalized ->
-            require(normalized.isNotBlank()) {
-                "ownerUid must not be blank"
-            }
+            require(normalized.isNotBlank()) { "ownerUid must not be blank" }
         }
 
         return transitionMutex.withLock {
@@ -78,6 +75,7 @@ class OwnerSessionCoordinator private constructor(
                 snapshot.activeOwnerUid == normalizedOwnerUid &&
                 providersAlreadyBound
             ) {
+                AppMediaRecoveryManager(appContext).reconcileOwner(normalizedOwnerUid)
                 return@withLock OpenResult.AlreadyActive(
                     ownerUid = normalizedOwnerUid,
                     generation = snapshot.generation
@@ -87,17 +85,10 @@ class OwnerSessionCoordinator private constructor(
             val transition = stateMachine.begin(normalizedOwnerUid)
             val previousOwnerUid = transition.previousOwnerUid
 
-            if (
-                previousOwnerUid != null &&
-                previousOwnerUid != normalizedOwnerUid
-            ) {
+            if (previousOwnerUid != null && previousOwnerUid != normalizedOwnerUid) {
                 // Runtime/socket/token teardown is the first and awaited owner-switch barrier.
-                DevicesRepositoryProvider.clear(
-                    expectedOwnerUid = previousOwnerUid
-                )
-                TankDeviceAssignmentRepositoryProvider.clear(
-                    expectedOwnerUid = previousOwnerUid
-                )
+                DevicesRepositoryProvider.clear(expectedOwnerUid = previousOwnerUid)
+                TankDeviceAssignmentRepositoryProvider.clear(expectedOwnerUid = previousOwnerUid)
             }
 
             if (UserDataScope.currentUid() != normalizedOwnerUid) {
@@ -125,15 +116,11 @@ class OwnerSessionCoordinator private constructor(
                 val devicesRepository = DevicesRepositoryProvider.get(appContext)
 
                 withTimeout(REPOSITORY_READY_TIMEOUT_MILLIS) {
-                    devicesRepository.ready.first { ready ->
-                        ready
-                    }
+                    devicesRepository.ready.first { ready -> ready }
                 }
 
                 val removedOrphanCredentialCount = credentialStore.retainTokensFor(
-                    devicesRepository.currentDevices().map { snapshot ->
-                        snapshot.deviceUid
-                    }
+                    devicesRepository.currentDevices().map { device -> device.deviceUid }
                 )
 
                 if (!stateMachine.isCurrent(transition)) {
@@ -149,13 +136,11 @@ class OwnerSessionCoordinator private constructor(
                         .get(appContext)
                         .repairOwnerAssignments()
                 ) {
-                    is TankAssignmentRepairResult.Completed -> {
+                    is TankAssignmentRepairResult.Completed ->
                         repairResult.removedAssignments.size
-                    }
 
-                    is TankAssignmentRepairResult.Failure -> {
+                    is TankAssignmentRepairResult.Failure ->
                         throw repairResult.error
-                    }
                 }
 
                 val tankCareRecovery = TankCareIntegrityRecovery
@@ -165,6 +150,10 @@ class OwnerSessionCoordinator private constructor(
                     CareTaskDataStoreManager
                         .create(appContext)
                         .repairOrphanedTankTasks(normalizedOwnerUid)
+
+                // Application.onCreate may run before UserDataScope is installed. The owner session
+                // barrier is the authoritative point for crash/process-death media reconciliation.
+                AppMediaRecoveryManager(appContext).reconcileOwner(normalizedOwnerUid)
 
                 SessionBoundServiceManager.start(
                     context = appContext,
@@ -234,20 +223,14 @@ class OwnerSessionCoordinator private constructor(
         }
     }
 
-    fun snapshot(): OwnerSessionStateMachine.Snapshot {
-        return stateMachine.snapshot()
-    }
+    fun snapshot(): OwnerSessionStateMachine.Snapshot = stateMachine.snapshot()
 
     private suspend fun clearTransitionProviders(
         transition: OwnerSessionStateMachine.Transition
     ) {
         val ownerUid = transition.targetOwnerUid ?: return
-        DevicesRepositoryProvider.clear(
-            expectedOwnerUid = ownerUid
-        )
-        TankDeviceAssignmentRepositoryProvider.clear(
-            expectedOwnerUid = ownerUid
-        )
+        DevicesRepositoryProvider.clear(expectedOwnerUid = ownerUid)
+        TankDeviceAssignmentRepositoryProvider.clear(expectedOwnerUid = ownerUid)
     }
 
     companion object {
@@ -256,9 +239,7 @@ class OwnerSessionCoordinator private constructor(
         private val stateMachine = OwnerSessionStateMachine()
         private val transitionMutex = Mutex()
 
-        fun create(
-            context: Context
-        ): OwnerSessionCoordinator {
+        fun create(context: Context): OwnerSessionCoordinator {
             return OwnerSessionCoordinator(
                 appContext = context.applicationContext
             )
