@@ -75,6 +75,22 @@ class MediaFlowCoordinatorInstrumentedTest {
     }
 
     @Test
+    fun coordinatorClearKeepsPromotedSelectionForRepositoryRecovery() = runBlocking {
+        val coordinator = coordinator(SavedStateHandle())
+        coordinator.initializeSelection(null)
+        val promoted = requireNotNull(coordinator.acceptCrop(createCropOutput()))
+
+        MediaFlowCoordinatorViewModel::class.java
+            .getDeclaredMethod("onCleared")
+            .apply { isAccessible = true }
+            .invoke(coordinator)
+
+        assertTrue(AppMediaStorage.isAppOwned(context, promoted.toString()))
+        AppMediaStorage.rollbackPendingMedia(context, promoted.toString())
+        assertFalse(AppMediaStorage.isAppOwned(context, promoted.toString()))
+    }
+
+    @Test
     fun previousPersistedMediaIsDeletedOnlyAfterReplacementCommit() = runBlocking {
         val coordinator = coordinator(SavedStateHandle())
         coordinator.initializeSelection(null)
