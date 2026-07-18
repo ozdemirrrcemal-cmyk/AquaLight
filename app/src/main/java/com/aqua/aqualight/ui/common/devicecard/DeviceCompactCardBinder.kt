@@ -1,8 +1,9 @@
 package com.aqua.aqualight.ui.common.devicecard
 
 import android.content.res.ColorStateList
-import android.graphics.Color
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemDeviceCompactCardBinding
 
 object DeviceCompactCardBinder {
@@ -11,17 +12,27 @@ object DeviceCompactCardBinder {
         binding: ItemDeviceCompactCardBinding,
         item: DeviceCompactCardUi
     ) {
-        val name = item.displayName.trim().ifBlank { "Device" }
-        val serial = item.serialText.trim().ifBlank { item.deviceUid.ifBlank { "Unknown" } }
-        val supporting = item.supportingText.trim()
-        val presenceText = if (item.statusStyle == DeviceCompactStatusStyle.ONLINE) {
-            "Online"
-        } else {
-            "Offline"
+        val context = binding.root.context
+        val name = item.displayName.trim().ifBlank {
+            context.getString(R.string.device_menu_default_title)
         }
+        val serial = item.serialText.trim().ifBlank {
+            item.deviceUid.ifBlank { context.getString(R.string.device_runtime_unknown) }
+        }
+        val supporting = item.supportingText.trim()
+        val presenceText = context.getString(
+            if (item.statusStyle == DeviceCompactStatusStyle.ONLINE) {
+                R.string.device_runtime_online
+            } else {
+                R.string.device_runtime_offline
+            }
+        )
 
         binding.tvDeviceName.text = name
-        binding.tvSerialNumber.text = "Serial: $serial"
+        binding.tvSerialNumber.text = context.getString(
+            R.string.device_runtime_serial_format,
+            serial
+        )
         binding.tvTankName.text = supporting
         binding.tvTankName.isVisible = supporting.isNotBlank()
 
@@ -31,7 +42,14 @@ object DeviceCompactCardBinder {
         binding.ivDeviceIcon.contentDescription = name
 
         binding.ivPresenceIcon.imageTintList = ColorStateList.valueOf(
-            presenceIconColor(item.statusStyle)
+            ContextCompat.getColor(
+                context,
+                if (item.statusStyle == DeviceCompactStatusStyle.ONLINE) {
+                    R.color.device_presence_online
+                } else {
+                    R.color.device_presence_offline
+                }
+            )
         )
         binding.ivPresenceIcon.contentDescription = presenceText
         binding.ivPresenceIcon.isVisible = !item.showAction
@@ -43,9 +61,13 @@ object DeviceCompactCardBinder {
             binding.ivPresenceIcon.isVisible || binding.tvCardAction.isVisible
 
         binding.root.contentDescription = buildString {
-            append(name)
-            append(", UID: ")
-            append(serial)
+            append(
+                context.getString(
+                    R.string.device_compact_content_description_base,
+                    name,
+                    serial
+                )
+            )
             if (supporting.isNotBlank()) {
                 append(", ")
                 append(supporting)
@@ -57,17 +79,6 @@ object DeviceCompactCardBinder {
                 append(", ")
                 append(presenceText)
             }
-        }
-    }
-
-    private fun presenceIconColor(
-        style: DeviceCompactStatusStyle
-    ): Int {
-        return when (style) {
-            DeviceCompactStatusStyle.ONLINE -> Color.parseColor("#5FD6B4")
-            DeviceCompactStatusStyle.CONNECTING,
-            DeviceCompactStatusStyle.WARNING,
-            DeviceCompactStatusStyle.OFFLINE -> Color.parseColor("#7B8794")
         }
     }
 }
