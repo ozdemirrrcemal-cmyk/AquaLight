@@ -112,6 +112,51 @@ class FeedbackViewModelTest {
         }
 
     @Test
+    fun mediaProcessingLockPreventsSubmitUntilSelectionCompletes() = runTest(dispatcher) {
+        val processedFile = File.createTempFile("feedback-processed-", ".jpg").apply {
+            writeBytes(byteArrayOf(1, 2, 3))
+        }
+        try {
+            val gate = CompletableDeferred<Unit>()
+            val repository = FakeFeedbackRepository()
+            val mediaProcessor = FakeFeedbackMediaProcessor().apply {
+                processGate = gate
+                processResult = FeedbackMediaProcessingResult.Success(
+                    ProcessedFeedbackMedia(
+                        path = processedFile.canonicalPath,
+                        displayName = "processed.jpg",
+                        width = 640,
+                        height = 480,
+                        byteCount = processedFile.length()
+                    )
+                )
+            }
+            val state = SavedStateHandle(
+                mapOf(
+                    "feedback.category" to "Bug",
+                    "feedback.message" to "A reproducible problem"
+                )
+            )
+            val viewModel = viewModel(state, repository, mediaProcessor)
+
+            viewModel.selectScreenshot(Uri.parse("content://test/source"))
+            viewModel.submit()
+
+            assertTrue(viewModel.uiState.value.isProcessingMedia)
+            runCurrent()
+            assertEquals(0, repository.submitCount)
+
+            gate.complete(Unit)
+            advanceUntilIdle()
+            assertNotNull(viewModel.uiState.value.screenshot)
+            assertFalse(viewModel.uiState.value.isBusy)
+            assertEquals(0, repository.submitCount)
+        } finally {
+            processedFile.delete()
+        }
+    }
+
+    @Test
     fun recreationNeverReplaysAnInterruptedSubmission() = runTest(dispatcher) {
         val repository = FakeFeedbackRepository()
         val mediaProcessor = FakeFeedbackMediaProcessor()
@@ -235,10 +280,14 @@ class FeedbackViewModelTest {
 
     private class FakeFeedbackMediaProcessor : FeedbackMediaProcessor {
         var allowRestore: Boolean = true
+        var processGate: CompletableDeferred<Unit>? = null
+        var processResult: FeedbackMediaProcessingResult? = null
         val deletedPaths = mutableListOf<String>()
 
-        override suspend fun process(uri: Uri): FeedbackMediaProcessingResult =
-            error("Unexpected process call")
+        override suspend fun process(uri: Uri): FeedbackMediaProcessingResult {
+            processGate?.await()
+            return processResult ?: error("Unexpected process call")
+        }
 
         override fun restore(
             path: String?,
