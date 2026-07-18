@@ -2,10 +2,12 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
+import com.aqua.aqualight.application.text.AppTextResolver
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootMenuMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootPresentationMapper
 import kotlinx.coroutines.Job
@@ -16,10 +18,11 @@ import kotlinx.coroutines.launch
 
 class DeviceLightRootViewModel(
     private val rootOperations: DeviceRootOperations,
-    private val firmwareUpdateOperations: DeviceFirmwareUpdateOperations
+    private val firmwareUpdateOperations: DeviceFirmwareUpdateOperations,
+    private val textResolver: AppTextResolver
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(DeviceLightRootUiState())
+    private val _uiState = MutableStateFlow(emptyState("", ""))
     val uiState: StateFlow<DeviceLightRootUiState> = _uiState.asStateFlow()
 
     private var boundDeviceUid: String = ""
@@ -59,15 +62,17 @@ class DeviceLightRootViewModel(
     fun checkBetaOtaManifest() {
         val deviceUid = boundDeviceUid
         if (deviceUid.isBlank()) {
-            updateOtaTestText("OTA test failed: deviceUid is missing.")
+            updateOtaTestText(textResolver.get(R.string.device_ota_test_missing_uid_check))
             return
         }
 
         viewModelScope.launch {
             lastOtaPlan = null
             updateOtaTestText(
-                "Checking signed beta manifest...\n" +
-                    "URL: $OTA_TEST_BETA_MANIFEST_URL"
+                textResolver.get(
+                    R.string.device_ota_test_checking_manifest,
+                    OTA_TEST_BETA_MANIFEST_URL
+                )
             )
             firmwareUpdateOperations.prepareUpdate(
                 deviceUid = deviceUid,
@@ -80,8 +85,10 @@ class DeviceLightRootViewModel(
                 },
                 onFailure = { error ->
                     updateOtaTestText(
-                        "OTA test plan failed:\n" +
-                            (error.message ?: error::class.java.simpleName)
+                        textResolver.get(
+                            R.string.device_ota_test_plan_failed,
+                            error.message ?: error::class.java.simpleName
+                        )
                     )
                 }
             )
@@ -90,12 +97,12 @@ class DeviceLightRootViewModel(
 
     fun startOtaTestUpdate() {
         if (boundDeviceUid.isBlank()) {
-            updateOtaTestText("OTA start failed: deviceUid is missing.")
+            updateOtaTestText(textResolver.get(R.string.device_ota_test_missing_uid_start))
             return
         }
         val plan = lastOtaPlan
         if (plan == null) {
-            updateOtaTestText("Run Check Beta Manifest first. No OTA plan is ready.")
+            updateOtaTestText(textResolver.get(R.string.device_ota_test_no_plan))
             return
         }
 
@@ -103,15 +110,20 @@ class DeviceLightRootViewModel(
         pendingOtaStartRequestId = result.messageId
         if (result.isSuccess && pendingOtaStartRequestId.isNotBlank()) {
             updateOtaTestText(
-                "OTA start command sent.\n" +
-                    "messageId: $pendingOtaStartRequestId\n" +
-                    "target: ${plan.targetVersion}\n" +
-                    "Watch firmware.ota.progress events below."
+                textResolver.get(
+                    R.string.device_ota_test_start_sent,
+                    pendingOtaStartRequestId,
+                    plan.targetVersion
+                )
             )
         } else {
             updateOtaTestText(
-                "OTA start command could not be sent.\n" +
-                    (result.errorMessage.ifBlank { "Unknown WebSocket send error." })
+                textResolver.get(
+                    R.string.device_ota_test_start_failed,
+                    result.errorMessage.ifBlank {
+                        textResolver.get(R.string.device_ota_test_unknown_websocket_error)
+                    }
+                )
             )
         }
     }
@@ -119,18 +131,27 @@ class DeviceLightRootViewModel(
     fun requestOtaTestStatus() {
         val deviceUid = boundDeviceUid
         if (deviceUid.isBlank()) {
-            updateOtaTestText("OTA status failed: deviceUid is missing.")
+            updateOtaTestText(textResolver.get(R.string.device_ota_test_missing_uid_status))
             return
         }
 
         val result = firmwareUpdateOperations.requestStatus(deviceUid)
         pendingOtaStatusRequestId = result.messageId
         if (result.isSuccess && pendingOtaStatusRequestId.isNotBlank()) {
-            updateOtaTestText("OTA status command sent. messageId: $pendingOtaStatusRequestId")
+            updateOtaTestText(
+                textResolver.get(
+                    R.string.device_ota_test_status_sent,
+                    pendingOtaStatusRequestId
+                )
+            )
         } else {
             updateOtaTestText(
-                "OTA status command could not be sent.\n" +
-                    (result.errorMessage.ifBlank { "Unknown WebSocket send error." })
+                textResolver.get(
+                    R.string.device_ota_test_status_failed,
+                    result.errorMessage.ifBlank {
+                        textResolver.get(R.string.device_ota_test_unknown_websocket_error)
+                    }
+                )
             )
         }
     }
@@ -138,18 +159,27 @@ class DeviceLightRootViewModel(
     fun clearOtaTestStatus() {
         val deviceUid = boundDeviceUid
         if (deviceUid.isBlank()) {
-            updateOtaTestText("OTA clear failed: deviceUid is missing.")
+            updateOtaTestText(textResolver.get(R.string.device_ota_test_missing_uid_clear))
             return
         }
 
         val result = firmwareUpdateOperations.clearStatus(deviceUid)
         pendingOtaClearRequestId = result.messageId
         if (result.isSuccess && pendingOtaClearRequestId.isNotBlank()) {
-            updateOtaTestText("OTA clear command sent. messageId: $pendingOtaClearRequestId")
+            updateOtaTestText(
+                textResolver.get(
+                    R.string.device_ota_test_clear_sent,
+                    pendingOtaClearRequestId
+                )
+            )
         } else {
             updateOtaTestText(
-                "OTA clear command could not be sent.\n" +
-                    (result.errorMessage.ifBlank { "Unknown WebSocket send error." })
+                textResolver.get(
+                    R.string.device_ota_test_clear_failed,
+                    result.errorMessage.ifBlank {
+                        textResolver.get(R.string.device_ota_test_unknown_websocket_error)
+                    }
+                )
             )
         }
     }
@@ -168,10 +198,18 @@ class DeviceLightRootViewModel(
     }
 
     private fun emptyState(fallbackTitle: String, deviceUid: String) = DeviceLightRootUiState(
-        title = fallbackTitle.ifBlank { DEFAULT_TITLE },
+        title = fallbackTitle.ifBlank { textResolver.get(R.string.device_root_light_title) },
         deviceUid = deviceUid,
-        connectionStatus = "Offline",
-        otaTestText = otaTestOverlayText ?: DEFAULT_OTA_TEXT
+        connectionStatus = textResolver.get(R.string.device_runtime_offline),
+        ipText = textResolver.get(R.string.device_runtime_unknown),
+        firmwareText = textResolver.get(R.string.device_runtime_unknown),
+        modelText = textResolver.get(R.string.device_runtime_unknown),
+        channelCountText = textResolver.get(R.string.device_runtime_unknown),
+        featuresText = textResolver.get(R.string.device_runtime_unknown),
+        manualMenuText = textResolver.get(R.string.device_root_light_manual_empty),
+        programsMenuText = textResolver.get(R.string.device_root_light_programs_empty),
+        otaTestText = otaTestOverlayText
+            ?: textResolver.get(R.string.device_ota_test_default_text)
     )
 
     private fun DeviceRootSnapshot.toLightRootUiState(
@@ -179,59 +217,61 @@ class DeviceLightRootViewModel(
     ): DeviceLightRootUiState {
         val menuSections = DeviceRootMenuMapper.light(this)
         return DeviceLightRootUiState(
-            title = title.ifBlank { fallbackTitle }.ifBlank { DEFAULT_TITLE },
+            title = title.ifBlank { fallbackTitle }
+                .ifBlank { textResolver.get(R.string.device_root_light_title) },
             deviceUid = deviceUid,
-            connectionStatus = DeviceRootPresentationMapper.availabilityLabel(this),
-            ipText = ipAddress.ifBlank { "Unknown" },
-            firmwareText = firmwareLabel.ifBlank { "Unknown" },
-            modelText = modelLabel.ifBlank { "Unknown" },
-            channelCountText = lightChannelCount.takeIf { it > 0 }?.toString() ?: "Unknown",
-            featuresText = DeviceRootPresentationMapper.lightFeatureLabel(this),
+            connectionStatus = DeviceRootPresentationMapper.availabilityLabel(this, textResolver),
+            ipText = ipAddress.ifBlank { textResolver.get(R.string.device_runtime_unknown) },
+            firmwareText = firmwareLabel.ifBlank { textResolver.get(R.string.device_runtime_unknown) },
+            modelText = modelLabel.ifBlank { textResolver.get(R.string.device_runtime_unknown) },
+            channelCountText = lightChannelCount.takeIf { it > 0 }?.toString()
+                ?: textResolver.get(R.string.device_runtime_unknown),
+            featuresText = DeviceRootPresentationMapper.lightFeatureLabel(this, textResolver),
             manualMenuText = menuSections.primaryText(
-                "Firmware has not exposed manual light controls yet."
+                textResolver,
+                R.string.device_root_light_manual_empty
             ),
             programsMenuText = menuSections.secondaryText(
-                "Firmware has not exposed light programs, presets or settings yet."
+                textResolver,
+                R.string.device_root_light_programs_empty
             ),
-            otaTestText = otaTestOverlayText ?: DEFAULT_OTA_TEXT
+            otaTestText = otaTestOverlayText
+                ?: textResolver.get(R.string.device_ota_test_default_text)
         )
     }
 
     private fun formatPlan(plan: PreparedDeviceFirmwareUpdate): String {
-        return """
-            OTA beta manifest verified.
-            READY TO START
-            current: ${plan.currentVersion}
-            target: ${plan.targetVersion}
-            channel: ${plan.channel}
-            env: ${plan.environment}
-            productKey: ${plan.productKey}
-            productId: ${plan.productId}
-            hw: ${plan.hardwareRevision}
-            file: ${plan.filename}
-            size: ${plan.sizeBytes}
-            sha256: ${plan.sha256.take(16)}...
-        """.trimIndent()
+        return textResolver.get(
+            R.string.device_ota_test_plan_summary,
+            plan.currentVersion,
+            plan.targetVersion,
+            plan.channel,
+            plan.environment,
+            plan.productKey,
+            plan.productId,
+            plan.hardwareRevision,
+            plan.filename,
+            plan.sizeBytes.toString(),
+            plan.sha256.take(16)
+        )
     }
 
     private companion object {
-        const val DEFAULT_TITLE = "Light"
-        const val DEFAULT_OTA_TEXT = "Hidden OTA test panel. Long press Firmware to unlock."
         const val OTA_TEST_BETA_MANIFEST_URL =
             "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/releases/download/v1.0.1/manifest-beta.json"
     }
 }
 
 data class DeviceLightRootUiState(
-    val title: String = "Light",
+    val title: String = "",
     val deviceUid: String = "",
-    val connectionStatus: String = "Unknown",
-    val ipText: String = "Unknown",
-    val firmwareText: String = "Unknown",
-    val modelText: String = "Unknown",
-    val channelCountText: String = "Unknown",
-    val featuresText: String = "Unknown",
-    val manualMenuText: String = "Firmware has not exposed manual light controls yet.",
-    val programsMenuText: String = "Firmware has not exposed light programs, presets or settings yet.",
-    val otaTestText: String = "Hidden OTA test panel. Long press Firmware to unlock."
+    val connectionStatus: String = "",
+    val ipText: String = "",
+    val firmwareText: String = "",
+    val modelText: String = "",
+    val channelCountText: String = "",
+    val featuresText: String = "",
+    val manualMenuText: String = "",
+    val programsMenuText: String = "",
+    val otaTestText: String = ""
 )
