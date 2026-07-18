@@ -37,6 +37,7 @@ REGISTRY = "app/src/main/java/com/aqua/aqualight/data/notifications/Notification
 POLICY = "app/src/main/java/com/aqua/aqualight/data/notifications/AndroidNotificationPermissionPolicy.kt"
 REPOSITORY = "app/src/main/java/com/aqua/aqualight/data/notifications/OwnerNotificationPreferences.kt"
 SCHEDULER = "app/src/main/java/com/aqua/aqualight/data/notifications/DefaultNotificationScheduler.kt"
+LEDGER = "app/src/main/java/com/aqua/aqualight/data/notifications/CareReminderScheduleLedger.kt"
 RENDERER = "app/src/main/java/com/aqua/aqualight/platform/notifications/AndroidNotificationRenderer.kt"
 PLATFORM = "app/src/main/java/com/aqua/aqualight/data/notifications/NotificationPlatform.kt"
 IDENTITY = "app/src/main/java/com/aqua/aqualight/data/notifications/NotificationIdentity.kt"
@@ -55,7 +56,6 @@ RECONCILE_WORKER = "app/src/main/java/com/aqua/aqualight/data/care/reminder/Care
 SESSION_MANAGER = "app/src/main/java/com/aqua/aqualight/data/auth/SessionBoundServiceManager.kt"
 USER_CLEANER = "app/src/main/java/com/aqua/aqualight/data/user/UserDataCleaner.kt"
 USER_PROTO = "app/src/main/proto/user_prefs.proto"
-USER_MANAGER = "app/src/main/java/com/aqua/aqualight/data/user/UserPreferencesManager.kt"
 MANIFEST = "app/src/main/AndroidManifest.xml"
 DOC = "docs/stage7-notification-reminder-contract.md"
 
@@ -65,6 +65,7 @@ required_files = (
     POLICY,
     REPOSITORY,
     SCHEDULER,
+    LEDGER,
     RENDERER,
     PLATFORM,
     IDENTITY,
@@ -83,14 +84,15 @@ required_files = (
     SESSION_MANAGER,
     USER_CLEANER,
     USER_PROTO,
-    USER_MANAGER,
     MANIFEST,
     DOC,
     "app/src/main/proto/notification_preferences.proto",
+    "app/src/main/proto/notification_schedule_state.proto",
     "app/src/test/java/com/aqua/aqualight/application/notifications/NotificationPreferenceUseCaseTest.kt",
     "app/src/test/java/com/aqua/aqualight/application/notifications/NotificationDispatchUseCaseTest.kt",
     "app/src/test/java/com/aqua/aqualight/application/notifications/CareReminderKindContractTest.kt",
     "app/src/test/java/com/aqua/aqualight/data/notifications/NotificationIdentityTest.kt",
+    "app/src/test/java/com/aqua/aqualight/data/notifications/NotificationScheduleStateRulesTest.kt",
     "app/src/test/java/com/aqua/aqualight/data/care/reminder/CareReminderSchedulePolicyTest.kt",
     "app/src/test/java/com/aqua/aqualight/data/care/reminder/CareReminderReconcileRuntimeTest.kt",
     "app/src/test/java/com/aqua/aqualight/ui/navigation/CareTaskNotificationRoutePolicyTest.kt",
@@ -98,6 +100,7 @@ required_files = (
     "app/src/androidTest/java/com/aqua/aqualight/data/notifications/OwnerNotificationPreferencesInstrumentedTest.kt",
     "app/src/androidTest/java/com/aqua/aqualight/data/notifications/NotificationChannelRegistryInstrumentedTest.kt",
     "app/src/androidTest/java/com/aqua/aqualight/data/notifications/OwnerNotificationCancellationInstrumentedTest.kt",
+    "app/src/androidTest/java/com/aqua/aqualight/data/notifications/CareReminderScheduleLedgerInstrumentedTest.kt",
     "app/src/androidTest/java/com/aqua/aqualight/data/recovery/NotificationPreferencesCorruptionRecoveryInstrumentedTest.kt",
 )
 for relative in required_files:
@@ -180,6 +183,12 @@ for token, reason in (
     ("NotificationRenderer", "scheduler depends only on the application renderer contract"),
     ("CareTaskReminderScheduler.schedule", "care alarms must use the internal backend"),
     ("CareTaskReminderScheduler.cancel", "care alarm cancellation must be central"),
+    ("CareReminderScheduleLedger.create", "alarm identities must use a durable owner/task ledger"),
+    ("scheduleLedger.markScheduled", "successful alarms must be persisted in the ledger"),
+    ("scheduleLedger.markCancelled", "cancelled or ineligible alarms must leave the ledger"),
+    ("scheduleLedger.taskIds", "reconciliation must discover stale alarm identities"),
+    ("scheduleLedger.clearOwner", "owner shutdown must clear its alarm ledger"),
+    ("staleTaskIds", "reconciliation must cancel removed-task alarms"),
     ("CareReminderDeliveryWorker.cancelOwner", "queued delivery must be owner-cancellable"),
     ("CareReminderReconcileWorker.cancel", "owner reconciliation must be cancellable"),
     ("preferences.isEnabled", "scheduler eligibility must use owner preference"),
@@ -192,6 +201,15 @@ for token in (
     "platform.notifications.AndroidNotificationRenderer",
 ):
     forbid(SCHEDULER, token, "scheduler must not construct a platform renderer or visible notification")
+
+for token, reason in (
+    ("notification_schedule_state.pb", "alarm identity ledger must be durable"),
+    ("suspend fun taskIds", "owner alarm identities must be enumerable"),
+    ("suspend fun markScheduled", "scheduled alarm identities must be recorded"),
+    ("suspend fun markCancelled", "cancelled alarm identities must be removed"),
+    ("suspend fun clearOwner", "owner ledger cleanup must be explicit"),
+):
+    require(LEDGER, token, reason)
 
 for token, reason in (
     ("NotificationPlatform", "process composition must be explicit"),
@@ -254,10 +272,18 @@ for token, reason in (
     ("CareReminderSchedulePolicy.plan", "alarm timing must come from deterministic persisted-time policy"),
     ("CareReminderIdentity.alarmData", "PendingIntent identity must contain owner and task"),
     ("setAndAllowWhileIdle", "care reminders must remain inexact and idle-compatible"),
+    ("return true", "alarm backend must report whether an alarm was actually installed"),
 ):
     require(ALARM_BACKEND, token, reason)
-for token in ("setExact(", "setExactAndAllowWhileIdle(", "UserDataScope.currentUid()"):
-    forbid(ALARM_BACKEND, token, "exact alarms and implicit owner lookup are forbidden")
+for token in (
+    "setExact(",
+    "setExactAndAllowWhileIdle(",
+    "UserDataScope.currentUid()",
+    "NotificationHelper",
+    "NotificationRenderer",
+    "NotificationManager",
+):
+    forbid(ALARM_BACKEND, token, "low-level alarm backend must not own visible notification work")
 
 require(ALARM_RECEIVER, "CareReminderDeliveryWorker.enqueue", "alarm receiver must enqueue durable delivery only")
 for token in (
@@ -331,6 +357,10 @@ for source in APP.rglob("*.kt"):
             errors.append(f"{relative}: only NotificationChannelRegistry may create channels")
     if "NotificationManagerCompat.from" in text and source != path(POLICY):
         errors.append(f"{relative}: app notification state belongs in NotificationPermissionPolicy")
+    if "CareTaskReminderScheduler." in text and source != path(SCHEDULER):
+        errors.append(f"{relative}: only DefaultNotificationScheduler may call the alarm backend")
+    if "CareReminderScheduleLedger" in text and source not in {path(SCHEDULER), path(LEDGER)}:
+        errors.append(f"{relative}: only DefaultNotificationScheduler may own the alarm ledger")
 
 if UI.is_dir():
     forbidden_ui_tokens = (
@@ -361,6 +391,6 @@ if errors:
 
 print(
     "Central notification guard passed: one owner preference source, three permanent "
-    "channels, pure care persistence, one policy, one scheduler, one platform renderer, "
-    "central preference/dispatch use-cases and owner-scoped lifecycle cleanup."
+    "channels, pure care persistence, durable owner/task alarm ledger, one policy, one "
+    "scheduler, one platform renderer, central use-cases and owner-scoped cleanup."
 )
