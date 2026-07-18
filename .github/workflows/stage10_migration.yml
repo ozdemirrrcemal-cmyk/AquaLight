@@ -48,7 +48,7 @@ jobs:
       - name: Run deterministic resource migrations
         run: |
           set -euo pipefail
-          echo "Stage 10 migration schema: 4"
+          echo "Stage 10 migration schema: 5"
           python3 -m py_compile tools/stage10_xml_resource_migration.py
           python3 -m py_compile tools/stage10_kotlin_color_migration.py
           python3 -m py_compile tools/stage10_kotlin_text_migration.py
@@ -101,10 +101,12 @@ jobs:
           git add app/src/main docs/stage10-*.txt
           if git diff --cached --quiet; then
             echo "Migration produced no changes."
-          else
-            git commit -m "Stage 10: centralize Kotlin colors and user text"
-            git push origin HEAD:agent/stage-10-design-system-resource-cleanup
+            exit 0
           fi
+          git commit -m "Stage 10: centralize Kotlin colors and user text"
+          git fetch origin agent/stage-10-design-system-resource-cleanup
+          git rebase origin/agent/stage-10-design-system-resource-cleanup
+          git push origin HEAD:agent/stage-10-design-system-resource-cleanup
 
       - name: Enforce compilation result
         if: steps.build.outputs.status != '0'
