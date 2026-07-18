@@ -166,24 +166,70 @@ object AppMediaStorage {
         expectedScope: AppMediaScope? = null
     ): File? {
         if (uriString.isNullOrBlank()) return null
+        val appContext = context.applicationContext
         val uri = runCatching { Uri.parse(uriString) }.getOrNull() ?: return null
         val scopes = expectedScope?.let(::listOf) ?: AppMediaScope.entries
 
         val candidates = when (uri.scheme) {
             "file" -> listOfNotNull(uri.path?.let(::File))
-            "content" -> {
-                val expectedAuthority = "${context.packageName}$FILE_PROVIDER_SUFFIX"
-                if (uri.authority != expectedAuthority) return null
-                val fileName = uri.lastPathSegment?.substringAfterLast('/') ?: return null
-                scopes.map { scope -> File(mediaDirectory(context, scope), fileName) }
-            }
+            "content" -> contentUriCandidates(appContext, uri, scopes)
             null, "" -> listOf(File(uriString))
             else -> return null
         }
 
         return candidates.firstOrNull { candidate ->
-            scopes.any { scope -> candidate.isInside(mediaDirectory(context, scope)) }
+            scopes.any { scope -> candidate.isInside(mediaDirectory(appContext, scope)) }
         }
+    }
+
+    private fun contentUriCandidates(
+        context: Context,
+        uri: Uri,
+        scopes: List<AppMediaScope>
+    ): List<File> {
+        val expectedAuthority = "${context.packageName}$FILE_PROVIDER_SUFFIX"
+        if (uri.authority != expectedAuthority) return emptyList()
+
+        val candidates = linkedSetOf<File>()
+        val segments = uri.pathSegments
+
+        // FileProvider encodes the configured root name as the first path segment
+        // and the relative file path in the remaining segments. Reconstructing the
+        // relative path avoids relying on lastPathSegment for nested/encoded paths.
+        if (segments.size >= 2) {
+            val rootName = segments.first()
+            val relativePath = segments.drop(1).joinToString(File.separator)
+            scopes.filter { scope -> scope.directoryName == rootName }
+                .forEach { scope ->
+                    candidates += File(mediaDirectory(context, scope), relativePath)
+                }
+        }
+
+        // Compatibility fallback for providers that expose only the file name.
+        uri.lastPathSegment
+            ?.substringAfterLast('/')
+            ?.takeIf(String::isNotBlank)
+            ?.let { fileName ->
+                scopes.forEach { scope ->
+                    candidates += File(mediaDirectory(context, scope), fileName)
+                }
+            }
+
+        // Final round-trip fallback: compare the canonical FileProvider URI for
+        // existing app-owned files. This is deterministic and remains fail-closed.
+        if (candidates.none(File::exists)) {
+            scopes.forEach { scope ->
+                mediaDirectory(context, scope).listFiles()
+                    ?.asSequence()
+                    ?.filter(File::isFile)
+                    ?.filter { file ->
+                        runCatching { toContentUri(context, file) == uri }.getOrDefault(false)
+                    }
+                    ?.forEach(candidates::add)
+            }
+        }
+
+        return candidates.toList()
     }
 
     private fun createTemporaryFile(
@@ -215,7 +261,7 @@ object AppMediaStorage {
         context: Context,
         scope: AppMediaScope
     ): File {
-        return File(context.filesDir, scope.directoryName).apply {
+        return File(context.applicationContext.filesDir, scope.directoryName).apply {
             if (!exists()) mkdirs()
         }
     }
@@ -224,9 +270,10 @@ object AppMediaStorage {
         context: Context,
         file: File
     ): Uri {
+        val appContext = context.applicationContext
         return FileProvider.getUriForFile(
-            context,
-            "${context.packageName}$FILE_PROVIDER_SUFFIX",
+            appContext,
+            "${appContext.packageName}$FILE_PROVIDER_SUFFIX",
             file
         )
     }
