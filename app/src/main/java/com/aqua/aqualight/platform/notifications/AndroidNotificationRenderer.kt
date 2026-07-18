@@ -26,6 +26,7 @@ import com.aqua.aqualight.data.care.reminder.CareReminderIdentity
 import com.aqua.aqualight.data.notifications.NotificationChannelRegistry
 import com.aqua.aqualight.data.notifications.NotificationIdentity
 import com.aqua.aqualight.ui.main.MainActivity
+import java.util.concurrent.ConcurrentHashMap
 
 /** The only Android platform adapter allowed to build, post, update or cancel notifications. */
 class AndroidNotificationRenderer(
@@ -34,6 +35,14 @@ class AndroidNotificationRenderer(
 
     private val appContext = context.applicationContext
     private val manager = appContext.getSystemService(NotificationManager::class.java)
+
+    /**
+     * Binder delivery to NotificationManager is asynchronous. Keeping same-process
+     * identities lets logout/account switching issue deterministic tagged cancels even
+     * when Android has not exposed a just-posted notification through activeNotifications yet.
+     * After process recreation, Android's active list remains the recovery authority.
+     */
+    private val postedNotifications = ConcurrentHashMap.newKeySet<PostedNotification>()
 
     @SuppressLint("MissingPermission")
     override fun renderCareReminder(notification: CareReminderNotification) {
@@ -149,22 +158,32 @@ class AndroidNotificationRenderer(
 
     override fun cancelCareReminder(ownerUid: String, taskId: Long) {
         require(taskId > 0L) { "taskId must be positive" }
-        manager?.cancel(
-            NotificationIdentity.tag(
-                NotificationCategory.CARE_REMINDERS,
-                ownerUid,
-                taskId.toString()
-            ),
-            CARE_NOTIFICATION_ID
+        val tag = NotificationIdentity.tag(
+            NotificationCategory.CARE_REMINDERS,
+            ownerUid,
+            taskId.toString()
         )
+        postedNotifications.remove(PostedNotification(ownerUid, tag, CARE_NOTIFICATION_ID))
+        manager?.cancel(tag, CARE_NOTIFICATION_ID)
     }
 
     override fun cancelOwner(ownerUid: String) {
-        val prefix = NotificationIdentity.ownerTagPrefix(ownerUid)
-        manager?.activeNotifications
-            ?.filter { notification -> notification.tag?.startsWith(prefix) == true }
-            ?.forEach { notification ->
-                manager.cancel(notification.tag, notification.id)
+        val normalizedOwner = ownerUid.trim()
+        require(normalizedOwner.isNotBlank()) { "ownerUid must not be blank" }
+        val notificationManager = manager ?: return
+
+        postedNotifications
+            .filter { posted -> posted.ownerUid == normalizedOwner }
+            .forEach { posted ->
+                postedNotifications.remove(posted)
+                notificationManager.cancel(posted.tag, posted.id)
+            }
+
+        val prefix = NotificationIdentity.ownerTagPrefix(normalizedOwner)
+        notificationManager.activeNotifications
+            .filter { notification -> notification.tag?.startsWith(prefix) == true }
+            .forEach { notification ->
+                notificationManager.cancel(notification.tag, notification.id)
             }
     }
 
@@ -222,11 +241,12 @@ class AndroidNotificationRenderer(
         id: Int,
         notification: Notification
     ) {
-        manager?.notify(
-            NotificationIdentity.tag(category, ownerUid, entityId),
-            id,
-            notification
-        )
+        val normalizedOwner = ownerUid.trim()
+        require(normalizedOwner.isNotBlank()) { "ownerUid must not be blank" }
+        val notificationManager = manager ?: return
+        val tag = NotificationIdentity.tag(category, normalizedOwner, entityId)
+        postedNotifications += PostedNotification(normalizedOwner, tag, id)
+        notificationManager.notify(tag, id, notification)
     }
 
     private fun createLargeIconBitmap(
@@ -264,6 +284,12 @@ class AndroidNotificationRenderer(
 
     private fun Int.dp(): Int =
         (this * appContext.resources.displayMetrics.density).toInt()
+
+    private data class PostedNotification(
+        val ownerUid: String,
+        val tag: String,
+        val id: Int
+    )
 
     companion object {
         private const val CARE_NOTIFICATION_ID = 1
