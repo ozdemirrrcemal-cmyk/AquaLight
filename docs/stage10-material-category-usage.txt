@@ -70,19 +70,19 @@ app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/FertilizerCa
 app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/FertilizerCatalog.kt:25:        AquariumMaterial(
 app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/FertilizerCatalog.kt:33:        AquariumMaterial(
 app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/FertilizerCatalog.kt:41:        AquariumMaterial(
-app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:3:object MaterialCategoryCatalog {
-app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:6:        MaterialCategory(
-app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:11:        MaterialCategory(
-app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:16:        MaterialCategory(
-app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:21:        MaterialCategory(
-app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:29:        MaterialCategory(
-app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:34:        MaterialCategory(
-app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:39:        MaterialCategory(
-app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:44:        MaterialCategory(
-app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:49:        MaterialCategory(
-app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:54:        MaterialCategory(
-app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:59:        MaterialCategory(
-app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:64:        MaterialCategory(
+app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:5:object MaterialCategoryCatalog {
+app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:8:        MaterialCategory(
+app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:13:        MaterialCategory(
+app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:18:        MaterialCategory(
+app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:23:        MaterialCategory(
+app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:31:        MaterialCategory(
+app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:36:        MaterialCategory(
+app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:41:        MaterialCategory(
+app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:46:        MaterialCategory(
+app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:51:        MaterialCategory(
+app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:56:        MaterialCategory(
+app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:61:        MaterialCategory(
+app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:66:        MaterialCategory(
 app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/AquariumMaterial.kt:3:data class AquariumMaterial(
 app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/DecorationCatalog.kt:9:        AquariumMaterial(
 app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/DecorationCatalog.kt:17:        AquariumMaterial(

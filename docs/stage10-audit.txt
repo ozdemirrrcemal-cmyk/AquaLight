@@ -1,16 +1,4 @@
 Stage 10 design-system/resource guard failed:
- - app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:8: [RAW_UI_MESSAGE] user-visible literal "Fertilizer" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:13: [RAW_UI_MESSAGE] user-visible literal "Decoration" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:18: [RAW_UI_MESSAGE] user-visible literal "Gravel" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:23: [RAW_UI_MESSAGE] user-visible literal "Substrate" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:31: [RAW_UI_MESSAGE] user-visible literal "Aquarium" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:36: [RAW_UI_MESSAGE] user-visible literal "CO2" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:41: [RAW_UI_MESSAGE] user-visible literal "Light" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:46: [RAW_UI_MESSAGE] user-visible literal "Filter" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:51: [RAW_UI_MESSAGE] user-visible literal "Heater" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:56: [RAW_UI_MESSAGE] user-visible literal "Cooler" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:61: [RAW_UI_MESSAGE] user-visible literal "Dosing" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:66: [RAW_UI_MESSAGE] user-visible literal "LED Background" must be supplied by @StringRes
  - app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleGattOperationQueue.kt:27: [RAW_UI_MESSAGE] user-visible literal "BLE GATT operation timed out: " must be supplied by @StringRes
  - app/src/main/java/com/aqua/aqualight/data/devices/repository/DevicesRepository.kt:338: [RAW_UI_MESSAGE] user-visible literal "$operation failed and no durable rollback snapshot was available." must be supplied by @StringRes
  - app/src/main/java/com/aqua/aqualight/data/user/UserPreferencesManager.kt:68: [RAW_UI_MESSAGE] user-visible literal "Use uid instead. This value was never a Firebase ID token." must be supplied by @StringRes
@@ -209,7 +197,7 @@ Stage 10 design-system/resource guard failed:
  - app/src/main/res/values-night/styles.xml:4: [LEGACY_STYLE] RedButton must be replaced by a semantic Widget.Aqua.* style
  - app/src/main/res/values-night/styles.xml:14: [LEGACY_STYLE] BlackButton must be replaced by a semantic Widget.Aqua.* style
  - app/src/main/res/values-night/styles.xml:25: [LEGACY_STYLE] WhiteButton must be replaced by a semantic Widget.Aqua.* style
-TOTAL STAGE 10 VIOLATIONS: 210
+TOTAL STAGE 10 VIOLATIONS: 198
 
-GENERATED_COMMIT=2b2ccd8c108d110bb6b055ed8839ed0b9694d050
-GENERATED_AT_UTC=2026-07-18T16:53:47Z
+GENERATED_COMMIT=37e542477bfb5ab92e39d20537a928aaae8b973c
+GENERATED_AT_UTC=2026-07-18T16:54:05Z

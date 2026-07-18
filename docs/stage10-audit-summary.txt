@@ -2,7 +2,7 @@
 
 ## Rule counts
     142 [RAW_COLOR]
-     65 [RAW_UI_MESSAGE]
+     53 [RAW_UI_MESSAGE]
       3 [LEGACY_STYLE]
 
 ## Files by rule
@@ -10,7 +10,6 @@
 ### RAW_XML_TEXT
 
 ### RAW_UI_MESSAGE
-app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt
 app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleGattOperationQueue.kt
 app/src/main/java/com/aqua/aqualight/data/devices/repository/DevicesRepository.kt
 app/src/main/java/com/aqua/aqualight/data/user/UserPreferencesManager.kt
@@ -116,5 +115,5 @@ app/src/main/res/values/toolbar_action_colors.xml
 app/src/main/res/values/typography_dimens.xml
 app/src/main/res/values/typography_styles.xml
 
-GENERATED_COMMIT=2b2ccd8c108d110bb6b055ed8839ed0b9694d050
-GENERATED_AT_UTC=2026-07-18T16:53:47Z
+GENERATED_COMMIT=37e542477bfb5ab92e39d20537a928aaae8b973c
+GENERATED_AT_UTC=2026-07-18T16:54:05Z
