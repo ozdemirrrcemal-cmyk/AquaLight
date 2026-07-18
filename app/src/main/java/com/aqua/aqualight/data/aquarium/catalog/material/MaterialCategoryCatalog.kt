@@ -1,26 +1,28 @@
 package com.aqua.aqualight.data.aquarium.catalog.material
 
+import com.aqua.aqualight.R
+
 object MaterialCategoryCatalog {
 
     val bioCategories = listOf(
         MaterialCategory(
             key = MaterialCategoryKey.FERTILIZER,
-            title = "Fertilizer",
+            titleRes = R.string.catalog_category_fertilizer,
             shortCode = "Fe"
         ),
         MaterialCategory(
             key = MaterialCategoryKey.DECORATION,
-            title = "Decoration",
+            titleRes = R.string.catalog_category_decoration,
             shortCode = "De"
         ),
         MaterialCategory(
             key = MaterialCategoryKey.GRAVEL,
-            title = "Gravel",
+            titleRes = R.string.catalog_category_gravel,
             shortCode = "Gr"
         ),
         MaterialCategory(
             key = MaterialCategoryKey.SUBSTRATE,
-            title = "Substrate",
+            titleRes = R.string.catalog_category_substrate,
             shortCode = "Su"
         )
     )
@@ -28,42 +30,42 @@ object MaterialCategoryCatalog {
     val hardwareCategories = listOf(
         MaterialCategory(
             key = MaterialCategoryKey.AQUARIUM,
-            title = "Aquarium",
+            titleRes = R.string.catalog_category_aquarium,
             shortCode = "Aq"
         ),
         MaterialCategory(
             key = MaterialCategoryKey.CO2,
-            title = "CO2",
+            titleRes = R.string.catalog_category_co2,
             shortCode = "C"
         ),
         MaterialCategory(
             key = MaterialCategoryKey.LIGHT,
-            title = "Light",
+            titleRes = R.string.catalog_category_light,
             shortCode = "Li"
         ),
         MaterialCategory(
             key = MaterialCategoryKey.FILTER,
-            title = "Filter",
+            titleRes = R.string.catalog_category_filter,
             shortCode = "Fi"
         ),
         MaterialCategory(
             key = MaterialCategoryKey.HEATER,
-            title = "Heater",
+            titleRes = R.string.catalog_category_heater,
             shortCode = "He"
         ),
         MaterialCategory(
             key = MaterialCategoryKey.COOLER,
-            title = "Cooler",
+            titleRes = R.string.catalog_category_cooler,
             shortCode = "Co"
         ),
         MaterialCategory(
             key = MaterialCategoryKey.DOSING,
-            title = "Dosing",
+            titleRes = R.string.catalog_category_dosing,
             shortCode = "Do"
         ),
         MaterialCategory(
             key = MaterialCategoryKey.LED_BACKGROUND,
-            title = "LED Background",
+            titleRes = R.string.catalog_category_led_background,
             shortCode = "LED"
         )
     )
