@@ -6,6 +6,7 @@ import androidx.core.os.LocaleListCompat
 import com.aqua.aqualight.base.theme.AppThemeController
 import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.composition.DefaultAppContainer
+import com.aqua.aqualight.data.media.AppMediaRecoveryManager
 import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.aqua.aqualight.data.user.UserPreferencesManager
@@ -62,6 +63,14 @@ class AquaApp : Application() {
                     applyTheme(resolvedThemeMode)
                     applyLanguage(resolvedLanguageCode)
                 }
+            }
+        }
+
+        // Local media reconciliation belongs to process startup. It preserves candidates already
+        // referenced by the active owner's durable stores and expires only unreferenced candidates.
+        applicationScope.launch {
+            runCatching {
+                AppMediaRecoveryManager(this@AquaApp).reconcileActiveOwner()
             }
         }
 
