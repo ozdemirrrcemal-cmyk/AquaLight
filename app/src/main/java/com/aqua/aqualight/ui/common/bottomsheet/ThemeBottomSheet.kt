@@ -2,6 +2,8 @@ package com.aqua.aqualight.ui.common.bottomsheet
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.os.bundleOf
+import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.theme.AppThemeController
@@ -19,9 +21,6 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
     private val settingsOperations by lazy {
         requireContext().requireAppContainer().userSettingsOperations
     }
-
-    var onBeforeThemeApplied: (() -> Unit)? = null
-    var onThemeChanged: (() -> Unit)? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -45,25 +44,19 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
     }
 
     private fun selectTheme(mode: String) {
-        val normalizedMode = AppThemeController.normalize(
-            mode
-        )
+        val normalizedMode = AppThemeController.normalize(mode)
 
         viewLifecycleOwner.lifecycleScope.launch {
-            settingsOperations.updateThemeMode(
-                normalizedMode
+            settingsOperations.updateThemeMode(normalizedMode)
+            updateRadios(normalizedMode)
+
+            val appContext = context?.applicationContext
+            val hostView = activity?.window?.decorView
+
+            parentFragmentManager.setFragmentResult(
+                REQUEST_KEY,
+                bundleOf(RESULT_THEME_MODE to normalizedMode)
             )
-
-            updateRadios(
-                normalizedMode
-            )
-
-            val appContext =
-                context?.applicationContext
-            val hostView =
-                activity?.window?.decorView
-
-            onBeforeThemeApplied?.invoke()
             dismiss()
 
             hostView?.post {
@@ -73,27 +66,18 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
                         mode = normalizedMode
                     )
                 }
-
-                onThemeChanged?.invoke()
             }
         }
     }
 
     private fun refreshRadios() {
         viewLifecycleOwner.lifecycleScope.launch {
-            val mode = settingsOperations.themeMode.first()
-
-            updateRadios(
-                mode
-            )
+            updateRadios(settingsOperations.themeMode.first())
         }
     }
 
     private fun updateRadios(mode: String) = with(binding) {
-        val normalizedMode = AppThemeController.normalize(
-            mode
-        )
-
+        val normalizedMode = AppThemeController.normalize(mode)
         val lightSelected = normalizedMode == AppThemeController.MODE_LIGHT
         val darkSelected = normalizedMode == AppThemeController.MODE_DARK
         val systemSelected = normalizedMode == AppThemeController.MODE_SYSTEM
@@ -108,7 +92,19 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
     }
 
     override fun onDestroyView() {
-        super.onDestroyView()
         _binding = null
+        super.onDestroyView()
+    }
+
+    companion object {
+        const val REQUEST_KEY = "theme_bottom_sheet_result"
+        const val RESULT_THEME_MODE = "theme_mode"
+
+        private const val TAG = "ThemeBottomSheet"
+
+        fun show(fragmentManager: FragmentManager) {
+            if (fragmentManager.findFragmentByTag(TAG) != null) return
+            ThemeBottomSheet().show(fragmentManager, TAG)
+        }
     }
 }
