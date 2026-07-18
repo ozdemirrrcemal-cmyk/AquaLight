@@ -147,11 +147,9 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
             binding.tvUnitValue.text = unitLabel()
         }
 
-        if (savedInstanceState == null) {
-            binding.inputWidth.setText(formatValue(requireArguments().getInt(ARG_WIDTH_CM)))
-            binding.inputLength.setText(formatValue(requireArguments().getInt(ARG_LENGTH_CM)))
-            binding.inputHeight.setText(formatValue(requireArguments().getInt(ARG_HEIGHT_CM)))
-        }
+        binding.inputWidth.setText(formatValue(requireArguments().getInt(ARG_WIDTH_CM)))
+        binding.inputLength.setText(formatValue(requireArguments().getInt(ARG_LENGTH_CM)))
+        binding.inputHeight.setText(formatValue(requireArguments().getInt(ARG_HEIGHT_CM)))
         renderUnit()
 
         binding.unitRow.setOnClickListener {
@@ -342,7 +340,10 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         options.forEach { (view, value) ->
             val selected = value.equals(selectedChoice, ignoreCase = true)
             view.isSelected = selected
-            view.setTypeface(null, if (selected) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
+            view.setTypeface(
+                null,
+                if (selected) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL
+            )
             view.setBackgroundResource(R.drawable.bg_aqua_selection_row_compact)
         }
     }
