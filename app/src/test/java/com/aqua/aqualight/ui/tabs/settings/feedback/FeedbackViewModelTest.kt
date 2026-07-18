@@ -141,9 +141,7 @@ class FeedbackViewModelTest {
             )
             val viewModel = viewModel(state, repository, mediaProcessor)
 
-            // The fake processor never dereferences the URI. Uri.EMPTY avoids invoking Android's
-            // unimplemented local-JVM Uri.parse() stub while preserving the production API boundary.
-            viewModel.selectScreenshot(Uri.EMPTY)
+            viewModel.selectScreenshotForTest { mediaProcessor.processForTest() }
             viewModel.submit()
 
             assertTrue(viewModel.uiState.value.isProcessingMedia)
@@ -288,10 +286,12 @@ class FeedbackViewModelTest {
         var processResult: FeedbackMediaProcessingResult? = null
         val deletedPaths = mutableListOf<String>()
 
-        override suspend fun process(uri: Uri): FeedbackMediaProcessingResult {
+        suspend fun processForTest(): FeedbackMediaProcessingResult {
             processGate?.await()
             return processResult ?: error("Unexpected process call")
         }
+
+        override suspend fun process(uri: Uri): FeedbackMediaProcessingResult = processForTest()
 
         override fun restore(
             path: String?,
