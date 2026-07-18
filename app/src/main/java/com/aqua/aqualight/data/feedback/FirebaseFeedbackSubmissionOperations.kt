@@ -31,7 +31,7 @@ import kotlinx.coroutines.withContext
 /**
  * Firebase feedback repository with a serialized, process-death-recoverable media transaction.
  *
- * The Firestore document itself is the server-side transaction fence:
+ * The Firestore document itself is the owner-scoped server transaction fence:
  * pending -> committed, or pending/absent -> aborted. A delayed writer can never overwrite an
  * aborted fence because every state transition is performed in a Firestore transaction.
  */
@@ -82,12 +82,17 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
 
         val pending = PendingFeedbackUpload(
             documentId = documentId,
+            ownerUid = ownerUid,
             storagePath = screenshotPath(ownerUid, documentId)
         )
         try {
             // Synchronous disk commit is intentional: remote work never starts without recovery state.
             journalStore.put(pending)
-            documentStore.reservePending(documentId, pending.storagePath)
+            documentStore.reservePending(
+                documentId = documentId,
+                ownerUid = ownerUid,
+                storagePath = pending.storagePath
+            )
         } catch (error: Throwable) {
             error.throwIfCancellation()
             journalStore.remove(documentId)
@@ -120,7 +125,12 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
         data[FIELD_TRANSACTION_STATE] = TRANSACTION_COMMITTED
 
         return try {
-            documentStore.commitPending(documentId, upload.storagePath, data)
+            documentStore.commitPending(
+                documentId = documentId,
+                ownerUid = ownerUid,
+                storagePath = upload.storagePath,
+                data = data
+            )
             journalStore.remove(documentId)
             FeedbackSubmissionResult.Success(documentId)
         } catch (persistenceError: Throwable) {
@@ -160,7 +170,7 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
         FIELD_USER_ID to ownerUid
     )
 
-    /** Reconciles every durable local entry through the server-side transaction fence. */
+    /** Reconciles every durable local entry through the owner-scoped server transaction fence. */
     private suspend fun cleanupPendingLocked(): FeedbackOrphanCleanupResult {
         val pending = journalStore.pendingEntries()
         var deleted = 0
@@ -184,7 +194,11 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
         entry: PendingFeedbackUpload
     ): ReconcileOutcome {
         val state = try {
-            documentStore.resolveForCleanup(entry.documentId, entry.storagePath)
+            documentStore.resolveForCleanup(
+                documentId = entry.documentId,
+                ownerUid = entry.ownerUid,
+                storagePath = entry.storagePath
+            )
         } catch (error: Throwable) {
             error.throwIfCancellation()
             return ReconcileOutcome.Retained(error)
@@ -294,14 +308,20 @@ internal enum class FeedbackDocumentResolution {
 internal interface FeedbackDocumentStore {
     fun newDocumentId(): String
     suspend fun save(documentId: String, data: Map<String, Any?>)
-    suspend fun reservePending(documentId: String, storagePath: String)
+    suspend fun reservePending(
+        documentId: String,
+        ownerUid: String,
+        storagePath: String
+    )
     suspend fun commitPending(
         documentId: String,
+        ownerUid: String,
         storagePath: String,
         data: Map<String, Any?>
     )
     suspend fun resolveForCleanup(
         documentId: String,
+        ownerUid: String,
         storagePath: String
     ): FeedbackDocumentResolution
 }
@@ -330,18 +350,23 @@ private class FirebaseFeedbackDocumentStore(
         firestore.collection(COLLECTION).document(documentId).set(stored).awaitResult()
     }
 
-    override suspend fun reservePending(documentId: String, storagePath: String) {
+    override suspend fun reservePending(
+        documentId: String,
+        ownerUid: String,
+        storagePath: String
+    ) {
         val reference = firestore.collection(COLLECTION).document(documentId)
         firestore.runTransaction { transaction ->
             check(!transaction.get(reference).exists()) {
                 "Feedback transaction document already exists."
             }
-            transaction.set(reference, pendingMarker(storagePath))
+            transaction.set(reference, pendingMarker(ownerUid, storagePath))
         }.awaitResult()
     }
 
     override suspend fun commitPending(
         documentId: String,
+        ownerUid: String,
         storagePath: String,
         data: Map<String, Any?>
     ) {
@@ -349,6 +374,9 @@ private class FirebaseFeedbackDocumentStore(
         firestore.runTransaction { transaction ->
             val snapshot = transaction.get(reference)
             check(snapshot.exists()) { "Feedback transaction reservation is missing." }
+            check(
+                snapshot.getString(FirebaseFeedbackSubmissionOperations.FIELD_USER_ID) == ownerUid
+            ) { "Feedback transaction owner changed." }
             check(
                 snapshot.getString(FirebaseFeedbackSubmissionOperations.FIELD_TRANSACTION_STATE) ==
                     FirebaseFeedbackSubmissionOperations.TRANSACTION_PENDING
@@ -368,20 +396,24 @@ private class FirebaseFeedbackDocumentStore(
 
     override suspend fun resolveForCleanup(
         documentId: String,
+        ownerUid: String,
         storagePath: String
     ): FeedbackDocumentResolution {
         val reference = firestore.collection(COLLECTION).document(documentId)
         return firestore.runTransaction { transaction ->
             val snapshot = transaction.get(reference)
             if (!snapshot.exists()) {
-                transaction.set(reference, abortedMarker(storagePath))
+                transaction.set(reference, abortedMarker(ownerUid, storagePath))
                 return@runTransaction FeedbackDocumentResolution.ABORTED
             }
 
+            val storedOwner = snapshot.getString(
+                FirebaseFeedbackSubmissionOperations.FIELD_USER_ID
+            )
             val storedPath = snapshot.getString(
                 FirebaseFeedbackSubmissionOperations.FIELD_SCREENSHOT_PATH
             )
-            if (storedPath != storagePath) {
+            if (storedOwner != ownerUid || storedPath != storagePath) {
                 return@runTransaction FeedbackDocumentResolution.CONFLICT
             }
 
@@ -416,7 +448,8 @@ private class FirebaseFeedbackDocumentStore(
         }.awaitResult()
     }
 
-    private fun pendingMarker(storagePath: String): Map<String, Any> = mapOf(
+    private fun pendingMarker(ownerUid: String, storagePath: String): Map<String, Any> = mapOf(
+        FirebaseFeedbackSubmissionOperations.FIELD_USER_ID to ownerUid,
         FirebaseFeedbackSubmissionOperations.FIELD_TRANSACTION_STATE to
             FirebaseFeedbackSubmissionOperations.TRANSACTION_PENDING,
         FirebaseFeedbackSubmissionOperations.FIELD_STATUS to
@@ -426,7 +459,8 @@ private class FirebaseFeedbackDocumentStore(
         FirebaseFeedbackSubmissionOperations.FIELD_TRANSACTION_EXPIRES_AT to transactionExpiry()
     )
 
-    private fun abortedMarker(storagePath: String): Map<String, Any> = mapOf(
+    private fun abortedMarker(ownerUid: String, storagePath: String): Map<String, Any> = mapOf(
+        FirebaseFeedbackSubmissionOperations.FIELD_USER_ID to ownerUid,
         FirebaseFeedbackSubmissionOperations.FIELD_TRANSACTION_STATE to
             FirebaseFeedbackSubmissionOperations.TRANSACTION_ABORTED,
         FirebaseFeedbackSubmissionOperations.FIELD_STATUS to
