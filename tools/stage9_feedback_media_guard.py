@@ -7,7 +7,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "app/src/main/java/com/aqua/aqualight"
 FEEDBACK_FRAGMENT = APP / "ui/tabs/settings/feedback/FeedbackFragment.kt"
-LEGACY_STORAGE_ADAPTER = APP / "data/aquarium/photo/TankPhotoStorage.kt"
+AQUARIUM_STORE = APP / "data/aquarium/store/AquariumTankDataStoreManager.kt"
 
 REQUIRED = (
     APP / "application/feedback/FeedbackSubmissionOperations.kt",
@@ -28,6 +28,7 @@ REQUIRED = (
 
 OBSOLETE = (
     APP / "ui/tabs/aquarium/photo/TankPhotoFlowCoordinator.kt",
+    APP / "data/aquarium/photo/TankPhotoStorage.kt",
 )
 
 errors: list[str] = []
@@ -77,17 +78,16 @@ for path in (
                 f"{path.relative_to(ROOT)}: duplicated media ownership is forbidden: {token}"
             )
 
-if LEGACY_STORAGE_ADAPTER.is_file():
-    adapter = LEGACY_STORAGE_ADAPTER.read_text(encoding="utf-8", errors="ignore")
-    if "AppMediaStorage" not in adapter:
+if AQUARIUM_STORE.is_file():
+    store = AQUARIUM_STORE.read_text(encoding="utf-8", errors="ignore")
+    if "AppMediaStorage" not in store or "AppMediaScope.TANK" not in store:
         errors.append(
-            f"{LEGACY_STORAGE_ADAPTER.relative_to(ROOT)}: temporary adapter must delegate to AppMediaStorage"
+            f"{AQUARIUM_STORE.relative_to(ROOT)}: aquarium persistence must use AppMediaStorage"
         )
-    for token in ("FileProvider", "File.createTempFile", "canonicalPath", "filesDir"):
-        if token in adapter:
-            errors.append(
-                f"{LEGACY_STORAGE_ADAPTER.relative_to(ROOT)}: adapter must not own file logic: {token}"
-            )
+    if "TankPhotoStorage" in store:
+        errors.append(
+            f"{AQUARIUM_STORE.relative_to(ROOT)}: legacy tank photo storage reference is forbidden"
+        )
 
 repository = APP / "data/feedback/FirebaseFeedbackSubmissionOperations.kt"
 if repository.is_file():
