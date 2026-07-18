@@ -38,6 +38,7 @@ import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.user.StartupAppearanceCache
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.platform.auth.GoogleIdentityClient
+import com.aqua.aqualight.platform.media.FeedbackMediaProcessor
 import com.aqua.aqualight.platform.text.AndroidAppTextResolver
 import com.aqua.aqualight.platform.text.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.platform.vision.MlKitProvisioningQrFrameDecoderFactory
@@ -84,6 +85,8 @@ internal class ReleaseSmokeAppContainer(context: Context) : AppContainer {
         AuthenticatedOwnerIdentity { SMOKE_OWNER_UID }
     override val feedbackSubmissionOperations: FeedbackSubmissionUseCase
         get() = unused("feedbackSubmissionOperations")
+    override val feedbackMediaProcessor: FeedbackMediaProcessor
+        get() = unused("feedbackMediaProcessor")
     override val provisioningDraftOperations: ProvisioningDraftOperations
         get() = unused("provisioningDraftOperations")
     override val provisioningQrFrameDecoderFactory: ProvisioningQrFrameDecoderFactory =
@@ -176,6 +179,7 @@ private class ReleaseSmokeViewModelFactory(
             modelClass.isAssignableFrom(AquariumTankViewModel::class.java) ->
                 AquariumTankViewModel(
                     operations = DefaultAquariumTankOperations(
+                        context = appContext,
                         tankStore = tankStore,
                         tankDataCleaner = OwnerTankDataCleaner(
                             deleteTankRecords = tankStore::deleteTanks,

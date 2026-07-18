@@ -1,0 +1,170 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(ownerUid) {
+      return request.auth != null && request.auth.uid == ownerUid;
+    }
+
+    function markerFieldsAreValid(feedbackId, state, status) {
+      let data = request.resource.data;
+      return data.keys().hasAll([
+          'userId',
+          'mediaTransactionState',
+          'status',
+          'screenshotPath',
+          'createdAt',
+          'mediaTransactionExpiresAt'
+        ])
+        && data.keys().hasOnly([
+          'userId',
+          'mediaTransactionState',
+          'status',
+          'screenshotPath',
+          'createdAt',
+          'mediaTransactionExpiresAt'
+        ])
+        && isOwner(data.userId)
+        && data.mediaTransactionState == state
+        && data.status == status
+        && data.screenshotPath ==
+          'feedback_screenshots/' + data.userId + '/' + feedbackId + '.jpg'
+        && data.createdAt is timestamp
+        && data.mediaTransactionExpiresAt is timestamp
+        && data.mediaTransactionExpiresAt > request.time;
+    }
+
+    function textFeedbackIsValid() {
+      let data = request.resource.data;
+      return data.keys().hasAll([
+          'category',
+          'email',
+          'message',
+          'platform',
+          'appVersion',
+          'locale',
+          'status',
+          'userId',
+          'createdAt',
+          'mediaTransactionState'
+        ])
+        && data.keys().hasOnly([
+          'category',
+          'email',
+          'message',
+          'platform',
+          'appVersion',
+          'locale',
+          'status',
+          'userId',
+          'createdAt',
+          'mediaTransactionState'
+        ])
+        && (
+          isOwner(data.userId)
+          || (request.auth == null && data.userId == 'anonymous')
+        )
+        && data.mediaTransactionState == 'committed'
+        && data.status == 'new'
+        && data.platform == 'android'
+        && data.category is string
+        && data.category.size() > 0
+        && data.category.size() <= 80
+        && data.message is string
+        && data.message.size() >= 10
+        && data.message.size() <= 4000
+        && (data.email == null || (data.email is string && data.email.size() <= 320))
+        && data.appVersion is string
+        && data.appVersion.size() <= 64
+        && data.locale is string
+        && data.locale.size() <= 35
+        && data.createdAt == request.time;
+    }
+
+    function committedMediaFeedbackIsValid(feedbackId) {
+      let data = request.resource.data;
+      return data.keys().hasAll([
+          'category',
+          'email',
+          'message',
+          'platform',
+          'appVersion',
+          'locale',
+          'status',
+          'userId',
+          'createdAt',
+          'screenshotUrl',
+          'screenshotPath',
+          'mediaTransactionState'
+        ])
+        && data.keys().hasOnly([
+          'category',
+          'email',
+          'message',
+          'platform',
+          'appVersion',
+          'locale',
+          'status',
+          'userId',
+          'createdAt',
+          'screenshotUrl',
+          'screenshotPath',
+          'mediaTransactionState'
+        ])
+        && isOwner(data.userId)
+        && data.mediaTransactionState == 'committed'
+        && data.status == 'new'
+        && data.platform == 'android'
+        && data.screenshotPath ==
+          'feedback_screenshots/' + data.userId + '/' + feedbackId + '.jpg'
+        && data.screenshotUrl is string
+        && data.screenshotUrl.size() > 0
+        && data.category is string
+        && data.category.size() > 0
+        && data.category.size() <= 80
+        && data.message is string
+        && data.message.size() >= 10
+        && data.message.size() <= 4000
+        && (data.email == null || (data.email is string && data.email.size() <= 320))
+        && data.appVersion is string
+        && data.appVersion.size() <= 64
+        && data.locale is string
+        && data.locale.size() <= 35
+        && data.createdAt == request.time;
+    }
+
+    match /feedback_items/{feedbackId} {
+      // A transaction may probe a freshly generated, still-absent document. Existing
+      // documents remain readable only by their immutable owner.
+      allow get: if request.auth != null
+        && (
+          !exists(/databases/$(database)/documents/feedback_items/$(feedbackId))
+          || resource.data.userId == request.auth.uid
+        );
+      allow list, delete: if false;
+
+      allow create: if textFeedbackIsValid()
+        || (
+          markerFieldsAreValid(feedbackId, 'pending', 'media_pending')
+          && request.resource.data.createdAt == request.time
+        )
+        || (
+          markerFieldsAreValid(feedbackId, 'aborted', 'media_aborted')
+          && request.resource.data.createdAt == request.time
+        );
+
+      allow update: if request.auth != null
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId
+        && resource.data.mediaTransactionState == 'pending'
+        && resource.data.screenshotPath == request.resource.data.screenshotPath
+        && (
+          committedMediaFeedbackIsValid(feedbackId)
+          || (
+            markerFieldsAreValid(feedbackId, 'aborted', 'media_aborted')
+            && request.resource.data.createdAt == resource.data.createdAt
+          )
+        );
+    }
+  }
+}

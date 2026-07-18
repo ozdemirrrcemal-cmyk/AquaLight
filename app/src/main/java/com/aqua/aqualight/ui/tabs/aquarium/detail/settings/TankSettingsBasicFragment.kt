@@ -8,6 +8,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import coil3.load
 import coil3.request.crossfade
@@ -16,16 +17,22 @@ import coil3.request.placeholder
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentTankSettingsBasicBinding
+import com.aqua.aqualight.platform.media.AppMediaScope
 import com.aqua.aqualight.platform.permissions.AppCapability
 import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.TankSettingsEditorBottomSheet
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
+import com.aqua.aqualight.ui.common.media.MediaCropPreparationResult
+import com.aqua.aqualight.ui.common.media.MediaCropSpec
+import com.aqua.aqualight.ui.common.media.MediaFlowCoordinatorViewModel
 import com.aqua.aqualight.ui.common.permission.CapabilityPermissionCoordinator
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDatePolicy
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDimensionFormatter
-import com.aqua.aqualight.ui.tabs.aquarium.photo.TankPhotoFlowCoordinator
 import com.yalantis.ucrop.UCrop
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic) {
@@ -38,10 +45,15 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     private var tankId: Long = 0L
     private var currentTank: AquariumTankSnapshot? = null
 
-    private val photoFlowCoordinator by lazy(LazyThreadSafetyMode.NONE) {
-        TankPhotoFlowCoordinator(
-            contextProvider = { requireContext() },
-            ownerTokenProvider = { tankId.toString() }
+    private val mediaFlow: MediaFlowCoordinatorViewModel by viewModels {
+        val container = requireContext().requireAppContainer()
+        MediaFlowCoordinatorViewModel.factory(
+            context = requireContext().applicationContext,
+            scope = AppMediaScope.TANK,
+            ownerToken = tankId.toString(),
+            ownerUid = container.authenticatedOwnerIdentity.requireOwnerUid(),
+            cropSpec = MediaCropSpec.TANK,
+            mediaProcessor = container.feedbackMediaProcessor
         )
     }
 
@@ -52,42 +64,62 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     private val galleryLauncher = registerForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { uri ->
-        uri?.let(::startImageCrop)
+        if (_binding != null && uri != null) {
+            lifecycleScope.launch { startImageCrop(uri) }
+        }
     }
 
     private val cameraLauncher = registerForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { success ->
-        if (success) {
-            photoFlowCoordinator.currentCameraUri()?.let(::startImageCrop)
-        } else {
-            photoFlowCoordinator.cleanupPendingCameraImage()
+        lifecycleScope.launch {
+            val cameraUri = mediaFlow.currentCameraUri()
+            if (_binding == null) {
+                mediaFlow.cancelCamera()
+                return@launch
+            }
+            if (success && cameraUri != null) {
+                startImageCrop(cameraUri)
+            } else {
+                mediaFlow.cancelCamera()
+            }
         }
     }
 
     private val cropLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        when {
-            result.resultCode == Activity.RESULT_OK -> {
-                val outputUri = result.data?.let(UCrop::getOutput)
-                if (outputUri != null) {
-                    saveTankPhoto(outputUri)
-                } else {
-                    photoFlowCoordinator.cleanupPendingCropSource()
+        lifecycleScope.launch {
+            if (_binding == null) {
+                mediaFlow.cancelCrop()
+                return@launch
+            }
+            when {
+                result.resultCode == Activity.RESULT_OK -> {
+                    val outputUri = result.data?.let(UCrop::getOutput)
+                    val accepted = outputUri?.let { mediaFlow.acceptCrop(it) }
+                    if (accepted != null) {
+                        saveTankPhoto(accepted)
+                    } else {
+                        mediaFlow.cancelCrop()
+                        showSnackBar(
+                            getString(R.string.aquarium_photo_crop_failed),
+                            BaseActivity.SnackType.ERROR
+                        )
+                    }
                 }
-            }
 
-            result.resultCode == UCrop.RESULT_ERROR -> {
-                val error = result.data?.let(UCrop::getError)
-                showSnackBar(
-                    message = error?.message ?: getString(R.string.aquarium_photo_crop_failed),
-                    type = BaseActivity.SnackType.ERROR
-                )
-                photoFlowCoordinator.cleanupPendingCropSource()
-            }
+                result.resultCode == UCrop.RESULT_ERROR -> {
+                    val error = result.data?.let(UCrop::getError)
+                    mediaFlow.cancelCrop()
+                    showSnackBar(
+                        message = error?.message ?: getString(R.string.aquarium_photo_crop_failed),
+                        type = BaseActivity.SnackType.ERROR
+                    )
+                }
 
-            else -> photoFlowCoordinator.cleanupPendingCropSource()
+                else -> mediaFlow.cancelCrop()
+            }
         }
     }
 
@@ -222,7 +254,9 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     }
 
     private fun bindTank(tank: AquariumTankSnapshot) {
+        if (_binding == null) return
         currentTank = tank
+        mediaFlow.initializeSelection(tank.photoUri)
 
         if (!tank.photoUri.isNullOrBlank()) {
             binding.imgTankPhoto.load(Uri.parse(tank.photoUri)) {
@@ -264,6 +298,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
         message: String,
         type: BaseActivity.SnackType = BaseActivity.SnackType.NORMAL
     ) {
+        if (_binding == null) return
         (activity as? BaseActivity)?.showSnackBar(message, type)
     }
 
@@ -288,84 +323,115 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     }
 
     private fun openCamera() {
-        val cameraUri = photoFlowCoordinator.createCameraUri()
-        if (cameraUri == null) {
-            showSnackBar(
-                getString(R.string.aquarium_photo_temp_file_failed),
-                BaseActivity.SnackType.ERROR
-            )
-            return
+        lifecycleScope.launch {
+            val cameraUri = mediaFlow.createCameraUri()
+            if (_binding == null) {
+                mediaFlow.cancelCamera()
+                return@launch
+            }
+            if (cameraUri == null) {
+                showSnackBar(
+                    getString(R.string.aquarium_photo_temp_file_failed),
+                    BaseActivity.SnackType.ERROR
+                )
+                return@launch
+            }
+            cameraLauncher.launch(cameraUri)
         }
-        cameraLauncher.launch(cameraUri)
     }
 
-    private fun startImageCrop(sourceUri: Uri) {
-        val destinationUri = photoFlowCoordinator.createCropOutputUri()
-        if (destinationUri == null) {
-            photoFlowCoordinator.cleanupPendingCameraImage()
-            showSnackBar(
-                getString(R.string.aquarium_photo_temp_crop_failed),
-                BaseActivity.SnackType.ERROR
-            )
+    private suspend fun startImageCrop(sourceUri: Uri) {
+        if (_binding == null) {
+            mediaFlow.cancelCamera()
             return
         }
+        setFragmentGlobalLoading(true)
+        try {
+            when (
+                val preparation = mediaFlow.prepareCropIntent(
+                    sourceUri = sourceUri,
+                    title = getString(R.string.aquarium_photo_crop_title)
+                )
+            ) {
+                is MediaCropPreparationResult.Ready -> {
+                    if (_binding != null) {
+                        cropLauncher.launch(preparation.intent)
+                    } else {
+                        mediaFlow.cancelCrop()
+                    }
+                }
 
-        photoFlowCoordinator.markCropSource(sourceUri)
-        cropLauncher.launch(
-            photoFlowCoordinator.buildCropIntent(
-                sourceUri = sourceUri,
-                destinationUri = destinationUri,
-                title = getString(R.string.aquarium_photo_crop_title)
-            )
-        )
+                is MediaCropPreparationResult.Failure,
+                MediaCropPreparationResult.StorageFailure -> {
+                    mediaFlow.cancelCamera()
+                    showSnackBar(
+                        getString(R.string.aquarium_photo_crop_failed),
+                        BaseActivity.SnackType.ERROR
+                    )
+                }
+            }
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } finally {
+            setFragmentGlobalLoading(false)
+        }
     }
 
-    private fun saveTankPhoto(photoUri: Uri) {
-        val contentUri = photoFlowCoordinator.toContentUri(photoUri)
+    private suspend fun saveTankPhoto(contentUri: Uri) {
+        if (_binding == null) {
+            mediaFlow.rollbackSelection()
+            return
+        }
         binding.imgTankPhoto.load(contentUri) {
             placeholder(R.drawable.nature_aquarium)
             error(R.drawable.nature_aquarium)
             crossfade(true)
         }
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                aquariumTankViewModel.updateTankPhoto(tankId, contentUri.toString())
-                showSnackBar(
-                    getString(R.string.aquarium_photo_updated),
-                    BaseActivity.SnackType.SUCCESS
-                )
-            } catch (exception: Exception) {
-                exception.printStackTrace()
-                photoFlowCoordinator.deleteInternalPhoto(contentUri.toString())
-                currentTank?.let(::bindTank)
-                showSnackBar(
-                    getString(R.string.aquarium_photo_save_failed),
-                    BaseActivity.SnackType.ERROR
-                )
-            } finally {
-                photoFlowCoordinator.cleanupPendingCropSource(contentUri.toString())
-            }
+        try {
+            aquariumTankViewModel.updateTankPhoto(tankId, contentUri.toString())
+            mediaFlow.commitSelection(deletePersistedMedia = false)
+            showSnackBar(
+                getString(R.string.aquarium_photo_updated),
+                BaseActivity.SnackType.SUCCESS
+            )
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (exception: Exception) {
+            exception.printStackTrace()
+            mediaFlow.rollbackSelection()
+            currentTank?.let(::bindTank)
+            showSnackBar(
+                getString(R.string.aquarium_photo_save_failed),
+                BaseActivity.SnackType.ERROR
+            )
         }
     }
 
     private fun removeTankPhoto() {
         val tank = currentTank ?: return
-        if (tank.photoUri.isNullOrBlank()) {
-            binding.imgTankPhoto.setImageResource(R.drawable.nature_aquarium)
-            return
-        }
+        if (_binding == null) return
+        lifecycleScope.launch {
+            if (tank.photoUri.isNullOrBlank()) {
+                _binding?.imgTankPhoto?.setImageResource(R.drawable.nature_aquarium)
+                return@launch
+            }
 
-        viewLifecycleOwner.lifecycleScope.launch {
+            mediaFlow.selectRemoval()
+            _binding?.imgTankPhoto?.setImageResource(R.drawable.nature_aquarium)
             try {
                 aquariumTankViewModel.updateTankPhoto(tankId, null)
-                binding.imgTankPhoto.setImageResource(R.drawable.nature_aquarium)
+                mediaFlow.commitSelection(deletePersistedMedia = false)
                 showSnackBar(
                     getString(R.string.aquarium_photo_removed),
                     BaseActivity.SnackType.SUCCESS
                 )
+            } catch (cancellation: CancellationException) {
+                throw cancellation
             } catch (exception: Exception) {
                 exception.printStackTrace()
+                mediaFlow.rollbackSelection()
+                currentTank?.let(::bindTank)
                 showSnackBar(
                     getString(R.string.aquarium_photo_remove_failed),
                     BaseActivity.SnackType.ERROR
@@ -381,6 +447,8 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 update()
+            } catch (cancellation: CancellationException) {
+                throw cancellation
             } catch (exception: Exception) {
                 exception.printStackTrace()
                 showSnackBar(errorMessage, BaseActivity.SnackType.ERROR)
@@ -497,7 +565,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     }
 
     override fun onDestroyView() {
-        photoFlowCoordinator.cleanupAllPending()
+        setFragmentGlobalLoading(false)
         _binding = null
         super.onDestroyView()
     }

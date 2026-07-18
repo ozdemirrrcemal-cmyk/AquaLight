@@ -11,7 +11,8 @@ import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
 import com.aqua.aqualight.data.aquarium.model.TankPlantTag
-import com.aqua.aqualight.data.aquarium.photo.TankPhotoStorage
+import com.aqua.aqualight.platform.media.AppMediaScope
+import com.aqua.aqualight.platform.media.AppMediaStorage
 import com.aqua.aqualight.data.aquarium.util.AquariumIdGenerator
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.aqua.aqualight.data.store.StoreInvariantViolation
@@ -75,52 +76,74 @@ class AquariumTankDataStoreManager(
         return newTankId
     }
 
+    /**
+     * Prepares all filesystem side effects before entering DataStore.updateData. The transform is
+     * therefore pure and retry-safe; a failed data commit rolls the copied candidate back.
+     */
     suspend fun duplicateTank(
         tankId: Long
     ): Long {
         TankStoreRules.requireValidTankId(tankId)
         val ownerUid = UserDataScope.requireCurrentUid()
-        var newTankId = 0L
+        val snapshot = TankStoreRules.validateStore(context.aquariumTanksDataStore.data.first())
+        val sourceSnapshot = snapshot.tanksList.firstOrNull { storedTank ->
+            storedTank.id == tankId && storedTank.belongsToOwner(ownerUid)
+        } ?: throw IllegalArgumentException("Tank not found for the active owner.")
+        TankStoreRules.validateTank(sourceSnapshot)
 
-        context.aquariumTanksDataStore.updateData { currentStore ->
-            requireOwnerScope(ownerUid)
-
-            val sourceTank = currentStore.tanksList.firstOrNull { storedTank ->
-                storedTank.id == tankId && storedTank.belongsToOwner(ownerUid)
-            } ?: throw IllegalArgumentException(
-                "Tank not found for the active owner."
-            )
-            TankStoreRules.validateTank(sourceTank)
-
-            val existingIds = currentStore.tanksList
+        val newTankId = AquariumIdGenerator.newLong(
+            snapshot.tanksList
                 .filter { tank -> tank.belongsToOwner(ownerUid) }
                 .mapTo(mutableSetOf()) { tank -> tank.id }
-            newTankId = AquariumIdGenerator.newLong(existingIds)
+        )
+        val sourcePhotoAtPreparation = sourceSnapshot.photoUri
+        val duplicatedPhotoUri = AppMediaStorage.copyInternalMedia(
+            context = context,
+            sourceUriString = sourcePhotoAtPreparation,
+            targetScope = AppMediaScope.TANK,
+            ownerToken = newTankId.toString(),
+            ownerUid = ownerUid
+        )
+        val sourceWasOwned = AppMediaStorage.isAppOwned(context, sourcePhotoAtPreparation)
+        if (sourceWasOwned && duplicatedPhotoUri.isNullOrBlank()) {
+            throw IllegalStateException("Tank photo could not be copied with independent ownership.")
+        }
 
-            val existingNames = currentStore.tanksList
-                .filter { storedTank -> storedTank.belongsToOwner(ownerUid) }
-                .mapTo(mutableSetOf()) { storedTank -> storedTank.name }
+        try {
+            context.aquariumTanksDataStore.updateData { currentStore ->
+                requireOwnerScope(ownerUid)
+                check(currentStore.tanksList.none { storedTank -> storedTank.id == newTankId }) {
+                    "Generated tank id was concurrently claimed."
+                }
+                val sourceTank = currentStore.tanksList.firstOrNull { storedTank ->
+                    storedTank.id == tankId && storedTank.belongsToOwner(ownerUid)
+                } ?: throw IllegalArgumentException("Tank not found for the active owner.")
+                TankStoreRules.validateTank(sourceTank)
+                check(sourceTank.photoUri == sourcePhotoAtPreparation) {
+                    "Tank photo changed while duplication was being prepared."
+                }
 
-            val duplicatedPhotoUri = TankPhotoStorage.copyInternalPhotoForTank(
-                context = context,
-                sourceUriString = sourceTank.photoUri,
-                tankId = newTankId
-            )
-
-            val duplicatedTank = sourceTank.toBuilder()
-                .setId(newTankId)
-                .setOwnerUid(ownerUid)
-                .setName(
-                    createDuplicateTankName(
-                        originalName = sourceTank.name,
-                        existingNames = existingNames
+                val existingNames = currentStore.tanksList
+                    .filter { storedTank -> storedTank.belongsToOwner(ownerUid) }
+                    .mapTo(mutableSetOf()) { storedTank -> storedTank.name }
+                val duplicatedTank = sourceTank.toBuilder()
+                    .setId(newTankId)
+                    .setOwnerUid(ownerUid)
+                    .setName(
+                        createDuplicateTankName(
+                            originalName = sourceTank.name,
+                            existingNames = existingNames
+                        )
                     )
-                )
-                .setPhotoUri(duplicatedPhotoUri.orEmpty().trim())
-                .setCreatedAtMillis(System.currentTimeMillis())
-                .build()
-            TankStoreRules.validateTank(duplicatedTank)
-            currentStore.appendValidated(duplicatedTank)
+                    .setPhotoUri(duplicatedPhotoUri.orEmpty().trim())
+                    .setCreatedAtMillis(System.currentTimeMillis())
+                    .build()
+                TankStoreRules.validateTank(duplicatedTank)
+                currentStore.appendValidated(duplicatedTank)
+            }
+        } catch (error: Throwable) {
+            runCatching { AppMediaStorage.rollbackPendingMedia(context, duplicatedPhotoUri) }
+            throw error
         }
 
         return newTankId
@@ -159,14 +182,15 @@ class AquariumTankDataStoreManager(
             currentStore.replaceAllValidated(remainingTanks)
         }
 
-        TankPhotoStorage.deleteInternalPhotos(
+        AppMediaStorage.deleteInternalMedia(
             context = context,
             uriStrings = photoUrisToDelete
         )
         deletedTankIds.forEach { deletedTankId ->
-            TankPhotoStorage.deleteTankOwnedTemporaryFiles(
+            AppMediaStorage.deleteOwnerTemporaryFiles(
                 context = context,
-                tankId = deletedTankId
+                scope = AppMediaScope.TANK,
+                ownerToken = deletedTankId.toString()
             )
         }
     }
@@ -194,14 +218,15 @@ class AquariumTankDataStoreManager(
             currentStore.replaceAllValidated(remainingTanks)
         }
 
-        TankPhotoStorage.deleteInternalPhotos(
+        AppMediaStorage.deleteInternalMedia(
             context = context,
             uriStrings = deletedPhotoUris
         )
         deletedTankIds.forEach { deletedTankId ->
-            TankPhotoStorage.deleteTankOwnedTemporaryFiles(
+            AppMediaStorage.deleteOwnerTemporaryFiles(
                 context = context,
-                tankId = deletedTankId
+                scope = AppMediaScope.TANK,
+                ownerToken = deletedTankId.toString()
             )
         }
     }
@@ -224,10 +249,11 @@ class AquariumTankDataStoreManager(
             .first()
     }
 
+    /** Returns the superseded URI after the durable store commit; no file I/O runs in the transform. */
     suspend fun updateTankPhoto(
         tankId: Long,
         photoUri: String?
-    ) {
+    ): String? {
         val normalizedPhotoUri = photoUri.orEmpty().trim()
         var previousPhotoUri: String? = null
 
@@ -240,10 +266,7 @@ class AquariumTankDataStoreManager(
                 .build()
         }
 
-        TankPhotoStorage.deleteInternalPhoto(
-            context = context,
-            uriString = previousPhotoUri
-        )
+        return previousPhotoUri
     }
 
     suspend fun updateTankStyle(

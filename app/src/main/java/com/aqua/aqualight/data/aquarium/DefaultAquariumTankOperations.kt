@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.aquarium
 
+import android.content.Context
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
 import com.aqua.aqualight.application.aquarium.AquariumPlantTag
@@ -18,33 +19,103 @@ import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
 import com.aqua.aqualight.data.aquarium.model.TankPlantTag
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.data.user.withCurrentOwnerScope
+import com.aqua.aqualight.platform.media.AppMediaStorage
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 
 class DefaultAquariumTankOperations(
+    context: Context,
     private val tankStore: AquariumTankDataStoreManager,
     private val tankDataCleaner: OwnerTankDataCleaner,
-    private val notificationPreferences: NotificationPreferenceUseCase
+    private val notificationPreferences: NotificationPreferenceUseCase,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : AquariumTankOperations {
+
+    private val appContext = context.applicationContext
 
     override val tanks: Flow<List<AquariumTankSnapshot>> = tankStore.tanksFlow.map { tanks ->
         tanks.map(SavedAquariumTank::toApplicationSnapshot)
     }
 
-    override suspend fun addTank(draft: AquariumTankDraft): Long =
-        tankStore.addTankFromDraft(draft.toDataDraft())
+    override suspend fun addTank(draft: AquariumTankDraft): Long = withContext(NonCancellable) {
+        withContext(dispatcher) {
+            val pendingPhoto = draft.photoUri
+            val tankId = try {
+                tankStore.addTankFromDraft(draft.toDataDraft())
+            } catch (error: Throwable) {
+                runCatching { AppMediaStorage.rollbackPendingMedia(appContext, pendingPhoto) }
+                throw error
+            }
 
-    override suspend fun duplicateTank(tankId: Long): Long = tankStore.duplicateTank(tankId)
+            runCatching { AppMediaStorage.commitPendingMedia(appContext, pendingPhoto) }
+            tankId
+        }
+    }
+
+    override suspend fun duplicateTank(tankId: Long): Long = withContext(NonCancellable) {
+        withContext(dispatcher) {
+            val ownerUid = UserDataScope.requireCurrentUid()
+            val source = tankStore.tanksSnapshotForOwner(ownerUid)
+                .firstOrNull { tank -> tank.id == tankId }
+                ?: throw IllegalArgumentException("Tank not found for the active owner.")
+            val duplicateId = tankStore.duplicateTank(tankId)
+            val duplicate = tankStore.tanksSnapshotForOwner(ownerUid)
+                .firstOrNull { tank -> tank.id == duplicateId }
+                ?: throw IllegalStateException("Duplicated tank record is missing.")
+
+            val sourceIsOwned = AppMediaStorage.isAppOwned(appContext, source.photoUri)
+            val invalidSharedOwnership = sourceIsOwned &&
+                !source.photoUri.isNullOrBlank() &&
+                (duplicate.photoUri.isNullOrBlank() || duplicate.photoUri == source.photoUri)
+            if (invalidSharedOwnership) {
+                runCatching { tankStore.deleteTanks(listOf(duplicateId)) }
+                throw IllegalStateException(
+                    "Tank photo could not be copied with independent ownership."
+                )
+            }
+
+            runCatching { AppMediaStorage.commitPendingMedia(appContext, duplicate.photoUri) }
+            duplicateId
+        }
+    }
 
     override suspend fun deleteTanks(
         tankIds: Collection<Long>
-    ): DeleteAquariumTanksResult = withCurrentOwnerScope {
-        tankDataCleaner.deleteTanks(tankIds).toApplicationResult()
+    ): DeleteAquariumTanksResult = withContext(dispatcher) {
+        withCurrentOwnerScope {
+            tankDataCleaner.deleteTanks(tankIds).toApplicationResult()
+        }
     }
 
-    override suspend fun updateTankPhoto(tankId: Long, photoUri: String?) =
-        tankStore.updateTankPhoto(tankId, photoUri)
+    override suspend fun updateTankPhoto(tankId: Long, photoUri: String?): Unit =
+        withContext(NonCancellable) {
+            withContext(dispatcher) {
+                val ownerUid = UserDataScope.requireCurrentUid()
+                val previousPhoto = try {
+                    tankStore.updateTankPhoto(tankId, photoUri)
+                } catch (error: Throwable) {
+                    runCatching { AppMediaStorage.rollbackPendingMedia(appContext, photoUri) }
+                    throw error
+                }
+
+                // The durable tank record owns the new URI. Cleanup cannot invalidate that commit.
+                runCatching { AppMediaStorage.commitPendingMedia(appContext, photoUri) }
+                runCatching {
+                    AppMediaStorage.deleteAfterCommit(
+                        context = appContext,
+                        ownerUid = ownerUid,
+                        uriString = previousPhoto
+                    )
+                }
+                Unit
+            }
+        }
 
     override suspend fun updateTankName(tankId: Long, name: String) =
         tankStore.updateTankName(tankId, name)

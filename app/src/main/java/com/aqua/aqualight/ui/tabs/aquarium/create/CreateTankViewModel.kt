@@ -1,95 +1,113 @@
 package com.aqua.aqualight.ui.tabs.aquarium.create
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
 import com.aqua.aqualight.application.aquarium.AquariumPlantTag
 import com.aqua.aqualight.application.aquarium.AquariumTankDraft
+import com.google.gson.Gson
 
-class CreateTankViewModel : ViewModel() {
+class CreateTankViewModel(
+    private val savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
-  var tankDraft = AquariumTankDraft()
-    private set
+    private val gson = Gson()
 
-  fun updateTankName(name: String) {
-    tankDraft = tankDraft.copy(name = name)
-  }
+    var tankDraft: AquariumTankDraft = restoreDraft()
+        private set
 
-  fun updateTankDescription(description: String) {
-    tankDraft = tankDraft.copy(description = description)
-  }
+    fun updateTankName(name: String) = updateDraft { copy(name = name) }
 
-  fun updateTankPhoto(photoUri: String?) {
-    tankDraft = tankDraft.copy(photoUri = photoUri)
-  }
-
-  fun updateTankPlants(plants: List<AquariumPlantTag>) {
-    tankDraft = tankDraft.copy(plants = plants.toList())
-  }
-
-  fun updateTankMaterials(materials: List<AquariumMaterialSelection>) {
-    tankDraft = tankDraft.copy(materials = materials.toList())
-  }
-
-  fun updateTankMaterialsForCategory(
-    categoryKey: String,
-    materials: List<AquariumMaterialSelection>
-  ) {
-    val otherMaterials = tankDraft.materials.filterNot {
-      it.categoryKey == categoryKey
+    fun updateTankDescription(description: String) = updateDraft {
+        copy(description = description)
     }
 
-    tankDraft = tankDraft.copy(
-      materials = otherMaterials + materials
-    )
-  }
+    fun updateTankPhoto(photoUri: String?) = updateDraft { copy(photoUri = photoUri) }
 
-  fun getMaterialsByCategory(
-    categoryKey: String
-  ): List<AquariumMaterialSelection> {
-    return tankDraft.materials.filter {
-      it.categoryKey == categoryKey
+    fun updateTankPlants(plants: List<AquariumPlantTag>) = updateDraft {
+        copy(plants = plants.toList())
     }
-  }
 
-  fun updateTankInfo(info: String) {
-    tankDraft = tankDraft.copy(info = info)
-  }
+    fun updateTankMaterials(materials: List<AquariumMaterialSelection>) = updateDraft {
+        copy(materials = materials.toList())
+    }
 
-  fun updateSetupDate(setupDateMillis: Long?) {
-    tankDraft = tankDraft.copy(setupDateMillis = setupDateMillis)
-  }
+    fun updateTankMaterialsForCategory(
+        categoryKey: String,
+        materials: List<AquariumMaterialSelection>
+    ) {
+        val otherMaterials = tankDraft.materials.filterNot {
+            it.categoryKey == categoryKey
+        }
+        updateDraft {
+            copy(materials = otherMaterials + materials)
+        }
+    }
 
-  fun updateTankSize(
-    widthCm: Int,
-    lengthCm: Int,
-    heightCm: Int,
-    sizeUnit: String = tankDraft.sizeUnit
-  ) {
-    tankDraft = tankDraft.copy(
-      widthCm = widthCm,
-      lengthCm = lengthCm,
-      heightCm = heightCm,
-      sizeUnit = sizeUnit.ifBlank { "cm" }
-    )
-  }
+    fun getMaterialsByCategory(
+        categoryKey: String
+    ): List<AquariumMaterialSelection> {
+        return tankDraft.materials.filter {
+            it.categoryKey == categoryKey
+        }
+    }
 
-  fun updateSizeUnit(sizeUnit: String) {
-    tankDraft = tankDraft.copy(
-      sizeUnit = sizeUnit.ifBlank { "cm" }
-    )
-  }
+    fun updateTankInfo(info: String) = updateDraft { copy(info = info) }
 
-  fun updateVolumeUnit(volumeUnit: String) {
-    tankDraft = tankDraft.copy(volumeUnit = volumeUnit)
-  }
+    fun updateSetupDate(setupDateMillis: Long?) = updateDraft {
+        copy(setupDateMillis = setupDateMillis)
+    }
 
-  fun updateTankType(tankType: String) {
-    tankDraft = tankDraft.copy(tankType = tankType)
-  }
+    fun updateTankSize(
+        widthCm: Int,
+        lengthCm: Int,
+        heightCm: Int,
+        sizeUnit: String = tankDraft.sizeUnit
+    ) = updateDraft {
+        copy(
+            widthCm = widthCm,
+            lengthCm = lengthCm,
+            heightCm = heightCm,
+            sizeUnit = sizeUnit.ifBlank { "cm" }
+        )
+    }
 
-  fun updateTankStyle(tankStyle: String) {
-    tankDraft = tankDraft.copy(tankStyle = tankStyle)
-  }
+    fun updateSizeUnit(sizeUnit: String) = updateDraft {
+        copy(sizeUnit = sizeUnit.ifBlank { "cm" })
+    }
 
-  fun completeTank() = Unit
+    fun updateVolumeUnit(volumeUnit: String) = updateDraft {
+        copy(volumeUnit = volumeUnit)
+    }
+
+    fun updateTankType(tankType: String) = updateDraft { copy(tankType = tankType) }
+
+    fun updateTankStyle(tankStyle: String) = updateDraft { copy(tankStyle = tankStyle) }
+
+    fun completeTank() {
+        savedStateHandle.remove<String>(KEY_DRAFT_JSON)
+    }
+
+    private inline fun updateDraft(
+        transform: AquariumTankDraft.() -> AquariumTankDraft
+    ) {
+        tankDraft = tankDraft.transform()
+        savedStateHandle[KEY_DRAFT_JSON] = gson.toJson(tankDraft)
+    }
+
+    private fun restoreDraft(): AquariumTankDraft {
+        val encoded = savedStateHandle.get<String>(KEY_DRAFT_JSON)
+            ?.takeIf(String::isNotBlank)
+            ?: return AquariumTankDraft()
+        return runCatching {
+            gson.fromJson(encoded, AquariumTankDraft::class.java)
+        }.getOrElse {
+            savedStateHandle.remove<String>(KEY_DRAFT_JSON)
+            AquariumTankDraft()
+        }
+    }
+
+    private companion object {
+        const val KEY_DRAFT_JSON = "createTank.draftJson"
+    }
 }

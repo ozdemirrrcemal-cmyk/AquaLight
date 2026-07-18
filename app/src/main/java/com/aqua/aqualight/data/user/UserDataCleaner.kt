@@ -13,6 +13,7 @@ import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningCommitReco
 import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
 import com.aqua.aqualight.data.devices.store.DeviceKnownStore
 import com.aqua.aqualight.data.notifications.NotificationPlatform
+import com.aqua.aqualight.platform.media.AppMediaStorage
 import java.io.File
 import java.util.concurrent.CancellationException
 
@@ -102,8 +103,6 @@ class UserDataCleaner private constructor(
         }
 
         runStep(Step.CARE_TASKS) {
-            // Always repeat owner-scoped cancellation before destructive deletion.
-            // This remains correct even when a previous session-stop step partially failed.
             NotificationPlatform.get(appContext)
                 .preferenceUseCase
                 .cancelOwner(targetOwnerUid)
@@ -140,6 +139,7 @@ class UserDataCleaner private constructor(
 
         runStep(Step.APP_OWNED_FILES) {
             clearAppOwnedUserFiles(
+                ownerUid = targetOwnerUid,
                 profilePhotoUri = profilePhotoUri,
                 tankPhotoUris = tankPhotoUris
             )
@@ -207,14 +207,21 @@ class UserDataCleaner private constructor(
     }
 
     private fun clearAppOwnedUserFiles(
+        ownerUid: String,
         profilePhotoUri: String,
         tankPhotoUris: List<String>
     ) {
         (tankPhotoUris + profilePhotoUri)
             .filter(String::isNotBlank)
-            .forEach(::deleteAppOwnedUri)
+            .forEach { uri ->
+                if (!AppMediaStorage.deleteInternalMedia(appContext, uri)) {
+                    deleteAppOwnedUri(uri)
+                }
+            }
 
+        AppMediaStorage.discardPendingMediaForOwner(appContext, ownerUid)
         File(appContext.cacheDir, "feedback_temp.jpg").delete()
+        File(appContext.cacheDir, "feedback_media").deleteRecursively()
     }
 
     private fun deleteAppOwnedUri(value: String) {
@@ -229,8 +236,7 @@ class UserDataCleaner private constructor(
 
         val file = when (uri.scheme) {
             "file" -> uri.path?.let(::File)
-            null,
-            "" -> File(value)
+            null, "" -> File(value)
             else -> null
         } ?: return
 
@@ -242,7 +248,8 @@ class UserDataCleaner private constructor(
         val allowedRoots = listOf(
             File(appContext.filesDir, "profile_photos"),
             File(appContext.filesDir, "tank_photos"),
-            File(appContext.cacheDir, "tank_exports")
+            File(appContext.cacheDir, "tank_exports"),
+            File(appContext.cacheDir, "feedback_media")
         )
 
         return allowedRoots.any { root ->

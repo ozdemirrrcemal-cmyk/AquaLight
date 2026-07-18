@@ -1,14 +1,25 @@
 package com.aqua.aqualight.data.user
 
+import android.content.Context
 import com.aqua.aqualight.application.user.UserAddressInput
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.application.user.UserProfileSnapshot
+import com.aqua.aqualight.platform.media.AppMediaStorage
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 
 class DefaultUserProfileOperations(
-    private val preferences: UserPreferencesManager
+    context: Context,
+    private val preferences: UserPreferencesManager,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : UserProfileOperations {
+
+    private val appContext = context.applicationContext
 
     override val profile: Flow<UserProfileSnapshot> =
         preferences.userPrefsFlow.map { prefs ->
@@ -27,8 +38,31 @@ class DefaultUserProfileOperations(
             )
         }
 
-    override suspend fun updateProfilePhoto(photoUri: String) {
-        preferences.updateProfilePhoto(photoUri)
+    override suspend fun updateProfilePhoto(photoUri: String): Unit = withContext(NonCancellable) {
+        withContext(dispatcher) {
+            val ownerUid = UserDataScope.requireCurrentUid()
+            val normalized = photoUri.trim()
+            val previous = preferences.profilePhotoUrl.first()
+                .takeIf { it.isNotBlank() && it != normalized }
+
+            try {
+                preferences.updateProfilePhoto(normalized)
+            } catch (error: Throwable) {
+                runCatching { AppMediaStorage.rollbackPendingMedia(appContext, normalized) }
+                throw error
+            }
+
+            // The durable profile write is authoritative. Cleanup is idempotent and retryable.
+            runCatching { AppMediaStorage.commitPendingMedia(appContext, normalized) }
+            runCatching {
+                AppMediaStorage.deleteAfterCommit(
+                    context = appContext,
+                    ownerUid = ownerUid,
+                    uriString = previous
+                )
+            }
+            Unit
+        }
     }
 
     override suspend fun updateUsername(username: String) {
