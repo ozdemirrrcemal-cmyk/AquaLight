@@ -5,9 +5,9 @@ import com.aqua.aqualight.application.user.UserAddressInput
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.application.user.UserProfileSnapshot
 import com.aqua.aqualight.platform.media.AppMediaStorage
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -45,21 +45,19 @@ class DefaultUserProfileOperations(
         var persisted = false
 
         try {
-            preferences.updateProfilePhoto(normalized)
-            persisted = true
-        } catch (cancellation: CancellationException) {
-            AppMediaStorage.rollbackPendingMedia(appContext, normalized)
-            throw cancellation
+            // DataStore and local media ownership form one terminal local transaction. Once entered,
+            // cancellation is deferred until the authoritative write outcome is known.
+            withContext(NonCancellable) {
+                preferences.updateProfilePhoto(normalized)
+                persisted = true
+                runCatching { AppMediaStorage.commitPendingMedia(appContext, normalized) }
+                runCatching { AppMediaStorage.deleteInternalMedia(appContext, previous) }
+            }
         } catch (error: Throwable) {
-            AppMediaStorage.rollbackPendingMedia(appContext, normalized)
+            if (!persisted) {
+                runCatching { AppMediaStorage.rollbackPendingMedia(appContext, normalized) }
+            }
             throw error
-        }
-
-        // Once the durable preference commit succeeds, cleanup errors must never be surfaced as a
-        // false save failure. Startup reconciliation safely retries any retained journal entry.
-        if (persisted) {
-            runCatching { AppMediaStorage.commitPendingMedia(appContext, normalized) }
-            runCatching { AppMediaStorage.deleteInternalMedia(appContext, previous) }
         }
     }
 
