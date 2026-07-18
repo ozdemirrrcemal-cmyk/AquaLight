@@ -27,6 +27,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankPhotoFragmentDirecti
 import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankStepFragment
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -221,15 +222,21 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
         isCompletingTank = true
         binding.btnNext.isEnabled = false
 
-        viewLifecycleOwner.lifecycleScope.launch {
+        lifecycleScope.launch {
             val draftViewModel = createTankViewModel()
             try {
-                aquariumTankViewModel.addTankFromDraft(draftViewModel.tankDraft)
-                draftViewModel.completeTank()
-                findNavController().popBackStack(
-                    R.id.aquariumFragment,
-                    false
-                )
+                withContext(NonCancellable) {
+                    aquariumTankViewModel.addTankFromDraft(draftViewModel.tankDraft)
+                    // Clearing the saved draft is part of the terminal save transaction. A view or
+                    // Fragment recreation cannot leave an already-saved tank as a reusable draft.
+                    draftViewModel.completeTank()
+                }
+                if (isAdded) {
+                    findNavController().popBackStack(
+                        R.id.aquariumFragment,
+                        false
+                    )
+                }
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (exception: Exception) {
