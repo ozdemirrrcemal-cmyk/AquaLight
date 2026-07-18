@@ -14,7 +14,7 @@ import org.junit.Test
 class FirebaseFeedbackSubmissionOperationsTest {
 
     @Test
-    fun successfulSubmissionReservesBeforeUploadAndCommitsAtomically() = runTest {
+    fun successfulSubmissionReservesOwnerBeforeUploadAndCommitsAtomically() = runTest {
         withScreenshot { screenshot ->
             val events = mutableListOf<String>()
             val documentStore = FakeDocumentStore(events)
@@ -26,6 +26,8 @@ class FirebaseFeedbackSubmissionOperationsTest {
 
             assertTrue(result is FeedbackSubmissionResult.Success)
             assertEquals(listOf("reserve", "upload", "commit"), events)
+            assertEquals("owner", documentStore.reservedOwnerUid)
+            assertEquals("owner", documentStore.committedOwnerUid)
             assertTrue(journalStore.pendingEntries().isEmpty())
             assertEquals(
                 "feedback_screenshots/owner/document-1.jpg",
@@ -72,6 +74,7 @@ class FirebaseFeedbackSubmissionOperationsTest {
             val failure = (result as FeedbackSubmissionResult.Failure).failure
             assertEquals(FeedbackSubmissionFailureKind.UPLOAD, failure.kind)
             assertEquals(listOf("reserve", "upload", "resolve", "delete"), events)
+            assertEquals("owner", documentStore.resolvedOwnerUid)
             assertTrue(journalStore.pendingEntries().isEmpty())
         }
     }
@@ -121,7 +124,7 @@ class FirebaseFeedbackSubmissionOperationsTest {
     }
 
     @Test
-    fun rollbackFailureKeepsJournalEntryForRetry() = runTest {
+    fun rollbackFailureKeepsOwnerAwareJournalEntryForRetry() = runTest {
         withScreenshot { screenshot ->
             val events = mutableListOf<String>()
             val documentStore = FakeDocumentStore(events).apply {
@@ -140,7 +143,7 @@ class FirebaseFeedbackSubmissionOperationsTest {
             assertEquals(FeedbackSubmissionFailureKind.ROLLBACK, failure.kind)
             assertEquals("feedback_screenshots/owner/document-1.jpg", failure.storagePath)
             assertTrue(failure.rollbackCause is IllegalStateException)
-            assertEquals(1, journalStore.pendingEntries().size)
+            assertEquals("owner", journalStore.pendingEntries().single().ownerUid)
         }
     }
 
@@ -169,7 +172,7 @@ class FirebaseFeedbackSubmissionOperationsTest {
     }
 
     @Test
-    fun cleanupDeletesStorageOnlyAfterServerFenceIsAborted() = runTest {
+    fun cleanupDeletesStorageOnlyAfterMatchingOwnerFenceIsAborted() = runTest {
         val events = mutableListOf<String>()
         val documentStore = FakeDocumentStore(events).apply {
             resolution = FeedbackDocumentResolution.ABORTED
@@ -183,6 +186,7 @@ class FirebaseFeedbackSubmissionOperationsTest {
         assertEquals(1, result.attemptedCount)
         assertEquals(1, result.deletedCount)
         assertEquals(0, result.remainingCount)
+        assertEquals("owner", documentStore.resolvedOwnerUid)
         assertEquals(listOf("resolve", "delete"), events)
     }
 
@@ -214,8 +218,20 @@ class FirebaseFeedbackSubmissionOperationsTest {
         }
         val screenshotStore = FakeScreenshotStore(events)
         val journalStore = FakeJournalStore().apply {
-            put(PendingFeedbackUpload("conflict", "feedback_screenshots/owner/conflict.jpg"))
-            put(PendingFeedbackUpload("unverified", "feedback_screenshots/owner/unverified.jpg"))
+            put(
+                PendingFeedbackUpload(
+                    "conflict",
+                    "owner",
+                    "feedback_screenshots/owner/conflict.jpg"
+                )
+            )
+            put(
+                PendingFeedbackUpload(
+                    "unverified",
+                    "owner",
+                    "feedback_screenshots/owner/unverified.jpg"
+                )
+            )
         }
         val repository = repository(documentStore, screenshotStore, journalStore)
 
@@ -266,6 +282,7 @@ class FirebaseFeedbackSubmissionOperationsTest {
 
     private fun pending() = PendingFeedbackUpload(
         documentId = "document-1",
+        ownerUid = "owner",
         storagePath = "feedback_screenshots/owner/document-1.jpg"
     )
 
@@ -289,6 +306,9 @@ class FirebaseFeedbackSubmissionOperationsTest {
         var resolution: FeedbackDocumentResolution = FeedbackDocumentResolution.ABORTED
         val resolutions = mutableMapOf<String, FeedbackDocumentResolution>()
         val resolutionErrors = mutableMapOf<String, Throwable>()
+        var reservedOwnerUid: String? = null
+        var committedOwnerUid: String? = null
+        var resolvedOwnerUid: String? = null
 
         override fun newDocumentId(): String = "document-1"
 
@@ -296,25 +316,34 @@ class FirebaseFeedbackSubmissionOperationsTest {
             saveError?.let { throw it }
         }
 
-        override suspend fun reservePending(documentId: String, storagePath: String) {
+        override suspend fun reservePending(
+            documentId: String,
+            ownerUid: String,
+            storagePath: String
+        ) {
             events += "reserve"
+            reservedOwnerUid = ownerUid
             reserveError?.let { throw it }
         }
 
         override suspend fun commitPending(
             documentId: String,
+            ownerUid: String,
             storagePath: String,
             data: Map<String, Any?>
         ) {
             events += "commit"
+            committedOwnerUid = ownerUid
             commitError?.let { throw it }
         }
 
         override suspend fun resolveForCleanup(
             documentId: String,
+            ownerUid: String,
             storagePath: String
         ): FeedbackDocumentResolution {
             events += "resolve"
+            resolvedOwnerUid = ownerUid
             resolutionErrors[documentId]?.let { throw it }
             return resolutions[documentId] ?: resolution
         }
