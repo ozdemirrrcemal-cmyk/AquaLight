@@ -38,29 +38,25 @@ class DefaultUserProfileOperations(
             )
         }
 
-    override suspend fun updateProfilePhoto(photoUri: String): Unit = withContext(dispatcher) {
-        val normalized = photoUri.trim()
-        val previous = preferences.profilePhotoUrl.first()
-            .takeIf { it.isNotBlank() && it != normalized }
-        var persisted = false
+    override suspend fun updateProfilePhoto(photoUri: String): Unit = withContext(NonCancellable) {
+        withContext(dispatcher) {
+            val normalized = photoUri.trim()
+            val previous = preferences.profilePhotoUrl.first()
+                .takeIf { it.isNotBlank() && it != normalized }
 
-        try {
-            // DataStore and local media ownership form one terminal local transaction. Once entered,
-            // cancellation is deferred until the authoritative write outcome is known.
-            withContext(NonCancellable) {
+            try {
                 preferences.updateProfilePhoto(normalized)
-                persisted = true
-                runCatching { AppMediaStorage.commitPendingMedia(appContext, normalized) }
-                runCatching { AppMediaStorage.deleteInternalMedia(appContext, previous) }
-            }
-        } catch (error: Throwable) {
-            if (!persisted) {
+            } catch (error: Throwable) {
                 runCatching { AppMediaStorage.rollbackPendingMedia(appContext, normalized) }
+                throw error
             }
-            throw error
-        }
 
-        Unit
+            // The domain write is authoritative. Journal finalization and old-file deletion are
+            // idempotent cleanup; recovery reconciles either operation if the process stops here.
+            runCatching { AppMediaStorage.commitPendingMedia(appContext, normalized) }
+            runCatching { AppMediaStorage.deleteInternalMedia(appContext, previous) }
+            Unit
+        }
     }
 
     override suspend fun updateUsername(username: String) {
