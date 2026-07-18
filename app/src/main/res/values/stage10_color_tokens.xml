@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Exact legacy values retained to keep device cards visually unchanged. -->
+    <color name="device_presence_online">#5FD6B4</color>
+    <color name="device_presence_offline">#7B8794</color>
+</resources>
