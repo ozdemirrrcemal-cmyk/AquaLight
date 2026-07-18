@@ -97,7 +97,7 @@ internal class DefaultAppContainer(
     override val userProfileOperations: UserProfileOperations by lazy(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
-        DefaultUserProfileOperations(userPreferencesManager)
+        DefaultUserProfileOperations(appContext, userPreferencesManager)
     }
 
     override val feedbackSubmissionOperations: FeedbackSubmissionUseCase by lazy(
