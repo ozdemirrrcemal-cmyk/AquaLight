@@ -106,6 +106,7 @@ class MediaFlowCoordinatorInstrumentedTest {
         assertFalse(AppMediaStorage.isAppOwned(context, firstPromoted.toString()))
         assertTrue(AppMediaStorage.isAppOwned(context, secondPromoted.toString()))
         AppMediaStorage.deleteInternalMedia(context, secondPromoted.toString())
+        Unit
     }
 
     @Test
@@ -122,6 +123,7 @@ class MediaFlowCoordinatorInstrumentedTest {
         assertTrue(AppMediaStorage.isAppOwned(context, persisted.toString()))
         assertFalse(AppMediaStorage.isAppOwned(context, replacement.toString()))
         AppMediaStorage.deleteInternalMedia(context, persisted.toString())
+        Unit
     }
 
     @Test
@@ -142,6 +144,7 @@ class MediaFlowCoordinatorInstrumentedTest {
         assertTrue(AppMediaStorage.isAppOwned(context, referenced.toString()))
         assertFalse(AppMediaStorage.isAppOwned(context, orphan.toString()))
         AppMediaStorage.deleteInternalMedia(context, referenced.toString())
+        Unit
     }
 
     private fun createCropOutput() = requireNotNull(
