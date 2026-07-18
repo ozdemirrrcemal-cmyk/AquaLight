@@ -87,10 +87,10 @@ class FeedbackViewModel(
     }
 
     fun selectScreenshot(uri: Uri) {
-        if (_uiState.value.isSubmitting) return
-        mediaJob?.cancel()
+        if (_uiState.value.isBusy) return
+        _uiState.update { it.copy(isProcessingMedia = true) }
+
         mediaJob = viewModelScope.launch {
-            _uiState.update { it.copy(isProcessingMedia = true) }
             try {
                 when (val result = mediaProcessor.process(uri)) {
                     is FeedbackMediaProcessingResult.Success -> {
@@ -119,6 +119,7 @@ class FeedbackViewModel(
     }
 
     fun clearScreenshot() {
+        if (_uiState.value.isBusy) return
         val current = _uiState.value.screenshot
         clearPersistedScreenshot()
         _uiState.update { it.copy(screenshot = null) }
@@ -145,9 +146,9 @@ class FeedbackViewModel(
             return
         }
 
-        submitJob?.cancel()
+        // Lock synchronously before scheduling work so double taps and media deletion cannot race upload.
+        _uiState.update { it.copy(isSubmitting = true) }
         submitJob = viewModelScope.launch {
-            _uiState.update { it.copy(isSubmitting = true) }
             try {
                 val state = _uiState.value
                 val result = try {
@@ -176,7 +177,13 @@ class FeedbackViewModel(
                     is FeedbackSubmissionResult.Success -> {
                         val submittedMedia = _uiState.value.screenshot
                         resetFormState()
-                        mediaProcessor.delete(submittedMedia?.path)
+                        try {
+                            mediaProcessor.delete(submittedMedia?.path)
+                        } catch (cancellation: CancellationException) {
+                            throw cancellation
+                        } catch (_: Throwable) {
+                            // Expiry cleanup is the deterministic fallback for a local delete failure.
+                        }
                         eventChannel.send(FeedbackUiEvent.SubmissionSucceeded)
                     }
                     is FeedbackSubmissionResult.Failure -> {
@@ -214,6 +221,8 @@ class FeedbackViewModel(
     }
 
     override fun onCleared() {
+        mediaJob?.cancel()
+        submitJob?.cancel()
         _uiState.value.screenshot?.file?.takeIf { it.exists() }?.delete()
         super.onCleared()
     }
