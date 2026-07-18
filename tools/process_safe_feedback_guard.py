@@ -9,12 +9,21 @@ ROOT = Path(__file__).resolve().parents[1]
 APP_ROOT = ROOT / "app/src/main/java/com/aqua/aqualight"
 UI_ROOT = APP_ROOT / "ui"
 THEME_SHEET = UI_ROOT / "common/bottomsheet/ThemeBottomSheet.kt"
+TANK_EDITOR_SHEET = UI_ROOT / "common/bottomsheet/TankSettingsEditorBottomSheet.kt"
 FEEDBACK_SHEET = UI_ROOT / "common/feedback/FeedbackBottomSheet.kt"
-LEGACY_DEVICE_CONFIRM = UI_ROOT / "tabs/devices/common/feedback/DeviceConfirmBottomSheet.kt"
-LEGACY_DEVICE_TONE = UI_ROOT / "tabs/devices/common/feedback/DeviceConfirmTone.kt"
 SNACKBAR_RENDERER = APP_ROOT / "base/BaseActivity.kt"
-TRANSITIONAL_RAW_BOTTOM_SHEET_ALLOWLIST = {
+
+LEGACY_PROCESS_UNSAFE_FILES = (
+    UI_ROOT / "tabs/devices/common/feedback/DeviceConfirmBottomSheet.kt",
+    UI_ROOT / "tabs/devices/common/feedback/DeviceConfirmTone.kt",
     UI_ROOT / "common/bottomsheet/SettingsContentBottomSheet.kt",
+    UI_ROOT / "common/bottomsheet/TankTypeBottomSheet.kt",
+    UI_ROOT / "common/bottomsheet/TankSizeBottomSheet.kt",
+    UI_ROOT / "common/bottomsheet/SetupDateBottomSheet.kt",
+    UI_ROOT / "common/bottomsheet/TankStyleBottomSheet.kt",
+)
+
+TRANSITIONAL_RAW_BOTTOM_SHEET_ALLOWLIST = {
     UI_ROOT / "common/bottomsheet/GlobalActionBottomSheet.kt",
     UI_ROOT / "tabs/maintenance/AddCareTaskFragment.kt",
     UI_ROOT / "tabs/aquarium/materials/CustomMaterialSheet.kt",
@@ -32,6 +41,7 @@ errors: list[str] = []
 
 required_files = (
     THEME_SHEET,
+    TANK_EDITOR_SHEET,
     FEEDBACK_SHEET,
     ROOT / "app/src/androidTest/java/com/aqua/aqualight/ui/common/feedback/ProcessSafeFeedbackInstrumentedTest.kt",
     ROOT / "docs/stage8-process-safe-feedback-contract.md",
@@ -40,9 +50,11 @@ for path in required_files:
     if not path.is_file():
         errors.append(f"{path.relative_to(ROOT)}: required stage-8 component is missing")
 
-for legacy_path in (LEGACY_DEVICE_CONFIRM, LEGACY_DEVICE_TONE):
+for legacy_path in LEGACY_PROCESS_UNSAFE_FILES:
     if legacy_path.exists():
-        errors.append(f"{legacy_path.relative_to(ROOT)}: legacy callback-based feedback component must stay removed")
+        errors.append(
+            f"{legacy_path.relative_to(ROOT)}: legacy callback/raw-dialog component must stay removed"
+        )
 
 if THEME_SHEET.is_file():
     theme_text = THEME_SHEET.read_text(encoding="utf-8", errors="ignore")
@@ -55,6 +67,20 @@ if THEME_SHEET.is_file():
         if token not in theme_text:
             errors.append(
                 f"{THEME_SHEET.relative_to(ROOT)}: theme result contract is incomplete: missing {token}"
+            )
+
+if TANK_EDITOR_SHEET.is_file():
+    editor_text = TANK_EDITOR_SHEET.read_text(encoding="utf-8", errors="ignore")
+    for token in (
+        "class TankSettingsEditorBottomSheet : BottomSheetDialogFragment()",
+        "arguments = bundleOf(",
+        "setFragmentResult(",
+        "enum class Mode",
+        "onSaveInstanceState",
+    ):
+        if token not in editor_text:
+            errors.append(
+                f"{TANK_EDITOR_SHEET.relative_to(ROOT)}: process-safe tank editor contract is incomplete: missing {token}"
             )
 
 if FEEDBACK_SHEET.is_file():
@@ -124,5 +150,5 @@ if errors:
 
 print(
     "Process-safe feedback architecture guard passed: Fragment sheets remain recreatable, "
-    "theme and confirmation results are callback-free, and transient feedback debt cannot expand."
+    "theme, tank editors and confirmation results are callback-free, and transient feedback debt cannot expand."
 )
