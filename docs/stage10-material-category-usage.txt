@@ -3,7 +3,8 @@ app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/materials/MaterialP
 app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankMaterialFragment.kt:10:import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
 app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankMaterialFragment.kt:76:        MaterialCategoryCatalog.bioCategories.forEach { item ->
 app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankMaterialFragment.kt:82:        MaterialCategoryCatalog.hardwareCategories.forEach { item ->
-app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankMaterialFragment.kt:129:                    argCategoryTitle = item.title
+app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankMaterialFragment.kt:94:            title = getString(item.titleRes),
+app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankMaterialFragment.kt:129:                    argCategoryTitle = getString(item.titleRes)
 app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:19:import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
 app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:126:    MaterialCategoryCatalog.bioCategories.forEach {
 app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:133:      writer.drawMaterialCategory(
@@ -17,13 +18,11 @@ app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/careprofile/CareProfileCal
 app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/careprofile/CareProfileCalculator.kt:240:  private fun findMaterialCategory(
 app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/careprofile/CareProfileCalculator.kt:243:    val categories = MaterialCategoryCatalog.bioCategories +
 app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/careprofile/CareProfileCalculator.kt:244:      MaterialCategoryCatalog.hardwareCategories
-app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsDetailsFragment.kt:8:import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
+app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsDetailsFragment.kt:10:import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
 app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsDetailsFragment.kt:55:        MaterialCategoryCatalog.bioCategories.forEach { category ->
-app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsDetailsFragment.kt:63:                    title = category.title,
-app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsDetailsFragment.kt:68:                            categoryTitle = category.title
-app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsDetailsFragment.kt:75:        MaterialCategoryCatalog.hardwareCategories.forEach { category ->
-app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsDetailsFragment.kt:83:                    title = category.title,
-app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsDetailsFragment.kt:88:                            categoryTitle = category.title
+app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsDetailsFragment.kt:59:            val categoryTitle = getString(category.titleRes)
+app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsDetailsFragment.kt:76:        MaterialCategoryCatalog.hardwareCategories.forEach { category ->
+app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsDetailsFragment.kt:80:            val categoryTitle = getString(category.titleRes)
 app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsFragment.kt:445:                argCategoryTitle = categoryTitle
 app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailTankFragment.kt:18:import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
 app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailTankFragment.kt:174:        MaterialCategoryCatalog.bioCategories.forEach { category ->
