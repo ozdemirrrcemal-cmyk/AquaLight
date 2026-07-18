@@ -4,9 +4,11 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.aqua.aqualight.ui.common.permission.CapabilityPermissionBottomSheet
+import com.aqua.aqualight.ui.common.permission.CapabilityPermissionContinuationState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -43,5 +45,45 @@ class PermissionInfrastructureInstrumentedTest {
         }
 
         assertEquals(original.arguments, recreated.arguments)
+    }
+
+    @Test
+    fun settingsContinuationSurvivesRecreationAndCompletesExactlyOnce() {
+        val original = CapabilityPermissionContinuationState().apply {
+            begin(
+                capability = AppCapability.NOTIFICATIONS,
+                actionToken = "enable_notifications",
+                notificationChannelId = "care_reminders"
+            )
+            markWaitingForSettings()
+        }
+        val recreated = CapabilityPermissionContinuationState().apply {
+            restore(original.snapshot())
+        }
+
+        assertTrue(recreated.waitingForSettings)
+        assertEquals("care_reminders", recreated.pendingNotificationChannelId)
+        assertEquals(
+            "enable_notifications",
+            recreated.consumeSettingsReturn(isGranted = true)
+        )
+        assertNull(recreated.consumeSettingsReturn(isGranted = true))
+        assertNull(recreated.consumeIfGranted(isGranted = true))
+    }
+
+    @Test
+    fun deniedSettingsReturnClearsPendingContinuation() {
+        val state = CapabilityPermissionContinuationState().apply {
+            begin(
+                capability = AppCapability.BLE_PROVISIONING,
+                actionToken = "resume_provisioning"
+            )
+            markWaitingForSettings()
+        }
+
+        assertNull(state.consumeSettingsReturn(isGranted = false))
+        assertFalse(state.waitingForSettings)
+        assertNull(state.pendingCapability)
+        assertNull(state.pendingActionToken)
     }
 }
