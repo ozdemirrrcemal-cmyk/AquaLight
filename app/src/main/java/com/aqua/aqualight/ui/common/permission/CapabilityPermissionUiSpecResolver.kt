@@ -74,6 +74,14 @@ internal object CapabilityPermissionUiSpecResolver {
                 settingsTitleRes = R.string.permission_notifications_settings_title,
                 settingsMessageRes = R.string.permission_notifications_settings_message
             )
+
+            AppCapability.PRECISE_REMINDERS -> CapabilityContent(
+                iconRes = R.drawable.ic_permission_precise_reminders,
+                rationaleTitleRes = R.string.permission_precise_reminders_rationale_title,
+                rationaleMessageRes = R.string.permission_precise_reminders_rationale_message,
+                settingsTitleRes = R.string.permission_precise_reminders_settings_title,
+                settingsMessageRes = R.string.permission_precise_reminders_settings_message
+            )
         }
 
         return when (mode) {
