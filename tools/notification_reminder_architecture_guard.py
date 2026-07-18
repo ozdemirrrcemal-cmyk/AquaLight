@@ -358,8 +358,14 @@ for source in APP.rglob("*.kt"):
             errors.append(f"{relative}: only NotificationChannelRegistry may create channels")
     if "NotificationManagerCompat.from" in text and source != path(POLICY):
         errors.append(f"{relative}: app notification state belongs in NotificationPermissionPolicy")
-    if "CareTaskReminderScheduler." in text and source != path(SCHEDULER):
-        errors.append(f"{relative}: only DefaultNotificationScheduler may call the alarm backend")
+    for alarm_call in (
+        "CareTaskReminderScheduler.schedule(",
+        "CareTaskReminderScheduler.cancel(",
+    ):
+        if alarm_call in text and source != path(SCHEDULER):
+            errors.append(
+                f"{relative}: only DefaultNotificationScheduler may call the alarm backend: {alarm_call}"
+            )
     if "CareReminderScheduleLedger" in text and source not in {path(SCHEDULER), path(LEDGER)}:
         errors.append(f"{relative}: only DefaultNotificationScheduler may own the alarm ledger")
 
