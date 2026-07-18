@@ -63,8 +63,12 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         ActivityResultContracts.TakePicture()
     ) { success ->
         val cameraUri = mediaFlow.currentCameraUri()
+        if (_binding == null) {
+            mediaFlow.cancelCamera()
+            return@registerForActivityResult
+        }
         if (success && cameraUri != null) {
-            viewLifecycleOwner.lifecycleScope.launch { openCrop(cameraUri) }
+            lifecycleScope.launch { openCrop(cameraUri) }
         } else {
             mediaFlow.cancelCamera()
         }
@@ -73,16 +77,20 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { uri ->
-        if (uri != null) {
-            viewLifecycleOwner.lifecycleScope.launch { openCrop(uri) }
+        if (_binding != null && uri != null) {
+            lifecycleScope.launch { openCrop(uri) }
         }
     }
 
     private val cropLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
+        if (_binding == null) {
+            mediaFlow.cancelCrop()
+            return@registerForActivityResult
+        }
         val data = result.data
-        viewLifecycleOwner.lifecycleScope.launch {
+        lifecycleScope.launch {
             when {
                 result.resultCode == Activity.RESULT_OK && data != null -> {
                     val output = UCrop.getOutput(data)
@@ -194,6 +202,10 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     }
 
     private suspend fun openCrop(sourceUri: Uri) {
+        if (_binding == null) {
+            mediaFlow.cancelCamera()
+            return
+        }
         setFragmentGlobalLoading(true)
         try {
             when (
@@ -202,7 +214,14 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
                     title = getString(R.string.edit_profile_crop_title)
                 )
             ) {
-                is MediaCropPreparationResult.Ready -> cropLauncher.launch(preparation.intent)
+                is MediaCropPreparationResult.Ready -> {
+                    if (_binding != null) {
+                        cropLauncher.launch(preparation.intent)
+                    } else {
+                        mediaFlow.cancelCrop()
+                    }
+                }
+
                 is MediaCropPreparationResult.Failure,
                 MediaCropPreparationResult.StorageFailure -> {
                     mediaFlow.cancelCamera()
@@ -266,7 +285,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         title: String,
         message: String
     ) {
-        if (!isAdded) return
+        if (!isAdded || _binding == null) return
         DialogManager.showInfoDialog(
             context = requireContext(),
             type = DialogType.WARNING,
