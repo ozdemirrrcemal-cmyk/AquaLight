@@ -62,15 +62,17 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     private val takePictureLauncher = registerForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { success ->
-        val cameraUri = mediaFlow.currentCameraUri()
-        if (_binding == null) {
-            mediaFlow.cancelCamera()
-            return@registerForActivityResult
-        }
-        if (success && cameraUri != null) {
-            lifecycleScope.launch { openCrop(cameraUri) }
-        } else {
-            mediaFlow.cancelCamera()
+        lifecycleScope.launch {
+            val cameraUri = mediaFlow.currentCameraUri()
+            if (_binding == null) {
+                mediaFlow.cancelCamera()
+                return@launch
+            }
+            if (success && cameraUri != null) {
+                openCrop(cameraUri)
+            } else {
+                mediaFlow.cancelCamera()
+            }
         }
     }
 
@@ -85,12 +87,12 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     private val cropLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        if (_binding == null) {
-            mediaFlow.cancelCrop()
-            return@registerForActivityResult
-        }
-        val data = result.data
         lifecycleScope.launch {
+            if (_binding == null) {
+                mediaFlow.cancelCrop()
+                return@launch
+            }
+            val data = result.data
             when {
                 result.resultCode == Activity.RESULT_OK && data != null -> {
                     val output = UCrop.getOutput(data)
@@ -140,7 +142,9 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
             when (bundle.getString(PhotoSourceBottomSheet.RESULT_KEY)) {
                 PhotoSourceBottomSheet.RESULT_GALLERY -> openGallery()
                 PhotoSourceBottomSheet.RESULT_CAMERA -> checkCameraPermissionAndOpen()
-                PhotoSourceBottomSheet.RESULT_REMOVE -> mediaFlow.selectRemoval()
+                PhotoSourceBottomSheet.RESULT_REMOVE -> lifecycleScope.launch {
+                    mediaFlow.selectRemoval()
+                }
             }
         }
     }
@@ -190,15 +194,21 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     }
 
     private fun startCameraCapture() {
-        val uri = mediaFlow.createCameraUri()
-        if (uri == null) {
-            showInfoDialog(
-                title = getString(R.string.edit_profile_error_title),
-                message = getString(R.string.edit_profile_temp_file_error)
-            )
-            return
+        lifecycleScope.launch {
+            val uri = mediaFlow.createCameraUri()
+            if (_binding == null) {
+                mediaFlow.cancelCamera()
+                return@launch
+            }
+            if (uri == null) {
+                showInfoDialog(
+                    title = getString(R.string.edit_profile_error_title),
+                    message = getString(R.string.edit_profile_temp_file_error)
+                )
+                return@launch
+            }
+            takePictureLauncher.launch(uri)
         }
-        takePictureLauncher.launch(uri)
     }
 
     private suspend fun openCrop(sourceUri: Uri) {
