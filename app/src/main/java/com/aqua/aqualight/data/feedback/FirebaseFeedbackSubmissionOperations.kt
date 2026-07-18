@@ -14,6 +14,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageException
 import com.google.firebase.storage.storage
 import java.io.File
 import kotlin.coroutines.resume
@@ -48,10 +49,18 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
 
         if (screenshotFile == null) return saveDocument(documentId, data)
 
+        val plannedStoragePath = screenshotPath(ownerUid, documentId)
+        // Persist before upload so process death between Storage and Firestore is recoverable.
+        orphanStore.add(plannedStoragePath)
+
         val upload = try {
-            screenshotStore.upload(ownerUid, documentId, screenshotFile)
+            screenshotStore.upload(plannedStoragePath, screenshotFile)
         } catch (error: FeedbackStorageUploadException) {
-            error.storagePath?.let(orphanStore::add)
+            if (error.storagePath == null) {
+                orphanStore.remove(plannedStoragePath)
+            } else {
+                orphanStore.add(error.storagePath)
+            }
             return FeedbackSubmissionResult.Failure(
                 FeedbackSubmissionFailure(
                     kind = if (error.rollbackCause == null) {
@@ -65,6 +74,7 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
                 )
             )
         } catch (error: Throwable) {
+            orphanStore.remove(plannedStoragePath)
             return failure(FeedbackSubmissionFailureKind.UPLOAD, error)
         }
 
@@ -135,6 +145,7 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
     }
 
     companion object {
+        private const val SCREENSHOT_ROOT = "feedback_screenshots"
         private const val ANONYMOUS_OWNER_UID = "anonymous"
         private const val PLATFORM_ANDROID = "android"
         private const val STATUS_NEW = "new"
@@ -149,6 +160,10 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
         internal const val FIELD_CREATED_AT = "createdAt"
         internal const val FIELD_SCREENSHOT_URL = "screenshotUrl"
         internal const val FIELD_SCREENSHOT_PATH = "screenshotPath"
+
+        internal fun screenshotPath(ownerUid: String, documentId: String): String {
+            return "$SCREENSHOT_ROOT/$ownerUid/$documentId.jpg"
+        }
 
         fun create(context: Context): FirebaseFeedbackSubmissionOperations {
             val appContext = context.applicationContext
@@ -168,7 +183,7 @@ internal interface FeedbackDocumentStore {
 }
 
 internal interface FeedbackScreenshotStore {
-    suspend fun upload(ownerUid: String, documentId: String, file: File): FeedbackScreenshotUpload
+    suspend fun upload(storagePath: String, file: File): FeedbackScreenshotUpload
     suspend fun delete(storagePath: String)
 }
 
@@ -204,34 +219,35 @@ private class FirebaseFeedbackScreenshotStore(
     private val storage: FirebaseStorage
 ) : FeedbackScreenshotStore {
     override suspend fun upload(
-        ownerUid: String,
-        documentId: String,
+        storagePath: String,
         file: File
     ): FeedbackScreenshotUpload {
-        val path = "$ROOT/$ownerUid/$documentId.jpg"
-        val reference = storage.reference.child(path)
+        val reference = storage.reference.child(storagePath)
         var uploaded = false
         return try {
             reference.putFile(Uri.fromFile(file)).awaitResult()
             uploaded = true
-            FeedbackScreenshotUpload(path, reference.downloadUrl.awaitResult().toString())
+            FeedbackScreenshotUpload(
+                storagePath = storagePath,
+                downloadUrl = reference.downloadUrl.awaitResult().toString()
+            )
         } catch (error: Throwable) {
             if (!uploaded) throw FeedbackStorageUploadException(error, null)
             val rollback = runCatching { reference.delete().awaitResult() }.exceptionOrNull()
             throw FeedbackStorageUploadException(
                 uploadError = error,
-                storagePath = if (rollback == null) null else path,
+                storagePath = if (rollback == null) null else storagePath,
                 rollbackCause = rollback
             )
         }
     }
 
     override suspend fun delete(storagePath: String) {
-        storage.reference.child(storagePath).delete().awaitResult()
-    }
-
-    private companion object {
-        const val ROOT = "feedback_screenshots"
+        try {
+            storage.reference.child(storagePath).delete().awaitResult()
+        } catch (error: StorageException) {
+            if (error.errorCode != StorageException.ERROR_OBJECT_NOT_FOUND) throw error
+        }
     }
 }
 
