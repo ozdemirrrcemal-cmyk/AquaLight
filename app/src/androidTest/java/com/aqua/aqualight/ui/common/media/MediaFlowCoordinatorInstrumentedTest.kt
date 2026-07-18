@@ -113,6 +113,7 @@ class MediaFlowCoordinatorInstrumentedTest {
         val coordinator = coordinator(SavedStateHandle())
         coordinator.initializeSelection(null)
         val referenced = requireNotNull(coordinator.acceptCrop(createCropOutput()))
+        coordinator.commitSelection(deletePersistedMedia = false)
         val orphan = requireNotNull(coordinator.acceptCrop(createCropOutput()))
 
         AppMediaStorage.reconcilePendingMedia(
