@@ -21,6 +21,7 @@ import com.aqua.aqualight.ui.common.bottomsheet.ThemeBottomSheet
 import com.aqua.aqualight.ui.common.dialog.AppDatePickerDialogFragment
 import com.aqua.aqualight.ui.common.dialog.AppTimePickerDialogFragment
 import com.aqua.aqualight.ui.common.permission.CapabilityPermissionBottomSheet
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -62,7 +63,10 @@ class ProcessSafeFeedbackInstrumentedTest {
             .newInstance()
             .apply { arguments = Bundle(original.requireArguments()) }
 
-        assertEquals(original.requireArguments(), recreated.requireArguments())
+        assertBundlesEquivalent(
+            expected = original.requireArguments(),
+            actual = recreated.requireArguments()
+        )
     }
 
     @Test
@@ -86,7 +90,10 @@ class ProcessSafeFeedbackInstrumentedTest {
             .newInstance()
             .apply { arguments = Bundle(original.requireArguments()) }
 
-        assertEquals(original.requireArguments(), recreated.requireArguments())
+        assertBundlesEquivalent(
+            expected = original.requireArguments(),
+            actual = recreated.requireArguments()
+        )
     }
 
     @Test
@@ -112,7 +119,10 @@ class ProcessSafeFeedbackInstrumentedTest {
         }
 
         val recreated = GlobalActionBottomSheet().apply { arguments = restored }
-        assertEquals(original, recreated.requireArguments())
+        assertBundlesEquivalent(
+            expected = original,
+            actual = recreated.requireArguments()
+        )
     }
 
     @Test
@@ -132,7 +142,10 @@ class ProcessSafeFeedbackInstrumentedTest {
                 val restored = activity.supportFragmentManager
                     .findFragmentByTag(TEST_FEEDBACK_TAG) as? FeedbackBottomSheet
                 assertNotNull(restored)
-                assertEquals(expectedArguments, restored?.requireArguments())
+                assertBundlesEquivalent(
+                    expected = requireNotNull(expectedArguments),
+                    actual = requireNotNull(restored).requireArguments()
+                )
             }
         }
     }
@@ -160,7 +173,10 @@ class ProcessSafeFeedbackInstrumentedTest {
             .newInstance()
             .apply { arguments = Bundle(original.requireArguments()) }
 
-        assertEquals(original.requireArguments(), recreated.requireArguments())
+        assertBundlesEquivalent(
+            expected = original.requireArguments(),
+            actual = recreated.requireArguments()
+        )
     }
 
     @Test
@@ -170,6 +186,38 @@ class ProcessSafeFeedbackInstrumentedTest {
 
         assertNull(fieldNames.firstOrNull { it == "onBeforeThemeApplied" })
         assertNull(fieldNames.firstOrNull { it == "onThemeChanged" })
+    }
+
+    private fun assertBundlesEquivalent(
+        expected: Bundle,
+        actual: Bundle
+    ) {
+        expected.classLoader = javaClass.classLoader
+        actual.classLoader = javaClass.classLoader
+
+        assertEquals(expected.keySet(), actual.keySet())
+        expected.keySet().forEach { key ->
+            val expectedValue = expected.get(key)
+            val actualValue = actual.get(key)
+            when {
+                expectedValue is BooleanArray && actualValue is BooleanArray -> {
+                    assertArrayEquals("Bundle key: $key", expectedValue, actualValue)
+                }
+                expectedValue is IntArray && actualValue is IntArray -> {
+                    assertArrayEquals("Bundle key: $key", expectedValue, actualValue)
+                }
+                expectedValue is LongArray && actualValue is LongArray -> {
+                    assertArrayEquals("Bundle key: $key", expectedValue, actualValue)
+                }
+                expectedValue is Array<*> && actualValue is Array<*> -> {
+                    assertArrayEquals("Bundle key: $key", expectedValue, actualValue)
+                }
+                expectedValue is ArrayList<*> && actualValue is ArrayList<*> -> {
+                    assertEquals("Bundle key: $key", expectedValue.toList(), actualValue.toList())
+                }
+                else -> assertEquals("Bundle key: $key", expectedValue, actualValue)
+            }
+        }
     }
 
     private fun feedbackSheet(): FeedbackBottomSheet {
