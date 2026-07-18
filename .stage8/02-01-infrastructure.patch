@@ -1,0 +1,428 @@
+diff --git a/app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/SingleChoiceBottomSheet.kt b/app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/SingleChoiceBottomSheet.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..c17f8ff8433c09855464b1ff05f4bb771fae0b6f
+--- /dev/null
++++ b/app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/SingleChoiceBottomSheet.kt
+@@ -0,0 +1,161 @@
++package com.aqua.aqualight.ui.common.bottomsheet
++
++import android.content.DialogInterface
++import android.graphics.Typeface
++import android.os.Bundle
++import android.util.TypedValue
++import android.view.Gravity
++import android.view.View
++import android.widget.GridLayout
++import android.widget.TextView
++import androidx.core.content.ContextCompat
++import androidx.core.os.bundleOf
++import androidx.fragment.app.FragmentManager
++import com.aqua.aqualight.R
++import com.google.android.material.bottomsheet.BottomSheetDialogFragment
++
++/** Generic process-safe selector for short, serializable ID/label option lists. */
++class SingleChoiceBottomSheet : BottomSheetDialogFragment(
++    R.layout.bottom_sheet_single_choice
++) {
++
++    private var resultSent = false
++
++    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
++        super.onViewCreated(view, savedInstanceState)
++        val args = requireArguments()
++        view.findViewById<TextView>(R.id.tvSingleChoiceTitle).text =
++            args.getString(ARG_TITLE).orEmpty()
++
++        val ids = args.getStringArrayList(ARG_OPTION_IDS).orEmpty()
++        val labels = args.getStringArrayList(ARG_OPTION_LABELS).orEmpty()
++        val selectedId = args.getString(ARG_SELECTED_ID).orEmpty()
++        val columns = args.getInt(ARG_COLUMNS, 1).coerceAtLeast(1)
++        val container = view.findViewById<GridLayout>(R.id.singleChoiceContainer).apply {
++            columnCount = columns
++            removeAllViews()
++        }
++
++        val count = minOf(ids.size, labels.size)
++        repeat(count) { index ->
++            container.addView(
++                createOption(
++                    id = ids[index],
++                    label = labels[index],
++                    selected = ids[index] == selectedId,
++                    columns = columns,
++                    index = index
++                )
++            )
++        }
++    }
++
++    override fun onCancel(dialog: DialogInterface) {
++        publish(RESULT_CANCELLED, "")
++        super.onCancel(dialog)
++    }
++
++    private fun createOption(
++        id: String,
++        label: String,
++        selected: Boolean,
++        columns: Int,
++        index: Int
++    ): TextView {
++        val gap = resources.getDimensionPixelSize(R.dimen.single_choice_gap)
++        val isLastColumn = index % columns == columns - 1
++        return TextView(requireContext()).apply {
++            text = label
++            gravity = Gravity.CENTER
++            isSelected = selected
++            isClickable = true
++            isFocusable = true
++            includeFontPadding = false
++            maxLines = 2
++            setTextSize(
++                TypedValue.COMPLEX_UNIT_PX,
++                resources.getDimension(R.dimen.single_choice_text_size)
++            )
++            setTextColor(
++                ContextCompat.getColor(
++                    requireContext(),
++                    if (selected) R.color.aqua_card_text_primary
++                    else R.color.aqua_card_text_secondary
++                )
++            )
++            setTypeface(null, if (selected) Typeface.BOLD else Typeface.NORMAL)
++            setBackgroundResource(R.drawable.bg_aqua_selection_row_compact)
++            layoutParams = GridLayout.LayoutParams().apply {
++                width = 0
++                height = resources.getDimensionPixelSize(R.dimen.single_choice_row_height)
++                columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
++                setMargins(0, 0, if (isLastColumn) 0 else gap, gap)
++            }
++            setPadding(
++                resources.getDimensionPixelSize(R.dimen.single_choice_horizontal_padding),
++                0,
++                resources.getDimensionPixelSize(R.dimen.single_choice_horizontal_padding),
++                0
++            )
++            setOnClickListener {
++                publish(RESULT_SELECTED, id)
++                dismiss()
++            }
++        }
++    }
++
++    private fun publish(result: String, selectedId: String) {
++        if (resultSent) return
++        resultSent = true
++        val args = requireArguments()
++        parentFragmentManager.setFragmentResult(
++            args.getString(ARG_REQUEST_KEY).orEmpty(),
++            bundleOf(
++                RESULT_KEY to result,
++                RESULT_SELECTED_ID to selectedId,
++                RESULT_PAYLOAD_ID to args.getString(ARG_PAYLOAD_ID).orEmpty()
++            )
++        )
++    }
++
++    companion object {
++        const val RESULT_KEY = "single_choice_result"
++        const val RESULT_SELECTED_ID = "single_choice_selected_id"
++        const val RESULT_PAYLOAD_ID = "single_choice_payload_id"
++        const val RESULT_SELECTED = "selected"
++        const val RESULT_CANCELLED = "cancelled"
++
++        private const val ARG_TITLE = "arg_title"
++        private const val ARG_OPTION_IDS = "arg_option_ids"
++        private const val ARG_OPTION_LABELS = "arg_option_labels"
++        private const val ARG_SELECTED_ID = "arg_selected_id"
++        private const val ARG_COLUMNS = "arg_columns"
++        private const val ARG_REQUEST_KEY = "arg_request_key"
++        private const val ARG_PAYLOAD_ID = "arg_payload_id"
++        private const val TAG_PREFIX = "SingleChoiceBottomSheet:"
++
++        fun show(
++            fragmentManager: FragmentManager,
++            title: String,
++            options: List<Pair<String, String>>,
++            selectedId: String?,
++            columns: Int,
++            requestKey: String,
++            payloadId: String = ""
++        ) {
++            val tag = TAG_PREFIX + requestKey
++            if (fragmentManager.findFragmentByTag(tag) != null || fragmentManager.isStateSaved) return
++            SingleChoiceBottomSheet().apply {
++                arguments = bundleOf(
++                    ARG_TITLE to title,
++                    ARG_OPTION_IDS to ArrayList(options.map { it.first }),
++                    ARG_OPTION_LABELS to ArrayList(options.map { it.second }),
++                    ARG_SELECTED_ID to selectedId.orEmpty(),
++                    ARG_COLUMNS to columns.coerceAtLeast(1),
++                    ARG_REQUEST_KEY to requestKey,
++                    ARG_PAYLOAD_ID to payloadId
++                )
++            }.show(fragmentManager, tag)
++        }
++    }
++}
+diff --git a/app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/TextInputBottomSheet.kt b/app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/TextInputBottomSheet.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..e2bb430e6a254aa9faa3c886729d802dba60d18f
+--- /dev/null
++++ b/app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/TextInputBottomSheet.kt
+@@ -0,0 +1,149 @@
++package com.aqua.aqualight.ui.common.bottomsheet
++
++import android.content.DialogInterface
++import android.os.Bundle
++import android.view.View
++import androidx.core.os.bundleOf
++import androidx.core.view.isVisible
++import androidx.fragment.app.FragmentManager
++import com.aqua.aqualight.R
++import com.google.android.material.bottomsheet.BottomSheetDialogFragment
++import com.google.android.material.textfield.TextInputEditText
++import com.google.android.material.textfield.TextInputLayout
++
++/** Re-creatable single text input sheet used by simple feature editors. */
++class TextInputBottomSheet : BottomSheetDialogFragment(
++    R.layout.bottom_sheet_text_input
++) {
++
++    private var resultSent = false
++
++    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
++        super.onViewCreated(view, savedInstanceState)
++        val args = requireArguments()
++        val inputLayout = view.findViewById<TextInputLayout>(R.id.textInputLayout)
++        val input = view.findViewById<TextInputEditText>(R.id.etTextInputValue)
++        val secondaryLabel = view.findViewById<android.widget.TextView>(
++            R.id.tvTextInputSecondaryLabel
++        )
++        val secondaryValue = view.findViewById<android.widget.TextView>(
++            R.id.tvTextInputSecondaryValue
++        )
++
++        view.findViewById<android.widget.TextView>(R.id.tvTextInputTitle).text =
++            args.getString(ARG_TITLE).orEmpty()
++        view.findViewById<android.widget.TextView>(R.id.tvTextInputLabel).text =
++            args.getString(ARG_LABEL).orEmpty()
++        inputLayout.hint = args.getString(ARG_HINT).orEmpty()
++        input.setText(args.getString(ARG_INITIAL_VALUE).orEmpty())
++        input.setSelection(input.text?.length ?: 0)
++
++        val secondaryText = args.getString(ARG_SECONDARY_VALUE).orEmpty()
++        val showSecondary = secondaryText.isNotBlank()
++        secondaryLabel.isVisible = showSecondary
++        secondaryValue.isVisible = showSecondary
++        secondaryLabel.text = args.getString(ARG_SECONDARY_LABEL).orEmpty()
++        secondaryValue.text = secondaryText
++
++        view.findViewById<com.google.android.material.button.MaterialButton>(
++            R.id.btnTextInputCancel
++        ).apply {
++            text = args.getString(ARG_CANCEL_TEXT).orEmpty()
++            setOnClickListener {
++                publish(RESULT_CANCELLED, "")
++                dismiss()
++            }
++        }
++        view.findViewById<com.google.android.material.button.MaterialButton>(
++            R.id.btnTextInputSave
++        ).apply {
++            text = args.getString(ARG_SAVE_TEXT).orEmpty()
++            setOnClickListener {
++                val value = input.text?.toString()?.trim().orEmpty()
++                if (args.getBoolean(ARG_REQUIRED) && value.isBlank()) {
++                    inputLayout.error = args.getString(ARG_REQUIRED_MESSAGE).orEmpty()
++                    return@setOnClickListener
++                }
++                inputLayout.error = null
++                publish(RESULT_SAVED, value)
++                dismiss()
++            }
++        }
++    }
++
++    override fun onCancel(dialog: DialogInterface) {
++        publish(RESULT_CANCELLED, "")
++        super.onCancel(dialog)
++    }
++
++    private fun publish(result: String, value: String) {
++        if (resultSent) return
++        resultSent = true
++        val args = requireArguments()
++        parentFragmentManager.setFragmentResult(
++            args.getString(ARG_REQUEST_KEY).orEmpty(),
++            bundleOf(
++                RESULT_KEY to result,
++                RESULT_VALUE to value,
++                RESULT_PAYLOAD_ID to args.getString(ARG_PAYLOAD_ID).orEmpty()
++            )
++        )
++    }
++
++    companion object {
++        const val RESULT_KEY = "text_input_result"
++        const val RESULT_VALUE = "text_input_value"
++        const val RESULT_PAYLOAD_ID = "text_input_payload_id"
++        const val RESULT_SAVED = "saved"
++        const val RESULT_CANCELLED = "cancelled"
++
++        private const val ARG_TITLE = "arg_title"
++        private const val ARG_LABEL = "arg_label"
++        private const val ARG_HINT = "arg_hint"
++        private const val ARG_INITIAL_VALUE = "arg_initial_value"
++        private const val ARG_SECONDARY_LABEL = "arg_secondary_label"
++        private const val ARG_SECONDARY_VALUE = "arg_secondary_value"
++        private const val ARG_SAVE_TEXT = "arg_save_text"
++        private const val ARG_CANCEL_TEXT = "arg_cancel_text"
++        private const val ARG_REQUIRED = "arg_required"
++        private const val ARG_REQUIRED_MESSAGE = "arg_required_message"
++        private const val ARG_REQUEST_KEY = "arg_request_key"
++        private const val ARG_PAYLOAD_ID = "arg_payload_id"
++        private const val TAG_PREFIX = "TextInputBottomSheet:"
++
++        fun show(
++            fragmentManager: FragmentManager,
++            title: String,
++            label: String,
++            hint: String,
++            initialValue: String,
++            secondaryLabel: String = "",
++            secondaryValue: String = "",
++            saveText: String,
++            cancelText: String,
++            required: Boolean,
++            requiredMessage: String,
++            requestKey: String,
++            payloadId: String = ""
++        ) {
++            val tag = TAG_PREFIX + requestKey
++            if (fragmentManager.findFragmentByTag(tag) != null || fragmentManager.isStateSaved) return
++            TextInputBottomSheet().apply {
++                arguments = bundleOf(
++                    ARG_TITLE to title,
++                    ARG_LABEL to label,
++                    ARG_HINT to hint,
++                    ARG_INITIAL_VALUE to initialValue,
++                    ARG_SECONDARY_LABEL to secondaryLabel,
++                    ARG_SECONDARY_VALUE to secondaryValue,
++                    ARG_SAVE_TEXT to saveText,
++                    ARG_CANCEL_TEXT to cancelText,
++                    ARG_REQUIRED to required,
++                    ARG_REQUIRED_MESSAGE to requiredMessage,
++                    ARG_REQUEST_KEY to requestKey,
++                    ARG_PAYLOAD_ID to payloadId
++                )
++            }.show(fragmentManager, tag)
++        }
++    }
++}
+diff --git a/app/src/main/java/com/aqua/aqualight/ui/common/dialog/AppDatePickerDialogFragment.kt b/app/src/main/java/com/aqua/aqualight/ui/common/dialog/AppDatePickerDialogFragment.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..fd9e2926c2061e8c6b3e31890008264ebd02aa1c
+--- /dev/null
++++ b/app/src/main/java/com/aqua/aqualight/ui/common/dialog/AppDatePickerDialogFragment.kt
+@@ -0,0 +1,100 @@
++package com.aqua.aqualight.ui.common.dialog
++
++import android.app.DatePickerDialog
++import android.app.Dialog
++import android.content.DialogInterface
++import android.os.Bundle
++import androidx.core.os.bundleOf
++import androidx.fragment.app.DialogFragment
++import androidx.fragment.app.FragmentManager
++import java.util.Calendar
++
++/** Framework-recreatable date picker that returns its value through Fragment Result. */
++class AppDatePickerDialogFragment : DialogFragment() {
++
++    private var resultSent = false
++
++    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
++        val args = requireArguments()
++        val calendar = Calendar.getInstance().apply {
++            timeInMillis = args.getLong(ARG_INITIAL_MILLIS)
++        }
++        return DatePickerDialog(
++            requireContext(),
++            { _, year, month, dayOfMonth ->
++                calendar.set(Calendar.YEAR, year)
++                calendar.set(Calendar.MONTH, month)
++                calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
++                publish(RESULT_SELECTED, calendar.timeInMillis)
++            },
++            calendar.get(Calendar.YEAR),
++            calendar.get(Calendar.MONTH),
++            calendar.get(Calendar.DAY_OF_MONTH)
++        ).apply {
++            args.getLong(ARG_MIN_MILLIS, NO_BOUND)
++                .takeUnless { it == NO_BOUND }
++                ?.let(datePicker::setMinDate)
++            args.getLong(ARG_MAX_MILLIS, NO_BOUND)
++                .takeUnless { it == NO_BOUND }
++                ?.let(datePicker::setMaxDate)
++        }
++    }
++
++    override fun onCancel(dialog: DialogInterface) {
++        publish(RESULT_CANCELLED, null)
++        super.onCancel(dialog)
++    }
++
++    private fun publish(result: String, millis: Long?) {
++        if (resultSent) return
++        resultSent = true
++        val args = requireArguments()
++        val payload = bundleOf(
++            RESULT_KEY to result,
++            RESULT_PAYLOAD_ID to args.getString(ARG_PAYLOAD_ID).orEmpty()
++        )
++        millis?.let { payload.putLong(RESULT_MILLIS, it) }
++        parentFragmentManager.setFragmentResult(
++            args.getString(ARG_REQUEST_KEY).orEmpty(),
++            payload
++        )
++        dismissAllowingStateLoss()
++    }
++
++    companion object {
++        const val RESULT_KEY = "app_date_picker_result"
++        const val RESULT_MILLIS = "app_date_picker_millis"
++        const val RESULT_PAYLOAD_ID = "app_date_picker_payload_id"
++        const val RESULT_SELECTED = "selected"
++        const val RESULT_CANCELLED = "cancelled"
++
++        private const val ARG_INITIAL_MILLIS = "arg_initial_millis"
++        private const val ARG_MIN_MILLIS = "arg_min_millis"
++        private const val ARG_MAX_MILLIS = "arg_max_millis"
++        private const val ARG_REQUEST_KEY = "arg_request_key"
++        private const val ARG_PAYLOAD_ID = "arg_payload_id"
++        private const val NO_BOUND = Long.MIN_VALUE
++        private const val TAG_PREFIX = "AppDatePickerDialogFragment:"
++
++        fun show(
++            fragmentManager: FragmentManager,
++            requestKey: String,
++            initialMillis: Long,
++            payloadId: String = "",
++            minMillis: Long? = null,
++            maxMillis: Long? = null
++        ) {
++            val tag = TAG_PREFIX + requestKey
++            if (fragmentManager.findFragmentByTag(tag) != null || fragmentManager.isStateSaved) return
++            AppDatePickerDialogFragment().apply {
++                arguments = bundleOf(
++                    ARG_INITIAL_MILLIS to initialMillis,
++                    ARG_MIN_MILLIS to (minMillis ?: NO_BOUND),
++                    ARG_MAX_MILLIS to (maxMillis ?: NO_BOUND),
++                    ARG_REQUEST_KEY to requestKey,
++                    ARG_PAYLOAD_ID to payloadId
++                )
++            }.show(fragmentManager, tag)
++        }
++    }
++}
