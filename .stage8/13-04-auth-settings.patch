@@ -1,0 +1,359 @@
+diff --git a/app/src/main/java/com/aqua/aqualight/ui/auth/ResetPasswordFragment.kt b/app/src/main/java/com/aqua/aqualight/ui/auth/ResetPasswordFragment.kt
+index a4cf9767a98d76c4a689244dd470707b3de18280..14b78a7e66b9bd9c21f4884bb5d12b4d049bcd31 100644
+--- a/app/src/main/java/com/aqua/aqualight/ui/auth/ResetPasswordFragment.kt
++++ b/app/src/main/java/com/aqua/aqualight/ui/auth/ResetPasswordFragment.kt
+@@ -16,4 +16,5 @@ import com.aqua.aqualight.databinding.FragmentResetPasswordBinding
+ import com.aqua.aqualight.ui.auth.state.AuthActionState
+ import com.aqua.aqualight.ui.auth.viewmodel.ResetPasswordViewModel
++import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
+ import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
+ import com.aqua.aqualight.utils.DialogManager
+@@ -52,7 +53,19 @@ class ResetPasswordFragment : Fragment() {
+ 
+         setupUI()
++        setupFeedbackResultListener()
+         observeState()
+     }
+ 
++
++    private fun setupFeedbackResultListener() {
++        childFragmentManager.setFragmentResultListener(
++            RESET_SUCCESS_REQUEST_KEY,
++            viewLifecycleOwner
++        ) { _, _ ->
++            viewModel.resetState()
++            findNavController().popBackStack()
++        }
++    }
++
+     private fun setupUI() =
+         with(binding) {
+@@ -100,17 +113,13 @@ class ResetPasswordFragment : Fragment() {
+         when (state) {
+             AuthActionState.PasswordResetEmailSent -> {
+-                DialogManager.showInfoDialog(
+-                    requireContext(),
+-                    DialogType.SUCCESS,
+-                    title = getString(
+-                        R.string.reset_success_title
+-                    ),
+-                    message = getString(
+-                        R.string.reset_success_message
+-                    ),
+-                    onDismiss = {
+-                        viewModel.resetState()
+-                        findNavController().popBackStack()
+-                    },
++                FeedbackBottomSheet.show(
++                    fragmentManager = childFragmentManager,
++                    title = getString(R.string.reset_success_title),
++                    message = getString(R.string.reset_success_message),
++                    primaryText = "",
++                    cancelText = null,
++                    tone = FeedbackBottomSheet.FeedbackTone.SUCCESS,
++                    requestKey = RESET_SUCCESS_REQUEST_KEY,
++                    actionId = "reset_sent",
+                     autoDismissMillis = 1800L
+                 )
+@@ -144,3 +153,7 @@ class ResetPasswordFragment : Fragment() {
+         _binding = null
+     }
++
++    private companion object {
++        const val RESET_SUCCESS_REQUEST_KEY = "reset_password_success_result"
++    }
+ }
+diff --git a/app/src/main/java/com/aqua/aqualight/ui/auth/security/ReAuthenticateFragment.kt b/app/src/main/java/com/aqua/aqualight/ui/auth/security/ReAuthenticateFragment.kt
+index c597c3b8a14664b3821bcc13ecdb2c24ea59251d..d94dce8486f0635e66875dd272561c4dd2b70fd3 100644
+--- a/app/src/main/java/com/aqua/aqualight/ui/auth/security/ReAuthenticateFragment.kt
++++ b/app/src/main/java/com/aqua/aqualight/ui/auth/security/ReAuthenticateFragment.kt
+@@ -16,4 +16,5 @@ import com.aqua.aqualight.composition.requireAppContainer
+ import com.aqua.aqualight.databinding.FragmentReAuthenticateBinding
+ import com.aqua.aqualight.platform.auth.GoogleIdentityTokenResult
++import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
+ import com.aqua.aqualight.ui.common.header.setupAquaHeader
+ import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
+@@ -33,4 +34,7 @@ class ReAuthenticateFragment :
+         const val ACTION_CHANGE_PASSWORD = "change_password"
+         const val ACTION_CHANGE_EMAIL = "change_email"
++        private const val REAUTH_FEEDBACK_REQUEST_KEY = "reauth_feedback_result"
++        private const val ACTION_CLOSE_REAUTH = "close_reauth"
++        private const val ACTION_NAVIGATE_LOGIN = "navigate_login"
+     }
+ 
+@@ -112,7 +116,21 @@ class ReAuthenticateFragment :
+ 
+         setupHeader()
++        setupFeedbackResultListener()
+         setupUi()
+     }
+ 
++
++    private fun setupFeedbackResultListener() {
++        childFragmentManager.setFragmentResultListener(
++            REAUTH_FEEDBACK_REQUEST_KEY,
++            viewLifecycleOwner
++        ) { _, result ->
++            when (result.getString(FeedbackBottomSheet.RESULT_ACTION_ID)) {
++                ACTION_CLOSE_REAUTH -> findNavController().popBackStack()
++                ACTION_NAVIGATE_LOGIN -> navigateToLogin()
++            }
++        }
++    }
++
+     private fun setupHeader() {
+         binding.appHeader.setupAquaHeader(
+@@ -126,16 +144,13 @@ class ReAuthenticateFragment :
+             AccountProvider.PASSWORD -> setupPasswordUi()
+             AccountProvider.UNKNOWN -> {
+-                DialogManager.showInfoDialog(
+-                    requireContext(),
+-                    DialogType.ERROR,
+-                    title = getString(
+-                        R.string.auth_provider_error_title
+-                    ),
+-                    message = getString(
+-                        R.string.auth_provider_error_message
+-                    ),
+-                    onDismiss = {
+-                        findNavController().popBackStack()
+-                    }
++                FeedbackBottomSheet.show(
++                    fragmentManager = childFragmentManager,
++                    title = getString(R.string.auth_provider_error_title),
++                    message = getString(R.string.auth_provider_error_message),
++                    primaryText = getString(R.string.ok),
++                    cancelText = null,
++                    tone = FeedbackBottomSheet.FeedbackTone.ERROR,
++                    requestKey = REAUTH_FEEDBACK_REQUEST_KEY,
++                    actionId = ACTION_CLOSE_REAUTH
+                 )
+             }
+@@ -330,14 +345,13 @@ class ReAuthenticateFragment :
+                 }
+ 
+-                DialogManager.showInfoDialog(
+-                    context = requireContext(),
+-                    type = DialogType.WARNING,
+-                    title = getString(
+-                        R.string.re_auth_delete_cleanup_warning_title
+-                    ),
+-                    message = getString(
+-                        R.string.re_auth_delete_cleanup_warning_message
+-                    ),
+-                    onDismiss = ::navigateToLogin
++                FeedbackBottomSheet.show(
++                    fragmentManager = childFragmentManager,
++                    title = getString(R.string.re_auth_delete_cleanup_warning_title),
++                    message = getString(R.string.re_auth_delete_cleanup_warning_message),
++                    primaryText = getString(R.string.ok),
++                    cancelText = null,
++                    tone = FeedbackBottomSheet.FeedbackTone.WARNING,
++                    requestKey = REAUTH_FEEDBACK_REQUEST_KEY,
++                    actionId = ACTION_NAVIGATE_LOGIN
+                 )
+                 return@launch
+diff --git a/app/src/main/java/com/aqua/aqualight/ui/tabs/settings/logout/ChangeEmailFragment.kt b/app/src/main/java/com/aqua/aqualight/ui/tabs/settings/logout/ChangeEmailFragment.kt
+index 3f8f4ed068e3994da77b881fdb5eb16c1b1a2e24..e7fbff1707ba5eda29887c034fdff007397088d5 100644
+--- a/app/src/main/java/com/aqua/aqualight/ui/tabs/settings/logout/ChangeEmailFragment.kt
++++ b/app/src/main/java/com/aqua/aqualight/ui/tabs/settings/logout/ChangeEmailFragment.kt
+@@ -16,4 +16,5 @@ import com.aqua.aqualight.databinding.FragmentChangeEmailBinding
+ import com.aqua.aqualight.ui.auth.state.AuthActionState
+ import com.aqua.aqualight.ui.auth.viewmodel.ChangeEmailViewModel
++import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
+ import com.aqua.aqualight.ui.common.header.setupAquaHeader
+ import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
+@@ -56,8 +57,28 @@ class ChangeEmailFragment :
+ 
+         setupHeader()
++        setupFeedbackResultListener()
+         setupScreen()
+         observeState()
+     }
+ 
++
++    private fun setupFeedbackResultListener() {
++        childFragmentManager.setFragmentResultListener(
++            CHANGE_EMAIL_FEEDBACK_REQUEST_KEY,
++            viewLifecycleOwner
++        ) { _, result ->
++            when (result.getString(FeedbackBottomSheet.RESULT_ACTION_ID)) {
++                ACTION_CLOSE -> findNavController().popBackStack()
++                ACTION_FINISH_EMAIL_CHANGE -> {
++                    viewLifecycleOwner.lifecycleScope.launch {
++                        sessionExitOperations.cleanupAfterSensitiveAction()
++                        viewModel.resetState()
++                        navigateToLoginRoot()
++                    }
++                }
++            }
++        }
++    }
++
+     private fun setupHeader() {
+         binding.appHeader.setupAquaHeader(
+@@ -68,17 +89,13 @@ class ChangeEmailFragment :
+     private fun setupScreen() {
+         if (viewModel.currentEmail().isBlank()) {
+-            DialogManager.showInfoDialog(
+-                requireContext(),
+-                DialogType.ERROR,
+-                title = getString(
+-                    R.string.change_email_user_not_found_title
+-                ),
+-                message = getString(
+-                    R.string.change_email_user_not_found_message
+-                ),
+-                onDismiss = {
+-                    findNavController()
+-                        .popBackStack()
+-                }
++            FeedbackBottomSheet.show(
++                fragmentManager = childFragmentManager,
++                title = getString(R.string.change_email_user_not_found_title),
++                message = getString(R.string.change_email_user_not_found_message),
++                primaryText = getString(R.string.ok),
++                cancelText = null,
++                tone = FeedbackBottomSheet.FeedbackTone.ERROR,
++                requestKey = CHANGE_EMAIL_FEEDBACK_REQUEST_KEY,
++                actionId = ACTION_CLOSE
+             )
+ 
+@@ -238,21 +255,16 @@ class ChangeEmailFragment :
+         when (state) {
+             is AuthActionState.EmailVerificationSent -> {
+-                DialogManager.showInfoDialog(
+-                    requireContext(),
+-                    DialogType.SUCCESS,
+-                    title = getString(
+-                        R.string.change_email_verification_title
+-                    ),
++                FeedbackBottomSheet.show(
++                    fragmentManager = childFragmentManager,
++                    title = getString(R.string.change_email_verification_title),
+                     message = getString(
+                         R.string.change_email_verification_message,
+                         state.newEmail
+                     ),
+-                    onDismiss = {
+-                        viewLifecycleOwner.lifecycleScope.launch {
+-                            sessionExitOperations.cleanupAfterSensitiveAction()
+-                            viewModel.resetState()
+-                            navigateToLoginRoot()
+-                        }
+-                    }
++                    primaryText = getString(R.string.ok),
++                    cancelText = null,
++                    tone = FeedbackBottomSheet.FeedbackTone.SUCCESS,
++                    requestKey = CHANGE_EMAIL_FEEDBACK_REQUEST_KEY,
++                    actionId = ACTION_FINISH_EMAIL_CHANGE
+                 )
+             }
+@@ -290,3 +302,9 @@ class ChangeEmailFragment :
+             null
+     }
++
++    private companion object {
++        const val CHANGE_EMAIL_FEEDBACK_REQUEST_KEY = "change_email_feedback_result"
++        const val ACTION_CLOSE = "close"
++        const val ACTION_FINISH_EMAIL_CHANGE = "finish_email_change"
++    }
+ }
+diff --git a/app/src/main/java/com/aqua/aqualight/ui/tabs/settings/logout/LogoutFragment.kt b/app/src/main/java/com/aqua/aqualight/ui/tabs/settings/logout/LogoutFragment.kt
+index b8b36e2b0f2f6bd7456b2f5da6b1ddc607fe1609..36a60b4b9894872a7300cab60a24dbb08d4f5fb3 100644
+--- a/app/src/main/java/com/aqua/aqualight/ui/tabs/settings/logout/LogoutFragment.kt
++++ b/app/src/main/java/com/aqua/aqualight/ui/tabs/settings/logout/LogoutFragment.kt
+@@ -13,4 +13,5 @@ import com.aqua.aqualight.composition.requireAppContainer
+ import com.aqua.aqualight.databinding.FragmentLogoutBinding
+ import com.aqua.aqualight.ui.auth.security.ReAuthenticateFragment
++import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
+ import com.aqua.aqualight.ui.common.header.setupAquaHeader
+ import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
+@@ -61,8 +62,25 @@ class LogoutFragment :
+ 
+         setupHeader()
++        setupFeedbackResultListener()
+         setupNavigationRows()
+         setupButtons()
+     }
+ 
++
++    private fun setupFeedbackResultListener() {
++        childFragmentManager.setFragmentResultListener(
++            LOGOUT_CONFIRM_REQUEST_KEY,
++            viewLifecycleOwner
++        ) { _, result ->
++            if (result.getString(FeedbackBottomSheet.RESULT_KEY) !=
++                FeedbackBottomSheet.RESULT_PRIMARY
++            ) return@setFragmentResultListener
++            when (result.getString(FeedbackBottomSheet.RESULT_ACTION_ID)) {
++                ACTION_LOGOUT -> performLogout()
++                ACTION_DELETE_ACCOUNT -> performDeleteAccount()
++            }
++        }
++    }
++
+     private fun setupHeader() {
+         binding.appHeader.setupAquaHeader(
+@@ -102,16 +120,13 @@ class LogoutFragment :
+ 
+     private fun showLogoutDialog() {
+-        DialogManager.showConfirmDialog(
+-            context = requireContext(),
+-            type = DialogType.WARNING,
+-            title = getString(
+-                R.string.logout_dialog_title
+-            ),
+-            message = getString(
+-                R.string.logout_dialog_message
+-            ),
+-            onConfirm = {
+-                performLogout()
+-            }
++        FeedbackBottomSheet.show(
++            fragmentManager = childFragmentManager,
++            title = getString(R.string.logout_dialog_title),
++            message = getString(R.string.logout_dialog_message),
++            primaryText = getString(R.string.confirm),
++            cancelText = getString(R.string.cancel),
++            tone = FeedbackBottomSheet.FeedbackTone.WARNING,
++            requestKey = LOGOUT_CONFIRM_REQUEST_KEY,
++            actionId = ACTION_LOGOUT
+         )
+     }
+@@ -158,16 +173,13 @@ class LogoutFragment :
+ 
+     private fun showDeleteAccountDialog() {
+-        DialogManager.showConfirmDialog(
+-            context = requireContext(),
+-            type = DialogType.ERROR,
+-            title = getString(
+-                R.string.delete_account_dialog_title
+-            ),
+-            message = getString(
+-                R.string.delete_account_dialog_message
+-            ),
+-            onConfirm = {
+-                performDeleteAccount()
+-            }
++        FeedbackBottomSheet.show(
++            fragmentManager = childFragmentManager,
++            title = getString(R.string.delete_account_dialog_title),
++            message = getString(R.string.delete_account_dialog_message),
++            primaryText = getString(R.string.confirm),
++            cancelText = getString(R.string.cancel),
++            tone = FeedbackBottomSheet.FeedbackTone.DANGER,
++            requestKey = LOGOUT_CONFIRM_REQUEST_KEY,
++            actionId = ACTION_DELETE_ACCOUNT
+         )
+     }
+@@ -213,3 +225,9 @@ class LogoutFragment :
+             null
+     }
++
++    private companion object {
++        const val LOGOUT_CONFIRM_REQUEST_KEY = "logout_confirm_result"
++        const val ACTION_LOGOUT = "logout"
++        const val ACTION_DELETE_ACCOUNT = "delete_account"
++    }
+ }
