@@ -26,7 +26,9 @@ import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankNameFragmentDirectio
 import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankPhotoFragmentDirections
 import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankStepFragment
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
 
@@ -39,6 +41,7 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
     private var destinationChangedListener: NavController.OnDestinationChangedListener? = null
     private var isCompletingTank: Boolean = false
     private var isNavigatingStep: Boolean = false
+    private var isClosingFlow: Boolean = false
 
     override fun onViewCreated(
         view: View,
@@ -112,11 +115,11 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
         } else {
             getString(R.string.aquarium_action_next)
         }
-        binding.btnNext.isEnabled = !isCompletingTank && !isNavigatingStep
+        binding.btnNext.isEnabled = !isCompletingTank && !isNavigatingStep && !isClosingFlow
     }
 
     private fun handleNextClick() {
-        if (isCompletingTank || isNavigatingStep) return
+        if (isCompletingTank || isNavigatingStep || isClosingFlow) return
 
         val currentStepFragment = currentCreateFlowFragment()
         if (currentStepFragment is TankStepFragment && !currentStepFragment.validateAndSave()) {
@@ -158,6 +161,7 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
     ) {
         if (
             isNavigatingStep ||
+            isClosingFlow ||
             createTankNavController.currentDestination?.id != sourceDestinationId
         ) {
             return
@@ -170,12 +174,12 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
         }.onFailure { exception ->
             exception.printStackTrace()
             isNavigatingStep = false
-            _binding?.btnNext?.isEnabled = !isCompletingTank
+            _binding?.btnNext?.isEnabled = !isCompletingTank && !isClosingFlow
         }
     }
 
     private fun handleBackNavigation() {
-        if (isCompletingTank) return
+        if (isCompletingTank || isClosingFlow) return
         if (!::createTankNavController.isInitialized) {
             closeCreateFlow()
             return
@@ -190,24 +194,30 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
     }
 
     private fun closeCreateFlow() {
-        cleanupDraftPhotoIfNotCompleted()
-        findNavController().navigateUp()
+        if (isClosingFlow || isCompletingTank) return
+        isClosingFlow = true
+        _binding?.btnNext?.isEnabled = false
+        lifecycleScope.launch {
+            cleanupDraftPhotoIfNotCompleted()
+            if (isAdded) findNavController().navigateUp()
+        }
     }
 
-    private fun cleanupDraftPhotoIfNotCompleted() {
+    private suspend fun cleanupDraftPhotoIfNotCompleted() {
         if (isCompletingTank || !::createTankNavController.isInitialized) return
-        val draftPhotoUri = runCatching {
-            createTankViewModel().tankDraft.photoUri
-        }.getOrNull()
-        AppMediaStorage.rollbackPendingMedia(
-            context = requireContext(),
-            uriString = draftPhotoUri
-        )
-        runCatching { createTankViewModel().completeTank() }
+        val draftViewModel = runCatching { createTankViewModel() }.getOrNull() ?: return
+        val draftPhotoUri = draftViewModel.tankDraft.photoUri
+        withContext(Dispatchers.IO) {
+            AppMediaStorage.rollbackPendingMedia(
+                context = requireContext().applicationContext,
+                uriString = draftPhotoUri
+            )
+        }
+        draftViewModel.completeTank()
     }
 
     private fun completeTank() {
-        if (isCompletingTank) return
+        if (isCompletingTank || isClosingFlow) return
         isCompletingTank = true
         binding.btnNext.isEnabled = false
 
