@@ -21,12 +21,10 @@ object CareTaskReminderScheduler {
   /**
    * Replaces the task alarm with the deterministic next occurrence.
    *
-   * Returns true only when a future alarm was actually installed. A false result
-   * means the persisted task currently has no schedulable due or missed occurrence.
-   *
-   * This intentionally uses an inexact alarm. Aquarium care reminders are
-   * user-facing but do not require alarm-clock precision, so AquaLight avoids
-   * exact-alarm special access and its additional policy surface.
+   * Returns true only when a future alarm was actually installed. User-selected
+   * reminder times use an exact idle alarm whenever Android permits it. Android 12+
+   * devices without Alarms & reminders access receive an inexact fallback until the
+   * user grants the centrally requested special access.
    */
   fun schedule(
     context: Context,
@@ -118,19 +116,35 @@ object CareTaskReminderScheduler {
       occurrence = occurrence
     )
 
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-      alarmManager.setAndAllowWhileIdle(
-        AlarmManager.RTC_WAKEUP,
-        triggerAtMillis,
-        pendingIntent
-      )
-    } else {
-      alarmManager.set(
-        AlarmManager.RTC_WAKEUP,
-        triggerAtMillis,
-        pendingIntent
-      )
+    val exactAccessGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
+      alarmManager.canScheduleExactAlarms()
+
+    if (shouldUseExactAlarm(Build.VERSION.SDK_INT, exactAccessGranted)) {
+      try {
+        alarmManager.setExactAndAllowWhileIdle(
+          AlarmManager.RTC_WAKEUP,
+          triggerAtMillis,
+          pendingIntent
+        )
+        return
+      } catch (_: SecurityException) {
+        // Access can be revoked between the grant check and platform call. Preserve
+        // the reminder with an inexact alarm; the grant broadcast will reconcile it.
+      }
     }
+
+    alarmManager.setAndAllowWhileIdle(
+      AlarmManager.RTC_WAKEUP,
+      triggerAtMillis,
+      pendingIntent
+    )
+  }
+
+  internal fun shouldUseExactAlarm(
+    sdkInt: Int,
+    exactAccessGranted: Boolean
+  ): Boolean {
+    return sdkInt < Build.VERSION_CODES.S || exactAccessGranted
   }
 
   private fun createPendingIntent(
