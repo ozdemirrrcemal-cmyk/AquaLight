@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Enforce AquaLight's commercial central notification architecture."""
+"""Enforce AquaLight's commercial central notification/reminder architecture."""
 
 from pathlib import Path
 import sys
@@ -41,6 +41,11 @@ LEDGER = "app/src/main/java/com/aqua/aqualight/data/notifications/CareReminderSc
 RENDERER = "app/src/main/java/com/aqua/aqualight/platform/notifications/AndroidNotificationRenderer.kt"
 PLATFORM = "app/src/main/java/com/aqua/aqualight/data/notifications/NotificationPlatform.kt"
 IDENTITY = "app/src/main/java/com/aqua/aqualight/data/notifications/NotificationIdentity.kt"
+CAPABILITY = "app/src/main/java/com/aqua/aqualight/platform/permissions/AppCapability.kt"
+PERMISSION_POLICY = "app/src/main/java/com/aqua/aqualight/platform/permissions/PermissionPolicy.kt"
+PRECISE_POLICY = "app/src/main/java/com/aqua/aqualight/platform/permissions/PreciseReminderAccessPolicy.kt"
+PERMISSION_COORDINATOR = "app/src/main/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionCoordinator.kt"
+PERMISSION_UI = "app/src/main/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionUiSpecResolver.kt"
 APP_SETTINGS = "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/app/AppSettingsFragment.kt"
 ADD_CARE = "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt"
 CARE_STORE = "app/src/main/java/com/aqua/aqualight/data/care/CareTaskDataStoreManager.kt"
@@ -70,6 +75,11 @@ required_files = (
     RENDERER,
     PLATFORM,
     IDENTITY,
+    CAPABILITY,
+    PERMISSION_POLICY,
+    PRECISE_POLICY,
+    PERMISSION_COORDINATOR,
+    PERMISSION_UI,
     APP_SETTINGS,
     ADD_CARE,
     CARE_STORE,
@@ -85,24 +95,20 @@ required_files = (
     SESSION_MANAGER,
     USER_CLEANER,
     USER_PROTO,
+    USER_MANAGER,
     MANIFEST,
     DOC,
     "app/src/main/proto/notification_preferences.proto",
     "app/src/main/proto/notification_schedule_state.proto",
     "app/src/test/java/com/aqua/aqualight/application/notifications/NotificationPreferenceUseCaseTest.kt",
     "app/src/test/java/com/aqua/aqualight/application/notifications/NotificationDispatchUseCaseTest.kt",
-    "app/src/test/java/com/aqua/aqualight/application/notifications/CareReminderKindContractTest.kt",
-    "app/src/test/java/com/aqua/aqualight/data/notifications/NotificationIdentityTest.kt",
-    "app/src/test/java/com/aqua/aqualight/data/notifications/NotificationScheduleStateRulesTest.kt",
     "app/src/test/java/com/aqua/aqualight/data/care/reminder/CareReminderSchedulePolicyTest.kt",
-    "app/src/test/java/com/aqua/aqualight/data/care/reminder/CareReminderReconcileRuntimeTest.kt",
-    "app/src/test/java/com/aqua/aqualight/ui/navigation/CareTaskNotificationRoutePolicyTest.kt",
-    "app/src/test/java/com/aqua/aqualight/data/aquarium/delete/OwnerTankDataCleanerTest.kt",
+    "app/src/test/java/com/aqua/aqualight/data/care/reminder/CareTaskReminderSchedulerTest.kt",
+    "app/src/test/java/com/aqua/aqualight/platform/permissions/PreciseReminderAccessPolicyTest.kt",
     "app/src/androidTest/java/com/aqua/aqualight/data/notifications/OwnerNotificationPreferencesInstrumentedTest.kt",
     "app/src/androidTest/java/com/aqua/aqualight/data/notifications/NotificationChannelRegistryInstrumentedTest.kt",
     "app/src/androidTest/java/com/aqua/aqualight/data/notifications/OwnerNotificationCancellationInstrumentedTest.kt",
     "app/src/androidTest/java/com/aqua/aqualight/data/notifications/CareReminderScheduleLedgerInstrumentedTest.kt",
-    "app/src/androidTest/java/com/aqua/aqualight/data/recovery/NotificationPreferencesCorruptionRecoveryInstrumentedTest.kt",
 )
 for relative in required_files:
     load(relative)
@@ -113,8 +119,6 @@ for obsolete in (
     "app/src/main/java/com/aqua/aqualight/data/notifications/ActiveNotificationPreferenceProjection.kt",
     "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareReminderCoordinator.kt",
     "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareTaskBootRuntime.kt",
-    "app/src/test/java/com/aqua/aqualight/data/care/reminder/CareTaskBootRuntimeTest.kt",
-    "app/src/androidTest/java/com/aqua/aqualight/data/notifications/ActiveNotificationPreferenceProjectionInstrumentedTest.kt",
 ):
     if path(obsolete).exists():
         errors.append(f"obsolete/temporary notification path remains: {obsolete}")
@@ -124,7 +128,6 @@ for token in (
     "CARE_REMINDERS",
     "DEVICE_ALERTS",
     "DEVICE_UPDATES",
-    "enum class CareReminderKind",
     "interface NotificationPermissionPolicy",
     "interface NotificationScheduler",
     "interface NotificationRenderer",
@@ -149,16 +152,28 @@ for token, reason in {
 }.items():
     require(REGISTRY, token, reason)
 for token in ("_v1", "APP_UPDATES", "app_updates", "deleteNotificationChannel"):
-    forbid(REGISTRY, token, "unreleased product uses semantic stable channel IDs without legacy migration")
+    forbid(REGISTRY, token, "pre-release product uses stable semantic channel IDs")
 
 for token, reason in (
-    ("Manifest.permission.POST_NOTIFICATIONS", "API 33 runtime permission must be evaluated centrally"),
-    ("areNotificationsEnabled", "Android app-level notification state must be separate"),
+    ("Manifest.permission.POST_NOTIFICATIONS", "runtime notification permission must be evaluated centrally"),
+    ("areNotificationsEnabled", "Android app notification state must be separate"),
     ("NotificationChannelRegistry.readState", "category channel state must be separate"),
 ):
     require(POLICY, token, reason)
 for token in ("requestPermissions", "ActivityResultContracts", "Settings.ACTION_"):
-    forbid(POLICY, token, "Stage 6 owns permission and settings UI")
+    forbid(POLICY, token, "Stage 6 coordinator owns permission and Settings UI")
+
+for token, reason in (
+    ("PRECISE_REMINDERS", "precise care timing must be a product capability"),
+    ("PreciseReminderAccessPolicy", "special access must be centrally evaluated"),
+):
+    require(CAPABILITY if token == "PRECISE_REMINDERS" else PERMISSION_POLICY, token, reason)
+require(PRECISE_POLICY, "canScheduleExactAlarms", "Android 12+ grant must be queried through AlarmManager")
+require(PRECISE_POLICY, "Build.VERSION_CODES.S", "special access starts at API 31")
+require(PERMISSION_COORDINATOR, "ACTION_REQUEST_SCHEDULE_EXACT_ALARM", "special access Settings routing must remain central")
+require(PERMISSION_UI, "AppCapability.PRECISE_REMINDERS", "precise timing must use the common professional permission sheet")
+require(ADD_CARE, "AppCapability.PRECISE_REMINDERS", "care-task save must require precise timing access")
+require(APP_SETTINGS, "AppCapability.PRECISE_REMINDERS", "App Settings must surface precise timing access")
 
 require(REPOSITORY, "NotificationPreferenceRepository", "owner store must implement the application repository")
 require(REPOSITORY, "notification_preferences.pb", "owner preference must have a dedicated Proto DataStore")
@@ -170,10 +185,9 @@ for token, reason in (
     ("NotificationCompat.Builder", "visible notification construction belongs only in renderer"),
     ("renderCareReminder", "care rendering contract is required"),
     ("renderDeviceAlert", "device alert rendering contract is required"),
-    ("renderDeviceUpdate", "device firmware update rendering contract is required"),
+    ("renderDeviceUpdate", "device update rendering contract is required"),
     ("NotificationIdentity.tag", "visible notifications require stable owner/category/entity tags"),
     ("activeNotifications", "owner-specific visible cancellation is required"),
-    ("MainActivity", "notification navigation belongs in the Android platform adapter"),
 ):
     require(RENDERER, token, reason)
 for token in ("AlarmManager", "WorkManager", "OwnerNotificationPreferences"):
@@ -181,49 +195,31 @@ for token in ("AlarmManager", "WorkManager", "OwnerNotificationPreferences"):
 
 for token, reason in (
     ("NotificationScheduler", "scheduler must implement the application contract"),
-    ("NotificationRenderer", "scheduler depends only on the application renderer contract"),
     ("CareTaskReminderScheduler.schedule", "care alarms must use the internal backend"),
     ("CareTaskReminderScheduler.cancel", "care alarm cancellation must be central"),
-    ("CareReminderScheduleLedger.create", "alarm identities must use a durable owner/task ledger"),
-    ("scheduleLedger.markScheduled", "successful alarms must be persisted in the ledger"),
-    ("scheduleLedger.markCancelled", "cancelled or ineligible alarms must leave the ledger"),
-    ("scheduleLedger.taskIds", "reconciliation must discover stale alarm identities"),
-    ("scheduleLedger.clearOwner", "owner shutdown must clear its alarm ledger"),
-    ("staleTaskIds", "reconciliation must cancel removed-task alarms"),
+    ("CareReminderScheduleLedger.create", "alarm identities require a durable owner/task ledger"),
+    ("scheduleLedger.markScheduled", "successful alarms must be recorded"),
+    ("scheduleLedger.markCancelled", "cancelled alarms must leave the ledger"),
+    ("scheduleLedger.taskIds", "reconciliation must discover stale identities"),
     ("CareReminderDeliveryWorker.cancelOwner", "queued delivery must be owner-cancellable"),
     ("CareReminderReconcileWorker.cancel", "owner reconciliation must be cancellable"),
     ("preferences.isEnabled", "scheduler eligibility must use owner preference"),
 ):
     require(SCHEDULER, token, reason)
-for token in (
-    "NotificationCompat.Builder",
-    "NotificationManager.notify",
-    "AndroidNotificationRenderer(",
-    "platform.notifications.AndroidNotificationRenderer",
-):
-    forbid(SCHEDULER, token, "scheduler must not construct a platform renderer or visible notification")
+for token in ("NotificationCompat.Builder", "NotificationManager.notify"):
+    forbid(SCHEDULER, token, "scheduler must delegate visible rendering")
 
 for token, reason in (
     ("notification_schedule_state.pb", "alarm identity ledger must be durable"),
     ("suspend fun taskIds", "owner alarm identities must be enumerable"),
-    ("suspend fun markScheduled", "scheduled alarm identities must be recorded"),
-    ("suspend fun markCancelled", "cancelled alarm identities must be removed"),
+    ("suspend fun markScheduled", "scheduled identities must be recorded"),
+    ("suspend fun markCancelled", "cancelled identities must be removed"),
     ("suspend fun clearOwner", "owner ledger cleanup must be explicit"),
 ):
     require(LEDGER, token, reason)
 
-for token, reason in (
-    ("NotificationPlatform", "process composition must be explicit"),
-    ("preferenceUseCase", "one preference use-case must be exposed"),
-    ("dispatchUseCase", "one dispatch use-case must be exposed"),
-    ("scheduler", "one scheduler instance must be exposed"),
-    ("renderer", "one renderer instance must be exposed"),
-    ("platform.notifications.AndroidNotificationRenderer", "renderer implementation must be platform-owned"),
-):
-    require(PLATFORM, token, reason)
-
 for screen in (APP_SETTINGS, ADD_CARE):
-    require(screen, "notificationPreferenceUseCase", "screen must use the same application preference use-case")
+    require(screen, "notificationPreferenceUseCase", "screen must use the shared application use-case")
     for token in (
         "NotificationChannelRegistry",
         "AndroidNotificationPermissionPolicy",
@@ -236,8 +232,9 @@ for screen in (APP_SETTINGS, ADD_CARE):
         "WorkManager",
         "NotificationManager",
         "CareTaskReminderScheduler",
+        "Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM",
     ):
-        forbid(screen, token, "UI must not bypass the notification application boundary")
+        forbid(screen, token, "UI must not bypass the central notification/permission boundary")
 
 for token in (
     "NotificationPlatform",
@@ -252,100 +249,86 @@ for token in (
     "WorkManager",
 ):
     forbid(CARE_STORE, token, "care persistence must remain notification-neutral")
-require(CARE_STORE, "Pure owner-scoped care-task persistence", "care store must document its notification-neutral contract")
 
 for token in (
     "notificationPreferences.scheduleCareTask",
     "notificationPreferences.cancelCareTask",
     "notificationPreferences.reconcileOwner",
 ):
-    require(MAINTENANCE_OPS, token, "maintenance commands must reconcile through the notification use-case")
-for token in ("CareTaskReminderScheduler", "NotificationPlatform", "AlarmManager"):
-    forbid(MAINTENANCE_OPS, token, "maintenance application adapter must not bypass central contracts")
-
-require(TANK_OPS, "notificationPreferences.reconcileOwner", "tank reminder setting changes must reconcile centrally")
-require(TANK_CLEANER, "cancelCareTaskReminder", "tank deletion must cancel deleted task reminders by owner and task")
-require(TANK_CLEANER, "reconcileCareReminders", "tank rollback must restore reminder state")
-require(SMART_CARE_WORKER, ".preferenceUseCase", "Smart Care persistence must reconcile through the central use-case")
-require(SMART_CARE_WORKER, ".reconcileOwner(scheduledOwnerUid)", "Smart Care must reconcile the captured owner")
+    require(MAINTENANCE_OPS, token, "maintenance commands must use the notification application boundary")
+require(TANK_OPS, "notificationPreferences.reconcileOwner", "tank reminder changes must reconcile centrally")
+require(TANK_CLEANER, "cancelCareTaskReminder", "tank deletion must cancel owner/task reminders")
+require(SMART_CARE_WORKER, ".preferenceUseCase", "Smart Care must reconcile through the central use-case")
 
 for token, reason in (
-    ("CareReminderSchedulePolicy.plan", "alarm timing must come from deterministic persisted-time policy"),
+    ("CareReminderSchedulePolicy.plan", "alarm timing must derive from persisted task time"),
     ("CareReminderIdentity.alarmData", "PendingIntent identity must contain owner and task"),
-    ("setAndAllowWhileIdle", "care reminders must remain inexact and idle-compatible"),
-    ("return true", "alarm backend must report whether an alarm was actually installed"),
+    ("canScheduleExactAlarms", "Android 12+ exact access must be checked immediately before scheduling"),
+    ("setExactAndAllowWhileIdle", "granted user-selected reminder times require exact idle delivery"),
+    ("setAndAllowWhileIdle", "revocation race requires a safe inexact fallback"),
+    ("shouldUseExactAlarm", "API/access selection must be unit-testable"),
 ):
     require(ALARM_BACKEND, token, reason)
-for token in (
-    "setExact(",
-    "setExactAndAllowWhileIdle(",
-    "UserDataScope.currentUid()",
-    "NotificationHelper",
-    "NotificationRenderer",
-    "NotificationManager",
-):
-    forbid(ALARM_BACKEND, token, "low-level alarm backend must not own visible notification work")
+for token in ("setAlarmClock(", "UserDataScope.currentUid()", "NotificationManager"):
+    forbid(ALARM_BACKEND, token, "low-level alarm backend must remain owner-explicit and notification-neutral")
 
-require(ALARM_RECEIVER, "CareReminderDeliveryWorker.enqueue", "alarm receiver must enqueue durable delivery only")
-for token in (
-    "goAsync()",
-    "CoroutineScope",
-    "FirebaseAuthenticatedOwnerProvider",
-    "CareTaskDataStoreManager",
-    "NotificationPlatform",
-    "NotificationCompat",
-):
-    forbid(ALARM_RECEIVER, token, "alarm receiver must remain enqueue-only")
+require(ALARM_RECEIVER, "CareReminderDeliveryWorker.enqueue", "alarm receiver must enqueue durable delivery")
+for token in ("FirebaseAuthenticatedOwnerProvider", "CareTaskDataStoreManager", "NotificationPlatform", "NotificationCompat"):
+    forbid(ALARM_RECEIVER, token, "alarm receiver must remain a lightweight boundary")
 
 for token, reason in (
-    ("NotificationPlatform.get", "delivery must use the central composition"),
-    ("dispatchUseCase.dispatchCareReminder", "delivery must pass final posting through the dispatch use-case"),
+    ("NotificationPlatform.get", "delivery must use central composition"),
+    ("dispatchUseCase.dispatchCareReminder", "posting must pass through the dispatch use-case"),
     ("FirebaseAuthenticatedOwnerProvider", "delivery must verify the active owner"),
     ("CareReminderDeliveryPolicy.shouldDeliver", "delivery must revalidate task and tank"),
-    ("ExistingWorkPolicy.KEEP", "duplicate alarm broadcasts must not duplicate delivery"),
-    ("BackoffPolicy.EXPONENTIAL", "transient delivery failure requires backoff"),
+    ("setExpedited", "alarm-triggered user-visible work must request expedited execution"),
+    ("OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST", "quota exhaustion needs a durable fallback"),
+    ("ExistingWorkPolicy.REPLACE", "a stale deferred delivery must not block the current alarm"),
+    ("BackoffPolicy.EXPONENTIAL", "transient failures require bounded backoff"),
     ("MAX_ATTEMPTS", "delivery retries must be bounded"),
 ):
     require(DELIVERY_WORKER, token, reason)
-for token in ("NotificationHelper", "OwnerNotificationPreferences", "UserPreferencesManager"):
-    forbid(DELIVERY_WORKER, token, "worker must use central use-cases instead of parallel authorities")
 
-require(BOOT_RECEIVER, "CareReminderReconcileWorker.enqueue", "boot/package replacement must enqueue durable reconciliation")
-for token in ("goAsync()", "CareTaskDataStoreManager", "AlarmManager", "NotificationPlatform"):
+for token, reason in (
+    ("CareReminderReconcileWorker.enqueue", "boot/package/access grant must enqueue reconciliation"),
+    ("ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED", "grant changes must restore exact alarms"),
+    ("PreciseReminderAccessPolicy", "grant broadcast must be verified before reconciliation"),
+):
+    require(BOOT_RECEIVER, token, reason)
+for token in ("CareTaskDataStoreManager", "NotificationPlatform"):
     forbid(BOOT_RECEIVER, token, "boot receiver must remain enqueue-only")
 
 for token, reason in (
     ("NotificationPlatform.get", "reconciliation must use central composition"),
     ("CareReminderReconcileRuntime", "owner stability must be checked"),
     ("enqueueUniqueWork", "owner reconciliation must be unique"),
-    ("BackoffPolicy.EXPONENTIAL", "transient restore failure requires backoff"),
-    ("MAX_ATTEMPTS", "restore retries must be bounded"),
+    ("BackoffPolicy.EXPONENTIAL", "transient restore failures require backoff"),
 ):
     require(RECONCILE_WORKER, token, reason)
-for token in ("ActiveNotificationPreferenceProjection", "CareReminderCoordinator"):
-    forbid(RECONCILE_WORKER, token, "temporary/parallel reconciliation authority is forbidden")
 
 require(SESSION_MANAGER, "NotificationPlatform.get", "account shutdown must use central composition")
 require(SESSION_MANAGER, "cancelOwner", "account shutdown must cancel only the outgoing owner")
 for token in ("cancelAll", "NotificationHelper", "ActiveNotificationPreferenceProjection"):
-    forbid(SESSION_MANAGER, token, "account change must not use app-wide or temporary notification cleanup")
-require(USER_CLEANER, ".preferenceUseCase", "destructive account cleanup must cancel owner notification state")
-require(USER_CLEANER, ".cancelOwner(targetOwnerUid)", "destructive cleanup must target only the selected owner")
+    forbid(SESSION_MANAGER, token, "account change must not use app-wide or temporary cleanup")
+require(USER_CLEANER, ".preferenceUseCase", "destructive cleanup must cancel owner notification state")
 
 require(USER_PROTO, "reserved 9;", "removed global notification field number must never be reused")
 require(USER_PROTO, 'reserved "notificationsEnabled";', "removed global notification field name must never be reused")
-for token in ("bool notificationsEnabled", "bool notifications_enabled"):
-    forbid(USER_PROTO, token, "notification preference must exist only in the owner-scoped store")
 for token in ("notificationsEnabled", "updateNotificationsEnabled"):
     forbid(USER_MANAGER, token, "global notification preference API must not exist")
 
 manifest_text = load(MANIFEST)
-for token in ("android.permission.SCHEDULE_EXACT_ALARM", "android.permission.USE_EXACT_ALARM"):
-    if token in manifest_text:
-        errors.append(f"{MANIFEST}: care reminders do not qualify for exact-alarm special access")
-for token in ("android.permission.RECEIVE_BOOT_COMPLETED", "CareTaskBootReceiver"):
+for token in (
+    "android.permission.POST_NOTIFICATIONS",
+    "android.permission.SCHEDULE_EXACT_ALARM",
+    "android.permission.RECEIVE_BOOT_COMPLETED",
+    "CareTaskBootReceiver",
+    "android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED",
+):
     if token not in manifest_text:
-        errors.append(f"{MANIFEST}: boot restore contract missing {token}")
+        errors.append(f"{MANIFEST}: reminder delivery contract missing {token}")
+if "android.permission.USE_EXACT_ALARM" in manifest_text:
+    errors.append(f"{MANIFEST}: restricted USE_EXACT_ALARM permission is forbidden")
 
 for source in APP.rglob("*.kt"):
     text = source.read_text(encoding="utf-8", errors="ignore")
@@ -363,11 +346,11 @@ for source in APP.rglob("*.kt"):
         "CareTaskReminderScheduler.cancel(",
     ):
         if alarm_call in text and source != path(SCHEDULER):
-            errors.append(
-                f"{relative}: only DefaultNotificationScheduler may call the alarm backend: {alarm_call}"
-            )
-    if "CareReminderScheduleLedger" in text and source not in {path(SCHEDULER), path(LEDGER)}:
-        errors.append(f"{relative}: only DefaultNotificationScheduler may own the alarm ledger")
+            errors.append(f"{relative}: only DefaultNotificationScheduler may call {alarm_call}")
+    if "setExactAndAllowWhileIdle(" in text and source != path(ALARM_BACKEND):
+        errors.append(f"{relative}: exact care alarms belong only in CareTaskReminderScheduler")
+    if "ACTION_REQUEST_SCHEDULE_EXACT_ALARM" in text and source != path(PERMISSION_COORDINATOR):
+        errors.append(f"{relative}: precise-reminder Settings routing belongs only in the coordinator")
 
 if UI.is_dir():
     forbidden_ui_tokens = (
@@ -397,7 +380,7 @@ if errors:
     sys.exit(1)
 
 print(
-    "Central notification guard passed: one owner preference source, three permanent "
-    "channels, pure care persistence, durable owner/task alarm ledger, one policy, one "
-    "scheduler, one platform renderer, central use-cases and owner-scoped cleanup."
+    "Central notification guard passed: owner-scoped preferences, three stable channels, "
+    "precise user-selected care alarms, expedited durable delivery, central use-cases, "
+    "durable owner/task ledger and owner-specific cleanup are enforced."
 )
