@@ -18,7 +18,6 @@ import com.aqua.aqualight.application.feedback.FeedbackSubmissionFailureKind
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentFeedbackBinding
-import com.aqua.aqualight.platform.media.AndroidFeedbackMediaProcessor
 import com.aqua.aqualight.platform.media.FeedbackMediaFailureKind
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
@@ -30,10 +29,10 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
     private val binding get() = _binding!!
 
     private val viewModel: FeedbackViewModel by viewModels {
-        val context = requireContext().applicationContext
+        val container = requireContext().requireAppContainer()
         FeedbackViewModel.factory(
-            submissionUseCase = context.requireAppContainer().feedbackSubmissionOperations,
-            mediaProcessor = AndroidFeedbackMediaProcessor(context)
+            submissionUseCase = container.feedbackSubmissionOperations,
+            mediaProcessor = container.feedbackMediaProcessor
         )
     }
 
