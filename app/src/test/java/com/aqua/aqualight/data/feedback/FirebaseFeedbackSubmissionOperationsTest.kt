@@ -13,6 +13,42 @@ import org.junit.Test
 class FirebaseFeedbackSubmissionOperationsTest {
 
     @Test
+    fun successfulSubmissionRemovesPreRegisteredOrphanPath() = runTest {
+        val documentStore = FakeDocumentStore()
+        val screenshotStore = FakeScreenshotStore()
+        val orphanStore = FakeOrphanStore()
+        val repository = repository(documentStore, screenshotStore, orphanStore)
+
+        val result = repository.submit(request(), File("feedback.jpg"))
+
+        assertTrue(result is FeedbackSubmissionResult.Success)
+        assertTrue(orphanStore.pendingPaths().isEmpty())
+        assertEquals(
+            "feedback_screenshots/owner/document-1.jpg",
+            screenshotStore.uploadedPath
+        )
+    }
+
+    @Test
+    fun uploadFailureBeforeObjectExistsRemovesPlannedPath() = runTest {
+        val documentStore = FakeDocumentStore()
+        val screenshotStore = FakeScreenshotStore().apply {
+            uploadError = FeedbackStorageUploadException(
+                uploadError = IllegalStateException("upload failed"),
+                storagePath = null
+            )
+        }
+        val orphanStore = FakeOrphanStore()
+        val repository = repository(documentStore, screenshotStore, orphanStore)
+
+        val result = repository.submit(request(), File("feedback.jpg"))
+
+        val failure = (result as FeedbackSubmissionResult.Failure).failure
+        assertEquals(FeedbackSubmissionFailureKind.UPLOAD, failure.kind)
+        assertTrue(orphanStore.pendingPaths().isEmpty())
+    }
+
+    @Test
     fun firestoreFailureAfterUploadDeletesStorageObject() = runTest {
         val documentStore = FakeDocumentStore().apply {
             saveError = IllegalStateException("firestore failed")
@@ -113,15 +149,18 @@ class FirebaseFeedbackSubmissionOperationsTest {
         val deletedPaths = mutableListOf<String>()
         val failingDeletePaths = mutableSetOf<String>()
         var deleteError: Throwable? = null
+        var uploadError: Throwable? = null
+        var uploadedPath: String? = null
 
         override suspend fun upload(
-            ownerUid: String,
-            documentId: String,
+            storagePath: String,
             file: File
         ): FeedbackScreenshotUpload {
+            uploadedPath = storagePath
+            uploadError?.let { throw it }
             return FeedbackScreenshotUpload(
-                storagePath = "feedback_screenshots/$ownerUid/$documentId.jpg",
-                downloadUrl = "https://example.invalid/$documentId.jpg"
+                storagePath = storagePath,
+                downloadUrl = "https://example.invalid/document-1.jpg"
             )
         }
 
