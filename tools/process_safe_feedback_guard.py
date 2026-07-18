@@ -9,9 +9,9 @@ ROOT = Path(__file__).resolve().parents[1]
 APP_ROOT = ROOT / "app/src/main/java/com/aqua/aqualight"
 UI_ROOT = APP_ROOT / "ui"
 BASE_ACTIVITY = APP_ROOT / "base/BaseActivity.kt"
+BASE_LOADING_ROOT = APP_ROOT / "base/loading"
 DIALOG_MANAGER = APP_ROOT / "utils/DialogManager.kt"
 COMMON_DIALOG_ROOT = UI_ROOT / "common/dialog"
-COMMON_LOADING_ROOT = UI_ROOT / "common/loading"
 
 REQUIRED_FILES = (
     UI_ROOT / "common/bottomsheet/ThemeBottomSheet.kt",
@@ -23,7 +23,7 @@ REQUIRED_FILES = (
     UI_ROOT / "common/feedback/FeedbackBottomSheet.kt",
     UI_ROOT / "common/dialog/AppDatePickerDialogFragment.kt",
     UI_ROOT / "common/dialog/AppTimePickerDialogFragment.kt",
-    UI_ROOT / "common/loading/LoadingOverlayDialogFragment.kt",
+    BASE_LOADING_ROOT / "LoadingOverlayDialogFragment.kt",
     ROOT / "app/src/androidTest/java/com/aqua/aqualight/ui/common/feedback/ProcessSafeFeedbackInstrumentedTest.kt",
     ROOT / "app/src/debug/java/com/aqua/aqualight/ui/common/feedback/Stage8DialogTestActivity.kt",
     ROOT / "app/src/debug/AndroidManifest.xml",
@@ -38,6 +38,7 @@ LEGACY_PROCESS_UNSAFE_FILES = (
     UI_ROOT / "common/bottomsheet/TankSizeBottomSheet.kt",
     UI_ROOT / "common/bottomsheet/SetupDateBottomSheet.kt",
     UI_ROOT / "common/bottomsheet/TankStyleBottomSheet.kt",
+    UI_ROOT / "common/loading/LoadingOverlayDialogFragment.kt",
     UI_ROOT / "tabs/aquarium/materials/CustomMaterialSheet.kt",
 )
 
