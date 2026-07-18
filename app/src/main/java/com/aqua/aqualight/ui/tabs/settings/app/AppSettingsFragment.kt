@@ -11,7 +11,6 @@ import com.aqua.aqualight.application.notifications.NotificationCategory
 import com.aqua.aqualight.application.notifications.NotificationChannelState
 import com.aqua.aqualight.application.notifications.NotificationPreferenceSnapshot
 import com.aqua.aqualight.composition.requireAppContainer
-import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.databinding.FragmentAppSettingsBinding
 import com.aqua.aqualight.platform.permissions.AppCapability
 import com.aqua.aqualight.ui.common.bottomsheet.ThemeBottomSheet
@@ -27,11 +26,17 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
     private var _binding: FragmentAppSettingsBinding? = null
     private val binding get() = _binding!!
 
+    private val appContainer by lazy {
+        requireContext().requireAppContainer()
+    }
     private val settingsOperations by lazy {
-        requireContext().requireAppContainer().userSettingsOperations
+        appContainer.userSettingsOperations
     }
     private val notificationPreferences by lazy {
-        requireContext().requireAppContainer().notificationPreferenceUseCase
+        appContainer.notificationPreferenceUseCase
+    }
+    private val ownerIdentity by lazy {
+        appContainer.authenticatedOwnerIdentity
     }
 
     private val permissionCoordinator = CapabilityPermissionCoordinator(this) { action ->
@@ -110,7 +115,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
     private fun refreshNotificationState() {
         if (_binding == null) return
         viewLifecycleOwner.lifecycleScope.launch {
-            val snapshot = notificationPreferences.snapshot(UserDataScope.requireCurrentUid())
+            val snapshot = notificationPreferences.snapshot(ownerIdentity.requireOwnerUid())
             notificationSnapshot = snapshot
             setNotificationSwitchChecked(snapshot.ownerPreferenceEnabled)
             binding.tvNotificationsSubtitle.setText(
@@ -136,7 +141,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
     private fun repairAndEnableNotifications() {
         if (_binding == null) return
         viewLifecycleOwner.lifecycleScope.launch {
-            val ownerUid = UserDataScope.requireCurrentUid()
+            val ownerUid = ownerIdentity.requireOwnerUid()
             val snapshot = notificationPreferences.snapshot(ownerUid)
             notificationSnapshot = snapshot
 
@@ -180,7 +185,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
     private fun disableNotifications() {
         setNotificationSwitchChecked(false)
         viewLifecycleOwner.lifecycleScope.launch {
-            notificationPreferences.setEnabled(UserDataScope.requireCurrentUid(), false)
+            notificationPreferences.setEnabled(ownerIdentity.requireOwnerUid(), false)
             refreshNotificationState()
         }
     }
