@@ -38,4 +38,9 @@
     <string name="permission_notifications_rationale_message">Allow notifications to receive aquarium-care reminders and important device alerts. You can change this later in App Settings.</string>
     <string name="permission_notifications_settings_title">Enable notifications</string>
     <string name="permission_notifications_settings_message">Notifications are currently blocked by Android. Open notification settings and allow AquaLight notifications.</string>
+
+    <string name="permission_precise_reminders_rationale_title">On-time care reminders</string>
+    <string name="permission_precise_reminders_rationale_message">Allow AquaLight to schedule alarms and reminders so care notifications can arrive at the time you choose, even while the app is closed.</string>
+    <string name="permission_precise_reminders_settings_title">Allow alarms and reminders</string>
+    <string name="permission_precise_reminders_settings_message">Android is currently allowing only approximate reminder timing. Open Alarms &amp; reminders and allow AquaLight to deliver care reminders at the selected time.</string>
 </resources>
