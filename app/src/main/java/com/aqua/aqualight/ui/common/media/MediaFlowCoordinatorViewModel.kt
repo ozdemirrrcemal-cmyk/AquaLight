@@ -9,14 +9,24 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.aqua.aqualight.R
 import com.aqua.aqualight.platform.media.AppMediaScope
 import com.aqua.aqualight.platform.media.AppMediaStorage
+import com.aqua.aqualight.platform.media.FeedbackMediaFailureKind
+import com.aqua.aqualight.platform.media.FeedbackMediaProcessingResult
+import com.aqua.aqualight.platform.media.FeedbackMediaProcessor
 import com.yalantis.ucrop.UCrop
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 /** Saved-state-capable coordinator shared by profile and tank camera/gallery/crop flows. */
 class MediaFlowCoordinatorViewModel(
@@ -24,10 +34,13 @@ class MediaFlowCoordinatorViewModel(
     context: Context,
     private val scope: AppMediaScope,
     private val ownerToken: String,
-    private val cropSpec: MediaCropSpec
+    private val cropSpec: MediaCropSpec,
+    private val mediaProcessor: FeedbackMediaProcessor,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
 
     private val appContext = context.applicationContext
+    private val preparationMutex = Mutex()
     private val _selection = MutableStateFlow(
         MediaSelectionState(
             initialized = savedStateHandle[KEY_INITIALIZED] ?: false,
@@ -39,7 +52,10 @@ class MediaFlowCoordinatorViewModel(
     val selection: StateFlow<MediaSelectionState> = _selection.asStateFlow()
 
     init {
-        AppMediaStorage.cleanupStaleTemporaryFiles(appContext)
+        viewModelScope.launch(dispatcher) {
+            AppMediaStorage.cleanupStaleTemporaryFiles(appContext)
+            mediaProcessor.cleanupExpired()
+        }
     }
 
     fun initializeSelection(
@@ -74,20 +90,170 @@ class MediaFlowCoordinatorViewModel(
         return uri
     }
 
-    fun buildCropIntent(
+    /**
+     * Every camera/gallery source is first copied, bounds-checked, sampled, resized and compressed by
+     * the bounded processor. UCrop therefore never receives an untrusted multi-megapixel provider.
+     */
+    suspend fun prepareCropIntent(
         sourceUri: Uri,
         title: String
-    ): Intent? {
-        cancelCrop()
-        val destinationUri = AppMediaStorage.createCropOutputUri(
-            context = appContext,
-            scope = scope,
-            ownerToken = ownerToken
-        ) ?: return null
+    ): MediaCropPreparationResult = preparationMutex.withLock {
+        clearPreparedSource()
+        withContext(dispatcher) {
+            AppMediaStorage.deleteInternalMedia(
+                appContext,
+                savedStateHandle.get<String>(KEY_CROP_OUTPUT_URI)
+            )
+            clearPendingCropState()
+        }
 
-        savedStateHandle[KEY_CROP_SOURCE_URI] = sourceUri.toString()
-        savedStateHandle[KEY_CROP_OUTPUT_URI] = destinationUri.toString()
+        when (val processed = mediaProcessor.process(sourceUri)) {
+            is FeedbackMediaProcessingResult.Failure -> {
+                MediaCropPreparationResult.Failure(processed.kind)
+            }
 
+            is FeedbackMediaProcessingResult.Success -> {
+                val safeSourceUri = AppMediaStorage.toContentUriForOwnedPath(
+                    context = appContext,
+                    path = processed.media.path
+                )
+                if (safeSourceUri == null) {
+                    mediaProcessor.delete(processed.media.path)
+                    return@withLock MediaCropPreparationResult.StorageFailure
+                }
+
+                val destinationUri = withContext(dispatcher) {
+                    AppMediaStorage.createCropOutputUri(
+                        context = appContext,
+                        scope = scope,
+                        ownerToken = ownerToken
+                    )
+                }
+                if (destinationUri == null) {
+                    mediaProcessor.delete(processed.media.path)
+                    return@withLock MediaCropPreparationResult.StorageFailure
+                }
+
+                savedStateHandle[KEY_PREPARED_SOURCE_PATH] = processed.media.path
+                savedStateHandle[KEY_CROP_SOURCE_URI] = safeSourceUri.toString()
+                savedStateHandle[KEY_CROP_OUTPUT_URI] = destinationUri.toString()
+
+                MediaCropPreparationResult.Ready(
+                    buildCropIntent(
+                        sourceUri = safeSourceUri,
+                        destinationUri = destinationUri,
+                        title = title
+                    )
+                )
+            }
+        }
+    }
+
+    suspend fun acceptCrop(resultUri: Uri): Uri? = preparationMutex.withLock {
+        val promoted = withContext(dispatcher) {
+            AppMediaStorage.promoteCropOutput(
+                context = appContext,
+                scope = scope,
+                ownerToken = ownerToken,
+                outputUri = resultUri
+            )
+        } ?: return@withLock null
+
+        val previousSelected = _selection.value.selectedUri
+        val persisted = _selection.value.persistedUri
+        if (
+            previousSelected != null &&
+            previousSelected != persisted &&
+            previousSelected != promoted.toString()
+        ) {
+            withContext(dispatcher) {
+                AppMediaStorage.rollbackPendingMedia(appContext, previousSelected)
+            }
+        }
+
+        cleanupPendingSource(keepUri = promoted.toString())
+        clearPreparedSource()
+        clearPendingCropState()
+        savedStateHandle.remove<String>(KEY_CAMERA_URI)
+        updateSelection(_selection.value.copy(selectedUri = promoted.toString()))
+        promoted
+    }
+
+    fun selectRemoval() {
+        val selected = _selection.value.selectedUri
+        val persisted = _selection.value.persistedUri
+        if (selected != null && selected != persisted) {
+            viewModelScope.launch(dispatcher) {
+                AppMediaStorage.rollbackPendingMedia(appContext, selected)
+            }
+        }
+        updateSelection(_selection.value.copy(selectedUri = null))
+    }
+
+    fun commitSelection(deletePersistedMedia: Boolean = true): String? {
+        val state = _selection.value
+        viewModelScope.launch(dispatcher) {
+            AppMediaStorage.commitPendingMedia(appContext, state.selectedUri)
+            if (deletePersistedMedia && state.persistedUri != state.selectedUri) {
+                AppMediaStorage.deleteInternalMedia(appContext, state.persistedUri)
+            }
+        }
+        updateSelection(state.copy(persistedUri = state.selectedUri))
+        return state.selectedUri
+    }
+
+    fun rollbackSelection(): String? {
+        val state = _selection.value
+        if (state.selectedUri != state.persistedUri) {
+            viewModelScope.launch(dispatcher) {
+                AppMediaStorage.rollbackPendingMedia(appContext, state.selectedUri)
+            }
+        }
+        updateSelection(state.copy(selectedUri = state.persistedUri))
+        return state.persistedUri
+    }
+
+    fun markExternallyOwnedSelection(uriString: String?) {
+        val normalized = uriString?.takeIf(String::isNotBlank)
+        updateSelection(
+            _selection.value.copy(
+                initialized = true,
+                persistedUri = normalized,
+                selectedUri = normalized,
+                externalLifecycleOwner = true
+            )
+        )
+    }
+
+    fun deleteInternalMedia(uriString: String?) {
+        viewModelScope.launch(dispatcher) {
+            AppMediaStorage.rollbackPendingMedia(appContext, uriString)
+        }
+    }
+
+    fun cancelCamera() {
+        val cameraUri = savedStateHandle.get<String>(KEY_CAMERA_URI)
+        savedStateHandle.remove<String>(KEY_CAMERA_URI)
+        viewModelScope.launch(dispatcher) {
+            AppMediaStorage.deleteInternalMedia(appContext, cameraUri)
+        }
+    }
+
+    fun cancelCrop() {
+        val outputUri = savedStateHandle.get<String>(KEY_CROP_OUTPUT_URI)
+        cleanupPendingSource(keepUri = null)
+        clearPendingCropState()
+        viewModelScope.launch(dispatcher) {
+            AppMediaStorage.deleteInternalMedia(appContext, outputUri)
+            clearPreparedSource()
+        }
+    }
+
+    private fun buildCropIntent(
+        sourceUri: Uri,
+        destinationUri: Uri,
+        title: String
+    ): Intent {
         val options = UCrop.Options().apply {
             setToolbarTitle(title)
             setCircleDimmedLayer(cropSpec.circleDimmedLayer)
@@ -96,6 +262,7 @@ class MediaFlowCoordinatorViewModel(
             setHideBottomControls(true)
             setCompressionQuality(cropSpec.compressionQuality)
             setFreeStyleCropEnabled(false)
+            setMaxBitmapSize(cropSpec.maxSourceBitmapSize)
 
             val toolbarColor = ContextCompat.getColor(appContext, R.color.crop_toolbar_bg)
             setToolbarColor(toolbarColor)
@@ -116,96 +283,22 @@ class MediaFlowCoordinatorViewModel(
             }
     }
 
-    fun acceptCrop(resultUri: Uri): Uri? {
-        val promoted = AppMediaStorage.promoteCropOutput(
-            context = appContext,
-            scope = scope,
-            ownerToken = ownerToken,
-            outputUri = resultUri
-        ) ?: return null
-
-        val previousSelected = _selection.value.selectedUri
-        val persisted = _selection.value.persistedUri
-        if (
-            previousSelected != null &&
-            previousSelected != persisted &&
-            previousSelected != promoted.toString()
-        ) {
-            AppMediaStorage.deleteInternalMedia(appContext, previousSelected)
-        }
-
-        cleanupPendingSource(keepUri = promoted.toString())
-        clearPendingCropState()
-        savedStateHandle.remove<String>(KEY_CAMERA_URI)
-        updateSelection(_selection.value.copy(selectedUri = promoted.toString()))
-        return promoted
-    }
-
-    fun selectRemoval() {
-        val selected = _selection.value.selectedUri
-        val persisted = _selection.value.persistedUri
-        if (selected != null && selected != persisted) {
-            AppMediaStorage.deleteInternalMedia(appContext, selected)
-        }
-        updateSelection(_selection.value.copy(selectedUri = null))
-    }
-
-    fun commitSelection(deletePersistedMedia: Boolean = true): String? {
-        val state = _selection.value
-        if (deletePersistedMedia && state.persistedUri != state.selectedUri) {
-            AppMediaStorage.deleteInternalMedia(appContext, state.persistedUri)
-        }
-        updateSelection(state.copy(persistedUri = state.selectedUri))
-        return state.selectedUri
-    }
-
-    fun rollbackSelection(): String? {
-        val state = _selection.value
-        if (state.selectedUri != state.persistedUri) {
-            AppMediaStorage.deleteInternalMedia(appContext, state.selectedUri)
-        }
-        updateSelection(state.copy(selectedUri = state.persistedUri))
-        return state.persistedUri
-    }
-
-    fun markExternallyOwnedSelection(uriString: String?) {
-        val normalized = uriString?.takeIf(String::isNotBlank)
-        updateSelection(
-            _selection.value.copy(
-                initialized = true,
-                persistedUri = normalized,
-                selectedUri = normalized,
-                externalLifecycleOwner = true
-            )
-        )
-    }
-
-    fun deleteInternalMedia(uriString: String?) {
-        AppMediaStorage.deleteInternalMedia(appContext, uriString)
-    }
-
-    fun cancelCamera() {
-        val cameraUri = savedStateHandle.get<String>(KEY_CAMERA_URI)
-        AppMediaStorage.deleteInternalMedia(appContext, cameraUri)
-        savedStateHandle.remove<String>(KEY_CAMERA_URI)
-    }
-
-    fun cancelCrop() {
-        cleanupPendingSource(keepUri = null)
-        AppMediaStorage.deleteInternalMedia(
-            appContext,
-            savedStateHandle.get<String>(KEY_CROP_OUTPUT_URI)
-        )
-        clearPendingCropState()
-    }
-
     private fun cleanupPendingSource(keepUri: String?) {
         val source = savedStateHandle.get<String>(KEY_CROP_SOURCE_URI)
         val camera = savedStateHandle.get<String>(KEY_CAMERA_URI)
-        if (source != null && source != keepUri && source == camera) {
-            AppMediaStorage.deleteInternalMedia(appContext, source)
+        if (camera != null && camera != keepUri) {
+            viewModelScope.launch(dispatcher) {
+                AppMediaStorage.deleteInternalMedia(appContext, camera)
+            }
             savedStateHandle.remove<String>(KEY_CAMERA_URI)
         }
+        if (source == camera) savedStateHandle.remove<String>(KEY_CROP_SOURCE_URI)
+    }
+
+    private suspend fun clearPreparedSource() {
+        val path = savedStateHandle.get<String>(KEY_PREPARED_SOURCE_PATH)
+        savedStateHandle.remove<String>(KEY_PREPARED_SOURCE_PATH)
+        mediaProcessor.delete(path)
     }
 
     private fun clearPendingCropState() {
@@ -222,11 +315,13 @@ class MediaFlowCoordinatorViewModel(
     }
 
     override fun onCleared() {
-        cancelCrop()
-        cancelCamera()
+        val outputUri = savedStateHandle.get<String>(KEY_CROP_OUTPUT_URI)
+        val cameraUri = savedStateHandle.get<String>(KEY_CAMERA_URI)
+        AppMediaStorage.deleteInternalMedia(appContext, outputUri)
+        AppMediaStorage.deleteInternalMedia(appContext, cameraUri)
         val state = _selection.value
         if (!state.externalLifecycleOwner && state.selectedUri != state.persistedUri) {
-            AppMediaStorage.deleteInternalMedia(appContext, state.selectedUri)
+            AppMediaStorage.rollbackPendingMedia(appContext, state.selectedUri)
         }
         super.onCleared()
     }
@@ -239,12 +334,14 @@ class MediaFlowCoordinatorViewModel(
         private const val KEY_CAMERA_URI = "media.cameraUri"
         private const val KEY_CROP_SOURCE_URI = "media.cropSourceUri"
         private const val KEY_CROP_OUTPUT_URI = "media.cropOutputUri"
+        private const val KEY_PREPARED_SOURCE_PATH = "media.preparedSourcePath"
 
         fun factory(
             context: Context,
             scope: AppMediaScope,
             ownerToken: String,
-            cropSpec: MediaCropSpec
+            cropSpec: MediaCropSpec,
+            mediaProcessor: FeedbackMediaProcessor
         ): ViewModelProvider.Factory {
             return object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(
@@ -259,7 +356,8 @@ class MediaFlowCoordinatorViewModel(
                         context = context,
                         scope = scope,
                         ownerToken = ownerToken,
-                        cropSpec = cropSpec
+                        cropSpec = cropSpec,
+                        mediaProcessor = mediaProcessor
                     )
                     @Suppress("UNCHECKED_CAST")
                     return viewModel as T
@@ -279,11 +377,18 @@ data class MediaSelectionState(
         get() = initialized && persistedUri != selectedUri
 }
 
+sealed interface MediaCropPreparationResult {
+    data class Ready(val intent: Intent) : MediaCropPreparationResult
+    data class Failure(val kind: FeedbackMediaFailureKind) : MediaCropPreparationResult
+    data object StorageFailure : MediaCropPreparationResult
+}
+
 data class MediaCropSpec(
     val aspectRatioX: Float,
     val aspectRatioY: Float,
     val maxWidth: Int,
     val maxHeight: Int,
+    val maxSourceBitmapSize: Int,
     val circleDimmedLayer: Boolean,
     val showCropGrid: Boolean,
     val showCropFrame: Boolean,
@@ -295,6 +400,7 @@ data class MediaCropSpec(
             aspectRatioY = 1f,
             maxWidth = 1_024,
             maxHeight = 1_024,
+            maxSourceBitmapSize = 2_048,
             circleDimmedLayer = true,
             showCropGrid = true,
             showCropFrame = false,
@@ -306,6 +412,7 @@ data class MediaCropSpec(
             aspectRatioY = 9f,
             maxWidth = 1_600,
             maxHeight = 900,
+            maxSourceBitmapSize = 3_200,
             circleDimmedLayer = false,
             showCropGrid = true,
             showCropFrame = true,
