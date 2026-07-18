@@ -95,7 +95,7 @@ internal class OwnerViewModelFactory(
                         )
                     ),
                     menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
-                    routeResolver = DeviceRouteResolver()
+                    routeResolver = DeviceRouteResolver(appTextResolver)
                 )
 
             DeviceAddViewModel::class.java ->
@@ -180,20 +180,33 @@ internal class OwnerViewModelFactory(
             DeviceLightRootViewModel::class.java ->
                 DeviceLightRootViewModel(
                     rootOperations = DefaultDeviceRootOperations(repository),
-                    firmwareUpdateOperations = DefaultDeviceFirmwareUpdateOperations(repository)
+                    firmwareUpdateOperations = DefaultDeviceFirmwareUpdateOperations(repository),
+                    textResolver = appTextResolver
                 )
 
             DeviceCoolingRootViewModel::class.java ->
-                DeviceCoolingRootViewModel(DefaultDeviceRootOperations(repository))
+                DeviceCoolingRootViewModel(
+                    operations = DefaultDeviceRootOperations(repository),
+                    textResolver = appTextResolver
+                )
 
             DeviceTimerRootViewModel::class.java ->
-                DeviceTimerRootViewModel(DefaultDeviceRootOperations(repository))
+                DeviceTimerRootViewModel(
+                    operations = DefaultDeviceRootOperations(repository),
+                    textResolver = appTextResolver
+                )
 
             DeviceDosingRootViewModel::class.java ->
-                DeviceDosingRootViewModel(DefaultDeviceRootOperations(repository))
+                DeviceDosingRootViewModel(
+                    operations = DefaultDeviceRootOperations(repository),
+                    textResolver = appTextResolver
+                )
 
             DeviceRootOverviewViewModel::class.java ->
-                DeviceRootOverviewViewModel(DefaultDeviceRootOperations(repository))
+                DeviceRootOverviewViewModel(
+                    operations = DefaultDeviceRootOperations(repository),
+                    textResolver = appTextResolver
+                )
 
             TankDetailDevicesViewModel::class.java ->
                 TankDetailDevicesViewModel(
@@ -202,7 +215,7 @@ internal class OwnerViewModelFactory(
                         devicesRepository = repository
                     ),
                     menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
-                    routeResolver = DeviceRouteResolver()
+                    routeResolver = DeviceRouteResolver(appTextResolver)
                 )
 
             TankDeviceSelectViewModel::class.java ->
