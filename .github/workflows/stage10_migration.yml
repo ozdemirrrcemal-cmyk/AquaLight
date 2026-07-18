@@ -41,6 +41,7 @@ jobs:
       - name: Run deterministic XML migration
         run: |
           set -euo pipefail
+          echo "Stage 10 migration schema: 1"
           python3 -m py_compile tools/stage10_xml_resource_migration.py
           python3 tools/stage10_xml_resource_migration.py | tee docs/stage10-migration-result.txt
 
