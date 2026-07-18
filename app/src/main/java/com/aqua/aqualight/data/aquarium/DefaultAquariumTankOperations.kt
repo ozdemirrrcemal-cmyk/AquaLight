@@ -22,9 +22,9 @@ import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.data.user.withCurrentOwnerScope
 import com.aqua.aqualight.platform.media.AppMediaStorage
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -45,41 +45,43 @@ class DefaultAquariumTankOperations(
 
     override suspend fun addTank(draft: AquariumTankDraft): Long = withContext(dispatcher) {
         val pendingPhoto = draft.photoUri
-        val tankId = try {
-            tankStore.addTankFromDraft(draft.toDataDraft())
-        } catch (cancellation: CancellationException) {
-            AppMediaStorage.rollbackPendingMedia(appContext, pendingPhoto)
-            throw cancellation
+        try {
+            withContext(NonCancellable) {
+                val tankId = tankStore.addTankFromDraft(draft.toDataDraft())
+                runCatching { AppMediaStorage.commitPendingMedia(appContext, pendingPhoto) }
+                tankId
+            }
         } catch (error: Throwable) {
-            AppMediaStorage.rollbackPendingMedia(appContext, pendingPhoto)
+            runCatching { AppMediaStorage.rollbackPendingMedia(appContext, pendingPhoto) }
             throw error
         }
-
-        runCatching { AppMediaStorage.commitPendingMedia(appContext, pendingPhoto) }
-        tankId
     }
 
     override suspend fun duplicateTank(tankId: Long): Long = withContext(dispatcher) {
-        val ownerUid = UserDataScope.requireCurrentUid()
-        val source = tankStore.tanksSnapshotForOwner(ownerUid)
-            .firstOrNull { tank -> tank.id == tankId }
-            ?: throw IllegalArgumentException("Tank not found for the active owner.")
-        val duplicateId = tankStore.duplicateTank(tankId)
-        val duplicate = tankStore.tanksSnapshotForOwner(ownerUid)
-            .firstOrNull { tank -> tank.id == duplicateId }
-            ?: throw IllegalStateException("Duplicated tank record is missing.")
+        withContext(NonCancellable) {
+            val ownerUid = UserDataScope.requireCurrentUid()
+            val source = tankStore.tanksSnapshotForOwner(ownerUid)
+                .firstOrNull { tank -> tank.id == tankId }
+                ?: throw IllegalArgumentException("Tank not found for the active owner.")
+            val duplicateId = tankStore.duplicateTank(tankId)
+            val duplicate = tankStore.tanksSnapshotForOwner(ownerUid)
+                .firstOrNull { tank -> tank.id == duplicateId }
+                ?: throw IllegalStateException("Duplicated tank record is missing.")
 
-        val sourceIsOwned = AppMediaStorage.isAppOwned(appContext, source.photoUri)
-        val invalidSharedOwnership = sourceIsOwned &&
-            !source.photoUri.isNullOrBlank() &&
-            (duplicate.photoUri.isNullOrBlank() || duplicate.photoUri == source.photoUri)
-        if (invalidSharedOwnership) {
-            runCatching { tankStore.deleteTanks(listOf(duplicateId)) }
-            throw IllegalStateException("Tank photo could not be copied with independent ownership.")
+            val sourceIsOwned = AppMediaStorage.isAppOwned(appContext, source.photoUri)
+            val invalidSharedOwnership = sourceIsOwned &&
+                !source.photoUri.isNullOrBlank() &&
+                (duplicate.photoUri.isNullOrBlank() || duplicate.photoUri == source.photoUri)
+            if (invalidSharedOwnership) {
+                runCatching { tankStore.deleteTanks(listOf(duplicateId)) }
+                throw IllegalStateException(
+                    "Tank photo could not be copied with independent ownership."
+                )
+            }
+
+            runCatching { AppMediaStorage.commitPendingMedia(appContext, duplicate.photoUri) }
+            duplicateId
         }
-
-        runCatching { AppMediaStorage.commitPendingMedia(appContext, duplicate.photoUri) }
-        duplicateId
     }
 
     override suspend fun deleteTanks(
@@ -93,15 +95,14 @@ class DefaultAquariumTankOperations(
     override suspend fun updateTankPhoto(tankId: Long, photoUri: String?) =
         withContext(dispatcher) {
             try {
-                tankStore.updateTankPhoto(tankId, photoUri)
-            } catch (cancellation: CancellationException) {
-                AppMediaStorage.rollbackPendingMedia(appContext, photoUri)
-                throw cancellation
+                withContext(NonCancellable) {
+                    tankStore.updateTankPhoto(tankId, photoUri)
+                    runCatching { AppMediaStorage.commitPendingMedia(appContext, photoUri) }
+                }
             } catch (error: Throwable) {
-                AppMediaStorage.rollbackPendingMedia(appContext, photoUri)
+                runCatching { AppMediaStorage.rollbackPendingMedia(appContext, photoUri) }
                 throw error
             }
-            runCatching { AppMediaStorage.commitPendingMedia(appContext, photoUri) }
         }
 
     override suspend fun updateTankName(tankId: Long, name: String) =
