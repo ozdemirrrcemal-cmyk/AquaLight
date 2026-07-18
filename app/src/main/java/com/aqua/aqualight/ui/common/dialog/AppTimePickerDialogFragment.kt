@@ -4,10 +4,10 @@ import android.app.Dialog
 import android.app.TimePickerDialog
 import android.content.DialogInterface
 import android.os.Bundle
+import android.text.format.DateFormat
 import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
-import java.text.DateFormat
 import java.util.Calendar
 
 /** Framework-recreatable time picker that returns its value through Fragment Result. */
