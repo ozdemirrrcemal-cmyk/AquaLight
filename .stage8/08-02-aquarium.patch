@@ -1,0 +1,364 @@
+diff --git a/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt b/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt
+index a1552668dc21a8d0c0bd973794383872aaf298c8..40a7cfb41dc765b6ea399208e3aa9a8b502da949 100644
+--- a/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt
++++ b/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt
+@@ -10,5 +10,4 @@ import android.widget.FrameLayout
+ import android.widget.GridLayout
+ import android.widget.LinearLayout
+-import android.widget.NumberPicker
+ import android.widget.TextView
+ import androidx.activity.OnBackPressedCallback
+@@ -21,13 +20,11 @@ import com.aqua.aqualight.R
+ import com.aqua.aqualight.base.BaseActivity
+ import com.aqua.aqualight.databinding.FragmentTankLivestockFormBinding
++import com.aqua.aqualight.ui.common.dialog.AppDatePickerDialogFragment
++import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
+ import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
+ import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCategories
+ import com.aqua.aqualight.application.aquarium.AquariumLivestock
+ import com.aqua.aqualight.data.aquarium.util.AquariumIdGenerator
+-import com.aqua.aqualight.utils.DialogManager
+-import com.aqua.aqualight.utils.DialogType
+-import com.google.android.material.bottomsheet.BottomSheetDialog
+ import kotlinx.coroutines.launch
+-import java.text.DateFormatSymbols
+ import java.text.SimpleDateFormat
+ import java.util.Calendar
+@@ -79,4 +76,5 @@ Fragment(R.layout.fragment_tank_livestock_form) {
+         setupInitialUi()
+         setupClickListeners()
++        setupResultListeners()
+         setupSystemBackButton()
+         setupNamePreviewListener()
+@@ -88,4 +86,32 @@ Fragment(R.layout.fragment_tank_livestock_form) {
+     }
+ 
++
++    private fun setupResultListeners() {
++        childFragmentManager.setFragmentResultListener(
++            LIVESTOCK_DATE_REQUEST_KEY,
++            viewLifecycleOwner
++        ) { _, result ->
++            if (result.getString(AppDatePickerDialogFragment.RESULT_KEY) !=
++                AppDatePickerDialogFragment.RESULT_SELECTED
++            ) return@setFragmentResultListener
++            selectedAddedDateMillis = result.getLong(AppDatePickerDialogFragment.RESULT_MILLIS)
++            updateDateText()
++        }
++
++        childFragmentManager.setFragmentResultListener(
++            LIVESTOCK_DELETE_REQUEST_KEY,
++            viewLifecycleOwner
++        ) { _, result ->
++            if (result.getString(FeedbackBottomSheet.RESULT_KEY) ==
++                FeedbackBottomSheet.RESULT_PRIMARY
++            ) deleteLivestock()
++        }
++
++        childFragmentManager.setFragmentResultListener(
++            LIVESTOCK_MISSING_REQUEST_KEY,
++            viewLifecycleOwner
++        ) { _, _ -> closeForm() }
++    }
++
+     private fun readArguments() {
+         tankId = args.tankId
+@@ -180,12 +206,13 @@ Fragment(R.layout.fragment_tank_livestock_form) {
+         hasShownMissingDataDialog = true
+ 
+-        DialogManager.showInfoDialog(
+-            context = requireContext(),
+-            type = DialogType.ERROR,
++        FeedbackBottomSheet.show(
++            fragmentManager = childFragmentManager,
+             title = title,
+             message = message,
+-            onDismiss = {
+-                closeForm()
+-            }
++            primaryText = getString(R.string.ok),
++            cancelText = null,
++            tone = FeedbackBottomSheet.FeedbackTone.ERROR,
++            requestKey = LIVESTOCK_MISSING_REQUEST_KEY,
++            actionId = ""
+         )
+     }
+@@ -460,24 +487,19 @@ Fragment(R.layout.fragment_tank_livestock_form) {
+ 
+     private fun showDeleteConfirmation() {
+-        DialogManager.showConfirmDialog(
+-            context = requireContext(),
+-            type = DialogType.WARNING,
++        FeedbackBottomSheet.show(
++            fragmentManager = childFragmentManager,
+             title = getString(R.string.aquarium_delete_livestock_title),
+             message = getString(R.string.aquarium_delete_livestock_message),
+-            confirmTextResId = R.string.delete,
+-            cancelTextResId = R.string.cancel,
+-            onConfirm = {
+-                deleteLivestock()
+-            }
++            primaryText = getString(R.string.delete),
++            cancelText = getString(R.string.cancel),
++            tone = FeedbackBottomSheet.FeedbackTone.WARNING,
++            requestKey = LIVESTOCK_DELETE_REQUEST_KEY,
++            actionId = editingLivestockId.toString()
+         )
+     }
+ 
+     private fun deleteLivestock() {
+-        if (editingLivestockId <= 0L || isDeletingLivestock) {
+-            return
+-        }
+-
++        if (editingLivestockId <= 0L || isDeletingLivestock) return
+         isDeletingLivestock = true
+-
+         viewLifecycleOwner.lifecycleScope.launch {
+             try {
+@@ -486,11 +508,8 @@ Fragment(R.layout.fragment_tank_livestock_form) {
+                     livestockId = editingLivestockId
+                 )
+-
+                 closeForm()
+             } catch (exception: Exception) {
+                 exception.printStackTrace()
+-
+                 isDeletingLivestock = false
+-
+                 showSnackBar(
+                     message = getString(R.string.aquarium_error_livestock_delete_failed),
+@@ -501,209 +520,21 @@ Fragment(R.layout.fragment_tank_livestock_form) {
+     }
+ 
+-
+     private fun showAddedDateSheet() {
+-        val dialog = BottomSheetDialog(requireContext(), R.style.AquaBottomSheetDialogTheme)
+-
+-        val calendar = Calendar.getInstance().apply {
+-            timeInMillis = selectedAddedDateMillis
+-        }
+-
+-        val container = LinearLayout(requireContext()).apply {
+-            orientation = LinearLayout.VERTICAL
+-            setPadding(
+-                22.dp(),
+-                14.dp(),
+-                22.dp(),
+-                24.dp()
+-            )
+-            background = ContextCompat.getDrawable(
+-                requireContext(),
+-                R.drawable.bg_bottomsheet_rounded
+-            )
+-        }
+-
+-        val handle = View(requireContext()).apply {
+-            background = ContextCompat.getDrawable(
+-                requireContext(),
+-                R.drawable.bg_bottomsheet_handle
+-            )
+-            layoutParams = LinearLayout.LayoutParams(
+-                42.dp(),
+-                4.dp()
+-            ).apply {
+-                gravity = Gravity.CENTER_HORIZONTAL
+-                bottomMargin = 16.dp()
+-            }
+-        }
+-
+-        val title = TextView(requireContext()).apply {
+-            text = getString(R.string.aquarium_added_date_label)
+-            gravity = Gravity.CENTER
+-            textSize = 18f
+-            setTextColor(
+-                ContextCompat.getColor(
+-                    requireContext(),
+-                    R.color.aqua_bottom_sheet_text_primary
+-                )
+-            )
+-            setTypeface(null, Typeface.BOLD)
+-            includeFontPadding = false
+-
+-            layoutParams = LinearLayout.LayoutParams(
+-                LinearLayout.LayoutParams.MATCH_PARENT,
+-                LinearLayout.LayoutParams.WRAP_CONTENT
+-            )
+-        }
+-
+-        val pickerRow = LinearLayout(requireContext()).apply {
+-            orientation = LinearLayout.HORIZONTAL
+-            gravity = Gravity.CENTER
+-
+-            val params = LinearLayout.LayoutParams(
+-                LinearLayout.LayoutParams.MATCH_PARENT,
+-                LinearLayout.LayoutParams.WRAP_CONTENT
+-            )
+-            params.topMargin = 24.dp()
+-            layoutParams = params
+-        }
+-
+-        val monthNames = Array(12) { index ->
+-            DateFormatSymbols(Locale.getDefault())
+-                .months[index]
+-                .replaceFirstChar { char ->
+-                    if (char.isLowerCase()) {
+-                        char.titlecase(Locale.getDefault())
+-                    } else {
+-                        char.toString()
+-                    }
+-                }
+-        }
+-
+-        val dayPicker = createDateNumberPicker().apply {
+-            minValue = 1
+-            maxValue = 31
+-            value = calendar.get(Calendar.DAY_OF_MONTH)
+-        }
+-
+-        val monthPicker = createDateNumberPicker().apply {
+-            minValue = 0
+-            maxValue = 11
+-            displayedValues = monthNames
+-            value = calendar.get(Calendar.MONTH)
+-        }
+-
+-        val yearPicker = createDateNumberPicker().apply {
+-            val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+-            minValue = currentYear - 20
+-            maxValue = currentYear + 5
+-            value = calendar.get(Calendar.YEAR)
+-        }
+-
+-        fun updateDayMax() {
+-            val tempCalendar = Calendar.getInstance().apply {
+-                set(Calendar.YEAR, yearPicker.value)
+-                set(Calendar.MONTH, monthPicker.value)
+-                set(Calendar.DAY_OF_MONTH, 1)
+-            }
+-
+-            val maxDay = tempCalendar.getActualMaximum(
+-                Calendar.DAY_OF_MONTH
+-            )
+-
+-            dayPicker.maxValue = maxDay
+-
+-            if (dayPicker.value > maxDay) {
+-                dayPicker.value = maxDay
+-            }
+-        }
+-
+-        monthPicker.setOnValueChangedListener { _, _, _ ->
+-            updateDayMax()
+-        }
+-
+-        yearPicker.setOnValueChangedListener { _, _, _ ->
+-            updateDayMax()
+-        }
+-
+-        updateDayMax()
+-
+-        pickerRow.addView(dayPicker)
+-        pickerRow.addView(monthPicker)
+-        pickerRow.addView(yearPicker)
+-
+-        val saveButton = com.google.android.material.button.MaterialButton(
+-            requireContext()
+-        ).apply {
+-            text = getString(R.string.common_save)
+-            textSize = 14f
+-            setTypeface(null, Typeface.BOLD)
+-            setAllCaps(false)
+-            setTextColor(
+-                ContextCompat.getColor(
+-                    requireContext(),
+-                    R.color.aqua_bottom_sheet_on_primary
+-                )
+-            )
+-            cornerRadius = 18.dp()
+-            backgroundTintList = android.content.res.ColorStateList.valueOf(
+-                ContextCompat.getColor(
+-                    requireContext(),
+-                    R.color.aqua_bottom_sheet_primary
+-                )
+-            )
+-
+-            val params = LinearLayout.LayoutParams(
+-                LinearLayout.LayoutParams.MATCH_PARENT,
+-                52.dp()
+-            )
+-            params.topMargin = 24.dp()
+-            layoutParams = params
+-
+-            setOnClickListener {
+-                val selectedCalendar = Calendar.getInstance().apply {
+-                    set(Calendar.YEAR, yearPicker.value)
+-                    set(Calendar.MONTH, monthPicker.value)
+-                    set(Calendar.DAY_OF_MONTH, dayPicker.value)
+-                    set(Calendar.HOUR_OF_DAY, 0)
+-                    set(Calendar.MINUTE, 0)
+-                    set(Calendar.SECOND, 0)
+-                    set(Calendar.MILLISECOND, 0)
+-                }
+-
+-                selectedAddedDateMillis = selectedCalendar.timeInMillis
+-                updateDateText()
+-
+-                dialog.dismiss()
+-            }
+-        }
+-
+-        container.addView(handle)
+-        container.addView(title)
+-        container.addView(pickerRow)
+-        container.addView(saveButton)
+-
+-        dialog.setContentView(container)
+-
+-        dialog.setOnShowListener {
+-            val bottomSheet = dialog.findViewById<FrameLayout>(
+-                com.google.android.material.R.id.design_bottom_sheet
+-            )
+-
+-            bottomSheet?.setBackgroundColor(Color.TRANSPARENT)
+-        }
+-
+-        dialog.show()
+-    }
+-
+-    private fun createDateNumberPicker(): NumberPicker {
+-        return NumberPicker(requireContext()).apply {
+-            wrapSelectorWheel = false
+-
+-            layoutParams = LinearLayout.LayoutParams(
+-                0,
+-                128.dp(),
+-                1f
+-            )
+-        }
++        val currentYear = Calendar.getInstance().get(Calendar.YEAR)
++        val minMillis = Calendar.getInstance().apply {
++            set(currentYear - 20, Calendar.JANUARY, 1, 0, 0, 0)
++            set(Calendar.MILLISECOND, 0)
++        }.timeInMillis
++        val maxMillis = Calendar.getInstance().apply {
++            set(currentYear + 5, Calendar.DECEMBER, 31, 23, 59, 59)
++            set(Calendar.MILLISECOND, 999)
++        }.timeInMillis
++        AppDatePickerDialogFragment.show(
++            fragmentManager = childFragmentManager,
++            requestKey = LIVESTOCK_DATE_REQUEST_KEY,
++            initialMillis = selectedAddedDateMillis,
++            minMillis = minMillis,
++            maxMillis = maxMillis
++        )
+     }
+ 
+@@ -824,4 +655,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
+ 
+     companion object {
++        private const val LIVESTOCK_DATE_REQUEST_KEY = "livestock_added_date_result"
++        private const val LIVESTOCK_DELETE_REQUEST_KEY = "livestock_delete_result"
++        private const val LIVESTOCK_MISSING_REQUEST_KEY = "livestock_missing_result"
+         private const val ARG_TANK_ID = "tankId"
+         private const val ARG_LIVESTOCK_ID = "livestockId"
