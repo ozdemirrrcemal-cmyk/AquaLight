@@ -7,22 +7,32 @@ import android.os.Build
 import androidx.core.content.ContextCompat
 
 /**
- * Single source of truth for AquaLight runtime-permission decisions.
+ * Single source of truth for AquaLight permission and special-access decisions.
  *
  * Screens submit a product [AppCapability] and receive one of the four standard
  * [PermissionDecision] values. API-level branching, grant checks, rationale checks,
- * and permanent-denial detection stay in this class.
+ * permanent-denial detection and precise-reminder access stay in this class.
  */
 class PermissionPolicy(
     private val context: Context,
     private val historyStore: PermissionRequestHistoryStore =
-        PermissionRequestHistoryStore(context)
+        PermissionRequestHistoryStore(context),
+    private val preciseReminderAccessPolicy: PreciseReminderAccessPolicy =
+        PreciseReminderAccessPolicy(context)
 ) {
 
     fun evaluate(
         capability: AppCapability,
         shouldShowRationale: (permission: String) -> Boolean
     ): PermissionDecision {
+        if (capability == AppCapability.PRECISE_REMINDERS) {
+            return if (preciseReminderAccessPolicy.isGranted()) {
+                PermissionDecision.GRANTED
+            } else {
+                PermissionDecision.OPEN_SETTINGS
+            }
+        }
+
         val missing = missingPermissions(capability)
         if (missing.isEmpty()) return PermissionDecision.GRANTED
 
@@ -37,7 +47,11 @@ class PermissionPolicy(
     }
 
     fun isGranted(capability: AppCapability): Boolean {
-        return missingPermissions(capability).isEmpty()
+        return if (capability == AppCapability.PRECISE_REMINDERS) {
+            preciseReminderAccessPolicy.isGranted()
+        } else {
+            missingPermissions(capability).isEmpty()
+        }
     }
 
     fun requiredPermissions(capability: AppCapability): Array<String> {
@@ -45,7 +59,10 @@ class PermissionPolicy(
     }
 
     fun markRequested(capability: AppCapability) {
-        historyStore.markRequested(requiredPermissions(capability).asList())
+        val permissions = requiredPermissions(capability).asList()
+        if (permissions.isNotEmpty()) {
+            historyStore.markRequested(permissions)
+        }
     }
 
     private fun missingPermissions(capability: AppCapability): List<String> {
@@ -96,6 +113,9 @@ class PermissionPolicy(
                 } else {
                     emptyList()
                 }
+
+                // Alarms & reminders is Android special access, not a runtime permission.
+                AppCapability.PRECISE_REMINDERS -> emptyList()
             }
         }
 
