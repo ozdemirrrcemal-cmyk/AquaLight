@@ -7,8 +7,8 @@ import android.content.Intent
 import android.os.Build
 import com.aqua.aqualight.data.care.model.CareTask
 import com.aqua.aqualight.data.user.UserDataScope
-import com.aqua.aqualight.utils.NotificationHelper
 
+/** Low-level AlarmManager backend. Visible notification work belongs to NotificationRenderer. */
 object CareTaskReminderScheduler {
 
   const val ACTION_CARE_TASK_REMINDER =
@@ -21,6 +21,9 @@ object CareTaskReminderScheduler {
   /**
    * Replaces the task alarm with the deterministic next occurrence.
    *
+   * Returns true only when a future alarm was actually installed. A false result
+   * means the persisted task currently has no schedulable due or missed occurrence.
+   *
    * This intentionally uses an inexact alarm. Aquarium care reminders are
    * user-facing but do not require alarm-clock precision, so AquaLight avoids
    * exact-alarm special access and its additional policy surface.
@@ -29,7 +32,7 @@ object CareTaskReminderScheduler {
     context: Context,
     task: CareTask,
     nowMillis: Long = System.currentTimeMillis()
-  ) {
+  ): Boolean {
     val ownerUid = requireOwnerUid(task.ownerUid)
     require(task.id > 0L) {
       "taskId must be positive"
@@ -44,7 +47,7 @@ object CareTaskReminderScheduler {
     val plan = CareReminderSchedulePolicy.plan(
       task = task.copy(ownerUid = ownerUid),
       nowMillis = nowMillis
-    ) ?: return
+    ) ?: return false
 
     scheduleAt(
       context = context,
@@ -53,6 +56,7 @@ object CareTaskReminderScheduler {
       occurrence = plan.occurrence,
       triggerAtMillis = plan.triggerAtMillis
     )
+    return true
   }
 
   fun cancel(
@@ -66,12 +70,6 @@ object CareTaskReminderScheduler {
     }
 
     cancelAlarm(
-      context = context,
-      taskId = taskId,
-      ownerUid = normalizedOwnerUid
-    )
-
-    NotificationHelper.cancelCareTaskNotification(
       context = context,
       taskId = taskId,
       ownerUid = normalizedOwnerUid
