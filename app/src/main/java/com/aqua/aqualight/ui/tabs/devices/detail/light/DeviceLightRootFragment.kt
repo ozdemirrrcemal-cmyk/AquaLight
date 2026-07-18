@@ -32,7 +32,7 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
 
         _binding = FragmentDeviceLightRootBinding.bind(view)
 
-        setupHeader(title = args.deviceTitle.ifBlank { "Light" })
+        setupHeader(title = args.deviceTitle.ifBlank { getString(R.string.device_root_light_title) })
         setupOtaTestPanel()
         observeViewModel()
 
@@ -104,13 +104,13 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
         setupHeader(title = state.title)
 
         binding.tvProductName.text = state.title
-        binding.tvDeviceUid.text = state.deviceUid.ifBlank { "Unknown device" }
+        binding.tvDeviceUid.text = state.deviceUid.ifBlank { getString(R.string.device_runtime_unknown_device) }
         binding.tvConnectionStatus.text = state.connectionStatus
-        binding.tvIp.text = "IP: ${state.ipText}"
-        binding.tvFirmware.text = "Firmware: ${state.firmwareText}"
-        binding.tvModel.text = "Model: ${state.modelText}"
-        binding.tvChannelCount.text = "Light channels: ${state.channelCountText}"
-        binding.tvFeatures.text = "Features: ${state.featuresText}"
+        binding.tvIp.text = getString(R.string.device_runtime_ip_format, state.ipText)
+        binding.tvFirmware.text = getString(R.string.device_runtime_firmware_format, state.firmwareText)
+        binding.tvModel.text = getString(R.string.device_runtime_model_format, state.modelText)
+        binding.tvChannelCount.text = getString(R.string.device_runtime_light_channels_format, state.channelCountText)
+        binding.tvFeatures.text = getString(R.string.device_runtime_features_format, state.featuresText)
         binding.tvManualPlaceholder.text = state.manualMenuText
         binding.tvProgramsPlaceholder.text = state.programsMenuText
         binding.tvOtaTestStatus.text = state.otaTestText

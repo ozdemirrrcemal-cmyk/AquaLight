@@ -295,6 +295,6 @@ class AndroidNotificationRenderer(
         private const val CARE_NOTIFICATION_ID = 1
         private const val DEVICE_ALERT_NOTIFICATION_ID = 2
         private const val DEVICE_UPDATE_NOTIFICATION_ID = 3
-        private const val DEFAULT_LARGE_ICON_COLOR = "#2196F3"
+        private const val DEFAULT_LARGE_ICON_COLOR = com.aqua.aqualight.designsystem.AquaColorTokens.HEX_2196F3
     }
 }

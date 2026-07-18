@@ -584,12 +584,12 @@ Fragment(R.layout.fragment_tank_livestock_form) {
         category: String
     ): String {
         return when (category) {
-            LivestockCategories.FISH -> "#1C5D8F"
-            LivestockCategories.SHRIMP -> "#8F4A3A"
-            LivestockCategories.SNAIL -> "#3E6B4A"
-            LivestockCategories.CRAB_CRAYFISH -> "#7A4D2D"
-            LivestockCategories.CORAL -> "#7A4E8F"
-            else -> "#3E536B"
+            LivestockCategories.FISH -> com.aqua.aqualight.designsystem.AquaColorTokens.HEX_1C5D8F
+            LivestockCategories.SHRIMP -> com.aqua.aqualight.designsystem.AquaColorTokens.HEX_8F4A3A
+            LivestockCategories.SNAIL -> com.aqua.aqualight.designsystem.AquaColorTokens.HEX_3E6B4A
+            LivestockCategories.CRAB_CRAYFISH -> com.aqua.aqualight.designsystem.AquaColorTokens.HEX_7A4D2D
+            LivestockCategories.CORAL -> com.aqua.aqualight.designsystem.AquaColorTokens.HEX_7A4E8F
+            else -> com.aqua.aqualight.designsystem.AquaColorTokens.HEX_3E536B
         }
     }
 

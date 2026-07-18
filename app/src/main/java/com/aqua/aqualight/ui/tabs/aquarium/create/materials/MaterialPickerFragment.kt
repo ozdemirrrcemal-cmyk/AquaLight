@@ -547,7 +547,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
             setTypeface(null, Typeface.BOLD)
             setAllCaps(false)
             cornerRadius = 14.dp()
-            setBackgroundColor(Color.parseColor("#2196F3"))
+            setBackgroundColor(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_2196F3)
 
             val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,

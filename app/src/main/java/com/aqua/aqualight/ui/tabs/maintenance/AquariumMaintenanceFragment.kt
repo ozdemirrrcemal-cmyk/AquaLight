@@ -360,7 +360,7 @@ class AquariumMaintenanceFragment :
             if (selected) {
                 Color.WHITE
             } else {
-                Color.parseColor("#8FA4BE")
+                com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_8FA4BE
             }
         )
 
@@ -545,8 +545,8 @@ class AquariumMaintenanceFragment :
         val card = MaterialCardView(requireContext()).apply {
             radius = 18.dp().toFloat()
             strokeWidth = 1.dp()
-            strokeColor = Color.parseColor("#2B6F5A")
-            setCardBackgroundColor(Color.parseColor("#12382F"))
+            strokeColor = com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_2B6F5A
+            setCardBackgroundColor(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_12382F)
             cardElevation = 0f
             useCompatPadding = false
 
@@ -627,7 +627,7 @@ class AquariumMaintenanceFragment :
         val metaText = TextView(requireContext()).apply {
             text = buildHistoryMetaText(task)
             textSize = 11.8f
-            setTextColor(Color.parseColor("#B8C7D9"))
+            setTextColor(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_B8C7D9)
             includeFontPadding = false
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
@@ -655,7 +655,7 @@ class AquariumMaintenanceFragment :
         val completedText = TextView(requireContext()).apply {
             text = getString(R.string.maintenance_status_completed)
             textSize = 11.8f
-            setTextColor(Color.parseColor("#5FD6B4"))
+            setTextColor(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_5FD6B4)
             setTypeface(null, Typeface.BOLD)
             includeFontPadding = false
 
@@ -694,7 +694,7 @@ class AquariumMaintenanceFragment :
         return TextView(requireContext()).apply {
             text = sourceLabel
             textSize = 10.4f
-            setTextColor(Color.parseColor("#8FE7D5"))
+            setTextColor(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_8FE7D5)
             setTypeface(null, Typeface.BOLD)
             includeFontPadding = false
             gravity = Gravity.CENTER
@@ -702,10 +702,10 @@ class AquariumMaintenanceFragment :
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = 999.dp().toFloat()
-                setColor(Color.parseColor("#173F38"))
+                setColor(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_173F38)
                 setStroke(
                     1.dp(),
-                    Color.parseColor("#2F7D70")
+                    com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_2F7D70
                 )
             }
 

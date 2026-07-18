@@ -233,13 +233,13 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
     private fun applyPrimaryActionStyle() {
         val button = binding.appHeader.btnPrimaryAction
         if (isDeleteMode) {
-            button.setTextColor(Color.parseColor("#FF8A8A"))
-            button.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#321E2A"))
+            button.setTextColor(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_FF8A8A)
+            button.backgroundTintList = ColorStateList.valueOf(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_321E2A)
             button.strokeWidth = 1.dp()
-            button.strokeColor = ColorStateList.valueOf(Color.parseColor("#7A3344"))
+            button.strokeColor = ColorStateList.valueOf(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_7A3344)
         } else {
             button.setTextColor(Color.WHITE)
-            button.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#1C3252"))
+            button.backgroundTintList = ColorStateList.valueOf(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_1C3252)
             button.strokeWidth = 0
             button.strokeColor = ColorStateList.valueOf(Color.TRANSPARENT)
         }

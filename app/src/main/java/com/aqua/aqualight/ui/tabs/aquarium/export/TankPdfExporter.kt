@@ -131,7 +131,7 @@ object TankPdfExporter {
       }
 
       writer.drawMaterialCategory(
-        title = category.title,
+        title = context.getString(category.titleRes),
         materials = materials
       )
     }
@@ -146,7 +146,7 @@ object TankPdfExporter {
       }
 
       writer.drawMaterialCategory(
-        title = category.title,
+        title = context.getString(category.titleRes),
         materials = materials
       )
     }
@@ -444,51 +444,51 @@ object TankPdfExporter {
     private var y = PAGE_MARGIN
 
     private val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = Color.parseColor("#10233A")
+      color = com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_10233A
       textSize = 21f
       typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
 
     private val subtitlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = Color.parseColor("#667085")
+      color = com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_667085
       textSize = 10.5f
     }
 
     private val sectionPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = Color.parseColor("#10233A")
+      color = com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_10233A
       textSize = 15f
       typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
 
     private val categoryPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = Color.parseColor("#10233A")
+      color = com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_10233A
       textSize = 12f
       typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
 
     private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = Color.parseColor("#475467")
+      color = com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_475467
       textSize = 10.5f
       typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
 
     private val valuePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = Color.parseColor("#101828")
+      color = com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_101828
       textSize = 11.5f
     }
 
     private val mutedPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = Color.parseColor("#8FA4BE")
+      color = com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_8FA4BE
       textSize = 11.5f
     }
 
     private val footerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = Color.parseColor("#98A2B3")
+      color = com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_98A2B3
       textSize = 9f
     }
 
     private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = Color.parseColor("#D0D5DD")
+      color = com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_D0D5DD
       strokeWidth = 1f
     }
 
@@ -590,7 +590,7 @@ object TankPdfExporter {
       )
 
       val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#F2F4F7")
+        color = com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_F2F4F7
       }
 
       canvas.drawRoundRect(
@@ -607,7 +607,7 @@ object TankPdfExporter {
         )
       } else {
         val noPhotoPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-          color = Color.parseColor("#8FA4BE")
+          color = com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_8FA4BE
           textSize = 12f
           textAlign = Paint.Align.CENTER
         }

@@ -286,9 +286,9 @@ class CareTaskAdapter(
 
       binding.tvSourceBadge.setTextColor(
         if (item.source == CareTaskSource.AUTOMATIC) {
-          Color.parseColor("#5FD6B4")
+          com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_5FD6B4
         } else {
-          Color.parseColor("#B8C7D9")
+          com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_B8C7D9
         }
       )
 
@@ -296,9 +296,9 @@ class CareTaskAdapter(
       binding.tvTaskMeta.textSize = 11.5f
       binding.tvTaskMeta.setTextColor(
         if (item.isOverdue && item.status == CareTaskStatus.PENDING) {
-          Color.parseColor("#D85C5C")
+          com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_D85C5C
         } else {
-          Color.parseColor("#B8C7D9")
+          com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_B8C7D9
         }
       )
 
@@ -307,13 +307,13 @@ class CareTaskAdapter(
       }
       binding.tvTaskSecondary.textSize = 11.5f
       binding.tvTaskSecondary.setTextColor(
-        Color.parseColor("#B8C7D9")
+        com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_B8C7D9
       )
 
       binding.tvTaskDescription.text = item.description
       binding.tvTaskDescription.textSize = 11.4f
       binding.tvTaskDescription.setTextColor(
-        Color.parseColor("#8FA4BE")
+        com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_8FA4BE
       )
       binding.tvTaskDescription.isVisible =
       item.description.isNotBlank()
@@ -369,15 +369,15 @@ class CareTaskAdapter(
       source: CareTaskSource
     ): GradientDrawable {
       val color = if (source == CareTaskSource.AUTOMATIC) {
-        Color.parseColor("#12382F")
+        com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_12382F
       } else {
-        Color.parseColor("#1C3252")
+        com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_1C3252
       }
 
       val strokeColor = if (source == CareTaskSource.AUTOMATIC) {
-        Color.parseColor("#2B6F5A")
+        com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_2B6F5A
       } else {
-        Color.parseColor("#2A4566")
+        com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_2A4566
       }
 
       return GradientDrawable().apply {

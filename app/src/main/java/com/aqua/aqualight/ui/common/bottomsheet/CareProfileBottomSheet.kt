@@ -37,7 +37,7 @@ class CareProfileBottomSheet : BottomSheetDialogFragment(
         binding.tvCareProfilePercent.text = args.getString(ARG_PERCENT_TEXT).orEmpty()
         binding.tvCareProfileSummary.text = args.getString(ARG_SUMMARY_TEXT).orEmpty()
         binding.careProgressTrack.background = rounded(
-            color = Color.parseColor("#DDE3EA"),
+            color = com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_DDE3EA,
             radius = resources.getDimension(R.dimen.care_profile_progress_radius)
         )
         binding.careProgressFill.background = rounded(
@@ -66,12 +66,12 @@ class CareProfileBottomSheet : BottomSheetDialogFragment(
                 else R.string.aquarium_care_profile_status_missing
             )
             row.tvCareProfileItemStatus.setTextColor(
-                Color.parseColor(if (isCompleted) "#5FD6B4" else "#E0A84C")
+                Color.parseColor(if (isCompleted) com.aqua.aqualight.designsystem.AquaColorTokens.HEX_5FD6B4 else com.aqua.aqualight.designsystem.AquaColorTokens.HEX_E0A84C)
             )
             row.tvCareProfileItemStatus.background = rounded(
-                color = Color.parseColor(if (isCompleted) "#09251D" else "#2A2315"),
+                color = Color.parseColor(if (isCompleted) com.aqua.aqualight.designsystem.AquaColorTokens.HEX_09251D else com.aqua.aqualight.designsystem.AquaColorTokens.HEX_2A2315),
                 radius = resources.getDimension(R.dimen.care_profile_status_radius),
-                strokeColor = Color.parseColor(if (isCompleted) "#1E5A48" else "#6A4D1E"),
+                strokeColor = Color.parseColor(if (isCompleted) com.aqua.aqualight.designsystem.AquaColorTokens.HEX_1E5A48 else com.aqua.aqualight.designsystem.AquaColorTokens.HEX_6A4D1E),
                 strokeWidth = resources.getDimensionPixelSize(R.dimen.care_profile_status_stroke)
             )
             row.root.setOnClickListener {

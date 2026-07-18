@@ -473,9 +473,9 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         percent: Int
     ): Int {
         return when {
-            percent < 40 -> Color.parseColor("#D85C5C")
-            percent < 75 -> Color.parseColor("#E0A84C")
-            else -> Color.parseColor("#5FD6B4")
+            percent < 40 -> com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_D85C5C
+            percent < 75 -> com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_E0A84C
+            else -> com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_5FD6B4
         }
     }
 

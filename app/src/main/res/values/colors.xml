@@ -268,4 +268,8 @@
     <color name="aqua_palette_ff3b30">#FF3B30</color>
     <color name="aqua_palette_ffd166">#FFD166</color>
 
+
+    <!-- Stage 10: centralized fixed palette values -->
+    <color name="aqua_palette_7b8794">#7B8794</color>
+
 </resources>

@@ -19,17 +19,17 @@ class DeviceScanPulseView @JvmOverloads constructor(
     private val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = 3.5f
-        color = Color.parseColor("#64FFDA")
+        color = com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_64FFDA
     }
 
     private val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
-        color = Color.parseColor("#3364FFDA")
+        color = com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_3364FFDA
     }
 
     private val corePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
-        color = Color.parseColor("#64FFDA")
+        color = com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_64FFDA
     }
 
     private var progress = 0f

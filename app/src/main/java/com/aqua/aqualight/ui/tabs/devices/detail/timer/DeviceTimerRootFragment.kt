@@ -29,7 +29,7 @@ class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_timer_root) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentDeviceTimerRootBinding.bind(view)
-        setupHeader(title = args.deviceTitle.ifBlank { DEFAULT_TITLE })
+        setupHeader(title = args.deviceTitle.ifBlank { getString(R.string.device_root_timer_title) })
         observeViewModel()
         viewModel.bind(
             deviceUidText = args.deviceUid,
@@ -59,13 +59,13 @@ class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_timer_root) {
         if (_binding == null) return
         setupHeader(title = state.title)
         binding.tvProductName.text = state.title
-        binding.tvDeviceUid.text = state.deviceUid.ifBlank { "Unknown device" }
+        binding.tvDeviceUid.text = state.deviceUid.ifBlank { getString(R.string.device_runtime_unknown_device) }
         binding.tvConnectionStatus.text = state.connectionStatus
-        binding.tvIp.text = "IP: ${state.ipText}"
-        binding.tvFirmware.text = "Firmware: ${state.firmwareText}"
-        binding.tvModel.text = "Model: ${state.modelText}"
-        binding.tvPrimaryCount.text = "${state.primaryCountLabel}: ${state.primaryCountText}"
-        binding.tvFeatures.text = "Features: ${state.featuresText}"
+        binding.tvIp.text = getString(R.string.device_runtime_ip_format, state.ipText)
+        binding.tvFirmware.text = getString(R.string.device_runtime_firmware_format, state.firmwareText)
+        binding.tvModel.text = getString(R.string.device_runtime_model_format, state.modelText)
+        binding.tvPrimaryCount.text = getString(R.string.device_runtime_labeled_value_format, state.primaryCountLabel, state.primaryCountText)
+        binding.tvFeatures.text = getString(R.string.device_runtime_features_format, state.featuresText)
         binding.tvPrimarySectionTitle.text = state.primarySectionTitle
         binding.tvPrimarySectionPlaceholder.text = state.primarySectionPlaceholder
         binding.tvSecondarySectionTitle.text = state.secondarySectionTitle
@@ -75,9 +75,5 @@ class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_timer_root) {
     override fun onDestroyView() {
         _binding = null
         super.onDestroyView()
-    }
-
-    private companion object {
-        const val DEFAULT_TITLE = "Timer"
     }
 }

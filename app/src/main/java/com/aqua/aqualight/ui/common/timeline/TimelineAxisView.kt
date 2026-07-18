@@ -25,13 +25,13 @@ class TimelineAxisView @JvmOverloads constructor(
       invalidate()
     }
 
-  private val axisLineColor = Color.parseColor("#26384C")
+  private val axisLineColor = com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_26384C
 
-  private val todayNodeColor = Color.parseColor("#4FD6C8")
-  private val pastNodeColor = Color.parseColor("#45BFAF")
+  private val todayNodeColor = com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_4FD6C8
+  private val pastNodeColor = com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_45BFAF
   private val upcomingNodeColor = axisLineColor
 
-  private val nodeCoverColor = Color.parseColor("#0B1D33")
+  private val nodeCoverColor = com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_0B1D33
 
   private val axisOffsetX = -5f.dp()
 

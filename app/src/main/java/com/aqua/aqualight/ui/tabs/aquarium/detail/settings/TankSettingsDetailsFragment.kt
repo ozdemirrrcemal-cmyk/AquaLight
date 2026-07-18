@@ -56,7 +56,7 @@ class TankSettingsDetailsFragment : Fragment(R.layout.fragment_tank_settings_det
             val selectedMaterials = tank.materials.filter { material ->
                 material.categoryKey == category.key
             }
-            val categoryTitle = getString(category.titleRes)
+            val categoryTitle = getString(getString(category.titleRes)Res)
 
             binding.bioMaterialsContainer.addView(
                 AquaMaterialCategoryRowFactory.create(
@@ -77,7 +77,7 @@ class TankSettingsDetailsFragment : Fragment(R.layout.fragment_tank_settings_det
             val selectedMaterials = tank.materials.filter { material ->
                 material.categoryKey == category.key
             }
-            val categoryTitle = getString(category.titleRes)
+            val categoryTitle = getString(getString(category.titleRes)Res)
 
             binding.hardwareMaterialsContainer.addView(
                 AquaMaterialCategoryRowFactory.create(

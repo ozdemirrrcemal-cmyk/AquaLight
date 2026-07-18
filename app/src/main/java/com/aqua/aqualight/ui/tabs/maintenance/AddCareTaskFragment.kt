@@ -351,9 +351,9 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
         if (type == null) {
             binding.taskTypeIconContainer.isVisible = false
             binding.tvTaskTypeTitle.text = getString(R.string.maintenance_select_care_task_type)
-            binding.tvTaskTypeTitle.setTextColor(Color.parseColor("#8FA4BE"))
+            binding.tvTaskTypeTitle.setTextColor(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_8FA4BE)
             binding.tvTaskTypeSubtitle.text = getString(R.string.maintenance_required)
-            binding.tvTaskTypeSubtitle.setTextColor(Color.parseColor("#6F829B"))
+            binding.tvTaskTypeSubtitle.setTextColor(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_6F829B)
             return
         }
 
@@ -396,16 +396,16 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
             }
             else -> category
         }
-        binding.tvTaskTypeSubtitle.setTextColor(Color.parseColor("#8FA4BE"))
+        binding.tvTaskTypeSubtitle.setTextColor(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_8FA4BE)
     }
 
     private fun updateSelectedAquariumUi() {
         val selectedTank = latestTanks.firstOrNull { tank -> tank.id == selectedTankId }
         if (selectedTank == null) {
             binding.tvAquariumTitle.text = getString(R.string.maintenance_select_aquarium)
-            binding.tvAquariumTitle.setTextColor(Color.parseColor("#8FA4BE"))
+            binding.tvAquariumTitle.setTextColor(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_8FA4BE)
             binding.tvAquariumSubtitle.text = getString(R.string.maintenance_required)
-            binding.tvAquariumSubtitle.setTextColor(Color.parseColor("#6F829B"))
+            binding.tvAquariumSubtitle.setTextColor(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_6F829B)
             return
         }
 
@@ -414,7 +414,7 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
         }
         binding.tvAquariumTitle.setTextColor(Color.WHITE)
         binding.tvAquariumSubtitle.text = getString(R.string.maintenance_selected_aquarium)
-        binding.tvAquariumSubtitle.setTextColor(Color.parseColor("#5FD6B4"))
+        binding.tvAquariumSubtitle.setTextColor(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_5FD6B4)
     }
 
     private fun updateDynamicSections() = with(binding) {
@@ -433,7 +433,7 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
             (type != CareTaskType.WATER_CHANGE || selectedWaterChangePercent != null)
         binding.btnSaveTask.isEnabled = canSave
         binding.btnSaveTask.backgroundTintList = ColorStateList.valueOf(
-            Color.parseColor(if (canSave) "#2196F3" else "#35506D")
+            Color.parseColor(if (canSave) com.aqua.aqualight.designsystem.AquaColorTokens.HEX_2196F3 else com.aqua.aqualight.designsystem.AquaColorTokens.HEX_35506D)
         )
     }
 

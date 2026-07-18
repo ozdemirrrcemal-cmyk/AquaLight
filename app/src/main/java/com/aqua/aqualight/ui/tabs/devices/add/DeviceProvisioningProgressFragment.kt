@@ -162,9 +162,9 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
             R.string.device_provisioning_wifi_format,
             state.wifiSsid
         )
-        binding.tvStepOne.text = "✓ ${state.stepOne}"
-        binding.tvStepTwo.text = "✓ ${state.stepTwo}"
-        binding.tvStepThree.text = "${state.currentStepIcon()} ${state.stepThree}"
+        binding.tvStepOne.text = getString(R.string.device_provisioning_step_format, "✓", state.stepOne)
+        binding.tvStepTwo.text = getString(R.string.device_provisioning_step_format, "✓", state.stepTwo)
+        binding.tvStepThree.text = getString(R.string.device_provisioning_step_format, state.currentStepIcon(), state.stepThree)
         binding.btnStartProvisioning.isVisible = state.canStart && !state.isCancelling
         binding.btnStartProvisioning.isEnabled = state.canStart && !state.isCancelling
         binding.btnStartProvisioning.text = state.buttonText
@@ -245,7 +245,7 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
                 deviceTitle = title.ifBlank {
                     getString(R.string.device_wifi_default_device_name)
                 },
-                message = UNSUPPORTED_FAMILY_MESSAGE,
+                message = getString(R.string.device_route_unsupported_family),
                 deviceUid = deviceUid
             )
     }
@@ -257,7 +257,5 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
 
     private companion object {
         const val ACTION_START_PROVISIONING = "start_device_provisioning"
-        const val UNSUPPORTED_FAMILY_MESSAGE =
-            "Unsupported AquaLight device family. Firmware did not provide a known product.family value."
     }
 }

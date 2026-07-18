@@ -177,9 +177,9 @@ class TaskDetailFragment :
 
     binding.tvSourceBadge.setTextColor(
       if (task.source == CareTaskSource.AUTOMATIC) {
-        Color.parseColor("#5FD6B4")
+        com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_5FD6B4
       } else {
-        Color.parseColor("#B8C7D9")
+        com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_B8C7D9
       }
     )
 
@@ -433,15 +433,15 @@ class TaskDetailFragment :
     source: CareTaskSource
   ): GradientDrawable {
     val color = if (source == CareTaskSource.AUTOMATIC) {
-      Color.parseColor("#12382F")
+      com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_12382F
     } else {
-      Color.parseColor("#1C3252")
+      com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_1C3252
     }
 
     val strokeColor = if (source == CareTaskSource.AUTOMATIC) {
-      Color.parseColor("#2B6F5A")
+      com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_2B6F5A
     } else {
-      Color.parseColor("#2A4566")
+      com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_2A4566
     }
 
     return GradientDrawable().apply {

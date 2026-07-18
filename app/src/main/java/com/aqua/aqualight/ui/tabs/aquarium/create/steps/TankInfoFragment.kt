@@ -145,7 +145,7 @@ class TankInfoFragment :
         binding.tvSetupDateValue.text = formatSetupDate(draft.setupDateMillis)
         binding.tvSetupDateValue.setTextColor(
             if (draft.setupDateMillis == null) {
-                Color.parseColor("#7F91AA")
+                com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_7F91AA
             } else {
                 Color.WHITE
             }
@@ -160,7 +160,7 @@ class TankInfoFragment :
         }
         binding.tvTankTypeValue.setTextColor(
             if (draft.tankType.isBlank()) {
-                Color.parseColor("#7F91AA")
+                com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_7F91AA
             } else {
                 Color.WHITE
             }
@@ -168,7 +168,7 @@ class TankInfoFragment :
 
         if (draft.tankStyle.isBlank()) {
             binding.tvStyleValue.text = getString(R.string.aquarium_common_not_selected)
-            binding.tvStyleValue.setTextColor(Color.parseColor("#7F91AA"))
+            binding.tvStyleValue.setTextColor(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_7F91AA)
         } else {
             binding.tvStyleValue.text = draft.tankStyle
             binding.tvStyleValue.setTextColor(Color.WHITE)

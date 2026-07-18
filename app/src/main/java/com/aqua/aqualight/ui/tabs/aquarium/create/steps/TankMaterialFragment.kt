@@ -91,7 +91,7 @@ class TankMaterialFragment :
     ): View {
         return AquaMaterialCategoryRowFactory.create(
             context = requireContext(),
-            title = getString(item.titleRes),
+            title = getString(getString(item.titleRes)Res),
             summary = getSelectedMaterialsText(
                 item.key
             ),
@@ -126,7 +126,7 @@ class TankMaterialFragment :
                     argMode = MaterialPickerFragment.MODE_CREATE,
                     argTankId = 0L,
                     argCategoryKey = item.key,
-                    argCategoryTitle = getString(item.titleRes)
+                    argCategoryTitle = getString(getString(item.titleRes)Res)
                 )
         )
 

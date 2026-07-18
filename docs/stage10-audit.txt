@@ -3,179 +3,72 @@ Stage 10 design-system/resource guard failed:
  - app/src/main/java/com/aqua/aqualight/data/devices/repository/DevicesRepository.kt:338: [RAW_UI_MESSAGE] user-visible literal "$operation failed and no durable rollback snapshot was available." must be supplied by @StringRes
  - app/src/main/java/com/aqua/aqualight/data/user/UserPreferencesManager.kt:68: [RAW_UI_MESSAGE] user-visible literal "Use uid instead. This value was never a Firebase ID token." must be supplied by @StringRes
  - app/src/main/java/com/aqua/aqualight/data/user/UserPreferencesManager.kt:219: [RAW_UI_MESSAGE] user-visible literal "Use replaceProfile for login/session replacement or patchProfile for profile edits." must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/auth/security/ReAuthenticateFragment.kt:92: [RAW_UI_MESSAGE] user-visible literal "Google Error" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsBasicFragment.kt:475: [RAW_UI_MESSAGE] user-visible literal "Tank Type" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsBasicFragment.kt:507: [RAW_UI_MESSAGE] user-visible literal "Setup Date" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsBasicFragment.kt:520: [RAW_UI_MESSAGE] user-visible literal "Tank Style" must be supplied by @StringRes
  - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/DevicesFragment.kt:197: [RAW_UI_MESSAGE] user-visible literal "$removedSentence $failedSentence" must be supplied by @StringRes
  - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceAddCandidateAdapter.kt:39: [RAW_UI_MESSAGE] user-visible literal "Serial: ${candidate.serial}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceProvisioningProgressFragment.kt:165: [RAW_UI_MESSAGE] user-visible literal "✓ ${state.stepOne}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceProvisioningProgressFragment.kt:166: [RAW_UI_MESSAGE] user-visible literal "✓ ${state.stepTwo}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceProvisioningProgressFragment.kt:167: [RAW_UI_MESSAGE] user-visible literal "${state.currentStepIcon()} ${state.stepThree}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/DeviceCoolingRootFragment.kt:64: [RAW_UI_MESSAGE] user-visible literal "IP: ${state.ipText}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/DeviceCoolingRootFragment.kt:65: [RAW_UI_MESSAGE] user-visible literal "Firmware: ${state.firmwareText}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/DeviceCoolingRootFragment.kt:66: [RAW_UI_MESSAGE] user-visible literal "Model: ${state.modelText}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/DeviceCoolingRootFragment.kt:67: [RAW_UI_MESSAGE] user-visible literal "${state.primaryCountLabel}: ${state.primaryCountText}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/DeviceCoolingRootFragment.kt:68: [RAW_UI_MESSAGE] user-visible literal "Features: ${state.featuresText}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/DeviceDosingRootFragment.kt:73: [RAW_UI_MESSAGE] user-visible literal "IP: ${state.ipText}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/DeviceDosingRootFragment.kt:74: [RAW_UI_MESSAGE] user-visible literal "Firmware: ${state.firmwareText}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/DeviceDosingRootFragment.kt:75: [RAW_UI_MESSAGE] user-visible literal "Model: ${state.modelText}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/DeviceDosingRootFragment.kt:76: [RAW_UI_MESSAGE] user-visible literal "${state.primaryCountLabel}: ${state.primaryCountText}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/DeviceDosingRootFragment.kt:77: [RAW_UI_MESSAGE] user-visible literal "Features: ${state.featuresText}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/DeviceLightRootFragment.kt:109: [RAW_UI_MESSAGE] user-visible literal "IP: ${state.ipText}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/DeviceLightRootFragment.kt:110: [RAW_UI_MESSAGE] user-visible literal "Firmware: ${state.firmwareText}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/DeviceLightRootFragment.kt:111: [RAW_UI_MESSAGE] user-visible literal "Model: ${state.modelText}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/DeviceLightRootFragment.kt:112: [RAW_UI_MESSAGE] user-visible literal "Light channels: ${state.channelCountText}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/DeviceLightRootFragment.kt:113: [RAW_UI_MESSAGE] user-visible literal "Features: ${state.featuresText}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/DeviceTimerRootFragment.kt:64: [RAW_UI_MESSAGE] user-visible literal "IP: ${state.ipText}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/DeviceTimerRootFragment.kt:65: [RAW_UI_MESSAGE] user-visible literal "Firmware: ${state.firmwareText}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/DeviceTimerRootFragment.kt:66: [RAW_UI_MESSAGE] user-visible literal "Model: ${state.modelText}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/DeviceTimerRootFragment.kt:67: [RAW_UI_MESSAGE] user-visible literal "${state.primaryCountLabel}: ${state.primaryCountText}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/DeviceTimerRootFragment.kt:68: [RAW_UI_MESSAGE] user-visible literal "Features: ${state.featuresText}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:44: [RAW_COLOR] #2196F3 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:52: [RAW_COLOR] #5C7CFA must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:60: [RAW_COLOR] #FF8A4C must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:68: [RAW_COLOR] #B7793E must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:77: [RAW_COLOR] #F2A900 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:85: [RAW_COLOR] #D99A00 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:93: [RAW_COLOR] #8EA9A0 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:101: [RAW_COLOR] #D8F3B0 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:109: [RAW_COLOR] #45D6B4 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:117: [RAW_COLOR] #7B2CBF must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:125: [RAW_COLOR] #4A90E2 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:134: [RAW_COLOR] #66C7F4 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:142: [RAW_COLOR] #4CAF50 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:151: [RAW_COLOR] #4DD6A7 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:159: [RAW_COLOR] #8BC34A must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:167: [RAW_COLOR] #66BB6A must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:176: [RAW_COLOR] #00BCD4 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:184: [RAW_COLOR] #FFD54F must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:193: [RAW_COLOR] #7C4DFF must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:201: [RAW_COLOR] #FF6B6B must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:210: [RAW_COLOR] #8FA4BE must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/platform/notifications/AndroidNotificationRenderer.kt:298: [RAW_COLOR] #2196F3 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CareProfileBottomSheet.kt:40: [RAW_COLOR] #DDE3EA must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CareProfileBottomSheet.kt:69: [RAW_COLOR] #5FD6B4 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CareProfileBottomSheet.kt:72: [RAW_COLOR] #09251D must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CareProfileBottomSheet.kt:74: [RAW_COLOR] #1E5A48 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/common/timeline/TimelineAxisView.kt:28: [RAW_COLOR] #26384C must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/common/timeline/TimelineAxisView.kt:30: [RAW_COLOR] #4FD6C8 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/common/timeline/TimelineAxisView.kt:31: [RAW_COLOR] #45BFAF must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/common/timeline/TimelineAxisView.kt:34: [RAW_COLOR] #0B1D33 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/common/timeline/TimelineDayResolver.kt:46: [RAW_COLOR] #4FD6C8 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/common/timeline/TimelineDayResolver.kt:47: [RAW_COLOR] #8FA0B5 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/AquariumFragment.kt:236: [RAW_COLOR] #FF8A8A must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/AquariumFragment.kt:237: [RAW_COLOR] #321E2A must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/AquariumFragment.kt:239: [RAW_COLOR] #7A3344 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/AquariumFragment.kt:242: [RAW_COLOR] #1C3252 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/materials/MaterialPickerFragment.kt:550: [RAW_COLOR] #2196F3 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankInfoFragment.kt:148: [RAW_COLOR] #7F91AA must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankInfoFragment.kt:163: [RAW_COLOR] #7F91AA must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankInfoFragment.kt:171: [RAW_COLOR] #7F91AA must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt:198: [RAW_COLOR] #8FA4BE must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt:218: [RAW_COLOR] #D85C5C must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt:222: [RAW_COLOR] #F2C94C must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt:226: [RAW_COLOR] #5FD6B4 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt:231: [RAW_COLOR] #8FA4BE must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt:474: [RAW_COLOR] #223A57 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt:475: [RAW_COLOR] #10233A must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt:573: [RAW_COLOR] #B8C7D9 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt:588: [RAW_COLOR] #5FD6B4 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt:147: [RAW_COLOR] #223A57 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt:148: [RAW_COLOR] #10233A must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt:243: [RAW_COLOR] #8FA4BE must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt:259: [RAW_COLOR] #5FD6B4 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt:280: [RAW_COLOR] #8FA4BE must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt:298: [RAW_COLOR] #8FA4BE must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt:363: [RAW_COLOR] #1C5D8F must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt:364: [RAW_COLOR] #8F4A3A must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt:365: [RAW_COLOR] #3E6B4A must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt:366: [RAW_COLOR] #7A4D2D must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt:367: [RAW_COLOR] #7A4E8F must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt:368: [RAW_COLOR] #3E536B must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt:587: [RAW_COLOR] #1C5D8F must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt:588: [RAW_COLOR] #8F4A3A must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt:589: [RAW_COLOR] #3E6B4A must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt:590: [RAW_COLOR] #7A4D2D must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt:591: [RAW_COLOR] #7A4E8F must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt:592: [RAW_COLOR] #3E536B must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsFragment.kt:476: [RAW_COLOR] #D85C5C must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsFragment.kt:477: [RAW_COLOR] #E0A84C must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsFragment.kt:478: [RAW_COLOR] #5FD6B4 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:447: [RAW_COLOR] #10233A must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:453: [RAW_COLOR] #667085 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:458: [RAW_COLOR] #10233A must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:464: [RAW_COLOR] #10233A must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:470: [RAW_COLOR] #475467 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:476: [RAW_COLOR] #101828 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:481: [RAW_COLOR] #8FA4BE must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:486: [RAW_COLOR] #98A2B3 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:491: [RAW_COLOR] #D0D5DD must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:593: [RAW_COLOR] #F2F4F7 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:610: [RAW_COLOR] #8FA4BE must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/DeviceCardAdapter.kt:96: [RAW_COLOR] #22354D must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/DeviceCardAdapter.kt:97: [RAW_COLOR] #5FD6B4 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceScanPulseView.kt:22: [RAW_COLOR] #64FFDA must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceScanPulseView.kt:27: [RAW_COLOR] #3364FFDA must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceScanPulseView.kt:32: [RAW_COLOR] #64FFDA must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt:354: [RAW_COLOR] #8FA4BE must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt:356: [RAW_COLOR] #6F829B must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt:399: [RAW_COLOR] #8FA4BE must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt:406: [RAW_COLOR] #8FA4BE must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt:408: [RAW_COLOR] #6F829B must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt:417: [RAW_COLOR] #5FD6B4 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt:436: [RAW_COLOR] #2196F3 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AquariumMaintenanceFragment.kt:363: [RAW_COLOR] #8FA4BE must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AquariumMaintenanceFragment.kt:548: [RAW_COLOR] #2B6F5A must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AquariumMaintenanceFragment.kt:549: [RAW_COLOR] #12382F must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AquariumMaintenanceFragment.kt:630: [RAW_COLOR] #B8C7D9 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AquariumMaintenanceFragment.kt:658: [RAW_COLOR] #5FD6B4 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AquariumMaintenanceFragment.kt:697: [RAW_COLOR] #8FE7D5 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AquariumMaintenanceFragment.kt:705: [RAW_COLOR] #173F38 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AquariumMaintenanceFragment.kt:708: [RAW_COLOR] #2F7D70 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt:289: [RAW_COLOR] #5FD6B4 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt:291: [RAW_COLOR] #B8C7D9 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt:299: [RAW_COLOR] #D85C5C must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt:301: [RAW_COLOR] #B8C7D9 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt:310: [RAW_COLOR] #B8C7D9 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt:316: [RAW_COLOR] #8FA4BE must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt:372: [RAW_COLOR] #12382F must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt:374: [RAW_COLOR] #1C3252 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt:378: [RAW_COLOR] #2B6F5A must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt:380: [RAW_COLOR] #2A4566 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/TaskDetailFragment.kt:180: [RAW_COLOR] #5FD6B4 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/TaskDetailFragment.kt:182: [RAW_COLOR] #B8C7D9 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/TaskDetailFragment.kt:436: [RAW_COLOR] #12382F must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/TaskDetailFragment.kt:438: [RAW_COLOR] #1C3252 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/TaskDetailFragment.kt:442: [RAW_COLOR] #2B6F5A must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/TaskDetailFragment.kt:444: [RAW_COLOR] #2A4566 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:31: [RAW_COLOR] #2196F3 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:39: [RAW_COLOR] #5C7CFA must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:47: [RAW_COLOR] #FF8A4C must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:55: [RAW_COLOR] #B7793E must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:63: [RAW_COLOR] #F2A900 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:71: [RAW_COLOR] #D99A00 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:79: [RAW_COLOR] #8EA9A0 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:87: [RAW_COLOR] #D8F3B0 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:95: [RAW_COLOR] #45D6B4 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:103: [RAW_COLOR] #7B2CBF must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:111: [RAW_COLOR] #4A90E2 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:119: [RAW_COLOR] #66C7F4 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:127: [RAW_COLOR] #4CAF50 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:135: [RAW_COLOR] #4DD6A7 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:143: [RAW_COLOR] #8BC34A must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:151: [RAW_COLOR] #66BB6A must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:159: [RAW_COLOR] #00BCD4 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:167: [RAW_COLOR] #FFD54F must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:175: [RAW_COLOR] #7C4DFF must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:183: [RAW_COLOR] #FF6B6B must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:191: [RAW_COLOR] #8FA4BE must reference a semantic color token
- - app/src/main/res/values/stage10_color_tokens.xml:4: [RAW_COLOR] #5FD6B4 must reference a semantic color token
- - app/src/main/res/values/stage10_color_tokens.xml:5: [RAW_COLOR] #7B8794 must reference a semantic color token
- - app/src/main/res/values-night/styles.xml:4: [LEGACY_STYLE] RedButton must be replaced by a semantic Widget.Aqua.* style
- - app/src/main/res/values-night/styles.xml:14: [LEGACY_STYLE] BlackButton must be replaced by a semantic Widget.Aqua.* style
- - app/src/main/res/values-night/styles.xml:25: [LEGACY_STYLE] WhiteButton must be replaced by a semantic Widget.Aqua.* style
-TOTAL STAGE 10 VIOLATIONS: 176
-
-GENERATED_COMMIT=ac311d4040b5b6cb3fb81141f945a5e97865125d
-GENERATED_AT_UTC=2026-07-18T17:00:23Z
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:8: [RAW_COLOR] #00BCD4 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:10: [RAW_COLOR] #09251D must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:12: [RAW_COLOR] #0B1D33 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:14: [RAW_COLOR] #101828 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:16: [RAW_COLOR] #10233A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:18: [RAW_COLOR] #12382F must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:20: [RAW_COLOR] #173F38 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:22: [RAW_COLOR] #1C3252 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:24: [RAW_COLOR] #1C5D8F must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:26: [RAW_COLOR] #1E5A48 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:28: [RAW_COLOR] #2196F3 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:30: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:32: [RAW_COLOR] #223A57 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:34: [RAW_COLOR] #26384C must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:36: [RAW_COLOR] #2A2315 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:38: [RAW_COLOR] #2A4566 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:40: [RAW_COLOR] #2B6F5A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:42: [RAW_COLOR] #2F7D70 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:44: [RAW_COLOR] #321E2A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:46: [RAW_COLOR] #3364FFDA must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:48: [RAW_COLOR] #35506D must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:50: [RAW_COLOR] #3E536B must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:52: [RAW_COLOR] #3E6B4A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:54: [RAW_COLOR] #45BFAF must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:56: [RAW_COLOR] #45D6B4 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:58: [RAW_COLOR] #475467 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:60: [RAW_COLOR] #4A90E2 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:62: [RAW_COLOR] #4CAF50 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:64: [RAW_COLOR] #4DD6A7 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:66: [RAW_COLOR] #4FD6C8 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:68: [RAW_COLOR] #5C7CFA must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:70: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:72: [RAW_COLOR] #64FFDA must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:74: [RAW_COLOR] #667085 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:76: [RAW_COLOR] #66BB6A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:78: [RAW_COLOR] #66C7F4 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:80: [RAW_COLOR] #6A4D1E must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:82: [RAW_COLOR] #6F829B must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:84: [RAW_COLOR] #7A3344 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:86: [RAW_COLOR] #7A4D2D must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:88: [RAW_COLOR] #7A4E8F must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:90: [RAW_COLOR] #7B2CBF must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:92: [RAW_COLOR] #7C4DFF must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:94: [RAW_COLOR] #7F91AA must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:96: [RAW_COLOR] #8BC34A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:98: [RAW_COLOR] #8EA9A0 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:100: [RAW_COLOR] #8F4A3A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:102: [RAW_COLOR] #8FA0B5 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:104: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:106: [RAW_COLOR] #8FE7D5 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:108: [RAW_COLOR] #98A2B3 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:110: [RAW_COLOR] #B7793E must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:112: [RAW_COLOR] #B8C7D9 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:114: [RAW_COLOR] #D0D5DD must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:116: [RAW_COLOR] #D85C5C must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:118: [RAW_COLOR] #D8F3B0 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:120: [RAW_COLOR] #D99A00 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:122: [RAW_COLOR] #DDE3EA must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:124: [RAW_COLOR] #E0A84C must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:126: [RAW_COLOR] #F2A900 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:128: [RAW_COLOR] #F2C94C must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:130: [RAW_COLOR] #F2F4F7 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:132: [RAW_COLOR] #FF6B6B must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:134: [RAW_COLOR] #FF8A4C must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:136: [RAW_COLOR] #FF8A8A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt:138: [RAW_COLOR] #FFD54F must reference a semantic color token
+TOTAL STAGE 10 VIOLATIONS: 72

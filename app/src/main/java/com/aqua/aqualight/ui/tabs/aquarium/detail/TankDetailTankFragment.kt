@@ -179,7 +179,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
             binding.tankBioComponentsContainer.addView(
                 createTankComponentCard(
                     shortCode = category.shortCode,
-                    title = category.title,
+                    title = getString(category.titleRes),
                     materials = selectedMaterials
                 )
             )
@@ -193,7 +193,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
             binding.tankHardwareComponentsContainer.addView(
                 createTankComponentCard(
                     shortCode = category.shortCode,
-                    title = category.title,
+                    title = getString(category.titleRes),
                     materials = selectedMaterials
                 )
             )

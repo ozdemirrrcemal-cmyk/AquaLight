@@ -43,8 +43,8 @@ object TimelineDayResolver {
     status: TimelineDayStatus
   ): Int {
     return when (status) {
-      TimelineDayStatus.TODAY -> Color.parseColor("#4FD6C8")
-      TimelineDayStatus.UPCOMING -> Color.parseColor("#8FA0B5")
+      TimelineDayStatus.TODAY -> com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_4FD6C8
+      TimelineDayStatus.UPCOMING -> com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_8FA0B5
       TimelineDayStatus.PAST -> Color.TRANSPARENT
     }
   }

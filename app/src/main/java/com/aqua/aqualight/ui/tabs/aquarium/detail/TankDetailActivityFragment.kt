@@ -195,7 +195,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
             binding.tvNextCareTaskTitle.text = getString(R.string.aquarium_no_value_placeholder)
             binding.tvNextCareValue.text = getString(R.string.aquarium_no_upcoming_care)
             binding.tvNextCareValue.setTextColor(
-                Color.parseColor("#8FA4BE")
+                com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_8FA4BE
             )
         } else {
             binding.tvNextCareTaskTitle.text = state.nextCareTask.title
@@ -215,20 +215,20 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
     ): Int {
         return when (status) {
             TankNextCareStatus.OVERDUE -> {
-                Color.parseColor("#D85C5C")
+                com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_D85C5C
             }
 
             TankNextCareStatus.TODAY -> {
-                Color.parseColor("#F2C94C")
+                com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_F2C94C
             }
 
             TankNextCareStatus.TOMORROW -> {
-                Color.parseColor("#5FD6B4")
+                com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_5FD6B4
             }
 
             TankNextCareStatus.NONE,
             TankNextCareStatus.FUTURE -> {
-                Color.parseColor("#8FA4BE")
+                com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_8FA4BE
             }
         }
     }
@@ -471,8 +471,8 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
         val card = MaterialCardView(requireContext()).apply {
             radius = 18.dp().toFloat()
             strokeWidth = 1.dp()
-            strokeColor = Color.parseColor("#223A57")
-            setCardBackgroundColor(Color.parseColor("#10233A"))
+            strokeColor = com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_223A57
+            setCardBackgroundColor(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_10233A)
             cardElevation = 0f
             useCompatPadding = false
             isClickable = true
@@ -570,7 +570,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
         val metaText = TextView(requireContext()).apply {
             text = buildActivityMetaText(task)
             textSize = 12f
-            setTextColor(Color.parseColor("#B8C7D9"))
+            setTextColor(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_B8C7D9)
             includeFontPadding = false
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
@@ -585,7 +585,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
         val completedText = TextView(requireContext()).apply {
             text = getString(R.string.aquarium_completed_label)
             textSize = 11.8f
-            setTextColor(Color.parseColor("#5FD6B4"))
+            setTextColor(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_5FD6B4)
             setTypeface(null, Typeface.BOLD)
             includeFontPadding = false
             maxLines = 1

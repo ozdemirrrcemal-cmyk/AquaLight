@@ -1,9 +1,8 @@
 # Stage 10 audit summary
 
 ## Rule counts
-    140 [RAW_COLOR]
-     33 [RAW_UI_MESSAGE]
-      3 [LEGACY_STYLE]
+     66 [RAW_COLOR]
+      6 [RAW_UI_MESSAGE]
 
 ## Files by rule
 
@@ -13,43 +12,15 @@
 app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleGattOperationQueue.kt
 app/src/main/java/com/aqua/aqualight/data/devices/repository/DevicesRepository.kt
 app/src/main/java/com/aqua/aqualight/data/user/UserPreferencesManager.kt
-app/src/main/java/com/aqua/aqualight/ui/auth/security/ReAuthenticateFragment.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsBasicFragment.kt
 app/src/main/java/com/aqua/aqualight/ui/tabs/devices/DevicesFragment.kt
 app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceAddCandidateAdapter.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceProvisioningProgressFragment.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/DeviceCoolingRootFragment.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/DeviceDosingRootFragment.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/DeviceLightRootFragment.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/DeviceTimerRootFragment.kt
 
 ### RAW_COLOR
-app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt
-app/src/main/java/com/aqua/aqualight/platform/notifications/AndroidNotificationRenderer.kt
-app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CareProfileBottomSheet.kt
-app/src/main/java/com/aqua/aqualight/ui/common/timeline/TimelineAxisView.kt
-app/src/main/java/com/aqua/aqualight/ui/common/timeline/TimelineDayResolver.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/AquariumFragment.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/materials/MaterialPickerFragment.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankInfoFragment.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsFragment.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/devices/DeviceCardAdapter.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceScanPulseView.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AquariumMaintenanceFragment.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/TaskDetailFragment.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt
-app/src/main/res/values/stage10_color_tokens.xml
+app/src/main/java/com/aqua/aqualight/designsystem/AquaColorTokens.kt
 
 ### RAW_DIMENSION
 
 ### LEGACY_STYLE
-app/src/main/res/values-night/styles.xml
 
 ### MENU_STRING_RESOURCE
 
@@ -59,57 +30,6 @@ app/src/main/res/values-night/styles.xml
 
 ### REQUIRED_RESOURCE
 
-## Resource value files
-app/src/main/res/values-night/bottom_sheet_colors.xml
-app/src/main/res/values-night/button_colors.xml
-app/src/main/res/values-night/card_colors.xml
-app/src/main/res/values-night/colors.xml
-app/src/main/res/values-night/dialog_colors.xml
-app/src/main/res/values-night/input_colors.xml
-app/src/main/res/values-night/state_screen_colors.xml
-app/src/main/res/values-night/styles.xml
-app/src/main/res/values-night/themes.xml
-app/src/main/res/values-night/toolbar_action_colors.xml
-app/src/main/res/values/aquarium_empty_state_strings.xml
-app/src/main/res/values/arrays.xml
-app/src/main/res/values/bottom_nav_attrs.xml
-app/src/main/res/values/bottom_sheet_action_styles.xml
-app/src/main/res/values/bottom_sheet_colors.xml
-app/src/main/res/values/bottom_sheet_styles.xml
-app/src/main/res/values/button_colors.xml
-app/src/main/res/values/button_dimens.xml
-app/src/main/res/values/button_styles.xml
-app/src/main/res/values/card_colors.xml
-app/src/main/res/values/card_styles.xml
-app/src/main/res/values/catalog_strings.xml
-app/src/main/res/values/colors.xml
-app/src/main/res/values/device_management_strings.xml
-app/src/main/res/values/dialog_colors.xml
-app/src/main/res/values/dialog_styles.xml
-app/src/main/res/values/dimens.xml
-app/src/main/res/values/input_colors.xml
-app/src/main/res/values/input_styles.xml
-app/src/main/res/values/maintenance_strings.xml
-app/src/main/res/values/screen_titles.xml
-app/src/main/res/values/selection_row_styles.xml
-app/src/main/res/values/stage10_color_tokens.xml
-app/src/main/res/values/stage8_feedback_dimens.xml
-app/src/main/res/values/state_screen_colors.xml
-app/src/main/res/values/strings.xml
-app/src/main/res/values/strings_device_menu.xml
-app/src/main/res/values/strings_devices_provisioning.xml
-app/src/main/res/values/strings_devices_wifi_setup_patch.xml
-app/src/main/res/values/strings_notifications.xml
-app/src/main/res/values/strings_permissions.xml
-app/src/main/res/values/strings_qr_preflight.xml
-app/src/main/res/values/styles.xml
-app/src/main/res/values/tank_device_assignment_strings.xml
-app/src/main/res/values/tank_strings.xml
-app/src/main/res/values/tank_tab_styles.xml
-app/src/main/res/values/themes.xml
-app/src/main/res/values/toolbar_action_colors.xml
-app/src/main/res/values/typography_dimens.xml
-app/src/main/res/values/typography_styles.xml
-
-GENERATED_COMMIT=ac311d4040b5b6cb3fb81141f945a5e97865125d
-GENERATED_AT_UTC=2026-07-18T17:00:23Z
+BUILD_EXIT=1
+GENERATED_COMMIT=b2a9c795ddfabc8fa98d825f06c058de0fa4fcea
+GENERATED_AT_UTC=2026-07-18T17:02:06Z

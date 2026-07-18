@@ -144,8 +144,8 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
         val card = MaterialCardView(requireContext()).apply {
             radius = 18.dp().toFloat()
             strokeWidth = 1.dp()
-            strokeColor = Color.parseColor("#223A57")
-            setCardBackgroundColor(Color.parseColor("#10233A"))
+            strokeColor = com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_223A57
+            setCardBackgroundColor(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_10233A)
             cardElevation = 0f
             useCompatPadding = false
             isClickable = true
@@ -240,7 +240,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
                 getLivestockQuantityText(livestock.quantity)
             )
             textSize = 12.5f
-            setTextColor(Color.parseColor("#8FA4BE"))
+            setTextColor(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_8FA4BE)
             includeFontPadding = false
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
@@ -256,7 +256,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
         val dateText = TextView(requireContext()).apply {
             text = getLivestockAddedDateText(livestock.addedDateMillis)
             textSize = 12f
-            setTextColor(Color.parseColor("#5FD6B4"))
+            setTextColor(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_5FD6B4)
             includeFontPadding = false
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
@@ -277,7 +277,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
             val noteText = TextView(requireContext()).apply {
                 text = livestock.note
                 textSize = 12f
-                setTextColor(Color.parseColor("#8FA4BE"))
+                setTextColor(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_8FA4BE)
                 includeFontPadding = false
                 maxLines = 1
                 ellipsize = TextUtils.TruncateAt.END
@@ -295,7 +295,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
 
         val arrow = ImageView(requireContext()).apply {
             setImageResource(R.drawable.ic_arrow_right)
-            setColorFilter(Color.parseColor("#8FA4BE"))
+            setColorFilter(com.aqua.aqualight.designsystem.AquaColorTokens.COLOR_8FA4BE)
             scaleType = ImageView.ScaleType.CENTER
 
             layoutParams = LinearLayout.LayoutParams(
@@ -360,12 +360,12 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
         category: String
     ): String {
         return when (category) {
-            LivestockCategories.FISH -> "#1C5D8F"
-            LivestockCategories.SHRIMP -> "#8F4A3A"
-            LivestockCategories.SNAIL -> "#3E6B4A"
-            LivestockCategories.CRAB_CRAYFISH -> "#7A4D2D"
-            LivestockCategories.CORAL -> "#7A4E8F"
-            else -> "#3E536B"
+            LivestockCategories.FISH -> com.aqua.aqualight.designsystem.AquaColorTokens.HEX_1C5D8F
+            LivestockCategories.SHRIMP -> com.aqua.aqualight.designsystem.AquaColorTokens.HEX_8F4A3A
+            LivestockCategories.SNAIL -> com.aqua.aqualight.designsystem.AquaColorTokens.HEX_3E6B4A
+            LivestockCategories.CRAB_CRAYFISH -> com.aqua.aqualight.designsystem.AquaColorTokens.HEX_7A4D2D
+            LivestockCategories.CORAL -> com.aqua.aqualight.designsystem.AquaColorTokens.HEX_7A4E8F
+            else -> com.aqua.aqualight.designsystem.AquaColorTokens.HEX_3E536B
         }
     }
 

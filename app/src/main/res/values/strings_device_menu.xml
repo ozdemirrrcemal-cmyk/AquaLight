@@ -105,4 +105,11 @@
     <string name="device_ota_test_unknown_websocket_error">Unknown WebSocket send error.</string>
     <string name="device_ota_test_default_text">Hidden OTA test panel. Long press Firmware to unlock.</string>
     <string name="device_ota_test_plan_summary">OTA beta manifest verified.\nREADY TO START\ncurrent: %1$s\ntarget: %2$s\nchannel: %3$s\nenv: %4$s\nproductKey: %5$s\nproductId: %6$s\nhw: %7$s\nfile: %8$s\nsize: %9$s\nsha256: %10$s…</string>
+
+    <!-- Stage 10: remaining Kotlin UI labels -->
+    <string name="device_provisioning_step_format">%1$s %2$s</string>
+    <string name="reauth_google_error_title">Google Error</string>
+    <string name="tank_settings_field_type_title">Tank Type</string>
+    <string name="tank_settings_field_setup_date_title">Setup Date</string>
+    <string name="tank_settings_field_style_title">Tank Style</string>
 </resources>

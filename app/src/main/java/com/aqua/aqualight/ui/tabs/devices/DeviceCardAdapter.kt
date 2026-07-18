@@ -93,7 +93,7 @@ class DeviceCardAdapter(
     private companion object {
         const val DEFAULT_STROKE_WIDTH_DP = 1
         const val SELECTED_STROKE_WIDTH_DP = 3
-        const val DEFAULT_STROKE_COLOR = "#22354D"
-        const val SELECTED_STROKE_COLOR = "#5FD6B4"
+        const val DEFAULT_STROKE_COLOR = com.aqua.aqualight.designsystem.AquaColorTokens.HEX_22354D
+        const val SELECTED_STROKE_COLOR = com.aqua.aqualight.designsystem.AquaColorTokens.HEX_5FD6B4
     }
 }

@@ -28,7 +28,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_water_change,
       categoryRes = R.string.maintenance_category_water_care,
       iconRes = R.drawable.ic_care_water_change_24,
-      accentColor = "#2196F3",
+      accentColor = com.aqua.aqualight.designsystem.AquaColorTokens.HEX_2196F3,
       defaultDescriptionRes = R.string.maintenance_task_desc_water_change
     ),
     CareTaskTypeDefinition(
@@ -36,7 +36,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_water_test,
       categoryRes = R.string.maintenance_category_water_care,
       iconRes = R.drawable.ic_care_water_test_24,
-      accentColor = "#5C7CFA",
+      accentColor = com.aqua.aqualight.designsystem.AquaColorTokens.HEX_5C7CFA,
       defaultDescriptionRes = R.string.maintenance_task_desc_water_test
     ),
     CareTaskTypeDefinition(
@@ -44,7 +44,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_temperature_check,
       categoryRes = R.string.maintenance_category_water_care,
       iconRes = R.drawable.ic_care_temperature_24,
-      accentColor = "#FF8A4C",
+      accentColor = com.aqua.aqualight.designsystem.AquaColorTokens.HEX_FF8A4C,
       defaultDescriptionRes = R.string.maintenance_task_desc_temperature_check
     ),
     CareTaskTypeDefinition(
@@ -52,7 +52,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_substrate_cleaning,
       categoryRes = R.string.maintenance_category_water_care,
       iconRes = R.drawable.ic_care_substrate_24,
-      accentColor = "#B7793E",
+      accentColor = com.aqua.aqualight.designsystem.AquaColorTokens.HEX_B7793E,
       defaultDescriptionRes = R.string.maintenance_task_desc_substrate_cleaning
     ),
     CareTaskTypeDefinition(
@@ -60,7 +60,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_filter_maintenance,
       categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_filter_24,
-      accentColor = "#F2A900",
+      accentColor = com.aqua.aqualight.designsystem.AquaColorTokens.HEX_F2A900,
       defaultDescriptionRes = R.string.maintenance_task_desc_filter_maintenance
     ),
     CareTaskTypeDefinition(
@@ -68,7 +68,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_filter_change,
       categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_filter_change_24,
-      accentColor = "#D99A00",
+      accentColor = com.aqua.aqualight.designsystem.AquaColorTokens.HEX_D99A00,
       defaultDescriptionRes = R.string.maintenance_task_desc_filter_change
     ),
     CareTaskTypeDefinition(
@@ -76,7 +76,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_pre_filter_cleaning,
       categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_prefilter_24,
-      accentColor = "#8EA9A0",
+      accentColor = com.aqua.aqualight.designsystem.AquaColorTokens.HEX_8EA9A0,
       defaultDescriptionRes = R.string.maintenance_task_desc_pre_filter_cleaning
     ),
     CareTaskTypeDefinition(
@@ -84,7 +84,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_pipe_cleaning,
       categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_pipe_24,
-      accentColor = "#D8F3B0",
+      accentColor = com.aqua.aqualight.designsystem.AquaColorTokens.HEX_D8F3B0,
       defaultDescriptionRes = R.string.maintenance_task_desc_pipe_cleaning
     ),
     CareTaskTypeDefinition(
@@ -92,7 +92,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_diffuser_cleaning,
       categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_diffuser_24,
-      accentColor = "#45D6B4",
+      accentColor = com.aqua.aqualight.designsystem.AquaColorTokens.HEX_45D6B4,
       defaultDescriptionRes = R.string.maintenance_task_desc_diffuser_cleaning
     ),
     CareTaskTypeDefinition(
@@ -100,7 +100,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_hose_cleaning,
       categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_hose_24,
-      accentColor = "#7B2CBF",
+      accentColor = com.aqua.aqualight.designsystem.AquaColorTokens.HEX_7B2CBF,
       defaultDescriptionRes = R.string.maintenance_task_desc_hose_cleaning
     ),
     CareTaskTypeDefinition(
@@ -108,7 +108,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_device_check,
       categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_device_24,
-      accentColor = "#4A90E2",
+      accentColor = com.aqua.aqualight.designsystem.AquaColorTokens.HEX_4A90E2,
       defaultDescriptionRes = R.string.maintenance_task_desc_device_check
     ),
     CareTaskTypeDefinition(
@@ -116,7 +116,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_glass_cleaning,
       categoryRes = R.string.maintenance_category_cleaning,
       iconRes = R.drawable.ic_care_glass_24,
-      accentColor = "#66C7F4",
+      accentColor = com.aqua.aqualight.designsystem.AquaColorTokens.HEX_66C7F4,
       defaultDescriptionRes = R.string.maintenance_task_desc_glass_cleaning
     ),
     CareTaskTypeDefinition(
@@ -124,7 +124,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_algae_cleaning,
       categoryRes = R.string.maintenance_category_cleaning,
       iconRes = R.drawable.ic_care_algae_24,
-      accentColor = "#4CAF50",
+      accentColor = com.aqua.aqualight.designsystem.AquaColorTokens.HEX_4CAF50,
       defaultDescriptionRes = R.string.maintenance_task_desc_algae_cleaning
     ),
     CareTaskTypeDefinition(
@@ -132,7 +132,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_plant_trim,
       categoryRes = R.string.maintenance_category_plants,
       iconRes = R.drawable.ic_care_trim_24,
-      accentColor = "#4DD6A7",
+      accentColor = com.aqua.aqualight.designsystem.AquaColorTokens.HEX_4DD6A7,
       defaultDescriptionRes = R.string.maintenance_task_desc_plant_trim
     ),
     CareTaskTypeDefinition(
@@ -140,7 +140,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_fertilizer_dosing,
       categoryRes = R.string.maintenance_category_plants,
       iconRes = R.drawable.ic_care_fertilizer_24,
-      accentColor = "#8BC34A",
+      accentColor = com.aqua.aqualight.designsystem.AquaColorTokens.HEX_8BC34A,
       defaultDescriptionRes = R.string.maintenance_task_desc_fertilizer_dosing
     ),
     CareTaskTypeDefinition(
@@ -148,7 +148,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_plant_health_check,
       categoryRes = R.string.maintenance_category_plants,
       iconRes = R.drawable.ic_care_plant_health_24,
-      accentColor = "#66BB6A",
+      accentColor = com.aqua.aqualight.designsystem.AquaColorTokens.HEX_66BB6A,
       defaultDescriptionRes = R.string.maintenance_task_desc_plant_health_check
     ),
     CareTaskTypeDefinition(
@@ -156,7 +156,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_co2_check,
       categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_co2_24,
-      accentColor = "#00BCD4",
+      accentColor = com.aqua.aqualight.designsystem.AquaColorTokens.HEX_00BCD4,
       defaultDescriptionRes = R.string.maintenance_task_desc_co2_check
     ),
     CareTaskTypeDefinition(
@@ -164,7 +164,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_light_check,
       categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_light_24,
-      accentColor = "#FFD54F",
+      accentColor = com.aqua.aqualight.designsystem.AquaColorTokens.HEX_FFD54F,
       defaultDescriptionRes = R.string.maintenance_task_desc_light_check
     ),
     CareTaskTypeDefinition(
@@ -172,7 +172,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_feeding,
       categoryRes = R.string.maintenance_category_livestock,
       iconRes = R.drawable.ic_care_feeding_24,
-      accentColor = "#7C4DFF",
+      accentColor = com.aqua.aqualight.designsystem.AquaColorTokens.HEX_7C4DFF,
       defaultDescriptionRes = R.string.maintenance_task_desc_feeding
     ),
     CareTaskTypeDefinition(
@@ -180,7 +180,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_livestock_check,
       categoryRes = R.string.maintenance_category_livestock,
       iconRes = R.drawable.ic_care_livestock_24,
-      accentColor = "#FF6B6B",
+      accentColor = com.aqua.aqualight.designsystem.AquaColorTokens.HEX_FF6B6B,
       defaultDescriptionRes = R.string.maintenance_task_desc_livestock_check
     ),
     CareTaskTypeDefinition(
@@ -188,7 +188,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_custom,
       categoryRes = R.string.maintenance_category_other,
       iconRes = R.drawable.ic_care_custom_24,
-      accentColor = "#8FA4BE",
+      accentColor = com.aqua.aqualight.designsystem.AquaColorTokens.HEX_8FA4BE,
       defaultDescriptionRes = R.string.maintenance_task_desc_custom
     )
   )
