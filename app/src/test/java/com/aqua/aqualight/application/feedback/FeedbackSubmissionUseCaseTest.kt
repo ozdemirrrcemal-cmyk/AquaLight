@@ -1,67 +1,43 @@
 package com.aqua.aqualight.application.feedback
 
 import java.io.File
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class FeedbackSubmissionUseCaseTest {
 
     @Test
-    fun forwardsRequestFileAndSuccessThroughOneFakeBoundary() {
-        val fake = FakeFeedbackSubmissionOperations()
-        val useCase = FeedbackSubmissionUseCase(fake)
+    fun submitForwardsRequestAndFileToRepository() = runTest {
+        val repository = FakeFeedbackRepository()
+        val useCase = FeedbackSubmissionUseCase(repository)
         val request = request()
         val screenshotFile = File("feedback.jpg")
-        var success = false
+        val expected = FeedbackSubmissionResult.Success("document-1")
+        repository.submitResult = expected
 
-        useCase.submit(
-            request = request,
-            screenshotFile = screenshotFile,
-            callback = object : FeedbackSubmissionCallback {
-                override fun onSuccess() {
-                    success = true
-                }
+        val actual = useCase.submit(request, screenshotFile)
 
-                override fun onFailure(failure: FeedbackSubmissionFailure) = Unit
-            }
-        )
-
-        assertSame(request, fake.request)
-        assertSame(screenshotFile, fake.screenshotFile)
-        fake.callback?.onSuccess()
-        assertTrue(success)
+        assertSame(request, repository.request)
+        assertSame(screenshotFile, repository.screenshotFile)
+        assertSame(expected, actual)
     }
 
     @Test
-    fun forwardsTypedFailureWithoutFirebaseOrAndroidDependencies() {
-        val fake = FakeFeedbackSubmissionOperations()
-        val useCase = FeedbackSubmissionUseCase(fake)
-        val expectedCause = IllegalStateException("upload failed")
-        var received: FeedbackSubmissionFailure? = null
-
-        useCase.submit(
-            request = request(),
-            screenshotFile = null,
-            callback = object : FeedbackSubmissionCallback {
-                override fun onSuccess() = Unit
-
-                override fun onFailure(failure: FeedbackSubmissionFailure) {
-                    received = failure
-                }
-            }
+    fun cleanupForwardsToRepository() = runTest {
+        val repository = FakeFeedbackRepository()
+        val expected = FeedbackOrphanCleanupResult(
+            attemptedCount = 3,
+            deletedCount = 2,
+            remainingCount = 1
         )
+        repository.cleanupResult = expected
+        val useCase = FeedbackSubmissionUseCase(repository)
 
-        fake.callback?.onFailure(
-            FeedbackSubmissionFailure(
-                kind = FeedbackSubmissionFailureKind.UPLOAD,
-                cause = expectedCause
-            )
-        )
+        val actual = useCase.cleanupOrphans()
 
-        assertEquals(FeedbackSubmissionFailureKind.UPLOAD, received?.kind)
-        assertSame(expectedCause, received?.cause)
+        assertEquals(expected, actual)
     }
 
     private fun request(): FeedbackSubmissionRequest {
@@ -74,19 +50,25 @@ class FeedbackSubmissionUseCaseTest {
         )
     }
 
-    private class FakeFeedbackSubmissionOperations : FeedbackSubmissionOperations {
+    private class FakeFeedbackRepository : FeedbackRepository {
         var request: FeedbackSubmissionRequest? = null
         var screenshotFile: File? = null
-        var callback: FeedbackSubmissionCallback? = null
+        var submitResult: FeedbackSubmissionResult =
+            FeedbackSubmissionResult.Success("default")
+        var cleanupResult: FeedbackOrphanCleanupResult =
+            FeedbackOrphanCleanupResult(0, 0, 0)
 
-        override fun submit(
+        override suspend fun submit(
             request: FeedbackSubmissionRequest,
-            screenshotFile: File?,
-            callback: FeedbackSubmissionCallback
-        ) {
+            screenshotFile: File?
+        ): FeedbackSubmissionResult {
             this.request = request
             this.screenshotFile = screenshotFile
-            this.callback = callback
+            return submitResult
+        }
+
+        override suspend fun cleanupOrphans(): FeedbackOrphanCleanupResult {
+            return cleanupResult
         }
     }
 }
