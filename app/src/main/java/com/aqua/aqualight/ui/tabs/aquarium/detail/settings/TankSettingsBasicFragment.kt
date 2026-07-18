@@ -64,8 +64,8 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     private val galleryLauncher = registerForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { uri ->
-        if (uri != null) {
-            viewLifecycleOwner.lifecycleScope.launch { startImageCrop(uri) }
+        if (_binding != null && uri != null) {
+            lifecycleScope.launch { startImageCrop(uri) }
         }
     }
 
@@ -73,8 +73,12 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
         ActivityResultContracts.TakePicture()
     ) { success ->
         val cameraUri = mediaFlow.currentCameraUri()
+        if (_binding == null) {
+            mediaFlow.cancelCamera()
+            return@registerForActivityResult
+        }
         if (success && cameraUri != null) {
-            viewLifecycleOwner.lifecycleScope.launch { startImageCrop(cameraUri) }
+            lifecycleScope.launch { startImageCrop(cameraUri) }
         } else {
             mediaFlow.cancelCamera()
         }
@@ -83,7 +87,11 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     private val cropLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        viewLifecycleOwner.lifecycleScope.launch {
+        if (_binding == null) {
+            mediaFlow.cancelCrop()
+            return@registerForActivityResult
+        }
+        lifecycleScope.launch {
             when {
                 result.resultCode == Activity.RESULT_OK -> {
                     val outputUri = result.data?.let(UCrop::getOutput)
@@ -244,6 +252,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     }
 
     private fun bindTank(tank: AquariumTankSnapshot) {
+        if (_binding == null) return
         currentTank = tank
         mediaFlow.initializeSelection(tank.photoUri)
 
@@ -287,6 +296,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
         message: String,
         type: BaseActivity.SnackType = BaseActivity.SnackType.NORMAL
     ) {
+        if (_binding == null) return
         (activity as? BaseActivity)?.showSnackBar(message, type)
     }
 
@@ -323,6 +333,10 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     }
 
     private suspend fun startImageCrop(sourceUri: Uri) {
+        if (_binding == null) {
+            mediaFlow.cancelCamera()
+            return
+        }
         setFragmentGlobalLoading(true)
         try {
             when (
@@ -331,7 +345,14 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
                     title = getString(R.string.aquarium_photo_crop_title)
                 )
             ) {
-                is MediaCropPreparationResult.Ready -> cropLauncher.launch(preparation.intent)
+                is MediaCropPreparationResult.Ready -> {
+                    if (_binding != null) {
+                        cropLauncher.launch(preparation.intent)
+                    } else {
+                        mediaFlow.cancelCrop()
+                    }
+                }
+
                 is MediaCropPreparationResult.Failure,
                 MediaCropPreparationResult.StorageFailure -> {
                     mediaFlow.cancelCamera()
@@ -349,6 +370,10 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     }
 
     private fun saveTankPhoto(contentUri: Uri) {
+        if (_binding == null) {
+            mediaFlow.rollbackSelection()
+            return
+        }
         binding.imgTankPhoto.load(contentUri) {
             placeholder(R.drawable.nature_aquarium)
             error(R.drawable.nature_aquarium)
@@ -379,6 +404,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
 
     private fun removeTankPhoto() {
         val tank = currentTank ?: return
+        if (_binding == null) return
         if (tank.photoUri.isNullOrBlank()) {
             binding.imgTankPhoto.setImageResource(R.drawable.nature_aquarium)
             return
