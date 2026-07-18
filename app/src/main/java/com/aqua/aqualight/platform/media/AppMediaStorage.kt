@@ -3,6 +3,7 @@ package com.aqua.aqualight.platform.media
 import android.content.Context
 import android.net.Uri
 import androidx.core.content.FileProvider
+import com.aqua.aqualight.data.user.UserDataScope
 import java.io.File
 import java.util.UUID
 import org.json.JSONObject
@@ -24,27 +25,23 @@ object AppMediaStorage {
         context: Context,
         scope: AppMediaScope,
         ownerToken: String
-    ): Uri? {
-        return createTemporaryFile(
-            context = context,
-            scope = scope,
-            role = MediaFileRole.CAMERA,
-            ownerToken = ownerToken
-        )?.let { file -> toContentUri(context, file) }
-    }
+    ): Uri? = createTemporaryFile(
+        context = context,
+        scope = scope,
+        role = MediaFileRole.CAMERA,
+        ownerToken = ownerToken
+    )?.let { file -> toContentUri(context, file) }
 
     fun createCropOutputUri(
         context: Context,
         scope: AppMediaScope,
         ownerToken: String
-    ): Uri? {
-        return createTemporaryFile(
-            context = context,
-            scope = scope,
-            role = MediaFileRole.CROP,
-            ownerToken = ownerToken
-        )?.let(Uri::fromFile)
-    }
+    ): Uri? = createTemporaryFile(
+        context = context,
+        scope = scope,
+        role = MediaFileRole.CROP,
+        ownerToken = ownerToken
+    )?.let(Uri::fromFile)
 
     /**
      * Promotes a crop output to an app-owned candidate. The candidate remains journaled until the
@@ -65,14 +62,11 @@ object AppMediaStorage {
         ) ?: return null
         if (!source.isFile || source.length() <= 0L) return null
 
-        return runCatching {
-            val target = File(
+        var target: File? = null
+        return try {
+            target = File(
                 mediaDirectory(context, scope),
-                buildFileName(
-                    scope = scope,
-                    role = MediaFileRole.SAVED,
-                    ownerToken = ownerToken
-                )
+                buildFileName(scope, MediaFileRole.SAVED, ownerToken)
             )
             if (!source.renameTo(target)) {
                 source.copyTo(target, overwrite = false)
@@ -81,25 +75,19 @@ object AppMediaStorage {
             val promoted = toContentUri(context, target)
             registerPending(context, promoted.toString(), ownerUid)
             promoted
-        }.getOrNull()
+        } catch (_: Throwable) {
+            target?.delete()
+            null
+        }
     }
 
-    fun toContentUriIfInternalFile(
-        context: Context,
-        uri: Uri
-    ): Uri? {
-        val file = resolveInternalMediaFile(
-            context = context,
-            uriString = uri.toString()
-        ) ?: return null
+    fun toContentUriIfInternalFile(context: Context, uri: Uri): Uri? {
+        val file = resolveInternalMediaFile(context, uri.toString()) ?: return null
         return toContentUri(context, file)
     }
 
     /** Returns a FileProvider URI only for known app-owned media roots. */
-    fun toContentUriForOwnedPath(
-        context: Context,
-        path: String?
-    ): Uri? {
+    fun toContentUriForOwnedPath(context: Context, path: String?): Uri? {
         if (path.isNullOrBlank()) return null
         val candidate = runCatching { File(path).canonicalFile }.getOrNull() ?: return null
         val appContext = context.applicationContext
@@ -109,6 +97,20 @@ object AppMediaStorage {
         if (!candidate.isFile || candidate.length() <= 0L) return null
         return runCatching { toContentUri(appContext, candidate) }.getOrNull()
     }
+
+    /** Compatibility entry for the owner-scoped tank store; identity is captured at call time. */
+    fun copyInternalMedia(
+        context: Context,
+        sourceUriString: String?,
+        targetScope: AppMediaScope,
+        ownerToken: String
+    ): String? = copyInternalMedia(
+        context = context,
+        sourceUriString = sourceUriString,
+        targetScope = targetScope,
+        ownerToken = ownerToken,
+        ownerUid = UserDataScope.requireCurrentUid()
+    )
 
     /**
      * Copies app-owned media into an independently owned target. A copy failure never falls back to
@@ -123,41 +125,33 @@ object AppMediaStorage {
     ): String? {
         require(ownerUid.isNotBlank()) { "ownerUid must not be blank" }
         if (sourceUriString.isNullOrBlank()) return sourceUriString
-        val sourceFile = resolveInternalMediaFile(
-            context = context,
-            uriString = sourceUriString
-        ) ?: return sourceUriString
+        val sourceFile = resolveInternalMediaFile(context, sourceUriString)
+            ?: return sourceUriString
 
-        return runCatching {
-            val targetFile = File(
+        var targetFile: File? = null
+        return try {
+            targetFile = File(
                 mediaDirectory(context, targetScope),
-                buildFileName(
-                    scope = targetScope,
-                    role = MediaFileRole.SAVED,
-                    ownerToken = ownerToken
-                )
+                buildFileName(targetScope, MediaFileRole.SAVED, ownerToken)
             )
             sourceFile.copyTo(targetFile, overwrite = false)
             val targetUri = toContentUri(context, targetFile).toString()
             registerPending(context, targetUri, ownerUid)
             targetUri
-        }.getOrNull()
+        } catch (_: Throwable) {
+            targetFile?.delete()
+            null
+        }
     }
 
     /** Marks a pending media candidate as owned by a successfully committed domain record. */
-    fun commitPendingMedia(
-        context: Context,
-        uriString: String?
-    ) {
+    fun commitPendingMedia(context: Context, uriString: String?) {
         if (uriString.isNullOrBlank()) return
         removePendingEntries(context, uriString)
     }
 
     /** Deletes a candidate only when it is still journaled as uncommitted. */
-    fun rollbackPendingMedia(
-        context: Context,
-        uriString: String?
-    ): Boolean {
+    fun rollbackPendingMedia(context: Context, uriString: String?): Boolean {
         if (uriString.isNullOrBlank() || !isPending(context, uriString)) return false
         val deleted = deleteInternalMedia(context, uriString)
         removePendingEntries(context, uriString)
@@ -189,46 +183,35 @@ object AppMediaStorage {
                     file == null || !file.exists() -> removePendingKey(appContext, entry.key)
                     file.canonicalPath in referencedFiles -> removePendingKey(appContext, entry.key)
                     entry.createdAtMillis < cutoff -> {
-                        runCatching { file.delete() }
-                        removePendingKey(appContext, entry.key)
+                        if (!file.exists() || file.delete()) {
+                            removePendingKey(appContext, entry.key)
+                        }
                     }
                 }
             }
     }
 
     /** Used only after an owner account has been durably cleared. */
-    fun discardPendingMediaForOwner(
-        context: Context,
-        ownerUid: String
-    ) {
+    fun discardPendingMediaForOwner(context: Context, ownerUid: String) {
         if (ownerUid.isBlank()) return
         pendingEntries(context)
             .filter { entry -> entry.ownerUid == ownerUid }
             .forEach { entry ->
-                resolveInternalMediaFile(context, entry.uri)?.let { file ->
-                    runCatching { file.delete() }
+                val file = resolveInternalMediaFile(context, entry.uri)
+                if (file == null || !file.exists() || file.delete()) {
+                    removePendingKey(context, entry.key)
                 }
-                removePendingKey(context, entry.key)
             }
     }
 
-    fun deleteInternalMedia(
-        context: Context,
-        uriString: String?
-    ): Boolean {
-        val file = resolveInternalMediaFile(
-            context = context,
-            uriString = uriString
-        ) ?: return false
+    fun deleteInternalMedia(context: Context, uriString: String?): Boolean {
+        val file = resolveInternalMediaFile(context, uriString) ?: return false
         val deleted = runCatching { !file.exists() || file.delete() }.getOrDefault(false)
         if (deleted) removePendingEntries(context, uriString)
         return deleted
     }
 
-    fun deleteInternalMedia(
-        context: Context,
-        uriStrings: Collection<String?>
-    ) {
+    fun deleteInternalMedia(context: Context, uriStrings: Collection<String?>) {
         uriStrings.forEach { deleteInternalMedia(context, it) }
     }
 
@@ -263,12 +246,8 @@ object AppMediaStorage {
         }
     }
 
-    fun isAppOwned(
-        context: Context,
-        uriString: String?
-    ): Boolean {
-        return resolveInternalMediaFile(context, uriString)?.exists() == true
-    }
+    fun isAppOwned(context: Context, uriString: String?): Boolean =
+        resolveInternalMediaFile(context, uriString)?.exists() == true
 
     internal fun resolveInternalMediaFile(
         context: Context,
@@ -331,7 +310,6 @@ object AppMediaStorage {
                     ?.forEach(candidates::add)
             }
         }
-
         return candidates.toList()
     }
 
@@ -340,39 +318,31 @@ object AppMediaStorage {
         scope: AppMediaScope,
         role: MediaFileRole,
         ownerToken: String
-    ): File? {
-        return runCatching {
-            File(
-                mediaDirectory(context, scope),
-                buildFileName(scope, role, ownerToken)
-            ).apply {
-                check(createNewFile()) { "Media file could not be created." }
-            }
-        }.getOrNull()
-    }
+    ): File? = runCatching {
+        File(
+            mediaDirectory(context, scope),
+            buildFileName(scope, role, ownerToken)
+        ).apply {
+            check(createNewFile()) { "Media file could not be created." }
+        }
+    }.getOrNull()
 
     private fun buildFileName(
         scope: AppMediaScope,
         role: MediaFileRole,
         ownerToken: String
-    ): String {
-        return "${scope.prefix}_${role.token}_${safeOwnerToken(ownerToken)}_" +
-            "${System.currentTimeMillis()}_${UUID.randomUUID()}.jpg"
-    }
+    ): String = "${scope.prefix}_${role.token}_${safeOwnerToken(ownerToken)}_" +
+        "${System.currentTimeMillis()}_${UUID.randomUUID()}.jpg"
 
-    private fun mediaDirectory(
-        context: Context,
-        scope: AppMediaScope
-    ): File {
+    private fun mediaDirectory(context: Context, scope: AppMediaScope): File {
         return File(context.applicationContext.filesDir, scope.directoryName).apply {
-            if (!exists()) check(mkdirs()) { "Media directory could not be created." }
+            if (!exists() && !mkdirs() && !exists()) {
+                error("Media directory could not be created.")
+            }
         }
     }
 
-    private fun toContentUri(
-        context: Context,
-        file: File
-    ): Uri {
+    private fun toContentUri(context: Context, file: File): Uri {
         val appContext = context.applicationContext
         return FileProvider.getUriForFile(
             appContext,
@@ -381,21 +351,18 @@ object AppMediaStorage {
         )
     }
 
-    private fun registerPending(
-        context: Context,
-        uriString: String,
-        ownerUid: String
-    ) {
+    private fun registerPending(context: Context, uriString: String, ownerUid: String) {
         val payload = JSONObject()
             .put(JSON_URI, uriString)
             .put(JSON_OWNER_UID, ownerUid)
             .put(JSON_CREATED_AT, System.currentTimeMillis())
             .toString()
         synchronized(pendingLock) {
-            val committed = pendingPreferences(context).edit()
-                .putString(PENDING_PREFIX + UUID.randomUUID(), payload)
-                .commit()
-            check(committed) { "Pending media journal could not be committed." }
+            check(
+                pendingPreferences(context).edit()
+                    .putString(PENDING_PREFIX + UUID.randomUUID(), payload)
+                    .commit()
+            ) { "Pending media journal could not be committed." }
         }
     }
 
@@ -448,9 +415,8 @@ object AppMediaStorage {
         return candidatePath == rootPath || candidatePath.startsWith(rootPath + File.separator)
     }
 
-    private fun safeOwnerToken(value: String): String {
-        return value.ifBlank { "draft" }.replace(Regex("[^A-Za-z0-9_-]"), "_")
-    }
+    private fun safeOwnerToken(value: String): String =
+        value.ifBlank { "draft" }.replace(Regex("[^A-Za-z0-9_-]"), "_")
 
     private data class PendingMediaEntry(
         val key: String,
