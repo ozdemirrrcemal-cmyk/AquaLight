@@ -227,17 +227,23 @@ class FeedbackMediaProcessorInstrumentedTest {
         }
     }
 
-    private class CancellingSourceAccess : FeedbackMediaSourceAccess {
-        val stream = object : InputStream() {
-            var closed = false
-            override fun read(): Int = throw CancellationException("cancelled source")
-            override fun read(buffer: ByteArray, offset: Int, length: Int): Int =
-                throw CancellationException("cancelled source")
-            override fun close() {
-                closed = true
-                super.close()
-            }
+    private class CancellingInputStream : InputStream() {
+        var closed: Boolean = false
+            private set
+
+        override fun read(): Int = throw CancellationException("cancelled source")
+
+        override fun read(buffer: ByteArray, offset: Int, length: Int): Int =
+            throw CancellationException("cancelled source")
+
+        override fun close() {
+            closed = true
+            super.close()
         }
+    }
+
+    private class CancellingSourceAccess : FeedbackMediaSourceAccess {
+        val stream = CancellingInputStream()
 
         override fun mimeType(uri: Uri): String? = "image/jpeg"
         override fun declaredLength(uri: Uri): Long? = null
