@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.aquarium
 
+import android.content.Context
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
 import com.aqua.aqualight.application.aquarium.AquariumPlantTag
@@ -18,33 +19,80 @@ import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
 import com.aqua.aqualight.data.aquarium.model.TankPlantTag
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.data.user.withCurrentOwnerScope
+import com.aqua.aqualight.platform.media.AppMediaStorage
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 
 class DefaultAquariumTankOperations(
+    context: Context,
     private val tankStore: AquariumTankDataStoreManager,
     private val tankDataCleaner: OwnerTankDataCleaner,
-    private val notificationPreferences: NotificationPreferenceUseCase
+    private val notificationPreferences: NotificationPreferenceUseCase,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : AquariumTankOperations {
+
+    private val appContext = context.applicationContext
 
     override val tanks: Flow<List<AquariumTankSnapshot>> = tankStore.tanksFlow.map { tanks ->
         tanks.map(SavedAquariumTank::toApplicationSnapshot)
     }
 
-    override suspend fun addTank(draft: AquariumTankDraft): Long =
-        tankStore.addTankFromDraft(draft.toDataDraft())
+    override suspend fun addTank(draft: AquariumTankDraft): Long = withContext(dispatcher) {
+        val pendingPhoto = draft.photoUri
+        var persisted = false
+        try {
+            val tankId = tankStore.addTankFromDraft(draft.toDataDraft())
+            persisted = true
+            AppMediaStorage.commitPendingMedia(appContext, pendingPhoto)
+            tankId
+        } catch (cancellation: CancellationException) {
+            if (!persisted) AppMediaStorage.rollbackPendingMedia(appContext, pendingPhoto)
+            throw cancellation
+        } catch (error: Throwable) {
+            if (!persisted) AppMediaStorage.rollbackPendingMedia(appContext, pendingPhoto)
+            throw error
+        }
+    }
 
-    override suspend fun duplicateTank(tankId: Long): Long = tankStore.duplicateTank(tankId)
+    override suspend fun duplicateTank(tankId: Long): Long = withContext(dispatcher) {
+        val duplicateId = tankStore.duplicateTank(tankId)
+        val ownerUid = UserDataScope.requireCurrentUid()
+        val duplicatePhoto = tankStore.tanksSnapshotForOwner(ownerUid)
+            .firstOrNull { tank -> tank.id == duplicateId }
+            ?.photoUri
+        AppMediaStorage.commitPendingMedia(appContext, duplicatePhoto)
+        duplicateId
+    }
 
     override suspend fun deleteTanks(
         tankIds: Collection<Long>
-    ): DeleteAquariumTanksResult = withCurrentOwnerScope {
-        tankDataCleaner.deleteTanks(tankIds).toApplicationResult()
+    ): DeleteAquariumTanksResult = withContext(dispatcher) {
+        withCurrentOwnerScope {
+            tankDataCleaner.deleteTanks(tankIds).toApplicationResult()
+        }
     }
 
     override suspend fun updateTankPhoto(tankId: Long, photoUri: String?) =
-        tankStore.updateTankPhoto(tankId, photoUri)
+        withContext(dispatcher) {
+            var persisted = false
+            try {
+                tankStore.updateTankPhoto(tankId, photoUri)
+                persisted = true
+                AppMediaStorage.commitPendingMedia(appContext, photoUri)
+            } catch (cancellation: CancellationException) {
+                if (!persisted) AppMediaStorage.rollbackPendingMedia(appContext, photoUri)
+                throw cancellation
+            } catch (error: Throwable) {
+                if (!persisted) AppMediaStorage.rollbackPendingMedia(appContext, photoUri)
+                throw error
+            }
+        }
 
     override suspend fun updateTankName(tankId: Long, name: String) =
         tankStore.updateTankName(tankId, name)
