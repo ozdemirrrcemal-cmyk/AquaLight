@@ -10,9 +10,9 @@ Stage 7 owns AquaLight's central notification platform:
 - care-reminder alarm and durable-work scheduling;
 - visible notification rendering;
 - owner-specific cancellation;
-- boot, package-replacement and account lifecycle reconciliation.
+- boot, package-replacement, precise-timing-access and account lifecycle reconciliation.
 
-Stage 6 remains the sole owner of runtime permission requests, rationale/settings sheets and process-safe settings navigation. Stage 7 evaluates delivery readiness but never launches a permission dialog or Android settings intent directly.
+Stage 6 remains the sole owner of runtime permission requests, rationale/settings sheets and process-safe settings navigation. Its capability boundary also routes the Android **Alarms & reminders** special-access screen. Stage 7 evaluates delivery state and schedules alarms but never launches Android settings directly.
 
 ## Permanent notification categories
 
@@ -61,28 +61,31 @@ UI code must not use:
 - `NotificationChannelRegistry`;
 - notification renderer/scheduler implementations;
 - owner notification DataStore;
-- raw channel IDs.
+- raw channel IDs;
+- raw Android permission or special-access Settings intents.
 
 `NotificationHelper` does not exist. Channel management, readiness checks, scheduling, rendering and cancellation are separate responsibilities.
 
-## Preference, permission and channel state
+## Preference, permission, channel and timing state
 
 The following states are independent:
 
 1. AquaLight owner preference;
 2. Android 13+ `POST_NOTIFICATIONS` runtime grant;
 3. Android app-level notification enablement;
-4. each category channel's state.
+4. each category channel's state;
+5. Android 12+ **Alarms & reminders** special access for precise user-selected care times.
 
 A category channel is `NOT_REQUIRED`, `MISSING`, `BLOCKED` or `ENABLED`.
 
-The App Settings switch represents only the owner preference. If Android or a channel is later blocked, the switch remains enabled and the UI shows the delivery problem separately. Repair navigation is delegated to the Stage 6 coordinator:
+The App Settings switch represents only the owner preference. If Android, a channel or precise timing access is later blocked, the switch remains enabled and the UI shows the delivery problem separately. Repair navigation is delegated to the Stage 6 coordinator:
 
 - missing runtime permission → central runtime permission flow;
 - app-level block → app notification settings;
-- category block → exact category channel settings.
+- category block → exact category channel settings;
+- missing precise timing access → Android Alarms & reminders settings.
 
-Add Care Task evaluates only the care-reminder category before saving a reminder-enabled task, but uses the same use-case as App Settings.
+Add Care Task evaluates only the care-reminder category and precise timing capability before saving a reminder-enabled task. It uses the same use-case and central coordinator as App Settings. Returning from Settings resumes the save exactly once only when access is actually granted.
 
 ## Rendering contract
 
@@ -97,9 +100,19 @@ Add Care Task evaluates only the care-reminder category before saving a reminder
 
 Device alert and device-update screens/services will call the central application boundary when those product flows are connected. They will not select channel IDs or construct notifications.
 
-## Scheduler and alarm contract
+## Scheduler and precise-alarm contract
 
-Care reminders use inexact `AlarmManager` scheduling. AquaLight does not request `SCHEDULE_EXACT_ALARM` or `USE_EXACT_ALARM`, because care reminders do not require alarm-clock-level exactness.
+A user selecting a clock time for a care reminder creates a time-sensitive user-facing alarm contract.
+
+- API 27–30 schedule the persisted time with `setExactAndAllowWhileIdle` without special access.
+- API 31+ use `SCHEDULE_EXACT_ALARM`, query `AlarmManager.canScheduleExactAlarms()` and route missing access through the common permission/settings sheet.
+- `USE_EXACT_ALARM` is forbidden. AquaLight uses the user-granted special-access path rather than the restricted automatic-grant permission.
+- When access is granted, `setExactAndAllowWhileIdle` is used.
+- If access is revoked between the grant check and scheduling call, a caught `SecurityException` installs an inexact fallback instead of losing the reminder.
+- When Android broadcasts `ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED` after a grant, the authenticated owner's reminders are reconciled and upgraded to exact alarms.
+- Missing access is visible in App Settings and blocks saving a reminder-enabled care task until the user grants access or turns the task's reminder off.
+
+Additional scheduler rules:
 
 - Scheduler APIs require explicit owner UID and task ID.
 - Alarm PendingIntent identity includes owner + task URI data; extras alone are not treated as identity.
@@ -116,9 +129,16 @@ Care reminders use inexact `AlarmManager` scheduling. AquaLight does not request
 - If due and missed times are both past, boot/reconcile does not repeatedly recreate an old notification.
 - After delivery, the same deterministic policy computes whether another occurrence remains.
 
-## Durable delivery and restore
+## Durable and prompt delivery
 
-The AlarmManager receiver is enqueue-only. It parses owner/task/occurrence and enqueues unique WorkManager delivery; it performs no Firebase, DataStore, coroutine or notification rendering work.
+The AlarmManager receiver remains lightweight. It parses owner/task/occurrence and enqueues one unique durable delivery job; it performs no Firebase, DataStore or notification rendering work.
+
+The delivery request:
+
+- is expedited on Android 12+ because it was triggered by an exact user-visible alarm;
+- uses `RUN_AS_NON_EXPEDITED_WORK_REQUEST` as a durability fallback if expedited quota is unavailable;
+- uses unique `REPLACE` semantics so an older deferred request cannot block the current alarm occurrence;
+- uses bounded exponential retry for transient failures.
 
 The delivery worker:
 
@@ -129,9 +149,19 @@ The delivery worker:
 5. renders through the central renderer;
 6. reconciles the next occurrence through the central scheduler.
 
-Duplicate owner/task/occurrence delivery uses unique work with `KEEP`. Transient failures use bounded exponential backoff. WorkManager cancellation is propagated rather than retried.
+Boot, `MY_PACKAGE_REPLACED` and precise-access-grant broadcasts enqueue owner-scoped reconciliation only. The worker verifies owner identity before and after reconciliation. Session startup enqueues reconciliation for the committed owner. Account shutdown cancels the outgoing owner's reconciliation, delivery work, alarms and visible notifications.
 
-Boot and `MY_PACKAGE_REPLACED` receivers enqueue owner-scoped reconciliation only. The worker verifies owner identity before and after reconciliation. Session startup enqueues reconciliation for the committed owner. Account shutdown cancels the outgoing owner's reconciliation, delivery work, alarms and visible notifications.
+## Durable alarm ledger
+
+Android does not expose a production API for enumerating all alarms owned by an application. AquaLight therefore persists only the minimum owner/task scheduling identity in `notification_schedule_state.pb`.
+
+- The ledger is owner-scoped and contains no notification text or sensitive device data.
+- Successful scheduling adds the owner/task identity.
+- Cancellation removes it.
+- Reconciliation compares the ledger to current tasks and cancels stale alarms left by process death, rollback, corruption recovery or destructive transactions.
+- Logout/account switch cancels the union of persisted tasks and ledger identities before clearing that owner ledger.
+
+The ledger is a permanent scheduler-state contract, not a compatibility projection or secondary preference source.
 
 ## Fail-closed rules
 
@@ -139,7 +169,8 @@ Boot and `MY_PACKAGE_REPLACED` receivers enqueue owner-scoped reconciliation onl
 - Ownerless or cross-owner care notification intents do not open a task.
 - An owner change during reconciliation cancels the outgoing owner's newly reconciled state.
 - A delivery worker does nothing when the authenticated owner no longer matches.
-- A missing/blocked permission or channel prevents posting without changing the owner preference.
+- A missing/blocked notification permission or channel prevents posting without changing the owner preference.
+- Missing precise timing access never silently claims on-time delivery.
 - Store corruption uses the existing recovery path and defaults to notifications disabled.
 
 ## Commercial verification gates
@@ -153,17 +184,21 @@ Stage 7 is not complete until all of the following pass:
 - API 35 channel creation and blocked/enabled behavior;
 - app preference, runtime permission, app-level block and per-channel block separation;
 - App Settings and Add Care Task common-use-case verification;
+- precise-reminder special-access denial, Settings return and exactly-once continuation;
+- API 27–30 exact-alarm selection without special access;
+- API 31+ exact/inexact selection based on `canScheduleExactAlarms()`;
 - due/missed/future/past deterministic schedule matrix;
 - idempotent scheduling and duplicate delivery prevention;
+- expedited alarm-triggered WorkManager delivery contract;
 - owner-specific alarm, work and visible-notification cancellation;
 - account switch during reconciliation and delivery;
-- boot/package-replacement restore for the authenticated owner only;
+- boot/package-replacement/access-grant restore for the authenticated owner only;
 - process death during settings, receiver, delivery and reconciliation flows;
 - notification deep-link owner validation;
-- notification-preference corruption recovery;
+- notification-preference and schedule-ledger corruption recovery;
 - device-alert and device-update renderer/category contract tests;
 - architecture guards in Android CI, CodeQL and release workflows;
 - API 27/API 35 instrumentation and minified release smoke;
-- real-device acceptance for permission denial/settings return, category blocking, reminder delivery, reboot and account switch.
+- real-device closed-app acceptance at the selected time, reboot restore and account switch.
 
 The PR remains draft and unmerged until automated gates and physical acceptance are complete.
