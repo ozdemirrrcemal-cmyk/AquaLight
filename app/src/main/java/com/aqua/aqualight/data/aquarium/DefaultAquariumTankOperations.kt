@@ -45,14 +45,18 @@ class DefaultAquariumTankOperations(
 
     override suspend fun addTank(draft: AquariumTankDraft): Long = withContext(dispatcher) {
         val pendingPhoto = draft.photoUri
+        var persisted = false
         try {
             withContext(NonCancellable) {
                 val tankId = tankStore.addTankFromDraft(draft.toDataDraft())
+                persisted = true
                 runCatching { AppMediaStorage.commitPendingMedia(appContext, pendingPhoto) }
                 tankId
             }
         } catch (error: Throwable) {
-            runCatching { AppMediaStorage.rollbackPendingMedia(appContext, pendingPhoto) }
+            if (!persisted) {
+                runCatching { AppMediaStorage.rollbackPendingMedia(appContext, pendingPhoto) }
+            }
             throw error
         }
     }
@@ -94,13 +98,17 @@ class DefaultAquariumTankOperations(
 
     override suspend fun updateTankPhoto(tankId: Long, photoUri: String?) =
         withContext(dispatcher) {
+            var persisted = false
             try {
                 withContext(NonCancellable) {
                     tankStore.updateTankPhoto(tankId, photoUri)
+                    persisted = true
                     runCatching { AppMediaStorage.commitPendingMedia(appContext, photoUri) }
                 }
             } catch (error: Throwable) {
-                runCatching { AppMediaStorage.rollbackPendingMedia(appContext, photoUri) }
+                if (!persisted) {
+                    runCatching { AppMediaStorage.rollbackPendingMedia(appContext, photoUri) }
+                }
                 throw error
             }
         }
