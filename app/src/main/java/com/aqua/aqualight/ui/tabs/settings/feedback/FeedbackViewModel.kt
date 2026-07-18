@@ -221,9 +221,12 @@ class FeedbackViewModel(
     }
 
     override fun onCleared() {
+        val submissionWasInFlight = _uiState.value.isSubmitting
         mediaJob?.cancel()
         submitJob?.cancel()
-        _uiState.value.screenshot?.file?.takeIf { it.exists() }?.delete()
+        if (!submissionWasInFlight) {
+            _uiState.value.screenshot?.file?.takeIf { it.exists() }?.delete()
+        }
         super.onCleared()
     }
 
