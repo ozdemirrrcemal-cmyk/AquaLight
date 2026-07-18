@@ -1,6 +1,4 @@
 app/src/main/java/com/aqua/aqualight/platform/notifications/AndroidNotificationRenderer.kt:298:        private const val DEFAULT_LARGE_ICON_COLOR = "#2196F3"
-app/src/main/java/com/aqua/aqualight/ui/tabs/settings/device/DeviceStatusAdapter.kt:63:        val ONLINE_COLOR: Int = Color.parseColor("#5FD6B4")
-app/src/main/java/com/aqua/aqualight/ui/tabs/settings/device/DeviceStatusAdapter.kt:64:        val OFFLINE_COLOR: Int = Color.parseColor("#7B8794")
 app/src/main/java/com/aqua/aqualight/ui/tabs/devices/DeviceCardAdapter.kt:96:        const val DEFAULT_STROKE_COLOR = "#22354D"
 app/src/main/java/com/aqua/aqualight/ui/tabs/devices/DeviceCardAdapter.kt:97:        const val SELECTED_STROKE_COLOR = "#5FD6B4"
 app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceScanPulseView.kt:22:        color = Color.parseColor("#64FFDA")
@@ -107,8 +105,6 @@ app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/TaskDetailFragment.kt:4
 app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/TaskDetailFragment.kt:438:      Color.parseColor("#1C3252")
 app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/TaskDetailFragment.kt:442:      Color.parseColor("#2B6F5A")
 app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/TaskDetailFragment.kt:444:      Color.parseColor("#2A4566")
-app/src/main/java/com/aqua/aqualight/ui/common/devicecard/DeviceCompactCardBinder.kt:67:            DeviceCompactStatusStyle.ONLINE -> Color.parseColor("#5FD6B4")
-app/src/main/java/com/aqua/aqualight/ui/common/devicecard/DeviceCompactCardBinder.kt:70:            DeviceCompactStatusStyle.OFFLINE -> Color.parseColor("#7B8794")
 app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CareProfileBottomSheet.kt:40:            color = Color.parseColor("#DDE3EA"),
 app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CareProfileBottomSheet.kt:69:                Color.parseColor(if (isCompleted) "#5FD6B4" else "#E0A84C")
 app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CareProfileBottomSheet.kt:72:                color = Color.parseColor(if (isCompleted) "#09251D" else "#2A2315"),
@@ -309,6 +305,8 @@ app/src/main/res/values/dimens.xml:147:    <dimen name="aqua_space_value_90">90d
 app/src/main/res/values/dimens.xml:148:    <dimen name="aqua_stroke_value_1">1dp</dimen>
 app/src/main/res/values/dimens.xml:149:    <dimen name="aqua_stroke_value_2">2dp</dimen>
 app/src/main/res/values/dimens.xml:150:    <dimen name="aqua_stroke_value_3">3dp</dimen>
+app/src/main/res/values/stage10_color_tokens.xml:4:    <color name="device_presence_online">#5FD6B4</color>
+app/src/main/res/values/stage10_color_tokens.xml:5:    <color name="device_presence_offline">#7B8794</color>
 app/src/main/res/values/button_dimens.xml:5:    <dimen name="aqua_button_height">56dp</dimen>
 app/src/main/res/values/button_dimens.xml:6:    <dimen name="aqua_button_height_compact">56dp</dimen>
 app/src/main/res/values/button_dimens.xml:7:    <dimen name="aqua_button_radius">18dp</dimen>

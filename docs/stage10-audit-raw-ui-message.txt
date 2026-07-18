@@ -3,7 +3,6 @@
  - app/src/main/java/com/aqua/aqualight/data/user/UserPreferencesManager.kt:68: [RAW_UI_MESSAGE] user-visible literal "Use uid instead. This value was never a Firebase ID token." must be supplied by @StringRes
  - app/src/main/java/com/aqua/aqualight/data/user/UserPreferencesManager.kt:219: [RAW_UI_MESSAGE] user-visible literal "Use replaceProfile for login/session replacement or patchProfile for profile edits." must be supplied by @StringRes
  - app/src/main/java/com/aqua/aqualight/ui/auth/security/ReAuthenticateFragment.kt:92: [RAW_UI_MESSAGE] user-visible literal "Google Error" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/common/devicecard/DeviceCompactCardBinder.kt:24: [RAW_UI_MESSAGE] user-visible literal "Serial: $serial" must be supplied by @StringRes
  - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsBasicFragment.kt:475: [RAW_UI_MESSAGE] user-visible literal "Tank Type" must be supplied by @StringRes
  - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsBasicFragment.kt:507: [RAW_UI_MESSAGE] user-visible literal "Setup Date" must be supplied by @StringRes
  - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsBasicFragment.kt:520: [RAW_UI_MESSAGE] user-visible literal "Tank Style" must be supplied by @StringRes
@@ -32,6 +31,3 @@
  - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/DeviceTimerRootFragment.kt:66: [RAW_UI_MESSAGE] user-visible literal "Model: ${state.modelText}" must be supplied by @StringRes
  - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/DeviceTimerRootFragment.kt:67: [RAW_UI_MESSAGE] user-visible literal "${state.primaryCountLabel}: ${state.primaryCountText}" must be supplied by @StringRes
  - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/DeviceTimerRootFragment.kt:68: [RAW_UI_MESSAGE] user-visible literal "Features: ${state.featuresText}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/route/DeviceRouteResolver.kt:47: [RAW_UI_MESSAGE] user-visible literal "Unsupported AquaLight device family. Firmware did not provide a known product.family value." must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/settings/device/DeviceStatusAdapter.kt:35: [RAW_UI_MESSAGE] user-visible literal "Serial" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/settings/device/DeviceStatusAdapter.kt:43: [RAW_UI_MESSAGE] user-visible literal "$name, Serial: $serial, $presenceText" must be supplied by @StringRes

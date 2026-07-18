@@ -794,6 +794,7 @@ app/src/main/res/values/input_styles.xml
 app/src/main/res/values/maintenance_strings.xml
 app/src/main/res/values/screen_titles.xml
 app/src/main/res/values/selection_row_styles.xml
+app/src/main/res/values/stage10_color_tokens.xml
 app/src/main/res/values/stage8_feedback_dimens.xml
 app/src/main/res/values/state_screen_colors.xml
 app/src/main/res/values/strings.xml

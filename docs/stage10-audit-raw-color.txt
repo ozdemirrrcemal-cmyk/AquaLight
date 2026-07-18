@@ -24,8 +24,6 @@
  - app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CareProfileBottomSheet.kt:69: [RAW_COLOR] #5FD6B4 must reference a semantic color token
  - app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CareProfileBottomSheet.kt:72: [RAW_COLOR] #09251D must reference a semantic color token
  - app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CareProfileBottomSheet.kt:74: [RAW_COLOR] #1E5A48 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/common/devicecard/DeviceCompactCardBinder.kt:67: [RAW_COLOR] #5FD6B4 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/common/devicecard/DeviceCompactCardBinder.kt:70: [RAW_COLOR] #7B8794 must reference a semantic color token
  - app/src/main/java/com/aqua/aqualight/ui/common/timeline/TimelineAxisView.kt:28: [RAW_COLOR] #26384C must reference a semantic color token
  - app/src/main/java/com/aqua/aqualight/ui/common/timeline/TimelineAxisView.kt:30: [RAW_COLOR] #4FD6C8 must reference a semantic color token
  - app/src/main/java/com/aqua/aqualight/ui/common/timeline/TimelineAxisView.kt:31: [RAW_COLOR] #45BFAF must reference a semantic color token
@@ -138,5 +136,5 @@
  - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:175: [RAW_COLOR] #7C4DFF must reference a semantic color token
  - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:183: [RAW_COLOR] #FF6B6B must reference a semantic color token
  - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:191: [RAW_COLOR] #8FA4BE must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/settings/device/DeviceStatusAdapter.kt:63: [RAW_COLOR] #5FD6B4 must reference a semantic color token
- - app/src/main/java/com/aqua/aqualight/ui/tabs/settings/device/DeviceStatusAdapter.kt:64: [RAW_COLOR] #7B8794 must reference a semantic color token
+ - app/src/main/res/values/stage10_color_tokens.xml:4: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/res/values/stage10_color_tokens.xml:5: [RAW_COLOR] #7B8794 must reference a semantic color token

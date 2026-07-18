@@ -1,8 +1,8 @@
 # Stage 10 audit summary
 
 ## Rule counts
-    142 [RAW_COLOR]
-     37 [RAW_UI_MESSAGE]
+    140 [RAW_COLOR]
+     33 [RAW_UI_MESSAGE]
       3 [LEGACY_STYLE]
 
 ## Files by rule
@@ -14,7 +14,6 @@ app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleGattOpe
 app/src/main/java/com/aqua/aqualight/data/devices/repository/DevicesRepository.kt
 app/src/main/java/com/aqua/aqualight/data/user/UserPreferencesManager.kt
 app/src/main/java/com/aqua/aqualight/ui/auth/security/ReAuthenticateFragment.kt
-app/src/main/java/com/aqua/aqualight/ui/common/devicecard/DeviceCompactCardBinder.kt
 app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsBasicFragment.kt
 app/src/main/java/com/aqua/aqualight/ui/tabs/devices/DevicesFragment.kt
 app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceAddCandidateAdapter.kt
@@ -23,14 +22,11 @@ app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/DeviceCoolin
 app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/DeviceDosingRootFragment.kt
 app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/DeviceLightRootFragment.kt
 app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/DeviceTimerRootFragment.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/devices/route/DeviceRouteResolver.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/settings/device/DeviceStatusAdapter.kt
 
 ### RAW_COLOR
 app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt
 app/src/main/java/com/aqua/aqualight/platform/notifications/AndroidNotificationRenderer.kt
 app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CareProfileBottomSheet.kt
-app/src/main/java/com/aqua/aqualight/ui/common/devicecard/DeviceCompactCardBinder.kt
 app/src/main/java/com/aqua/aqualight/ui/common/timeline/TimelineAxisView.kt
 app/src/main/java/com/aqua/aqualight/ui/common/timeline/TimelineDayResolver.kt
 app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/AquariumFragment.kt
@@ -48,7 +44,7 @@ app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AquariumMaintenanceFrag
 app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt
 app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/TaskDetailFragment.kt
 app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/settings/device/DeviceStatusAdapter.kt
+app/src/main/res/values/stage10_color_tokens.xml
 
 ### RAW_DIMENSION
 
@@ -96,6 +92,7 @@ app/src/main/res/values/input_styles.xml
 app/src/main/res/values/maintenance_strings.xml
 app/src/main/res/values/screen_titles.xml
 app/src/main/res/values/selection_row_styles.xml
+app/src/main/res/values/stage10_color_tokens.xml
 app/src/main/res/values/stage8_feedback_dimens.xml
 app/src/main/res/values/state_screen_colors.xml
 app/src/main/res/values/strings.xml
@@ -114,5 +111,5 @@ app/src/main/res/values/toolbar_action_colors.xml
 app/src/main/res/values/typography_dimens.xml
 app/src/main/res/values/typography_styles.xml
 
-GENERATED_COMMIT=a359f6274b5d30fad1f6d1cc8048ae9987ad067e
-GENERATED_AT_UTC=2026-07-18T16:55:46Z
+GENERATED_COMMIT=0628e59334d4c936cb564cde2586b18fea09642c
+GENERATED_AT_UTC=2026-07-18T16:57:41Z
