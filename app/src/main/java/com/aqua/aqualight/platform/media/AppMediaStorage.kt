@@ -157,7 +157,7 @@ object AppMediaStorage {
         context: Context,
         uriString: String?
     ): Boolean {
-        return resolveInternalMediaFile(context, uriString) != null
+        return resolveInternalMediaFile(context, uriString)?.exists() == true
     }
 
     internal fun resolveInternalMediaFile(
