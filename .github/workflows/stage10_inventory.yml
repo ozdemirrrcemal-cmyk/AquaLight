@@ -1,29 +1,19 @@
 name: Stage 10 Inventory
 
 on:
-  push:
-    branches:
-      - agent/stage-10-design-system-resource-cleanup
+  workflow_dispatch:
 
 permissions:
-  contents: write
-
-concurrency:
-  group: stage10-inventory-${{ github.ref }}
-  cancel-in-progress: true
+  contents: read
 
 jobs:
   inventory:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: agent/stage-10-design-system-resource-cleanup
-          fetch-depth: 0
 
       - name: Generate source inventory and audit
         shell: bash
@@ -36,47 +26,10 @@ jobs:
           grep '\[RAW_UI_MESSAGE\]' docs/stage10-audit.txt > docs/stage10-audit-raw-ui-message.txt || true
           grep '\[RAW_COLOR\]' docs/stage10-audit.txt > docs/stage10-audit-raw-color.txt || true
           grep '\[RAW_DIMENSION\]' docs/stage10-audit.txt > docs/stage10-audit-raw-dimension.txt || true
-          grep -RInE 'MaterialCategoryCatalog|MaterialCategory\(|category\.title\b|\.titleRes\b|argCategoryTitle|AquariumMaterial\(' app/src/main/java app/src/main/res \
-            > docs/stage10-material-category-usage.txt || true
-          grep -RInE '#[0-9A-Fa-f]{6,8}|RedButton|BlackButton|WhiteButton|[0-9]+(\.[0-9]+)?(dp|sp)' app/src/main/java app/src/main/res \
-            > docs/stage10-raw-resource-usage.txt || true
 
-          {
-            echo "# Stage 10 audit summary"
-            echo
-            echo "## Rule counts"
-            grep -o '\[[A-Z0-9_]*\]' docs/stage10-audit.txt | sort | uniq -c | sort -nr || true
-            echo
-            echo "## Files by rule"
-            for rule in RAW_XML_TEXT RAW_UI_MESSAGE RAW_COLOR RAW_DIMENSION LEGACY_STYLE MENU_STRING_RESOURCE NIGHT_SPLASH_TYPOGRAPHY SYSTEM_BAR_CONTRAST REQUIRED_RESOURCE; do
-              echo
-              echo "### ${rule}"
-              grep "\[${rule}\]" docs/stage10-audit.txt | sed -E 's/^ - ([^:]+):.*/\1/' | sort -u || true
-            done
-            echo
-            echo "## Resource value files"
-            find app/src/main/res -maxdepth 2 -type f -path '*/values*/*.xml' -print | sort
-            echo
-            echo "GENERATED_COMMIT=$(git rev-parse HEAD)"
-            echo "GENERATED_AT_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          } > docs/stage10-audit-summary.txt
-
-          {
-            echo
-            echo "GENERATED_COMMIT=$(git rev-parse HEAD)"
-            echo "GENERATED_AT_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          } >> docs/stage10-audit.txt
-
-      - name: Commit generated inventory
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/stage10-*.txt
-          if git diff --cached --quiet; then
-            echo "Inventory is unchanged."
-            exit 0
-          fi
-          git commit -m "Stage 10: refresh generated resource inventory"
-          git push origin HEAD:agent/stage-10-design-system-resource-cleanup
+      - name: Upload inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage10-inventory-${{ github.run_number }}
+          path: docs/stage10-*.txt
+          if-no-files-found: error
