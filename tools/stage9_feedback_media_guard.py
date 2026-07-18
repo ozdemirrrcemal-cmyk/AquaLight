@@ -7,12 +7,21 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "app/src/main/java/com/aqua/aqualight"
 AQUA_APP = APP / "app/AquaApp.kt"
+APP_CONTAINER = APP / "composition/AppContainer.kt"
+RELEASE_SMOKE_CONTAINER = (
+    ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeAppContainer.kt"
+)
 FEEDBACK_FRAGMENT = APP / "ui/tabs/settings/feedback/FeedbackFragment.kt"
 AQUARIUM_STORE = APP / "data/aquarium/store/AquariumTankDataStoreManager.kt"
 REPOSITORY = APP / "data/feedback/FirebaseFeedbackSubmissionOperations.kt"
 JOURNAL = APP / "data/feedback/FeedbackSubmissionJournalStore.kt"
 PROCESSOR = APP / "platform/media/FeedbackMediaProcessor.kt"
 COORDINATOR = APP / "ui/common/media/MediaFlowCoordinatorViewModel.kt"
+JOURNAL_INSTRUMENTED_TEST = (
+    ROOT
+    / "app/src/androidTest/java/com/aqua/aqualight/data/feedback/"
+    / "FeedbackSubmissionJournalStoreInstrumentedTest.kt"
+)
 
 REQUIRED = (
     APP / "application/feedback/FeedbackSubmissionOperations.kt",
@@ -28,6 +37,7 @@ REQUIRED = (
     ROOT / "app/src/test/java/com/aqua/aqualight/platform/media/FeedbackImagePolicyTest.kt",
     ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/settings/feedback/FeedbackViewModelTest.kt",
     ROOT / "app/src/androidTest/java/com/aqua/aqualight/platform/media/FeedbackMediaProcessorInstrumentedTest.kt",
+    JOURNAL_INSTRUMENTED_TEST,
     ROOT / "app/src/androidTest/java/com/aqua/aqualight/ui/common/media/MediaFlowCoordinatorInstrumentedTest.kt",
 )
 
@@ -56,16 +66,36 @@ if FEEDBACK_FRAGMENT.is_file():
         "FirebaseFirestore",
         "FirebaseStorage",
         "FeedbackSubmissionCallback",
+        "AndroidFeedbackMediaProcessor",
         "openInputStream(",
         "openAssetFileDescriptor(",
     ):
         if token in text:
             errors.append(
-                f"{FEEDBACK_FRAGMENT.relative_to(ROOT)}: UI must not own heavy work: {token}"
+                f"{FEEDBACK_FRAGMENT.relative_to(ROOT)}: UI must not own platform/heavy work: {token}"
             )
-    if "FeedbackViewModel" not in text:
+    for token in ("FeedbackViewModel", "container.feedbackMediaProcessor"):
+        if token not in text:
+            errors.append(
+                f"{FEEDBACK_FRAGMENT.relative_to(ROOT)}: feedback UI boundary missing: {token}"
+            )
+
+if APP_CONTAINER.is_file():
+    text = APP_CONTAINER.read_text(encoding="utf-8", errors="ignore")
+    for token in (
+        "val feedbackMediaProcessor: FeedbackMediaProcessor",
+        "AndroidFeedbackMediaProcessor(appContext)",
+    ):
+        if token not in text:
+            errors.append(
+                f"{APP_CONTAINER.relative_to(ROOT)}: feedback media composition binding missing: {token}"
+            )
+
+if RELEASE_SMOKE_CONTAINER.is_file():
+    text = RELEASE_SMOKE_CONTAINER.read_text(encoding="utf-8", errors="ignore")
+    if "override val feedbackMediaProcessor: FeedbackMediaProcessor" not in text:
         errors.append(
-            f"{FEEDBACK_FRAGMENT.relative_to(ROOT)}: feedback state must be ViewModel-owned"
+            f"{RELEASE_SMOKE_CONTAINER.relative_to(ROOT)}: release-smoke composition parity missing"
         )
 
 for path in (
@@ -193,6 +223,10 @@ TEST_EXPECTATIONS = {
         "largeUnknownLengthImageIsBoundedAndSourceStreamIsClosed",
         "sourceBeyondByteLimitIsRejectedBeforeDecodeAndStreamIsClosed",
         "cancellationIsNotConvertedToIoFailureAndStagedFileIsDeleted",
+    ),
+    JOURNAL_INSTRUMENTED_TEST: (
+        "journalEntrySurvivesStoreRecreationAndCanBeRemovedDurably",
+        "multipleEntriesAreUpdatedWithoutMutatingSharedPreferenceSnapshots",
     ),
     ROOT / "app/src/androidTest/java/com/aqua/aqualight/ui/common/media/MediaFlowCoordinatorInstrumentedTest.kt": (
         "pendingCameraAndCropFilesAreCleanedAfterCoordinatorRecreationAndCancel",
