@@ -34,10 +34,7 @@ class CapabilityPermissionCoordinator(
     private val sheetTag =
         "CapabilityPermissionBottomSheet:${fragment::class.java.name}:$instanceKey"
 
-    private var pendingCapability: AppCapability? = null
-    private var pendingActionToken: String? = null
-    private var pendingNotificationChannelId: String? = null
-    private var waitingForSettings = false
+    private val continuation = CapabilityPermissionContinuationState()
     private var stateProviderRegistered = false
 
     private val permissionLauncher = fragment.registerForActivityResult(
@@ -74,9 +71,15 @@ class CapabilityPermissionCoordinator(
     }
 
     override fun onResume(owner: LifecycleOwner) {
-        when {
-            waitingForSettings -> onSettingsReturned()
-            pendingCapability != null && policy().isGranted(requireCapability()) -> complete()
+        val capability = continuation.pendingCapability ?: return
+        if (continuation.waitingForSettings) {
+            completeAction(
+                continuation.consumeSettingsReturn(policy().isGranted(capability))
+            )
+        } else {
+            completeAction(
+                continuation.consumeIfGranted(policy().isGranted(capability))
+            )
         }
     }
 
@@ -89,12 +92,10 @@ class CapabilityPermissionCoordinator(
     }
 
     fun runWhenGranted(capability: AppCapability, actionToken: String) {
-        require(actionToken.isNotBlank()) { "Permission action token must not be blank." }
-
-        pendingCapability = capability
-        pendingActionToken = actionToken
-        pendingNotificationChannelId = null
-        waitingForSettings = false
+        continuation.begin(
+            capability = capability,
+            actionToken = actionToken
+        )
         dispatchCurrentDecision()
     }
 
@@ -104,12 +105,10 @@ class CapabilityPermissionCoordinator(
      * notifications disabled at Android app level).
      */
     fun openSettingsFor(capability: AppCapability, actionToken: String) {
-        require(actionToken.isNotBlank()) { "Permission action token must not be blank." }
-
-        pendingCapability = capability
-        pendingActionToken = actionToken
-        pendingNotificationChannelId = null
-        waitingForSettings = false
+        continuation.begin(
+            capability = capability,
+            actionToken = actionToken
+        )
         showSheet(CapabilityPermissionBottomSheet.Mode.OPEN_SETTINGS)
     }
 
@@ -122,12 +121,11 @@ class CapabilityPermissionCoordinator(
         actionToken: String
     ) {
         require(channelId.isNotBlank()) { "Notification channel ID must not be blank." }
-        require(actionToken.isNotBlank()) { "Permission action token must not be blank." }
-
-        pendingCapability = AppCapability.NOTIFICATIONS
-        pendingActionToken = actionToken
-        pendingNotificationChannelId = channelId.trim()
-        waitingForSettings = false
+        continuation.begin(
+            capability = AppCapability.NOTIFICATIONS,
+            actionToken = actionToken,
+            notificationChannelId = channelId
+        )
         showSheet(CapabilityPermissionBottomSheet.Mode.OPEN_SETTINGS)
     }
 
@@ -138,7 +136,7 @@ class CapabilityPermissionCoordinator(
     }
 
     private fun dispatchCurrentDecision() {
-        val capability = pendingCapability ?: return
+        val capability = continuation.pendingCapability ?: return
 
         when (
             policy().evaluate(
@@ -158,7 +156,7 @@ class CapabilityPermissionCoordinator(
     }
 
     private fun launchPermissionRequest() {
-        val capability = pendingCapability ?: return
+        val capability = continuation.pendingCapability ?: return
         val policy = policy()
         val permissions = policy.requiredPermissions(capability)
 
@@ -176,7 +174,7 @@ class CapabilityPermissionCoordinator(
     }
 
     private fun onPermissionResult() {
-        val capability = pendingCapability ?: return
+        val capability = continuation.pendingCapability ?: return
         if (policy().isGranted(capability)) {
             complete()
         } else {
@@ -185,7 +183,7 @@ class CapabilityPermissionCoordinator(
     }
 
     private fun showSheet(mode: CapabilityPermissionBottomSheet.Mode) {
-        val capability = pendingCapability ?: return
+        val capability = continuation.pendingCapability ?: return
         val manager = fragment.childFragmentManager
         if (manager.isStateSaved || manager.findFragmentByTag(sheetTag) != null) return
 
@@ -197,8 +195,8 @@ class CapabilityPermissionCoordinator(
     }
 
     private fun launchSettings() {
-        val capability = pendingCapability ?: return
-        waitingForSettings = true
+        val capability = continuation.pendingCapability ?: return
+        continuation.markWaitingForSettings()
 
         val primaryIntent = settingsIntent(capability)
         runCatching {
@@ -206,26 +204,20 @@ class CapabilityPermissionCoordinator(
         }.recoverCatching {
             settingsLauncher.launch(Intent(Settings.ACTION_SETTINGS))
         }.onFailure {
-            waitingForSettings = false
             clearPending()
         }
     }
 
     private fun onSettingsReturned() {
-        if (!waitingForSettings) return
-        waitingForSettings = false
-
-        val capability = pendingCapability ?: return
-        if (policy().isGranted(capability)) {
-            complete()
-        } else {
-            clearPending()
-        }
+        val capability = continuation.pendingCapability ?: return
+        completeAction(
+            continuation.consumeSettingsReturn(policy().isGranted(capability))
+        )
     }
 
     private fun settingsIntent(capability: AppCapability): Intent {
         val context = fragment.requireContext()
-        val notificationChannelId = pendingNotificationChannelId
+        val notificationChannelId = continuation.pendingNotificationChannelId
 
         return when {
             capability == AppCapability.NOTIFICATIONS &&
@@ -254,20 +246,15 @@ class CapabilityPermissionCoordinator(
     }
 
     private fun complete() {
-        val action = pendingActionToken ?: return
-        clearPending()
-        onGranted(action)
+        completeAction(continuation.consumeAction())
+    }
+
+    private fun completeAction(actionToken: String?) {
+        actionToken?.let(onGranted)
     }
 
     private fun clearPending() {
-        pendingCapability = null
-        pendingActionToken = null
-        pendingNotificationChannelId = null
-        waitingForSettings = false
-    }
-
-    private fun requireCapability(): AppCapability {
-        return checkNotNull(pendingCapability) { "No pending permission capability." }
+        continuation.clear()
     }
 
     private fun policy(): PermissionPolicy {
@@ -275,28 +262,26 @@ class CapabilityPermissionCoordinator(
     }
 
     private fun saveState(): Bundle {
+        val snapshot = continuation.snapshot()
         return bundleOf(
-            STATE_CAPABILITY to pendingCapability?.name,
-            STATE_ACTION to pendingActionToken,
-            STATE_NOTIFICATION_CHANNEL_ID to pendingNotificationChannelId,
-            STATE_WAITING_FOR_SETTINGS to waitingForSettings
+            STATE_CAPABILITY to snapshot.capabilityName,
+            STATE_ACTION to snapshot.actionToken,
+            STATE_NOTIFICATION_CHANNEL_ID to snapshot.notificationChannelId,
+            STATE_WAITING_FOR_SETTINGS to snapshot.waitingForSettings
         )
     }
 
     private fun restoreState(bundle: Bundle?) {
-        pendingCapability = bundle
-            ?.getString(STATE_CAPABILITY)
-            ?.let { name -> runCatching { AppCapability.valueOf(name) }.getOrNull() }
-        pendingActionToken = bundle?.getString(STATE_ACTION)
-        pendingNotificationChannelId = bundle
-            ?.getString(STATE_NOTIFICATION_CHANNEL_ID)
-            ?.trim()
-            ?.takeIf(String::isNotBlank)
-        waitingForSettings = bundle?.getBoolean(STATE_WAITING_FOR_SETTINGS) == true
-
-        if (pendingCapability == null || pendingActionToken.isNullOrBlank()) {
-            clearPending()
-        }
+        continuation.restore(
+            bundle?.let { restored ->
+                CapabilityPermissionContinuationSnapshot(
+                    capabilityName = restored.getString(STATE_CAPABILITY),
+                    actionToken = restored.getString(STATE_ACTION),
+                    notificationChannelId = restored.getString(STATE_NOTIFICATION_CHANNEL_ID),
+                    waitingForSettings = restored.getBoolean(STATE_WAITING_FOR_SETTINGS)
+                )
+            }
+        )
     }
 
     private companion object {
