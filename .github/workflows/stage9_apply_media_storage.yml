@@ -1,0 +1,39 @@
+name: Stage 9 Apply Media Storage Migration
+
+on:
+  push:
+    branches:
+      - agent/stage-9-feedback-media-cleanup
+    paths:
+      - "tools/stage9_apply_media_storage_migration.py"
+      - ".github/workflows/stage9_apply_media_storage.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/stage-9-feedback-media-cleanup
+          fetch-depth: 0
+
+      - name: Apply migration
+        run: python3 tools/stage9_apply_media_storage_migration.py
+
+      - name: Commit migrated source
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/java/com/aqua/aqualight/data/aquarium/store/AquariumTankDataStoreManager.kt
+          git add -u app/src/main/java/com/aqua/aqualight/data/aquarium/photo/TankPhotoStorage.kt
+          if git diff --cached --quiet; then
+            echo "Migration already applied."
+            exit 0
+          fi
+          git commit -m "refactor: migrate aquarium persistence to shared media storage"
+          git push origin HEAD:agent/stage-9-feedback-media-cleanup
