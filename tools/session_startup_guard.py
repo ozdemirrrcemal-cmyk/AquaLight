@@ -178,7 +178,8 @@ for token, reason in (
     ("dispatchUseCase.dispatchCareReminder", "final visible delivery must use the central dispatch use-case"),
     ("CareReminderDeliveryPolicy.shouldDeliver(ownerTask, tank)", "delivery must revalidate persisted task and tank state"),
     ("UserDataScope.withOwnerUid", "delivery reads must remain owner-pinned"),
-    ("ExistingWorkPolicy.KEEP", "duplicate alarm broadcasts must not duplicate in-flight delivery"),
+    ("ExistingWorkPolicy.REPLACE", "the newest alarm occurrence must replace any stale deferred delivery"),
+    ("setExpedited", "exact alarm delivery must request prompt execution on Android 12+"),
 ):
     require(delivery_worker_path, delivery_worker, token, reason)
 for token in ("OwnerNotificationPreferences", "NotificationHelper"):
@@ -276,5 +277,5 @@ if errors:
 
 print(
     "Session/startup guard passed: foreground runtime, auth coordination, "
-    "owner-scoped durable background maintenance and terminal cleanup tests are intact."
+    "owner-scoped prompt durable background maintenance and terminal cleanup tests are intact."
 )
