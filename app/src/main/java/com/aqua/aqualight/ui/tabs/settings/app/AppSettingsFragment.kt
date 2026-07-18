@@ -53,6 +53,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentAppSettingsBinding.bind(view)
 
+        setupThemeResultListener()
         setupHeader()
         setupClicks()
         observeThemeSummary()
@@ -64,6 +65,21 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
     override fun onResume() {
         super.onResume()
         refreshNotificationState()
+    }
+
+    private fun setupThemeResultListener() {
+        parentFragmentManager.setFragmentResultListener(
+            ThemeBottomSheet.REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            result.getString(ThemeBottomSheet.RESULT_THEME_MODE)
+                ?: return@setFragmentResultListener
+
+            (activity as? MainActivity)?.markSettingsRootRestoreAfterThemeChange()
+            runCatching {
+                findNavController().popBackStack(R.id.settingsFragment, false)
+            }
+        }
     }
 
     private fun setupHeader() {
@@ -218,15 +234,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
     }
 
     private fun openThemeSheet() {
-        val sheet = ThemeBottomSheet().apply {
-            onBeforeThemeApplied = {
-                (activity as? MainActivity)?.markSettingsRootRestoreAfterThemeChange()
-                runCatching {
-                    findNavController().popBackStack(R.id.settingsFragment, false)
-                }
-            }
-        }
-        sheet.show(parentFragmentManager, "theme_sheet")
+        ThemeBottomSheet.show(parentFragmentManager)
     }
 
     private fun safeNavigate(directions: NavDirections) {
