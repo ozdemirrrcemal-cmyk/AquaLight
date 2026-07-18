@@ -26,7 +26,7 @@ class MediaFlowCoordinatorInstrumentedTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
 
     @Test
-    fun pendingCameraUriSurvivesCoordinatorRecreation() {
+    fun pendingCameraUriSurvivesCoordinatorRecreation() = runBlocking {
         val savedState = SavedStateHandle()
         val first = coordinator(savedState)
         val cameraUri = first.createCameraUri()
