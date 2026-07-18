@@ -1,0 +1,58 @@
+name: Repair alarm guard matching
+
+on:
+  push:
+    branches:
+      - agent/stage7-notification-reminders
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[alarm-guard-patch]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/stage7-notification-reminders
+          fetch-depth: 0
+
+      - name: Narrow alarm backend call matching
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("tools/notification_reminder_architecture_guard.py")
+          text = path.read_text(encoding="utf-8")
+          old = '''    if "CareTaskReminderScheduler." in text and source != path(SCHEDULER):
+                  errors.append(f"{relative}: only DefaultNotificationScheduler may call the alarm backend")
+          '''
+          new = '''    for alarm_call in (
+                  "CareTaskReminderScheduler.schedule(",
+                  "CareTaskReminderScheduler.cancel(",
+              ):
+                  if alarm_call in text and source != path(SCHEDULER):
+                      errors.append(
+                          f"{relative}: only DefaultNotificationScheduler may call the alarm backend: {alarm_call}"
+                      )
+          '''
+          if text.count(old) != 1:
+              raise SystemExit("Expected exactly one broad alarm backend guard")
+          path.write_text(text.replace(old, new, 1), encoding="utf-8")
+          PY
+
+      - name: Remove one-time workflow and commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/agent_alarm_guard_patch.yml
+          git config user.name "AquaLight CI"
+          git config user.email "actions@users.noreply.github.com"
+          git add tools/notification_reminder_architecture_guard.py
+          git add .github/workflows/agent_alarm_guard_patch.yml
+          git diff --cached --check
+          git commit -m "Narrow alarm backend guard matching [alarm-guard-patch]"
+          git push origin HEAD:agent/stage7-notification-reminders
