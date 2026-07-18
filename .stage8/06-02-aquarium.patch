@@ -1,0 +1,169 @@
+diff --git a/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/AquariumFragment.kt b/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/AquariumFragment.kt
+index 9fba4a92c9a9177b87d6c62e328de3cb9bbebd9f..a9f1a31e89f43672dd67ab9956f12d9bc4e99d97 100644
+--- a/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/AquariumFragment.kt
++++ b/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/AquariumFragment.kt
+@@ -18,4 +18,5 @@ import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
+ import com.aqua.aqualight.application.aquarium.DeleteAquariumTanksResult
+ import com.aqua.aqualight.databinding.FragmentAquariumBinding
++import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
+ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+ import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
+@@ -57,4 +58,5 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
+         _binding = FragmentAquariumBinding.bind(view)
+         setupHeader()
++        setupDeleteResultListener()
+         setupRecyclerView()
+         setupEmptyStateActions()
+@@ -63,4 +65,24 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
+     }
+ 
++
++    private fun setupDeleteResultListener() {
++        childFragmentManager.setFragmentResultListener(
++            DELETE_TANKS_REQUEST_KEY,
++            viewLifecycleOwner
++        ) { _, result ->
++            when (result.getString(FeedbackBottomSheet.RESULT_KEY)) {
++                FeedbackBottomSheet.RESULT_PRIMARY -> {
++                    val ids = result.getString(FeedbackBottomSheet.RESULT_ACTION_ID)
++                        .orEmpty()
++                        .split(',')
++                        .mapNotNull(String::toLongOrNull)
++                        .toSet()
++                    deleteSelectedTanks(ids)
++                }
++                FeedbackBottomSheet.RESULT_CANCEL -> exitDeleteMode()
++            }
++        }
++    }
++
+     override fun onResume() {
+         super.onResume()
+@@ -265,13 +287,13 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
+         }
+ 
+-        DialogManager.showConfirmDialog(
+-            context = requireContext(),
+-            type = DialogType.WARNING,
++        FeedbackBottomSheet.show(
++            fragmentManager = childFragmentManager,
+             title = title,
+             message = message,
+-            confirmTextResId = R.string.confirm,
+-            cancelTextResId = R.string.cancel,
+-            onConfirm = { deleteSelectedTanks(tankIdsToDelete) },
+-            onCancel = { exitDeleteMode() }
++            primaryText = getString(R.string.confirm),
++            cancelText = getString(R.string.cancel),
++            tone = FeedbackBottomSheet.FeedbackTone.WARNING,
++            requestKey = DELETE_TANKS_REQUEST_KEY,
++            actionId = tankIdsToDelete.sorted().joinToString(",")
+         )
+     }
+@@ -343,3 +365,7 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
+         super.onDestroyView()
+     }
++
++    private companion object {
++        const val DELETE_TANKS_REQUEST_KEY = "aquarium_delete_tanks_result"
++    }
+ }
+diff --git a/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/CreateTankFragment.kt b/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/CreateTankFragment.kt
+index ef453235d413140dd73b0ae249e0b7e5e07e76b6..b9fe057faa474ff4b6a981c4baccc5c662f60c84 100644
+--- a/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/CreateTankFragment.kt
++++ b/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/CreateTankFragment.kt
+@@ -3,5 +3,4 @@ package com.aqua.aqualight.ui.tabs.aquarium.create
+ import android.os.Bundle
+ import android.view.View
+-import android.widget.Toast
+ import androidx.activity.OnBackPressedCallback
+ import androidx.core.view.isVisible
+@@ -16,4 +15,5 @@ import androidx.navigation.fragment.NavHostFragment
+ import androidx.navigation.fragment.findNavController
+ import com.aqua.aqualight.R
++import com.aqua.aqualight.base.BaseActivity
+ import com.aqua.aqualight.data.aquarium.photo.TankPhotoStorage
+ import com.aqua.aqualight.databinding.FragmentCreateTankBinding
+@@ -307,9 +307,8 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
+                     true
+ 
+-                Toast.makeText(
+-                    requireContext(),
+-                    getString(R.string.aquarium_error_tank_save_failed),
+-                    Toast.LENGTH_SHORT
+-                ).show()
++                (activity as? BaseActivity)?.showSnackBar(
++                    message = getString(R.string.aquarium_error_tank_save_failed),
++                    type = BaseActivity.SnackType.ERROR
++                )
+             }
+         }
+diff --git a/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/materials/MaterialPickerFragment.kt b/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/materials/MaterialPickerFragment.kt
+index c75d2aa23aa394e676ffbc8bea15b288c4b87db9..feebe70923bbf1e21d9d881fabc1cc9e94bbbf0c 100644
+--- a/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/materials/MaterialPickerFragment.kt
++++ b/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/materials/MaterialPickerFragment.kt
+@@ -26,5 +26,5 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderSearchField
+ import com.aqua.aqualight.ui.common.header.setupAquaHeader
+ import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
+-import com.aqua.aqualight.ui.tabs.aquarium.materials.CustomMaterialSheet
++import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
+ import com.aqua.aqualight.ui.tabs.aquarium.materials.MaterialSelectionMapper
+ import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
+@@ -97,4 +97,5 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
+         setupHeader()
+         setupClickListeners()
++        setupCustomMaterialResultListener()
+ 
+         if (pickerMode == MODE_SETTINGS) {
+@@ -105,4 +106,20 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
+     }
+ 
++
++    private fun setupCustomMaterialResultListener() {
++        childFragmentManager.setFragmentResultListener(
++            CUSTOM_MATERIAL_REQUEST_KEY,
++            viewLifecycleOwner
++        ) { _, result ->
++            if (result.getString(TextInputBottomSheet.RESULT_KEY) !=
++                TextInputBottomSheet.RESULT_SAVED
++            ) return@setFragmentResultListener
++            result.getString(TextInputBottomSheet.RESULT_VALUE)
++                ?.trim()
++                ?.takeIf(String::isNotBlank)
++                ?.let(::addCustomMaterial)
++        }
++    }
++
+     private fun setupHeader() {
+         binding.appHeader.setupAquaHeader(
+@@ -548,11 +565,17 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
+ 
+     private fun showNewMaterialSheet() {
+-        CustomMaterialSheet.show(
+-            fragment = this,
+-            categoryTitle = categoryTitle,
+-            initialName = searchQuery.trim(),
+-            onSave = { materialName ->
+-                addCustomMaterial(materialName)
+-            }
++        TextInputBottomSheet.show(
++            fragmentManager = childFragmentManager,
++            title = getString(R.string.material_picker_new_material),
++            label = getString(R.string.material_picker_material_name),
++            hint = getString(R.string.material_picker_enter_material_name),
++            initialValue = searchQuery.trim(),
++            secondaryLabel = getString(R.string.material_picker_category),
++            secondaryValue = categoryTitle,
++            saveText = getString(R.string.material_picker_save),
++            cancelText = getString(R.string.material_picker_cancel),
++            required = true,
++            requiredMessage = getString(R.string.material_picker_required),
++            requestKey = CUSTOM_MATERIAL_REQUEST_KEY
+         )
+     }
+@@ -717,4 +740,5 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
+ 
+     companion object {
++        private const val CUSTOM_MATERIAL_REQUEST_KEY = "custom_material_result"
+         const val ARG_MODE = "arg_mode"
+         const val ARG_TANK_ID = "arg_tank_id"
