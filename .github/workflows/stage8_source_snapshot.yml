@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - agent/stage-8-process-safe-feedback
+  pull_request:
+    paths:
+      - "app/**"
+      - "tools/process_safe_feedback_guard.py"
+      - "docs/stage8-process-safe-feedback-contract.md"
+      - ".github/workflows/stage8_source_snapshot.yml"
   workflow_dispatch:
 
 permissions:
