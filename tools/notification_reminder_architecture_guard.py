@@ -55,6 +55,7 @@ BOOT_RECEIVER = "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareTas
 RECONCILE_WORKER = "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareReminderReconcileWorker.kt"
 SESSION_MANAGER = "app/src/main/java/com/aqua/aqualight/data/auth/SessionBoundServiceManager.kt"
 USER_CLEANER = "app/src/main/java/com/aqua/aqualight/data/user/UserDataCleaner.kt"
+USER_MANAGER = "app/src/main/java/com/aqua/aqualight/data/user/UserPreferencesManager.kt"
 USER_PROTO = "app/src/main/proto/user_prefs.proto"
 MANIFEST = "app/src/main/AndroidManifest.xml"
 DOC = "docs/stage7-notification-reminder-contract.md"
