@@ -47,6 +47,7 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
             context = requireContext().applicationContext,
             scope = AppMediaScope.TANK,
             ownerToken = "draft",
+            ownerUid = container.authenticatedOwnerIdentity.requireOwnerUid(),
             cropSpec = MediaCropSpec.TANK,
             mediaProcessor = container.feedbackMediaProcessor
         )
