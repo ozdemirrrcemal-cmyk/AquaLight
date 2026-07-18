@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
-"""Fail CI when a UI screen bypasses the central capability permission system."""
+"""Fail CI when production code bypasses the central capability permission system."""
 
 from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-UI_ROOT = ROOT / "app/src/main/java/com/aqua/aqualight/ui"
+APP_ROOT = ROOT / "app/src/main/java/com/aqua/aqualight"
+UI_ROOT = APP_ROOT / "ui"
 ALLOWED_ROOT = UI_ROOT / "common/permission"
 RES_LAYOUT_ROOT = ROOT / "app/src/main/res/layout"
-UI_SPEC_PATH = (
-    ALLOWED_ROOT / "CapabilityPermissionUiSpecResolver.kt"
-)
+UI_SPEC_PATH = ALLOWED_ROOT / "CapabilityPermissionUiSpecResolver.kt"
 SHEET_PATH = ALLOWED_ROOT / "CapabilityPermissionBottomSheet.kt"
 COORDINATOR_PATH = ALLOWED_ROOT / "CapabilityPermissionCoordinator.kt"
+CONTINUATION_PATH = ALLOWED_ROOT / "CapabilityPermissionContinuationState.kt"
+PERMISSION_POLICY_PATH = APP_ROOT / "platform/permissions/PermissionPolicy.kt"
+NOTIFICATION_POLICY_PATH = APP_ROOT / "data/notifications/AndroidNotificationPermissionPolicy.kt"
 
-FORBIDDEN_TOKENS = {
+UI_FORBIDDEN_TOKENS = {
     "ActivityResultContracts.RequestPermission(": (
         "runtime permission launchers must live in CapabilityPermissionCoordinator"
     ),
@@ -24,7 +26,10 @@ FORBIDDEN_TOKENS = {
     "ContextCompat.checkSelfPermission(": (
         "screens must query AppCapability through CapabilityPermissionCoordinator"
     ),
-    "shouldShowRequestPermissionRationale(": (
+    "ActivityCompat.checkSelfPermission(": (
+        "screens must query AppCapability through CapabilityPermissionCoordinator"
+    ),
+    "shouldShowRequestPermissionRationale": (
         "rationale decisions must be produced by PermissionPolicy"
     ),
     "Settings.ACTION_APPLICATION_DETAILS_SETTINGS": (
@@ -53,7 +58,37 @@ FORBIDDEN_TOKENS = {
     ),
 }
 
+# These APIs can change permission state or route users to Settings. They are forbidden
+# throughout production code unless the central coordinator/policies explicitly own them.
+GLOBAL_PERMISSION_BOUNDARIES = {
+    "ActivityCompat.requestPermissions(": set(),
+    "requestPermissions(": set(),
+    "ActivityResultContracts.RequestPermission(": {COORDINATOR_PATH},
+    "ActivityResultContracts.RequestMultiplePermissions(": {COORDINATOR_PATH},
+    "Settings.ACTION_APPLICATION_DETAILS_SETTINGS": {COORDINATOR_PATH},
+    "Settings.ACTION_APP_NOTIFICATION_SETTINGS": {COORDINATOR_PATH},
+    "Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS": {COORDINATOR_PATH},
+    "Settings.ACTION_SETTINGS": {COORDINATOR_PATH},
+    "ContextCompat.checkSelfPermission(": {
+        PERMISSION_POLICY_PATH,
+        NOTIFICATION_POLICY_PATH,
+    },
+    "ActivityCompat.checkSelfPermission(": set(),
+}
+
 errors: list[str] = []
+
+if not APP_ROOT.exists():
+    errors.append(f"Missing production source root: {APP_ROOT.relative_to(ROOT)}")
+else:
+    for source in APP_ROOT.rglob("*.kt"):
+        text = source.read_text(encoding="utf-8", errors="ignore")
+        relative = source.relative_to(ROOT)
+        for token, allowed_paths in GLOBAL_PERMISSION_BOUNDARIES.items():
+            if token in text and source not in allowed_paths:
+                errors.append(
+                    f"{relative}: production permission boundary bypass: {token}"
+                )
 
 if not UI_ROOT.exists():
     errors.append(f"Missing UI source root: {UI_ROOT.relative_to(ROOT)}")
@@ -64,7 +99,7 @@ else:
 
         text = source.read_text(encoding="utf-8", errors="ignore")
         relative = source.relative_to(ROOT)
-        for token, reason in FORBIDDEN_TOKENS.items():
+        for token, reason in UI_FORBIDDEN_TOKENS.items():
             if token in text:
                 errors.append(f"{relative}: {reason}: {token}")
 
@@ -96,7 +131,11 @@ required_files = (
     "app/src/main/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionCoordinator.kt",
     "app/src/main/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionBottomSheet.kt",
     "app/src/main/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionUiSpecResolver.kt",
+    "app/src/main/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionContinuationState.kt",
+    "app/src/test/java/com/aqua/aqualight/platform/permissions/PermissionPolicyTest.kt",
     "app/src/test/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionUiSpecResolverTest.kt",
+    "app/src/test/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionContinuationStateTest.kt",
+    "app/src/androidTest/java/com/aqua/aqualight/platform/permissions/PermissionInfrastructureInstrumentedTest.kt",
 )
 for relative_path in required_files:
     if not (ROOT / relative_path).is_file():
@@ -126,17 +165,43 @@ if COORDINATOR_PATH.is_file():
             "channel Settings Intent construction must remain central",
         ),
         (
+            "CapabilityPermissionContinuationState()",
+            "settings return must use the one-shot continuation state",
+        ),
+        (
+            "consumeSettingsReturn",
+            "lifecycle and Activity Result callbacks must share one-shot consumption",
+        ),
+        (
             "STATE_NOTIFICATION_CHANNEL_ID",
             "channel settings destination must survive rotation/process recreation",
         ),
         (
-            "STATE_NOTIFICATION_CHANNEL_ID to pendingNotificationChannelId",
+            "STATE_NOTIFICATION_CHANNEL_ID to snapshot.notificationChannelId",
             "channel ID must be persisted through SavedStateRegistry",
+        ),
+        (
+            "STATE_WAITING_FOR_SETTINGS to snapshot.waitingForSettings",
+            "settings-return state must be persisted through SavedStateRegistry",
         ),
     ):
         if token not in coordinator_text:
             errors.append(
                 f"{COORDINATOR_PATH.relative_to(ROOT)}: {reason}: missing {token}"
+            )
+
+if CONTINUATION_PATH.is_file():
+    continuation_text = CONTINUATION_PATH.read_text(encoding="utf-8", errors="ignore")
+    for token, reason in (
+        ("fun consumeSettingsReturn", "settings return must be explicitly consumed"),
+        ("if (!waitingForSettings) return null", "duplicate callbacks must be ignored"),
+        ("clear()", "denied or completed actions must clear pending state"),
+        ("fun snapshot()", "pending continuation must be recreatable"),
+        ("fun restore(", "pending continuation must restore after recreation"),
+    ):
+        if token not in continuation_text:
+            errors.append(
+                f"{CONTINUATION_PATH.relative_to(ROOT)}: {reason}: missing {token}"
             )
 
 if errors:
@@ -146,6 +211,6 @@ if errors:
     sys.exit(1)
 
 print(
-    "Central permission architecture guard passed: policy, launchers, copy, artwork "
-    "and process-safe app/channel settings routing remain capability-driven and central."
+    "Central permission architecture guard passed: policy, launchers, one-shot settings "
+    "continuation, copy, artwork and process-safe app/channel routing remain central."
 )
