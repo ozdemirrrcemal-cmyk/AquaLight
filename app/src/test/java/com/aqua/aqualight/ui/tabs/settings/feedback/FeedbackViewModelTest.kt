@@ -13,12 +13,14 @@ import com.aqua.aqualight.platform.media.FeedbackMediaProcessingResult
 import com.aqua.aqualight.platform.media.FeedbackMediaProcessor
 import com.aqua.aqualight.platform.media.ProcessedFeedbackMedia
 import java.io.File
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -74,6 +76,82 @@ class FeedbackViewModelTest {
             assertTrue(mediaProcessor.deletedPaths.contains(mediaFile.canonicalPath))
         } finally {
             mediaFile.delete()
+        }
+    }
+
+    @Test
+    fun synchronousBusyLockPreventsDoubleSubmitAndScreenshotDeletionDuringUpload() =
+        runTest(dispatcher) {
+            val mediaFile = File.createTempFile("feedback-race-", ".jpg").apply {
+                writeBytes(byteArrayOf(1, 2, 3))
+            }
+            try {
+                val gate = CompletableDeferred<Unit>()
+                val repository = FakeFeedbackRepository().apply { submitGate = gate }
+                val mediaProcessor = FakeFeedbackMediaProcessor()
+                val viewModel = viewModel(savedState(mediaFile), repository, mediaProcessor)
+
+                viewModel.submit()
+                viewModel.submit()
+                viewModel.clearScreenshot()
+
+                assertTrue(viewModel.uiState.value.isSubmitting)
+                assertNotNull(viewModel.uiState.value.screenshot)
+                assertTrue(mediaProcessor.deletedPaths.isEmpty())
+
+                runCurrent()
+                assertEquals(1, repository.submitCount)
+                gate.complete(Unit)
+                advanceUntilIdle()
+
+                assertEquals(1, repository.submitCount)
+                assertFalse(viewModel.uiState.value.isBusy)
+            } finally {
+                mediaFile.delete()
+            }
+        }
+
+    @Test
+    fun mediaProcessingLockPreventsSubmitUntilSelectionCompletes() = runTest(dispatcher) {
+        val processedFile = File.createTempFile("feedback-processed-", ".jpg").apply {
+            writeBytes(byteArrayOf(1, 2, 3))
+        }
+        try {
+            val gate = CompletableDeferred<Unit>()
+            val repository = FakeFeedbackRepository()
+            val mediaProcessor = FakeFeedbackMediaProcessor().apply {
+                processGate = gate
+                processResult = FeedbackMediaProcessingResult.Success(
+                    ProcessedFeedbackMedia(
+                        path = processedFile.canonicalPath,
+                        displayName = "processed.jpg",
+                        width = 640,
+                        height = 480,
+                        byteCount = processedFile.length()
+                    )
+                )
+            }
+            val state = SavedStateHandle(
+                mapOf(
+                    "feedback.category" to "Bug",
+                    "feedback.message" to "A reproducible problem"
+                )
+            )
+            val viewModel = viewModel(state, repository, mediaProcessor)
+
+            viewModel.selectScreenshot(Uri.parse("content://test/source"))
+            viewModel.submit()
+
+            assertTrue(viewModel.uiState.value.isProcessingMedia)
+            runCurrent()
+            assertEquals(0, repository.submitCount)
+
+            gate.complete(Unit)
+            advanceUntilIdle()
+            assertNotNull(viewModel.uiState.value.screenshot)
+            assertFalse(viewModel.uiState.value.isBusy)
+        } finally {
+            processedFile.delete()
         }
     }
 
@@ -182,6 +260,7 @@ class FeedbackViewModelTest {
         var request: FeedbackSubmissionRequest? = null
         var screenshotFile: File? = null
         var submitCount: Int = 0
+        var submitGate: CompletableDeferred<Unit>? = null
         var result: FeedbackSubmissionResult = FeedbackSubmissionResult.Success("document-1")
 
         override suspend fun submit(
@@ -191,6 +270,7 @@ class FeedbackViewModelTest {
             submitCount += 1
             this.request = request
             this.screenshotFile = screenshotFile
+            submitGate?.await()
             return result
         }
 
@@ -199,9 +279,14 @@ class FeedbackViewModelTest {
 
     private class FakeFeedbackMediaProcessor : FeedbackMediaProcessor {
         var allowRestore: Boolean = true
+        var processGate: CompletableDeferred<Unit>? = null
+        var processResult: FeedbackMediaProcessingResult? = null
         val deletedPaths = mutableListOf<String>()
 
-        override suspend fun process(uri: Uri): FeedbackMediaProcessingResult = error("Not expected")
+        override suspend fun process(uri: Uri): FeedbackMediaProcessingResult {
+            processGate?.await()
+            return processResult ?: error("Unexpected process call")
+        }
 
         override fun restore(
             path: String?,
