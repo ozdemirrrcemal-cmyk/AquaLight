@@ -1,16 +1,16 @@
 package com.aqua.aqualight.ui.tabs.settings.profile
 
 import android.app.Activity
-import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import coil3.load
 import coil3.request.crossfade
@@ -19,15 +19,17 @@ import coil3.request.placeholder
 import com.aqua.aqualight.R
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentEditProfileBinding
+import com.aqua.aqualight.platform.media.AppMediaScope
 import com.aqua.aqualight.platform.permissions.AppCapability
 import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
+import com.aqua.aqualight.ui.common.media.MediaCropSpec
+import com.aqua.aqualight.ui.common.media.MediaFlowCoordinatorViewModel
 import com.aqua.aqualight.ui.common.permission.CapabilityPermissionCoordinator
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.yalantis.ucrop.UCrop
-import java.io.File
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
@@ -39,52 +41,64 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         requireContext().requireAppContainer().userProfileOperations
     }
 
-    private val permissionCoordinator = CapabilityPermissionCoordinator(this) { action ->
-        when (action) {
-            ACTION_CAPTURE_PROFILE_PHOTO -> startCameraCapture()
-        }
+    private val mediaFlow: MediaFlowCoordinatorViewModel by viewModels {
+        MediaFlowCoordinatorViewModel.factory(
+            context = requireContext().applicationContext,
+            scope = AppMediaScope.PROFILE,
+            ownerToken = "profile",
+            cropSpec = MediaCropSpec.PROFILE
+        )
     }
 
-    private var cameraImageUri: Uri? = null
-    private var selectedPhotoUri: Uri? = null
+    private val permissionCoordinator = CapabilityPermissionCoordinator(this) { action ->
+        if (action == ACTION_CAPTURE_PROFILE_PHOTO) startCameraCapture()
+    }
 
     private val takePictureLauncher = registerForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { success ->
-        if (success && cameraImageUri != null) {
-            onPhotoSelected(cameraImageUri!!)
+        val cameraUri = mediaFlow.currentCameraUri()
+        if (success && cameraUri != null) {
+            openCrop(cameraUri)
+        } else {
+            mediaFlow.cancelCamera()
         }
     }
 
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { uri ->
-        if (uri != null) {
-            onPhotoSelected(uri)
-        }
+        if (uri != null) openCrop(uri)
     }
 
-    private val uCropLauncher = registerForActivityResult(
+    private val cropLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         val data = result.data
-
         when {
             result.resultCode == Activity.RESULT_OK && data != null -> {
-                val croppedUri = UCrop.getOutput(data) ?: return@registerForActivityResult
-                handleCroppedImage(croppedUri)
+                val output = UCrop.getOutput(data)
+                val accepted = output?.let(mediaFlow::acceptCrop)
+                if (accepted == null) {
+                    mediaFlow.cancelCrop()
+                    showInfoDialog(
+                        title = getString(R.string.edit_profile_error_title),
+                        message = getString(R.string.edit_profile_save_photo_error)
+                    )
+                }
             }
 
             result.resultCode == UCrop.RESULT_ERROR && data != null -> {
                 val error = UCrop.getError(data)
-                error?.printStackTrace()
-
+                mediaFlow.cancelCrop()
                 showInfoDialog(
                     title = getString(R.string.edit_profile_error_title),
                     message = error?.localizedMessage
                         ?: getString(R.string.edit_profile_save_photo_error)
                 )
             }
+
+            else -> mediaFlow.cancelCrop()
         }
     }
 
@@ -92,118 +106,62 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
-
+        super.onViewCreated(view, savedInstanceState)
         _binding = FragmentEditProfileBinding.bind(view)
 
-        setupHeader()
-        observeCurrentPhoto()
-        setupResultListener()
+        binding.appHeader.setupAquaHeader(fragment = this)
+        setupPhotoSourceResultListener()
         setupClickListeners()
+        observeProfileAndSelection()
     }
 
-    private fun setupHeader() {
-        binding.appHeader.setupAquaHeader(
-            fragment = this
-        )
-    }
-
-    private fun observeCurrentPhoto() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            profileOperations.profile.collectLatest { profile ->
-                if (selectedPhotoUri != null) return@collectLatest
-
-                val url = profile.profilePhotoUrl
-
-                if (url.isNotBlank()) {
-                    binding.ivEditProfilePhoto.load(url) {
-                        placeholder(R.drawable.ic_profile_placeholder)
-                        error(R.drawable.ic_profile_placeholder)
-                        crossfade(true)
-                    }
-                } else {
-                    binding.ivEditProfilePhoto.setImageResource(
-                        R.drawable.ic_profile_placeholder
-                    )
-                }
-            }
-        }
-    }
-
-    private fun setupResultListener() {
+    private fun setupPhotoSourceResultListener() {
         childFragmentManager.setFragmentResultListener(
             PhotoSourceBottomSheet.REQUEST_KEY,
             viewLifecycleOwner
         ) { _, bundle ->
-            when (
-                bundle.getString(
-                    PhotoSourceBottomSheet.RESULT_KEY
-                )
-            ) {
+            when (bundle.getString(PhotoSourceBottomSheet.RESULT_KEY)) {
                 PhotoSourceBottomSheet.RESULT_GALLERY -> openGallery()
                 PhotoSourceBottomSheet.RESULT_CAMERA -> checkCameraPermissionAndOpen()
+                PhotoSourceBottomSheet.RESULT_REMOVE -> mediaFlow.selectRemoval()
             }
         }
     }
 
-    private fun setupClickListeners() =
-        with(binding) {
+    private fun setupClickListeners() = with(binding) {
+        val openChooser: (View) -> Unit = { showPhotoSourceSheet() }
+        ivEditProfilePhoto.setOnClickListener(openChooser)
+        ivCameraIcon.setOnClickListener(openChooser)
+        btnSave.setOnClickListener { saveSelection() }
+    }
 
-            val openChooser: (View) -> Unit = {
-                PhotoSourceBottomSheet
-                    .newInstance(
-                        title = "Profile Photo"
-                    )
-                    .show(
-                        childFragmentManager,
-                        PhotoSourceBottomSheet.TAG
-                    )
-            }
-
-            ivEditProfilePhoto.setOnClickListener(
-                openChooser
-            )
-
-            ivCameraIcon.setOnClickListener(
-                openChooser
-            )
-
-            btnSave.setOnClickListener {
-                val uriToSave = selectedPhotoUri
-
-                if (uriToSave == null) {
-                    findNavController().popBackStack()
-                    return@setOnClickListener
+    private fun observeProfileAndSelection() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    profileOperations.profile.collect { profile ->
+                        mediaFlow.initializeSelection(profile.profilePhotoUrl)
+                    }
                 }
-
-                viewLifecycleOwner.lifecycleScope.launch {
-                    try {
-                        profileOperations.updateProfilePhoto(
-                            uriToSave.toString()
-                        )
-
-                        findNavController().popBackStack()
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-
-                        showInfoDialog(
-                            title = getString(R.string.edit_profile_error_title),
-                            message = e.localizedMessage
-                                ?: getString(R.string.edit_profile_save_photo_error)
-                        )
+                launch {
+                    mediaFlow.selection.collect { state ->
+                        renderPhoto(state.selectedUri)
                     }
                 }
             }
         }
+    }
+
+    private fun showPhotoSourceSheet() {
+        PhotoSourceBottomSheet.newInstance(
+            title = getString(R.string.edit_profile_choose_source_title),
+            showRemove = !mediaFlow.selection.value.selectedUri.isNullOrBlank()
+        ).show(childFragmentManager, PhotoSourceBottomSheet.TAG)
+    }
 
     private fun openGallery() {
         pickImageLauncher.launch(
-            PickVisualMediaRequest(
-                ActivityResultContracts.PickVisualMedia.ImageOnly
-            )
+            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
         )
     }
 
@@ -215,129 +173,79 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     }
 
     private fun startCameraCapture() {
-        val uri = createImageUri()
-            ?: run {
-                showInfoDialog(
-                    title = getString(R.string.edit_profile_error_title),
-                    message = getString(R.string.edit_profile_temp_file_error)
-                )
-                return
-            }
-
-        cameraImageUri = uri
+        val uri = mediaFlow.createCameraUri()
+        if (uri == null) {
+            showInfoDialog(
+                title = getString(R.string.edit_profile_error_title),
+                message = getString(R.string.edit_profile_temp_file_error)
+            )
+            return
+        }
         takePictureLauncher.launch(uri)
     }
 
-    private fun getProfilePhotosDir(): File {
-        val context = requireContext()
+    private fun openCrop(sourceUri: Uri) {
+        val intent = mediaFlow.buildCropIntent(
+            sourceUri = sourceUri,
+            title = getString(R.string.edit_profile_crop_title)
+        )
+        if (intent == null) {
+            mediaFlow.cancelCamera()
+            showInfoDialog(
+                title = getString(R.string.edit_profile_error_title),
+                message = getString(R.string.edit_profile_temp_file_error)
+            )
+            return
+        }
+        cropLauncher.launch(intent)
+    }
 
-        return File(
-            context.filesDir,
-            "profile_photos"
-        ).apply {
-            if (!exists()) {
-                mkdirs()
+    private fun saveSelection() {
+        val selection = mediaFlow.selection.value
+        if (!selection.hasPendingChange) {
+            findNavController().popBackStack()
+            return
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            setFragmentGlobalLoading(true)
+            binding.btnSave.isEnabled = false
+            try {
+                profileOperations.updateProfilePhoto(selection.selectedUri.orEmpty())
+                mediaFlow.commitSelection(deletePersistedMedia = false)
+                findNavController().popBackStack()
+            } catch (error: Exception) {
+                mediaFlow.rollbackSelection()
+                showInfoDialog(
+                    title = getString(R.string.edit_profile_error_title),
+                    message = error.localizedMessage
+                        ?: getString(R.string.edit_profile_save_photo_error)
+                )
+            } finally {
+                _binding?.btnSave?.isEnabled = true
+                setFragmentGlobalLoading(false)
             }
         }
     }
 
-    private fun createImageUri(): Uri? {
-        return try {
-            val dir = getProfilePhotosDir()
-            val file = File.createTempFile(
-                "profile_",
-                ".jpg",
-                dir
-            )
-
-            FileProvider.getUriForFile(
-                requireContext(),
-                "${requireContext().packageName}.fileprovider",
-                file
-            )
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
+    private fun renderPhoto(uriString: String?) {
+        if (_binding == null) return
+        if (uriString.isNullOrBlank()) {
+            binding.ivEditProfilePhoto.setImageResource(R.drawable.ic_profile_placeholder)
+            return
         }
-    }
-
-    private fun onPhotoSelected(
-        sourceUri: Uri
-    ) {
-        val context = requireContext()
-        val destFile = File(
-            getProfilePhotosDir(),
-            "profile_cropped_${System.currentTimeMillis()}.jpg"
-        )
-        val destUri = Uri.fromFile(destFile)
-
-        val options = UCrop.Options().apply {
-            setCircleDimmedLayer(true)
-            withAspectRatio(1f, 1f)
-
-            setShowCropGrid(true)
-            setShowCropFrame(false)
-            setHideBottomControls(true)
-
-            setToolbarTitle(
-                getString(R.string.edit_profile_crop_title)
-            )
-
-            val toolbarColor = ContextCompat.getColor(
-                context,
-                R.color.crop_toolbar_bg
-            )
-
-            setToolbarColor(toolbarColor)
-            setToolbarWidgetColor(Color.WHITE)
-            setToolbarCancelDrawable(R.drawable.ic_back)
-        }
-
-        UCrop.of(
-            sourceUri,
-            destUri
-        )
-            .withAspectRatio(1f, 1f)
-            .withOptions(options)
-            .start(
-                context,
-                uCropLauncher
-            )
-    }
-
-    private fun handleCroppedImage(
-        croppedFileUri: Uri
-    ) {
-        val context = requireContext()
-        val file = File(
-            croppedFileUri.path ?: return
-        )
-
-        val contentUri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            file
-        )
-
-        binding.ivEditProfilePhoto.load(
-            contentUri
-        ) {
+        binding.ivEditProfilePhoto.load(uriString) {
             placeholder(R.drawable.ic_profile_placeholder)
             error(R.drawable.ic_profile_placeholder)
             crossfade(true)
         }
-
-        selectedPhotoUri = contentUri
     }
 
     private fun showInfoDialog(
         title: String,
         message: String
     ) {
-        if (!isAdded) {
-            return
-        }
-
+        if (!isAdded) return
         DialogManager.showInfoDialog(
             context = requireContext(),
             type = DialogType.WARNING,
@@ -348,8 +256,9 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     }
 
     override fun onDestroyView() {
-        super.onDestroyView()
+        setFragmentGlobalLoading(false)
         _binding = null
+        super.onDestroyView()
     }
 
     private companion object {
