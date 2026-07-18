@@ -8,10 +8,7 @@ import androidx.navigation.navGraphViewModels
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentTankInfoBinding
-import com.aqua.aqualight.ui.common.bottomsheet.SetupDateBottomSheet
-import com.aqua.aqualight.ui.common.bottomsheet.TankSizeBottomSheet
-import com.aqua.aqualight.ui.common.bottomsheet.TankStyleBottomSheet
-import com.aqua.aqualight.ui.common.bottomsheet.TankTypeBottomSheet
+import com.aqua.aqualight.ui.common.bottomsheet.TankSettingsEditorBottomSheet
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDatePolicy
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDimensionFormatter
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumMeasurementPolicy
@@ -30,16 +27,94 @@ class TankInfoFragment :
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
+        super.onViewCreated(view, savedInstanceState)
 
-        _binding =
-            FragmentTankInfoBinding.bind(view)
+        _binding = FragmentTankInfoBinding.bind(view)
 
+        setupEditorResultListener()
         setupClickListeners()
         renderDetails()
+    }
+
+    private fun setupEditorResultListener() {
+        childFragmentManager.setFragmentResultListener(
+            TankSettingsEditorBottomSheet.REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (result.getString(TankSettingsEditorBottomSheet.RESULT_STATUS) !=
+                TankSettingsEditorBottomSheet.RESULT_SAVED
+            ) {
+                return@setFragmentResultListener
+            }
+
+            val mode = result.getString(TankSettingsEditorBottomSheet.RESULT_MODE)
+                ?.let { value ->
+                    runCatching {
+                        TankSettingsEditorBottomSheet.Mode.valueOf(value)
+                    }.getOrNull()
+                }
+                ?: return@setFragmentResultListener
+
+            when (mode) {
+                TankSettingsEditorBottomSheet.Mode.SETUP_DATE -> {
+                    viewModel.updateSetupDate(
+                        result.getLong(TankSettingsEditorBottomSheet.RESULT_MILLIS)
+                    )
+                }
+
+                TankSettingsEditorBottomSheet.Mode.SIZE -> {
+                    val widthCm = result.getInt(
+                        TankSettingsEditorBottomSheet.RESULT_WIDTH_CM
+                    )
+                    val lengthCm = result.getInt(
+                        TankSettingsEditorBottomSheet.RESULT_LENGTH_CM
+                    )
+                    val heightCm = result.getInt(
+                        TankSettingsEditorBottomSheet.RESULT_HEIGHT_CM
+                    )
+                    val sizeUnit = result.getString(
+                        TankSettingsEditorBottomSheet.RESULT_UNIT
+                    ).orEmpty()
+
+                    if (!AquariumMeasurementPolicy.areValidDimensions(
+                            widthCm = widthCm,
+                            lengthCm = lengthCm,
+                            heightCm = heightCm
+                        ) || sizeUnit.isBlank()
+                    ) {
+                        showSnackBar(
+                            message = getString(R.string.aquarium_validation_invalid_tank_size),
+                            type = BaseActivity.SnackType.WARNING
+                        )
+                        return@setFragmentResultListener
+                    }
+
+                    viewModel.updateTankSize(
+                        widthCm = widthCm,
+                        lengthCm = lengthCm,
+                        heightCm = heightCm,
+                        sizeUnit = sizeUnit
+                    )
+                }
+
+                TankSettingsEditorBottomSheet.Mode.TYPE -> {
+                    result.getString(TankSettingsEditorBottomSheet.RESULT_TEXT)
+                        ?.takeIf(String::isNotBlank)
+                        ?.let(viewModel::updateTankType)
+                }
+
+                TankSettingsEditorBottomSheet.Mode.STYLE -> {
+                    result.getString(TankSettingsEditorBottomSheet.RESULT_TEXT)
+                        ?.takeIf(String::isNotBlank)
+                        ?.let(viewModel::updateTankStyle)
+                }
+
+                TankSettingsEditorBottomSheet.Mode.NAME,
+                TankSettingsEditorBottomSheet.Mode.IDEA -> Unit
+            }
+
+            renderDetails()
+        }
     }
 
     private fun setupClickListeners() {
@@ -65,14 +140,9 @@ class TankInfoFragment :
     }
 
     private fun renderDetails() {
-        val draft =
-            viewModel.tankDraft
+        val draft = viewModel.tankDraft
 
-        binding.tvSetupDateValue.text =
-            formatSetupDate(
-                draft.setupDateMillis
-            )
-
+        binding.tvSetupDateValue.text = formatSetupDate(draft.setupDateMillis)
         binding.tvSetupDateValue.setTextColor(
             if (draft.setupDateMillis == null) {
                 Color.parseColor("#7F91AA")
@@ -81,20 +151,13 @@ class TankInfoFragment :
             }
         )
 
-        binding.tvSizeLabel.text =
-            formatSizeTitle()
+        binding.tvSizeLabel.text = formatSizeTitle()
+        binding.tvSizeValue.text = formatSize()
+        binding.tvVolumeValue.text = formatVolume()
 
-        binding.tvSizeValue.text =
-            formatSize()
-
-        binding.tvVolumeValue.text =
-            formatVolume()
-
-        binding.tvTankTypeValue.text =
-            draft.tankType.ifBlank {
-                getString(R.string.aquarium_common_not_selected)
-            }
-
+        binding.tvTankTypeValue.text = draft.tankType.ifBlank {
+            getString(R.string.aquarium_common_not_selected)
+        }
         binding.tvTankTypeValue.setTextColor(
             if (draft.tankType.isBlank()) {
                 Color.parseColor("#7F91AA")
@@ -104,130 +167,67 @@ class TankInfoFragment :
         )
 
         if (draft.tankStyle.isBlank()) {
-            binding.tvStyleValue.text =
-                getString(R.string.aquarium_common_not_selected)
-
-            binding.tvStyleValue.setTextColor(
-                Color.parseColor("#7F91AA")
-            )
+            binding.tvStyleValue.text = getString(R.string.aquarium_common_not_selected)
+            binding.tvStyleValue.setTextColor(Color.parseColor("#7F91AA"))
         } else {
-            binding.tvStyleValue.text =
-                draft.tankStyle
-
-            binding.tvStyleValue.setTextColor(
-                Color.WHITE
-            )
+            binding.tvStyleValue.text = draft.tankStyle
+            binding.tvStyleValue.setTextColor(Color.WHITE)
         }
     }
 
     private fun showSetupDateSheet() {
-        SetupDateBottomSheet.show(
-            fragment = this,
+        TankSettingsEditorBottomSheet.show(
+            fragmentManager = childFragmentManager,
+            mode = TankSettingsEditorBottomSheet.Mode.SETUP_DATE,
+            title = getString(R.string.aquarium_setup_date_title),
             currentMillis = viewModel.tankDraft.setupDateMillis,
             minYear = AquariumDatePolicy.minSetupYear(),
             maxYear = AquariumDatePolicy.maxSetupYear(),
-            monthLocale = AquariumDatePolicy.setupDateLocale,
-            onSave = { selectedMillis, dismiss ->
-
-                viewModel.updateSetupDate(
-                    selectedMillis
-                )
-
-                renderDetails()
-
-                dismiss()
-            }
+            locale = AquariumDatePolicy.setupDateLocale
         )
     }
 
     private fun showSizeSheet() {
-        val draft =
-            viewModel.tankDraft
-
-        TankSizeBottomSheet.show(
-            fragment = this,
-            currentWidthCm = draft.widthCm,
-            currentLengthCm = draft.lengthCm,
-            currentHeightCm = draft.heightCm,
-            currentUnit = draft.sizeUnit,
+        val draft = viewModel.tankDraft
+        TankSettingsEditorBottomSheet.show(
+            fragmentManager = childFragmentManager,
+            mode = TankSettingsEditorBottomSheet.Mode.SIZE,
             title = getString(R.string.aquarium_tank_size_title),
-            onInvalidInput = {
-                showSnackBar(
-                    message = getString(R.string.aquarium_validation_invalid_tank_size),
-                    type = BaseActivity.SnackType.WARNING
-                )
-            },
-            onSave = { result, dismiss ->
-
-                viewModel.updateTankSize(
-                    widthCm = result.widthCm,
-                    lengthCm = result.lengthCm,
-                    heightCm = result.heightCm,
-                    sizeUnit = result.sizeUnit
-                )
-
-                renderDetails()
-
-                dismiss()
-            }
+            validationMessage = getString(R.string.aquarium_validation_invalid_tank_size),
+            widthCm = draft.widthCm,
+            lengthCm = draft.lengthCm,
+            heightCm = draft.heightCm,
+            currentUnit = draft.sizeUnit
         )
     }
 
     private fun showTankTypeSheet() {
-        TankTypeBottomSheet.show(
-            fragment = this,
-            currentType = viewModel.tankDraft.tankType,
-            onSave = { selectedType, dismiss ->
-
-                viewModel.updateTankType(
-                    selectedType
-                )
-
-                renderDetails()
-
-                dismiss()
-            }
+        TankSettingsEditorBottomSheet.show(
+            fragmentManager = childFragmentManager,
+            mode = TankSettingsEditorBottomSheet.Mode.TYPE,
+            title = getString(R.string.aquarium_tank_type_title),
+            currentText = viewModel.tankDraft.tankType
         )
     }
 
     private fun showStyleSheet() {
-        TankStyleBottomSheet.show(
-            fragment = this,
-            currentStyle = viewModel.tankDraft.tankStyle,
-            onSave = { selectedStyle, dismiss ->
-
-                viewModel.updateTankStyle(
-                    selectedStyle
-                )
-
-                renderDetails()
-
-                dismiss()
-            }
+        TankSettingsEditorBottomSheet.show(
+            fragmentManager = childFragmentManager,
+            mode = TankSettingsEditorBottomSheet.Mode.STYLE,
+            title = getString(R.string.aquarium_tank_style_title),
+            currentText = viewModel.tankDraft.tankStyle,
+            validationMessage = getString(R.string.aquarium_error_tank_style_save_failed)
         )
     }
 
     private fun toggleVolumeUnit() {
-        val currentUnit =
-            viewModel.tankDraft.volumeUnit
-
-        val newUnit =
-            if (currentUnit == "L") {
-                "gal"
-            } else {
-                "L"
-            }
-
-        viewModel.updateVolumeUnit(
-            newUnit
-        )
-
+        val currentUnit = viewModel.tankDraft.volumeUnit
+        val newUnit = if (currentUnit == "L") "gal" else "L"
+        viewModel.updateVolumeUnit(newUnit)
         renderDetails()
     }
 
-    private fun formatSetupDate(
-        millis: Long?
-    ): String {
+    private fun formatSetupDate(millis: Long?): String {
         return AquariumDatePolicy.formatSetupDate(
             millis = millis,
             emptyText = getString(R.string.aquarium_common_not_selected)
@@ -243,7 +243,6 @@ class TankInfoFragment :
 
     private fun formatSize(): String {
         val draft = viewModel.tankDraft
-
         return AquariumDimensionFormatter.sizeText(
             widthCm = draft.widthCm,
             lengthCm = draft.lengthCm,
@@ -254,7 +253,6 @@ class TankInfoFragment :
 
     private fun formatVolume(): String {
         val draft = viewModel.tankDraft
-
         return AquariumDimensionFormatter.volumeText(
             widthCm = draft.widthCm,
             lengthCm = draft.lengthCm,
@@ -302,9 +300,7 @@ class TankInfoFragment :
     }
 
     override fun onDestroyView() {
+        _binding = null
         super.onDestroyView()
-
-        _binding =
-            null
     }
 }
