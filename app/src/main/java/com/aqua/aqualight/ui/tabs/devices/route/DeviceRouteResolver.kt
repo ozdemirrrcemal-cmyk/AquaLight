@@ -1,7 +1,9 @@
 package com.aqua.aqualight.ui.tabs.devices.route
 
+import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.text.AppTextResolver
 
 /**
  * Maps an application-approved device-menu decision to a UI navigation destination.
@@ -9,14 +11,16 @@ import com.aqua.aqualight.application.devices.OwnerDeviceFamily
  * Liveness and repository access are resolved before this mapper is called. UI routing depends only
  * on firmware-provided family metadata carried by the application result.
  */
-class DeviceRouteResolver {
+class DeviceRouteResolver(
+    private val textResolver: AppTextResolver
+) {
 
     fun resolve(
         access: DeviceMenuAccessResult.Available
     ): DeviceRoute {
         val deviceUid = access.deviceUid
         val title = access.title.ifBlank {
-            deviceUid.ifBlank { DEFAULT_DEVICE_TITLE }
+            deviceUid.ifBlank { textResolver.get(R.string.device_menu_default_title) }
         }
 
         return when (access.family) {
@@ -44,12 +48,8 @@ class DeviceRouteResolver {
                 deviceUid = deviceUid,
                 title = title,
                 target = DeviceRouteTarget.UNSUPPORTED,
-                message = "Unsupported AquaLight device family. Firmware did not provide a known product.family value."
+                message = textResolver.get(R.string.device_route_unsupported_family)
             )
         }
-    }
-
-    private companion object {
-        const val DEFAULT_DEVICE_TITLE = "Device"
     }
 }
