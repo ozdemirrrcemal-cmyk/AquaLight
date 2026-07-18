@@ -5,9 +5,9 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
+import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
 import com.aqua.aqualight.databinding.FragmentTankSettingsDetailsBinding
 import com.aqua.aqualight.ui.common.material.AquaMaterialCategoryRowFactory
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
@@ -56,16 +56,17 @@ class TankSettingsDetailsFragment : Fragment(R.layout.fragment_tank_settings_det
             val selectedMaterials = tank.materials.filter { material ->
                 material.categoryKey == category.key
             }
+            val categoryTitle = getString(category.titleRes)
 
             binding.bioMaterialsContainer.addView(
                 AquaMaterialCategoryRowFactory.create(
                     context = requireContext(),
-                    title = category.title,
+                    title = categoryTitle,
                     summary = getMaterialSummary(selectedMaterials),
                     onClick = {
                         (parentFragment as? TankSettingsFragment)?.openMaterialPickerFlow(
                             categoryKey = category.key,
-                            categoryTitle = category.title
+                            categoryTitle = categoryTitle
                         )
                     }
                 )
@@ -76,16 +77,17 @@ class TankSettingsDetailsFragment : Fragment(R.layout.fragment_tank_settings_det
             val selectedMaterials = tank.materials.filter { material ->
                 material.categoryKey == category.key
             }
+            val categoryTitle = getString(category.titleRes)
 
             binding.hardwareMaterialsContainer.addView(
                 AquaMaterialCategoryRowFactory.create(
                     context = requireContext(),
-                    title = category.title,
+                    title = categoryTitle,
                     summary = getMaterialSummary(selectedMaterials),
                     onClick = {
                         (parentFragment as? TankSettingsFragment)?.openMaterialPickerFlow(
                             categoryKey = category.key,
-                            categoryTitle = category.title
+                            categoryTitle = categoryTitle
                         )
                     }
                 )
