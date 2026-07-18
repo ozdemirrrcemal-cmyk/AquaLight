@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
+import android.os.SystemClock
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -33,47 +34,90 @@ class OwnerNotificationCancellationInstrumentedTest {
         val ownerB = "visible-owner-b-$suffix"
         val deviceA = "device-a-$suffix"
         val deviceB = "device-b-$suffix"
-
-        OwnerNotificationPreferences.create(context).apply {
-            setEnabled(ownerA, true)
-            setEnabled(ownerB, true)
-        }
-
-        assertEquals(
-            NotificationDispatchResult.POSTED,
-            platform.dispatchUseCase.dispatchDeviceAlert(
-                DeviceAlertNotification(
-                    ownerUid = ownerA,
-                    deviceUid = deviceA,
-                    title = "Owner A alert",
-                    message = "Owner A device alert"
-                )
-            )
-        )
-        assertEquals(
-            NotificationDispatchResult.POSTED,
-            platform.dispatchUseCase.dispatchDeviceAlert(
-                DeviceAlertNotification(
-                    ownerUid = ownerB,
-                    deviceUid = deviceB,
-                    title = "Owner B alert",
-                    message = "Owner B device alert"
-                )
-            )
-        )
-
         val manager = context.getSystemService(NotificationManager::class.java)
         val prefixA = NotificationIdentity.ownerTagPrefix(ownerA)
         val prefixB = NotificationIdentity.ownerTagPrefix(ownerB)
-        assertTrue(manager.activeNotifications.any { it.tag?.startsWith(prefixA) == true })
-        assertTrue(manager.activeNotifications.any { it.tag?.startsWith(prefixB) == true })
 
-        platform.renderer.cancelOwner(ownerA)
+        try {
+            OwnerNotificationPreferences.create(context).apply {
+                setEnabled(ownerA, true)
+                setEnabled(ownerB, true)
+            }
 
-        assertFalse(manager.activeNotifications.any { it.tag?.startsWith(prefixA) == true })
-        assertTrue(manager.activeNotifications.any { it.tag?.startsWith(prefixB) == true })
+            assertEquals(
+                NotificationDispatchResult.POSTED,
+                platform.dispatchUseCase.dispatchDeviceAlert(
+                    DeviceAlertNotification(
+                        ownerUid = ownerA,
+                        deviceUid = deviceA,
+                        title = "Owner A alert",
+                        message = "Owner A device alert"
+                    )
+                )
+            )
+            assertEquals(
+                NotificationDispatchResult.POSTED,
+                platform.dispatchUseCase.dispatchDeviceAlert(
+                    DeviceAlertNotification(
+                        ownerUid = ownerB,
+                        deviceUid = deviceB,
+                        title = "Owner B alert",
+                        message = "Owner B device alert"
+                    )
+                )
+            )
 
-        platform.renderer.cancelOwner(ownerB)
+            assertTrue(
+                "Owner A notification was not exposed by Android in time.",
+                awaitNotificationState {
+                    manager.activeNotifications.any { notification ->
+                        notification.tag?.startsWith(prefixA) == true
+                    }
+                }
+            )
+            assertTrue(
+                "Owner B notification was not exposed by Android in time.",
+                awaitNotificationState {
+                    manager.activeNotifications.any { notification ->
+                        notification.tag?.startsWith(prefixB) == true
+                    }
+                }
+            )
+
+            platform.renderer.cancelOwner(ownerA)
+
+            assertTrue(
+                "Owner A notification remained visible after owner cancellation.",
+                awaitNotificationState {
+                    manager.activeNotifications.none { notification ->
+                        notification.tag?.startsWith(prefixA) == true
+                    }
+                }
+            )
+            assertFalse(
+                manager.activeNotifications.any { notification ->
+                    notification.tag?.startsWith(prefixA) == true
+                }
+            )
+            assertTrue(
+                "Cancelling owner A removed owner B's notification.",
+                manager.activeNotifications.any { notification ->
+                    notification.tag?.startsWith(prefixB) == true
+                }
+            )
+        } finally {
+            platform.renderer.cancelOwner(ownerA)
+            platform.renderer.cancelOwner(ownerB)
+        }
+    }
+
+    private fun awaitNotificationState(condition: () -> Boolean): Boolean {
+        val deadline = SystemClock.elapsedRealtime() + NOTIFICATION_STATE_TIMEOUT_MILLIS
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (condition()) return true
+            SystemClock.sleep(NOTIFICATION_STATE_POLL_MILLIS)
+        }
+        return condition()
     }
 
     private fun grantNotificationPermissionWhenRequired() {
@@ -82,5 +126,10 @@ class OwnerNotificationCancellationInstrumentedTest {
             context.packageName,
             Manifest.permission.POST_NOTIFICATIONS
         )
+    }
+
+    private companion object {
+        const val NOTIFICATION_STATE_TIMEOUT_MILLIS = 5_000L
+        const val NOTIFICATION_STATE_POLL_MILLIS = 50L
     }
 }
