@@ -1,0 +1,53 @@
+name: Stage 10 Inventory
+
+on:
+  push:
+    branches:
+      - agent/stage-10-design-system-resource-cleanup
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stage10-inventory-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  inventory:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: agent/stage-10-design-system-resource-cleanup
+          fetch-depth: 0
+
+      - name: Generate source inventory and audit
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p docs
+          find app/src/main -type f -print | sort > docs/stage10-file-inventory.txt
+          python3 tools/stage10_design_system_guard.py > docs/stage10-audit.txt 2>&1 || true
+          {
+            echo
+            echo "GENERATED_COMMIT=$(git rev-parse HEAD)"
+            echo "GENERATED_AT_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } >> docs/stage10-audit.txt
+
+      - name: Commit generated inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/stage10-file-inventory.txt docs/stage10-audit.txt
+          if git diff --cached --quiet; then
+            echo "Inventory is unchanged."
+            exit 0
+          fi
+          git commit -m "Stage 10: record generated resource inventory"
+          git push origin HEAD:agent/stage-10-design-system-resource-cleanup
