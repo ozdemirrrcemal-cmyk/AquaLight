@@ -5,12 +5,19 @@ import android.net.Uri
 import androidx.core.content.FileProvider
 import java.io.File
 import java.util.UUID
+import org.json.JSONObject
 
 /** Canonical app-owned media storage for profile and aquarium photo flows. */
 object AppMediaStorage {
 
     private const val FILE_PROVIDER_SUFFIX = ".fileprovider"
     private const val MAX_PENDING_AGE_MILLIS = 24L * 60L * 60L * 1000L
+    private const val PENDING_PREFERENCES = "app_media_pending_v1"
+    private const val PENDING_PREFIX = "pending."
+    private const val JSON_URI = "uri"
+    private const val JSON_CREATED_AT = "createdAt"
+    private const val FEEDBACK_MEDIA_DIRECTORY = "feedback_media"
+    private val pendingLock = Any()
 
     fun createCameraCaptureUri(
         context: Context,
@@ -38,6 +45,10 @@ object AppMediaStorage {
         )?.let(Uri::fromFile)
     }
 
+    /**
+     * Promotes a crop output to an app-owned candidate. The candidate remains journaled until the
+     * owning repository confirms that its URI was durably committed to the domain store.
+     */
     fun promoteCropOutput(
         context: Context,
         scope: AppMediaScope,
@@ -61,10 +72,12 @@ object AppMediaStorage {
                 )
             )
             if (!source.renameTo(target)) {
-                source.copyTo(target, overwrite = true)
-                source.delete()
+                source.copyTo(target, overwrite = false)
+                check(source.delete()) { "Crop source could not be removed after promotion." }
             }
-            toContentUri(context, target)
+            val promoted = toContentUri(context, target)
+            registerPending(context, promoted.toString())
+            promoted
         }.getOrNull()
     }
 
@@ -79,12 +92,32 @@ object AppMediaStorage {
         return toContentUri(context, file)
     }
 
+    /** Returns a FileProvider URI only for known app-owned media roots. */
+    fun toContentUriForOwnedPath(
+        context: Context,
+        path: String?
+    ): Uri? {
+        if (path.isNullOrBlank()) return null
+        val candidate = runCatching { File(path).canonicalFile }.getOrNull() ?: return null
+        val appContext = context.applicationContext
+        val allowedRoots = AppMediaScope.entries.map { mediaDirectory(appContext, it).canonicalFile } +
+            File(appContext.cacheDir, FEEDBACK_MEDIA_DIRECTORY).canonicalFile
+        if (allowedRoots.none { root -> candidate.isInside(root) }) return null
+        if (!candidate.isFile || candidate.length() <= 0L) return null
+        return runCatching { toContentUri(appContext, candidate) }.getOrNull()
+    }
+
+    /**
+     * Copies app-owned media into an independently owned target. A copy failure never falls back to
+     * the source URI because that would make two domain records own the same physical file.
+     */
     fun copyInternalMedia(
         context: Context,
         sourceUriString: String?,
         targetScope: AppMediaScope,
         ownerToken: String
     ): String? {
+        if (sourceUriString.isNullOrBlank()) return sourceUriString
         val sourceFile = resolveInternalMediaFile(
             context = context,
             uriString = sourceUriString
@@ -99,9 +132,59 @@ object AppMediaStorage {
                     ownerToken = ownerToken
                 )
             )
-            sourceFile.copyTo(targetFile, overwrite = true)
-            toContentUri(context, targetFile).toString()
-        }.getOrElse { sourceUriString }
+            sourceFile.copyTo(targetFile, overwrite = false)
+            val targetUri = toContentUri(context, targetFile).toString()
+            registerPending(context, targetUri)
+            targetUri
+        }.getOrNull()
+    }
+
+    /** Marks a pending media candidate as owned by a successfully committed domain record. */
+    fun commitPendingMedia(
+        context: Context,
+        uriString: String?
+    ) {
+        if (uriString.isNullOrBlank()) return
+        removePendingEntries(context, uriString)
+    }
+
+    /** Deletes a candidate only when it is still journaled as uncommitted. */
+    fun rollbackPendingMedia(
+        context: Context,
+        uriString: String?
+    ): Boolean {
+        if (uriString.isNullOrBlank() || !isPending(context, uriString)) return false
+        val deleted = deleteInternalMedia(context, uriString)
+        removePendingEntries(context, uriString)
+        return deleted
+    }
+
+    /**
+     * Reconciles process-death leftovers against authoritative domain references. Referenced media is
+     * committed; unreferenced candidates are deleted only after the grace window.
+     */
+    fun reconcilePendingMedia(
+        context: Context,
+        referencedUris: Collection<String>,
+        nowMillis: Long = System.currentTimeMillis()
+    ) {
+        val appContext = context.applicationContext
+        val referencedFiles = referencedUris.mapNotNull { value ->
+            resolveInternalMediaFile(appContext, value)?.canonicalPath
+        }.toSet()
+        val cutoff = nowMillis - MAX_PENDING_AGE_MILLIS
+
+        pendingEntries(appContext).forEach { entry ->
+            val file = resolveInternalMediaFile(appContext, entry.uri)
+            when {
+                file == null || !file.exists() -> removePendingKey(appContext, entry.key)
+                file.canonicalPath in referencedFiles -> removePendingKey(appContext, entry.key)
+                entry.createdAtMillis < cutoff -> {
+                    runCatching { file.delete() }
+                    removePendingKey(appContext, entry.key)
+                }
+            }
+        }
     }
 
     fun deleteInternalMedia(
@@ -112,7 +195,9 @@ object AppMediaStorage {
             context = context,
             uriString = uriString
         ) ?: return false
-        return runCatching { !file.exists() || file.delete() }.getOrDefault(false)
+        val deleted = runCatching { !file.exists() || file.delete() }.getOrDefault(false)
+        if (deleted) removePendingEntries(context, uriString)
+        return deleted
     }
 
     fun deleteInternalMedia(
@@ -192,10 +277,6 @@ object AppMediaStorage {
 
         val candidates = linkedSetOf<File>()
         val segments = uri.pathSegments
-
-        // FileProvider encodes the configured root name as the first path segment
-        // and the relative file path in the remaining segments. Reconstructing the
-        // relative path avoids relying on lastPathSegment for nested/encoded paths.
         if (segments.size >= 2) {
             val rootName = segments.first()
             val relativePath = segments.drop(1).joinToString(File.separator)
@@ -205,7 +286,6 @@ object AppMediaStorage {
                 }
         }
 
-        // Compatibility fallback for providers that expose only the file name.
         uri.lastPathSegment
             ?.substringAfterLast('/')
             ?.takeIf(String::isNotBlank)
@@ -215,8 +295,6 @@ object AppMediaStorage {
                 }
             }
 
-        // Final round-trip fallback: compare the canonical FileProvider URI for
-        // existing app-owned files. This is deterministic and remains fail-closed.
         if (candidates.none(File::exists)) {
             scopes.forEach { scope ->
                 mediaDirectory(context, scope).listFiles()
@@ -262,7 +340,7 @@ object AppMediaStorage {
         scope: AppMediaScope
     ): File {
         return File(context.applicationContext.filesDir, scope.directoryName).apply {
-            if (!exists()) mkdirs()
+            if (!exists()) check(mkdirs()) { "Media directory could not be created." }
         }
     }
 
@@ -278,6 +356,61 @@ object AppMediaStorage {
         )
     }
 
+    private fun registerPending(context: Context, uriString: String) {
+        val payload = JSONObject()
+            .put(JSON_URI, uriString)
+            .put(JSON_CREATED_AT, System.currentTimeMillis())
+            .toString()
+        synchronized(pendingLock) {
+            val committed = pendingPreferences(context).edit()
+                .putString(PENDING_PREFIX + UUID.randomUUID(), payload)
+                .commit()
+            check(committed) { "Pending media journal could not be committed." }
+        }
+    }
+
+    private fun pendingEntries(context: Context): List<PendingMediaEntry> =
+        synchronized(pendingLock) {
+            pendingPreferences(context).all.mapNotNull { (key, value) ->
+                if (!key.startsWith(PENDING_PREFIX) || value !is String) return@mapNotNull null
+                runCatching {
+                    val json = JSONObject(value)
+                    PendingMediaEntry(
+                        key = key,
+                        uri = json.getString(JSON_URI),
+                        createdAtMillis = json.getLong(JSON_CREATED_AT)
+                    )
+                }.getOrNull()
+            }
+        }
+
+    private fun isPending(context: Context, uriString: String): Boolean =
+        pendingEntries(context).any { entry -> entry.uri == uriString }
+
+    private fun removePendingEntries(context: Context, uriString: String?) {
+        if (uriString.isNullOrBlank()) return
+        val keys = pendingEntries(context)
+            .filter { entry -> entry.uri == uriString }
+            .map(PendingMediaEntry::key)
+        if (keys.isEmpty()) return
+        synchronized(pendingLock) {
+            val editor = pendingPreferences(context).edit()
+            keys.forEach(editor::remove)
+            check(editor.commit()) { "Pending media journal could not be updated." }
+        }
+    }
+
+    private fun removePendingKey(context: Context, key: String) {
+        synchronized(pendingLock) {
+            check(pendingPreferences(context).edit().remove(key).commit()) {
+                "Pending media journal could not be updated."
+            }
+        }
+    }
+
+    private fun pendingPreferences(context: Context) =
+        context.applicationContext.getSharedPreferences(PENDING_PREFERENCES, Context.MODE_PRIVATE)
+
     private fun File.isInside(root: File): Boolean {
         val candidatePath = runCatching { canonicalPath }.getOrNull() ?: return false
         val rootPath = runCatching { root.canonicalPath }.getOrNull() ?: return false
@@ -287,6 +420,12 @@ object AppMediaStorage {
     private fun safeOwnerToken(value: String): String {
         return value.ifBlank { "draft" }.replace(Regex("[^A-Za-z0-9_-]"), "_")
     }
+
+    private data class PendingMediaEntry(
+        val key: String,
+        val uri: String,
+        val createdAtMillis: Long
+    )
 }
 
 enum class AppMediaScope(
