@@ -10,16 +10,15 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
-import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentTankDetailDevicesBinding
+import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDeviceItem
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDevicesAdapter
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesEvent
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesUiState
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
-import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmBottomSheet
-import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmTone
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
@@ -64,11 +63,29 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
 
         _binding = FragmentTankDetailDevicesBinding.bind(view)
 
+        setupFeedbackResultListener()
         setupRecycler()
         setupClickListeners()
         observeViewModel()
 
         viewModel.bind(tankId)
+    }
+
+    private fun setupFeedbackResultListener() {
+        parentFragmentManager.setFragmentResultListener(
+            REMOVE_DEVICE_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (result.getString(FeedbackBottomSheet.RESULT_KEY) != FeedbackBottomSheet.RESULT_PRIMARY) {
+                return@setFragmentResultListener
+            }
+
+            val deviceUid = result.getString(FeedbackBottomSheet.RESULT_ACTION_ID)
+                ?.takeIf(String::isNotBlank)
+                ?: return@setFragmentResultListener
+
+            viewModel.removeDeviceFromTank(deviceUid)
+        }
     }
 
     private fun setupRecycler() {
@@ -180,18 +197,16 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
             return
         }
 
-        DeviceConfirmBottomSheet
-            .create(requireContext())
-            .show(
-                title = getString(R.string.aquarium_remove_device_title),
-                message = getString(R.string.aquarium_remove_device_message, item.title),
-                confirmText = getString(R.string.aquarium_remove_action),
-                cancelText = getString(R.string.common_cancel),
-                tone = DeviceConfirmTone.DANGER,
-                onConfirm = {
-                    viewModel.removeDeviceFromTank(item.deviceUid)
-                }
-            )
+        FeedbackBottomSheet.show(
+            fragmentManager = parentFragmentManager,
+            title = getString(R.string.aquarium_remove_device_title),
+            message = getString(R.string.aquarium_remove_device_message, item.title),
+            primaryText = getString(R.string.aquarium_remove_action),
+            cancelText = getString(R.string.common_cancel),
+            tone = FeedbackBottomSheet.FeedbackTone.DANGER,
+            requestKey = REMOVE_DEVICE_REQUEST_KEY,
+            actionId = item.deviceUid
+        )
     }
 
     private fun parentHost(): Host? {
@@ -212,6 +227,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     companion object {
 
         private const val ARG_TANK_ID = "tankId"
+        private const val REMOVE_DEVICE_REQUEST_KEY = "tank_detail_remove_device_result"
         private const val TANK_DEVICE_LOADING_OWNER =
             "TankDetailDevicesFragment.DeviceOperation"
 
