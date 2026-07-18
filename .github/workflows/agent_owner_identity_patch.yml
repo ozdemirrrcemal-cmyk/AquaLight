@@ -1,0 +1,80 @@
+name: Apply owner identity boundary
+
+on:
+  push:
+    branches:
+      - agent/stage7-notification-reminders
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[owner-identity-patch]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/stage7-notification-reminders
+          fetch-depth: 0
+
+      - name: Inject committed owner identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt")
+          text = path.read_text(encoding="utf-8")
+
+          old_import = "import com.aqua.aqualight.data.user.UserDataScope\n"
+          if text.count(old_import) != 1:
+              raise SystemExit("Expected exactly one UserDataScope import")
+          text = text.replace(old_import, "", 1)
+
+          old_property = '''    private val notificationPreferences by lazy {
+                  requireContext().requireAppContainer().notificationPreferenceUseCase
+              }
+          '''
+          new_property = '''    private val appContainer by lazy {
+                  requireContext().requireAppContainer()
+              }
+              private val notificationPreferences by lazy {
+                  appContainer.notificationPreferenceUseCase
+              }
+              private val ownerIdentity by lazy {
+                  appContainer.authenticatedOwnerIdentity
+              }
+          '''
+          if text.count(old_property) != 1:
+              raise SystemExit("Expected exactly one notification preference property")
+          text = text.replace(old_property, new_property, 1)
+
+          old_owner = "val ownerUid = UserDataScope.requireCurrentUid()"
+          new_owner = "val ownerUid = ownerIdentity.requireOwnerUid()"
+          if text.count(old_owner) != 1:
+              raise SystemExit("Expected exactly one direct owner lookup")
+          text = text.replace(old_owner, new_owner, 1)
+
+          if "UserDataScope.requireCurrentUid(" in text or "import com.aqua.aqualight.data.user.UserDataScope" in text:
+              raise SystemExit("Direct UI owner lookup remains")
+          if "authenticatedOwnerIdentity" not in text or "ownerIdentity.requireOwnerUid()" not in text:
+              raise SystemExit("Injected owner boundary is incomplete")
+
+          path.write_text(text, encoding="utf-8")
+          PY
+
+      - name: Remove one-time workflow and commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/agent_owner_identity_patch.yml
+          git config user.name "AquaLight CI"
+          git config user.email "actions@users.noreply.github.com"
+          git add app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt
+          git add .github/workflows/agent_owner_identity_patch.yml
+          git diff --cached --check
+          git commit -m "Inject owner identity into care task UI [owner-identity-patch]"
+          git push origin HEAD:agent/stage7-notification-reminders
