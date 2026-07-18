@@ -30,7 +30,7 @@ class CareProfileBottomSheet : BottomSheetDialogFragment(
         val percent = args.getInt(ARG_PERCENT).coerceIn(0, 100)
         val titles = args.getStringArrayList(ARG_TITLES).orEmpty()
         val subtitles = args.getStringArrayList(ARG_SUBTITLES).orEmpty()
-        val completed = args.getBooleanArray(ARG_COMPLETED).orEmpty()
+        val completed = args.getBooleanArray(ARG_COMPLETED) ?: booleanArrayOf()
         val tokens = args.getStringArrayList(ARG_TOKENS).orEmpty()
         val count = minOf(titles.size, subtitles.size, completed.size, tokens.size)
 
@@ -58,19 +58,20 @@ class CareProfileBottomSheet : BottomSheetDialogFragment(
                 binding.careProfileItemsContainer,
                 false
             )
+            val isCompleted = completed[index]
             row.tvCareProfileItemTitle.text = titles[index]
             row.tvCareProfileItemSubtitle.text = subtitles[index]
             row.tvCareProfileItemStatus.text = getString(
-                if (completed[index]) R.string.aquarium_care_profile_status_complete
+                if (isCompleted) R.string.aquarium_care_profile_status_complete
                 else R.string.aquarium_care_profile_status_missing
             )
             row.tvCareProfileItemStatus.setTextColor(
-                Color.parseColor(if (completed[index]) "#5FD6B4" else "#E0A84C")
+                Color.parseColor(if (isCompleted) "#5FD6B4" else "#E0A84C")
             )
             row.tvCareProfileItemStatus.background = rounded(
-                color = Color.parseColor(if (completed[index]) "#09251D" else "#2A2315"),
+                color = Color.parseColor(if (isCompleted) "#09251D" else "#2A2315"),
                 radius = resources.getDimension(R.dimen.care_profile_status_radius),
-                strokeColor = Color.parseColor(if (completed[index]) "#1E5A48" else "#6A4D1E"),
+                strokeColor = Color.parseColor(if (isCompleted) "#1E5A48" else "#6A4D1E"),
                 strokeWidth = resources.getDimensionPixelSize(R.dimen.care_profile_status_stroke)
             )
             row.root.setOnClickListener {
