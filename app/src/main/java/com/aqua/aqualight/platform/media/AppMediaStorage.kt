@@ -15,6 +15,7 @@ object AppMediaStorage {
     private const val PENDING_PREFERENCES = "app_media_pending_v1"
     private const val PENDING_PREFIX = "pending."
     private const val JSON_URI = "uri"
+    private const val JSON_OWNER_UID = "ownerUid"
     private const val JSON_CREATED_AT = "createdAt"
     private const val FEEDBACK_MEDIA_DIRECTORY = "feedback_media"
     private val pendingLock = Any()
@@ -53,8 +54,10 @@ object AppMediaStorage {
         context: Context,
         scope: AppMediaScope,
         ownerToken: String,
+        ownerUid: String,
         outputUri: Uri
     ): Uri? {
+        require(ownerUid.isNotBlank()) { "ownerUid must not be blank" }
         val source = resolveInternalMediaFile(
             context = context,
             uriString = outputUri.toString(),
@@ -76,7 +79,7 @@ object AppMediaStorage {
                 check(source.delete()) { "Crop source could not be removed after promotion." }
             }
             val promoted = toContentUri(context, target)
-            registerPending(context, promoted.toString())
+            registerPending(context, promoted.toString(), ownerUid)
             promoted
         }.getOrNull()
     }
@@ -115,8 +118,10 @@ object AppMediaStorage {
         context: Context,
         sourceUriString: String?,
         targetScope: AppMediaScope,
-        ownerToken: String
+        ownerToken: String,
+        ownerUid: String
     ): String? {
+        require(ownerUid.isNotBlank()) { "ownerUid must not be blank" }
         if (sourceUriString.isNullOrBlank()) return sourceUriString
         val sourceFile = resolveInternalMediaFile(
             context = context,
@@ -134,7 +139,7 @@ object AppMediaStorage {
             )
             sourceFile.copyTo(targetFile, overwrite = false)
             val targetUri = toContentUri(context, targetFile).toString()
-            registerPending(context, targetUri)
+            registerPending(context, targetUri, ownerUid)
             targetUri
         }.getOrNull()
     }
@@ -160,31 +165,51 @@ object AppMediaStorage {
     }
 
     /**
-     * Reconciles process-death leftovers against authoritative domain references. Referenced media is
-     * committed; unreferenced candidates are deleted only after the grace window.
+     * Reconciles process-death leftovers for one immutable owner against authoritative domain
+     * references. Referenced media is committed; unreferenced candidates are deleted after grace.
      */
     fun reconcilePendingMedia(
         context: Context,
+        ownerUid: String,
         referencedUris: Collection<String>,
         nowMillis: Long = System.currentTimeMillis()
     ) {
+        require(ownerUid.isNotBlank()) { "ownerUid must not be blank" }
         val appContext = context.applicationContext
         val referencedFiles = referencedUris.mapNotNull { value ->
             resolveInternalMediaFile(appContext, value)?.canonicalPath
         }.toSet()
         val cutoff = nowMillis - MAX_PENDING_AGE_MILLIS
 
-        pendingEntries(appContext).forEach { entry ->
-            val file = resolveInternalMediaFile(appContext, entry.uri)
-            when {
-                file == null || !file.exists() -> removePendingKey(appContext, entry.key)
-                file.canonicalPath in referencedFiles -> removePendingKey(appContext, entry.key)
-                entry.createdAtMillis < cutoff -> {
-                    runCatching { file.delete() }
-                    removePendingKey(appContext, entry.key)
+        pendingEntries(appContext)
+            .filter { entry -> entry.ownerUid == ownerUid }
+            .forEach { entry ->
+                val file = resolveInternalMediaFile(appContext, entry.uri)
+                when {
+                    file == null || !file.exists() -> removePendingKey(appContext, entry.key)
+                    file.canonicalPath in referencedFiles -> removePendingKey(appContext, entry.key)
+                    entry.createdAtMillis < cutoff -> {
+                        runCatching { file.delete() }
+                        removePendingKey(appContext, entry.key)
+                    }
                 }
             }
-        }
+    }
+
+    /** Used only after an owner account has been durably cleared. */
+    fun discardPendingMediaForOwner(
+        context: Context,
+        ownerUid: String
+    ) {
+        if (ownerUid.isBlank()) return
+        pendingEntries(context)
+            .filter { entry -> entry.ownerUid == ownerUid }
+            .forEach { entry ->
+                resolveInternalMediaFile(context, entry.uri)?.let { file ->
+                    runCatching { file.delete() }
+                }
+                removePendingKey(context, entry.key)
+            }
     }
 
     fun deleteInternalMedia(
@@ -356,9 +381,14 @@ object AppMediaStorage {
         )
     }
 
-    private fun registerPending(context: Context, uriString: String) {
+    private fun registerPending(
+        context: Context,
+        uriString: String,
+        ownerUid: String
+    ) {
         val payload = JSONObject()
             .put(JSON_URI, uriString)
+            .put(JSON_OWNER_UID, ownerUid)
             .put(JSON_CREATED_AT, System.currentTimeMillis())
             .toString()
         synchronized(pendingLock) {
@@ -378,6 +408,7 @@ object AppMediaStorage {
                     PendingMediaEntry(
                         key = key,
                         uri = json.getString(JSON_URI),
+                        ownerUid = json.getString(JSON_OWNER_UID),
                         createdAtMillis = json.getLong(JSON_CREATED_AT)
                     )
                 }.getOrNull()
@@ -424,6 +455,7 @@ object AppMediaStorage {
     private data class PendingMediaEntry(
         val key: String,
         val uri: String,
+        val ownerUid: String,
         val createdAtMillis: Long
     )
 }
