@@ -5,6 +5,10 @@
     <dimen name="feedback_snackbar_bottom_margin">24dp</dimen>
     <dimen name="feedback_snackbar_elevation">8dp</dimen>
 
+    <dimen name="global_action_detail_gap">11dp</dimen>
+    <dimen name="global_action_button_height">50dp</dimen>
+    <dimen name="global_action_button_gap">10dp</dimen>
+
     <dimen name="care_sheet_category_text_size">12sp</dimen>
     <dimen name="care_sheet_category_first_top_margin">2dp</dimen>
     <dimen name="care_sheet_category_top_margin">14dp</dimen>
