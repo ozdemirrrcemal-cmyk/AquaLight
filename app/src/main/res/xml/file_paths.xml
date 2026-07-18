@@ -10,9 +10,14 @@
     <files-path
         name="tank_photos"
         path="tank_photos/" />
-		
+
+    <!-- Bounded, app-owned source prepared before profile/tank cropping. -->
     <cache-path
-    name="tank_exports"
-    path="tank_exports/" />
+        name="feedback_media"
+        path="feedback_media/" />
+
+    <cache-path
+        name="tank_exports"
+        path="tank_exports/" />
 
 </paths>
