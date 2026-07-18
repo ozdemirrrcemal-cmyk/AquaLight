@@ -1,0 +1,54 @@
+name: Apply Verified Stage 8 Patch
+
+on:
+  push:
+    branches:
+      - agent/stage-8-process-safe-feedback
+    paths:
+      - ".stage8/ready"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stage8-verified-patch
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/stage-8-process-safe-feedback
+          fetch-depth: 0
+
+      - name: Apply verified patch set
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          patches=(.stage8/*.patch)
+          if (( ${#patches[@]} == 0 )); then
+            echo "No Stage 8 patch files found." >&2
+            exit 1
+          fi
+          for patch in "${patches[@]}"; do
+            echo "Applying ${patch}"
+            git apply --check "${patch}"
+            git apply --index "${patch}"
+          done
+          python3 tools/process_safe_feedback_guard.py
+
+      - name: Commit completed migration
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -r .stage8
+          git rm .github/workflows/stage8_apply_verified_patch.yml
+          git config user.name "AquaLight Stage 8 CI"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "Complete Stage 8 process-safe feedback migration"
+          git push origin HEAD:agent/stage-8-process-safe-feedback
