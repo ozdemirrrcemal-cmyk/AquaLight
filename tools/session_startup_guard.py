@@ -142,10 +142,17 @@ reminder_worker = read(reminder_worker_path)
 for token, reason in (
     ("KEY_OWNER_UID", "reminder reconciliation work must carry an immutable owner UID"),
     ("CareReminderReconcileRuntime", "reminder worker must use the testable owner-stability boundary"),
-    ("CareReminderCoordinator", "reminder worker must delegate alarm reconciliation centrally"),
-    ("OwnerNotificationPreferences", "reminder worker must load the owner-scoped app preference"),
+    ("NotificationPlatform.get", "reminder worker must use the central notification composition"),
+    ("preferenceUseCase", "reminder worker must reconcile through the central use-case"),
 ):
     require(reminder_worker_path, reminder_worker, token, reason)
+for token in ("CareReminderCoordinator", "OwnerNotificationPreferences"):
+    forbid(
+        reminder_worker_path,
+        reminder_worker,
+        token,
+        "reminder worker must not revive removed parallel notification authorities",
+    )
 
 boot_path = background_paths[2]
 boot = read(boot_path)
@@ -166,12 +173,21 @@ for token in ("goAsync()", "CareTaskDataStoreManager", "UserDataScope.withOwnerU
 delivery_worker_path = background_paths[3]
 delivery_worker = read(delivery_worker_path)
 for token, reason in (
-    ("OwnerNotificationPreferences", "delivery must re-check the owner app preference"),
-    ("CareReminderDeliveryPolicy.shouldDeliver(task, tank)", "delivery must revalidate persisted task and tank state"),
+    ("NotificationPlatform.get", "delivery must use the central notification composition"),
+    ("preferenceUseCase.snapshot", "delivery must re-check owner preference and Android readiness"),
+    ("dispatchUseCase.dispatchCareReminder", "final visible delivery must use the central dispatch use-case"),
+    ("CareReminderDeliveryPolicy.shouldDeliver(ownerTask, tank)", "delivery must revalidate persisted task and tank state"),
     ("UserDataScope.withOwnerUid", "delivery reads must remain owner-pinned"),
     ("ExistingWorkPolicy.KEEP", "duplicate alarm broadcasts must not duplicate in-flight delivery"),
 ):
     require(delivery_worker_path, delivery_worker, token, reason)
+for token in ("OwnerNotificationPreferences", "NotificationHelper"):
+    forbid(
+        delivery_worker_path,
+        delivery_worker,
+        token,
+        "delivery must not bypass central notification use-cases",
+    )
 
 alarm_receiver_path = (
     "app/src/main/java/com/aqua/aqualight/data/care/reminder/"
@@ -226,20 +242,16 @@ reminder_runtime_tests_path = (
 reminder_runtime_tests = read(reminder_runtime_tests_path)
 for token, reason in (
     (
-        "authenticatedOwnerSynchronizesPreferenceAndReconciles",
-        "authenticated restore must synchronize and reconcile only its owner",
+        "authenticatedOwnerReconcilesExactlyOnce",
+        "authenticated restore must reconcile exactly one active owner",
     ),
     (
-        "accountSwitchDuringPreferenceProjectionCancelsOldOwner",
-        "account switching during restore must cancel stale owner alarms",
+        "accountSwitchDuringReconcileCancelsOutgoingOwner",
+        "account switching during restore must cancel stale owner state",
     ),
     (
-        "accountSwitchAfterReconcileCancelsOldOwnerAlarms",
-        "post-reconcile account switching must remove stale owner alarms",
-    ),
-    (
-        "unauthenticatedOrDifferentOwnerDoesNotReadStores",
-        "unauthenticated boot must remain inert",
+        "unauthenticatedOrDifferentOwnerDoesNotTouchNotificationState",
+        "unauthenticated or different-owner boot must remain inert",
     ),
 ):
     require(reminder_runtime_tests_path, reminder_runtime_tests, token, reason)
