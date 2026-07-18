@@ -3,11 +3,16 @@ package com.aqua.aqualight.ui.common.feedback
 import android.os.Bundle
 import androidx.core.os.bundleOf
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetAction
+import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetActionStyle
+import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetDetailRow
 import com.aqua.aqualight.ui.common.bottomsheet.CareTaskTypeBottomSheetFragment
 import com.aqua.aqualight.ui.common.bottomsheet.CountryPickerBottomSheet
+import com.aqua.aqualight.ui.common.bottomsheet.GlobalActionBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.TankSettingsEditorBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.ThemeBottomSheet
+import com.aqua.aqualight.ui.common.loading.LoadingOverlayDialogFragment
 import com.aqua.aqualight.ui.common.permission.CapabilityPermissionBottomSheet
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -27,6 +32,8 @@ class ProcessSafeFeedbackInstrumentedTest {
             CareTaskTypeBottomSheetFragment::class.java,
             CapabilityPermissionBottomSheet::class.java,
             TankSettingsEditorBottomSheet::class.java,
+            GlobalActionBottomSheet::class.java,
+            LoadingOverlayDialogFragment::class.java,
             FeedbackBottomSheet::class.java
         )
 
@@ -47,6 +54,32 @@ class ProcessSafeFeedbackInstrumentedTest {
             actionId = "device-123"
         )
         val recreated = FeedbackBottomSheet::class.java
+            .getDeclaredConstructor()
+            .newInstance()
+            .apply {
+                arguments = Bundle(original.requireArguments())
+            }
+
+        assertEquals(original.requireArguments(), recreated.requireArguments())
+    }
+
+    @Test
+    fun globalActionArgumentsCanRecreateDetailsAndActions() {
+        val original = GlobalActionBottomSheet.newInstance(
+            title = "Completed task",
+            message = "Choose an action",
+            details = listOf(BottomSheetDetailRow("Aquarium", "Tank 1")),
+            actions = listOf(
+                BottomSheetAction(
+                    id = "delete",
+                    text = "Delete",
+                    style = BottomSheetActionStyle.DANGER
+                )
+            ),
+            requestKey = "test_global_action_result",
+            payloadId = "task-42"
+        )
+        val recreated = GlobalActionBottomSheet::class.java
             .getDeclaredConstructor()
             .newInstance()
             .apply {
