@@ -1,10 +1,12 @@
 package com.aqua.aqualight.data.care.reminder
 
 import android.content.Context
+import android.os.Build
 import androidx.work.BackoffPolicy
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
@@ -180,7 +182,7 @@ class CareReminderDeliveryWorker(
             val owner = UserDataScope.normalizeOwnerUid(ownerUid)
             if (taskId <= 0L || owner.isBlank()) return
 
-            val request = OneTimeWorkRequestBuilder<CareReminderDeliveryWorker>()
+            val requestBuilder = OneTimeWorkRequestBuilder<CareReminderDeliveryWorker>()
                 .setInputData(
                     workDataOf(
                         KEY_TASK_ID to taskId,
@@ -194,12 +196,20 @@ class CareReminderDeliveryWorker(
                     BACKOFF_SECONDS,
                     TimeUnit.SECONDS
                 )
-                .build()
+
+            // Android 12+ can execute this short user-visible delivery as an expedited
+            // job. Earlier APIs keep the normal Worker path to avoid a foreground-service
+            // requirement solely for posting a reminder.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                requestBuilder.setExpedited(
+                    OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST
+                )
+            }
 
             WorkManager.getInstance(context.applicationContext).enqueueUniqueWork(
                 CareReminderIdentity.deliveryWorkName(owner, taskId, occurrence),
-                ExistingWorkPolicy.KEEP,
-                request
+                ExistingWorkPolicy.REPLACE,
+                requestBuilder.build()
             )
         }
 
