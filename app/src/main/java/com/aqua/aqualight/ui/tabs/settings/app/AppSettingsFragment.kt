@@ -47,6 +47,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
     private var changingNotificationSwitchProgrammatically = false
     private var notificationSnapshot: NotificationPreferenceSnapshot? = null
+    private var preciseReminderAccessGranted = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -88,7 +89,10 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
         cardNotifications.setOnClickListener {
             val snapshot = notificationSnapshot
-            if (snapshot?.ownerPreferenceEnabled == true && !snapshot.allCategoriesDeliverable) {
+            if (
+                snapshot?.ownerPreferenceEnabled == true &&
+                (!snapshot.allCategoriesDeliverable || !preciseReminderAccessGranted)
+            ) {
                 repairAndEnableNotifications()
             }
         }
@@ -116,14 +120,20 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         if (_binding == null) return
         viewLifecycleOwner.lifecycleScope.launch {
             val snapshot = notificationPreferences.snapshot(ownerIdentity.requireOwnerUid())
+            val preciseGranted = permissionCoordinator.isGranted(
+                AppCapability.PRECISE_REMINDERS
+            )
             notificationSnapshot = snapshot
+            preciseReminderAccessGranted = preciseGranted
             setNotificationSwitchChecked(snapshot.ownerPreferenceEnabled)
             binding.tvNotificationsSubtitle.setText(
                 when {
                     !snapshot.ownerPreferenceEnabled -> {
                         R.string.settings_notifications_subtitle_disabled
                     }
-                    snapshot.delivery.values.any { !it.runtimePermissionGranted || !it.appNotificationsEnabled } -> {
+                    snapshot.delivery.values.any {
+                        !it.runtimePermissionGranted || !it.appNotificationsEnabled
+                    } -> {
                         R.string.settings_notifications_subtitle_system_blocked
                     }
                     snapshot.delivery.values.any {
@@ -131,6 +141,9 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
                             it.channelState == NotificationChannelState.MISSING
                     } -> {
                         R.string.settings_notifications_subtitle_channel_blocked
+                    }
+                    !preciseGranted -> {
+                        R.string.settings_notifications_subtitle_precise_reminders_blocked
                     }
                     else -> R.string.settings_notifications_subtitle_enabled
                 }
@@ -172,6 +185,14 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             if (blockedCategory != null) {
                 permissionCoordinator.openNotificationChannelSettingsFor(
                     channelId = notificationPreferences.channelId(blockedCategory),
+                    actionToken = ACTION_ENABLE_NOTIFICATIONS
+                )
+                return@launch
+            }
+
+            if (!permissionCoordinator.isGranted(AppCapability.PRECISE_REMINDERS)) {
+                permissionCoordinator.runWhenGranted(
+                    capability = AppCapability.PRECISE_REMINDERS,
                     actionToken = ACTION_ENABLE_NOTIFICATIONS
                 )
                 return@launch
