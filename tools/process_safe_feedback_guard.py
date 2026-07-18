@@ -15,6 +15,11 @@ LEGACY_DEVICE_TONE = UI_ROOT / "tabs/devices/common/feedback/DeviceConfirmTone.k
 SNACKBAR_RENDERER = APP_ROOT / "base/BaseActivity.kt"
 TRANSITIONAL_RAW_BOTTOM_SHEET_ALLOWLIST = {
     UI_ROOT / "common/bottomsheet/SettingsContentBottomSheet.kt",
+    UI_ROOT / "common/bottomsheet/GlobalActionBottomSheet.kt",
+    UI_ROOT / "tabs/maintenance/AddCareTaskFragment.kt",
+    UI_ROOT / "tabs/aquarium/materials/CustomMaterialSheet.kt",
+    UI_ROOT / "tabs/aquarium/detail/settings/TankSettingsFragment.kt",
+    UI_ROOT / "tabs/aquarium/detail/TankDetailLivestockFormFragment.kt",
 }
 TRANSITIONAL_TOAST_ALLOWLIST = {
     UI_ROOT / "tabs/devices/add/DeviceWifiProvisioningFragment.kt",
