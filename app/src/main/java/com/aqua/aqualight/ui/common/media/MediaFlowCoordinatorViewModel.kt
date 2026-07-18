@@ -34,6 +34,7 @@ class MediaFlowCoordinatorViewModel(
     context: Context,
     private val scope: AppMediaScope,
     private val ownerToken: String,
+    private val ownerUid: String,
     private val cropSpec: MediaCropSpec,
     private val mediaProcessor: FeedbackMediaProcessor,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
@@ -52,6 +53,7 @@ class MediaFlowCoordinatorViewModel(
     val selection: StateFlow<MediaSelectionState> = _selection.asStateFlow()
 
     init {
+        require(ownerUid.isNotBlank()) { "ownerUid must not be blank" }
         viewModelScope.launch(dispatcher) {
             AppMediaStorage.cleanupStaleTemporaryFiles(appContext)
             mediaProcessor.cleanupExpired()
@@ -155,6 +157,7 @@ class MediaFlowCoordinatorViewModel(
                 context = appContext,
                 scope = scope,
                 ownerToken = ownerToken,
+                ownerUid = ownerUid,
                 outputUri = resultUri
             )
         } ?: return@withLock null
@@ -340,6 +343,7 @@ class MediaFlowCoordinatorViewModel(
             context: Context,
             scope: AppMediaScope,
             ownerToken: String,
+            ownerUid: String,
             cropSpec: MediaCropSpec,
             mediaProcessor: FeedbackMediaProcessor
         ): ViewModelProvider.Factory {
@@ -356,6 +360,7 @@ class MediaFlowCoordinatorViewModel(
                         context = context,
                         scope = scope,
                         ownerToken = ownerToken,
+                        ownerUid = ownerUid,
                         cropSpec = cropSpec,
                         mediaProcessor = mediaProcessor
                     )
