@@ -135,11 +135,13 @@ forbid(
 require(
     "owner_factory",
     "internal class OwnerViewModelFactory",
+    "notificationPreferenceUseCase: NotificationPreferenceUseCase",
     "modelClass in OWNER_BINDINGS",
     "val graph = ownerGraphResolver.requireActive()",
     "ownerUidProvider = { graph.ownerUid }",
+    "notificationPreferences = notificationPreferenceUseCase",
+    "cancelCareTaskReminder =",
     "No owner-scoped ViewModel binding",
-    "pending session is",
 )
 forbid(
     "owner_factory",
