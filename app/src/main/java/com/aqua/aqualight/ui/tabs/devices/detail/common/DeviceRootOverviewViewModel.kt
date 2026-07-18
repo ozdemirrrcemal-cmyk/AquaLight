@@ -1,9 +1,12 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.common
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
+import com.aqua.aqualight.application.text.AppTextResolver
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,7 +14,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class DeviceRootOverviewViewModel(
-    private val operations: DeviceRootOperations
+    private val operations: DeviceRootOperations,
+    private val textResolver: AppTextResolver
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceRootOverviewUiState())
@@ -52,19 +56,30 @@ class DeviceRootOverviewViewModel(
         val menuSections = DeviceRootMenuMapper.overview(kind = kind, snapshot = this)
         val count = DeviceRootPresentationMapper.primaryCount(this, kind)
         return DeviceRootOverviewUiState(
-            title = title.ifBlank { fallbackTitle }.ifBlank { kind.defaultTitle },
+            title = title.ifBlank { fallbackTitle }.ifBlank { text(kind.defaultTitleRes) },
             deviceUid = deviceUid,
-            connectionStatus = DeviceRootPresentationMapper.availabilityLabel(this),
-            ipText = ipAddress.ifBlank { "Unknown" },
-            firmwareText = firmwareLabel.ifBlank { "Unknown" },
-            modelText = modelLabel.ifBlank { "Unknown" },
-            primaryCountLabel = kind.primaryCountLabel,
-            primaryCountText = count.takeIf { it > 0 }?.toString() ?: "Unknown",
-            featuresText = DeviceRootPresentationMapper.overviewFeatureLabel(this, kind),
-            primarySectionTitle = kind.primarySectionTitle,
-            primarySectionPlaceholder = menuSections.primaryText(kind.primarySectionPlaceholder),
-            secondarySectionTitle = kind.secondarySectionTitle,
-            secondarySectionPlaceholder = menuSections.secondaryText(kind.secondarySectionPlaceholder)
+            connectionStatus = DeviceRootPresentationMapper.availabilityLabel(this, textResolver),
+            ipText = ipAddress.ifBlank { text(R.string.device_runtime_unknown) },
+            firmwareText = firmwareLabel.ifBlank { text(R.string.device_runtime_unknown) },
+            modelText = modelLabel.ifBlank { text(R.string.device_runtime_unknown) },
+            primaryCountLabel = text(kind.primaryCountLabelRes),
+            primaryCountText = count.takeIf { it > 0 }?.toString()
+                ?: text(R.string.device_runtime_unknown),
+            featuresText = DeviceRootPresentationMapper.overviewFeatureLabel(
+                snapshot = this,
+                kind = kind,
+                textResolver = textResolver
+            ),
+            primarySectionTitle = text(kind.primarySectionTitleRes),
+            primarySectionPlaceholder = menuSections.primaryText(
+                textResolver,
+                kind.primarySectionPlaceholderRes
+            ),
+            secondarySectionTitle = text(kind.secondarySectionTitleRes),
+            secondarySectionPlaceholder = menuSections.secondaryText(
+                textResolver,
+                kind.secondarySectionPlaceholderRes
+            )
         )
     }
 
@@ -73,63 +88,70 @@ class DeviceRootOverviewViewModel(
         fallbackTitle: String,
         deviceUid: String
     ) = DeviceRootOverviewUiState(
-        title = fallbackTitle.ifBlank { kind.defaultTitle },
+        title = fallbackTitle.ifBlank { text(kind.defaultTitleRes) },
         deviceUid = deviceUid,
-        connectionStatus = "Offline",
-        primaryCountLabel = kind.primaryCountLabel,
-        primarySectionTitle = kind.primarySectionTitle,
-        primarySectionPlaceholder = kind.primarySectionPlaceholder,
-        secondarySectionTitle = kind.secondarySectionTitle,
-        secondarySectionPlaceholder = kind.secondarySectionPlaceholder
+        connectionStatus = text(R.string.device_runtime_offline),
+        ipText = text(R.string.device_runtime_unknown),
+        firmwareText = text(R.string.device_runtime_unknown),
+        modelText = text(R.string.device_runtime_unknown),
+        primaryCountLabel = text(kind.primaryCountLabelRes),
+        primaryCountText = text(R.string.device_runtime_unknown),
+        featuresText = text(R.string.device_runtime_unknown),
+        primarySectionTitle = text(kind.primarySectionTitleRes),
+        primarySectionPlaceholder = text(kind.primarySectionPlaceholderRes),
+        secondarySectionTitle = text(kind.secondarySectionTitleRes),
+        secondarySectionPlaceholder = text(kind.secondarySectionPlaceholderRes)
     )
+
+    private fun text(@StringRes resId: Int): String = textResolver.get(resId)
 }
 
 enum class DeviceRootKind(
-    val defaultTitle: String,
-    val primaryCountLabel: String,
-    val primarySectionTitle: String,
-    val primarySectionPlaceholder: String,
-    val secondarySectionTitle: String,
-    val secondarySectionPlaceholder: String
+    @StringRes val defaultTitleRes: Int,
+    @StringRes val primaryCountLabelRes: Int,
+    @StringRes val primarySectionTitleRes: Int,
+    @StringRes val primarySectionPlaceholderRes: Int,
+    @StringRes val secondarySectionTitleRes: Int,
+    @StringRes val secondarySectionPlaceholderRes: Int
 ) {
     DOSING(
-        defaultTitle = "Dosing",
-        primaryCountLabel = "Dosing channels",
-        primarySectionTitle = "Channel controls",
-        primarySectionPlaceholder = "Dosing channel controls hazırlanıyor.",
-        secondarySectionTitle = "Schedules",
-        secondarySectionPlaceholder = "Dosing schedules hazırlanıyor."
+        defaultTitleRes = R.string.device_root_dosing_title,
+        primaryCountLabelRes = R.string.device_root_dosing_count_label,
+        primarySectionTitleRes = R.string.device_root_dosing_primary_title,
+        primarySectionPlaceholderRes = R.string.device_root_dosing_primary_empty,
+        secondarySectionTitleRes = R.string.device_root_dosing_secondary_title,
+        secondarySectionPlaceholderRes = R.string.device_root_dosing_secondary_empty
     ),
     TIMER(
-        defaultTitle = "Timer",
-        primaryCountLabel = "Timer channels",
-        primarySectionTitle = "Timer channels",
-        primarySectionPlaceholder = "Timer channel controls hazırlanıyor.",
-        secondarySectionTitle = "Schedules",
-        secondarySectionPlaceholder = "Timer schedules hazırlanıyor."
+        defaultTitleRes = R.string.device_root_timer_title,
+        primaryCountLabelRes = R.string.device_root_timer_count_label,
+        primarySectionTitleRes = R.string.device_root_timer_primary_title,
+        primarySectionPlaceholderRes = R.string.device_root_timer_primary_empty,
+        secondarySectionTitleRes = R.string.device_root_timer_secondary_title,
+        secondarySectionPlaceholderRes = R.string.device_root_timer_secondary_empty
     ),
     COOLING(
-        defaultTitle = "Cooling",
-        primaryCountLabel = "Fan outputs",
-        primarySectionTitle = "Fan control",
-        primarySectionPlaceholder = "Fan control hazırlanıyor.",
-        secondarySectionTitle = "Temperature automation",
-        secondarySectionPlaceholder = "Temperature automation hazırlanıyor."
+        defaultTitleRes = R.string.device_root_cooling_title,
+        primaryCountLabelRes = R.string.device_root_cooling_count_label,
+        primarySectionTitleRes = R.string.device_root_cooling_primary_title,
+        primarySectionPlaceholderRes = R.string.device_root_cooling_primary_empty,
+        secondarySectionTitleRes = R.string.device_root_cooling_secondary_title,
+        secondarySectionPlaceholderRes = R.string.device_root_cooling_secondary_empty
     )
 }
 
 data class DeviceRootOverviewUiState(
-    val title: String = "Device",
+    val title: String = "",
     val deviceUid: String = "",
-    val connectionStatus: String = "Offline",
-    val ipText: String = "Unknown",
-    val firmwareText: String = "Unknown",
-    val modelText: String = "Unknown",
-    val primaryCountLabel: String = "Channels",
-    val primaryCountText: String = "Unknown",
-    val featuresText: String = "Unknown",
-    val primarySectionTitle: String = "Controls",
-    val primarySectionPlaceholder: String = "Controls hazırlanıyor.",
-    val secondarySectionTitle: String = "Schedules",
-    val secondarySectionPlaceholder: String = "Schedules hazırlanıyor."
+    val connectionStatus: String = "",
+    val ipText: String = "",
+    val firmwareText: String = "",
+    val modelText: String = "",
+    val primaryCountLabel: String = "",
+    val primaryCountText: String = "",
+    val featuresText: String = "",
+    val primarySectionTitle: String = "",
+    val primarySectionPlaceholder: String = "",
+    val secondarySectionTitle: String = "",
+    val secondarySectionPlaceholder: String = ""
 )
