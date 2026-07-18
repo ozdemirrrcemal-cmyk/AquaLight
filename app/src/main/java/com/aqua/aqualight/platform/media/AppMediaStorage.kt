@@ -15,11 +15,14 @@ object AppMediaStorage {
     private const val MAX_PENDING_AGE_MILLIS = 24L * 60L * 60L * 1000L
     private const val PENDING_PREFERENCES = "app_media_pending_v1"
     private const val PENDING_PREFIX = "pending."
+    private const val DELETION_PREFERENCES = "app_media_deletion_v1"
+    private const val DELETION_PREFIX = "deletion."
     private const val JSON_URI = "uri"
     private const val JSON_OWNER_UID = "ownerUid"
     private const val JSON_CREATED_AT = "createdAt"
     private const val FEEDBACK_MEDIA_DIRECTORY = "feedback_media"
     private val pendingLock = Any()
+    private val deletionLock = Any()
 
     fun createCameraCaptureUri(
         context: Context,
@@ -66,7 +69,7 @@ object AppMediaStorage {
         return try {
             target = File(
                 mediaDirectory(context, scope),
-                buildFileName(scope, MediaFileRole.SAVED, ownerToken)
+                buildSavedFileName(scope, ownerUid, ownerToken)
             )
             if (!source.renameTo(target)) {
                 source.copyTo(target, overwrite = false)
@@ -132,7 +135,7 @@ object AppMediaStorage {
         return try {
             targetFile = File(
                 mediaDirectory(context, targetScope),
-                buildFileName(targetScope, MediaFileRole.SAVED, ownerToken)
+                buildSavedFileName(targetScope, ownerUid, ownerToken)
             )
             sourceFile.copyTo(targetFile, overwrite = false)
             val targetUri = toContentUri(context, targetFile).toString()
@@ -150,12 +153,49 @@ object AppMediaStorage {
         removePendingEntries(context, uriString)
     }
 
-    /** Deletes a candidate only when it is still journaled as uncommitted. */
-    fun rollbackPendingMedia(context: Context, uriString: String?): Boolean {
+    /**
+     * Deletes a candidate only while it is still journaled as uncommitted.
+     * The recovery record is retained when deletion fails, so process-start recovery can retry.
+     */
+    fun rollbackPendingMedia(context: Context, uriString: String?): Boolean =
+        rollbackPendingMedia(context, uriString) { file -> !file.exists() || file.delete() }
+
+    internal fun rollbackPendingMedia(
+        context: Context,
+        uriString: String?,
+        deleteFile: (File) -> Boolean
+    ): Boolean {
         if (uriString.isNullOrBlank() || !isPending(context, uriString)) return false
-        val deleted = deleteInternalMedia(context, uriString)
-        removePendingEntries(context, uriString)
+        val file = resolveInternalMediaFile(context, uriString) ?: return false
+        val deleted = runCatching { !file.exists() || deleteFile(file) }.getOrDefault(false)
+        if (deleted) removePendingEntries(context, uriString)
         return deleted
+    }
+
+    /**
+     * Journals a superseded committed file before deletion. A journal failure never risks deleting
+     * a still-referenced file; the owner-scoped committed-file sweep is the durable fallback.
+     */
+    fun deleteAfterCommit(
+        context: Context,
+        ownerUid: String,
+        uriString: String?
+    ): Boolean = deleteAfterCommit(context, ownerUid, uriString) { file ->
+        !file.exists() || file.delete()
+    }
+
+    internal fun deleteAfterCommit(
+        context: Context,
+        ownerUid: String,
+        uriString: String?,
+        deleteFile: (File) -> Boolean
+    ): Boolean {
+        require(ownerUid.isNotBlank()) { "ownerUid must not be blank" }
+        if (uriString.isNullOrBlank()) return true
+        val file = resolveInternalMediaFile(context, uriString) ?: return true
+        if (!file.exists()) return true
+        val entry = registerDeletion(context, uriString, ownerUid)
+        return reconcileDeletionEntry(context, entry, deleteFile)
     }
 
     /**
@@ -191,6 +231,69 @@ object AppMediaStorage {
             }
     }
 
+    /** Retries committed-file deletions without ever deleting a currently referenced URI. */
+    fun reconcilePendingDeletions(
+        context: Context,
+        ownerUid: String,
+        referencedUris: Collection<String>
+    ) {
+        require(ownerUid.isNotBlank()) { "ownerUid must not be blank" }
+        val appContext = context.applicationContext
+        val referencedFiles = referencedUris.mapNotNull { value ->
+            resolveInternalMediaFile(appContext, value)?.canonicalPath
+        }.toSet()
+
+        deletionEntries(appContext)
+            .filter { entry -> entry.ownerUid == ownerUid }
+            .forEach { entry ->
+                val file = resolveInternalMediaFile(appContext, entry.uri)
+                when {
+                    file == null || !file.exists() -> removeDeletionKey(appContext, entry.key)
+                    file.canonicalPath in referencedFiles -> Unit
+                    else -> reconcileDeletionEntry(appContext, entry) { candidate ->
+                        !candidate.exists() || candidate.delete()
+                    }
+                }
+            }
+    }
+
+    /**
+     * Owner-prefixed saved files provide a second recovery layer when deletion-journal persistence
+     * itself fails. Only unreferenced files older than the grace window are removed.
+     */
+    fun reconcileUnreferencedCommittedMedia(
+        context: Context,
+        ownerUid: String,
+        referencedUris: Collection<String>,
+        nowMillis: Long = System.currentTimeMillis()
+    ) {
+        require(ownerUid.isNotBlank()) { "ownerUid must not be blank" }
+        val appContext = context.applicationContext
+        val referencedFiles = referencedUris.mapNotNull { value ->
+            resolveInternalMediaFile(appContext, value)?.canonicalPath
+        }.toSet()
+        val cutoff = nowMillis - MAX_PENDING_AGE_MILLIS
+
+        AppMediaScope.entries.forEach { scope ->
+            val ownerPrefix = savedOwnerPrefix(scope, ownerUid)
+            mediaDirectory(appContext, scope).listFiles()
+                ?.asSequence()
+                ?.filter(File::isFile)
+                ?.filter { file -> file.name.startsWith(ownerPrefix) }
+                ?.filter { file -> file.canonicalPath !in referencedFiles }
+                ?.filter { file -> file.lastModified() < cutoff }
+                ?.forEach { file ->
+                    val uriString = runCatching {
+                        toContentUri(appContext, file).toString()
+                    }.getOrNull()
+                    if (!file.exists() || file.delete()) {
+                        removeDeletionEntries(appContext, uriString)
+                        removePendingEntries(appContext, uriString)
+                    }
+                }
+        }
+    }
+
     /** Used only after an owner account has been durably cleared. */
     fun discardPendingMediaForOwner(context: Context, ownerUid: String) {
         if (ownerUid.isBlank()) return
@@ -202,12 +305,23 @@ object AppMediaStorage {
                     removePendingKey(context, entry.key)
                 }
             }
+        deletionEntries(context)
+            .filter { entry -> entry.ownerUid == ownerUid }
+            .forEach { entry ->
+                val file = resolveInternalMediaFile(context, entry.uri)
+                if (file == null || !file.exists() || file.delete()) {
+                    removeDeletionKey(context, entry.key)
+                }
+            }
     }
 
     fun deleteInternalMedia(context: Context, uriString: String?): Boolean {
         val file = resolveInternalMediaFile(context, uriString) ?: return false
         val deleted = runCatching { !file.exists() || file.delete() }.getOrDefault(false)
-        if (deleted) removePendingEntries(context, uriString)
+        if (deleted) {
+            removePendingEntries(context, uriString)
+            removeDeletionEntries(context, uriString)
+        }
         return deleted
     }
 
@@ -334,6 +448,16 @@ object AppMediaStorage {
     ): String = "${scope.prefix}_${role.token}_${safeOwnerToken(ownerToken)}_" +
         "${System.currentTimeMillis()}_${UUID.randomUUID()}.jpg"
 
+    private fun buildSavedFileName(
+        scope: AppMediaScope,
+        ownerUid: String,
+        ownerToken: String
+    ): String = savedOwnerPrefix(scope, ownerUid) +
+        "${safeOwnerToken(ownerToken)}_${System.currentTimeMillis()}_${UUID.randomUUID()}.jpg"
+
+    private fun savedOwnerPrefix(scope: AppMediaScope, ownerUid: String): String =
+        "${scope.prefix}_${MediaFileRole.SAVED.token}_${safeOwnerToken(ownerUid)}_"
+
     private fun mediaDirectory(context: Context, scope: AppMediaScope): File {
         return File(context.applicationContext.filesDir, scope.directoryName).apply {
             if (!exists() && !mkdirs() && !exists()) {
@@ -366,6 +490,43 @@ object AppMediaStorage {
         }
     }
 
+    private fun registerDeletion(
+        context: Context,
+        uriString: String,
+        ownerUid: String
+    ): PendingDeletionEntry = synchronized(deletionLock) {
+        deletionEntriesLocked(context).firstOrNull { entry ->
+            entry.uri == uriString && entry.ownerUid == ownerUid
+        } ?: run {
+            val key = DELETION_PREFIX + UUID.randomUUID()
+            val payload = JSONObject()
+                .put(JSON_URI, uriString)
+                .put(JSON_OWNER_UID, ownerUid)
+                .put(JSON_CREATED_AT, System.currentTimeMillis())
+                .toString()
+            check(deletionPreferences(context).edit().putString(key, payload).commit()) {
+                "Committed media deletion journal could not be committed."
+            }
+            PendingDeletionEntry(key, uriString, ownerUid)
+        }
+    }
+
+    private fun reconcileDeletionEntry(
+        context: Context,
+        entry: PendingDeletionEntry,
+        deleteFile: (File) -> Boolean
+    ): Boolean {
+        val file = resolveInternalMediaFile(context, entry.uri)
+        val deleted = file == null || runCatching {
+            !file.exists() || deleteFile(file)
+        }.getOrDefault(false)
+        if (deleted) {
+            removeDeletionKey(context, entry.key)
+            removePendingEntries(context, entry.uri)
+        }
+        return deleted
+    }
+
     private fun pendingEntries(context: Context): List<PendingMediaEntry> =
         synchronized(pendingLock) {
             pendingPreferences(context).all.mapNotNull { (key, value) ->
@@ -380,6 +541,22 @@ object AppMediaStorage {
                     )
                 }.getOrNull()
             }
+        }
+
+    private fun deletionEntries(context: Context): List<PendingDeletionEntry> =
+        synchronized(deletionLock) { deletionEntriesLocked(context) }
+
+    private fun deletionEntriesLocked(context: Context): List<PendingDeletionEntry> =
+        deletionPreferences(context).all.mapNotNull { (key, value) ->
+            if (!key.startsWith(DELETION_PREFIX) || value !is String) return@mapNotNull null
+            runCatching {
+                val json = JSONObject(value)
+                PendingDeletionEntry(
+                    key = key,
+                    uri = json.getString(JSON_URI),
+                    ownerUid = json.getString(JSON_OWNER_UID)
+                )
+            }.getOrNull()
         }
 
     private fun isPending(context: Context, uriString: String): Boolean =
@@ -406,8 +583,32 @@ object AppMediaStorage {
         }
     }
 
+    private fun removeDeletionEntries(context: Context, uriString: String?) {
+        if (uriString.isNullOrBlank()) return
+        synchronized(deletionLock) {
+            val keys = deletionEntriesLocked(context)
+                .filter { entry -> entry.uri == uriString }
+                .map(PendingDeletionEntry::key)
+            if (keys.isEmpty()) return@synchronized
+            val editor = deletionPreferences(context).edit()
+            keys.forEach(editor::remove)
+            check(editor.commit()) { "Committed media deletion journal could not be updated." }
+        }
+    }
+
+    private fun removeDeletionKey(context: Context, key: String) {
+        synchronized(deletionLock) {
+            check(deletionPreferences(context).edit().remove(key).commit()) {
+                "Committed media deletion journal could not be updated."
+            }
+        }
+    }
+
     private fun pendingPreferences(context: Context) =
         context.applicationContext.getSharedPreferences(PENDING_PREFERENCES, Context.MODE_PRIVATE)
+
+    private fun deletionPreferences(context: Context) =
+        context.applicationContext.getSharedPreferences(DELETION_PREFERENCES, Context.MODE_PRIVATE)
 
     private fun File.isInside(root: File): Boolean {
         val candidatePath = runCatching { canonicalPath }.getOrNull() ?: return false
@@ -423,6 +624,12 @@ object AppMediaStorage {
         val uri: String,
         val ownerUid: String,
         val createdAtMillis: Long
+    )
+
+    private data class PendingDeletionEntry(
+        val key: String,
+        val uri: String,
+        val ownerUid: String
     )
 }
 
