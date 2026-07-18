@@ -1,14 +1,6 @@
 name: Stage 10 Resource Migration
 
 on:
-  push:
-    branches:
-      - agent/stage-10-design-system-resource-cleanup
-    paths:
-      - "tools/stage10_xml_resource_migration.py"
-      - "tools/stage10_kotlin_color_migration.py"
-      - "tools/stage10_kotlin_text_migration.py"
-      - ".github/workflows/stage10_migration.yml"
   pull_request:
     paths:
       - "app/src/main/**"
@@ -19,7 +11,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: stage10-resource-migration-${{ github.ref }}
+  group: stage10-resource-migration-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
@@ -48,7 +40,7 @@ jobs:
       - name: Run deterministic resource migrations
         run: |
           set -euo pipefail
-          echo "Stage 10 migration schema: 5"
+          echo "Stage 10 migration schema: 6"
           python3 -m py_compile tools/stage10_xml_resource_migration.py
           python3 -m py_compile tools/stage10_kotlin_color_migration.py
           python3 -m py_compile tools/stage10_kotlin_text_migration.py
