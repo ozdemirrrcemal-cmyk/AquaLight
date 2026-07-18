@@ -198,13 +198,19 @@ class MediaFlowCoordinatorViewModel(
         updateSelection(_selection.value.copy(selectedUri = null))
     }
 
+    /**
+     * When deletePersistedMedia is false, a repository has already committed or rolled back all
+     * filesystem ownership. The coordinator only acknowledges the authoritative domain state.
+     */
     suspend fun commitSelection(deletePersistedMedia: Boolean = true): String? =
         preparationMutex.withLock {
             val state = _selection.value
-            withContext(dispatcher) {
-                AppMediaStorage.commitPendingMedia(appContext, state.selectedUri)
-                if (deletePersistedMedia && state.persistedUri != state.selectedUri) {
-                    AppMediaStorage.deleteInternalMedia(appContext, state.persistedUri)
+            if (deletePersistedMedia) {
+                withContext(dispatcher) {
+                    AppMediaStorage.commitPendingMedia(appContext, state.selectedUri)
+                    if (state.persistedUri != state.selectedUri) {
+                        AppMediaStorage.deleteInternalMedia(appContext, state.persistedUri)
+                    }
                 }
             }
             updateSelection(state.copy(persistedUri = state.selectedUri))
