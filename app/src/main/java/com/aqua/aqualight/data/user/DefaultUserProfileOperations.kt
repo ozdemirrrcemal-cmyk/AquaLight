@@ -38,7 +38,7 @@ class DefaultUserProfileOperations(
             )
         }
 
-    override suspend fun updateProfilePhoto(photoUri: String) = withContext(dispatcher) {
+    override suspend fun updateProfilePhoto(photoUri: String): Unit = withContext(dispatcher) {
         val normalized = photoUri.trim()
         val previous = preferences.profilePhotoUrl.first()
             .takeIf { it.isNotBlank() && it != normalized }
@@ -59,6 +59,8 @@ class DefaultUserProfileOperations(
             }
             throw error
         }
+
+        Unit
     }
 
     override suspend fun updateUsername(username: String) {
