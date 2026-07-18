@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.application.auth.AccountSecurityOperations
+import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
 import com.aqua.aqualight.application.auth.SessionExitOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionUseCase
@@ -79,6 +80,8 @@ internal class ReleaseSmokeAppContainer(context: Context) : AppContainer {
         get() = unused("notificationPreferenceUseCase")
     override val notificationDispatchUseCase: NotificationDispatchUseCase
         get() = unused("notificationDispatchUseCase")
+    override val authenticatedOwnerIdentity: AuthenticatedOwnerIdentity =
+        AuthenticatedOwnerIdentity { SMOKE_OWNER_UID }
     override val feedbackSubmissionOperations: FeedbackSubmissionUseCase
         get() = unused("feedbackSubmissionOperations")
     override val provisioningDraftOperations: ProvisioningDraftOperations
@@ -94,6 +97,10 @@ internal class ReleaseSmokeAppContainer(context: Context) : AppContainer {
 
     private fun <T> unused(name: String): T =
         error("Release smoke dependency was not expected: $name")
+
+    private companion object {
+        const val SMOKE_OWNER_UID = "release-smoke-owner"
+    }
 }
 
 private class ReleaseSmokeViewModelFactory(
