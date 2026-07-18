@@ -32,7 +32,6 @@ import com.aqua.aqualight.application.notifications.NotificationCategory
 import com.aqua.aqualight.application.notifications.NotificationChannelState
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
-import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.databinding.FragmentAddCareTaskBinding
 import com.aqua.aqualight.platform.permissions.AppCapability
 import com.aqua.aqualight.ui.common.bottomsheet.CareTaskTypeBottomSheetFragment
@@ -60,8 +59,14 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
     private val maintenanceViewModel: MaintenanceViewModel by activityViewModels()
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
+    private val appContainer by lazy {
+        requireContext().requireAppContainer()
+    }
     private val notificationPreferences by lazy {
-        requireContext().requireAppContainer().notificationPreferenceUseCase
+        appContainer.notificationPreferenceUseCase
+    }
+    private val ownerIdentity by lazy {
+        appContainer.authenticatedOwnerIdentity
     }
 
     private val permissionCoordinator = CapabilityPermissionCoordinator(this) {
@@ -559,7 +564,7 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
     private fun continueSaveAfterNotificationAccess() {
         if (_binding == null) return
         viewLifecycleOwner.lifecycleScope.launch {
-            val ownerUid = UserDataScope.requireCurrentUid()
+            val ownerUid = ownerIdentity.requireOwnerUid()
             val snapshot = notificationPreferences.snapshot(ownerUid)
             val readiness = snapshot.readiness(NotificationCategory.CARE_REMINDERS)
 
