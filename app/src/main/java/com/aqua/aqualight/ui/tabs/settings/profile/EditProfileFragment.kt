@@ -24,12 +24,14 @@ import com.aqua.aqualight.platform.permissions.AppCapability
 import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
+import com.aqua.aqualight.ui.common.media.MediaCropPreparationResult
 import com.aqua.aqualight.ui.common.media.MediaCropSpec
 import com.aqua.aqualight.ui.common.media.MediaFlowCoordinatorViewModel
 import com.aqua.aqualight.ui.common.permission.CapabilityPermissionCoordinator
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.yalantis.ucrop.UCrop
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
@@ -42,11 +44,13 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     }
 
     private val mediaFlow: MediaFlowCoordinatorViewModel by viewModels {
+        val container = requireContext().requireAppContainer()
         MediaFlowCoordinatorViewModel.factory(
             context = requireContext().applicationContext,
             scope = AppMediaScope.PROFILE,
             ownerToken = "profile",
-            cropSpec = MediaCropSpec.PROFILE
+            cropSpec = MediaCropSpec.PROFILE,
+            mediaProcessor = container.feedbackMediaProcessor
         )
     }
 
@@ -59,7 +63,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     ) { success ->
         val cameraUri = mediaFlow.currentCameraUri()
         if (success && cameraUri != null) {
-            openCrop(cameraUri)
+            viewLifecycleOwner.lifecycleScope.launch { openCrop(cameraUri) }
         } else {
             mediaFlow.cancelCamera()
         }
@@ -68,37 +72,41 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { uri ->
-        if (uri != null) openCrop(uri)
+        if (uri != null) {
+            viewLifecycleOwner.lifecycleScope.launch { openCrop(uri) }
+        }
     }
 
     private val cropLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         val data = result.data
-        when {
-            result.resultCode == Activity.RESULT_OK && data != null -> {
-                val output = UCrop.getOutput(data)
-                val accepted = output?.let(mediaFlow::acceptCrop)
-                if (accepted == null) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            when {
+                result.resultCode == Activity.RESULT_OK && data != null -> {
+                    val output = UCrop.getOutput(data)
+                    val accepted = output?.let { mediaFlow.acceptCrop(it) }
+                    if (accepted == null) {
+                        mediaFlow.cancelCrop()
+                        showInfoDialog(
+                            title = getString(R.string.edit_profile_error_title),
+                            message = getString(R.string.edit_profile_save_photo_error)
+                        )
+                    }
+                }
+
+                result.resultCode == UCrop.RESULT_ERROR && data != null -> {
+                    val error = UCrop.getError(data)
                     mediaFlow.cancelCrop()
                     showInfoDialog(
                         title = getString(R.string.edit_profile_error_title),
-                        message = getString(R.string.edit_profile_save_photo_error)
+                        message = error?.localizedMessage
+                            ?: getString(R.string.edit_profile_save_photo_error)
                     )
                 }
-            }
 
-            result.resultCode == UCrop.RESULT_ERROR && data != null -> {
-                val error = UCrop.getError(data)
-                mediaFlow.cancelCrop()
-                showInfoDialog(
-                    title = getString(R.string.edit_profile_error_title),
-                    message = error?.localizedMessage
-                        ?: getString(R.string.edit_profile_save_photo_error)
-                )
+                else -> mediaFlow.cancelCrop()
             }
-
-            else -> mediaFlow.cancelCrop()
         }
     }
 
@@ -184,20 +192,30 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         takePictureLauncher.launch(uri)
     }
 
-    private fun openCrop(sourceUri: Uri) {
-        val intent = mediaFlow.buildCropIntent(
-            sourceUri = sourceUri,
-            title = getString(R.string.edit_profile_crop_title)
-        )
-        if (intent == null) {
-            mediaFlow.cancelCamera()
-            showInfoDialog(
-                title = getString(R.string.edit_profile_error_title),
-                message = getString(R.string.edit_profile_temp_file_error)
-            )
-            return
+    private suspend fun openCrop(sourceUri: Uri) {
+        setFragmentGlobalLoading(true)
+        try {
+            when (
+                val preparation = mediaFlow.prepareCropIntent(
+                    sourceUri = sourceUri,
+                    title = getString(R.string.edit_profile_crop_title)
+                )
+            ) {
+                is MediaCropPreparationResult.Ready -> cropLauncher.launch(preparation.intent)
+                is MediaCropPreparationResult.Failure,
+                MediaCropPreparationResult.StorageFailure -> {
+                    mediaFlow.cancelCamera()
+                    showInfoDialog(
+                        title = getString(R.string.edit_profile_error_title),
+                        message = getString(R.string.edit_profile_save_photo_error)
+                    )
+                }
+            }
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } finally {
+            setFragmentGlobalLoading(false)
         }
-        cropLauncher.launch(intent)
     }
 
     private fun saveSelection() {
@@ -214,6 +232,8 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
                 profileOperations.updateProfilePhoto(selection.selectedUri.orEmpty())
                 mediaFlow.commitSelection(deletePersistedMedia = false)
                 findNavController().popBackStack()
+            } catch (cancellation: CancellationException) {
+                throw cancellation
             } catch (error: Exception) {
                 mediaFlow.rollbackSelection()
                 showInfoDialog(
