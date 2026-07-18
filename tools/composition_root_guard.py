@@ -16,6 +16,7 @@ paths = {
     "process_factory": SOURCE_ROOT / "composition/ProcessViewModelFactory.kt",
     "owner_factory": SOURCE_ROOT / "composition/OwnerViewModelFactory.kt",
     "owner_graph": SOURCE_ROOT / "composition/OwnerDependencyGraph.kt",
+    "owner_identity": SOURCE_ROOT / "application/auth/AuthenticatedOwnerIdentity.kt",
     "assignment_provider": SOURCE_ROOT / "data/aquarium/devices/TankDeviceAssignmentRepositoryProvider.kt",
     "devices_provider": SOURCE_ROOT / "data/devices/repository/DevicesRepositoryProvider.kt",
     "aqua_app": SOURCE_ROOT / "app/AquaApp.kt",
@@ -58,7 +59,9 @@ require(
     "interface AppContainer",
     "internal class DefaultAppContainer",
     "ActiveOwnerDependencyGraphResolver(appContext)",
+    "ResolvingAuthenticatedOwnerIdentity(ownerGraphResolver)",
     "ResolvingProvisioningDraftOperations(ownerGraphResolver)",
+    "val authenticatedOwnerIdentity: AuthenticatedOwnerIdentity",
     "processFactory = ProcessViewModelFactory()",
     "ownerFactory = OwnerViewModelFactory(",
     "val authViewModelFactory: ViewModelProvider.Factory",
@@ -73,6 +76,12 @@ forbid(
     "DevicesRepositoryProvider",
     "TankDeviceAssignmentRepositoryProvider",
     "DefaultProvisioningDraftOperations(appContext)",
+)
+
+require(
+    "owner_identity",
+    "fun interface AuthenticatedOwnerIdentity",
+    "fun requireOwnerUid(): String",
 )
 
 require(
@@ -124,6 +133,8 @@ require(
     "DevicesRepositoryProvider.currentRepository(ownerUid) === devicesRepository",
     "assignmentRepository",
     "ownerUidProvider = ownerUidProvider",
+    "class ResolvingAuthenticatedOwnerIdentity",
+    "ownerGraphResolver.requireActive().ownerUid",
     "ResolvingProvisioningDraftOperations",
 )
 forbid(
