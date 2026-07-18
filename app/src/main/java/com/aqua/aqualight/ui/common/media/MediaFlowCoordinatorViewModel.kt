@@ -19,7 +19,10 @@ import com.aqua.aqualight.platform.media.FeedbackMediaProcessingResult
 import com.aqua.aqualight.platform.media.FeedbackMediaProcessor
 import com.yalantis.ucrop.UCrop
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,6 +45,7 @@ class MediaFlowCoordinatorViewModel(
 
     private val appContext = context.applicationContext
     private val preparationMutex = Mutex()
+    private val terminalCleanupScope = CoroutineScope(SupervisorJob() + dispatcher)
     private val _selection = MutableStateFlow(
         MediaSelectionState(
             initialized = savedStateHandle[KEY_INITIALIZED] ?: false,
@@ -76,20 +80,21 @@ class MediaFlowCoordinatorViewModel(
         )
     }
 
-    fun currentCameraUri(): Uri? {
-        return savedStateHandle.get<String>(KEY_CAMERA_URI)?.let(Uri::parse)
-    }
+    fun currentCameraUri(): Uri? =
+        savedStateHandle.get<String>(KEY_CAMERA_URI)?.let(Uri::parse)
 
-    fun createCameraUri(): Uri? {
-        cancelCrop()
-        cancelCamera()
-        val uri = AppMediaStorage.createCameraCaptureUri(
-            context = appContext,
-            scope = scope,
-            ownerToken = ownerToken
-        )
+    suspend fun createCameraUri(): Uri? = preparationMutex.withLock {
+        cancelCropLocked()
+        cancelCameraLocked()
+        val uri = withContext(dispatcher) {
+            AppMediaStorage.createCameraCaptureUri(
+                context = appContext,
+                scope = scope,
+                ownerToken = ownerToken
+            )
+        }
         savedStateHandle[KEY_CAMERA_URI] = uri?.toString()
-        return uri
+        uri
     }
 
     /**
@@ -100,13 +105,11 @@ class MediaFlowCoordinatorViewModel(
         sourceUri: Uri,
         title: String
     ): MediaCropPreparationResult = preparationMutex.withLock {
-        clearPreparedSource()
+        clearPreparedSourceLocked()
+        val previousOutput = savedStateHandle.get<String>(KEY_CROP_OUTPUT_URI)
+        clearPendingCropState()
         withContext(dispatcher) {
-            AppMediaStorage.deleteInternalMedia(
-                appContext,
-                savedStateHandle.get<String>(KEY_CROP_OUTPUT_URI)
-            )
-            clearPendingCropState()
+            AppMediaStorage.deleteInternalMedia(appContext, previousOutput)
         }
 
         when (val processed = mediaProcessor.process(sourceUri)) {
@@ -115,10 +118,12 @@ class MediaFlowCoordinatorViewModel(
             }
 
             is FeedbackMediaProcessingResult.Success -> {
-                val safeSourceUri = AppMediaStorage.toContentUriForOwnedPath(
-                    context = appContext,
-                    path = processed.media.path
-                )
+                val safeSourceUri = withContext(dispatcher) {
+                    AppMediaStorage.toContentUriForOwnedPath(
+                        context = appContext,
+                        path = processed.media.path
+                    )
+                }
                 if (safeSourceUri == null) {
                     mediaProcessor.delete(processed.media.path)
                     return@withLock MediaCropPreparationResult.StorageFailure
@@ -174,46 +179,47 @@ class MediaFlowCoordinatorViewModel(
             }
         }
 
-        cleanupPendingSource(keepUri = promoted.toString())
-        clearPreparedSource()
+        cleanupPendingSourceLocked(keepUri = promoted.toString())
+        clearPreparedSourceLocked()
         clearPendingCropState()
         savedStateHandle.remove<String>(KEY_CAMERA_URI)
         updateSelection(_selection.value.copy(selectedUri = promoted.toString()))
         promoted
     }
 
-    fun selectRemoval() {
+    suspend fun selectRemoval() = preparationMutex.withLock {
         val selected = _selection.value.selectedUri
         val persisted = _selection.value.persistedUri
         if (selected != null && selected != persisted) {
-            viewModelScope.launch(dispatcher) {
+            withContext(dispatcher) {
                 AppMediaStorage.rollbackPendingMedia(appContext, selected)
             }
         }
         updateSelection(_selection.value.copy(selectedUri = null))
     }
 
-    fun commitSelection(deletePersistedMedia: Boolean = true): String? {
-        val state = _selection.value
-        viewModelScope.launch(dispatcher) {
-            AppMediaStorage.commitPendingMedia(appContext, state.selectedUri)
-            if (deletePersistedMedia && state.persistedUri != state.selectedUri) {
-                AppMediaStorage.deleteInternalMedia(appContext, state.persistedUri)
+    suspend fun commitSelection(deletePersistedMedia: Boolean = true): String? =
+        preparationMutex.withLock {
+            val state = _selection.value
+            withContext(dispatcher) {
+                AppMediaStorage.commitPendingMedia(appContext, state.selectedUri)
+                if (deletePersistedMedia && state.persistedUri != state.selectedUri) {
+                    AppMediaStorage.deleteInternalMedia(appContext, state.persistedUri)
+                }
             }
+            updateSelection(state.copy(persistedUri = state.selectedUri))
+            state.selectedUri
         }
-        updateSelection(state.copy(persistedUri = state.selectedUri))
-        return state.selectedUri
-    }
 
-    fun rollbackSelection(): String? {
+    suspend fun rollbackSelection(): String? = preparationMutex.withLock {
         val state = _selection.value
         if (state.selectedUri != state.persistedUri) {
-            viewModelScope.launch(dispatcher) {
+            withContext(dispatcher) {
                 AppMediaStorage.rollbackPendingMedia(appContext, state.selectedUri)
             }
         }
         updateSelection(state.copy(selectedUri = state.persistedUri))
-        return state.persistedUri
+        state.persistedUri
     }
 
     fun markExternallyOwnedSelection(uriString: String?) {
@@ -228,27 +234,43 @@ class MediaFlowCoordinatorViewModel(
         )
     }
 
-    fun deleteInternalMedia(uriString: String?) {
-        viewModelScope.launch(dispatcher) {
-            AppMediaStorage.rollbackPendingMedia(appContext, uriString)
-        }
+    suspend fun deleteInternalMedia(uriString: String?) = withContext(dispatcher) {
+        AppMediaStorage.rollbackPendingMedia(appContext, uriString)
+        Unit
     }
 
-    fun cancelCamera() {
+    suspend fun cancelCamera() = preparationMutex.withLock {
+        cancelCameraLocked()
+    }
+
+    suspend fun cancelCrop() = preparationMutex.withLock {
+        cancelCropLocked()
+    }
+
+    private suspend fun cancelCameraLocked() {
         val cameraUri = savedStateHandle.get<String>(KEY_CAMERA_URI)
         savedStateHandle.remove<String>(KEY_CAMERA_URI)
-        viewModelScope.launch(dispatcher) {
+        withContext(dispatcher) {
             AppMediaStorage.deleteInternalMedia(appContext, cameraUri)
         }
     }
 
-    fun cancelCrop() {
+    private suspend fun cancelCropLocked() {
         val outputUri = savedStateHandle.get<String>(KEY_CROP_OUTPUT_URI)
-        cleanupPendingSource(keepUri = null)
+        val cameraUri = savedStateHandle.get<String>(KEY_CAMERA_URI)
+        val sourceUri = savedStateHandle.get<String>(KEY_CROP_SOURCE_URI)
+        val preparedPath = savedStateHandle.get<String>(KEY_PREPARED_SOURCE_PATH)
         clearPendingCropState()
-        viewModelScope.launch(dispatcher) {
+        savedStateHandle.remove<String>(KEY_PREPARED_SOURCE_PATH)
+        if (sourceUri == cameraUri) {
+            savedStateHandle.remove<String>(KEY_CAMERA_URI)
+        }
+        withContext(dispatcher) {
             AppMediaStorage.deleteInternalMedia(appContext, outputUri)
-            clearPreparedSource()
+            if (sourceUri == cameraUri) {
+                AppMediaStorage.deleteInternalMedia(appContext, cameraUri)
+            }
+            mediaProcessor.delete(preparedPath)
         }
     }
 
@@ -286,19 +308,19 @@ class MediaFlowCoordinatorViewModel(
             }
     }
 
-    private fun cleanupPendingSource(keepUri: String?) {
+    private suspend fun cleanupPendingSourceLocked(keepUri: String?) {
         val source = savedStateHandle.get<String>(KEY_CROP_SOURCE_URI)
         val camera = savedStateHandle.get<String>(KEY_CAMERA_URI)
         if (camera != null && camera != keepUri) {
-            viewModelScope.launch(dispatcher) {
+            savedStateHandle.remove<String>(KEY_CAMERA_URI)
+            withContext(dispatcher) {
                 AppMediaStorage.deleteInternalMedia(appContext, camera)
             }
-            savedStateHandle.remove<String>(KEY_CAMERA_URI)
         }
         if (source == camera) savedStateHandle.remove<String>(KEY_CROP_SOURCE_URI)
     }
 
-    private suspend fun clearPreparedSource() {
+    private suspend fun clearPreparedSourceLocked() {
         val path = savedStateHandle.get<String>(KEY_PREPARED_SOURCE_PATH)
         savedStateHandle.remove<String>(KEY_PREPARED_SOURCE_PATH)
         mediaProcessor.delete(path)
@@ -320,11 +342,19 @@ class MediaFlowCoordinatorViewModel(
     override fun onCleared() {
         val outputUri = savedStateHandle.get<String>(KEY_CROP_OUTPUT_URI)
         val cameraUri = savedStateHandle.get<String>(KEY_CAMERA_URI)
-        AppMediaStorage.deleteInternalMedia(appContext, outputUri)
-        AppMediaStorage.deleteInternalMedia(appContext, cameraUri)
+        val preparedPath = savedStateHandle.get<String>(KEY_PREPARED_SOURCE_PATH)
         val state = _selection.value
-        if (!state.externalLifecycleOwner && state.selectedUri != state.persistedUri) {
-            AppMediaStorage.rollbackPendingMedia(appContext, state.selectedUri)
+        terminalCleanupScope.launch {
+            try {
+                AppMediaStorage.deleteInternalMedia(appContext, outputUri)
+                AppMediaStorage.deleteInternalMedia(appContext, cameraUri)
+                mediaProcessor.delete(preparedPath)
+                if (!state.externalLifecycleOwner && state.selectedUri != state.persistedUri) {
+                    AppMediaStorage.rollbackPendingMedia(appContext, state.selectedUri)
+                }
+            } finally {
+                terminalCleanupScope.cancel()
+            }
         }
         super.onCleared()
     }
