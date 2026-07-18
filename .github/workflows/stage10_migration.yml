@@ -43,15 +43,13 @@ jobs:
       - name: Run deterministic resource migrations
         run: |
           set -euo pipefail
-          echo "Stage 10 migration schema: 2"
+          echo "Stage 10 migration schema: 3"
           python3 -m py_compile tools/stage10_xml_resource_migration.py
           python3 -m py_compile tools/stage10_kotlin_color_migration.py
+          python3 -m py_compile tools/stage10_kotlin_text_migration.py
           python3 tools/stage10_xml_resource_migration.py | tee docs/stage10-migration-result.txt
           python3 tools/stage10_kotlin_color_migration.py | tee -a docs/stage10-migration-result.txt
-          if [[ -f tools/stage10_kotlin_text_migration.py ]]; then
-            python3 -m py_compile tools/stage10_kotlin_text_migration.py
-            python3 tools/stage10_kotlin_text_migration.py | tee -a docs/stage10-migration-result.txt
-          fi
+          python3 tools/stage10_kotlin_text_migration.py | tee -a docs/stage10-migration-result.txt
 
       - name: Verify generated Android resources and Kotlin compilation
         id: build
