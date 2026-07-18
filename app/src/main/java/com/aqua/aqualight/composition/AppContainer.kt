@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.app.AquaApp
 import com.aqua.aqualight.application.auth.AccountSecurityOperations
 import com.aqua.aqualight.application.auth.AuthOperations
+import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
 import com.aqua.aqualight.application.auth.SessionExitOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionUseCase
@@ -42,6 +43,7 @@ interface AppContainer {
     val userSettingsOperations: UserSettingsOperations
     val notificationPreferenceUseCase: NotificationPreferenceUseCase
     val notificationDispatchUseCase: NotificationDispatchUseCase
+    val authenticatedOwnerIdentity: AuthenticatedOwnerIdentity
     val userProfileOperations: UserProfileOperations
     val feedbackSubmissionOperations: FeedbackSubmissionUseCase
     val provisioningDraftOperations: ProvisioningDraftOperations
@@ -110,6 +112,12 @@ internal class DefaultAppContainer(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
         ActiveOwnerDependencyGraphResolver(appContext)
+    }
+
+    override val authenticatedOwnerIdentity: AuthenticatedOwnerIdentity by lazy(
+        LazyThreadSafetyMode.SYNCHRONIZED
+    ) {
+        ResolvingAuthenticatedOwnerIdentity(ownerGraphResolver)
     }
 
     override val provisioningDraftOperations: ProvisioningDraftOperations by lazy(
