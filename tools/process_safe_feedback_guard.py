@@ -25,6 +25,7 @@ REQUIRED_FILES = (
     UI_ROOT / "common/dialog/AppTimePickerDialogFragment.kt",
     BASE_LOADING_ROOT / "LoadingOverlayDialogFragment.kt",
     ROOT / "app/src/androidTest/java/com/aqua/aqualight/ui/common/feedback/ProcessSafeFeedbackInstrumentedTest.kt",
+    ROOT / "app/src/androidTest/java/com/aqua/aqualight/base/loading/LoadingOverlayRaceInstrumentedTest.kt",
     ROOT / "app/src/debug/java/com/aqua/aqualight/ui/common/feedback/Stage8DialogTestActivity.kt",
     ROOT / "app/src/debug/AndroidManifest.xml",
     ROOT / "docs/stage8-process-safe-feedback-contract.md",
@@ -102,6 +103,15 @@ if DIALOG_MANAGER.is_file():
     if "FeedbackBottomSheet.show(" not in manager_text:
         errors.append(f"{DIALOG_MANAGER.relative_to(ROOT)}: info feedback must delegate to FeedbackBottomSheet")
 
+loading_renderer = BASE_LOADING_ROOT / "LoadingOverlayDialogFragment.kt"
+if loading_renderer.is_file():
+    loading_text = loading_renderer.read_text(encoding="utf-8", errors="ignore")
+    for token in ("pendingOverlays", "WeakReference", "dismissAllowingStateLoss"):
+        if token not in loading_text:
+            errors.append(
+                f"{loading_renderer.relative_to(ROOT)}: pending loading show/hide race protection is missing: {token}"
+            )
+
 for source in (
     UI_ROOT / "common/bottomsheet/CareTaskTypeBottomSheetFragment.kt",
     UI_ROOT / "common/bottomsheet/GlobalActionBottomSheet.kt",
@@ -122,5 +132,6 @@ if errors:
 
 print(
     "Process-safe feedback architecture guard passed: all dialogs and sheets are recreatable, "
-    "results are callback-free, Snackbar rendering is centralized, Toast is absent, and Stage 8 dimensions are resource-backed."
+    "results are callback-free, loading show/hide races are covered, Snackbar rendering is centralized, "
+    "Toast is absent, and Stage 8 dimensions are resource-backed."
 )
