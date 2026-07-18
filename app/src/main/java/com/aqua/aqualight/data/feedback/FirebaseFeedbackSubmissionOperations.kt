@@ -95,7 +95,7 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
             )
         } catch (error: Throwable) {
             error.throwIfCancellation()
-            journalStore.remove(documentId)
+            runCatching { journalStore.remove(documentId) }
             return failure(FeedbackSubmissionFailureKind.PERSISTENCE, error)
         }
 
@@ -131,7 +131,8 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
                 storagePath = upload.storagePath,
                 data = data
             )
-            journalStore.remove(documentId)
+            // The remote committed fence is authoritative. Local cleanup is safely retryable.
+            runCatching { journalStore.remove(documentId) }
             FeedbackSubmissionResult.Success(documentId)
         } catch (persistenceError: Throwable) {
             persistenceError.throwIfCancellation()
@@ -206,7 +207,7 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
 
         return when (state) {
             FeedbackDocumentResolution.COMMITTED -> {
-                journalStore.remove(entry.documentId)
+                runCatching { journalStore.remove(entry.documentId) }
                 ReconcileOutcome.Committed
             }
             FeedbackDocumentResolution.ABORTED -> {
