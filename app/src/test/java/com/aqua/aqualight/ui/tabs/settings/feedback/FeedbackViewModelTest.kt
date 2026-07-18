@@ -15,6 +15,7 @@ import com.aqua.aqualight.platform.media.ProcessedFeedbackMedia
 import java.io.File
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -32,6 +33,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class FeedbackViewModelTest {
 
     private val dispatcher = StandardTestDispatcher()
@@ -139,7 +141,9 @@ class FeedbackViewModelTest {
             )
             val viewModel = viewModel(state, repository, mediaProcessor)
 
-            viewModel.selectScreenshot(Uri.parse("content://test/source"))
+            // The fake processor never dereferences the URI. Uri.EMPTY avoids invoking Android's
+            // unimplemented local-JVM Uri.parse() stub while preserving the production API boundary.
+            viewModel.selectScreenshot(Uri.EMPTY)
             viewModel.submit()
 
             assertTrue(viewModel.uiState.value.isProcessingMedia)
