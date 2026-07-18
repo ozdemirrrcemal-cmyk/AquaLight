@@ -142,6 +142,7 @@ internal class OwnerViewModelFactory(
             AquariumTankViewModel::class.java ->
                 AquariumTankViewModel(
                     operations = DefaultAquariumTankOperations(
+                        context = appContext,
                         tankStore = graph.aquariumTankStore,
                         tankDataCleaner = OwnerTankDataCleaner(
                             deleteTankRecords = graph.aquariumTankStore::deleteTanks,
