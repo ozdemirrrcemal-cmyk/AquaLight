@@ -20,7 +20,11 @@ import com.aqua.aqualight.platform.media.FeedbackMediaProcessor
 import com.aqua.aqualight.platform.media.ProcessedFeedbackMedia
 import java.util.Locale
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -60,6 +64,7 @@ class FeedbackViewModel(
 
     private var mediaJob: Job? = null
     private var submitJob: Job? = null
+    private val terminalCleanupScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     init {
         if (restoredMedia == null) {
@@ -235,10 +240,19 @@ class FeedbackViewModel(
 
     override fun onCleared() {
         val submissionWasInFlight = _uiState.value.isSubmitting
+        val cleanupPath = if (submissionWasInFlight) null else _uiState.value.screenshot?.path
         mediaJob?.cancel()
         submitJob?.cancel()
-        if (!submissionWasInFlight) {
-            _uiState.value.screenshot?.file?.takeIf { it.exists() }?.delete()
+        if (cleanupPath == null) {
+            terminalCleanupScope.cancel()
+        } else {
+            terminalCleanupScope.launch {
+                try {
+                    mediaProcessor.delete(cleanupPath)
+                } finally {
+                    terminalCleanupScope.cancel()
+                }
+            }
         }
         super.onCleared()
     }
