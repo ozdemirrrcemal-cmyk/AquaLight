@@ -42,5 +42,15 @@ class AppMediaRecoveryManager(
             ownerUid = normalizedOwnerUid,
             referencedUris = referencedUris
         )
+        AppMediaStorage.reconcilePendingDeletions(
+            context = appContext,
+            ownerUid = normalizedOwnerUid,
+            referencedUris = referencedUris
+        )
+        AppMediaStorage.reconcileUnreferencedCommittedMedia(
+            context = appContext,
+            ownerUid = normalizedOwnerUid,
+            referencedUris = referencedUris
+        )
     }
 }
