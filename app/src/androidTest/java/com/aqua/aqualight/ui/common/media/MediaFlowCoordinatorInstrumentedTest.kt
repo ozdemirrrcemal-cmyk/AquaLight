@@ -35,19 +35,28 @@ class MediaFlowCoordinatorInstrumentedTest {
     }
 
     @Test
-    fun acceptedCropIsPromotedAndRollbackDeletesPendingSelection() {
+    fun pendingCameraAndCropFilesAreCleanedAfterCoordinatorRecreationAndCancel() {
+        AppMediaStorage.deleteOwnerTemporaryFiles(context, AppMediaScope.TANK, OWNER_TOKEN)
         val savedState = SavedStateHandle()
-        val coordinator = coordinator(savedState)
-        coordinator.initializeSelection(null)
-        val output = AppMediaStorage.createCropOutputUri(
-            context = context,
-            scope = AppMediaScope.TANK,
-            ownerToken = "test-owner"
-        )
-        assertNotNull(output)
-        File(requireNotNull(output).path!!).writeBytes(byteArrayOf(1, 2, 3, 4))
+        val first = coordinator(savedState)
+        val cameraUri = requireNotNull(first.createCameraUri())
+        assertNotNull(first.buildCropIntent(cameraUri, "Crop"))
+        assertTrue(tempFiles().any { it.name.contains("_camera_") })
+        assertTrue(tempFiles().any { it.name.contains("_crop_") })
 
-        val promoted = coordinator.acceptCrop(output)
+        val recreated = coordinator(savedState)
+        recreated.cancelCrop()
+        recreated.cancelCamera()
+
+        assertFalse(AppMediaStorage.isAppOwned(context, cameraUri.toString()))
+        assertFalse(tempFiles().any { it.name.contains("_camera_") || it.name.contains("_crop_") })
+    }
+
+    @Test
+    fun acceptedCropIsPromotedAndRollbackDeletesPendingSelection() {
+        val coordinator = coordinator(SavedStateHandle())
+        coordinator.initializeSelection(null)
+        val promoted = coordinator.acceptCrop(createCropOutput())
 
         assertNotNull(promoted)
         assertTrue(AppMediaStorage.isAppOwned(context, promoted.toString()))
@@ -56,15 +65,67 @@ class MediaFlowCoordinatorInstrumentedTest {
         assertFalse(AppMediaStorage.isAppOwned(context, promoted.toString()))
     }
 
-    private fun coordinator(
-        savedStateHandle: SavedStateHandle
-    ): MediaFlowCoordinatorViewModel {
-        return MediaFlowCoordinatorViewModel(
+    @Test
+    fun previousPersistedMediaIsDeletedOnlyAfterReplacementCommit() {
+        val coordinator = coordinator(SavedStateHandle())
+        coordinator.initializeSelection(null)
+        val firstPromoted = requireNotNull(coordinator.acceptCrop(createCropOutput()))
+        coordinator.commitSelection(deletePersistedMedia = true)
+        val secondPromoted = requireNotNull(coordinator.acceptCrop(createCropOutput()))
+
+        assertTrue(AppMediaStorage.isAppOwned(context, firstPromoted.toString()))
+        assertTrue(AppMediaStorage.isAppOwned(context, secondPromoted.toString()))
+
+        coordinator.commitSelection(deletePersistedMedia = true)
+
+        assertFalse(AppMediaStorage.isAppOwned(context, firstPromoted.toString()))
+        assertTrue(AppMediaStorage.isAppOwned(context, secondPromoted.toString()))
+        coordinator.deleteInternalMedia(secondPromoted.toString())
+    }
+
+    @Test
+    fun rollbackKeepsPersistedMediaAndDeletesOnlyNewSelection() {
+        val coordinator = coordinator(SavedStateHandle())
+        coordinator.initializeSelection(null)
+        val persisted = requireNotNull(coordinator.acceptCrop(createCropOutput()))
+        coordinator.commitSelection(deletePersistedMedia = true)
+        val replacement = requireNotNull(coordinator.acceptCrop(createCropOutput()))
+
+        val restored = coordinator.rollbackSelection()
+
+        assertEquals(persisted.toString(), restored)
+        assertTrue(AppMediaStorage.isAppOwned(context, persisted.toString()))
+        assertFalse(AppMediaStorage.isAppOwned(context, replacement.toString()))
+        coordinator.deleteInternalMedia(persisted.toString())
+    }
+
+    private fun createCropOutput() = requireNotNull(
+        AppMediaStorage.createCropOutputUri(
+            context = context,
+            scope = AppMediaScope.TANK,
+            ownerToken = OWNER_TOKEN
+        )
+    ).also { output ->
+        File(requireNotNull(output.path)).writeBytes(byteArrayOf(1, 2, 3, 4))
+    }
+
+    private fun tempFiles(): List<File> {
+        return File(context.filesDir, AppMediaScope.TANK.directoryName)
+            .listFiles()
+            .orEmpty()
+            .filter { file -> file.name.contains("_${OWNER_TOKEN}_") }
+    }
+
+    private fun coordinator(savedStateHandle: SavedStateHandle) =
+        MediaFlowCoordinatorViewModel(
             savedStateHandle = savedStateHandle,
             context = context,
             scope = AppMediaScope.TANK,
-            ownerToken = "test-owner",
+            ownerToken = OWNER_TOKEN,
             cropSpec = MediaCropSpec.TANK
         )
+
+    private companion object {
+        const val OWNER_TOKEN = "stage9-test-owner"
     }
 }
