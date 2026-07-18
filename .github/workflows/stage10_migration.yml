@@ -9,6 +9,11 @@ on:
       - "tools/stage10_kotlin_color_migration.py"
       - "tools/stage10_kotlin_text_migration.py"
       - ".github/workflows/stage10_migration.yml"
+  pull_request:
+    paths:
+      - "app/src/main/**"
+      - "tools/stage10_*.py"
+      - ".github/workflows/stage10_migration.yml"
 
 permissions:
   contents: write
@@ -43,7 +48,7 @@ jobs:
       - name: Run deterministic resource migrations
         run: |
           set -euo pipefail
-          echo "Stage 10 migration schema: 3"
+          echo "Stage 10 migration schema: 4"
           python3 -m py_compile tools/stage10_xml_resource_migration.py
           python3 -m py_compile tools/stage10_kotlin_color_migration.py
           python3 -m py_compile tools/stage10_kotlin_text_migration.py
