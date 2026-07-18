@@ -13,27 +13,54 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Source
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageException
 import com.google.firebase.storage.storage
 import java.io.File
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
-/** Firebase feedback repository with deterministic upload rollback. */
+/**
+ * Firebase feedback repository with a serialized, process-death-recoverable screenshot transaction.
+ */
 class FirebaseFeedbackSubmissionOperations internal constructor(
     private val ownerUidProvider: () -> String?,
     private val documentStore: FeedbackDocumentStore,
     private val screenshotStore: FeedbackScreenshotStore,
-    private val orphanStore: FeedbackOrphanStore
+    private val journalStore: FeedbackSubmissionJournalStore,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : FeedbackRepository {
+
+    private val transactionMutex = Mutex()
 
     override suspend fun submit(
         request: FeedbackSubmissionRequest,
         screenshotFile: File?
+    ): FeedbackSubmissionResult = withContext(dispatcher) {
+        transactionMutex.withLock {
+            cleanupPendingLocked()
+            submitLocked(request, screenshotFile)
+        }
+    }
+
+    override suspend fun cleanupOrphans(): FeedbackOrphanCleanupResult = withContext(dispatcher) {
+        transactionMutex.withLock {
+            cleanupPendingLocked()
+        }
+    }
+
+    private suspend fun submitLocked(
+        request: FeedbackSubmissionRequest,
+        screenshotFile: File?
     ): FeedbackSubmissionResult {
-        cleanupOrphans()
         val ownerUid = ownerUidProvider()?.takeIf(String::isNotBlank) ?: ANONYMOUS_OWNER_UID
         val documentId = documentStore.newDocumentId()
         val data = linkedMapOf<String, Any?>(
@@ -48,18 +75,30 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
         )
 
         if (screenshotFile == null) return saveDocument(documentId, data)
+        if (!screenshotFile.isFile || screenshotFile.length() <= 0L) {
+            return failure(
+                FeedbackSubmissionFailureKind.UPLOAD,
+                IllegalArgumentException("Feedback screenshot is missing or empty.")
+            )
+        }
 
-        val plannedStoragePath = screenshotPath(ownerUid, documentId)
-        // Persist before upload so process death between Storage and Firestore is recoverable.
-        orphanStore.add(plannedStoragePath)
+        val pending = PendingFeedbackUpload(
+            documentId = documentId,
+            storagePath = screenshotPath(ownerUid, documentId)
+        )
+        try {
+            // Synchronous disk commit is intentional: upload must never start without recovery state.
+            journalStore.put(pending)
+        } catch (error: Throwable) {
+            error.throwIfCancellation()
+            return failure(FeedbackSubmissionFailureKind.GENERIC, error)
+        }
 
         val upload = try {
-            screenshotStore.upload(plannedStoragePath, screenshotFile)
+            screenshotStore.upload(pending.storagePath, screenshotFile)
         } catch (error: FeedbackStorageUploadException) {
             if (error.storagePath == null) {
-                orphanStore.remove(plannedStoragePath)
-            } else {
-                orphanStore.add(error.storagePath)
+                journalStore.remove(documentId)
             }
             return FeedbackSubmissionResult.Failure(
                 FeedbackSubmissionFailure(
@@ -74,7 +113,9 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
                 )
             )
         } catch (error: Throwable) {
-            orphanStore.remove(plannedStoragePath)
+            error.throwIfCancellation()
+            // The production adapter emits an untyped error only before object creation.
+            journalStore.remove(documentId)
             return failure(FeedbackSubmissionFailureKind.UPLOAD, error)
         }
 
@@ -82,12 +123,13 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
         data[FIELD_SCREENSHOT_PATH] = upload.storagePath
         return try {
             documentStore.save(documentId, data)
-            orphanStore.remove(upload.storagePath)
+            journalStore.remove(documentId)
             FeedbackSubmissionResult.Success(documentId)
         } catch (persistenceError: Throwable) {
+            persistenceError.throwIfCancellation()
             try {
                 screenshotStore.delete(upload.storagePath)
-                orphanStore.remove(upload.storagePath)
+                journalStore.remove(documentId)
                 FeedbackSubmissionResult.Failure(
                     FeedbackSubmissionFailure(
                         kind = FeedbackSubmissionFailureKind.PERSISTENCE,
@@ -96,7 +138,7 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
                     )
                 )
             } catch (rollbackError: Throwable) {
-                orphanStore.add(upload.storagePath)
+                rollbackError.throwIfCancellation()
                 FeedbackSubmissionResult.Failure(
                     FeedbackSubmissionFailure(
                         kind = FeedbackSubmissionFailureKind.ROLLBACK,
@@ -109,19 +151,45 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
         }
     }
 
-    override suspend fun cleanupOrphans(): FeedbackOrphanCleanupResult {
-        val pending = orphanStore.pendingPaths()
+    /**
+     * Reconciles every durable journal entry against Firestore before deleting Storage data.
+     * Verification failure or a conflicting document is fail-safe: the entry is retained.
+     */
+    private suspend fun cleanupPendingLocked(): FeedbackOrphanCleanupResult {
+        val pending = journalStore.pendingEntries()
         var deleted = 0
-        pending.forEach { path ->
-            runCatching { screenshotStore.delete(path) }.onSuccess {
-                orphanStore.remove(path)
-                deleted += 1
+
+        pending.forEach { entry ->
+            when (
+                runCatching {
+                    documentStore.commitState(entry.documentId, entry.storagePath)
+                }.getOrElse { error ->
+                    error.throwIfCancellation()
+                    FeedbackDocumentCommitState.UNVERIFIED
+                }
+            ) {
+                FeedbackDocumentCommitState.COMMITTED -> {
+                    // Firestore is authoritative; never delete its matching screenshot.
+                    journalStore.remove(entry.documentId)
+                }
+                FeedbackDocumentCommitState.ABSENT -> {
+                    try {
+                        screenshotStore.delete(entry.storagePath)
+                        journalStore.remove(entry.documentId)
+                        deleted += 1
+                    } catch (error: Throwable) {
+                        error.throwIfCancellation()
+                    }
+                }
+                FeedbackDocumentCommitState.CONFLICT,
+                FeedbackDocumentCommitState.UNVERIFIED -> Unit
             }
         }
+
         return FeedbackOrphanCleanupResult(
             attemptedCount = pending.size,
             deletedCount = deleted,
-            remainingCount = orphanStore.pendingPaths().size
+            remainingCount = journalStore.pendingEntries().size
         )
     }
 
@@ -133,6 +201,7 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
             documentStore.save(documentId, data)
             FeedbackSubmissionResult.Success(documentId)
         } catch (error: Throwable) {
+            error.throwIfCancellation()
             failure(FeedbackSubmissionFailureKind.PERSISTENCE, error)
         }
     }
@@ -142,6 +211,10 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
         error: Throwable
     ): FeedbackSubmissionResult.Failure {
         return FeedbackSubmissionResult.Failure(FeedbackSubmissionFailure(kind, error))
+    }
+
+    private fun Throwable.throwIfCancellation() {
+        if (this is CancellationException) throw this
     }
 
     companion object {
@@ -171,15 +244,23 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
                 ownerUidProvider = { FirebaseAuth.getInstance().currentUser?.uid },
                 documentStore = FirebaseFeedbackDocumentStore(FirebaseFirestore.getInstance()),
                 screenshotStore = FirebaseFeedbackScreenshotStore(Firebase.storage),
-                orphanStore = SharedPreferencesFeedbackOrphanStore(appContext)
+                journalStore = SharedPreferencesFeedbackSubmissionJournalStore(appContext)
             )
         }
     }
 }
 
+internal enum class FeedbackDocumentCommitState {
+    ABSENT,
+    COMMITTED,
+    CONFLICT,
+    UNVERIFIED
+}
+
 internal interface FeedbackDocumentStore {
     fun newDocumentId(): String
     suspend fun save(documentId: String, data: Map<String, Any?>)
+    suspend fun commitState(documentId: String, storagePath: String): FeedbackDocumentCommitState
 }
 
 internal interface FeedbackScreenshotStore {
@@ -210,6 +291,24 @@ private class FirebaseFeedbackDocumentStore(
         firestore.collection(COLLECTION).document(documentId).set(stored).awaitResult()
     }
 
+    override suspend fun commitState(
+        documentId: String,
+        storagePath: String
+    ): FeedbackDocumentCommitState {
+        val snapshot = firestore.collection(COLLECTION)
+            .document(documentId)
+            .get(Source.SERVER)
+            .awaitResult()
+        if (!snapshot.exists()) return FeedbackDocumentCommitState.ABSENT
+        return if (
+            snapshot.getString(FirebaseFeedbackSubmissionOperations.FIELD_SCREENSHOT_PATH) == storagePath
+        ) {
+            FeedbackDocumentCommitState.COMMITTED
+        } else {
+            FeedbackDocumentCommitState.CONFLICT
+        }
+    }
+
     private companion object {
         const val COLLECTION = "feedback_items"
     }
@@ -232,6 +331,7 @@ private class FirebaseFeedbackScreenshotStore(
                 downloadUrl = reference.downloadUrl.awaitResult().toString()
             )
         } catch (error: Throwable) {
+            error.throwIfCancellation()
             if (!uploaded) throw FeedbackStorageUploadException(error, null)
             val rollback = runCatching { reference.delete().awaitResult() }.exceptionOrNull()
             throw FeedbackStorageUploadException(
@@ -249,11 +349,15 @@ private class FirebaseFeedbackScreenshotStore(
             if (error.errorCode != StorageException.ERROR_OBJECT_NOT_FOUND) throw error
         }
     }
+
+    private fun Throwable.throwIfCancellation() {
+        if (this is CancellationException) throw this
+    }
 }
 
-private suspend fun <T> Task<T>.awaitResult(): T = suspendCancellableCoroutine { continuation ->
+/** Firebase Tasks are not cancellable; wait for their authoritative terminal result. */
+private suspend fun <T> Task<T>.awaitResult(): T = suspendCoroutine { continuation ->
     addOnCompleteListener { task ->
-        if (!continuation.isActive) return@addOnCompleteListener
         if (task.isSuccessful) continuation.resume(task.result)
         else continuation.resumeWithException(
             task.exception ?: IllegalStateException("Firebase task failed without an exception.")
