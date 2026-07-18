@@ -1,0 +1,47 @@
+name: Stage 8 Source Snapshot
+
+on:
+  push:
+    branches:
+      - agent/stage-8-process-safe-feedback
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+
+      - name: Run Stage 8 guard and retain diagnostics
+        shell: bash
+        run: |
+          set +e
+          python3 tools/process_safe_feedback_guard.py > stage8-guard.log 2>&1
+          status=$?
+          cat stage8-guard.log
+          echo "$status" > stage8-guard-exit-code.txt
+          exit 0
+
+      - name: Package source snapshot
+        shell: bash
+        run: |
+          tar -czf stage8-source.tar.gz \
+            app/src/main \
+            app/src/androidTest \
+            tools/process_safe_feedback_guard.py \
+            docs/stage8-process-safe-feedback-contract.md \
+            .github/workflows
+
+      - name: Upload source snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage8-source-${{ github.sha }}
+          path: |
+            stage8-source.tar.gz
+            stage8-guard.log
+            stage8-guard-exit-code.txt
+          if-no-files-found: error
