@@ -8,23 +8,24 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class FirebaseFeedbackSubmissionOperationsTest {
 
     @Test
-    fun successfulSubmissionRemovesDurableJournalEntry() = runTest {
+    fun successfulSubmissionReservesBeforeUploadAndCommitsAtomically() = runTest {
         withScreenshot { screenshot ->
-            val documentStore = FakeDocumentStore()
-            val screenshotStore = FakeScreenshotStore()
+            val events = mutableListOf<String>()
+            val documentStore = FakeDocumentStore(events)
+            val screenshotStore = FakeScreenshotStore(events)
             val journalStore = FakeJournalStore()
             val repository = repository(documentStore, screenshotStore, journalStore)
 
             val result = repository.submit(request(), screenshot)
 
             assertTrue(result is FeedbackSubmissionResult.Success)
+            assertEquals(listOf("reserve", "upload", "commit"), events)
             assertTrue(journalStore.pendingEntries().isEmpty())
             assertEquals(
                 "feedback_screenshots/owner/document-1.jpg",
@@ -34,32 +35,56 @@ class FirebaseFeedbackSubmissionOperationsTest {
     }
 
     @Test
-    fun uploadFailureBeforeObjectExistsRemovesJournalEntry() = runTest {
+    fun reservationFailurePreventsStorageUpload() = runTest {
         withScreenshot { screenshot ->
-            val screenshotStore = FakeScreenshotStore().apply {
-                uploadError = FeedbackStorageUploadException(
-                    uploadError = IllegalStateException("upload failed"),
-                    storagePath = null
-                )
+            val events = mutableListOf<String>()
+            val documentStore = FakeDocumentStore(events).apply {
+                reserveError = IllegalStateException("reservation failed")
             }
+            val screenshotStore = FakeScreenshotStore(events)
             val journalStore = FakeJournalStore()
-            val repository = repository(FakeDocumentStore(), screenshotStore, journalStore)
+            val repository = repository(documentStore, screenshotStore, journalStore)
 
             val result = repository.submit(request(), screenshot)
 
             val failure = (result as FeedbackSubmissionResult.Failure).failure
-            assertEquals(FeedbackSubmissionFailureKind.UPLOAD, failure.kind)
+            assertEquals(FeedbackSubmissionFailureKind.PERSISTENCE, failure.kind)
+            assertEquals(listOf("reserve"), events)
             assertTrue(journalStore.pendingEntries().isEmpty())
         }
     }
 
     @Test
-    fun firestoreFailureAfterUploadDeletesStorageObject() = runTest {
+    fun uploadFailureAbortsFenceAndDeletesAnyPartialObject() = runTest {
         withScreenshot { screenshot ->
-            val documentStore = FakeDocumentStore().apply {
-                saveError = IllegalStateException("firestore failed")
+            val events = mutableListOf<String>()
+            val documentStore = FakeDocumentStore(events).apply {
+                resolution = FeedbackDocumentResolution.ABORTED
             }
-            val screenshotStore = FakeScreenshotStore()
+            val screenshotStore = FakeScreenshotStore(events).apply {
+                uploadError = IllegalStateException("upload failed")
+            }
+            val journalStore = FakeJournalStore()
+            val repository = repository(documentStore, screenshotStore, journalStore)
+
+            val result = repository.submit(request(), screenshot)
+
+            val failure = (result as FeedbackSubmissionResult.Failure).failure
+            assertEquals(FeedbackSubmissionFailureKind.UPLOAD, failure.kind)
+            assertEquals(listOf("reserve", "upload", "resolve", "delete"), events)
+            assertTrue(journalStore.pendingEntries().isEmpty())
+        }
+    }
+
+    @Test
+    fun firestoreFailureAfterUploadAbortsFenceAndDeletesStorageObject() = runTest {
+        withScreenshot { screenshot ->
+            val events = mutableListOf<String>()
+            val documentStore = FakeDocumentStore(events).apply {
+                commitError = IllegalStateException("firestore failed")
+                resolution = FeedbackDocumentResolution.ABORTED
+            }
+            val screenshotStore = FakeScreenshotStore(events)
             val journalStore = FakeJournalStore()
             val repository = repository(documentStore, screenshotStore, journalStore)
 
@@ -68,9 +93,29 @@ class FirebaseFeedbackSubmissionOperationsTest {
             val failure = (result as FeedbackSubmissionResult.Failure).failure
             assertEquals(FeedbackSubmissionFailureKind.PERSISTENCE, failure.kind)
             assertEquals(
-                listOf("feedback_screenshots/owner/document-1.jpg"),
-                screenshotStore.deletedPaths
+                listOf("reserve", "upload", "commit", "resolve", "delete"),
+                events
             )
+            assertTrue(journalStore.pendingEntries().isEmpty())
+        }
+    }
+
+    @Test
+    fun ambiguousCommitErrorReturnsSuccessWhenServerFenceIsCommitted() = runTest {
+        withScreenshot { screenshot ->
+            val events = mutableListOf<String>()
+            val documentStore = FakeDocumentStore(events).apply {
+                commitError = IllegalStateException("client lost acknowledgement")
+                resolution = FeedbackDocumentResolution.COMMITTED
+            }
+            val screenshotStore = FakeScreenshotStore(events)
+            val journalStore = FakeJournalStore()
+            val repository = repository(documentStore, screenshotStore, journalStore)
+
+            val result = repository.submit(request(), screenshot)
+
+            assertTrue(result is FeedbackSubmissionResult.Success)
+            assertTrue(screenshotStore.deletedPaths.isEmpty())
             assertTrue(journalStore.pendingEntries().isEmpty())
         }
     }
@@ -78,10 +123,12 @@ class FirebaseFeedbackSubmissionOperationsTest {
     @Test
     fun rollbackFailureKeepsJournalEntryForRetry() = runTest {
         withScreenshot { screenshot ->
-            val documentStore = FakeDocumentStore().apply {
-                saveError = IllegalStateException("firestore failed")
+            val events = mutableListOf<String>()
+            val documentStore = FakeDocumentStore(events).apply {
+                commitError = IllegalStateException("firestore failed")
+                resolution = FeedbackDocumentResolution.ABORTED
             }
-            val screenshotStore = FakeScreenshotStore().apply {
+            val screenshotStore = FakeScreenshotStore(events).apply {
                 deleteError = IllegalStateException("delete failed")
             }
             val journalStore = FakeJournalStore()
@@ -98,12 +145,13 @@ class FirebaseFeedbackSubmissionOperationsTest {
     }
 
     @Test
-    fun cancellationAfterUploadKeepsJournalAndDoesNotGuessRollbackOutcome() = runTest {
+    fun cancellationDuringCommitKeepsJournalAndDoesNotGuessRemoteOutcome() = runTest {
         withScreenshot { screenshot ->
-            val documentStore = FakeDocumentStore().apply {
-                saveError = CancellationException("screen left")
+            val events = mutableListOf<String>()
+            val documentStore = FakeDocumentStore(events).apply {
+                commitError = CancellationException("screen left")
             }
-            val screenshotStore = FakeScreenshotStore()
+            val screenshotStore = FakeScreenshotStore(events)
             val journalStore = FakeJournalStore()
             val repository = repository(documentStore, screenshotStore, journalStore)
 
@@ -121,11 +169,12 @@ class FirebaseFeedbackSubmissionOperationsTest {
     }
 
     @Test
-    fun cleanupDeletesStorageOnlyWhenServerConfirmsDocumentAbsent() = runTest {
-        val documentStore = FakeDocumentStore().apply {
-            commitStates["document-1"] = FeedbackDocumentCommitState.ABSENT
+    fun cleanupDeletesStorageOnlyAfterServerFenceIsAborted() = runTest {
+        val events = mutableListOf<String>()
+        val documentStore = FakeDocumentStore(events).apply {
+            resolution = FeedbackDocumentResolution.ABORTED
         }
-        val screenshotStore = FakeScreenshotStore()
+        val screenshotStore = FakeScreenshotStore(events)
         val journalStore = FakeJournalStore().apply { put(pending()) }
         val repository = repository(documentStore, screenshotStore, journalStore)
 
@@ -134,15 +183,16 @@ class FirebaseFeedbackSubmissionOperationsTest {
         assertEquals(1, result.attemptedCount)
         assertEquals(1, result.deletedCount)
         assertEquals(0, result.remainingCount)
-        assertEquals(listOf(pending().storagePath), screenshotStore.deletedPaths)
+        assertEquals(listOf("resolve", "delete"), events)
     }
 
     @Test
-    fun cleanupPreservesStorageWhenFirestoreAlreadyCommittedMatchingPath() = runTest {
-        val documentStore = FakeDocumentStore().apply {
-            commitStates["document-1"] = FeedbackDocumentCommitState.COMMITTED
+    fun cleanupPreservesStorageWhenServerFenceIsCommitted() = runTest {
+        val events = mutableListOf<String>()
+        val documentStore = FakeDocumentStore(events).apply {
+            resolution = FeedbackDocumentResolution.COMMITTED
         }
-        val screenshotStore = FakeScreenshotStore()
+        val screenshotStore = FakeScreenshotStore(events)
         val journalStore = FakeJournalStore().apply { put(pending()) }
         val repository = repository(documentStore, screenshotStore, journalStore)
 
@@ -151,16 +201,18 @@ class FirebaseFeedbackSubmissionOperationsTest {
         assertEquals(1, result.attemptedCount)
         assertEquals(0, result.deletedCount)
         assertEquals(0, result.remainingCount)
+        assertEquals(listOf("resolve"), events)
         assertTrue(screenshotStore.deletedPaths.isEmpty())
     }
 
     @Test
     fun cleanupFailsSafeForConflictOrUnverifiedServerState() = runTest {
-        val documentStore = FakeDocumentStore().apply {
-            commitStates["conflict"] = FeedbackDocumentCommitState.CONFLICT
-            verificationErrors["unverified"] = IllegalStateException("offline")
+        val events = mutableListOf<String>()
+        val documentStore = FakeDocumentStore(events).apply {
+            resolutions["conflict"] = FeedbackDocumentResolution.CONFLICT
+            resolutionErrors["unverified"] = IllegalStateException("offline")
         }
-        val screenshotStore = FakeScreenshotStore()
+        val screenshotStore = FakeScreenshotStore(events)
         val journalStore = FakeJournalStore().apply {
             put(PendingFeedbackUpload("conflict", "feedback_screenshots/owner/conflict.jpg"))
             put(PendingFeedbackUpload("unverified", "feedback_screenshots/owner/unverified.jpg"))
@@ -176,17 +228,18 @@ class FirebaseFeedbackSubmissionOperationsTest {
     }
 
     @Test
-    fun missingOrEmptyScreenshotIsRejectedBeforeJournalOrUpload() = runTest {
-        val screenshotStore = FakeScreenshotStore()
+    fun missingOrEmptyScreenshotIsRejectedBeforeReservationOrUpload() = runTest {
+        val events = mutableListOf<String>()
+        val screenshotStore = FakeScreenshotStore(events)
         val journalStore = FakeJournalStore()
-        val repository = repository(FakeDocumentStore(), screenshotStore, journalStore)
+        val repository = repository(FakeDocumentStore(events), screenshotStore, journalStore)
 
         val result = repository.submit(request(), File("does-not-exist.jpg"))
 
         val failure = (result as FeedbackSubmissionResult.Failure).failure
         assertEquals(FeedbackSubmissionFailureKind.UPLOAD, failure.kind)
         assertTrue(journalStore.pendingEntries().isEmpty())
-        assertEquals(null, screenshotStore.uploadedPath)
+        assertTrue(events.isEmpty())
     }
 
     private fun repository(
@@ -227,10 +280,15 @@ class FirebaseFeedbackSubmissionOperationsTest {
         }
     }
 
-    private class FakeDocumentStore : FeedbackDocumentStore {
+    private class FakeDocumentStore(
+        private val events: MutableList<String>
+    ) : FeedbackDocumentStore {
         var saveError: Throwable? = null
-        val commitStates = mutableMapOf<String, FeedbackDocumentCommitState>()
-        val verificationErrors = mutableMapOf<String, Throwable>()
+        var reserveError: Throwable? = null
+        var commitError: Throwable? = null
+        var resolution: FeedbackDocumentResolution = FeedbackDocumentResolution.ABORTED
+        val resolutions = mutableMapOf<String, FeedbackDocumentResolution>()
+        val resolutionErrors = mutableMapOf<String, Throwable>()
 
         override fun newDocumentId(): String = "document-1"
 
@@ -238,22 +296,40 @@ class FirebaseFeedbackSubmissionOperationsTest {
             saveError?.let { throw it }
         }
 
-        override suspend fun commitState(
+        override suspend fun reservePending(documentId: String, storagePath: String) {
+            events += "reserve"
+            reserveError?.let { throw it }
+        }
+
+        override suspend fun commitPending(
+            documentId: String,
+            storagePath: String,
+            data: Map<String, Any?>
+        ) {
+            events += "commit"
+            commitError?.let { throw it }
+        }
+
+        override suspend fun resolveForCleanup(
             documentId: String,
             storagePath: String
-        ): FeedbackDocumentCommitState {
-            verificationErrors[documentId]?.let { throw it }
-            return commitStates[documentId] ?: FeedbackDocumentCommitState.ABSENT
+        ): FeedbackDocumentResolution {
+            events += "resolve"
+            resolutionErrors[documentId]?.let { throw it }
+            return resolutions[documentId] ?: resolution
         }
     }
 
-    private class FakeScreenshotStore : FeedbackScreenshotStore {
+    private class FakeScreenshotStore(
+        private val events: MutableList<String>
+    ) : FeedbackScreenshotStore {
         val deletedPaths = mutableListOf<String>()
         var deleteError: Throwable? = null
         var uploadError: Throwable? = null
         var uploadedPath: String? = null
 
         override suspend fun upload(storagePath: String, file: File): FeedbackScreenshotUpload {
+            events += "upload"
             uploadedPath = storagePath
             uploadError?.let { throw it }
             return FeedbackScreenshotUpload(
@@ -263,6 +339,7 @@ class FirebaseFeedbackSubmissionOperationsTest {
         }
 
         override suspend fun delete(storagePath: String) {
+            events += "delete"
             deletedPaths += storagePath
             deleteError?.let { throw it }
         }
