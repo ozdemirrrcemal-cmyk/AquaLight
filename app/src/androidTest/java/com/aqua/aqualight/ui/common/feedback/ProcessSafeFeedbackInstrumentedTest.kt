@@ -5,6 +5,7 @@ import android.os.Parcel
 import androidx.core.os.bundleOf
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.aqua.aqualight.base.loading.LoadingOverlayDialogFragment
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetAction
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetActionStyle
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetDetailRow
@@ -19,7 +20,6 @@ import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.ThemeBottomSheet
 import com.aqua.aqualight.ui.common.dialog.AppDatePickerDialogFragment
 import com.aqua.aqualight.ui.common.dialog.AppTimePickerDialogFragment
-import com.aqua.aqualight.ui.common.loading.LoadingOverlayDialogFragment
 import com.aqua.aqualight.ui.common.permission.CapabilityPermissionBottomSheet
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
