@@ -137,7 +137,10 @@ service cloud.firestore {
       // A transaction may probe a freshly generated, still-absent document. Existing
       // documents remain readable only by their immutable owner.
       allow get: if request.auth != null
-        && resource.data.get('userId', request.auth.uid) == request.auth.uid;
+        && (
+          !exists(/databases/$(database)/documents/feedback_items/$(feedbackId))
+          || resource.data.userId == request.auth.uid
+        );
       allow list, delete: if false;
 
       allow create: if textFeedbackIsValid()
