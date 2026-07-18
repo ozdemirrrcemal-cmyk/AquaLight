@@ -2,8 +2,10 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
+import com.aqua.aqualight.application.text.AppTextResolver
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootMenuMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootPresentationMapper
@@ -14,10 +16,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class DeviceDosingRootViewModel(
-    private val operations: DeviceRootOperations
+    private val operations: DeviceRootOperations,
+    private val textResolver: AppTextResolver
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(DeviceDosingRootUiState(title = DEFAULT_TITLE))
+    private val _uiState = MutableStateFlow(emptyState("", ""))
     val uiState: StateFlow<DeviceDosingRootUiState> = _uiState.asStateFlow()
 
     private var boundDeviceUid: String = ""
@@ -31,7 +34,7 @@ class DeviceDosingRootViewModel(
         if (deviceUid.isBlank()) {
             observeJob?.cancel()
             boundDeviceUid = ""
-            _uiState.value = emptyState(fallbackTitle.ifBlank { DEFAULT_TITLE }, "")
+            _uiState.value = emptyState(fallbackTitle, "")
             return
         }
         if (boundDeviceUid == deviceUid) return
@@ -39,63 +42,74 @@ class DeviceDosingRootViewModel(
         boundDeviceUid = deviceUid
         observeJob?.cancel()
         operations.connect(deviceUid)
-        _uiState.value = emptyState(fallbackTitle.ifBlank { DEFAULT_TITLE }, deviceUid)
+        _uiState.value = emptyState(fallbackTitle, deviceUid)
         observeJob = viewModelScope.launch {
             operations.observe(deviceUid).collect { snapshot ->
                 _uiState.value = snapshot?.toRootUiState(fallbackTitle)
-                    ?: emptyState(fallbackTitle.ifBlank { DEFAULT_TITLE }, deviceUid)
+                    ?: emptyState(fallbackTitle, deviceUid)
             }
         }
     }
 
     private fun emptyState(title: String, deviceUid: String) = DeviceDosingRootUiState(
-        title = title,
+        title = title.ifBlank { textResolver.get(KIND.defaultTitleRes) },
         deviceUid = deviceUid,
-        connectionStatus = "Offline",
-        primaryCountLabel = KIND.primaryCountLabel,
-        primarySectionTitle = KIND.primarySectionTitle,
-        primarySectionPlaceholder = KIND.primarySectionPlaceholder,
-        secondarySectionTitle = KIND.secondarySectionTitle,
-        secondarySectionPlaceholder = KIND.secondarySectionPlaceholder
+        connectionStatus = textResolver.get(R.string.device_runtime_offline),
+        ipText = textResolver.get(R.string.device_runtime_unknown),
+        firmwareText = textResolver.get(R.string.device_runtime_unknown),
+        modelText = textResolver.get(R.string.device_runtime_unknown),
+        primaryCountLabel = textResolver.get(KIND.primaryCountLabelRes),
+        primaryCountText = textResolver.get(R.string.device_runtime_unknown),
+        featuresText = textResolver.get(R.string.device_runtime_unknown),
+        primarySectionTitle = textResolver.get(KIND.primarySectionTitleRes),
+        primarySectionPlaceholder = textResolver.get(KIND.primarySectionPlaceholderRes),
+        secondarySectionTitle = textResolver.get(KIND.secondarySectionTitleRes),
+        secondarySectionPlaceholder = textResolver.get(KIND.secondarySectionPlaceholderRes)
     )
 
     private fun DeviceRootSnapshot.toRootUiState(fallbackTitle: String): DeviceDosingRootUiState {
         val menuSections = DeviceRootMenuMapper.overview(kind = KIND, snapshot = this)
         return DeviceDosingRootUiState(
-            title = title.ifBlank { fallbackTitle }.ifBlank { DEFAULT_TITLE },
+            title = title.ifBlank { fallbackTitle }.ifBlank { textResolver.get(KIND.defaultTitleRes) },
             deviceUid = deviceUid,
-            connectionStatus = DeviceRootPresentationMapper.availabilityLabel(this),
-            ipText = ipAddress.ifBlank { "Unknown" },
-            firmwareText = firmwareLabel.ifBlank { "Unknown" },
-            modelText = modelLabel.ifBlank { "Unknown" },
-            primaryCountLabel = KIND.primaryCountLabel,
-            primaryCountText = dosingChannelCount.takeIf { it > 0 }?.toString() ?: "Unknown",
-            featuresText = DeviceRootPresentationMapper.overviewFeatureLabel(this, KIND),
-            primarySectionTitle = KIND.primarySectionTitle,
-            primarySectionPlaceholder = menuSections.primaryText(KIND.primarySectionPlaceholder),
-            secondarySectionTitle = KIND.secondarySectionTitle,
-            secondarySectionPlaceholder = menuSections.secondaryText(KIND.secondarySectionPlaceholder)
+            connectionStatus = DeviceRootPresentationMapper.availabilityLabel(this, textResolver),
+            ipText = ipAddress.ifBlank { textResolver.get(R.string.device_runtime_unknown) },
+            firmwareText = firmwareLabel.ifBlank { textResolver.get(R.string.device_runtime_unknown) },
+            modelText = modelLabel.ifBlank { textResolver.get(R.string.device_runtime_unknown) },
+            primaryCountLabel = textResolver.get(KIND.primaryCountLabelRes),
+            primaryCountText = dosingChannelCount.takeIf { it > 0 }?.toString()
+                ?: textResolver.get(R.string.device_runtime_unknown),
+            featuresText = DeviceRootPresentationMapper.overviewFeatureLabel(this, KIND, textResolver),
+            primarySectionTitle = textResolver.get(KIND.primarySectionTitleRes),
+            primarySectionPlaceholder = menuSections.primaryText(
+                textResolver,
+                KIND.primarySectionPlaceholderRes
+            ),
+            secondarySectionTitle = textResolver.get(KIND.secondarySectionTitleRes),
+            secondarySectionPlaceholder = menuSections.secondaryText(
+                textResolver,
+                KIND.secondarySectionPlaceholderRes
+            )
         )
     }
 
     private companion object {
         val KIND = DeviceRootKind.DOSING
-        const val DEFAULT_TITLE = "Dosing"
     }
 }
 
 data class DeviceDosingRootUiState(
-    val title: String = "Dosing",
+    val title: String = "",
     val deviceUid: String = "",
-    val connectionStatus: String = "Unknown",
-    val ipText: String = "Unknown",
-    val firmwareText: String = "Unknown",
-    val modelText: String = "Unknown",
-    val primaryCountLabel: String = "Channels",
-    val primaryCountText: String = "Unknown",
-    val featuresText: String = "Unknown",
-    val primarySectionTitle: String = "Controls",
-    val primarySectionPlaceholder: String = "Controls hazırlanıyor.",
-    val secondarySectionTitle: String = "Schedules",
-    val secondarySectionPlaceholder: String = "Schedules hazırlanıyor."
+    val connectionStatus: String = "",
+    val ipText: String = "",
+    val firmwareText: String = "",
+    val modelText: String = "",
+    val primaryCountLabel: String = "",
+    val primaryCountText: String = "",
+    val featuresText: String = "",
+    val primarySectionTitle: String = "",
+    val primarySectionPlaceholder: String = "",
+    val secondarySectionTitle: String = "",
+    val secondarySectionPlaceholder: String = ""
 )
