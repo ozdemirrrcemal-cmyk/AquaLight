@@ -87,12 +87,25 @@ class FeedbackViewModel(
     }
 
     fun selectScreenshot(uri: Uri) {
+        launchScreenshotProcessing { mediaProcessor.process(uri) }
+    }
+
+    /** Exercises the same state machine without constructing Android framework objects in JVM tests. */
+    internal fun selectScreenshotForTest(
+        process: suspend () -> FeedbackMediaProcessingResult
+    ) {
+        launchScreenshotProcessing(process)
+    }
+
+    private fun launchScreenshotProcessing(
+        process: suspend () -> FeedbackMediaProcessingResult
+    ) {
         if (_uiState.value.isBusy) return
         _uiState.update { it.copy(isProcessingMedia = true) }
 
         mediaJob = viewModelScope.launch {
             try {
-                when (val result = mediaProcessor.process(uri)) {
+                when (val result = process()) {
                     is FeedbackMediaProcessingResult.Success -> {
                         val previous = _uiState.value.screenshot
                         if (previous?.path != result.media.path) {
