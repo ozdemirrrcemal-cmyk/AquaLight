@@ -65,6 +65,15 @@ class AquaApp : Application() {
             }
         }
 
+        // Recovery belongs to process startup rather than the Feedback screen. The repository
+        // performs server verification and IO dispatching internally; unavailable networking is
+        // fail-safe and leaves the durable journal for the next process start.
+        applicationScope.launch {
+            runCatching {
+                appContainer.feedbackSubmissionOperations.cleanupOrphans()
+            }
+        }
+
         // Channel creation is idempotent and preserves every user-controlled setting.
         NotificationPlatform.get(this).permissionPolicy.ensureChannels()
     }
