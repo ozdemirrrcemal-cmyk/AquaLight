@@ -8,7 +8,6 @@ data class DeviceCompactCardUi(
     val serialText: String,
     val supportingText: String = "",
     @DrawableRes val iconRes: Int,
-    val statusText: String = "",
     val statusStyle: DeviceCompactStatusStyle = DeviceCompactStatusStyle.OFFLINE,
     val actionText: String = "",
     val showAction: Boolean = false

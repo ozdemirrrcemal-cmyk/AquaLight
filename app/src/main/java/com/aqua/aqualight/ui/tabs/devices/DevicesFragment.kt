@@ -245,27 +245,29 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             DeviceRouteTarget.LIGHT_ROOT ->
                 DevicesFragmentDirections.actionDevicesFragmentToDeviceLightRootFragment(
                     deviceUid = route.deviceUid,
-                    deviceTitle = route.title
+                    deviceTitle = route.title.ifBlank { getString(route.titleRes) }
                 )
             DeviceRouteTarget.DOSING_ROOT ->
                 DevicesFragmentDirections.actionDevicesFragmentToDeviceDosingRootFragment(
                     deviceUid = route.deviceUid,
-                    deviceTitle = route.title
+                    deviceTitle = route.title.ifBlank { getString(route.titleRes) }
                 )
             DeviceRouteTarget.TIMER_ROOT ->
                 DevicesFragmentDirections.actionDevicesFragmentToDeviceTimerRootFragment(
                     deviceUid = route.deviceUid,
-                    deviceTitle = route.title
+                    deviceTitle = route.title.ifBlank { getString(route.titleRes) }
                 )
             DeviceRouteTarget.COOLING_ROOT ->
                 DevicesFragmentDirections.actionDevicesFragmentToDeviceCoolingRootFragment(
                     deviceUid = route.deviceUid,
-                    deviceTitle = route.title
+                    deviceTitle = route.title.ifBlank { getString(route.titleRes) }
                 )
             DeviceRouteTarget.UNSUPPORTED ->
                 DevicesFragmentDirections.actionDevicesFragmentToUnsupportedDeviceFragment(
-                    deviceTitle = route.title,
-                    message = route.message,
+                    deviceTitle = route.title.ifBlank { getString(route.titleRes) },
+                    message = route.messageRes.takeIf { it != 0 }
+                        ?.let { getString(it) }
+                        .orEmpty(),
                     deviceUid = route.deviceUid
                 )
         }

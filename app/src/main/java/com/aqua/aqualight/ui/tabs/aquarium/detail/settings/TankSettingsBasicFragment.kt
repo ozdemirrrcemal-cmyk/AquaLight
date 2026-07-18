@@ -472,7 +472,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
         TankSettingsEditorBottomSheet.show(
             fragmentManager = childFragmentManager,
             mode = TankSettingsEditorBottomSheet.Mode.TYPE,
-            title = "Tank Type",
+            title = getString(R.string.aquarium_tank_type_title),
             currentText = tank.tankType
         )
     }
@@ -504,7 +504,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
         TankSettingsEditorBottomSheet.show(
             fragmentManager = childFragmentManager,
             mode = TankSettingsEditorBottomSheet.Mode.SETUP_DATE,
-            title = "Setup Date",
+            title = getString(R.string.aquarium_setup_date_title),
             currentMillis = tank.setupDateMillis,
             minYear = AquariumDatePolicy.minSetupYear(),
             maxYear = AquariumDatePolicy.maxSetupYear(),
@@ -517,7 +517,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
         TankSettingsEditorBottomSheet.show(
             fragmentManager = childFragmentManager,
             mode = TankSettingsEditorBottomSheet.Mode.STYLE,
-            title = "Tank Style",
+            title = getString(R.string.aquarium_tank_style_title),
             currentText = tank.tankStyle,
             validationMessage = getString(R.string.aquarium_error_tank_style_save_failed)
         )

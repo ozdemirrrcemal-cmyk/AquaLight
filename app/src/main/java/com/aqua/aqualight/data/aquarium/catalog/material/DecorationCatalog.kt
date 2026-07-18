@@ -1,90 +1,149 @@
 package com.aqua.aqualight.data.aquarium.catalog.material
 
+import com.aqua.aqualight.R
+
 
 object DecorationCatalog {
 
-    private const val CATEGORY_TITLE = "Decoration"
-
-    val products: List<AquariumMaterial> = listOf(
-        AquariumMaterial(
+    val definitions: List<AquariumMaterialDefinition> = listOf(
+        AquariumMaterialDefinition(
             id = "decoration_seiryu_stone",
-            brand = "",
-            name = "Seiryu Stone",
+            brandRes = 0,
+            nameRes = R.string.catalog_material_decoration_seiryu_stone_name,
             categoryKey = MaterialCategoryKey.DECORATION,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("decoration", "stone", "rock", "hardscape", "seiryu")
+            categoryTitleRes = R.string.catalog_material_category_decoration_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_decoration,
+                R.string.catalog_keyword_stone,
+                R.string.catalog_keyword_rock,
+                R.string.catalog_keyword_hardscape,
+                R.string.catalog_keyword_seiryu
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "decoration_dragon_stone",
-            brand = "",
-            name = "Dragon Stone",
+            brandRes = 0,
+            nameRes = R.string.catalog_material_decoration_dragon_stone_name,
             categoryKey = MaterialCategoryKey.DECORATION,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("decoration", "stone", "rock", "hardscape", "dragon")
+            categoryTitleRes = R.string.catalog_material_category_decoration_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_decoration,
+                R.string.catalog_keyword_stone,
+                R.string.catalog_keyword_rock,
+                R.string.catalog_keyword_hardscape,
+                R.string.catalog_keyword_dragon
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "decoration_lava_rock",
-            brand = "",
-            name = "Lava Rock",
+            brandRes = 0,
+            nameRes = R.string.catalog_material_decoration_lava_rock_name,
             categoryKey = MaterialCategoryKey.DECORATION,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("decoration", "stone", "rock", "lava", "hardscape")
+            categoryTitleRes = R.string.catalog_material_category_decoration_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_decoration,
+                R.string.catalog_keyword_stone,
+                R.string.catalog_keyword_rock,
+                R.string.catalog_keyword_lava,
+                R.string.catalog_keyword_hardscape
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "decoration_manten_stone",
-            brand = "",
-            name = "Manten Stone",
+            brandRes = 0,
+            nameRes = R.string.catalog_material_decoration_manten_stone_name,
             categoryKey = MaterialCategoryKey.DECORATION,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("decoration", "stone", "rock", "hardscape", "manten")
+            categoryTitleRes = R.string.catalog_material_category_decoration_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_decoration,
+                R.string.catalog_keyword_stone,
+                R.string.catalog_keyword_rock,
+                R.string.catalog_keyword_hardscape,
+                R.string.catalog_keyword_manten
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "decoration_ohko_stone",
-            brand = "",
-            name = "Ohko Stone",
+            brandRes = 0,
+            nameRes = R.string.catalog_material_decoration_ohko_stone_name,
             categoryKey = MaterialCategoryKey.DECORATION,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("decoration", "stone", "rock", "dragon", "ohko")
+            categoryTitleRes = R.string.catalog_material_category_decoration_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_decoration,
+                R.string.catalog_keyword_stone,
+                R.string.catalog_keyword_rock,
+                R.string.catalog_keyword_dragon,
+                R.string.catalog_keyword_ohko
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "decoration_spider_wood",
-            brand = "",
-            name = "Spider Wood",
+            brandRes = 0,
+            nameRes = R.string.catalog_material_decoration_spider_wood_name,
             categoryKey = MaterialCategoryKey.DECORATION,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("decoration", "wood", "driftwood", "hardscape", "spider")
+            categoryTitleRes = R.string.catalog_material_category_decoration_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_decoration,
+                R.string.catalog_keyword_wood,
+                R.string.catalog_keyword_driftwood,
+                R.string.catalog_keyword_hardscape,
+                R.string.catalog_keyword_spider
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "decoration_mopani_wood",
-            brand = "",
-            name = "Mopani Wood",
+            brandRes = 0,
+            nameRes = R.string.catalog_material_decoration_mopani_wood_name,
             categoryKey = MaterialCategoryKey.DECORATION,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("decoration", "wood", "driftwood", "hardscape", "mopani")
+            categoryTitleRes = R.string.catalog_material_category_decoration_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_decoration,
+                R.string.catalog_keyword_wood,
+                R.string.catalog_keyword_driftwood,
+                R.string.catalog_keyword_hardscape,
+                R.string.catalog_keyword_mopani
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "decoration_red_moor_wood",
-            brand = "",
-            name = "Red Moor Wood",
+            brandRes = 0,
+            nameRes = R.string.catalog_material_decoration_red_moor_wood_name,
             categoryKey = MaterialCategoryKey.DECORATION,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("decoration", "wood", "driftwood", "hardscape", "moor")
+            categoryTitleRes = R.string.catalog_material_category_decoration_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_decoration,
+                R.string.catalog_keyword_wood,
+                R.string.catalog_keyword_driftwood,
+                R.string.catalog_keyword_hardscape,
+                R.string.catalog_keyword_moor
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "decoration_mangrove_root",
-            brand = "",
-            name = "Mangrove Root",
+            brandRes = 0,
+            nameRes = R.string.catalog_material_decoration_mangrove_root_name,
             categoryKey = MaterialCategoryKey.DECORATION,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("decoration", "wood", "root", "driftwood", "mangrove")
+            categoryTitleRes = R.string.catalog_material_category_decoration_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_decoration,
+                R.string.catalog_keyword_wood,
+                R.string.catalog_keyword_root,
+                R.string.catalog_keyword_driftwood,
+                R.string.catalog_keyword_mangrove
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "decoration_cholla_wood",
-            brand = "",
-            name = "Cholla Wood",
+            brandRes = 0,
+            nameRes = R.string.catalog_material_decoration_cholla_wood_name,
             categoryKey = MaterialCategoryKey.DECORATION,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("decoration", "wood", "shrimp", "cholla")
+            categoryTitleRes = R.string.catalog_material_category_decoration_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_decoration,
+                R.string.catalog_keyword_wood,
+                R.string.catalog_keyword_shrimp,
+                R.string.catalog_keyword_cholla
+            )
         )
     )
 }

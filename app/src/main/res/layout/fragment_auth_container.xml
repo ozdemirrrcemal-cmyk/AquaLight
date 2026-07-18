@@ -37,14 +37,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="start|top"
-        android:layout_marginTop="24dp"
-        android:layout_marginStart="24dp"
+        android:layout_marginTop="@dimen/aqua_size_24"
+        android:layout_marginStart="@dimen/aqua_size_24"
         android:gravity="start">
 
         <ImageView
             android:id="@+id/imgLogo"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
+            android:layout_width="@dimen/aqua_size_80"
+            android:layout_height="@dimen/aqua_size_80"
             android:src="@drawable/logo_login"
             android:contentDescription="@string/main_login_logo_description" />
 
@@ -53,7 +53,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/splasch_app_title"
-            android:textColor="#0A192F"
+            android:textColor="@color/aqua_palette_hex_0a192f"
             android:textSize="@dimen/aqua_text_size_title_medium"
             android:fontFamily="@font/poppins_bold"
             android:includeFontPadding="false" />
@@ -63,7 +63,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/splasch_app_subtitle"
-            android:textColor="#0A192F"
+            android:textColor="@color/aqua_palette_hex_0a192f"
             android:textSize="@dimen/aqua_text_size_body_large"
             android:fontFamily="@font/raleway_medium"
             android:includeFontPadding="false" />

@@ -1,50 +1,75 @@
 package com.aqua.aqualight.data.aquarium.catalog.material
 
+import com.aqua.aqualight.R
+
 
 object CoolerCatalog {
 
-    private const val CATEGORY_TITLE = "Cooler"
-
-    val products: List<AquariumMaterial> = listOf(
-        AquariumMaterial(
+    val definitions: List<AquariumMaterialDefinition> = listOf(
+        AquariumMaterialDefinition(
             id = "cooler_aquael_fan_mini",
-            brand = "Aquael",
-            name = "Aquael Fan Mini",
+            brandRes = R.string.catalog_brand_aquael,
+            nameRes = R.string.catalog_material_cooler_aquael_fan_mini_name,
             categoryKey = MaterialCategoryKey.COOLER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("cooler", "fan", "temperature", "aquael")
+            categoryTitleRes = R.string.catalog_material_category_cooler_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_cooler,
+                R.string.catalog_keyword_fan,
+                R.string.catalog_keyword_temperature,
+                R.string.catalog_keyword_aquael
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "cooler_chihiros_cooling_fan",
-            brand = "Chihiros",
-            name = "Chihiros Cooling Fan",
+            brandRes = R.string.catalog_brand_chihiros,
+            nameRes = R.string.catalog_material_cooler_chihiros_cooling_fan_name,
             categoryKey = MaterialCategoryKey.COOLER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("cooler", "fan", "temperature", "chihiros")
+            categoryTitleRes = R.string.catalog_material_category_cooler_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_cooler,
+                R.string.catalog_keyword_fan,
+                R.string.catalog_keyword_temperature,
+                R.string.catalog_keyword_chihiros
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "cooler_ista_cooling_fan",
-            brand = "ISTA",
-            name = "ISTA Cooling Fan",
+            brandRes = R.string.catalog_brand_ista,
+            nameRes = R.string.catalog_material_cooler_ista_cooling_fan_name,
             categoryKey = MaterialCategoryKey.COOLER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("cooler", "fan", "temperature", "ista")
+            categoryTitleRes = R.string.catalog_material_category_cooler_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_cooler,
+                R.string.catalog_keyword_fan,
+                R.string.catalog_keyword_temperature,
+                R.string.catalog_keyword_ista
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "cooler_jbl_cooler_100",
-            brand = "JBL",
-            name = "JBL Cooler 100",
+            brandRes = R.string.catalog_brand_jbl,
+            nameRes = R.string.catalog_material_cooler_jbl_cooler_100_name,
             categoryKey = MaterialCategoryKey.COOLER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("cooler", "fan", "temperature", "jbl")
+            categoryTitleRes = R.string.catalog_material_category_cooler_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_cooler,
+                R.string.catalog_keyword_fan,
+                R.string.catalog_keyword_temperature,
+                R.string.catalog_keyword_jbl
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "cooler_jbl_cooler_200",
-            brand = "JBL",
-            name = "JBL Cooler 200",
+            brandRes = R.string.catalog_brand_jbl,
+            nameRes = R.string.catalog_material_cooler_jbl_cooler_200_name,
             categoryKey = MaterialCategoryKey.COOLER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("cooler", "fan", "temperature", "jbl")
+            categoryTitleRes = R.string.catalog_material_category_cooler_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_cooler,
+                R.string.catalog_keyword_fan,
+                R.string.catalog_keyword_temperature,
+                R.string.catalog_keyword_jbl
+            )
         )
     )
 }

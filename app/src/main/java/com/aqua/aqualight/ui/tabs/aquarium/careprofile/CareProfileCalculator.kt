@@ -185,7 +185,7 @@ object CareProfileCalculator {
     keywords: Array<String>
   ): Item {
     val completed = hasMaterial(tank, keywords)
-    val category = findMaterialCategory(keywords)
+    val category = findMaterialCategory(context, keywords)
     return Item(
       title = title,
       subtitle = if (completed) {
@@ -238,17 +238,18 @@ object CareProfileCalculator {
   }
 
   private fun findMaterialCategory(
+    context: Context,
     keywords: Array<String>
   ): Pair<String, String>? {
     val categories = MaterialCategoryCatalog.bioCategories +
       MaterialCategoryCatalog.hardwareCategories
     val category = categories.firstOrNull { item ->
       containsAnyCareKeyword(
-        value = "${item.key} ${item.title}",
+        value = "${item.key} ${item.title(context)}",
         keywords = keywords
       )
     }
-    return category?.let { it.key to it.title }
+    return category?.let { it.key to it.title(context) }
   }
 
   private fun containsAnyCareKeyword(

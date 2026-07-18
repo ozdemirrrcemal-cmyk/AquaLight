@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail
 
+import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
@@ -178,8 +179,8 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
 
             binding.tankBioComponentsContainer.addView(
                 createTankComponentCard(
-                    shortCode = category.shortCode,
-                    title = category.title,
+                    shortCode = category.shortCode(requireContext()),
+                    title = category.title(requireContext()),
                     materials = selectedMaterials
                 )
             )
@@ -192,8 +193,8 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
 
             binding.tankHardwareComponentsContainer.addView(
                 createTankComponentCard(
-                    shortCode = category.shortCode,
-                    title = category.title,
+                    shortCode = category.shortCode(requireContext()),
+                    title = category.title(requireContext()),
                     materials = selectedMaterials
                 )
             )
@@ -206,8 +207,8 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
         materials: List<AquariumMaterialSelection>
     ): View {
         val card = MaterialCardView(requireContext()).apply {
-            radius = 16.dp().toFloat()
-            strokeWidth = 1.dp()
+            radius = resources.getDimensionPixelOffset(R.dimen.aqua_size_16).toFloat()
+            strokeWidth = resources.getDimensionPixelOffset(R.dimen.aqua_size_1)
             strokeColor = ContextCompat.getColor(
                 requireContext(),
                 R.color.aqua_card_outline
@@ -226,7 +227,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply {
-                bottomMargin = 10.dp()
+                bottomMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_10)
             }
             setOnClickListener {
                 openTankSettingsDetails()
@@ -236,18 +237,24 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
         val row = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(14.dp(), 12.dp(), 14.dp(), 12.dp())
+            setPadding(resources.getDimensionPixelOffset(R.dimen.aqua_size_14), resources.getDimensionPixelOffset(R.dimen.aqua_size_12), resources.getDimensionPixelOffset(R.dimen.aqua_size_14), resources.getDimensionPixelOffset(R.dimen.aqua_size_12))
         }
 
         val iconBox = TextView(requireContext()).apply {
             text = shortCode.uppercase(Locale.getDefault())
             gravity = Gravity.CENTER
-            textSize = if (shortCode.length > 2) 10f else 12f
+            setTextSizeResource(
+                if (shortCode.length > 2) {
+                    R.dimen.aqua_text_size_status_micro
+                } else {
+                    R.dimen.aqua_text_size_caption
+                }
+            )
             setTextColor(Color.WHITE)
             setTypeface(null, Typeface.BOLD)
             setBackgroundResource(R.drawable.bg_material_icon_box)
             includeFontPadding = false
-            layoutParams = LinearLayout.LayoutParams(42.dp(), 42.dp())
+            layoutParams = LinearLayout.LayoutParams(resources.getDimensionPixelOffset(R.dimen.aqua_size_42), resources.getDimensionPixelOffset(R.dimen.aqua_size_42))
         }
 
         val textBox = LinearLayout(requireContext()).apply {
@@ -257,13 +264,13 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 1f
             ).apply {
-                marginStart = 14.dp()
+                marginStart = resources.getDimensionPixelOffset(R.dimen.aqua_size_14)
             }
         }
 
         val titleText = TextView(requireContext()).apply {
             text = title
-            textSize = 14f
+            setTextSizeResource(R.dimen.aqua_text_size_body)
             setTextColor(
                 ContextCompat.getColor(
                     requireContext(),
@@ -278,21 +285,21 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
 
         val summaryText = TextView(requireContext()).apply {
             text = getComponentSummary(materials)
-            textSize = 12f
+            setTextSizeResource(R.dimen.aqua_text_size_caption)
             setTextColor(
                 ContextCompat.getColor(
                     requireContext(),
                     R.color.aqua_card_text_secondary
                 )
             )
-            setLineSpacing(2.dp().toFloat(), 1.0f)
+            setLineSpacing(resources.getDimensionPixelOffset(R.dimen.aqua_size_2).toFloat(), 1.0f)
             maxLines = 2
             ellipsize = TextUtils.TruncateAt.END
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply {
-                topMargin = 6.dp()
+                topMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_6)
             }
         }
 
@@ -367,11 +374,6 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
             type = type
         )
     }
-
-    private fun Int.dp(): Int {
-        return (this * resources.displayMetrics.density).toInt()
-    }
-
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

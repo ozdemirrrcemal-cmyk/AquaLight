@@ -147,7 +147,7 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
         itemIndex: Int
     ): View {
         val selected = item.type == selectedType
-        val accentColor = parseColorOrDefault(item.accentColor)
+        val accentColor = ContextCompat.getColor(requireContext(), item.accentColorRes)
         val isRightColumn = itemIndex % 2 == 1
         val horizontalPadding = resources.getDimensionPixelSize(
             R.dimen.care_sheet_card_horizontal_padding
@@ -274,12 +274,6 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
             Color.red(color),
             Color.green(color),
             Color.blue(color)
-        )
-    }
-
-    private fun parseColorOrDefault(color: String): Int {
-        return runCatching { Color.parseColor(color) }.getOrDefault(
-            ContextCompat.getColor(requireContext(), R.color.aqua_card_accent)
         )
     }
 

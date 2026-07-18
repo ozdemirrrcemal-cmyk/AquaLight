@@ -97,9 +97,9 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
 
     private fun setupMethodLabel(): String {
         return if (args.qrSecretReference.isNotBlank()) {
-            "Secure QR Setup"
+            getString(R.string.device_setup_method_secure_qr)
         } else {
-            "Manual BLE Setup"
+            getString(R.string.device_setup_method_manual_ble)
         }
     }
 
@@ -112,7 +112,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
                     .takeUnless { value -> value.isLikelyBleAddress() }
                     .orEmpty()
             }
-            .ifBlank { "—" }
+            .ifBlank { getString(R.string.common_not_available_em_dash) }
     }
 
     private fun setupActions() {

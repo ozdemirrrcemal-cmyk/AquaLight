@@ -9,7 +9,7 @@
     <include
         android:id="@+id/appHeader"
         layout="@layout/layout_aqua_header"
-        android:layout_width="0dp"
+        android:layout_width="@dimen/aqua_size_0"
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -17,17 +17,17 @@
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardTankImage"
-        android:layout_width="0dp"
-        android:layout_height="190dp"
-        android:layout_marginStart="14dp"
-        android:layout_marginTop="22dp"
-        android:layout_marginEnd="14dp"
-        app:cardCornerRadius="22dp"
-        app:cardElevation="0dp"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="@dimen/aqua_size_190"
+        android:layout_marginStart="@dimen/aqua_size_14"
+        android:layout_marginTop="@dimen/aqua_size_22"
+        android:layout_marginEnd="@dimen/aqua_size_14"
+        app:cardCornerRadius="@dimen/aqua_size_22"
+        app:cardElevation="@dimen/aqua_size_0"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/appHeader"
-        app:strokeWidth="0dp">
+        app:strokeWidth="@dimen/aqua_size_0">
 
         <FrameLayout
             android:id="@+id/imageFrame"
@@ -45,7 +45,7 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="#22000000" />
+                android:background="@color/aqua_palette_hex_22000000" />
 
             <FrameLayout
                 android:id="@+id/markerContainer"
@@ -59,33 +59,33 @@
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tankTabs"
-        android:layout_width="0dp"
-        android:layout_height="48dp"
-        android:layout_marginStart="14dp"
-        android:layout_marginTop="2dp"
-        android:layout_marginEnd="14dp"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="@dimen/aqua_size_48"
+        android:layout_marginStart="@dimen/aqua_size_14"
+        android:layout_marginTop="@dimen/aqua_size_2"
+        android:layout_marginEnd="@dimen/aqua_size_14"
         android:background="@color/background_color"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/cardTankImage"
         app:tabGravity="fill"
-        app:tabIndicatorColor="#2196F3"
+        app:tabIndicatorColor="@color/aqua_palette_hex_2196f3"
         app:tabIndicatorFullWidth="false"
         app:tabIndicatorGravity="bottom"
-        app:tabIndicatorHeight="3dp"
-        app:tabMinWidth="0dp"
+        app:tabIndicatorHeight="@dimen/aqua_size_3"
+        app:tabMinWidth="@dimen/aqua_size_0"
         app:tabMode="fixed"
-        app:tabPaddingEnd="0dp"
-        app:tabPaddingStart="0dp"
+        app:tabPaddingEnd="@dimen/aqua_size_0"
+        app:tabPaddingStart="@dimen/aqua_size_0"
         app:tabRippleColor="@android:color/transparent"
         app:tabSelectedTextColor="@android:color/white"
         app:tabTextAppearance="@style/TextAppearance.Aqua.TankTab"
-        app:tabTextColor="#8FA4BE" />
+        app:tabTextColor="@color/aqua_palette_hex_8fa4be" />
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/tankDetailPager"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="@dimen/aqua_size_0"
         android:background="@color/background_color"
         android:clipToPadding="false"
         android:overScrollMode="never"

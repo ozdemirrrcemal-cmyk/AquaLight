@@ -2,18 +2,18 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/nav_aquarium"
-        android:title="Aquarium"
+        android:title="@string/screen_title_aquarium"
         android:icon="@drawable/ic_nav_aquarium_pro" />
     <item
         android:id="@+id/nav_maintenance"
-        android:title="Maintenance"
+        android:title="@string/screen_title_maintenance"
         android:icon="@drawable/ic_aquarium_maintenance" />
     <item
         android:id="@+id/nav_devices"
-        android:title="Devices"
+        android:title="@string/screen_title_devices"
         android:icon="@drawable/ic_devices" />
     <item
         android:id="@+id/nav_settings"
-        android:title="Settings"
+        android:title="@string/screen_title_settings"
         android:icon="@drawable/ic_settings" />
 </menu>

@@ -200,7 +200,10 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
         FeedbackBottomSheet.show(
             fragmentManager = parentFragmentManager,
             title = getString(R.string.aquarium_remove_device_title),
-            message = getString(R.string.aquarium_remove_device_message, item.title),
+            message = getString(
+                R.string.aquarium_remove_device_message,
+                item.title.ifBlank { getString(R.string.device_menu_default_title) }
+            ),
             primaryText = getString(R.string.aquarium_remove_action),
             cancelText = getString(R.string.common_cancel),
             tone = FeedbackBottomSheet.FeedbackTone.DANGER,

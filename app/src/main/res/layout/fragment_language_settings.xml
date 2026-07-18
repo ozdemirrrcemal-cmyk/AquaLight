@@ -12,7 +12,7 @@
    <include
     android:id="@+id/appHeader"
     layout="@layout/layout_aqua_header"
-    android:layout_width="0dp"
+    android:layout_width="@dimen/aqua_size_0"
     android:layout_height="wrap_content"
     app:layout_constraintTop_toTopOf="parent"
     app:layout_constraintStart_toStartOf="parent"
@@ -21,14 +21,14 @@
     <!-- 🔹 İçerik -->
     <ScrollView
         android:id="@+id/scrollContainer"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="@dimen/aqua_size_0"
         android:fillViewport="true"
         android:scrollbars="none"
-        android:paddingStart="10dp"
-        android:paddingEnd="10dp"
-        android:paddingTop="16dp"
-        android:paddingBottom="16dp"
+        android:paddingStart="@dimen/aqua_size_10"
+        android:paddingEnd="@dimen/aqua_size_10"
+        android:paddingTop="@dimen/aqua_size_16"
+        android:paddingBottom="@dimen/aqua_size_16"
         app:layout_constraintTop_toBottomOf="@id/appHeader"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -51,26 +51,26 @@
                     android:id="@+id/cardTurkish"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="@dimen/aqua_size_12"
                     style="@style/Widget.Aqua.Card">
 
                     <LinearLayout
                         android:orientation="horizontal"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:padding="12dp"
+                        android:padding="@dimen/aqua_size_12"
                         android:gravity="center_vertical"
                         android:contentDescription="@string/language_turkish_row_desc">
 
                         <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
+                            android:layout_width="@dimen/aqua_size_32"
+                            android:layout_height="@dimen/aqua_size_32"
                             android:src="@drawable/flag_tr"
-                            android:layout_marginEnd="12dp"
+                            android:layout_marginEnd="@dimen/aqua_size_12"
                             android:contentDescription="@string/language_turkish_flag_desc" />
 
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/language_turkish"
@@ -94,26 +94,26 @@
                     android:id="@+id/cardEnglish"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="@dimen/aqua_size_12"
                     style="@style/Widget.Aqua.Card">
 
                     <LinearLayout
                         android:orientation="horizontal"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:padding="12dp"
+                        android:padding="@dimen/aqua_size_12"
                         android:gravity="center_vertical"
                         android:contentDescription="@string/language_english_row_desc">
 
                         <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
+                            android:layout_width="@dimen/aqua_size_32"
+                            android:layout_height="@dimen/aqua_size_32"
                             android:src="@drawable/flag_en"
-                            android:layout_marginEnd="12dp"
+                            android:layout_marginEnd="@dimen/aqua_size_12"
                             android:contentDescription="@string/language_english_flag_desc" />
 
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/language_english"
@@ -137,26 +137,26 @@
                     android:id="@+id/cardGerman"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="@dimen/aqua_size_12"
                     style="@style/Widget.Aqua.Card">
 
                     <LinearLayout
                         android:orientation="horizontal"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:padding="12dp"
+                        android:padding="@dimen/aqua_size_12"
                         android:gravity="center_vertical"
                         android:contentDescription="@string/language_german_row_desc">
 
                         <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
+                            android:layout_width="@dimen/aqua_size_32"
+                            android:layout_height="@dimen/aqua_size_32"
                             android:src="@drawable/flag_de"
-                            android:layout_marginEnd="12dp"
+                            android:layout_marginEnd="@dimen/aqua_size_12"
                             android:contentDescription="@string/language_german_flag_desc" />
 
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/language_german"
@@ -180,26 +180,26 @@
                     android:id="@+id/cardFrench"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="@dimen/aqua_size_12"
                     style="@style/Widget.Aqua.Card">
 
                     <LinearLayout
                         android:orientation="horizontal"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:padding="12dp"
+                        android:padding="@dimen/aqua_size_12"
                         android:gravity="center_vertical"
                         android:contentDescription="@string/language_french_row_desc">
 
                         <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
+                            android:layout_width="@dimen/aqua_size_32"
+                            android:layout_height="@dimen/aqua_size_32"
                             android:src="@drawable/flag_fr"
-                            android:layout_marginEnd="12dp"
+                            android:layout_marginEnd="@dimen/aqua_size_12"
                             android:contentDescription="@string/language_french_flag_desc" />
 
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/language_french"
@@ -223,26 +223,26 @@
                     android:id="@+id/cardRussian"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="@dimen/aqua_size_12"
                     style="@style/Widget.Aqua.Card">
 
                     <LinearLayout
                         android:orientation="horizontal"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:padding="12dp"
+                        android:padding="@dimen/aqua_size_12"
                         android:gravity="center_vertical"
                         android:contentDescription="@string/language_russian_row_desc">
 
                         <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
+                            android:layout_width="@dimen/aqua_size_32"
+                            android:layout_height="@dimen/aqua_size_32"
                             android:src="@drawable/flag_ru"
-                            android:layout_marginEnd="12dp"
+                            android:layout_marginEnd="@dimen/aqua_size_12"
                             android:contentDescription="@string/language_russian_flag_desc" />
 
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/language_russian"
@@ -266,26 +266,26 @@
                     android:id="@+id/cardChinese"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="@dimen/aqua_size_12"
                     style="@style/Widget.Aqua.Card">
 
                     <LinearLayout
                         android:orientation="horizontal"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:padding="12dp"
+                        android:padding="@dimen/aqua_size_12"
                         android:gravity="center_vertical"
                         android:contentDescription="@string/language_chinese_row_desc">
 
                         <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
+                            android:layout_width="@dimen/aqua_size_32"
+                            android:layout_height="@dimen/aqua_size_32"
                             android:src="@drawable/flag_cn"
-                            android:layout_marginEnd="12dp"
+                            android:layout_marginEnd="@dimen/aqua_size_12"
                             android:contentDescription="@string/language_chinese_flag_desc" />
 
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/language_chinese"

@@ -15,6 +15,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.databinding.ItemAquariumTankBinding
 import com.aqua.aqualight.ui.tabs.maintenance.TankCareSummaryUi
+import com.aqua.aqualight.ui.common.text.resolve
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -184,8 +185,10 @@ class AquariumTankAdapter(
       careSummary: TankCareSummaryUi?
     ): String {
       val lastWaterChange = careSummary?.lastWaterChangeText
+        ?.let { context.resolve(it) }
         ?: context.getString(R.string.aquarium_no_value_placeholder)
       val lastTrim = careSummary?.lastTrimText
+        ?.let { context.resolve(it) }
         ?: context.getString(R.string.aquarium_no_value_placeholder)
 
       return context.getString(

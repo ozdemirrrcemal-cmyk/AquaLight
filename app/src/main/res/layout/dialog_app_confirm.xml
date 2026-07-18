@@ -23,7 +23,7 @@
         android:id="@+id/dialogMessage"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="@dimen/aqua_size_10"
         android:gravity="center"
         android:maxLines="6"
         android:textAppearance="@style/TextAppearance.Aqua.Dialog.Message" />
@@ -31,24 +31,24 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="@dimen/aqua_size_20"
         android:orientation="horizontal">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCancel"
             style="@style/Widget.Aqua.Dialog.Button.Neutral"
-            android:layout_width="0dp"
-            android:layout_height="52dp"
-            android:layout_marginEnd="10dp"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="@dimen/aqua_size_52"
+            android:layout_marginEnd="@dimen/aqua_size_10"
             android:layout_weight="1"
             android:text="@string/cancel" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnConfirm"
             style="@style/Widget.Aqua.Dialog.Button.Danger"
-            android:layout_width="0dp"
-            android:layout_height="52dp"
-            android:layout_marginStart="10dp"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="@dimen/aqua_size_52"
+            android:layout_marginStart="@dimen/aqua_size_10"
             android:layout_weight="1"
             android:text="@string/confirm" />
     </LinearLayout>

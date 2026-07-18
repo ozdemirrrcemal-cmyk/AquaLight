@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.maintenance
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.application.care.CareTaskSnapshot
 import com.aqua.aqualight.application.care.CareTaskSource
@@ -13,6 +14,7 @@ import com.aqua.aqualight.application.care.ManualCareTaskInput
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.ui.tabs.maintenance.model.MaintenanceTab
 import com.aqua.aqualight.ui.tabs.maintenance.text.MaintenanceTextResolver
+import com.aqua.aqualight.ui.common.text.AquaUiText
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -37,18 +39,30 @@ enum class TankNextCareStatus {
 }
 
 data class TankActivityUiState(
-    val lastTrimText: String = "--",
-    val lastWaterChangeText: String = "--",
-    val lastFilterMaintenanceText: String = "--",
-    val nextCareText: String = "--",
+    val lastTrimText: AquaUiText = AquaUiText.Resource(
+        R.string.common_not_available_double_symbol
+    ),
+    val lastWaterChangeText: AquaUiText = AquaUiText.Resource(
+        R.string.common_not_available_double_symbol
+    ),
+    val lastFilterMaintenanceText: AquaUiText = AquaUiText.Resource(
+        R.string.common_not_available_double_symbol
+    ),
+    val nextCareText: AquaUiText = AquaUiText.Resource(
+        R.string.common_not_available_double_symbol
+    ),
     val nextCareStatus: TankNextCareStatus = TankNextCareStatus.NONE,
     val nextCareTask: CareTaskUi? = null,
     val completedTasks: List<CareTaskUi> = emptyList()
 )
 
 data class TankCareSummaryUi(
-    val lastTrimText: String = "--",
-    val lastWaterChangeText: String = "--"
+    val lastTrimText: AquaUiText = AquaUiText.Resource(
+        R.string.common_not_available_double_symbol
+    ),
+    val lastWaterChangeText: AquaUiText = AquaUiText.Resource(
+        R.string.common_not_available_double_symbol
+    )
 )
 
 class MaintenanceViewModel(
@@ -141,7 +155,10 @@ class MaintenanceViewModel(
                     tasks = completedTasks,
                     types = getFilterMaintenanceTypes()
                 ),
-                nextCareText = nextCareTask?.let(::getNextCareSummaryText) ?: "--",
+                nextCareText = nextCareTask
+                    ?.let(::getNextCareSummaryText)
+                    ?.let(AquaUiText::Dynamic)
+                    ?: AquaUiText.Resource(R.string.common_not_available_double_symbol),
                 nextCareStatus = nextCareTask?.let(::getNextCareStatus)
                     ?: TankNextCareStatus.NONE,
                 nextCareTask = nextCareTask?.toCareTaskUi(tankName),
@@ -402,15 +419,15 @@ class MaintenanceViewModel(
     private fun getLastCompletedTaskText(
         tasks: List<CareTaskSnapshot>,
         types: Set<CareTaskType>
-    ): String {
+    ): AquaUiText {
         val lastTask = tasks
             .filter { task -> task.type in types }
             .maxByOrNull { task -> task.completedAtMillis ?: task.dueAtMillis }
         val completedAt = lastTask?.completedAtMillis ?: lastTask?.dueAtMillis
         return if (completedAt == null || completedAt <= 0L) {
-            "--"
+            AquaUiText.Resource(R.string.common_not_available_double_symbol)
         } else {
-            getDaysAgoText(completedAt)
+            AquaUiText.Dynamic(getDaysAgoText(completedAt))
         }
     }
 

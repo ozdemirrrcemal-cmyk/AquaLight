@@ -6,7 +6,7 @@
 
   <View
     style="@style/Widget.Aqua.BottomSheet.Handle"
-    android:layout_marginBottom="16dp" />
+    android:layout_marginBottom="@dimen/aqua_size_16" />
 
   <TextView
     style="@style/TextAppearance.Aqua.BottomSheet.SectionTitle"
@@ -19,7 +19,7 @@
     android:id="@+id/aquariumOptionsContainer"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="18dp"
+    android:layout_marginTop="@dimen/aqua_size_18"
     android:orientation="vertical" />
 
 </LinearLayout>

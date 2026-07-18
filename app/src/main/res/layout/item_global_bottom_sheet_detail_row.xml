@@ -9,16 +9,16 @@
 
     <TextView
         android:id="@+id/tvDetailLabel"
-        android:layout_width="0dp"
+        android:layout_width="@dimen/aqua_size_0"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:includeFontPadding="false"
-        android:textColor="#8FA4BE"
+        android:textColor="@color/aqua_palette_hex_8fa4be"
         android:textSize="@dimen/aqua_text_size_caption" />
 
     <TextView
         android:id="@+id/tvDetailValue"
-        android:layout_width="0dp"
+        android:layout_width="@dimen/aqua_size_0"
         android:layout_height="wrap_content"
         android:layout_weight="1.2"
         android:ellipsize="end"

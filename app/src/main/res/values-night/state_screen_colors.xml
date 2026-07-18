@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="aqua_state_container_surface">#101D2C</color>
-    <color name="aqua_state_container_outline">#22354D</color>
-    <color name="aqua_state_text_primary">#F2F6FA</color>
-    <color name="aqua_state_text_secondary">#90A1B5</color>
-    <color name="aqua_state_text_tertiary">#6E7F94</color>
-    <color name="aqua_state_icon_tint">#FFFFFF</color>
-    <color name="aqua_state_loading_overlay">#00000000</color>
+    <color name="aqua_state_container_surface">@color/aqua_palette_hex_101d2c</color>
+    <color name="aqua_state_container_outline">@color/aqua_palette_hex_22354d</color>
+    <color name="aqua_state_text_primary">@color/aqua_palette_hex_f2f6fa</color>
+    <color name="aqua_state_text_secondary">@color/aqua_palette_hex_90a1b5</color>
+    <color name="aqua_state_text_tertiary">@color/aqua_palette_hex_6e7f94</color>
+    <color name="aqua_state_icon_tint">@color/aqua_palette_hex_ffffff</color>
+    <color name="aqua_state_loading_overlay">@color/aqua_palette_hex_00000000</color>
 </resources>

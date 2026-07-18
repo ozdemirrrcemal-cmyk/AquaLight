@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp"
-    android:height="24dp"
+    android:width="@dimen/aqua_size_24"
+    android:height="@dimen/aqua_size_24"
     android:viewportWidth="24"
     android:viewportHeight="24">
 
     <!-- Arka yuvarlak -->
     <path
-        android:fillColor="#0B1120"
+        android:fillColor="@color/aqua_palette_hex_0b1120"
         android:pathData="M12,2a10,10 0 1,0 0,20a10,10 0 1,0 0,-20z" />
 
     <!-- Telefon gövdesi -->
     <path
-        android:fillColor="#111827"
-        android:strokeColor="#38BDF8"
+        android:fillColor="@color/aqua_palette_hex_111827"
+        android:strokeColor="@color/aqua_palette_hex_38bdf8"
         android:strokeWidth="1.3"
         android:pathData="M8.5,6.5h7a1.5,1.5 0,0 1,1.5 1.5v8a1.5,1.5 0,0 1,-1.5 1.5h-7A1.5,1.5 0,0 1,7 16v-8a1.5,1.5 0,0 1,1.5 -1.5z" />
 
     <!-- Ekran içi: yarısı güneş, yarısı ay -->
     <!-- Güneş (sol) -->
     <path
-        android:fillColor="#FACC15"
+        android:fillColor="@color/aqua_palette_hex_facc15"
         android:pathData="M10.2,11.9a1.8,1.8 0 1,0 0,-3.6a1.8,1.8 0 1,0 0,3.6z" />
 
     <!-- Ay (sağ) -->
     <path
-        android:fillColor="#A855F7"
+        android:fillColor="@color/aqua_palette_hex_a855f7"
         android:pathData="
             M13.9,8.1
             A1.9,1.9 0 1,1 11.7,10
@@ -33,6 +33,6 @@
 
     <!-- Alt bar -->
     <path
-        android:fillColor="#1E293B"
+        android:fillColor="@color/aqua_palette_hex_1e293b"
         android:pathData="M10.3,15.1h3.4a0.6,0.6 0 0,1 0,1.2h-3.4a0.6,0.6 0 0,1 0,-1.2z" />
 </vector>

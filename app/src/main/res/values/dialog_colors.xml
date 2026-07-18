@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="aqua_dialog_surface">#07131F</color>
-    <color name="aqua_dialog_surface_elevated">#162638</color>
-    <color name="aqua_dialog_outline">#223A57</color>
+    <color name="aqua_dialog_surface">@color/aqua_palette_hex_07131f</color>
+    <color name="aqua_dialog_surface_elevated">@color/aqua_palette_hex_162638</color>
+    <color name="aqua_dialog_outline">@color/aqua_palette_hex_223a57</color>
 
-    <color name="aqua_dialog_text_primary">#F4F8FC</color>
-    <color name="aqua_dialog_text_secondary">#9AAEC4</color>
+    <color name="aqua_dialog_text_primary">@color/aqua_palette_hex_f4f8fc</color>
+    <color name="aqua_dialog_text_secondary">@color/aqua_palette_hex_9aaec4</color>
 
-    <color name="aqua_dialog_primary">#6489C9</color>
-    <color name="aqua_dialog_on_primary">#F4F8FC</color>
+    <color name="aqua_dialog_primary">@color/aqua_palette_hex_6489c9</color>
+    <color name="aqua_dialog_on_primary">@color/aqua_palette_hex_f4f8fc</color>
 
-    <color name="aqua_dialog_neutral">#162638</color>
-    <color name="aqua_dialog_on_neutral">#F4F8FC</color>
+    <color name="aqua_dialog_neutral">@color/aqua_palette_hex_162638</color>
+    <color name="aqua_dialog_on_neutral">@color/aqua_palette_hex_f4f8fc</color>
 
-    <color name="aqua_dialog_danger">#FF5A52</color>
-    <color name="aqua_dialog_danger_container">#321E2A</color>
-    <color name="aqua_dialog_danger_outline">#7A3344</color>
+    <color name="aqua_dialog_danger">@color/aqua_palette_hex_ff5a52</color>
+    <color name="aqua_dialog_danger_container">@color/aqua_palette_hex_321e2a</color>
+    <color name="aqua_dialog_danger_outline">@color/aqua_palette_hex_7a3344</color>
 </resources>

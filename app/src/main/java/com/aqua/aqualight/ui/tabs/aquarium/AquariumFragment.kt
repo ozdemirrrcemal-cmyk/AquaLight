@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.aquarium
 
+import androidx.core.content.ContextCompat
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
@@ -233,13 +234,13 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
     private fun applyPrimaryActionStyle() {
         val button = binding.appHeader.btnPrimaryAction
         if (isDeleteMode) {
-            button.setTextColor(Color.parseColor("#FF8A8A"))
-            button.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#321E2A"))
-            button.strokeWidth = 1.dp()
-            button.strokeColor = ColorStateList.valueOf(Color.parseColor("#7A3344"))
+            button.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_ff8a8a))
+            button.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_321e2a))
+            button.strokeWidth = resources.getDimensionPixelOffset(R.dimen.aqua_size_1)
+            button.strokeColor = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_7a3344))
         } else {
             button.setTextColor(Color.WHITE)
-            button.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#1C3252"))
+            button.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_1c3252))
             button.strokeWidth = 0
             button.strokeColor = ColorStateList.valueOf(Color.TRANSPARENT)
         }
@@ -356,9 +357,6 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
             }
         }
     }
-
-    private fun Int.dp(): Int = (this * resources.displayMetrics.density).toInt()
-
     override fun onDestroyView() {
         binding.rvTanks.adapter = null
         _binding = null

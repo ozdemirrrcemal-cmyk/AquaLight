@@ -5,7 +5,6 @@ import com.aqua.aqualight.application.devices.OwnerDeviceListItem
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardUi
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
 import com.aqua.aqualight.ui.common.devicecard.DeviceFamilyIconMapper
-import java.util.Locale
 
 object DeviceCardMapper {
 
@@ -26,8 +25,6 @@ object DeviceCardMapper {
                 serialText = device.serialText.ifBlank { device.deviceUid },
                 supportingText = supportingText,
                 iconRes = DeviceFamilyIconMapper.iconFor(device.family),
-                statusText = (if (isReachable) "Online" else "Offline")
-                    .uppercase(Locale.US),
                 statusStyle = if (isReachable) {
                     DeviceCompactStatusStyle.ONLINE
                 } else {

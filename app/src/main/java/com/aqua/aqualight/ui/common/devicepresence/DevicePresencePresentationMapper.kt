@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.common.devicepresence
 
+import androidx.annotation.StringRes
+import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 
 /**
@@ -11,8 +13,9 @@ import com.aqua.aqualight.data.devices.model.DeviceOnlineState
  */
 object DevicePresencePresentationMapper {
 
-    fun availabilityLabel(state: DeviceOnlineState): String =
-        if (isReachable(state)) "Online" else "Offline"
+    @StringRes
+    fun availabilityLabelRes(state: DeviceOnlineState): Int =
+        if (isReachable(state)) R.string.device_online else R.string.device_offline
 
     fun isReachable(state: DeviceOnlineState): Boolean {
         return when (state) {

@@ -16,10 +16,10 @@ class UnsupportedDeviceFragment : Fragment(R.layout.fragment_unsupported_device)
     private val binding get() = _binding!!
 
     private val deviceTitle: String
-        get() = args.deviceTitle.ifBlank { DEFAULT_DEVICE_TITLE }
+        get() = args.deviceTitle.ifBlank { getString(R.string.device_menu_default_title) }
 
     private val message: String
-        get() = args.message.ifBlank { DEFAULT_MESSAGE }
+        get() = args.message.ifBlank { getString(R.string.device_unavailable_message) }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -39,7 +39,5 @@ class UnsupportedDeviceFragment : Fragment(R.layout.fragment_unsupported_device)
         const val ARG_DEVICE_TITLE = "deviceTitle"
         const val ARG_MESSAGE = "message"
 
-        private const val DEFAULT_DEVICE_TITLE = "Device"
-        private const val DEFAULT_MESSAGE = "This device is not available."
     }
 }

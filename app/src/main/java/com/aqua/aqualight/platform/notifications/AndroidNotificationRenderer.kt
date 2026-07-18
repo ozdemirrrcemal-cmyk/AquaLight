@@ -11,6 +11,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import androidx.annotation.DrawableRes
+import androidx.annotation.ColorRes
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
@@ -77,7 +78,7 @@ class AndroidNotificationRenderer(
         val typeUi = CareTaskTypeCatalog.get(
             CareTaskType.valueOf(notification.kind.name)
         )
-        createLargeIconBitmap(typeUi.iconRes, typeUi.accentColor)
+        createLargeIconBitmap(typeUi.iconRes, typeUi.accentColorRes)
             ?.let(builder::setLargeIcon)
 
         notify(
@@ -251,18 +252,17 @@ class AndroidNotificationRenderer(
 
     private fun createLargeIconBitmap(
         @DrawableRes iconRes: Int,
-        color: String
+        @ColorRes colorRes: Int
     ): Bitmap? {
         if (iconRes <= 0) return null
 
-        val size = 48.dp()
-        val iconSize = 25.dp()
+        val size = appContext.resources.getDimensionPixelOffset(R.dimen.aqua_size_48)
+        val iconSize = appContext.resources.getDimensionPixelOffset(R.dimen.aqua_size_25)
         val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.FILL
-            this.color = runCatching { Color.parseColor(color) }
-                .getOrDefault(Color.parseColor(DEFAULT_LARGE_ICON_COLOR))
+            color = ContextCompat.getColor(appContext, colorRes)
         }
         canvas.drawCircle(size / 2f, size / 2f, size / 2f, paint)
 
@@ -282,9 +282,6 @@ class AndroidNotificationRenderer(
         }
     }
 
-    private fun Int.dp(): Int =
-        (this * appContext.resources.displayMetrics.density).toInt()
-
     private data class PostedNotification(
         val ownerUid: String,
         val tag: String,
@@ -295,6 +292,5 @@ class AndroidNotificationRenderer(
         private const val CARE_NOTIFICATION_ID = 1
         private const val DEVICE_ALERT_NOTIFICATION_ID = 2
         private const val DEVICE_UPDATE_NOTIFICATION_ID = 3
-        private const val DEFAULT_LARGE_ICON_COLOR = "#2196F3"
     }
 }

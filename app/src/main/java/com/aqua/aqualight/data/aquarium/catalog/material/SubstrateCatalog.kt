@@ -1,42 +1,62 @@
 package com.aqua.aqualight.data.aquarium.catalog.material
 
+import com.aqua.aqualight.R
+
 
 object SubstrateCatalog {
 
-    private const val CATEGORY_TITLE = "Substrate"
-
-    val products: List<AquariumMaterial> = listOf(
-        AquariumMaterial(
+    val definitions: List<AquariumMaterialDefinition> = listOf(
+        AquariumMaterialDefinition(
             id = "substrate_chihiros_aquasoil_9l",
-            brand = "Chihiros",
-            name = "Chihiros Aquasoil 9L",
+            brandRes = R.string.catalog_brand_chihiros,
+            nameRes = R.string.catalog_material_substrate_chihiros_aquasoil_9l_name,
             categoryKey = MaterialCategoryKey.SUBSTRATE,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("substrate", "soil", "aquasoil", "chihiros")
+            categoryTitleRes = R.string.catalog_material_category_substrate_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_substrate,
+                R.string.catalog_keyword_soil,
+                R.string.catalog_keyword_aquasoil,
+                R.string.catalog_keyword_chihiros
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "substrate_chihiros_aquasoil_3l",
-            brand = "Chihiros",
-            name = "Chihiros Aquasoil 3L",
+            brandRes = R.string.catalog_brand_chihiros,
+            nameRes = R.string.catalog_material_substrate_chihiros_aquasoil_3l_name,
             categoryKey = MaterialCategoryKey.SUBSTRATE,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("substrate", "soil", "aquasoil", "chihiros")
+            categoryTitleRes = R.string.catalog_material_category_substrate_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_substrate,
+                R.string.catalog_keyword_soil,
+                R.string.catalog_keyword_aquasoil,
+                R.string.catalog_keyword_chihiros
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "substrate_ada_tourmaline_bc",
-            brand = "ADA",
-            name = "ADA Tourmaline BC",
+            brandRes = R.string.catalog_brand_ada,
+            nameRes = R.string.catalog_material_substrate_ada_tourmaline_bc_name,
             categoryKey = MaterialCategoryKey.SUBSTRATE,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("substrate", "soil", "ada", "additive")
+            categoryTitleRes = R.string.catalog_material_category_substrate_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_substrate,
+                R.string.catalog_keyword_soil,
+                R.string.catalog_keyword_ada,
+                R.string.catalog_keyword_additive
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "substrate_dennerle_deponitmix_4_8kg",
-            brand = "Dennerle",
-            name = "Dennerle DeponitMix Professional 10in1 - 4.8 kg",
+            brandRes = R.string.catalog_brand_dennerle,
+            nameRes = R.string.catalog_material_substrate_dennerle_deponitmix_4_8kg_name,
             categoryKey = MaterialCategoryKey.SUBSTRATE,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("substrate", "soil", "base layer", "dennerle")
+            categoryTitleRes = R.string.catalog_material_category_substrate_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_substrate,
+                R.string.catalog_keyword_soil,
+                R.string.catalog_keyword_base_layer,
+                R.string.catalog_keyword_dennerle
+            )
         )
     )
 }

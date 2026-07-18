@@ -9,7 +9,7 @@
    <include
         android:id="@+id/appHeader"
         layout="@layout/layout_aqua_header"
-        android:layout_width="0dp"
+        android:layout_width="@dimen/aqua_size_0"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -17,15 +17,15 @@
 
   <ScrollView
     android:id="@+id/contentScrollView"
-    android:layout_width="0dp"
-    android:layout_height="0dp"
+    android:layout_width="@dimen/aqua_size_0"
+    android:layout_height="@dimen/aqua_size_0"
     android:clipToPadding="false"
     android:fillViewport="true"
     android:overScrollMode="never"
-    android:paddingStart="16dp"
-    android:paddingEnd="16dp"
-    android:paddingTop="18dp"
-    android:paddingBottom="120dp"
+    android:paddingStart="@dimen/aqua_size_16"
+    android:paddingEnd="@dimen/aqua_size_16"
+    android:paddingTop="@dimen/aqua_size_18"
+    android:paddingBottom="@dimen/aqua_size_120"
     android:scrollbars="none"
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
@@ -48,21 +48,21 @@
           android:layout_height="wrap_content"
           android:gravity="center_vertical"
           android:orientation="horizontal"
-          android:padding="16dp">
+          android:padding="@dimen/aqua_size_16">
 
           <ImageView
             android:id="@+id/ivLifeIconPreview"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:padding="12dp"
+            android:layout_width="@dimen/aqua_size_56"
+            android:layout_height="@dimen/aqua_size_56"
+            android:padding="@dimen/aqua_size_12"
             android:scaleType="centerInside"
             android:src="@drawable/ic_life_fish_24"
             app:tint="@android:color/white" />
 
           <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="@dimen/aqua_size_0"
             android:layout_height="wrap_content"
-            android:layout_marginStart="14dp"
+            android:layout_marginStart="@dimen/aqua_size_14"
             android:layout_weight="1"
             android:orientation="vertical">
 
@@ -80,7 +80,7 @@
               android:id="@+id/tvLifeCategoryPreview"
               android:layout_width="match_parent"
               android:layout_height="wrap_content"
-              android:layout_marginTop="7dp"
+              android:layout_marginTop="@dimen/aqua_size_7"
               android:includeFontPadding="false"
               android:text="@string/aquarium_tank_type_fish"
               android:textColor="@color/aqua_card_text_secondary"
@@ -95,7 +95,7 @@
       <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="22dp"
+        android:layout_marginTop="@dimen/aqua_size_22"
         android:includeFontPadding="false"
         android:text="@string/aquarium_text_name"
         android:textColor="@color/aqua_card_text_primary"
@@ -106,8 +106,8 @@
         style="@style/Widget.Aqua.Input.PlainEditText"
         android:id="@+id/etLifeName"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_marginTop="9dp"
+        android:layout_height="@dimen/aqua_size_50"
+        android:layout_marginTop="@dimen/aqua_size_9"
         android:hint="@string/aquarium_hint_livestock_name_example"
         android:inputType="textCapWords"
         android:singleLine="true" />
@@ -115,7 +115,7 @@
       <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="@dimen/aqua_size_20"
         android:includeFontPadding="false"
         android:text="@string/aquarium_text_category"
         android:textColor="@color/aqua_card_text_primary"
@@ -126,13 +126,13 @@
         android:id="@+id/categoryGrid"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="@dimen/aqua_size_10"
         android:columnCount="2" />
 
       <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="@dimen/aqua_size_20"
         android:includeFontPadding="false"
         android:text="@string/aquarium_text_quantity"
         android:textColor="@color/aqua_card_text_primary"
@@ -143,15 +143,15 @@
   style="@style/Widget.Aqua.SelectionRow.Control"
         android:id="@+id/quantityRow"
         android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:layout_marginTop="9dp"
+        android:layout_height="@dimen/aqua_size_52"
+        android:layout_marginTop="@dimen/aqua_size_9"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
         <TextView
           android:id="@+id/btnDecreaseQuantity"
-          android:layout_width="42dp"
-          android:layout_height="42dp"
+          android:layout_width="@dimen/aqua_size_42"
+          android:layout_height="@dimen/aqua_size_42"
           android:gravity="center"
           android:text="@string/common_minus"
           android:textColor="@color/aqua_card_text_primary"
@@ -160,7 +160,7 @@
 
         <TextView
           android:id="@+id/tvQuantityValue"
-          android:layout_width="0dp"
+          android:layout_width="@dimen/aqua_size_0"
           android:layout_height="wrap_content"
           android:layout_weight="1"
           android:gravity="center"
@@ -172,8 +172,8 @@
 
         <TextView
           android:id="@+id/btnIncreaseQuantity"
-          android:layout_width="42dp"
-          android:layout_height="42dp"
+          android:layout_width="@dimen/aqua_size_42"
+          android:layout_height="@dimen/aqua_size_42"
           android:gravity="center"
           android:text="@string/common_plus"
           android:textColor="@color/aqua_card_text_primary"
@@ -185,7 +185,7 @@
       <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="@dimen/aqua_size_20"
         android:includeFontPadding="false"
         android:text="@string/aquarium_text_added_date"
         android:textColor="@color/aqua_card_text_primary"
@@ -196,8 +196,8 @@
   style="@style/Widget.Aqua.SelectionRow"
         android:id="@+id/rowAddedDate"
         android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:layout_marginTop="9dp"
+        android:layout_height="@dimen/aqua_size_52"
+        android:layout_marginTop="@dimen/aqua_size_9"
         android:clickable="true"
         android:focusable="true"
         android:gravity="center_vertical"
@@ -205,7 +205,7 @@
 
         <TextView
           android:id="@+id/tvAddedDateValue"
-          android:layout_width="0dp"
+          android:layout_width="@dimen/aqua_size_0"
           android:layout_height="wrap_content"
           android:layout_weight="1"
           android:includeFontPadding="false"
@@ -215,17 +215,17 @@
           android:textStyle="bold" />
 
         <ImageView
-          android:layout_width="22dp"
-          android:layout_height="22dp"
+          android:layout_width="@dimen/aqua_size_22"
+          android:layout_height="@dimen/aqua_size_22"
           android:src="@drawable/ic_arrow_right"
-          app:tint="#8FA4BE" />
+          app:tint="@color/aqua_palette_hex_8fa4be" />
 
       </LinearLayout>
 
       <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="@dimen/aqua_size_20"
         android:includeFontPadding="false"
         android:text="@string/aquarium_text_note"
         android:textColor="@color/aqua_card_text_primary"
@@ -236,8 +236,8 @@
         style="@style/Widget.Aqua.Input.PlainEditText.Multiline"
         android:id="@+id/etLifeNote"
         android:layout_width="match_parent"
-        android:layout_height="112dp"
-        android:layout_marginTop="9dp"
+        android:layout_height="@dimen/aqua_size_112"
+        android:layout_marginTop="@dimen/aqua_size_9"
         android:gravity="top|start"
         android:hint="@string/aquarium_hint_optional_note"
         android:inputType="textMultiLine|textCapSentences"
@@ -249,19 +249,19 @@
         android:id="@+id/btnSaveLife"
         android:layout_width="match_parent"
         android:layout_height="@dimen/aqua_button_height"
-        android:layout_marginTop="26dp"
+        android:layout_marginTop="@dimen/aqua_size_26"
         android:text="@string/aquarium_text_save_livestock"
         android:textStyle="bold" />
 
       <TextView
         android:id="@+id/btnDeleteLife"
         android:layout_width="match_parent"
-        android:layout_height="44dp"
-        android:layout_marginTop="14dp"
+        android:layout_height="@dimen/aqua_size_44"
+        android:layout_marginTop="@dimen/aqua_size_14"
         android:gravity="center"
         android:includeFontPadding="false"
         android:text="@string/aquarium_text_delete_livestock"
-        android:textColor="#D85C5C"
+        android:textColor="@color/aqua_palette_hex_d85c5c"
         android:textSize="@dimen/aqua_text_size_body"
         android:textStyle="bold"
         android:visibility="gone" />

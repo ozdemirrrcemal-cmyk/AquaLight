@@ -1,50 +1,73 @@
 package com.aqua.aqualight.data.aquarium.catalog.material
 
+import com.aqua.aqualight.R
+
 
 object DosingCatalog {
 
-    private const val CATEGORY_TITLE = "Dosing"
-
-    val products: List<AquariumMaterial> = listOf(
-        AquariumMaterial(
+    val definitions: List<AquariumMaterialDefinition> = listOf(
+        AquariumMaterialDefinition(
             id = "dosing_chihiros_dosing_pump",
-            brand = "Chihiros",
-            name = "Chihiros Dosing Pump",
+            brandRes = R.string.catalog_brand_chihiros,
+            nameRes = R.string.catalog_material_dosing_chihiros_dosing_pump_name,
             categoryKey = MaterialCategoryKey.DOSING,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("dosing", "pump", "fertilizer", "chihiros")
+            categoryTitleRes = R.string.catalog_material_category_dosing_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_dosing,
+                R.string.catalog_keyword_pump,
+                R.string.catalog_keyword_fertilizer,
+                R.string.catalog_keyword_chihiros
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "dosing_chihiros_dosing_system",
-            brand = "Chihiros",
-            name = "Chihiros Dosing System",
+            brandRes = R.string.catalog_brand_chihiros,
+            nameRes = R.string.catalog_material_dosing_chihiros_dosing_system_name,
             categoryKey = MaterialCategoryKey.DOSING,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("dosing", "pump", "system", "fertilizer", "chihiros")
+            categoryTitleRes = R.string.catalog_material_category_dosing_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_dosing,
+                R.string.catalog_keyword_pump,
+                R.string.catalog_keyword_system,
+                R.string.catalog_keyword_fertilizer,
+                R.string.catalog_keyword_chihiros
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "dosing_jebao_dp_4",
-            brand = "Jebao",
-            name = "Jebao DP-4 Dosing Pump",
+            brandRes = R.string.catalog_brand_jebao,
+            nameRes = R.string.catalog_material_dosing_jebao_dp_4_name,
             categoryKey = MaterialCategoryKey.DOSING,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("dosing", "pump", "jebao")
+            categoryTitleRes = R.string.catalog_material_category_dosing_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_dosing,
+                R.string.catalog_keyword_pump,
+                R.string.catalog_keyword_jebao
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "dosing_kamoer_x1",
-            brand = "Kamoer",
-            name = "Kamoer X1 Dosing Pump",
+            brandRes = R.string.catalog_brand_kamoer,
+            nameRes = R.string.catalog_material_dosing_kamoer_x1_name,
             categoryKey = MaterialCategoryKey.DOSING,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("dosing", "pump", "kamoer")
+            categoryTitleRes = R.string.catalog_material_category_dosing_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_dosing,
+                R.string.catalog_keyword_pump,
+                R.string.catalog_keyword_kamoer
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "dosing_kamoer_f4",
-            brand = "Kamoer",
-            name = "Kamoer F4 Dosing Pump",
+            brandRes = R.string.catalog_brand_kamoer,
+            nameRes = R.string.catalog_material_dosing_kamoer_f4_name,
             categoryKey = MaterialCategoryKey.DOSING,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("dosing", "pump", "kamoer")
+            categoryTitleRes = R.string.catalog_material_category_dosing_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_dosing,
+                R.string.catalog_keyword_pump,
+                R.string.catalog_keyword_kamoer
+            )
         )
     )
 }

@@ -151,7 +151,7 @@ class DeviceQrScanViewModel(
                             deviceUid = payload.deviceUid,
                             deviceTitle = payload.displayName,
                             deviceSerial = payload.serialNumber,
-                            deviceModel = SECURE_QR_SETUP_LABEL,
+                            deviceModel = string(R.string.device_setup_method_secure_qr),
                             bleAddress = candidate.address,
                             bleName = payload.bleName,
                             qrSecretReference = payload.secretReference
@@ -210,7 +210,6 @@ class DeviceQrScanViewModel(
 
     private companion object {
         const val QR_SCAN_TIMEOUT_MS = 10_000L
-        const val SECURE_QR_SETUP_LABEL = "Secure QR Setup"
     }
 }
 

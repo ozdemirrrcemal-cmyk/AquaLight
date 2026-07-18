@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.FrameLayout
 import androidx.core.os.bundleOf
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.DialogCareProfileBinding
@@ -37,7 +38,7 @@ class CareProfileBottomSheet : BottomSheetDialogFragment(
         binding.tvCareProfilePercent.text = args.getString(ARG_PERCENT_TEXT).orEmpty()
         binding.tvCareProfileSummary.text = args.getString(ARG_SUMMARY_TEXT).orEmpty()
         binding.careProgressTrack.background = rounded(
-            color = Color.parseColor("#DDE3EA"),
+            color = ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_dde3ea),
             radius = resources.getDimension(R.dimen.care_profile_progress_radius)
         )
         binding.careProgressFill.background = rounded(
@@ -66,12 +67,24 @@ class CareProfileBottomSheet : BottomSheetDialogFragment(
                 else R.string.aquarium_care_profile_status_missing
             )
             row.tvCareProfileItemStatus.setTextColor(
-                Color.parseColor(if (isCompleted) "#5FD6B4" else "#E0A84C")
+                ContextCompat.getColor(
+                    requireContext(),
+                    if (isCompleted) R.color.aqua_palette_hex_5fd6b4
+                    else R.color.aqua_palette_hex_e0a84c
+                )
             )
             row.tvCareProfileItemStatus.background = rounded(
-                color = Color.parseColor(if (isCompleted) "#09251D" else "#2A2315"),
+                color = ContextCompat.getColor(
+                    requireContext(),
+                    if (isCompleted) R.color.aqua_palette_hex_09251d
+                    else R.color.aqua_palette_hex_2a2315
+                ),
                 radius = resources.getDimension(R.dimen.care_profile_status_radius),
-                strokeColor = Color.parseColor(if (isCompleted) "#1E5A48" else "#6A4D1E"),
+                strokeColor = ContextCompat.getColor(
+                    requireContext(),
+                    if (isCompleted) R.color.aqua_palette_hex_1e5a48
+                    else R.color.aqua_palette_hex_6a4d1e
+                ),
                 strokeWidth = resources.getDimensionPixelSize(R.dimen.care_profile_status_stroke)
             )
             row.root.setOnClickListener {

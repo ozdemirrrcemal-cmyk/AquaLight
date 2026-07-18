@@ -1,66 +1,99 @@
 package com.aqua.aqualight.data.aquarium.catalog.material
 
+import com.aqua.aqualight.R
+
 
 object HeaterCatalog {
 
-    private const val CATEGORY_TITLE = "Heater"
-
-    val products: List<AquariumMaterial> = listOf(
-        AquariumMaterial(
+    val definitions: List<AquariumMaterialDefinition> = listOf(
+        AquariumMaterialDefinition(
             id = "heater_eheim_thermocontrol_50w",
-            brand = "Eheim",
-            name = "Eheim Thermocontrol 50W",
+            brandRes = R.string.catalog_brand_eheim,
+            nameRes = R.string.catalog_material_heater_eheim_thermocontrol_50w_name,
             categoryKey = MaterialCategoryKey.HEATER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("heater", "thermo", "temperature", "eheim")
+            categoryTitleRes = R.string.catalog_material_category_heater_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_heater,
+                R.string.catalog_keyword_thermo,
+                R.string.catalog_keyword_temperature,
+                R.string.catalog_keyword_eheim
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "heater_eheim_thermocontrol_100w",
-            brand = "Eheim",
-            name = "Eheim Thermocontrol 100W",
+            brandRes = R.string.catalog_brand_eheim,
+            nameRes = R.string.catalog_material_heater_eheim_thermocontrol_100w_name,
             categoryKey = MaterialCategoryKey.HEATER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("heater", "thermo", "temperature", "eheim")
+            categoryTitleRes = R.string.catalog_material_category_heater_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_heater,
+                R.string.catalog_keyword_thermo,
+                R.string.catalog_keyword_temperature,
+                R.string.catalog_keyword_eheim
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "heater_eheim_thermocontrol_150w",
-            brand = "Eheim",
-            name = "Eheim Thermocontrol 150W",
+            brandRes = R.string.catalog_brand_eheim,
+            nameRes = R.string.catalog_material_heater_eheim_thermocontrol_150w_name,
             categoryKey = MaterialCategoryKey.HEATER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("heater", "thermo", "temperature", "eheim")
+            categoryTitleRes = R.string.catalog_material_category_heater_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_heater,
+                R.string.catalog_keyword_thermo,
+                R.string.catalog_keyword_temperature,
+                R.string.catalog_keyword_eheim
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "heater_jbl_protemp_s_50",
-            brand = "JBL",
-            name = "JBL ProTemp S 50",
+            brandRes = R.string.catalog_brand_jbl,
+            nameRes = R.string.catalog_material_heater_jbl_protemp_s_50_name,
             categoryKey = MaterialCategoryKey.HEATER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("heater", "temperature", "jbl", "protemp")
+            categoryTitleRes = R.string.catalog_material_category_heater_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_heater,
+                R.string.catalog_keyword_temperature,
+                R.string.catalog_keyword_jbl,
+                R.string.catalog_keyword_protemp
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "heater_jbl_protemp_s_100",
-            brand = "JBL",
-            name = "JBL ProTemp S 100",
+            brandRes = R.string.catalog_brand_jbl,
+            nameRes = R.string.catalog_material_heater_jbl_protemp_s_100_name,
             categoryKey = MaterialCategoryKey.HEATER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("heater", "temperature", "jbl", "protemp")
+            categoryTitleRes = R.string.catalog_material_category_heater_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_heater,
+                R.string.catalog_keyword_temperature,
+                R.string.catalog_keyword_jbl,
+                R.string.catalog_keyword_protemp
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "heater_aquael_ultra_heater_50w",
-            brand = "Aquael",
-            name = "Aquael Ultra Heater 50W",
+            brandRes = R.string.catalog_brand_aquael,
+            nameRes = R.string.catalog_material_heater_aquael_ultra_heater_50w_name,
             categoryKey = MaterialCategoryKey.HEATER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("heater", "temperature", "aquael")
+            categoryTitleRes = R.string.catalog_material_category_heater_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_heater,
+                R.string.catalog_keyword_temperature,
+                R.string.catalog_keyword_aquael
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "heater_aquael_ultra_heater_100w",
-            brand = "Aquael",
-            name = "Aquael Ultra Heater 100W",
+            brandRes = R.string.catalog_brand_aquael,
+            nameRes = R.string.catalog_material_heater_aquael_ultra_heater_100w_name,
             categoryKey = MaterialCategoryKey.HEATER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("heater", "temperature", "aquael")
+            categoryTitleRes = R.string.catalog_material_category_heater_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_heater,
+                R.string.catalog_keyword_temperature,
+                R.string.catalog_keyword_aquael
+            )
         )
     )
 }

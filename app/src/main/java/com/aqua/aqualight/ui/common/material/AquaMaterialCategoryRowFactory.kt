@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.common.material
 
+import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
@@ -62,7 +63,7 @@ object AquaMaterialCategoryRowFactory {
         val iconBox = TextView(context).apply {
             text = iconText
             gravity = Gravity.CENTER
-            textSize = 10f
+            setTextSizeResource(R.dimen.aqua_text_size_status_micro)
             setTextColor(Color.WHITE)
             setTypeface(null, Typeface.BOLD)
             background = iconBackground
@@ -88,7 +89,7 @@ object AquaMaterialCategoryRowFactory {
 
         val titleText = TextView(context).apply {
             text = title
-            textSize = 14f
+            setTextSizeResource(R.dimen.aqua_text_size_body)
             setTextColor(
                 ContextCompat.getColor(
                     context,
@@ -103,7 +104,7 @@ object AquaMaterialCategoryRowFactory {
 
         val summaryText = TextView(context).apply {
             text = summary
-            textSize = 12f
+            setTextSizeResource(R.dimen.aqua_text_size_caption)
             setTextColor(
                 ContextCompat.getColor(
                     context,

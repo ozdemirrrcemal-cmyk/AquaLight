@@ -4,31 +4,31 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp">
+    android:padding="@dimen/aqua_size_24">
 
   <com.google.android.material.button.MaterialButton
     android:id="@+id/btnGoogleLogin"
-    android:layout_width="0dp"
+    android:layout_width="@dimen/aqua_size_0"
     android:layout_height="@dimen/aqua_button_height"
     style="@style/Widget.Aqua.Button.Auth.Google"
     android:text="@string/login_google"
     android:contentDescription="@string/login_google_desc"
     app:icon="@drawable/ic_google"
-    app:iconSize="20dp"
+    app:iconSize="@dimen/aqua_size_20"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintBottom_toTopOf="@+id/btnSignIn"
-    android:layout_marginBottom="4dp"
-    android:paddingStart="24dp"
-    android:paddingEnd="24dp"
+    android:layout_marginBottom="@dimen/aqua_size_4"
+    android:paddingStart="@dimen/aqua_size_24"
+    android:paddingEnd="@dimen/aqua_size_24"
     android:gravity="center"
-    app:iconPadding="10dp"
+    app:iconPadding="@dimen/aqua_size_10"
     app:iconGravity="start"
     />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSignIn"
-        android:layout_width="0dp"
+        android:layout_width="@dimen/aqua_size_0"
         android:layout_height="@dimen/aqua_button_height"
         android:text="@string/login_sign_in"
         android:contentDescription="@string/login_sign_in_desc"
@@ -36,11 +36,11 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/btnRegister"
-        android:layout_marginBottom="4dp" />
+        android:layout_marginBottom="@dimen/aqua_size_4" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnRegister"
-        android:layout_width="0dp"
+        android:layout_width="@dimen/aqua_size_0"
         android:layout_height="@dimen/aqua_button_height"
         android:text="@string/login_register"
         android:contentDescription="@string/login_register_desc"
@@ -48,6 +48,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginBottom="20dp" />
+        android:layout_marginBottom="@dimen/aqua_size_20" />
 		
 </androidx.constraintlayout.widget.ConstraintLayout>

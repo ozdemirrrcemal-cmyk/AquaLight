@@ -116,6 +116,7 @@
     <string name="aquarium_tank_type_title">Tank Type</string>
     <string name="aquarium_type_title">Type</string>
     <string name="aquarium_unit_centimeters">centimeters</string>
+    <string name="aquarium_unit_inches">inches</string>
     <string name="aquarium_unit_title">Unit</string>
     <string name="aquarium_volume_title">Volume</string>
     <string name="aquarium_width_title">Width</string>

@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.aquarium.create.steps
 
+import androidx.core.content.ContextCompat
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
@@ -145,7 +146,7 @@ class TankInfoFragment :
         binding.tvSetupDateValue.text = formatSetupDate(draft.setupDateMillis)
         binding.tvSetupDateValue.setTextColor(
             if (draft.setupDateMillis == null) {
-                Color.parseColor("#7F91AA")
+                ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_7f91aa)
             } else {
                 Color.WHITE
             }
@@ -160,7 +161,7 @@ class TankInfoFragment :
         }
         binding.tvTankTypeValue.setTextColor(
             if (draft.tankType.isBlank()) {
-                Color.parseColor("#7F91AA")
+                ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_7f91aa)
             } else {
                 Color.WHITE
             }
@@ -168,7 +169,7 @@ class TankInfoFragment :
 
         if (draft.tankStyle.isBlank()) {
             binding.tvStyleValue.text = getString(R.string.aquarium_common_not_selected)
-            binding.tvStyleValue.setTextColor(Color.parseColor("#7F91AA"))
+            binding.tvStyleValue.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_7f91aa))
         } else {
             binding.tvStyleValue.text = draft.tankStyle
             binding.tvStyleValue.setTextColor(Color.WHITE)

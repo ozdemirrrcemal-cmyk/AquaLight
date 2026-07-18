@@ -1,9 +1,12 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.common
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
+import com.aqua.aqualight.ui.common.text.AquaUiText
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -52,19 +55,23 @@ class DeviceRootOverviewViewModel(
         val menuSections = DeviceRootMenuMapper.overview(kind = kind, snapshot = this)
         val count = DeviceRootPresentationMapper.primaryCount(this, kind)
         return DeviceRootOverviewUiState(
-            title = title.ifBlank { fallbackTitle }.ifBlank { kind.defaultTitle },
+            title = titleText(title, fallbackTitle, defaultTitleRes = kind.defaultTitleRes),
             deviceUid = deviceUid,
-            connectionStatus = DeviceRootPresentationMapper.availabilityLabel(this),
-            ipText = ipAddress.ifBlank { "Unknown" },
-            firmwareText = firmwareLabel.ifBlank { "Unknown" },
-            modelText = modelLabel.ifBlank { "Unknown" },
-            primaryCountLabel = kind.primaryCountLabel,
-            primaryCountText = count.takeIf { it > 0 }?.toString() ?: "Unknown",
-            featuresText = DeviceRootPresentationMapper.overviewFeatureLabel(this, kind),
-            primarySectionTitle = kind.primarySectionTitle,
-            primarySectionPlaceholder = menuSections.primaryText(kind.primarySectionPlaceholder),
-            secondarySectionTitle = kind.secondarySectionTitle,
-            secondarySectionPlaceholder = menuSections.secondaryText(kind.secondarySectionPlaceholder)
+            connectionStatus = AquaUiText.Resource(
+                DeviceRootPresentationMapper.availabilityLabelRes(this)
+            ),
+            ipText = dynamicOrUnknown(ipAddress),
+            firmwareText = dynamicOrUnknown(firmwareLabel),
+            modelText = dynamicOrUnknown(modelLabel),
+            primaryCountLabelRes = kind.primaryCountLabelRes,
+            primaryCountText = count.takeIf { it > 0 }
+                ?.let { AquaUiText.Dynamic(it.toString()) }
+                ?: AquaUiText.Resource(R.string.device_unknown),
+            featuresText = DeviceRootPresentationMapper.overviewFeatureText(this, kind),
+            primarySectionTitleRes = kind.primarySectionTitleRes,
+            primarySectionPlaceholder = menuSections.primaryText(kind.primarySectionPlaceholderRes),
+            secondarySectionTitleRes = kind.secondarySectionTitleRes,
+            secondarySectionPlaceholder = menuSections.secondaryText(kind.secondarySectionPlaceholderRes)
         )
     }
 
@@ -73,63 +80,79 @@ class DeviceRootOverviewViewModel(
         fallbackTitle: String,
         deviceUid: String
     ) = DeviceRootOverviewUiState(
-        title = fallbackTitle.ifBlank { kind.defaultTitle },
+        title = titleText(fallbackTitle, defaultTitleRes = kind.defaultTitleRes),
         deviceUid = deviceUid,
-        connectionStatus = "Offline",
-        primaryCountLabel = kind.primaryCountLabel,
-        primarySectionTitle = kind.primarySectionTitle,
-        primarySectionPlaceholder = kind.primarySectionPlaceholder,
-        secondarySectionTitle = kind.secondarySectionTitle,
-        secondarySectionPlaceholder = kind.secondarySectionPlaceholder
+        connectionStatus = AquaUiText.Resource(R.string.device_offline),
+        primaryCountLabelRes = kind.primaryCountLabelRes,
+        primarySectionTitleRes = kind.primarySectionTitleRes,
+        primarySectionPlaceholder = AquaUiText.Resource(kind.primarySectionPlaceholderRes),
+        secondarySectionTitleRes = kind.secondarySectionTitleRes,
+        secondarySectionPlaceholder = AquaUiText.Resource(kind.secondarySectionPlaceholderRes)
     )
+
+    private fun dynamicOrUnknown(value: String): AquaUiText =
+        value.takeIf(String::isNotBlank)
+            ?.let(AquaUiText::Dynamic)
+            ?: AquaUiText.Resource(R.string.device_unknown)
+
+    private fun titleText(
+        vararg candidates: String,
+        @StringRes defaultTitleRes: Int
+    ): AquaUiText = candidates.firstOrNull(String::isNotBlank)
+        ?.let(AquaUiText::Dynamic)
+        ?: AquaUiText.Resource(defaultTitleRes)
 }
 
 enum class DeviceRootKind(
-    val defaultTitle: String,
-    val primaryCountLabel: String,
-    val primarySectionTitle: String,
-    val primarySectionPlaceholder: String,
-    val secondarySectionTitle: String,
-    val secondarySectionPlaceholder: String
+    @StringRes val defaultTitleRes: Int,
+    @StringRes val primaryCountLabelRes: Int,
+    @StringRes val primarySectionTitleRes: Int,
+    @StringRes val primarySectionPlaceholderRes: Int,
+    @StringRes val secondarySectionTitleRes: Int,
+    @StringRes val secondarySectionPlaceholderRes: Int
 ) {
     DOSING(
-        defaultTitle = "Dosing",
-        primaryCountLabel = "Dosing channels",
-        primarySectionTitle = "Channel controls",
-        primarySectionPlaceholder = "Dosing channel controls hazırlanıyor.",
-        secondarySectionTitle = "Schedules",
-        secondarySectionPlaceholder = "Dosing schedules hazırlanıyor."
+        defaultTitleRes = R.string.device_family_dosing,
+        primaryCountLabelRes = R.string.device_dosing_channels_label,
+        primarySectionTitleRes = R.string.device_menu_channels_title,
+        primarySectionPlaceholderRes = R.string.device_menu_dosing_controls_preparing,
+        secondarySectionTitleRes = R.string.device_menu_schedules_title,
+        secondarySectionPlaceholderRes = R.string.device_menu_dosing_schedules_preparing
     ),
     TIMER(
-        defaultTitle = "Timer",
-        primaryCountLabel = "Timer channels",
-        primarySectionTitle = "Timer channels",
-        primarySectionPlaceholder = "Timer channel controls hazırlanıyor.",
-        secondarySectionTitle = "Schedules",
-        secondarySectionPlaceholder = "Timer schedules hazırlanıyor."
+        defaultTitleRes = R.string.device_family_timer,
+        primaryCountLabelRes = R.string.device_menu_timer_channels_title,
+        primarySectionTitleRes = R.string.device_menu_timer_channels_title,
+        primarySectionPlaceholderRes = R.string.device_menu_timer_controls_preparing,
+        secondarySectionTitleRes = R.string.device_menu_schedules_title,
+        secondarySectionPlaceholderRes = R.string.device_menu_timer_schedules_preparing
     ),
     COOLING(
-        defaultTitle = "Cooling",
-        primaryCountLabel = "Fan outputs",
-        primarySectionTitle = "Fan control",
-        primarySectionPlaceholder = "Fan control hazırlanıyor.",
-        secondarySectionTitle = "Temperature automation",
-        secondarySectionPlaceholder = "Temperature automation hazırlanıyor."
+        defaultTitleRes = R.string.device_family_cooling,
+        primaryCountLabelRes = R.string.device_fan_outputs_label,
+        primarySectionTitleRes = R.string.device_menu_fan_control_title,
+        primarySectionPlaceholderRes = R.string.device_menu_fan_control_preparing,
+        secondarySectionTitleRes = R.string.device_menu_temperature_automation_title,
+        secondarySectionPlaceholderRes = R.string.device_menu_temperature_automation_preparing
     )
 }
 
 data class DeviceRootOverviewUiState(
-    val title: String = "Device",
+    val title: AquaUiText = AquaUiText.Resource(R.string.device_unknown_device),
     val deviceUid: String = "",
-    val connectionStatus: String = "Offline",
-    val ipText: String = "Unknown",
-    val firmwareText: String = "Unknown",
-    val modelText: String = "Unknown",
-    val primaryCountLabel: String = "Channels",
-    val primaryCountText: String = "Unknown",
-    val featuresText: String = "Unknown",
-    val primarySectionTitle: String = "Controls",
-    val primarySectionPlaceholder: String = "Controls hazırlanıyor.",
-    val secondarySectionTitle: String = "Schedules",
-    val secondarySectionPlaceholder: String = "Schedules hazırlanıyor."
+    val connectionStatus: AquaUiText = AquaUiText.Resource(R.string.device_offline),
+    val ipText: AquaUiText = AquaUiText.Resource(R.string.device_unknown),
+    val firmwareText: AquaUiText = AquaUiText.Resource(R.string.device_unknown),
+    val modelText: AquaUiText = AquaUiText.Resource(R.string.device_unknown),
+    @StringRes val primaryCountLabelRes: Int = R.string.device_menu_channels_title,
+    val primaryCountText: AquaUiText = AquaUiText.Resource(R.string.device_unknown),
+    val featuresText: AquaUiText = AquaUiText.Resource(R.string.device_unknown),
+    @StringRes val primarySectionTitleRes: Int = R.string.device_menu_controls_title,
+    val primarySectionPlaceholder: AquaUiText = AquaUiText.Resource(
+        R.string.device_menu_controls_preparing
+    ),
+    @StringRes val secondarySectionTitleRes: Int = R.string.device_menu_schedules_title,
+    val secondarySectionPlaceholder: AquaUiText = AquaUiText.Resource(
+        R.string.device_menu_programs_preparing
+    )
 )

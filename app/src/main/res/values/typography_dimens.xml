@@ -40,4 +40,8 @@
     <dimen name="aqua_text_size_status_tiny">11sp</dimen>
     <dimen name="aqua_text_size_status_micro">10sp</dimen>
     <dimen name="aqua_text_size_status_nano">9sp</dimen>
+    <dimen name="aqua_text_size_badge_compact">10.2sp</dimen>
+    <dimen name="aqua_text_size_body_precise_small">11.4sp</dimen>
+    <dimen name="aqua_text_size_body_precise_medium">13.4sp</dimen>
+    <dimen name="aqua_text_size_marker">26sp</dimen>
 </resources>

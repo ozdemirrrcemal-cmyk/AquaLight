@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.maintenance
 
+import androidx.core.content.ContextCompat
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
@@ -351,16 +352,16 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
         if (type == null) {
             binding.taskTypeIconContainer.isVisible = false
             binding.tvTaskTypeTitle.text = getString(R.string.maintenance_select_care_task_type)
-            binding.tvTaskTypeTitle.setTextColor(Color.parseColor("#8FA4BE"))
+            binding.tvTaskTypeTitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_8fa4be))
             binding.tvTaskTypeSubtitle.text = getString(R.string.maintenance_required)
-            binding.tvTaskTypeSubtitle.setTextColor(Color.parseColor("#6F829B"))
+            binding.tvTaskTypeSubtitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_6f829b))
             return
         }
 
         val typeUi = CareTaskTypeCatalog.get(type)
         val typeTitle = typeUi.title(requireContext())
         val category = typeUi.category(requireContext())
-        val accentColor = Color.parseColor(typeUi.accentColor)
+        val accentColor = ContextCompat.getColor(requireContext(), typeUi.accentColorRes)
 
         binding.taskTypeIconContainer.isVisible = true
         binding.taskTypeIconContainer.background = createIconBackground(
@@ -396,16 +397,16 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
             }
             else -> category
         }
-        binding.tvTaskTypeSubtitle.setTextColor(Color.parseColor("#8FA4BE"))
+        binding.tvTaskTypeSubtitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_8fa4be))
     }
 
     private fun updateSelectedAquariumUi() {
         val selectedTank = latestTanks.firstOrNull { tank -> tank.id == selectedTankId }
         if (selectedTank == null) {
             binding.tvAquariumTitle.text = getString(R.string.maintenance_select_aquarium)
-            binding.tvAquariumTitle.setTextColor(Color.parseColor("#8FA4BE"))
+            binding.tvAquariumTitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_8fa4be))
             binding.tvAquariumSubtitle.text = getString(R.string.maintenance_required)
-            binding.tvAquariumSubtitle.setTextColor(Color.parseColor("#6F829B"))
+            binding.tvAquariumSubtitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_6f829b))
             return
         }
 
@@ -414,7 +415,7 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
         }
         binding.tvAquariumTitle.setTextColor(Color.WHITE)
         binding.tvAquariumSubtitle.text = getString(R.string.maintenance_selected_aquarium)
-        binding.tvAquariumSubtitle.setTextColor(Color.parseColor("#5FD6B4"))
+        binding.tvAquariumSubtitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_5fd6b4))
     }
 
     private fun updateDynamicSections() = with(binding) {
@@ -433,7 +434,11 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
             (type != CareTaskType.WATER_CHANGE || selectedWaterChangePercent != null)
         binding.btnSaveTask.isEnabled = canSave
         binding.btnSaveTask.backgroundTintList = ColorStateList.valueOf(
-            Color.parseColor(if (canSave) "#2196F3" else "#35506D")
+            ContextCompat.getColor(
+                requireContext(),
+                if (canSave) R.color.aqua_palette_hex_2196f3
+                else R.color.aqua_palette_hex_35506d
+            )
         )
     }
 
@@ -670,9 +675,9 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
     private fun createIconBackground(color: Int, selected: Boolean): GradientDrawable {
         return GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
-            cornerRadius = 13.dp().toFloat()
+            cornerRadius = resources.getDimensionPixelOffset(R.dimen.aqua_size_13).toFloat()
             setColor(applyAlpha(color, if (selected) 0.34f else 0.22f))
-            setStroke(1.dp(), applyAlpha(color, if (selected) 0.9f else 0.55f))
+            setStroke(resources.getDimensionPixelOffset(R.dimen.aqua_size_1), applyAlpha(color, if (selected) 0.9f else 0.55f))
         }
     }
 
@@ -693,11 +698,6 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
         val repeatIntervalDays: Int,
         val missedReminderDays: Int
     )
-
-    private fun Int.dp(): Int {
-        return (this * resources.displayMetrics.density).toInt()
-    }
-
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

@@ -367,31 +367,33 @@ class TankDetailFragment :
             DeviceRouteTarget.LIGHT_ROOT ->
                 TankDetailFragmentDirections.actionTankDetailFragmentToDeviceLightRootFragment(
                     deviceUid = route.deviceUid,
-                    deviceTitle = route.title
+                    deviceTitle = route.title.ifBlank { getString(route.titleRes) }
                 )
 
             DeviceRouteTarget.DOSING_ROOT ->
                 TankDetailFragmentDirections.actionTankDetailFragmentToDeviceDosingRootFragment(
                     deviceUid = route.deviceUid,
-                    deviceTitle = route.title
+                    deviceTitle = route.title.ifBlank { getString(route.titleRes) }
                 )
 
             DeviceRouteTarget.TIMER_ROOT ->
                 TankDetailFragmentDirections.actionTankDetailFragmentToDeviceTimerRootFragment(
                     deviceUid = route.deviceUid,
-                    deviceTitle = route.title
+                    deviceTitle = route.title.ifBlank { getString(route.titleRes) }
                 )
 
             DeviceRouteTarget.COOLING_ROOT ->
                 TankDetailFragmentDirections.actionTankDetailFragmentToDeviceCoolingRootFragment(
                     deviceUid = route.deviceUid,
-                    deviceTitle = route.title
+                    deviceTitle = route.title.ifBlank { getString(route.titleRes) }
                 )
 
             DeviceRouteTarget.UNSUPPORTED ->
                 TankDetailFragmentDirections.actionTankDetailFragmentToUnsupportedDeviceFragment(
-                    deviceTitle = route.title,
-                    message = route.message,
+                    deviceTitle = route.title.ifBlank { getString(route.titleRes) },
+                    message = route.messageRes.takeIf { it != 0 }
+                        ?.let { getString(it) }
+                        .orEmpty(),
                     deviceUid = route.deviceUid
                 )
         }

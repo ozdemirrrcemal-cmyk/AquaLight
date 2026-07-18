@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.add
 
 import android.os.Bundle
 import android.view.View
+import androidx.annotation.StringRes
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -162,9 +163,15 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
             R.string.device_provisioning_wifi_format,
             state.wifiSsid
         )
-        binding.tvStepOne.text = "✓ ${state.stepOne}"
-        binding.tvStepTwo.text = "✓ ${state.stepTwo}"
-        binding.tvStepThree.text = "${state.currentStepIcon()} ${state.stepThree}"
+        binding.tvStepOne.text = stepText(
+            R.string.device_provisioning_step_icon_complete,
+            state.stepOne
+        )
+        binding.tvStepTwo.text = stepText(
+            R.string.device_provisioning_step_icon_complete,
+            state.stepTwo
+        )
+        binding.tvStepThree.text = stepText(state.currentStepIconRes(), state.stepThree)
         binding.btnStartProvisioning.isVisible = state.canStart && !state.isCancelling
         binding.btnStartProvisioning.isEnabled = state.canStart && !state.isCancelling
         binding.btnStartProvisioning.text = state.buttonText
@@ -187,10 +194,17 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
         )
     }
 
-    private fun DeviceProvisioningProgressUiState.currentStepIcon(): String = when {
-        canStart -> "!"
-        showProgress -> "●"
-        else -> "✓"
+    private fun stepText(@StringRes iconRes: Int, text: String): String = getString(
+        R.string.device_provisioning_step_with_icon,
+        getString(iconRes),
+        text
+    )
+
+    @StringRes
+    private fun DeviceProvisioningProgressUiState.currentStepIconRes(): Int = when {
+        canStart -> R.string.device_provisioning_step_icon_attention
+        showProgress -> R.string.device_provisioning_step_icon_progress
+        else -> R.string.device_provisioning_step_icon_complete
     }
 
     private fun returnToWifiCredentials(failure: DeviceProvisioningWifiCredentialFailure) {
@@ -245,7 +259,7 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
                 deviceTitle = title.ifBlank {
                     getString(R.string.device_wifi_default_device_name)
                 },
-                message = UNSUPPORTED_FAMILY_MESSAGE,
+                message = getString(R.string.device_unsupported_family_message),
                 deviceUid = deviceUid
             )
     }
@@ -257,7 +271,5 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
 
     private companion object {
         const val ACTION_START_PROVISIONING = "start_device_provisioning"
-        const val UNSUPPORTED_FAMILY_MESSAGE =
-            "Unsupported AquaLight device family. Firmware did not provide a known product.family value."
     }
 }

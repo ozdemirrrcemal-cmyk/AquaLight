@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.route
 
+import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 
@@ -15,9 +16,7 @@ class DeviceRouteResolver {
         access: DeviceMenuAccessResult.Available
     ): DeviceRoute {
         val deviceUid = access.deviceUid
-        val title = access.title.ifBlank {
-            deviceUid.ifBlank { DEFAULT_DEVICE_TITLE }
-        }
+        val title = access.title.ifBlank { deviceUid }
 
         return when (access.family) {
             OwnerDeviceFamily.LIGHT -> DeviceRoute(
@@ -44,12 +43,8 @@ class DeviceRouteResolver {
                 deviceUid = deviceUid,
                 title = title,
                 target = DeviceRouteTarget.UNSUPPORTED,
-                message = "Unsupported AquaLight device family. Firmware did not provide a known product.family value."
+                messageRes = R.string.device_unsupported_family_message
             )
         }
-    }
-
-    private companion object {
-        const val DEFAULT_DEVICE_TITLE = "Device"
     }
 }

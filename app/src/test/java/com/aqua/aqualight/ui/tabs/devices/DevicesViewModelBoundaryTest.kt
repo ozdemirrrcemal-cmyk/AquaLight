@@ -9,6 +9,7 @@ import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.OwnerDeviceListItem
 import com.aqua.aqualight.application.devices.OwnerDevicesOperations
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
+import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteTarget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -61,7 +62,7 @@ class DevicesViewModelBoundaryTest {
         assertEquals("AquaLight One", state.devices.single().card.displayName)
         assertEquals("AQL-0001", state.devices.single().card.serialText)
         assertEquals("Tank 1", state.devices.single().card.supportingText)
-        assertEquals("ONLINE", state.devices.single().card.statusText)
+        assertEquals(DeviceCompactStatusStyle.ONLINE, state.devices.single().card.statusStyle)
     }
 
     @Test

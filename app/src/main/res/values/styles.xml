@@ -1,16 +1,10 @@
 <resources>
 
-    <!-- Filled (temel) -->
-<style name="RedButton" parent="Widget.Aqua.Button.Auth.Primary" />
-<style name="BlackButton" parent="Widget.Aqua.Button.Auth.Secondary" />
-
-    <!-- Outlined -->
-<style name="WhiteButton" parent="Widget.Aqua.Button.Auth.Google" />
 <!-- 🔹 Bottom nav: aktif indicator -->
 <style name="Widget.Aqua.BottomNav.ActiveIndicator" parent="">  
     <!-- Boyut -->
-    <item name="android:width">60dp</item>
-    <item name="android:height">32dp</item>
+    <item name="android:width">@dimen/aqua_size_60</item>
+    <item name="android:height">@dimen/aqua_size_32</item>
 
     <!-- Arka plan rengi -->
     <item name="android:color">?attr/aquaBottomNavActiveIndicator</item>
@@ -23,7 +17,7 @@
 <style name="ShapeAppearance.Aqua.BottomNavIndicator"
     parent="@style/ShapeAppearance.Material3.Corner.None">
     <item name="cornerFamily">rounded</item>
-    <item name="cornerSize">16dp</item> <!-- 32dp yüksekliğin yarısı -->
+    <item name="cornerSize">@dimen/aqua_size_16</item> <!-- Half the indicator height. -->
 </style>
 
 <style name="TextAppearance.Aqua.BottomNav" parent="TextAppearance.MaterialComponents.Body2">
@@ -34,9 +28,9 @@
     parent="Widget.MaterialComponents.BottomNavigationView">
 
     <!-- 🔹 Toplam yüksekliği aşağı çeken kısım -->
-    <item name="android:minHeight">56dp</item>   <!-- 48–56 arası mantıklı -->
-    <item name="android:paddingTop">2dp</item>
-    <item name="android:paddingBottom">5dp</item>
+    <item name="android:minHeight">@dimen/aqua_size_56</item>   <!-- 48–56 arası mantıklı -->
+    <item name="android:paddingTop">@dimen/aqua_size_2</item>
+    <item name="android:paddingBottom">@dimen/aqua_size_5</item>
 
     <!-- Yazıları da biraz küçültelim -->
     <item name="itemTextAppearanceActive">@style/TextAppearance.Aqua.BottomNav</item>
@@ -59,7 +53,7 @@
     <item name="android:fontFamily">@font/inter_regular</item>
     <item name="android:textColor">@android:color/white</item>
     <item name="android:textSize">@dimen/aqua_text_size_step_title</item>
-    <item name="android:lineSpacingExtra">2dp</item>
+    <item name="android:lineSpacingExtra">@dimen/aqua_size_2</item>
 </style>
 
 <!-- 🔹 Primary (mavi) buton – eski inline görünüme uygun -->
@@ -89,7 +83,7 @@
     parent="TextAppearance.Material3.BodyMedium">
     <item name="fontFamily">@font/inter_medium</item>
     <item name="android:fontFamily">@font/inter_medium</item>
-    <item name="android:textColor">#64FFDA</item>
+    <item name="android:textColor">@color/aqua_palette_hex_64ffda</item>
     <item name="android:textSize">@dimen/aqua_text_size_feedback_success</item>
 </style>
 
@@ -104,8 +98,8 @@
     <item name="android:background">@android:color/transparent</item>
 
     <!-- Fazla boşluk olmasın diye min boyutları küçült -->
-    <item name="android:minWidth">0dp</item>
-    <item name="android:minHeight">0dp</item>
+    <item name="android:minWidth">@dimen/aqua_size_0</item>
+    <item name="android:minHeight">@dimen/aqua_size_0</item>
 </style>
 
 
@@ -125,10 +119,10 @@
 
 <style name="Aqua.DeviceMenuRow" parent="Aqua">
     <item name="android:layout_width">match_parent</item>
-    <item name="android:layout_height">48dp</item>
+    <item name="android:layout_height">@dimen/aqua_size_48</item>
     <item name="android:gravity">center_vertical</item>
-    <item name="android:paddingLeft">12dp</item>
-    <item name="android:paddingRight">12dp</item>
+    <item name="android:paddingLeft">@dimen/aqua_size_12</item>
+    <item name="android:paddingRight">@dimen/aqua_size_12</item>
     <item name="android:background">?attr/selectableItemBackground</item>
     <!-- 🔹 Lint’in istediği satır -->
     <item name="android:orientation">horizontal</item>
@@ -136,10 +130,10 @@
 
 <style name="ShapeAppearanceOverlay.Aqua.DockedActivityButton" parent="">
   <item name="cornerFamily">rounded</item>
-  <item name="cornerSizeTopLeft">29dp</item>
-  <item name="cornerSizeBottomLeft">29dp</item>
-  <item name="cornerSizeTopRight">0dp</item>
-  <item name="cornerSizeBottomRight">0dp</item>
+  <item name="cornerSizeTopLeft">@dimen/aqua_size_29</item>
+  <item name="cornerSizeBottomLeft">@dimen/aqua_size_29</item>
+  <item name="cornerSizeTopRight">@dimen/aqua_size_0</item>
+  <item name="cornerSizeBottomRight">@dimen/aqua_size_0</item>
 </style>
 
 </resources>

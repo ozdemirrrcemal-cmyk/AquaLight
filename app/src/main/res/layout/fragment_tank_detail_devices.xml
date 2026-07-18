@@ -6,14 +6,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_color"
-    android:paddingStart="14dp"
-    android:paddingTop="16dp"
-    android:paddingEnd="14dp"
-    android:paddingBottom="120dp">
+    android:paddingStart="@dimen/aqua_size_14"
+    android:paddingTop="@dimen/aqua_size_16"
+    android:paddingEnd="@dimen/aqua_size_14"
+    android:paddingBottom="@dimen/aqua_size_120">
 
     <LinearLayout
         android:id="@+id/devicesHeaderRow"
-        android:layout_width="0dp"
+        android:layout_width="@dimen/aqua_size_0"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
@@ -23,7 +23,7 @@
 
         <TextView
             android:id="@+id/tvDeviceTitle"
-            android:layout_width="0dp"
+            android:layout_width="@dimen/aqua_size_0"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:includeFontPadding="false"
@@ -36,7 +36,7 @@
             style="@style/Widget.Aqua.Button.InlineAdd"
             android:id="@+id/btnAddDevice"
             android:layout_width="wrap_content"
-            android:layout_height="34dp"
+            android:layout_height="@dimen/aqua_size_34"
             android:contentDescription="@string/devices_scan_button_desc"
             android:text="@string/aquarium_action_add"
             android:textStyle="bold" />
@@ -45,12 +45,12 @@
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvAssignedDevices"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="8dp"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="@dimen/aqua_size_0"
+        android:layout_marginTop="@dimen/aqua_size_8"
         android:clipToPadding="false"
         android:overScrollMode="never"
-        android:paddingBottom="24dp"
+        android:paddingBottom="@dimen/aqua_size_24"
         app:layout_constraintTop_toBottomOf="@id/devicesHeaderRow"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -58,28 +58,28 @@
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardDevicesEmpty"
-        android:layout_width="0dp"
+        android:layout_width="@dimen/aqua_size_0"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="@dimen/aqua_size_16"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/devicesHeaderRow"
         app:cardBackgroundColor="@color/aqua_state_container_surface"
-        app:cardCornerRadius="24dp"
-        app:cardElevation="0dp"
+        app:cardCornerRadius="@dimen/aqua_size_24"
+        app:cardElevation="@dimen/aqua_size_0"
         app:strokeColor="@color/aqua_state_container_outline"
-        app:strokeWidth="1dp">
+        app:strokeWidth="@dimen/aqua_size_1">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="vertical"
-            android:paddingStart="18dp"
-            android:paddingTop="24dp"
-            android:paddingEnd="18dp"
-            android:paddingBottom="24dp">
+            android:paddingStart="@dimen/aqua_size_18"
+            android:paddingTop="@dimen/aqua_size_24"
+            android:paddingEnd="@dimen/aqua_size_18"
+            android:paddingBottom="@dimen/aqua_size_24">
 
             <TextView
                 android:id="@+id/tvDevicesEmptyTitle"
@@ -96,10 +96,10 @@
                 android:id="@+id/tvDevicesEmptyMessage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="9dp"
+                android:layout_marginTop="@dimen/aqua_size_9"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:lineSpacingExtra="3dp"
+                android:lineSpacingExtra="@dimen/aqua_size_3"
                 android:text="@string/aquarium_text_add_a_saved_device_to_control_or_monitor_this_aquarium"
                 android:textColor="@color/aqua_state_text_secondary"
                 android:textSize="@dimen/aqua_text_size_state_body" />

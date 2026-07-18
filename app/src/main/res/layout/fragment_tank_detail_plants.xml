@@ -8,10 +8,10 @@
     android:clipToPadding="false"
     android:fillViewport="true"
     android:overScrollMode="never"
-    android:paddingStart="14dp"
-    android:paddingEnd="14dp"
-    android:paddingTop="16dp"
-    android:paddingBottom="120dp"
+    android:paddingStart="@dimen/aqua_size_14"
+    android:paddingEnd="@dimen/aqua_size_14"
+    android:paddingTop="@dimen/aqua_size_16"
+    android:paddingBottom="@dimen/aqua_size_120"
     android:scrollbars="none"
     android:background="@color/background_color">
 
@@ -32,7 +32,7 @@
             android:id="@+id/btnAddPlant"
             android:layout_width="match_parent"
             android:layout_height="@dimen/aqua_button_height"
-            android:layout_marginTop="14dp"
+            android:layout_marginTop="@dimen/aqua_size_14"
             android:text="@string/aquarium_action_add_plant"
             android:textStyle="bold" />
 

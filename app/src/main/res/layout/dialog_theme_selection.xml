@@ -8,7 +8,7 @@
 
     <View
         style="@style/Widget.Aqua.BottomSheet.Handle"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="@dimen/aqua_size_16" />
 
     <TextView
         android:id="@+id/tvDialogTitle"
@@ -16,7 +16,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
-        android:layout_marginBottom="18dp"
+        android:layout_marginBottom="@dimen/aqua_size_18"
         android:text="@string/theme_selection_title"
         android:labelFor="@id/layoutLight" />
 
@@ -24,22 +24,22 @@
         android:id="@+id/layoutLight"
         style="@style/Widget.Aqua.SelectionRow.BottomSheet"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginBottom="12dp"
+        android:layout_height="@dimen/aqua_size_56"
+        android:layout_marginBottom="@dimen/aqua_size_12"
         android:contentDescription="@string/theme_selection_light_option_description"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
             <ImageView
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:layout_marginEnd="14dp"
+                android:layout_width="@dimen/aqua_size_22"
+                android:layout_height="@dimen/aqua_size_22"
+                android:layout_marginEnd="@dimen/aqua_size_14"
                 android:src="@drawable/ic_theme_light"
                 app:tint="@color/theme_option_light_icon" />
 
             <TextView
                 android:id="@+id/tvLight"
-                android:layout_width="0dp"
+                android:layout_width="@dimen/aqua_size_0"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"
@@ -61,22 +61,22 @@
         android:id="@+id/layoutDark"
         style="@style/Widget.Aqua.SelectionRow.BottomSheet"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginBottom="12dp"
+        android:layout_height="@dimen/aqua_size_56"
+        android:layout_marginBottom="@dimen/aqua_size_12"
         android:contentDescription="@string/theme_selection_dark_option_description"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
             <ImageView
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:layout_marginEnd="14dp"
+                android:layout_width="@dimen/aqua_size_22"
+                android:layout_height="@dimen/aqua_size_22"
+                android:layout_marginEnd="@dimen/aqua_size_14"
                 android:src="@drawable/ic_theme_dark"
                 app:tint="@color/theme_option_dark_icon" />
 
             <TextView
                 android:id="@+id/tvDark"
-                android:layout_width="0dp"
+                android:layout_width="@dimen/aqua_size_0"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"
@@ -98,21 +98,21 @@
         android:id="@+id/layoutSystem"
         style="@style/Widget.Aqua.SelectionRow.BottomSheet"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="@dimen/aqua_size_56"
         android:contentDescription="@string/theme_selection_system_option_description"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
             <ImageView
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:layout_marginEnd="14dp"
+                android:layout_width="@dimen/aqua_size_22"
+                android:layout_height="@dimen/aqua_size_22"
+                android:layout_marginEnd="@dimen/aqua_size_14"
                 android:src="@drawable/ic_theme_system"
                 app:tint="@color/theme_option_system_icon" />
 
             <TextView
                 android:id="@+id/tvSystem"
-                android:layout_width="0dp"
+                android:layout_width="@dimen/aqua_size_0"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"

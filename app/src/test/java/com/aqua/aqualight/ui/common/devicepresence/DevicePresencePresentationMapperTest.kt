@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.common.devicepresence
 
+import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -11,8 +12,8 @@ class DevicePresencePresentationMapperTest {
     @Test
     fun `authenticated runtime is the only normal online control state`() {
         assertEquals(
-            "Online",
-            DevicePresencePresentationMapper.availabilityLabel(DeviceOnlineState.AUTHENTICATED)
+            R.string.device_online,
+            DevicePresencePresentationMapper.availabilityLabelRes(DeviceOnlineState.AUTHENTICATED)
         )
         assertTrue(
             DevicePresencePresentationMapper.isReachable(DeviceOnlineState.AUTHENTICATED)
@@ -22,8 +23,8 @@ class DevicePresencePresentationMapperTest {
     @Test
     fun `fresh UDP presence remains visually offline until authentication`() {
         assertEquals(
-            "Offline",
-            DevicePresencePresentationMapper.availabilityLabel(DeviceOnlineState.ONLINE_LAN)
+            R.string.device_offline,
+            DevicePresencePresentationMapper.availabilityLabelRes(DeviceOnlineState.ONLINE_LAN)
         )
         assertTrue(
             DevicePresencePresentationMapper.isConnecting(DeviceOnlineState.ONLINE_LAN)
@@ -36,8 +37,8 @@ class DevicePresencePresentationMapperTest {
     @Test
     fun `websocket handshake is internal and never exposes connecting label`() {
         assertEquals(
-            "Offline",
-            DevicePresencePresentationMapper.availabilityLabel(DeviceOnlineState.CONNECTING_WS)
+            R.string.device_offline,
+            DevicePresencePresentationMapper.availabilityLabelRes(DeviceOnlineState.CONNECTING_WS)
         )
         assertTrue(
             DevicePresencePresentationMapper.isConnecting(DeviceOnlineState.CONNECTING_WS)
@@ -55,7 +56,10 @@ class DevicePresencePresentationMapperTest {
             DeviceOnlineState.AUTH_REQUIRED,
             DeviceOnlineState.ERROR
         ).forEach { state ->
-            assertEquals("Offline", DevicePresencePresentationMapper.availabilityLabel(state))
+            assertEquals(
+                R.string.device_offline,
+                DevicePresencePresentationMapper.availabilityLabelRes(state)
+            )
             assertFalse(DevicePresencePresentationMapper.isReachable(state))
             assertFalse(DevicePresencePresentationMapper.isConnecting(state))
         }

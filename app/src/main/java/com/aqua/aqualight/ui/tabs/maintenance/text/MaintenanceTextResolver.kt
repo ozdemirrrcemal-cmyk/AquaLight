@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.maintenance.text
 
+import androidx.annotation.ColorInt
 import com.aqua.aqualight.application.care.CareTaskSource
 import com.aqua.aqualight.application.care.CareTaskType
 
@@ -40,5 +41,5 @@ data class CareTaskTypePresentation(
     val title: String,
     val defaultDescription: String,
     val iconRes: Int,
-    val accentColor: String
+    @ColorInt val accentColor: Int
 )

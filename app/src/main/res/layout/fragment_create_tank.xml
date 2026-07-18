@@ -9,7 +9,7 @@
     <include
         android:id="@+id/appHeader"
         layout="@layout/layout_aqua_header"
-        android:layout_width="0dp"
+        android:layout_width="@dimen/aqua_size_0"
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -18,8 +18,8 @@
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/createTankNavHost"
         android:name="androidx.navigation.fragment.NavHostFragment"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="@dimen/aqua_size_0"
         app:defaultNavHost="false"
         app:navGraph="@navigation/nav_create_tank"
         app:layout_constraintBottom_toTopOf="@id/progressBar"
@@ -30,25 +30,25 @@
     <ProgressBar
         android:id="@+id/progressBar"
         style="@android:style/Widget.ProgressBar.Horizontal"
-        android:layout_width="0dp"
-        android:layout_height="4dp"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="@dimen/aqua_size_4"
         android:indeterminate="false"
         android:max="100"
         android:progress="20"
-        android:progressBackgroundTint="#2D3A4F"
-        android:progressTint="#1FAA59"
+        android:progressBackgroundTint="@color/aqua_palette_hex_2d3a4f"
+        android:progressTint="@color/aqua_palette_hex_1faa59"
         app:layout_constraintBottom_toTopOf="@id/bottomContainer"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
     <LinearLayout
         android:id="@+id/bottomContainer"
-        android:layout_width="0dp"
+        android:layout_width="@dimen/aqua_size_0"
         android:layout_height="wrap_content"
-        android:background="#1C3252"
+        android:background="@color/aqua_palette_hex_1c3252"
         android:orientation="vertical"
-        android:padding="12dp"
-        android:paddingBottom="16dp"
+        android:padding="@dimen/aqua_size_12"
+        android:paddingBottom="@dimen/aqua_size_16"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">

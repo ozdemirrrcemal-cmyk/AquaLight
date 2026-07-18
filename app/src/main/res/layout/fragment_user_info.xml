@@ -15,7 +15,7 @@
 <include
     android:id="@+id/appHeader"
     layout="@layout/layout_aqua_header"
-    android:layout_width="0dp"
+    android:layout_width="@dimen/aqua_size_0"
     android:layout_height="wrap_content"
     app:layout_constraintTop_toTopOf="parent"
     app:layout_constraintStart_toStartOf="parent"
@@ -25,12 +25,12 @@
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scrollContainer"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="@dimen/aqua_size_0"
         android:clipToPadding="false"
         android:fillViewport="true"
         android:fitsSystemWindows="true"
-        android:paddingBottom="24dp"
+        android:paddingBottom="@dimen/aqua_size_24"
         android:scrollbars="none"
         app:layout_constraintTop_toBottomOf="@id/appHeader"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -43,10 +43,10 @@
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
             android:orientation="vertical"
-            android:paddingStart="10dp"
-            android:paddingTop="16dp"
-            android:paddingEnd="10dp"
-            android:paddingBottom="140dp">
+            android:paddingStart="@dimen/aqua_size_10"
+            android:paddingTop="@dimen/aqua_size_16"
+            android:paddingEnd="@dimen/aqua_size_10"
+            android:paddingBottom="@dimen/aqua_size_140">
 
             <!-- PROFILE -->
 
@@ -55,25 +55,25 @@
                 style="@style/Widget.Aqua.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp">
+                android:layout_marginBottom="@dimen/aqua_size_16">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_horizontal"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="@dimen/aqua_size_16">
 
                     <FrameLayout
-                        android:layout_width="64dp"
-                        android:layout_height="64dp"
+                        android:layout_width="@dimen/aqua_size_64"
+                        android:layout_height="@dimen/aqua_size_64"
                         android:background="@drawable/profile_background">
 
                         <ImageView
                             android:id="@+id/ivUserPhoto"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:layout_margin="2dp"
+                            android:layout_margin="@dimen/aqua_size_2"
                             android:background="@drawable/profile_clip_circle"
                             android:clickable="true"
                             android:clipToOutline="true"
@@ -88,7 +88,7 @@
                         android:id="@+id/tvName"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="@dimen/aqua_size_12"
                         android:text="@string/user_info_name_default"
                         android:textColor="@color/aqua_card_text_primary"
                         android:textSize="@dimen/aqua_text_size_title_small"
@@ -98,7 +98,7 @@
                         android:id="@+id/tvUserEmail"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
+                        android:layout_marginTop="@dimen/aqua_size_4"
                         android:text="@string/user_info_email_default"
                         android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="@dimen/aqua_text_size_body" />
@@ -114,13 +114,13 @@
                 style="@style/Widget.Aqua.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp">
+                android:layout_marginBottom="@dimen/aqua_size_12">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="12dp">
+                    android:padding="@dimen/aqua_size_12">
 
                     <!-- LABEL -->
 
@@ -143,7 +143,7 @@
                         android:inputType="text"
                         android:maxLength="20"
                         android:maxLines="1"
-                        android:padding="0dp"
+                        android:padding="@dimen/aqua_size_0"
                         android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold"
                         android:contentDescription="@string/user_info_username_desc" />
@@ -154,7 +154,7 @@
                         android:id="@+id/tvUsernameError"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
+                        android:layout_marginTop="@dimen/aqua_size_6"
                         android:textColor="@color/snackbar_error"
                         android:textSize="@dimen/aqua_text_size_caption"
                         android:visibility="gone"
@@ -175,24 +175,24 @@
                 <LinearLayout
                     android:id="@+id/rowAddress"
                     android:layout_width="match_parent"
-                    android:layout_height="56dp"
+                    android:layout_height="@dimen/aqua_size_56"
                     android:clickable="true"
                     android:contentDescription="@string/user_info_address_desc"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackgroundBorderless"
                     android:gravity="center_vertical"
-                    android:paddingHorizontal="16dp">
+                    android:paddingHorizontal="@dimen/aqua_size_16">
 
                     <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:layout_marginEnd="12dp"
+                        android:layout_width="@dimen/aqua_size_20"
+                        android:layout_height="@dimen/aqua_size_20"
+                        android:layout_marginEnd="@dimen/aqua_size_12"
                         android:contentDescription="@string/user_info_location_icon_desc"
                         android:src="@drawable/ic_location"
                         app:tint="@color/aqua_card_text_secondary" />
 
                     <TextView
-                        android:layout_width="0dp"
+                        android:layout_width="@dimen/aqua_size_0"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/user_info_address_label"
@@ -200,8 +200,8 @@
                         android:textSize="@dimen/aqua_text_size_body_xlarge" />
 
                     <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
+                        android:layout_width="@dimen/aqua_size_20"
+                        android:layout_height="@dimen/aqua_size_20"
                         android:contentDescription="@string/user_info_arrow_desc"
                         android:src="@drawable/ic_arrow_right"
                         app:tint="@color/aqua_card_text_secondary" />
@@ -217,7 +217,7 @@
                 style="@style/Widget.Aqua.Button.Primary"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/aqua_button_height"
-                android:layout_marginTop="32dp"
+                android:layout_marginTop="@dimen/aqua_size_32"
                 android:text="@string/user_info_save_button"
                 android:contentDescription="@string/user_info_save_button_desc" />
 

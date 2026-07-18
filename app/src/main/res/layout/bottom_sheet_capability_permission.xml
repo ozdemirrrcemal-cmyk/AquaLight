@@ -7,7 +7,7 @@
 
     <View
         style="@style/Widget.Aqua.BottomSheet.Handle"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="@dimen/aqua_size_16" />
 
     <FrameLayout
         android:id="@+id/permissionIconSurface"
@@ -35,7 +35,7 @@
         style="@style/TextAppearance.Aqua.BottomSheet.Title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="@dimen/aqua_size_16"
         android:gravity="center"
         android:labelFor="@id/tvPermissionMessage" />
 
@@ -44,22 +44,22 @@
         style="@style/TextAppearance.Aqua.BottomSheet.Subtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="9dp"
-        android:layout_marginBottom="22dp"
+        android:layout_marginTop="@dimen/aqua_size_9"
+        android:layout_marginBottom="@dimen/aqua_size_22"
         android:gravity="center" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnPermissionPrimary"
         style="@style/Widget.Aqua.BottomSheet.Button.Primary"
         android:layout_width="match_parent"
-        android:layout_height="52dp" />
+        android:layout_height="@dimen/aqua_size_52" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnPermissionCancel"
         style="@style/Widget.Material3.Button.TextButton"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_marginTop="2dp"
+        android:layout_height="@dimen/aqua_size_48"
+        android:layout_marginTop="@dimen/aqua_size_2"
         android:text="@string/permission_sheet_not_now" />
 
 </LinearLayout>

@@ -15,6 +15,7 @@ import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceLightRootBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.text.resolve
 import kotlinx.coroutines.launch
 
 class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
@@ -32,7 +33,7 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
 
         _binding = FragmentDeviceLightRootBinding.bind(view)
 
-        setupHeader(title = args.deviceTitle.ifBlank { "Light" })
+        setupHeader(title = args.deviceTitle.ifBlank { getString(R.string.device_family_light) })
         setupOtaTestPanel()
         observeViewModel()
 
@@ -101,19 +102,37 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
     private fun renderState(state: DeviceLightRootUiState) {
         if (_binding == null) return
 
-        setupHeader(title = state.title)
+        val context = requireContext()
+        val unknown = getString(R.string.device_unknown)
+        val title = state.title.ifBlank { getString(R.string.device_family_light) }
+        setupHeader(title = title)
 
-        binding.tvProductName.text = state.title
-        binding.tvDeviceUid.text = state.deviceUid.ifBlank { "Unknown device" }
-        binding.tvConnectionStatus.text = state.connectionStatus
-        binding.tvIp.text = "IP: ${state.ipText}"
-        binding.tvFirmware.text = "Firmware: ${state.firmwareText}"
-        binding.tvModel.text = "Model: ${state.modelText}"
-        binding.tvChannelCount.text = "Light channels: ${state.channelCountText}"
-        binding.tvFeatures.text = "Features: ${state.featuresText}"
-        binding.tvManualPlaceholder.text = state.manualMenuText
-        binding.tvProgramsPlaceholder.text = state.programsMenuText
-        binding.tvOtaTestStatus.text = state.otaTestText
+        binding.tvProductName.text = title
+        binding.tvDeviceUid.text = state.deviceUid.ifBlank {
+            getString(R.string.device_unknown_device)
+        }
+        binding.tvConnectionStatus.setText(state.connectionStatusRes)
+        binding.tvIp.text = getString(R.string.device_ip_value, state.ipText.ifBlank { unknown })
+        binding.tvFirmware.text = getString(
+            R.string.device_firmware_value,
+            state.firmwareText.ifBlank { unknown }
+        )
+        binding.tvModel.text = getString(
+            R.string.device_model_value,
+            state.modelText.ifBlank { unknown }
+        )
+        binding.tvChannelCount.text = getString(
+            R.string.device_labeled_value,
+            getString(R.string.device_light_channels_label),
+            state.channelCountText.ifBlank { unknown }
+        )
+        binding.tvFeatures.text = getString(
+            R.string.device_features_value,
+            context.resolve(state.featuresText)
+        )
+        binding.tvManualPlaceholder.text = context.resolve(state.manualMenuText)
+        binding.tvProgramsPlaceholder.text = context.resolve(state.programsMenuText)
+        binding.tvOtaTestStatus.text = context.resolve(state.otaTestText)
     }
 
     override fun onDestroyView() {

@@ -12,7 +12,7 @@
     <include
     android:id="@+id/appHeader"
     layout="@layout/layout_aqua_header"
-    android:layout_width="0dp"
+    android:layout_width="@dimen/aqua_size_0"
     android:layout_height="wrap_content"
     app:layout_constraintTop_toTopOf="parent"
     app:layout_constraintStart_toStartOf="parent"
@@ -21,8 +21,8 @@
     <!-- 🔹 İçerik -->
     <ScrollView
         android:id="@+id/scrollContent"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="@dimen/aqua_size_0"
         android:fillViewport="true"
         android:scrollbars="none"
         app:layout_constraintTop_toBottomOf="@id/appHeader"
@@ -35,10 +35,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp"
-            android:paddingTop="16dp"
-            android:paddingBottom="16dp">
+            android:paddingStart="@dimen/aqua_size_10"
+            android:paddingEnd="@dimen/aqua_size_10"
+            android:paddingTop="@dimen/aqua_size_16"
+            android:paddingBottom="@dimen/aqua_size_16">
 
             <!-- 📝 Üst açıklama -->
             <TextView
@@ -49,8 +49,8 @@
                 android:textColor="@color/aqua_card_text_secondary"
                 android:textSize="@dimen/aqua_text_size_body"
                 android:gravity="center"
-                android:lineSpacingExtra="4dp"
-                android:layout_marginBottom="16dp"
+                android:lineSpacingExtra="@dimen/aqua_size_4"
+                android:layout_marginBottom="@dimen/aqua_size_16"
                 android:contentDescription="@string/usage_subinfo_desc" />
 
             <!-- 📊 Son 7 gün sistem aktivitesi -->
@@ -58,14 +58,14 @@
                 android:id="@+id/cardUsageSummary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
+                android:layout_marginBottom="@dimen/aqua_size_12"
                 style="@style/Widget.Aqua.Card">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp"
+                    android:padding="@dimen/aqua_size_16"
                     android:contentDescription="@string/usage_summary_card_desc">
 
                     <TextView
@@ -76,7 +76,7 @@
                         android:textColor="@color/aqua_card_text_primary"
                         android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold"
-                        android:layout_marginBottom="8dp" />
+                        android:layout_marginBottom="@dimen/aqua_size_8" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -85,7 +85,7 @@
 
                         <!-- Otomasyon çalışmaları (son 7 gün) -->
                         <LinearLayout
-                            android:layout_width="0dp"
+                            android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:orientation="vertical">
@@ -111,7 +111,7 @@
 
                         <!-- Uyarı / alarm sayısı (son 7 gün) -->
                         <LinearLayout
-                            android:layout_width="0dp"
+                            android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:orientation="vertical">
@@ -143,14 +143,14 @@
                 android:id="@+id/cardTodayUsage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
+                android:layout_marginBottom="@dimen/aqua_size_12"
                 style="@style/Widget.Aqua.Card">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp"
+                    android:padding="@dimen/aqua_size_16"
                     android:contentDescription="@string/usage_today_card_desc">
 
                     <TextView
@@ -161,7 +161,7 @@
                         android:textColor="@color/aqua_card_text_primary"
                         android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold"
-                        android:layout_marginBottom="8dp" />
+                        android:layout_marginBottom="@dimen/aqua_size_8" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -170,7 +170,7 @@
 
                         <!-- Bugün çalışan otomasyonlar -->
                         <LinearLayout
-                            android:layout_width="0dp"
+                            android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:orientation="vertical">
@@ -196,7 +196,7 @@
 
                         <!-- Bugünkü manuel müdahaleler -->
                         <LinearLayout
-                            android:layout_width="0dp"
+                            android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:orientation="vertical">
@@ -228,14 +228,14 @@
                 android:id="@+id/cardLastActivity"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
+                android:layout_marginBottom="@dimen/aqua_size_12"
                 style="@style/Widget.Aqua.Card">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp"
+                    android:padding="@dimen/aqua_size_16"
                     android:contentDescription="@string/usage_last_activity_card_desc">
 
                     <TextView
@@ -246,7 +246,7 @@
                         android:textColor="@color/aqua_card_text_primary"
                         android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold"
-                        android:layout_marginBottom="8dp" />
+                        android:layout_marginBottom="@dimen/aqua_size_8" />
 
                     <TextView
                         android:id="@+id/tvLastOpenLabel"
@@ -264,7 +264,7 @@
                         tools:text="Today, 21:34"
                         android:textColor="@color/aqua_card_text_primary"
                         android:textSize="@dimen/aqua_text_size_body"
-                        android:layout_marginBottom="8dp" />
+                        android:layout_marginBottom="@dimen/aqua_size_8" />
 
                     <TextView
                         android:id="@+id/tvMostUsedDeviceLabel"
@@ -296,7 +296,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp"
+                    android:padding="@dimen/aqua_size_16"
                     android:contentDescription="@string/usage_privacy_card_desc">
 
                     <TextView
@@ -307,7 +307,7 @@
                         android:textColor="@color/aqua_card_text_primary"
                         android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold"
-                        android:layout_marginBottom="4dp" />
+                        android:layout_marginBottom="@dimen/aqua_size_4" />
 
                     <TextView
                         android:id="@+id/tvUsagePrivacyBody"
@@ -316,7 +316,7 @@
                         android:text="@string/usage_privacy_body"
                         android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="@dimen/aqua_text_size_body_small"
-                        android:lineSpacingExtra="3dp" />
+                        android:lineSpacingExtra="@dimen/aqua_size_3" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

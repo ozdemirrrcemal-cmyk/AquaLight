@@ -10,13 +10,13 @@
         style="@style/TextAppearance.Aqua.BottomSheet.Title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="18dp"
+        android:layout_marginTop="@dimen/aqua_size_18"
         android:gravity="center" />
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="@dimen/aqua_size_20"
         android:fillViewport="true"
         android:overScrollMode="never">
 

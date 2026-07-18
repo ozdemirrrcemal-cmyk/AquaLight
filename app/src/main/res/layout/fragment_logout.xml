@@ -11,7 +11,7 @@
  <include
     android:id="@+id/appHeader"
     layout="@layout/layout_aqua_header"
-    android:layout_width="0dp"
+    android:layout_width="@dimen/aqua_size_0"
     android:layout_height="wrap_content"
     app:layout_constraintTop_toTopOf="parent"
     app:layout_constraintStart_toStartOf="parent"
@@ -20,8 +20,8 @@
     <!-- 🔹 İçerik (sadece kart) -->
     <ScrollView
         android:id="@+id/scrollContent"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="@dimen/aqua_size_0"
         android:fillViewport="true"
         android:clipToPadding="false"
         app:layout_constraintTop_toBottomOf="@id/appHeader"
@@ -34,10 +34,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingTop="16dp"
-            android:paddingBottom="16dp"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp">
+            android:paddingTop="@dimen/aqua_size_16"
+            android:paddingBottom="@dimen/aqua_size_16"
+            android:paddingStart="@dimen/aqua_size_10"
+            android:paddingEnd="@dimen/aqua_size_10">
 
             <!-- 🟦 Hesap ayarları – Settings menü stili -->
             <com.google.android.material.card.MaterialCardView
@@ -55,8 +55,8 @@
                     <LinearLayout
                         android:id="@+id/rowChangePassword"
                         android:layout_width="match_parent"
-                        android:layout_height="56dp"
-                        android:paddingHorizontal="16dp"
+                        android:layout_height="@dimen/aqua_size_56"
+                        android:paddingHorizontal="@dimen/aqua_size_16"
                         android:gravity="center_vertical"
                         android:clickable="true"
                         android:focusable="true"
@@ -64,7 +64,7 @@
                         android:contentDescription="@string/account_settings_change_password_desc">
 
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/account_settings_change_password"
@@ -72,8 +72,8 @@
                             android:textSize="@dimen/aqua_text_size_body"/>
 
                         <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
+                            android:layout_width="@dimen/aqua_size_20"
+                            android:layout_height="@dimen/aqua_size_20"
                             android:src="@drawable/ic_arrow_right"
                             app:tint="@color/aqua_card_text_secondary"
                             android:contentDescription="@string/settings_arrow_desc"/>
@@ -81,15 +81,15 @@
 
                     <View
                         android:layout_width="match_parent"
-                        android:layout_height="1dp"
+                        android:layout_height="@dimen/aqua_size_1"
                         android:background="@color/settings_divider"/>
 
                     <!-- Change email -->
                     <LinearLayout
                         android:id="@+id/rowChangeEmail"
                         android:layout_width="match_parent"
-                        android:layout_height="56dp"
-                        android:paddingHorizontal="16dp"
+                        android:layout_height="@dimen/aqua_size_56"
+                        android:paddingHorizontal="@dimen/aqua_size_16"
                         android:gravity="center_vertical"
                         android:clickable="true"
                         android:focusable="true"
@@ -97,7 +97,7 @@
                         android:contentDescription="@string/account_settings_change_email_desc">
 
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/account_settings_change_email"
@@ -105,8 +105,8 @@
                             android:textSize="@dimen/aqua_text_size_body"/>
 
                         <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
+                            android:layout_width="@dimen/aqua_size_20"
+                            android:layout_height="@dimen/aqua_size_20"
                             android:src="@drawable/ic_arrow_right"
                             app:tint="@color/aqua_card_text_secondary"
                             android:contentDescription="@string/settings_arrow_desc"/>
@@ -114,15 +114,15 @@
 
                     <View
                         android:layout_width="match_parent"
-                        android:layout_height="1dp"
+                        android:layout_height="@dimen/aqua_size_1"
                         android:background="@color/settings_divider"/>
 
                     <!-- Security settings -->
                     <LinearLayout
                         android:id="@+id/rowSecuritySettings"
                         android:layout_width="match_parent"
-                        android:layout_height="56dp"
-                        android:paddingHorizontal="16dp"
+                        android:layout_height="@dimen/aqua_size_56"
+                        android:paddingHorizontal="@dimen/aqua_size_16"
                         android:gravity="center_vertical"
                         android:clickable="true"
                         android:focusable="true"
@@ -130,7 +130,7 @@
                         android:contentDescription="@string/account_settings_security_settings_desc">
 
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/account_settings_security_settings"
@@ -138,8 +138,8 @@
                             android:textSize="@dimen/aqua_text_size_body"/>
 
                         <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
+                            android:layout_width="@dimen/aqua_size_20"
+                            android:layout_height="@dimen/aqua_size_20"
                             android:src="@drawable/ic_arrow_right"
                             app:tint="@color/aqua_card_text_secondary"
                             android:contentDescription="@string/settings_arrow_desc"/>
@@ -154,12 +154,12 @@
     <!-- 🔹 Alt sabit butonlar -->
     <LinearLayout
         android:id="@+id/bottomActions"
-        android:layout_width="0dp"
+        android:layout_width="@dimen/aqua_size_0"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingStart="10dp"
-        android:paddingEnd="10dp"
-        android:paddingBottom="20dp"
+        android:paddingStart="@dimen/aqua_size_10"
+        android:paddingEnd="@dimen/aqua_size_10"
+        android:paddingBottom="@dimen/aqua_size_20"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -179,7 +179,7 @@
             style="@style/Widget.Aqua.Button.Danger"
             android:layout_width="match_parent"
             android:layout_height="@dimen/aqua_button_height"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="@dimen/aqua_size_8"
             android:text="@string/account_settings_delete_account"
             android:contentDescription="@string/account_settings_delete_account_desc" />
     </LinearLayout>

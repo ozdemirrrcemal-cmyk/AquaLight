@@ -15,6 +15,7 @@ import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
 import androidx.core.content.FileProvider
+import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
@@ -48,7 +49,8 @@ object TankPdfExporter {
     val texts = TankPdfTexts.from(context)
     val writer = PdfWriter(
       document = document,
-      texts = texts
+      texts = texts,
+      context = context
     )
 
     writer.drawReportHeader(
@@ -131,7 +133,7 @@ object TankPdfExporter {
       }
 
       writer.drawMaterialCategory(
-        title = category.title,
+        title = category.title(context),
         materials = materials
       )
     }
@@ -146,7 +148,7 @@ object TankPdfExporter {
       }
 
       writer.drawMaterialCategory(
-        title = category.title,
+        title = category.title(context),
         materials = materials
       )
     }
@@ -435,7 +437,8 @@ object TankPdfExporter {
 
   private class PdfWriter(
     private val document: PdfDocument,
-    private val texts: TankPdfTexts
+    private val texts: TankPdfTexts,
+    private val context: Context
   ) {
 
     private var pageNumber = 0
@@ -444,51 +447,51 @@ object TankPdfExporter {
     private var y = PAGE_MARGIN
 
     private val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = Color.parseColor("#10233A")
+      color = ContextCompat.getColor(context, R.color.aqua_palette_hex_10233a)
       textSize = 21f
       typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
 
     private val subtitlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = Color.parseColor("#667085")
+      color = ContextCompat.getColor(context, R.color.aqua_palette_hex_667085)
       textSize = 10.5f
     }
 
     private val sectionPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = Color.parseColor("#10233A")
+      color = ContextCompat.getColor(context, R.color.aqua_palette_hex_10233a)
       textSize = 15f
       typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
 
     private val categoryPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = Color.parseColor("#10233A")
+      color = ContextCompat.getColor(context, R.color.aqua_palette_hex_10233a)
       textSize = 12f
       typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
 
     private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = Color.parseColor("#475467")
+      color = ContextCompat.getColor(context, R.color.aqua_palette_hex_475467)
       textSize = 10.5f
       typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
 
     private val valuePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = Color.parseColor("#101828")
+      color = ContextCompat.getColor(context, R.color.aqua_palette_hex_101828)
       textSize = 11.5f
     }
 
     private val mutedPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = Color.parseColor("#8FA4BE")
+      color = ContextCompat.getColor(context, R.color.aqua_palette_hex_8fa4be)
       textSize = 11.5f
     }
 
     private val footerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = Color.parseColor("#98A2B3")
+      color = ContextCompat.getColor(context, R.color.aqua_palette_hex_98a2b3)
       textSize = 9f
     }
 
     private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = Color.parseColor("#D0D5DD")
+      color = ContextCompat.getColor(context, R.color.aqua_palette_hex_d0d5dd)
       strokeWidth = 1f
     }
 
@@ -590,7 +593,7 @@ object TankPdfExporter {
       )
 
       val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#F2F4F7")
+        color = ContextCompat.getColor(context, R.color.aqua_palette_hex_f2f4f7)
       }
 
       canvas.drawRoundRect(
@@ -607,7 +610,7 @@ object TankPdfExporter {
         )
       } else {
         val noPhotoPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-          color = Color.parseColor("#8FA4BE")
+          color = ContextCompat.getColor(context, R.color.aqua_palette_hex_8fa4be)
           textSize = 12f
           textAlign = Paint.Align.CENTER
         }

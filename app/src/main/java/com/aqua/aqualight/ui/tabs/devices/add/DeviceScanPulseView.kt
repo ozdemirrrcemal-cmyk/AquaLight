@@ -3,11 +3,12 @@ package com.aqua.aqualight.ui.tabs.devices.add
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
 import android.view.animation.LinearInterpolator
+import androidx.core.content.ContextCompat
+import com.aqua.aqualight.R
 import kotlin.math.min
 
 class DeviceScanPulseView @JvmOverloads constructor(
@@ -18,18 +19,18 @@ class DeviceScanPulseView @JvmOverloads constructor(
 
     private val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = 3.5f
-        color = Color.parseColor("#64FFDA")
+        strokeWidth = resources.getDimension(R.dimen.device_scan_ring_stroke_width)
+        color = ContextCompat.getColor(context, R.color.aqua_palette_hex_64ffda)
     }
 
     private val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
-        color = Color.parseColor("#3364FFDA")
+        color = ContextCompat.getColor(context, R.color.aqua_palette_hex_3364ffda)
     }
 
     private val corePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
-        color = Color.parseColor("#64FFDA")
+        color = ContextCompat.getColor(context, R.color.aqua_palette_hex_64ffda)
     }
 
     private var progress = 0f

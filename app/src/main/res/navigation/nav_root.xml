@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/nav_root" app:startDestination="@id/authContainerFragment">
   <!-- Auth container (videolu ekran) -->
-  <fragment android:id="@+id/authContainerFragment" android:name="com.aqua.aqualight.ui.auth.AuthContainerFragment" android:label="Auth"/>
+  <fragment android:id="@+id/authContainerFragment" android:name="com.aqua.aqualight.ui.auth.AuthContainerFragment" android:label="@string/navigation_auth_label"/>
   <!-- App alt sekmeler (daha önce yaptığımız) -->
   <include app:graph="@navigation/nav_app"/>
 </navigation>

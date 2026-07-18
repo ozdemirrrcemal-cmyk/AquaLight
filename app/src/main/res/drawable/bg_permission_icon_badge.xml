@@ -3,6 +3,6 @@
     android:shape="oval">
     <solid android:color="@color/aqua_permission_icon_badge_surface" />
     <stroke
-        android:width="2dp"
+        android:width="@dimen/aqua_size_2"
         android:color="@color/aqua_bottom_sheet_surface" />
 </shape>

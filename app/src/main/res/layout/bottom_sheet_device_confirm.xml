@@ -9,13 +9,13 @@
 
     <ImageView
         android:id="@+id/ivConfirmIcon"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="@dimen/aqua_size_48"
+        android:layout_height="@dimen/aqua_size_48"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="22dp"
+        android:layout_marginTop="@dimen/aqua_size_22"
         android:background="@drawable/bg_bottomsheet_icon_surface"
         android:contentDescription="@null"
-        android:padding="12dp"
+        android:padding="@dimen/aqua_size_12"
         android:src="@drawable/ic_warning" />
 
     <TextView
@@ -23,42 +23,42 @@
         style="@style/TextAppearance.Aqua.BottomSheet.Title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="18dp"
+        android:layout_marginTop="@dimen/aqua_size_18"
         android:gravity="center"
-        android:text="Confirm action" />
+        android:text="@string/common_confirm_action_title" />
 
     <TextView
         android:id="@+id/tvConfirmMessage"
         style="@style/TextAppearance.Aqua.BottomSheet.Subtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="9dp"
+        android:layout_marginTop="@dimen/aqua_size_9"
         android:gravity="center"
-        android:text="Are you sure you want to continue?" />
+        android:text="@string/common_confirm_action_message" />
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="54dp"
-        android:layout_marginTop="28dp"
+        android:layout_height="@dimen/aqua_size_54"
+        android:layout_marginTop="@dimen/aqua_size_28"
         android:orientation="horizontal">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnConfirmCancel"
             style="@style/Widget.Aqua.BottomSheet.Button.Neutral"
-            android:layout_width="0dp"
+            android:layout_width="@dimen/aqua_size_0"
             android:layout_height="match_parent"
-            android:layout_marginEnd="10dp"
+            android:layout_marginEnd="@dimen/aqua_size_10"
             android:layout_weight="1"
-            android:text="Cancel" />
+            android:text="@string/common_cancel" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnConfirmPrimary"
             style="@style/Widget.Aqua.BottomSheet.Button.Critical"
-            android:layout_width="0dp"
+            android:layout_width="@dimen/aqua_size_0"
             android:layout_height="match_parent"
-            android:layout_marginStart="10dp"
+            android:layout_marginStart="@dimen/aqua_size_10"
             android:layout_weight="1"
-            android:text="Confirm" />
+            android:text="@string/confirm" />
 
     </LinearLayout>
 

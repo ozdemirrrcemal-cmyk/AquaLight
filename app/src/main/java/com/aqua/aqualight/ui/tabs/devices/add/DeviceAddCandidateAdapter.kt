@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemDeviceAddCandidateBinding
 
 class DeviceAddCandidateAdapter(
@@ -36,7 +37,10 @@ class DeviceAddCandidateAdapter(
 
         fun bind(candidate: DeviceAddCandidateUi) {
             binding.tvCandidateTitle.text = candidate.title
-            binding.tvCandidateSerial.text = "Serial: ${candidate.serial}"
+            binding.tvCandidateSerial.text = binding.root.context.getString(
+                R.string.device_serial_value,
+                candidate.serial
+            )
             binding.tvCandidateModel.text = candidate.model
             binding.tvCandidateStatus.text = candidate.status
 
