@@ -1,6 +1,7 @@
 package com.aqua.aqualight.composition
 
 import android.content.Context
+import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftRequest
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftSession
@@ -152,6 +153,15 @@ internal class ActiveOwnerDependencyGraphResolver(
                 }
             }
         }
+    }
+}
+
+/** Resolves owner identity through the same committed-session barrier as owner services. */
+internal class ResolvingAuthenticatedOwnerIdentity(
+    private val ownerGraphResolver: OwnerDependencyGraphResolver
+) : AuthenticatedOwnerIdentity {
+    override fun requireOwnerUid(): String {
+        return ownerGraphResolver.requireActive().ownerUid
     }
 }
 
