@@ -41,8 +41,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
-          cache-dependency-path: firebase/package-lock.json
 
       - name: Set up JDK 21 for Firestore emulator
         uses: actions/setup-java@v4
@@ -52,7 +50,7 @@ jobs:
 
       - name: Install pinned Firebase test dependencies
         working-directory: firebase
-        run: npm ci
+        run: npm install --ignore-scripts --no-audit --no-fund
 
       - name: Validate index JSON
         run: node -e "JSON.parse(require('fs').readFileSync('firestore.indexes.json', 'utf8'))"
