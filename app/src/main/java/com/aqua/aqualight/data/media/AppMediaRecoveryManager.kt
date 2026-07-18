@@ -19,20 +19,27 @@ class AppMediaRecoveryManager(
     private val preferences = UserPreferencesManager.create(appContext)
     private val tanks = AquariumTankDataStoreManager(appContext)
 
-    suspend fun reconcileActiveOwner() = withContext(dispatcher) {
-        val ownerUid = UserDataScope.currentUid().takeIf(String::isNotBlank) ?: return@withContext
+    suspend fun reconcileActiveOwner() {
+        val ownerUid = UserDataScope.currentUid().takeIf(String::isNotBlank) ?: return
+        reconcileOwner(ownerUid)
+    }
+
+    suspend fun reconcileOwner(ownerUid: String) = withContext(dispatcher) {
+        val normalizedOwnerUid = ownerUid.trim().also { normalized ->
+            require(normalized.isNotBlank()) { "ownerUid must not be blank" }
+        }
         val referencedUris = buildSet {
-            preferences.profilePhotoUrlForOwner(ownerUid)
+            preferences.profilePhotoUrlForOwner(normalizedOwnerUid)
                 .takeIf(String::isNotBlank)
                 ?.let(::add)
-            tanks.tanksSnapshotForOwner(ownerUid)
+            tanks.tanksSnapshotForOwner(normalizedOwnerUid)
                 .mapNotNull { tank -> tank.photoUri?.takeIf(String::isNotBlank) }
                 .forEach(::add)
         }
 
         AppMediaStorage.reconcilePendingMedia(
             context = appContext,
-            ownerUid = ownerUid,
+            ownerUid = normalizedOwnerUid,
             referencedUris = referencedUris
         )
     }
