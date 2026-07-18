@@ -139,6 +139,7 @@ class UserDataCleaner private constructor(
 
         runStep(Step.APP_OWNED_FILES) {
             clearAppOwnedUserFiles(
+                ownerUid = targetOwnerUid,
                 profilePhotoUri = profilePhotoUri,
                 tankPhotoUris = tankPhotoUris
             )
@@ -206,6 +207,7 @@ class UserDataCleaner private constructor(
     }
 
     private fun clearAppOwnedUserFiles(
+        ownerUid: String,
         profilePhotoUri: String,
         tankPhotoUris: List<String>
     ) {
@@ -217,6 +219,7 @@ class UserDataCleaner private constructor(
                 }
             }
 
+        AppMediaStorage.discardPendingMediaForOwner(appContext, ownerUid)
         File(appContext.cacheDir, "feedback_temp.jpg").delete()
         File(appContext.cacheDir, "feedback_media").deleteRecursively()
     }
@@ -233,8 +236,7 @@ class UserDataCleaner private constructor(
 
         val file = when (uri.scheme) {
             "file" -> uri.path?.let(::File)
-            null,
-            "" -> File(value)
+            null, "" -> File(value)
             else -> null
         } ?: return
 
