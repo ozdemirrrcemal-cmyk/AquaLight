@@ -590,6 +590,12 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
                         actionToken = ACTION_SAVE_TASK_WITH_NOTIFICATIONS
                     )
                 }
+                !permissionCoordinator.isGranted(AppCapability.PRECISE_REMINDERS) -> {
+                    permissionCoordinator.runWhenGranted(
+                        capability = AppCapability.PRECISE_REMINDERS,
+                        actionToken = ACTION_SAVE_TASK_WITH_NOTIFICATIONS
+                    )
+                }
                 else -> {
                     if (!snapshot.ownerPreferenceEnabled) {
                         notificationPreferences.setEnabled(ownerUid, true)
