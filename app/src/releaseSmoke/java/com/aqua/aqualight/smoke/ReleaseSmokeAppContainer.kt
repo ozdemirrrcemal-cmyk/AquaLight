@@ -179,6 +179,7 @@ private class ReleaseSmokeViewModelFactory(
             modelClass.isAssignableFrom(AquariumTankViewModel::class.java) ->
                 AquariumTankViewModel(
                     operations = DefaultAquariumTankOperations(
+                        context = appContext,
                         tankStore = tankStore,
                         tankDataCleaner = OwnerTankDataCleaner(
                             deleteTankRecords = tankStore::deleteTanks,
