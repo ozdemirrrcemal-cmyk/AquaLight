@@ -1,14 +1,20 @@
 package com.aqua.aqualight.data.user
 
+import android.content.Context
 import com.aqua.aqualight.application.user.UserAddressInput
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.application.user.UserProfileSnapshot
+import com.aqua.aqualight.platform.media.AppMediaStorage
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class DefaultUserProfileOperations(
+    context: Context,
     private val preferences: UserPreferencesManager
 ) : UserProfileOperations {
+
+    private val appContext = context.applicationContext
 
     override val profile: Flow<UserProfileSnapshot> =
         preferences.userPrefsFlow.map { prefs ->
@@ -28,7 +34,16 @@ class DefaultUserProfileOperations(
         }
 
     override suspend fun updateProfilePhoto(photoUri: String) {
-        preferences.updateProfilePhoto(photoUri)
+        val normalized = photoUri.trim()
+        val previous = preferences.profilePhotoUrl.first()
+            .takeIf { it.isNotBlank() && it != normalized }
+
+        preferences.updateProfilePhoto(normalized)
+
+        AppMediaStorage.deleteInternalMedia(
+            context = appContext,
+            uriString = previous
+        )
     }
 
     override suspend fun updateUsername(username: String) {
