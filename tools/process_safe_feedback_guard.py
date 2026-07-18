@@ -79,8 +79,9 @@ if UI_ROOT.exists():
     for source in UI_ROOT.rglob("*.kt"):
         text = source.read_text(encoding="utf-8", errors="ignore")
         relative = source.relative_to(ROOT)
+        is_fragment_sheet = "BottomSheetDialogFragment" in text
 
-        if "BottomSheetDialogFragment" in text:
+        if is_fragment_sheet:
             if callback_field_pattern.search(text):
                 errors.append(
                     f"{relative}: Fragment-based sheet must return actions through Fragment Result or SavedStateHandle"
@@ -91,7 +92,11 @@ if UI_ROOT.exists():
                     f"{relative}: Fragment-based sheet must expose an empty constructor and store state in arguments"
                 )
 
-        if "BottomSheetDialog(" in text and source not in TRANSITIONAL_RAW_BOTTOM_SHEET_ALLOWLIST:
+        if (
+            "BottomSheetDialog(" in text
+            and not is_fragment_sheet
+            and source not in TRANSITIONAL_RAW_BOTTOM_SHEET_ALLOWLIST
+        ):
             errors.append(
                 f"{relative}: raw BottomSheetDialog is forbidden; use a recreatable Fragment-based sheet"
             )
