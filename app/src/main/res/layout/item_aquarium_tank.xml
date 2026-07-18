@@ -9,7 +9,7 @@
     android:layout_height="wrap_content"
     android:layout_marginStart="0dp"
     android:layout_marginEnd="0dp"
-    android:layout_marginTop="10dp"
+    android:layout_marginTop="@dimen/aqua_space_value_10"
     app:rippleColor="@android:color/transparent">
 
     <LinearLayout
@@ -19,7 +19,7 @@
 
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="176dp">
+            android:layout_height="@dimen/aqua_size_value_176">
 
             <ImageView
                 android:id="@+id/imgTankPhoto"
@@ -32,17 +32,17 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="#12000000" />
+                android:background="@color/aqua_palette_12000000" />
 
             <ImageView
                 android:id="@+id/selectionCircle"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
+                android:layout_width="@dimen/aqua_size_value_30"
+                android:layout_height="@dimen/aqua_size_value_30"
                 android:layout_gravity="top|end"
-                android:layout_marginTop="12dp"
-                android:layout_marginEnd="12dp"
+                android:layout_marginTop="@dimen/aqua_space_value_12"
+                android:layout_marginEnd="@dimen/aqua_space_value_12"
                 android:contentDescription="@string/aquarium_content_desc_selected"
-                android:padding="7dp"
+                android:padding="@dimen/aqua_space_value_7"
                 android:scaleType="centerInside"
                 android:visibility="gone"
                 app:tint="@android:color/white" />
@@ -53,12 +53,12 @@
             android:id="@+id/infoBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#E8EEF8"
+            android:background="@color/aqua_palette_e8eef8"
             android:orientation="vertical"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:paddingTop="10dp"
-            android:paddingBottom="11dp">
+            android:paddingStart="@dimen/aqua_space_value_16"
+            android:paddingEnd="@dimen/aqua_space_value_16"
+            android:paddingTop="@dimen/aqua_space_value_10"
+            android:paddingBottom="@dimen/aqua_space_value_11">
 
             <LinearLayout
                 android:id="@+id/topInfoRow"
@@ -75,7 +75,7 @@
                     android:ellipsize="end"
                     android:maxLines="1"
                     android:text="@string/aquarium_text_yatak_odas"
-                    android:textColor="#101820"
+                    android:textColor="@color/aqua_palette_101820"
                     android:textSize="@dimen/aqua_text_size_body"
                     android:textStyle="bold" />
 
@@ -91,15 +91,15 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/aquarium_text_day_35"
-                        android:textColor="#101820"
+                        android:textColor="@color/aqua_palette_101820"
                         android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold" />
 
                     <View
                         android:id="@+id/statusDot"
-                        android:layout_width="8dp"
-                        android:layout_height="8dp"
-                        android:layout_marginStart="7dp"
+                        android:layout_width="@dimen/aqua_size_value_8"
+                        android:layout_height="@dimen/aqua_size_value_8"
+                        android:layout_marginStart="@dimen/aqua_space_value_7"
                         android:background="@drawable/bg_tank_status_dot" />
 
                 </LinearLayout>
@@ -110,18 +110,18 @@
                 android:id="@+id/tvCareInfo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="7dp"
+                android:layout_marginTop="@dimen/aqua_space_value_7"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:text="@string/aquarium_text_last_water_change_today_last_trim_today"
-                android:textColor="#17202A"
+                android:textColor="@color/aqua_palette_17202a"
                 android:textSize="@dimen/aqua_text_size_micro" />
 
             <LinearLayout
                 android:id="@+id/bottomInfoRow"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
+                android:layout_marginTop="@dimen/aqua_space_value_5"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -133,7 +133,7 @@
                     android:ellipsize="end"
                     android:maxLines="1"
                     android:text="@string/aquarium_text_120w_x_50l_x_50h"
-                    android:textColor="#17202A"
+                    android:textColor="@color/aqua_palette_17202a"
                     android:textSize="@dimen/aqua_text_size_micro_caption" />
 
                 <TextView
@@ -143,7 +143,7 @@
                     android:ellipsize="end"
                     android:maxLines="1"
                     android:text="@string/aquarium_text_setup_date_2026_04_12"
-                    android:textColor="#17202A"
+                    android:textColor="@color/aqua_palette_17202a"
                     android:textSize="@dimen/aqua_text_size_micro_caption" />
 
             </LinearLayout>

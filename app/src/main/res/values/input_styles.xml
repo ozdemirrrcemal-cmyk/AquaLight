@@ -5,12 +5,12 @@
         <item name="boxBackgroundMode">outline</item>
         <item name="boxBackgroundColor">@android:color/transparent</item>
         <item name="boxStrokeColor">@color/aqua_input_stroke_color</item>
-        <item name="boxStrokeWidth">1dp</item>
-        <item name="boxStrokeWidthFocused">2dp</item>
-        <item name="boxCornerRadiusTopStart">14dp</item>
-        <item name="boxCornerRadiusTopEnd">14dp</item>
-        <item name="boxCornerRadiusBottomStart">14dp</item>
-        <item name="boxCornerRadiusBottomEnd">14dp</item>
+        <item name="boxStrokeWidth">@dimen/aqua_stroke_value_1</item>
+        <item name="boxStrokeWidthFocused">@dimen/aqua_stroke_value_2</item>
+        <item name="boxCornerRadiusTopStart">@dimen/aqua_radius_value_14</item>
+        <item name="boxCornerRadiusTopEnd">@dimen/aqua_radius_value_14</item>
+        <item name="boxCornerRadiusBottomStart">@dimen/aqua_radius_value_14</item>
+        <item name="boxCornerRadiusBottomEnd">@dimen/aqua_radius_value_14</item>
         <item name="hintTextColor">@color/aqua_input_hint_color</item>
         <item name="android:textColorHint">@color/aqua_input_hint_color</item>
         <item name="errorTextColor">@color/aqua_input_error</item>
@@ -19,24 +19,24 @@
     </style>
 
     <style name="Widget.Aqua.Input.Layout.Multiline" parent="Widget.Aqua.Input.Layout">
-        <item name="boxCornerRadiusTopStart">14dp</item>
-        <item name="boxCornerRadiusTopEnd">14dp</item>
-        <item name="boxCornerRadiusBottomStart">14dp</item>
-        <item name="boxCornerRadiusBottomEnd">14dp</item>
+        <item name="boxCornerRadiusTopStart">@dimen/aqua_radius_value_14</item>
+        <item name="boxCornerRadiusTopEnd">@dimen/aqua_radius_value_14</item>
+        <item name="boxCornerRadiusBottomStart">@dimen/aqua_radius_value_14</item>
+        <item name="boxCornerRadiusBottomEnd">@dimen/aqua_radius_value_14</item>
     </style>
 
     <style name="Widget.Aqua.Input.Layout.Search" parent="Widget.Aqua.Input.Layout">
-        <item name="boxCornerRadiusTopStart">18dp</item>
-        <item name="boxCornerRadiusTopEnd">18dp</item>
-        <item name="boxCornerRadiusBottomStart">18dp</item>
-        <item name="boxCornerRadiusBottomEnd">18dp</item>
+        <item name="boxCornerRadiusTopStart">@dimen/aqua_radius_value_18</item>
+        <item name="boxCornerRadiusTopEnd">@dimen/aqua_radius_value_18</item>
+        <item name="boxCornerRadiusBottomStart">@dimen/aqua_radius_value_18</item>
+        <item name="boxCornerRadiusBottomEnd">@dimen/aqua_radius_value_18</item>
     </style>
 
     <style name="Widget.Aqua.Input.Layout.Feedback" parent="Widget.Aqua.Input.Layout">
-        <item name="boxCornerRadiusTopStart">18dp</item>
-        <item name="boxCornerRadiusTopEnd">18dp</item>
-        <item name="boxCornerRadiusBottomStart">18dp</item>
-        <item name="boxCornerRadiusBottomEnd">18dp</item>
+        <item name="boxCornerRadiusTopStart">@dimen/aqua_radius_value_18</item>
+        <item name="boxCornerRadiusTopEnd">@dimen/aqua_radius_value_18</item>
+        <item name="boxCornerRadiusBottomStart">@dimen/aqua_radius_value_18</item>
+        <item name="boxCornerRadiusBottomEnd">@dimen/aqua_radius_value_18</item>
         <item name="boxStrokeColor">@color/aqua_input_feedback_stroke_color</item>
     </style>
 
@@ -63,37 +63,37 @@
         <item name="android:textCursorDrawable">@null</item>
         <item name="android:textSize">@dimen/aqua_text_size_body_xlarge</item>
         <item name="android:includeFontPadding">false</item>
-        <item name="android:minHeight">54dp</item>
-        <item name="android:paddingStart">16dp</item>
-        <item name="android:paddingEnd">16dp</item>
-        <item name="android:paddingTop">12dp</item>
-        <item name="android:paddingBottom">12dp</item>
+        <item name="android:minHeight">@dimen/aqua_size_value_54</item>
+        <item name="android:paddingStart">@dimen/aqua_space_value_16</item>
+        <item name="android:paddingEnd">@dimen/aqua_space_value_16</item>
+        <item name="android:paddingTop">@dimen/aqua_space_value_12</item>
+        <item name="android:paddingBottom">@dimen/aqua_space_value_12</item>
     </style>
 
     <style name="Widget.Aqua.Input.PlainEditText.Multiline" parent="Widget.Aqua.Input.PlainEditText">
         <item name="android:gravity">top|start</item>
         <item name="android:minLines">3</item>
-        <item name="android:paddingTop">14dp</item>
-        <item name="android:paddingBottom">14dp</item>
+        <item name="android:paddingTop">@dimen/aqua_space_value_14</item>
+        <item name="android:paddingBottom">@dimen/aqua_space_value_14</item>
     </style>
 
     <style name="Widget.Aqua.Input.PlainEditText.Search" parent="Widget.Aqua.Input.PlainEditText">
-        <item name="android:minHeight">48dp</item>
+        <item name="android:minHeight">@dimen/aqua_size_value_48</item>
         <item name="android:textSize">@dimen/aqua_text_size_body_large</item>
-        <item name="android:paddingStart">16dp</item>
-        <item name="android:paddingEnd">16dp</item>
-        <item name="android:paddingTop">10dp</item>
-        <item name="android:paddingBottom">10dp</item>
+        <item name="android:paddingStart">@dimen/aqua_space_value_16</item>
+        <item name="android:paddingEnd">@dimen/aqua_space_value_16</item>
+        <item name="android:paddingTop">@dimen/aqua_space_value_10</item>
+        <item name="android:paddingBottom">@dimen/aqua_space_value_10</item>
         <item name="android:singleLine">true</item>
     </style>
 
     <style name="Widget.Aqua.Input.PlainEditText.Compact" parent="Widget.Aqua.Input.PlainEditText">
-        <item name="android:minHeight">48dp</item>
+        <item name="android:minHeight">@dimen/aqua_size_value_48</item>
         <item name="android:textSize">@dimen/aqua_text_size_body_large</item>
-        <item name="android:paddingStart">14dp</item>
-        <item name="android:paddingEnd">14dp</item>
-        <item name="android:paddingTop">10dp</item>
-        <item name="android:paddingBottom">10dp</item>
+        <item name="android:paddingStart">@dimen/aqua_space_value_14</item>
+        <item name="android:paddingEnd">@dimen/aqua_space_value_14</item>
+        <item name="android:paddingTop">@dimen/aqua_space_value_10</item>
+        <item name="android:paddingBottom">@dimen/aqua_space_value_10</item>
         <item name="android:singleLine">true</item>
     </style>
 

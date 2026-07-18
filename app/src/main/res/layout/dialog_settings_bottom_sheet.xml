@@ -6,7 +6,7 @@
 
   <View
     style="@style/Widget.Aqua.BottomSheet.Handle"
-    android:layout_marginBottom="16dp" />
+    android:layout_marginBottom="@dimen/aqua_space_value_16" />
 
   <TextView
     android:id="@+id/tvSheetTitle"
@@ -14,13 +14,13 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:gravity="center"
-    android:text="Tank Name" />
+    android:text="@string/settings_bottom_sheet_tvsheettitle_text" />
 
   <LinearLayout
     android:id="@+id/sheetContentContainer"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="18dp"
+    android:layout_marginTop="@dimen/aqua_space_value_18"
     android:orientation="vertical" />
 
 </LinearLayout>

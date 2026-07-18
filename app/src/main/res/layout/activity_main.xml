@@ -26,7 +26,7 @@
         android:background="?attr/aquaBottomNavBackground"
         android:visibility="gone"
         app:itemActiveIndicatorStyle="@style/Widget.Aqua.BottomNav.ActiveIndicator"
-        app:itemIconSize="23dp"
+        app:itemIconSize="@dimen/aqua_size_value_23"
         app:itemIconTint="@color/bottom_nav_item_tint"
         app:itemTextColor="@color/bottom_nav_item_tint"
         app:layout_constraintBottom_toBottomOf="parent"

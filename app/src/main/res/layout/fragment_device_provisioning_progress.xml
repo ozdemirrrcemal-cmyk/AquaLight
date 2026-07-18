@@ -24,10 +24,10 @@
         android:clipToPadding="false"
         android:fillViewport="true"
         android:overScrollMode="never"
-        android:paddingStart="16dp"
-        android:paddingTop="10dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="24dp"
+        android:paddingStart="@dimen/aqua_space_value_16"
+        android:paddingTop="@dimen/aqua_space_value_10"
+        android:paddingEnd="@dimen/aqua_space_value_16"
+        android:paddingBottom="@dimen/aqua_space_value_24"
         app:layout_constraintTop_toBottomOf="@id/appHeader"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -48,24 +48,24 @@
                     android:layout_height="wrap_content"
                     android:gravity="center_horizontal"
                     android:orientation="vertical"
-                    android:padding="20dp">
+                    android:padding="@dimen/aqua_space_value_20">
 
                     <ProgressBar
                         android:id="@+id/progressBar"
                         style="?android:attr/progressBarStyleLarge"
-                        android:layout_width="58dp"
-                        android:layout_height="58dp"
+                        android:layout_width="@dimen/aqua_size_value_58"
+                        android:layout_height="@dimen/aqua_size_value_58"
                         android:indeterminate="true"
-                        android:indeterminateTint="#5FD6B4" />
+                        android:indeterminateTint="@color/aqua_palette_5fd6b4" />
 
                     <TextView
                         android:id="@+id/tvTitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="17dp"
+                        android:layout_marginTop="@dimen/aqua_space_value_17"
                         android:gravity="center"
                         android:includeFontPadding="false"
-                        android:textColor="#F2F6FA"
+                        android:textColor="@color/aqua_palette_f2f6fa"
                         android:textSize="@dimen/aqua_text_size_title_intermediate"
                         android:textStyle="bold"
                         tools:text="Connecting to device" />
@@ -74,10 +74,10 @@
                         android:id="@+id/tvMessage"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="@dimen/aqua_space_value_8"
                         android:gravity="center"
-                        android:lineSpacingExtra="2dp"
-                        android:textColor="#90A1B5"
+                        android:lineSpacingExtra="@dimen/aqua_space_value_2"
+                        android:textColor="@color/aqua_palette_90a1b5"
                         android:textSize="@dimen/aqua_text_size_caption_plus"
                         tools:text="AquaLight device setup is in progress." />
                 </LinearLayout>
@@ -87,20 +87,20 @@
                 style="@style/Widget.Aqua.Card.Device"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp">
+                android:layout_marginTop="@dimen/aqua_space_value_12">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="@dimen/aqua_space_value_16">
 
                     <TextView
                         android:id="@+id/tvDeviceName"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
-                        android:textColor="#F2F6FA"
+                        android:textColor="@color/aqua_palette_f2f6fa"
                         android:textSize="@dimen/aqua_text_size_card_title"
                         android:textStyle="bold"
                         tools:text="WRGB Pro Elite" />
@@ -109,9 +109,9 @@
                         android:id="@+id/tvDeviceSerial"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="7dp"
+                        android:layout_marginTop="@dimen/aqua_space_value_7"
                         android:includeFontPadding="false"
-                        android:textColor="#90A1B5"
+                        android:textColor="@color/aqua_palette_90a1b5"
                         android:textSize="@dimen/aqua_text_size_caption_plus"
                         tools:text="Serial: AQL-LIGHT-123456" />
 
@@ -119,9 +119,9 @@
                         android:id="@+id/tvBleAddress"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
+                        android:layout_marginTop="@dimen/aqua_space_value_6"
                         android:includeFontPadding="false"
-                        android:textColor="#5FD6B4"
+                        android:textColor="@color/aqua_palette_5fd6b4"
                         android:textSize="@dimen/aqua_text_size_caption_plus"
                         tools:text="BLE: AA:BB:CC:DD:EE:FF" />
 
@@ -129,9 +129,9 @@
                         android:id="@+id/tvWifiSsid"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="@dimen/aqua_space_value_12"
                         android:includeFontPadding="false"
-                        android:textColor="#F2F6FA"
+                        android:textColor="@color/aqua_palette_f2f6fa"
                         android:textSize="@dimen/aqua_text_size_body_small"
                         tools:text="Wi-Fi: HomeNetwork" />
                 </LinearLayout>
@@ -141,13 +141,13 @@
                 style="@style/Widget.Aqua.Card.Device"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp">
+                android:layout_marginTop="@dimen/aqua_space_value_12">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="@dimen/aqua_space_value_16">
 
                     <TextView
                         android:id="@+id/tvStepOne"
@@ -155,7 +155,7 @@
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
                         android:text="@string/device_provisioning_step_device_selected"
-                        android:textColor="#F2F6FA"
+                        android:textColor="@color/aqua_palette_f2f6fa"
                         android:textSize="@dimen/aqua_text_size_body_small"
                         android:textStyle="bold" />
 
@@ -163,10 +163,10 @@
                         android:id="@+id/tvStepTwo"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
+                        android:layout_marginTop="@dimen/aqua_space_value_10"
                         android:includeFontPadding="false"
                         android:text="@string/device_provisioning_step_wifi_prepared"
-                        android:textColor="#F2F6FA"
+                        android:textColor="@color/aqua_palette_f2f6fa"
                         android:textSize="@dimen/aqua_text_size_body_small"
                         android:textStyle="bold" />
 
@@ -174,10 +174,10 @@
                         android:id="@+id/tvStepThree"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
+                        android:layout_marginTop="@dimen/aqua_space_value_10"
                         android:includeFontPadding="false"
                         android:text="@string/device_provisioning_step_preparing_secure"
-                        android:textColor="#90A1B5"
+                        android:textColor="@color/aqua_palette_90a1b5"
                         android:textSize="@dimen/aqua_text_size_body_small"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -188,7 +188,7 @@
                 android:id="@+id/btnStartProvisioning"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/aqua_button_height"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="@dimen/aqua_space_value_16"
                 android:text="@string/device_provisioning_try_again"
                 android:textStyle="bold" />
 

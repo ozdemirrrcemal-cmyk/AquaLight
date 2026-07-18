@@ -174,8 +174,8 @@
         <item name="android:layout_width">wrap_content</item>
         <item name="android:minWidth">0dp</item>
         <item name="android:minHeight">0dp</item>
-        <item name="android:paddingStart">16dp</item>
-        <item name="android:paddingEnd">16dp</item>
+        <item name="android:paddingStart">@dimen/aqua_space_value_16</item>
+        <item name="android:paddingEnd">@dimen/aqua_space_value_16</item>
         <item name="android:paddingTop">0dp</item>
         <item name="android:paddingBottom">0dp</item>
         <item name="android:insetTop">0dp</item>
@@ -190,7 +190,7 @@
         <item name="backgroundTint">@color/aqua_toolbar_primary_action_container</item>
         <item name="android:textColor">?attr/colorOnSurface</item>
         <item name="iconTint">?attr/colorOnSurface</item>
-        <item name="cornerRadius">17dp</item>
+        <item name="cornerRadius">@dimen/aqua_radius_value_17</item>
         <item name="rippleColor">@color/aqua_button_ripple</item>
         <item name="elevation">0dp</item>
         <item name="strokeWidth">0dp</item>

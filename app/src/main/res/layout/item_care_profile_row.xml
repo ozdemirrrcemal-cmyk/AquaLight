@@ -5,8 +5,8 @@
   xmlns:app="http://schemas.android.com/apk/res-auto"
   android:id="@+id/careProfileRowRoot"
   android:layout_width="match_parent"
-  android:layout_height="64dp"
-  android:layout_marginTop="10dp"
+  android:layout_height="@dimen/aqua_size_value_64"
+  android:layout_marginTop="@dimen/aqua_space_value_10"
   android:clickable="true"
   android:focusable="true"
   android:foreground="?attr/selectableItemBackground">
@@ -16,8 +16,8 @@
     android:layout_height="match_parent"
     android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:paddingStart="16dp"
-    android:paddingEnd="14dp">
+    android:paddingStart="@dimen/aqua_space_value_16"
+    android:paddingEnd="@dimen/aqua_space_value_14">
 
     <LinearLayout
       android:layout_width="0dp"
@@ -41,7 +41,7 @@
         android:id="@+id/tvCareProfileItemSubtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="7dp"
+        android:layout_marginTop="@dimen/aqua_space_value_7"
         android:ellipsize="end"
         android:includeFontPadding="false"
         android:maxLines="1"
@@ -53,9 +53,9 @@
 
     <TextView
       android:id="@+id/tvCareProfileItemStatus"
-      android:layout_width="76dp"
-      android:layout_height="28dp"
-      android:layout_marginStart="12dp"
+      android:layout_width="@dimen/aqua_size_value_76"
+      android:layout_height="@dimen/aqua_size_value_28"
+      android:layout_marginStart="@dimen/aqua_space_value_12"
       android:gravity="center"
       android:includeFontPadding="false"
       android:text="@string/aquarium_action_complete"

@@ -10,7 +10,7 @@
         style="@style/Widget.Aqua.Input.PlainEditText.Multiline"
     android:id="@+id/inputTankName"
     android:layout_width="match_parent"
-    android:layout_height="48dp"
+    android:layout_height="@dimen/aqua_size_value_48"
     android:hint="@string/aquarium_hint_tank_name"
     android:includeFontPadding="false"
     android:inputType="text"
@@ -21,8 +21,8 @@
   <com.google.android.material.button.MaterialButton
     android:id="@+id/btnSave"
     android:layout_width="match_parent"
-    android:layout_height="50dp"
-    android:layout_marginTop="26dp"
+    android:layout_height="@dimen/aqua_size_value_50"
+    android:layout_marginTop="@dimen/aqua_space_value_26"
     android:insetTop="0dp"
     android:insetBottom="0dp"
     android:minHeight="0dp"
@@ -32,18 +32,18 @@
     android:textColor="@android:color/white"
     android:textSize="@dimen/aqua_text_size_body"
     android:textStyle="bold"
-    app:backgroundTint="#2196F3"
-    app:cornerRadius="16dp" />
+    app:backgroundTint="@color/aqua_palette_2196f3"
+    app:cornerRadius="@dimen/aqua_radius_value_16" />
 
   <TextView
     android:id="@+id/btnCancel"
     android:layout_width="match_parent"
-    android:layout_height="40dp"
-    android:layout_marginTop="10dp"
+    android:layout_height="@dimen/aqua_size_value_40"
+    android:layout_marginTop="@dimen/aqua_space_value_10"
     android:gravity="center"
     android:includeFontPadding="false"
     android:text="@string/common_cancel"
-    android:textColor="#8FA4BE"
+    android:textColor="@color/aqua_palette_8fa4be"
     android:textSize="@dimen/aqua_text_size_body" />
 
 </LinearLayout>

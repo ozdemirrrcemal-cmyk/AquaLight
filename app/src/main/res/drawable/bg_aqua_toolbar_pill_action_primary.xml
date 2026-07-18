@@ -3,7 +3,7 @@
     android:shape="rectangle">
     <solid android:color="@color/aqua_toolbar_pill_primary_container" />
     <stroke
-        android:width="1dp"
+        android:width="@dimen/aqua_size_value_1"
         android:color="@color/aqua_toolbar_pill_primary_outline" />
-    <corners android:radius="19dp" />
+    <corners android:radius="@dimen/aqua_radius_value_19" />
 </shape>

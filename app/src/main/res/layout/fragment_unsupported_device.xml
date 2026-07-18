@@ -5,7 +5,7 @@
     android:background="@color/background_color"
     android:gravity="center"
     android:orientation="vertical"
-    android:padding="32dp">
+    android:padding="@dimen/aqua_space_value_32">
 
     <TextView
         android:id="@+id/tvUnsupportedTitle"
@@ -20,7 +20,7 @@
         android:id="@+id/tvUnsupportedMessage"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="@dimen/aqua_space_value_12"
         android:gravity="center"
         android:textColor="?android:attr/textColorSecondary"
         android:textSize="@dimen/aqua_text_size_body" />

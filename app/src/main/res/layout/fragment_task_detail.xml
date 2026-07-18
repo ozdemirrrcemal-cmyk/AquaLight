@@ -21,10 +21,10 @@
         android:layout_height="0dp"
         android:clipToPadding="false"
         android:overScrollMode="never"
-        android:paddingStart="16dp"
-        android:paddingTop="16dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="110dp"
+        android:paddingStart="@dimen/aqua_space_value_16"
+        android:paddingTop="@dimen/aqua_space_value_16"
+        android:paddingEnd="@dimen/aqua_space_value_16"
+        android:paddingBottom="@dimen/aqua_space_value_110"
         android:scrollbars="none"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -47,17 +47,17 @@
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="16dp">
+                    android:padding="@dimen/aqua_space_value_16">
 
                     <FrameLayout
                         android:id="@+id/iconContainer"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp">
+                        android:layout_width="@dimen/aqua_size_value_48"
+                        android:layout_height="@dimen/aqua_size_value_48">
 
                         <ImageView
                             android:id="@+id/ivTaskIcon"
-                            android:layout_width="26dp"
-                            android:layout_height="26dp"
+                            android:layout_width="@dimen/aqua_size_value_26"
+                            android:layout_height="@dimen/aqua_size_value_26"
                             android:layout_gravity="center"
                             android:scaleType="centerInside"
                             app:tint="@android:color/white" />
@@ -67,7 +67,7 @@
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
+                        android:layout_marginStart="@dimen/aqua_space_value_14"
                         android:layout_weight="1"
                         android:orientation="vertical">
 
@@ -92,13 +92,13 @@
                             <TextView
                                 android:id="@+id/tvSourceBadge"
                                 android:layout_width="wrap_content"
-                                android:layout_height="22dp"
-                                android:layout_marginStart="8dp"
+                                android:layout_height="@dimen/aqua_size_value_22"
+                                android:layout_marginStart="@dimen/aqua_space_value_8"
                                 android:gravity="center"
                                 android:includeFontPadding="false"
-                                android:minWidth="46dp"
-                                android:paddingStart="9dp"
-                                android:paddingEnd="9dp"
+                                android:minWidth="@dimen/aqua_size_value_46"
+                                android:paddingStart="@dimen/aqua_space_value_9"
+                                android:paddingEnd="@dimen/aqua_space_value_9"
                                 android:textColor="@android:color/white"
                                 android:textSize="@dimen/aqua_text_size_micro_caption"
                                 android:textStyle="bold" />
@@ -109,7 +109,7 @@
                             android:id="@+id/tvStatusValue"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="7dp"
+                            android:layout_marginTop="@dimen/aqua_space_value_7"
                             android:includeFontPadding="false"
                             android:textColor="@color/aqua_card_text_secondary"
                             android:textSize="@dimen/aqua_text_size_caption" />
@@ -123,7 +123,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
+                android:layout_marginTop="@dimen/aqua_space_value_18"
                 android:includeFontPadding="false"
                 android:text="@string/maintenance_task_information"
                 android:textColor="@android:color/white"
@@ -134,7 +134,7 @@
                 android:id="@+id/infoContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="@dimen/aqua_space_value_10"
                 android:orientation="vertical">
 
                 <include
@@ -175,7 +175,7 @@
                 android:id="@+id/tvDescriptionLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
+                android:layout_marginTop="@dimen/aqua_space_value_18"
                 android:includeFontPadding="false"
                 android:text="@string/maintenance_description_label"
                 android:textColor="@android:color/white"
@@ -186,20 +186,20 @@
                 style="@style/Widget.Aqua.Card.Form"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="9dp">
+                android:layout_marginTop="@dimen/aqua_space_value_9">
 
                 <TextView
                     android:id="@+id/tvDescriptionValue"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:includeFontPadding="false"
-                    android:lineSpacingExtra="3dp"
-                    android:minHeight="64dp"
-                    android:paddingStart="14dp"
-                    android:paddingTop="13dp"
-                    android:paddingEnd="14dp"
-                    android:paddingBottom="13dp"
-                    android:textColor="#B8C7D9"
+                    android:lineSpacingExtra="@dimen/aqua_space_value_3"
+                    android:minHeight="@dimen/aqua_size_value_64"
+                    android:paddingStart="@dimen/aqua_space_value_14"
+                    android:paddingTop="@dimen/aqua_space_value_13"
+                    android:paddingEnd="@dimen/aqua_space_value_14"
+                    android:paddingBottom="@dimen/aqua_space_value_13"
+                    android:textColor="@color/aqua_palette_b8c7d9"
                     android:textSize="@dimen/aqua_text_size_caption" />
 
             </com.google.android.material.card.MaterialCardView>
@@ -208,7 +208,7 @@
                 android:id="@+id/tvNoteLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
+                android:layout_marginTop="@dimen/aqua_space_value_18"
                 android:includeFontPadding="false"
                 android:text="@string/maintenance_note_label"
                 android:textColor="@android:color/white"
@@ -220,20 +220,20 @@
                 android:id="@+id/noteCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="9dp">
+                android:layout_marginTop="@dimen/aqua_space_value_9">
 
                 <TextView
                     android:id="@+id/tvNoteValue"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:includeFontPadding="false"
-                    android:lineSpacingExtra="3dp"
-                    android:minHeight="64dp"
-                    android:paddingStart="14dp"
-                    android:paddingTop="13dp"
-                    android:paddingEnd="14dp"
-                    android:paddingBottom="13dp"
-                    android:textColor="#B8C7D9"
+                    android:lineSpacingExtra="@dimen/aqua_space_value_3"
+                    android:minHeight="@dimen/aqua_size_value_64"
+                    android:paddingStart="@dimen/aqua_space_value_14"
+                    android:paddingTop="@dimen/aqua_space_value_13"
+                    android:paddingEnd="@dimen/aqua_space_value_14"
+                    android:paddingBottom="@dimen/aqua_space_value_13"
+                    android:textColor="@color/aqua_palette_b8c7d9"
                     android:textSize="@dimen/aqua_text_size_caption" />
 
             </com.google.android.material.card.MaterialCardView>
@@ -242,13 +242,13 @@
                 android:id="@+id/tvAutoTaskInfo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:background="#12382F"
+                android:layout_marginTop="@dimen/aqua_space_value_18"
+                android:background="@color/aqua_palette_12382f"
                 android:includeFontPadding="false"
-                android:lineSpacingExtra="3dp"
-                android:padding="14dp"
+                android:lineSpacingExtra="@dimen/aqua_space_value_3"
+                android:padding="@dimen/aqua_space_value_14"
                 android:text="@string/maintenance_automatic_task_info"
-                android:textColor="#5FD6B4"
+                android:textColor="@color/aqua_palette_5fd6b4"
                 android:textSize="@dimen/aqua_text_size_caption"
                 android:visibility="gone" />
 
@@ -257,7 +257,7 @@
                 android:id="@+id/btnCompleteTask"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/aqua_button_height"
-                android:layout_marginTop="18dp"
+                android:layout_marginTop="@dimen/aqua_space_value_18"
                 android:text="@string/maintenance_complete_task"
                 android:textStyle="bold" />
 
@@ -266,7 +266,7 @@
                 android:id="@+id/btnDeleteTask"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/aqua_button_height"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="@dimen/aqua_space_value_12"
                 android:text="@string/maintenance_delete_task"
                 android:textStyle="bold" />
 

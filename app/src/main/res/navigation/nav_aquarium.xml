@@ -283,7 +283,7 @@
     <fragment
         android:id="@+id/deviceLightRootFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootFragment"
-        android:label="Light"
+        android:label="@string/theme_selection_light"
         tools:layout="@layout/fragment_device_light_root">
         <argument
             android:name="deviceUid"
@@ -297,7 +297,7 @@
     <fragment
         android:id="@+id/deviceDosingRootFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingRootFragment"
-        android:label="Dosing"
+        android:label="@string/nav_devicedosingrootfragment_label"
         tools:layout="@layout/fragment_device_dosing_root">
         <argument
             android:name="deviceUid"
@@ -311,7 +311,7 @@
     <fragment
         android:id="@+id/deviceTimerRootFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootFragment"
-        android:label="Timer"
+        android:label="@string/nav_devicetimerrootfragment_label"
         tools:layout="@layout/fragment_device_timer_root">
         <argument
             android:name="deviceUid"
@@ -325,7 +325,7 @@
     <fragment
         android:id="@+id/deviceCoolingRootFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootFragment"
-        android:label="Cooling"
+        android:label="@string/nav_devicecoolingrootfragment_label"
         tools:layout="@layout/fragment_device_cooling_root">
         <argument
             android:name="deviceUid"

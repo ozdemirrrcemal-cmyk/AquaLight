@@ -6,8 +6,8 @@
     android:gravity="start"
     android:includeFontPadding="false"
     android:paddingStart="0dp"
-    android:paddingTop="6dp"
-    android:paddingBottom="10dp"
+    android:paddingTop="@dimen/aqua_space_value_6"
+    android:paddingBottom="@dimen/aqua_space_value_10"
     android:textColor="@android:color/white"
     android:textSize="@dimen/aqua_text_size_micro_plus"
     android:textStyle="normal" />

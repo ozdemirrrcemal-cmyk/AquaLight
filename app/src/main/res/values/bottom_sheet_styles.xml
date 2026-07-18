@@ -19,8 +19,8 @@
 
     <style name="ShapeAppearanceOverlay.Aqua.BottomSheet" parent="">
         <item name="cornerFamily">rounded</item>
-        <item name="cornerSizeTopLeft">32dp</item>
-        <item name="cornerSizeTopRight">32dp</item>
+        <item name="cornerSizeTopLeft">@dimen/aqua_radius_value_32</item>
+        <item name="cornerSizeTopRight">@dimen/aqua_radius_value_32</item>
         <item name="cornerSizeBottomLeft">0dp</item>
         <item name="cornerSizeBottomRight">0dp</item>
     </style>
@@ -30,39 +30,39 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:background">@drawable/bg_bottomsheet_rounded</item>
         <item name="android:orientation">vertical</item>
-        <item name="android:paddingStart">22dp</item>
-        <item name="android:paddingTop">14dp</item>
-        <item name="android:paddingEnd">22dp</item>
-        <item name="android:paddingBottom">24dp</item>
+        <item name="android:paddingStart">@dimen/aqua_space_value_22</item>
+        <item name="android:paddingTop">@dimen/aqua_space_value_14</item>
+        <item name="android:paddingEnd">@dimen/aqua_space_value_22</item>
+        <item name="android:paddingBottom">@dimen/aqua_space_value_24</item>
     </style>
 
     <style name="Widget.Aqua.BottomSheet.Handle" parent="">
-        <item name="android:layout_width">42dp</item>
-        <item name="android:layout_height">4dp</item>
+        <item name="android:layout_width">@dimen/aqua_size_value_42</item>
+        <item name="android:layout_height">@dimen/aqua_size_value_4</item>
         <item name="android:layout_gravity">center_horizontal</item>
         <item name="android:background">@drawable/bg_bottomsheet_handle</item>
     </style>
 
     <style name="Widget.Aqua.BottomSheet.PermissionIconSurface" parent="">
-        <item name="android:layout_width">64dp</item>
-        <item name="android:layout_height">64dp</item>
+        <item name="android:layout_width">@dimen/aqua_size_value_64</item>
+        <item name="android:layout_height">@dimen/aqua_size_value_64</item>
         <item name="android:layout_gravity">center_horizontal</item>
         <item name="android:background">@drawable/bg_permission_icon_surface</item>
     </style>
 
     <style name="Widget.Aqua.BottomSheet.PermissionIcon" parent="">
-        <item name="android:layout_width">30dp</item>
-        <item name="android:layout_height">30dp</item>
+        <item name="android:layout_width">@dimen/aqua_size_value_30</item>
+        <item name="android:layout_height">@dimen/aqua_size_value_30</item>
         <item name="android:layout_gravity">center</item>
         <item name="android:importantForAccessibility">no</item>
     </style>
 
     <style name="Widget.Aqua.BottomSheet.PermissionStatusBadge" parent="">
-        <item name="android:layout_width">22dp</item>
-        <item name="android:layout_height">22dp</item>
+        <item name="android:layout_width">@dimen/aqua_size_value_22</item>
+        <item name="android:layout_height">@dimen/aqua_size_value_22</item>
         <item name="android:layout_gravity">end|bottom</item>
         <item name="android:background">@drawable/bg_permission_icon_badge</item>
-        <item name="android:padding">5dp</item>
+        <item name="android:padding">@dimen/aqua_space_value_5</item>
     </style>
 
     <style name="Widget.Aqua.BottomSheet.PermissionStatusIcon" parent="">
@@ -120,8 +120,8 @@
         parent="Widget.Material3.Button">
         <item name="backgroundTint">@color/aqua_bottom_sheet_primary</item>
         <item name="android:textColor">@color/aqua_bottom_sheet_on_primary</item>
-        <item name="cornerRadius">18dp</item>
-        <item name="android:minHeight">52dp</item>
+        <item name="cornerRadius">@dimen/aqua_radius_value_18</item>
+        <item name="android:minHeight">@dimen/aqua_size_value_52</item>
         <item name="android:insetTop">0dp</item>
         <item name="android:insetBottom">0dp</item>
         <item name="android:textAllCaps">false</item>
@@ -133,8 +133,8 @@
         parent="Widget.Material3.Button">
         <item name="backgroundTint">@color/aqua_bottom_sheet_neutral</item>
         <item name="android:textColor">@color/aqua_bottom_sheet_on_neutral</item>
-        <item name="cornerRadius">18dp</item>
-        <item name="android:minHeight">52dp</item>
+        <item name="cornerRadius">@dimen/aqua_radius_value_18</item>
+        <item name="android:minHeight">@dimen/aqua_size_value_52</item>
         <item name="android:insetTop">0dp</item>
         <item name="android:insetBottom">0dp</item>
         <item name="android:textAllCaps">false</item>
@@ -147,9 +147,9 @@
         <item name="backgroundTint">@color/aqua_bottom_sheet_danger_container</item>
         <item name="android:textColor">@color/aqua_bottom_sheet_danger</item>
         <item name="strokeColor">@color/aqua_bottom_sheet_danger_outline</item>
-        <item name="strokeWidth">1dp</item>
-        <item name="cornerRadius">18dp</item>
-        <item name="android:minHeight">52dp</item>
+        <item name="strokeWidth">@dimen/aqua_stroke_value_1</item>
+        <item name="cornerRadius">@dimen/aqua_radius_value_18</item>
+        <item name="android:minHeight">@dimen/aqua_size_value_52</item>
         <item name="android:insetTop">0dp</item>
         <item name="android:insetBottom">0dp</item>
         <item name="android:textAllCaps">false</item>

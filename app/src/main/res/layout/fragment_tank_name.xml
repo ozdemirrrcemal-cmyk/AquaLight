@@ -12,32 +12,32 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingStart="24dp"
-        android:paddingEnd="24dp"
-        android:paddingTop="28dp"
-        android:paddingBottom="24dp">
+        android:paddingStart="@dimen/aqua_space_value_24"
+        android:paddingEnd="@dimen/aqua_space_value_24"
+        android:paddingTop="@dimen/aqua_space_value_28"
+        android:paddingBottom="@dimen/aqua_space_value_24">
 
         <TextView
             android:id="@+id/tvStepDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="@dimen/aqua_space_value_10"
             android:text="@string/aquarium_text_give_your_aquarium_a_clear_and_recognizable_name_this_name_w"
             android:textSize="@dimen/aqua_text_size_body"
-            android:lineSpacingExtra="3dp" />
+            android:lineSpacingExtra="@dimen/aqua_space_value_3" />
 
         <com.google.android.material.card.MaterialCardView
             style="@style/Widget.Aqua.Card.Form"
             android:id="@+id/cardTankName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="34dp">
+            android:layout_marginTop="@dimen/aqua_space_value_34">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="18dp">
+                android:padding="@dimen/aqua_space_value_18">
 
                 <TextView
                     android:id="@+id/tvInputTitle"
@@ -51,17 +51,17 @@
                     android:id="@+id/tvInputHint"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
+                    android:layout_marginTop="@dimen/aqua_space_value_4"
                     android:text="@string/aquarium_text_example_living_room_tank_planted_120_shrimp_tank"
                     android:textSize="@dimen/aqua_text_size_body_small"
-                    android:lineSpacingExtra="2dp" />
+                    android:lineSpacingExtra="@dimen/aqua_space_value_2" />
 
                 <com.google.android.material.textfield.TextInputLayout
                     style="@style/Widget.Aqua.Input.Layout"
                     android:id="@+id/tilTankName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="18dp"
+                    android:layout_marginTop="@dimen/aqua_space_value_18"
                     android:hint="@string/aquarium_tank_name_title"
                     app:errorEnabled="true">
 
@@ -72,7 +72,7 @@
                         android:layout_height="wrap_content"
                         android:inputType="textCapWords"
                         android:maxLength="32"
-                        android:minHeight="58dp"
+                        android:minHeight="@dimen/aqua_size_value_58"
                         android:singleLine="true"
                         android:textSize="@dimen/aqua_text_size_body_xlarge" />
 
@@ -87,16 +87,16 @@
             android:id="@+id/cardInfo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp">
+            android:layout_marginTop="@dimen/aqua_space_value_18">
 
             <TextView
                 android:id="@+id/tvNameInfo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="16dp"
+                android:padding="@dimen/aqua_space_value_16"
                 android:text="@string/aquarium_text_you_can_change_this_name_later_from_aquarium_settings"
                 android:textSize="@dimen/aqua_text_size_body_small"
-                android:lineSpacingExtra="2dp" />
+                android:lineSpacingExtra="@dimen/aqua_space_value_2" />
 
         </com.google.android.material.card.MaterialCardView>
 

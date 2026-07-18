@@ -1,0 +1,5 @@
+Stage 10 XML migration complete:
+ - xml_text_files: 18
+ - xml_dimension_files: 223
+ - xml_color_files: 107
+ - legacy_style_files: 1

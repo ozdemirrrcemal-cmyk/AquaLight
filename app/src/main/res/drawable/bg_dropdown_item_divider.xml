@@ -11,9 +11,9 @@
     <!-- Altta ince çizgi (divider) -->
     <item android:gravity="bottom">
         <shape android:shape="rectangle">
-            <size android:height="1dp" />
+            <size android:height="@dimen/aqua_size_value_1" />
             <!-- Divider rengi: istersen değiştir -->
-            <solid android:color="#3348556B" />
+            <solid android:color="@color/aqua_palette_3348556b" />
         </shape>
     </item>
 

@@ -12,8 +12,8 @@
 
     <ImageView
         android:id="@+id/loadingLogo"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="@dimen/aqua_size_value_100"
+        android:layout_height="@dimen/aqua_size_value_100"
         android:layout_gravity="center"
         android:src="@drawable/logo_login"
         android:scaleType="centerInside"

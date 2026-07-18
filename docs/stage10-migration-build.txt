@@ -1,0 +1,145 @@
+
+Welcome to Gradle 8.11.1!
+
+Here are the highlights of this release:
+ - Parallel load and store for Configuration Cache
+ - Java compilation errors at the end of the build output
+ - Consolidated report for warnings and deprecations
+
+For more details see https://docs.gradle.org/8.11.1/release-notes.html
+
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.11.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Calculating task graph as no cached configuration is available for tasks: :app:processDebugResources :app:compileDebugKotlin
+
+> Configure project :app
+WARNING: BuildType 'releaseSmoke' is both debuggable and has 'isMinifyEnabled' set to true.
+All code optimizations and obfuscation are disabled for debuggable builds.
+
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:processDebugGoogleServices FROM-CACHE
+> Task :app:injectCrashlyticsVersionControlInfoDebug FROM-CACHE
+> Task :app:injectCrashlyticsMappingFileIdDebug
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:generateDebugResValues FROM-CACHE
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:generateDebugResources
+> Task :app:extractDeepLinksDebug
+> Task :app:mapDebugSourceSetPaths
+> Task :app:checkDebugAarMetadata
+> Task :app:dataBindingMergeDependencyArtifactsDebug
+> Task :app:generateDebugBuildConfig FROM-CACHE
+> Task :app:protobufDummy UP-TO-DATE
+> Task :app:extractDebugProto
+> Task :app:processDebugMainManifest
+> Task :app:processDebugManifest
+> Task :app:processDebugManifestForPackage
+> Task :app:extractProto
+> Task :app:generateSafeArgsDebug
+> Task :app:extractIncludeDebugProto
+> Task :app:generateDebugProto
+> Task :app:packageDebugResources
+> Task :app:parseDebugLocalResources
+> Task :app:mergeDebugResources
+> Task :app:dataBindingGenBaseClassesDebug
+> Task :app:processDebugResources
+> Task :app:compileDebugKotlin
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/auth/AuthRepository.kt:149:18 'fun fetchSignInMethodsForEmail(p0: String): Task<SignInMethodQueryResult!>' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/auth/GoogleSignInClientFactory.kt:5:8 'class GoogleSignIn : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/auth/GoogleSignInClientFactory.kt:6:8 'class GoogleSignInClient : GoogleApi<GoogleSignInOptions!>' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/auth/GoogleSignInClientFactory.kt:7:8 'class GoogleSignInOptions : AbstractSafeParcelable, Api.ApiOptions.Optional, ReflectedParcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/auth/GoogleSignInClientFactory.kt:13:8 'class GoogleSignInClient : GoogleApi<GoogleSignInOptions!>' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/auth/GoogleSignInClientFactory.kt:16:23 'class GoogleSignInOptions : AbstractSafeParcelable, Api.ApiOptions.Optional, ReflectedParcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/auth/GoogleSignInClientFactory.kt:17:13 'class GoogleSignInOptions : AbstractSafeParcelable, Api.ApiOptions.Optional, ReflectedParcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/auth/GoogleSignInClientFactory.kt:27:16 'class GoogleSignIn : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/monitor/DeviceConnectivityObserver.kt:73:29 'val allNetworks: Array<(out) Network!>' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/monitor/DeviceConnectivityObserver.kt:90:36 'val allNetworks: Array<(out) Network!>' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleDeviceInfoPreflightClient.kt:169:58 'var value: ByteArray!' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt:285:80 'var value: ByteArray!' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt:294:83 'var value: ByteArray!' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/AqlProvisioningDraftStore.kt:4:8 'class EncryptedSharedPreferences : Any, SharedPreferences' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/AqlProvisioningDraftStore.kt:5:8 'class MasterKey : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/AqlProvisioningDraftStore.kt:26:31 'class EncryptedSharedPreferences : Any, SharedPreferences' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/AqlProvisioningDraftStore.kt:29:9 'class MasterKey : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/AqlProvisioningDraftStore.kt:29:19 'constructor(p0: @NonNull() Context): MasterKey.Builder' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/AqlProvisioningDraftStore.kt:30:27 'class MasterKey : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/AqlProvisioningDraftStore.kt:30:37 'enum class KeyScheme : Enum<MasterKey.KeyScheme!>' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/AqlProvisioningDraftStore.kt:32:9 'class EncryptedSharedPreferences : Any, SharedPreferences' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/AqlProvisioningDraftStore.kt:32:36 'enum class PrefKeyEncryptionScheme : Enum<EncryptedSharedPreferences.PrefKeyEncryptionScheme!>' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/AqlProvisioningDraftStore.kt:33:9 'class EncryptedSharedPreferences : Any, SharedPreferences' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/AqlProvisioningDraftStore.kt:33:36 'enum class PrefValueEncryptionScheme : Enum<EncryptedSharedPreferences.PrefValueEncryptionScheme!>' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/AqlProvisioningQrSecretStore.kt:4:8 'class EncryptedSharedPreferences : Any, SharedPreferences' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/AqlProvisioningQrSecretStore.kt:5:8 'class MasterKey : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/AqlProvisioningQrSecretStore.kt:17:31 'class EncryptedSharedPreferences : Any, SharedPreferences' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/AqlProvisioningQrSecretStore.kt:20:9 'class MasterKey : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/AqlProvisioningQrSecretStore.kt:20:19 'constructor(p0: @NonNull() Context): MasterKey.Builder' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/AqlProvisioningQrSecretStore.kt:21:27 'class MasterKey : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/AqlProvisioningQrSecretStore.kt:21:37 'enum class KeyScheme : Enum<MasterKey.KeyScheme!>' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/AqlProvisioningQrSecretStore.kt:23:9 'class EncryptedSharedPreferences : Any, SharedPreferences' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/AqlProvisioningQrSecretStore.kt:23:36 'enum class PrefKeyEncryptionScheme : Enum<EncryptedSharedPreferences.PrefKeyEncryptionScheme!>' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/AqlProvisioningQrSecretStore.kt:24:9 'class EncryptedSharedPreferences : Any, SharedPreferences' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/AqlProvisioningQrSecretStore.kt:24:36 'enum class PrefValueEncryptionScheme : Enum<EncryptedSharedPreferences.PrefValueEncryptionScheme!>' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/ProvisioningCommitRecoveryStore.kt:5:8 'class EncryptedSharedPreferences : Any, SharedPreferences' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/ProvisioningCommitRecoveryStore.kt:6:8 'class MasterKey : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/ProvisioningCommitRecoveryStore.kt:87:9 'class EncryptedSharedPreferences : Any, SharedPreferences' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/ProvisioningCommitRecoveryStore.kt:90:13 'class MasterKey : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/ProvisioningCommitRecoveryStore.kt:90:23 'constructor(p0: @NonNull() Context): MasterKey.Builder' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/ProvisioningCommitRecoveryStore.kt:91:31 'class MasterKey : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/ProvisioningCommitRecoveryStore.kt:91:41 'enum class KeyScheme : Enum<MasterKey.KeyScheme!>' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/ProvisioningCommitRecoveryStore.kt:93:13 'class EncryptedSharedPreferences : Any, SharedPreferences' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/ProvisioningCommitRecoveryStore.kt:93:40 'enum class PrefKeyEncryptionScheme : Enum<EncryptedSharedPreferences.PrefKeyEncryptionScheme!>' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/ProvisioningCommitRecoveryStore.kt:94:13 'class EncryptedSharedPreferences : Any, SharedPreferences' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/ProvisioningCommitRecoveryStore.kt:94:40 'enum class PrefValueEncryptionScheme : Enum<EncryptedSharedPreferences.PrefValueEncryptionScheme!>' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsWireCodec.kt:508:24 'var isLenient: Boolean' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/store/DeviceCredentialStore.kt:5:8 'class EncryptedSharedPreferences : Any, SharedPreferences' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/store/DeviceCredentialStore.kt:6:8 'class MasterKey : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/store/DeviceCredentialStore.kt:32:25 'class MasterKey : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/store/DeviceCredentialStore.kt:32:35 'constructor(p0: @NonNull() Context): MasterKey.Builder' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/store/DeviceCredentialStore.kt:33:27 'class MasterKey : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/store/DeviceCredentialStore.kt:33:37 'enum class KeyScheme : Enum<MasterKey.KeyScheme!>' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/store/DeviceCredentialStore.kt:36:9 'class EncryptedSharedPreferences : Any, SharedPreferences' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/store/DeviceCredentialStore.kt:40:13 'class EncryptedSharedPreferences : Any, SharedPreferences' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/store/DeviceCredentialStore.kt:40:40 'enum class PrefKeyEncryptionScheme : Enum<EncryptedSharedPreferences.PrefKeyEncryptionScheme!>' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/store/DeviceCredentialStore.kt:41:13 'class EncryptedSharedPreferences : Any, SharedPreferences' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/store/DeviceCredentialStore.kt:41:40 'enum class PrefValueEncryptionScheme : Enum<EncryptedSharedPreferences.PrefValueEncryptionScheme!>' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/security/KeyStoreUtils.kt:4:8 'class EncryptedFile : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/security/KeyStoreUtils.kt:5:8 'class MasterKey : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/security/KeyStoreUtils.kt:30:16 'class MasterKey : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/security/KeyStoreUtils.kt:69:16 'class MasterKey : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/security/KeyStoreUtils.kt:95:16 'class MasterKey : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/security/KeyStoreUtils.kt:143:16 'class MasterKey : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/security/KeyStoreUtils.kt:162:16 'class MasterKey : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/security/KeyStoreUtils.kt:164:6 'class EncryptedFile : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/security/KeyStoreUtils.kt:165:12 'class EncryptedFile : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/security/KeyStoreUtils.kt:165:26 'constructor(p0: @NonNull() Context, p1: @NonNull() File, p2: @NonNull() MasterKey, p3: @NonNull() EncryptedFile.FileEncryptionScheme): EncryptedFile.Builder' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/security/KeyStoreUtils.kt:169:7 'class EncryptedFile : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/security/KeyStoreUtils.kt:169:21 'enum class FileEncryptionScheme : Enum<EncryptedFile.FileEncryptionScheme!>' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/user/EncryptedUserPreferencesSerializer.kt:6:8 'class MasterKey : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/user/EncryptedUserPreferencesSerializer.kt:46:25 'class MasterKey : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/user/EncryptedUserPreferencesSerializer.kt:46:35 'constructor(p0: @NonNull() Context): MasterKey.Builder' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/user/EncryptedUserPreferencesSerializer.kt:47:27 'class MasterKey : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/user/EncryptedUserPreferencesSerializer.kt:47:37 'enum class KeyScheme : Enum<MasterKey.KeyScheme!>' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/platform/auth/GoogleIdentityClient.kt:6:8 'class GoogleSignIn : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/platform/auth/GoogleIdentityClient.kt:7:8 'class GoogleSignInClient : GoogleApi<GoogleSignInOptions!>' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/platform/auth/GoogleIdentityClient.kt:40:25 'class GoogleSignInClient : GoogleApi<GoogleSignInOptions!>' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/platform/auth/GoogleIdentityClient.kt:55:27 'class GoogleSignIn : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/platform/notifications/AndroidNotificationRenderer.kt:60:35 'val EXTRA_START_IN_APP: String' is deprecated. Startup graph selection is owned by AppSessionCoordinator.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/platform/notifications/AndroidNotificationRenderer.kt:218:35 'val EXTRA_START_IN_APP: String' is deprecated. Startup graph selection is owned by AppSessionCoordinator.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/platform/vision/ProvisioningQrFrameDecoder.kt:36:5 Annotation 'androidx.camera.core.ExperimentalGetImage' is not annotated with '@RequiresOptIn'. '@OptIn' has no effect.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/ui/auth/LoginFragment.kt:154:14 'fun overridePendingTransition(p0: Int, p1: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CountryPickerBottomSheet.kt:133:26 'constructor(p0: String!, p1: String!): Locale' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/ui/main/MainActivity.kt:123:29 'val EXTRA_START_IN_APP: String' is deprecated. Startup graph selection is owned by AppSessionCoordinator.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/ui/main/MainActivity.kt:354:29 'val EXTRA_START_IN_APP: String' is deprecated. Startup graph selection is owned by AppSessionCoordinator.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/ui/navigation/RootNavigator.kt:41:18 'fun overridePendingTransition(p0: Int, p1: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/ui/splash/SplashActivity.kt:35:13 'fun overridePendingTransition(p0: Int, p1: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/TaskDetailFragment.kt:103:41 Condition is always 'true'.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/ui/tabs/settings/app/AppSettingsFragment.kt:247:43 'fun launchWhenStarted(block: suspend CoroutineScope.() -> Unit): Job' is deprecated. launchWhenStarted is deprecated as it can lead to wasted resources in some cases. Replace with suspending repeatOnLifecycle to run the block whenever the Lifecycle state is at least Lifecycle.State.STARTED.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/ui/tabs/settings/app/AppSettingsFragment.kt:259:43 'fun launchWhenStarted(block: suspend CoroutineScope.() -> Unit): Job' is deprecated. launchWhenStarted is deprecated as it can lead to wasted resources in some cases. Replace with suspending repeatOnLifecycle to run the block whenever the Lifecycle state is at least Lifecycle.State.STARTED.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/ui/tabs/settings/app/AppSettingsFragment.kt:274:43 'fun launchWhenStarted(block: suspend CoroutineScope.() -> Unit): Job' is deprecated. launchWhenStarted is deprecated as it can lead to wasted resources in some cases. Replace with suspending repeatOnLifecycle to run the block whenever the Lifecycle state is at least Lifecycle.State.STARTED.
+w: file:///home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/ui/tabs/settings/app/LanguageSettingsFragment.kt:51:43 'fun launchWhenStarted(block: suspend CoroutineScope.() -> Unit): Job' is deprecated. launchWhenStarted is deprecated as it can lead to wasted resources in some cases. Replace with suspending repeatOnLifecycle to run the block whenever the Lifecycle state is at least Lifecycle.State.STARTED.
+
+BUILD SUCCESSFUL in 1m 40s
+25 actionable tasks: 21 executed, 4 from cache
+Configuration cache entry stored.
+BUILD_EXIT=0

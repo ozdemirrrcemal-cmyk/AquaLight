@@ -10,7 +10,7 @@
   style="@style/Widget.Aqua.SelectionRow.BottomSheet"
     android:id="@+id/unitRow"
     android:layout_width="match_parent"
-    android:layout_height="46dp"
+    android:layout_height="@dimen/aqua_size_value_46"
     android:gravity="center_vertical"
     android:orientation="horizontal">
 
@@ -39,13 +39,13 @@
     android:id="@+id/sizeInputsRow"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="22dp"
+    android:layout_marginTop="@dimen/aqua_space_value_22"
     android:orientation="horizontal">
 
     <LinearLayout
       android:layout_width="0dp"
       android:layout_height="wrap_content"
-      android:layout_marginEnd="8dp"
+      android:layout_marginEnd="@dimen/aqua_space_value_8"
       android:layout_weight="1"
       android:orientation="vertical">
 
@@ -62,8 +62,8 @@
         style="@style/Widget.Aqua.Input.PlainEditText.Multiline"
         android:id="@+id/inputWidth"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_marginTop="9dp"
+        android:layout_height="@dimen/aqua_size_value_50"
+        android:layout_marginTop="@dimen/aqua_space_value_9"
         android:gravity="center_vertical"
         android:includeFontPadding="false"
         android:inputType="numberDecimal"
@@ -76,7 +76,7 @@
     <LinearLayout
       android:layout_width="0dp"
       android:layout_height="wrap_content"
-      android:layout_marginEnd="8dp"
+      android:layout_marginEnd="@dimen/aqua_space_value_8"
       android:layout_weight="1"
       android:orientation="vertical">
 
@@ -93,8 +93,8 @@
         style="@style/Widget.Aqua.Input.PlainEditText.Multiline"
         android:id="@+id/inputLength"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_marginTop="9dp"
+        android:layout_height="@dimen/aqua_size_value_50"
+        android:layout_marginTop="@dimen/aqua_space_value_9"
         android:gravity="center_vertical"
         android:includeFontPadding="false"
         android:inputType="numberDecimal"
@@ -123,8 +123,8 @@
         style="@style/Widget.Aqua.Input.PlainEditText.Multiline"
         android:id="@+id/inputHeight"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_marginTop="9dp"
+        android:layout_height="@dimen/aqua_size_value_50"
+        android:layout_marginTop="@dimen/aqua_space_value_9"
         android:gravity="center_vertical"
         android:includeFontPadding="false"
         android:inputType="numberDecimal"
@@ -139,8 +139,8 @@
   <com.google.android.material.button.MaterialButton
     android:id="@+id/btnSave"
     android:layout_width="match_parent"
-    android:layout_height="50dp"
-    android:layout_marginTop="26dp"
+    android:layout_height="@dimen/aqua_size_value_50"
+    android:layout_marginTop="@dimen/aqua_space_value_26"
     android:insetTop="0dp"
     android:insetBottom="0dp"
     android:minWidth="0dp"
@@ -150,14 +150,14 @@
     android:textColor="@android:color/white"
     android:textSize="@dimen/aqua_text_size_body"
     android:textStyle="bold"
-    app:backgroundTint="#2196F3"
-    app:cornerRadius="16dp" />
+    app:backgroundTint="@color/aqua_palette_2196f3"
+    app:cornerRadius="@dimen/aqua_radius_value_16" />
 
   <TextView
     android:id="@+id/btnCancel"
     android:layout_width="match_parent"
-    android:layout_height="40dp"
-    android:layout_marginTop="10dp"
+    android:layout_height="@dimen/aqua_size_value_40"
+    android:layout_marginTop="@dimen/aqua_space_value_10"
     android:gravity="center"
     android:includeFontPadding="false"
     android:text="@string/common_cancel"

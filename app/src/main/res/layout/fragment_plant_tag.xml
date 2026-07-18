@@ -19,12 +19,12 @@
         android:id="@+id/tvDescription"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="10dp"
-        android:layout_marginEnd="24dp"
-        android:lineSpacingExtra="3dp"
+        android:layout_marginStart="@dimen/aqua_space_value_24"
+        android:layout_marginTop="@dimen/aqua_space_value_10"
+        android:layout_marginEnd="@dimen/aqua_space_value_24"
+        android:lineSpacingExtra="@dimen/aqua_space_value_3"
         android:text="@string/aquarium_text_tap_on_the_aquarium_photo_to_select_and_tag_the_plants_used"
-        android:textColor="#8FA4BE"
+        android:textColor="@color/aqua_palette_8fa4be"
         android:textSize="@dimen/aqua_text_size_body"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -33,11 +33,11 @@
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardImage"
         android:layout_width="0dp"
-        android:layout_height="240dp"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="22dp"
-        android:layout_marginEnd="24dp"
-        app:cardCornerRadius="20dp"
+        android:layout_height="@dimen/aqua_size_value_240"
+        android:layout_marginStart="@dimen/aqua_space_value_24"
+        android:layout_marginTop="@dimen/aqua_space_value_22"
+        android:layout_marginEnd="@dimen/aqua_space_value_24"
+        app:cardCornerRadius="@dimen/aqua_radius_value_20"
         app:cardElevation="0dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -62,7 +62,7 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="#22000000" />
+                android:background="@color/aqua_palette_22000000" />
 
             <FrameLayout
                 android:id="@+id/markerContainer"
@@ -77,11 +77,11 @@
         android:id="@+id/plantListScrollView"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="@dimen/aqua_space_value_20"
         android:clipToPadding="false"
         android:fillViewport="true"
         android:overScrollMode="never"
-        android:paddingBottom="24dp"
+        android:paddingBottom="@dimen/aqua_space_value_24"
         android:scrollbars="none"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -93,9 +93,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingStart="24dp"
-            android:paddingEnd="24dp"
-            android:paddingBottom="28dp" />
+            android:paddingStart="@dimen/aqua_space_value_24"
+            android:paddingEnd="@dimen/aqua_space_value_24"
+            android:paddingBottom="@dimen/aqua_space_value_28" />
 
     </ScrollView>
 

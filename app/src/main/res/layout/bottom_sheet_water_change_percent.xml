@@ -6,7 +6,7 @@
 
   <View
     style="@style/Widget.Aqua.BottomSheet.Handle"
-    android:layout_marginBottom="16dp" />
+    android:layout_marginBottom="@dimen/aqua_space_value_16" />
 
   <TextView
     style="@style/TextAppearance.Aqua.BottomSheet.SectionTitle"
@@ -19,7 +19,7 @@
     android:id="@+id/percentOptionsContainer"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="18dp"
+    android:layout_marginTop="@dimen/aqua_space_value_18"
     android:orientation="vertical" />
 
 </LinearLayout>

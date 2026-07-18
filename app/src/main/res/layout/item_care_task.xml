@@ -6,7 +6,7 @@
     android:id="@+id/cardCareTask"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
+    android:layout_marginBottom="@dimen/aqua_space_value_12"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground">
@@ -16,21 +16,21 @@
         android:layout_height="wrap_content"
         android:gravity="top"
         android:orientation="horizontal"
-        android:paddingStart="14dp"
-        android:paddingTop="13dp"
-        android:paddingEnd="14dp"
-        android:paddingBottom="13dp">
+        android:paddingStart="@dimen/aqua_space_value_14"
+        android:paddingTop="@dimen/aqua_space_value_13"
+        android:paddingEnd="@dimen/aqua_space_value_14"
+        android:paddingBottom="@dimen/aqua_space_value_13">
 
         <FrameLayout
             android:id="@+id/iconContainer"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:layout_marginTop="3dp">
+            android:layout_width="@dimen/aqua_size_value_44"
+            android:layout_height="@dimen/aqua_size_value_44"
+            android:layout_marginTop="@dimen/aqua_space_value_3">
 
             <ImageView
                 android:id="@+id/ivTaskIcon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="@dimen/aqua_size_value_24"
+                android:layout_height="@dimen/aqua_size_value_24"
                 android:layout_gravity="center"
                 android:scaleType="centerInside"
                 app:tint="@android:color/white" />
@@ -41,7 +41,7 @@
             android:id="@+id/textContainer"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="13dp"
+            android:layout_marginStart="@dimen/aqua_space_value_13"
             android:layout_weight="1"
             android:orientation="vertical">
 
@@ -67,14 +67,14 @@
                 <TextView
                     android:id="@+id/tvSourceBadge"
                     android:layout_width="wrap_content"
-                    android:layout_height="22dp"
-                    android:layout_marginStart="8dp"
+                    android:layout_height="@dimen/aqua_size_value_22"
+                    android:layout_marginStart="@dimen/aqua_space_value_8"
                     android:background="@drawable/bg_care_task_source_badge"
                     android:gravity="center"
                     android:includeFontPadding="false"
-                    android:minWidth="46dp"
-                    android:paddingStart="9dp"
-                    android:paddingEnd="9dp"
+                    android:minWidth="@dimen/aqua_size_value_46"
+                    android:paddingStart="@dimen/aqua_space_value_9"
+                    android:paddingEnd="@dimen/aqua_space_value_9"
                     android:textColor="@android:color/white"
                     android:textSize="@dimen/aqua_text_size_micro_caption"
                     android:textStyle="bold" />
@@ -85,29 +85,29 @@
                 android:id="@+id/tvTaskMeta"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="7dp"
+                android:layout_marginTop="@dimen/aqua_space_value_7"
                 android:ellipsize="end"
                 android:includeFontPadding="false"
                 android:maxLines="1"
-                android:textColor="#B8C7D9"
+                android:textColor="@color/aqua_palette_b8c7d9"
                 android:textSize="@dimen/aqua_text_size_caption" />
 
             <TextView
                 android:id="@+id/tvTaskSecondary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="@dimen/aqua_space_value_6"
                 android:ellipsize="end"
                 android:includeFontPadding="false"
                 android:maxLines="1"
-                android:textColor="#B8C7D9"
+                android:textColor="@color/aqua_palette_b8c7d9"
                 android:textSize="@dimen/aqua_text_size_caption" />
 
             <TextView
                 android:id="@+id/tvTaskDescription"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="@dimen/aqua_space_value_6"
                 android:ellipsize="end"
                 android:includeFontPadding="false"
                 android:maxLines="2"
@@ -117,16 +117,16 @@
             <TextView
                 android:id="@+id/tvCompletedBadge"
                 android:layout_width="wrap_content"
-                android:layout_height="30dp"
-                android:layout_marginTop="9dp"
+                android:layout_height="@dimen/aqua_size_value_30"
+                android:layout_marginTop="@dimen/aqua_space_value_9"
                 android:background="@drawable/bg_care_task_completed_badge"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:minWidth="78dp"
-                android:paddingStart="11dp"
-                android:paddingEnd="11dp"
+                android:minWidth="@dimen/aqua_size_value_78"
+                android:paddingStart="@dimen/aqua_space_value_11"
+                android:paddingEnd="@dimen/aqua_space_value_11"
                 android:text="@string/maintenance_status_completed"
-                android:textColor="#5FD6B4"
+                android:textColor="@color/aqua_palette_5fd6b4"
                 android:textSize="@dimen/aqua_text_size_micro_plus"
                 android:textStyle="bold"
                 android:visibility="gone" />

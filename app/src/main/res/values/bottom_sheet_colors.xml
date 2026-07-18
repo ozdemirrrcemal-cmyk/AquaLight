@@ -1,36 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Main Tank Devices remove sheet base -->
-    <color name="aqua_bottom_sheet_surface">#07131F</color>
-    <color name="aqua_bottom_sheet_surface_elevated">#101D2C</color>
-    <color name="aqua_bottom_sheet_surface_pressed">#132943</color>
-    <color name="aqua_bottom_sheet_outline">#22354D</color>
-    <color name="aqua_bottom_sheet_outline_subtle">#22354D</color>
-    <color name="aqua_bottom_sheet_handle">#2B425A</color>
-    <color name="aqua_bottom_sheet_sheet_border">#223A57</color>
+    <color name="aqua_bottom_sheet_surface">@color/aqua_palette_07131f</color>
+    <color name="aqua_bottom_sheet_surface_elevated">@color/aqua_palette_101d2c</color>
+    <color name="aqua_bottom_sheet_surface_pressed">@color/aqua_palette_132943</color>
+    <color name="aqua_bottom_sheet_outline">@color/aqua_palette_22354d</color>
+    <color name="aqua_bottom_sheet_outline_subtle">@color/aqua_palette_22354d</color>
+    <color name="aqua_bottom_sheet_handle">@color/aqua_palette_2b425a</color>
+    <color name="aqua_bottom_sheet_sheet_border">@color/aqua_palette_223a57</color>
 
-    <color name="aqua_bottom_sheet_text_primary">#F4F8FC</color>
-    <color name="aqua_bottom_sheet_text_secondary">#9AAEC4</color>
+    <color name="aqua_bottom_sheet_text_primary">@color/aqua_palette_f4f8fc</color>
+    <color name="aqua_bottom_sheet_text_secondary">@color/aqua_palette_9aaec4</color>
 
     <!-- Normal primary action -->
-    <color name="aqua_bottom_sheet_primary">#6489C9</color>
-    <color name="aqua_bottom_sheet_on_primary">#F4F8FC</color>
+    <color name="aqua_bottom_sheet_primary">@color/aqua_palette_6489c9</color>
+    <color name="aqua_bottom_sheet_on_primary">@color/aqua_palette_f4f8fc</color>
 
     <!-- Shared permission capability icon language -->
-    <color name="aqua_permission_icon_surface">#0D2432</color>
-    <color name="aqua_permission_icon_outline">#285462</color>
-    <color name="aqua_permission_icon_foreground">#55C7B3</color>
-    <color name="aqua_permission_icon_badge_surface">#6489C9</color>
-    <color name="aqua_permission_icon_badge_foreground">#F4F8FC</color>
+    <color name="aqua_permission_icon_surface">@color/aqua_palette_0d2432</color>
+    <color name="aqua_permission_icon_outline">@color/aqua_palette_285462</color>
+    <color name="aqua_permission_icon_foreground">@color/aqua_palette_55c7b3</color>
+    <color name="aqua_permission_icon_badge_surface">@color/aqua_palette_6489c9</color>
+    <color name="aqua_permission_icon_badge_foreground">@color/aqua_palette_f4f8fc</color>
 
     <!-- Cancel / neutral action -->
-    <color name="aqua_bottom_sheet_neutral">#162638</color>
-    <color name="aqua_bottom_sheet_on_neutral">#F4F8FC</color>
+    <color name="aqua_bottom_sheet_neutral">@color/aqua_palette_162638</color>
+    <color name="aqua_bottom_sheet_on_neutral">@color/aqua_palette_f4f8fc</color>
 
     <!-- Remove / delete / destructive action: kırmızı kalacak -->
-    <color name="aqua_bottom_sheet_danger">#FF5A52</color>
-    <color name="aqua_bottom_sheet_danger_container">#321E2A</color>
-    <color name="aqua_bottom_sheet_danger_outline">#7A3344</color>
+    <color name="aqua_bottom_sheet_danger">@color/aqua_palette_ff5a52</color>
+    <color name="aqua_bottom_sheet_danger_container">@color/aqua_palette_321e2a</color>
+    <color name="aqua_bottom_sheet_danger_outline">@color/aqua_palette_7a3344</color>
 
-    <color name="aqua_bottom_sheet_selection_active">#6489C9</color>
+    <color name="aqua_bottom_sheet_selection_active">@color/aqua_palette_6489c9</color>
 </resources>

@@ -7,40 +7,40 @@
     android:id="@+id/cardDevice"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="4dp"
-    android:layout_marginTop="8dp"
-    android:layout_marginBottom="6dp"
+    android:layout_marginHorizontal="@dimen/aqua_space_value_4"
+    android:layout_marginTop="@dimen/aqua_space_value_8"
+    android:layout_marginBottom="@dimen/aqua_space_value_6"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
     app:cardUseCompatPadding="false"
-    app:rippleColor="#24344A"
-    app:strokeWidth="1dp">
+    app:rippleColor="@color/aqua_palette_24344a"
+    app:strokeWidth="@dimen/aqua_stroke_value_1">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingStart="16dp"
-        android:paddingTop="15dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="15dp">
+        android:paddingStart="@dimen/aqua_space_value_16"
+        android:paddingTop="@dimen/aqua_space_value_15"
+        android:paddingEnd="@dimen/aqua_space_value_16"
+        android:paddingBottom="@dimen/aqua_space_value_15">
 
         <com.google.android.material.card.MaterialCardView
             style="@style/Widget.Aqua.Card.Device.Media"
             android:id="@+id/deviceIconContainer"
-            android:layout_width="54dp"
-            android:layout_height="54dp"
+            android:layout_width="@dimen/aqua_size_value_54"
+            android:layout_height="@dimen/aqua_size_value_54"
                     app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:strokeWidth="1dp">
+            app:strokeWidth="@dimen/aqua_stroke_value_1">
 
             <ImageView
                 android:id="@+id/ivDeviceIcon"
-                android:layout_width="38dp"
-                android:layout_height="38dp"
+                android:layout_width="@dimen/aqua_size_value_38"
+                android:layout_height="@dimen/aqua_size_value_38"
                 android:layout_gravity="center"
                 android:adjustViewBounds="true"
-                android:contentDescription="Device icon"
+                android:contentDescription="@string/device_status_ivdeviceicon_description"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_device_aqua_ster"
                 tools:src="@drawable/ic_device_light" />
@@ -51,12 +51,12 @@
             android:id="@+id/tvDeviceName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="15dp"
-            android:layout_marginEnd="12dp"
+            android:layout_marginStart="@dimen/aqua_space_value_15"
+            android:layout_marginEnd="@dimen/aqua_space_value_12"
             android:ellipsize="end"
             android:includeFontPadding="false"
             android:maxLines="1"
-            android:textColor="#F2F6FA"
+            android:textColor="@color/aqua_palette_f2f6fa"
             android:textSize="@dimen/aqua_text_size_body_xlarge"
             android:textStyle="bold"
             app:layout_constraintEnd_toStartOf="@id/flPresenceContainer"
@@ -66,31 +66,31 @@
 
         <FrameLayout
             android:id="@+id/flPresenceContainer"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
+            android:layout_width="@dimen/aqua_size_value_44"
+            android:layout_height="@dimen/aqua_size_value_44"
             app:layout_constraintBottom_toBottomOf="@id/tvDeviceName"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@id/tvDeviceName">
 
             <ImageView
                 android:id="@+id/ivPresenceIcon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="@dimen/aqua_size_value_24"
+                android:layout_height="@dimen/aqua_size_value_24"
                 android:layout_gravity="center"
-                android:contentDescription="Device presence"
+                android:contentDescription="@string/device_status_ivpresenceicon_description"
                 android:src="@drawable/ic_status_wifi"
-                app:tint="#5FD6B4"
-                tools:tint="#5FD6B4" />
+                app:tint="@color/aqua_palette_5fd6b4"
+                tools:tint="@color/aqua_palette_5fd6b4" />
 
         </FrameLayout>
 
         <View
             android:id="@+id/viewMetaTopDivider"
             android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_marginStart="15dp"
-            android:layout_marginTop="14dp"
-            android:background="#24384F"
+            android:layout_height="@dimen/aqua_size_value_1"
+            android:layout_marginStart="@dimen/aqua_space_value_15"
+            android:layout_marginTop="@dimen/aqua_space_value_14"
+            android:background="@color/aqua_palette_24384f"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/deviceIconContainer"
             app:layout_constraintTop_toBottomOf="@id/tvDeviceName" />
@@ -99,8 +99,8 @@
             android:id="@+id/llDeviceMeta"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="15dp"
-            android:layout_marginTop="9dp"
+            android:layout_marginStart="@dimen/aqua_space_value_15"
+            android:layout_marginTop="@dimen/aqua_space_value_9"
             android:orientation="horizontal"
             android:weightSum="3"
             app:layout_constraintEnd_toEndOf="parent"
@@ -118,29 +118,29 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:includeFontPadding="false"
-                    android:text="IP"
-                    android:textColor="#90A1B5"
+                    android:text="@string/device_status_tviptitle_text"
+                    android:textColor="@color/aqua_palette_90a1b5"
                     android:textSize="@dimen/aqua_text_size_status_tiny" />
 
                 <TextView
                     android:id="@+id/tvIp"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="5dp"
+                    android:layout_marginTop="@dimen/aqua_space_value_5"
                     android:ellipsize="end"
                     android:includeFontPadding="false"
                     android:maxLines="1"
-                    android:textColor="#F2F6FA"
+                    android:textColor="@color/aqua_palette_f2f6fa"
                     android:textSize="@dimen/aqua_text_size_status_micro"
                     tools:text="192.168.1.33" />
 
             </LinearLayout>
 
             <View
-                android:layout_width="1dp"
-                android:layout_height="34dp"
-                android:layout_marginHorizontal="10dp"
-                android:background="#24384F" />
+                android:layout_width="@dimen/aqua_size_value_1"
+                android:layout_height="@dimen/aqua_size_value_34"
+                android:layout_marginHorizontal="@dimen/aqua_space_value_10"
+                android:background="@color/aqua_palette_24384f" />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -153,29 +153,29 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:includeFontPadding="false"
-                    android:text="Serial"
-                    android:textColor="#90A1B5"
+                    android:text="@string/device_status_tvserialtitle_text"
+                    android:textColor="@color/aqua_palette_90a1b5"
                     android:textSize="@dimen/aqua_text_size_status_tiny" />
 
                 <TextView
                     android:id="@+id/tvSerial"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="5dp"
+                    android:layout_marginTop="@dimen/aqua_space_value_5"
                     android:ellipsize="end"
                     android:includeFontPadding="false"
                     android:maxLines="1"
-                    android:textColor="#F2F6FA"
+                    android:textColor="@color/aqua_palette_f2f6fa"
                     android:textSize="@dimen/aqua_text_size_status_nano"
                     tools:text="AQL-LGT-336172" />
 
             </LinearLayout>
 
             <View
-                android:layout_width="1dp"
-                android:layout_height="34dp"
-                android:layout_marginHorizontal="10dp"
-                android:background="#24384F" />
+                android:layout_width="@dimen/aqua_size_value_1"
+                android:layout_height="@dimen/aqua_size_value_34"
+                android:layout_marginHorizontal="@dimen/aqua_space_value_10"
+                android:background="@color/aqua_palette_24384f" />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -186,10 +186,10 @@
 
                 <ImageView
                     android:id="@+id/ivLastSeen"
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:layout_marginEnd="6dp"
-                    android:contentDescription="Last seen icon"
+                    android:layout_width="@dimen/aqua_size_value_16"
+                    android:layout_height="@dimen/aqua_size_value_16"
+                    android:layout_marginEnd="@dimen/aqua_space_value_6"
+                    android:contentDescription="@string/device_status_ivlastseen_description"
                     android:src="@drawable/ic_last_seen" />
 
                 <LinearLayout
@@ -205,19 +205,19 @@
                         android:ellipsize="end"
                         android:includeFontPadding="false"
                         android:maxLines="1"
-                        android:text="Last seen"
-                        android:textColor="#90A1B5"
+                        android:text="@string/device_status_tvlastseentitle_text"
+                        android:textColor="@color/aqua_palette_90a1b5"
                         android:textSize="@dimen/aqua_text_size_status_tiny" />
 
                     <TextView
                         android:id="@+id/tvLastSeen"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="5dp"
+                        android:layout_marginTop="@dimen/aqua_space_value_5"
                         android:ellipsize="end"
                         android:includeFontPadding="false"
                         android:maxLines="1"
-                        android:textColor="#F2F6FA"
+                        android:textColor="@color/aqua_palette_f2f6fa"
                         android:textSize="@dimen/aqua_text_size_status_micro"
                         tools:text="Just now" />
 

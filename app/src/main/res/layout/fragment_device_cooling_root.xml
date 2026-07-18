@@ -24,10 +24,10 @@
         android:clipToPadding="false"
         android:fillViewport="true"
         android:overScrollMode="never"
-        android:paddingStart="16dp"
-        android:paddingTop="12dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="24dp"
+        android:paddingStart="@dimen/aqua_space_value_16"
+        android:paddingTop="@dimen/aqua_space_value_12"
+        android:paddingEnd="@dimen/aqua_space_value_16"
+        android:paddingBottom="@dimen/aqua_space_value_24"
         app:layout_constraintTop_toBottomOf="@id/appHeader"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -47,7 +47,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="18dp">
+                    android:padding="@dimen/aqua_space_value_18">
 
                     <TextView
                         android:id="@+id/tvProductName"
@@ -62,15 +62,15 @@
                         android:id="@+id/tvDeviceUid"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:textColor="#8FA4BE"
+                        android:layout_marginTop="@dimen/aqua_space_value_6"
+                        android:textColor="@color/aqua_palette_8fa4be"
                         android:textSize="@dimen/aqua_text_size_caption"
                         tools:text="AQL-COOLING-123456" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
+                        android:layout_marginTop="@dimen/aqua_space_value_16"
                         android:orientation="horizontal"
                         android:weightSum="1">
 
@@ -82,15 +82,15 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Connection"
-                                android:textColor="#8FA4BE"
+                                android:text="@string/device_cooling_root_text_text"
+                                android:textColor="@color/aqua_palette_8fa4be"
                                 android:textSize="@dimen/aqua_text_size_caption" />
 
                             <TextView
                                 android:id="@+id/tvConnectionStatus"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
+                                android:layout_marginTop="@dimen/aqua_space_value_4"
                                 android:textColor="@color/white"
                                 android:textSize="@dimen/aqua_text_size_body_large"
                                 android:textStyle="bold"
@@ -104,18 +104,18 @@
                 style="@style/Widget.Aqua.Card.Device.Section"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp">
+                android:layout_marginTop="@dimen/aqua_space_value_14">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="18dp">
+                    android:padding="@dimen/aqua_space_value_18">
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Device information"
+                        android:text="@string/device_cooling_root_text_text_2"
                         android:textColor="@color/white"
                         android:textSize="@dimen/aqua_text_size_title_small"
                         android:textStyle="bold" />
@@ -124,8 +124,8 @@
                         android:id="@+id/tvIp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="14dp"
-                        android:textColor="#DCE7F3"
+                        android:layout_marginTop="@dimen/aqua_space_value_14"
+                        android:textColor="@color/aqua_palette_dce7f3"
                         android:textSize="@dimen/aqua_text_size_body"
                         tools:text="IP: 192.168.1.40" />
 
@@ -133,8 +133,8 @@
                         android:id="@+id/tvFirmware"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:textColor="#DCE7F3"
+                        android:layout_marginTop="@dimen/aqua_space_value_10"
+                        android:textColor="@color/aqua_palette_dce7f3"
                         android:textSize="@dimen/aqua_text_size_body"
                         tools:text="Firmware: 1.0.0 / build 20260624" />
 
@@ -142,8 +142,8 @@
                         android:id="@+id/tvModel"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:textColor="#DCE7F3"
+                        android:layout_marginTop="@dimen/aqua_space_value_10"
+                        android:textColor="@color/aqua_palette_dce7f3"
                         android:textSize="@dimen/aqua_text_size_body"
                         tools:text="Model: dose-pro-4" />
 
@@ -151,8 +151,8 @@
                         android:id="@+id/tvPrimaryCount"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:textColor="#DCE7F3"
+                        android:layout_marginTop="@dimen/aqua_space_value_10"
+                        android:textColor="@color/aqua_palette_dce7f3"
                         android:textSize="@dimen/aqua_text_size_body"
                         tools:text="Fan channels: 2" />
 
@@ -160,8 +160,8 @@
                         android:id="@+id/tvFeatures"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:textColor="#DCE7F3"
+                        android:layout_marginTop="@dimen/aqua_space_value_10"
+                        android:textColor="@color/aqua_palette_dce7f3"
                         android:textSize="@dimen/aqua_text_size_body"
                         tools:text="Features: Cooling, Fan, Temperature, OTA" />
                 </LinearLayout>
@@ -171,13 +171,13 @@
                 style="@style/Widget.Aqua.Card.Device.Section"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp">
+                android:layout_marginTop="@dimen/aqua_space_value_14">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="18dp">
+                    android:padding="@dimen/aqua_space_value_18">
 
                     <TextView
                         android:id="@+id/tvPrimarySectionTitle"
@@ -192,8 +192,8 @@
                         android:id="@+id/tvPrimarySectionPlaceholder"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:textColor="#8FA4BE"
+                        android:layout_marginTop="@dimen/aqua_space_value_8"
+                        android:textColor="@color/aqua_palette_8fa4be"
                         android:textSize="@dimen/aqua_text_size_body"
                         tools:text="Channel controls hazırlanıyor." />
                 </LinearLayout>
@@ -203,13 +203,13 @@
                 style="@style/Widget.Aqua.Card.Device.Section"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp">
+                android:layout_marginTop="@dimen/aqua_space_value_14">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="18dp">
+                    android:padding="@dimen/aqua_space_value_18">
 
                     <TextView
                         android:id="@+id/tvSecondarySectionTitle"
@@ -224,8 +224,8 @@
                         android:id="@+id/tvSecondarySectionPlaceholder"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:textColor="#8FA4BE"
+                        android:layout_marginTop="@dimen/aqua_space_value_8"
+                        android:textColor="@color/aqua_palette_8fa4be"
                         android:textSize="@dimen/aqua_text_size_body"
                         tools:text="Schedules hazırlanıyor." />
                 </LinearLayout>

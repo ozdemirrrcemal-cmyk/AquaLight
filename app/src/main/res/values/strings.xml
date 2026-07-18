@@ -541,4 +541,50 @@
 
     <string name="device_ota_test_panel_opened">OTA test panel opened</string>
     <string name="device_ota_test_panel_hidden">OTA test panel hidden</string>
+
+    <!-- Stage 10: extracted user-visible XML text -->
+    <string name="device_confirm_tvconfirmtitle_text">Confirm action</string>
+    <string name="device_confirm_tvconfirmmessage_text">Are you sure you want to continue?</string>
+    <string name="settings_bottom_sheet_tvsheettitle_text">Tank Name</string>
+    <string name="device_add_btnqrsetup_text">Scan secure QR code</string>
+    <string name="device_add_text_text">Setup rules</string>
+    <string name="device_add_text_text_2">First setup uses the QR code. For an already paired device, open setup mode on the device, then press Manual BLE Scan. AquaLight verifies the firmware state before sending Wi‑Fi.</string>
+    <string name="device_add_tvfounddeviceshint_text">Select a device only after setup mode is open. AquaLight will verify DeviceInfo before Wi‑Fi is sent.</string>
+    <string name="device_cooling_root_text_text">Connection</string>
+    <string name="device_cooling_root_text_text_2">Device information</string>
+    <string name="device_light_root_text_text">Hidden OTA test panel</string>
+    <string name="device_light_root_text_text_2">Temporary internal panel. Long press Firmware to show or hide. Remove after OTA validation.</string>
+    <string name="device_light_root_btnotatestcheck_text">Check beta</string>
+    <string name="device_light_root_btnotateststatus_text">Status</string>
+    <string name="device_light_root_btnotateststart_text">Start OTA</string>
+    <string name="device_light_root_btnotatestclear_text">Clear</string>
+    <string name="device_light_root_text_text_3">Manual control</string>
+    <string name="device_light_root_tvmanualplaceholder_text">Manual control hazırlanıyor.</string>
+    <string name="device_light_root_text_text_4">Programs</string>
+    <string name="device_light_root_tvprogramsplaceholder_text">Programlar hazırlanıyor.</string>
+    <string name="device_status_tvemptydevicestatustitle_text">No active devices</string>
+    <string name="device_status_tvemptydevicestatusmessage_text">Connected devices will appear here once they are available.</string>
+    <string name="settings_tvactivedevices_text">3 Active Devices</string>
+    <string name="user_address_tvcountryvalue_text">Turkey</string>
+    <string name="device_add_candidate_tvdeviceicon_text">AQ</string>
+    <string name="device_status_ivdeviceicon_description">Device icon</string>
+    <string name="device_status_ivpresenceicon_description">Device presence</string>
+    <string name="device_status_tviptitle_text">IP</string>
+    <string name="device_status_tvserialtitle_text">Serial</string>
+    <string name="device_status_ivlastseen_description">Last seen icon</string>
+    <string name="device_status_tvlastseentitle_text">Last seen</string>
+    <string name="aqua_header_etheadersearch_hint">Type here to search...</string>
+    <string name="aqua_header_btnclearheadersearch_description">Clear search</string>
+    <string name="nav_aquarium_title">Aquarium</string>
+    <string name="nav_maintenance_title">Maintenance</string>
+    <string name="nav_settings_title">Settings</string>
+    <string name="nav_devicedosingrootfragment_label">Dosing</string>
+    <string name="nav_devicetimerrootfragment_label">Timer</string>
+    <string name="nav_devicecoolingrootfragment_label">Cooling</string>
+    <string name="nav_deviceaddfragment_label">Add Device</string>
+    <string name="nav_deviceqrscanfragment_label">QR Setup</string>
+    <string name="nav_devicewifiprovisioningfragment_label">Wi-Fi Setup</string>
+    <string name="nav_deviceprovisioningprogressfragment_label">Provisioning</string>
+    <string name="nav_authcontainerfragment_label">Auth</string>
+
 </resources>

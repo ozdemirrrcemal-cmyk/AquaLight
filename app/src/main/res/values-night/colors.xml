@@ -2,26 +2,26 @@
 <resources>
 
     <!-- 🌙 Material 3 Dark Color Scheme -->
-    <color name="md_theme_dark_primary">#2196F3</color>
-    <color name="md_theme_dark_onPrimary">#FFFFFF</color>
-    <color name="md_theme_dark_primaryContainer">#0A192F</color>
-    <color name="md_theme_dark_onPrimaryContainer">#FFFFFF</color>
-    <color name="md_theme_dark_secondary">#4A6363</color>
-    <color name="md_theme_dark_onSecondary">#FFFFFF</color>
-    <color name="md_theme_dark_secondaryContainer">#0A192F</color>
-    <color name="md_theme_dark_onSecondaryContainer">#FFFFFF</color>
-    <color name="md_theme_dark_background">#0A192F</color>
-    <color name="md_theme_dark_onBackground">#FFFFFF</color>
-    <color name="md_theme_dark_surface">#0A192F</color>
-    <color name="md_theme_dark_onSurface">#E0E6ED</color>
+    <color name="md_theme_dark_primary">@color/aqua_palette_2196f3</color>
+    <color name="md_theme_dark_onPrimary">@color/aqua_palette_ffffff</color>
+    <color name="md_theme_dark_primaryContainer">@color/aqua_palette_0a192f</color>
+    <color name="md_theme_dark_onPrimaryContainer">@color/aqua_palette_ffffff</color>
+    <color name="md_theme_dark_secondary">@color/aqua_palette_4a6363</color>
+    <color name="md_theme_dark_onSecondary">@color/aqua_palette_ffffff</color>
+    <color name="md_theme_dark_secondaryContainer">@color/aqua_palette_0a192f</color>
+    <color name="md_theme_dark_onSecondaryContainer">@color/aqua_palette_ffffff</color>
+    <color name="md_theme_dark_background">@color/aqua_palette_0a192f</color>
+    <color name="md_theme_dark_onBackground">@color/aqua_palette_ffffff</color>
+    <color name="md_theme_dark_surface">@color/aqua_palette_0a192f</color>
+    <color name="md_theme_dark_onSurface">@color/aqua_palette_e0e6ed</color>
 
     <!-- ✳️ Koyu kontrast & outline renkleri -->
-    <color name="md_theme_dark_surfaceVariant">#121A24</color>
-    <color name="md_theme_dark_onSurfaceVariant">#5C6B75</color>
-    <color name="md_theme_dark_outline">#455A64</color>
-    <color name="md_theme_dark_outlineVariant">#37474F</color>
-    <color name="md_theme_dark_error">#B3261E</color>
-    <color name="md_theme_dark_onError">#FFFFFF</color>
+    <color name="md_theme_dark_surfaceVariant">@color/aqua_palette_121a24</color>
+    <color name="md_theme_dark_onSurfaceVariant">@color/aqua_palette_5c6b75</color>
+    <color name="md_theme_dark_outline">@color/aqua_palette_455a64</color>
+    <color name="md_theme_dark_outlineVariant">@color/aqua_palette_37474f</color>
+    <color name="md_theme_dark_error">@color/aqua_palette_b3261e</color>
+    <color name="md_theme_dark_onError">@color/aqua_palette_ffffff</color>
 
     <!-- 🪟 Yarı saydam yüzey -->
     <color name="colorSurfaceTransparent">#CC0A192F</color>
@@ -33,25 +33,25 @@
     <color name="dialog_icon_info">#64B5F6</color>
 
     <!-- 🎨 Theme option icons -->
-    <color name="theme_option_light_icon">#FFD166</color>
+    <color name="theme_option_light_icon">@color/aqua_palette_ffd166</color>
     <color name="theme_option_dark_icon">#B39DFF</color>
     <color name="theme_option_system_icon">#29A9FF</color>
 
     <!-- 🔤 Auth metin & border renkleri (DARK THEME) -->
     <color name="auth_text_color">@android:color/white</color>
     <color name="auth_unfocused_color">@color/aqua_card_text_secondary</color>
-    <color name="auth_focus_color">#1E90FF</color>
+    <color name="auth_focus_color">@color/aqua_palette_1e90ff</color>
 
     <!-- 🧾 Settings ekranı -->
-    <color name="background_color">#0A192F</color>              <!-- Ana arka plan -->
+    <color name="background_color">@color/aqua_palette_0a192f</color>              <!-- Ana arka plan -->
     <color name="settings_divider">#223355</color>              <!-- Divider çizgisi -->
 
     <!-- ⬇️ Bottom Navigation -->
-    <color name="bottom_nav_background">#112240</color>
-    <color name="bottom_nav_item_active">#FFFFFF</color>
-    <color name="bottom_nav_item_inactive">#A0A0A0</color>
-    <color name="crop_toolbar_bg">#0A192F</color>
-    <color name="aqua_button_blue">#1E90FF</color>
-    <color name="aqua_button_red">#FF3B30</color>
+    <color name="bottom_nav_background">@color/aqua_palette_112240</color>
+    <color name="bottom_nav_item_active">@color/aqua_palette_ffffff</color>
+    <color name="bottom_nav_item_inactive">@color/aqua_palette_a0a0a0</color>
+    <color name="crop_toolbar_bg">@color/aqua_palette_0a192f</color>
+    <color name="aqua_button_blue">@color/aqua_palette_1e90ff</color>
+    <color name="aqua_button_red">@color/aqua_palette_ff3b30</color>
 
 </resources>

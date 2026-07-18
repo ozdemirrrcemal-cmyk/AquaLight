@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:includeFontPadding="false"
-        android:textColor="#8FA4BE"
+        android:textColor="@color/aqua_palette_8fa4be"
         android:textSize="@dimen/aqua_text_size_caption" />
 
     <TextView

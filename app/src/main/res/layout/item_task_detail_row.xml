@@ -5,17 +5,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="8dp">
+    android:layout_marginBottom="@dimen/aqua_space_value_8">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="14dp"
-        android:paddingTop="12dp"
-        android:paddingEnd="14dp"
-        android:paddingBottom="12dp">
+        android:paddingStart="@dimen/aqua_space_value_14"
+        android:paddingTop="@dimen/aqua_space_value_12"
+        android:paddingEnd="@dimen/aqua_space_value_14"
+        android:paddingBottom="@dimen/aqua_space_value_12">
 
         <TextView
             android:id="@+id/tvRowLabel"
@@ -30,7 +30,7 @@
             android:id="@+id/tvRowValue"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
+            android:layout_marginStart="@dimen/aqua_space_value_12"
             android:layout_weight="1.15"
             android:ellipsize="end"
             android:gravity="end"

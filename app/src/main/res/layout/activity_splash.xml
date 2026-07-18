@@ -12,15 +12,15 @@
     <!-- 🔹 Logo -->
     <ImageView
         android:id="@+id/logoImage"
-        android:layout_width="160dp"
-        android:layout_height="160dp"
+        android:layout_width="@dimen/aqua_size_value_160"
+        android:layout_height="@dimen/aqua_size_value_160"
         android:src="@drawable/logo_login"
         android:contentDescription="@string/splasch_logo_description"
         android:adjustViewBounds="true"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="140dp" />
+        android:layout_marginTop="@dimen/aqua_space_value_140" />
 
     <!-- 🔹 Başlık -->
     <TextView
@@ -32,7 +32,7 @@
         app:layout_constraintTop_toBottomOf="@id/logoImage"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="24dp" />
+        android:layout_marginTop="@dimen/aqua_space_value_24" />
 
     <!-- 🔹 Alt başlık -->
     <TextView
@@ -44,6 +44,6 @@
         app:layout_constraintTop_toBottomOf="@id/appTitle"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="6dp" />
+        android:layout_marginTop="@dimen/aqua_space_value_6" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

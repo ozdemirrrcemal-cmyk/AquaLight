@@ -6,7 +6,7 @@
 
     <View
         style="@style/Widget.Aqua.BottomSheet.Handle"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="@dimen/aqua_space_value_16" />
 
     <TextView
         android:id="@+id/tvBottomTitle"
@@ -14,21 +14,21 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
-        android:paddingBottom="12dp"
+        android:paddingBottom="@dimen/aqua_space_value_12"
         android:text="@string/address_info_country_label" />
 
     <LinearLayout
         style="@style/Widget.Aqua.SelectionRow.BottomSheet"
         android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:layout_marginBottom="12dp"
+        android:layout_height="@dimen/aqua_size_value_52"
+        android:layout_marginBottom="@dimen/aqua_space_value_12"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
         <ImageView
             android:id="@+id/ivSearch"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
+            android:layout_width="@dimen/aqua_size_value_20"
+            android:layout_height="@dimen/aqua_size_value_20"
             android:contentDescription="@string/address_info_country_search_hint"
             android:src="@drawable/ic_search"
             app:tint="@color/aqua_card_text_secondary" />
@@ -38,7 +38,7 @@
             style="@style/Widget.Aqua.Input.PlainEditText.Search"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="@dimen/aqua_space_value_8"
             android:layout_weight="1"
             android:background="@android:color/transparent"
             android:hint="@string/address_info_country_search_hint"
@@ -53,9 +53,9 @@
         android:id="@+id/recyclerCountries"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="@dimen/aqua_space_value_8"
         android:overScrollMode="never"
         android:clipToPadding="false"
-        android:paddingBottom="16dp" />
+        android:paddingBottom="@dimen/aqua_space_value_16" />
 
 </LinearLayout>

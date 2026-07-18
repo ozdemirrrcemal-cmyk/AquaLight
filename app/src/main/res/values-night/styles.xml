@@ -2,22 +2,22 @@
 
     <!-- Filled (temel) -->
     <style name="RedButton" parent="Widget.Material3.Button">
-        <item name="backgroundTint">#DB4437</item>
+        <item name="backgroundTint">@color/aqua_palette_db4437</item>
         <item name="android:textColor">@android:color/white</item>
-        <item name="cornerRadius">15dp</item>
-        <item name="android:minHeight">56dp</item>
-        <item name="android:paddingTop">17dp</item>
-        <item name="android:paddingBottom">17dp</item>
+        <item name="cornerRadius">@dimen/aqua_radius_value_15</item>
+        <item name="android:minHeight">@dimen/aqua_size_value_56</item>
+        <item name="android:paddingTop">@dimen/aqua_space_value_17</item>
+        <item name="android:paddingBottom">@dimen/aqua_space_value_17</item>
         <item name="android:elevation">0dp</item>
     </style>
 
     <style name="BlackButton" parent="Widget.Material3.Button">
         <item name="backgroundTint">@android:color/black</item>
         <item name="android:textColor">@android:color/white</item>
-        <item name="cornerRadius">15dp</item>
-        <item name="android:minHeight">56dp</item>
-        <item name="android:paddingTop">17dp</item>
-        <item name="android:paddingBottom">17dp</item>
+        <item name="cornerRadius">@dimen/aqua_radius_value_15</item>
+        <item name="android:minHeight">@dimen/aqua_size_value_56</item>
+        <item name="android:paddingTop">@dimen/aqua_space_value_17</item>
+        <item name="android:paddingBottom">@dimen/aqua_space_value_17</item>
         <item name="android:elevation">0dp</item>
     </style>
 
@@ -25,10 +25,10 @@
     <style name="WhiteButton" parent="Widget.Material3.Button.OutlinedButton">
         <item name="backgroundTint">@android:color/white</item>
         <item name="android:textColor">@android:color/black</item>
-        <item name="cornerRadius">15dp</item>
-        <item name="android:minHeight">56dp</item>
-        <item name="android:paddingTop">17dp</item>
-        <item name="android:paddingBottom">17dp</item>
+        <item name="cornerRadius">@dimen/aqua_radius_value_15</item>
+        <item name="android:minHeight">@dimen/aqua_size_value_56</item>
+        <item name="android:paddingTop">@dimen/aqua_space_value_17</item>
+        <item name="android:paddingBottom">@dimen/aqua_space_value_17</item>
         <item name="android:elevation">0dp</item>
     </style>
 </resources>

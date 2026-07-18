@@ -63,7 +63,7 @@
     <fragment
         android:id="@+id/deviceAddFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.add.DeviceAddFragment"
-        android:label="Add Device"
+        android:label="@string/nav_deviceaddfragment_label"
         tools:layout="@layout/fragment_device_add">
         <action
             android:id="@+id/action_deviceAddFragment_to_deviceWifiProvisioningFragment"
@@ -84,7 +84,7 @@
     <fragment
         android:id="@+id/deviceQrScanFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.add.DeviceQrScanFragment"
-        android:label="QR Setup"
+        android:label="@string/nav_deviceqrscanfragment_label"
         tools:layout="@layout/fragment_device_qr_scan">
         <action
             android:id="@+id/action_deviceQrScanFragment_to_deviceWifiProvisioningFragment"
@@ -98,7 +98,7 @@
     <fragment
         android:id="@+id/deviceWifiProvisioningFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.add.DeviceWifiProvisioningFragment"
-        android:label="Wi-Fi Setup"
+        android:label="@string/nav_devicewifiprovisioningfragment_label"
         tools:layout="@layout/fragment_device_wifi_provisioning">
         <argument
             android:name="candidateId"
@@ -139,7 +139,7 @@
     <fragment
         android:id="@+id/deviceProvisioningProgressFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.add.DeviceProvisioningProgressFragment"
-        android:label="Provisioning"
+        android:label="@string/nav_deviceprovisioningprogressfragment_label"
         tools:layout="@layout/fragment_device_provisioning_progress">
         <argument
             android:name="sessionId"
@@ -149,7 +149,7 @@
     <fragment
         android:id="@+id/deviceLightRootFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootFragment"
-        android:label="Light"
+        android:label="@string/theme_selection_light"
         tools:layout="@layout/fragment_device_light_root">
         <argument
             android:name="deviceUid"
@@ -163,7 +163,7 @@
     <fragment
         android:id="@+id/deviceDosingRootFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingRootFragment"
-        android:label="Dosing"
+        android:label="@string/nav_devicedosingrootfragment_label"
         tools:layout="@layout/fragment_device_dosing_root">
         <argument
             android:name="deviceUid"
@@ -177,7 +177,7 @@
     <fragment
         android:id="@+id/deviceTimerRootFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootFragment"
-        android:label="Timer"
+        android:label="@string/nav_devicetimerrootfragment_label"
         tools:layout="@layout/fragment_device_timer_root">
         <argument
             android:name="deviceUid"
@@ -191,7 +191,7 @@
     <fragment
         android:id="@+id/deviceCoolingRootFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootFragment"
-        android:label="Cooling"
+        android:label="@string/nav_devicecoolingrootfragment_label"
         tools:layout="@layout/fragment_device_cooling_root">
         <argument
             android:name="deviceUid"
