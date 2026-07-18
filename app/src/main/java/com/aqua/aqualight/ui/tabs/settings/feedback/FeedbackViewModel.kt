@@ -47,9 +47,9 @@ class FeedbackViewModel(
 
     private val _uiState = MutableStateFlow(
         FeedbackUiState(
-            category = savedStateHandle[KEY_CATEGORY].orEmpty(),
-            email = savedStateHandle[KEY_EMAIL].orEmpty(),
-            message = savedStateHandle[KEY_MESSAGE].orEmpty(),
+            category = savedStateHandle.get<String>(KEY_CATEGORY).orEmpty(),
+            email = savedStateHandle.get<String>(KEY_EMAIL).orEmpty(),
+            message = savedStateHandle.get<String>(KEY_MESSAGE).orEmpty(),
             screenshot = restoredMedia
         )
     )
