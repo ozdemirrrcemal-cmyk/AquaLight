@@ -94,7 +94,7 @@ app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/DecorationCa
 app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/DecorationCatalog.kt:65:        AquariumMaterial(
 app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/DecorationCatalog.kt:73:        AquariumMaterial(
 app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/DecorationCatalog.kt:81:        AquariumMaterial(
-app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategory.kt:3:data class MaterialCategory(
+app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategory.kt:5:data class MaterialCategory(
 app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/GravelCatalog.kt:9:        AquariumMaterial(
 app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/GravelCatalog.kt:17:        AquariumMaterial(
 app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/GravelCatalog.kt:25:        AquariumMaterial(
