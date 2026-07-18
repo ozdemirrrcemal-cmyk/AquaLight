@@ -1,0 +1,436 @@
+diff --git a/app/src/main/java/com/aqua/aqualight/ui/common/dialog/AppTimePickerDialogFragment.kt b/app/src/main/java/com/aqua/aqualight/ui/common/dialog/AppTimePickerDialogFragment.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..04e8c7f5058b6364e4da0437fd58018fe84260c9
+--- /dev/null
++++ b/app/src/main/java/com/aqua/aqualight/ui/common/dialog/AppTimePickerDialogFragment.kt
+@@ -0,0 +1,86 @@
++package com.aqua.aqualight.ui.common.dialog
++
++import android.app.Dialog
++import android.app.TimePickerDialog
++import android.content.DialogInterface
++import android.os.Bundle
++import androidx.core.os.bundleOf
++import androidx.fragment.app.DialogFragment
++import androidx.fragment.app.FragmentManager
++import java.text.DateFormat
++import java.util.Calendar
++
++/** Framework-recreatable time picker that returns its value through Fragment Result. */
++class AppTimePickerDialogFragment : DialogFragment() {
++
++    private var resultSent = false
++
++    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
++        val args = requireArguments()
++        val calendar = Calendar.getInstance().apply {
++            timeInMillis = args.getLong(ARG_INITIAL_MILLIS)
++        }
++        return TimePickerDialog(
++            requireContext(),
++            { _, hourOfDay, minute ->
++                calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
++                calendar.set(Calendar.MINUTE, minute)
++                publish(RESULT_SELECTED, calendar.timeInMillis)
++            },
++            calendar.get(Calendar.HOUR_OF_DAY),
++            calendar.get(Calendar.MINUTE),
++            DateFormat.is24HourFormat(requireContext())
++        )
++    }
++
++    override fun onCancel(dialog: DialogInterface) {
++        publish(RESULT_CANCELLED, null)
++        super.onCancel(dialog)
++    }
++
++    private fun publish(result: String, millis: Long?) {
++        if (resultSent) return
++        resultSent = true
++        val args = requireArguments()
++        val payload = bundleOf(
++            RESULT_KEY to result,
++            RESULT_PAYLOAD_ID to args.getString(ARG_PAYLOAD_ID).orEmpty()
++        )
++        millis?.let { payload.putLong(RESULT_MILLIS, it) }
++        parentFragmentManager.setFragmentResult(
++            args.getString(ARG_REQUEST_KEY).orEmpty(),
++            payload
++        )
++        dismissAllowingStateLoss()
++    }
++
++    companion object {
++        const val RESULT_KEY = "app_time_picker_result"
++        const val RESULT_MILLIS = "app_time_picker_millis"
++        const val RESULT_PAYLOAD_ID = "app_time_picker_payload_id"
++        const val RESULT_SELECTED = "selected"
++        const val RESULT_CANCELLED = "cancelled"
++
++        private const val ARG_INITIAL_MILLIS = "arg_initial_millis"
++        private const val ARG_REQUEST_KEY = "arg_request_key"
++        private const val ARG_PAYLOAD_ID = "arg_payload_id"
++        private const val TAG_PREFIX = "AppTimePickerDialogFragment:"
++
++        fun show(
++            fragmentManager: FragmentManager,
++            requestKey: String,
++            initialMillis: Long,
++            payloadId: String = ""
++        ) {
++            val tag = TAG_PREFIX + requestKey
++            if (fragmentManager.findFragmentByTag(tag) != null || fragmentManager.isStateSaved) return
++            AppTimePickerDialogFragment().apply {
++                arguments = bundleOf(
++                    ARG_INITIAL_MILLIS to initialMillis,
++                    ARG_REQUEST_KEY to requestKey,
++                    ARG_PAYLOAD_ID to payloadId
++                )
++            }.show(fragmentManager, tag)
++        }
++    }
++}
+diff --git a/app/src/main/java/com/aqua/aqualight/ui/common/feedback/FeedbackBottomSheet.kt b/app/src/main/java/com/aqua/aqualight/ui/common/feedback/FeedbackBottomSheet.kt
+index 46da84e3dd01a17a7a20c573716d0ab458501fc8..1ecff6ad3013da805336560fe79edd20894d2f21 100644
+--- a/app/src/main/java/com/aqua/aqualight/ui/common/feedback/FeedbackBottomSheet.kt
++++ b/app/src/main/java/com/aqua/aqualight/ui/common/feedback/FeedbackBottomSheet.kt
+@@ -3,4 +3,6 @@ package com.aqua.aqualight.ui.common.feedback
+ import android.content.DialogInterface
+ import android.os.Bundle
++import android.os.Handler
++import android.os.Looper
+ import android.view.View
+ import androidx.core.os.bundleOf
+@@ -11,10 +13,5 @@ import com.aqua.aqualight.databinding.BottomSheetDeviceConfirmBinding
+ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+ 
+-/**
+- * Shared process-safe confirm, warning and error sheet.
+- *
+- * All state is stored in arguments and all actions are returned with Fragment Result so
+- * Android can recreate the sheet after configuration change or process recreation.
+- */
++/** Shared process-safe confirm, info, warning and error sheet. */
+ class FeedbackBottomSheet : BottomSheetDialogFragment(
+     R.layout.bottom_sheet_device_confirm
+@@ -24,4 +21,6 @@ class FeedbackBottomSheet : BottomSheetDialogFragment(
+     private val binding get() = _binding!!
+     private var resultSent = false
++    private val handler = Handler(Looper.getMainLooper())
++    private var autoDismissRunnable: Runnable? = null
+ 
+     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+@@ -30,5 +29,7 @@ class FeedbackBottomSheet : BottomSheetDialogFragment(
+ 
+         val args = requireArguments()
+-        val tone = FeedbackTone.valueOf(args.getString(ARG_TONE).orEmpty())
++        val tone = runCatching {
++            FeedbackTone.valueOf(args.getString(ARG_TONE).orEmpty())
++        }.getOrDefault(FeedbackTone.INFO)
+         val cancelText = args.getString(ARG_CANCEL_TEXT)
+ 
+@@ -36,5 +37,7 @@ class FeedbackBottomSheet : BottomSheetDialogFragment(
+         binding.tvConfirmTitle.text = args.getString(ARG_TITLE).orEmpty()
+         binding.tvConfirmMessage.text = args.getString(ARG_MESSAGE).orEmpty()
+-        binding.btnConfirmPrimary.text = args.getString(ARG_PRIMARY_TEXT).orEmpty()
++        val primaryText = args.getString(ARG_PRIMARY_TEXT).orEmpty()
++        binding.btnConfirmPrimary.text = primaryText
++        binding.btnConfirmPrimary.isVisible = primaryText.isNotBlank()
+         binding.btnConfirmCancel.isVisible = cancelText != null
+         binding.btnConfirmCancel.text = cancelText.orEmpty()
+@@ -48,4 +51,6 @@ class FeedbackBottomSheet : BottomSheetDialogFragment(
+             dismiss()
+         }
++
++        scheduleAutoDismiss(args.getLong(ARG_AUTO_DISMISS_AT, NO_AUTO_DISMISS))
+     }
+ 
+@@ -56,8 +61,19 @@ class FeedbackBottomSheet : BottomSheetDialogFragment(
+ 
+     override fun onDestroyView() {
++        autoDismissRunnable?.let(handler::removeCallbacks)
++        autoDismissRunnable = null
+         _binding = null
+         super.onDestroyView()
+     }
+ 
++    private fun scheduleAutoDismiss(dismissAtMillis: Long) {
++        if (dismissAtMillis == NO_AUTO_DISMISS) return
++        val delay = (dismissAtMillis - System.currentTimeMillis()).coerceAtLeast(0L)
++        autoDismissRunnable = Runnable {
++            sendResult(RESULT_PRIMARY)
++            dismissAllowingStateLoss()
++        }.also { handler.postDelayed(it, delay) }
++    }
++
+     private fun sendResult(result: String) {
+         if (resultSent) return
+@@ -77,7 +93,8 @@ class FeedbackBottomSheet : BottomSheetDialogFragment(
+         return when (tone) {
+             FeedbackTone.INFO -> R.drawable.ic_info
++            FeedbackTone.SUCCESS -> R.drawable.ic_success
+             FeedbackTone.WARNING,
+-            FeedbackTone.ERROR,
+             FeedbackTone.DANGER -> R.drawable.ic_warning
++            FeedbackTone.ERROR -> R.drawable.ic_error
+         }
+     }
+@@ -85,4 +102,5 @@ class FeedbackBottomSheet : BottomSheetDialogFragment(
+     enum class FeedbackTone {
+         INFO,
++        SUCCESS,
+         WARNING,
+         ERROR,
+@@ -103,4 +121,6 @@ class FeedbackBottomSheet : BottomSheetDialogFragment(
+         private const val ARG_REQUEST_KEY = "arg_request_key"
+         private const val ARG_ACTION_ID = "arg_action_id"
++        private const val ARG_AUTO_DISMISS_AT = "arg_auto_dismiss_at"
++        private const val NO_AUTO_DISMISS = Long.MIN_VALUE
+         private const val TAG_PREFIX = "FeedbackBottomSheet:"
+ 
+@@ -112,5 +132,6 @@ class FeedbackBottomSheet : BottomSheetDialogFragment(
+             tone: FeedbackTone,
+             requestKey: String,
+-            actionId: String
++            actionId: String,
++            autoDismissMillis: Long = 0L
+         ): FeedbackBottomSheet {
+             return FeedbackBottomSheet().apply {
+@@ -122,5 +143,10 @@ class FeedbackBottomSheet : BottomSheetDialogFragment(
+                     ARG_TONE to tone.name,
+                     ARG_REQUEST_KEY to requestKey,
+-                    ARG_ACTION_ID to actionId
++                    ARG_ACTION_ID to actionId,
++                    ARG_AUTO_DISMISS_AT to if (autoDismissMillis > 0L) {
++                        System.currentTimeMillis() + autoDismissMillis
++                    } else {
++                        NO_AUTO_DISMISS
++                    }
+                 )
+             }
+@@ -135,8 +161,9 @@ class FeedbackBottomSheet : BottomSheetDialogFragment(
+             tone: FeedbackTone,
+             requestKey: String,
+-            actionId: String
++            actionId: String,
++            autoDismissMillis: Long = 0L
+         ) {
+             val tag = TAG_PREFIX + requestKey
+-            if (fragmentManager.findFragmentByTag(tag) != null) return
++            if (fragmentManager.findFragmentByTag(tag) != null || fragmentManager.isStateSaved) return
+ 
+             newInstance(
+@@ -147,5 +174,6 @@ class FeedbackBottomSheet : BottomSheetDialogFragment(
+                 tone = tone,
+                 requestKey = requestKey,
+-                actionId = actionId
++                actionId = actionId,
++                autoDismissMillis = autoDismissMillis
+             ).show(fragmentManager, tag)
+         }
+diff --git a/app/src/main/java/com/aqua/aqualight/utils/DialogManager.kt b/app/src/main/java/com/aqua/aqualight/utils/DialogManager.kt
+index 8b7727214e4fe0df16ea746902d840db3ba3f45d..ffcb07169afc232c738587166a25d7ea35398bf1 100644
+--- a/app/src/main/java/com/aqua/aqualight/utils/DialogManager.kt
++++ b/app/src/main/java/com/aqua/aqualight/utils/DialogManager.kt
+@@ -1,12 +1,10 @@
+ package com.aqua.aqualight.utils
+ 
+-import android.app.AlertDialog
+ import android.content.Context
+-import android.os.Handler
+-import android.os.Looper
++import android.content.ContextWrapper
+ import androidx.annotation.StringRes
++import androidx.fragment.app.FragmentActivity
+ import com.aqua.aqualight.R
+-import com.aqua.aqualight.databinding.DialogAppBinding
+-import com.aqua.aqualight.databinding.DialogAppConfirmBinding
++import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
+ 
+ enum class DialogType {
+@@ -17,4 +15,5 @@ enum class DialogType {
+ }
+ 
++/** Compatibility facade for one-way informational feedback. Confirmations use Fragment Result directly. */
+ object DialogManager {
+ 
+@@ -25,112 +24,45 @@ object DialogManager {
+         message: String,
+         @StringRes buttonTextResId: Int = R.string.ok,
+-        onDismiss: (() -> Unit)? = null,
+         autoDismissMillis: Long = 0L
+     ) {
+-        val binding = DialogAppBinding.inflate(
+-            android.view.LayoutInflater.from(context)
+-        )
+-
+-        binding.dialogIcon.apply {
+-            imageTintList = null
+-            setImageResource(iconResFor(type))
+-            contentDescription = context.getString(R.string.dialog_icon_desc)
+-        }
+-
+-        binding.dialogTitle.text = title
+-        binding.dialogMessage.text = message
+-
+-        val dialog = AlertDialog.Builder(context, R.style.AppDialogTheme)
+-            .setView(binding.root)
+-            .setCancelable(false)
+-            .create()
+-
+-        val handler = Handler(Looper.getMainLooper())
+-        var dismissRunnable: Runnable? = null
+-
+-        dialog.setOnDismissListener {
+-            dismissRunnable?.let { runnable ->
+-                handler.removeCallbacks(runnable)
+-            }
+-            onDismiss?.invoke()
++        val activity = context.findFragmentActivity() ?: return
++        val requestKey = buildString {
++            append(INFO_REQUEST_PREFIX)
++            append(type.name)
++            append(':')
++            append(title.hashCode())
++            append(':')
++            append(message.hashCode())
+         }
+-
+-        if (autoDismissMillis <= 0L) {
+-            binding.dialogButton.visibility = android.view.View.VISIBLE
+-            binding.dialogButton.text = context.getString(buttonTextResId)
+-            binding.dialogButton.setOnClickListener {
+-                dialog.dismiss()
+-            }
+-        } else {
+-            binding.dialogButton.visibility = android.view.View.GONE
+-
+-            dismissRunnable = Runnable {
+-                if (dialog.isShowing) {
+-                    dialog.dismiss()
+-                }
+-            }
+-
+-            handler.postDelayed(dismissRunnable!!, autoDismissMillis)
+-        }
+-
+-        dialog.show()
+-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+-        dialog.window?.setDimAmount(0.52f)
+-    }
+-
+-    fun showConfirmDialog(
+-        context: Context,
+-        type: DialogType,
+-        title: String,
+-        message: String,
+-        @StringRes confirmTextResId: Int = R.string.confirm,
+-        @StringRes cancelTextResId: Int = R.string.cancel,
+-        onConfirm: (() -> Unit)? = null,
+-        onCancel: (() -> Unit)? = null
+-    ) {
+-        val binding = DialogAppConfirmBinding.inflate(
+-            android.view.LayoutInflater.from(context)
++        FeedbackBottomSheet.show(
++            fragmentManager = activity.supportFragmentManager,
++            title = title,
++            message = message,
++            primaryText = if (autoDismissMillis > 0L) "" else context.getString(buttonTextResId),
++            cancelText = null,
++            tone = type.toFeedbackTone(),
++            requestKey = requestKey,
++            actionId = "",
++            autoDismissMillis = autoDismissMillis
+         )
++    }
+ 
+-        binding.dialogIcon.apply {
+-            imageTintList = null
+-            setImageResource(iconResFor(type))
+-            contentDescription = context.getString(R.string.dialog_icon_desc)
+-        }
+-
+-        binding.dialogTitle.text = title
+-        binding.dialogMessage.text = message
+-        binding.btnCancel.text = context.getString(cancelTextResId)
+-        binding.btnConfirm.text = context.getString(confirmTextResId)
+-
+-        val dialog = AlertDialog.Builder(context, R.style.AppDialogTheme)
+-            .setView(binding.root)
+-            .setCancelable(false)
+-            .create()
+-
+-        binding.btnCancel.setOnClickListener {
+-            dialog.dismiss()
+-            onCancel?.invoke()
+-        }
+-
+-        binding.btnConfirm.setOnClickListener {
+-            dialog.dismiss()
+-            onConfirm?.invoke()
++    private fun DialogType.toFeedbackTone(): FeedbackBottomSheet.FeedbackTone {
++        return when (this) {
++            DialogType.INFO -> FeedbackBottomSheet.FeedbackTone.INFO
++            DialogType.SUCCESS -> FeedbackBottomSheet.FeedbackTone.SUCCESS
++            DialogType.WARNING -> FeedbackBottomSheet.FeedbackTone.WARNING
++            DialogType.ERROR -> FeedbackBottomSheet.FeedbackTone.ERROR
+         }
+-
+-        dialog.show()
+-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+-        dialog.window?.setDimAmount(0.52f)
+     }
+ 
+-    private fun iconResFor(
+-        type: DialogType
+-    ): Int {
+-        return when (type) {
+-            DialogType.ERROR -> R.drawable.ic_error
+-            DialogType.SUCCESS -> R.drawable.ic_success
+-            DialogType.WARNING -> R.drawable.ic_warning
+-            DialogType.INFO -> R.drawable.ic_info
++    private tailrec fun Context.findFragmentActivity(): FragmentActivity? {
++        return when (this) {
++            is FragmentActivity -> this
++            is ContextWrapper -> baseContext.findFragmentActivity()
++            else -> null
+         }
+     }
++
++    private const val INFO_REQUEST_PREFIX = "dialog_manager_info:"
+ }
+diff --git a/app/src/main/res/layout/bottom_sheet_single_choice.xml b/app/src/main/res/layout/bottom_sheet_single_choice.xml
+new file mode 100644
+index 0000000000000000000000000000000000000000..71395463e0c7981e95ce1dcbe63413dd536ca1b0
+--- /dev/null
++++ b/app/src/main/res/layout/bottom_sheet_single_choice.xml
+@@ -0,0 +1,29 @@
++<?xml version="1.0" encoding="utf-8"?>
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:id="@+id/singleChoiceRoot"
++    style="@style/Widget.Aqua.BottomSheet.Root">
++
++    <View style="@style/Widget.Aqua.BottomSheet.Handle" />
++
++    <TextView
++        android:id="@+id/tvSingleChoiceTitle"
++        style="@style/TextAppearance.Aqua.BottomSheet.Title"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:layout_marginTop="18dp"
++        android:gravity="center" />
++
++    <ScrollView
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:layout_marginTop="20dp"
++        android:fillViewport="true"
++        android:overScrollMode="never">
++
++        <GridLayout
++            android:id="@+id/singleChoiceContainer"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content" />
++    </ScrollView>
++
++</LinearLayout>
