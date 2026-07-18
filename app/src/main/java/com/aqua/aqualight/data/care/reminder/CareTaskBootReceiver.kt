@@ -1,20 +1,31 @@
 package com.aqua.aqualight.data.care.reminder
 
+import android.app.AlarmManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.aqua.aqualight.data.auth.FirebaseAuthenticatedOwnerProvider
+import com.aqua.aqualight.platform.permissions.PreciseReminderAccessPolicy
 
-/** Enqueues durable owner reminder restoration after reboot or app replacement. */
+/** Enqueues owner reminder restoration after reboot, app replacement or timing access grant. */
 class CareTaskBootReceiver : BroadcastReceiver() {
 
     override fun onReceive(
         context: Context,
         intent: Intent
     ) {
+        val action = intent.action
         if (
-            intent.action != Intent.ACTION_BOOT_COMPLETED &&
-            intent.action != Intent.ACTION_MY_PACKAGE_REPLACED
+            action != Intent.ACTION_BOOT_COMPLETED &&
+            action != Intent.ACTION_MY_PACKAGE_REPLACED &&
+            action != AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED
+        ) {
+            return
+        }
+
+        if (
+            action == AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED &&
+            !PreciseReminderAccessPolicy(context).isGranted()
         ) {
             return
         }
