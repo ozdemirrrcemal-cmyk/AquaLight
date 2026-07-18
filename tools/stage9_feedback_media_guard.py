@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail CI when Stage 9 feedback/media architecture regresses."""
+"""Fail CI when Stage 9 feedback/media architecture or recovery contracts regress."""
 
 from pathlib import Path
 import sys
@@ -8,15 +8,19 @@ ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "app/src/main/java/com/aqua/aqualight"
 FEEDBACK_FRAGMENT = APP / "ui/tabs/settings/feedback/FeedbackFragment.kt"
 AQUARIUM_STORE = APP / "data/aquarium/store/AquariumTankDataStoreManager.kt"
+REPOSITORY = APP / "data/feedback/FirebaseFeedbackSubmissionOperations.kt"
+JOURNAL = APP / "data/feedback/FeedbackSubmissionJournalStore.kt"
+PROCESSOR = APP / "platform/media/FeedbackMediaProcessor.kt"
+COORDINATOR = APP / "ui/common/media/MediaFlowCoordinatorViewModel.kt"
 
 REQUIRED = (
     APP / "application/feedback/FeedbackSubmissionOperations.kt",
-    APP / "data/feedback/FirebaseFeedbackSubmissionOperations.kt",
-    APP / "data/feedback/FeedbackOrphanStore.kt",
+    REPOSITORY,
+    JOURNAL,
     APP / "platform/media/FeedbackImagePolicy.kt",
-    APP / "platform/media/FeedbackMediaProcessor.kt",
+    PROCESSOR,
     APP / "platform/media/AppMediaStorage.kt",
-    APP / "ui/common/media/MediaFlowCoordinatorViewModel.kt",
+    COORDINATOR,
     APP / "ui/tabs/settings/feedback/FeedbackViewModel.kt",
     ROOT / "docs/stage9-feedback-media-contract.md",
     ROOT / "app/src/test/java/com/aqua/aqualight/data/feedback/FirebaseFeedbackSubmissionOperationsTest.kt",
@@ -29,6 +33,7 @@ REQUIRED = (
 OBSOLETE = (
     APP / "ui/tabs/aquarium/photo/TankPhotoFlowCoordinator.kt",
     APP / "data/aquarium/photo/TankPhotoStorage.kt",
+    APP / "data/feedback/FeedbackOrphanStore.kt",
 )
 
 errors: list[str] = []
@@ -39,7 +44,7 @@ for path in REQUIRED:
 
 for path in OBSOLETE:
     if path.exists():
-        errors.append(f"{path.relative_to(ROOT)}: obsolete media implementation must stay removed")
+        errors.append(f"{path.relative_to(ROOT)}: obsolete Stage 9 implementation must stay removed")
 
 if FEEDBACK_FRAGMENT.is_file():
     text = FEEDBACK_FRAGMENT.read_text(encoding="utf-8", errors="ignore")
@@ -89,43 +94,104 @@ if AQUARIUM_STORE.is_file():
             f"{AQUARIUM_STORE.relative_to(ROOT)}: legacy tank photo storage reference is forbidden"
         )
 
-repository = APP / "data/feedback/FirebaseFeedbackSubmissionOperations.kt"
-if repository.is_file():
-    text = repository.read_text(encoding="utf-8", errors="ignore")
+if REPOSITORY.is_file():
+    text = REPOSITORY.read_text(encoding="utf-8", errors="ignore")
     for token in (
-        "suspend fun submit",
+        "withContext(dispatcher)",
+        "transactionMutex.withLock",
+        "journalStore.put",
+        "documentStore.commitState",
+        "FeedbackDocumentCommitState.COMMITTED",
+        "FeedbackDocumentCommitState.ABSENT",
+        "Source.SERVER",
         "screenshotStore.delete",
-        "cleanupOrphans",
-        "orphanStore.add",
+        "suspendCoroutine",
+        "throwIfCancellation",
     ):
         if token not in text:
             errors.append(
-                f"{repository.relative_to(ROOT)}: required rollback/orphan contract missing: {token}"
+                f"{REPOSITORY.relative_to(ROOT)}: commercial transaction contract missing: {token}"
             )
+    if "suspendCancellableCoroutine" in text:
+        errors.append(
+            f"{REPOSITORY.relative_to(ROOT)}: non-cancellable Firebase Task must not use cancellable await"
+        )
 
-processor = APP / "platform/media/FeedbackMediaProcessor.kt"
-if processor.is_file():
-    text = processor.read_text(encoding="utf-8", errors="ignore")
+if JOURNAL.is_file():
+    text = JOURNAL.read_text(encoding="utf-8", errors="ignore")
+    for token in (
+        "FeedbackSubmissionJournalStore",
+        "PendingFeedbackUpload",
+        ".commit()",
+        "feedback_submission_journal_v1",
+    ):
+        if token not in text:
+            errors.append(
+                f"{JOURNAL.relative_to(ROOT)}: durable journal contract missing: {token}"
+            )
+    if ".apply()" in text:
+        errors.append(
+            f"{JOURNAL.relative_to(ROOT)}: upload journal must be synchronously durable, not apply()"
+        )
+
+if PROCESSOR.is_file():
+    text = PROCESSOR.read_text(encoding="utf-8", errors="ignore")
     for token in (
         "Dispatchers.IO",
+        "feedback_source_",
+        "MAX_SOURCE_BYTES",
+        "currentCoroutineContext().ensureActive()",
         "inJustDecodeBounds",
+        "FileInputStream",
         ".use {",
+        "CancellationException",
         "OutOfMemoryError",
         "MAX_OUTPUT_BYTES",
     ):
         if token not in text:
             errors.append(
-                f"{processor.relative_to(ROOT)}: required bounded processing missing: {token}"
+                f"{PROCESSOR.relative_to(ROOT)}: bounded/cancellable media processing missing: {token}"
             )
 
-coordinator = APP / "ui/common/media/MediaFlowCoordinatorViewModel.kt"
-if coordinator.is_file():
-    text = coordinator.read_text(encoding="utf-8", errors="ignore")
+if COORDINATOR.is_file():
+    text = COORDINATOR.read_text(encoding="utf-8", errors="ignore")
     for token in ("SavedStateHandle", "commitSelection", "rollbackSelection"):
         if token not in text:
             errors.append(
-                f"{coordinator.relative_to(ROOT)}: required lifecycle contract missing: {token}"
+                f"{COORDINATOR.relative_to(ROOT)}: required lifecycle contract missing: {token}"
             )
+
+TEST_EXPECTATIONS = {
+    ROOT / "app/src/test/java/com/aqua/aqualight/data/feedback/FirebaseFeedbackSubmissionOperationsTest.kt": (
+        "firestoreFailureAfterUploadDeletesStorageObject",
+        "cancellationAfterUploadKeepsJournalAndDoesNotGuessRollbackOutcome",
+        "cleanupPreservesStorageWhenFirestoreAlreadyCommittedMatchingPath",
+        "cleanupFailsSafeForConflictOrUnverifiedServerState",
+    ),
+    ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/settings/feedback/FeedbackViewModelTest.kt": (
+        "restoresFormAndSelectedMediaThenSubmitsThroughUseCase",
+        "recreationNeverReplaysAnInterruptedSubmission",
+        "submissionFailureKeepsFormAndScreenshotForRetry",
+    ),
+    ROOT / "app/src/androidTest/java/com/aqua/aqualight/platform/media/FeedbackMediaProcessorInstrumentedTest.kt": (
+        "largeUnknownLengthImageIsBoundedAndSourceStreamIsClosed",
+        "sourceBeyondByteLimitIsRejectedBeforeDecodeAndStreamIsClosed",
+        "cancellationIsNotConvertedToIoFailureAndStagedFileIsDeleted",
+    ),
+    ROOT / "app/src/androidTest/java/com/aqua/aqualight/ui/common/media/MediaFlowCoordinatorInstrumentedTest.kt": (
+        "pendingCameraAndCropFilesAreCleanedAfterCoordinatorRecreationAndCancel",
+        "previousPersistedMediaIsDeletedOnlyAfterReplacementCommit",
+        "rollbackKeepsPersistedMediaAndDeletesOnlyNewSelection",
+    ),
+}
+
+for path, tokens in TEST_EXPECTATIONS.items():
+    if not path.is_file():
+        continue
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    for token in tokens:
+        if token not in text:
+            errors.append(f"{path.relative_to(ROOT)}: required regression test missing: {token}")
 
 if errors:
     print("Stage 9 feedback/media architecture guard failed:")
