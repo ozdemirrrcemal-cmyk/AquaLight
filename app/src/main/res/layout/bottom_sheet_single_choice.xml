@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/singleChoiceRoot"
+    style="@style/Widget.Aqua.BottomSheet.Root">
+
+    <View style="@style/Widget.Aqua.BottomSheet.Handle" />
+
+    <TextView
+        android:id="@+id/tvSingleChoiceTitle"
+        style="@style/TextAppearance.Aqua.BottomSheet.Title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:gravity="center" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:fillViewport="true"
+        android:overScrollMode="never">
+
+        <GridLayout
+            android:id="@+id/singleChoiceContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </ScrollView>
+
+</LinearLayout>

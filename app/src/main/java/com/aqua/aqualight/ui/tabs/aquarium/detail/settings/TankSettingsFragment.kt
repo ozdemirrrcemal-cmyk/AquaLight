@@ -4,7 +4,6 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.View
-import android.widget.FrameLayout
 import androidx.activity.OnBackPressedCallback
 import androidx.annotation.StringRes
 import androidx.fragment.app.Fragment
@@ -15,9 +14,9 @@ import androidx.navigation.fragment.navArgs
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
-import com.aqua.aqualight.databinding.DialogCareProfileBinding
 import com.aqua.aqualight.databinding.FragmentTankSettingsBinding
-import com.aqua.aqualight.databinding.ItemCareProfileRowBinding
+import com.aqua.aqualight.ui.common.bottomsheet.CareProfileBottomSheet
+import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderScoreBadge
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -28,10 +27,6 @@ import com.aqua.aqualight.ui.tabs.aquarium.careprofile.CareProfileCalculator
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragment
 import com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailFragment
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
-import com.aqua.aqualight.utils.DialogManager
-import com.aqua.aqualight.utils.DialogType
-import com.google.android.material.bottomsheet.BottomSheetDialog
-import kotlin.math.roundToInt
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
 
@@ -47,6 +42,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     private var currentTank: AquariumTankSnapshot? = null
     private var isDeletingTank: Boolean = false
     private var tabHost: AquaSwipeTabHost<SettingsTab>? = null
+    private var careProfileItemsByToken: Map<String, CareProfileCalculator.Item> = emptyMap()
 
     override fun onCreate(
         savedInstanceState: Bundle?
@@ -70,11 +66,28 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         selectedTab = restoreSelectedTab(savedInstanceState)
 
         setupHeader()
+        setupResultListeners()
         setupSystemBackButton()
         setupSettingsPager(
             initialTab = selectedTab
         )
         observeTank()
+    }
+
+
+    private fun setupResultListeners() {
+        childFragmentManager.setFragmentResultListener(
+            CARE_PROFILE_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            result.getString(CareProfileBottomSheet.RESULT_TOKEN)
+                ?.let(careProfileItemsByToken::get)
+                ?.let(::handleCareProfileItemClick)
+        }
+        childFragmentManager.setFragmentResultListener(
+            TANK_MISSING_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, _ -> findNavController().navigateUp() }
     }
 
     private fun setupHeader(
@@ -206,14 +219,15 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
                     return@observe
                 }
 
-                DialogManager.showInfoDialog(
-                    context = requireContext(),
-                    type = DialogType.ERROR,
+                FeedbackBottomSheet.show(
+                    fragmentManager = childFragmentManager,
                     title = getString(R.string.aquarium_tank_not_found_title),
                     message = getString(R.string.aquarium_tank_no_longer_exists_message),
-                    onDismiss = {
-                        findNavController().navigateUp()
-                    }
+                    primaryText = getString(R.string.ok),
+                    cancelText = null,
+                    tone = FeedbackBottomSheet.FeedbackTone.ERROR,
+                    requestKey = TANK_MISSING_REQUEST_KEY,
+                    actionId = ""
                 )
 
                 return@observe
@@ -261,109 +275,44 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         )
     }
 
-    private fun showCareProfileSheet(
-        tank: AquariumTankSnapshot
-    ) {
+    private fun showCareProfileSheet(tank: AquariumTankSnapshot) {
         val result = CareProfileCalculator.calculate(requireContext(), tank)
-        val dialog = BottomSheetDialog(requireContext())
-        val sheetBinding = DialogCareProfileBinding.inflate(layoutInflater)
-
-        val profileColor = getCareProfileColor(result.percent)
-
-        sheetBinding.tvCareProfilePercent.text = getString(
-            R.string.aquarium_care_profile_percent_format,
-            result.percent
-        )
-        sheetBinding.tvCareProfileSummary.text = getString(
-            R.string.aquarium_care_profile_summary_format,
-            result.completedCount,
-            result.totalCount
-        )
-
-        sheetBinding.careProgressTrack.background = createRoundedDrawable(
-            color = "#DDE3EA",
-            radiusPx = 3.dp()
-        )
-
-        sheetBinding.careProgressFill.background = createRoundedDrawable(
-            color = colorToHex(profileColor),
-            radiusPx = 3.dp()
-        )
-
-        sheetBinding.careProfileItemsContainer.removeAllViews()
-
-        result.items.forEach { item ->
-            val rowBinding = ItemCareProfileRowBinding.inflate(
-                layoutInflater,
-                sheetBinding.careProfileItemsContainer,
-                false
-            )
-
-            rowBinding.tvCareProfileItemTitle.text = item.title
-            rowBinding.tvCareProfileItemSubtitle.text = item.subtitle
-
-            rowBinding.tvCareProfileItemStatus.text = if (item.completed) {
-                getString(R.string.aquarium_care_profile_status_complete)
-            } else {
-                getString(R.string.aquarium_care_profile_status_missing)
-            }
-
-            rowBinding.tvCareProfileItemStatus.setTextColor(
-                if (item.completed) {
-                    Color.parseColor("#5FD6B4")
-                } else {
-                    Color.parseColor("#E0A84C")
-                }
-            )
-
-            rowBinding.tvCareProfileItemStatus.background = createRoundedDrawable(
-                color = if (item.completed) "#09251D" else "#2A2315",
-                radiusPx = 14.dp(),
-                strokeColor = if (item.completed) "#1E5A48" else "#6A4D1E",
-                strokeWidthPx = 1.dp()
-            )
-
-            rowBinding.root.setOnClickListener {
-                dialog.dismiss()
-                handleCareProfileItemClick(item)
-            }
-
-            sheetBinding.careProfileItemsContainer.addView(rowBinding.root)
+        val tokenPairs = result.items.mapIndexed { index, item ->
+            buildCareProfileToken(index, item) to item
         }
+        careProfileItemsByToken = tokenPairs.toMap()
+        CareProfileBottomSheet.show(
+            fragmentManager = childFragmentManager,
+            percent = result.percent,
+            percentText = getString(
+                R.string.aquarium_care_profile_percent_format,
+                result.percent
+            ),
+            summaryText = getString(
+                R.string.aquarium_care_profile_summary_format,
+                result.completedCount,
+                result.totalCount
+            ),
+            profileColor = getCareProfileColor(result.percent),
+            titles = result.items.map(CareProfileCalculator.Item::title),
+            subtitles = result.items.map(CareProfileCalculator.Item::subtitle),
+            completed = result.items.map(CareProfileCalculator.Item::completed).toBooleanArray(),
+            tokens = tokenPairs.map { it.first },
+            requestKey = CARE_PROFILE_REQUEST_KEY
+        )
+    }
 
-        dialog.setContentView(sheetBinding.root)
-
-        dialog.setOnShowListener {
-            val bottomSheet = dialog.findViewById<FrameLayout>(
-                com.google.android.material.R.id.design_bottom_sheet
-            )
-
-            val maxHeight = (
-                resources.displayMetrics.heightPixels * 0.82f
-            ).roundToInt()
-
-            bottomSheet?.let { sheet ->
-                sheet.setBackgroundColor(Color.TRANSPARENT)
-
-                val params = sheet.layoutParams
-                params.height = maxHeight
-                sheet.layoutParams = params
-            }
-
-            dialog.behavior.peekHeight = maxHeight
-
-            sheetBinding.careProgressTrack.post {
-                val fillWidth = (
-                    sheetBinding.careProgressTrack.width * result.percent / 100f
-                ).roundToInt()
-
-                val params = sheetBinding.careProgressFill.layoutParams
-                params.width = fillWidth
-                sheetBinding.careProgressFill.layoutParams = params
-            }
+    private fun buildCareProfileToken(
+        index: Int,
+        item: CareProfileCalculator.Item
+    ): String {
+        return buildString {
+            append(index)
+            append(':')
+            append(item.actionKey?.name.orEmpty())
+            append(':')
+            append(item.materialCategoryKey.orEmpty())
         }
-
-        dialog.show()
     }
 
     private fun handleCareProfileItemClick(
@@ -636,6 +585,8 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     }
 
     companion object {
+        private const val CARE_PROFILE_REQUEST_KEY = "tank_care_profile_result"
+        private const val TANK_MISSING_REQUEST_KEY = "tank_settings_missing_result"
         private const val KEY_SELECTED_TAB = "selectedTab"
         private const val SETTINGS_PAGER_OFFSCREEN_LIMIT = 2
 

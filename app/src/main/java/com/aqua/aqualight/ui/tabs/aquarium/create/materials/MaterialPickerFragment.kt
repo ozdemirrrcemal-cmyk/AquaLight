@@ -25,7 +25,7 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderSearchField
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.ui.tabs.aquarium.materials.CustomMaterialSheet
+import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.tabs.aquarium.materials.MaterialSelectionMapper
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCatalog
@@ -96,11 +96,28 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
 
         setupHeader()
         setupClickListeners()
+        setupCustomMaterialResultListener()
 
         if (pickerMode == MODE_SETTINGS) {
             observeSettingsTank()
         } else {
             initializeCreateMode()
+        }
+    }
+
+
+    private fun setupCustomMaterialResultListener() {
+        childFragmentManager.setFragmentResultListener(
+            CUSTOM_MATERIAL_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (result.getString(TextInputBottomSheet.RESULT_KEY) !=
+                TextInputBottomSheet.RESULT_SAVED
+            ) return@setFragmentResultListener
+            result.getString(TextInputBottomSheet.RESULT_VALUE)
+                ?.trim()
+                ?.takeIf(String::isNotBlank)
+                ?.let(::addCustomMaterial)
         }
     }
 
@@ -547,13 +564,19 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
     }
 
     private fun showNewMaterialSheet() {
-        CustomMaterialSheet.show(
-            fragment = this,
-            categoryTitle = categoryTitle,
-            initialName = searchQuery.trim(),
-            onSave = { materialName ->
-                addCustomMaterial(materialName)
-            }
+        TextInputBottomSheet.show(
+            fragmentManager = childFragmentManager,
+            title = getString(R.string.material_picker_new_material),
+            label = getString(R.string.material_picker_material_name),
+            hint = getString(R.string.material_picker_enter_material_name),
+            initialValue = searchQuery.trim(),
+            secondaryLabel = getString(R.string.material_picker_category),
+            secondaryValue = categoryTitle,
+            saveText = getString(R.string.material_picker_save),
+            cancelText = getString(R.string.material_picker_cancel),
+            required = true,
+            requiredMessage = getString(R.string.material_picker_required),
+            requestKey = CUSTOM_MATERIAL_REQUEST_KEY
         )
     }
 
@@ -716,6 +739,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
     }
 
     companion object {
+        private const val CUSTOM_MATERIAL_REQUEST_KEY = "custom_material_result"
         const val ARG_MODE = "arg_mode"
         const val ARG_TANK_ID = "arg_tank_id"
         const val ARG_CATEGORY_KEY = "arg_category_key"

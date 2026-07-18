@@ -11,6 +11,7 @@ import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.application.aquarium.DeleteAquariumTanksResult
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentTankSettingsOthersBinding
+import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.export.TankPdfExporter
@@ -56,7 +57,28 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
         _binding = FragmentTankSettingsOthersBinding.bind(view)
 
         setupClickListeners()
+        setupFeedbackResultListener()
         observeTank()
+    }
+
+
+    private fun setupFeedbackResultListener() {
+        childFragmentManager.setFragmentResultListener(
+            OTHER_SETTINGS_FEEDBACK_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            when (result.getString(FeedbackBottomSheet.RESULT_ACTION_ID)) {
+                ACTION_DUPLICATE -> if (
+                    result.getString(FeedbackBottomSheet.RESULT_KEY) ==
+                    FeedbackBottomSheet.RESULT_PRIMARY
+                ) duplicateCurrentTank()
+                ACTION_DELETE -> if (
+                    result.getString(FeedbackBottomSheet.RESULT_KEY) ==
+                    FeedbackBottomSheet.RESULT_PRIMARY
+                ) deleteCurrentTank()
+                ACTION_MISSING -> findNavController().navigateUp()
+            }
+        }
     }
 
     private fun setupClickListeners() {
@@ -114,14 +136,15 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
                     return@observe
                 }
 
-                DialogManager.showInfoDialog(
-                    context = requireContext(),
-                    type = DialogType.ERROR,
+                FeedbackBottomSheet.show(
+                    fragmentManager = childFragmentManager,
                     title = getString(R.string.aquarium_tank_not_found_title),
                     message = getString(R.string.aquarium_tank_no_longer_exists_message),
-                    onDismiss = {
-                        findNavController().navigateUp()
-                    }
+                    primaryText = getString(R.string.ok),
+                    cancelText = null,
+                    tone = FeedbackBottomSheet.FeedbackTone.ERROR,
+                    requestKey = OTHER_SETTINGS_FEEDBACK_REQUEST_KEY,
+                    actionId = ACTION_MISSING
                 )
 
                 return@observe
@@ -211,16 +234,15 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
             return
         }
 
-        DialogManager.showConfirmDialog(
-            context = requireContext(),
-            type = DialogType.INFO,
+        FeedbackBottomSheet.show(
+            fragmentManager = childFragmentManager,
             title = getString(R.string.aquarium_duplicate_tank_title),
             message = getString(R.string.aquarium_duplicate_tank_message, tank.name),
-            confirmTextResId = R.string.duplicate,
-            cancelTextResId = R.string.cancel,
-            onConfirm = {
-                duplicateCurrentTank()
-            }
+            primaryText = getString(R.string.duplicate),
+            cancelText = getString(R.string.cancel),
+            tone = FeedbackBottomSheet.FeedbackTone.INFO,
+            requestKey = OTHER_SETTINGS_FEEDBACK_REQUEST_KEY,
+            actionId = ACTION_DUPLICATE
         )
     }
 
@@ -320,16 +342,15 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
             return
         }
 
-        DialogManager.showConfirmDialog(
-            context = requireContext(),
-            type = DialogType.WARNING,
+        FeedbackBottomSheet.show(
+            fragmentManager = childFragmentManager,
             title = getString(R.string.aquarium_delete_tank_title),
             message = getString(R.string.aquarium_delete_tank_message, tank.name),
-            confirmTextResId = R.string.delete,
-            cancelTextResId = R.string.cancel,
-            onConfirm = {
-                deleteCurrentTank()
-            }
+            primaryText = getString(R.string.delete),
+            cancelText = getString(R.string.cancel),
+            tone = FeedbackBottomSheet.FeedbackTone.DANGER,
+            requestKey = OTHER_SETTINGS_FEEDBACK_REQUEST_KEY,
+            actionId = ACTION_DELETE
         )
     }
 
@@ -415,6 +436,10 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
 
     companion object {
         private const val ARG_TANK_ID = "tankId"
+        private const val OTHER_SETTINGS_FEEDBACK_REQUEST_KEY = "tank_other_settings_feedback"
+        private const val ACTION_DUPLICATE = "duplicate"
+        private const val ACTION_DELETE = "delete"
+        private const val ACTION_MISSING = "missing"
 
         fun newInstance(
             tankId: Long

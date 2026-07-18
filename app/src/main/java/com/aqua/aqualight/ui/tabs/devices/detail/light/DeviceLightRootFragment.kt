@@ -2,7 +2,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light
 
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -11,6 +10,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceLightRootBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -60,11 +60,14 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
         binding.tvFirmware.setOnLongClickListener {
             val shouldShow = binding.otaTestPanel.visibility != View.VISIBLE
             binding.otaTestPanel.visibility = if (shouldShow) View.VISIBLE else View.GONE
-            Toast.makeText(
-                requireContext(),
-                if (shouldShow) "OTA test panel opened" else "OTA test panel hidden",
-                Toast.LENGTH_SHORT
-            ).show()
+            (activity as? BaseActivity)?.showSnackBar(
+                message = if (shouldShow) {
+                    getString(R.string.device_ota_test_panel_opened)
+                } else {
+                    getString(R.string.device_ota_test_panel_hidden)
+                },
+                type = BaseActivity.SnackType.NORMAL
+            )
             true
         }
 

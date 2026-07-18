@@ -15,6 +15,7 @@ import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentChangeEmailBinding
 import com.aqua.aqualight.ui.auth.state.AuthActionState
 import com.aqua.aqualight.ui.auth.viewmodel.ChangeEmailViewModel
+import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.navigation.RootNavigator
@@ -55,8 +56,28 @@ class ChangeEmailFragment :
             FragmentChangeEmailBinding.bind(view)
 
         setupHeader()
+        setupFeedbackResultListener()
         setupScreen()
         observeState()
+    }
+
+
+    private fun setupFeedbackResultListener() {
+        childFragmentManager.setFragmentResultListener(
+            CHANGE_EMAIL_FEEDBACK_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            when (result.getString(FeedbackBottomSheet.RESULT_ACTION_ID)) {
+                ACTION_CLOSE -> findNavController().popBackStack()
+                ACTION_FINISH_EMAIL_CHANGE -> {
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        sessionExitOperations.cleanupAfterSensitiveAction()
+                        viewModel.resetState()
+                        navigateToLoginRoot()
+                    }
+                }
+            }
+        }
     }
 
     private fun setupHeader() {
@@ -67,19 +88,15 @@ class ChangeEmailFragment :
 
     private fun setupScreen() {
         if (viewModel.currentEmail().isBlank()) {
-            DialogManager.showInfoDialog(
-                requireContext(),
-                DialogType.ERROR,
-                title = getString(
-                    R.string.change_email_user_not_found_title
-                ),
-                message = getString(
-                    R.string.change_email_user_not_found_message
-                ),
-                onDismiss = {
-                    findNavController()
-                        .popBackStack()
-                }
+            FeedbackBottomSheet.show(
+                fragmentManager = childFragmentManager,
+                title = getString(R.string.change_email_user_not_found_title),
+                message = getString(R.string.change_email_user_not_found_message),
+                primaryText = getString(R.string.ok),
+                cancelText = null,
+                tone = FeedbackBottomSheet.FeedbackTone.ERROR,
+                requestKey = CHANGE_EMAIL_FEEDBACK_REQUEST_KEY,
+                actionId = ACTION_CLOSE
             )
 
             return
@@ -237,23 +254,18 @@ class ChangeEmailFragment :
 
         when (state) {
             is AuthActionState.EmailVerificationSent -> {
-                DialogManager.showInfoDialog(
-                    requireContext(),
-                    DialogType.SUCCESS,
-                    title = getString(
-                        R.string.change_email_verification_title
-                    ),
+                FeedbackBottomSheet.show(
+                    fragmentManager = childFragmentManager,
+                    title = getString(R.string.change_email_verification_title),
                     message = getString(
                         R.string.change_email_verification_message,
                         state.newEmail
                     ),
-                    onDismiss = {
-                        viewLifecycleOwner.lifecycleScope.launch {
-                            sessionExitOperations.cleanupAfterSensitiveAction()
-                            viewModel.resetState()
-                            navigateToLoginRoot()
-                        }
-                    }
+                    primaryText = getString(R.string.ok),
+                    cancelText = null,
+                    tone = FeedbackBottomSheet.FeedbackTone.SUCCESS,
+                    requestKey = CHANGE_EMAIL_FEEDBACK_REQUEST_KEY,
+                    actionId = ACTION_FINISH_EMAIL_CHANGE
                 )
             }
 
@@ -288,5 +300,11 @@ class ChangeEmailFragment :
 
         _binding =
             null
+    }
+
+    private companion object {
+        const val CHANGE_EMAIL_FEEDBACK_REQUEST_KEY = "change_email_feedback_result"
+        const val ACTION_CLOSE = "close"
+        const val ACTION_FINISH_EMAIL_CHANGE = "finish_email_change"
     }
 }

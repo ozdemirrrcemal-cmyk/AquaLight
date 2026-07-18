@@ -2,7 +2,6 @@ package com.aqua.aqualight.ui.tabs.devices.add
 
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -12,6 +11,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceAddBinding
 import com.aqua.aqualight.platform.permissions.AppCapability
@@ -140,11 +140,10 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
     private fun handleEvent(event: DeviceAddEvent) {
         when (event) {
             is DeviceAddEvent.ShowMessage -> {
-                Toast.makeText(
-                    requireContext(),
-                    event.message,
-                    Toast.LENGTH_SHORT
-                ).show()
+                (activity as? BaseActivity)?.showSnackBar(
+                    message = event.message,
+                    type = BaseActivity.SnackType.WARNING
+                )
             }
 
             DeviceAddEvent.OpenQrScanner -> {

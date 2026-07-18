@@ -15,6 +15,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.databinding.FragmentTaskDetailBinding
 import com.aqua.aqualight.databinding.ItemTaskDetailRowBinding
+import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderPillTextAction
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -64,8 +65,25 @@ class TaskDetailFragment :
 
     setupHeader()
     setupClickListeners()
+    setupFeedbackResultListener()
     observeTanks()
     observeTask()
+  }
+
+
+  private fun setupFeedbackResultListener() {
+    childFragmentManager.setFragmentResultListener(
+      TASK_CONFIRM_REQUEST_KEY,
+      viewLifecycleOwner
+    ) { _, result ->
+      if (result.getString(FeedbackBottomSheet.RESULT_KEY) !=
+        FeedbackBottomSheet.RESULT_PRIMARY
+      ) return@setFragmentResultListener
+      when (result.getString(FeedbackBottomSheet.RESULT_ACTION_ID)) {
+        ACTION_COMPLETE -> completeCurrentTask()
+        ACTION_DELETE -> deleteCurrentTask()
+      }
+    }
   }
 
   private fun setupHeader(
@@ -320,79 +338,67 @@ class TaskDetailFragment :
     )
   }
 
-  private fun showCompleteTaskDialog(
-    task: CareTaskUi
-  ) {
-    DialogManager.showConfirmDialog(
-      context = requireContext(),
-      type = DialogType.SUCCESS,
+  private fun showCompleteTaskDialog(task: CareTaskUi) {
+    FeedbackBottomSheet.show(
+      fragmentManager = childFragmentManager,
       title = getString(R.string.maintenance_dialog_complete_task_title),
-      message = getString(
-        R.string.maintenance_dialog_complete_task_message,
-        task.title
-      ),
-      confirmTextResId = R.string.confirm,
-      cancelTextResId = R.string.cancel,
-      onConfirm = {
-        viewLifecycleOwner.lifecycleScope.launch {
-          try {
-            showGlobalLoading(true)
-
-            maintenanceViewModel.completeTask(
-              taskId = task.id
-            ).join()
-
-            findNavController().popBackStack()
-          } finally {
-            showGlobalLoading(false)
-          }
-        }
-      }
+      message = getString(R.string.maintenance_dialog_complete_task_message, task.title),
+      primaryText = getString(R.string.confirm),
+      cancelText = getString(R.string.cancel),
+      tone = FeedbackBottomSheet.FeedbackTone.SUCCESS,
+      requestKey = TASK_CONFIRM_REQUEST_KEY,
+      actionId = ACTION_COMPLETE
     )
   }
 
-  private fun showDeleteTaskDialog(
-    task: CareTaskUi
-  ) {
-    DialogManager.showConfirmDialog(
-      context = requireContext(),
-      type = DialogType.WARNING,
-      title = getString(R.string.maintenance_dialog_delete_task_title),
-      message = getString(
-        R.string.maintenance_dialog_delete_task_message,
-        task.title
-      ),
-      confirmTextResId = R.string.confirm,
-      cancelTextResId = R.string.cancel,
-      onConfirm = {
-        viewLifecycleOwner.lifecycleScope.launch {
-          var deleteFailed = false
-
-          try {
-            showGlobalLoading(true)
-
-            maintenanceViewModel.deleteManualTask(
-              taskId = task.id
-            )
-
-            findNavController().popBackStack()
-          } catch (_: Exception) {
-            deleteFailed = true
-          } finally {
-            showGlobalLoading(false)
-          }
-
-          if (deleteFailed && _binding != null) {
-            DialogManager.showInfoDialog(
-              context = requireContext(),
-              type = DialogType.ERROR,
-              title = getString(R.string.maintenance_delete_failed_title),
-              message = getString(R.string.maintenance_delete_failed_message)
-            )
-          }
-        }
+  private fun completeCurrentTask() {
+    val task = currentTask ?: return
+    viewLifecycleOwner.lifecycleScope.launch {
+      try {
+        showGlobalLoading(true)
+        maintenanceViewModel.completeTask(taskId = task.id).join()
+        findNavController().popBackStack()
+      } finally {
+        showGlobalLoading(false)
       }
+    }
+  }
+
+  private fun showDeleteTaskDialog(task: CareTaskUi) {
+    FeedbackBottomSheet.show(
+      fragmentManager = childFragmentManager,
+      title = getString(R.string.maintenance_dialog_delete_task_title),
+      message = getString(R.string.maintenance_dialog_delete_task_message, task.title),
+      primaryText = getString(R.string.confirm),
+      cancelText = getString(R.string.cancel),
+      tone = FeedbackBottomSheet.FeedbackTone.WARNING,
+      requestKey = TASK_CONFIRM_REQUEST_KEY,
+      actionId = ACTION_DELETE
     )
+  }
+
+  private fun deleteCurrentTask() {
+    val task = currentTask ?: return
+    viewLifecycleOwner.lifecycleScope.launch {
+      var deleteFailed = false
+      try {
+        showGlobalLoading(true)
+        maintenanceViewModel.deleteManualTask(taskId = task.id)
+        findNavController().popBackStack()
+      } catch (_: Exception) {
+        deleteFailed = true
+      } finally {
+        showGlobalLoading(false)
+      }
+      if (deleteFailed && _binding != null) {
+        DialogManager.showInfoDialog(
+          context = requireContext(),
+          type = DialogType.ERROR,
+          title = getString(R.string.maintenance_delete_failed_title),
+          message = getString(R.string.maintenance_delete_failed_message)
+        )
+      }
+    }
   }
 
   private fun showGlobalLoading(
@@ -495,5 +501,11 @@ class TaskDetailFragment :
   override fun onDestroyView() {
     _binding = null
     super.onDestroyView()
+  }
+
+  private companion object {
+    const val TASK_CONFIRM_REQUEST_KEY = "task_detail_confirm_result"
+    const val ACTION_COMPLETE = "complete"
+    const val ACTION_DELETE = "delete"
   }
 }

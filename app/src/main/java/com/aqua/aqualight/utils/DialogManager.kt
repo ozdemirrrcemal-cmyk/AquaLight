@@ -1,13 +1,11 @@
 package com.aqua.aqualight.utils
 
-import android.app.AlertDialog
 import android.content.Context
-import android.os.Handler
-import android.os.Looper
+import android.content.ContextWrapper
 import androidx.annotation.StringRes
+import androidx.fragment.app.FragmentActivity
 import com.aqua.aqualight.R
-import com.aqua.aqualight.databinding.DialogAppBinding
-import com.aqua.aqualight.databinding.DialogAppConfirmBinding
+import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 
 enum class DialogType {
     INFO,
@@ -16,6 +14,7 @@ enum class DialogType {
     WARNING
 }
 
+/** Compatibility facade for one-way informational feedback. Confirmations use Fragment Result directly. */
 object DialogManager {
 
     fun showInfoDialog(
@@ -24,113 +23,46 @@ object DialogManager {
         title: String,
         message: String,
         @StringRes buttonTextResId: Int = R.string.ok,
-        onDismiss: (() -> Unit)? = null,
         autoDismissMillis: Long = 0L
     ) {
-        val binding = DialogAppBinding.inflate(
-            android.view.LayoutInflater.from(context)
+        val activity = context.findFragmentActivity() ?: return
+        val requestKey = buildString {
+            append(INFO_REQUEST_PREFIX)
+            append(type.name)
+            append(':')
+            append(title.hashCode())
+            append(':')
+            append(message.hashCode())
+        }
+        FeedbackBottomSheet.show(
+            fragmentManager = activity.supportFragmentManager,
+            title = title,
+            message = message,
+            primaryText = if (autoDismissMillis > 0L) "" else context.getString(buttonTextResId),
+            cancelText = null,
+            tone = type.toFeedbackTone(),
+            requestKey = requestKey,
+            actionId = "",
+            autoDismissMillis = autoDismissMillis
         )
-
-        binding.dialogIcon.apply {
-            imageTintList = null
-            setImageResource(iconResFor(type))
-            contentDescription = context.getString(R.string.dialog_icon_desc)
-        }
-
-        binding.dialogTitle.text = title
-        binding.dialogMessage.text = message
-
-        val dialog = AlertDialog.Builder(context, R.style.AppDialogTheme)
-            .setView(binding.root)
-            .setCancelable(false)
-            .create()
-
-        val handler = Handler(Looper.getMainLooper())
-        var dismissRunnable: Runnable? = null
-
-        dialog.setOnDismissListener {
-            dismissRunnable?.let { runnable ->
-                handler.removeCallbacks(runnable)
-            }
-            onDismiss?.invoke()
-        }
-
-        if (autoDismissMillis <= 0L) {
-            binding.dialogButton.visibility = android.view.View.VISIBLE
-            binding.dialogButton.text = context.getString(buttonTextResId)
-            binding.dialogButton.setOnClickListener {
-                dialog.dismiss()
-            }
-        } else {
-            binding.dialogButton.visibility = android.view.View.GONE
-
-            dismissRunnable = Runnable {
-                if (dialog.isShowing) {
-                    dialog.dismiss()
-                }
-            }
-
-            handler.postDelayed(dismissRunnable!!, autoDismissMillis)
-        }
-
-        dialog.show()
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        dialog.window?.setDimAmount(0.52f)
     }
 
-    fun showConfirmDialog(
-        context: Context,
-        type: DialogType,
-        title: String,
-        message: String,
-        @StringRes confirmTextResId: Int = R.string.confirm,
-        @StringRes cancelTextResId: Int = R.string.cancel,
-        onConfirm: (() -> Unit)? = null,
-        onCancel: (() -> Unit)? = null
-    ) {
-        val binding = DialogAppConfirmBinding.inflate(
-            android.view.LayoutInflater.from(context)
-        )
-
-        binding.dialogIcon.apply {
-            imageTintList = null
-            setImageResource(iconResFor(type))
-            contentDescription = context.getString(R.string.dialog_icon_desc)
-        }
-
-        binding.dialogTitle.text = title
-        binding.dialogMessage.text = message
-        binding.btnCancel.text = context.getString(cancelTextResId)
-        binding.btnConfirm.text = context.getString(confirmTextResId)
-
-        val dialog = AlertDialog.Builder(context, R.style.AppDialogTheme)
-            .setView(binding.root)
-            .setCancelable(false)
-            .create()
-
-        binding.btnCancel.setOnClickListener {
-            dialog.dismiss()
-            onCancel?.invoke()
-        }
-
-        binding.btnConfirm.setOnClickListener {
-            dialog.dismiss()
-            onConfirm?.invoke()
-        }
-
-        dialog.show()
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        dialog.window?.setDimAmount(0.52f)
-    }
-
-    private fun iconResFor(
-        type: DialogType
-    ): Int {
-        return when (type) {
-            DialogType.ERROR -> R.drawable.ic_error
-            DialogType.SUCCESS -> R.drawable.ic_success
-            DialogType.WARNING -> R.drawable.ic_warning
-            DialogType.INFO -> R.drawable.ic_info
+    private fun DialogType.toFeedbackTone(): FeedbackBottomSheet.FeedbackTone {
+        return when (this) {
+            DialogType.INFO -> FeedbackBottomSheet.FeedbackTone.INFO
+            DialogType.SUCCESS -> FeedbackBottomSheet.FeedbackTone.SUCCESS
+            DialogType.WARNING -> FeedbackBottomSheet.FeedbackTone.WARNING
+            DialogType.ERROR -> FeedbackBottomSheet.FeedbackTone.ERROR
         }
     }
+
+    private tailrec fun Context.findFragmentActivity(): FragmentActivity? {
+        return when (this) {
+            is FragmentActivity -> this
+            is ContextWrapper -> baseContext.findFragmentActivity()
+            else -> null
+        }
+    }
+
+    private const val INFO_REQUEST_PREFIX = "dialog_manager_info:"
 }

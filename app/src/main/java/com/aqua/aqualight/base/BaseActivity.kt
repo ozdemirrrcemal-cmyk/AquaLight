@@ -1,23 +1,16 @@
 package com.aqua.aqualight.base
 
-import android.app.Dialog
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
-import android.view.LayoutInflater
+import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
-import android.view.Window
-import android.view.WindowManager
-import android.view.animation.AnimationUtils
-import android.widget.FrameLayout
-import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.loading.LoadingOverlayDialogFragment
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
@@ -25,6 +18,7 @@ import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 
 open class BaseActivity : AppCompatActivity() {
 
@@ -43,9 +37,6 @@ open class BaseActivity : AppCompatActivity() {
     protected val uiScope: CoroutineScope = CoroutineScope(
         Dispatchers.Main.immediate + activityJob
     )
-
-    private var loadingDialog: Dialog? = null
-    private var loadingLogo: ImageView? = null
 
     private val loadingOwners: MutableSet<String> = linkedSetOf()
 
@@ -67,12 +58,26 @@ open class BaseActivity : AppCompatActivity() {
         // graph saved by the previous process must not be restored before session commit.
         // Configuration changes inside the current process keep their normal restoration.
         super.onCreate(stateFromCurrentProcess)
+
+        stateFromCurrentProcess
+            ?.getStringArrayList(STATE_LOADING_OWNERS)
+            ?.filter(String::isNotBlank)
+            ?.let(loadingOwners::addAll)
+    }
+
+    override fun onPostResume() {
+        super.onPostResume()
+        renderGlobalLoading()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putString(
             ProcessUiStateRestorePolicy.STATE_PROCESS_TOKEN,
             AppProcessIdentity.token
+        )
+        outState.putStringArrayList(
+            STATE_LOADING_OWNERS,
+            ArrayList(loadingOwners)
         )
         super.onSaveInstanceState(outState)
     }
@@ -101,15 +106,7 @@ open class BaseActivity : AppCompatActivity() {
             loadingOwners.remove(normalizedOwnerKey)
         }
 
-        if (!changed) {
-            return
-        }
-
-        if (loadingOwners.isNotEmpty()) {
-            showLoadingDialog()
-        } else {
-            hideLoadingDialog()
-        }
+        if (changed) renderGlobalLoading()
     }
 
     fun clearGlobalLoading(owner: Any) {
@@ -134,9 +131,7 @@ open class BaseActivity : AppCompatActivity() {
         deviceTitle: String,
         @StringRes messageRes: Int = R.string.device_menu_offline_message
     ) {
-        if (isFinishing || isDestroyed) {
-            return
-        }
+        if (isFinishing || isDestroyed) return
 
         val safeTitle = deviceTitle.trim().ifBlank {
             getString(R.string.device_menu_default_title)
@@ -162,74 +157,13 @@ open class BaseActivity : AppCompatActivity() {
         return "${this::class.java.name}@${System.identityHashCode(this)}"
     }
 
-    private fun showLoadingDialog() {
-        if (isFinishing || isDestroyed) {
-            return
+    private fun renderGlobalLoading() {
+        if (isFinishing || isDestroyed) return
+        if (loadingOwners.isNotEmpty()) {
+            LoadingOverlayDialogFragment.show(supportFragmentManager)
+        } else {
+            LoadingOverlayDialogFragment.hide(supportFragmentManager)
         }
-        if (loadingDialog?.isShowing == true) {
-            return
-        }
-
-        val dialog = Dialog(
-            this,
-            android.R.style.Theme_Translucent_NoTitleBar
-        ).apply {
-            requestWindowFeature(Window.FEATURE_NO_TITLE)
-            setCancelable(false)
-            setCanceledOnTouchOutside(false)
-        }
-
-        val overlay = LayoutInflater.from(this).inflate(
-            R.layout.loading_overlay,
-            null,
-            false
-        ) as FrameLayout
-
-        overlay.visibility = View.VISIBLE
-        overlay.isClickable = true
-        overlay.isFocusable = true
-
-        val logo = overlay.findViewById<ImageView>(R.id.loadingLogo)
-
-        dialog.setContentView(
-            overlay,
-            ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
-        )
-
-        loadingDialog = dialog
-        loadingLogo = logo
-        dialog.show()
-
-        dialog.window?.apply {
-            setLayout(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
-            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-            clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-            setDimAmount(0f)
-            attributes = attributes.apply {
-                width = ViewGroup.LayoutParams.MATCH_PARENT
-                height = ViewGroup.LayoutParams.MATCH_PARENT
-                windowAnimations = 0
-            }
-        }
-
-        val anim = AnimationUtils.loadAnimation(
-            this,
-            R.anim.rotate_pulse_logo
-        )
-        logo.startAnimation(anim)
-    }
-
-    private fun hideLoadingDialog() {
-        loadingLogo?.clearAnimation()
-        loadingDialog?.dismiss()
-        loadingDialog = null
-        loadingLogo = null
     }
 
     fun showSnackBar(
@@ -244,22 +178,10 @@ open class BaseActivity : AppCompatActivity() {
         )
 
         val backgroundColor = when (type) {
-            SnackType.SUCCESS -> ContextCompat.getColor(
-                this,
-                R.color.snackbar_success
-            )
-            SnackType.ERROR -> ContextCompat.getColor(
-                this,
-                R.color.snackbar_error
-            )
-            SnackType.WARNING -> ContextCompat.getColor(
-                this,
-                R.color.snackbar_warning
-            )
-            SnackType.NORMAL -> ContextCompat.getColor(
-                this,
-                R.color.aqua_button_blue
-            )
+            SnackType.SUCCESS -> ContextCompat.getColor(this, R.color.snackbar_success)
+            SnackType.ERROR -> ContextCompat.getColor(this, R.color.snackbar_error)
+            SnackType.WARNING -> ContextCompat.getColor(this, R.color.snackbar_warning)
+            SnackType.NORMAL -> ContextCompat.getColor(this, R.color.aqua_button_blue)
         }
 
         snackbar.setBackgroundTint(backgroundColor)
@@ -272,17 +194,28 @@ open class BaseActivity : AppCompatActivity() {
         val textView = snackView.findViewById<TextView>(
             com.google.android.material.R.id.snackbar_text
         )
-        textView.textSize = 15f
+        textView.setTextSize(
+            TypedValue.COMPLEX_UNIT_PX,
+            resources.getDimension(R.dimen.feedback_snackbar_text_size)
+        )
         textView.maxLines = 2
         textView.setPadding(0, 0, 0, 0)
 
         val params = snackView.layoutParams
         if (params is ViewGroup.MarginLayoutParams) {
-            params.setMargins(24, 0, 24, 24)
+            val horizontalMargin = resources.getDimensionPixelSize(
+                R.dimen.feedback_snackbar_horizontal_margin
+            )
+            params.setMargins(
+                horizontalMargin,
+                0,
+                horizontalMargin,
+                resources.getDimensionPixelSize(R.dimen.feedback_snackbar_bottom_margin)
+            )
             snackView.layoutParams = params
         }
 
-        snackView.elevation = 8f
+        snackView.elevation = resources.getDimension(R.dimen.feedback_snackbar_elevation)
         snackView.background = ContextCompat.getDrawable(
             this,
             R.drawable.bg_snackbar
@@ -304,8 +237,11 @@ open class BaseActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         activityJob.cancel()
-        loadingOwners.clear()
-        hideLoadingDialog()
+        if (isFinishing) loadingOwners.clear()
         super.onDestroy()
+    }
+
+    private companion object {
+        const val STATE_LOADING_OWNERS = "base_activity_loading_owners"
     }
 }
