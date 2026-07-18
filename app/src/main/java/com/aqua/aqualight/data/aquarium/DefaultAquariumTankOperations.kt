@@ -96,14 +96,23 @@ class DefaultAquariumTankOperations(
     override suspend fun updateTankPhoto(tankId: Long, photoUri: String?): Unit =
         withContext(NonCancellable) {
             withContext(dispatcher) {
-                try {
+                val ownerUid = UserDataScope.requireCurrentUid()
+                val previousPhoto = try {
                     tankStore.updateTankPhoto(tankId, photoUri)
                 } catch (error: Throwable) {
                     runCatching { AppMediaStorage.rollbackPendingMedia(appContext, photoUri) }
                     throw error
                 }
 
+                // The durable tank record owns the new URI. Cleanup cannot invalidate that commit.
                 runCatching { AppMediaStorage.commitPendingMedia(appContext, photoUri) }
+                runCatching {
+                    AppMediaStorage.deleteAfterCommit(
+                        context = appContext,
+                        ownerUid = ownerUid,
+                        uriString = previousPhoto
+                    )
+                }
                 Unit
             }
         }
