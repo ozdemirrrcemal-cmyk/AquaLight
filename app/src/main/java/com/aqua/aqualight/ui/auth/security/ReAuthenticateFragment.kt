@@ -15,6 +15,7 @@ import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentReAuthenticateBinding
 import com.aqua.aqualight.platform.auth.GoogleIdentityTokenResult
+import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.navigation.RootNavigator
@@ -32,6 +33,9 @@ class ReAuthenticateFragment :
         const val ACTION_DELETE_ACCOUNT = "delete_account"
         const val ACTION_CHANGE_PASSWORD = "change_password"
         const val ACTION_CHANGE_EMAIL = "change_email"
+        private const val REAUTH_FEEDBACK_REQUEST_KEY = "reauth_feedback_result"
+        private const val ACTION_CLOSE_REAUTH = "close_reauth"
+        private const val ACTION_NAVIGATE_LOGIN = "navigate_login"
     }
 
     private var _binding: FragmentReAuthenticateBinding? = null
@@ -111,7 +115,21 @@ class ReAuthenticateFragment :
             args.argAction
 
         setupHeader()
+        setupFeedbackResultListener()
         setupUi()
+    }
+
+
+    private fun setupFeedbackResultListener() {
+        childFragmentManager.setFragmentResultListener(
+            REAUTH_FEEDBACK_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            when (result.getString(FeedbackBottomSheet.RESULT_ACTION_ID)) {
+                ACTION_CLOSE_REAUTH -> findNavController().popBackStack()
+                ACTION_NAVIGATE_LOGIN -> navigateToLogin()
+            }
+        }
     }
 
     private fun setupHeader() {
@@ -125,18 +143,15 @@ class ReAuthenticateFragment :
             AccountProvider.GOOGLE -> setupGoogleUi()
             AccountProvider.PASSWORD -> setupPasswordUi()
             AccountProvider.UNKNOWN -> {
-                DialogManager.showInfoDialog(
-                    requireContext(),
-                    DialogType.ERROR,
-                    title = getString(
-                        R.string.auth_provider_error_title
-                    ),
-                    message = getString(
-                        R.string.auth_provider_error_message
-                    ),
-                    onDismiss = {
-                        findNavController().popBackStack()
-                    }
+                FeedbackBottomSheet.show(
+                    fragmentManager = childFragmentManager,
+                    title = getString(R.string.auth_provider_error_title),
+                    message = getString(R.string.auth_provider_error_message),
+                    primaryText = getString(R.string.ok),
+                    cancelText = null,
+                    tone = FeedbackBottomSheet.FeedbackTone.ERROR,
+                    requestKey = REAUTH_FEEDBACK_REQUEST_KEY,
+                    actionId = ACTION_CLOSE_REAUTH
                 )
             }
         }
@@ -329,16 +344,15 @@ class ReAuthenticateFragment :
                     error.printStackTrace()
                 }
 
-                DialogManager.showInfoDialog(
-                    context = requireContext(),
-                    type = DialogType.WARNING,
-                    title = getString(
-                        R.string.re_auth_delete_cleanup_warning_title
-                    ),
-                    message = getString(
-                        R.string.re_auth_delete_cleanup_warning_message
-                    ),
-                    onDismiss = ::navigateToLogin
+                FeedbackBottomSheet.show(
+                    fragmentManager = childFragmentManager,
+                    title = getString(R.string.re_auth_delete_cleanup_warning_title),
+                    message = getString(R.string.re_auth_delete_cleanup_warning_message),
+                    primaryText = getString(R.string.ok),
+                    cancelText = null,
+                    tone = FeedbackBottomSheet.FeedbackTone.WARNING,
+                    requestKey = REAUTH_FEEDBACK_REQUEST_KEY,
+                    actionId = ACTION_NAVIGATE_LOGIN
                 )
                 return@launch
             }

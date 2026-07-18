@@ -8,13 +8,13 @@ import android.provider.Settings
 import android.text.InputType
 import android.view.View
 import android.view.inputmethod.InputMethodManager
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningWifiInputError
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningWifiInputPolicy
 import com.aqua.aqualight.composition.requireAppContainer
@@ -212,11 +212,10 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
             wifiSettingsLauncher.launch(Intent(Settings.ACTION_WIFI_SETTINGS))
         }.onFailure {
             waitingForWifiSettingsReturn = false
-            Toast.makeText(
-                requireContext(),
-                getString(R.string.device_wifi_settings_open_failed),
-                Toast.LENGTH_SHORT
-            ).show()
+            (activity as? BaseActivity)?.showSnackBar(
+                message = getString(R.string.device_wifi_settings_open_failed),
+                type = BaseActivity.SnackType.ERROR
+            )
         }
     }
 
@@ -273,29 +272,26 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
         when (ProvisioningWifiInputPolicy.validate(ssid, networkKey)) {
             ProvisioningWifiInputError.EMPTY_SSID -> {
                 binding.etWifiSsid.requestFocus()
-                Toast.makeText(
-                    requireContext(),
-                    getString(R.string.device_wifi_select_first),
-                    Toast.LENGTH_SHORT
-                ).show()
+                (activity as? BaseActivity)?.showSnackBar(
+                    message = getString(R.string.device_wifi_select_first),
+                    type = BaseActivity.SnackType.WARNING
+                )
             }
 
             ProvisioningWifiInputError.SSID_TOO_LONG -> {
                 binding.etWifiSsid.requestFocus()
-                Toast.makeText(
-                    requireContext(),
-                    getString(R.string.device_wifi_name_too_long),
-                    Toast.LENGTH_SHORT
-                ).show()
+                (activity as? BaseActivity)?.showSnackBar(
+                    message = getString(R.string.device_wifi_name_too_long),
+                    type = BaseActivity.SnackType.WARNING
+                )
             }
 
             ProvisioningWifiInputError.PASSWORD_TOO_LONG -> {
                 binding.etWifiPassword.requestFocus()
-                Toast.makeText(
-                    requireContext(),
-                    getString(R.string.device_wifi_password_too_long),
-                    Toast.LENGTH_SHORT
-                ).show()
+                (activity as? BaseActivity)?.showSnackBar(
+                    message = getString(R.string.device_wifi_password_too_long),
+                    type = BaseActivity.SnackType.WARNING
+                )
             }
 
             null -> {
@@ -305,11 +301,10 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
                     networkKey = networkKey,
                     operations = provisioningDraftOperations
                 ).getOrElse { error ->
-                    Toast.makeText(
-                        requireContext(),
-                        error.message ?: getString(R.string.device_wifi_invalid_details),
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    (activity as? BaseActivity)?.showSnackBar(
+                        message = error.message ?: getString(R.string.device_wifi_invalid_details),
+                        type = BaseActivity.SnackType.ERROR
+                    )
                     return
                 }
 

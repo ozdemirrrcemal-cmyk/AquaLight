@@ -15,6 +15,7 @@ import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentResetPasswordBinding
 import com.aqua.aqualight.ui.auth.state.AuthActionState
 import com.aqua.aqualight.ui.auth.viewmodel.ResetPasswordViewModel
+import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
@@ -51,7 +52,19 @@ class ResetPasswordFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setupUI()
+        setupFeedbackResultListener()
         observeState()
+    }
+
+
+    private fun setupFeedbackResultListener() {
+        childFragmentManager.setFragmentResultListener(
+            RESET_SUCCESS_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, _ ->
+            viewModel.resetState()
+            findNavController().popBackStack()
+        }
     }
 
     private fun setupUI() =
@@ -99,19 +112,15 @@ class ResetPasswordFragment : Fragment() {
 
         when (state) {
             AuthActionState.PasswordResetEmailSent -> {
-                DialogManager.showInfoDialog(
-                    requireContext(),
-                    DialogType.SUCCESS,
-                    title = getString(
-                        R.string.reset_success_title
-                    ),
-                    message = getString(
-                        R.string.reset_success_message
-                    ),
-                    onDismiss = {
-                        viewModel.resetState()
-                        findNavController().popBackStack()
-                    },
+                FeedbackBottomSheet.show(
+                    fragmentManager = childFragmentManager,
+                    title = getString(R.string.reset_success_title),
+                    message = getString(R.string.reset_success_message),
+                    primaryText = "",
+                    cancelText = null,
+                    tone = FeedbackBottomSheet.FeedbackTone.SUCCESS,
+                    requestKey = RESET_SUCCESS_REQUEST_KEY,
+                    actionId = "reset_sent",
                     autoDismissMillis = 1800L
                 )
             }
@@ -142,5 +151,9 @@ class ResetPasswordFragment : Fragment() {
         super.onDestroyView()
 
         _binding = null
+    }
+
+    private companion object {
+        const val RESET_SUCCESS_REQUEST_KEY = "reset_password_success_result"
     }
 }

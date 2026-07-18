@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail
 
-import android.app.DatePickerDialog
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -27,6 +26,8 @@ import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetActionStyle
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetDetailRow
 import com.aqua.aqualight.ui.common.bottomsheet.CareTaskTypeBottomSheetFragment
 import com.aqua.aqualight.ui.common.bottomsheet.GlobalActionBottomSheet
+import com.aqua.aqualight.ui.common.dialog.AppDatePickerDialogFragment
+import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.common.timeline.TimelineAxisView
 import com.aqua.aqualight.ui.common.timeline.TimelineDayResolver
 import com.aqua.aqualight.ui.common.timeline.TimelineDayStatus
@@ -35,8 +36,6 @@ import com.aqua.aqualight.ui.tabs.maintenance.TankActivityUiState
 import com.aqua.aqualight.ui.tabs.maintenance.TankNextCareStatus
 import com.aqua.aqualight.application.care.CareTaskType
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
-import com.aqua.aqualight.utils.DialogManager
-import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -52,6 +51,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
     private val maintenanceViewModel: MaintenanceViewModel by activityViewModels()
 
     private var tankId: Long = 0L
+    private var completedTasksById: Map<Long, CareTaskUi> = emptyMap()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,6 +66,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
 
         setupClickListeners()
         setupCareTaskTypeResultListener()
+        setupActionResultListeners()
         observeTankActivity()
     }
 
@@ -121,6 +122,54 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
         }
     }
 
+
+    private fun setupActionResultListeners() {
+        childFragmentManager.setFragmentResultListener(
+            ACTIVITY_ACTION_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (result.getString(GlobalActionBottomSheet.RESULT_KEY) !=
+                GlobalActionBottomSheet.RESULT_ACTION
+            ) return@setFragmentResultListener
+
+            val taskId = result.getString(GlobalActionBottomSheet.RESULT_PAYLOAD_ID)
+                ?.toLongOrNull()
+                ?: return@setFragmentResultListener
+            when (result.getString(GlobalActionBottomSheet.RESULT_ACTION_ID)) {
+                ACTION_CHANGE_DATE -> showChangeActivityDatePicker(taskId)
+                ACTION_DELETE -> showDeleteActivityTaskDialog(taskId)
+            }
+        }
+
+        childFragmentManager.setFragmentResultListener(
+            ACTIVITY_DELETE_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (result.getString(FeedbackBottomSheet.RESULT_KEY) !=
+                FeedbackBottomSheet.RESULT_PRIMARY
+            ) return@setFragmentResultListener
+            result.getString(FeedbackBottomSheet.RESULT_ACTION_ID)
+                ?.toLongOrNull()
+                ?.let(::deleteActivityTask)
+        }
+
+        childFragmentManager.setFragmentResultListener(
+            ACTIVITY_DATE_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (result.getString(AppDatePickerDialogFragment.RESULT_KEY) !=
+                AppDatePickerDialogFragment.RESULT_SELECTED
+            ) return@setFragmentResultListener
+            val taskId = result.getString(AppDatePickerDialogFragment.RESULT_PAYLOAD_ID)
+                ?.toLongOrNull()
+                ?: return@setFragmentResultListener
+            updateCompletedTaskDate(
+                taskId = taskId,
+                millis = result.getLong(AppDatePickerDialogFragment.RESULT_MILLIS)
+            )
+        }
+    }
+
     private fun observeTankActivity() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -137,6 +186,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
     private fun renderActivitySummary(
         state: TankActivityUiState
     ) {
+        completedTasksById = state.completedTasks.associateBy(CareTaskUi::id)
         binding.tvLastTrimValue.text = state.lastTrimText
         binding.tvLastWaterChangeValue.text = state.lastWaterChangeText
         binding.tvLastFilterValue.text = state.lastFilterMaintenanceText
@@ -233,9 +283,8 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
         task: CareTaskUi
     ) {
         val completedAt = task.completedAtMillis ?: task.dueAtMillis
-
         GlobalActionBottomSheet.show(
-            context = requireContext(),
+            fragmentManager = childFragmentManager,
             title = task.title,
             message = getString(R.string.aquarium_completed_activity_record),
             details = listOf(
@@ -245,9 +294,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
                 ),
                 BottomSheetDetailRow(
                     label = getString(R.string.aquarium_source_label),
-                    value = task.sourceLabel.ifBlank {
-                        "-"
-                    }
+                    value = task.sourceLabel.ifBlank { "-" }
                 ),
                 BottomSheetDetailRow(
                     label = getString(R.string.aquarium_status_label),
@@ -256,109 +303,80 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
             ),
             actions = listOf(
                 BottomSheetAction(
+                    id = ACTION_CHANGE_DATE,
                     text = getString(R.string.aquarium_change_date_action),
-                    style = BottomSheetActionStyle.PRIMARY,
-                    onClick = {
-                        showChangeActivityDatePicker(task)
-                    }
+                    style = BottomSheetActionStyle.PRIMARY
                 ),
                 BottomSheetAction(
+                    id = ACTION_DELETE,
                     text = getString(R.string.common_delete),
-                    style = BottomSheetActionStyle.DANGER,
-                    onClick = {
-                        showDeleteActivityTaskDialog(task)
-                    }
+                    style = BottomSheetActionStyle.DANGER
                 )
-            )
+            ),
+            requestKey = ACTIVITY_ACTION_REQUEST_KEY,
+            payloadId = task.id.toString()
         )
     }
 
-    private fun showChangeActivityDatePicker(
-        task: CareTaskUi
-    ) {
-        val currentMillis = task.completedAtMillis ?: task.dueAtMillis
-
-        val calendar = Calendar.getInstance().apply {
-            timeInMillis = currentMillis
-        }
-
-        DatePickerDialog(
-            requireContext(),
-            {
-                _, year, month, dayOfMonth ->
-
-                calendar.set(
-                    Calendar.YEAR,
-                    year
-                )
-
-                calendar.set(
-                    Calendar.MONTH,
-                    month
-                )
-
-                calendar.set(
-                    Calendar.DAY_OF_MONTH,
-                    dayOfMonth
-                )
-
-                viewLifecycleOwner.lifecycleScope.launch {
-                    try {
-                        showGlobalLoading(true)
-
-                        maintenanceViewModel.updateCompletedTaskDate(
-                            taskId = task.id,
-                            completedAtMillis = calendar.timeInMillis
-                        ).join()
-                    } catch (exception: Exception) {
-                        exception.printStackTrace()
-
-                        showSnackBar(
-                            message = getString(R.string.aquarium_error_activity_date_update_failed),
-                            type = BaseActivity.SnackType.ERROR
-                        )
-                    } finally {
-                        showGlobalLoading(false)
-                    }
-                }
-            },
-            calendar.get(Calendar.YEAR),
-            calendar.get(Calendar.MONTH),
-            calendar.get(Calendar.DAY_OF_MONTH)
-        ).show()
+    private fun showChangeActivityDatePicker(taskId: Long) {
+        val task = completedTasksById[taskId] ?: return
+        AppDatePickerDialogFragment.show(
+            fragmentManager = childFragmentManager,
+            requestKey = ACTIVITY_DATE_REQUEST_KEY,
+            initialMillis = task.completedAtMillis ?: task.dueAtMillis,
+            payloadId = taskId.toString()
+        )
     }
 
-    private fun showDeleteActivityTaskDialog(
-        task: CareTaskUi
-    ) {
-        DialogManager.showConfirmDialog(
-            context = requireContext(),
-            type = DialogType.WARNING,
+    private fun updateCompletedTaskDate(taskId: Long, millis: Long) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                showGlobalLoading(true)
+                maintenanceViewModel.updateCompletedTaskDate(
+                    taskId = taskId,
+                    completedAtMillis = millis
+                ).join()
+            } catch (exception: Exception) {
+                exception.printStackTrace()
+                showSnackBar(
+                    message = getString(R.string.aquarium_error_activity_date_update_failed),
+                    type = BaseActivity.SnackType.ERROR
+                )
+            } finally {
+                showGlobalLoading(false)
+            }
+        }
+    }
+
+    private fun showDeleteActivityTaskDialog(taskId: Long) {
+        val task = completedTasksById[taskId] ?: return
+        FeedbackBottomSheet.show(
+            fragmentManager = childFragmentManager,
             title = getString(R.string.aquarium_delete_activity_title),
             message = getString(R.string.aquarium_delete_activity_message, task.title),
-            confirmTextResId = R.string.confirm,
-            cancelTextResId = R.string.cancel,
-            onConfirm = {
-                viewLifecycleOwner.lifecycleScope.launch {
-                    try {
-                        showGlobalLoading(true)
-
-                        maintenanceViewModel.deleteTask(
-                            taskId = task.id
-                        ).join()
-                    } catch (exception: Exception) {
-                        exception.printStackTrace()
-
-                        showSnackBar(
-                            message = getString(R.string.aquarium_error_activity_delete_failed),
-                            type = BaseActivity.SnackType.ERROR
-                        )
-                    } finally {
-                        showGlobalLoading(false)
-                    }
-                }
-            }
+            primaryText = getString(R.string.confirm),
+            cancelText = getString(R.string.cancel),
+            tone = FeedbackBottomSheet.FeedbackTone.WARNING,
+            requestKey = ACTIVITY_DELETE_REQUEST_KEY,
+            actionId = taskId.toString()
         )
+    }
+
+    private fun deleteActivityTask(taskId: Long) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                showGlobalLoading(true)
+                maintenanceViewModel.deleteTask(taskId = taskId).join()
+            } catch (exception: Exception) {
+                exception.printStackTrace()
+                showSnackBar(
+                    message = getString(R.string.aquarium_error_activity_delete_failed),
+                    type = BaseActivity.SnackType.ERROR
+                )
+            } finally {
+                showGlobalLoading(false)
+            }
+        }
     }
 
     private fun createActivityDateHeader(
@@ -755,6 +773,11 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
     companion object {
         private const val ARG_TANK_ID = "tankId"
         private const val ACTIVITY_AXIS_WIDTH_DP = 36
+        private const val ACTIVITY_ACTION_REQUEST_KEY = "tank_activity_action_result"
+        private const val ACTIVITY_DELETE_REQUEST_KEY = "tank_activity_delete_result"
+        private const val ACTIVITY_DATE_REQUEST_KEY = "tank_activity_date_result"
+        private const val ACTION_CHANGE_DATE = "change_date"
+        private const val ACTION_DELETE = "delete"
 
         fun newInstance(
             tankId: Long

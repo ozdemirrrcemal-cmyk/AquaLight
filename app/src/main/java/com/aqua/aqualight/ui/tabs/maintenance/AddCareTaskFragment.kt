@@ -1,19 +1,12 @@
 package com.aqua.aqualight.ui.tabs.maintenance
 
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
 import android.content.res.ColorStateList
 import android.graphics.Color
-import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
-import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.View
-import android.widget.GridLayout
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -35,6 +28,9 @@ import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentAddCareTaskBinding
 import com.aqua.aqualight.platform.permissions.AppCapability
 import com.aqua.aqualight.ui.common.bottomsheet.CareTaskTypeBottomSheetFragment
+import com.aqua.aqualight.ui.common.bottomsheet.SingleChoiceBottomSheet
+import com.aqua.aqualight.ui.common.dialog.AppDatePickerDialogFragment
+import com.aqua.aqualight.ui.common.dialog.AppTimePickerDialogFragment
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
@@ -42,7 +38,6 @@ import com.aqua.aqualight.ui.common.permission.CapabilityPermissionCoordinator
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.ui.tabs.maintenance.text.CareTaskTypeCatalog
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -99,6 +94,7 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
         setupInitialUi()
         setupClickListeners()
         observeTaskTypeSelection()
+        setupPickerResultListeners()
         observeTanks()
 
         if (isEditMode) {
@@ -149,6 +145,66 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
         switchReminder.setOnCheckedChangeListener { _, _ -> updateDynamicSections() }
         switchMissedReminder.setOnCheckedChangeListener { _, _ -> updateDynamicSections() }
         btnSaveTask.setOnClickListener { saveTask() }
+    }
+
+
+    private fun setupPickerResultListeners() {
+        childFragmentManager.setFragmentResultListener(
+            WATER_PERCENT_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (result.getString(SingleChoiceBottomSheet.RESULT_KEY) !=
+                SingleChoiceBottomSheet.RESULT_SELECTED
+            ) return@setFragmentResultListener
+            selectedWaterChangePercent = result
+                .getString(SingleChoiceBottomSheet.RESULT_SELECTED_ID)
+                ?.toIntOrNull()
+            updateSelectedTaskTypeUi()
+            updateSaveButtonState()
+        }
+
+        childFragmentManager.setFragmentResultListener(
+            AQUARIUM_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (result.getString(SingleChoiceBottomSheet.RESULT_KEY) !=
+                SingleChoiceBottomSheet.RESULT_SELECTED
+            ) return@setFragmentResultListener
+            selectedTankId = result
+                .getString(SingleChoiceBottomSheet.RESULT_SELECTED_ID)
+                ?.toLongOrNull()
+                ?: return@setFragmentResultListener
+            updateSelectedAquariumUi()
+            updateSaveButtonState()
+        }
+
+        childFragmentManager.setFragmentResultListener(
+            DUE_DATE_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (result.getString(AppDatePickerDialogFragment.RESULT_KEY) !=
+                AppDatePickerDialogFragment.RESULT_SELECTED
+            ) return@setFragmentResultListener
+            selectedCalendar.timeInMillis = result.getLong(
+                AppDatePickerDialogFragment.RESULT_MILLIS
+            )
+            updateDateTimeText()
+        }
+
+        childFragmentManager.setFragmentResultListener(
+            DUE_TIME_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (result.getString(AppTimePickerDialogFragment.RESULT_KEY) !=
+                AppTimePickerDialogFragment.RESULT_SELECTED
+            ) return@setFragmentResultListener
+            selectedCalendar.timeInMillis = result.getLong(
+                AppTimePickerDialogFragment.RESULT_MILLIS
+            )
+            selectedCalendar.set(Calendar.SECOND, 0)
+            selectedCalendar.set(Calendar.MILLISECOND, 0)
+            updateDateTimeText()
+        }
     }
 
     private fun observeTanks() {
@@ -255,74 +311,17 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
     }
 
     private fun showWaterChangePercentBottomSheet() {
-        val dialog = BottomSheetDialog(requireContext(), R.style.AquaBottomSheetDialogTheme)
-        val contentView = LayoutInflater.from(requireContext()).inflate(
-            R.layout.bottom_sheet_water_change_percent,
-            null,
-            false
+        val options = listOf(10, 20, 30, 40, 50, 60, 70, 80, 90, 100).map { percent ->
+            percent.toString() to getString(R.string.maintenance_percent_value, percent)
+        }
+        SingleChoiceBottomSheet.show(
+            fragmentManager = childFragmentManager,
+            title = getString(R.string.maintenance_select_water_change_percentage),
+            options = options,
+            selectedId = selectedWaterChangePercent?.toString(),
+            columns = 4,
+            requestKey = WATER_PERCENT_REQUEST_KEY
         )
-        val container = contentView.findViewById<LinearLayout>(R.id.percentOptionsContainer)
-        renderWaterChangePercentOptions(container, dialog)
-        dialog.setContentView(contentView)
-        dialog.setOnShowListener {
-            dialog.findViewById<View>(
-                com.google.android.material.R.id.design_bottom_sheet
-            )?.setBackgroundColor(Color.TRANSPARENT)
-        }
-        dialog.show()
-    }
-
-    private fun renderWaterChangePercentOptions(
-        container: LinearLayout,
-        dialog: BottomSheetDialog
-    ) {
-        container.removeAllViews()
-        val grid = GridLayout(requireContext()).apply {
-            columnCount = 4
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-        }
-        listOf(10, 20, 30, 40, 50, 60, 70, 80, 90, 100).forEach { percent ->
-            grid.addView(createPercentChip(percent, dialog))
-        }
-        container.addView(grid)
-    }
-
-    private fun createPercentChip(percent: Int, dialog: BottomSheetDialog): View {
-        val selected = percent == selectedWaterChangePercent
-        return TextView(requireContext()).apply {
-            text = getString(R.string.maintenance_percent_value, percent)
-            gravity = Gravity.CENTER
-            textSize = 12.8f
-            isSelected = selected
-            background = ContextCompat.getDrawable(
-                requireContext(),
-                R.drawable.bg_aqua_selection_row_compact
-            )
-            setTextColor(
-                ContextCompat.getColor(
-                    requireContext(),
-                    if (selected) R.color.aqua_card_text_primary
-                    else R.color.aqua_card_text_secondary
-                )
-            )
-            setTypeface(null, if (selected) Typeface.BOLD else Typeface.NORMAL)
-            includeFontPadding = false
-            layoutParams = GridLayout.LayoutParams().apply {
-                width = 0
-                height = 42.dp()
-                columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
-                setMargins(0, 0, 8.dp(), 8.dp())
-            }
-            setOnClickListener {
-                selectedWaterChangePercent = percent
-                updateSelectedTaskTypeUi()
-                updateSaveButtonState()
-                dialog.dismiss()
-            }
-        }
     }
 
     private fun showAquariumBottomSheet() {
@@ -333,90 +332,18 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
             )
             return
         }
-
-        val dialog = BottomSheetDialog(requireContext(), R.style.AquaBottomSheetDialogTheme)
-        val contentView = LayoutInflater.from(requireContext()).inflate(
-            R.layout.bottom_sheet_select_aquarium,
-            null,
-            false
+        SingleChoiceBottomSheet.show(
+            fragmentManager = childFragmentManager,
+            title = getString(R.string.maintenance_select_aquarium),
+            options = latestTanks.map { tank ->
+                tank.id.toString() to tank.name.ifBlank {
+                    getString(R.string.maintenance_unnamed_aquarium)
+                }
+            },
+            selectedId = selectedTankId.takeIf { it != 0L }?.toString(),
+            columns = 1,
+            requestKey = AQUARIUM_REQUEST_KEY
         )
-        val container = contentView.findViewById<LinearLayout>(R.id.aquariumOptionsContainer)
-        container.removeAllViews()
-        latestTanks.forEach { tank ->
-            container.addView(createAquariumOptionCard(tank, dialog))
-        }
-        dialog.setContentView(contentView)
-        dialog.setOnShowListener {
-            dialog.findViewById<View>(
-                com.google.android.material.R.id.design_bottom_sheet
-            )?.setBackgroundColor(Color.TRANSPARENT)
-        }
-        dialog.show()
-    }
-
-    private fun createAquariumOptionCard(
-        tank: AquariumTankSnapshot,
-        dialog: BottomSheetDialog
-    ): View {
-        val selected = tank.id == selectedTankId
-        val row = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            isSelected = selected
-            isClickable = true
-            isFocusable = true
-            background = ContextCompat.getDrawable(
-                requireContext(),
-                R.drawable.bg_aqua_selection_row_compact
-            )
-            setPadding(14.dp(), 8.dp(), 14.dp(), 8.dp())
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                52.dp()
-            ).apply {
-                bottomMargin = 9.dp()
-            }
-            setOnClickListener {
-                selectedTankId = tank.id
-                updateSelectedAquariumUi()
-                updateSaveButtonState()
-                dialog.dismiss()
-            }
-        }
-
-        val title = TextView(requireContext()).apply {
-            text = tank.name.ifBlank { getString(R.string.maintenance_unnamed_aquarium) }
-            textSize = 13.5f
-            setTextColor(
-                ContextCompat.getColor(
-                    requireContext(),
-                    if (selected) R.color.aqua_card_text_primary
-                    else R.color.aqua_card_text_secondary
-                )
-            )
-            setTypeface(null, if (selected) Typeface.BOLD else Typeface.NORMAL)
-            includeFontPadding = false
-            maxLines = 1
-            layoutParams = LinearLayout.LayoutParams(
-                0,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                1f
-            )
-        }
-
-        val check = TextView(requireContext()).apply {
-            text = if (selected) getString(R.string.maintenance_selected) else ""
-            textSize = 11.5f
-            setTextColor(
-                ContextCompat.getColor(requireContext(), R.color.aqua_card_accent)
-            )
-            setTypeface(null, Typeface.BOLD)
-            includeFontPadding = false
-        }
-
-        row.addView(title)
-        row.addView(check)
-        return row
     }
 
     private fun updateSelectedTaskTypeUi() {
@@ -511,34 +438,19 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
     }
 
     private fun showDatePicker() {
-        DatePickerDialog(
-            requireContext(),
-            { _, year, month, dayOfMonth ->
-                selectedCalendar.set(Calendar.YEAR, year)
-                selectedCalendar.set(Calendar.MONTH, month)
-                selectedCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
-                updateDateTimeText()
-            },
-            selectedCalendar.get(Calendar.YEAR),
-            selectedCalendar.get(Calendar.MONTH),
-            selectedCalendar.get(Calendar.DAY_OF_MONTH)
-        ).show()
+        AppDatePickerDialogFragment.show(
+            fragmentManager = childFragmentManager,
+            requestKey = DUE_DATE_REQUEST_KEY,
+            initialMillis = selectedCalendar.timeInMillis
+        )
     }
 
     private fun showTimePicker() {
-        TimePickerDialog(
-            requireContext(),
-            { _, hourOfDay, minute ->
-                selectedCalendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
-                selectedCalendar.set(Calendar.MINUTE, minute)
-                selectedCalendar.set(Calendar.SECOND, 0)
-                selectedCalendar.set(Calendar.MILLISECOND, 0)
-                updateDateTimeText()
-            },
-            selectedCalendar.get(Calendar.HOUR_OF_DAY),
-            selectedCalendar.get(Calendar.MINUTE),
-            true
-        ).show()
+        AppTimePickerDialogFragment.show(
+            fragmentManager = childFragmentManager,
+            requestKey = DUE_TIME_REQUEST_KEY,
+            initialMillis = selectedCalendar.timeInMillis
+        )
     }
 
     private fun updateDateTimeText() {
@@ -792,6 +704,10 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
     }
 
     private companion object {
+        private const val WATER_PERCENT_REQUEST_KEY = "care_task_water_percent_result"
+        private const val AQUARIUM_REQUEST_KEY = "care_task_aquarium_result"
+        private const val DUE_DATE_REQUEST_KEY = "care_task_due_date_result"
+        private const val DUE_TIME_REQUEST_KEY = "care_task_due_time_result"
         const val ACTION_SAVE_TASK_WITH_NOTIFICATIONS =
             "save_task_with_notifications"
     }

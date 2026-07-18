@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail CI when sheets or transient feedback bypass the process-safe UI contract."""
+"""Fail CI when dialogs, sheets or transient feedback bypass the Stage 8 contract."""
 
 from pathlib import Path
 import re
@@ -8,10 +8,27 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 APP_ROOT = ROOT / "app/src/main/java/com/aqua/aqualight"
 UI_ROOT = APP_ROOT / "ui"
-THEME_SHEET = UI_ROOT / "common/bottomsheet/ThemeBottomSheet.kt"
-TANK_EDITOR_SHEET = UI_ROOT / "common/bottomsheet/TankSettingsEditorBottomSheet.kt"
-FEEDBACK_SHEET = UI_ROOT / "common/feedback/FeedbackBottomSheet.kt"
-SNACKBAR_RENDERER = APP_ROOT / "base/BaseActivity.kt"
+BASE_ACTIVITY = APP_ROOT / "base/BaseActivity.kt"
+DIALOG_MANAGER = APP_ROOT / "utils/DialogManager.kt"
+COMMON_DIALOG_ROOT = UI_ROOT / "common/dialog"
+COMMON_LOADING_ROOT = UI_ROOT / "common/loading"
+
+REQUIRED_FILES = (
+    UI_ROOT / "common/bottomsheet/ThemeBottomSheet.kt",
+    UI_ROOT / "common/bottomsheet/TankSettingsEditorBottomSheet.kt",
+    UI_ROOT / "common/bottomsheet/GlobalActionBottomSheet.kt",
+    UI_ROOT / "common/bottomsheet/SingleChoiceBottomSheet.kt",
+    UI_ROOT / "common/bottomsheet/TextInputBottomSheet.kt",
+    UI_ROOT / "common/bottomsheet/CareProfileBottomSheet.kt",
+    UI_ROOT / "common/feedback/FeedbackBottomSheet.kt",
+    UI_ROOT / "common/dialog/AppDatePickerDialogFragment.kt",
+    UI_ROOT / "common/dialog/AppTimePickerDialogFragment.kt",
+    UI_ROOT / "common/loading/LoadingOverlayDialogFragment.kt",
+    ROOT / "app/src/androidTest/java/com/aqua/aqualight/ui/common/feedback/ProcessSafeFeedbackInstrumentedTest.kt",
+    ROOT / "app/src/debug/java/com/aqua/aqualight/ui/common/feedback/Stage8DialogTestActivity.kt",
+    ROOT / "app/src/debug/AndroidManifest.xml",
+    ROOT / "docs/stage8-process-safe-feedback-contract.md",
+)
 
 LEGACY_PROCESS_UNSAFE_FILES = (
     UI_ROOT / "tabs/devices/common/feedback/DeviceConfirmBottomSheet.kt",
@@ -21,126 +38,80 @@ LEGACY_PROCESS_UNSAFE_FILES = (
     UI_ROOT / "common/bottomsheet/TankSizeBottomSheet.kt",
     UI_ROOT / "common/bottomsheet/SetupDateBottomSheet.kt",
     UI_ROOT / "common/bottomsheet/TankStyleBottomSheet.kt",
-)
-
-TRANSITIONAL_RAW_BOTTOM_SHEET_ALLOWLIST = {
-    UI_ROOT / "common/bottomsheet/GlobalActionBottomSheet.kt",
-    UI_ROOT / "tabs/maintenance/AddCareTaskFragment.kt",
     UI_ROOT / "tabs/aquarium/materials/CustomMaterialSheet.kt",
-    UI_ROOT / "tabs/aquarium/detail/settings/TankSettingsFragment.kt",
-    UI_ROOT / "tabs/aquarium/detail/TankDetailLivestockFormFragment.kt",
-}
-TRANSITIONAL_TOAST_ALLOWLIST = {
-    UI_ROOT / "tabs/devices/add/DeviceWifiProvisioningFragment.kt",
-    UI_ROOT / "tabs/devices/add/DeviceAddFragment.kt",
-    UI_ROOT / "tabs/devices/detail/light/DeviceLightRootFragment.kt",
-    UI_ROOT / "tabs/aquarium/create/CreateTankFragment.kt",
-}
+)
 
 errors: list[str] = []
 
-required_files = (
-    THEME_SHEET,
-    TANK_EDITOR_SHEET,
-    FEEDBACK_SHEET,
-    ROOT / "app/src/androidTest/java/com/aqua/aqualight/ui/common/feedback/ProcessSafeFeedbackInstrumentedTest.kt",
-    ROOT / "docs/stage8-process-safe-feedback-contract.md",
-)
-for path in required_files:
+for path in REQUIRED_FILES:
     if not path.is_file():
-        errors.append(f"{path.relative_to(ROOT)}: required stage-8 component is missing")
+        errors.append(f"{path.relative_to(ROOT)}: required Stage 8 component is missing")
 
-for legacy_path in LEGACY_PROCESS_UNSAFE_FILES:
-    if legacy_path.exists():
-        errors.append(
-            f"{legacy_path.relative_to(ROOT)}: legacy callback/raw-dialog component must stay removed"
-        )
+for path in LEGACY_PROCESS_UNSAFE_FILES:
+    if path.exists():
+        errors.append(f"{path.relative_to(ROOT)}: legacy callback/raw-dialog component must stay removed")
 
-if THEME_SHEET.is_file():
-    theme_text = THEME_SHEET.read_text(encoding="utf-8", errors="ignore")
-    for token in ("onBeforeThemeApplied", "onThemeChanged"):
-        if token in theme_text:
-            errors.append(
-                f"{THEME_SHEET.relative_to(ROOT)}: runtime callback field is process-unsafe: {token}"
-            )
-    for token in ("setFragmentResult(", "REQUEST_KEY", "RESULT_THEME_MODE"):
-        if token not in theme_text:
-            errors.append(
-                f"{THEME_SHEET.relative_to(ROOT)}: theme result contract is incomplete: missing {token}"
-            )
+callback_field_pattern = re.compile(
+    r"^\s*(?:var|val)\s+on[A-Z][A-Za-z0-9_]*\s*:\s*\(.*\)\s*->",
+    re.MULTILINE,
+)
+constructor_pattern = re.compile(
+    r"class\s+[A-Za-z0-9_]*(?:BottomSheet|DialogFragment)[A-Za-z0-9_]*\s*\((.*?)\)\s*:\s*(?:BottomSheetDialogFragment|DialogFragment)",
+    re.DOTALL,
+)
 
-if TANK_EDITOR_SHEET.is_file():
-    editor_text = TANK_EDITOR_SHEET.read_text(encoding="utf-8", errors="ignore")
-    for token in (
-        "class TankSettingsEditorBottomSheet : BottomSheetDialogFragment()",
-        "arguments = bundleOf(",
-        "setFragmentResult(",
-        "enum class Mode",
-        "onSaveInstanceState",
-    ):
-        if token not in editor_text:
-            errors.append(
-                f"{TANK_EDITOR_SHEET.relative_to(ROOT)}: process-safe tank editor contract is incomplete: missing {token}"
-            )
+for source in APP_ROOT.rglob("*.kt"):
+    text = source.read_text(encoding="utf-8", errors="ignore")
+    relative = source.relative_to(ROOT)
+    is_fragment_dialog = "BottomSheetDialogFragment" in text or "DialogFragment" in text
 
-if FEEDBACK_SHEET.is_file():
-    feedback_text = FEEDBACK_SHEET.read_text(encoding="utf-8", errors="ignore")
-    for token in (
-        "class FeedbackBottomSheet : BottomSheetDialogFragment",
-        "arguments = bundleOf(",
-        "setFragmentResult(",
-        "fun newInstance(",
-        "fun show(",
-    ):
-        if token not in feedback_text:
-            errors.append(
-                f"{FEEDBACK_SHEET.relative_to(ROOT)}: shared feedback contract is incomplete: missing {token}"
-            )
+    if is_fragment_dialog:
+        if callback_field_pattern.search(text):
+            errors.append(f"{relative}: Fragment dialog must return actions through Fragment Result")
+        constructor_match = constructor_pattern.search(text)
+        if constructor_match and constructor_match.group(1).strip():
+            errors.append(f"{relative}: Fragment dialog must expose a public no-argument constructor")
 
-if UI_ROOT.exists():
-    callback_field_pattern = re.compile(
-        r"^\s*(?:var|val)\s+on[A-Z][A-Za-z0-9_]*\s*:\s*\(.*\)\s*->",
-        re.MULTILINE,
-    )
-    constructor_pattern = re.compile(
-        r"class\s+[A-Za-z0-9_]*BottomSheet[A-Za-z0-9_]*\s*\((.*?)\)\s*:\s*BottomSheetDialogFragment",
-        re.DOTALL,
-    )
+    if "BottomSheetDialog(" in text and not is_fragment_dialog:
+        errors.append(f"{relative}: raw BottomSheetDialog is forbidden")
 
-    for source in UI_ROOT.rglob("*.kt"):
-        text = source.read_text(encoding="utf-8", errors="ignore")
-        relative = source.relative_to(ROOT)
-        is_fragment_sheet = "BottomSheetDialogFragment" in text
+    if "AlertDialog.Builder(" in text:
+        errors.append(f"{relative}: raw AlertDialog is forbidden")
 
-        if is_fragment_sheet:
-            if callback_field_pattern.search(text):
-                errors.append(
-                    f"{relative}: Fragment-based sheet must return actions through Fragment Result or SavedStateHandle"
-                )
-            constructor_match = constructor_pattern.search(text)
-            if constructor_match and constructor_match.group(1).strip():
-                errors.append(
-                    f"{relative}: Fragment-based sheet must expose an empty constructor and store state in arguments"
-                )
+    if "DatePickerDialog(" in text and not source.is_relative_to(COMMON_DIALOG_ROOT):
+        errors.append(f"{relative}: date picker must use AppDatePickerDialogFragment")
 
-        if (
-            "BottomSheetDialog(" in text
-            and not is_fragment_sheet
-            and source not in TRANSITIONAL_RAW_BOTTOM_SHEET_ALLOWLIST
-        ):
-            errors.append(
-                f"{relative}: raw BottomSheetDialog is forbidden; use a recreatable Fragment-based sheet"
-            )
+    if "TimePickerDialog(" in text and not source.is_relative_to(COMMON_DIALOG_ROOT):
+        errors.append(f"{relative}: time picker must use AppTimePickerDialogFragment")
 
-        if "Snackbar.make(" in text and source != SNACKBAR_RENDERER:
-            errors.append(
-                f"{relative}: Snackbar creation must remain under the shared renderer boundary"
-            )
+    if "Toast.makeText(" in text:
+        errors.append(f"{relative}: Toast is forbidden; use the shared Snackbar renderer")
 
-        if "Toast.makeText(" in text and source not in TRANSITIONAL_TOAST_ALLOWLIST:
-            errors.append(
-                f"{relative}: new Toast usage is forbidden; route transient feedback through the shared UI contract"
-            )
+    if "Snackbar.make(" in text and source != BASE_ACTIVITY:
+        errors.append(f"{relative}: Snackbar creation must remain under BaseActivity")
+
+    if "DialogManager.showConfirmDialog" in text:
+        errors.append(f"{relative}: confirmations must use FeedbackBottomSheet Fragment Result")
+
+if DIALOG_MANAGER.is_file():
+    manager_text = DIALOG_MANAGER.read_text(encoding="utf-8", errors="ignore")
+    for token in ("onDismiss:", "onConfirm:", "onCancel:", "showConfirmDialog"):
+        if token in manager_text:
+            errors.append(f"{DIALOG_MANAGER.relative_to(ROOT)}: callback API is forbidden: {token}")
+    if "FeedbackBottomSheet.show(" not in manager_text:
+        errors.append(f"{DIALOG_MANAGER.relative_to(ROOT)}: info feedback must delegate to FeedbackBottomSheet")
+
+for source in (
+    UI_ROOT / "common/bottomsheet/CareTaskTypeBottomSheetFragment.kt",
+    UI_ROOT / "common/bottomsheet/GlobalActionBottomSheet.kt",
+    BASE_ACTIVITY,
+):
+    if not source.is_file():
+        continue
+    text = source.read_text(encoding="utf-8", errors="ignore")
+    for token in ("textSize =", ".dp()", ".dp(requireContext", "setMargins(24", "elevation = 8f"):
+        if token in text:
+            errors.append(f"{source.relative_to(ROOT)}: Stage 8 dimensions must come from resources: {token}")
 
 if errors:
     print("Process-safe feedback architecture guard failed:")
@@ -149,6 +120,6 @@ if errors:
     sys.exit(1)
 
 print(
-    "Process-safe feedback architecture guard passed: Fragment sheets remain recreatable, "
-    "theme, tank editors and confirmation results are callback-free, and transient feedback debt cannot expand."
+    "Process-safe feedback architecture guard passed: all dialogs and sheets are recreatable, "
+    "results are callback-free, Snackbar rendering is centralized, Toast is absent, and Stage 8 dimensions are resource-backed."
 )

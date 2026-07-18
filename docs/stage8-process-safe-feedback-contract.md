@@ -1,76 +1,98 @@
-# Stage 8 — Process-safe sheets and feedback contract
+# Stage 8 — Process-safe sheets, dialogs and feedback
 
 ## Commercial decision
 
-This stage is required before release. Android may recreate a `Fragment` or `DialogFragment`
-after rotation, configuration change, background process eviction, permission changes, or task
-restoration. Constructor parameters, callback properties, captured `Context` values, and raw
-`BottomSheetDialog` instances cannot be reconstructed reliably by the framework.
+Stage 8 is a release requirement. Android may recreate a `Fragment` or `DialogFragment` after
+rotation, configuration change, background process eviction, permission changes, or task
+restoration. Constructor parameters, mutable callback properties, captured `Context` values and
+feature-owned raw dialogs cannot be reconstructed safely by the framework.
 
-## Main-branch audit
+## Delivered architecture
 
-### Already compliant
+- Every app-owned sheet and dialog is a no-argument `DialogFragment` or
+  `BottomSheetDialogFragment`.
+- Reconstructable input is stored in `arguments`; transient UI selections that must survive a
+  recreation are stored in saved instance state or in the owning ViewModel.
+- Results are returned only with Fragment Result. A sheet does not retain its caller, Activity,
+  Fragment, View, repository, ViewModel or callback lambda.
+- `FeedbackBottomSheet` is the common confirm, information, success, warning and error contract.
+- `GlobalActionBottomSheet` is the common multi-action/detail contract.
+- `SingleChoiceBottomSheet`, `TextInputBottomSheet`, `TankSettingsEditorBottomSheet` and
+  `CareProfileBottomSheet` cover the remaining reusable sheet forms.
+- `AppDatePickerDialogFragment` and `AppTimePickerDialogFragment` own all date/time picker flows.
+- `DialogManager` is a compatibility façade for information feedback only and delegates to the
+  process-safe feedback sheet. Callback and confirm APIs were removed.
+- `LoadingOverlayDialogFragment` is owned by FragmentManager. `BaseActivity` stores loading owner
+  keys in saved state and renders exactly one restored overlay.
+- Snackbar creation remains behind `BaseActivity`; feature-owned Toast usage was removed.
+- Programmatic Stage 8 dimensions are backed by resources.
 
-- `CapabilityPermissionBottomSheet` uses arguments and Fragment Result.
-- `PhotoSourceBottomSheet` uses arguments and Fragment Result.
-- `CountryPickerBottomSheet` uses arguments and Fragment Result.
-- `CareTaskTypeBottomSheetFragment` uses arguments and Fragment Result.
-- `NotificationsBottomSheet` is not present on current `main`; the old checklist item is obsolete.
+## Migrated feature flows
 
-### Migrated in the first Stage 8 batch
+The following flows now use reconstructable arguments and Fragment Result contracts:
 
-- `ThemeBottomSheet` no longer stores callback fields. It publishes the selected mode through
-  Fragment Result and has a duplicate-safe `show` entry point.
-- Device removal confirmation now uses the shared `FeedbackBottomSheet`.
-- The device-specific callback-based confirm wrapper and tone enum were removed.
-- Instrumentation checks assert no-argument construction and recreatable argument bundles.
-- `process_safe_feedback_guard.py` prevents new callback-based sheets, raw sheet dialogs,
-  direct Snackbar creation, and additional Toast debt.
+- theme selection and permission sheets;
+- device removal and multi-device deletion;
+- aquarium deletion, duplication and missing-record warnings;
+- tank basic settings editors, care-profile actions and livestock forms;
+- maintenance history actions, task completion/deletion, water-change percentage, aquarium
+  selection, due date and due time;
+- completed tank activity actions and date changes;
+- custom material creation;
+- logout, account deletion, re-authentication, password reset and email verification feedback;
+- device provisioning, create-tank and OTA test feedback through the shared Snackbar renderer.
 
-### Remaining migration debt
-
-- `SettingsContentBottomSheet` and the tank settings helper sheets still build raw dialogs and
-  inject callback-bound views. They must be replaced by one Fragment-based action sheet family.
-- `DialogManager` must be folded into the shared info/warning/error contract.
-- Existing Toast calls are temporarily allowlisted and must be migrated before Stage 8 closes.
-- Global loading is centralized by owner key, but it is still rendered as an Activity-owned
-  `Dialog`; rendering must move to a lifecycle-safe overlay driven by observable UI state.
-- Programmatic spacing and typography values in `CareTaskTypeBottomSheetFragment` and the
-  Snackbar implementation must move to resources.
-- Full rotation and process-death scenario tests must be added after the remaining raw dialogs
-  are converted.
+`NotificationsBottomSheet` is not present in the current product tree, so the original checklist
+entry for removing its constructor parameter is obsolete rather than pending.
 
 ## Mandatory rules
 
 1. Every `DialogFragment` and `BottomSheetDialogFragment` has a public no-argument constructor.
-2. Reconstructable input belongs in `arguments`; pending workflow state belongs in a ViewModel,
+2. Reconstructable input belongs in `arguments`; pending business state belongs in a ViewModel,
    `SavedStateHandle`, or another durable owner.
-3. A sheet returns user actions only with Fragment Result or a `SavedStateHandle` result.
-4. A sheet never stores a Fragment, Activity, View, Context, lambda callback, repository, or
-   ViewModel in constructor parameters or mutable callback fields.
-5. Confirmation, warning, error, and informational decisions use the shared feedback sheet.
-6. Snackbar creation remains behind one renderer boundary. Toast is reserved for platform-level
-   events where no screen anchor exists; it is not a normal feature feedback mechanism.
-7. Loading is state, not an imperative dialog lifetime. The screen or Activity observes owners
-   and renders one common blocking overlay.
-8. User-facing dimensions, text sizes, radii, margins, colors, and copy come from resources.
-9. Duplicate sheets use stable tags and refuse a second instance while the first is restored or
-   visible.
-10. Every new sheet ships with recreation coverage and is included in the architecture guard.
+3. User actions return only with Fragment Result or a `SavedStateHandle` result.
+4. A sheet never stores a Fragment, Activity, View, Context, callback lambda, repository or
+   ViewModel in constructor parameters or mutable fields.
+5. Confirmation, warning, error, success and informational decisions use the shared feedback
+   contract; action lists use the global action contract.
+6. Snackbar creation remains behind one renderer boundary. Toast is not a feature feedback
+   mechanism.
+7. Loading is owner state rendered by one FragmentManager-owned overlay, not an Activity-owned
+   imperative `Dialog` lifetime.
+8. User-facing dimensions, text sizes, radii, margins and copy come from resources.
+9. Duplicate sheets use stable tags and reject a second instance while the first is visible or
+   being restored.
+10. Every new sheet is added to the recreation instrumentation suite and the architecture guard.
 
 ## Feedback channel selection
 
-- **Inline field error:** validation that the user can fix in the current form.
+- **Inline field error:** validation the user can correct in the current form.
 - **Snackbar:** non-blocking operation result with an available screen anchor.
 - **Feedback bottom sheet:** destructive confirmation, important warning, recoverable blocking
-  error, or decision that requires an explicit user action.
-- **Dialog:** reserved for platform-owned or accessibility-critical cases that cannot use the
-  shared sheet.
-- **Toast:** platform-level notification only when the app has no suitable visual owner.
+  error, success requiring acknowledgement, or a decision requiring explicit action.
+- **Global action sheet:** multiple actions plus contextual details.
+- **Platform dialog fragment:** date/time or another platform-owned picker.
+- **Toast:** prohibited for product feature feedback.
 
-## Stage completion gate
+## Automated gates
 
-Stage 8 is complete only when no raw feature-owned dialog/sheet is callback-bound, the common
-loading overlay survives rotation without leaking a window, all remaining Toast debt is removed
-or explicitly justified, programmatic visual constants are resource-backed, and emulator tests
-cover rotation plus process recreation for the shared sheet flows.
+`process_safe_feedback_guard.py` fails CI when production code introduces any of the following:
+
+- callback fields or non-empty constructors on Fragment dialogs;
+- raw feature-owned `BottomSheetDialog`, `AlertDialog`, `DatePickerDialog`, or `TimePickerDialog`;
+- direct Toast creation;
+- Snackbar construction outside the central renderer;
+- callback-based `DialogManager` APIs;
+- removal of a required Stage 8 component, test host, or instrumentation contract;
+- reintroduction of deleted legacy sheet classes;
+- hard-coded programmatic dimensions in the Stage 8 renderer components.
+
+Instrumentation verifies no-argument reconstruction, argument Bundle recreation, Parcel
+round-trip across a simulated process boundary, and real Activity recreation with a visible
+feedback sheet. The API 27 and API 35 emulator jobs execute these tests.
+
+## Completion gate
+
+Stage 8 is complete when architecture guard, lint, unit tests, debug build, CodeQL, API 27
+instrumentation, API 35 instrumentation and minified release-smoke validation all pass on the
+same branch head. The branch remains draft until that gate is green.

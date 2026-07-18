@@ -12,6 +12,7 @@ import com.aqua.aqualight.application.auth.AccountProvider
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentLogoutBinding
 import com.aqua.aqualight.ui.auth.security.ReAuthenticateFragment
+import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.navigation.RootNavigator
@@ -60,8 +61,25 @@ class LogoutFragment :
         )
 
         setupHeader()
+        setupFeedbackResultListener()
         setupNavigationRows()
         setupButtons()
+    }
+
+
+    private fun setupFeedbackResultListener() {
+        childFragmentManager.setFragmentResultListener(
+            LOGOUT_CONFIRM_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (result.getString(FeedbackBottomSheet.RESULT_KEY) !=
+                FeedbackBottomSheet.RESULT_PRIMARY
+            ) return@setFragmentResultListener
+            when (result.getString(FeedbackBottomSheet.RESULT_ACTION_ID)) {
+                ACTION_LOGOUT -> performLogout()
+                ACTION_DELETE_ACCOUNT -> performDeleteAccount()
+            }
+        }
     }
 
     private fun setupHeader() {
@@ -101,18 +119,15 @@ class LogoutFragment :
     }
 
     private fun showLogoutDialog() {
-        DialogManager.showConfirmDialog(
-            context = requireContext(),
-            type = DialogType.WARNING,
-            title = getString(
-                R.string.logout_dialog_title
-            ),
-            message = getString(
-                R.string.logout_dialog_message
-            ),
-            onConfirm = {
-                performLogout()
-            }
+        FeedbackBottomSheet.show(
+            fragmentManager = childFragmentManager,
+            title = getString(R.string.logout_dialog_title),
+            message = getString(R.string.logout_dialog_message),
+            primaryText = getString(R.string.confirm),
+            cancelText = getString(R.string.cancel),
+            tone = FeedbackBottomSheet.FeedbackTone.WARNING,
+            requestKey = LOGOUT_CONFIRM_REQUEST_KEY,
+            actionId = ACTION_LOGOUT
         )
     }
 
@@ -157,18 +172,15 @@ class LogoutFragment :
     }
 
     private fun showDeleteAccountDialog() {
-        DialogManager.showConfirmDialog(
-            context = requireContext(),
-            type = DialogType.ERROR,
-            title = getString(
-                R.string.delete_account_dialog_title
-            ),
-            message = getString(
-                R.string.delete_account_dialog_message
-            ),
-            onConfirm = {
-                performDeleteAccount()
-            }
+        FeedbackBottomSheet.show(
+            fragmentManager = childFragmentManager,
+            title = getString(R.string.delete_account_dialog_title),
+            message = getString(R.string.delete_account_dialog_message),
+            primaryText = getString(R.string.confirm),
+            cancelText = getString(R.string.cancel),
+            tone = FeedbackBottomSheet.FeedbackTone.DANGER,
+            requestKey = LOGOUT_CONFIRM_REQUEST_KEY,
+            actionId = ACTION_DELETE_ACCOUNT
         )
     }
 
@@ -211,5 +223,11 @@ class LogoutFragment :
 
         _binding =
             null
+    }
+
+    private companion object {
+        const val LOGOUT_CONFIRM_REQUEST_KEY = "logout_confirm_result"
+        const val ACTION_LOGOUT = "logout"
+        const val ACTION_DELETE_ACCOUNT = "delete_account"
     }
 }

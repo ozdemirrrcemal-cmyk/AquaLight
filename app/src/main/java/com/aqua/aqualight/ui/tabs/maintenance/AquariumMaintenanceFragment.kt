@@ -26,6 +26,7 @@ import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetAction
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetActionStyle
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetDetailRow
 import com.aqua.aqualight.ui.common.bottomsheet.GlobalActionBottomSheet
+import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -39,8 +40,6 @@ import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.ui.tabs.maintenance.model.MaintenanceTab
-import com.aqua.aqualight.utils.DialogManager
-import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -61,6 +60,7 @@ class AquariumMaintenanceFragment :
     private var currentSelectedTab: MaintenanceTab = MaintenanceTab.ALL
     private var latestTanks: List<AquariumTankSnapshot> = emptyList()
     private var careProfileTargetTankId: Long = 0L
+    private var tasksById: Map<Long, CareTaskUi> = emptyMap()
 
     override fun onViewCreated(
         view: View,
@@ -76,6 +76,7 @@ class AquariumMaintenanceFragment :
         setupHeader()
         setupRecycler()
         setupClickListeners()
+        setupHistoryActionResultListeners()
         observeTanks()
         observeSelectedTab()
         observeCareTasks()
@@ -147,6 +148,36 @@ class AquariumMaintenanceFragment :
         }
     }
 
+
+    private fun setupHistoryActionResultListeners() {
+        childFragmentManager.setFragmentResultListener(
+            HISTORY_ACTION_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (result.getString(GlobalActionBottomSheet.RESULT_KEY) !=
+                GlobalActionBottomSheet.RESULT_ACTION
+            ) return@setFragmentResultListener
+            if (result.getString(GlobalActionBottomSheet.RESULT_ACTION_ID) != ACTION_DELETE) {
+                return@setFragmentResultListener
+            }
+            result.getString(GlobalActionBottomSheet.RESULT_PAYLOAD_ID)
+                ?.toLongOrNull()
+                ?.let(::showDeleteHistoryTaskDialog)
+        }
+
+        childFragmentManager.setFragmentResultListener(
+            HISTORY_DELETE_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (result.getString(FeedbackBottomSheet.RESULT_KEY) !=
+                FeedbackBottomSheet.RESULT_PRIMARY
+            ) return@setFragmentResultListener
+            result.getString(FeedbackBottomSheet.RESULT_ACTION_ID)
+                ?.toLongOrNull()
+                ?.let(::deleteHistoryTask)
+        }
+    }
+
     private fun observeTanks() {
         aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
             latestTanks = tanks
@@ -174,6 +205,7 @@ class AquariumMaintenanceFragment :
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 maintenanceViewModel.taskItems.collect { tasks ->
+                    tasksById = tasks.associateBy(CareTaskUi::id)
 
                     if (currentSelectedTab == MaintenanceTab.HISTORY) {
                         adapter.submitCareTasks(
@@ -691,13 +723,10 @@ class AquariumMaintenanceFragment :
         }
     }
 
-    private fun showHistoryTaskBottomSheet(
-        task: CareTaskUi
-    ) {
+    private fun showHistoryTaskBottomSheet(task: CareTaskUi) {
         val completedAt = task.completedAtMillis ?: task.dueAtMillis
-
         GlobalActionBottomSheet.show(
-            context = requireContext(),
+            fragmentManager = childFragmentManager,
             title = task.title,
             message = getString(R.string.maintenance_completed_care_record),
             details = listOf(
@@ -722,43 +751,39 @@ class AquariumMaintenanceFragment :
             ),
             actions = listOf(
                 BottomSheetAction(
+                    id = ACTION_DELETE,
                     text = getString(R.string.maintenance_delete_from_history),
-                    style = BottomSheetActionStyle.DANGER,
-                    onClick = {
-                        showDeleteHistoryTaskDialog(task)
-                    }
+                    style = BottomSheetActionStyle.DANGER
                 )
-            )
+            ),
+            requestKey = HISTORY_ACTION_REQUEST_KEY,
+            payloadId = task.id.toString()
         )
     }
 
-    private fun showDeleteHistoryTaskDialog(
-        task: CareTaskUi
-    ) {
-        DialogManager.showConfirmDialog(
-            context = requireContext(),
-            type = DialogType.ERROR,
+    private fun showDeleteHistoryTaskDialog(taskId: Long) {
+        val task = tasksById[taskId] ?: return
+        FeedbackBottomSheet.show(
+            fragmentManager = childFragmentManager,
             title = getString(R.string.maintenance_delete_from_history_title),
-            message = getString(
-                R.string.maintenance_delete_from_history_message,
-                task.title
-            ),
-            confirmTextResId = R.string.confirm,
-            cancelTextResId = R.string.cancel,
-            onConfirm = {
-                viewLifecycleOwner.lifecycleScope.launch {
-                    try {
-                        showGlobalLoading(true)
-
-                        maintenanceViewModel.deleteTask(
-                            taskId = task.id
-                        ).join()
-                    } finally {
-                        showGlobalLoading(false)
-                    }
-                }
-            }
+            message = getString(R.string.maintenance_delete_from_history_message, task.title),
+            primaryText = getString(R.string.confirm),
+            cancelText = getString(R.string.cancel),
+            tone = FeedbackBottomSheet.FeedbackTone.DANGER,
+            requestKey = HISTORY_DELETE_REQUEST_KEY,
+            actionId = taskId.toString()
         )
+    }
+
+    private fun deleteHistoryTask(taskId: Long) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                showGlobalLoading(true)
+                maintenanceViewModel.deleteTask(taskId = taskId).join()
+            } finally {
+                showGlobalLoading(false)
+            }
+        }
     }
 
     private fun showGlobalLoading(
@@ -880,5 +905,8 @@ class AquariumMaintenanceFragment :
 
     companion object {
         private const val HISTORY_AXIS_WIDTH_DP = 36
+        private const val HISTORY_ACTION_REQUEST_KEY = "maintenance_history_action_result"
+        private const val HISTORY_DELETE_REQUEST_KEY = "maintenance_history_delete_result"
+        private const val ACTION_DELETE = "delete"
     }
 }

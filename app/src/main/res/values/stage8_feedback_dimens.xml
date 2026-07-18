@@ -23,4 +23,11 @@
     <dimen name="care_sheet_icon_stroke">1dp</dimen>
     <dimen name="care_sheet_title_text_size">12.2sp</dimen>
     <dimen name="care_sheet_title_start_margin">10dp</dimen>
+    <dimen name="single_choice_text_size">13sp</dimen>
+    <dimen name="single_choice_row_height">52dp</dimen>
+    <dimen name="single_choice_gap">8dp</dimen>
+    <dimen name="single_choice_horizontal_padding">12dp</dimen>
+    <dimen name="care_profile_progress_radius">3dp</dimen>
+    <dimen name="care_profile_status_radius">14dp</dimen>
+    <dimen name="care_profile_status_stroke">1dp</dimen>
 </resources>

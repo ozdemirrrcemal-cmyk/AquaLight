@@ -2,7 +2,6 @@ package com.aqua.aqualight.ui.tabs.aquarium.create
 
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -15,6 +14,7 @@ import androidx.navigation.NavDirections
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.aquarium.photo.TankPhotoStorage
 import com.aqua.aqualight.databinding.FragmentCreateTankBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -306,11 +306,10 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
                 _binding?.btnNext?.isEnabled =
                     true
 
-                Toast.makeText(
-                    requireContext(),
-                    getString(R.string.aquarium_error_tank_save_failed),
-                    Toast.LENGTH_SHORT
-                ).show()
+                (activity as? BaseActivity)?.showSnackBar(
+                    message = getString(R.string.aquarium_error_tank_save_failed),
+                    type = BaseActivity.SnackType.ERROR
+                )
             }
         }
     }

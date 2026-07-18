@@ -17,6 +17,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.application.aquarium.DeleteAquariumTanksResult
 import com.aqua.aqualight.databinding.FragmentAquariumBinding
+import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -56,10 +57,31 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentAquariumBinding.bind(view)
         setupHeader()
+        setupDeleteResultListener()
         setupRecyclerView()
         setupEmptyStateActions()
         observeTanks()
         observeCareSummary()
+    }
+
+
+    private fun setupDeleteResultListener() {
+        childFragmentManager.setFragmentResultListener(
+            DELETE_TANKS_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            when (result.getString(FeedbackBottomSheet.RESULT_KEY)) {
+                FeedbackBottomSheet.RESULT_PRIMARY -> {
+                    val ids = result.getString(FeedbackBottomSheet.RESULT_ACTION_ID)
+                        .orEmpty()
+                        .split(',')
+                        .mapNotNull(String::toLongOrNull)
+                        .toSet()
+                    deleteSelectedTanks(ids)
+                }
+                FeedbackBottomSheet.RESULT_CANCEL -> exitDeleteMode()
+            }
+        }
     }
 
     override fun onResume() {
@@ -264,15 +286,15 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
             )
         }
 
-        DialogManager.showConfirmDialog(
-            context = requireContext(),
-            type = DialogType.WARNING,
+        FeedbackBottomSheet.show(
+            fragmentManager = childFragmentManager,
             title = title,
             message = message,
-            confirmTextResId = R.string.confirm,
-            cancelTextResId = R.string.cancel,
-            onConfirm = { deleteSelectedTanks(tankIdsToDelete) },
-            onCancel = { exitDeleteMode() }
+            primaryText = getString(R.string.confirm),
+            cancelText = getString(R.string.cancel),
+            tone = FeedbackBottomSheet.FeedbackTone.WARNING,
+            requestKey = DELETE_TANKS_REQUEST_KEY,
+            actionId = tankIdsToDelete.sorted().joinToString(",")
         )
     }
 
@@ -341,5 +363,9 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
         binding.rvTanks.adapter = null
         _binding = null
         super.onDestroyView()
+    }
+
+    private companion object {
+        const val DELETE_TANKS_REQUEST_KEY = "aquarium_delete_tanks_result"
     }
 }

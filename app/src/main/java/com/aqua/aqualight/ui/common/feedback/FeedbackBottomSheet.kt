@@ -2,6 +2,8 @@ package com.aqua.aqualight.ui.common.feedback
 
 import android.content.DialogInterface
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
@@ -10,12 +12,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.BottomSheetDeviceConfirmBinding
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
-/**
- * Shared process-safe confirm, warning and error sheet.
- *
- * All state is stored in arguments and all actions are returned with Fragment Result so
- * Android can recreate the sheet after configuration change or process recreation.
- */
+/** Shared process-safe confirm, info, warning and error sheet. */
 class FeedbackBottomSheet : BottomSheetDialogFragment(
     R.layout.bottom_sheet_device_confirm
 ) {
@@ -23,19 +20,25 @@ class FeedbackBottomSheet : BottomSheetDialogFragment(
     private var _binding: BottomSheetDeviceConfirmBinding? = null
     private val binding get() = _binding!!
     private var resultSent = false
+    private val handler = Handler(Looper.getMainLooper())
+    private var autoDismissRunnable: Runnable? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = BottomSheetDeviceConfirmBinding.bind(view)
 
         val args = requireArguments()
-        val tone = FeedbackTone.valueOf(args.getString(ARG_TONE).orEmpty())
+        val tone = runCatching {
+            FeedbackTone.valueOf(args.getString(ARG_TONE).orEmpty())
+        }.getOrDefault(FeedbackTone.INFO)
         val cancelText = args.getString(ARG_CANCEL_TEXT)
 
         binding.ivConfirmIcon.setImageResource(iconForTone(tone))
         binding.tvConfirmTitle.text = args.getString(ARG_TITLE).orEmpty()
         binding.tvConfirmMessage.text = args.getString(ARG_MESSAGE).orEmpty()
-        binding.btnConfirmPrimary.text = args.getString(ARG_PRIMARY_TEXT).orEmpty()
+        val primaryText = args.getString(ARG_PRIMARY_TEXT).orEmpty()
+        binding.btnConfirmPrimary.text = primaryText
+        binding.btnConfirmPrimary.isVisible = primaryText.isNotBlank()
         binding.btnConfirmCancel.isVisible = cancelText != null
         binding.btnConfirmCancel.text = cancelText.orEmpty()
 
@@ -47,6 +50,8 @@ class FeedbackBottomSheet : BottomSheetDialogFragment(
             sendResult(RESULT_CANCEL)
             dismiss()
         }
+
+        scheduleAutoDismiss(args.getLong(ARG_AUTO_DISMISS_AT, NO_AUTO_DISMISS))
     }
 
     override fun onCancel(dialog: DialogInterface) {
@@ -55,8 +60,19 @@ class FeedbackBottomSheet : BottomSheetDialogFragment(
     }
 
     override fun onDestroyView() {
+        autoDismissRunnable?.let(handler::removeCallbacks)
+        autoDismissRunnable = null
         _binding = null
         super.onDestroyView()
+    }
+
+    private fun scheduleAutoDismiss(dismissAtMillis: Long) {
+        if (dismissAtMillis == NO_AUTO_DISMISS) return
+        val delay = (dismissAtMillis - System.currentTimeMillis()).coerceAtLeast(0L)
+        autoDismissRunnable = Runnable {
+            sendResult(RESULT_PRIMARY)
+            dismissAllowingStateLoss()
+        }.also { handler.postDelayed(it, delay) }
     }
 
     private fun sendResult(result: String) {
@@ -76,14 +92,16 @@ class FeedbackBottomSheet : BottomSheetDialogFragment(
     private fun iconForTone(tone: FeedbackTone): Int {
         return when (tone) {
             FeedbackTone.INFO -> R.drawable.ic_info
+            FeedbackTone.SUCCESS -> R.drawable.ic_success
             FeedbackTone.WARNING,
-            FeedbackTone.ERROR,
             FeedbackTone.DANGER -> R.drawable.ic_warning
+            FeedbackTone.ERROR -> R.drawable.ic_error
         }
     }
 
     enum class FeedbackTone {
         INFO,
+        SUCCESS,
         WARNING,
         ERROR,
         DANGER
@@ -102,6 +120,8 @@ class FeedbackBottomSheet : BottomSheetDialogFragment(
         private const val ARG_TONE = "arg_tone"
         private const val ARG_REQUEST_KEY = "arg_request_key"
         private const val ARG_ACTION_ID = "arg_action_id"
+        private const val ARG_AUTO_DISMISS_AT = "arg_auto_dismiss_at"
+        private const val NO_AUTO_DISMISS = Long.MIN_VALUE
         private const val TAG_PREFIX = "FeedbackBottomSheet:"
 
         fun newInstance(
@@ -111,7 +131,8 @@ class FeedbackBottomSheet : BottomSheetDialogFragment(
             cancelText: String?,
             tone: FeedbackTone,
             requestKey: String,
-            actionId: String
+            actionId: String,
+            autoDismissMillis: Long = 0L
         ): FeedbackBottomSheet {
             return FeedbackBottomSheet().apply {
                 arguments = bundleOf(
@@ -121,7 +142,12 @@ class FeedbackBottomSheet : BottomSheetDialogFragment(
                     ARG_CANCEL_TEXT to cancelText,
                     ARG_TONE to tone.name,
                     ARG_REQUEST_KEY to requestKey,
-                    ARG_ACTION_ID to actionId
+                    ARG_ACTION_ID to actionId,
+                    ARG_AUTO_DISMISS_AT to if (autoDismissMillis > 0L) {
+                        System.currentTimeMillis() + autoDismissMillis
+                    } else {
+                        NO_AUTO_DISMISS
+                    }
                 )
             }
         }
@@ -134,10 +160,11 @@ class FeedbackBottomSheet : BottomSheetDialogFragment(
             cancelText: String?,
             tone: FeedbackTone,
             requestKey: String,
-            actionId: String
+            actionId: String,
+            autoDismissMillis: Long = 0L
         ) {
             val tag = TAG_PREFIX + requestKey
-            if (fragmentManager.findFragmentByTag(tag) != null) return
+            if (fragmentManager.findFragmentByTag(tag) != null || fragmentManager.isStateSaved) return
 
             newInstance(
                 title = title,
@@ -146,7 +173,8 @@ class FeedbackBottomSheet : BottomSheetDialogFragment(
                 cancelText = cancelText,
                 tone = tone,
                 requestKey = requestKey,
-                actionId = actionId
+                actionId = actionId,
+                autoDismissMillis = autoDismissMillis
             ).show(fragmentManager, tag)
         }
     }

@@ -14,6 +14,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDevicesBinding
+import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderFilledIconAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
@@ -47,8 +48,21 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         _binding = FragmentDevicesBinding.bind(view)
 
         setupHeader()
+        setupFeedbackResultListener()
         setupUiShell()
         observeViewModel()
+    }
+
+
+    private fun setupFeedbackResultListener() {
+        childFragmentManager.setFragmentResultListener(
+            DELETE_DEVICES_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (result.getString(FeedbackBottomSheet.RESULT_KEY) ==
+                FeedbackBottomSheet.RESULT_PRIMARY
+            ) viewModel.deleteSelectedDevices()
+        }
     }
 
     override fun onStart() {
@@ -204,9 +218,8 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         val selectedCount = state.selectedCount
         if (selectedCount <= 0 || state.isDeletingDevices) return
 
-        DialogManager.showConfirmDialog(
-            context = requireContext(),
-            type = DialogType.WARNING,
+        FeedbackBottomSheet.show(
+            fragmentManager = childFragmentManager,
             title = resources.getQuantityString(
                 R.plurals.devices_delete_confirm_title,
                 selectedCount,
@@ -217,11 +230,11 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                 selectedCount,
                 selectedCount
             ),
-            confirmTextResId = R.string.common_delete,
-            cancelTextResId = R.string.common_cancel,
-            onConfirm = {
-                viewModel.deleteSelectedDevices()
-            }
+            primaryText = getString(R.string.common_delete),
+            cancelText = getString(R.string.common_cancel),
+            tone = FeedbackBottomSheet.FeedbackTone.WARNING,
+            requestKey = DELETE_DEVICES_REQUEST_KEY,
+            actionId = "delete_selected"
         )
     }
 
@@ -273,5 +286,6 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
     private companion object {
         const val DEVICE_OPERATION_LOADING_OWNER = "DevicesFragment.DeviceOperation"
+        const val DELETE_DEVICES_REQUEST_KEY = "devices_delete_result"
     }
 }
