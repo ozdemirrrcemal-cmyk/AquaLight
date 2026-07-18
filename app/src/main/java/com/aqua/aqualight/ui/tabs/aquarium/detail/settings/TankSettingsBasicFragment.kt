@@ -51,6 +51,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
             context = requireContext().applicationContext,
             scope = AppMediaScope.TANK,
             ownerToken = tankId.toString(),
+            ownerUid = container.authenticatedOwnerIdentity.requireOwnerUid(),
             cropSpec = MediaCropSpec.TANK,
             mediaProcessor = container.feedbackMediaProcessor
         )
