@@ -141,10 +141,12 @@ if REPOSITORY.is_file():
         "reservePending",
         "commitPending",
         "resolveForCleanup",
+        "ownerUid = entry.ownerUid",
         "TRANSACTION_PENDING",
         "TRANSACTION_COMMITTED",
         "TRANSACTION_ABORTED",
         "runTransaction",
+        "FIELD_USER_ID",
         "screenshotStore.delete",
         "suspendCoroutine",
         "throwIfCancellation",
@@ -167,12 +169,13 @@ if JOURNAL.is_file():
     for token in (
         "FeedbackSubmissionJournalStore",
         "PendingFeedbackUpload",
+        "ownerUid",
         ".commit()",
-        "feedback_submission_journal_v1",
+        "feedback_submission_journal_v2",
     ):
         if token not in text:
             errors.append(
-                f"{JOURNAL.relative_to(ROOT)}: durable journal contract missing: {token}"
+                f"{JOURNAL.relative_to(ROOT)}: durable owner-aware journal contract missing: {token}"
             )
     if ".apply()" in text:
         errors.append(
@@ -208,7 +211,7 @@ if COORDINATOR.is_file():
 
 TEST_EXPECTATIONS = {
     ROOT / "app/src/test/java/com/aqua/aqualight/data/feedback/FirebaseFeedbackSubmissionOperationsTest.kt": (
-        "successfulSubmissionReservesBeforeUploadAndCommitsAtomically",
+        "successfulSubmissionReservesOwnerBeforeUploadAndCommitsAtomically",
         "firestoreFailureAfterUploadAbortsFenceAndDeletesStorageObject",
         "ambiguousCommitErrorReturnsSuccessWhenServerFenceIsCommitted",
         "cancellationDuringCommitKeepsJournalAndDoesNotGuessRemoteOutcome",
@@ -226,7 +229,7 @@ TEST_EXPECTATIONS = {
     ),
     JOURNAL_INSTRUMENTED_TEST: (
         "journalEntrySurvivesStoreRecreationAndCanBeRemovedDurably",
-        "multipleEntriesAreUpdatedWithoutMutatingSharedPreferenceSnapshots",
+        "multipleOwnerAwareEntriesAreUpdatedWithoutMutatingPreferenceSnapshots",
     ),
     ROOT / "app/src/androidTest/java/com/aqua/aqualight/ui/common/media/MediaFlowCoordinatorInstrumentedTest.kt": (
         "pendingCameraAndCropFilesAreCleanedAfterCoordinatorRecreationAndCancel",
