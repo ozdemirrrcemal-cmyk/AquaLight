@@ -6,6 +6,8 @@ on:
       - agent/stage-10-design-system-resource-cleanup
     paths:
       - "tools/stage10_xml_resource_migration.py"
+      - "tools/stage10_kotlin_color_migration.py"
+      - "tools/stage10_kotlin_text_migration.py"
       - ".github/workflows/stage10_migration.yml"
 
 permissions:
@@ -38,12 +40,18 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Run deterministic XML migration
+      - name: Run deterministic resource migrations
         run: |
           set -euo pipefail
-          echo "Stage 10 migration schema: 1"
+          echo "Stage 10 migration schema: 2"
           python3 -m py_compile tools/stage10_xml_resource_migration.py
+          python3 -m py_compile tools/stage10_kotlin_color_migration.py
           python3 tools/stage10_xml_resource_migration.py | tee docs/stage10-migration-result.txt
+          python3 tools/stage10_kotlin_color_migration.py | tee -a docs/stage10-migration-result.txt
+          if [[ -f tools/stage10_kotlin_text_migration.py ]]; then
+            python3 -m py_compile tools/stage10_kotlin_text_migration.py
+            python3 tools/stage10_kotlin_text_migration.py | tee -a docs/stage10-migration-result.txt
+          fi
 
       - name: Verify generated Android resources and Kotlin compilation
         id: build
@@ -91,7 +99,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "Migration produced no changes."
           else
-            git commit -m "Stage 10: centralize XML text colors dimensions and styles"
+            git commit -m "Stage 10: centralize Kotlin colors and user text"
             git push origin HEAD:agent/stage-10-design-system-resource-cleanup
           fi
 
