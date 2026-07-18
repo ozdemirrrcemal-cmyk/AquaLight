@@ -14,6 +14,7 @@ SHEET_PATH = ALLOWED_ROOT / "CapabilityPermissionBottomSheet.kt"
 COORDINATOR_PATH = ALLOWED_ROOT / "CapabilityPermissionCoordinator.kt"
 CONTINUATION_PATH = ALLOWED_ROOT / "CapabilityPermissionContinuationState.kt"
 PERMISSION_POLICY_PATH = APP_ROOT / "platform/permissions/PermissionPolicy.kt"
+PRECISE_REMINDER_POLICY_PATH = APP_ROOT / "platform/permissions/PreciseReminderAccessPolicy.kt"
 NOTIFICATION_POLICY_PATH = APP_ROOT / "data/notifications/AndroidNotificationPermissionPolicy.kt"
 BLE_PERMISSION_CHECK_PATHS = {
     APP_ROOT / "data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt",
@@ -47,6 +48,9 @@ UI_FORBIDDEN_TOKENS = {
     "Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS": (
         "notification channel settings must be opened by CapabilityPermissionCoordinator"
     ),
+    "Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM": (
+        "Alarms & reminders special access must be opened by CapabilityPermissionCoordinator"
+    ),
     "Manifest.permission.CAMERA": (
         "camera access must be requested as CAMERA_PHOTO or CAMERA_QR"
     ),
@@ -75,6 +79,7 @@ GLOBAL_PERMISSION_BOUNDARIES = {
     "Settings.ACTION_APPLICATION_DETAILS_SETTINGS": {COORDINATOR_PATH},
     "Settings.ACTION_APP_NOTIFICATION_SETTINGS": {COORDINATOR_PATH},
     "Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS": {COORDINATOR_PATH},
+    "Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM": {COORDINATOR_PATH},
     "ContextCompat.checkSelfPermission(": {
         PERMISSION_POLICY_PATH,
         NOTIFICATION_POLICY_PATH,
@@ -111,7 +116,6 @@ else:
                 errors.append(f"{relative}: {reason}: {token}")
 
 # Capability-specific artwork is part of the same central contract as copy and actions.
-# No screen, Fragment or XML layout may choose a permission icon independently.
 if ALLOWED_ROOT.exists():
     for source in ALLOWED_ROOT.rglob("*.kt"):
         if source == UI_SPEC_PATH:
@@ -135,11 +139,13 @@ if RES_LAYOUT_ROOT.exists():
 required_files = (
     "app/src/main/java/com/aqua/aqualight/platform/permissions/AppCapability.kt",
     "app/src/main/java/com/aqua/aqualight/platform/permissions/PermissionPolicy.kt",
+    "app/src/main/java/com/aqua/aqualight/platform/permissions/PreciseReminderAccessPolicy.kt",
     "app/src/main/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionCoordinator.kt",
     "app/src/main/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionBottomSheet.kt",
     "app/src/main/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionUiSpecResolver.kt",
     "app/src/main/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionContinuationState.kt",
     "app/src/test/java/com/aqua/aqualight/platform/permissions/PermissionPolicyTest.kt",
+    "app/src/test/java/com/aqua/aqualight/platform/permissions/PreciseReminderAccessPolicyTest.kt",
     "app/src/test/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionUiSpecResolverTest.kt",
     "app/src/test/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionContinuationStateTest.kt",
     "app/src/androidTest/java/com/aqua/aqualight/platform/permissions/PermissionInfrastructureInstrumentedTest.kt",
@@ -147,6 +153,29 @@ required_files = (
 for relative_path in required_files:
     if not (ROOT / relative_path).is_file():
         errors.append(f"{relative_path}: required central permission component is missing")
+
+if PERMISSION_POLICY_PATH.is_file():
+    policy_text = PERMISSION_POLICY_PATH.read_text(encoding="utf-8", errors="ignore")
+    for token, reason in (
+        ("AppCapability.PRECISE_REMINDERS", "precise reminder access must be capability-driven"),
+        ("PreciseReminderAccessPolicy", "special access must be evaluated centrally"),
+        ("PermissionDecision.OPEN_SETTINGS", "missing special access must route to Settings"),
+    ):
+        if token not in policy_text:
+            errors.append(
+                f"{PERMISSION_POLICY_PATH.relative_to(ROOT)}: {reason}: missing {token}"
+            )
+
+if PRECISE_REMINDER_POLICY_PATH.is_file():
+    precise_text = PRECISE_REMINDER_POLICY_PATH.read_text(encoding="utf-8", errors="ignore")
+    for token, reason in (
+        ("canScheduleExactAlarms", "Android 12+ exact access must be queried from AlarmManager"),
+        ("Build.VERSION_CODES.S", "special access must begin at API 31"),
+    ):
+        if token not in precise_text:
+            errors.append(
+                f"{PRECISE_REMINDER_POLICY_PATH.relative_to(ROOT)}: {reason}: missing {token}"
+            )
 
 if SHEET_PATH.is_file():
     sheet_text = SHEET_PATH.read_text(encoding="utf-8", errors="ignore")
@@ -160,6 +189,15 @@ if SHEET_PATH.is_file():
             "CapabilityPermissionUiSpecResolver"
         )
 
+if UI_SPEC_PATH.is_file():
+    ui_spec_text = UI_SPEC_PATH.read_text(encoding="utf-8", errors="ignore")
+    for token, reason in (
+        ("AppCapability.PRECISE_REMINDERS", "precise reminder access needs common UI copy"),
+        ("ic_permission_precise_reminders", "precise reminder access needs a professional icon"),
+    ):
+        if token not in ui_spec_text:
+            errors.append(f"{UI_SPEC_PATH.relative_to(ROOT)}: {reason}: missing {token}")
+
 if COORDINATOR_PATH.is_file():
     coordinator_text = COORDINATOR_PATH.read_text(encoding="utf-8", errors="ignore")
     for token, reason in (
@@ -172,6 +210,10 @@ if COORDINATOR_PATH.is_file():
             "channel Settings Intent construction must remain central",
         ),
         (
+            "Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM",
+            "Alarms & reminders Settings Intent construction must remain central",
+        ),
+        (
             "CapabilityPermissionContinuationState()",
             "settings return must use the one-shot continuation state",
         ),
@@ -180,12 +222,12 @@ if COORDINATOR_PATH.is_file():
             "lifecycle and Activity Result callbacks must share one-shot consumption",
         ),
         (
-            "STATE_NOTIFICATION_CHANNEL_ID",
-            "channel settings destination must survive rotation/process recreation",
+            "if (policy.isGranted(capability))",
+            "empty runtime-permission sets must not bypass ungranted special access",
         ),
         (
-            "STATE_NOTIFICATION_CHANNEL_ID to snapshot.notificationChannelId",
-            "channel ID must be persisted through SavedStateRegistry",
+            "STATE_NOTIFICATION_CHANNEL_ID",
+            "channel settings destination must survive rotation/process recreation",
         ),
         (
             "STATE_WAITING_FOR_SETTINGS to snapshot.waitingForSettings",
@@ -227,6 +269,7 @@ for defensive_path in BLE_PERMISSION_CHECK_PATHS:
         "ActivityResultContracts",
         "Settings.ACTION_APPLICATION_DETAILS_SETTINGS",
         "Settings.ACTION_APP_NOTIFICATION_SETTINGS",
+        "Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM",
     ):
         if forbidden in text:
             errors.append(
@@ -240,7 +283,7 @@ if errors:
     sys.exit(1)
 
 print(
-    "Central permission architecture guard passed: policy, launchers, one-shot settings "
-    "continuation, defensive BLE revocation checks, copy, artwork and process-safe "
-    "app/channel routing remain central."
+    "Central permission architecture guard passed: runtime permissions, precise-reminder "
+    "special access, launchers, one-shot Settings continuation, defensive BLE checks, "
+    "copy, artwork and process-safe app/channel routing remain central."
 )
