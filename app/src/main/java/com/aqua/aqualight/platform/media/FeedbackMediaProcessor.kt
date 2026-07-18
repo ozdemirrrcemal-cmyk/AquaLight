@@ -104,7 +104,7 @@ private class ContentResolverFeedbackMediaSourceAccess(
                 null,
                 null,
                 null
-            )?.use(Cursor::readDisplayName)
+            )?.use { cursor -> cursor.readDisplayName() }
         }.getOrNull()
 
         return queriedName?.takeIf(String::isNotBlank) ?: DEFAULT_DISPLAY_NAME
