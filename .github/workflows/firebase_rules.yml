@@ -1,0 +1,65 @@
+name: Firebase Rules Validation
+
+on:
+  push:
+    branches:
+      - main
+      - agent/stage-9-feedback-media-cleanup
+    paths:
+      - firebase.json
+      - firestore.rules
+      - firestore.indexes.json
+      - storage.rules
+      - firebase/**
+      - .github/workflows/firebase_rules.yml
+  pull_request:
+    paths:
+      - firebase.json
+      - firestore.rules
+      - firestore.indexes.json
+      - storage.rules
+      - firebase/**
+      - .github/workflows/firebase_rules.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firebase-rules-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-rules:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: firebase/package-lock.json
+
+      - name: Set up JDK 21 for Firestore emulator
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install pinned Firebase test dependencies
+        working-directory: firebase
+        run: npm ci
+
+      - name: Validate index JSON
+        run: node -e "JSON.parse(require('fs').readFileSync('firestore.indexes.json', 'utf8'))"
+
+      - name: Run Firestore and Storage rules tests
+        run: >-
+          npx --yes firebase-tools@15.24.0 emulators:exec
+          --only firestore,storage
+          --project demo-aqualight-stage9
+          "node firebase/rules.test.mjs"
