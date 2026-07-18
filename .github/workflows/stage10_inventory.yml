@@ -32,6 +32,10 @@ jobs:
           mkdir -p docs
           find app/src/main -type f -print | sort > docs/stage10-file-inventory.txt
           python3 tools/stage10_design_system_guard.py > docs/stage10-audit.txt 2>&1 || true
+          grep -RInE 'MaterialCategoryCatalog|MaterialCategory\(|category\.title\b|\.titleRes\b|argCategoryTitle|AquariumMaterial\(' app/src/main/java app/src/main/res \
+            > docs/stage10-material-category-usage.txt || true
+          grep -RInE '#[0-9A-Fa-f]{6,8}|RedButton|BlackButton|WhiteButton|[0-9]+(\.[0-9]+)?(dp|sp)' app/src/main/java app/src/main/res \
+            > docs/stage10-raw-resource-usage.txt || true
 
           {
             echo "# Stage 10 audit summary"
@@ -49,9 +53,6 @@ jobs:
             echo "## Resource value files"
             find app/src/main/res -maxdepth 2 -type f -path '*/values*/*.xml' -print | sort
             echo
-            echo "## Catalog and legacy style usages"
-            grep -RInE 'MaterialCategoryCatalog|MaterialCategory\(|\.title\b|RedButton|BlackButton|WhiteButton' app/src/main/java app/src/main/res || true
-            echo
             echo "GENERATED_COMMIT=$(git rev-parse HEAD)"
             echo "GENERATED_AT_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           } > docs/stage10-audit-summary.txt
@@ -68,7 +69,8 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/stage10-file-inventory.txt docs/stage10-audit.txt docs/stage10-audit-summary.txt
+          git add docs/stage10-file-inventory.txt docs/stage10-audit.txt docs/stage10-audit-summary.txt \
+            docs/stage10-material-category-usage.txt docs/stage10-raw-resource-usage.txt
           if git diff --cached --quiet; then
             echo "Inventory is unchanged."
             exit 0
