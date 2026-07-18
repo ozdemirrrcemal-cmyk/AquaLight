@@ -15,6 +15,12 @@ COORDINATOR_PATH = ALLOWED_ROOT / "CapabilityPermissionCoordinator.kt"
 CONTINUATION_PATH = ALLOWED_ROOT / "CapabilityPermissionContinuationState.kt"
 PERMISSION_POLICY_PATH = APP_ROOT / "platform/permissions/PermissionPolicy.kt"
 NOTIFICATION_POLICY_PATH = APP_ROOT / "data/notifications/AndroidNotificationPermissionPolicy.kt"
+BLE_PERMISSION_CHECK_PATHS = {
+    APP_ROOT / "data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt",
+    APP_ROOT / "data/devices/provisioning/ble/AqlBleDeviceInfoPreflightClient.kt",
+    APP_ROOT / "data/devices/provisioning/ble/AqlBleProvisioningScanner.kt",
+    APP_ROOT / "data/devices/provisioning/ble/AqlBleProvisioningAddressResolver.kt",
+}
 
 UI_FORBIDDEN_TOKENS = {
     "ActivityResultContracts.RequestPermission(": (
@@ -58,8 +64,9 @@ UI_FORBIDDEN_TOKENS = {
     ),
 }
 
-# These APIs can change permission state or route users to Settings. They are forbidden
-# throughout production code unless the central coordinator/policies explicitly own them.
+# State-changing permission APIs and permission-specific Settings routes are central-only.
+# BLE transport adapters may perform read-only defensive checks immediately before a
+# platform call because permission can be revoked after the UI coordinator grants it.
 GLOBAL_PERMISSION_BOUNDARIES = {
     "ActivityCompat.requestPermissions(": set(),
     "requestPermissions(": set(),
@@ -68,10 +75,10 @@ GLOBAL_PERMISSION_BOUNDARIES = {
     "Settings.ACTION_APPLICATION_DETAILS_SETTINGS": {COORDINATOR_PATH},
     "Settings.ACTION_APP_NOTIFICATION_SETTINGS": {COORDINATOR_PATH},
     "Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS": {COORDINATOR_PATH},
-    "Settings.ACTION_SETTINGS": {COORDINATOR_PATH},
     "ContextCompat.checkSelfPermission(": {
         PERMISSION_POLICY_PATH,
         NOTIFICATION_POLICY_PATH,
+        *BLE_PERMISSION_CHECK_PATHS,
     },
     "ActivityCompat.checkSelfPermission(": set(),
 }
@@ -204,6 +211,28 @@ if CONTINUATION_PATH.is_file():
                 f"{CONTINUATION_PATH.relative_to(ROOT)}: {reason}: missing {token}"
             )
 
+for defensive_path in BLE_PERMISSION_CHECK_PATHS:
+    if not defensive_path.is_file():
+        errors.append(
+            f"{defensive_path.relative_to(ROOT)}: required BLE permission boundary is missing"
+        )
+        continue
+    text = defensive_path.read_text(encoding="utf-8", errors="ignore")
+    if "ContextCompat.checkSelfPermission(" not in text:
+        errors.append(
+            f"{defensive_path.relative_to(ROOT)}: BLE platform adapter must fail closed after runtime revocation"
+        )
+    for forbidden in (
+        "requestPermissions(",
+        "ActivityResultContracts",
+        "Settings.ACTION_APPLICATION_DETAILS_SETTINGS",
+        "Settings.ACTION_APP_NOTIFICATION_SETTINGS",
+    ):
+        if forbidden in text:
+            errors.append(
+                f"{defensive_path.relative_to(ROOT)}: defensive BLE check must not request permission or route Settings: {forbidden}"
+            )
+
 if errors:
     print("Central permission architecture guard failed:")
     for error in errors:
@@ -212,5 +241,6 @@ if errors:
 
 print(
     "Central permission architecture guard passed: policy, launchers, one-shot settings "
-    "continuation, copy, artwork and process-safe app/channel routing remain central."
+    "continuation, defensive BLE revocation checks, copy, artwork and process-safe "
+    "app/channel routing remain central."
 )
