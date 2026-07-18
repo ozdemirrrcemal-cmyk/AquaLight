@@ -65,6 +65,12 @@ class AquaApp : Application() {
             }
         }
 
+        applicationScope.launch {
+            runCatching {
+                appContainer.feedbackSubmissionOperations.cleanupOrphans()
+            }
+        }
+
         // Channel creation is idempotent and preserves every user-controlled setting.
         NotificationPlatform.get(this).permissionPolicy.ensureChannels()
     }
