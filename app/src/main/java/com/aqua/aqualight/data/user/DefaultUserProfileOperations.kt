@@ -47,14 +47,19 @@ class DefaultUserProfileOperations(
         try {
             preferences.updateProfilePhoto(normalized)
             persisted = true
-            AppMediaStorage.commitPendingMedia(appContext, normalized)
-            AppMediaStorage.deleteInternalMedia(appContext, previous)
         } catch (cancellation: CancellationException) {
-            if (!persisted) AppMediaStorage.rollbackPendingMedia(appContext, normalized)
+            AppMediaStorage.rollbackPendingMedia(appContext, normalized)
             throw cancellation
         } catch (error: Throwable) {
-            if (!persisted) AppMediaStorage.rollbackPendingMedia(appContext, normalized)
+            AppMediaStorage.rollbackPendingMedia(appContext, normalized)
             throw error
+        }
+
+        // Once the durable preference commit succeeds, cleanup errors must never be surfaced as a
+        // false save failure. Startup reconciliation safely retries any retained journal entry.
+        if (persisted) {
+            runCatching { AppMediaStorage.commitPendingMedia(appContext, normalized) }
+            runCatching { AppMediaStorage.deleteInternalMedia(appContext, previous) }
         }
     }
 
