@@ -1,3 +1,4 @@
+app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:40:            textResolver.get(item.titleRes),
 app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/materials/MaterialPickerFragment.kt:83:        categoryTitle = args.argCategoryTitle
 app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankMaterialFragment.kt:10:import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
 app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankMaterialFragment.kt:76:        MaterialCategoryCatalog.bioCategories.forEach { item ->

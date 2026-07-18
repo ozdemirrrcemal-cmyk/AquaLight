@@ -2,7 +2,7 @@
 
 ## Rule counts
     142 [RAW_COLOR]
-     53 [RAW_UI_MESSAGE]
+     37 [RAW_UI_MESSAGE]
       3 [LEGACY_STYLE]
 
 ## Files by rule
@@ -19,7 +19,6 @@ app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettin
 app/src/main/java/com/aqua/aqualight/ui/tabs/devices/DevicesFragment.kt
 app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceAddCandidateAdapter.kt
 app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceProvisioningProgressFragment.kt
-app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt
 app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/DeviceCoolingRootFragment.kt
 app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/DeviceDosingRootFragment.kt
 app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/DeviceLightRootFragment.kt
@@ -115,5 +114,5 @@ app/src/main/res/values/toolbar_action_colors.xml
 app/src/main/res/values/typography_dimens.xml
 app/src/main/res/values/typography_styles.xml
 
-GENERATED_COMMIT=37e542477bfb5ab92e39d20537a928aaae8b973c
-GENERATED_AT_UTC=2026-07-18T16:54:05Z
+GENERATED_COMMIT=cc32e4d36d1779cee385df15301c50a87aa28a3a
+GENERATED_AT_UTC=2026-07-18T16:54:33Z

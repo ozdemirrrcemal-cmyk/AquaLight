@@ -13,22 +13,6 @@ Stage 10 design-system/resource guard failed:
  - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceProvisioningProgressFragment.kt:165: [RAW_UI_MESSAGE] user-visible literal "✓ ${state.stepOne}" must be supplied by @StringRes
  - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceProvisioningProgressFragment.kt:166: [RAW_UI_MESSAGE] user-visible literal "✓ ${state.stepTwo}" must be supplied by @StringRes
  - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceProvisioningProgressFragment.kt:167: [RAW_UI_MESSAGE] user-visible literal "${state.currentStepIcon()} ${state.stepThree}" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:38: [RAW_UI_MESSAGE] user-visible literal "Manual control" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:43: [RAW_UI_MESSAGE] user-visible literal "Quick setup" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:50: [RAW_UI_MESSAGE] user-visible literal "Programs" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:55: [RAW_UI_MESSAGE] user-visible literal "Presets" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:60: [RAW_UI_MESSAGE] user-visible literal "Simulation" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:65: [RAW_UI_MESSAGE] user-visible literal "Device settings" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:85: [RAW_UI_MESSAGE] user-visible literal "Channels" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:90: [RAW_UI_MESSAGE] user-visible literal "Calibration" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:97: [RAW_UI_MESSAGE] user-visible literal "Schedules" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:102: [RAW_UI_MESSAGE] user-visible literal "Device settings" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:112: [RAW_UI_MESSAGE] user-visible literal "Timer channels" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:119: [RAW_UI_MESSAGE] user-visible literal "Schedules" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:124: [RAW_UI_MESSAGE] user-visible literal "Device settings" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:134: [RAW_UI_MESSAGE] user-visible literal "Fan control" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:141: [RAW_UI_MESSAGE] user-visible literal "Temperature automation" must be supplied by @StringRes
- - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:146: [RAW_UI_MESSAGE] user-visible literal "Device settings" must be supplied by @StringRes
  - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/DeviceCoolingRootFragment.kt:64: [RAW_UI_MESSAGE] user-visible literal "IP: ${state.ipText}" must be supplied by @StringRes
  - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/DeviceCoolingRootFragment.kt:65: [RAW_UI_MESSAGE] user-visible literal "Firmware: ${state.firmwareText}" must be supplied by @StringRes
  - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/DeviceCoolingRootFragment.kt:66: [RAW_UI_MESSAGE] user-visible literal "Model: ${state.modelText}" must be supplied by @StringRes
@@ -197,7 +181,7 @@ Stage 10 design-system/resource guard failed:
  - app/src/main/res/values-night/styles.xml:4: [LEGACY_STYLE] RedButton must be replaced by a semantic Widget.Aqua.* style
  - app/src/main/res/values-night/styles.xml:14: [LEGACY_STYLE] BlackButton must be replaced by a semantic Widget.Aqua.* style
  - app/src/main/res/values-night/styles.xml:25: [LEGACY_STYLE] WhiteButton must be replaced by a semantic Widget.Aqua.* style
-TOTAL STAGE 10 VIOLATIONS: 198
+TOTAL STAGE 10 VIOLATIONS: 182
 
-GENERATED_COMMIT=37e542477bfb5ab92e39d20537a928aaae8b973c
-GENERATED_AT_UTC=2026-07-18T16:54:05Z
+GENERATED_COMMIT=cc32e4d36d1779cee385df15301c50a87aa28a3a
+GENERATED_AT_UTC=2026-07-18T16:54:33Z
