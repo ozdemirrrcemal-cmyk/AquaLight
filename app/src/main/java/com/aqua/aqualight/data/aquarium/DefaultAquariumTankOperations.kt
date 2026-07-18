@@ -96,7 +96,7 @@ class DefaultAquariumTankOperations(
         }
     }
 
-    override suspend fun updateTankPhoto(tankId: Long, photoUri: String?) =
+    override suspend fun updateTankPhoto(tankId: Long, photoUri: String?): Unit =
         withContext(dispatcher) {
             var persisted = false
             try {
@@ -111,6 +111,8 @@ class DefaultAquariumTankOperations(
                 }
                 throw error
             }
+
+            Unit
         }
 
     override suspend fun updateTankName(tankId: Long, name: String) =
