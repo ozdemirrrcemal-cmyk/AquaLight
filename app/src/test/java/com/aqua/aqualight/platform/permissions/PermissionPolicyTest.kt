@@ -94,6 +94,16 @@ class PermissionPolicyTest {
     }
 
     @Test
+    fun `precise reminders use special access instead of runtime permission`() {
+        listOf(27, 30, 31, 33, 36).forEach { sdk ->
+            assertEquals(
+                emptyList<String>(),
+                PermissionPolicy.requiredPermissions(AppCapability.PRECISE_REMINDERS, sdk)
+            )
+        }
+    }
+
+    @Test
     fun `decision contract distinguishes request rationale and permanent denial`() {
         assertEquals(
             PermissionDecision.GRANTED,
