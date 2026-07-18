@@ -2,27 +2,28 @@ package com.aqua.aqualight.application.feedback
 
 import java.io.File
 
-interface FeedbackSubmissionOperations {
-    fun submit(
+/** Commercial feedback boundary. Firebase and Android callbacks never escape data code. */
+interface FeedbackRepository {
+    suspend fun submit(
         request: FeedbackSubmissionRequest,
-        screenshotFile: File?,
-        callback: FeedbackSubmissionCallback
-    )
+        screenshotFile: File?
+    ): FeedbackSubmissionResult
+
+    suspend fun cleanupOrphans(): FeedbackOrphanCleanupResult
 }
 
 class FeedbackSubmissionUseCase(
-    private val operations: FeedbackSubmissionOperations
+    private val repository: FeedbackRepository
 ) {
-    fun submit(
+    suspend fun submit(
         request: FeedbackSubmissionRequest,
-        screenshotFile: File?,
-        callback: FeedbackSubmissionCallback
-    ) {
-        operations.submit(
-            request = request,
-            screenshotFile = screenshotFile,
-            callback = callback
-        )
+        screenshotFile: File?
+    ): FeedbackSubmissionResult {
+        return repository.submit(request, screenshotFile)
+    }
+
+    suspend fun cleanupOrphans(): FeedbackOrphanCleanupResult {
+        return repository.cleanupOrphans()
     }
 }
 
@@ -34,18 +35,27 @@ data class FeedbackSubmissionRequest(
     val localeTag: String
 )
 
-interface FeedbackSubmissionCallback {
-    fun onSuccess()
-
-    fun onFailure(failure: FeedbackSubmissionFailure)
+sealed interface FeedbackSubmissionResult {
+    data class Success(val documentId: String) : FeedbackSubmissionResult
+    data class Failure(val failure: FeedbackSubmissionFailure) : FeedbackSubmissionResult
 }
 
 data class FeedbackSubmissionFailure(
     val kind: FeedbackSubmissionFailureKind,
-    val cause: Throwable?
+    val cause: Throwable?,
+    val storagePath: String? = null,
+    val rollbackCause: Throwable? = null
 )
 
 enum class FeedbackSubmissionFailureKind {
     UPLOAD,
+    PERSISTENCE,
+    ROLLBACK,
     GENERIC
 }
+
+data class FeedbackOrphanCleanupResult(
+    val attemptedCount: Int,
+    val deletedCount: Int,
+    val remainingCount: Int
+)
