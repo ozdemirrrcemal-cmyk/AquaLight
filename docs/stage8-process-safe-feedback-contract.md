@@ -24,6 +24,8 @@ feature-owned raw dialogs cannot be reconstructed safely by the framework.
   process-safe feedback sheet. Callback and confirm APIs were removed.
 - `LoadingOverlayDialogFragment` is owned by FragmentManager. `BaseActivity` stores loading owner
   keys in saved state and renders exactly one restored overlay.
+- Pending loading overlays are tracked until their asynchronous Fragment transaction is attached,
+  so a rapid `show` then `hide` cannot leave a stale full-screen overlay visible.
 - Snackbar creation remains behind `BaseActivity`; feature-owned Toast usage was removed.
 - Programmatic Stage 8 dimensions are backed by resources.
 
@@ -58,7 +60,7 @@ entry for removing its constructor parameter is obsolete rather than pending.
 6. Snackbar creation remains behind one renderer boundary. Toast is not a feature feedback
    mechanism.
 7. Loading is owner state rendered by one FragmentManager-owned overlay, not an Activity-owned
-   imperative `Dialog` lifetime.
+   imperative `Dialog` lifetime. Pending show transactions must remain cancelable before attach.
 8. User-facing dimensions, text sizes, radii, margins and copy come from resources.
 9. Duplicate sheets use stable tags and reject a second instance while the first is visible or
    being restored.
@@ -88,8 +90,9 @@ entry for removing its constructor parameter is obsolete rather than pending.
 - hard-coded programmatic dimensions in the Stage 8 renderer components.
 
 Instrumentation verifies no-argument reconstruction, argument Bundle recreation, Parcel
-round-trip across a simulated process boundary, and real Activity recreation with a visible
-feedback sheet. The API 27 and API 35 emulator jobs execute these tests.
+round-trip across a simulated process boundary, real Activity recreation with a visible feedback
+sheet, and rapid loading-overlay show/hide cancellation. The API 27 and API 35 emulator jobs
+execute these tests.
 
 ## Completion gate
 
