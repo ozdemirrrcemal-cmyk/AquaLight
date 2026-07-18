@@ -75,7 +75,10 @@ class OwnerSessionCoordinator private constructor(
                 snapshot.activeOwnerUid == normalizedOwnerUid &&
                 providersAlreadyBound
             ) {
-                AppMediaRecoveryManager(appContext).reconcileOwner(normalizedOwnerUid)
+                // Cleanup is retryable and must never make an otherwise active session unavailable.
+                runCatching {
+                    AppMediaRecoveryManager(appContext).reconcileOwner(normalizedOwnerUid)
+                }
                 return@withLock OpenResult.AlreadyActive(
                     ownerUid = normalizedOwnerUid,
                     generation = snapshot.generation
@@ -153,7 +156,10 @@ class OwnerSessionCoordinator private constructor(
 
                 // Application.onCreate may run before UserDataScope is installed. The owner session
                 // barrier is the authoritative point for crash/process-death media reconciliation.
-                AppMediaRecoveryManager(appContext).reconcileOwner(normalizedOwnerUid)
+                // A cleanup failure retains the journal and is retried on the next session opening.
+                runCatching {
+                    AppMediaRecoveryManager(appContext).reconcileOwner(normalizedOwnerUid)
+                }
 
                 SessionBoundServiceManager.start(
                     context = appContext,
