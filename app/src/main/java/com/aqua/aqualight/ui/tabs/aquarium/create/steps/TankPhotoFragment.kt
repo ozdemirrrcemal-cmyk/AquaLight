@@ -62,15 +62,17 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
     private val takePictureLauncher = registerForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { success ->
-        val uri = mediaFlow.currentCameraUri()
-        if (_binding == null) {
-            mediaFlow.cancelCamera()
-            return@registerForActivityResult
-        }
-        if (success && uri != null) {
-            lifecycleScope.launch { openCropScreen(uri) }
-        } else {
-            mediaFlow.cancelCamera()
+        lifecycleScope.launch {
+            val uri = mediaFlow.currentCameraUri()
+            if (_binding == null) {
+                mediaFlow.cancelCamera()
+                return@launch
+            }
+            if (success && uri != null) {
+                openCropScreen(uri)
+            } else {
+                mediaFlow.cancelCamera()
+            }
         }
     }
 
@@ -85,12 +87,12 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
     private val cropLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        if (_binding == null) {
-            mediaFlow.cancelCrop()
-            return@registerForActivityResult
-        }
-        val data = result.data
         lifecycleScope.launch {
+            if (_binding == null) {
+                mediaFlow.cancelCrop()
+                return@launch
+            }
+            val data = result.data
             when {
                 result.resultCode == Activity.RESULT_OK && data != null -> {
                     val output = UCrop.getOutput(data)
@@ -147,7 +149,9 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
             when (bundle.getString(PhotoSourceBottomSheet.RESULT_KEY)) {
                 PhotoSourceBottomSheet.RESULT_GALLERY -> openGallery()
                 PhotoSourceBottomSheet.RESULT_CAMERA -> checkCameraPermissionAndOpen()
-                PhotoSourceBottomSheet.RESULT_REMOVE -> removeSelectedPhoto()
+                PhotoSourceBottomSheet.RESULT_REMOVE -> lifecycleScope.launch {
+                    removeSelectedPhoto()
+                }
             }
         }
     }
@@ -206,15 +210,21 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
     }
 
     private fun startCameraCapture() {
-        val uri = mediaFlow.createCameraUri()
-        if (uri == null) {
-            showInfoDialog(
-                title = getString(R.string.aquarium_photo_error_title),
-                message = getString(R.string.aquarium_photo_temp_file_failed)
-            )
-            return
+        lifecycleScope.launch {
+            val uri = mediaFlow.createCameraUri()
+            if (_binding == null) {
+                mediaFlow.cancelCamera()
+                return@launch
+            }
+            if (uri == null) {
+                showInfoDialog(
+                    title = getString(R.string.aquarium_photo_error_title),
+                    message = getString(R.string.aquarium_photo_temp_file_failed)
+                )
+                return@launch
+            }
+            takePictureLauncher.launch(uri)
         }
-        takePictureLauncher.launch(uri)
     }
 
     private suspend fun openCropScreen(sourceUri: Uri) {
@@ -254,7 +264,7 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
         }
     }
 
-    private fun acceptDraftPhoto(contentUri: Uri) {
+    private suspend fun acceptDraftPhoto(contentUri: Uri) {
         if (_binding == null) {
             mediaFlow.rollbackSelection()
             return
@@ -267,7 +277,7 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
         renderPhoto(newValue)
     }
 
-    private fun removeSelectedPhoto() {
+    private suspend fun removeSelectedPhoto() {
         val previous = viewModel.tankDraft.photoUri
         viewModel.updateTankPhoto(null)
         mediaFlow.deleteInternalMedia(previous)
