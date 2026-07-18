@@ -343,15 +343,14 @@ class MediaFlowCoordinatorViewModel(
         val outputUri = savedStateHandle.get<String>(KEY_CROP_OUTPUT_URI)
         val cameraUri = savedStateHandle.get<String>(KEY_CAMERA_URI)
         val preparedPath = savedStateHandle.get<String>(KEY_PREPARED_SOURCE_PATH)
-        val state = _selection.value
         terminalCleanupScope.launch {
             try {
+                // Only transient camera/crop artifacts belong to the coordinator lifecycle.
+                // A promoted selection may already be referenced by a successful repository write;
+                // pending-media reconciliation is the sole authority for that candidate.
                 AppMediaStorage.deleteInternalMedia(appContext, outputUri)
                 AppMediaStorage.deleteInternalMedia(appContext, cameraUri)
                 mediaProcessor.delete(preparedPath)
-                if (!state.externalLifecycleOwner && state.selectedUri != state.persistedUri) {
-                    AppMediaStorage.rollbackPendingMedia(appContext, state.selectedUri)
-                }
             } finally {
                 terminalCleanupScope.cancel()
             }
