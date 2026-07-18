@@ -1,0 +1,806 @@
+Stage 10 design-system/resource guard failed:
+ - app/src/main/res/layout/bottom_sheet_device_confirm.xml:28: [RAW_XML_TEXT] text uses literal "Confirm action"; move it to strings.xml
+ - app/src/main/res/layout/bottom_sheet_device_confirm.xml:37: [RAW_XML_TEXT] text uses literal "Are you sure you want to continue?"; move it to strings.xml
+ - app/src/main/res/layout/bottom_sheet_device_confirm.xml:52: [RAW_XML_TEXT] text uses literal "Cancel"; move it to strings.xml
+ - app/src/main/res/layout/bottom_sheet_device_confirm.xml:61: [RAW_XML_TEXT] text uses literal "Confirm"; move it to strings.xml
+ - app/src/main/res/layout/dialog_settings_bottom_sheet.xml:17: [RAW_XML_TEXT] text uses literal "Tank Name"; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_add.xml:111: [RAW_XML_TEXT] text uses literal "Scan secure QR code"; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_add.xml:155: [RAW_XML_TEXT] text uses literal "Setup rules"; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_add.xml:165: [RAW_XML_TEXT] text uses literal "First setup uses the QR code. For an already paired device, open setup mode on the device, then press Manual BLE Scan. AquaLight verifies the firmware state before sending Wi‑Fi."; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_add.xml:190: [RAW_XML_TEXT] text uses literal "Select a device only after setup mode is open. AquaLight will verify DeviceInfo before Wi‑Fi is sent."; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_cooling_root.xml:85: [RAW_XML_TEXT] text uses literal "Connection"; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_cooling_root.xml:118: [RAW_XML_TEXT] text uses literal "Device information"; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_dosing_root.xml:85: [RAW_XML_TEXT] text uses literal "Connection"; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_dosing_root.xml:118: [RAW_XML_TEXT] text uses literal "Device information"; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_light_root.xml:85: [RAW_XML_TEXT] text uses literal "Connection"; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_light_root.xml:118: [RAW_XML_TEXT] text uses literal "Device information"; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_light_root.xml:188: [RAW_XML_TEXT] text uses literal "Hidden OTA test panel"; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_light_root.xml:197: [RAW_XML_TEXT] text uses literal "Temporary internal panel. Long press Firmware to show or hide. Remove after OTA validation."; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_light_root.xml:225: [RAW_XML_TEXT] text uses literal "Check beta"; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_light_root.xml:234: [RAW_XML_TEXT] text uses literal "Status"; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_light_root.xml:251: [RAW_XML_TEXT] text uses literal "Start OTA"; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_light_root.xml:260: [RAW_XML_TEXT] text uses literal "Clear"; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_light_root.xml:280: [RAW_XML_TEXT] text uses literal "Manual control"; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_light_root.xml:290: [RAW_XML_TEXT] text uses literal "Manual control hazırlanıyor."; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_light_root.xml:311: [RAW_XML_TEXT] text uses literal "Programs"; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_light_root.xml:321: [RAW_XML_TEXT] text uses literal "Programlar hazırlanıyor."; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_root_overview.xml:84: [RAW_XML_TEXT] text uses literal "Connection"; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_root_overview.xml:117: [RAW_XML_TEXT] text uses literal "Device information"; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_status.xml:77: [RAW_XML_TEXT] text uses literal "No active devices"; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_status.xml:90: [RAW_XML_TEXT] text uses literal "Connected devices will appear here once they are available."; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_timer_root.xml:85: [RAW_XML_TEXT] text uses literal "Connection"; move it to strings.xml
+ - app/src/main/res/layout/fragment_device_timer_root.xml:118: [RAW_XML_TEXT] text uses literal "Device information"; move it to strings.xml
+ - app/src/main/res/layout/fragment_settings.xml:108: [RAW_XML_TEXT] text uses literal "3 Active Devices"; move it to strings.xml
+ - app/src/main/res/layout/fragment_user_address.xml:180: [RAW_XML_TEXT] text uses literal "Turkey"; move it to strings.xml
+ - app/src/main/res/layout/item_device_add_candidate.xml:35: [RAW_XML_TEXT] text uses literal "AQ"; move it to strings.xml
+ - app/src/main/res/layout/item_device_status.xml:43: [RAW_XML_TEXT] contentDescription uses literal "Device icon"; move it to strings.xml
+ - app/src/main/res/layout/item_device_status.xml:80: [RAW_XML_TEXT] contentDescription uses literal "Device presence"; move it to strings.xml
+ - app/src/main/res/layout/item_device_status.xml:121: [RAW_XML_TEXT] text uses literal "IP"; move it to strings.xml
+ - app/src/main/res/layout/item_device_status.xml:156: [RAW_XML_TEXT] text uses literal "Serial"; move it to strings.xml
+ - app/src/main/res/layout/item_device_status.xml:192: [RAW_XML_TEXT] contentDescription uses literal "Last seen icon"; move it to strings.xml
+ - app/src/main/res/layout/item_device_status.xml:208: [RAW_XML_TEXT] text uses literal "Last seen"; move it to strings.xml
+ - app/src/main/res/layout/layout_aqua_header.xml:55: [RAW_XML_TEXT] hint uses literal "Type here to search..."; move it to strings.xml
+ - app/src/main/res/layout/layout_aqua_header.xml:76: [RAW_XML_TEXT] contentDescription uses literal "Clear search"; move it to strings.xml
+ - app/src/main/res/layout/layout_aqua_header.xml:79: [RAW_XML_TEXT] text uses literal "×"; move it to strings.xml
+ - app/src/main/res/layout/layout_aqua_header.xml:276: [RAW_XML_TEXT] text uses literal "Device"; move it to strings.xml
+ - app/src/main/res/menu/menu_bottom.xml:5: [RAW_XML_TEXT] title uses literal "Aquarium"; move it to strings.xml
+ - app/src/main/res/menu/menu_bottom.xml:9: [RAW_XML_TEXT] title uses literal "Maintenance"; move it to strings.xml
+ - app/src/main/res/menu/menu_bottom.xml:13: [RAW_XML_TEXT] title uses literal "Devices"; move it to strings.xml
+ - app/src/main/res/menu/menu_bottom.xml:17: [RAW_XML_TEXT] title uses literal "Settings"; move it to strings.xml
+ - app/src/main/res/navigation/nav_aquarium.xml:286: [RAW_XML_TEXT] label uses literal "Light"; move it to strings.xml
+ - app/src/main/res/navigation/nav_aquarium.xml:300: [RAW_XML_TEXT] label uses literal "Dosing"; move it to strings.xml
+ - app/src/main/res/navigation/nav_aquarium.xml:314: [RAW_XML_TEXT] label uses literal "Timer"; move it to strings.xml
+ - app/src/main/res/navigation/nav_aquarium.xml:328: [RAW_XML_TEXT] label uses literal "Cooling"; move it to strings.xml
+ - app/src/main/res/navigation/nav_devices.xml:66: [RAW_XML_TEXT] label uses literal "Add Device"; move it to strings.xml
+ - app/src/main/res/navigation/nav_devices.xml:87: [RAW_XML_TEXT] label uses literal "QR Setup"; move it to strings.xml
+ - app/src/main/res/navigation/nav_devices.xml:101: [RAW_XML_TEXT] label uses literal "Wi-Fi Setup"; move it to strings.xml
+ - app/src/main/res/navigation/nav_devices.xml:142: [RAW_XML_TEXT] label uses literal "Provisioning"; move it to strings.xml
+ - app/src/main/res/navigation/nav_devices.xml:152: [RAW_XML_TEXT] label uses literal "Light"; move it to strings.xml
+ - app/src/main/res/navigation/nav_devices.xml:166: [RAW_XML_TEXT] label uses literal "Dosing"; move it to strings.xml
+ - app/src/main/res/navigation/nav_devices.xml:180: [RAW_XML_TEXT] label uses literal "Timer"; move it to strings.xml
+ - app/src/main/res/navigation/nav_devices.xml:194: [RAW_XML_TEXT] label uses literal "Cooling"; move it to strings.xml
+ - app/src/main/res/navigation/nav_root.xml:4: [RAW_XML_TEXT] label uses literal "Auth"; move it to strings.xml
+ - app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:8: [RAW_UI_MESSAGE] user-visible literal "Fertilizer" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:13: [RAW_UI_MESSAGE] user-visible literal "Decoration" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:18: [RAW_UI_MESSAGE] user-visible literal "Gravel" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:23: [RAW_UI_MESSAGE] user-visible literal "Substrate" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:31: [RAW_UI_MESSAGE] user-visible literal "Aquarium" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:36: [RAW_UI_MESSAGE] user-visible literal "CO2" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:41: [RAW_UI_MESSAGE] user-visible literal "Light" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:46: [RAW_UI_MESSAGE] user-visible literal "Filter" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:51: [RAW_UI_MESSAGE] user-visible literal "Heater" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:56: [RAW_UI_MESSAGE] user-visible literal "Cooler" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:61: [RAW_UI_MESSAGE] user-visible literal "Dosing" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCategoryCatalog.kt:66: [RAW_UI_MESSAGE] user-visible literal "LED Background" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleGattOperationQueue.kt:27: [RAW_UI_MESSAGE] user-visible literal "BLE GATT operation timed out: " must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/data/devices/repository/DevicesRepository.kt:338: [RAW_UI_MESSAGE] user-visible literal "$operation failed and no durable rollback snapshot was available." must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/data/user/UserPreferencesManager.kt:68: [RAW_UI_MESSAGE] user-visible literal "Use uid instead. This value was never a Firebase ID token." must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/data/user/UserPreferencesManager.kt:219: [RAW_UI_MESSAGE] user-visible literal "Use replaceProfile for login/session replacement or patchProfile for profile edits." must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/auth/security/ReAuthenticateFragment.kt:92: [RAW_UI_MESSAGE] user-visible literal "Google Error" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/common/devicecard/DeviceCompactCardBinder.kt:24: [RAW_UI_MESSAGE] user-visible literal "Serial: $serial" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsBasicFragment.kt:475: [RAW_UI_MESSAGE] user-visible literal "Tank Type" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsBasicFragment.kt:507: [RAW_UI_MESSAGE] user-visible literal "Setup Date" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsBasicFragment.kt:520: [RAW_UI_MESSAGE] user-visible literal "Tank Style" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/DevicesFragment.kt:197: [RAW_UI_MESSAGE] user-visible literal "$removedSentence $failedSentence" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceAddCandidateAdapter.kt:39: [RAW_UI_MESSAGE] user-visible literal "Serial: ${candidate.serial}" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceProvisioningProgressFragment.kt:165: [RAW_UI_MESSAGE] user-visible literal "✓ ${state.stepOne}" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceProvisioningProgressFragment.kt:166: [RAW_UI_MESSAGE] user-visible literal "✓ ${state.stepTwo}" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceProvisioningProgressFragment.kt:167: [RAW_UI_MESSAGE] user-visible literal "${state.currentStepIcon()} ${state.stepThree}" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:38: [RAW_UI_MESSAGE] user-visible literal "Manual control" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:43: [RAW_UI_MESSAGE] user-visible literal "Quick setup" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:50: [RAW_UI_MESSAGE] user-visible literal "Programs" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:55: [RAW_UI_MESSAGE] user-visible literal "Presets" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:60: [RAW_UI_MESSAGE] user-visible literal "Simulation" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:65: [RAW_UI_MESSAGE] user-visible literal "Device settings" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:85: [RAW_UI_MESSAGE] user-visible literal "Channels" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:90: [RAW_UI_MESSAGE] user-visible literal "Calibration" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:97: [RAW_UI_MESSAGE] user-visible literal "Schedules" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:102: [RAW_UI_MESSAGE] user-visible literal "Device settings" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:112: [RAW_UI_MESSAGE] user-visible literal "Timer channels" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:119: [RAW_UI_MESSAGE] user-visible literal "Schedules" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:124: [RAW_UI_MESSAGE] user-visible literal "Device settings" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:134: [RAW_UI_MESSAGE] user-visible literal "Fan control" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:141: [RAW_UI_MESSAGE] user-visible literal "Temperature automation" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt:146: [RAW_UI_MESSAGE] user-visible literal "Device settings" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/DeviceCoolingRootFragment.kt:64: [RAW_UI_MESSAGE] user-visible literal "IP: ${state.ipText}" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/DeviceCoolingRootFragment.kt:65: [RAW_UI_MESSAGE] user-visible literal "Firmware: ${state.firmwareText}" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/DeviceCoolingRootFragment.kt:66: [RAW_UI_MESSAGE] user-visible literal "Model: ${state.modelText}" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/DeviceCoolingRootFragment.kt:67: [RAW_UI_MESSAGE] user-visible literal "${state.primaryCountLabel}: ${state.primaryCountText}" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/DeviceCoolingRootFragment.kt:68: [RAW_UI_MESSAGE] user-visible literal "Features: ${state.featuresText}" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/DeviceDosingRootFragment.kt:73: [RAW_UI_MESSAGE] user-visible literal "IP: ${state.ipText}" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/DeviceDosingRootFragment.kt:74: [RAW_UI_MESSAGE] user-visible literal "Firmware: ${state.firmwareText}" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/DeviceDosingRootFragment.kt:75: [RAW_UI_MESSAGE] user-visible literal "Model: ${state.modelText}" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/DeviceDosingRootFragment.kt:76: [RAW_UI_MESSAGE] user-visible literal "${state.primaryCountLabel}: ${state.primaryCountText}" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/DeviceDosingRootFragment.kt:77: [RAW_UI_MESSAGE] user-visible literal "Features: ${state.featuresText}" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/DeviceLightRootFragment.kt:109: [RAW_UI_MESSAGE] user-visible literal "IP: ${state.ipText}" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/DeviceLightRootFragment.kt:110: [RAW_UI_MESSAGE] user-visible literal "Firmware: ${state.firmwareText}" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/DeviceLightRootFragment.kt:111: [RAW_UI_MESSAGE] user-visible literal "Model: ${state.modelText}" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/DeviceLightRootFragment.kt:112: [RAW_UI_MESSAGE] user-visible literal "Light channels: ${state.channelCountText}" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/DeviceLightRootFragment.kt:113: [RAW_UI_MESSAGE] user-visible literal "Features: ${state.featuresText}" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/DeviceTimerRootFragment.kt:64: [RAW_UI_MESSAGE] user-visible literal "IP: ${state.ipText}" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/DeviceTimerRootFragment.kt:65: [RAW_UI_MESSAGE] user-visible literal "Firmware: ${state.firmwareText}" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/DeviceTimerRootFragment.kt:66: [RAW_UI_MESSAGE] user-visible literal "Model: ${state.modelText}" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/DeviceTimerRootFragment.kt:67: [RAW_UI_MESSAGE] user-visible literal "${state.primaryCountLabel}: ${state.primaryCountText}" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/DeviceTimerRootFragment.kt:68: [RAW_UI_MESSAGE] user-visible literal "Features: ${state.featuresText}" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/route/DeviceRouteResolver.kt:47: [RAW_UI_MESSAGE] user-visible literal "Unsupported AquaLight device family. Firmware did not provide a known product.family value." must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/settings/device/DeviceStatusAdapter.kt:35: [RAW_UI_MESSAGE] user-visible literal "Serial" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/settings/device/DeviceStatusAdapter.kt:43: [RAW_UI_MESSAGE] user-visible literal "$name, Serial: $serial, $presenceText" must be supplied by @StringRes
+ - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:44: [RAW_COLOR] #2196F3 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:52: [RAW_COLOR] #5C7CFA must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:60: [RAW_COLOR] #FF8A4C must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:68: [RAW_COLOR] #B7793E must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:77: [RAW_COLOR] #F2A900 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:85: [RAW_COLOR] #D99A00 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:93: [RAW_COLOR] #8EA9A0 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:101: [RAW_COLOR] #D8F3B0 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:109: [RAW_COLOR] #45D6B4 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:117: [RAW_COLOR] #7B2CBF must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:125: [RAW_COLOR] #4A90E2 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:134: [RAW_COLOR] #66C7F4 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:142: [RAW_COLOR] #4CAF50 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:151: [RAW_COLOR] #4DD6A7 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:159: [RAW_COLOR] #8BC34A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:167: [RAW_COLOR] #66BB6A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:176: [RAW_COLOR] #00BCD4 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:184: [RAW_COLOR] #FFD54F must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:193: [RAW_COLOR] #7C4DFF must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:201: [RAW_COLOR] #FF6B6B must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/data/care/catalog/CareTaskTypeCatalog.kt:210: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/platform/notifications/AndroidNotificationRenderer.kt:298: [RAW_COLOR] #2196F3 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CareProfileBottomSheet.kt:40: [RAW_COLOR] #DDE3EA must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CareProfileBottomSheet.kt:69: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CareProfileBottomSheet.kt:72: [RAW_COLOR] #09251D must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CareProfileBottomSheet.kt:74: [RAW_COLOR] #1E5A48 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/common/devicecard/DeviceCompactCardBinder.kt:67: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/common/devicecard/DeviceCompactCardBinder.kt:70: [RAW_COLOR] #7B8794 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/common/timeline/TimelineAxisView.kt:28: [RAW_COLOR] #26384C must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/common/timeline/TimelineAxisView.kt:30: [RAW_COLOR] #4FD6C8 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/common/timeline/TimelineAxisView.kt:31: [RAW_COLOR] #45BFAF must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/common/timeline/TimelineAxisView.kt:34: [RAW_COLOR] #0B1D33 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/common/timeline/TimelineDayResolver.kt:46: [RAW_COLOR] #4FD6C8 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/common/timeline/TimelineDayResolver.kt:47: [RAW_COLOR] #8FA0B5 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/AquariumFragment.kt:236: [RAW_COLOR] #FF8A8A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/AquariumFragment.kt:237: [RAW_COLOR] #321E2A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/AquariumFragment.kt:239: [RAW_COLOR] #7A3344 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/AquariumFragment.kt:242: [RAW_COLOR] #1C3252 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/materials/MaterialPickerFragment.kt:550: [RAW_COLOR] #2196F3 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankInfoFragment.kt:148: [RAW_COLOR] #7F91AA must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankInfoFragment.kt:163: [RAW_COLOR] #7F91AA must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankInfoFragment.kt:171: [RAW_COLOR] #7F91AA must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt:198: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt:218: [RAW_COLOR] #D85C5C must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt:222: [RAW_COLOR] #F2C94C must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt:226: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt:231: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt:474: [RAW_COLOR] #223A57 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt:475: [RAW_COLOR] #10233A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt:573: [RAW_COLOR] #B8C7D9 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt:588: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt:147: [RAW_COLOR] #223A57 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt:148: [RAW_COLOR] #10233A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt:243: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt:259: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt:280: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt:298: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt:363: [RAW_COLOR] #1C5D8F must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt:364: [RAW_COLOR] #8F4A3A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt:365: [RAW_COLOR] #3E6B4A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt:366: [RAW_COLOR] #7A4D2D must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt:367: [RAW_COLOR] #7A4E8F must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt:368: [RAW_COLOR] #3E536B must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt:587: [RAW_COLOR] #1C5D8F must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt:588: [RAW_COLOR] #8F4A3A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt:589: [RAW_COLOR] #3E6B4A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt:590: [RAW_COLOR] #7A4D2D must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt:591: [RAW_COLOR] #7A4E8F must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt:592: [RAW_COLOR] #3E536B must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsFragment.kt:476: [RAW_COLOR] #D85C5C must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsFragment.kt:477: [RAW_COLOR] #E0A84C must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsFragment.kt:478: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:447: [RAW_COLOR] #10233A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:453: [RAW_COLOR] #667085 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:458: [RAW_COLOR] #10233A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:464: [RAW_COLOR] #10233A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:470: [RAW_COLOR] #475467 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:476: [RAW_COLOR] #101828 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:481: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:486: [RAW_COLOR] #98A2B3 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:491: [RAW_COLOR] #D0D5DD must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:593: [RAW_COLOR] #F2F4F7 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt:610: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/DeviceCardAdapter.kt:96: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/DeviceCardAdapter.kt:97: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceScanPulseView.kt:22: [RAW_COLOR] #64FFDA must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceScanPulseView.kt:27: [RAW_COLOR] #3364FFDA must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceScanPulseView.kt:32: [RAW_COLOR] #64FFDA must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt:354: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt:356: [RAW_COLOR] #6F829B must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt:399: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt:406: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt:408: [RAW_COLOR] #6F829B must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt:417: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt:436: [RAW_COLOR] #2196F3 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AquariumMaintenanceFragment.kt:363: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AquariumMaintenanceFragment.kt:548: [RAW_COLOR] #2B6F5A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AquariumMaintenanceFragment.kt:549: [RAW_COLOR] #12382F must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AquariumMaintenanceFragment.kt:630: [RAW_COLOR] #B8C7D9 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AquariumMaintenanceFragment.kt:658: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AquariumMaintenanceFragment.kt:697: [RAW_COLOR] #8FE7D5 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AquariumMaintenanceFragment.kt:705: [RAW_COLOR] #173F38 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AquariumMaintenanceFragment.kt:708: [RAW_COLOR] #2F7D70 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt:289: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt:291: [RAW_COLOR] #B8C7D9 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt:299: [RAW_COLOR] #D85C5C must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt:301: [RAW_COLOR] #B8C7D9 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt:310: [RAW_COLOR] #B8C7D9 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt:316: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt:372: [RAW_COLOR] #12382F must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt:374: [RAW_COLOR] #1C3252 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt:378: [RAW_COLOR] #2B6F5A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt:380: [RAW_COLOR] #2A4566 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/TaskDetailFragment.kt:180: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/TaskDetailFragment.kt:182: [RAW_COLOR] #B8C7D9 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/TaskDetailFragment.kt:436: [RAW_COLOR] #12382F must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/TaskDetailFragment.kt:438: [RAW_COLOR] #1C3252 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/TaskDetailFragment.kt:442: [RAW_COLOR] #2B6F5A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/TaskDetailFragment.kt:444: [RAW_COLOR] #2A4566 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:31: [RAW_COLOR] #2196F3 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:39: [RAW_COLOR] #5C7CFA must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:47: [RAW_COLOR] #FF8A4C must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:55: [RAW_COLOR] #B7793E must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:63: [RAW_COLOR] #F2A900 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:71: [RAW_COLOR] #D99A00 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:79: [RAW_COLOR] #8EA9A0 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:87: [RAW_COLOR] #D8F3B0 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:95: [RAW_COLOR] #45D6B4 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:103: [RAW_COLOR] #7B2CBF must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:111: [RAW_COLOR] #4A90E2 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:119: [RAW_COLOR] #66C7F4 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:127: [RAW_COLOR] #4CAF50 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:135: [RAW_COLOR] #4DD6A7 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:143: [RAW_COLOR] #8BC34A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:151: [RAW_COLOR] #66BB6A must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:159: [RAW_COLOR] #00BCD4 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:167: [RAW_COLOR] #FFD54F must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:175: [RAW_COLOR] #7C4DFF must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:183: [RAW_COLOR] #FF6B6B must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/CareTaskTypeCatalog.kt:191: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/settings/device/DeviceStatusAdapter.kt:63: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/java/com/aqua/aqualight/ui/tabs/settings/device/DeviceStatusAdapter.kt:64: [RAW_COLOR] #7B8794 must reference a semantic color token
+ - app/src/main/res/color/aqua_input_feedback_stroke_color.xml:6: [RAW_COLOR] #3A5878 must reference a semantic color token
+ - app/src/main/res/drawable/bg_aqua_bottom_sheet.xml:4: [RAW_COLOR] #10233A must reference a semantic color token
+ - app/src/main/res/drawable/bg_care_task_completed_badge.xml:4: [RAW_COLOR] #12382F must reference a semantic color token
+ - app/src/main/res/drawable/bg_care_task_completed_badge.xml:8: [RAW_COLOR] #2B6F5A must reference a semantic color token
+ - app/src/main/res/drawable/bg_care_task_source_badge.xml:4: [RAW_COLOR] #1C3252 must reference a semantic color token
+ - app/src/main/res/drawable/bg_device_compact_action_chip.xml:3: [RAW_COLOR] #123B36 must reference a semantic color token
+ - app/src/main/res/drawable/bg_device_compact_action_chip.xml:5: [RAW_COLOR] #287568 must reference a semantic color token
+ - app/src/main/res/drawable/bg_device_compact_status_chip.xml:3: [RAW_COLOR] #173148 must reference a semantic color token
+ - app/src/main/res/drawable/bg_device_compact_status_chip.xml:5: [RAW_COLOR] #2A4663 must reference a semantic color token
+ - app/src/main/res/drawable/bg_device_icon_container.xml:4: [RAW_COLOR] #0D1C2E must reference a semantic color token
+ - app/src/main/res/drawable/bg_device_icon_container.xml:7: [RAW_COLOR] #1E3550 must reference a semantic color token
+ - app/src/main/res/drawable/bg_devices_empty_orb.xml:4: [RAW_COLOR] #162A3E must reference a semantic color token
+ - app/src/main/res/drawable/bg_devices_empty_orb.xml:7: [RAW_COLOR] #2A4663 must reference a semantic color token
+ - app/src/main/res/drawable/bg_dropdown_item_divider.xml:16: [RAW_COLOR] #3348556B must reference a semantic color token
+ - app/src/main/res/drawable/bg_dropdown_popup.xml:17: [RAW_COLOR] #3348556B must reference a semantic color token
+ - app/src/main/res/drawable/bg_global_action_detail_container.xml:6: [RAW_COLOR] #10263D must reference a semantic color token
+ - app/src/main/res/drawable/bg_global_action_detail_container.xml:10: [RAW_COLOR] #263F59 must reference a semantic color token
+ - app/src/main/res/drawable/bg_maintenance_empty_icon_circle.xml:4: [RAW_COLOR] #10233A must reference a semantic color token
+ - app/src/main/res/drawable/bg_maintenance_empty_icon_circle.xml:8: [RAW_COLOR] #223A57 must reference a semantic color token
+ - app/src/main/res/drawable/bg_maintenance_profile_percent_warning.xml:3: [RAW_COLOR] #2A2315 must reference a semantic color token
+ - app/src/main/res/drawable/bg_maintenance_profile_percent_warning.xml:6: [RAW_COLOR] #6A4D1E must reference a semantic color token
+ - app/src/main/res/drawable/bg_maintenance_tab_selected.xml:4: [RAW_COLOR] #1C3D63 must reference a semantic color token
+ - app/src/main/res/drawable/bg_maintenance_tab_selected.xml:8: [RAW_COLOR] #2196F3 must reference a semantic color token
+ - app/src/main/res/drawable/bg_maintenance_tab_unselected.xml:4: [RAW_COLOR] #10233A must reference a semantic color token
+ - app/src/main/res/drawable/bg_maintenance_tab_unselected.xml:8: [RAW_COLOR] #223A57 must reference a semantic color token
+ - app/src/main/res/drawable/bg_material_check_selected.xml:5: [RAW_COLOR] #2196F3 must reference a semantic color token
+ - app/src/main/res/drawable/bg_material_check_selected.xml:9: [RAW_COLOR] #5DB8FF must reference a semantic color token
+ - app/src/main/res/drawable/bg_material_check_unselected.xml:9: [RAW_COLOR] #334B66 must reference a semantic color token
+ - app/src/main/res/drawable/bg_material_icon_box.xml:4: [RAW_COLOR] #1B324D must reference a semantic color token
+ - app/src/main/res/drawable/bg_material_icon_box.xml:10: [RAW_COLOR] #294867 must reference a semantic color token
+ - app/src/main/res/drawable/bg_offline_dot.xml:9: [RAW_COLOR] #F44336 must reference a semantic color token
+ - app/src/main/res/drawable/bg_online_dot.xml:9: [RAW_COLOR] #4CAF50 must reference a semantic color token
+ - app/src/main/res/drawable/bg_plant_marker.xml:5: [RAW_COLOR] #80000000 must reference a semantic color token
+ - app/src/main/res/drawable/bg_plant_marker.xml:9: [RAW_COLOR] #55FFFFFF must reference a semantic color token
+ - app/src/main/res/drawable/bg_plant_marker_circle.xml:5: [RAW_COLOR] #80000000 must reference a semantic color token
+ - app/src/main/res/drawable/bg_plant_marker_circle.xml:9: [RAW_COLOR] #33FFFFFF must reference a semantic color token
+ - app/src/main/res/drawable/bg_plant_number_circle.xml:5: [RAW_COLOR] #2A4058 must reference a semantic color token
+ - app/src/main/res/drawable/bg_plant_number_circle.xml:9: [RAW_COLOR] #3E5B78 must reference a semantic color token
+ - app/src/main/res/drawable/bg_status_dot_green.xml:5: [RAW_COLOR] #31D07E must reference a semantic color token
+ - app/src/main/res/drawable/bg_tank_selection_selected.xml:2: [RAW_COLOR] #2196F3 must reference a semantic color token
+ - app/src/main/res/drawable/bg_tank_selection_unselected.xml:2: [RAW_COLOR] #66000000 must reference a semantic color token
+ - app/src/main/res/drawable/bg_tank_selection_unselected.xml:5: [RAW_COLOR] #CCFFFFFF must reference a semantic color token
+ - app/src/main/res/drawable/bg_tank_status_dot.xml:5: [RAW_COLOR] #22C7A9 must reference a semantic color token
+ - app/src/main/res/drawable/ic_aquarium_notifications.xml:9: [RAW_COLOR] #FFBB33 must reference a semantic color token
+ - app/src/main/res/drawable/ic_aquarium_notifications.xml:14: [RAW_COLOR] #FFFFFF must reference a semantic color token
+ - app/src/main/res/drawable/ic_arrow_right.xml:8: [RAW_COLOR] #A0A0A0 must reference a semantic color token
+ - app/src/main/res/drawable/ic_category.xml:7: [RAW_COLOR] #FFFFFFFF must reference a semantic color token
+ - app/src/main/res/drawable/ic_devices.xml:9: [RAW_COLOR] #51514C must reference a semantic color token
+ - app/src/main/res/drawable/ic_devices.xml:15: [RAW_COLOR] #A7A79B must reference a semantic color token
+ - app/src/main/res/drawable/ic_devices.xml:23: [RAW_COLOR] #F4D100 must reference a semantic color token
+ - app/src/main/res/drawable/ic_devices.xml:35: [RAW_COLOR] #F4D100 must reference a semantic color token
+ - app/src/main/res/drawable/ic_email.xml:7: [RAW_COLOR] #FFFFFFFF must reference a semantic color token
+ - app/src/main/res/drawable/ic_flashlight.xml:8: [RAW_COLOR] #FFFFFFFF must reference a semantic color token
+ - app/src/main/res/drawable/ic_gallery.xml:6: [RAW_COLOR] #FFFFFF must reference a semantic color token
+ - app/src/main/res/drawable/ic_google.xml:7: [RAW_COLOR] #EA4335 must reference a semantic color token
+ - app/src/main/res/drawable/ic_google.xml:10: [RAW_COLOR] #34A853 must reference a semantic color token
+ - app/src/main/res/drawable/ic_google.xml:13: [RAW_COLOR] #FBBC05 must reference a semantic color token
+ - app/src/main/res/drawable/ic_google.xml:16: [RAW_COLOR] #4285F4 must reference a semantic color token
+ - app/src/main/res/drawable/ic_google.xml:19: [RAW_COLOR] #00000000 must reference a semantic color token
+ - app/src/main/res/drawable/ic_last_seen.xml:7: [RAW_COLOR] #8BCAFF must reference a semantic color token
+ - app/src/main/res/drawable/ic_message.xml:7: [RAW_COLOR] #FFFFFFFF must reference a semantic color token
+ - app/src/main/res/drawable/ic_notification.xml:9: [RAW_COLOR] #1E90FF must reference a semantic color token
+ - app/src/main/res/drawable/ic_notification.xml:19: [RAW_COLOR] #FFFFFF must reference a semantic color token
+ - app/src/main/res/drawable/ic_profile_placeholder.xml:9: [RAW_COLOR] #FF000000 must reference a semantic color token
+ - app/src/main/res/drawable/ic_qr_code_24.xml:8: [RAW_COLOR] #000000 must reference a semantic color token
+ - app/src/main/res/drawable/ic_radar.xml:8: [RAW_COLOR] #000000 must reference a semantic color token
+ - app/src/main/res/drawable/ic_send.xml:6: [RAW_COLOR] #FFFFFF must reference a semantic color token
+ - app/src/main/res/drawable/ic_send.xml:8: [RAW_COLOR] #FFFFFF must reference a semantic color token
+ - app/src/main/res/drawable/ic_theme_dark.xml:10: [RAW_COLOR] #020617 must reference a semantic color token
+ - app/src/main/res/drawable/ic_theme_dark.xml:15: [RAW_COLOR] #A78BFA must reference a semantic color token
+ - app/src/main/res/drawable/ic_theme_dark.xml:23: [RAW_COLOR] #FACCFF must reference a semantic color token
+ - app/src/main/res/drawable/ic_theme_dark.xml:26: [RAW_COLOR] #FACCFF must reference a semantic color token
+ - app/src/main/res/drawable/ic_theme_light.xml:10: [RAW_COLOR] #1E3A8A must reference a semantic color token
+ - app/src/main/res/drawable/ic_theme_light.xml:15: [RAW_COLOR] #FFD85C must reference a semantic color token
+ - app/src/main/res/drawable/ic_theme_light.xml:21: [RAW_COLOR] #FFE58A must reference a semantic color token
+ - app/src/main/res/drawable/ic_theme_system.xml:10: [RAW_COLOR] #0B1120 must reference a semantic color token
+ - app/src/main/res/drawable/ic_theme_system.xml:15: [RAW_COLOR] #111827 must reference a semantic color token
+ - app/src/main/res/drawable/ic_theme_system.xml:16: [RAW_COLOR] #38BDF8 must reference a semantic color token
+ - app/src/main/res/drawable/ic_theme_system.xml:23: [RAW_COLOR] #FACC15 must reference a semantic color token
+ - app/src/main/res/drawable/ic_theme_system.xml:28: [RAW_COLOR] #A855F7 must reference a semantic color token
+ - app/src/main/res/drawable/ic_theme_system.xml:36: [RAW_COLOR] #1E293B must reference a semantic color token
+ - app/src/main/res/drawable/ic_upload_to_device_24.xml:8: [RAW_COLOR] #FFFFFFFF must reference a semantic color token
+ - app/src/main/res/drawable/ic_wifi_signal_pro_24.xml:8: [RAW_COLOR] #00000000 must reference a semantic color token
+ - app/src/main/res/drawable/ic_wifi_signal_pro_24.xml:9: [RAW_COLOR] #FFFFFFFF must reference a semantic color token
+ - app/src/main/res/drawable/ic_wifi_signal_pro_24.xml:15: [RAW_COLOR] #00000000 must reference a semantic color token
+ - app/src/main/res/drawable/ic_wifi_signal_pro_24.xml:16: [RAW_COLOR] #FFFFFFFF must reference a semantic color token
+ - app/src/main/res/drawable/ic_wifi_signal_pro_24.xml:22: [RAW_COLOR] #00000000 must reference a semantic color token
+ - app/src/main/res/drawable/ic_wifi_signal_pro_24.xml:23: [RAW_COLOR] #FFFFFFFF must reference a semantic color token
+ - app/src/main/res/drawable/ic_wifi_signal_pro_24.xml:29: [RAW_COLOR] #FFFFFFFF must reference a semantic color token
+ - app/src/main/res/drawable/profile_background.xml:10: [RAW_COLOR] #1E3A8A must reference a semantic color token
+ - app/src/main/res/drawable/profile_background.xml:11: [RAW_COLOR] #0A192F must reference a semantic color token
+ - app/src/main/res/drawable/profile_background.xml:12: [RAW_COLOR] #112240 must reference a semantic color token
+ - app/src/main/res/drawable/profile_background.xml:15: [RAW_COLOR] #33FFFFFF must reference a semantic color token
+ - app/src/main/res/drawable/profile_background.xml:22: [RAW_COLOR] #10FFFFFF must reference a semantic color token
+ - app/src/main/res/drawable/profile_background_small.xml:4: [RAW_COLOR] #FFFFFF must reference a semantic color token
+ - app/src/main/res/drawable/profile_background_small.xml:7: [RAW_COLOR] #A0A0A0 must reference a semantic color token
+ - app/src/main/res/layout/content_sheet_idea.xml:35: [RAW_COLOR] #2196F3 must reference a semantic color token
+ - app/src/main/res/layout/content_sheet_idea.xml:46: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/content_sheet_setup_date.xml:50: [RAW_COLOR] #2196F3 must reference a semantic color token
+ - app/src/main/res/layout/content_sheet_setup_date.xml:61: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/content_sheet_tank_name.xml:35: [RAW_COLOR] #2196F3 must reference a semantic color token
+ - app/src/main/res/layout/content_sheet_tank_name.xml:46: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/content_sheet_tank_size.xml:153: [RAW_COLOR] #2196F3 must reference a semantic color token
+ - app/src/main/res/layout/content_sheet_tank_style.xml:222: [RAW_COLOR] #2196F3 must reference a semantic color token
+ - app/src/main/res/layout/content_sheet_tank_type.xml:70: [RAW_COLOR] #2196F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_add_care_task.xml:352: [RAW_COLOR] #B8C7D9 must reference a semantic color token
+ - app/src/main/res/layout/fragment_add_care_task.xml:372: [RAW_COLOR] #B8C7D9 must reference a semantic color token
+ - app/src/main/res/layout/fragment_add_care_task.xml:494: [RAW_COLOR] #B8C7D9 must reference a semantic color token
+ - app/src/main/res/layout/fragment_add_care_task.xml:514: [RAW_COLOR] #B8C7D9 must reference a semantic color token
+ - app/src/main/res/layout/fragment_aquarium_maintenance.xml:132: [RAW_COLOR] #E0A84C must reference a semantic color token
+ - app/src/main/res/layout/fragment_aquarium_maintenance.xml:180: [RAW_COLOR] #E0A84C must reference a semantic color token
+ - app/src/main/res/layout/fragment_aquarium_maintenance.xml:259: [RAW_COLOR] #2196F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_auth_container.xml:56: [RAW_COLOR] #0A192F must reference a semantic color token
+ - app/src/main/res/layout/fragment_auth_container.xml:66: [RAW_COLOR] #0A192F must reference a semantic color token
+ - app/src/main/res/layout/fragment_create_tank.xml:38: [RAW_COLOR] #2D3A4F must reference a semantic color token
+ - app/src/main/res/layout/fragment_create_tank.xml:39: [RAW_COLOR] #1FAA59 must reference a semantic color token
+ - app/src/main/res/layout/fragment_create_tank.xml:48: [RAW_COLOR] #1C3252 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_add.xml:71: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_cooling_root.xml:66: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_cooling_root.xml:86: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_cooling_root.xml:128: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_cooling_root.xml:137: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_cooling_root.xml:146: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_cooling_root.xml:155: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_cooling_root.xml:164: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_cooling_root.xml:196: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_cooling_root.xml:228: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_dosing_root.xml:66: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_dosing_root.xml:86: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_dosing_root.xml:128: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_dosing_root.xml:137: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_dosing_root.xml:146: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_dosing_root.xml:155: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_dosing_root.xml:164: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_dosing_root.xml:196: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_dosing_root.xml:228: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_light_root.xml:66: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_light_root.xml:86: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_light_root.xml:128: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_light_root.xml:137: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_light_root.xml:146: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_light_root.xml:155: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_light_root.xml:164: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_light_root.xml:198: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_light_root.xml:207: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_light_root.xml:291: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_light_root.xml:322: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_physical_proof.xml:57: [RAW_COLOR] #F2F6FA must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_physical_proof.xml:68: [RAW_COLOR] #90A1B5 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_physical_proof.xml:78: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_physical_proof.xml:101: [RAW_COLOR] #F2F6FA must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_physical_proof.xml:111: [RAW_COLOR] #90A1B5 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_physical_proof.xml:122: [RAW_COLOR] #F2F6FA must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_physical_proof.xml:140: [RAW_COLOR] #90A1B5 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_provisioning_progress.xml:59: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_provisioning_progress.xml:68: [RAW_COLOR] #F2F6FA must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_provisioning_progress.xml:80: [RAW_COLOR] #90A1B5 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_provisioning_progress.xml:103: [RAW_COLOR] #F2F6FA must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_provisioning_progress.xml:114: [RAW_COLOR] #90A1B5 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_provisioning_progress.xml:124: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_provisioning_progress.xml:134: [RAW_COLOR] #F2F6FA must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_provisioning_progress.xml:158: [RAW_COLOR] #F2F6FA must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_provisioning_progress.xml:169: [RAW_COLOR] #F2F6FA must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_provisioning_progress.xml:180: [RAW_COLOR] #90A1B5 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_qr_scan.xml:34: [RAW_COLOR] #A6000000 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_qr_scan.xml:44: [RAW_COLOR] #A6000000 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_qr_scan.xml:54: [RAW_COLOR] #A6000000 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_qr_scan.xml:64: [RAW_COLOR] #A6000000 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_qr_scan.xml:77: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_qr_scan.xml:126: [RAW_COLOR] #F2F6FA must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_qr_scan.xml:137: [RAW_COLOR] #90A1B5 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_root_overview.xml:65: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_root_overview.xml:85: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_root_overview.xml:127: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_root_overview.xml:136: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_root_overview.xml:145: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_root_overview.xml:154: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_root_overview.xml:163: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_root_overview.xml:195: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_root_overview.xml:227: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_timer_root.xml:66: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_timer_root.xml:86: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_timer_root.xml:128: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_timer_root.xml:137: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_timer_root.xml:146: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_timer_root.xml:155: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_timer_root.xml:164: [RAW_COLOR] #DCE7F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_timer_root.xml:196: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_timer_root.xml:228: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_wifi_provisioning.xml:57: [RAW_COLOR] #F2F6FA must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_wifi_provisioning.xml:68: [RAW_COLOR] #90A1B5 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_wifi_provisioning.xml:78: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_wifi_provisioning.xml:101: [RAW_COLOR] #F2F6FA must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_wifi_provisioning.xml:111: [RAW_COLOR] #90A1B5 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_wifi_provisioning.xml:132: [RAW_COLOR] #F2F6FA must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_wifi_provisioning.xml:163: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_wifi_provisioning.xml:188: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_wifi_provisioning.xml:190: [RAW_COLOR] #90A1B5 must reference a semantic color token
+ - app/src/main/res/layout/fragment_device_wifi_provisioning.xml:209: [RAW_COLOR] #90A1B5 must reference a semantic color token
+ - app/src/main/res/layout/fragment_feedback.xml:77: [RAW_COLOR] #64FFDA must reference a semantic color token
+ - app/src/main/res/layout/fragment_feedback.xml:79: [RAW_COLOR] #7A8CA3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_feedback.xml:102: [RAW_COLOR] #64FFDA must reference a semantic color token
+ - app/src/main/res/layout/fragment_feedback.xml:127: [RAW_COLOR] #64FFDA must reference a semantic color token
+ - app/src/main/res/layout/fragment_material_picker.xml:47: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_material_picker.xml:98: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_plant_tag.xml:27: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_plant_tag.xml:65: [RAW_COLOR] #22000000 must reference a semantic color token
+ - app/src/main/res/layout/fragment_tank_detail.xml:48: [RAW_COLOR] #22000000 must reference a semantic color token
+ - app/src/main/res/layout/fragment_tank_detail.xml:72: [RAW_COLOR] #2196F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_tank_detail.xml:83: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_tank_detail_activity.xml:73: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/res/layout/fragment_tank_detail_activity.xml:114: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/res/layout/fragment_tank_detail_activity.xml:156: [RAW_COLOR] #F2C94C must reference a semantic color token
+ - app/src/main/res/layout/fragment_tank_detail_activity.xml:209: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/res/layout/fragment_tank_detail_activity.xml:262: [RAW_COLOR] #1C3252 must reference a semantic color token
+ - app/src/main/res/layout/fragment_tank_detail_activity.xml:265: [RAW_COLOR] #2C4B72 must reference a semantic color token
+ - app/src/main/res/layout/fragment_tank_detail_activity.xml:280: [RAW_COLOR] #EAF4FF must reference a semantic color token
+ - app/src/main/res/layout/fragment_tank_detail_activity.xml:293: [RAW_COLOR] #2196F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_tank_info.xml:79: [RAW_COLOR] #7F91AA must reference a semantic color token
+ - app/src/main/res/layout/fragment_tank_info.xml:137: [RAW_COLOR] #7F91AA must reference a semantic color token
+ - app/src/main/res/layout/fragment_tank_info.xml:195: [RAW_COLOR] #7F91AA must reference a semantic color token
+ - app/src/main/res/layout/fragment_tank_info.xml:253: [RAW_COLOR] #7F91AA must reference a semantic color token
+ - app/src/main/res/layout/fragment_tank_info.xml:310: [RAW_COLOR] #7F91AA must reference a semantic color token
+ - app/src/main/res/layout/fragment_tank_livestock_form.xml:221: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_tank_livestock_form.xml:264: [RAW_COLOR] #D85C5C must reference a semantic color token
+ - app/src/main/res/layout/fragment_tank_material.xml:28: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/fragment_tank_photo.xml:89: [RAW_COLOR] #26000000 must reference a semantic color token
+ - app/src/main/res/layout/fragment_tank_settings.xml:30: [RAW_COLOR] #2196F3 must reference a semantic color token
+ - app/src/main/res/layout/fragment_tank_settings_basic.xml:47: [RAW_COLOR] #22000000 must reference a semantic color token
+ - app/src/main/res/layout/fragment_tank_settings_others.xml:241: [RAW_COLOR] #E06A6A must reference a semantic color token
+ - app/src/main/res/layout/fragment_task_detail.xml:202: [RAW_COLOR] #B8C7D9 must reference a semantic color token
+ - app/src/main/res/layout/fragment_task_detail.xml:236: [RAW_COLOR] #B8C7D9 must reference a semantic color token
+ - app/src/main/res/layout/fragment_task_detail.xml:246: [RAW_COLOR] #12382F must reference a semantic color token
+ - app/src/main/res/layout/fragment_task_detail.xml:251: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/res/layout/item_aquarium_tank.xml:35: [RAW_COLOR] #12000000 must reference a semantic color token
+ - app/src/main/res/layout/item_aquarium_tank.xml:56: [RAW_COLOR] #E8EEF8 must reference a semantic color token
+ - app/src/main/res/layout/item_aquarium_tank.xml:78: [RAW_COLOR] #101820 must reference a semantic color token
+ - app/src/main/res/layout/item_aquarium_tank.xml:94: [RAW_COLOR] #101820 must reference a semantic color token
+ - app/src/main/res/layout/item_aquarium_tank.xml:117: [RAW_COLOR] #17202A must reference a semantic color token
+ - app/src/main/res/layout/item_aquarium_tank.xml:136: [RAW_COLOR] #17202A must reference a semantic color token
+ - app/src/main/res/layout/item_aquarium_tank.xml:146: [RAW_COLOR] #17202A must reference a semantic color token
+ - app/src/main/res/layout/item_care_task.xml:92: [RAW_COLOR] #B8C7D9 must reference a semantic color token
+ - app/src/main/res/layout/item_care_task.xml:103: [RAW_COLOR] #B8C7D9 must reference a semantic color token
+ - app/src/main/res/layout/item_care_task.xml:129: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/res/layout/item_device_add_candidate.xml:17: [RAW_COLOR] #24344A must reference a semantic color token
+ - app/src/main/res/layout/item_device_add_candidate.xml:36: [RAW_COLOR] #F2F6FA must reference a semantic color token
+ - app/src/main/res/layout/item_device_add_candidate.xml:52: [RAW_COLOR] #F2F6FA must reference a semantic color token
+ - app/src/main/res/layout/item_device_add_candidate.xml:70: [RAW_COLOR] #90A1B5 must reference a semantic color token
+ - app/src/main/res/layout/item_device_add_candidate.xml:87: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/res/layout/item_device_add_candidate.xml:104: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/res/layout/item_device_compact_card.xml:17: [RAW_COLOR] #24344A must reference a semantic color token
+ - app/src/main/res/layout/item_device_compact_card.xml:71: [RAW_COLOR] #F2F6FA must reference a semantic color token
+ - app/src/main/res/layout/item_device_compact_card.xml:84: [RAW_COLOR] #90A1B5 must reference a semantic color token
+ - app/src/main/res/layout/item_device_compact_card.xml:96: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/res/layout/item_device_compact_card.xml:117: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/res/layout/item_device_compact_card.xml:118: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/res/layout/item_device_compact_card.xml:130: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/res/layout/item_device_status.xml:17: [RAW_COLOR] #24344A must reference a semantic color token
+ - app/src/main/res/layout/item_device_status.xml:59: [RAW_COLOR] #F2F6FA must reference a semantic color token
+ - app/src/main/res/layout/item_device_status.xml:82: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/res/layout/item_device_status.xml:83: [RAW_COLOR] #5FD6B4 must reference a semantic color token
+ - app/src/main/res/layout/item_device_status.xml:93: [RAW_COLOR] #24384F must reference a semantic color token
+ - app/src/main/res/layout/item_device_status.xml:122: [RAW_COLOR] #90A1B5 must reference a semantic color token
+ - app/src/main/res/layout/item_device_status.xml:133: [RAW_COLOR] #F2F6FA must reference a semantic color token
+ - app/src/main/res/layout/item_device_status.xml:143: [RAW_COLOR] #24384F must reference a semantic color token
+ - app/src/main/res/layout/item_device_status.xml:157: [RAW_COLOR] #90A1B5 must reference a semantic color token
+ - app/src/main/res/layout/item_device_status.xml:168: [RAW_COLOR] #F2F6FA must reference a semantic color token
+ - app/src/main/res/layout/item_device_status.xml:178: [RAW_COLOR] #24384F must reference a semantic color token
+ - app/src/main/res/layout/item_device_status.xml:209: [RAW_COLOR] #90A1B5 must reference a semantic color token
+ - app/src/main/res/layout/item_device_status.xml:220: [RAW_COLOR] #F2F6FA must reference a semantic color token
+ - app/src/main/res/layout/item_global_bottom_sheet_detail_row.xml:16: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/layout_aqua_header.xml:62: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/layout/layout_aqua_header.xml:214: [RAW_COLOR] #4CAF50 must reference a semantic color token
+ - app/src/main/res/layout/layout_aqua_header.xml:224: [RAW_COLOR] #4CAF50 must reference a semantic color token
+ - app/src/main/res/values/bottom_sheet_colors.xml:4: [RAW_COLOR] #07131F must reference a semantic color token
+ - app/src/main/res/values/bottom_sheet_colors.xml:5: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values/bottom_sheet_colors.xml:6: [RAW_COLOR] #132943 must reference a semantic color token
+ - app/src/main/res/values/bottom_sheet_colors.xml:7: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values/bottom_sheet_colors.xml:8: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values/bottom_sheet_colors.xml:9: [RAW_COLOR] #2B425A must reference a semantic color token
+ - app/src/main/res/values/bottom_sheet_colors.xml:10: [RAW_COLOR] #223A57 must reference a semantic color token
+ - app/src/main/res/values/bottom_sheet_colors.xml:12: [RAW_COLOR] #F4F8FC must reference a semantic color token
+ - app/src/main/res/values/bottom_sheet_colors.xml:13: [RAW_COLOR] #9AAEC4 must reference a semantic color token
+ - app/src/main/res/values/bottom_sheet_colors.xml:16: [RAW_COLOR] #6489C9 must reference a semantic color token
+ - app/src/main/res/values/bottom_sheet_colors.xml:17: [RAW_COLOR] #F4F8FC must reference a semantic color token
+ - app/src/main/res/values/bottom_sheet_colors.xml:20: [RAW_COLOR] #0D2432 must reference a semantic color token
+ - app/src/main/res/values/bottom_sheet_colors.xml:21: [RAW_COLOR] #285462 must reference a semantic color token
+ - app/src/main/res/values/bottom_sheet_colors.xml:22: [RAW_COLOR] #55C7B3 must reference a semantic color token
+ - app/src/main/res/values/bottom_sheet_colors.xml:23: [RAW_COLOR] #6489C9 must reference a semantic color token
+ - app/src/main/res/values/bottom_sheet_colors.xml:24: [RAW_COLOR] #F4F8FC must reference a semantic color token
+ - app/src/main/res/values/bottom_sheet_colors.xml:27: [RAW_COLOR] #162638 must reference a semantic color token
+ - app/src/main/res/values/bottom_sheet_colors.xml:28: [RAW_COLOR] #F4F8FC must reference a semantic color token
+ - app/src/main/res/values/bottom_sheet_colors.xml:31: [RAW_COLOR] #FF5A52 must reference a semantic color token
+ - app/src/main/res/values/bottom_sheet_colors.xml:32: [RAW_COLOR] #321E2A must reference a semantic color token
+ - app/src/main/res/values/bottom_sheet_colors.xml:33: [RAW_COLOR] #7A3344 must reference a semantic color token
+ - app/src/main/res/values/bottom_sheet_colors.xml:35: [RAW_COLOR] #6489C9 must reference a semantic color token
+ - app/src/main/res/values/button_colors.xml:5: [RAW_COLOR] #2798F7 must reference a semantic color token
+ - app/src/main/res/values/button_colors.xml:6: [RAW_COLOR] #FFFFFF must reference a semantic color token
+ - app/src/main/res/values/button_colors.xml:8: [RAW_COLOR] #143A5C must reference a semantic color token
+ - app/src/main/res/values/button_colors.xml:9: [RAW_COLOR] #FFFFFF must reference a semantic color token
+ - app/src/main/res/values/button_colors.xml:11: [RAW_COLOR] #132237 must reference a semantic color token
+ - app/src/main/res/values/button_colors.xml:12: [RAW_COLOR] #FFFFFF must reference a semantic color token
+ - app/src/main/res/values/button_colors.xml:14: [RAW_COLOR] #00000000 must reference a semantic color token
+ - app/src/main/res/values/button_colors.xml:15: [RAW_COLOR] #2A425F must reference a semantic color token
+ - app/src/main/res/values/button_colors.xml:16: [RAW_COLOR] #DDE8F5 must reference a semantic color token
+ - app/src/main/res/values/button_colors.xml:18: [RAW_COLOR] #3A1728 must reference a semantic color token
+ - app/src/main/res/values/button_colors.xml:19: [RAW_COLOR] #90415A must reference a semantic color token
+ - app/src/main/res/values/button_colors.xml:20: [RAW_COLOR] #FF6B6B must reference a semantic color token
+ - app/src/main/res/values/button_colors.xml:22: [RAW_COLOR] #2D4D6A must reference a semantic color token
+ - app/src/main/res/values/button_colors.xml:23: [RAW_COLOR] #D6E2F0 must reference a semantic color token
+ - app/src/main/res/values/button_colors.xml:25: [RAW_COLOR] #33FFFFFF must reference a semantic color token
+ - app/src/main/res/values/button_colors.xml:26: [RAW_COLOR] #2798F7 must reference a semantic color token
+ - app/src/main/res/values/button_colors.xml:27: [RAW_COLOR] #FFFFFF must reference a semantic color token
+ - app/src/main/res/values/button_colors.xml:28: [RAW_COLOR] #020711 must reference a semantic color token
+ - app/src/main/res/values/button_colors.xml:29: [RAW_COLOR] #FFFFFF must reference a semantic color token
+ - app/src/main/res/values/button_colors.xml:30: [RAW_COLOR] #13243A must reference a semantic color token
+ - app/src/main/res/values/button_colors.xml:31: [RAW_COLOR] #FFFFFF must reference a semantic color token
+ - app/src/main/res/values/button_colors.xml:32: [RAW_COLOR] #111827 must reference a semantic color token
+ - app/src/main/res/values/button_colors.xml:33: [RAW_COLOR] #DADCE0 must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:4: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:5: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:6: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:7: [RAW_COLOR] #132943 must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:9: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:10: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:11: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:13: [RAW_COLOR] #F4F8FC must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:14: [RAW_COLOR] #9AAEC4 must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:16: [RAW_COLOR] #6489C9 must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:19: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:20: [RAW_COLOR] #162A3E must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:21: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:22: [RAW_COLOR] #2A4663 must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:25: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:26: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:27: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:28: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:30: [RAW_COLOR] #FF5A52 must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:31: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:32: [RAW_COLOR] #7A3344 must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:35: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:36: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:38: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:39: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:41: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:42: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:44: [RAW_COLOR] #1C3252 must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:45: [RAW_COLOR] #2D4E78 must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:48: [RAW_COLOR] #800D1D31 must reference a semantic color token
+ - app/src/main/res/values/card_colors.xml:49: [RAW_COLOR] #33FFFFFF must reference a semantic color token
+ - app/src/main/res/values/dialog_colors.xml:3: [RAW_COLOR] #07131F must reference a semantic color token
+ - app/src/main/res/values/dialog_colors.xml:4: [RAW_COLOR] #162638 must reference a semantic color token
+ - app/src/main/res/values/dialog_colors.xml:5: [RAW_COLOR] #223A57 must reference a semantic color token
+ - app/src/main/res/values/dialog_colors.xml:7: [RAW_COLOR] #F4F8FC must reference a semantic color token
+ - app/src/main/res/values/dialog_colors.xml:8: [RAW_COLOR] #9AAEC4 must reference a semantic color token
+ - app/src/main/res/values/dialog_colors.xml:10: [RAW_COLOR] #6489C9 must reference a semantic color token
+ - app/src/main/res/values/dialog_colors.xml:11: [RAW_COLOR] #F4F8FC must reference a semantic color token
+ - app/src/main/res/values/dialog_colors.xml:13: [RAW_COLOR] #162638 must reference a semantic color token
+ - app/src/main/res/values/dialog_colors.xml:14: [RAW_COLOR] #F4F8FC must reference a semantic color token
+ - app/src/main/res/values/dialog_colors.xml:16: [RAW_COLOR] #FF5A52 must reference a semantic color token
+ - app/src/main/res/values/dialog_colors.xml:17: [RAW_COLOR] #321E2A must reference a semantic color token
+ - app/src/main/res/values/dialog_colors.xml:18: [RAW_COLOR] #7A3344 must reference a semantic color token
+ - app/src/main/res/values/input_colors.xml:4: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values/input_colors.xml:6: [RAW_COLOR] #6489C9 must reference a semantic color token
+ - app/src/main/res/values/input_colors.xml:7: [RAW_COLOR] #3A5878 must reference a semantic color token
+ - app/src/main/res/values/input_colors.xml:8: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values/input_colors.xml:10: [RAW_COLOR] #B7C7D9 must reference a semantic color token
+ - app/src/main/res/values/input_colors.xml:11: [RAW_COLOR] #9AAEC4 must reference a semantic color token
+ - app/src/main/res/values/input_colors.xml:13: [RAW_COLOR] #F4F8FC must reference a semantic color token
+ - app/src/main/res/values/input_colors.xml:14: [RAW_COLOR] #9AAEC4 must reference a semantic color token
+ - app/src/main/res/values/input_colors.xml:16: [RAW_COLOR] #FF5A52 must reference a semantic color token
+ - app/src/main/res/values/state_screen_colors.xml:3: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values/state_screen_colors.xml:4: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values/state_screen_colors.xml:5: [RAW_COLOR] #F2F6FA must reference a semantic color token
+ - app/src/main/res/values/state_screen_colors.xml:6: [RAW_COLOR] #90A1B5 must reference a semantic color token
+ - app/src/main/res/values/state_screen_colors.xml:7: [RAW_COLOR] #6E7F94 must reference a semantic color token
+ - app/src/main/res/values/state_screen_colors.xml:8: [RAW_COLOR] #FFFFFF must reference a semantic color token
+ - app/src/main/res/values/state_screen_colors.xml:9: [RAW_COLOR] #00000000 must reference a semantic color token
+ - app/src/main/res/values/styles.xml:92: [RAW_COLOR] #64FFDA must reference a semantic color token
+ - app/src/main/res/values/toolbar_action_colors.xml:3: [RAW_COLOR] #1F6F4A must reference a semantic color token
+ - app/src/main/res/values/toolbar_action_colors.xml:4: [RAW_COLOR] #2A8A5E must reference a semantic color token
+ - app/src/main/res/values/toolbar_action_colors.xml:5: [RAW_COLOR] #12365A must reference a semantic color token
+ - app/src/main/res/values/toolbar_action_colors.xml:6: [RAW_COLOR] #2B93F6 must reference a semantic color token
+ - app/src/main/res/values/toolbar_action_colors.xml:7: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values/toolbar_action_colors.xml:8: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values/toolbar_action_colors.xml:9: [RAW_COLOR] #3A1C29 must reference a semantic color token
+ - app/src/main/res/values/toolbar_action_colors.xml:10: [RAW_COLOR] #A2445F must reference a semantic color token
+ - app/src/main/res/values/toolbar_action_colors.xml:11: [RAW_COLOR] #F2F6FA must reference a semantic color token
+ - app/src/main/res/values/toolbar_action_colors.xml:12: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/values/toolbar_action_colors.xml:13: [RAW_COLOR] #51667F must reference a semantic color token
+ - app/src/main/res/values/toolbar_action_colors.xml:14: [RAW_COLOR] #3300FFFF must reference a semantic color token
+ - app/src/main/res/values/toolbar_action_colors.xml:15: [RAW_COLOR] #1C3D63 must reference a semantic color token
+ - app/src/main/res/values/toolbar_action_colors.xml:16: [RAW_COLOR] #2196F3 must reference a semantic color token
+ - app/src/main/res/values/toolbar_action_colors.xml:17: [RAW_COLOR] #1C3252 must reference a semantic color token
+ - app/src/main/res/values-night/bottom_sheet_colors.xml:4: [RAW_COLOR] #07131F must reference a semantic color token
+ - app/src/main/res/values-night/bottom_sheet_colors.xml:5: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values-night/bottom_sheet_colors.xml:6: [RAW_COLOR] #132943 must reference a semantic color token
+ - app/src/main/res/values-night/bottom_sheet_colors.xml:7: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values-night/bottom_sheet_colors.xml:8: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values-night/bottom_sheet_colors.xml:9: [RAW_COLOR] #2B425A must reference a semantic color token
+ - app/src/main/res/values-night/bottom_sheet_colors.xml:10: [RAW_COLOR] #223A57 must reference a semantic color token
+ - app/src/main/res/values-night/bottom_sheet_colors.xml:12: [RAW_COLOR] #F4F8FC must reference a semantic color token
+ - app/src/main/res/values-night/bottom_sheet_colors.xml:13: [RAW_COLOR] #9AAEC4 must reference a semantic color token
+ - app/src/main/res/values-night/bottom_sheet_colors.xml:16: [RAW_COLOR] #6489C9 must reference a semantic color token
+ - app/src/main/res/values-night/bottom_sheet_colors.xml:17: [RAW_COLOR] #F4F8FC must reference a semantic color token
+ - app/src/main/res/values-night/bottom_sheet_colors.xml:20: [RAW_COLOR] #0D2432 must reference a semantic color token
+ - app/src/main/res/values-night/bottom_sheet_colors.xml:21: [RAW_COLOR] #285462 must reference a semantic color token
+ - app/src/main/res/values-night/bottom_sheet_colors.xml:22: [RAW_COLOR] #55C7B3 must reference a semantic color token
+ - app/src/main/res/values-night/bottom_sheet_colors.xml:23: [RAW_COLOR] #6489C9 must reference a semantic color token
+ - app/src/main/res/values-night/bottom_sheet_colors.xml:24: [RAW_COLOR] #F4F8FC must reference a semantic color token
+ - app/src/main/res/values-night/bottom_sheet_colors.xml:27: [RAW_COLOR] #162638 must reference a semantic color token
+ - app/src/main/res/values-night/bottom_sheet_colors.xml:28: [RAW_COLOR] #F4F8FC must reference a semantic color token
+ - app/src/main/res/values-night/bottom_sheet_colors.xml:31: [RAW_COLOR] #FF5A52 must reference a semantic color token
+ - app/src/main/res/values-night/bottom_sheet_colors.xml:32: [RAW_COLOR] #321E2A must reference a semantic color token
+ - app/src/main/res/values-night/bottom_sheet_colors.xml:33: [RAW_COLOR] #7A3344 must reference a semantic color token
+ - app/src/main/res/values-night/bottom_sheet_colors.xml:35: [RAW_COLOR] #6489C9 must reference a semantic color token
+ - app/src/main/res/values-night/button_colors.xml:5: [RAW_COLOR] #2798F7 must reference a semantic color token
+ - app/src/main/res/values-night/button_colors.xml:6: [RAW_COLOR] #FFFFFF must reference a semantic color token
+ - app/src/main/res/values-night/button_colors.xml:8: [RAW_COLOR] #143A5C must reference a semantic color token
+ - app/src/main/res/values-night/button_colors.xml:9: [RAW_COLOR] #FFFFFF must reference a semantic color token
+ - app/src/main/res/values-night/button_colors.xml:11: [RAW_COLOR] #132237 must reference a semantic color token
+ - app/src/main/res/values-night/button_colors.xml:12: [RAW_COLOR] #FFFFFF must reference a semantic color token
+ - app/src/main/res/values-night/button_colors.xml:14: [RAW_COLOR] #00000000 must reference a semantic color token
+ - app/src/main/res/values-night/button_colors.xml:15: [RAW_COLOR] #2A425F must reference a semantic color token
+ - app/src/main/res/values-night/button_colors.xml:16: [RAW_COLOR] #DDE8F5 must reference a semantic color token
+ - app/src/main/res/values-night/button_colors.xml:18: [RAW_COLOR] #3A1728 must reference a semantic color token
+ - app/src/main/res/values-night/button_colors.xml:19: [RAW_COLOR] #90415A must reference a semantic color token
+ - app/src/main/res/values-night/button_colors.xml:20: [RAW_COLOR] #FF6B6B must reference a semantic color token
+ - app/src/main/res/values-night/button_colors.xml:22: [RAW_COLOR] #2D4D6A must reference a semantic color token
+ - app/src/main/res/values-night/button_colors.xml:23: [RAW_COLOR] #D6E2F0 must reference a semantic color token
+ - app/src/main/res/values-night/button_colors.xml:25: [RAW_COLOR] #33FFFFFF must reference a semantic color token
+ - app/src/main/res/values-night/button_colors.xml:26: [RAW_COLOR] #2798F7 must reference a semantic color token
+ - app/src/main/res/values-night/button_colors.xml:27: [RAW_COLOR] #FFFFFF must reference a semantic color token
+ - app/src/main/res/values-night/button_colors.xml:28: [RAW_COLOR] #020711 must reference a semantic color token
+ - app/src/main/res/values-night/button_colors.xml:29: [RAW_COLOR] #FFFFFF must reference a semantic color token
+ - app/src/main/res/values-night/button_colors.xml:30: [RAW_COLOR] #13243A must reference a semantic color token
+ - app/src/main/res/values-night/button_colors.xml:31: [RAW_COLOR] #FFFFFF must reference a semantic color token
+ - app/src/main/res/values-night/button_colors.xml:32: [RAW_COLOR] #111827 must reference a semantic color token
+ - app/src/main/res/values-night/button_colors.xml:33: [RAW_COLOR] #DADCE0 must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:4: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:5: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:6: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:7: [RAW_COLOR] #132943 must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:9: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:10: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:11: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:13: [RAW_COLOR] #F4F8FC must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:14: [RAW_COLOR] #9AAEC4 must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:16: [RAW_COLOR] #6489C9 must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:19: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:20: [RAW_COLOR] #162A3E must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:21: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:22: [RAW_COLOR] #2A4663 must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:25: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:26: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:27: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:28: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:30: [RAW_COLOR] #FF5A52 must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:31: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:32: [RAW_COLOR] #7A3344 must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:35: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:36: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:38: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:39: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:41: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:42: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:44: [RAW_COLOR] #1C3252 must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:45: [RAW_COLOR] #2D4E78 must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:48: [RAW_COLOR] #800D1D31 must reference a semantic color token
+ - app/src/main/res/values-night/card_colors.xml:49: [RAW_COLOR] #33FFFFFF must reference a semantic color token
+ - app/src/main/res/values-night/dialog_colors.xml:3: [RAW_COLOR] #07131F must reference a semantic color token
+ - app/src/main/res/values-night/dialog_colors.xml:4: [RAW_COLOR] #162638 must reference a semantic color token
+ - app/src/main/res/values-night/dialog_colors.xml:5: [RAW_COLOR] #223A57 must reference a semantic color token
+ - app/src/main/res/values-night/dialog_colors.xml:7: [RAW_COLOR] #F4F8FC must reference a semantic color token
+ - app/src/main/res/values-night/dialog_colors.xml:8: [RAW_COLOR] #9AAEC4 must reference a semantic color token
+ - app/src/main/res/values-night/dialog_colors.xml:10: [RAW_COLOR] #6489C9 must reference a semantic color token
+ - app/src/main/res/values-night/dialog_colors.xml:11: [RAW_COLOR] #F4F8FC must reference a semantic color token
+ - app/src/main/res/values-night/dialog_colors.xml:13: [RAW_COLOR] #162638 must reference a semantic color token
+ - app/src/main/res/values-night/dialog_colors.xml:14: [RAW_COLOR] #F4F8FC must reference a semantic color token
+ - app/src/main/res/values-night/dialog_colors.xml:16: [RAW_COLOR] #FF5A52 must reference a semantic color token
+ - app/src/main/res/values-night/dialog_colors.xml:17: [RAW_COLOR] #321E2A must reference a semantic color token
+ - app/src/main/res/values-night/dialog_colors.xml:18: [RAW_COLOR] #7A3344 must reference a semantic color token
+ - app/src/main/res/values-night/input_colors.xml:4: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values-night/input_colors.xml:6: [RAW_COLOR] #6489C9 must reference a semantic color token
+ - app/src/main/res/values-night/input_colors.xml:7: [RAW_COLOR] #3A5878 must reference a semantic color token
+ - app/src/main/res/values-night/input_colors.xml:8: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values-night/input_colors.xml:10: [RAW_COLOR] #B7C7D9 must reference a semantic color token
+ - app/src/main/res/values-night/input_colors.xml:11: [RAW_COLOR] #9AAEC4 must reference a semantic color token
+ - app/src/main/res/values-night/input_colors.xml:13: [RAW_COLOR] #F4F8FC must reference a semantic color token
+ - app/src/main/res/values-night/input_colors.xml:14: [RAW_COLOR] #9AAEC4 must reference a semantic color token
+ - app/src/main/res/values-night/input_colors.xml:16: [RAW_COLOR] #FF5A52 must reference a semantic color token
+ - app/src/main/res/values-night/state_screen_colors.xml:3: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values-night/state_screen_colors.xml:4: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values-night/state_screen_colors.xml:5: [RAW_COLOR] #F2F6FA must reference a semantic color token
+ - app/src/main/res/values-night/state_screen_colors.xml:6: [RAW_COLOR] #90A1B5 must reference a semantic color token
+ - app/src/main/res/values-night/state_screen_colors.xml:7: [RAW_COLOR] #6E7F94 must reference a semantic color token
+ - app/src/main/res/values-night/state_screen_colors.xml:8: [RAW_COLOR] #FFFFFF must reference a semantic color token
+ - app/src/main/res/values-night/state_screen_colors.xml:9: [RAW_COLOR] #00000000 must reference a semantic color token
+ - app/src/main/res/values-night/styles.xml:5: [RAW_COLOR] #DB4437 must reference a semantic color token
+ - app/src/main/res/values-night/toolbar_action_colors.xml:3: [RAW_COLOR] #1F6F4A must reference a semantic color token
+ - app/src/main/res/values-night/toolbar_action_colors.xml:4: [RAW_COLOR] #2A8A5E must reference a semantic color token
+ - app/src/main/res/values-night/toolbar_action_colors.xml:5: [RAW_COLOR] #12365A must reference a semantic color token
+ - app/src/main/res/values-night/toolbar_action_colors.xml:6: [RAW_COLOR] #2B93F6 must reference a semantic color token
+ - app/src/main/res/values-night/toolbar_action_colors.xml:7: [RAW_COLOR] #101D2C must reference a semantic color token
+ - app/src/main/res/values-night/toolbar_action_colors.xml:8: [RAW_COLOR] #22354D must reference a semantic color token
+ - app/src/main/res/values-night/toolbar_action_colors.xml:9: [RAW_COLOR] #3A1C29 must reference a semantic color token
+ - app/src/main/res/values-night/toolbar_action_colors.xml:10: [RAW_COLOR] #A2445F must reference a semantic color token
+ - app/src/main/res/values-night/toolbar_action_colors.xml:11: [RAW_COLOR] #F2F6FA must reference a semantic color token
+ - app/src/main/res/values-night/toolbar_action_colors.xml:12: [RAW_COLOR] #8FA4BE must reference a semantic color token
+ - app/src/main/res/values-night/toolbar_action_colors.xml:13: [RAW_COLOR] #51667F must reference a semantic color token
+ - app/src/main/res/values-night/toolbar_action_colors.xml:14: [RAW_COLOR] #3300FFFF must reference a semantic color token
+ - app/src/main/res/values-night/toolbar_action_colors.xml:15: [RAW_COLOR] #1C3D63 must reference a semantic color token
+ - app/src/main/res/values-night/toolbar_action_colors.xml:16: [RAW_COLOR] #2196F3 must reference a semantic color token
+ - app/src/main/res/values-night/toolbar_action_colors.xml:17: [RAW_COLOR] #1C3252 must reference a semantic color token
+ - app/src/main/res/layout/activity_splash.xml:23: [RAW_DIMENSION] 140dp must reference a semantic dimen/typography token
+ - app/src/main/res/layout/activity_splash.xml:35: [RAW_DIMENSION] 24dp must reference a semantic dimen/typography token
+ - app/src/main/res/layout/activity_splash.xml:47: [RAW_DIMENSION] 6dp must reference a semantic dimen/typography token
+ - app/src/main/res/layout/bottom_sheet_capability_permission.xml:10: [RAW_DIMENSION] 16dp must reference a semantic dimen/typography token
+ - app/src/main/res/layout/bottom_sheet_capability_permission.xml:38: [RAW_DIMENSION] 16dp must reference a semantic dimen/typography token
+ - app/src/main/res/layout/bottom_sheet_capability_permission.xml:47: [RAW_DIMENSION] 9dp must reference a semantic dimen/typography token
+ - app/src/main/res/layout/bottom_sheet_capability_permission.xml:48: [RAW_DIMENSION] 22dp must reference a semantic dimen/typography token
+ - app/src/main/res/layout/bottom_sheet_capability_permission.xml:62: [RAW_DIMENSION] 2dp must reference a semantic dimen/typography token
+ - app/src/main/res/layout/bottom_sheet_care_task_type.xml:10: [RAW_DIMENSION] 16dp must reference a semantic dimen/typography token
+ - app/src/main/res/layout/bottom_sheet_care_task_type.xml:25: [RAW_DIMENSION] 18dp must reference a semantic dimen/typography token
+ - app/src/main/res/layout/bottom_sheet_care_task_type.xml:29: [RAW_DIMENSION] 8dp must reference a semantic dimen/typography token
+ - app/src/main/res/layout/bottom_sheet_device_confirm.xml:15: [RAW_DIMENSION] 22dp must reference a semantic dimen/typography token
+ - app/src/main/res/layout/bottom_sheet_device_confirm.xml:18: [RAW_DIMENSION] 12dp must reference a semantic dimen/typography token
+ - app/src/main/res/layout/bottom_sheet_device_confirm.xml:26: [RAW_DIMENSION] 18dp must reference a semantic dimen/typography token
+ - app/src/main/res/layout/bottom_sheet_device_confirm.xml:35: [RAW_DIMENSION] 9dp must reference a semantic dimen/typography token
+ - app/src/main/res/layout/bottom_sheet_device_confirm.xml:42: [RAW_DIMENSION] 28dp must reference a semantic dimen/typography token
+ - app/src/main/res/layout/bottom_sheet_device_confirm.xml:50: [RAW_DIMENSION] 10dp must reference a semantic dimen/typography token
+ - app/src/main/res/layout/bottom_sheet_device_confirm.xml:59: [RAW_DIMENSION] 10dp must reference a semantic dimen/typography token
+ - ... 1160 additional violations omitted
+TOTAL STAGE 10 VIOLATIONS: 1960
+
+GENERATED_COMMIT=ca9553406b4e4cf09f7123cf0c7c4d878a0489b2
+GENERATED_AT_UTC=2026-07-18T16:41:12Z
