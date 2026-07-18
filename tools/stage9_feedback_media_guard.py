@@ -6,6 +6,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "app/src/main/java/com/aqua/aqualight"
+AQUA_APP = APP / "app/AquaApp.kt"
 FEEDBACK_FRAGMENT = APP / "ui/tabs/settings/feedback/FeedbackFragment.kt"
 AQUARIUM_STORE = APP / "data/aquarium/store/AquariumTankDataStoreManager.kt"
 REPOSITORY = APP / "data/feedback/FirebaseFeedbackSubmissionOperations.kt"
@@ -94,16 +95,26 @@ if AQUARIUM_STORE.is_file():
             f"{AQUARIUM_STORE.relative_to(ROOT)}: legacy tank photo storage reference is forbidden"
         )
 
+if AQUA_APP.is_file():
+    text = AQUA_APP.read_text(encoding="utf-8", errors="ignore")
+    if "feedbackSubmissionOperations.cleanupOrphans()" not in text:
+        errors.append(
+            f"{AQUA_APP.relative_to(ROOT)}: orphan recovery must run at process startup"
+        )
+
 if REPOSITORY.is_file():
     text = REPOSITORY.read_text(encoding="utf-8", errors="ignore")
     for token in (
         "withContext(dispatcher)",
         "transactionMutex.withLock",
         "journalStore.put",
-        "documentStore.commitState",
-        "FeedbackDocumentCommitState.COMMITTED",
-        "FeedbackDocumentCommitState.ABSENT",
-        "Source.SERVER",
+        "reservePending",
+        "commitPending",
+        "resolveForCleanup",
+        "TRANSACTION_PENDING",
+        "TRANSACTION_COMMITTED",
+        "TRANSACTION_ABORTED",
+        "runTransaction",
         "screenshotStore.delete",
         "suspendCoroutine",
         "throwIfCancellation",
@@ -115,6 +126,10 @@ if REPOSITORY.is_file():
     if "suspendCancellableCoroutine" in text:
         errors.append(
             f"{REPOSITORY.relative_to(ROOT)}: non-cancellable Firebase Task must not use cancellable await"
+        )
+    if ".get(Source.SERVER)" in text:
+        errors.append(
+            f"{REPOSITORY.relative_to(ROOT)}: get-then-delete cleanup is race-prone; use atomic fence"
         )
 
 if JOURNAL.is_file():
@@ -163,9 +178,10 @@ if COORDINATOR.is_file():
 
 TEST_EXPECTATIONS = {
     ROOT / "app/src/test/java/com/aqua/aqualight/data/feedback/FirebaseFeedbackSubmissionOperationsTest.kt": (
-        "firestoreFailureAfterUploadDeletesStorageObject",
-        "cancellationAfterUploadKeepsJournalAndDoesNotGuessRollbackOutcome",
-        "cleanupPreservesStorageWhenFirestoreAlreadyCommittedMatchingPath",
+        "successfulSubmissionReservesBeforeUploadAndCommitsAtomically",
+        "firestoreFailureAfterUploadAbortsFenceAndDeletesStorageObject",
+        "ambiguousCommitErrorReturnsSuccessWhenServerFenceIsCommitted",
+        "cancellationDuringCommitKeepsJournalAndDoesNotGuessRemoteOutcome",
         "cleanupFailsSafeForConflictOrUnverifiedServerState",
     ),
     ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/settings/feedback/FeedbackViewModelTest.kt": (
