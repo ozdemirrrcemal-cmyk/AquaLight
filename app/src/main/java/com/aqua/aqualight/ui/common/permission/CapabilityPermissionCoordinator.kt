@@ -101,8 +101,7 @@ class CapabilityPermissionCoordinator(
 
     /**
      * Presents the same central settings explanation for a system-level capability
-     * block that is not represented by a missing runtime permission (for example,
-     * notifications disabled at Android app level).
+     * block that is not represented by a missing runtime permission.
      */
     fun openSettingsFor(capability: AppCapability, actionToken: String) {
         continuation.begin(
@@ -161,7 +160,11 @@ class CapabilityPermissionCoordinator(
         val permissions = policy.requiredPermissions(capability)
 
         if (permissions.isEmpty()) {
-            complete()
+            if (policy.isGranted(capability)) {
+                complete()
+            } else {
+                launchSettings()
+            }
             return
         }
 
@@ -220,6 +223,14 @@ class CapabilityPermissionCoordinator(
         val notificationChannelId = continuation.pendingNotificationChannelId
 
         return when {
+            capability == AppCapability.PRECISE_REMINDERS &&
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+                Intent(
+                    Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                    Uri.fromParts("package", context.packageName, null)
+                )
+            }
+
             capability == AppCapability.NOTIFICATIONS &&
                 notificationChannelId != null &&
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.O -> {
