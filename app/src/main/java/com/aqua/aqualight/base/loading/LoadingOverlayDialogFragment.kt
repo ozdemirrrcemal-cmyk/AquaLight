@@ -13,11 +13,18 @@ import android.widget.ImageView
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import com.aqua.aqualight.R
+import java.lang.ref.WeakReference
+import java.util.WeakHashMap
 
 /** Full-screen, non-cancelable loading renderer owned by FragmentManager. */
 class LoadingOverlayDialogFragment : DialogFragment(R.layout.loading_overlay) {
 
     private var logo: ImageView? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        clearPending(parentFragmentManager, this)
+    }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return Dialog(requireContext(), android.R.style.Theme_Translucent_NoTitleBar).apply {
@@ -63,15 +70,52 @@ class LoadingOverlayDialogFragment : DialogFragment(R.layout.loading_overlay) {
     companion object {
         const val TAG = "LoadingOverlayDialogFragment"
 
+        private val pendingOverlays =
+            WeakHashMap<FragmentManager, WeakReference<LoadingOverlayDialogFragment>>()
+
         fun show(fragmentManager: FragmentManager) {
             if (fragmentManager.isStateSaved) return
             if (fragmentManager.findFragmentByTag(TAG) != null) return
-            LoadingOverlayDialogFragment().show(fragmentManager, TAG)
+            if (pendingOverlay(fragmentManager) != null) return
+
+            val overlay = LoadingOverlayDialogFragment()
+            pendingOverlays[fragmentManager] = WeakReference(overlay)
+
+            try {
+                overlay.show(fragmentManager, TAG)
+            } catch (error: RuntimeException) {
+                clearPending(fragmentManager, overlay)
+                throw error
+            }
         }
 
         fun hide(fragmentManager: FragmentManager) {
-            (fragmentManager.findFragmentByTag(TAG) as? DialogFragment)
-                ?.dismissAllowingStateLoss()
+            val visibleOverlay =
+                fragmentManager.findFragmentByTag(TAG) as? LoadingOverlayDialogFragment
+            val pendingOverlay = pendingOverlay(fragmentManager)
+
+            pendingOverlay?.let { clearPending(fragmentManager, it) }
+            visibleOverlay?.dismissAllowingStateLoss()
+            if (pendingOverlay != null && pendingOverlay !== visibleOverlay) {
+                pendingOverlay.dismissAllowingStateLoss()
+            }
+        }
+
+        private fun pendingOverlay(
+            fragmentManager: FragmentManager
+        ): LoadingOverlayDialogFragment? {
+            val overlay = pendingOverlays[fragmentManager]?.get()
+            if (overlay == null) pendingOverlays.remove(fragmentManager)
+            return overlay
+        }
+
+        private fun clearPending(
+            fragmentManager: FragmentManager,
+            overlay: LoadingOverlayDialogFragment
+        ) {
+            if (pendingOverlays[fragmentManager]?.get() === overlay) {
+                pendingOverlays.remove(fragmentManager)
+            }
         }
     }
 }
