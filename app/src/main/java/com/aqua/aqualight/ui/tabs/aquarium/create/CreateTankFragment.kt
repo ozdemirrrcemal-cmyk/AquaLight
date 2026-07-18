@@ -15,8 +15,8 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.aquarium.photo.TankPhotoStorage
 import com.aqua.aqualight.databinding.FragmentCreateTankBinding
+import com.aqua.aqualight.platform.media.AppMediaStorage
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
@@ -209,7 +209,6 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
         }
     }
 
-
     private fun navigateToStepIfCurrent(
         sourceDestinationId: Int,
         directions: NavDirections
@@ -270,7 +269,7 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
             createTankViewModel().tankDraft.photoUri
         }.getOrNull()
 
-        TankPhotoStorage.deleteInternalPhoto(
+        AppMediaStorage.deleteInternalMedia(
             context = requireContext(),
             uriString = draftPhotoUri
         )
