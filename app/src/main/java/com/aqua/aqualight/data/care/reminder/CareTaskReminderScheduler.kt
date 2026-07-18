@@ -8,7 +8,7 @@ import android.os.Build
 import com.aqua.aqualight.data.care.model.CareTask
 import com.aqua.aqualight.data.user.UserDataScope
 
-/** Low-level AlarmManager backend. Visible notification work belongs to NotificationRenderer. */
+/** Low-level AlarmManager backend. Visible delivery belongs to the central platform adapter. */
 object CareTaskReminderScheduler {
 
   const val ACTION_CARE_TASK_REMINDER =
