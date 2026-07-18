@@ -11,7 +11,8 @@ import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
 import com.aqua.aqualight.data.aquarium.model.TankPlantTag
-import com.aqua.aqualight.data.aquarium.photo.TankPhotoStorage
+import com.aqua.aqualight.platform.media.AppMediaScope
+import com.aqua.aqualight.platform.media.AppMediaStorage
 import com.aqua.aqualight.data.aquarium.util.AquariumIdGenerator
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.aqua.aqualight.data.store.StoreInvariantViolation
@@ -101,10 +102,11 @@ class AquariumTankDataStoreManager(
                 .filter { storedTank -> storedTank.belongsToOwner(ownerUid) }
                 .mapTo(mutableSetOf()) { storedTank -> storedTank.name }
 
-            val duplicatedPhotoUri = TankPhotoStorage.copyInternalPhotoForTank(
+            val duplicatedPhotoUri = AppMediaStorage.copyInternalMedia(
                 context = context,
                 sourceUriString = sourceTank.photoUri,
-                tankId = newTankId
+                targetScope = AppMediaScope.TANK,
+                ownerToken = newTankId.toString()
             )
 
             val duplicatedTank = sourceTank.toBuilder()
@@ -159,14 +161,15 @@ class AquariumTankDataStoreManager(
             currentStore.replaceAllValidated(remainingTanks)
         }
 
-        TankPhotoStorage.deleteInternalPhotos(
+        AppMediaStorage.deleteInternalMedia(
             context = context,
             uriStrings = photoUrisToDelete
         )
         deletedTankIds.forEach { deletedTankId ->
-            TankPhotoStorage.deleteTankOwnedTemporaryFiles(
+            AppMediaStorage.deleteOwnerTemporaryFiles(
                 context = context,
-                tankId = deletedTankId
+                scope = AppMediaScope.TANK,
+                ownerToken = deletedTankId.toString()
             )
         }
     }
@@ -194,14 +197,15 @@ class AquariumTankDataStoreManager(
             currentStore.replaceAllValidated(remainingTanks)
         }
 
-        TankPhotoStorage.deleteInternalPhotos(
+        AppMediaStorage.deleteInternalMedia(
             context = context,
             uriStrings = deletedPhotoUris
         )
         deletedTankIds.forEach { deletedTankId ->
-            TankPhotoStorage.deleteTankOwnedTemporaryFiles(
+            AppMediaStorage.deleteOwnerTemporaryFiles(
                 context = context,
-                tankId = deletedTankId
+                scope = AppMediaScope.TANK,
+                ownerToken = deletedTankId.toString()
             )
         }
     }
@@ -240,7 +244,7 @@ class AquariumTankDataStoreManager(
                 .build()
         }
 
-        TankPhotoStorage.deleteInternalPhoto(
+        AppMediaStorage.deleteInternalMedia(
             context = context,
             uriString = previousPhotoUri
         )
