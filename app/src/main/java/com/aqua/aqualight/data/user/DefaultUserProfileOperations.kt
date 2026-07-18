@@ -5,13 +5,18 @@ import com.aqua.aqualight.application.user.UserAddressInput
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.application.user.UserProfileSnapshot
 import com.aqua.aqualight.platform.media.AppMediaStorage
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 
 class DefaultUserProfileOperations(
     context: Context,
-    private val preferences: UserPreferencesManager
+    private val preferences: UserPreferencesManager,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : UserProfileOperations {
 
     private val appContext = context.applicationContext
@@ -33,17 +38,24 @@ class DefaultUserProfileOperations(
             )
         }
 
-    override suspend fun updateProfilePhoto(photoUri: String) {
+    override suspend fun updateProfilePhoto(photoUri: String) = withContext(dispatcher) {
         val normalized = photoUri.trim()
         val previous = preferences.profilePhotoUrl.first()
             .takeIf { it.isNotBlank() && it != normalized }
+        var persisted = false
 
-        preferences.updateProfilePhoto(normalized)
-
-        AppMediaStorage.deleteInternalMedia(
-            context = appContext,
-            uriString = previous
-        )
+        try {
+            preferences.updateProfilePhoto(normalized)
+            persisted = true
+            AppMediaStorage.commitPendingMedia(appContext, normalized)
+            AppMediaStorage.deleteInternalMedia(appContext, previous)
+        } catch (cancellation: CancellationException) {
+            if (!persisted) AppMediaStorage.rollbackPendingMedia(appContext, normalized)
+            throw cancellation
+        } catch (error: Throwable) {
+            if (!persisted) AppMediaStorage.rollbackPendingMedia(appContext, normalized)
+            throw error
+        }
     }
 
     override suspend fun updateUsername(username: String) {
