@@ -18,7 +18,8 @@ class FeedbackSubmissionJournalStoreInstrumentedTest {
         clearJournal()
         val entry = PendingFeedbackUpload(
             documentId = "document-process-recreation",
-            storagePath = "feedback_screenshots/owner/document-process-recreation.jpg"
+            ownerUid = "owner-process-recreation",
+            storagePath = "feedback_screenshots/owner-process-recreation/document.jpg"
         )
 
         try {
@@ -39,10 +40,18 @@ class FeedbackSubmissionJournalStoreInstrumentedTest {
     }
 
     @Test
-    fun multipleEntriesAreUpdatedWithoutMutatingSharedPreferenceSnapshots() {
+    fun multipleOwnerAwareEntriesAreUpdatedWithoutMutatingPreferenceSnapshots() {
         clearJournal()
-        val first = PendingFeedbackUpload("document-a", "feedback_screenshots/owner/a.jpg")
-        val second = PendingFeedbackUpload("document-b", "feedback_screenshots/owner/b.jpg")
+        val first = PendingFeedbackUpload(
+            "document-a",
+            "owner-a",
+            "feedback_screenshots/owner-a/a.jpg"
+        )
+        val second = PendingFeedbackUpload(
+            "document-b",
+            "owner-b",
+            "feedback_screenshots/owner-b/b.jpg"
+        )
 
         try {
             val store = SharedPreferencesFeedbackSubmissionJournalStore(context)
@@ -69,6 +78,6 @@ class FeedbackSubmissionJournalStoreInstrumentedTest {
     }
 
     private companion object {
-        const val PREFERENCES_NAME = "feedback_submission_journal_v1"
+        const val PREFERENCES_NAME = "feedback_submission_journal_v2"
     }
 }
