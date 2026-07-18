@@ -96,3 +96,6 @@ feedback sheet. The API 27 and API 35 emulator jobs execute these tests.
 Stage 8 is complete when architecture guard, lint, unit tests, debug build, CodeQL, API 27
 instrumentation, API 35 instrumentation and minified release-smoke validation all pass on the
 same branch head. The branch remains draft until that gate is green.
+
+The validation result must belong to the final connector-authored branch head; intermediate patch
+staging commits and automation-authored assembly commits are not accepted as the release gate.
