@@ -4,6 +4,8 @@ import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import com.aqua.aqualight.application.feedback.FeedbackOrphanCleanupResult
 import com.aqua.aqualight.application.feedback.FeedbackRepository
+import com.aqua.aqualight.application.feedback.FeedbackSubmissionFailure
+import com.aqua.aqualight.application.feedback.FeedbackSubmissionFailureKind
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionRequest
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionResult
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionUseCase
@@ -22,6 +24,9 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -40,57 +45,163 @@ class FeedbackViewModelTest {
     }
 
     @Test
-    fun restoresFormFromSavedStateAndSubmitsThroughUseCase() = runTest(dispatcher) {
+    fun restoresFormAndSelectedMediaThenSubmitsThroughUseCase() = runTest(dispatcher) {
+        val mediaFile = File.createTempFile("feedback-vm-", ".jpg").apply {
+            writeBytes(byteArrayOf(1, 2, 3))
+        }
+        try {
+            val repository = FakeFeedbackRepository()
+            val mediaProcessor = FakeFeedbackMediaProcessor()
+            val viewModel = viewModel(savedState(mediaFile), repository, mediaProcessor)
+
+            assertEquals("Bug", viewModel.uiState.value.category)
+            assertEquals("A reproducible problem", viewModel.uiState.value.message)
+            assertEquals(mediaFile.canonicalPath, viewModel.uiState.value.screenshot?.path)
+            assertFalse(viewModel.uiState.value.isBusy)
+
+            val event = async { viewModel.events.first() }
+            viewModel.submit()
+            advanceUntilIdle()
+
+            assertEquals(FeedbackUiEvent.SubmissionSucceeded, event.await())
+            assertEquals("Bug", repository.request?.category)
+            assertEquals(mediaFile.canonicalPath, repository.screenshotFile?.canonicalPath)
+            assertEquals("9.0", repository.request?.appVersion)
+            assertEquals("tr-TR", repository.request?.localeTag)
+            assertEquals("", viewModel.uiState.value.category)
+            assertNull(viewModel.uiState.value.screenshot)
+            assertFalse(viewModel.uiState.value.isBusy)
+            assertTrue(mediaProcessor.deletedPaths.contains(mediaFile.canonicalPath))
+        } finally {
+            mediaFile.delete()
+        }
+    }
+
+    @Test
+    fun recreationNeverReplaysAnInterruptedSubmission() = runTest(dispatcher) {
         val repository = FakeFeedbackRepository()
-        val viewModel = FeedbackViewModel(
-            savedStateHandle = SavedStateHandle(
-                mapOf(
-                    "feedback.category" to "Bug",
-                    "feedback.email" to "",
-                    "feedback.message" to "A reproducible problem"
-                )
-            ),
-            submissionUseCase = FeedbackSubmissionUseCase(repository),
-            mediaProcessor = FakeFeedbackMediaProcessor(),
-            appVersionProvider = { "9.0" },
-            localeTagProvider = { "tr-TR" }
+        val mediaProcessor = FakeFeedbackMediaProcessor()
+        val savedState = SavedStateHandle(
+            mapOf(
+                "feedback.category" to "Bug",
+                "feedback.message" to "A reproducible problem"
+            )
         )
 
-        assertEquals("Bug", viewModel.uiState.value.category)
-        assertEquals("A reproducible problem", viewModel.uiState.value.message)
-
-        val event = async { viewModel.events.first() }
-        viewModel.submit()
+        val first = viewModel(savedState, repository, mediaProcessor)
+        assertFalse(first.uiState.value.isSubmitting)
+        val recreated = viewModel(savedState, repository, mediaProcessor)
         advanceUntilIdle()
 
-        assertEquals(FeedbackUiEvent.SubmissionSucceeded, event.await())
-        assertEquals("Bug", repository.request?.category)
-        assertEquals("9.0", repository.request?.appVersion)
-        assertEquals("tr-TR", repository.request?.localeTag)
-        assertEquals("", viewModel.uiState.value.category)
-        assertFalse(viewModel.uiState.value.isBusy)
+        assertEquals("Bug", recreated.uiState.value.category)
+        assertEquals("A reproducible problem", recreated.uiState.value.message)
+        assertFalse(recreated.uiState.value.isSubmitting)
+        assertEquals(0, repository.submitCount)
     }
+
+    @Test
+    fun submissionFailureKeepsFormAndScreenshotForRetry() = runTest(dispatcher) {
+        val mediaFile = File.createTempFile("feedback-retry-", ".jpg").apply {
+            writeBytes(byteArrayOf(1, 2, 3))
+        }
+        try {
+            val repository = FakeFeedbackRepository().apply {
+                result = FeedbackSubmissionResult.Failure(
+                    FeedbackSubmissionFailure(
+                        kind = FeedbackSubmissionFailureKind.PERSISTENCE,
+                        cause = IllegalStateException("write failed")
+                    )
+                )
+            }
+            val mediaProcessor = FakeFeedbackMediaProcessor()
+            val viewModel = viewModel(savedState(mediaFile), repository, mediaProcessor)
+            val event = async { viewModel.events.first() }
+
+            viewModel.submit()
+            advanceUntilIdle()
+
+            assertEquals(
+                FeedbackUiEvent.SubmissionFailed(FeedbackSubmissionFailureKind.PERSISTENCE),
+                event.await()
+            )
+            assertEquals("Bug", viewModel.uiState.value.category)
+            assertNotNull(viewModel.uiState.value.screenshot)
+            assertTrue(mediaProcessor.deletedPaths.isEmpty())
+            assertFalse(viewModel.uiState.value.isBusy)
+        } finally {
+            mediaFile.delete()
+        }
+    }
+
+    @Test
+    fun invalidRestoredMediaIsRemovedFromSavedState() = runTest(dispatcher) {
+        val savedState = SavedStateHandle(
+            mapOf(
+                "feedback.screenshot.path" to "/invalid/outside/file.jpg",
+                "feedback.screenshot.name" to "file.jpg",
+                "feedback.screenshot.width" to 100,
+                "feedback.screenshot.height" to 100,
+                "feedback.screenshot.bytes" to 10L
+            )
+        )
+        val processor = FakeFeedbackMediaProcessor().apply { allowRestore = false }
+
+        val viewModel = viewModel(savedState, FakeFeedbackRepository(), processor)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.screenshot)
+        assertNull(savedState.get<String>("feedback.screenshot.path"))
+    }
+
+    private fun viewModel(
+        savedStateHandle: SavedStateHandle,
+        repository: FakeFeedbackRepository,
+        mediaProcessor: FakeFeedbackMediaProcessor
+    ) = FeedbackViewModel(
+        savedStateHandle = savedStateHandle,
+        submissionUseCase = FeedbackSubmissionUseCase(repository),
+        mediaProcessor = mediaProcessor,
+        appVersionProvider = { "9.0" },
+        localeTagProvider = { "tr-TR" }
+    )
+
+    private fun savedState(mediaFile: File) = SavedStateHandle(
+        mapOf(
+            "feedback.category" to "Bug",
+            "feedback.email" to "",
+            "feedback.message" to "A reproducible problem",
+            "feedback.screenshot.path" to mediaFile.canonicalPath,
+            "feedback.screenshot.name" to "screenshot.jpg",
+            "feedback.screenshot.width" to 640,
+            "feedback.screenshot.height" to 480,
+            "feedback.screenshot.bytes" to mediaFile.length()
+        )
+    )
 
     private class FakeFeedbackRepository : FeedbackRepository {
         var request: FeedbackSubmissionRequest? = null
+        var screenshotFile: File? = null
+        var submitCount: Int = 0
+        var result: FeedbackSubmissionResult = FeedbackSubmissionResult.Success("document-1")
 
         override suspend fun submit(
             request: FeedbackSubmissionRequest,
             screenshotFile: File?
         ): FeedbackSubmissionResult {
+            submitCount += 1
             this.request = request
-            return FeedbackSubmissionResult.Success("document-1")
+            this.screenshotFile = screenshotFile
+            return result
         }
 
-        override suspend fun cleanupOrphans(): FeedbackOrphanCleanupResult {
-            return FeedbackOrphanCleanupResult(0, 0, 0)
-        }
+        override suspend fun cleanupOrphans() = FeedbackOrphanCleanupResult(0, 0, 0)
     }
 
     private class FakeFeedbackMediaProcessor : FeedbackMediaProcessor {
-        override suspend fun process(uri: Uri): FeedbackMediaProcessingResult {
-            error("Not expected")
-        }
+        var allowRestore: Boolean = true
+        val deletedPaths = mutableListOf<String>()
+
+        override suspend fun process(uri: Uri): FeedbackMediaProcessingResult = error("Not expected")
 
         override fun restore(
             path: String?,
@@ -98,9 +209,22 @@ class FeedbackViewModelTest {
             width: Int?,
             height: Int?,
             byteCount: Long?
-        ): ProcessedFeedbackMedia? = null
+        ): ProcessedFeedbackMedia? {
+            if (!allowRestore || path.isNullOrBlank()) return null
+            val file = File(path)
+            if (!file.isFile || file.length() <= 0L) return null
+            return ProcessedFeedbackMedia(
+                path = file.canonicalPath,
+                displayName = displayName.orEmpty(),
+                width = width ?: return null,
+                height = height ?: return null,
+                byteCount = byteCount ?: file.length()
+            )
+        }
 
-        override suspend fun delete(path: String?) = Unit
+        override suspend fun delete(path: String?) {
+            path?.let(deletedPaths::add)
+        }
 
         override suspend fun cleanupExpired() = Unit
     }
