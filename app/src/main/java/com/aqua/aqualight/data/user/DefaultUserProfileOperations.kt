@@ -40,6 +40,7 @@ class DefaultUserProfileOperations(
 
     override suspend fun updateProfilePhoto(photoUri: String): Unit = withContext(NonCancellable) {
         withContext(dispatcher) {
+            val ownerUid = UserDataScope.requireCurrentUid()
             val normalized = photoUri.trim()
             val previous = preferences.profilePhotoUrl.first()
                 .takeIf { it.isNotBlank() && it != normalized }
@@ -51,10 +52,15 @@ class DefaultUserProfileOperations(
                 throw error
             }
 
-            // The domain write is authoritative. Journal finalization and old-file deletion are
-            // idempotent cleanup; recovery reconciles either operation if the process stops here.
+            // The durable profile write is authoritative. Cleanup is idempotent and retryable.
             runCatching { AppMediaStorage.commitPendingMedia(appContext, normalized) }
-            runCatching { AppMediaStorage.deleteInternalMedia(appContext, previous) }
+            runCatching {
+                AppMediaStorage.deleteAfterCommit(
+                    context = appContext,
+                    ownerUid = ownerUid,
+                    uriString = previous
+                )
+            }
             Unit
         }
     }
