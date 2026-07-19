@@ -17,6 +17,8 @@ STAGING={'tr','de','fr','ru','zh'}
 UNSUPPORTED={f'language_{lang}{suffix}' for lang in ('turkish','german','french','russian','chinese') for suffix in ('','_flag_desc','_row_desc','_radio_desc')}
 RUNTIME_HEADER={("layout_aqua_header.xml","@+id/btnActionOne"),("layout_aqua_header.xml","@+id/btnActionTwo"),("layout_aqua_header.xml","@+id/btnActionThree"),("layout_aqua_header.xml","@+id/btnFilledIconAction")}
 PLACEHOLDER=re.compile(r'(?<!%)%(?!%)(?:(?P<index>\d+)\$)?[-+#, 0(<]*\d*(?:\.\d+)?(?P<type>[a-zA-Z])')
+DYNAMIC_VIEW_BLOCK=re.compile(r'(?P<type>[A-Za-z0-9_.]+)\([^)]*\)\.apply\s*\{(?P<body>.*?)(?=\n\s*\})',re.S)
+DYNAMIC_FIXED_LAYOUT=re.compile(r'LayoutParams\(\s*resources\.getDimensionPixelOffset\(R\.dimen\.aqua_size_(?P<width>\d+)\)\s*,\s*resources\.getDimensionPixelOffset\(R\.dimen\.aqua_size_(?P<height>\d+)\)',re.S)
 
 class Failure(RuntimeError):pass
 def fail(msg):raise Failure(msg)
@@ -135,20 +137,25 @@ def check_xml_controls():
             if interactive:
                 width=dp(view.attrib.get(f'{ANDROID}layout_width'),dims);height=dp(view.attrib.get(f'{ANDROID}layout_height'),dims)
                 minw=dp(view.attrib.get(f'{ANDROID}minWidth'),dims) or 0;minh=dp(view.attrib.get(f'{ANDROID}minHeight'),dims) or 0
-                if width is not None and width > 0 and max(width,minw)<48:errors.append(where+' fixed width below 48dp')
-                if height is not None and height > 0 and max(height,minh)<48:errors.append(where+' fixed height below 48dp')
+                if width is not None and width>0 and max(width,minw)<48:errors.append(where+' fixed width below 48dp')
+                if height is not None and height>0 and max(height,minh)<48:errors.append(where+' fixed height below 48dp')
     if errors:fail('XML accessibility violations:\n- '+'\n- '.join(errors[:100]))
 
 def check_dynamic_controls():
     errors=[]
     for p in sorted(UI.rglob('*.kt')):
         source=p.read_text(encoding='utf-8')
-        for m in re.finditer(r'(?:ImageView|ImageButton)\([^)]*\)\.apply\s*\{(?P<body>.*?)(?=\n\s*\})',source,re.S):
-            body=m.group('body')
-            if 'setOnClickListener' in body and 'contentDescription' not in body and 'importantForAccessibility' not in body:
+        for match in DYNAMIC_VIEW_BLOCK.finditer(source):
+            view_type=match.group('type').rsplit('.',1)[-1]
+            body=match.group('body')
+            interactive='setOnClickListener' in body or 'isClickable = true' in body
+            if not interactive:continue
+            if view_type in {'ImageView','ImageButton'} and 'contentDescription' not in body and 'importantForAccessibility' not in body:
                 errors.append(f'{p.relative_to(ROOT)} clickable programmatic image lacks description')
-        if 'setOnClickListener' in source and 'R.dimen.aqua_size_46' in source:
-            errors.append(f'{p.relative_to(ROOT)} uses 46dp near dynamic click handling')
+            for size in DYNAMIC_FIXED_LAYOUT.finditer(body):
+                width=int(size.group('width'));height=int(size.group('height'))
+                if width<48 or height<48:
+                    errors.append(f'{p.relative_to(ROOT)} programmatic clickable target is {width}x{height}dp')
     if errors:fail('Dynamic accessibility violations:\n- '+'\n- '.join(sorted(set(errors))))
 
 def check_locale_boundary():
