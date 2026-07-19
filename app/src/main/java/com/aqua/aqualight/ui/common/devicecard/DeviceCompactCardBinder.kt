@@ -27,6 +27,10 @@ object DeviceCompactCardBinder {
                 R.string.device_offline
             }
         )
+        val presenceAnnouncement = context.getString(
+            R.string.accessibility_device_status_changed,
+            presenceText
+        )
 
         binding.tvDeviceName.text = name
         binding.tvSerialNumber.text = context.getString(R.string.device_serial_value, serial)
@@ -41,7 +45,7 @@ object DeviceCompactCardBinder {
         binding.ivPresenceIcon.imageTintList = ColorStateList.valueOf(
             presenceIconColor(binding, item.statusStyle)
         )
-        binding.ivPresenceIcon.contentDescription = presenceText
+        binding.ivPresenceIcon.contentDescription = presenceAnnouncement
         binding.ivPresenceIcon.isVisible = !item.showAction
 
         binding.tvCardAction.text = item.actionText
