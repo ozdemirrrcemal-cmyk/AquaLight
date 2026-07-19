@@ -1,1 +1,1 @@
-IndentationError: unexpected indent (<stage5-measurement-codemod>, line 1)
+SystemExit: app/src/main/java/com/aqua/aqualight/i18n/LocaleFormatter.kt: expected one occurrence, found 0: '    internal fun formatDecimal(\n        value: Number,\n        locale: Locale,\n        maximumFractionDigits: Int = 2\n  '
