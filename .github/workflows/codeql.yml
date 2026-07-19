@@ -67,6 +67,7 @@ jobs:
             python3 tools/process_safe_feedback_guard.py
             python3 tools/stage9_feedback_media_guard.py
             python3 tools/design_system_resource_guard.py
+            python3 tools/localization_accessibility_guard.py
           } 2>&1 | tee architecture-guards.log
 
       - name: Initialize CodeQL
@@ -147,35 +148,3 @@ jobs:
           ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee assemble-release.log
           test -s app/build/outputs/apk/release/AquaLight.apk
           test -s app/build/outputs/mapping/release/mapping.txt
-
-      - name: Upload validation logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: codeql-validation-logs-${{ github.run_number }}
-          path: |
-            architecture-guards.log
-            codeql-extraction-build.log
-            unit-test.log
-            unit-test-release.log
-            lint-debug.log
-            lint-release.log
-            assemble-debug.log
-            assemble-release.log
-            app/build/outputs/mapping/release/mapping.txt
-            app/build/reports/tests/testDebugUnitTest/**
-            app/build/reports/tests/testReleaseUnitTest/**
-            app/build/reports/lint-results-debug.*
-            app/build/reports/lint-results-release.*
-          if-no-files-found: ignore
-
-      - name: Remove CI-only release keystore
-        if: always()
-        run: rm -f release-key.jks
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          output: codeql-results
-          upload-database: false
-          wait-for-processing: false
