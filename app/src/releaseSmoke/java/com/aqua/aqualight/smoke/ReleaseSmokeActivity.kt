@@ -30,9 +30,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * CI-only Activity packaged exclusively in the minified releaseSmoke variant.
+ * CI-only Activity packaged in releaseSmoke and debug test variants.
  * It exercises real Fragment lifecycle/rendering without opening Firebase, BLE or WebSocket
- * infrastructure. Locale, theme and font-scale labels are supplied by the emulator runner.
+ * infrastructure. Production Release does not package this source set.
  */
 class ReleaseSmokeActivity : BaseActivity() {
 
@@ -56,12 +56,29 @@ class ReleaseSmokeActivity : BaseActivity() {
             .orEmpty()
             .ifBlank { DEFAULT_FONT_SCALE_LABEL }
     }
+    private val requestedScreenName: String? by lazy {
+        intent.getStringExtra(EXTRA_SMOKE_SCREEN)
+            ?.trim()
+            ?.takeIf(String::isNotBlank)
+    }
+    private val holdForAccessibilityAudit: Boolean by lazy {
+        intent.getBooleanExtra(EXTRA_HOLD_FOR_ACCESSIBILITY, false)
+    }
     private val smokeModeKey: String by lazy {
         listOf(
             smokeLocaleTag.lowercase().replace('-', '_'),
             smokeTheme,
             "font${smokeFontScaleLabel.replace('.', '_')}"
         ).joinToString("-")
+    }
+    private val activeScreens: List<SmokeScreen> by lazy {
+        val screens = allSmokeScreens()
+        val requested = requestedScreenName ?: return@lazy screens
+        listOf(
+            requireNotNull(screens.firstOrNull { screen -> screen.name == requested }) {
+                "Unknown smoke screen: $requested"
+            }
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -103,7 +120,7 @@ class ReleaseSmokeActivity : BaseActivity() {
 
         lifecycleScope.launch {
             runCatching {
-                smokeScreens().forEach { screen ->
+                activeScreens.forEach { screen ->
                     if (navController.currentDestination?.id != screen.destinationId) {
                         navController.navigate(screen.destinationId)
                     }
@@ -121,7 +138,7 @@ class ReleaseSmokeActivity : BaseActivity() {
                     check(fragment.isAdded) {
                         "${screen.name} was not added"
                     }
-                    check(fragment.view != null) {
+                    val fragmentView = requireNotNull(fragment.view) {
                         "${screen.name} did not create a view"
                     }
                     check(
@@ -132,9 +149,16 @@ class ReleaseSmokeActivity : BaseActivity() {
                         "${screen.name} did not reach STARTED"
                     }
                     captureScreen(screen)
+
+                    if (holdForAccessibilityAudit) {
+                        fragmentView.contentDescription = "$ACCESSIBILITY_READY_PREFIX:${screen.name}"
+                        return@launch
+                    }
                 }
             }.onSuccess {
-                renderResult("$PASS_MARKER:$smokeModeKey")
+                if (!holdForAccessibilityAudit) {
+                    renderResult("$PASS_MARKER:$smokeModeKey")
+                }
             }.onFailure { error ->
                 renderResult(
                     "$FAIL_MARKER\n${error::class.java.name}\n${error.message.orEmpty()}"
@@ -151,11 +175,10 @@ class ReleaseSmokeActivity : BaseActivity() {
         val fragmentNavigator = navigatorProvider.getNavigator(
             FragmentNavigator::class.java
         )
-        val screens = smokeScreens()
 
         return NavGraph(graphNavigator).apply {
             id = SMOKE_GRAPH_ID
-            screens.forEach { screen ->
+            activeScreens.forEach { screen ->
                 addDestination(
                     fragmentNavigator.createDestination().apply {
                         id = screen.destinationId
@@ -163,11 +186,11 @@ class ReleaseSmokeActivity : BaseActivity() {
                     }
                 )
             }
-            setStartDestination(screens.first().destinationId)
+            setStartDestination(activeScreens.first().destinationId)
         }
     }
 
-    private fun smokeScreens(): List<SmokeScreen> = listOf(
+    private fun allSmokeScreens(): List<SmokeScreen> = listOf(
         SmokeScreen(
             name = "AquariumFragment",
             destinationId = DESTINATION_AQUARIUM,
@@ -248,9 +271,12 @@ class ReleaseSmokeActivity : BaseActivity() {
         const val SCREEN_SETTLE_MILLIS = 700L
         const val PASS_MARKER = "RELEASE_SMOKE_PASS"
         const val FAIL_MARKER = "RELEASE_SMOKE_FAIL"
+        const val ACCESSIBILITY_READY_PREFIX = "ACCESSIBILITY_READY"
         const val EXTRA_SMOKE_THEME = "aqua_smoke_theme"
         const val EXTRA_SMOKE_LOCALE = "aqua_smoke_locale"
         const val EXTRA_SMOKE_FONT_SCALE = "aqua_smoke_font_scale"
+        const val EXTRA_SMOKE_SCREEN = "aqua_smoke_screen"
+        const val EXTRA_HOLD_FOR_ACCESSIBILITY = "aqua_hold_for_accessibility"
         const val THEME_LIGHT = "light"
         const val THEME_DARK = "dark"
         const val DEFAULT_LOCALE = "en"
