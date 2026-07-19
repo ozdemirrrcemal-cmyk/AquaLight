@@ -134,6 +134,47 @@ class LocaleContextArchitectureTest {
     }
 
     @Test
+    fun maintenanceDateAndTimeSurfacesUseTheSharedLocaleBoundary() {
+        val taskDetail = File(
+            repositoryRoot,
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/TaskDetailFragment.kt"
+        ).readText()
+        val adapter = File(
+            repositoryRoot,
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt"
+        ).readText()
+        val viewModel = File(
+            repositoryRoot,
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/MaintenanceViewModel.kt"
+        ).readText()
+        val resolver = File(
+            repositoryRoot,
+            "app/src/main/java/com/aqua/aqualight/platform/text/" +
+                "AndroidMaintenanceTextResolver.kt"
+        ).readText()
+
+        assertTrue(taskDetail.contains("LocaleFormatter.formatDate(requireContext(), millis)"))
+        assertTrue(taskDetail.contains("LocaleFormatter.formatTime(requireContext(), millis)"))
+        assertTrue(taskDetail.contains("LocaleFormatter.formatDateTime(requireContext(), millis)"))
+        assertFalse(taskDetail.contains("SimpleDateFormat("))
+        assertFalse(taskDetail.contains("Locale.getDefault()"))
+        assertFalse(taskDetail.contains("dd.MM.yyyy"))
+        assertFalse(taskDetail.contains("HH:mm"))
+
+        assertTrue(adapter.contains("LocaleFormatter.formatDate(context, millis)"))
+        assertFalse(adapter.contains("SimpleDateFormat("))
+        assertFalse(adapter.contains("Locale.getDefault()"))
+        assertFalse(adapter.contains("dd.MM.yyyy"))
+
+        assertTrue(viewModel.contains("textResolver.formatTime(millis)"))
+        assertFalse(viewModel.contains("SimpleDateFormat("))
+        assertFalse(viewModel.contains("Locale.getDefault()"))
+        assertFalse(viewModel.contains("HH:mm"))
+
+        assertTrue(resolver.contains("LocaleFormatter.formatTime(appContext, timeMillis)"))
+    }
+
+    @Test
     fun customTankDatePickerUsesTheAppCompatApplicationLocale() {
         val policyPath =
             "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/common/" +
