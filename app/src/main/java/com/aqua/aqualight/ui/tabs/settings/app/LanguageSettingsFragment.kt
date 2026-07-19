@@ -2,8 +2,6 @@ package com.aqua.aqualight.ui.tabs.settings.app
 
 import android.os.Bundle
 import android.view.View
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.os.LocaleListCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -77,9 +75,6 @@ class LanguageSettingsFragment : Fragment(R.layout.fragment_language_settings) {
 
         viewLifecycleOwner.lifecycleScope.launch {
             settingsOperations.updateLanguage(supportedCode)
-            AppCompatDelegate.setApplicationLocales(
-                LocaleListCompat.forLanguageTags(supportedCode)
-            )
             findNavController().popBackStack()
         }
     }
