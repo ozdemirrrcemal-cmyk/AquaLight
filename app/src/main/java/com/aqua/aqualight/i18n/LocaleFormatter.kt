@@ -2,9 +2,11 @@ package com.aqua.aqualight.i18n
 
 import android.content.Context
 import android.content.res.Configuration
+import android.text.format.DateFormat as AndroidDateFormat
 import androidx.core.content.ContextCompat
-import java.text.DateFormat
+import java.text.DateFormat as JavaDateFormat
 import java.text.NumberFormat
+import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
@@ -14,7 +16,10 @@ object LocaleFormatter {
     /**
      * Returns a context whose resources follow the AndroidX per-app language selection.
      * Before an explicit user choice is available, Turkish devices use Turkish and every other
-     * device uses English. Unsupported framework locales can therefore never leak into dialogs.
+     * device uses English. Unsupported framework locales can therefore never leak into formatting.
+     *
+     * This context is for resource and formatting work only. Window-owning UI such as Dialog must
+     * always use its live Activity context.
      */
     fun localizedContext(context: Context): Context {
         val languageContext = ContextCompat.getContextForLanguage(context)
@@ -77,11 +82,21 @@ object LocaleFormatter {
     }
 
     fun formatTime(context: Context, timeMillis: Long): String {
-        return formatTime(timeMillis, appLocale(context))
+        val localizedContext = localizedContext(context)
+        return formatTime(
+            timeMillis = timeMillis,
+            locale = appLocale(localizedContext),
+            is24Hour = AndroidDateFormat.is24HourFormat(localizedContext)
+        )
     }
 
     fun formatDateTime(context: Context, timeMillis: Long): String {
-        return formatDateTime(timeMillis, appLocale(context))
+        val localizedContext = localizedContext(context)
+        return formatDateTime(
+            timeMillis = timeMillis,
+            locale = appLocale(localizedContext),
+            is24Hour = AndroidDateFormat.is24HourFormat(localizedContext)
+        )
     }
 
     internal fun formatInteger(value: Number, locale: Locale): String {
@@ -112,24 +127,46 @@ object LocaleFormatter {
     }
 
     internal fun formatDate(timeMillis: Long, locale: Locale): String {
-        return DateFormat.getDateInstance(
-            DateFormat.MEDIUM,
+        return JavaDateFormat.getDateInstance(
+            JavaDateFormat.MEDIUM,
             locale
         ).format(Date(timeMillis))
     }
 
+    /** Locale-default overload retained for deterministic JVM formatter coverage. */
     internal fun formatTime(timeMillis: Long, locale: Locale): String {
-        return DateFormat.getTimeInstance(
-            DateFormat.SHORT,
+        return JavaDateFormat.getTimeInstance(
+            JavaDateFormat.SHORT,
             locale
         ).format(Date(timeMillis))
     }
 
+    internal fun formatTime(
+        timeMillis: Long,
+        locale: Locale,
+        is24Hour: Boolean
+    ): String {
+        val skeleton = if (is24Hour) "Hm" else "hm"
+        val pattern = AndroidDateFormat.getBestDateTimePattern(locale, skeleton)
+        return SimpleDateFormat(pattern, locale).format(Date(timeMillis))
+    }
+
+    /** Locale-default overload retained for deterministic JVM formatter coverage. */
     internal fun formatDateTime(timeMillis: Long, locale: Locale): String {
-        return DateFormat.getDateTimeInstance(
-            DateFormat.MEDIUM,
-            DateFormat.SHORT,
+        return JavaDateFormat.getDateTimeInstance(
+            JavaDateFormat.MEDIUM,
+            JavaDateFormat.SHORT,
             locale
         ).format(Date(timeMillis))
+    }
+
+    internal fun formatDateTime(
+        timeMillis: Long,
+        locale: Locale,
+        is24Hour: Boolean
+    ): String {
+        val skeleton = if (is24Hour) "yMMMdHm" else "yMMMdhm"
+        val pattern = AndroidDateFormat.getBestDateTimePattern(locale, skeleton)
+        return SimpleDateFormat(pattern, locale).format(Date(timeMillis))
     }
 }
