@@ -2,9 +2,11 @@ package com.aqua.aqualight.ui.tabs.settings.device
 
 import android.content.res.ColorStateList
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
-import androidx.recyclerview.widget.RecyclerView
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemDeviceStatusBinding
 import com.aqua.aqualight.ui.common.text.resolve
@@ -53,12 +55,17 @@ class DeviceStatusAdapter : RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewH
                 )
             )
             binding.ivPresenceIcon.contentDescription = presenceText
+            ViewCompat.setAccessibilityLiveRegion(
+                binding.ivPresenceIcon,
+                View.ACCESSIBILITY_LIVE_REGION_POLITE
+            )
             binding.root.contentDescription = context.getString(
                 R.string.device_status_accessibility,
                 name,
                 serial,
                 presenceText
             )
+            ViewCompat.setStateDescription(binding.root, presenceText)
         }
     }
 
@@ -76,5 +83,4 @@ class DeviceStatusAdapter : RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewH
     }
 
     override fun getItemCount(): Int = items.size
-
 }
