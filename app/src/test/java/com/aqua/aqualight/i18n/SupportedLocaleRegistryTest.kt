@@ -1,5 +1,6 @@
 package com.aqua.aqualight.i18n
 
+import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -9,35 +10,38 @@ import org.junit.Test
 class SupportedLocaleRegistryTest {
 
     @Test
-    fun onlyCompleteEnglishResourcesAreCommerciallyEnabled() {
-        assertEquals(setOf("en"), SupportedLocaleRegistry.all)
+    fun onlyCompleteTurkishAndEnglishResourcesAreCommerciallyEnabled() {
+        assertEquals(setOf("en", "tr"), SupportedLocaleRegistry.all)
         assertTrue(SupportedLocaleRegistry.isSupported("en"))
-        assertFalse(SupportedLocaleRegistry.isSupported("tr"))
+        assertTrue(SupportedLocaleRegistry.isSupported("tr"))
+        assertFalse(SupportedLocaleRegistry.isSupported("de"))
+        assertFalse(SupportedLocaleRegistry.isSupported("fr"))
+        assertFalse(SupportedLocaleRegistry.isSupported("ru"))
+        assertFalse(SupportedLocaleRegistry.isSupported("zh"))
     }
 
     @Test
-    fun previouslyAdvertisedUntranslatedLanguagesMigrateToEnglish() {
-        listOf("tr", "de", "fr", "ru", "zh").forEach { languageTag ->
-            assertEquals(
-                SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG,
-                SupportedLocaleRegistry.normalizeStoredLanguageTag(languageTag)
-            )
-        }
+    fun persistedChoiceAcceptsOnlyExactCanonicalSupportedTags() {
+        assertEquals("en", SupportedLocaleRegistry.normalizeStoredLanguageTag("en"))
+        assertEquals("tr", SupportedLocaleRegistry.normalizeStoredLanguageTag("tr"))
+        listOf("de", "fr", "ru", "zh", "es", "EN", "TR", " en ", "tr-TR", "")
+            .forEach { languageTag ->
+                assertNull(SupportedLocaleRegistry.normalizeStoredLanguageTag(languageTag))
+            }
     }
 
     @Test
-    fun arbitraryAndNonCanonicalTagsAreNotAcceptedForPersistence() {
-        assertNull(SupportedLocaleRegistry.normalizeStoredLanguageTag("es"))
-        assertNull(SupportedLocaleRegistry.normalizeStoredLanguageTag("EN"))
-        assertNull(SupportedLocaleRegistry.normalizeStoredLanguageTag(" en "))
-        assertNull(SupportedLocaleRegistry.normalizeStoredLanguageTag(""))
+    fun firstRunDefaultUsesTurkishOnlyForTurkishDevices() {
+        assertEquals("tr", SupportedLocaleRegistry.deviceDefault(Locale("tr", "TR")))
+        assertEquals("en", SupportedLocaleRegistry.deviceDefault(Locale.US))
+        assertEquals("en", SupportedLocaleRegistry.deviceDefault(Locale.GERMANY))
     }
 
     @Test
-    fun runtimeResolutionAlwaysReturnsASupportedLanguage() {
+    fun runtimeResolutionSupportsRegionalVariantsWithoutAddingLanguages() {
         assertEquals("en", SupportedLocaleRegistry.resolve("en"))
-        assertEquals("en", SupportedLocaleRegistry.resolve("tr"))
-        assertEquals("en", SupportedLocaleRegistry.resolve("es"))
-        assertEquals("en", SupportedLocaleRegistry.resolve(null))
+        assertEquals("en", SupportedLocaleRegistry.resolve("en-US"))
+        assertEquals("tr", SupportedLocaleRegistry.resolve("tr"))
+        assertEquals("tr", SupportedLocaleRegistry.resolve("tr-TR"))
     }
 }
