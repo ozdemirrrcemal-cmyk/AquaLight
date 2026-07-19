@@ -35,6 +35,7 @@ The following checks run in Android, Release and CodeQL CI paths:
 - translation staging-folder presence;
 - icon-only control content-description checks, including runtime-managed header actions;
 - explicit icon touch targets below 48dp rejection;
+- rendered visible clickable targets below 48dp rejection on the release-smoke screens;
 - dynamic Online/Offline accessibility binding checks;
 - critical WCAG contrast-pair checks for light and dark semantic colors.
 
@@ -45,7 +46,7 @@ The minified release-smoke matrix runs on API 27 and API 35 and captures four ma
 - 200% font scale;
 - RTL layout direction.
 
-Each variant must produce four non-empty screenshots. Visible icon-only controls are checked for non-empty accessibility descriptions before capture.
+Each variant must produce four non-empty screenshots. Before capture, visible icon-only controls must have non-empty accessibility descriptions and every visible clickable target must render at least 48dp in both dimensions.
 
 ## Dynamic device status contract
 
@@ -56,6 +57,7 @@ Each variant must produce four non-empty screenshots. Visible icon-only controls
 
 ## Touch target contract
 
+- Every visible clickable control in the core release-smoke flows must render at least 48dp in both dimensions.
 - New icon-only controls must expose a minimum 48dp interactive target.
 - Decorative icons must use `importantForAccessibility="no"` and no spoken duplicate label.
 - A visible interactive icon must never depend on a drawable name or visual color for meaning.
