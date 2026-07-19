@@ -31,7 +31,7 @@
             android:id="@+id/deviceIconContainer"
             android:layout_width="@dimen/aqua_size_54"
             android:layout_height="@dimen/aqua_size_54"
-                    app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:strokeWidth="@dimen/aqua_size_1">
@@ -112,6 +112,7 @@
                 android:layout_width="@dimen/aqua_size_24"
                 android:layout_height="@dimen/aqua_size_24"
                 android:layout_gravity="center"
+                android:accessibilityLiveRegion="polite"
                 android:contentDescription="@string/app_name"
                 android:src="@drawable/ic_status_wifi"
                 app:tint="@color/aqua_accent_positive"
