@@ -12,7 +12,8 @@ class DateOnlyArchitectureTest {
     fun calendarOnlyFieldsCannotReturnToTimestampStorage() {
         val protectedRoots = listOf(
             File(repositoryRoot, "app/src/main/java"),
-            File(repositoryRoot, "app/src/main/proto")
+            File(repositoryRoot, "app/src/main/proto"),
+            File(repositoryRoot, "app/src/androidTest/java")
         )
         val forbiddenTokens = listOf(
             "setupDateMillis",
