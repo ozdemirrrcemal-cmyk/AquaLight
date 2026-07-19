@@ -25,6 +25,10 @@ object LocaleFormatter {
         } else {
             locales[0]
         }
+        return resolveSupportedLocale(configuredLocale)
+    }
+
+    internal fun resolveSupportedLocale(configuredLocale: Locale): Locale {
         return Locale.forLanguageTag(
             SupportedLocaleRegistry.resolve(configuredLocale.toLanguageTag())
         )
