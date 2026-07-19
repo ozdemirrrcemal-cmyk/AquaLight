@@ -45,7 +45,6 @@
     <string name="device_provisioning_step_icon_attention" translatable="false">!</string>
     <string name="device_provisioning_step_icon_progress" translatable="false">●</string>
     <string name="device_provisioning_step_icon_complete" translatable="false">✓</string>
-    <string name="device_card_accessibility">%1$s, UID: %2$s, %3$s</string>
     <string name="device_card_accessibility_with_supporting">%1$s, UID: %2$s, %3$s, %4$s</string>
     <string name="device_status_accessibility">%1$s, Serial: %2$s, %3$s</string>
     <string name="device_unsupported_family_message">Unsupported AquaLight device family. Firmware did not provide a known product.family value.</string>
