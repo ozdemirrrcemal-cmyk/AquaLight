@@ -72,7 +72,7 @@ class OrphanedCareTaskRepairInstrumentedTest {
         photoUri = null,
         plants = emptyList(),
         materials = emptyList(),
-        setupDateMillis = CREATED_MILLIS,
+        setupDateEpochDay = SETUP_EPOCH_DAY,
         widthCm = 60,
         lengthCm = 40,
         heightCm = 40,
@@ -83,7 +83,7 @@ class OrphanedCareTaskRepairInstrumentedTest {
     )
 
     private companion object {
-        const val CREATED_MILLIS = 1_767_225_600_000L
+        const val SETUP_EPOCH_DAY = 20_454L
         const val DUE_MILLIS = 1_767_312_000_000L
     }
 }
