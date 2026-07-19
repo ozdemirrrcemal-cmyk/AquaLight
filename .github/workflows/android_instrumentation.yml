@@ -58,6 +58,9 @@ jobs:
           grep -Fq "bash tools/verify_uninstall_clears_data.sh" tools/run_release_smoke.sh
           grep -Fq "RELEASE_SMOKE_PASS" tools/run_release_smoke.sh
           grep -Fq "ReleaseSmokeActivity" tools/run_release_smoke.sh
+          grep -Fq "aqua_smoke_profile" tools/run_release_smoke.sh
+          grep -Fq "large-font-light" tools/run_release_smoke.sh
+          grep -Fq "rtl-light" tools/run_release_smoke.sh
 
       - name: Generate CI-only release keystore
         run: |
