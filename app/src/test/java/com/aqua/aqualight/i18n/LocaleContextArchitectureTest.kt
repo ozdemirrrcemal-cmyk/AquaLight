@@ -18,10 +18,28 @@ class LocaleContextArchitectureTest {
             "app/src/main/java/com/aqua/aqualight/app/AquaApp.kt"
         ).readText()
 
-        assertTrue(source.contains("override fun attachBaseContext(base: Context)"))
-        assertTrue(source.contains("StartupAppearanceCache.create(base)"))
+        val attachIndex = source.indexOf("override fun attachBaseContext(base: Context)")
+        val superAttachIndex = source.indexOf("super.attachBaseContext(base)")
+        val cacheReadIndex = source.indexOf("StartupAppearanceCache.create(this)")
+        val onCreateIndex = source.indexOf("override fun onCreate")
+
+        assertTrue(attachIndex >= 0)
+        assertTrue(superAttachIndex > attachIndex)
+        assertTrue(cacheReadIndex > superAttachIndex)
+        assertTrue(onCreateIndex > cacheReadIndex)
         assertTrue(source.contains("AppCompatDelegate.setApplicationLocales("))
-        assertTrue(source.indexOf("override fun attachBaseContext") < source.indexOf("override fun onCreate"))
+    }
+
+    @Test
+    fun startupAppearanceCacheSupportsPreApplicationBaseContext() {
+        val source = File(
+            repositoryRoot,
+            "app/src/main/java/com/aqua/aqualight/data/user/StartupAppearanceCache.kt"
+        ).readText()
+
+        assertTrue(source.contains("context.applicationContext ?: context"))
+        assertTrue(source.contains("context.getSharedPreferences("))
+        assertFalse(source.contains("context.applicationContext.getSharedPreferences("))
     }
 
     @Test
