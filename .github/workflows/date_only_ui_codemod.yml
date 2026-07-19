@@ -18,154 +18,133 @@ jobs:
           ref: agent/localization-accessibility-commercial
           fetch-depth: 0
 
-      - name: Apply exact UI boundary replacements
+      - name: Apply verified date-only boundary replacements
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
-          def replace_once(path_text, old, new):
-              path = Path(path_text)
-              text = path.read_text(encoding='utf-8')
+          def load(path):
+              p = Path(path)
+              return p, p.read_text(encoding='utf-8')
+
+          def require_replace(text, old, new, label, expected=None):
               count = text.count(old)
+              if count == 0 or (expected is not None and count != expected):
+                  raise SystemExit(f'{label}: unexpected match count {count}')
+              return text.replace(old, new)
+
+          def require_sub(text, pattern, replacement, label):
+              updated, count = re.subn(pattern, replacement, text, flags=re.MULTILINE)
               if count != 1:
-                  raise SystemExit(f'{path}: expected one exact match, found {count}: {old[:80]!r}')
-              path.write_text(text.replace(old, new, 1), encoding='utf-8')
+                  raise SystemExit(f'{label}: expected one regex match, found {count}')
+              return updated
 
-          settings = 'app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsBasicFragment.kt'
-          replace_once(settings,
-          '''                TankSettingsEditorBottomSheet.Mode.SETUP_DATE -> {
-                              val millis = result.getLong(TankSettingsEditorBottomSheet.RESULT_MILLIS)
-                              runTankUpdate(getString(R.string.aquarium_error_setup_date_save_failed)) {
-                                  aquariumTankViewModel.updateTankSetupDate(tankId, millis)
-                              }
-                          }''',
-          '''                TankSettingsEditorBottomSheet.Mode.SETUP_DATE -> {
-                              val epochDay = AquariumDatePolicy.epochDayFromPickerMillis(
-                                  result.getLong(TankSettingsEditorBottomSheet.RESULT_MILLIS)
-                              )
-                              runTankUpdate(getString(R.string.aquarium_error_setup_date_save_failed)) {
-                                  aquariumTankViewModel.updateTankSetupDate(tankId, epochDay)
-                              }
-                          }''')
-          replace_once(settings,
-          '        binding.tvSettingSetupDate.text = getSetupDateText(tank.setupDateMillis)',
-          '        binding.tvSettingSetupDate.text = getSetupDateText(tank.setupDateEpochDay)')
-          replace_once(settings,
-          '            currentMillis = tank.setupDateMillis,',
-          '''            currentMillis = AquariumDatePolicy.pickerMillis(
-                              tank.setupDateEpochDay
-                          ),''')
-          replace_once(settings,
-          '''    private fun getSetupDateText(setupDateMillis: Long?): String {
-                          return AquariumDatePolicy.formatSetupDate(
-                              millis = setupDateMillis,
-                              emptyText = getString(R.string.aquarium_no_value_placeholder)
-                          )
-                      }''',
-          '''    private fun getSetupDateText(setupDateEpochDay: Long?): String {
-                          return AquariumDatePolicy.formatSetupDate(
-                              epochDay = setupDateEpochDay,
-                              emptyText = getString(R.string.aquarium_no_value_placeholder)
-                          )
-                      }''')
+          settings_path, text = load('app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsBasicFragment.kt')
+          text = require_replace(text, 'setupDateMillis', 'setupDateEpochDay', 'settings field rename')
+          text = require_replace(
+              text,
+              '            currentMillis = tank.setupDateEpochDay,',
+              '            currentMillis = AquariumDatePolicy.pickerMillis(tank.setupDateEpochDay),',
+              'settings picker conversion',
+              1
+          )
+          text = require_replace(
+              text,
+              '            val millis = result.getLong(TankSettingsEditorBottomSheet.RESULT_MILLIS)',
+              '            val epochDay = AquariumDatePolicy.epochDayFromPickerMillis(\n                result.getLong(TankSettingsEditorBottomSheet.RESULT_MILLIS)\n            )',
+              'settings result conversion',
+              1
+          )
+          text = require_replace(
+              text,
+              'aquariumTankViewModel.updateTankSetupDate(tankId, millis)',
+              'aquariumTankViewModel.updateTankSetupDate(tankId, epochDay)',
+              'settings update argument',
+              1
+          )
+          text = require_replace(
+              text,
+              '            millis = setupDateEpochDay,',
+              '            epochDay = setupDateEpochDay,',
+              'settings formatter argument',
+              1
+          )
+          settings_path.write_text(text, encoding='utf-8')
 
-          form = 'app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt'
-          replace_once(form,
-          'import com.aqua.aqualight.i18n.LocaleFormatter',
-          'import com.aqua.aqualight.i18n.DateOnly\nimport com.aqua.aqualight.i18n.LocaleFormatter')
-          replace_once(form,
-          '    private var selectedAddedDateMillis: Long = System.currentTimeMillis()',
-          '    private var selectedAddedDateEpochDay: Long = DateOnly.todayEpochDay()')
-          replace_once(form,
-          '            selectedAddedDateMillis = result.getLong(AppDatePickerDialogFragment.RESULT_MILLIS)',
-          '''            selectedAddedDateEpochDay = DateOnly.fromPickerMillis(
-                              result.getLong(AppDatePickerDialogFragment.RESULT_MILLIS)
-                          )''')
-          replace_once(form,
-          '        selectedAddedDateMillis = System.currentTimeMillis()',
-          '        selectedAddedDateEpochDay = DateOnly.todayEpochDay()')
-          replace_once(form,
-          '''        selectedAddedDateMillis = livestock.addedDateMillis
-                  ?.takeIf {
-                      millis ->
-                      millis > 0L
-                  } ?: System.currentTimeMillis()''',
-          '''        selectedAddedDateEpochDay = livestock.addedDateEpochDay
-                  ?.takeIf { epochDay -> epochDay > 0L }
-                  ?: DateOnly.todayEpochDay()''')
-          replace_once(form,
-          '''        binding.tvAddedDateValue.text = LocaleFormatter.formatDate(
-                      requireContext(),
-                      selectedAddedDateMillis
-                  )''',
-          '''        binding.tvAddedDateValue.text = LocaleFormatter.formatDateEpochDay(
-                      requireContext(),
-                      selectedAddedDateEpochDay
-                  )''')
-          replace_once(form,
-          '            addedDateMillis = selectedAddedDateMillis,',
-          '            addedDateEpochDay = selectedAddedDateEpochDay,')
-          replace_once(form,
-          '            initialMillis = selectedAddedDateMillis,',
-          '            initialMillis = DateOnly.toPickerMillis(selectedAddedDateEpochDay),')
+          form_path, text = load('app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt')
+          text = require_replace(
+              text,
+              'import com.aqua.aqualight.i18n.LocaleFormatter',
+              'import com.aqua.aqualight.i18n.DateOnly\nimport com.aqua.aqualight.i18n.LocaleFormatter',
+              'livestock DateOnly import',
+              1
+          )
+          text = require_replace(text, 'selectedAddedDateMillis', 'selectedAddedDateEpochDay', 'livestock selected field rename')
+          text = require_replace(text, 'addedDateMillis', 'addedDateEpochDay', 'livestock model field rename')
+          text = require_replace(
+              text,
+              'private var selectedAddedDateEpochDay: Long = System.currentTimeMillis()',
+              'private var selectedAddedDateEpochDay: Long = DateOnly.todayEpochDay()',
+              'livestock initial date',
+              1
+          )
+          text = require_replace(
+              text,
+              'selectedAddedDateEpochDay = System.currentTimeMillis()',
+              'selectedAddedDateEpochDay = DateOnly.todayEpochDay()',
+              'livestock reset date',
+              1
+          )
+          text = require_sub(
+              text,
+              r'selectedAddedDateEpochDay = result\.getLong\(AppDatePickerDialogFragment\.RESULT_MILLIS\)',
+              'selectedAddedDateEpochDay = DateOnly.fromPickerMillis(\n                result.getLong(AppDatePickerDialogFragment.RESULT_MILLIS)\n            )',
+              'livestock picker result'
+          )
+          text = require_sub(
+              text,
+              r'selectedAddedDateEpochDay = livestock\.addedDateEpochDay\s*\?\.takeIf \{\s*millis ->\s*millis > 0L\s*\} \?: System\.currentTimeMillis\(\)',
+              'selectedAddedDateEpochDay = livestock.addedDateEpochDay\n            ?.takeIf { epochDay -> epochDay > 0L }\n            ?: DateOnly.todayEpochDay()',
+              'livestock edit date'
+          )
+          text = require_replace(
+              text,
+              'LocaleFormatter.formatDate(\n            requireContext(),\n            selectedAddedDateEpochDay\n        )',
+              'LocaleFormatter.formatDateEpochDay(\n            requireContext(),\n            selectedAddedDateEpochDay\n        )',
+              'livestock date display',
+              1
+          )
+          text = require_replace(
+              text,
+              'initialMillis = selectedAddedDateEpochDay,',
+              'initialMillis = DateOnly.toPickerMillis(selectedAddedDateEpochDay),',
+              'livestock picker initial value',
+              1
+          )
+          form_path.write_text(text, encoding='utf-8')
 
-          life = 'app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt'
-          replace_once(life,
-          '            text = getLivestockAddedDateText(livestock.addedDateMillis)',
-          '            text = getLivestockAddedDateText(livestock.addedDateEpochDay)')
-          replace_once(life,
-          '''    private fun getLivestockAddedDateText(
-                  addedDateMillis: Long?
-              ): String {
-                  if (addedDateMillis == null || addedDateMillis <= 0L) {
-                      return getString(R.string.aquarium_livestock_added_date_not_set)
-                  }
+          life_path, text = load('app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt')
+          text = require_replace(text, 'addedDateMillis', 'addedDateEpochDay', 'livestock list field rename')
+          text = require_replace(
+              text,
+              'LocaleFormatter.formatDate(requireContext(), addedDateEpochDay)',
+              'LocaleFormatter.formatDateEpochDay(requireContext(), addedDateEpochDay)',
+              'livestock list date display',
+              1
+          )
+          life_path.write_text(text, encoding='utf-8')
 
-                  return getString(
-                      R.string.aquarium_livestock_added_date_format,
-                      LocaleFormatter.formatDate(requireContext(), addedDateMillis)
-                  )
-              }''',
-          '''    private fun getLivestockAddedDateText(
-                  addedDateEpochDay: Long?
-              ): String {
-                  if (addedDateEpochDay == null || addedDateEpochDay <= 0L) {
-                      return getString(R.string.aquarium_livestock_added_date_not_set)
-                  }
-
-                  return getString(
-                      R.string.aquarium_livestock_added_date_format,
-                      LocaleFormatter.formatDateEpochDay(requireContext(), addedDateEpochDay)
-                  )
-              }''')
-
-          pdf = 'app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt'
-          replace_once(pdf,
-          '      setupDateMillis = tank.setupDateMillis,',
-          '      setupDateEpochDay = tank.setupDateEpochDay,')
-          replace_once(pdf,
-          '''  private fun getSetupDateText(
-                context: Context,
-                setupDateMillis: Long?,
-                noValue: String
-              ): String {
-                if (setupDateMillis == null) {
-                  return noValue
-                }
-
-                return LocaleFormatter.formatDate(context, setupDateMillis)
-              }''',
-          '''  private fun getSetupDateText(
-                context: Context,
-                setupDateEpochDay: Long?,
-                noValue: String
-              ): String {
-                if (setupDateEpochDay == null) {
-                  return noValue
-                }
-
-                return LocaleFormatter.formatDateEpochDay(context, setupDateEpochDay)
-              }''')
+          pdf_path, text = load('app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt')
+          text = require_replace(text, 'setupDateMillis', 'setupDateEpochDay', 'PDF setup date rename')
+          text = require_replace(
+              text,
+              'LocaleFormatter.formatDate(context, setupDateEpochDay)',
+              'LocaleFormatter.formatDateEpochDay(context, setupDateEpochDay)',
+              'PDF setup date display',
+              1
+          )
+          pdf_path.write_text(text, encoding='utf-8')
           PY
 
       - name: Commit deterministic UI codemod
