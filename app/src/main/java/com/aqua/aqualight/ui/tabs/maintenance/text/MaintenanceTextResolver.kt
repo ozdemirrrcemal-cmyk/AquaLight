@@ -35,13 +35,11 @@ interface MaintenanceTextResolver {
     fun daysAgo(days: Long): String
 
     fun unknownAquarium(): String
-
-    fun formatTime(millis: Long): String
 }
 
 data class CareTaskTypePresentation(
     val title: String,
     val defaultDescription: String,
     val iconRes: Int,
-    @ColorInt val accentColor: Int
+    val accentColor: Int
 )
