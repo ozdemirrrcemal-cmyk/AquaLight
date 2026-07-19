@@ -4,10 +4,36 @@ import android.graphics.Rect
 import android.view.MotionEvent
 import android.view.TouchDelegate
 import android.view.View
+import android.view.ViewGroup
 import java.util.WeakHashMap
 import kotlin.math.ceil
 
-private const val MINIMUM_TOUCH_TARGET_DP = 48
+const val MINIMUM_TOUCH_TARGET_DP = 48
+
+/**
+ * Installs one process-local layout observer that expands every visible clickable control below
+ * 48dp. The control's measured size and approved visuals remain unchanged.
+ */
+fun installAutomaticTouchTargets(root: View) {
+    if (!AutomaticTouchTargetRegistration.register(root)) return
+
+    val scan = {
+        root.forEachDescendant { view ->
+            if (
+                view.visibility == View.VISIBLE &&
+                view.isEnabled &&
+                (view.isClickable || view.isLongClickable) &&
+                view.width > 0 &&
+                view.height > 0
+            ) {
+                view.ensureMinimumTouchTarget()
+            }
+        }
+    }
+
+    root.viewTreeObserver.addOnGlobalLayoutListener(scan)
+    root.post(scan)
+}
 
 /**
  * Expands a control's actual touch area without changing its measured size or approved visuals.
@@ -21,6 +47,9 @@ fun View.ensureMinimumTouchTarget(minimumSizeDp: Int = MINIMUM_TOUCH_TARGET_DP) 
     val updateDelegate = {
         if (visibility == View.VISIBLE && width > 0 && height > 0) {
             val minimumPx = ceil(minimumSizeDp * resources.displayMetrics.density).toInt()
+            if (width >= minimumPx && height >= minimumPx) {
+                return@let
+            }
             val bounds = Rect().also(::getHitRect)
             val horizontalExpansion = ((minimumPx - bounds.width()).coerceAtLeast(0) + 1) / 2
             val verticalExpansion = ((minimumPx - bounds.height()).coerceAtLeast(0) + 1) / 2
@@ -34,6 +63,25 @@ fun View.ensureMinimumTouchTarget(minimumSizeDp: Int = MINIMUM_TOUCH_TARGET_DP) 
 
     addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> updateDelegate() }
     parentView.post(updateDelegate)
+}
+
+private inline fun View.forEachDescendant(action: (View) -> Unit) {
+    action(this)
+    if (this !is ViewGroup) return
+    for (index in 0 until childCount) {
+        getChildAt(index).forEachDescendant(action)
+    }
+}
+
+private object AutomaticTouchTargetRegistration {
+    private val installedRoots = WeakHashMap<View, Unit>()
+
+    @Synchronized
+    fun register(root: View): Boolean {
+        if (installedRoots.containsKey(root)) return false
+        installedRoots[root] = Unit
+        return true
+    }
 }
 
 private object TouchTargetRegistration {
