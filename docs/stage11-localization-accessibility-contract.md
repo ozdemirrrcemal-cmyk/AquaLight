@@ -40,6 +40,7 @@ On first launch, a Turkish device locale selects Turkish. Every other device loc
 - Picker milliseconds exist only at the Android UI boundary and are converted immediately to or from a calendar day.
 - Tank store schema V2 deliberately rejects the unreleased timestamp-based V1 contract; no compatibility alias or migration layer is retained.
 - Date-only tests verify that the selected calendar day survives multiple device time zones.
+- A populated tank fixture jointly verifies Turkish and English dates, decimals and volume output while both tank and livestock calendar days round-trip through Istanbul, Los Angeles and Tokyo.
 - Decimal tank measurements are formatted and parsed using the active AquaLight application locale.
 - Turkish comma decimals and English point decimals are first-class inputs. The alternate decimal separator is accepted for keyboard compatibility, while grouping, mixed separators, partial values and non-finite numbers are rejected.
 - Changing between centimeters and inches converts the values currently typed by the user instead of restoring stale persisted values.
