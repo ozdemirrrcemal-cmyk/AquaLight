@@ -178,7 +178,7 @@ class CommercialStoreConcurrencyTest {
         .setOwnerUid(OWNER_UID)
         .setName("Tank $index")
         .setDescription("")
-        .setSetupDateMillis(FIXED_NOW_MILLIS)
+        .setSetupDateEpochDay(FIXED_SETUP_EPOCH_DAY)
         .setWidthCm(60)
         .setLengthCm(40)
         .setHeightCm(40)
@@ -193,6 +193,7 @@ class CommercialStoreConcurrencyTest {
         const val WRITE_COUNT = 64
         const val OWNER_UID = "owner-concurrency"
         const val TANK_ID = 10L
+        const val FIXED_SETUP_EPOCH_DAY = 20_454L
         const val FIXED_NOW_MILLIS = 1_767_225_600_000L
         const val FIXED_DUE_MILLIS = 1_767_312_000_000L
     }

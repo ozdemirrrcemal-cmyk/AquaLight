@@ -236,7 +236,7 @@ class MaintenanceViewModelBoundaryTest {
         name = name,
         description = "",
         photoUri = null,
-        setupDateMillis = null,
+        setupDateEpochDay = null,
         widthCm = 10,
         lengthCm = 10,
         heightCm = 10,

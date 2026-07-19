@@ -115,7 +115,7 @@ private class FakeAquariumTankOperations(
         latestSize = size
     }
     override suspend fun updateTankVolumeUnit(tankId: Long, volumeUnit: String) = Unit
-    override suspend fun updateTankSetupDate(tankId: Long, setupDateMillis: Long) = Unit
+    override suspend fun updateTankSetupDate(tankId: Long, setupDateEpochDay: Long) = Unit
     override suspend fun updateTankStyle(tankId: Long, tankStyle: String) = Unit
     override suspend fun updateTankDescription(tankId: Long, description: String) = Unit
     override suspend fun updateTankMaterials(
@@ -139,7 +139,7 @@ private fun aquariumTank(id: Long, name: String): AquariumTankSnapshot =
         name = name,
         description = "",
         photoUri = null,
-        setupDateMillis = null,
+        setupDateEpochDay = null,
         widthCm = 80,
         lengthCm = 40,
         heightCm = 45,

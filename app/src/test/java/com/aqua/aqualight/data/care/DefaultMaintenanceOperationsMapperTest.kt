@@ -76,7 +76,7 @@ class DefaultMaintenanceOperationsMapperTest {
             name = "Planted",
             description = "High tech",
             photoUri = "content://tank/21",
-            setupDateMillis = 1000L,
+            setupDateEpochDay = 1000L,
             widthCm = 60,
             lengthCm = 35,
             heightCm = 36,
