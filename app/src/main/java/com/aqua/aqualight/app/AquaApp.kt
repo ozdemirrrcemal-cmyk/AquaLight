@@ -32,17 +32,20 @@ class AquaApp : Application() {
         private set
 
     override fun attachBaseContext(base: Context) {
+        // Attach the framework ContextImpl first. On older Android versions the
+        // Application's applicationContext is not guaranteed to exist before this call.
+        super.attachBaseContext(base)
+
         // AppCompat does not have framework-managed per-app locale storage before API 33.
         // Apply the synchronous startup mirror before any Activity or framework picker is created.
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            val cachedLanguage = StartupAppearanceCache.create(base)
+            val cachedLanguage = StartupAppearanceCache.create(this)
                 .read()
                 .languageCode
             AppCompatDelegate.setApplicationLocales(
                 localeList(cachedLanguage)
             )
         }
-        super.attachBaseContext(base)
     }
 
     override fun onCreate() {
