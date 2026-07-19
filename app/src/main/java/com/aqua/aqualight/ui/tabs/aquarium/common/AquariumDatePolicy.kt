@@ -58,12 +58,13 @@ object AquariumDatePolicy {
 
     private fun currentApplicationLocale(): Locale {
         val locales = AppCompatDelegate.getApplicationLocales()
+        val deviceDefault = Locale.forLanguageTag(
+            SupportedLocaleRegistry.deviceDefault()
+        )
         val configuredLocale = if (locales.isEmpty) {
-            Locale.forLanguageTag(SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG)
+            deviceDefault
         } else {
-            locales[0] ?: Locale.forLanguageTag(
-                SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG
-            )
+            locales[0] ?: deviceDefault
         }
         return LocaleFormatter.resolveSupportedLocale(configuredLocale)
     }
