@@ -2,9 +2,11 @@ package com.aqua.aqualight.ui.tabs.settings.device
 
 import android.content.res.ColorStateList
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
-import androidx.recyclerview.widget.RecyclerView
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemDeviceStatusBinding
 import com.aqua.aqualight.ui.common.text.resolve
@@ -39,7 +41,8 @@ class DeviceStatusAdapter : RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewH
             binding.ivDeviceIcon.setImageResource(item.iconRes)
             binding.ivDeviceIcon.imageTintList = null
             binding.ivDeviceIcon.clearColorFilter()
-            binding.ivDeviceIcon.contentDescription = name
+            binding.ivDeviceIcon.contentDescription = null
+            binding.ivDeviceIcon.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
             binding.tvIp.text = item.ip.ifBlank { context.getString(R.string.device_unknown) }
             binding.tvSerialTitle.setText(R.string.device_label_serial)
             binding.tvSerial.text = serial
@@ -52,13 +55,17 @@ class DeviceStatusAdapter : RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewH
                     else R.color.aqua_device_status_adapter_color
                 )
             )
-            binding.ivPresenceIcon.contentDescription = presenceText
+            binding.ivPresenceIcon.contentDescription = null
+            binding.ivPresenceIcon.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+
+            binding.root.isFocusable = true
             binding.root.contentDescription = context.getString(
                 R.string.device_status_accessibility,
                 name,
                 serial,
                 presenceText
             )
+            ViewCompat.setStateDescription(binding.root, presenceText)
         }
     }
 
@@ -76,5 +83,4 @@ class DeviceStatusAdapter : RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewH
     }
 
     override fun getItemCount(): Int = items.size
-
 }
