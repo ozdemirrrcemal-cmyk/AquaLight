@@ -13,12 +13,13 @@
 
     <ImageView
         android:id="@+id/btnBack"
-        android:layout_width="@dimen/aqua_size_30"
-        android:layout_height="@dimen/aqua_size_30"
+        android:layout_width="@dimen/aqua_size_48"
+        android:layout_height="@dimen/aqua_size_48"
         android:clickable="true"
         android:contentDescription="@string/change_email_back_button_desc"
         android:focusable="true"
-        android:scaleType="center"
+        android:padding="@dimen/aqua_size_9"
+        android:scaleType="centerInside"
         android:src="@drawable/ic_back"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -26,10 +27,10 @@
         app:tint="@color/aqua_toolbar_icon_tint" />
 
     <com.google.android.material.card.MaterialCardView
-    style="@style/Widget.Aqua.Card.Inline"
         android:id="@+id/searchContainer"
+        style="@style/Widget.Aqua.Card.Inline"
         android:layout_width="@dimen/aqua_size_0"
-        android:layout_height="@dimen/aqua_size_44"
+        android:layout_height="@dimen/aqua_size_48"
         android:layout_marginStart="@dimen/aqua_size_18"
         android:visibility="gone"
         app:cardBackgroundColor="@color/aqua_input_background"
@@ -71,8 +72,8 @@
 
             <TextView
                 android:id="@+id/btnClearHeaderSearch"
-                android:layout_width="@dimen/aqua_size_36"
-                android:layout_height="@dimen/aqua_size_36"
+                android:layout_width="@dimen/aqua_size_48"
+                android:layout_height="@dimen/aqua_size_48"
                 android:clickable="true"
                 android:contentDescription="@string/common_clear_search_description"
                 android:focusable="true"
@@ -93,7 +94,7 @@
     <LinearLayout
         android:id="@+id/headerRightContainer"
         android:layout_width="wrap_content"
-        android:layout_height="@dimen/aqua_size_40"
+        android:layout_height="@dimen/aqua_size_48"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="@id/btnBack"
@@ -103,7 +104,7 @@
         <LinearLayout
             android:id="@+id/headerActionsContainer"
             android:layout_width="wrap_content"
-            android:layout_height="@dimen/aqua_size_36"
+            android:layout_height="@dimen/aqua_size_48"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:visibility="gone"
@@ -111,10 +112,10 @@
 
             <ImageButton
                 android:id="@+id/btnActionOne"
-                android:layout_width="@dimen/aqua_size_40"
-                android:layout_height="@dimen/aqua_size_40"
+                android:layout_width="@dimen/aqua_size_48"
+                android:layout_height="@dimen/aqua_size_48"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:padding="@dimen/aqua_size_9"
+                android:padding="@dimen/aqua_size_12"
                 android:scaleType="centerInside"
                 android:visibility="gone"
                 app:tint="@color/aqua_toolbar_icon_tint"
@@ -122,10 +123,10 @@
 
             <ImageButton
                 android:id="@+id/btnActionTwo"
-                android:layout_width="@dimen/aqua_size_40"
-                android:layout_height="@dimen/aqua_size_40"
+                android:layout_width="@dimen/aqua_size_48"
+                android:layout_height="@dimen/aqua_size_48"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:padding="@dimen/aqua_size_9"
+                android:padding="@dimen/aqua_size_12"
                 android:scaleType="centerInside"
                 android:visibility="gone"
                 app:tint="@color/aqua_toolbar_icon_tint"
@@ -133,10 +134,10 @@
 
             <ImageButton
                 android:id="@+id/btnActionThree"
-                android:layout_width="@dimen/aqua_size_40"
-                android:layout_height="@dimen/aqua_size_40"
+                android:layout_width="@dimen/aqua_size_48"
+                android:layout_height="@dimen/aqua_size_48"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:padding="@dimen/aqua_size_9"
+                android:padding="@dimen/aqua_size_12"
                 android:scaleType="centerInside"
                 android:visibility="gone"
                 app:tint="@color/aqua_toolbar_icon_tint"
@@ -146,12 +147,12 @@
 
         <ImageView
             android:id="@+id/btnFilledIconAction"
-            android:layout_width="@dimen/aqua_size_36"
-            android:layout_height="@dimen/aqua_size_36"
+            android:layout_width="@dimen/aqua_size_48"
+            android:layout_height="@dimen/aqua_size_48"
             android:background="@drawable/bg_aqua_toolbar_filled_icon_action"
             android:clickable="true"
             android:focusable="true"
-            android:padding="@dimen/aqua_size_9"
+            android:padding="@dimen/aqua_size_14"
             android:scaleType="centerInside"
             android:visibility="gone"
             app:tint="@color/aqua_toolbar_icon_tint"
@@ -159,16 +160,16 @@
             tools:visibility="visible" />
 
         <com.google.android.material.card.MaterialCardView
-    style="@style/Widget.Aqua.Card.Inline"
             android:id="@+id/btnCardIconAction"
-            android:layout_width="@dimen/aqua_size_32"
-            android:layout_height="@dimen/aqua_size_32"
+            style="@style/Widget.Aqua.Card.Inline"
+            android:layout_width="@dimen/aqua_size_48"
+            android:layout_height="@dimen/aqua_size_48"
             android:clickable="true"
             android:focusable="true"
             android:foreground="?attr/selectableItemBackgroundBorderless"
             android:visibility="gone"
             app:cardBackgroundColor="@color/aqua_toolbar_action_success_container"
-            app:cardCornerRadius="@dimen/aqua_size_16"
+            app:cardCornerRadius="@dimen/aqua_size_24"
             app:cardElevation="@dimen/aqua_size_0"
             app:strokeColor="@color/aqua_toolbar_action_success_outline"
             app:strokeWidth="@dimen/aqua_size_1"
@@ -188,13 +189,16 @@
         <TextView
             android:id="@+id/btnPillTextAction"
             android:layout_width="wrap_content"
-            android:layout_height="@dimen/aqua_size_36"
+            android:layout_height="wrap_content"
             android:background="@drawable/bg_aqua_toolbar_pill_action_primary"
             android:gravity="center"
             android:includeFontPadding="false"
             android:minWidth="@dimen/aqua_size_58"
+            android:minHeight="@dimen/aqua_size_48"
             android:paddingStart="@dimen/aqua_size_14"
+            android:paddingTop="@dimen/aqua_size_8"
             android:paddingEnd="@dimen/aqua_size_14"
+            android:paddingBottom="@dimen/aqua_size_8"
             android:textColor="@color/aqua_content_on_dark"
             android:textSize="@dimen/aqua_text_size_toolbar_pill_action"
             android:textStyle="bold"
@@ -203,16 +207,16 @@
             tools:visibility="visible" />
 
         <com.google.android.material.card.MaterialCardView
-    style="@style/Widget.Aqua.Card.Inline"
             android:id="@+id/scoreContainer"
-            android:layout_width="@dimen/aqua_size_36"
-            android:layout_height="@dimen/aqua_size_36"
+            style="@style/Widget.Aqua.Card.Inline"
+            android:layout_width="@dimen/aqua_size_48"
+            android:layout_height="@dimen/aqua_size_48"
             android:clickable="true"
             android:focusable="true"
             android:foreground="?attr/selectableItemBackgroundBorderless"
             android:visibility="gone"
             app:cardBackgroundColor="@color/aqua_color_transparent"
-            app:cardCornerRadius="@dimen/aqua_size_18"
+            app:cardCornerRadius="@dimen/aqua_size_24"
             app:cardElevation="@dimen/aqua_size_0"
             app:strokeColor="@color/aqua_status_success"
             app:strokeWidth="@dimen/aqua_size_2"
@@ -232,10 +236,13 @@
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.button.MaterialButton
-    style="@style/Widget.Aqua.Button.ToolbarPrimaryAction"
             android:id="@+id/btnPrimaryAction"
-            android:layout_width="@dimen/aqua_size_78"
-            android:layout_height="@dimen/aqua_size_34"
+            style="@style/Widget.Aqua.Button.ToolbarPrimaryAction"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="@dimen/aqua_size_78"
+            android:minHeight="@dimen/aqua_size_48"
+            android:maxLines="1"
             android:visibility="gone"
             tools:text="+ Add"
             tools:visibility="visible" />
