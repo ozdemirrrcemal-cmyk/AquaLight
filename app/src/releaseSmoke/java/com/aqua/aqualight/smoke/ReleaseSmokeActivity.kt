@@ -213,7 +213,7 @@ class ReleaseSmokeActivity : BaseActivity() {
         }
     }
 
-    private inline fun View.forEachDescendantInclusive(block: (View) -> Unit) {
+    private fun View.forEachDescendantInclusive(block: (View) -> Unit) {
         block(this)
         if (this is ViewGroup) {
             for (index in 0 until childCount) {
