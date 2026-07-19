@@ -10,6 +10,7 @@ import com.aqua.aqualight.data.media.AppMediaRecoveryManager
 import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.aqua.aqualight.data.user.UserPreferencesManager
+import com.aqua.aqualight.localization.SupportedLocaleRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -34,11 +35,18 @@ class AquaApp : Application() {
 
         val appearanceCache = appContainer.startupAppearanceCache
         val cachedAppearance = appearanceCache.read()
+        val cachedLanguage = SupportedLocaleRegistry.normalize(
+            cachedAppearance.languageCode
+        )
 
         // The first frame uses a tiny SharedPreferences mirror. Encrypted Proto
         // DataStore is reconciled asynchronously and never blocks app startup.
         applyTheme(cachedAppearance.themeMode)
-        applyLanguage(cachedAppearance.languageCode)
+        applyLanguage(cachedLanguage)
+
+        if (cachedAppearance.languageCode != cachedLanguage) {
+            appearanceCache.writeLanguageCode(cachedLanguage)
+        }
 
         val userPrefs = appContainer.userPreferencesManager
         applicationScope.launch {
@@ -46,8 +54,12 @@ class AquaApp : Application() {
             val resolvedThemeMode = preferences.themeMode.ifBlank {
                 UserPreferencesManager.DEFAULT_THEME_MODE
             }
-            val resolvedLanguageCode = preferences.languageCode.ifBlank {
-                UserPreferencesManager.DEFAULT_LANGUAGE_CODE
+            val resolvedLanguageCode = SupportedLocaleRegistry.normalize(
+                preferences.languageCode
+            )
+
+            if (preferences.languageCode != resolvedLanguageCode) {
+                userPrefs.updateLanguage(resolvedLanguageCode)
             }
 
             appearanceCache.write(
@@ -57,7 +69,7 @@ class AquaApp : Application() {
 
             if (
                 cachedAppearance.themeMode != resolvedThemeMode ||
-                cachedAppearance.languageCode != resolvedLanguageCode
+                cachedLanguage != resolvedLanguageCode
             ) {
                 withContext(Dispatchers.Main.immediate) {
                     applyTheme(resolvedThemeMode)
@@ -104,8 +116,9 @@ class AquaApp : Application() {
     }
 
     private fun applyLanguage(code: String) {
-        val safeCode = code.ifBlank { UserPreferencesManager.DEFAULT_LANGUAGE_CODE }
-        val localeList = LocaleListCompat.forLanguageTags(safeCode)
-        AppCompatDelegate.setApplicationLocales(localeList)
+        val normalizedCode = SupportedLocaleRegistry.normalize(code)
+        AppCompatDelegate.setApplicationLocales(
+            LocaleListCompat.forLanguageTags(normalizedCode)
+        )
     }
 }
