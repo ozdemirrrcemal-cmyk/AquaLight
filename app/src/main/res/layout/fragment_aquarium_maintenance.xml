@@ -72,9 +72,10 @@
                 android:layout_marginEnd="@dimen/aqua_size_8"
                 android:layout_weight="1"
                 android:background="@drawable/bg_maintenance_tab_unselected"
+                android:contentDescription="@string/maintenance_tab_upcoming"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:text="@string/maintenance_tab_upcoming"
+                android:text="@string/maintenance_tab_next"
                 android:textColor="@color/aqua_card_text_secondary"
                 android:textSize="@dimen/aqua_text_size_body_small" />
 
@@ -290,7 +291,8 @@
             android:layout_width="@dimen/aqua_size_180"
             android:layout_height="@dimen/aqua_button_height"
             android:layout_marginTop="@dimen/aqua_size_22"
-            android:text="@string/maintenance_action_add_task"
+            android:contentDescription="@string/maintenance_action_add_care_task"
+            android:text="@string/maintenance_action_add"
             android:textStyle="bold" />
 
     </LinearLayout>
