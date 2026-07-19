@@ -76,7 +76,7 @@
                             android:layout_width="@dimen/aqua_size_32"
                             android:layout_height="@dimen/aqua_size_32"
                             android:layout_marginEnd="@dimen/aqua_size_12"
-                            android:contentDescription="@null"
+                            android:contentDescription="@string/language_english_flag_desc"
                             android:importantForAccessibility="no"
                             android:src="@drawable/flag_en" />
 
@@ -102,6 +102,119 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
             </RadioGroup>
+
+            <!--
+                Translation staging references. These resources remain packaged for the final
+                translation pass but are not rendered, focusable or exposed to accessibility.
+            -->
+            <LinearLayout
+                android:id="@+id/translationStagingResources"
+                android:layout_width="@dimen/aqua_size_0"
+                android:layout_height="@dimen/aqua_size_0"
+                android:importantForAccessibility="noHideDescendants"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <ImageView
+                        android:layout_width="@dimen/aqua_size_1"
+                        android:layout_height="@dimen/aqua_size_1"
+                        android:contentDescription="@string/language_turkish_flag_desc"
+                        android:src="@drawable/flag_tr" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/language_turkish_row_desc"
+                        android:text="@string/language_turkish" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/language_turkish_radio_desc" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <ImageView
+                        android:layout_width="@dimen/aqua_size_1"
+                        android:layout_height="@dimen/aqua_size_1"
+                        android:contentDescription="@string/language_german_flag_desc"
+                        android:src="@drawable/flag_de" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/language_german_row_desc"
+                        android:text="@string/language_german" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/language_german_radio_desc" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <ImageView
+                        android:layout_width="@dimen/aqua_size_1"
+                        android:layout_height="@dimen/aqua_size_1"
+                        android:contentDescription="@string/language_french_flag_desc"
+                        android:src="@drawable/flag_fr" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/language_french_row_desc"
+                        android:text="@string/language_french" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/language_french_radio_desc" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <ImageView
+                        android:layout_width="@dimen/aqua_size_1"
+                        android:layout_height="@dimen/aqua_size_1"
+                        android:contentDescription="@string/language_russian_flag_desc"
+                        android:src="@drawable/flag_ru" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/language_russian_row_desc"
+                        android:text="@string/language_russian" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/language_russian_radio_desc" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <ImageView
+                        android:layout_width="@dimen/aqua_size_1"
+                        android:layout_height="@dimen/aqua_size_1"
+                        android:contentDescription="@string/language_chinese_flag_desc"
+                        android:src="@drawable/flag_cn" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/language_chinese_row_desc"
+                        android:text="@string/language_chinese" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/language_chinese_radio_desc" />
+                </LinearLayout>
+            </LinearLayout>
         </LinearLayout>
     </ScrollView>
 
