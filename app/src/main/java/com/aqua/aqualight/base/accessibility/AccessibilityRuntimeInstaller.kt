@@ -21,6 +21,7 @@ class AccessibilityRuntimeInstaller : Application.ActivityLifecycleCallbacks {
                     view: View,
                     savedInstanceState: Bundle?
                 ) {
+                    LargeFontCompactCopyInstaller.install(view)
                     MinimumTouchTargetInstaller.install(view)
                 }
             },
@@ -29,6 +30,7 @@ class AccessibilityRuntimeInstaller : Application.ActivityLifecycleCallbacks {
     }
 
     override fun onActivityResumed(activity: Activity) {
+        LargeFontCompactCopyInstaller.install(activity.window.decorView)
         MinimumTouchTargetInstaller.install(activity.window.decorView)
     }
 
