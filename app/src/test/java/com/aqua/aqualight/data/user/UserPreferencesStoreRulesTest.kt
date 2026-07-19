@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.user
 
 import com.aqua.aqualight.data.store.CommercialStoreSchema
 import com.aqua.aqualight.data.store.StoreInvariantViolation
+import com.aqua.aqualight.i18n.SupportedLocaleRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
@@ -93,6 +94,35 @@ class UserPreferencesStoreRulesTest {
             assertThrows(StoreInvariantViolation::class.java) {
                 UserPreferencesStoreRules.validate(preferences)
             }
+        }
+    }
+
+    @Test
+    fun legacyAdvertisedLanguagesMigrateToEnglish() {
+        listOf("tr", "de", "fr", "ru", "zh").forEach { legacyLanguage ->
+            val preferences = UserPreferencesStoreRules.defaultPreferences()
+                .toBuilder()
+                .setLanguageCode(legacyLanguage)
+                .build()
+
+            val normalized = UserPreferencesStoreRules.validate(preferences)
+
+            assertEquals(
+                SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG,
+                normalized.languageCode
+            )
+        }
+    }
+
+    @Test
+    fun arbitraryUnsupportedLanguageIsRejected() {
+        val preferences = UserPreferencesStoreRules.defaultPreferences()
+            .toBuilder()
+            .setLanguageCode("es")
+            .build()
+
+        assertThrows(StoreInvariantViolation::class.java) {
+            UserPreferencesStoreRules.validate(preferences)
         }
     }
 
