@@ -17,13 +17,18 @@ class CommercialStoreMigrationPolicyTest {
             locateRepositoryRoot(),
             "docs/stage5-data-integrity-contract.md"
         ).readText()
+        val normalizedPolicy = policy.replace(Regex("\\s+"), " ")
 
-        assertTrue(policy.contains("Status: no public migration source exists"))
-        assertTrue(policy.contains("has not shipped a public Tank, Care Task, or encrypted User"))
-        assertTrue(policy.contains("unreleased development contract"))
-        assertTrue(policy.contains("deliberately rejected rather than migrated"))
-        assertTrue(policy.contains("No legacy `DataMigration`, alias, or compatibility"))
-        assertTrue(policy.contains("After public release, every schema change must increment"))
+        assertTrue(normalizedPolicy.contains("Status: no public migration source exists"))
+        assertTrue(
+            normalizedPolicy.contains(
+                "has not shipped a public Tank, Care Task, or encrypted User Preferences schema"
+            )
+        )
+        assertTrue(normalizedPolicy.contains("unreleased development contract"))
+        assertTrue(normalizedPolicy.contains("deliberately rejected rather than migrated"))
+        assertTrue(normalizedPolicy.contains("No legacy `DataMigration`, alias, or compatibility"))
+        assertTrue(normalizedPolicy.contains("After public release, every schema change must increment"))
     }
 
     private fun locateRepositoryRoot(): File {
