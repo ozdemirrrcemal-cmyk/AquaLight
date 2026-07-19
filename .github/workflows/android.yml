@@ -79,8 +79,9 @@ jobs:
           python3 tools/process_safe_feedback_guard.py
           python3 tools/stage9_feedback_media_guard.py
           python3 tools/design_system_resource_guard.py
+          python3 tools/localization_accessibility_guard.py
 
-      # İsteğe bağlı: bağımlılık modül cache’lerini temizle (refresh-deps)
+      # İsteğe bağlı: bağımlılık modül cache'lerini temizle (refresh-deps)
       - name: 🔄 Force refresh dependencies (optional)
         if: contains(github.event.head_commit.message, 'refresh-deps')
         run: |
@@ -88,7 +89,7 @@ jobs:
           echo "Gradle module caches cleared."
 
       # İsteğe bağlı: TAM TEMİZLEME – commit mesajında 'clean' veya 'clean-cache' varsa
-      # (setup-java ve cache restore’dan SONRA konumlandırıldı ki gerçekten silsin)
+      # (setup-java ve cache restore'dan SONRA konumlandırıldı ki gerçekten silsin)
       - name: 🧹 Hard clean caches & outputs (on demand)
         if: ${{ contains(github.event.head_commit.message, 'clean') || contains(github.event.head_commit.message, 'clean-cache') }}
         run: |
