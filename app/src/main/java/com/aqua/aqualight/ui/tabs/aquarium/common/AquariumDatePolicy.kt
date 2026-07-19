@@ -2,9 +2,10 @@ package com.aqua.aqualight.ui.tabs.aquarium.common
 
 import android.content.Context
 import androidx.appcompat.app.AppCompatDelegate
+import com.aqua.aqualight.i18n.DateOnly
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.i18n.SupportedLocaleRegistry
-import java.util.Calendar
+import java.time.LocalDate
 import java.util.Locale
 
 object AquariumDatePolicy {
@@ -15,43 +16,41 @@ object AquariumDatePolicy {
         return LocaleFormatter.appLocale(context)
     }
 
-    /**
-     * Source-compatible locale boundary for picker APIs that accept a Locale argument.
-     * It follows the AppCompat per-app language and never falls back to an unsupported
-     * device locale.
-     */
+    /** Picker locale follows the AppCompat per-app language. */
     val setupDateLocale: Locale
         get() = currentApplicationLocale()
 
     fun minSetupYear(): Int = MIN_SETUP_YEAR
 
-    fun maxSetupYear(): Int {
-        return Calendar.getInstance().get(Calendar.YEAR) + MAX_YEAR_OFFSET
-    }
+    fun maxSetupYear(): Int = LocalDate.now().year + MAX_YEAR_OFFSET
+
+    fun pickerMillis(epochDay: Long?): Long? = epochDay?.let(DateOnly::toPickerMillis)
+
+    fun epochDayFromPickerMillis(timeMillis: Long): Long = DateOnly.fromPickerMillis(timeMillis)
 
     fun formatSetupDate(
         context: Context,
-        millis: Long?,
+        epochDay: Long?,
         emptyText: String
     ): String {
-        if (millis == null) {
+        if (epochDay == null) {
             return emptyText
         }
 
-        return LocaleFormatter.formatDate(context, millis)
+        return LocaleFormatter.formatDateEpochDay(context, epochDay)
     }
 
-    /** Source-compatible display boundary for callers that do not own a Context. */
+    /** Display boundary for callers that do not own a Context. */
     fun formatSetupDate(
-        millis: Long?,
+        epochDay: Long?,
         emptyText: String
     ): String {
-        if (millis == null) {
+        if (epochDay == null) {
             return emptyText
         }
 
-        return LocaleFormatter.formatDate(
-            millis,
+        return LocaleFormatter.formatDateEpochDay(
+            epochDay,
             currentApplicationLocale()
         )
     }
