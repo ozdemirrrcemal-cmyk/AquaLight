@@ -63,8 +63,7 @@
     <string name="maintenance_only_pending_manual_tasks_editable">Only pending manual tasks can be edited.</string>
     <string name="maintenance_create_aquarium_first">Create an aquarium first to add care tasks.</string>
     <string name="maintenance_unnamed_aquarium">Unnamed aquarium</string>
-    <string name="maintenance_selected">Selected</string>
-    <string name="maintenance_selected_aquarium">Selected aquarium</string>
+<string name="maintenance_selected_aquarium">Selected aquarium</string>
     <string name="maintenance_select_water_change_percentage">Select water change percentage</string>
     <string name="maintenance_validation_select_task_type">Please select a care task type.</string>
     <string name="maintenance_validation_select_aquarium">Please select an aquarium.</string>
@@ -72,9 +71,7 @@
     <string name="maintenance_validation_custom_title_short">Custom task title must be at least 2 characters.</string>
     <string name="maintenance_validation_repeat_days_range">Repeat interval must be between %1$d and %2$d days.</string>
     <string name="maintenance_validation_missed_reminder_days_range">Missed reminder duration must be between %1$d and %2$d days.</string>
-    <string name="maintenance_task_fallback_title">Care Task</string>
-    <string name="maintenance_water_change_percent_sheet_title">Water Change Percentage</string>
-    <string name="maintenance_task_title_with_percent">%1$s (%2$d%%)</string>
+<string name="maintenance_task_title_with_percent">%1$s (%2$d%%)</string>
     <string name="maintenance_task_category_with_percent">%1$s • %2$d%%</string>
 
     <!-- Task detail -->

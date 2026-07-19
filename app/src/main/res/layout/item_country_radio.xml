@@ -2,25 +2,25 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     style="@style/Widget.Aqua.SelectionRow.BottomSheet"
     android:layout_width="match_parent"
-    android:layout_height="72dp"
-    android:layout_marginBottom="10dp"
+    android:layout_height="@dimen/aqua_size_72"
+    android:layout_marginBottom="@dimen/aqua_size_10"
     android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:paddingTop="10dp"
-    android:paddingBottom="10dp">
+    android:paddingTop="@dimen/aqua_size_10"
+    android:paddingBottom="@dimen/aqua_size_10">
 
     <TextView
         android:id="@+id/tvFlag"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:layout_width="@dimen/aqua_size_32"
+        android:layout_height="@dimen/aqua_size_32"
         android:gravity="center"
         android:textColor="@color/aqua_card_text_primary"
         android:textSize="@dimen/aqua_text_size_title_medium" />
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="@dimen/aqua_size_0"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
+        android:layout_marginStart="@dimen/aqua_size_12"
         android:layout_weight="1"
         android:orientation="vertical">
 
@@ -37,7 +37,7 @@
             android:id="@+id/tvCountryIso"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
+            android:layout_marginTop="@dimen/aqua_size_3"
             android:includeFontPadding="false"
             android:textColor="@color/aqua_card_text_secondary"
             android:textSize="@dimen/aqua_text_size_body_small" />

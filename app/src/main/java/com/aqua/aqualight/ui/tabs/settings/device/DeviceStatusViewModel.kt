@@ -4,6 +4,8 @@ import androidx.annotation.DrawableRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.application.devices.DeviceStatusOperations
+import com.aqua.aqualight.R
+import com.aqua.aqualight.ui.common.text.AquaUiText
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -54,6 +56,6 @@ data class DeviceStatusItem(
     @DrawableRes val iconRes: Int,
     val ip: String = "",
     val serialText: String = "",
-    val lastSeenText: String = "",
+    val lastSeenText: AquaUiText = AquaUiText.Resource(R.string.common_not_available_symbol),
     val isOnline: Boolean = false
 )

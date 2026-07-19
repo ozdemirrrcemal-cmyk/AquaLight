@@ -7,19 +7,19 @@
             <gradient
                 android:type="linear"
                 android:angle="270"
-                android:startColor="#1E3A8A"
-                android:centerColor="#0A192F"
-                android:endColor="#112240" />
+                android:startColor="@color/aqua_profile_background_start_color"
+                android:centerColor="@color/aqua_profile_background_center_color"
+                android:endColor="@color/aqua_profile_background_end_color" />
             <stroke
-                android:width="2dp"
-                android:color="#33FFFFFF" />
+                android:width="@dimen/aqua_size_2"
+                android:color="@color/aqua_profile_background_fill" />
         </shape>
     </item>
 
     <!-- Hafif iç parlama -->
-    <item android:top="2dp" android:left="2dp" android:right="2dp" android:bottom="2dp">
+    <item android:top="@dimen/aqua_size_2" android:left="@dimen/aqua_size_2" android:right="@dimen/aqua_size_2" android:bottom="@dimen/aqua_size_2">
         <shape android:shape="oval">
-            <solid android:color="#10FFFFFF" />
+            <solid android:color="@color/aqua_profile_background_fill_variant_2" />
         </shape>
     </item>
 </layer-list>

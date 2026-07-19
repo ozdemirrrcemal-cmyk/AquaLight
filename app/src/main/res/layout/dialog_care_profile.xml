@@ -7,11 +7,11 @@
 
   <View
     style="@style/Widget.Aqua.BottomSheet.Handle"
-    android:layout_marginBottom="16dp" />
+    android:layout_marginBottom="@dimen/aqua_size_16" />
 
   <FrameLayout
     android:layout_width="match_parent"
-    android:layout_height="42dp">
+    android:layout_height="@dimen/aqua_size_42">
 
     <TextView
       android:id="@+id/tvCareProfileTitle"
@@ -25,12 +25,12 @@
   <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="18dp"
+    android:layout_marginTop="@dimen/aqua_size_18"
     android:orientation="horizontal">
 
     <TextView
       style="@style/TextAppearance.Aqua.BottomSheet.RowTitle"
-      android:layout_width="0dp"
+      android:layout_width="@dimen/aqua_size_0"
       android:layout_height="wrap_content"
       android:layout_weight="1"
       android:text="@string/aquarium_text_progress" />
@@ -46,12 +46,12 @@
   <FrameLayout
     android:id="@+id/careProgressTrack"
     android:layout_width="match_parent"
-    android:layout_height="5dp"
-    android:layout_marginTop="14dp">
+    android:layout_height="@dimen/aqua_size_5"
+    android:layout_marginTop="@dimen/aqua_size_14">
 
     <View
       android:id="@+id/careProgressFill"
-      android:layout_width="0dp"
+      android:layout_width="@dimen/aqua_size_0"
       android:layout_height="match_parent" />
   </FrameLayout>
 
@@ -60,7 +60,7 @@
     style="@style/TextAppearance.Aqua.BottomSheet.RowSubtitle"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="12dp"
+    android:layout_marginTop="@dimen/aqua_size_12"
     android:text="@string/aquarium_text_0_of_0_care_details_completed" />
 
   <TextView
@@ -68,20 +68,20 @@
     style="@style/TextAppearance.Aqua.BottomSheet.Subtitle"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="20dp"
-    android:lineSpacingExtra="3dp"
+    android:layout_marginTop="@dimen/aqua_size_20"
+    android:lineSpacingExtra="@dimen/aqua_size_3"
     android:text="@string/aquarium_text_complete_your_aquarium_profile_to_get_more_accurate_automati" />
 
   <androidx.core.widget.NestedScrollView
     android:id="@+id/careProfileItemsScroll"
     android:layout_width="match_parent"
-    android:layout_height="0dp"
-    android:layout_marginTop="8dp"
+    android:layout_height="@dimen/aqua_size_0"
+    android:layout_marginTop="@dimen/aqua_size_8"
     android:layout_weight="1"
     android:clipToPadding="false"
     android:fillViewport="false"
     android:overScrollMode="never"
-    android:paddingBottom="12dp"
+    android:paddingBottom="@dimen/aqua_size_12"
     android:scrollbars="none">
 
     <LinearLayout

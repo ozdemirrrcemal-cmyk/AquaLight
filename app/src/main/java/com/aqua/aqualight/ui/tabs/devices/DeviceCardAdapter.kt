@@ -1,11 +1,12 @@
 package com.aqua.aqualight.ui.tabs.devices
 
-import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import androidx.core.content.ContextCompat
+import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemDeviceCompactCardBinding
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardBinder
 
@@ -51,12 +52,14 @@ class DeviceCardAdapter(
             )
 
             binding.root.strokeWidth = if (item.isSelected) {
-                SELECTED_STROKE_WIDTH_DP.dp()
+                itemView.resources.getDimensionPixelSize(R.dimen.aqua_size_3)
             } else {
-                DEFAULT_STROKE_WIDTH_DP.dp()
+                itemView.resources.getDimensionPixelSize(R.dimen.aqua_size_1)
             }
-            binding.root.strokeColor = Color.parseColor(
-                if (item.isSelected) SELECTED_STROKE_COLOR else DEFAULT_STROKE_COLOR
+            binding.root.strokeColor = ContextCompat.getColor(
+                itemView.context,
+                if (item.isSelected) R.color.aqua_accent_positive
+                else R.color.aqua_device_card_adapter_color
             )
 
             binding.root.setOnClickListener {
@@ -69,9 +72,6 @@ class DeviceCardAdapter(
             }
         }
 
-        private fun Int.dp(): Int {
-            return (this * itemView.resources.displayMetrics.density).toInt()
-        }
     }
 
     private object DiffCallback : DiffUtil.ItemCallback<DeviceCardUi>() {
@@ -90,10 +90,4 @@ class DeviceCardAdapter(
         }
     }
 
-    private companion object {
-        const val DEFAULT_STROKE_WIDTH_DP = 1
-        const val SELECTED_STROKE_WIDTH_DP = 3
-        const val DEFAULT_STROKE_COLOR = "#22354D"
-        const val SELECTED_STROKE_COLOR = "#5FD6B4"
-    }
 }

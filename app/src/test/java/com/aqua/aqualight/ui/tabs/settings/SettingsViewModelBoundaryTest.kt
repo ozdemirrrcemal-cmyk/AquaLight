@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.settings
 
+import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceStatusOperations
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
@@ -7,6 +8,7 @@ import com.aqua.aqualight.application.devices.OwnerDeviceStatusSnapshot
 import com.aqua.aqualight.application.user.UserAddressInput
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.application.user.UserProfileSnapshot
+import com.aqua.aqualight.ui.common.text.AquaUiText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -48,7 +50,10 @@ class SettingsViewModelBoundaryTest {
         assertEquals(1, deviceOperations.startCalls)
         assertEquals("Commercial User", state.username)
         assertEquals("commercial@aqualight.invalid", state.email)
-        assertEquals("1 Online Device", state.deviceOverview.activeDeviceCountText)
+        assertEquals(
+            AquaUiText.Plural(R.plurals.settings_online_devices_count, 1),
+            state.deviceOverview.activeDeviceCountText
+        )
         assertTrue(state.deviceOverview.hasOnlineDevices)
     }
 

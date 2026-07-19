@@ -17,64 +17,56 @@
         <item name="cornerRadius">@dimen/aqua_button_radius</item>
         <item name="iconPadding">@dimen/aqua_button_icon_padding</item>
         <item name="rippleColor">@color/aqua_button_ripple</item>
-        <item name="elevation">0dp</item>
+        <item name="elevation">@dimen/aqua_size_0</item>
         <item name="android:letterSpacing">0</item>
         <item name="android:maxLines">1</item>
         <item name="android:ellipsize">end</item>
         <item name="android:includeFontPadding">false</item>
-        <item name="android:insetTop">0dp</item>
-        <item name="android:insetBottom">0dp</item>
+        <item name="android:insetTop">@dimen/aqua_size_0</item>
+        <item name="android:insetBottom">@dimen/aqua_size_0</item>
     </style>
 
     <style name="Widget.Aqua.Button.Primary" parent="Widget.Aqua.Button">
         <item name="backgroundTint">@color/aqua_button_primary_container_tint</item>
         <item name="android:textColor">@color/aqua_button_primary_content_tint</item>
         <item name="iconTint">@color/aqua_button_primary_content_tint</item>
-        <item name="strokeWidth">0dp</item>
+        <item name="strokeWidth">@dimen/aqua_size_0</item>
     </style>
 
     <style name="Widget.Aqua.Button.Secondary" parent="Widget.Aqua.Button">
         <item name="backgroundTint">@color/aqua_button_secondary_container_tint</item>
         <item name="android:textColor">@color/aqua_button_secondary_content_tint</item>
         <item name="iconTint">@color/aqua_button_secondary_content_tint</item>
-        <item name="strokeWidth">0dp</item>
+        <item name="strokeWidth">@dimen/aqua_size_0</item>
     </style>
 
     <style name="Widget.Aqua.Button.Neutral" parent="Widget.Aqua.Button">
         <item name="backgroundTint">@color/aqua_button_neutral_container</item>
         <item name="android:textColor">@color/aqua_button_neutral_content</item>
         <item name="iconTint">@color/aqua_button_neutral_content</item>
-        <item name="strokeWidth">0dp</item>
+        <item name="strokeWidth">@dimen/aqua_size_0</item>
     </style>
 
-    <style name="Widget.Aqua.Button.Outline" parent="Widget.Aqua.Button">
-        <item name="backgroundTint">@color/aqua_button_outline_container</item>
-        <item name="android:textColor">@color/aqua_button_outline_content</item>
-        <item name="iconTint">@color/aqua_button_outline_content</item>
-        <item name="strokeColor">@color/aqua_button_outline_stroke</item>
-        <item name="strokeWidth">@dimen/aqua_button_stroke_width</item>
-    </style>
-
-    <style name="Widget.Aqua.Button.IconToggle" parent="Widget.MaterialComponents.Button">
-        <item name="android:minWidth">0dp</item>
-        <item name="android:minHeight">0dp</item>
-        <item name="android:paddingStart">0dp</item>
-        <item name="android:paddingTop">0dp</item>
-        <item name="android:paddingEnd">0dp</item>
-        <item name="android:paddingBottom">0dp</item>
-        <item name="android:insetTop">0dp</item>
-        <item name="android:insetBottom">0dp</item>
+<style name="Widget.Aqua.Button.IconToggle" parent="Widget.MaterialComponents.Button">
+        <item name="android:minWidth">@dimen/aqua_size_0</item>
+        <item name="android:minHeight">@dimen/aqua_size_0</item>
+        <item name="android:paddingStart">@dimen/aqua_size_0</item>
+        <item name="android:paddingTop">@dimen/aqua_size_0</item>
+        <item name="android:paddingEnd">@dimen/aqua_size_0</item>
+        <item name="android:paddingBottom">@dimen/aqua_size_0</item>
+        <item name="android:insetTop">@dimen/aqua_size_0</item>
+        <item name="android:insetBottom">@dimen/aqua_size_0</item>
         <item name="android:gravity">center</item>
         <item name="backgroundTint">@color/aqua_button_icon_toggle_container_tint</item>
         <item name="iconTint">@color/aqua_button_icon_toggle_content_tint</item>
         <item name="iconSize">@dimen/aqua_icon_toggle_button_icon_size</item>
-        <item name="iconPadding">0dp</item>
+        <item name="iconPadding">@dimen/aqua_size_0</item>
         <item name="iconGravity">textStart</item>
         <item name="cornerRadius">@dimen/aqua_icon_toggle_button_radius</item>
         <item name="strokeColor">@color/aqua_button_icon_toggle_stroke_tint</item>
         <item name="strokeWidth">@dimen/aqua_button_stroke_width</item>
         <item name="rippleColor">@color/aqua_button_ripple</item>
-        <item name="elevation">0dp</item>
+        <item name="elevation">@dimen/aqua_size_0</item>
     </style>
 
     <style name="Widget.Aqua.Button.Danger" parent="Widget.Aqua.Button">
@@ -84,7 +76,6 @@
         <item name="strokeColor">@color/aqua_button_danger_stroke</item>
         <item name="strokeWidth">@dimen/aqua_button_stroke_width</item>
     </style>
-    <style name="Widget.Aqua.Button.Compact" parent="Widget.Aqua.Button.Primary.Compact" />
     <style name="Widget.Aqua.Button.Primary.Compact" parent="Widget.Aqua.Button.Primary">
         <item name="android:minHeight">@dimen/aqua_button_height_compact</item>
         <item name="android:paddingStart">@dimen/aqua_button_padding_horizontal_compact</item>
@@ -95,8 +86,8 @@
         <item name="android:maxLines">1</item>
         <item name="android:ellipsize">end</item>
         <item name="android:includeFontPadding">false</item>
-        <item name="android:insetTop">0dp</item>
-        <item name="android:insetBottom">0dp</item>
+        <item name="android:insetTop">@dimen/aqua_size_0</item>
+        <item name="android:insetBottom">@dimen/aqua_size_0</item>
     </style>
     <style name="Widget.Aqua.Button.Secondary.Compact" parent="Widget.Aqua.Button.Secondary">
         <item name="android:minHeight">@dimen/aqua_button_height_compact</item>
@@ -108,8 +99,8 @@
         <item name="android:maxLines">1</item>
         <item name="android:ellipsize">end</item>
         <item name="android:includeFontPadding">false</item>
-        <item name="android:insetTop">0dp</item>
-        <item name="android:insetBottom">0dp</item>
+        <item name="android:insetTop">@dimen/aqua_size_0</item>
+        <item name="android:insetBottom">@dimen/aqua_size_0</item>
     </style>
     <style name="Widget.Aqua.Button.Neutral.Compact" parent="Widget.Aqua.Button.Neutral">
         <item name="android:minHeight">@dimen/aqua_button_height_compact</item>
@@ -121,10 +112,10 @@
         <item name="android:maxLines">1</item>
         <item name="android:ellipsize">end</item>
         <item name="android:includeFontPadding">false</item>
-        <item name="android:insetTop">0dp</item>
-        <item name="android:insetBottom">0dp</item>
+        <item name="android:insetTop">@dimen/aqua_size_0</item>
+        <item name="android:insetBottom">@dimen/aqua_size_0</item>
     </style>
-    <style name="Widget.Aqua.Button.Outline.Compact" parent="Widget.Aqua.Button.Outline">
+<style name="Widget.Aqua.Button.Danger.Compact" parent="Widget.Aqua.Button.Danger">
         <item name="android:minHeight">@dimen/aqua_button_height_compact</item>
         <item name="android:paddingStart">@dimen/aqua_button_padding_horizontal_compact</item>
         <item name="android:paddingEnd">@dimen/aqua_button_padding_horizontal_compact</item>
@@ -134,27 +125,14 @@
         <item name="android:maxLines">1</item>
         <item name="android:ellipsize">end</item>
         <item name="android:includeFontPadding">false</item>
-        <item name="android:insetTop">0dp</item>
-        <item name="android:insetBottom">0dp</item>
-    </style>
-    <style name="Widget.Aqua.Button.Danger.Compact" parent="Widget.Aqua.Button.Danger">
-        <item name="android:minHeight">@dimen/aqua_button_height_compact</item>
-        <item name="android:paddingStart">@dimen/aqua_button_padding_horizontal_compact</item>
-        <item name="android:paddingEnd">@dimen/aqua_button_padding_horizontal_compact</item>
-        <item name="android:textSize">@dimen/aqua_text_size_body_xlarge</item>
-        <item name="cornerRadius">@dimen/aqua_button_radius_compact</item>
-        <item name="android:letterSpacing">0</item>
-        <item name="android:maxLines">1</item>
-        <item name="android:ellipsize">end</item>
-        <item name="android:includeFontPadding">false</item>
-        <item name="android:insetTop">0dp</item>
-        <item name="android:insetBottom">0dp</item>
+        <item name="android:insetTop">@dimen/aqua_size_0</item>
+        <item name="android:insetBottom">@dimen/aqua_size_0</item>
     </style>
     <style name="Widget.Aqua.Button.Auth.Primary" parent="Widget.Aqua.Button">
         <item name="backgroundTint">@color/aqua_button_auth_primary_container</item>
         <item name="android:textColor">@color/aqua_button_auth_primary_content</item>
         <item name="iconTint">@color/aqua_button_auth_primary_content</item>
-        <item name="strokeWidth">0dp</item>
+        <item name="strokeWidth">@dimen/aqua_size_0</item>
     </style>
     <style name="Widget.Aqua.Button.Auth.Secondary" parent="Widget.Aqua.Button">
         <item name="backgroundTint">@color/aqua_button_auth_secondary_container</item>
@@ -172,14 +150,14 @@
     </style>
     <style name="Widget.Aqua.Button.InlineAdd" parent="Widget.MaterialComponents.Button">
         <item name="android:layout_width">wrap_content</item>
-        <item name="android:minWidth">0dp</item>
-        <item name="android:minHeight">0dp</item>
-        <item name="android:paddingStart">16dp</item>
-        <item name="android:paddingEnd">16dp</item>
-        <item name="android:paddingTop">0dp</item>
-        <item name="android:paddingBottom">0dp</item>
-        <item name="android:insetTop">0dp</item>
-        <item name="android:insetBottom">0dp</item>
+        <item name="android:minWidth">@dimen/aqua_size_0</item>
+        <item name="android:minHeight">@dimen/aqua_size_0</item>
+        <item name="android:paddingStart">@dimen/aqua_size_16</item>
+        <item name="android:paddingEnd">@dimen/aqua_size_16</item>
+        <item name="android:paddingTop">@dimen/aqua_size_0</item>
+        <item name="android:paddingBottom">@dimen/aqua_size_0</item>
+        <item name="android:insetTop">@dimen/aqua_size_0</item>
+        <item name="android:insetBottom">@dimen/aqua_size_0</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:textStyle">bold</item>
         <item name="android:textSize">@dimen/aqua_text_size_toolbar_primary_action</item>
@@ -190,9 +168,27 @@
         <item name="backgroundTint">@color/aqua_toolbar_primary_action_container</item>
         <item name="android:textColor">?attr/colorOnSurface</item>
         <item name="iconTint">?attr/colorOnSurface</item>
-        <item name="cornerRadius">17dp</item>
+        <item name="cornerRadius">@dimen/aqua_size_17</item>
         <item name="rippleColor">@color/aqua_button_ripple</item>
-        <item name="elevation">0dp</item>
-        <item name="strokeWidth">0dp</item>
+        <item name="elevation">@dimen/aqua_size_0</item>
+        <item name="strokeWidth">@dimen/aqua_size_0</item>
     </style>
+
+    <style name="Widget.Aqua.Button.ToolbarPrimaryAction" parent="Widget.MaterialComponents.Button">
+        <item name="android:insetTop">@dimen/aqua_size_0</item>
+        <item name="android:insetBottom">@dimen/aqua_size_0</item>
+        <item name="android:minWidth">@dimen/aqua_size_0</item>
+        <item name="android:minHeight">@dimen/aqua_size_0</item>
+        <item name="android:paddingStart">@dimen/aqua_size_10</item>
+        <item name="android:paddingTop">@dimen/aqua_size_0</item>
+        <item name="android:paddingEnd">@dimen/aqua_size_10</item>
+        <item name="android:paddingBottom">@dimen/aqua_size_0</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+        <item name="android:textSize">@dimen/aqua_text_size_toolbar_primary_action</item>
+        <item name="android:textStyle">bold</item>
+        <item name="backgroundTint">@color/aqua_toolbar_primary_action_container</item>
+        <item name="cornerRadius">@dimen/aqua_size_17</item>
+    </style>
+
 </resources>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp"
-    android:height="24dp"
+    android:width="@dimen/aqua_size_24"
+    android:height="@dimen/aqua_size_24"
     android:viewportWidth="24"
     android:viewportHeight="24">
 
@@ -12,6 +12,6 @@
 
     <!-- Check mark -->
     <path
-        android:fillColor="@android:color/white"
+        android:fillColor="@color/aqua_content_on_dark"
         android:pathData="M10,16.5 L5.5,12 L6.91,10.59 L10,13.67 L17.09,6.58 L18.5,8 L10,16.5 Z"/>
 </vector>

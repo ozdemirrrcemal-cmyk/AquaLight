@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.maintenance.model
 
+import androidx.annotation.ColorInt
 import com.aqua.aqualight.application.care.CareTaskSource
 import com.aqua.aqualight.application.care.CareTaskStatus
 import com.aqua.aqualight.application.care.CareTaskType
@@ -26,7 +27,7 @@ data class CareTaskUi(
   val waterChangePercent: Int?,
   val note: String,
   val iconRes: Int,
-  val accentColor: String,
+  @ColorInt val accentColor: Int,
   val isOverdue: Boolean,
   val primaryTimeText: String,
   val secondaryText: String

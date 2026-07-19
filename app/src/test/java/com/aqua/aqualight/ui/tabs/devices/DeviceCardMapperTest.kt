@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.OwnerDeviceListItem
+import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -31,7 +32,7 @@ class DeviceCardMapperTest {
         assertEquals("AQL-WPE-336172", card.deviceUid)
         assertEquals("WRGB Pro Elite 120", card.card.displayName)
         assertEquals("AQL-WPE-336172", card.card.serialText)
-        assertEquals("ONLINE", card.card.statusText)
+        assertEquals(DeviceCompactStatusStyle.ONLINE, card.card.statusStyle)
     }
 
     private fun device(

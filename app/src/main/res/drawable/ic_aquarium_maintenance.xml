@@ -1,15 +1,15 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+    android:width="@dimen/aqua_size_24" android:height="@dimen/aqua_size_24" android:viewportWidth="24" android:viewportHeight="24">
     <path android:pathData="M6,5.5h1v0.85c0,1.1 0.9,2 2,2h6c1.1,0 2,-0.9 2,-2V5.5h1c1.1,0 2,0.9 2,2v5.2c-0.8,-0.55 -1.77,-0.87 -2.8,-0.87c-2.8,0 -5.07,2.27 -5.07,5.07c0,1.44 0.6,2.74 1.56,3.67H6c-1.1,0 -2,-0.9 -2,-2v-11c0,-1.17 0.9,-2.07 2,-2.07z"
         android:fillColor="?attr/colorControlActivated"/>
     <path android:pathData="M9,4h6c0.55,0 1,0.45 1,1v1.35c0,0.55 -0.45,1 -1,1H9c-0.55,0 -1,-0.45 -1,-1V5c0,-0.55 0.45,-1 1,-1z"
         android:fillColor="?attr/colorControlActivated"/>
     <path android:pathData="M8,11h7M8,14.5h4.5"
-        android:fillColor="@android:color/transparent" android:strokeColor="@android:color/white"
+        android:fillColor="@color/aqua_color_transparent" android:strokeColor="@color/aqua_content_on_dark"
         android:strokeWidth="1.55" android:strokeLineCap="round"/>
     <path android:pathData="M17.2,21.1a4.1,4.1 0,1 0,0 -8.2a4.1,4.1 0,0 0,0 8.2z"
         android:fillColor="?attr/colorControlActivated"/>
     <path android:pathData="M15.45,17.05l1.15,1.15l2.3,-2.5"
-        android:fillColor="@android:color/transparent" android:strokeColor="@android:color/white"
+        android:fillColor="@color/aqua_color_transparent" android:strokeColor="@color/aqua_content_on_dark"
         android:strokeWidth="1.8" android:strokeLineCap="round" android:strokeLineJoin="round"/>
 </vector>

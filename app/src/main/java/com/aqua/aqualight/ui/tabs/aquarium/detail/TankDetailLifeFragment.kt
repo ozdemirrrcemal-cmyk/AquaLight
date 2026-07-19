@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail
 
-import android.graphics.Color
+import com.aqua.aqualight.ui.common.text.setTextSizeResource
+import androidx.core.content.ContextCompat
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
@@ -10,6 +11,7 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.annotation.ColorRes
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -142,10 +144,10 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
         livestock: AquariumLivestock
     ): View {
         val card = MaterialCardView(requireContext()).apply {
-            radius = 18.dp().toFloat()
-            strokeWidth = 1.dp()
-            strokeColor = Color.parseColor("#223A57")
-            setCardBackgroundColor(Color.parseColor("#10233A"))
+            radius = resources.getDimensionPixelOffset(R.dimen.aqua_size_18).toFloat()
+            strokeWidth = resources.getDimensionPixelOffset(R.dimen.aqua_size_1)
+            strokeColor = ContextCompat.getColor(requireContext(), R.color.aqua_tank_detail_life_fragment_outline)
+            setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.aqua_surface_deep))
             cardElevation = 0f
             useCompatPadding = false
             isClickable = true
@@ -155,7 +157,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.bottomMargin = 12.dp()
+            params.bottomMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_12)
             layoutParams = params
 
             setOnClickListener {
@@ -170,10 +172,10 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
             gravity = Gravity.CENTER_VERTICAL
 
             setPadding(
-                14.dp(),
-                12.dp(),
-                12.dp(),
-                12.dp()
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_14),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_12),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_12),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_12)
             )
         }
 
@@ -182,7 +184,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
                 getLivestockCategoryIcon(livestock.category)
             )
 
-            setColorFilter(Color.WHITE)
+            setColorFilter(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
 
             background = createLifeIconBackground(
                 color = getLivestockCategoryColor(livestock.category)
@@ -195,15 +197,15 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
             }
 
             layoutParams = LinearLayout.LayoutParams(
-                46.dp(),
-                46.dp()
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_46),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_46)
             )
 
             setPadding(
-                10.dp(),
-                10.dp(),
-                10.dp(),
-                10.dp()
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_10),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_10),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_10),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_10)
             )
         }
 
@@ -215,8 +217,8 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 1f
             )
-            params.marginStart = 14.dp()
-            params.marginEnd = 10.dp()
+            params.marginStart = resources.getDimensionPixelOffset(R.dimen.aqua_size_14)
+            params.marginEnd = resources.getDimensionPixelOffset(R.dimen.aqua_size_10)
             layoutParams = params
         }
 
@@ -225,8 +227,8 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
                 getString(R.string.aquarium_unnamed_livestock)
             }
 
-            textSize = 14.5f
-            setTextColor(Color.WHITE)
+            setTextSizeResource(R.dimen.aqua_text_size_body_plus)
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
             setTypeface(null, Typeface.BOLD)
             includeFontPadding = false
             maxLines = 1
@@ -239,8 +241,8 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
                 livestock.category.ifBlank { getString(R.string.aquarium_tank_type_other) },
                 getLivestockQuantityText(livestock.quantity)
             )
-            textSize = 12.5f
-            setTextColor(Color.parseColor("#8FA4BE"))
+            setTextSizeResource(R.dimen.aqua_text_size_caption_plus)
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_secondary))
             includeFontPadding = false
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
@@ -249,14 +251,14 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.topMargin = 7.dp()
+            params.topMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_7)
             layoutParams = params
         }
 
         val dateText = TextView(requireContext()).apply {
             text = getLivestockAddedDateText(livestock.addedDateMillis)
-            textSize = 12f
-            setTextColor(Color.parseColor("#5FD6B4"))
+            setTextSizeResource(R.dimen.aqua_text_size_caption)
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_accent_positive))
             includeFontPadding = false
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
@@ -265,7 +267,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.topMargin = 7.dp()
+            params.topMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_7)
             layoutParams = params
         }
 
@@ -276,8 +278,8 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
         if (livestock.note.isNotBlank()) {
             val noteText = TextView(requireContext()).apply {
                 text = livestock.note
-                textSize = 12f
-                setTextColor(Color.parseColor("#8FA4BE"))
+                setTextSizeResource(R.dimen.aqua_text_size_caption)
+                setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_secondary))
                 includeFontPadding = false
                 maxLines = 1
                 ellipsize = TextUtils.TruncateAt.END
@@ -286,7 +288,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 )
-                params.topMargin = 7.dp()
+                params.topMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_7)
                 layoutParams = params
             }
 
@@ -295,12 +297,12 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
 
         val arrow = ImageView(requireContext()).apply {
             setImageResource(R.drawable.ic_arrow_right)
-            setColorFilter(Color.parseColor("#8FA4BE"))
+            setColorFilter(ContextCompat.getColor(requireContext(), R.color.aqua_content_secondary))
             scaleType = ImageView.ScaleType.CENTER
 
             layoutParams = LinearLayout.LayoutParams(
-                22.dp(),
-                22.dp()
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_22),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_22)
             )
         }
 
@@ -358,31 +360,26 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
 
     private fun getLivestockCategoryColor(
         category: String
-    ): String {
+    ): Int {
         return when (category) {
-            LivestockCategories.FISH -> "#1C5D8F"
-            LivestockCategories.SHRIMP -> "#8F4A3A"
-            LivestockCategories.SNAIL -> "#3E6B4A"
-            LivestockCategories.CRAB_CRAYFISH -> "#7A4D2D"
-            LivestockCategories.CORAL -> "#7A4E8F"
-            else -> "#3E536B"
+            LivestockCategories.FISH -> R.color.aqua_tank_detail_life_fragment_color
+            LivestockCategories.SHRIMP -> R.color.aqua_tank_detail_life_fragment_color_variant_2
+            LivestockCategories.SNAIL -> R.color.aqua_tank_detail_life_fragment_color_variant_3
+            LivestockCategories.CRAB_CRAYFISH -> R.color.aqua_tank_detail_life_fragment_color_variant_4
+            LivestockCategories.CORAL -> R.color.aqua_tank_detail_life_fragment_color_variant_5
+            else -> R.color.aqua_tank_detail_life_fragment_color_variant_6
         }
     }
 
     private fun createLifeIconBackground(
-        color: String
+        @ColorRes color: Int
     ): GradientDrawable {
         return GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
-            setColor(Color.parseColor(color))
-            cornerRadius = 16.dp().toFloat()
+            setColor(ContextCompat.getColor(requireContext(), color))
+            cornerRadius = resources.getDimensionPixelOffset(R.dimen.aqua_size_16).toFloat()
         }
     }
-
-    private fun Int.dp(): Int {
-        return (this * resources.displayMetrics.density).toInt()
-    }
-
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

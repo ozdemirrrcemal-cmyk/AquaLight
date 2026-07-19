@@ -1,74 +1,111 @@
 package com.aqua.aqualight.data.aquarium.catalog.material
 
+import com.aqua.aqualight.R
+
 
 object Co2Catalog {
 
-    private const val CATEGORY_TITLE = "CO2"
-
-    val products: List<AquariumMaterial> = listOf(
-        AquariumMaterial(
+    val definitions: List<AquariumMaterialDefinition> = listOf(
+        AquariumMaterialDefinition(
             id = "co2_chihiros_co2_regulator",
-            brand = "Chihiros",
-            name = "Chihiros CO2 Regulator",
+            brandRes = R.string.catalog_brand_chihiros,
+            nameRes = R.string.catalog_material_co2_chihiros_co2_regulator_name,
             categoryKey = MaterialCategoryKey.CO2,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("co2", "regulator", "chihiros")
+            categoryTitleRes = R.string.catalog_material_category_co2_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_co2,
+                R.string.catalog_keyword_regulator,
+                R.string.catalog_keyword_chihiros
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "co2_chihiros_co2_generator",
-            brand = "Chihiros",
-            name = "Chihiros CO2 Generator System",
+            brandRes = R.string.catalog_brand_chihiros,
+            nameRes = R.string.catalog_material_co2_chihiros_co2_generator_name,
             categoryKey = MaterialCategoryKey.CO2,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("co2", "generator", "system", "chihiros")
+            categoryTitleRes = R.string.catalog_material_category_co2_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_co2,
+                R.string.catalog_keyword_generator,
+                R.string.catalog_keyword_system,
+                R.string.catalog_keyword_chihiros
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "co2_ista_professional_regulator",
-            brand = "ISTA",
-            name = "ISTA Professional CO2 Regulator",
+            brandRes = R.string.catalog_brand_ista,
+            nameRes = R.string.catalog_material_co2_ista_professional_regulator_name,
             categoryKey = MaterialCategoryKey.CO2,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("co2", "regulator", "ista")
+            categoryTitleRes = R.string.catalog_material_category_co2_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_co2,
+                R.string.catalog_keyword_regulator,
+                R.string.catalog_keyword_ista
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "co2_ista_aluminium_cylinder",
-            brand = "ISTA",
-            name = "ISTA Aluminium CO2 Cylinder",
+            brandRes = R.string.catalog_brand_ista,
+            nameRes = R.string.catalog_material_co2_ista_aluminium_cylinder_name,
             categoryKey = MaterialCategoryKey.CO2,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("co2", "cylinder", "bottle", "ista")
+            categoryTitleRes = R.string.catalog_material_category_co2_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_co2,
+                R.string.catalog_keyword_cylinder,
+                R.string.catalog_keyword_bottle,
+                R.string.catalog_keyword_ista
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "co2_jbl_proflora_u504",
-            brand = "JBL",
-            name = "JBL ProFlora u504 CO2 Set",
+            brandRes = R.string.catalog_brand_jbl,
+            nameRes = R.string.catalog_material_co2_jbl_proflora_u504_name,
             categoryKey = MaterialCategoryKey.CO2,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("co2", "jbl", "proflora", "set")
+            categoryTitleRes = R.string.catalog_material_category_co2_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_co2,
+                R.string.catalog_keyword_jbl,
+                R.string.catalog_keyword_proflora,
+                R.string.catalog_keyword_set
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "co2_dennerle_quantum",
-            brand = "Dennerle",
-            name = "Dennerle Quantum CO2 Regulator",
+            brandRes = R.string.catalog_brand_dennerle,
+            nameRes = R.string.catalog_material_co2_dennerle_quantum_name,
             categoryKey = MaterialCategoryKey.CO2,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("co2", "regulator", "dennerle")
+            categoryTitleRes = R.string.catalog_material_category_co2_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_co2,
+                R.string.catalog_keyword_regulator,
+                R.string.catalog_keyword_dennerle
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "co2_aquario_neo_diffuser",
-            brand = "Aquario",
-            name = "Aquario Neo CO2 Diffuser",
+            brandRes = R.string.catalog_brand_aquario,
+            nameRes = R.string.catalog_material_co2_aquario_neo_diffuser_name,
             categoryKey = MaterialCategoryKey.CO2,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("co2", "diffuser", "neo", "aquario")
+            categoryTitleRes = R.string.catalog_material_category_co2_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_co2,
+                R.string.catalog_keyword_diffuser,
+                R.string.catalog_keyword_neo,
+                R.string.catalog_keyword_aquario
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "co2_do_aqua_music_glass",
-            brand = "Do!aqua",
-            name = "Do!aqua CO2 Music Glass Diffuser",
+            brandRes = R.string.catalog_brand_do_aqua,
+            nameRes = R.string.catalog_material_co2_do_aqua_music_glass_name,
             categoryKey = MaterialCategoryKey.CO2,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("co2", "diffuser", "glass", "doaqua")
+            categoryTitleRes = R.string.catalog_material_category_co2_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_co2,
+                R.string.catalog_keyword_diffuser,
+                R.string.catalog_keyword_glass,
+                R.string.catalog_keyword_doaqua
+            )
         )
     )
 }

@@ -1,42 +1,62 @@
 package com.aqua.aqualight.data.aquarium.catalog.material
 
+import com.aqua.aqualight.R
+
 
 object LedBackgroundCatalog {
 
-    private const val CATEGORY_TITLE = "LED Background"
-
-    val products: List<AquariumMaterial> = listOf(
-        AquariumMaterial(
+    val definitions: List<AquariumMaterialDefinition> = listOf(
+        AquariumMaterialDefinition(
             id = "led_background_chihiros_vivid_background",
-            brand = "Chihiros",
-            name = "Chihiros Vivid Background",
+            brandRes = R.string.catalog_brand_chihiros,
+            nameRes = R.string.catalog_material_led_background_chihiros_vivid_background_name,
             categoryKey = MaterialCategoryKey.LED_BACKGROUND,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("led", "background", "light", "chihiros")
+            categoryTitleRes = R.string.catalog_material_category_led_background_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_led,
+                R.string.catalog_keyword_background,
+                R.string.catalog_keyword_light,
+                R.string.catalog_keyword_chihiros
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "led_background_chihiros_shades",
-            brand = "Chihiros",
-            name = "Chihiros LED Background Shades",
+            brandRes = R.string.catalog_brand_chihiros,
+            nameRes = R.string.catalog_material_led_background_chihiros_shades_name,
             categoryKey = MaterialCategoryKey.LED_BACKGROUND,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("led", "background", "shade", "chihiros")
+            categoryTitleRes = R.string.catalog_material_category_led_background_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_led,
+                R.string.catalog_keyword_background,
+                R.string.catalog_keyword_shade,
+                R.string.catalog_keyword_chihiros
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "led_background_twinstar_light_screen",
-            brand = "Twinstar",
-            name = "Twinstar Light Screen",
+            brandRes = R.string.catalog_brand_twinstar,
+            nameRes = R.string.catalog_material_led_background_twinstar_light_screen_name,
             categoryKey = MaterialCategoryKey.LED_BACKGROUND,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("led", "background", "screen", "twinstar")
+            categoryTitleRes = R.string.catalog_material_category_led_background_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_led,
+                R.string.catalog_keyword_background,
+                R.string.catalog_keyword_screen,
+                R.string.catalog_keyword_twinstar
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "led_background_week_aqua_led_screen",
-            brand = "Week Aqua",
-            name = "Week Aqua LED Background Screen",
+            brandRes = R.string.catalog_brand_week_aqua,
+            nameRes = R.string.catalog_material_led_background_week_aqua_led_screen_name,
             categoryKey = MaterialCategoryKey.LED_BACKGROUND,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("led", "background", "screen", "week aqua")
+            categoryTitleRes = R.string.catalog_material_category_led_background_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_led,
+                R.string.catalog_keyword_background,
+                R.string.catalog_keyword_screen,
+                R.string.catalog_keyword_week_aqua
+            )
         )
     )
 }

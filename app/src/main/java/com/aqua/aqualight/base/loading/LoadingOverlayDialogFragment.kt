@@ -1,7 +1,6 @@
 package com.aqua.aqualight.base.loading
 
 import android.app.Dialog
-import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.View
@@ -10,6 +9,7 @@ import android.view.Window
 import android.view.WindowManager
 import android.view.animation.AnimationUtils
 import android.widget.ImageView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import com.aqua.aqualight.R
@@ -50,7 +50,7 @@ class LoadingOverlayDialogFragment : DialogFragment(R.layout.loading_overlay) {
         super.onStart()
         dialog?.window?.apply {
             setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            setBackgroundDrawable(ColorDrawable(ContextCompat.getColor(requireContext(), R.color.aqua_color_transparent)))
             clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             setDimAmount(0f)
             attributes = attributes.apply {

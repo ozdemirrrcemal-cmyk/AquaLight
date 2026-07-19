@@ -1,11 +1,11 @@
 package com.aqua.aqualight.ui.common.bottomsheet
 
-import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.View
 import android.widget.FrameLayout
 import androidx.core.os.bundleOf
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.DialogCareProfileBinding
@@ -37,7 +37,7 @@ class CareProfileBottomSheet : BottomSheetDialogFragment(
         binding.tvCareProfilePercent.text = args.getString(ARG_PERCENT_TEXT).orEmpty()
         binding.tvCareProfileSummary.text = args.getString(ARG_SUMMARY_TEXT).orEmpty()
         binding.careProgressTrack.background = rounded(
-            color = Color.parseColor("#DDE3EA"),
+            color = ContextCompat.getColor(requireContext(), R.color.aqua_care_profile_bottom_sheet_color),
             radius = resources.getDimension(R.dimen.care_profile_progress_radius)
         )
         binding.careProgressFill.background = rounded(
@@ -66,12 +66,24 @@ class CareProfileBottomSheet : BottomSheetDialogFragment(
                 else R.string.aquarium_care_profile_status_missing
             )
             row.tvCareProfileItemStatus.setTextColor(
-                Color.parseColor(if (isCompleted) "#5FD6B4" else "#E0A84C")
+                ContextCompat.getColor(
+                    requireContext(),
+                    if (isCompleted) R.color.aqua_accent_positive
+                    else R.color.aqua_content_warning
+                )
             )
             row.tvCareProfileItemStatus.background = rounded(
-                color = Color.parseColor(if (isCompleted) "#09251D" else "#2A2315"),
+                color = ContextCompat.getColor(
+                    requireContext(),
+                    if (isCompleted) R.color.aqua_care_profile_bottom_sheet_color_variant_2
+                    else R.color.aqua_care_profile_bottom_sheet_color_variant_3
+                ),
                 radius = resources.getDimension(R.dimen.care_profile_status_radius),
-                strokeColor = Color.parseColor(if (isCompleted) "#1E5A48" else "#6A4D1E"),
+                strokeColor = ContextCompat.getColor(
+                    requireContext(),
+                    if (isCompleted) R.color.aqua_care_profile_bottom_sheet_color_variant_4
+                    else R.color.aqua_care_profile_bottom_sheet_color_variant_5
+                ),
                 strokeWidth = resources.getDimensionPixelSize(R.dimen.care_profile_status_stroke)
             )
             row.root.setOnClickListener {
@@ -92,7 +104,7 @@ class CareProfileBottomSheet : BottomSheetDialogFragment(
             com.google.android.material.R.id.design_bottom_sheet
         ) ?: return
         val maxHeight = (resources.displayMetrics.heightPixels * MAX_HEIGHT_RATIO).roundToInt()
-        sheet.setBackgroundColor(Color.TRANSPARENT)
+        sheet.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.aqua_color_transparent))
         sheet.layoutParams = sheet.layoutParams.apply { height = maxHeight }
         sheetDialog.behavior.apply {
             peekHeight = maxHeight

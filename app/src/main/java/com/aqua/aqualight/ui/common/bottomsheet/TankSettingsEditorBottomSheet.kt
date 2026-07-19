@@ -111,17 +111,19 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
 
     private fun bindTypeEditor() {
         val binding = ContentSheetTankTypeBinding.inflate(layoutInflater)
-        selectedChoice = selectedChoice.ifBlank { DEFAULT_TANK_TYPE }
+        selectedChoice = selectedChoice.ifBlank {
+            getString(R.string.aquarium_tank_type_fish)
+        }
         val options = listOf(
-            binding.optionFish to "Fish",
-            binding.optionShrimp to "Shrimp",
-            binding.optionPlanted to "Planted",
-            binding.optionMarine to "Marine",
-            binding.optionSofties to "Softies",
-            binding.optionMixedReef to "Mixed Reef",
-            binding.optionSps to "SPS",
-            binding.optionCoral to "Coral",
-            binding.optionOther to "Other"
+            binding.optionFish to getString(R.string.aquarium_tank_type_fish),
+            binding.optionShrimp to getString(R.string.aquarium_tank_type_shrimp),
+            binding.optionPlanted to getString(R.string.aquarium_tank_type_planted),
+            binding.optionMarine to getString(R.string.aquarium_tank_type_marine),
+            binding.optionSofties to getString(R.string.aquarium_tank_type_softies),
+            binding.optionMixedReef to getString(R.string.aquarium_tank_type_mixed_reef),
+            binding.optionSps to getString(R.string.aquarium_tank_type_sps),
+            binding.optionCoral to getString(R.string.aquarium_tank_type_coral),
+            binding.optionOther to getString(R.string.aquarium_tank_type_other)
         )
         bindChoiceOptions(options)
         binding.btnCancel.setOnClickListener { cancelAndDismiss() }
@@ -136,7 +138,13 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         val binding = ContentSheetTankSizeBinding.inflate(layoutInflater)
         val formatter = DecimalFormat("#.##")
 
-        fun unitLabel(): String = if (selectedUnit == UNIT_IN) "inches" else "centimeters"
+        fun unitLabel(): String = getString(
+            if (selectedUnit == UNIT_IN) {
+                R.string.aquarium_unit_inches
+            } else {
+                R.string.aquarium_unit_centimeters
+            }
+        )
 
         fun formatValue(cmValue: Int): String {
             val value = if (selectedUnit == UNIT_IN) cmValue / CM_PER_INCH else cmValue.toDouble()
@@ -261,18 +269,20 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
 
     private fun bindStyleEditor() {
         val binding = ContentSheetTankStyleBinding.inflate(layoutInflater)
-        selectedChoice = selectedChoice.ifBlank { DEFAULT_TANK_STYLE }
+        selectedChoice = selectedChoice.ifBlank {
+            getString(R.string.aquarium_text_nature_aquarium)
+        }
         binding.inputStyle.setText(selectedChoice)
         val options = listOf(
-            binding.optionNatureAquarium to "Nature Aquarium",
-            binding.optionIwagumi to "Iwagumi",
-            binding.optionDutch to "Dutch",
-            binding.optionJungle to "Jungle",
-            binding.optionBiotope to "Biotope",
-            binding.optionBlackwater to "Blackwater",
-            binding.optionForest to "Forest",
-            binding.optionMountain to "Mountain",
-            binding.optionIsland to "Island"
+            binding.optionNatureAquarium to getString(R.string.aquarium_text_nature_aquarium),
+            binding.optionIwagumi to getString(R.string.aquarium_style_iwagumi),
+            binding.optionDutch to getString(R.string.aquarium_style_dutch),
+            binding.optionJungle to getString(R.string.aquarium_style_jungle),
+            binding.optionBiotope to getString(R.string.aquarium_style_biotope),
+            binding.optionBlackwater to getString(R.string.aquarium_style_blackwater),
+            binding.optionForest to getString(R.string.aquarium_style_forest),
+            binding.optionMountain to getString(R.string.aquarium_style_mountain),
+            binding.optionIsland to getString(R.string.aquarium_style_island)
         )
 
         fun renderSelection() {
@@ -431,8 +441,6 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         private const val CM_PER_INCH = 2.54
         private const val UNIT_CM = "cm"
         private const val UNIT_IN = "in"
-        private const val DEFAULT_TANK_TYPE = "Fish"
-        private const val DEFAULT_TANK_STYLE = "Nature Aquarium"
 
         fun show(
             fragmentManager: FragmentManager,

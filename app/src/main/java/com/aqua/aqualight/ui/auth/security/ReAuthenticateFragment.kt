@@ -89,7 +89,7 @@ class ReAuthenticateFragment :
                     DialogManager.showInfoDialog(
                         requireContext(),
                         DialogType.ERROR,
-                        title = "Google Error",
+                        title = getString(R.string.auth_google_error_title),
                         message = tokenResult.error.localizedMessage
                             ?: getString(
                                 R.string.re_auth_unknown_error

@@ -1,70 +1,72 @@
 package com.aqua.aqualight.data.aquarium.catalog.material
 
+import com.aqua.aqualight.R
+
 object MaterialCategoryCatalog {
 
     val bioCategories = listOf(
         MaterialCategory(
             key = MaterialCategoryKey.FERTILIZER,
-            title = "Fertilizer",
-            shortCode = "Fe"
+            titleRes = R.string.catalog_material_category_fertilizer_title,
+            shortCodeRes = R.string.catalog_material_category_fertilizer_short_code
         ),
         MaterialCategory(
             key = MaterialCategoryKey.DECORATION,
-            title = "Decoration",
-            shortCode = "De"
+            titleRes = R.string.catalog_material_category_decoration_title,
+            shortCodeRes = R.string.catalog_material_category_decoration_short_code
         ),
         MaterialCategory(
             key = MaterialCategoryKey.GRAVEL,
-            title = "Gravel",
-            shortCode = "Gr"
+            titleRes = R.string.catalog_material_category_gravel_title,
+            shortCodeRes = R.string.catalog_material_category_gravel_short_code
         ),
         MaterialCategory(
             key = MaterialCategoryKey.SUBSTRATE,
-            title = "Substrate",
-            shortCode = "Su"
+            titleRes = R.string.catalog_material_category_substrate_title,
+            shortCodeRes = R.string.catalog_material_category_substrate_short_code
         )
     )
 
     val hardwareCategories = listOf(
         MaterialCategory(
             key = MaterialCategoryKey.AQUARIUM,
-            title = "Aquarium",
-            shortCode = "Aq"
+            titleRes = R.string.catalog_material_category_aquarium_title,
+            shortCodeRes = R.string.catalog_material_category_aquarium_short_code
         ),
         MaterialCategory(
             key = MaterialCategoryKey.CO2,
-            title = "CO2",
-            shortCode = "C"
+            titleRes = R.string.catalog_material_category_co2_title,
+            shortCodeRes = R.string.catalog_material_category_co2_short_code
         ),
         MaterialCategory(
             key = MaterialCategoryKey.LIGHT,
-            title = "Light",
-            shortCode = "Li"
+            titleRes = R.string.catalog_material_category_light_title,
+            shortCodeRes = R.string.catalog_material_category_light_short_code
         ),
         MaterialCategory(
             key = MaterialCategoryKey.FILTER,
-            title = "Filter",
-            shortCode = "Fi"
+            titleRes = R.string.catalog_material_category_filter_title,
+            shortCodeRes = R.string.catalog_material_category_filter_short_code
         ),
         MaterialCategory(
             key = MaterialCategoryKey.HEATER,
-            title = "Heater",
-            shortCode = "He"
+            titleRes = R.string.catalog_material_category_heater_title,
+            shortCodeRes = R.string.catalog_material_category_heater_short_code
         ),
         MaterialCategory(
             key = MaterialCategoryKey.COOLER,
-            title = "Cooler",
-            shortCode = "Co"
+            titleRes = R.string.catalog_material_category_cooler_title,
+            shortCodeRes = R.string.catalog_material_category_cooler_short_code
         ),
         MaterialCategory(
             key = MaterialCategoryKey.DOSING,
-            title = "Dosing",
-            shortCode = "Do"
+            titleRes = R.string.catalog_material_category_dosing_title,
+            shortCodeRes = R.string.catalog_material_category_dosing_short_code
         ),
         MaterialCategory(
             key = MaterialCategoryKey.LED_BACKGROUND,
-            title = "LED Background",
-            shortCode = "LED"
+            titleRes = R.string.catalog_material_category_led_background_title,
+            shortCodeRes = R.string.catalog_material_category_led_background_short_code
         )
     )
 

@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.maintenance
 
+import com.aqua.aqualight.ui.common.text.setTextSizeResource
+import androidx.core.content.ContextCompat
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -358,9 +360,9 @@ class AquariumMaintenanceFragment :
 
         tabView.setTextColor(
             if (selected) {
-                Color.WHITE
+                ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark)
             } else {
-                Color.parseColor("#8FA4BE")
+                ContextCompat.getColor(requireContext(), R.color.aqua_content_secondary)
             }
         )
 
@@ -454,7 +456,7 @@ class AquariumMaintenanceFragment :
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.topMargin = 4.dp()
+            params.topMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_4)
             params.bottomMargin = 0
             layoutParams = params
         }
@@ -466,15 +468,15 @@ class AquariumMaintenanceFragment :
             )
 
             layoutParams = LinearLayout.LayoutParams(
-                HISTORY_AXIS_WIDTH_DP.dp(),
-                38.dp()
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_36),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_38)
             )
         }
 
         val dateText = TextView(requireContext()).apply {
             text = formatHistoryDate(millis)
-            textSize = 12.5f
-            setTextColor(Color.WHITE)
+            setTextSizeResource(R.dimen.aqua_text_size_caption_plus)
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
             setTypeface(null, Typeface.NORMAL)
             includeFontPadding = false
 
@@ -483,7 +485,7 @@ class AquariumMaintenanceFragment :
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 1f
             )
-            params.marginStart = 4.dp()
+            params.marginStart = resources.getDimensionPixelOffset(R.dimen.aqua_size_4)
             layoutParams = params
         }
 
@@ -491,9 +493,12 @@ class AquariumMaintenanceFragment :
             text = getString(
                 TimelineDayResolver.getStatusTextRes(dayStatus)
             )
-            textSize = 12.5f
+            setTextSizeResource(R.dimen.aqua_text_size_caption_plus)
             setTextColor(
-                TimelineDayResolver.getStatusTextColor(dayStatus)
+                ContextCompat.getColor(
+                    requireContext(),
+                    TimelineDayResolver.getStatusTextColorRes(dayStatus)
+                )
             )
             setTypeface(null, Typeface.BOLD)
             includeFontPadding = false
@@ -525,7 +530,7 @@ class AquariumMaintenanceFragment :
             )
 
             layoutParams = LinearLayout.LayoutParams(
-                HISTORY_AXIS_WIDTH_DP.dp(),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_36),
                 LinearLayout.LayoutParams.MATCH_PARENT
             )
         }
@@ -543,10 +548,10 @@ class AquariumMaintenanceFragment :
         task: CareTaskUi
     ): View {
         val card = MaterialCardView(requireContext()).apply {
-            radius = 18.dp().toFloat()
-            strokeWidth = 1.dp()
-            strokeColor = Color.parseColor("#2B6F5A")
-            setCardBackgroundColor(Color.parseColor("#12382F"))
+            radius = resources.getDimensionPixelOffset(R.dimen.aqua_size_18).toFloat()
+            strokeWidth = resources.getDimensionPixelOffset(R.dimen.aqua_size_1)
+            strokeColor = ContextCompat.getColor(requireContext(), R.color.aqua_outline_positive)
+            setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.aqua_surface_positive))
             cardElevation = 0f
             useCompatPadding = false
 
@@ -555,7 +560,7 @@ class AquariumMaintenanceFragment :
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 1f
             )
-            params.bottomMargin = 12.dp()
+            params.bottomMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_12)
             layoutParams = params
         }
 
@@ -568,33 +573,33 @@ class AquariumMaintenanceFragment :
             gravity = Gravity.TOP
 
             setPadding(
-                12.dp(),
-                11.dp(),
-                12.dp(),
-                11.dp()
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_12),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_11),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_12),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_11)
             )
         }
 
         val iconBox = FrameLayout(requireContext()).apply {
             background = createHistoryIconBackground(
-                color = Color.parseColor(task.accentColor)
+                color = task.accentColor
             )
 
             val params = LinearLayout.LayoutParams(
-                38.dp(),
-                38.dp()
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_38),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_38)
             )
-            params.topMargin = 3.dp()
+            params.topMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_3)
             layoutParams = params
         }
 
         val icon = ImageView(requireContext()).apply {
             setImageResource(task.iconRes)
-            setColorFilter(Color.WHITE)
+            setColorFilter(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
 
             val params = FrameLayout.LayoutParams(
-                19.dp(),
-                19.dp(),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_19),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_19),
                 Gravity.CENTER
             )
             layoutParams = params
@@ -610,14 +615,14 @@ class AquariumMaintenanceFragment :
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 1f
             )
-            params.marginStart = 11.dp()
+            params.marginStart = resources.getDimensionPixelOffset(R.dimen.aqua_size_11)
             layoutParams = params
         }
 
         val titleText = TextView(requireContext()).apply {
             text = task.title
-            textSize = 13.2f
-            setTextColor(Color.WHITE)
+            setTextSizeResource(R.dimen.aqua_text_size_body_precise)
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
             setTypeface(null, Typeface.BOLD)
             includeFontPadding = false
             maxLines = 1
@@ -626,8 +631,8 @@ class AquariumMaintenanceFragment :
 
         val metaText = TextView(requireContext()).apply {
             text = buildHistoryMetaText(task)
-            textSize = 11.8f
-            setTextColor(Color.parseColor("#B8C7D9"))
+            setTextSizeResource(R.dimen.aqua_text_size_caption_precise)
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_tertiary))
             includeFontPadding = false
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
@@ -636,7 +641,7 @@ class AquariumMaintenanceFragment :
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.topMargin = 6.dp()
+            params.topMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_6)
             layoutParams = params
         }
 
@@ -648,14 +653,14 @@ class AquariumMaintenanceFragment :
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.topMargin = 7.dp()
+            params.topMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_7)
             layoutParams = params
         }
 
         val completedText = TextView(requireContext()).apply {
             text = getString(R.string.maintenance_status_completed)
-            textSize = 11.8f
-            setTextColor(Color.parseColor("#5FD6B4"))
+            setTextSizeResource(R.dimen.aqua_text_size_caption_precise)
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_accent_positive))
             setTypeface(null, Typeface.BOLD)
             includeFontPadding = false
 
@@ -693,27 +698,27 @@ class AquariumMaintenanceFragment :
     ): View {
         return TextView(requireContext()).apply {
             text = sourceLabel
-            textSize = 10.4f
-            setTextColor(Color.parseColor("#8FE7D5"))
+            setTextSizeResource(R.dimen.aqua_text_size_micro_tight)
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_aquarium_maintenance_fragment_content))
             setTypeface(null, Typeface.BOLD)
             includeFontPadding = false
             gravity = Gravity.CENTER
 
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
-                cornerRadius = 999.dp().toFloat()
-                setColor(Color.parseColor("#173F38"))
+                cornerRadius = resources.getDimensionPixelOffset(R.dimen.aqua_size_999).toFloat()
+                setColor(ContextCompat.getColor(requireContext(), R.color.aqua_aquarium_maintenance_fragment_color))
                 setStroke(
-                    1.dp(),
-                    Color.parseColor("#2F7D70")
+                    resources.getDimensionPixelOffset(R.dimen.aqua_size_1),
+                    ContextCompat.getColor(requireContext(), R.color.aqua_aquarium_maintenance_fragment_color_variant_2)
                 )
             }
 
             setPadding(
-                8.dp(),
-                4.dp(),
-                8.dp(),
-                4.dp()
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_8),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_4),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_8),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_4)
             )
 
             layoutParams = LinearLayout.LayoutParams(
@@ -861,7 +866,7 @@ class AquariumMaintenanceFragment :
     ): GradientDrawable {
         return GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
-            cornerRadius = 13.dp().toFloat()
+            cornerRadius = resources.getDimensionPixelOffset(R.dimen.aqua_size_13).toFloat()
 
             setColor(
                 applyAlpha(
@@ -871,7 +876,7 @@ class AquariumMaintenanceFragment :
             )
 
             setStroke(
-                1.dp(),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_1),
                 applyAlpha(
                     color = color,
                     alpha = 0.7f
@@ -891,11 +896,6 @@ class AquariumMaintenanceFragment :
             Color.blue(color)
         )
     }
-
-    private fun Int.dp(): Int {
-        return (this * resources.displayMetrics.density).toInt()
-    }
-
     override fun onDestroyView() {
         binding.rvCareTasks.adapter = null
         _binding = null
@@ -904,7 +904,6 @@ class AquariumMaintenanceFragment :
     }
 
     companion object {
-        private const val HISTORY_AXIS_WIDTH_DP = 36
         private const val HISTORY_ACTION_REQUEST_KEY = "maintenance_history_action_result"
         private const val HISTORY_DELETE_REQUEST_KEY = "maintenance_history_delete_result"
         private const val ACTION_DELETE = "delete"

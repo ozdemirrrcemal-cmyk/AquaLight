@@ -5,9 +5,9 @@
     android:layout_height="wrap_content"
     android:gravity="start"
     android:includeFontPadding="false"
-    android:paddingStart="0dp"
-    android:paddingTop="6dp"
-    android:paddingBottom="10dp"
-    android:textColor="@android:color/white"
+    android:paddingStart="@dimen/aqua_size_0"
+    android:paddingTop="@dimen/aqua_size_6"
+    android:paddingBottom="@dimen/aqua_size_10"
+    android:textColor="@color/aqua_content_on_dark"
     android:textSize="@dimen/aqua_text_size_micro_plus"
     android:textStyle="normal" />

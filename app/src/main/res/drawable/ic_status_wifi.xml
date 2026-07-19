@@ -1,36 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="20dp"
-    android:height="20dp"
+    android:width="@dimen/aqua_size_20"
+    android:height="@dimen/aqua_size_20"
     android:viewportWidth="24"
     android:viewportHeight="24">
 
     <!-- Büyük yay -->
     <path
-        android:fillColor="@android:color/transparent"
-        android:strokeColor="@android:color/white"
+        android:fillColor="@color/aqua_color_transparent"
+        android:strokeColor="@color/aqua_content_on_dark"
         android:strokeWidth="1.6"
         android:strokeLineCap="round"
         android:pathData="M4,10c2.4,-2.4 4.9,-3.6 8,-3.6 3.1,0 5.6,1.2 8,3.6" />
 
     <!-- Orta yay -->
     <path
-        android:fillColor="@android:color/transparent"
-        android:strokeColor="@android:color/white"
+        android:fillColor="@color/aqua_color_transparent"
+        android:strokeColor="@color/aqua_content_on_dark"
         android:strokeWidth="1.6"
         android:strokeLineCap="round"
         android:pathData="M7,12.5c1.7,-1.7 3.4,-2.5 5,-2.5 1.6,0 3.3,0.8 5,2.5" />
 
     <!-- Küçük yay -->
     <path
-        android:fillColor="@android:color/transparent"
-        android:strokeColor="@android:color/white"
+        android:fillColor="@color/aqua_color_transparent"
+        android:strokeColor="@color/aqua_content_on_dark"
         android:strokeWidth="1.6"
         android:strokeLineCap="round"
         android:pathData="M10,15c0.8,-0.8 1.6,-1.2 2,-1.2 0.4,0 1.2,0.4 2,1.2" />
 
     <!-- Nokta -->
     <path
-        android:fillColor="@android:color/white"
+        android:fillColor="@color/aqua_content_on_dark"
         android:pathData="M11.25,17.25h1.5v1.5h-1.5z" />
 </vector>

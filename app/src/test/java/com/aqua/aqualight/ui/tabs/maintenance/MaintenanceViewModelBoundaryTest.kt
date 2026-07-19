@@ -209,7 +209,7 @@ class MaintenanceViewModelBoundaryTest {
             title = type.name,
             defaultDescription = type.name,
             iconRes = 0,
-            accentColor = "#000000"
+            accentColor = 0
         )
 
         override fun waterChangeTitle(typeTitle: String, percent: Int) =

@@ -57,7 +57,7 @@ class TankDetailDevicesViewModel(
                 val items = devices.map { device ->
                     TankAssignedDeviceItem(
                         deviceUid = device.deviceUid,
-                        title = device.displayName.ifBlank { "Device" },
+                        title = device.displayName,
                         card = DeviceCompactSnapshotMapper.map(device)
                     )
                 }

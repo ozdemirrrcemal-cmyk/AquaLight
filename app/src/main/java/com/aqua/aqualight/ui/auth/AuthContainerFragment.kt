@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.auth
 
-import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
@@ -12,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import androidx.core.content.ContextCompat
 import androidx.activity.addCallback
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.NavHostFragment
@@ -135,7 +135,7 @@ class AuthContainerFragment : Fragment() {
                 blurView?.setupWith(root, RenderEffectBlur())
                     ?.setFrameClearDrawable(
                         requireActivity().window.decorView.background
-                            ?: ColorDrawable(Color.TRANSPARENT)
+                            ?: ColorDrawable(ContextCompat.getColor(requireContext(), R.color.aqua_color_transparent))
                     )
                     ?.setBlurRadius(22f)
             } catch (_: Exception) {

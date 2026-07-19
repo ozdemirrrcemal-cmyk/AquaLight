@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Common component copy -->
+    <string name="common_confirm_action_title">Confirm action</string>
+    <string name="common_confirm_action_message">Are you sure you want to continue?</string>
+    <string name="common_clear_search_description">Clear search</string>
+    <string name="common_not_available_symbol" translatable="false">-</string>
+    <string name="common_not_available_double_symbol" translatable="false">--</string>
+    <string name="common_not_available_em_dash" translatable="false">—</string>
+    <string name="common_list_separator" translatable="false">,\u0020</string>
+
+    <!-- Navigation -->
+    <string name="navigation_auth_label">Auth</string>
+
+    <!-- Device setup and shared device presentation -->
+    <string name="device_add_scan_secure_qr_action">Scan secure QR code</string>
+    <string name="device_add_setup_rules_title">Setup rules</string>
+    <string name="device_add_setup_rules_message">First setup uses the QR code. For an already paired device, open setup mode on the device, then press Manual BLE Scan. AquaLight verifies the firmware state before sending Wi‑Fi.</string>
+    <string name="device_add_manual_scan_hint">Select a device only after setup mode is open. AquaLight will verify DeviceInfo before Wi‑Fi is sent.</string>
+    <string name="device_setup_method_secure_qr">Secure QR Setup</string>
+    <string name="device_setup_method_manual_ble">Manual BLE Setup</string>
+    <string name="device_detail_connection_section_title">Connection</string>
+    <string name="device_detail_information_section_title">Device information</string>
+    <string name="device_status_empty_title">No active devices</string>
+    <string name="device_status_empty_message">Connected devices will appear here once they are available.</string>
+    <string name="device_icon_content_description">Device icon</string>
+    <string name="device_presence_content_description">Device presence</string>
+    <string name="device_last_seen_icon_content_description">Last seen icon</string>
+    <string name="device_label_ip">IP</string>
+    <string name="device_label_serial">Serial</string>
+    <string name="device_label_last_seen">Last seen</string>
+    <string name="device_brand_short_code" translatable="false">AQ</string>
+    <string name="device_unknown">Unknown</string>
+    <string name="device_unknown_device">Unknown device</string>
+    <string name="device_unavailable_message">This device is not available.</string>
+    <string name="device_online">Online</string>
+    <string name="device_offline">Offline</string>
+    <string name="device_serial_value">Serial: %1$s</string>
+    <string name="device_ip_value">IP: %1$s</string>
+    <string name="device_firmware_value">Firmware: %1$s</string>
+    <string name="device_model_value">Model: %1$s</string>
+    <string name="device_features_value">Features: %1$s</string>
+    <string name="device_labeled_value">%1$s: %2$s</string>
+    <string name="device_provisioning_step_with_icon">%1$s %2$s</string>
+    <string name="device_provisioning_step_icon_attention" translatable="false">!</string>
+    <string name="device_provisioning_step_icon_progress" translatable="false">●</string>
+    <string name="device_provisioning_step_icon_complete" translatable="false">✓</string>
+    <string name="device_card_accessibility">%1$s, UID: %2$s, %3$s</string>
+    <string name="device_card_accessibility_with_supporting">%1$s, UID: %2$s, %3$s, %4$s</string>
+    <string name="device_status_accessibility">%1$s, Serial: %2$s, %3$s</string>
+    <string name="device_unsupported_family_message">Unsupported AquaLight device family. Firmware did not provide a known product.family value.</string>
+    <string name="device_status_last_seen_just_now">Just now</string>
+    <plurals name="device_status_last_seen_seconds_ago">
+        <item quantity="one">%1$ds ago</item>
+        <item quantity="other">%1$ds ago</item>
+    </plurals>
+    <plurals name="device_status_last_seen_minutes_ago">
+        <item quantity="one">%1$dm ago</item>
+        <item quantity="other">%1$dm ago</item>
+    </plurals>
+    <plurals name="device_status_last_seen_hours_ago">
+        <item quantity="one">%1$dh ago</item>
+        <item quantity="other">%1$dh ago</item>
+    </plurals>
+    <plurals name="device_status_last_seen_days_ago">
+        <item quantity="one">%1$dd ago</item>
+        <item quantity="other">%1$dd ago</item>
+    </plurals>
+
+    <!-- Device families and skeleton menus -->
+    <string name="device_family_light">Light</string>
+    <string name="device_family_dosing">Dosing</string>
+    <string name="device_family_timer">Timer</string>
+    <string name="device_family_cooling">Cooling</string>
+    <string name="device_menu_manual_control_title">Manual control</string>
+    <string name="device_menu_manual_control_description">Direct channel control for supported light outputs.</string>
+    <string name="device_menu_quick_setup_title">Quick setup</string>
+    <string name="device_menu_quick_setup_description">Fast setup from firmware-supported light presets and profiles.</string>
+    <string name="device_menu_programs_title">Programs</string>
+    <string name="device_menu_programs_description">Create and manage daily light programs.</string>
+    <string name="device_menu_presets_title">Presets</string>
+    <string name="device_menu_presets_description">Use firmware-provided light presets.</string>
+    <string name="device_menu_simulation_title">Simulation</string>
+    <string name="device_menu_simulation_description">Sunrise, sunset and light simulation features.</string>
+    <string name="device_menu_settings_title">Device settings</string>
+    <string name="device_menu_light_settings_description">Device identity, firmware and runtime settings.</string>
+    <string name="device_menu_settings_description">Firmware, runtime and device settings.</string>
+    <string name="device_menu_channels_title">Channels</string>
+    <string name="device_menu_dosing_channels_description">Configure dosing channels and pump parameters.</string>
+    <string name="device_menu_calibration_title">Calibration</string>
+    <string name="device_menu_calibration_description">Calibrate dosing flow for accurate dosing.</string>
+    <string name="device_menu_schedules_title">Schedules</string>
+    <string name="device_menu_dosing_schedules_description">Single dose, hourly, timer and custom dosing periods.</string>
+    <string name="device_menu_timer_channels_title">Timer channels</string>
+    <string name="device_menu_timer_channels_description">Configure timer relay channels.</string>
+    <string name="device_menu_timer_schedules_description">Create and manage timer schedules.</string>
+    <string name="device_menu_fan_control_title">Fan control</string>
+    <string name="device_menu_fan_control_description">Manual fan control for supported cooling channels.</string>
+    <string name="device_menu_temperature_automation_title">Temperature automation</string>
+    <string name="device_menu_temperature_automation_description">Temperature-based cooling automation.</string>
+    <string name="device_menu_bullet_item">• %1$s\n  %2$s</string>
+    <string name="device_menu_item_separator">\n\n</string>
+    <string name="device_menu_manual_preparing">Manual control hazırlanıyor.</string>
+    <string name="device_menu_programs_preparing">Programlar hazırlanıyor.</string>
+    <string name="device_menu_dosing_controls_preparing">Dosing channel controls hazırlanıyor.</string>
+    <string name="device_menu_dosing_schedules_preparing">Dosing schedules hazırlanıyor.</string>
+    <string name="device_menu_timer_controls_preparing">Timer channel controls hazırlanıyor.</string>
+    <string name="device_menu_timer_schedules_preparing">Timer schedules hazırlanıyor.</string>
+    <string name="device_menu_fan_control_preparing">Fan control hazırlanıyor.</string>
+    <string name="device_menu_temperature_automation_preparing">Temperature automation hazırlanıyor.</string>
+    <string name="device_menu_controls_title">Controls</string>
+    <string name="device_menu_controls_preparing">Controls hazırlanıyor.</string>
+    <string name="device_menu_light_manual_unavailable">Firmware has not exposed manual light controls yet.</string>
+    <string name="device_menu_light_programs_unavailable">Firmware has not exposed light programs, presets or settings yet.</string>
+
+    <!-- Device information labels and capabilities -->
+    <string name="device_light_channels_label">Light channels</string>
+    <string name="device_dosing_channels_label">Dosing channels</string>
+    <string name="device_fan_outputs_label">Fan outputs</string>
+    <string name="device_feature_dosing">Dosing</string>
+    <string name="device_feature_timer">Timer</string>
+    <string name="device_feature_cooling">Cooling</string>
+    <string name="device_feature_fan">Fan</string>
+    <string name="device_feature_temperature">Temperature</string>
+    <string name="device_feature_time_sync">Time sync</string>
+    <string name="device_feature_ota" translatable="false">OTA</string>
+    <string name="device_feature_manual_light">Manual light</string>
+    <string name="device_feature_program">Program</string>
+    <string name="device_feature_presets">Presets</string>
+    <string name="device_feature_simulation">Simulation</string>
+
+    <!-- Internal OTA validation panel; still user-visible while enabled -->
+    <string name="device_ota_test_panel_title">Hidden OTA test panel</string>
+    <string name="device_ota_test_panel_description">Temporary internal panel. Long press Firmware to show or hide. Remove after OTA validation.</string>
+    <string name="device_ota_test_check_beta_action">Check beta</string>
+    <string name="device_ota_test_status_action">Status</string>
+    <string name="device_ota_test_start_action">Start OTA</string>
+    <string name="device_ota_test_clear_action">Clear</string>
+    <string name="device_ota_test_locked_message">Hidden OTA test panel. Long press Firmware to unlock.</string>
+    <string name="device_ota_test_missing_uid">OTA test failed: deviceUid is missing.</string>
+    <string name="device_ota_test_checking_manifest">Checking signed beta manifest...\nURL: %1$s</string>
+    <string name="device_ota_test_plan_failed">OTA test plan failed:\n%1$s</string>
+    <string name="device_ota_test_start_missing_uid">OTA start failed: deviceUid is missing.</string>
+    <string name="device_ota_test_plan_not_ready">Run Check Beta Manifest first. No OTA plan is ready.</string>
+    <string name="device_ota_test_start_sent">OTA start command sent.\nmessageId: %1$s\ntarget: %2$s\nWatch firmware.ota.progress events below.</string>
+    <string name="device_ota_test_start_failed">OTA start command could not be sent.\n%1$s</string>
+    <string name="device_ota_test_unknown_websocket_error">Unknown WebSocket send error.</string>
+    <string name="device_ota_test_status_missing_uid">OTA status failed: deviceUid is missing.</string>
+    <string name="device_ota_test_status_sent">OTA status command sent. messageId: %1$s</string>
+    <string name="device_ota_test_status_failed">OTA status command could not be sent.\n%1$s</string>
+    <string name="device_ota_test_clear_missing_uid">OTA clear failed: deviceUid is missing.</string>
+    <string name="device_ota_test_clear_sent">OTA clear command sent. messageId: %1$s</string>
+    <string name="device_ota_test_clear_failed">OTA clear command could not be sent.\n%1$s</string>
+    <string name="device_ota_test_plan_summary">OTA beta manifest verified.\nREADY TO START\ncurrent: %1$s\ntarget: %2$s\nchannel: %3$s\nenv: %4$s\nproductKey: %5$s\nproductId: %6$s\nhw: %7$s\nfile: %8$s\nsize: %9$d\nsha256: %10$s...</string>
+
+    <!-- Settings/address preview copy -->
+    <string name="settings_active_devices_preview">3 Active Devices</string>
+    <string name="settings_no_active_devices_summary">No active devices</string>
+    <plurals name="settings_online_devices_count">
+        <item quantity="one">%1$d Online Device</item>
+        <item quantity="other">%1$d Online Devices</item>
+    </plurals>
+    <string name="address_country_turkey">Turkey</string>
+    <string name="auth_google_error_title">Google Error</string>
+    <string name="aqua_selected_symbol" translatable="false">✓</string>
+    <string name="aquarium_dimension_format">%1$s W%2$s%3$s L%2$s%4$s H</string>
+    <string name="aquarium_volume_liter_format">%1$s L</string>
+    <string name="aquarium_volume_gallon_format">%1$s gal</string>
+    <string name="aquarium_dimension_separator_spaced_multiply" translatable="false"> × </string>
+    <string name="aquarium_dimension_separator_spaced_x" translatable="false"> x </string>
+    <string name="aquarium_dimension_separator_multiply" translatable="false">×</string>
+</resources>

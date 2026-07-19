@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.aquarium.materials
 
+import android.content.Context
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
 import com.aqua.aqualight.data.aquarium.catalog.material.AquariumMaterial
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCatalog
@@ -7,10 +8,11 @@ import java.util.UUID
 
 object MaterialSelectionMapper {
     fun productsForCategory(
+        context: Context,
         categoryKey: String,
         currentSelections: List<AquariumMaterialSelection>
     ): List<AquariumMaterial> {
-        val catalogProducts = MaterialCatalog.getByCategory(categoryKey)
+        val catalogProducts = MaterialCatalog.getByCategory(context, categoryKey)
         val catalogIds = catalogProducts.map(AquariumMaterial::id).toSet()
 
         val customProducts = currentSelections

@@ -22,8 +22,7 @@
     <!-- Aquarium and tank -->
     <string name="aquarium_action_complete">Complete</string>
     <string name="aquarium_action_next">Next</string>
-    <string name="aquarium_camera_permission_required">Camera permission is required to take a tank photo.</string>
-    <string name="aquarium_common_not_selected">Not selected</string>
+<string name="aquarium_common_not_selected">Not selected</string>
     <string name="aquarium_confirm">Confirm</string>
     <string name="aquarium_create_step_title">Step %1$d</string>
     <string name="aquarium_create_step_1">Step 1</string>
@@ -41,18 +40,15 @@
     <string name="aquarium_error_tank_style_save_failed">Tank style could not be saved. Please try again.</string>
     <string name="aquarium_error_tank_type_save_failed">Tank type could not be saved. Please try again.</string>
     <string name="aquarium_error_volume_unit_save_failed">Volume unit could not be saved. Please try again.</string>
-    <string name="aquarium_idea_title">Tank note</string>
-    <string name="aquarium_no_idea_added">No note added</string>
-    <string name="aquarium_permission_required_title">Permission required</string>
-    <string name="aquarium_photo_crop_error_title">Crop error</string>
+<string name="aquarium_no_idea_added">No note added</string>
+<string name="aquarium_photo_crop_error_title">Crop error</string>
     <string name="aquarium_photo_crop_failed">Photo could not be cropped. Please try again.</string>
     <string name="aquarium_photo_crop_title">Edit tank photo</string>
     <string name="aquarium_photo_error_title">Photo error</string>
     <string name="aquarium_photo_remove_failed">Photo could not be removed. Please try again.</string>
     <string name="aquarium_photo_removed">Photo removed.</string>
     <string name="aquarium_photo_save_failed">Photo could not be saved. Please try again.</string>
-    <string name="aquarium_photo_temp_crop_failed">Temporary crop file could not be created.</string>
-    <string name="aquarium_photo_temp_file_failed">Temporary photo file could not be created.</string>
+<string name="aquarium_photo_temp_file_failed">Temporary photo file could not be created.</string>
     <string name="aquarium_photo_title">Tank photo</string>
     <string name="aquarium_photo_updated">Photo updated.</string>
     <string name="aquarium_remove_plant_tag">Remove plant tag</string>
@@ -65,16 +61,14 @@
     <string name="aquarium_action_add">+ Add</string>
     <string name="aquarium_action_add_livestock">+ Add Livestock</string>
     <string name="aquarium_action_add_plant">+  Add Plant</string>
-    <string name="aquarium_active_program_label">ACTIVE PROGRAM</string>
-    <string name="aquarium_components_title">Components</string>
+<string name="aquarium_components_title">Components</string>
     <string name="aquarium_concept_field_title">Aquarium Concept</string>
     <string name="aquarium_days_title">Days</string>
     <string name="aquarium_detail_tab_activity">Activity</string>
     <string name="aquarium_detail_tab_devices">Devices</string>
     <string name="aquarium_detail_tab_plants">Plants</string>
     <string name="aquarium_detail_tab_tank">Tank</string>
-    <string name="aquarium_empty_tank_list_message">No aquarium yet. Tap + Add to create your first tank.</string>
-    <string name="aquarium_height_title">Height</string>
+<string name="aquarium_height_title">Height</string>
     <string name="aquarium_length_title">Length</string>
     <string name="aquarium_material_group_bio">Bio</string>
     <string name="aquarium_material_group_hardware">Hardware</string>
@@ -116,13 +110,13 @@
     <string name="aquarium_tank_type_title">Tank Type</string>
     <string name="aquarium_type_title">Type</string>
     <string name="aquarium_unit_centimeters">centimeters</string>
+    <string name="aquarium_unit_inches">inches</string>
     <string name="aquarium_unit_title">Unit</string>
     <string name="aquarium_volume_title">Volume</string>
     <string name="aquarium_width_title">Width</string>
     <string name="aquarium_action_add_aquarium">Add Aquarium</string>
     <string name="aquarium_action_delete_selected_aquariums">Delete selected aquariums</string>
-    <string name="aquarium_added_date_label">Added Date</string>
-    <string name="aquarium_change_date_action">Change date</string>
+<string name="aquarium_change_date_action">Change date</string>
     <string name="aquarium_completed_activity_record">Completed activity record</string>
     <string name="aquarium_completed_at_label">Completed at</string>
     <string name="aquarium_completed_label">Completed</string>
@@ -164,12 +158,7 @@
     <string name="aquarium_error_livestock_delete_failed">Livestock could not be deleted.</string>
     <string name="aquarium_device_not_found_title">Device Not Found</string>
     <string name="aquarium_device_not_found_message">This device is no longer available.</string>
-    <string name="aquarium_unsupported_device_title">Unsupported Device</string>
-    <string name="aquarium_unsupported_device_message">This device is not supported by this app version.</string>
-    <string name="aquarium_device_open_failed_title">Open Failed</string>
-    <string name="aquarium_device_open_failed_message">The device could not be opened. Please try again.</string>
-    <string name="aquarium_device_offline_title">Device Offline</string>
-    <string name="aquarium_error_device_remove_failed">Device could not be removed from this tank.</string>
+<string name="aquarium_error_device_remove_failed">Device could not be removed from this tank.</string>
 
     <!-- Aquarium UI text -->
     <string name="aquarium_text_0_days">0 days</string>
@@ -224,8 +213,7 @@
     <string name="aquarium_text_progress">Progress</string>
     <string name="aquarium_text_quantity">Quantity</string>
     <string name="aquarium_text_save_livestock">Save Livestock</string>
-    <string name="aquarium_text_select_aquarium">Select Aquarium</string>
-    <string name="aquarium_text_send_reminder_notifications_for_this_tank_s_care_tasks">Send reminder notifications for this tank\'s care tasks.</string>
+<string name="aquarium_text_send_reminder_notifications_for_this_tank_s_care_tasks">Send reminder notifications for this tank\'s care tasks.</string>
     <string name="aquarium_text_set_the_final_aquarium_details_these_values_help_organize_an">Set the final aquarium details. These values help organize and recognize your tank later.</string>
     <string name="aquarium_text_setup_date_2026_04_12">Setup Date: 2026/04/12</string>
     <string name="aquarium_text_size_cm">Size (cm)</string>
@@ -233,8 +221,7 @@
     <string name="aquarium_text_smart_care_suggestions">Smart Care Suggestions</string>
     <string name="aquarium_text_tap_on_the_aquarium_photo_to_select_and_tag_the_plants_used">Tap on the aquarium photo to select and tag the plants used in your layout.</string>
     <string name="aquarium_text_this_concept_will_help_keep_your_aquarium_design_consistent">This concept will help keep your aquarium design consistent when choosing plants, hardscape, lighting, and livestock.</string>
-    <string name="aquarium_text_this_section_will_be_available_soon">This section will be available soon.</string>
-    <string name="aquarium_text_timeline">Timeline</string>
+<string name="aquarium_text_timeline">Timeline</string>
     <string name="aquarium_text_use_a_photo_to_make_this_aquarium_easier_to_recognize_later">Use a photo to make this aquarium easier to recognize later.</string>
     <string name="aquarium_text_value">--</string>
     <string name="aquarium_text_yatak_odas">Yatak Odası</string>
@@ -304,7 +291,7 @@
     <string name="tank_pdf_page_format">Page %1$d</string>
     <string name="tank_pdf_share_subject">AquaLight Tank Report - %1$s</string>
     <string name="tank_pdf_share_chooser">Export Tank Data</string>
-    <string name="tank_pdf_size_format">%1$d W x %2$d L x %3$d H</string>
+    <string name="tank_pdf_size_format">%1$d W × %2$d L × %3$d H</string>
 
 
     <!-- Aquarium remaining UI text -->
@@ -334,10 +321,7 @@
     <string name="aquarium_day_format">Day %1$d</string>
     <string name="aquarium_activity_date_today_format">%1$s · Today</string>
     <string name="aquarium_activity_date_yesterday_format">%1$s · Yesterday</string>
-    <string name="aquarium_activity_status_overdue">Overdue</string>
-    <string name="aquarium_activity_status_today">Today</string>
-    <string name="aquarium_activity_status_tomorrow">Tomorrow</string>
-    <string name="aquarium_livestock_summary_format">%1$d species • %2$d total livestock</string>
+<string name="aquarium_livestock_summary_format">%1$d species • %2$d total livestock</string>
     <string name="aquarium_livestock_added_date_not_set">Added date not set</string>
     <string name="aquarium_livestock_added_date_format">Added %1$s</string>
     <string name="aquarium_livestock_default_title">Livestock</string>
@@ -346,35 +330,7 @@
     <string name="aquarium_action_save_changes">Save Changes</string>
     <string name="aquarium_care_profile_status_complete">Complete</string>
     <string name="aquarium_care_profile_status_missing">Missing</string>
-    <string name="aquarium_device_unknown_aquarium">Unknown aquarium</string>
-    <string name="aquarium_device_label_offline">OFFLINE</string>
-    <string name="aquarium_device_label_manual_mode">MANUAL MODE</string>
-    <string name="aquarium_device_label_scene_active">SCENE ACTIVE</string>
-    <string name="aquarium_device_label_moonlight">MOONLIGHT</string>
-    <string name="aquarium_device_label_syncing">SYNCING</string>
-    <string name="aquarium_device_label_no_active_program">NO ACTIVE PROGRAM</string>
-    <string name="aquarium_device_label_active_program">ACTIVE PROGRAM</string>
-    <string name="aquarium_device_label_scheduled">SCHEDULED</string>
-    <string name="aquarium_device_no_live_data_title">No live data</string>
-    <string name="aquarium_device_manual_control_title">Manual Control</string>
-    <string name="aquarium_device_scene_mode_title">Scene Mode</string>
-    <string name="aquarium_device_moonlight_mode_title">Moonlight Mode</string>
-    <string name="aquarium_device_waiting_for_time_title">Waiting for ESP32 time</string>
-    <string name="aquarium_device_program_not_set_title">Program not set</string>
-    <string name="aquarium_device_manual_left_text">Manual</string>
-    <string name="aquarium_device_scene_left_text">Scene</string>
-    <string name="aquarium_device_resume_right_text">Resume</string>
-    <string name="aquarium_device_empty_time_text">--:--</string>
-    <string name="aquarium_light_channel_white">White</string>
-    <string name="aquarium_light_channel_red">Red</string>
-    <string name="aquarium_light_channel_green">Green</string>
-    <string name="aquarium_light_channel_blue">Blue</string>
-    <string name="aquarium_light_channel_warm_white">Warm White</string>
-    <string name="aquarium_light_channel_cool_white">Cool White</string>
-    <string name="aquarium_light_channel_uv">UV</string>
-    <string name="aquarium_light_channel_intensity">Intensity</string>
-
-    <!-- Plurals -->
+<!-- Plurals -->
     <plurals name="aquarium_selected_aquariums_delete_message">
         <item quantity="one">%d selected aquarium will be permanently deleted.</item>
         <item quantity="other">%d selected aquariums will be permanently deleted.</item>

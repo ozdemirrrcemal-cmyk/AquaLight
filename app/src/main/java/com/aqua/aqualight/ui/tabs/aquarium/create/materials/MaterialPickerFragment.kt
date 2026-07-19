@@ -1,9 +1,9 @@
 package com.aqua.aqualight.ui.tabs.aquarium.create.materials
 
+import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.aquarium.catalog.material.AquariumMaterial
-import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.TextUtils
@@ -230,6 +230,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
         currentSelections: List<AquariumMaterialSelection>
     ): List<AquariumMaterial> {
         return MaterialSelectionMapper.productsForCategory(
+            context = requireContext(),
             categoryKey = categoryKey,
             currentSelections = currentSelections
         )
@@ -244,7 +245,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
     private fun renderKeywords() {
         binding.keywordContainer.removeAllViews()
 
-        val keywords = MaterialCatalog.getPopularKeywords(categoryKey)
+        val keywords = MaterialCatalog.getPopularKeywords(requireContext(), categoryKey)
 
         if (keywords.isEmpty()) {
             binding.tvKeywordTitle.isVisible = false
@@ -266,8 +267,8 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
         keyword: String
     ): View {
         val chip = MaterialCardView(requireContext()).apply {
-            radius = 13.dp().toFloat()
-            strokeWidth = 1.dp()
+            radius = resources.getDimensionPixelOffset(R.dimen.aqua_size_13).toFloat()
+            strokeWidth = resources.getDimensionPixelOffset(R.dimen.aqua_size_1)
             strokeColor = ContextCompat.getColor(
                 requireContext(),
                 R.color.aqua_card_outline
@@ -284,9 +285,9 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
 
             val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
-                36.dp()
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_36)
             )
-            params.marginEnd = 8.dp()
+            params.marginEnd = resources.getDimensionPixelOffset(R.dimen.aqua_size_8)
             layoutParams = params
 
             setOnClickListener {
@@ -310,12 +311,12 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
                     R.color.aqua_card_text_secondary
                 )
             )
-            textSize = 12.5f
+            setTextSizeResource(R.dimen.aqua_text_size_caption_plus)
             includeFontPadding = false
             setPadding(
-                15.dp(),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_15),
                 0,
-                15.dp(),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_15),
                 0
             )
         }
@@ -388,8 +389,8 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.topMargin = 34.dp()
-            params.bottomMargin = 18.dp()
+            params.topMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_34)
+            params.bottomMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_18)
             layoutParams = params
         }
 
@@ -402,8 +403,8 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
         val isSelected = selectedProductIds.contains(product.id)
 
         val card = MaterialCardView(requireContext()).apply {
-            radius = 16.dp().toFloat()
-            strokeWidth = 1.dp()
+            radius = resources.getDimensionPixelOffset(R.dimen.aqua_size_16).toFloat()
+            strokeWidth = resources.getDimensionPixelOffset(R.dimen.aqua_size_1)
             strokeColor = ContextCompat.getColor(
                 requireContext(),
                 if (isSelected) {
@@ -431,7 +432,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.bottomMargin = 9.dp()
+            params.bottomMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_9)
             layoutParams = params
 
             setOnClickListener {
@@ -448,13 +449,13 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
         val row = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            minimumHeight = 74.dp()
+            minimumHeight = resources.getDimensionPixelOffset(R.dimen.aqua_size_74)
 
             setPadding(
-                14.dp(),
-                10.dp(),
-                12.dp(),
-                10.dp()
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_14),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_10),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_12),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_10)
             )
         }
 
@@ -467,7 +468,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 1f
             )
-            params.marginEnd = 12.dp()
+            params.marginEnd = resources.getDimensionPixelOffset(R.dimen.aqua_size_12)
             layoutParams = params
         }
 
@@ -479,7 +480,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
                     R.color.aqua_card_text_secondary
                 )
             )
-            textSize = 11.5f
+            setTextSizeResource(R.dimen.aqua_text_size_micro_plus)
             includeFontPadding = false
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
@@ -493,7 +494,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
                     R.color.aqua_card_text_primary
                 )
             )
-            textSize = 13.5f
+            setTextSizeResource(R.dimen.aqua_text_size_body_compact)
             setTypeface(null, Typeface.NORMAL)
             includeFontPadding = false
             maxLines = 2
@@ -503,16 +504,16 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.topMargin = 6.dp()
+            params.topMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_6)
             layoutParams = params
         }
 
         val check = TextView(requireContext()).apply {
-            text = if (isSelected) "✓" else ""
+            text = if (isSelected) getString(R.string.aqua_selected_symbol) else ""
             gravity = Gravity.CENTER
-            textSize = 12f
+            setTextSizeResource(R.dimen.aqua_text_size_caption)
             setTypeface(null, Typeface.BOLD)
-            setTextColor(Color.WHITE)
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
             includeFontPadding = false
             setBackgroundResource(
                 if (isSelected) {
@@ -523,8 +524,8 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
             )
 
             layoutParams = LinearLayout.LayoutParams(
-                24.dp(),
-                24.dp()
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_24),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_24)
             )
         }
 
@@ -542,19 +543,19 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
     private fun createNewMaterialButton(): View {
         return MaterialButton(requireContext()).apply {
             text = getString(R.string.material_picker_new_title, categoryTitle)
-            textSize = 14f
-            setTextColor(Color.WHITE)
+            setTextSizeResource(R.dimen.aqua_text_size_body)
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
             setTypeface(null, Typeface.BOLD)
             setAllCaps(false)
-            cornerRadius = 14.dp()
-            setBackgroundColor(Color.parseColor("#2196F3"))
+            cornerRadius = resources.getDimensionPixelOffset(R.dimen.aqua_size_14)
+            setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.aqua_accent_primary))
 
             val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                48.dp()
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_48)
             )
-            params.topMargin = 8.dp()
-            params.bottomMargin = 16.dp()
+            params.topMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_8)
+            params.bottomMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_16)
             layoutParams = params
 
             setOnClickListener {
@@ -728,11 +729,6 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
     private fun closePicker() {
         findNavController().navigateUp()
     }
-
-    private fun Int.dp(): Int {
-        return (this * resources.displayMetrics.density).toInt()
-    }
-
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

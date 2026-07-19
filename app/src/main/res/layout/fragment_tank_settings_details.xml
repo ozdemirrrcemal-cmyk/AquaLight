@@ -8,10 +8,10 @@
     android:clipToPadding="false"
     android:fillViewport="true"
     android:overScrollMode="never"
-    android:paddingStart="16dp"
-    android:paddingTop="12dp"
-    android:paddingEnd="16dp"
-    android:paddingBottom="120dp"
+    android:paddingStart="@dimen/aqua_size_16"
+    android:paddingTop="@dimen/aqua_size_12"
+    android:paddingEnd="@dimen/aqua_size_16"
+    android:paddingBottom="@dimen/aqua_size_120"
     android:scrollbars="none">
 
     <LinearLayout
@@ -24,7 +24,7 @@
             android:id="@+id/tvBioTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="@dimen/aqua_size_8"
             android:includeFontPadding="false"
             android:text="@string/aquarium_material_group_bio"
             android:textColor="?attr/colorOnSurface"
@@ -34,14 +34,14 @@
             android:id="@+id/bioMaterialsContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="@dimen/aqua_size_12"
             android:orientation="vertical" />
 
         <TextView
             android:id="@+id/tvHardwareTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="22dp"
+            android:layout_marginTop="@dimen/aqua_size_22"
             android:includeFontPadding="false"
             android:text="@string/aquarium_material_group_hardware"
             android:textColor="?attr/colorOnSurface"
@@ -51,7 +51,7 @@
             android:id="@+id/hardwareMaterialsContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="@dimen/aqua_size_12"
             android:orientation="vertical" />
 
     </LinearLayout>

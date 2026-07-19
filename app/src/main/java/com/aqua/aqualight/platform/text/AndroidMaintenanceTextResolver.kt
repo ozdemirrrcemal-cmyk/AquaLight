@@ -1,6 +1,7 @@
 package com.aqua.aqualight.platform.text
 
 import android.content.Context
+import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.care.CareTaskSource
 import com.aqua.aqualight.application.care.CareTaskType
@@ -20,7 +21,7 @@ class AndroidMaintenanceTextResolver(
             title = definition.title(appContext),
             defaultDescription = definition.defaultDescription(appContext),
             iconRes = definition.iconRes,
-            accentColor = definition.accentColor
+            accentColor = ContextCompat.getColor(appContext, definition.accentColorRes)
         )
     }
 

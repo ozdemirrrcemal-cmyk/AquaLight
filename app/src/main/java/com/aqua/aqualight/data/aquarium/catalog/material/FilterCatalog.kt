@@ -1,82 +1,129 @@
 package com.aqua.aqualight.data.aquarium.catalog.material
 
+import com.aqua.aqualight.R
+
 
 object FilterCatalog {
 
-    private const val CATEGORY_TITLE = "Filter"
-
-    val products: List<AquariumMaterial> = listOf(
-        AquariumMaterial(
+    val definitions: List<AquariumMaterialDefinition> = listOf(
+        AquariumMaterialDefinition(
             id = "filter_eheim_classic_150",
-            brand = "Eheim",
-            name = "Eheim Classic 150",
+            brandRes = R.string.catalog_brand_eheim,
+            nameRes = R.string.catalog_material_filter_eheim_classic_150_name,
             categoryKey = MaterialCategoryKey.FILTER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("filter", "external", "canister", "eheim")
+            categoryTitleRes = R.string.catalog_material_category_filter_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_filter,
+                R.string.catalog_keyword_external,
+                R.string.catalog_keyword_canister,
+                R.string.catalog_keyword_eheim
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "filter_eheim_classic_250",
-            brand = "Eheim",
-            name = "Eheim Classic 250",
+            brandRes = R.string.catalog_brand_eheim,
+            nameRes = R.string.catalog_material_filter_eheim_classic_250_name,
             categoryKey = MaterialCategoryKey.FILTER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("filter", "external", "canister", "eheim")
+            categoryTitleRes = R.string.catalog_material_category_filter_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_filter,
+                R.string.catalog_keyword_external,
+                R.string.catalog_keyword_canister,
+                R.string.catalog_keyword_eheim
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "filter_eheim_experience_250",
-            brand = "Eheim",
-            name = "Eheim Experience 250",
+            brandRes = R.string.catalog_brand_eheim,
+            nameRes = R.string.catalog_material_filter_eheim_experience_250_name,
             categoryKey = MaterialCategoryKey.FILTER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("filter", "external", "canister", "eheim")
+            categoryTitleRes = R.string.catalog_material_category_filter_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_filter,
+                R.string.catalog_keyword_external,
+                R.string.catalog_keyword_canister,
+                R.string.catalog_keyword_eheim
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "filter_oase_biomaster_250",
-            brand = "Oase",
-            name = "Oase BioMaster 250",
+            brandRes = R.string.catalog_brand_oase,
+            nameRes = R.string.catalog_material_filter_oase_biomaster_250_name,
             categoryKey = MaterialCategoryKey.FILTER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("filter", "external", "canister", "oase", "biomaster")
+            categoryTitleRes = R.string.catalog_material_category_filter_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_filter,
+                R.string.catalog_keyword_external,
+                R.string.catalog_keyword_canister,
+                R.string.catalog_keyword_oase,
+                R.string.catalog_keyword_biomaster
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "filter_oase_biomaster_350",
-            brand = "Oase",
-            name = "Oase BioMaster 350",
+            brandRes = R.string.catalog_brand_oase,
+            nameRes = R.string.catalog_material_filter_oase_biomaster_350_name,
             categoryKey = MaterialCategoryKey.FILTER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("filter", "external", "canister", "oase", "biomaster")
+            categoryTitleRes = R.string.catalog_material_category_filter_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_filter,
+                R.string.catalog_keyword_external,
+                R.string.catalog_keyword_canister,
+                R.string.catalog_keyword_oase,
+                R.string.catalog_keyword_biomaster
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "filter_jbl_cristalprofi_e702",
-            brand = "JBL",
-            name = "JBL CristalProfi e702",
+            brandRes = R.string.catalog_brand_jbl,
+            nameRes = R.string.catalog_material_filter_jbl_cristalprofi_e702_name,
             categoryKey = MaterialCategoryKey.FILTER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("filter", "external", "canister", "jbl")
+            categoryTitleRes = R.string.catalog_material_category_filter_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_filter,
+                R.string.catalog_keyword_external,
+                R.string.catalog_keyword_canister,
+                R.string.catalog_keyword_jbl
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "filter_jbl_cristalprofi_e902",
-            brand = "JBL",
-            name = "JBL CristalProfi e902",
+            brandRes = R.string.catalog_brand_jbl,
+            nameRes = R.string.catalog_material_filter_jbl_cristalprofi_e902_name,
             categoryKey = MaterialCategoryKey.FILTER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("filter", "external", "canister", "jbl")
+            categoryTitleRes = R.string.catalog_material_category_filter_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_filter,
+                R.string.catalog_keyword_external,
+                R.string.catalog_keyword_canister,
+                R.string.catalog_keyword_jbl
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "filter_aquael_versamax",
-            brand = "Aquael",
-            name = "Aquael Versamax Hang-on Filter",
+            brandRes = R.string.catalog_brand_aquael,
+            nameRes = R.string.catalog_material_filter_aquael_versamax_name,
             categoryKey = MaterialCategoryKey.FILTER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("filter", "hang on", "hob", "aquael")
+            categoryTitleRes = R.string.catalog_material_category_filter_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_filter,
+                R.string.catalog_keyword_hang_on,
+                R.string.catalog_keyword_hob,
+                R.string.catalog_keyword_aquael
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "filter_sunsun_hw_603b",
-            brand = "SunSun",
-            name = "SunSun HW-603B External Filter",
+            brandRes = R.string.catalog_brand_sunsun,
+            nameRes = R.string.catalog_material_filter_sunsun_hw_603b_name,
             categoryKey = MaterialCategoryKey.FILTER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("filter", "external", "canister", "sunsun")
+            categoryTitleRes = R.string.catalog_material_category_filter_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_filter,
+                R.string.catalog_keyword_external,
+                R.string.catalog_keyword_canister,
+                R.string.catalog_keyword_sunsun
+            )
         )
     )
 }

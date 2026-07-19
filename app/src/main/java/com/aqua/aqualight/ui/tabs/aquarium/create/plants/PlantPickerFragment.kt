@@ -1,8 +1,8 @@
 package com.aqua.aqualight.ui.tabs.aquarium.create.plants
 
+import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import com.aqua.aqualight.data.aquarium.catalog.plant.PlantCatalog
 import com.aqua.aqualight.data.aquarium.catalog.plant.AquariumPlant
-import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
@@ -27,7 +27,9 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
 
     private val args: PlantPickerFragmentArgs by navArgs()
 
-    private val plants: List<AquariumPlant> = PlantCatalog.plants
+    private val plants: List<AquariumPlant> by lazy(LazyThreadSafetyMode.NONE) {
+        PlantCatalog.resolve(requireContext())
+    }
 
     override fun onViewCreated(
         view: View,
@@ -105,14 +107,14 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
                     R.color.aqua_card_text_secondary
                 )
             )
-            textSize = 14f
+            setTextSizeResource(R.dimen.aqua_text_size_body)
             includeFontPadding = false
 
             val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.bottomMargin = 16.dp()
+            params.bottomMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_16)
             layoutParams = params
         }
 
@@ -150,7 +152,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.topMargin = 32.dp()
+            params.topMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_32)
             layoutParams = params
         }
 
@@ -161,8 +163,8 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
         plant: AquariumPlant
     ): View {
         val card = MaterialCardView(requireContext()).apply {
-            radius = 18.dp().toFloat()
-            strokeWidth = 1.dp()
+            radius = resources.getDimensionPixelOffset(R.dimen.aqua_size_18).toFloat()
+            strokeWidth = resources.getDimensionPixelOffset(R.dimen.aqua_size_1)
             strokeColor = ContextCompat.getColor(
                 requireContext(),
                 R.color.aqua_card_outline
@@ -182,7 +184,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.bottomMargin = 12.dp()
+            params.bottomMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_12)
             layoutParams = params
 
             setOnClickListener {
@@ -197,10 +199,10 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_VERTICAL
             setPadding(
-                18.dp(),
-                15.dp(),
-                18.dp(),
-                15.dp()
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_18),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_15),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_18),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_15)
             )
         }
 
@@ -212,7 +214,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
                     R.color.aqua_card_text_secondary
                 )
             )
-            textSize = 12f
+            setTextSizeResource(R.dimen.aqua_text_size_caption)
             includeFontPadding = false
         }
 
@@ -224,7 +226,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
                     R.color.aqua_card_text_primary
                 )
             )
-            textSize = 15f
+            setTextSizeResource(R.dimen.aqua_text_size_body_large)
             includeFontPadding = false
             maxLines = 2
 
@@ -232,7 +234,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.topMargin = 7.dp()
+            params.topMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_7)
             layoutParams = params
         }
 
@@ -267,11 +269,6 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
     private fun closePicker() {
         findNavController().navigateUp()
     }
-
-    private fun Int.dp(): Int {
-        return (this * resources.displayMetrics.density).toInt()
-    }
-
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

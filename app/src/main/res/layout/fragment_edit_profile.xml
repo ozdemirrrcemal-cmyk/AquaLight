@@ -6,14 +6,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_color"
-    android:padding="20dp"
+    android:padding="@dimen/aqua_size_20"
     android:fitsSystemWindows="false">
 
     <!-- 🔹 Başlık Alanı -->
     <include
     android:id="@+id/appHeader"
     layout="@layout/layout_aqua_header"
-    android:layout_width="0dp"
+    android:layout_width="@dimen/aqua_size_0"
     android:layout_height="wrap_content"
     app:layout_constraintTop_toTopOf="parent"
     app:layout_constraintStart_toStartOf="parent"
@@ -22,11 +22,11 @@
     <!-- 🧍‍♂️ Profil Fotoğrafı + Kamera İkonu -->
     <FrameLayout
     android:id="@+id/photoContainer"
-    android:layout_width="180dp"
-    android:layout_height="180dp"
-    android:layout_marginTop="24dp"
+    android:layout_width="@dimen/aqua_size_180"
+    android:layout_height="@dimen/aqua_size_180"
+    android:layout_marginTop="@dimen/aqua_size_24"
     android:background="@drawable/profile_background"
-    android:padding="0dp"
+    android:padding="@dimen/aqua_size_0"
     app:layout_constraintTop_toBottomOf="@id/appHeader"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintEnd_toEndOf="parent">
@@ -36,7 +36,7 @@
         android:id="@+id/ivEditProfilePhoto"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_margin="2dp"  
+        android:layout_margin="@dimen/aqua_size_2"
         android:background="@drawable/profile_clip_circle"
         android:scaleType="centerCrop"
         android:src="@drawable/ic_profile_placeholder"
@@ -46,13 +46,13 @@
     <!-- Kamera ikonu -->
     <ImageView
         android:id="@+id/ivCameraIcon"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="@dimen/aqua_size_40"
+        android:layout_height="@dimen/aqua_size_40"
         android:background="@drawable/profile_background_small"
         android:src="@drawable/ic_camera"
-        android:padding="8dp"
+        android:padding="@dimen/aqua_size_8"
         android:layout_gravity="bottom|end"
-        android:layout_marginBottom="15dp"
+        android:layout_marginBottom="@dimen/aqua_size_15"
         android:contentDescription="@string/edit_profile_camera_icon_desc"
         android:clickable="true"
         android:focusable="true" />
@@ -63,11 +63,11 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSave"
         style="@style/Widget.Aqua.Button.Primary"
-        android:layout_width="0dp"
+        android:layout_width="@dimen/aqua_size_0"
         android:layout_height="@dimen/aqua_button_height"
         android:text="@string/edit_profile_save_button"
         android:contentDescription="@string/edit_profile_save_button_desc"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="@dimen/aqua_size_16"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />

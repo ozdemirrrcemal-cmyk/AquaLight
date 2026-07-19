@@ -53,8 +53,8 @@ class AboutAppFragment : Fragment(R.layout.fragment_about_app) {
                 0
             )
 
-        val versionName =
-            packageInfo.versionName ?: "-"
+        val versionName = packageInfo.versionName
+            ?: getString(R.string.common_not_available_symbol)
 
         val versionCode =
             if (

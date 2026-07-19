@@ -1,9 +1,11 @@
 package com.aqua.aqualight.ui.tabs.settings.device
 
+import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceStatusOperations
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.OwnerDeviceStatusSnapshot
+import com.aqua.aqualight.ui.common.text.AquaUiText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -45,7 +47,13 @@ class DeviceStatusViewModelBoundaryTest {
         assertEquals("AquaLight One", item.displayName)
         assertEquals("192.168.1.20", item.ip)
         assertEquals("AQL-0001", item.serialText)
-        assertEquals("15s ago", item.lastSeenText)
+        assertEquals(
+            AquaUiText.Plural(
+                R.plurals.device_status_last_seen_seconds_ago,
+                quantity = 15
+            ),
+            item.lastSeenText
+        )
         assertEquals(true, item.isOnline)
     }
 
@@ -57,11 +65,20 @@ class DeviceStatusViewModelBoundaryTest {
         val clock = FakeDeviceStatusClock(nowMillis = 10_000L)
         val viewModel = DeviceStatusViewModel(operations, clock)
 
-        assertEquals("Just now", viewModel.uiState.value.devices.single().lastSeenText)
+        assertEquals(
+            AquaUiText.Resource(R.string.device_status_last_seen_just_now),
+            viewModel.uiState.value.devices.single().lastSeenText
+        )
 
         clock.emit(62_000L)
 
-        assertEquals("1m ago", viewModel.uiState.value.devices.single().lastSeenText)
+        assertEquals(
+            AquaUiText.Plural(
+                R.plurals.device_status_last_seen_minutes_ago,
+                quantity = 1
+            ),
+            viewModel.uiState.value.devices.single().lastSeenText
+        )
     }
 
     private fun status(lastSeenAtMillis: Long) = OwnerDeviceStatusSnapshot(

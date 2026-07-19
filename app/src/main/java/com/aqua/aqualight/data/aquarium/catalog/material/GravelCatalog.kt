@@ -1,74 +1,118 @@
 package com.aqua.aqualight.data.aquarium.catalog.material
 
+import com.aqua.aqualight.R
+
 
 object GravelCatalog {
 
-    private const val CATEGORY_TITLE = "Gravel"
-
-    val products: List<AquariumMaterial> = listOf(
-        AquariumMaterial(
+    val definitions: List<AquariumMaterialDefinition> = listOf(
+        AquariumMaterialDefinition(
             id = "gravel_ada_aqua_gravel_s",
-            brand = "ADA",
-            name = "ADA Aqua Gravel S",
+            brandRes = R.string.catalog_brand_ada,
+            nameRes = R.string.catalog_material_gravel_ada_aqua_gravel_s_name,
             categoryKey = MaterialCategoryKey.GRAVEL,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("gravel", "sand", "stone", "ada", "aqua gravel")
+            categoryTitleRes = R.string.catalog_material_category_gravel_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_gravel,
+                R.string.catalog_keyword_sand,
+                R.string.catalog_keyword_stone,
+                R.string.catalog_keyword_ada,
+                R.string.catalog_keyword_aqua_gravel
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "gravel_ada_aqua_gravel_m",
-            brand = "ADA",
-            name = "ADA Aqua Gravel M",
+            brandRes = R.string.catalog_brand_ada,
+            nameRes = R.string.catalog_material_gravel_ada_aqua_gravel_m_name,
             categoryKey = MaterialCategoryKey.GRAVEL,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("gravel", "sand", "stone", "ada", "aqua gravel")
+            categoryTitleRes = R.string.catalog_material_category_gravel_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_gravel,
+                R.string.catalog_keyword_sand,
+                R.string.catalog_keyword_stone,
+                R.string.catalog_keyword_ada,
+                R.string.catalog_keyword_aqua_gravel
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "gravel_dennerle_nano_gravel_black",
-            brand = "Dennerle",
-            name = "Dennerle Nano Gravel Black",
+            brandRes = R.string.catalog_brand_dennerle,
+            nameRes = R.string.catalog_material_gravel_dennerle_nano_gravel_black_name,
             categoryKey = MaterialCategoryKey.GRAVEL,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("gravel", "black", "nano", "dennerle")
+            categoryTitleRes = R.string.catalog_material_category_gravel_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_gravel,
+                R.string.catalog_keyword_black,
+                R.string.catalog_keyword_nano,
+                R.string.catalog_keyword_dennerle
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "gravel_dennerle_nano_gravel_natural",
-            brand = "Dennerle",
-            name = "Dennerle Nano Gravel Natural",
+            brandRes = R.string.catalog_brand_dennerle,
+            nameRes = R.string.catalog_material_gravel_dennerle_nano_gravel_natural_name,
             categoryKey = MaterialCategoryKey.GRAVEL,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("gravel", "natural", "nano", "dennerle")
+            categoryTitleRes = R.string.catalog_material_category_gravel_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_gravel,
+                R.string.catalog_keyword_natural,
+                R.string.catalog_keyword_nano,
+                R.string.catalog_keyword_dennerle
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "gravel_jbl_sansibar_dark",
-            brand = "JBL",
-            name = "JBL Sansibar Dark",
+            brandRes = R.string.catalog_brand_jbl,
+            nameRes = R.string.catalog_material_gravel_jbl_sansibar_dark_name,
             categoryKey = MaterialCategoryKey.GRAVEL,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("gravel", "sand", "black", "dark", "jbl")
+            categoryTitleRes = R.string.catalog_material_category_gravel_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_gravel,
+                R.string.catalog_keyword_sand,
+                R.string.catalog_keyword_black,
+                R.string.catalog_keyword_dark,
+                R.string.catalog_keyword_jbl
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "gravel_jbl_sansibar_white",
-            brand = "JBL",
-            name = "JBL Sansibar White",
+            brandRes = R.string.catalog_brand_jbl,
+            nameRes = R.string.catalog_material_gravel_jbl_sansibar_white_name,
             categoryKey = MaterialCategoryKey.GRAVEL,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("gravel", "sand", "white", "jbl")
+            categoryTitleRes = R.string.catalog_material_category_gravel_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_gravel,
+                R.string.catalog_keyword_sand,
+                R.string.catalog_keyword_white,
+                R.string.catalog_keyword_jbl
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "gravel_aquael_basaltsand",
-            brand = "Aquael",
-            name = "Aquael Basalt Sand",
+            brandRes = R.string.catalog_brand_aquael,
+            nameRes = R.string.catalog_material_gravel_aquael_basaltsand_name,
             categoryKey = MaterialCategoryKey.GRAVEL,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("gravel", "sand", "basalt", "black", "aquael")
+            categoryTitleRes = R.string.catalog_material_category_gravel_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_gravel,
+                R.string.catalog_keyword_sand,
+                R.string.catalog_keyword_basalt,
+                R.string.catalog_keyword_black,
+                R.string.catalog_keyword_aquael
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "gravel_natural_river_sand",
-            brand = "",
-            name = "Natural River Sand",
+            brandRes = 0,
+            nameRes = R.string.catalog_material_gravel_natural_river_sand_name,
             categoryKey = MaterialCategoryKey.GRAVEL,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("gravel", "sand", "river", "natural")
+            categoryTitleRes = R.string.catalog_material_category_gravel_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_gravel,
+                R.string.catalog_keyword_sand,
+                R.string.catalog_keyword_river,
+                R.string.catalog_keyword_natural
+            )
         )
     )
 }

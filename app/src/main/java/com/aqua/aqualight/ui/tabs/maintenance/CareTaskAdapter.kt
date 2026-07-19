@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.maintenance
 
+import com.aqua.aqualight.ui.common.text.setTextSizeResource
+import androidx.core.content.ContextCompat
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
@@ -245,9 +247,9 @@ class CareTaskAdapter(
       title: String
     ) {
       titleText.text = title
-      titleText.textSize = 11.5f
+      titleText.setTextSizeResource(R.dimen.aqua_text_size_micro_plus)
       titleText.setTypeface(null, Typeface.NORMAL)
-      titleText.setTextColor(Color.WHITE)
+      titleText.setTextColor(ContextCompat.getColor(titleText.context, R.color.aqua_content_on_dark))
     }
   }
 
@@ -258,7 +260,7 @@ class CareTaskAdapter(
     fun bind(
       item: CareTaskUi
     ) {
-      val accentColor = Color.parseColor(item.accentColor)
+      val accentColor = item.accentColor
 
       binding.ivTaskIcon.setImageResource(item.iconRes)
 
@@ -267,8 +269,8 @@ class CareTaskAdapter(
       )
 
       binding.tvTaskTitle.text = item.title
-      binding.tvTaskTitle.textSize = 13.2f
-      binding.tvTaskTitle.setTextColor(Color.WHITE)
+      binding.tvTaskTitle.setTextSizeResource(R.dimen.aqua_text_size_body_precise)
+      binding.tvTaskTitle.setTextColor(ContextCompat.getColor(binding.root.context, R.color.aqua_content_on_dark))
       binding.tvTaskTitle.setTypeface(
         null,
         if (item.status == CareTaskStatus.COMPLETED) {
@@ -279,41 +281,41 @@ class CareTaskAdapter(
       )
 
       binding.tvSourceBadge.text = item.sourceLabel
-      binding.tvSourceBadge.textSize = 10.2f
+      binding.tvSourceBadge.setTextSizeResource(R.dimen.aqua_text_size_badge_compact)
       binding.tvSourceBadge.background = createSourceBadgeBackground(
         source = item.source
       )
 
       binding.tvSourceBadge.setTextColor(
         if (item.source == CareTaskSource.AUTOMATIC) {
-          Color.parseColor("#5FD6B4")
+          ContextCompat.getColor(binding.root.context, R.color.aqua_accent_positive)
         } else {
-          Color.parseColor("#B8C7D9")
+          ContextCompat.getColor(binding.root.context, R.color.aqua_content_tertiary)
         }
       )
 
       binding.tvTaskMeta.text = buildScheduleText(item)
-      binding.tvTaskMeta.textSize = 11.5f
+      binding.tvTaskMeta.setTextSizeResource(R.dimen.aqua_text_size_micro_plus)
       binding.tvTaskMeta.setTextColor(
         if (item.isOverdue && item.status == CareTaskStatus.PENDING) {
-          Color.parseColor("#D85C5C")
+          ContextCompat.getColor(binding.root.context, R.color.aqua_status_danger)
         } else {
-          Color.parseColor("#B8C7D9")
+          ContextCompat.getColor(binding.root.context, R.color.aqua_content_tertiary)
         }
       )
 
       binding.tvTaskSecondary.text = item.tankName.ifBlank {
         context.getString(R.string.maintenance_aquarium_label)
       }
-      binding.tvTaskSecondary.textSize = 11.5f
+      binding.tvTaskSecondary.setTextSizeResource(R.dimen.aqua_text_size_micro_plus)
       binding.tvTaskSecondary.setTextColor(
-        Color.parseColor("#B8C7D9")
+        ContextCompat.getColor(binding.root.context, R.color.aqua_content_tertiary)
       )
 
       binding.tvTaskDescription.text = item.description
-      binding.tvTaskDescription.textSize = 11.4f
+      binding.tvTaskDescription.setTextSizeResource(R.dimen.aqua_text_size_body_precise_small)
       binding.tvTaskDescription.setTextColor(
-        Color.parseColor("#8FA4BE")
+        ContextCompat.getColor(binding.root.context, R.color.aqua_content_secondary)
       )
       binding.tvTaskDescription.isVisible =
       item.description.isNotBlank()
@@ -348,7 +350,7 @@ class CareTaskAdapter(
     ): GradientDrawable {
       return GradientDrawable().apply {
         shape = GradientDrawable.RECTANGLE
-        cornerRadius = 14.dp().toFloat()
+        cornerRadius = binding.root.resources.getDimensionPixelOffset(R.dimen.aqua_size_14).toFloat()
         setColor(
           applyAlpha(
             color = color,
@@ -356,7 +358,7 @@ class CareTaskAdapter(
           )
         )
         setStroke(
-          1.dp(),
+          binding.root.resources.getDimensionPixelOffset(R.dimen.aqua_size_1),
           applyAlpha(
             color = color,
             alpha = 0.65f
@@ -369,23 +371,23 @@ class CareTaskAdapter(
       source: CareTaskSource
     ): GradientDrawable {
       val color = if (source == CareTaskSource.AUTOMATIC) {
-        Color.parseColor("#12382F")
+        ContextCompat.getColor(binding.root.context, R.color.aqua_surface_positive)
       } else {
-        Color.parseColor("#1C3252")
+        ContextCompat.getColor(binding.root.context, R.color.aqua_surface_action)
       }
 
       val strokeColor = if (source == CareTaskSource.AUTOMATIC) {
-        Color.parseColor("#2B6F5A")
+        ContextCompat.getColor(binding.root.context, R.color.aqua_outline_positive)
       } else {
-        Color.parseColor("#2A4566")
+        ContextCompat.getColor(binding.root.context, R.color.aqua_care_task_adapter_color)
       }
 
       return GradientDrawable().apply {
         shape = GradientDrawable.RECTANGLE
-        cornerRadius = 11.dp().toFloat()
+        cornerRadius = binding.root.resources.getDimensionPixelOffset(R.dimen.aqua_size_11).toFloat()
         setColor(color)
         setStroke(
-          1.dp(),
+          binding.root.resources.getDimensionPixelOffset(R.dimen.aqua_size_1),
           strokeColor
         )
       }
@@ -401,12 +403,6 @@ class CareTaskAdapter(
         Color.green(color),
         Color.blue(color)
       )
-    }
-
-    private fun Int.dp(): Int {
-      return (
-        this * binding.root.resources.displayMetrics.density
-      ).toInt()
     }
   }
 

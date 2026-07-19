@@ -2,60 +2,61 @@
 xmlns:android="http://schemas.android.com/apk/res/android"
 xmlns:app="http://schemas.android.com/apk/res-auto"
 xmlns:tools="http://schemas.android.com/tools"
-android:layout_width="match_parent"  
-android:layout_height="match_parent"  
-android:background="@color/background_color"  
-tools:context=".ui.tabs.settings.device.DeviceStatusFragment">  
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:background="@color/background_color"
+tools:context=".ui.tabs.settings.device.DeviceStatusFragment">
 
-<!-- HEADER -->  
+<!-- HEADER -->
 <include
     android:id="@+id/appHeader"
     layout="@layout/layout_aqua_header"
-    android:layout_width="0dp"
+    android:layout_width="@dimen/aqua_size_0"
     android:layout_height="wrap_content"
     app:layout_constraintTop_toTopOf="parent"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintEnd_toEndOf="parent" />
 
-<!-- DEVICES RECYCLER -->  
-<androidx.recyclerview.widget.RecyclerView  
-    android:id="@+id/rvDevices"  
-    android:layout_width="0dp"  
-    android:layout_height="0dp"  
+<!-- DEVICES RECYCLER -->
+<androidx.recyclerview.widget.RecyclerView
+    android:id="@+id/rvDevices"
+    android:layout_width="@dimen/aqua_size_0"
+    android:layout_height="@dimen/aqua_size_0"
 
-    android:layout_marginTop="8dp"  
+    android:layout_marginTop="@dimen/aqua_size_8"
 
-    android:paddingStart="3dp"  
-    android:paddingEnd="3dp"  
-    android:paddingBottom="20dp"  
+    android:paddingStart="@dimen/aqua_size_3"
+    android:paddingEnd="@dimen/aqua_size_3"
+    android:paddingBottom="@dimen/aqua_size_20"
 
-    android:clipToPadding="false"  
-    android:overScrollMode="never"  
+    android:clipToPadding="false"
+    android:overScrollMode="never"
 
-    tools:listitem="@layout/item_device_status"  
+    tools:listitem="@layout/item_device_status"
 
-    app:layout_constraintTop_toBottomOf="@id/appHeader"  
-    app:layout_constraintBottom_toBottomOf="parent"  
-    app:layout_constraintStart_toStartOf="parent"  
+    app:layout_constraintTop_toBottomOf="@id/appHeader"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintEnd_toEndOf="parent"/>
 
 <com.google.android.material.card.MaterialCardView
+    style="@style/Widget.Aqua.Card.Inline"
     android:id="@+id/emptyStateContainer"
-    android:layout_width="0dp"
+    android:layout_width="@dimen/aqua_size_0"
     android:layout_height="wrap_content"
-    android:layout_marginStart="28dp"
-    android:layout_marginEnd="28dp"
+    android:layout_marginStart="@dimen/aqua_size_28"
+    android:layout_marginEnd="@dimen/aqua_size_28"
     android:visibility="gone"
     app:cardBackgroundColor="@color/aqua_state_container_surface"
-    app:cardCornerRadius="24dp"
-    app:cardElevation="0dp"
+    app:cardCornerRadius="@dimen/aqua_size_24"
+    app:cardElevation="@dimen/aqua_size_0"
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toBottomOf="@id/appHeader"
     app:layout_constraintVertical_bias="0.48"
     app:strokeColor="@color/aqua_state_container_outline"
-    app:strokeWidth="1dp"
+    app:strokeWidth="@dimen/aqua_size_1"
     tools:visibility="visible">
 
     <LinearLayout
@@ -63,10 +64,10 @@ tools:context=".ui.tabs.settings.device.DeviceStatusFragment">
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:paddingStart="22dp"
-        android:paddingTop="24dp"
-        android:paddingEnd="22dp"
-        android:paddingBottom="24dp">
+        android:paddingStart="@dimen/aqua_size_22"
+        android:paddingTop="@dimen/aqua_size_24"
+        android:paddingEnd="@dimen/aqua_size_22"
+        android:paddingBottom="@dimen/aqua_size_24">
 
         <TextView
             android:id="@+id/tvEmptyDeviceStatusTitle"
@@ -74,7 +75,7 @@ tools:context=".ui.tabs.settings.device.DeviceStatusFragment">
             android:layout_height="wrap_content"
             android:gravity="center"
             android:includeFontPadding="false"
-            android:text="No active devices"
+            android:text="@string/device_status_empty_title"
             android:textColor="@color/aqua_state_text_primary"
             android:textSize="@dimen/aqua_text_size_state_title"
             android:textStyle="bold" />
@@ -83,11 +84,11 @@ tools:context=".ui.tabs.settings.device.DeviceStatusFragment">
             android:id="@+id/tvEmptyDeviceStatusMessage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="@dimen/aqua_size_10"
             android:gravity="center"
             android:includeFontPadding="false"
-            android:lineSpacingExtra="3dp"
-            android:text="Connected devices will appear here once they are available."
+            android:lineSpacingExtra="@dimen/aqua_size_3"
+            android:text="@string/device_status_empty_message"
             android:textColor="@color/aqua_state_text_secondary"
             android:textSize="@dimen/aqua_text_size_state_body" />
 

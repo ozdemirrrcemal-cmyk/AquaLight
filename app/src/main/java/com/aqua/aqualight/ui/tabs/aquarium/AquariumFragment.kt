@@ -1,7 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium
 
+import androidx.core.content.ContextCompat
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import androidx.core.view.isVisible
@@ -233,15 +233,15 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
     private fun applyPrimaryActionStyle() {
         val button = binding.appHeader.btnPrimaryAction
         if (isDeleteMode) {
-            button.setTextColor(Color.parseColor("#FF8A8A"))
-            button.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#321E2A"))
-            button.strokeWidth = 1.dp()
-            button.strokeColor = ColorStateList.valueOf(Color.parseColor("#7A3344"))
+            button.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_aquarium_fragment_button_content))
+            button.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.aqua_aquarium_fragment_button_icon))
+            button.strokeWidth = resources.getDimensionPixelOffset(R.dimen.aqua_size_1)
+            button.strokeColor = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.aqua_aquarium_fragment_button_outline))
         } else {
-            button.setTextColor(Color.WHITE)
-            button.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#1C3252"))
+            button.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
+            button.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.aqua_surface_action))
             button.strokeWidth = 0
-            button.strokeColor = ColorStateList.valueOf(Color.TRANSPARENT)
+            button.strokeColor = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.aqua_color_transparent))
         }
     }
 
@@ -356,9 +356,6 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
             }
         }
     }
-
-    private fun Int.dp(): Int = (this * resources.displayMetrics.density).toInt()
-
     override fun onDestroyView() {
         binding.rvTanks.adapter = null
         _binding = null

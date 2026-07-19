@@ -1,42 +1,65 @@
 package com.aqua.aqualight.data.aquarium.catalog.material
 
+import com.aqua.aqualight.R
+
 
 object AquariumCatalog {
 
-    private const val CATEGORY_TITLE = "Aquarium"
-
-    val products: List<AquariumMaterial> = listOf(
-        AquariumMaterial(
+    val definitions: List<AquariumMaterialDefinition> = listOf(
+        AquariumMaterialDefinition(
             id = "aquarium_chihiros_tiny_terrarium_egg_wabi_kusa",
-            brand = "Chihiros",
-            name = "Chihiros Tiny Terrarium Egg - Wabi Kusa Set (10W, 550 ml)",
+            brandRes = R.string.catalog_brand_chihiros,
+            nameRes = R.string.catalog_material_aquarium_chihiros_tiny_terrarium_egg_wabi_kusa_name,
             categoryKey = MaterialCategoryKey.AQUARIUM,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("aquarium", "tank", "set", "wabi kusa", "chihiros")
+            categoryTitleRes = R.string.catalog_material_category_aquarium_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_aquarium,
+                R.string.catalog_keyword_tank,
+                R.string.catalog_keyword_set,
+                R.string.catalog_keyword_wabi_kusa,
+                R.string.catalog_keyword_chihiros
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "aquarium_chihiros_wabi_kusa_magnetic_light_base_glass_air",
-            brand = "Chihiros",
-            name = "Chihiros Wabi Kusa Set (Magnetic Light, Base, Glass Air)",
+            brandRes = R.string.catalog_brand_chihiros,
+            nameRes = R.string.catalog_material_aquarium_chihiros_wabi_kusa_magnetic_light_base_glass_air_name,
             categoryKey = MaterialCategoryKey.AQUARIUM,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("aquarium", "tank", "set", "glass", "chihiros")
+            categoryTitleRes = R.string.catalog_material_category_aquarium_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_aquarium,
+                R.string.catalog_keyword_tank,
+                R.string.catalog_keyword_set,
+                R.string.catalog_keyword_glass,
+                R.string.catalog_keyword_chihiros
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "aquarium_chihiros_wabi_kusa_magnetic_light_base_glass_pot",
-            brand = "Chihiros",
-            name = "Chihiros Wabi Kusa Set (Magnetic Light, Base, Glass Pot)",
+            brandRes = R.string.catalog_brand_chihiros,
+            nameRes = R.string.catalog_material_aquarium_chihiros_wabi_kusa_magnetic_light_base_glass_pot_name,
             categoryKey = MaterialCategoryKey.AQUARIUM,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("aquarium", "tank", "set", "glass", "chihiros")
+            categoryTitleRes = R.string.catalog_material_category_aquarium_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_aquarium,
+                R.string.catalog_keyword_tank,
+                R.string.catalog_keyword_set,
+                R.string.catalog_keyword_glass,
+                R.string.catalog_keyword_chihiros
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "aquarium_chihiros_magnetic_base",
-            brand = "Chihiros",
-            name = "Chihiros Magnetic Base",
+            brandRes = R.string.catalog_brand_chihiros,
+            nameRes = R.string.catalog_material_aquarium_chihiros_magnetic_base_name,
             categoryKey = MaterialCategoryKey.AQUARIUM,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("aquarium", "base", "magnetic", "chihiros")
+            categoryTitleRes = R.string.catalog_material_category_aquarium_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_aquarium,
+                R.string.catalog_keyword_base,
+                R.string.catalog_keyword_magnetic,
+                R.string.catalog_keyword_chihiros
+            )
         )
     )
 }

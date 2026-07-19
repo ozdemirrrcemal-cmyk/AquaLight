@@ -22,6 +22,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentSettingsBinding
 import com.aqua.aqualight.ui.tabs.settings.device.DeviceSettingsDeviceOverviewUi
+import com.aqua.aqualight.ui.common.text.resolve
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -94,7 +95,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private fun renderDeviceStatus(
         overview: DeviceSettingsDeviceOverviewUi
     ) {
-        binding.tvActiveDevices.text = overview.activeDeviceCountText
+        binding.tvActiveDevices.text = requireContext().resolve(overview.activeDeviceCountText)
 
         binding.viewDeviceDot.setBackgroundResource(
             if (overview.hasOnlineDevices) {

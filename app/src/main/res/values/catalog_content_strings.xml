@@ -1,0 +1,432 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Localizable catalog categories -->
+    <string name="catalog_material_category_fertilizer_title">Fertilizer</string>
+    <string name="catalog_material_category_fertilizer_short_code" translatable="false">Fe</string>
+    <string name="catalog_material_category_decoration_title">Decoration</string>
+    <string name="catalog_material_category_decoration_short_code" translatable="false">De</string>
+    <string name="catalog_material_category_gravel_title">Gravel</string>
+    <string name="catalog_material_category_gravel_short_code" translatable="false">Gr</string>
+    <string name="catalog_material_category_substrate_title">Substrate</string>
+    <string name="catalog_material_category_substrate_short_code" translatable="false">Su</string>
+    <string name="catalog_material_category_aquarium_title">Aquarium</string>
+    <string name="catalog_material_category_aquarium_short_code" translatable="false">Aq</string>
+    <string name="catalog_material_category_co2_title">CO2</string>
+    <string name="catalog_material_category_co2_short_code" translatable="false">C</string>
+    <string name="catalog_material_category_light_title">Light</string>
+    <string name="catalog_material_category_light_short_code" translatable="false">Li</string>
+    <string name="catalog_material_category_filter_title">Filter</string>
+    <string name="catalog_material_category_filter_short_code" translatable="false">Fi</string>
+    <string name="catalog_material_category_heater_title">Heater</string>
+    <string name="catalog_material_category_heater_short_code" translatable="false">He</string>
+    <string name="catalog_material_category_cooler_title">Cooler</string>
+    <string name="catalog_material_category_cooler_short_code" translatable="false">Co</string>
+    <string name="catalog_material_category_dosing_title">Dosing</string>
+    <string name="catalog_material_category_dosing_short_code" translatable="false">Do</string>
+    <string name="catalog_material_category_led_background_title">LED Background</string>
+    <string name="catalog_material_category_led_background_short_code" translatable="false">LED</string>
+    <string name="catalog_plant_category_epiphytes_title">Epiphytes</string>
+    <string name="catalog_plant_category_foreground_title">Foreground</string>
+    <string name="catalog_plant_category_ground_cover_title">Ground Cover</string>
+    <string name="catalog_plant_category_middle_ground_title">Middle Ground</string>
+    <string name="catalog_plant_category_background_title">Background</string>
+    <string name="catalog_plant_category_mosses_title">Mosses</string>
+    <string name="catalog_plant_category_floating_plants_title">Floating Plants</string>
+    <string name="catalog_plant_category_rare_plants_title">Rare Plants</string>
+
+    <!-- Official brand and product names are not translated. -->
+    <string name="catalog_brand_ada" translatable="false">ADA</string>
+    <string name="catalog_brand_aquael" translatable="false">Aquael</string>
+    <string name="catalog_brand_aquario" translatable="false">Aquario</string>
+    <string name="catalog_brand_chihiros" translatable="false">Chihiros</string>
+    <string name="catalog_brand_dennerle" translatable="false">Dennerle</string>
+    <string name="catalog_brand_do_aqua" translatable="false">Do!aqua</string>
+    <string name="catalog_brand_eheim" translatable="false">Eheim</string>
+    <string name="catalog_brand_green_aqua" translatable="false">Green Aqua</string>
+    <string name="catalog_brand_ista" translatable="false">ISTA</string>
+    <string name="catalog_brand_jbl" translatable="false">JBL</string>
+    <string name="catalog_brand_jebao" translatable="false">Jebao</string>
+    <string name="catalog_brand_kamoer" translatable="false">Kamoer</string>
+    <string name="catalog_brand_oase" translatable="false">Oase</string>
+    <string name="catalog_brand_sunsun" translatable="false">SunSun</string>
+    <string name="catalog_brand_tropica" translatable="false">Tropica</string>
+    <string name="catalog_brand_twinstar" translatable="false">Twinstar</string>
+    <string name="catalog_brand_week_aqua" translatable="false">Week Aqua</string>
+    <string name="catalog_material_aquarium_chihiros_tiny_terrarium_egg_wabi_kusa_name" translatable="false">Chihiros Tiny Terrarium Egg - Wabi Kusa Set (10W, 550 ml)</string>
+    <string name="catalog_material_aquarium_chihiros_wabi_kusa_magnetic_light_base_glass_air_name" translatable="false">Chihiros Wabi Kusa Set (Magnetic Light, Base, Glass Air)</string>
+    <string name="catalog_material_aquarium_chihiros_wabi_kusa_magnetic_light_base_glass_pot_name" translatable="false">Chihiros Wabi Kusa Set (Magnetic Light, Base, Glass Pot)</string>
+    <string name="catalog_material_aquarium_chihiros_magnetic_base_name" translatable="false">Chihiros Magnetic Base</string>
+    <string name="catalog_material_co2_chihiros_co2_regulator_name" translatable="false">Chihiros CO2 Regulator</string>
+    <string name="catalog_material_co2_chihiros_co2_generator_name" translatable="false">Chihiros CO2 Generator System</string>
+    <string name="catalog_material_co2_ista_professional_regulator_name" translatable="false">ISTA Professional CO2 Regulator</string>
+    <string name="catalog_material_co2_ista_aluminium_cylinder_name" translatable="false">ISTA Aluminium CO2 Cylinder</string>
+    <string name="catalog_material_co2_jbl_proflora_u504_name" translatable="false">JBL ProFlora u504 CO2 Set</string>
+    <string name="catalog_material_co2_dennerle_quantum_name" translatable="false">Dennerle Quantum CO2 Regulator</string>
+    <string name="catalog_material_co2_aquario_neo_diffuser_name" translatable="false">Aquario Neo CO2 Diffuser</string>
+    <string name="catalog_material_co2_do_aqua_music_glass_name" translatable="false">Do!aqua CO2 Music Glass Diffuser</string>
+    <string name="catalog_material_cooler_aquael_fan_mini_name" translatable="false">Aquael Fan Mini</string>
+    <string name="catalog_material_cooler_chihiros_cooling_fan_name" translatable="false">Chihiros Cooling Fan</string>
+    <string name="catalog_material_cooler_ista_cooling_fan_name" translatable="false">ISTA Cooling Fan</string>
+    <string name="catalog_material_cooler_jbl_cooler_100_name" translatable="false">JBL Cooler 100</string>
+    <string name="catalog_material_cooler_jbl_cooler_200_name" translatable="false">JBL Cooler 200</string>
+    <string name="catalog_material_decoration_seiryu_stone_name" translatable="false">Seiryu Stone</string>
+    <string name="catalog_material_decoration_dragon_stone_name" translatable="false">Dragon Stone</string>
+    <string name="catalog_material_decoration_lava_rock_name" translatable="false">Lava Rock</string>
+    <string name="catalog_material_decoration_manten_stone_name" translatable="false">Manten Stone</string>
+    <string name="catalog_material_decoration_ohko_stone_name" translatable="false">Ohko Stone</string>
+    <string name="catalog_material_decoration_spider_wood_name" translatable="false">Spider Wood</string>
+    <string name="catalog_material_decoration_mopani_wood_name" translatable="false">Mopani Wood</string>
+    <string name="catalog_material_decoration_red_moor_wood_name" translatable="false">Red Moor Wood</string>
+    <string name="catalog_material_decoration_mangrove_root_name" translatable="false">Mangrove Root</string>
+    <string name="catalog_material_decoration_cholla_wood_name" translatable="false">Cholla Wood</string>
+    <string name="catalog_material_dosing_chihiros_dosing_pump_name" translatable="false">Chihiros Dosing Pump</string>
+    <string name="catalog_material_dosing_chihiros_dosing_system_name" translatable="false">Chihiros Dosing System</string>
+    <string name="catalog_material_dosing_jebao_dp_4_name" translatable="false">Jebao DP-4 Dosing Pump</string>
+    <string name="catalog_material_dosing_kamoer_x1_name" translatable="false">Kamoer X1 Dosing Pump</string>
+    <string name="catalog_material_dosing_kamoer_f4_name" translatable="false">Kamoer F4 Dosing Pump</string>
+    <string name="catalog_material_fertilizer_green_aqua_carbon_plant_wellness_1000_name" translatable="false">Green Aqua Carbon Plant Wellness - Fertilizer Pack 1000 ml</string>
+    <string name="catalog_material_fertilizer_green_aqua_carbon_plant_wellness_500_name" translatable="false">Green Aqua Carbon Plant Wellness - Fertilizer Pack 500 ml</string>
+    <string name="catalog_material_fertilizer_green_aqua_carbon_plant_wellness_250_name" translatable="false">Green Aqua Carbon Plant Wellness - Fertilizer Pack 250 ml</string>
+    <string name="catalog_material_fertilizer_tropica_specialised_nutrition_name" translatable="false">Tropica Specialised Nutrition</string>
+    <string name="catalog_material_fertilizer_tropica_premium_nutrition_name" translatable="false">Tropica Premium Nutrition</string>
+    <string name="catalog_material_filter_eheim_classic_150_name" translatable="false">Eheim Classic 150</string>
+    <string name="catalog_material_filter_eheim_classic_250_name" translatable="false">Eheim Classic 250</string>
+    <string name="catalog_material_filter_eheim_experience_250_name" translatable="false">Eheim Experience 250</string>
+    <string name="catalog_material_filter_oase_biomaster_250_name" translatable="false">Oase BioMaster 250</string>
+    <string name="catalog_material_filter_oase_biomaster_350_name" translatable="false">Oase BioMaster 350</string>
+    <string name="catalog_material_filter_jbl_cristalprofi_e702_name" translatable="false">JBL CristalProfi e702</string>
+    <string name="catalog_material_filter_jbl_cristalprofi_e902_name" translatable="false">JBL CristalProfi e902</string>
+    <string name="catalog_material_filter_aquael_versamax_name" translatable="false">Aquael Versamax Hang-on Filter</string>
+    <string name="catalog_material_filter_sunsun_hw_603b_name" translatable="false">SunSun HW-603B External Filter</string>
+    <string name="catalog_material_gravel_ada_aqua_gravel_s_name" translatable="false">ADA Aqua Gravel S</string>
+    <string name="catalog_material_gravel_ada_aqua_gravel_m_name" translatable="false">ADA Aqua Gravel M</string>
+    <string name="catalog_material_gravel_dennerle_nano_gravel_black_name" translatable="false">Dennerle Nano Gravel Black</string>
+    <string name="catalog_material_gravel_dennerle_nano_gravel_natural_name" translatable="false">Dennerle Nano Gravel Natural</string>
+    <string name="catalog_material_gravel_jbl_sansibar_dark_name" translatable="false">JBL Sansibar Dark</string>
+    <string name="catalog_material_gravel_jbl_sansibar_white_name" translatable="false">JBL Sansibar White</string>
+    <string name="catalog_material_gravel_aquael_basaltsand_name" translatable="false">Aquael Basalt Sand</string>
+    <string name="catalog_material_gravel_natural_river_sand_name" translatable="false">Natural River Sand</string>
+    <string name="catalog_material_heater_eheim_thermocontrol_50w_name" translatable="false">Eheim Thermocontrol 50W</string>
+    <string name="catalog_material_heater_eheim_thermocontrol_100w_name" translatable="false">Eheim Thermocontrol 100W</string>
+    <string name="catalog_material_heater_eheim_thermocontrol_150w_name" translatable="false">Eheim Thermocontrol 150W</string>
+    <string name="catalog_material_heater_jbl_protemp_s_50_name" translatable="false">JBL ProTemp S 50</string>
+    <string name="catalog_material_heater_jbl_protemp_s_100_name" translatable="false">JBL ProTemp S 100</string>
+    <string name="catalog_material_heater_aquael_ultra_heater_50w_name" translatable="false">Aquael Ultra Heater 50W</string>
+    <string name="catalog_material_heater_aquael_ultra_heater_100w_name" translatable="false">Aquael Ultra Heater 100W</string>
+    <string name="catalog_material_led_background_chihiros_vivid_background_name" translatable="false">Chihiros Vivid Background</string>
+    <string name="catalog_material_led_background_chihiros_shades_name" translatable="false">Chihiros LED Background Shades</string>
+    <string name="catalog_material_led_background_twinstar_light_screen_name" translatable="false">Twinstar Light Screen</string>
+    <string name="catalog_material_led_background_week_aqua_led_screen_name" translatable="false">Week Aqua LED Background Screen</string>
+    <string name="catalog_material_light_chihiros_wrgb_ii_name" translatable="false">Chihiros WRGB II</string>
+    <string name="catalog_material_light_chihiros_wrgb_ii_slim_name" translatable="false">Chihiros WRGB II Slim</string>
+    <string name="catalog_material_light_chihiros_magnetic_lamp_led_name" translatable="false">Chihiros Magnetic Lamp - LED Light</string>
+    <string name="catalog_material_light_twinstar_s_series_name" translatable="false">Twinstar S Series</string>
+    <string name="catalog_material_substrate_chihiros_aquasoil_9l_name" translatable="false">Chihiros Aquasoil 9L</string>
+    <string name="catalog_material_substrate_chihiros_aquasoil_3l_name" translatable="false">Chihiros Aquasoil 3L</string>
+    <string name="catalog_material_substrate_ada_tourmaline_bc_name" translatable="false">ADA Tourmaline BC</string>
+    <string name="catalog_material_substrate_dennerle_deponitmix_4_8kg_name" translatable="false">Dennerle DeponitMix Professional 10in1 - 4.8 kg</string>
+
+    <!-- Scientific cultivar names are locale-independent catalog data. -->
+    <string name="catalog_plant_anubias_barteri_name" translatable="false">Anubias barteri</string>
+    <string name="catalog_plant_anubias_barteri_var_nana_name" translatable="false">Anubias barteri var. nana</string>
+    <string name="catalog_plant_anubias_barteri_var_nana_petite_name" translatable="false">Anubias barteri var. nana \'Petite\'</string>
+    <string name="catalog_plant_anubias_barteri_var_nana_mini_name" translatable="false">Anubias barteri var. nana \'Mini\'</string>
+    <string name="catalog_plant_anubias_barteri_var_nana_pangolino_name" translatable="false">Anubias barteri var. nana \'Pangolino\'</string>
+    <string name="catalog_plant_anubias_barteri_var_caladiifolia_name" translatable="false">Anubias barteri var. caladiifolia</string>
+    <string name="catalog_plant_anubias_barteri_var_coffeefolia_name" translatable="false">Anubias barteri var. coffeefolia</string>
+    <string name="catalog_plant_anubias_gracilis_name" translatable="false">Anubias gracilis</string>
+    <string name="catalog_plant_anubias_hastifolia_name" translatable="false">Anubias hastifolia</string>
+    <string name="catalog_plant_anubias_heterophylla_name" translatable="false">Anubias heterophylla</string>
+    <string name="catalog_plant_bucephalandra_sp_catarina_name" translatable="false">Bucephalandra sp. \'Catarina\'</string>
+    <string name="catalog_plant_bucephalandra_sp_theia_green_name" translatable="false">Bucephalandra sp. \'Theia Green\'</string>
+    <string name="catalog_plant_bucephalandra_sp_biblis_name" translatable="false">Bucephalandra sp. \'Biblis\'</string>
+    <string name="catalog_plant_bucephalandra_sp_brownie_ghost_name" translatable="false">Bucephalandra sp. \'Brownie Ghost\'</string>
+    <string name="catalog_plant_bucephalandra_sp_brownie_blue_name" translatable="false">Bucephalandra sp. \'Brownie Blue\'</string>
+    <string name="catalog_plant_bucephalandra_sp_kedagang_name" translatable="false">Bucephalandra sp. \'Kedagang\'</string>
+    <string name="catalog_plant_bucephalandra_sp_mini_coin_name" translatable="false">Bucephalandra sp. \'Mini Coin\'</string>
+    <string name="catalog_plant_bucephalandra_sp_needle_leaf_name" translatable="false">Bucephalandra sp. \'Needle Leaf\'</string>
+    <string name="catalog_plant_bucephalandra_sp_red_mini_name" translatable="false">Bucephalandra sp. \'Red Mini\'</string>
+    <string name="catalog_plant_bucephalandra_sp_wavy_green_name" translatable="false">Bucephalandra sp. \'Wavy Green\'</string>
+    <string name="catalog_plant_microsorum_pteropus_name" translatable="false">Microsorum pteropus</string>
+    <string name="catalog_plant_microsorum_pteropus_narrow_name" translatable="false">Microsorum pteropus \'Narrow\'</string>
+    <string name="catalog_plant_microsorum_pteropus_trident_name" translatable="false">Microsorum pteropus \'Trident\'</string>
+    <string name="catalog_plant_microsorum_pteropus_windelov_name" translatable="false">Microsorum pteropus \'Windelov\'</string>
+    <string name="catalog_plant_microsorum_pteropus_needle_leaf_name" translatable="false">Microsorum pteropus \'Needle Leaf\'</string>
+    <string name="catalog_plant_bolbitis_heudelotii_name" translatable="false">Bolbitis heudelotii</string>
+    <string name="catalog_plant_bolbitis_heteroclita_difformis_name" translatable="false">Bolbitis heteroclita \'Difformis\'</string>
+    <string name="catalog_plant_hygrophila_pinnatifida_name" translatable="false">Hygrophila pinnatifida</string>
+    <string name="catalog_plant_cryptocoryne_parva_name" translatable="false">Cryptocoryne parva</string>
+    <string name="catalog_plant_cryptocoryne_lucens_name" translatable="false">Cryptocoryne lucens</string>
+    <string name="catalog_plant_cryptocoryne_willisii_name" translatable="false">Cryptocoryne willisii</string>
+    <string name="catalog_plant_staurogyne_repens_name" translatable="false">Staurogyne repens</string>
+    <string name="catalog_plant_pogostemon_helferi_name" translatable="false">Pogostemon helferi</string>
+    <string name="catalog_plant_lobelia_cardinalis_mini_name" translatable="false">Lobelia cardinalis \'Mini\'</string>
+    <string name="catalog_plant_alternanthera_reineckii_mini_name" translatable="false">Alternanthera reineckii \'Mini\'</string>
+    <string name="catalog_plant_helanthium_tenellum_name" translatable="false">Helanthium tenellum</string>
+    <string name="catalog_plant_helanthium_tenellum_green_name" translatable="false">Helanthium tenellum \'Green\'</string>
+    <string name="catalog_plant_lilaeopsis_brasiliensis_name" translatable="false">Lilaeopsis brasiliensis</string>
+    <string name="catalog_plant_lilaeopsis_novae_zelandiae_name" translatable="false">Lilaeopsis novae-zelandiae</string>
+    <string name="catalog_plant_marsilea_hirsuta_name" translatable="false">Marsilea hirsuta</string>
+    <string name="catalog_plant_marsilea_crenata_name" translatable="false">Marsilea crenata</string>
+    <string name="catalog_plant_marsilea_minuta_name" translatable="false">Marsilea minuta</string>
+    <string name="catalog_plant_ranunculus_inundatus_name" translatable="false">Ranunculus inundatus</string>
+    <string name="catalog_plant_eriocaulon_cinereum_name" translatable="false">Eriocaulon cinereum</string>
+    <string name="catalog_plant_sagittaria_subulata_name" translatable="false">Sagittaria subulata</string>
+    <string name="catalog_plant_blyxa_japonica_name" translatable="false">Blyxa japonica</string>
+    <string name="catalog_plant_hemianthus_callitrichoides_cuba_name" translatable="false">Hemianthus callitrichoides \'Cuba\'</string>
+    <string name="catalog_plant_micranthemum_tweediei_monte_carlo_name" translatable="false">Micranthemum tweediei \'Monte Carlo\'</string>
+    <string name="catalog_plant_glossostigma_elatinoides_name" translatable="false">Glossostigma elatinoides</string>
+    <string name="catalog_plant_eleocharis_acicularis_name" translatable="false">Eleocharis acicularis</string>
+    <string name="catalog_plant_eleocharis_acicularis_mini_name" translatable="false">Eleocharis acicularis \'Mini\'</string>
+    <string name="catalog_plant_eleocharis_parvula_name" translatable="false">Eleocharis parvula</string>
+    <string name="catalog_plant_eleocharis_pusilla_name" translatable="false">Eleocharis pusilla</string>
+    <string name="catalog_plant_utricularia_graminifolia_name" translatable="false">Utricularia graminifolia</string>
+    <string name="catalog_plant_hydrocotyle_tripartita_japan_name" translatable="false">Hydrocotyle tripartita \'Japan\'</string>
+    <string name="catalog_plant_marsilea_quadrifolia_name" translatable="false">Marsilea quadrifolia</string>
+    <string name="catalog_plant_lilaeopsis_mauritiana_name" translatable="false">Lilaeopsis mauritiana</string>
+    <string name="catalog_plant_riccia_fluitans_name" translatable="false">Riccia fluitans</string>
+    <string name="catalog_plant_cryptocoryne_wendtii_green_name" translatable="false">Cryptocoryne wendtii \'Green\'</string>
+    <string name="catalog_plant_cryptocoryne_wendtii_brown_name" translatable="false">Cryptocoryne wendtii \'Brown\'</string>
+    <string name="catalog_plant_cryptocoryne_wendtii_tropica_name" translatable="false">Cryptocoryne wendtii \'Tropica\'</string>
+    <string name="catalog_plant_cryptocoryne_wendtii_mi_oya_name" translatable="false">Cryptocoryne wendtii \'Mi Oya\'</string>
+    <string name="catalog_plant_cryptocoryne_beckettii_name" translatable="false">Cryptocoryne beckettii</string>
+    <string name="catalog_plant_cryptocoryne_undulata_name" translatable="false">Cryptocoryne undulata</string>
+    <string name="catalog_plant_cryptocoryne_lutea_name" translatable="false">Cryptocoryne lutea</string>
+    <string name="catalog_plant_cryptocoryne_albida_name" translatable="false">Cryptocoryne albida</string>
+    <string name="catalog_plant_cryptocoryne_balansae_name" translatable="false">Cryptocoryne balansae</string>
+    <string name="catalog_plant_cryptocoryne_spiralis_name" translatable="false">Cryptocoryne spiralis</string>
+    <string name="catalog_plant_cryptocoryne_pontederiifolia_name" translatable="false">Cryptocoryne pontederiifolia</string>
+    <string name="catalog_plant_cryptocoryne_crispatula_name" translatable="false">Cryptocoryne crispatula</string>
+    <string name="catalog_plant_lagenandra_meeboldii_red_name" translatable="false">Lagenandra meeboldii \'Red\'</string>
+    <string name="catalog_plant_lagenandra_meeboldii_green_name" translatable="false">Lagenandra meeboldii \'Green\'</string>
+    <string name="catalog_plant_hygrophila_corymbosa_compact_name" translatable="false">Hygrophila corymbosa \'Compact\'</string>
+    <string name="catalog_plant_hygrophila_polysperma_rosanervig_name" translatable="false">Hygrophila polysperma \'Rosanervig\'</string>
+    <string name="catalog_plant_pogostemon_erectus_name" translatable="false">Pogostemon erectus</string>
+    <string name="catalog_plant_rotala_indica_bonsai_name" translatable="false">Rotala indica \'Bonsai\'</string>
+    <string name="catalog_plant_rotala_rotundifolia_green_name" translatable="false">Rotala rotundifolia \'Green\'</string>
+    <string name="catalog_plant_bacopa_compacta_name" translatable="false">Bacopa compacta</string>
+    <string name="catalog_plant_bacopa_caroliniana_name" translatable="false">Bacopa caroliniana</string>
+    <string name="catalog_plant_bacopa_monnieri_name" translatable="false">Bacopa monnieri</string>
+    <string name="catalog_plant_ludwigia_palustris_super_red_name" translatable="false">Ludwigia palustris \'Super Red\'</string>
+    <string name="catalog_plant_ludwigia_repens_name" translatable="false">Ludwigia repens</string>
+    <string name="catalog_plant_nymphoides_hydrophylla_taiwan_name" translatable="false">Nymphoides hydrophylla \'Taiwan\'</string>
+    <string name="catalog_plant_hydrocotyle_leucocephala_name" translatable="false">Hydrocotyle leucocephala</string>
+    <string name="catalog_plant_hydrocotyle_verticillata_name" translatable="false">Hydrocotyle verticillata</string>
+    <string name="catalog_plant_vallisneria_spiralis_name" translatable="false">Vallisneria spiralis</string>
+    <string name="catalog_plant_vallisneria_americana_name" translatable="false">Vallisneria americana</string>
+    <string name="catalog_plant_vallisneria_nana_name" translatable="false">Vallisneria nana</string>
+    <string name="catalog_plant_vallisneria_gigantea_name" translatable="false">Vallisneria gigantea</string>
+    <string name="catalog_plant_egeria_densa_name" translatable="false">Egeria densa</string>
+    <string name="catalog_plant_elodea_canadensis_name" translatable="false">Elodea canadensis</string>
+    <string name="catalog_plant_limnophila_sessiliflora_name" translatable="false">Limnophila sessiliflora</string>
+    <string name="catalog_plant_limnophila_aromatica_name" translatable="false">Limnophila aromatica</string>
+    <string name="catalog_plant_limnophila_hippuridoides_name" translatable="false">Limnophila hippuridoides</string>
+    <string name="catalog_plant_cabomba_caroliniana_name" translatable="false">Cabomba caroliniana</string>
+    <string name="catalog_plant_cabomba_aquatica_name" translatable="false">Cabomba aquatica</string>
+    <string name="catalog_plant_myriophyllum_mattogrossense_name" translatable="false">Myriophyllum mattogrossense</string>
+    <string name="catalog_plant_myriophyllum_aquaticum_name" translatable="false">Myriophyllum aquaticum</string>
+    <string name="catalog_plant_myriophyllum_tuberculatum_name" translatable="false">Myriophyllum tuberculatum</string>
+    <string name="catalog_plant_rotala_rotundifolia_name" translatable="false">Rotala rotundifolia</string>
+    <string name="catalog_plant_rotala_rotundifolia_h_ra_name" translatable="false">Rotala rotundifolia \'H\'ra\'</string>
+    <string name="catalog_plant_rotala_rotundifolia_orange_juice_name" translatable="false">Rotala rotundifolia \'Orange Juice\'</string>
+    <string name="catalog_plant_rotala_wallichii_name" translatable="false">Rotala wallichii</string>
+    <string name="catalog_plant_rotala_macrandra_name" translatable="false">Rotala macrandra</string>
+    <string name="catalog_plant_rotala_macrandra_green_name" translatable="false">Rotala macrandra \'Green\'</string>
+    <string name="catalog_plant_rotala_macrandra_mini_butterfly_name" translatable="false">Rotala macrandra \'Mini Butterfly\'</string>
+    <string name="catalog_plant_ludwigia_arcuata_name" translatable="false">Ludwigia arcuata</string>
+    <string name="catalog_plant_ludwigia_glandulosa_name" translatable="false">Ludwigia glandulosa</string>
+    <string name="catalog_plant_ludwigia_inclinata_name" translatable="false">Ludwigia inclinata</string>
+    <string name="catalog_plant_ludwigia_inclinata_var_verticillata_cuba_name" translatable="false">Ludwigia inclinata var. verticillata \'Cuba\'</string>
+    <string name="catalog_plant_ludwigia_inclinata_var_verticillata_pantanal_name" translatable="false">Ludwigia inclinata var. verticillata \'Pantanal\'</string>
+    <string name="catalog_plant_hygrophila_polysperma_name" translatable="false">Hygrophila polysperma</string>
+    <string name="catalog_plant_hygrophila_corymbosa_name" translatable="false">Hygrophila corymbosa</string>
+    <string name="catalog_plant_hygrophila_difformis_name" translatable="false">Hygrophila difformis</string>
+    <string name="catalog_plant_heteranthera_zosterifolia_name" translatable="false">Heteranthera zosterifolia</string>
+    <string name="catalog_plant_pogostemon_stellatus_name" translatable="false">Pogostemon stellatus</string>
+    <string name="catalog_plant_pogostemon_stellatus_octopus_name" translatable="false">Pogostemon stellatus \'Octopus\'</string>
+    <string name="catalog_plant_proserpinaca_palustris_name" translatable="false">Proserpinaca palustris</string>
+    <string name="catalog_plant_alternanthera_reineckii_name" translatable="false">Alternanthera reineckii</string>
+    <string name="catalog_plant_alternanthera_reineckii_rosanervig_name" translatable="false">Alternanthera reineckii \'Rosanervig\'</string>
+    <string name="catalog_plant_alternanthera_reineckii_red_ruby_name" translatable="false">Alternanthera reineckii \'Red Ruby\'</string>
+    <string name="catalog_plant_ammannia_gracilis_name" translatable="false">Ammannia gracilis</string>
+    <string name="catalog_plant_ammannia_senegalensis_name" translatable="false">Ammannia senegalensis</string>
+    <string name="catalog_plant_bacopa_australis_name" translatable="false">Bacopa australis</string>
+    <string name="catalog_plant_didiplis_diandra_name" translatable="false">Didiplis diandra</string>
+    <string name="catalog_plant_mayaca_fluviatilis_name" translatable="false">Mayaca fluviatilis</string>
+    <string name="catalog_plant_eichhornia_diversifolia_name" translatable="false">Eichhornia diversifolia</string>
+    <string name="catalog_plant_aponogeton_crispus_name" translatable="false">Aponogeton crispus</string>
+    <string name="catalog_plant_aponogeton_ulvaceus_name" translatable="false">Aponogeton ulvaceus</string>
+    <string name="catalog_plant_crinum_calamistratum_name" translatable="false">Crinum calamistratum</string>
+    <string name="catalog_plant_crinum_natans_name" translatable="false">Crinum natans</string>
+    <string name="catalog_plant_echinodorus_bleheri_name" translatable="false">Echinodorus bleheri</string>
+    <string name="catalog_plant_echinodorus_grisebachii_name" translatable="false">Echinodorus grisebachii</string>
+    <string name="catalog_plant_echinodorus_ozelot_name" translatable="false">Echinodorus \'Ozelot\'</string>
+    <string name="catalog_plant_echinodorus_red_diamond_name" translatable="false">Echinodorus \'Red Diamond\'</string>
+    <string name="catalog_plant_echinodorus_reni_name" translatable="false">Echinodorus \'Reni\'</string>
+    <string name="catalog_plant_taxiphyllum_barbieri_name" translatable="false">Taxiphyllum barbieri</string>
+    <string name="catalog_plant_taxiphyllum_sp_flame_moss_name" translatable="false">Taxiphyllum sp. \'Flame Moss\'</string>
+    <string name="catalog_plant_taxiphyllum_sp_spiky_moss_name" translatable="false">Taxiphyllum sp. \'Spiky Moss\'</string>
+    <string name="catalog_plant_taxiphyllum_sp_peacock_moss_name" translatable="false">Taxiphyllum sp. \'Peacock Moss\'</string>
+    <string name="catalog_plant_vesicularia_montagnei_christmas_moss_name" translatable="false">Vesicularia montagnei \'Christmas Moss\'</string>
+    <string name="catalog_plant_vesicularia_ferriei_weeping_moss_name" translatable="false">Vesicularia ferriei \'Weeping Moss\'</string>
+    <string name="catalog_plant_vesicularia_dubyana_name" translatable="false">Vesicularia dubyana</string>
+    <string name="catalog_plant_vesicularia_sp_mini_christmas_moss_name" translatable="false">Vesicularia sp. \'Mini Christmas Moss\'</string>
+    <string name="catalog_plant_fissidens_fontanus_name" translatable="false">Fissidens fontanus</string>
+    <string name="catalog_plant_fissidens_nobilis_name" translatable="false">Fissidens nobilis</string>
+    <string name="catalog_plant_riccardia_chamedryfolia_name" translatable="false">Riccardia chamedryfolia</string>
+    <string name="catalog_plant_riccardia_graeffei_name" translatable="false">Riccardia graeffei</string>
+    <string name="catalog_plant_leptodictyum_riparium_name" translatable="false">Leptodictyum riparium</string>
+    <string name="catalog_plant_amblystegium_serpens_name" translatable="false">Amblystegium serpens</string>
+    <string name="catalog_plant_monosolenium_tenerum_name" translatable="false">Monosolenium tenerum</string>
+    <string name="catalog_plant_lomariopsis_lineata_name" translatable="false">Lomariopsis lineata</string>
+    <string name="catalog_plant_cladophora_aegagropila_name" translatable="false">Cladophora aegagropila</string>
+    <string name="catalog_plant_salvinia_natans_name" translatable="false">Salvinia natans</string>
+    <string name="catalog_plant_salvinia_minima_name" translatable="false">Salvinia minima</string>
+    <string name="catalog_plant_salvinia_auriculata_name" translatable="false">Salvinia auriculata</string>
+    <string name="catalog_plant_phyllanthus_fluitans_name" translatable="false">Phyllanthus fluitans</string>
+    <string name="catalog_plant_limnobium_laevigatum_name" translatable="false">Limnobium laevigatum</string>
+    <string name="catalog_plant_pistia_stratiotes_name" translatable="false">Pistia stratiotes</string>
+    <string name="catalog_plant_lemna_minor_name" translatable="false">Lemna minor</string>
+    <string name="catalog_plant_spirodela_polyrhiza_name" translatable="false">Spirodela polyrhiza</string>
+    <string name="catalog_plant_azolla_caroliniana_name" translatable="false">Azolla caroliniana</string>
+    <string name="catalog_plant_azolla_filiculoides_name" translatable="false">Azolla filiculoides</string>
+    <string name="catalog_plant_ceratopteris_cornuta_name" translatable="false">Ceratopteris cornuta</string>
+    <string name="catalog_plant_ceratopteris_thalictroides_name" translatable="false">Ceratopteris thalictroides</string>
+    <string name="catalog_plant_hygroryza_aristata_name" translatable="false">Hygroryza aristata</string>
+    <string name="catalog_plant_hydrocharis_morsus_ranae_name" translatable="false">Hydrocharis morsus-ranae</string>
+    <string name="catalog_plant_eriocaulon_sp_vietnam_name" translatable="false">Eriocaulon sp. \'Vietnam\'</string>
+    <string name="catalog_plant_eriocaulon_sp_japan_needle_leaf_name" translatable="false">Eriocaulon sp. \'Japan Needle Leaf\'</string>
+    <string name="catalog_plant_eriocaulon_setaceum_name" translatable="false">Eriocaulon setaceum</string>
+    <string name="catalog_plant_syngonanthus_macrocaulon_name" translatable="false">Syngonanthus macrocaulon</string>
+    <string name="catalog_plant_syngonanthus_sp_belem_name" translatable="false">Syngonanthus sp. \'Belem\'</string>
+    <string name="catalog_plant_tonina_fluviatilis_name" translatable="false">Tonina fluviatilis</string>
+    <string name="catalog_plant_tonina_sp_belem_name" translatable="false">Tonina sp. \'Belem\'</string>
+    <string name="catalog_plant_tonina_sp_manaus_name" translatable="false">Tonina sp. \'Manaus\'</string>
+    <string name="catalog_plant_ludwigia_sp_white_name" translatable="false">Ludwigia sp. \'White\'</string>
+    <string name="catalog_plant_ludwigia_inclinata_var_verticillata_white_name" translatable="false">Ludwigia inclinata var. verticillata \'White\'</string>
+    <string name="catalog_plant_rotala_ramosior_florida_name" translatable="false">Rotala ramosior \'Florida\'</string>
+    <string name="catalog_plant_rotala_sp_pearl_name" translatable="false">Rotala sp. \'Pearl\'</string>
+    <string name="catalog_plant_rotala_sp_blood_red_name" translatable="false">Rotala sp. \'Blood Red\'</string>
+    <string name="catalog_plant_rotala_sp_vietnam_h_ra_name" translatable="false">Rotala sp. \'Vietnam H\'ra\'</string>
+    <string name="catalog_plant_ammannia_pedicellata_golden_name" translatable="false">Ammannia pedicellata \'Golden\'</string>
+    <string name="catalog_plant_ammannia_praetermissa_name" translatable="false">Ammannia praetermissa</string>
+    <string name="catalog_plant_pogostemon_yatabeanus_name" translatable="false">Pogostemon yatabeanus</string>
+    <string name="catalog_plant_pogostemon_kimberley_name" translatable="false">Pogostemon kimberley</string>
+    <string name="catalog_plant_pogostemon_deccanensis_name" translatable="false">Pogostemon deccanensis</string>
+    <string name="catalog_plant_aponogeton_madagascariensis_name" translatable="false">Aponogeton madagascariensis</string>
+    <string name="catalog_plant_aponogeton_boivinianus_name" translatable="false">Aponogeton boivinianus</string>
+    <string name="catalog_plant_barclaya_longifolia_name" translatable="false">Barclaya longifolia</string>
+    <string name="catalog_plant_barclaya_longifolia_red_name" translatable="false">Barclaya longifolia \'Red\'</string>
+    <string name="catalog_plant_nymphaea_lotus_red_name" translatable="false">Nymphaea lotus \'Red\'</string>
+    <string name="catalog_plant_nymphaea_micrantha_name" translatable="false">Nymphaea micrantha</string>
+    <string name="catalog_plant_nymphaea_stellata_name" translatable="false">Nymphaea stellata</string>
+    <string name="catalog_plant_crinum_thaianum_name" translatable="false">Crinum thaianum</string>
+    <string name="catalog_plant_lagenandra_keralensis_name" translatable="false">Lagenandra keralensis</string>
+    <string name="catalog_plant_lagenandra_thwaitesii_name" translatable="false">Lagenandra thwaitesii</string>
+    <string name="catalog_plant_cryptocoryne_flamingo_name" translatable="false">Cryptocoryne flamingo</string>
+    <string name="catalog_plant_cryptocoryne_nurii_name" translatable="false">Cryptocoryne nurii</string>
+    <string name="catalog_plant_cryptocoryne_cordata_rosanervig_name" translatable="false">Cryptocoryne cordata \'Rosanervig\'</string>
+    <string name="catalog_plant_bucephalandra_sp_black_pearl_name" translatable="false">Bucephalandra sp. \'Black Pearl\'</string>
+    <string name="catalog_plant_bucephalandra_sp_dark_skeleton_king_name" translatable="false">Bucephalandra sp. \'Dark Skeleton King\'</string>
+    <string name="catalog_plant_bucephalandra_sp_godzilla_name" translatable="false">Bucephalandra sp. \'Godzilla\'</string>
+    <string name="catalog_plant_bucephalandra_sp_silver_powder_name" translatable="false">Bucephalandra sp. \'Silver Powder\'</string>
+    <!-- Searchable catalog keywords shown as material-picker chips. -->
+    <string name="catalog_keyword_aquarium">aquarium</string>
+    <string name="catalog_keyword_tank">tank</string>
+    <string name="catalog_keyword_set">set</string>
+    <string name="catalog_keyword_wabi_kusa" translatable="false">wabi kusa</string>
+    <string name="catalog_keyword_chihiros" translatable="false">chihiros</string>
+    <string name="catalog_keyword_glass">glass</string>
+    <string name="catalog_keyword_base">base</string>
+    <string name="catalog_keyword_magnetic">magnetic</string>
+    <string name="catalog_keyword_co2" translatable="false">co2</string>
+    <string name="catalog_keyword_regulator">regulator</string>
+    <string name="catalog_keyword_generator">generator</string>
+    <string name="catalog_keyword_system">system</string>
+    <string name="catalog_keyword_ista" translatable="false">ista</string>
+    <string name="catalog_keyword_cylinder">cylinder</string>
+    <string name="catalog_keyword_bottle">bottle</string>
+    <string name="catalog_keyword_jbl" translatable="false">jbl</string>
+    <string name="catalog_keyword_proflora" translatable="false">proflora</string>
+    <string name="catalog_keyword_dennerle" translatable="false">dennerle</string>
+    <string name="catalog_keyword_diffuser">diffuser</string>
+    <string name="catalog_keyword_neo" translatable="false">neo</string>
+    <string name="catalog_keyword_aquario" translatable="false">aquario</string>
+    <string name="catalog_keyword_doaqua" translatable="false">doaqua</string>
+    <string name="catalog_keyword_cooler">cooler</string>
+    <string name="catalog_keyword_fan">fan</string>
+    <string name="catalog_keyword_temperature">temperature</string>
+    <string name="catalog_keyword_aquael" translatable="false">aquael</string>
+    <string name="catalog_keyword_decoration">decoration</string>
+    <string name="catalog_keyword_stone">stone</string>
+    <string name="catalog_keyword_rock">rock</string>
+    <string name="catalog_keyword_hardscape">hardscape</string>
+    <string name="catalog_keyword_seiryu" translatable="false">seiryu</string>
+    <string name="catalog_keyword_dragon">dragon</string>
+    <string name="catalog_keyword_lava">lava</string>
+    <string name="catalog_keyword_manten">manten</string>
+    <string name="catalog_keyword_ohko">ohko</string>
+    <string name="catalog_keyword_wood">wood</string>
+    <string name="catalog_keyword_driftwood">driftwood</string>
+    <string name="catalog_keyword_spider">spider</string>
+    <string name="catalog_keyword_mopani">mopani</string>
+    <string name="catalog_keyword_moor">moor</string>
+    <string name="catalog_keyword_root">root</string>
+    <string name="catalog_keyword_mangrove">mangrove</string>
+    <string name="catalog_keyword_shrimp">shrimp</string>
+    <string name="catalog_keyword_cholla">cholla</string>
+    <string name="catalog_keyword_dosing">dosing</string>
+    <string name="catalog_keyword_pump">pump</string>
+    <string name="catalog_keyword_fertilizer">fertilizer</string>
+    <string name="catalog_keyword_jebao" translatable="false">jebao</string>
+    <string name="catalog_keyword_kamoer" translatable="false">kamoer</string>
+    <string name="catalog_keyword_liquid">liquid</string>
+    <string name="catalog_keyword_plant">plant</string>
+    <string name="catalog_keyword_carbon">carbon</string>
+    <string name="catalog_keyword_green_aqua" translatable="false">green aqua</string>
+    <string name="catalog_keyword_macro">macro</string>
+    <string name="catalog_keyword_nitrate">nitrate</string>
+    <string name="catalog_keyword_phosphate">phosphate</string>
+    <string name="catalog_keyword_micro">micro</string>
+    <string name="catalog_keyword_iron">iron</string>
+    <string name="catalog_keyword_filter">filter</string>
+    <string name="catalog_keyword_external">external</string>
+    <string name="catalog_keyword_canister">canister</string>
+    <string name="catalog_keyword_eheim" translatable="false">eheim</string>
+    <string name="catalog_keyword_oase" translatable="false">oase</string>
+    <string name="catalog_keyword_biomaster" translatable="false">biomaster</string>
+    <string name="catalog_keyword_hang_on">hang on</string>
+    <string name="catalog_keyword_hob" translatable="false">hob</string>
+    <string name="catalog_keyword_sunsun" translatable="false">sunsun</string>
+    <string name="catalog_keyword_gravel">gravel</string>
+    <string name="catalog_keyword_sand">sand</string>
+    <string name="catalog_keyword_ada" translatable="false">ada</string>
+    <string name="catalog_keyword_aqua_gravel">aqua gravel</string>
+    <string name="catalog_keyword_black">black</string>
+    <string name="catalog_keyword_nano">nano</string>
+    <string name="catalog_keyword_natural">natural</string>
+    <string name="catalog_keyword_dark">dark</string>
+    <string name="catalog_keyword_white">white</string>
+    <string name="catalog_keyword_basalt">basalt</string>
+    <string name="catalog_keyword_river">river</string>
+    <string name="catalog_keyword_heater">heater</string>
+    <string name="catalog_keyword_thermo">thermo</string>
+    <string name="catalog_keyword_protemp" translatable="false">protemp</string>
+    <string name="catalog_keyword_led" translatable="false">led</string>
+    <string name="catalog_keyword_background">background</string>
+    <string name="catalog_keyword_light">light</string>
+    <string name="catalog_keyword_shade">shade</string>
+    <string name="catalog_keyword_screen">screen</string>
+    <string name="catalog_keyword_twinstar" translatable="false">twinstar</string>
+    <string name="catalog_keyword_week_aqua" translatable="false">week aqua</string>
+    <string name="catalog_keyword_rgb" translatable="false">rgb</string>
+    <string name="catalog_keyword_wrgb" translatable="false">wrgb</string>
+    <string name="catalog_keyword_slim">slim</string>
+    <string name="catalog_keyword_lamp">lamp</string>
+    <string name="catalog_keyword_substrate">substrate</string>
+    <string name="catalog_keyword_soil">soil</string>
+    <string name="catalog_keyword_aquasoil">aquasoil</string>
+    <string name="catalog_keyword_additive">additive</string>
+    <string name="catalog_keyword_base_layer">base layer</string>
+</resources>
+

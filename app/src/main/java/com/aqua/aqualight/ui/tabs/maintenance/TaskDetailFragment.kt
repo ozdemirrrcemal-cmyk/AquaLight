@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.maintenance
 
+import androidx.core.content.ContextCompat
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
@@ -160,7 +161,7 @@ class TaskDetailFragment :
   ) {
     setupHeader(task)
 
-    val accentColor = Color.parseColor(task.accentColor)
+    val accentColor = task.accentColor
 
     binding.ivTaskIcon.setImageResource(task.iconRes)
 
@@ -177,9 +178,9 @@ class TaskDetailFragment :
 
     binding.tvSourceBadge.setTextColor(
       if (task.source == CareTaskSource.AUTOMATIC) {
-        Color.parseColor("#5FD6B4")
+        ContextCompat.getColor(requireContext(), R.color.aqua_accent_positive)
       } else {
-        Color.parseColor("#B8C7D9")
+        ContextCompat.getColor(requireContext(), R.color.aqua_content_tertiary)
       }
     )
 
@@ -412,7 +413,7 @@ class TaskDetailFragment :
   ): GradientDrawable {
     return GradientDrawable().apply {
       shape = GradientDrawable.RECTANGLE
-      cornerRadius = 16.dp().toFloat()
+      cornerRadius = resources.getDimensionPixelOffset(R.dimen.aqua_size_16).toFloat()
       setColor(
         applyAlpha(
           color = color,
@@ -420,7 +421,7 @@ class TaskDetailFragment :
         )
       )
       setStroke(
-        1.dp(),
+        resources.getDimensionPixelOffset(R.dimen.aqua_size_1),
         applyAlpha(
           color = color,
           alpha = 0.65f
@@ -433,23 +434,23 @@ class TaskDetailFragment :
     source: CareTaskSource
   ): GradientDrawable {
     val color = if (source == CareTaskSource.AUTOMATIC) {
-      Color.parseColor("#12382F")
+      ContextCompat.getColor(requireContext(), R.color.aqua_surface_positive)
     } else {
-      Color.parseColor("#1C3252")
+      ContextCompat.getColor(requireContext(), R.color.aqua_surface_action)
     }
 
     val strokeColor = if (source == CareTaskSource.AUTOMATIC) {
-      Color.parseColor("#2B6F5A")
+      ContextCompat.getColor(requireContext(), R.color.aqua_outline_positive)
     } else {
-      Color.parseColor("#2A4566")
+      ContextCompat.getColor(requireContext(), R.color.aqua_task_detail_fragment_color)
     }
 
     return GradientDrawable().apply {
       shape = GradientDrawable.RECTANGLE
-      cornerRadius = 11.dp().toFloat()
+      cornerRadius = resources.getDimensionPixelOffset(R.dimen.aqua_size_11).toFloat()
       setColor(color)
       setStroke(
-        1.dp(),
+        resources.getDimensionPixelOffset(R.dimen.aqua_size_1),
         strokeColor
       )
     }
@@ -493,11 +494,6 @@ class TaskDetailFragment :
       Locale.getDefault()
     ).format(Date(millis))
   }
-
-  private fun Int.dp(): Int {
-    return (this * resources.displayMetrics.density).toInt()
-  }
-
   override fun onDestroyView() {
     _binding = null
     super.onDestroyView()

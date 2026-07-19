@@ -1,35 +1,38 @@
 package com.aqua.aqualight.data.aquarium.catalog.material
 
+import android.content.Context
 
 object MaterialCatalog {
 
-    val products: List<AquariumMaterial> =
-        FertilizerCatalog.products +
-            DecorationCatalog.products +
-            GravelCatalog.products +
-            SubstrateCatalog.products +
-            AquariumCatalog.products +
-            Co2Catalog.products +
-            LightCatalog.products +
-            FilterCatalog.products +
-            HeaterCatalog.products +
-            CoolerCatalog.products +
-            DosingCatalog.products +
-            LedBackgroundCatalog.products
+    val definitions: List<AquariumMaterialDefinition> =
+        FertilizerCatalog.definitions +
+            DecorationCatalog.definitions +
+            GravelCatalog.definitions +
+            SubstrateCatalog.definitions +
+            AquariumCatalog.definitions +
+            Co2Catalog.definitions +
+            LightCatalog.definitions +
+            FilterCatalog.definitions +
+            HeaterCatalog.definitions +
+            CoolerCatalog.definitions +
+            DosingCatalog.definitions +
+            LedBackgroundCatalog.definitions
 
     fun getByCategory(
+        context: Context,
         categoryKey: String
     ): List<AquariumMaterial> {
-        return products.filter {
+        return definitions.filter {
             it.categoryKey == categoryKey
-        }
+        }.map { definition -> definition.resolve(context) }
     }
 
     fun search(
+        context: Context,
         categoryKey: String,
         query: String
     ): List<AquariumMaterial> {
-        val categoryProducts = getByCategory(categoryKey)
+        val categoryProducts = getByCategory(context, categoryKey)
 
         if (query.isBlank()) {
             return categoryProducts
@@ -46,12 +49,16 @@ object MaterialCatalog {
     }
 
     fun getPopularKeywords(
+        context: Context,
         categoryKey: String
     ): List<String> {
-        val products = getByCategory(categoryKey)
+        val products = definitions.filter { definition ->
+            definition.categoryKey == categoryKey
+        }
 
         return products
-            .flatMap { it.keywords }
+            .flatMap { it.keywordRes }
+            .map { context.getString(it) }
             .map { it.trim() }
             .filter { it.isNotBlank() }
             .distinctBy { it.lowercase() }

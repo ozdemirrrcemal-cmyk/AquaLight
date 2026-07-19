@@ -14,26 +14,26 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingStart="20dp"
-        android:paddingEnd="20dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="24dp">
+        android:paddingStart="@dimen/aqua_size_20"
+        android:paddingEnd="@dimen/aqua_size_20"
+        android:paddingTop="@dimen/aqua_size_8"
+        android:paddingBottom="@dimen/aqua_size_24">
 		
         <TextView
             android:id="@+id/tvStepDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="@dimen/aqua_size_8"
             android:text="@string/aquarium_text_add_the_biological_materials_and_hardware_used_in_this_aquar"
-            android:textColor="#8FA4BE"
+            android:textColor="@color/aqua_content_secondary"
             android:textSize="@dimen/aqua_text_size_body"
-            android:lineSpacingExtra="3dp" />
+            android:lineSpacingExtra="@dimen/aqua_size_3" />
 
         <TextView
             android:id="@+id/tvBioTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="26dp"
+            android:layout_marginTop="@dimen/aqua_size_26"
             android:text="@string/aquarium_material_group_bio"
             android:textColor="?attr/colorOnSurface"
             android:textSize="@dimen/aqua_text_size_body_large"
@@ -43,14 +43,14 @@
             android:id="@+id/bioContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="@dimen/aqua_size_12"
             android:orientation="vertical" />
 
         <TextView
             android:id="@+id/tvHardwareTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="26dp"
+            android:layout_marginTop="@dimen/aqua_size_26"
             android:text="@string/aquarium_material_group_hardware"
             android:textColor="?attr/colorOnSurface"
             android:textSize="@dimen/aqua_text_size_body_large"
@@ -60,7 +60,7 @@
             android:id="@+id/hardwareContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="@dimen/aqua_size_12"
             android:orientation="vertical" />
 
     </LinearLayout>

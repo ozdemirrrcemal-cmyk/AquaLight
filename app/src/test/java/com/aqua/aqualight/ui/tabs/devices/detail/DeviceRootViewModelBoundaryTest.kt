@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail
 
+import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceFirmwareCommandResult
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.DeviceRootCapability
@@ -11,6 +12,7 @@ import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
+import com.aqua.aqualight.ui.common.text.AquaUiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -44,11 +46,18 @@ class DeviceRootViewModelBoundaryTest {
         )
 
         val state = viewModel.uiState.value
-        assertEquals("AquaLight Dosing", state.title)
-        assertEquals("Online", state.connectionStatus)
-        assertEquals("4", state.primaryCountText)
-        assertTrue(state.featuresText.contains("Dosing"))
-        assertTrue(state.primarySectionPlaceholder.contains("Channels"))
+        assertEquals(AquaUiText.Dynamic("AquaLight Dosing"), state.title)
+        assertEquals(
+            AquaUiText.Resource(R.string.device_online),
+            state.connectionStatus
+        )
+        assertEquals(AquaUiText.Dynamic("4"), state.primaryCountText)
+        assertTrue(
+            (state.featuresText as AquaUiText.Joined).parts.contains(
+                AquaUiText.Resource(R.string.device_feature_dosing)
+            )
+        )
+        assertTrue(state.primarySectionPlaceholder is AquaUiText.Joined)
         assertEquals("device-1", operations.lastObservedUid)
     }
 
@@ -77,7 +86,10 @@ class DeviceRootViewModelBoundaryTest {
         viewModel.bind("device-1", "Light")
         viewModel.checkBetaOtaManifest()
         assertEquals("device-1", firmwareOperations.preparedDeviceUid)
-        assertTrue(viewModel.uiState.value.otaTestText.contains("READY TO START"))
+        assertEquals(
+            R.string.device_ota_test_plan_summary,
+            (viewModel.uiState.value.otaTestText as AquaUiText.Resource).resId
+        )
 
         viewModel.startOtaTestUpdate()
         viewModel.requestOtaTestStatus()
@@ -86,7 +98,10 @@ class DeviceRootViewModelBoundaryTest {
         assertEquals(1, firmwareOperations.startCalls)
         assertEquals("device-1", firmwareOperations.statusDeviceUid)
         assertEquals("device-1", firmwareOperations.clearDeviceUid)
-        assertTrue(viewModel.uiState.value.otaTestText.contains("clear-message"))
+        assertTrue(
+            (viewModel.uiState.value.otaTestText as AquaUiText.Resource)
+                .args.contains("clear-message")
+        )
         assertEquals("device-1", rootOperations.lastConnectedUid)
     }
 

@@ -1,42 +1,65 @@
 package com.aqua.aqualight.data.aquarium.catalog.material
 
+import com.aqua.aqualight.R
+
 
 object LightCatalog {
 
-    private const val CATEGORY_TITLE = "Light"
-
-    val products: List<AquariumMaterial> = listOf(
-        AquariumMaterial(
+    val definitions: List<AquariumMaterialDefinition> = listOf(
+        AquariumMaterialDefinition(
             id = "light_chihiros_wrgb_ii",
-            brand = "Chihiros",
-            name = "Chihiros WRGB II",
+            brandRes = R.string.catalog_brand_chihiros,
+            nameRes = R.string.catalog_material_light_chihiros_wrgb_ii_name,
             categoryKey = MaterialCategoryKey.LIGHT,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("light", "led", "rgb", "wrgb", "chihiros")
+            categoryTitleRes = R.string.catalog_material_category_light_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_light,
+                R.string.catalog_keyword_led,
+                R.string.catalog_keyword_rgb,
+                R.string.catalog_keyword_wrgb,
+                R.string.catalog_keyword_chihiros
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "light_chihiros_wrgb_ii_slim",
-            brand = "Chihiros",
-            name = "Chihiros WRGB II Slim",
+            brandRes = R.string.catalog_brand_chihiros,
+            nameRes = R.string.catalog_material_light_chihiros_wrgb_ii_slim_name,
             categoryKey = MaterialCategoryKey.LIGHT,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("light", "led", "rgb", "slim", "chihiros")
+            categoryTitleRes = R.string.catalog_material_category_light_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_light,
+                R.string.catalog_keyword_led,
+                R.string.catalog_keyword_rgb,
+                R.string.catalog_keyword_slim,
+                R.string.catalog_keyword_chihiros
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "light_chihiros_magnetic_lamp_led",
-            brand = "Chihiros",
-            name = "Chihiros Magnetic Lamp - LED Light",
+            brandRes = R.string.catalog_brand_chihiros,
+            nameRes = R.string.catalog_material_light_chihiros_magnetic_lamp_led_name,
             categoryKey = MaterialCategoryKey.LIGHT,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("light", "led", "magnetic", "lamp", "chihiros")
+            categoryTitleRes = R.string.catalog_material_category_light_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_light,
+                R.string.catalog_keyword_led,
+                R.string.catalog_keyword_magnetic,
+                R.string.catalog_keyword_lamp,
+                R.string.catalog_keyword_chihiros
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "light_twinstar_s_series",
-            brand = "Twinstar",
-            name = "Twinstar S Series",
+            brandRes = R.string.catalog_brand_twinstar,
+            nameRes = R.string.catalog_material_light_twinstar_s_series_name,
             categoryKey = MaterialCategoryKey.LIGHT,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("light", "led", "rgb", "twinstar")
+            categoryTitleRes = R.string.catalog_material_category_light_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_light,
+                R.string.catalog_keyword_led,
+                R.string.catalog_keyword_rgb,
+                R.string.catalog_keyword_twinstar
+            )
         )
     )
 }

@@ -1,6 +1,6 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.settings
 
-import android.graphics.Color
+import androidx.core.content.ContextCompat
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.View
@@ -473,45 +473,11 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         percent: Int
     ): Int {
         return when {
-            percent < 40 -> Color.parseColor("#D85C5C")
-            percent < 75 -> Color.parseColor("#E0A84C")
-            else -> Color.parseColor("#5FD6B4")
+            percent < 40 -> ContextCompat.getColor(requireContext(), R.color.aqua_status_danger)
+            percent < 75 -> ContextCompat.getColor(requireContext(), R.color.aqua_content_warning)
+            else -> ContextCompat.getColor(requireContext(), R.color.aqua_accent_positive)
         }
     }
-
-    private fun colorToHex(
-        color: Int
-    ): String {
-        return String.format(
-            "#%06X",
-            0xFFFFFF and color
-        )
-    }
-
-    private fun createRoundedDrawable(
-        color: String,
-        radiusPx: Int,
-        strokeColor: String? = null,
-        strokeWidthPx: Int = 0
-    ): GradientDrawable {
-        return GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            setColor(Color.parseColor(color))
-            cornerRadius = radiusPx.toFloat()
-
-            if (strokeColor != null && strokeWidthPx > 0) {
-                setStroke(
-                    strokeWidthPx,
-                    Color.parseColor(strokeColor)
-                )
-            }
-        }
-    }
-
-    private fun Int.dp(): Int {
-        return (this * resources.displayMetrics.density).toInt()
-    }
-
     override fun onSaveInstanceState(
         outState: Bundle
     ) {

@@ -92,6 +92,7 @@ android {
         htmlReport true
         xmlReport true
         abortOnError true
+        warningsAsErrors true
     }
 
     buildFeatures { buildConfig true; viewBinding true }

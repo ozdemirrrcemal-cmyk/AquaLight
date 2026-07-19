@@ -2,7 +2,6 @@ package com.aqua.aqualight.ui.common.media
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
 import android.net.Uri
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.SavedStateHandle
@@ -297,7 +296,7 @@ class MediaFlowCoordinatorViewModel(
 
             val toolbarColor = ContextCompat.getColor(appContext, R.color.crop_toolbar_bg)
             setToolbarColor(toolbarColor)
-            setToolbarWidgetColor(Color.WHITE)
+            setToolbarWidgetColor(ContextCompat.getColor(appContext, R.color.aqua_content_on_dark))
             setRootViewBackgroundColor(toolbarColor)
             setActiveControlsWidgetColor(toolbarColor)
             setToolbarCancelDrawable(R.drawable.ic_back)

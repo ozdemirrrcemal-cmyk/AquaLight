@@ -10,7 +10,7 @@
         style="@style/TextAppearance.Aqua.BottomSheet.Title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="18dp"
+        android:layout_marginTop="@dimen/aqua_size_18"
         android:gravity="center" />
 
     <TextView
@@ -18,14 +18,14 @@
         style="@style/TextAppearance.Aqua.BottomSheet.RowSubtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="22dp" />
+        android:layout_marginTop="@dimen/aqua_size_22" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/textInputLayout"
-        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        style="@style/Widget.Aqua.Input.Layout.Inline"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp">
+        android:layout_marginTop="@dimen/aqua_size_8">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etTextInputValue"
@@ -40,7 +40,7 @@
         style="@style/TextAppearance.Aqua.BottomSheet.RowSubtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="18dp"
+        android:layout_marginTop="@dimen/aqua_size_18"
         android:visibility="gone" />
 
     <TextView
@@ -48,31 +48,31 @@
         style="@style/TextAppearance.Aqua.BottomSheet.RowTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="@dimen/aqua_size_6"
         android:background="@drawable/bg_aqua_selection_row_compact"
-        android:padding="16dp"
+        android:padding="@dimen/aqua_size_16"
         android:visibility="gone" />
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="54dp"
-        android:layout_marginTop="26dp"
+        android:layout_height="@dimen/aqua_size_54"
+        android:layout_marginTop="@dimen/aqua_size_26"
         android:orientation="horizontal">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnTextInputCancel"
             style="@style/Widget.Aqua.BottomSheet.Button.Neutral"
-            android:layout_width="0dp"
+            android:layout_width="@dimen/aqua_size_0"
             android:layout_height="match_parent"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="@dimen/aqua_size_8"
             android:layout_weight="1" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnTextInputSave"
             style="@style/Widget.Aqua.BottomSheet.Button.Primary"
-            android:layout_width="0dp"
+            android:layout_width="@dimen/aqua_size_0"
             android:layout_height="match_parent"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="@dimen/aqua_size_8"
             android:layout_weight="1" />
     </LinearLayout>
 

@@ -9,7 +9,7 @@
     <include
         android:id="@+id/appHeader"
         layout="@layout/layout_aqua_header"
-        android:layout_width="0dp"
+        android:layout_width="@dimen/aqua_size_0"
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -17,8 +17,8 @@
 
     <ScrollView
         android:id="@+id/plantScrollView"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="@dimen/aqua_size_0"
         android:fillViewport="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -30,10 +30,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingStart="24dp"
-            android:paddingTop="20dp"
-            android:paddingEnd="24dp"
-            android:paddingBottom="28dp" />
+            android:paddingStart="@dimen/aqua_size_24"
+            android:paddingTop="@dimen/aqua_size_20"
+            android:paddingEnd="@dimen/aqua_size_24"
+            android:paddingBottom="@dimen/aqua_size_28" />
 
     </ScrollView>
 

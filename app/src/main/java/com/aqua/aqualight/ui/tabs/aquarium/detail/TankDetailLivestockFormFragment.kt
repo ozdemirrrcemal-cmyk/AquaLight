@@ -1,6 +1,6 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail
 
-import android.graphics.Color
+import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
@@ -10,6 +10,7 @@ import android.widget.FrameLayout
 import android.widget.GridLayout
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.annotation.ColorRes
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
 import androidx.core.content.ContextCompat
@@ -337,7 +338,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
         return TextView(requireContext()).apply {
             text = category
             gravity = Gravity.CENTER
-            textSize = 13.5f
+            setTextSizeResource(R.dimen.aqua_text_size_body_compact)
             isSelected = selected
             background = ContextCompat.getDrawable(
                 requireContext(),
@@ -361,7 +362,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
 
             val params = GridLayout.LayoutParams().apply {
                 width = 0
-                height = 46.dp()
+                height = resources.getDimensionPixelOffset(R.dimen.aqua_size_46)
                 columnSpec = GridLayout.spec(
                     GridLayout.UNDEFINED,
                     1f
@@ -369,8 +370,8 @@ Fragment(R.layout.fragment_tank_livestock_form) {
                 setMargins(
                     0,
                     0,
-                    8.dp(),
-                    8.dp()
+                    resources.getDimensionPixelOffset(R.dimen.aqua_size_8),
+                    resources.getDimensionPixelOffset(R.dimen.aqua_size_8)
                 )
             }
 
@@ -397,7 +398,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
             getCategoryIcon(selectedCategory)
         )
 
-        binding.ivLifeIconPreview.setColorFilter(Color.WHITE)
+        binding.ivLifeIconPreview.setColorFilter(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
 
         binding.ivLifeIconPreview.background = createIconBackground(
             color = getCategoryColor(selectedCategory)
@@ -582,72 +583,26 @@ Fragment(R.layout.fragment_tank_livestock_form) {
 
     private fun getCategoryColor(
         category: String
-    ): String {
+    ): Int {
         return when (category) {
-            LivestockCategories.FISH -> "#1C5D8F"
-            LivestockCategories.SHRIMP -> "#8F4A3A"
-            LivestockCategories.SNAIL -> "#3E6B4A"
-            LivestockCategories.CRAB_CRAYFISH -> "#7A4D2D"
-            LivestockCategories.CORAL -> "#7A4E8F"
-            else -> "#3E536B"
+            LivestockCategories.FISH -> R.color.aqua_tank_detail_livestock_form_fragment_color
+            LivestockCategories.SHRIMP -> R.color.aqua_tank_detail_livestock_form_fragment_color_variant_2
+            LivestockCategories.SNAIL -> R.color.aqua_tank_detail_livestock_form_fragment_color_variant_3
+            LivestockCategories.CRAB_CRAYFISH -> R.color.aqua_tank_detail_livestock_form_fragment_color_variant_4
+            LivestockCategories.CORAL -> R.color.aqua_tank_detail_livestock_form_fragment_color_variant_5
+            else -> R.color.aqua_tank_detail_livestock_form_fragment_color_variant_6
         }
     }
 
     private fun createIconBackground(
-        color: String
+        @ColorRes color: Int
     ): GradientDrawable {
         return GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
-            setColor(Color.parseColor(color))
-            cornerRadius = 18.dp().toFloat()
+            setColor(ContextCompat.getColor(requireContext(), color))
+            cornerRadius = resources.getDimensionPixelOffset(R.dimen.aqua_size_18).toFloat()
         }
     }
-
-    private fun createRoundedDrawable(
-        color: String,
-        radiusPx: Int,
-        strokeColor: String? = null,
-        strokeWidthPx: Int = 0
-    ): GradientDrawable {
-        return GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            setColor(Color.parseColor(color))
-            cornerRadius = radiusPx.toFloat()
-
-            if (strokeColor != null && strokeWidthPx > 0) {
-                setStroke(
-                    strokeWidthPx,
-                    Color.parseColor(strokeColor)
-                )
-            }
-        }
-    }
-
-    private fun createTopRoundedDrawable(
-        color: String,
-        radiusPx: Int
-    ): GradientDrawable {
-        return GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            setColor(Color.parseColor(color))
-
-            cornerRadii = floatArrayOf(
-                radiusPx.toFloat(),
-                radiusPx.toFloat(),
-                radiusPx.toFloat(),
-                radiusPx.toFloat(),
-                0f,
-                0f,
-                0f,
-                0f
-            )
-        }
-    }
-
-    private fun Int.dp(): Int {
-        return (this * resources.displayMetrics.density).toInt()
-    }
-
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

@@ -4,12 +4,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp">
+    android:padding="@dimen/aqua_size_24">
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/emailContainer"
         style="@style/Widget.Aqua.Input.Layout"
-        android:layout_width="0dp"
+        android:layout_width="@dimen/aqua_size_0"
         android:layout_height="wrap_content"
         android:contentDescription="@string/register_email_field_desc"
         app:layout_constraintBottom_toTopOf="@id/passwordContainer"
@@ -31,7 +31,7 @@
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/passwordContainer"
         style="@style/Widget.Aqua.Input.Layout"
-        android:layout_width="0dp"
+        android:layout_width="@dimen/aqua_size_0"
         android:layout_height="wrap_content"
         android:contentDescription="@string/register_password_field_desc"
         app:layout_constraintBottom_toTopOf="@id/passwordRepeatContainer"
@@ -53,7 +53,7 @@
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/passwordRepeatContainer"
         style="@style/Widget.Aqua.Input.Layout"
-        android:layout_width="0dp"
+        android:layout_width="@dimen/aqua_size_0"
         android:layout_height="wrap_content"
         android:contentDescription="@string/register_password_repeat_field_desc"
         app:layout_constraintBottom_toTopOf="@id/btnRegister"
@@ -75,9 +75,9 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnRegister"
         style="@style/Widget.Aqua.Button.Auth.Primary"
-        android:layout_width="0dp"
+        android:layout_width="@dimen/aqua_size_0"
         android:layout_height="@dimen/aqua_button_height"
-        android:layout_marginBottom="4dp"
+        android:layout_marginBottom="@dimen/aqua_size_4"
         android:contentDescription="@string/register_button_desc"
         android:text="@string/register_button"
         app:layout_constraintBottom_toTopOf="@id/btnReturnToSignIn"
@@ -87,9 +87,9 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnReturnToSignIn"
         style="@style/Widget.Aqua.Button.Auth.Secondary"
-        android:layout_width="0dp"
+        android:layout_width="@dimen/aqua_size_0"
         android:layout_height="@dimen/aqua_button_height"
-        android:layout_marginBottom="20dp"
+        android:layout_marginBottom="@dimen/aqua_size_20"
         android:contentDescription="@string/register_back_button_desc"
         android:text="@string/register_back_button"
         app:layout_constraintBottom_toBottomOf="parent"

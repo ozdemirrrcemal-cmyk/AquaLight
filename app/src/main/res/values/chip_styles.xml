@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Widget.Aqua.Chip.Status" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:background">@drawable/bg_device_compact_status_chip</item>
+        <item name="android:gravity">center</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:paddingStart">@dimen/aqua_size_12</item>
+        <item name="android:paddingEnd">@dimen/aqua_size_12</item>
+        <item name="android:textColor">@color/aqua_accent_positive</item>
+        <item name="android:textSize">@dimen/aqua_text_size_micro_plus</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="Widget.Aqua.Chip.Status.Scan" parent="Widget.Aqua.Chip.Status">
+        <item name="android:layout_height">@dimen/aqua_size_28</item>
+        <item name="android:minWidth">@dimen/aqua_size_92</item>
+    </style>
+
+    <style name="Widget.Aqua.Chip.Status.Candidate" parent="Widget.Aqua.Chip.Status">
+        <item name="android:layout_height">@dimen/aqua_size_30</item>
+        <item name="android:minWidth">@dimen/aqua_size_76</item>
+    </style>
+
+    <style name="Widget.Aqua.Chip.Action" parent="Widget.Aqua.Chip.Status">
+        <item name="android:layout_height">@dimen/aqua_size_34</item>
+        <item name="android:background">@drawable/bg_device_compact_action_chip</item>
+        <item name="android:minWidth">@dimen/aqua_size_70</item>
+        <item name="android:paddingStart">@dimen/aqua_size_14</item>
+        <item name="android:paddingEnd">@dimen/aqua_size_14</item>
+        <item name="android:textSize">@dimen/aqua_text_size_caption_plus</item>
+    </style>
+
+</resources>

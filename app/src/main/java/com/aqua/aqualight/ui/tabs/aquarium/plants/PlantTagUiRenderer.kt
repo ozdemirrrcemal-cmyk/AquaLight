@@ -1,7 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.plants
 
+import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import android.content.Context
-import android.graphics.Color
 import android.graphics.Typeface
 import android.view.Gravity
 import android.widget.FrameLayout
@@ -46,7 +46,7 @@ object PlantTagUiRenderer {
                 val marker = TextView(container.context).apply {
                     text = "${index + 1}"
                     gravity = Gravity.CENTER
-                    textSize = 12f
+                    setTextSizeResource(R.dimen.aqua_text_size_caption)
                     setTextColor(
                         ContextCompat.getColor(
                             context,
@@ -95,9 +95,9 @@ object PlantTagUiRenderer {
         val number = TextView(context).apply {
             text = "${index + 1}"
             gravity = Gravity.CENTER
-            textSize = 13f
+            setTextSizeResource(R.dimen.aqua_text_size_body_small)
             includeFontPadding = false
-            setTextColor(Color.WHITE)
+            setTextColor(ContextCompat.getColor(context, R.color.aqua_content_on_dark))
             setTypeface(null, Typeface.BOLD)
             setBackgroundResource(R.drawable.bg_plant_number_circle)
             layoutParams = LinearLayout.LayoutParams(context.dp(38), context.dp(38))
@@ -116,17 +116,17 @@ object PlantTagUiRenderer {
 
         val categoryText = TextView(context).apply {
             text = plant.category
-            textSize = 12f
+            setTextSizeResource(R.dimen.aqua_text_size_caption)
             includeFontPadding = false
             setTextColor(ContextCompat.getColor(context, R.color.aqua_card_text_secondary))
         }
 
         val nameText = TextView(context).apply {
             text = plant.plantName
-            textSize = 14f
+            setTextSizeResource(R.dimen.aqua_text_size_body)
             includeFontPadding = false
             maxLines = 2
-            setTextColor(Color.WHITE)
+            setTextColor(ContextCompat.getColor(context, R.color.aqua_content_on_dark))
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -137,7 +137,7 @@ object PlantTagUiRenderer {
 
         val delete = TextView(context).apply {
             text = context.getString(R.string.common_close)
-            textSize = 26f
+            setTextSizeResource(R.dimen.aqua_text_size_marker)
             gravity = Gravity.CENTER
             includeFontPadding = false
             setTextColor(ContextCompat.getColor(context, R.color.aqua_card_text_secondary))

@@ -12,7 +12,7 @@
     <include
         android:id="@+id/appHeader"
         layout="@layout/layout_aqua_header"
-        android:layout_width="0dp"
+        android:layout_width="@dimen/aqua_size_0"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -20,14 +20,14 @@
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvDevices"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="10dp"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="@dimen/aqua_size_0"
+        android:layout_marginTop="@dimen/aqua_size_10"
         android:clipToPadding="false"
         android:overScrollMode="never"
-        android:paddingStart="14dp"
-        android:paddingEnd="14dp"
-        android:paddingBottom="28dp"
+        android:paddingStart="@dimen/aqua_size_14"
+        android:paddingEnd="@dimen/aqua_size_14"
+        android:paddingBottom="@dimen/aqua_size_28"
         tools:listitem="@layout/item_device_compact_card"
         app:layout_constraintTop_toBottomOf="@id/appHeader"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -36,10 +36,10 @@
 
     <TextView
         android:id="@+id/tvEmptyState"
-        android:layout_width="0dp"
+        android:layout_width="@dimen/aqua_size_0"
         android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"
+        android:layout_marginStart="@dimen/aqua_size_32"
+        android:layout_marginEnd="@dimen/aqua_size_32"
         android:gravity="center"
         android:text="@string/tank_device_select_empty_title"
         android:textAlignment="center"

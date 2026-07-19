@@ -53,6 +53,7 @@ class TankSettingsDetailsFragment : Fragment(R.layout.fragment_tank_settings_det
         binding.hardwareMaterialsContainer.removeAllViews()
 
         MaterialCategoryCatalog.bioCategories.forEach { category ->
+            val categoryTitle = category.title(requireContext())
             val selectedMaterials = tank.materials.filter { material ->
                 material.categoryKey == category.key
             }
@@ -60,12 +61,12 @@ class TankSettingsDetailsFragment : Fragment(R.layout.fragment_tank_settings_det
             binding.bioMaterialsContainer.addView(
                 AquaMaterialCategoryRowFactory.create(
                     context = requireContext(),
-                    title = category.title,
+                    title = categoryTitle,
                     summary = getMaterialSummary(selectedMaterials),
                     onClick = {
                         (parentFragment as? TankSettingsFragment)?.openMaterialPickerFlow(
                             categoryKey = category.key,
-                            categoryTitle = category.title
+                            categoryTitle = categoryTitle
                         )
                     }
                 )
@@ -73,6 +74,7 @@ class TankSettingsDetailsFragment : Fragment(R.layout.fragment_tank_settings_det
         }
 
         MaterialCategoryCatalog.hardwareCategories.forEach { category ->
+            val categoryTitle = category.title(requireContext())
             val selectedMaterials = tank.materials.filter { material ->
                 material.categoryKey == category.key
             }
@@ -80,12 +82,12 @@ class TankSettingsDetailsFragment : Fragment(R.layout.fragment_tank_settings_det
             binding.hardwareMaterialsContainer.addView(
                 AquaMaterialCategoryRowFactory.create(
                     context = requireContext(),
-                    title = category.title,
+                    title = categoryTitle,
                     summary = getMaterialSummary(selectedMaterials),
                     onClick = {
                         (parentFragment as? TankSettingsFragment)?.openMaterialPickerFlow(
                             categoryKey = category.key,
-                            categoryTitle = category.title
+                            categoryTitle = categoryTitle
                         )
                     }
                 )

@@ -1,50 +1,79 @@
 package com.aqua.aqualight.data.aquarium.catalog.material
 
+import com.aqua.aqualight.R
+
 
 object FertilizerCatalog {
 
-    private const val CATEGORY_TITLE = "Fertilizer"
-
-    val products: List<AquariumMaterial> = listOf(
-        AquariumMaterial(
+    val definitions: List<AquariumMaterialDefinition> = listOf(
+        AquariumMaterialDefinition(
             id = "fertilizer_green_aqua_carbon_plant_wellness_1000",
-            brand = "Green Aqua",
-            name = "Green Aqua Carbon Plant Wellness - Fertilizer Pack 1000 ml",
+            brandRes = R.string.catalog_brand_green_aqua,
+            nameRes = R.string.catalog_material_fertilizer_green_aqua_carbon_plant_wellness_1000_name,
             categoryKey = MaterialCategoryKey.FERTILIZER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("fertilizer", "liquid", "plant", "carbon", "green aqua")
+            categoryTitleRes = R.string.catalog_material_category_fertilizer_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_fertilizer,
+                R.string.catalog_keyword_liquid,
+                R.string.catalog_keyword_plant,
+                R.string.catalog_keyword_carbon,
+                R.string.catalog_keyword_green_aqua
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "fertilizer_green_aqua_carbon_plant_wellness_500",
-            brand = "Green Aqua",
-            name = "Green Aqua Carbon Plant Wellness - Fertilizer Pack 500 ml",
+            brandRes = R.string.catalog_brand_green_aqua,
+            nameRes = R.string.catalog_material_fertilizer_green_aqua_carbon_plant_wellness_500_name,
             categoryKey = MaterialCategoryKey.FERTILIZER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("fertilizer", "liquid", "plant", "carbon", "green aqua")
+            categoryTitleRes = R.string.catalog_material_category_fertilizer_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_fertilizer,
+                R.string.catalog_keyword_liquid,
+                R.string.catalog_keyword_plant,
+                R.string.catalog_keyword_carbon,
+                R.string.catalog_keyword_green_aqua
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "fertilizer_green_aqua_carbon_plant_wellness_250",
-            brand = "Green Aqua",
-            name = "Green Aqua Carbon Plant Wellness - Fertilizer Pack 250 ml",
+            brandRes = R.string.catalog_brand_green_aqua,
+            nameRes = R.string.catalog_material_fertilizer_green_aqua_carbon_plant_wellness_250_name,
             categoryKey = MaterialCategoryKey.FERTILIZER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("fertilizer", "liquid", "plant", "carbon", "green aqua")
+            categoryTitleRes = R.string.catalog_material_category_fertilizer_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_fertilizer,
+                R.string.catalog_keyword_liquid,
+                R.string.catalog_keyword_plant,
+                R.string.catalog_keyword_carbon,
+                R.string.catalog_keyword_green_aqua
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "fertilizer_tropica_specialised_nutrition",
-            brand = "Tropica",
-            name = "Tropica Specialised Nutrition",
+            brandRes = R.string.catalog_brand_tropica,
+            nameRes = R.string.catalog_material_fertilizer_tropica_specialised_nutrition_name,
             categoryKey = MaterialCategoryKey.FERTILIZER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("fertilizer", "macro", "nitrate", "phosphate", "plant")
+            categoryTitleRes = R.string.catalog_material_category_fertilizer_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_fertilizer,
+                R.string.catalog_keyword_macro,
+                R.string.catalog_keyword_nitrate,
+                R.string.catalog_keyword_phosphate,
+                R.string.catalog_keyword_plant
+            )
         ),
-        AquariumMaterial(
+        AquariumMaterialDefinition(
             id = "fertilizer_tropica_premium_nutrition",
-            brand = "Tropica",
-            name = "Tropica Premium Nutrition",
+            brandRes = R.string.catalog_brand_tropica,
+            nameRes = R.string.catalog_material_fertilizer_tropica_premium_nutrition_name,
             categoryKey = MaterialCategoryKey.FERTILIZER,
-            categoryTitle = CATEGORY_TITLE,
-            keywords = listOf("fertilizer", "micro", "iron", "plant")
+            categoryTitleRes = R.string.catalog_material_category_fertilizer_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_fertilizer,
+                R.string.catalog_keyword_micro,
+                R.string.catalog_keyword_iron,
+                R.string.catalog_keyword_plant
+            )
         )
     )
 }

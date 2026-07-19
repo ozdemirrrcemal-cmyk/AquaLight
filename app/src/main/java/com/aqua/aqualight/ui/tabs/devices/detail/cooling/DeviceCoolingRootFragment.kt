@@ -14,6 +14,7 @@ import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceCoolingRootBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.text.resolve
 import kotlinx.coroutines.launch
 
 class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root) {
@@ -29,7 +30,7 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentDeviceCoolingRootBinding.bind(view)
-        setupHeader(title = args.deviceTitle.ifBlank { DEFAULT_TITLE })
+        setupHeader(title = args.deviceTitle.ifBlank { getString(R.string.device_family_cooling) })
         observeViewModel()
         viewModel.bind(
             deviceUidText = args.deviceUid,
@@ -57,19 +58,39 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
 
     private fun renderState(state: DeviceCoolingRootUiState) {
         if (_binding == null) return
-        setupHeader(title = state.title)
-        binding.tvProductName.text = state.title
-        binding.tvDeviceUid.text = state.deviceUid.ifBlank { "Unknown device" }
-        binding.tvConnectionStatus.text = state.connectionStatus
-        binding.tvIp.text = "IP: ${state.ipText}"
-        binding.tvFirmware.text = "Firmware: ${state.firmwareText}"
-        binding.tvModel.text = "Model: ${state.modelText}"
-        binding.tvPrimaryCount.text = "${state.primaryCountLabel}: ${state.primaryCountText}"
-        binding.tvFeatures.text = "Features: ${state.featuresText}"
-        binding.tvPrimarySectionTitle.text = state.primarySectionTitle
-        binding.tvPrimarySectionPlaceholder.text = state.primarySectionPlaceholder
-        binding.tvSecondarySectionTitle.text = state.secondarySectionTitle
-        binding.tvSecondarySectionPlaceholder.text = state.secondarySectionPlaceholder
+        val context = requireContext()
+        val unknown = getString(R.string.device_unknown)
+        val title = state.title.ifBlank { getString(R.string.device_family_cooling) }
+        setupHeader(title = title)
+        binding.tvProductName.text = title
+        binding.tvDeviceUid.text = state.deviceUid.ifBlank {
+            getString(R.string.device_unknown_device)
+        }
+        binding.tvConnectionStatus.setText(state.connectionStatusRes)
+        binding.tvIp.text = getString(R.string.device_ip_value, state.ipText.ifBlank { unknown })
+        binding.tvFirmware.text = getString(
+            R.string.device_firmware_value,
+            state.firmwareText.ifBlank { unknown }
+        )
+        binding.tvModel.text = getString(
+            R.string.device_model_value,
+            state.modelText.ifBlank { unknown }
+        )
+        binding.tvPrimaryCount.text = getString(
+            R.string.device_labeled_value,
+            getString(state.primaryCountLabelRes),
+            state.primaryCountText.ifBlank { unknown }
+        )
+        binding.tvFeatures.text = getString(
+            R.string.device_features_value,
+            context.resolve(state.featuresText)
+        )
+        binding.tvPrimarySectionTitle.setText(state.primarySectionTitleRes)
+        binding.tvPrimarySectionPlaceholder.text = context.resolve(state.primarySectionPlaceholder)
+        binding.tvSecondarySectionTitle.setText(state.secondarySectionTitleRes)
+        binding.tvSecondarySectionPlaceholder.text = context.resolve(
+            state.secondarySectionPlaceholder
+        )
     }
 
     override fun onDestroyView() {
@@ -77,7 +98,4 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
         super.onDestroyView()
     }
 
-    private companion object {
-        const val DEFAULT_TITLE = "Cooling"
-    }
 }

@@ -11,7 +11,7 @@
    <include
     android:id="@+id/appHeader"
     layout="@layout/layout_aqua_header"
-    android:layout_width="0dp"
+    android:layout_width="@dimen/aqua_size_0"
     android:layout_height="wrap_content"
     app:layout_constraintTop_toTopOf="parent"
     app:layout_constraintStart_toStartOf="parent"
@@ -20,8 +20,8 @@
     <!-- 🔹 İçerik -->
     <ScrollView
         android:id="@+id/scrollContent"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="@dimen/aqua_size_0"
         android:fillViewport="true"
         android:scrollbars="none"
         app:layout_constraintTop_toBottomOf="@id/appHeader"
@@ -34,17 +34,17 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp"
-            android:paddingTop="16dp"
-            android:paddingBottom="16dp">
+            android:paddingStart="@dimen/aqua_size_10"
+            android:paddingEnd="@dimen/aqua_size_10"
+            android:paddingTop="@dimen/aqua_size_16"
+            android:paddingBottom="@dimen/aqua_size_16">
 
             <!-- 🟦 Uygulama başlık / logo kartı -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardAppHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
+                android:layout_marginBottom="@dimen/aqua_size_12"
                 style="@style/Widget.Aqua.Card">
 
                 <LinearLayout
@@ -52,22 +52,22 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="16dp"
+                    android:padding="@dimen/aqua_size_16"
                     android:contentDescription="@string/about_app_header_card_desc">
 
                     <ImageView
                         android:id="@+id/ivAppLogo"
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
+                        android:layout_width="@dimen/aqua_size_56"
+                        android:layout_height="@dimen/aqua_size_56"
                         android:src="@drawable/logo_login"
                         android:contentDescription="@string/about_app_logo_desc" />
 
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="@dimen/aqua_size_0"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:orientation="vertical"
-                        android:layout_marginStart="16dp">
+                        android:layout_marginStart="@dimen/aqua_size_16">
 
                         <TextView
                             android:id="@+id/tvAppName"
@@ -85,7 +85,7 @@
                             android:text="@string/about_app_header_tagline"
                             android:textColor="@color/aqua_card_text_secondary"
                             android:textSize="@dimen/aqua_text_size_body_small"
-                            android:layout_marginTop="2dp" />
+                            android:layout_marginTop="@dimen/aqua_size_2" />
 
                         <TextView
                             android:id="@+id/tvAppVersion"
@@ -95,7 +95,7 @@
                             tools:text="Version 1.0.0 (100)"
                             android:textColor="@color/aqua_card_text_secondary"
                             android:textSize="@dimen/aqua_text_size_caption"
-                            android:layout_marginTop="4dp" />
+                            android:layout_marginTop="@dimen/aqua_size_4" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -105,14 +105,14 @@
                 android:id="@+id/cardAbout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
+                android:layout_marginBottom="@dimen/aqua_size_12"
                 style="@style/Widget.Aqua.Card">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp"
+                    android:padding="@dimen/aqua_size_16"
                     android:contentDescription="@string/about_app_overview_card_desc">
 
                     <TextView
@@ -123,7 +123,7 @@
                         android:textColor="@color/aqua_card_text_primary"
                         android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold"
-                        android:layout_marginBottom="4dp" />
+                        android:layout_marginBottom="@dimen/aqua_size_4" />
 
                     <TextView
                         android:id="@+id/tvAboutBody"
@@ -132,7 +132,7 @@
                         android:text="@string/about_app_overview_body"
                         android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="@dimen/aqua_text_size_body_small"
-                        android:lineSpacingExtra="3dp" />
+                        android:lineSpacingExtra="@dimen/aqua_size_3" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -141,14 +141,14 @@
                 android:id="@+id/cardSystemInfo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
+                android:layout_marginBottom="@dimen/aqua_size_12"
                 style="@style/Widget.Aqua.Card">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp"
+                    android:padding="@dimen/aqua_size_16"
                     android:contentDescription="@string/about_app_system_card_desc">
 
                     <TextView
@@ -159,18 +159,18 @@
                         android:textColor="@color/aqua_card_text_primary"
                         android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold"
-                        android:layout_marginBottom="8dp" />
+                        android:layout_marginBottom="@dimen/aqua_size_8" />
 
                     <!-- Versiyon -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:layout_marginBottom="4dp">
+                        android:layout_marginBottom="@dimen/aqua_size_4">
 
                         <TextView
                             android:id="@+id/tvVersionLabel"
-                            android:layout_width="0dp"
+                            android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/about_app_version_label"
@@ -192,11 +192,11 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:layout_marginBottom="4dp">
+                        android:layout_marginBottom="@dimen/aqua_size_4">
 
                         <TextView
                             android:id="@+id/tvBuildLabel"
-                            android:layout_width="0dp"
+                            android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/about_app_build_label"
@@ -218,11 +218,11 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:layout_marginBottom="4dp">
+                        android:layout_marginBottom="@dimen/aqua_size_4">
 
                         <TextView
                             android:id="@+id/tvDeviceLabel"
-                            android:layout_width="0dp"
+                            android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/about_app_device_label"
@@ -247,7 +247,7 @@
 
                         <TextView
                             android:id="@+id/tvAndroidLabel"
-                            android:layout_width="0dp"
+                            android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/about_app_android_label"
@@ -271,14 +271,14 @@
                 android:id="@+id/cardLegal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="@dimen/aqua_size_16"
                 style="@style/Widget.Aqua.Card">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp"
+                    android:padding="@dimen/aqua_size_16"
                     android:contentDescription="@string/about_app_legal_card_desc">
 
                     <TextView
@@ -289,20 +289,20 @@
                         android:textColor="@color/aqua_card_text_primary"
                         android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold"
-                        android:layout_marginBottom="8dp" />
+                        android:layout_marginBottom="@dimen/aqua_size_8" />
 
                     <!-- Privacy policy -->
                     <LinearLayout
                         android:id="@+id/rowPrivacy"
                         android:layout_width="match_parent"
-                        android:layout_height="48dp"
+                        android:layout_height="@dimen/aqua_size_48"
                         android:gravity="center_vertical"
                         android:clickable="true"
                         android:focusable="true"
                         android:background="?android:attr/selectableItemBackground">
 
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/about_app_privacy_policy"
@@ -310,8 +310,8 @@
                             android:textSize="@dimen/aqua_text_size_body_small" />
 
                         <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
+                            android:layout_width="@dimen/aqua_size_20"
+                            android:layout_height="@dimen/aqua_size_20"
                             android:src="@drawable/ic_arrow_right"
                             android:contentDescription="@string/about_app_row_arrow_desc" />
                     </LinearLayout>
@@ -320,14 +320,14 @@
                     <LinearLayout
                         android:id="@+id/rowTerms"
                         android:layout_width="match_parent"
-                        android:layout_height="48dp"
+                        android:layout_height="@dimen/aqua_size_48"
                         android:gravity="center_vertical"
                         android:clickable="true"
                         android:focusable="true"
                         android:background="?android:attr/selectableItemBackground">
 
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/about_app_terms"
@@ -335,8 +335,8 @@
                             android:textSize="@dimen/aqua_text_size_body_small" />
 
                         <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
+                            android:layout_width="@dimen/aqua_size_20"
+                            android:layout_height="@dimen/aqua_size_20"
                             android:src="@drawable/ic_arrow_right"
                             android:contentDescription="@string/about_app_row_arrow_desc" />
                     </LinearLayout>
@@ -345,14 +345,14 @@
                     <LinearLayout
                         android:id="@+id/rowLicenses"
                         android:layout_width="match_parent"
-                        android:layout_height="48dp"
+                        android:layout_height="@dimen/aqua_size_48"
                         android:gravity="center_vertical"
                         android:clickable="true"
                         android:focusable="true"
                         android:background="?android:attr/selectableItemBackground">
 
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/about_app_licenses"
@@ -360,8 +360,8 @@
                             android:textSize="@dimen/aqua_text_size_body_small" />
 
                         <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
+                            android:layout_width="@dimen/aqua_size_20"
+                            android:layout_height="@dimen/aqua_size_20"
                             android:src="@drawable/ic_arrow_right"
                             android:contentDescription="@string/about_app_row_arrow_desc" />
                     </LinearLayout>
@@ -377,7 +377,7 @@
                 android:textColor="@color/aqua_card_text_secondary"
                 android:textSize="@dimen/aqua_text_size_caption"
                 android:gravity="center"
-                android:layout_marginTop="4dp" />
+                android:layout_marginTop="@dimen/aqua_size_4" />
 
         </LinearLayout>
     </ScrollView>

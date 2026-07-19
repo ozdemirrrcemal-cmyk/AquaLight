@@ -11,35 +11,35 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingTop="16dp"
-        android:paddingStart="10dp"
-        android:paddingEnd="10dp"
-        android:paddingBottom="16dp">
+        android:paddingTop="@dimen/aqua_size_16"
+        android:paddingStart="@dimen/aqua_size_10"
+        android:paddingEnd="@dimen/aqua_size_10"
+        android:paddingBottom="@dimen/aqua_size_16">
 
         <!-- 🔹 Profile card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             style="@style/Widget.Aqua.Card.Elevated"
-            android:layout_marginBottom="5dp">
+            android:layout_marginBottom="@dimen/aqua_size_5">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:padding="12dp">
+                android:padding="@dimen/aqua_size_12">
 
                 <FrameLayout
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
+                    android:layout_width="@dimen/aqua_size_64"
+                    android:layout_height="@dimen/aqua_size_64"
                     android:background="@drawable/profile_background">
 
                     <ImageView
                         android:id="@+id/ivProfilePhoto"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:layout_margin="2dp"
+                        android:layout_margin="@dimen/aqua_size_2"
                         android:background="@drawable/profile_clip_circle"
                         android:scaleType="centerCrop"
                         android:src="@drawable/ic_profile_placeholder"
@@ -50,10 +50,10 @@
                 </FrameLayout>
 
                 <LinearLayout
-                    android:layout_width="0dp"
+                    android:layout_width="@dimen/aqua_size_0"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:layout_marginStart="16dp"
+                    android:layout_marginStart="@dimen/aqua_size_16"
                     android:orientation="vertical">
 
                     <TextView
@@ -73,30 +73,31 @@
     android:textSize="@dimen/aqua_text_size_caption"/>
 
 <com.google.android.material.card.MaterialCardView
+    style="@style/Widget.Aqua.Card.Inline"
     android:id="@+id/cardActiveDevices"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_marginTop="8dp"
-    app:cardCornerRadius="50dp"
-    app:cardElevation="0dp"
+    android:layout_marginTop="@dimen/aqua_size_8"
+    app:cardCornerRadius="@dimen/aqua_size_50"
+    app:cardElevation="@dimen/aqua_size_0"
     app:strokeColor="@color/aqua_card_outline_subtle"
-    app:strokeWidth="1dp">
+    app:strokeWidth="@dimen/aqua_size_1">
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="10dp"
-        android:paddingTop="5dp"
-        android:paddingEnd="10dp"
-        android:paddingBottom="5dp">
+        android:paddingStart="@dimen/aqua_size_10"
+        android:paddingTop="@dimen/aqua_size_5"
+        android:paddingEnd="@dimen/aqua_size_10"
+        android:paddingBottom="@dimen/aqua_size_5">
 
         <!-- Online / Offline Dot -->
         <View
             android:id="@+id/viewDeviceDot"
-            android:layout_width="8dp"
-            android:layout_height="8dp"
+            android:layout_width="@dimen/aqua_size_8"
+            android:layout_height="@dimen/aqua_size_8"
             android:background="@drawable/bg_online_dot" />
 
         <!-- Device Text -->
@@ -104,8 +105,8 @@
             android:id="@+id/tvActiveDevices"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="3 Active Devices"
+            android:layout_marginStart="@dimen/aqua_size_8"
+            android:text="@string/settings_active_devices_preview"
             android:textColor="@color/aqua_card_text_primary"
             android:textSize="@dimen/aqua_text_size_micro"
             android:textStyle="bold" />
@@ -133,8 +134,8 @@
                     android:id="@+id/rowUserInfo"
                     android:layout_width="match_parent"
 					android:layout_height="wrap_content"
-                    android:minHeight="56dp"
-                    android:paddingHorizontal="16dp"
+                    android:minHeight="@dimen/aqua_size_56"
+                    android:paddingHorizontal="@dimen/aqua_size_16"
                     android:gravity="center_vertical"
                     android:clickable="true"
                     android:focusable="true"
@@ -142,7 +143,7 @@
                     android:contentDescription="@string/settings_user_info_desc">
 
                     <TextView
-                        android:layout_width="0dp"
+                        android:layout_width="@dimen/aqua_size_0"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/settings_user_info"
@@ -150,8 +151,8 @@
                         android:textSize="@dimen/aqua_text_size_body"/>
 
                     <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
+                        android:layout_width="@dimen/aqua_size_20"
+                        android:layout_height="@dimen/aqua_size_20"
                         android:src="@drawable/ic_arrow_right"
                         app:tint="@color/aqua_card_text_secondary"
                         android:contentDescription="@string/settings_arrow_desc"/>
@@ -159,7 +160,7 @@
 
                 <View
                     android:layout_width="match_parent"
-                    android:layout_height="1dp"
+                    android:layout_height="@dimen/aqua_size_1"
                     android:background="@color/aqua_card_divider"/>
 
                 <!-- 2️⃣ Device Status -->
@@ -167,8 +168,8 @@
                     android:id="@+id/rowDeviceStatus"
                     android:layout_width="match_parent"
 					android:layout_height="wrap_content"
-                    android:minHeight="56dp"
-                    android:paddingHorizontal="16dp"
+                    android:minHeight="@dimen/aqua_size_56"
+                    android:paddingHorizontal="@dimen/aqua_size_16"
                     android:gravity="center_vertical"
                     android:clickable="true"
                     android:focusable="true"
@@ -176,7 +177,7 @@
                     android:contentDescription="@string/settings_device_status_desc">
 
                     <TextView
-                        android:layout_width="0dp"
+                        android:layout_width="@dimen/aqua_size_0"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/settings_device_status"
@@ -184,8 +185,8 @@
                         android:textSize="@dimen/aqua_text_size_body"/>
 
                     <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
+                        android:layout_width="@dimen/aqua_size_20"
+                        android:layout_height="@dimen/aqua_size_20"
                         android:src="@drawable/ic_arrow_right"
                         app:tint="@color/aqua_card_text_secondary"
                         android:contentDescription="@string/settings_arrow_desc"/>
@@ -193,15 +194,15 @@
 
                 <View
                     android:layout_width="match_parent"
-                    android:layout_height="1dp"
+                    android:layout_height="@dimen/aqua_size_1"
                     android:background="@color/aqua_card_divider"/>
                 <!-- 4️⃣ App Settings -->
                 <LinearLayout
                     android:id="@+id/rowSettings"
                     android:layout_width="match_parent"
 					android:layout_height="wrap_content"
-                    android:minHeight="56dp"
-                    android:paddingHorizontal="16dp"
+                    android:minHeight="@dimen/aqua_size_56"
+                    android:paddingHorizontal="@dimen/aqua_size_16"
                     android:gravity="center_vertical"
                     android:clickable="true"
                     android:focusable="true"
@@ -209,7 +210,7 @@
                     android:contentDescription="@string/settings_app_desc">
 
                     <TextView
-                        android:layout_width="0dp"
+                        android:layout_width="@dimen/aqua_size_0"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/settings_app"
@@ -217,8 +218,8 @@
                         android:textSize="@dimen/aqua_text_size_body"/>
 
                     <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
+                        android:layout_width="@dimen/aqua_size_20"
+                        android:layout_height="@dimen/aqua_size_20"
                         android:src="@drawable/ic_arrow_right"
                         app:tint="@color/aqua_card_text_secondary"
                         android:contentDescription="@string/settings_arrow_desc"/>
@@ -226,7 +227,7 @@
 
                 <View
                     android:layout_width="match_parent"
-                    android:layout_height="1dp"
+                    android:layout_height="@dimen/aqua_size_1"
                     android:background="@color/aqua_card_divider"/>
 
                 <!-- 5️⃣ Usage Statistics -->
@@ -234,8 +235,8 @@
                     android:id="@+id/rowUsage"
                     android:layout_width="match_parent"
 					android:layout_height="wrap_content"
-                    android:minHeight="56dp"
-                    android:paddingHorizontal="16dp"
+                    android:minHeight="@dimen/aqua_size_56"
+                    android:paddingHorizontal="@dimen/aqua_size_16"
                     android:gravity="center_vertical"
                     android:clickable="true"
                     android:focusable="true"
@@ -243,7 +244,7 @@
                     android:contentDescription="@string/settings_usage_desc">
 
                     <TextView
-                        android:layout_width="0dp"
+                        android:layout_width="@dimen/aqua_size_0"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/settings_usage"
@@ -251,8 +252,8 @@
                         android:textSize="@dimen/aqua_text_size_body"/>
 
                     <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
+                        android:layout_width="@dimen/aqua_size_20"
+                        android:layout_height="@dimen/aqua_size_20"
                         android:src="@drawable/ic_arrow_right"
                         app:tint="@color/aqua_card_text_secondary"
                         android:contentDescription="@string/settings_arrow_desc"/>
@@ -260,7 +261,7 @@
 
                 <View
                     android:layout_width="match_parent"
-                    android:layout_height="1dp"
+                    android:layout_height="@dimen/aqua_size_1"
                     android:background="@color/aqua_card_divider"/>
 
                 <!-- 6️⃣ Privacy Policy -->
@@ -268,8 +269,8 @@
                     android:id="@+id/rowPrivacy"
                     android:layout_width="match_parent"
 					android:layout_height="wrap_content"
-                    android:minHeight="56dp"
-                    android:paddingHorizontal="16dp"
+                    android:minHeight="@dimen/aqua_size_56"
+                    android:paddingHorizontal="@dimen/aqua_size_16"
                     android:gravity="center_vertical"
                     android:clickable="true"
                     android:focusable="true"
@@ -277,7 +278,7 @@
                     android:contentDescription="@string/settings_privacy_desc">
 
                     <TextView
-                        android:layout_width="0dp"
+                        android:layout_width="@dimen/aqua_size_0"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/settings_privacy"
@@ -285,8 +286,8 @@
                         android:textSize="@dimen/aqua_text_size_body"/>
 
                     <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
+                        android:layout_width="@dimen/aqua_size_20"
+                        android:layout_height="@dimen/aqua_size_20"
                         android:src="@drawable/ic_arrow_right"
                         app:tint="@color/aqua_card_text_secondary"
                         android:contentDescription="@string/settings_arrow_desc"/>
@@ -294,7 +295,7 @@
 
                 <View
                     android:layout_width="match_parent"
-                    android:layout_height="1dp"
+                    android:layout_height="@dimen/aqua_size_1"
                     android:background="@color/aqua_card_divider"/>
 
                 <!-- 7️⃣ Feedback / Support -->
@@ -302,8 +303,8 @@
                     android:id="@+id/rowFeedback"
                     android:layout_width="match_parent"
 					android:layout_height="wrap_content"
-                    android:minHeight="56dp"
-                    android:paddingHorizontal="16dp"
+                    android:minHeight="@dimen/aqua_size_56"
+                    android:paddingHorizontal="@dimen/aqua_size_16"
                     android:gravity="center_vertical"
                     android:clickable="true"
                     android:focusable="true"
@@ -311,7 +312,7 @@
                     android:contentDescription="@string/settings_feedback_desc">
 
                     <TextView
-                        android:layout_width="0dp"
+                        android:layout_width="@dimen/aqua_size_0"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/settings_feedback"
@@ -319,8 +320,8 @@
                         android:textSize="@dimen/aqua_text_size_body"/>
 
                     <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
+                        android:layout_width="@dimen/aqua_size_20"
+                        android:layout_height="@dimen/aqua_size_20"
                         android:src="@drawable/ic_arrow_right"
                         app:tint="@color/aqua_card_text_secondary"
                         android:contentDescription="@string/settings_arrow_desc"/>
@@ -328,7 +329,7 @@
 
                 <View
                     android:layout_width="match_parent"
-                    android:layout_height="1dp"
+                    android:layout_height="@dimen/aqua_size_1"
                     android:background="@color/aqua_card_divider"/>
 
                 <!-- 8️⃣ Logout / Account Management -->
@@ -336,8 +337,8 @@
                     android:id="@+id/rowLogout"
                     android:layout_width="match_parent"
 					android:layout_height="wrap_content"
-                    android:minHeight="56dp"
-                    android:paddingHorizontal="16dp"
+                    android:minHeight="@dimen/aqua_size_56"
+                    android:paddingHorizontal="@dimen/aqua_size_16"
                     android:gravity="center_vertical"
                     android:clickable="true"
                     android:focusable="true"
@@ -345,7 +346,7 @@
                     android:contentDescription="@string/settings_logout_desc">
 
                     <TextView
-                        android:layout_width="0dp"
+                        android:layout_width="@dimen/aqua_size_0"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/settings_logout"
@@ -353,8 +354,8 @@
                         android:textSize="@dimen/aqua_text_size_body"/>
 
                     <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
+                        android:layout_width="@dimen/aqua_size_20"
+                        android:layout_height="@dimen/aqua_size_20"
                         android:src="@drawable/ic_arrow_right"
                         app:tint="@color/aqua_card_text_secondary"
                         android:contentDescription="@string/settings_arrow_desc"/>
@@ -369,41 +370,41 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center"
-    android:layout_marginTop="25dp"
-    android:layout_marginStart="10dp"
-    android:layout_marginEnd="10dp">
+    android:layout_marginTop="@dimen/aqua_size_25"
+    android:layout_marginStart="@dimen/aqua_size_10"
+    android:layout_marginEnd="@dimen/aqua_size_10">
 
             <ImageView
                 android:id="@+id/ivSocialWebsite"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                android:layout_width="@dimen/aqua_size_48"
+                android:layout_height="@dimen/aqua_size_48"
                 android:src="@drawable/internet"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/settings_social_website"/>
 
             <ImageView
                 android:id="@+id/ivSocialFacebook"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="24dp"
+                android:layout_width="@dimen/aqua_size_48"
+                android:layout_height="@dimen/aqua_size_48"
+                android:layout_marginStart="@dimen/aqua_size_24"
                 android:src="@drawable/facebook"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/settings_social_facebook"/>
 
             <ImageView
                 android:id="@+id/ivSocialInstagram"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="24dp"
+                android:layout_width="@dimen/aqua_size_48"
+                android:layout_height="@dimen/aqua_size_48"
+                android:layout_marginStart="@dimen/aqua_size_24"
                 android:src="@drawable/instagram"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/settings_social_instagram"/>
 
             <ImageView
                 android:id="@+id/ivSocialYoutube"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="24dp"
+                android:layout_width="@dimen/aqua_size_48"
+                android:layout_height="@dimen/aqua_size_48"
+                android:layout_marginStart="@dimen/aqua_size_24"
                 android:src="@drawable/youtube"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/settings_social_youtube"/>
@@ -414,8 +415,8 @@
     android:id="@+id/tvFooterInfo"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="12dp"
-    android:layout_marginBottom="12dp"
+    android:layout_marginTop="@dimen/aqua_size_12"
+    android:layout_marginBottom="@dimen/aqua_size_12"
     android:gravity="center"
     android:textColor="@color/aqua_card_text_secondary"
     android:textSize="@dimen/aqua_text_size_caption" />
