@@ -3,18 +3,11 @@ package com.aqua.aqualight.ui.tabs.aquarium.common
 import android.content.Context
 import androidx.annotation.StringRes
 import com.aqua.aqualight.R
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
-import java.util.Locale
+import com.aqua.aqualight.i18n.LocaleFormatter
 import kotlin.math.roundToInt
 
 object AquariumDimensionFormatter {
     private const val GALLON_PER_LITER = 0.264172
-
-    private val preciseFormatter = DecimalFormat(
-        "#0.##",
-        DecimalFormatSymbols(Locale.US)
-    )
 
     fun sizeTitle(
         context: Context,
@@ -43,18 +36,18 @@ object AquariumDimensionFormatter {
 
             context.getString(
                 R.string.aquarium_dimension_format,
-                preciseFormatter.format(widthIn),
+                LocaleFormatter.formatDecimal(context, widthIn),
                 separator,
-                preciseFormatter.format(lengthIn),
-                preciseFormatter.format(heightIn)
+                LocaleFormatter.formatDecimal(context, lengthIn),
+                LocaleFormatter.formatDecimal(context, heightIn)
             )
         } else {
             context.getString(
                 R.string.aquarium_dimension_format,
-                widthCm.toString(),
+                LocaleFormatter.formatInteger(context, widthCm),
                 separator,
-                lengthCm.toString(),
-                heightCm.toString()
+                LocaleFormatter.formatInteger(context, lengthCm),
+                LocaleFormatter.formatInteger(context, heightCm)
             )
         }
     }
@@ -73,12 +66,20 @@ object AquariumDimensionFormatter {
             val gallons = liters * GALLON_PER_LITER
             context.getString(
                 R.string.aquarium_volume_gallon_format,
-                if (rounded) gallons.roundToInt().toString() else preciseFormatter.format(gallons)
+                if (rounded) {
+                    LocaleFormatter.formatInteger(context, gallons.roundToInt())
+                } else {
+                    LocaleFormatter.formatDecimal(context, gallons)
+                }
             )
         } else {
             context.getString(
                 R.string.aquarium_volume_liter_format,
-                if (rounded) liters.roundToInt().toString() else preciseFormatter.format(liters)
+                if (rounded) {
+                    LocaleFormatter.formatInteger(context, liters.roundToInt())
+                } else {
+                    LocaleFormatter.formatDecimal(context, liters)
+                }
             )
         }
     }
