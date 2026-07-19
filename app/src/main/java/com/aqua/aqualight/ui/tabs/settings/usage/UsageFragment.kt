@@ -4,14 +4,12 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import coil3.load
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.user.UsageAnalyticsSnapshot
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentUsageBinding
+import com.aqua.aqualight.localization.LocaleFormatters
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -25,95 +23,65 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
         requireContext().requireAppContainer().userSettingsOperations
     }
 
-    override fun onViewCreated(
-        view: View,
-        savedInstanceState: Bundle?
-    ) {
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
-
-        _binding =
-            FragmentUsageBinding.bind(view)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        _binding = FragmentUsageBinding.bind(view)
 
         setupHeader()
-
         observeUsageAnalytics()
     }
 
     private fun setupHeader() {
-        binding.appHeader.setupAquaHeader(
-            fragment = this
-        )
+        binding.appHeader.setupAquaHeader(fragment = this)
     }
 
     private fun observeUsageAnalytics() {
         viewLifecycleOwner.lifecycleScope.launch {
-            settingsOperations.usageAnalytics.collectLatest { usage ->
-                bindUsageToUi(
-                    usage
-                )
-            }
+            settingsOperations.usageAnalytics.collectLatest(::bindUsageToUi)
         }
     }
 
-    private fun bindUsageToUi(
-        usage: UsageAnalyticsSnapshot
-    ) {
-        binding.tvTotalSessionsValue.text =
-            usage.weeklyAutomationCount.toString()
-
-        binding.tvTotalTimeValue.text =
-            usage.weeklyAlertCount.toString()
-
-        binding.tvTodaySessionsValue.text =
-            usage.todayAutomationCount.toString()
-
-        binding.tvTodayTimeValue.text =
-            usage.todayManualActionCount.toString()
-
-        binding.tvLastOpenValue.text =
-            formatLastEventTime(
-                usage.lastEventTimeMillis
-            )
-
-        binding.tvMostUsedDeviceValue.text =
-            usage.lastEventDescription.ifBlank {
-                getString(
-                    R.string.usage_last_event_none
-                )
-            }
-    }
-
-    private fun formatLastEventTime(
-        timeMillis: Long
-    ): String {
-        if (
-            timeMillis <= 0L
-        ) {
-            return getString(
-                R.string.usage_last_open_never
-            )
-        }
-
-        val date =
-            Date(timeMillis)
-
-        val formatter =
-            SimpleDateFormat(
-                "MMM d, HH:mm",
-                Locale.getDefault()
-            )
-
-        return formatter.format(
-            date
+    private fun bindUsageToUi(usage: UsageAnalyticsSnapshot) {
+        val locale = currentLocale()
+        binding.tvTotalSessionsValue.text = LocaleFormatters.formatInteger(
+            usage.weeklyAutomationCount.toLong(),
+            locale
         )
+        binding.tvTotalTimeValue.text = LocaleFormatters.formatInteger(
+            usage.weeklyAlertCount.toLong(),
+            locale
+        )
+        binding.tvTodaySessionsValue.text = LocaleFormatters.formatInteger(
+            usage.todayAutomationCount.toLong(),
+            locale
+        )
+        binding.tvTodayTimeValue.text = LocaleFormatters.formatInteger(
+            usage.todayManualActionCount.toLong(),
+            locale
+        )
+        binding.tvLastOpenValue.text = formatLastEventTime(
+            usage.lastEventTimeMillis,
+            locale
+        )
+        binding.tvMostUsedDeviceValue.text = usage.lastEventDescription.ifBlank {
+            getString(R.string.usage_last_event_none)
+        }
+    }
+
+    private fun formatLastEventTime(timeMillis: Long, locale: Locale): String {
+        if (timeMillis <= 0L) {
+            return getString(R.string.usage_last_open_never)
+        }
+        return LocaleFormatters.formatDateTime(timeMillis, locale)
+    }
+
+    private fun currentLocale(): Locale {
+        val locales = resources.configuration.locales
+        return if (locales.isEmpty) Locale.getDefault() else locales[0]
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-
         _binding = null
     }
 }
