@@ -17,6 +17,10 @@ class LocaleContextArchitectureTest {
             repositoryRoot,
             "app/src/main/java/com/aqua/aqualight/app/AquaApp.kt"
         ).readText()
+        val controller = File(
+            repositoryRoot,
+            "app/src/main/java/com/aqua/aqualight/i18n/AppLanguageController.kt"
+        ).readText()
 
         val attachIndex = source.indexOf("override fun attachBaseContext(base: Context)")
         val superAttachIndex = source.indexOf("super.attachBaseContext(base)")
@@ -27,7 +31,26 @@ class LocaleContextArchitectureTest {
         assertTrue(superAttachIndex > attachIndex)
         assertTrue(cacheReadIndex > superAttachIndex)
         assertTrue(onCreateIndex > cacheReadIndex)
-        assertTrue(source.contains("AppCompatDelegate.setApplicationLocales("))
+        assertTrue(source.contains("AppLanguageController.apply("))
+        assertTrue(controller.contains("AppCompatDelegate.getApplicationLocales()"))
+        assertTrue(controller.contains("AppCompatDelegate.setApplicationLocales("))
+    }
+
+    @Test
+    fun settingsReportTheLocaleActuallyRenderingTheApplication() {
+        val operations = File(
+            repositoryRoot,
+            "app/src/main/java/com/aqua/aqualight/data/user/DefaultUserSettingsOperations.kt"
+        ).readText()
+        val languageScreen = File(
+            repositoryRoot,
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/app/" +
+                "LanguageSettingsFragment.kt"
+        ).readText()
+
+        assertTrue(operations.contains("AppLanguageController.current()"))
+        assertTrue(operations.contains("AppLanguageController.apply(supportedCode)"))
+        assertFalse(languageScreen.contains("AppCompatDelegate.setApplicationLocales("))
     }
 
     @Test
