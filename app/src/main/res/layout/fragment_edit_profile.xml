@@ -46,8 +46,8 @@
     <!-- Kamera ikonu -->
     <ImageView
         android:id="@+id/ivCameraIcon"
-        android:layout_width="@dimen/aqua_size_40"
-        android:layout_height="@dimen/aqua_size_40"
+        android:layout_width="@dimen/aqua_size_48"
+        android:layout_height="@dimen/aqua_size_48"
         android:background="@drawable/profile_background_small"
         android:src="@drawable/ic_camera"
         android:padding="@dimen/aqua_size_8"

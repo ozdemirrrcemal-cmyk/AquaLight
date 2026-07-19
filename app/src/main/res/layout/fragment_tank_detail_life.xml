@@ -43,7 +43,7 @@
                 style="@style/Widget.Aqua.Button.InlineAdd"
                 android:id="@+id/btnAddLife"
                 android:layout_width="wrap_content"
-                android:layout_height="@dimen/aqua_size_34"
+                android:layout_height="@dimen/aqua_size_48"
                 android:text="@string/aquarium_action_add"
                 android:textStyle="bold"
                 android:contentDescription="@string/devices_scan_button_desc" />

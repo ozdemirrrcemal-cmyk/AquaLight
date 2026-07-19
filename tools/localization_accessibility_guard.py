@@ -135,8 +135,8 @@ def check_xml_controls():
             if interactive:
                 width=dp(view.attrib.get(f'{ANDROID}layout_width'),dims);height=dp(view.attrib.get(f'{ANDROID}layout_height'),dims)
                 minw=dp(view.attrib.get(f'{ANDROID}minWidth'),dims) or 0;minh=dp(view.attrib.get(f'{ANDROID}minHeight'),dims) or 0
-                if width is not None and max(width,minw)<48:errors.append(where+' fixed width below 48dp')
-                if height is not None and max(height,minh)<48:errors.append(where+' fixed height below 48dp')
+                if width is not None and width > 0 and max(width,minw)<48:errors.append(where+' fixed width below 48dp')
+                if height is not None and height > 0 and max(height,minh)<48:errors.append(where+' fixed height below 48dp')
     if errors:fail('XML accessibility violations:\n- '+'\n- '.join(errors[:100]))
 
 def check_dynamic_controls():

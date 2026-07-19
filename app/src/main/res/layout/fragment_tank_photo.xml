@@ -93,8 +93,8 @@
             <com.google.android.material.card.MaterialCardView
             style="@style/Widget.Aqua.Card.PhotoOverlay"
               android:id="@+id/btnCamera"
-              android:layout_width="@dimen/aqua_size_44"
-              android:layout_height="@dimen/aqua_size_44"
+              android:layout_width="@dimen/aqua_size_48"
+              android:layout_height="@dimen/aqua_size_48"
               android:layout_gravity="bottom|end"
               android:layout_marginEnd="@dimen/aqua_size_14"
               android:layout_marginBottom="@dimen/aqua_size_14"
