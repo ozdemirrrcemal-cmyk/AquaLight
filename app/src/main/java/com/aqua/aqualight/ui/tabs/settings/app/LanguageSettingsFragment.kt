@@ -4,13 +4,14 @@ import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.user.UserSettingsOperations
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentLanguageSettingsBinding
+import com.aqua.aqualight.localization.SupportedLocaleRegistry
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -33,12 +34,11 @@ class LanguageSettingsFragment : Fragment(R.layout.fragment_language_settings) {
             savedInstanceState
         )
 
-        _binding =
-            FragmentLanguageSettingsBinding.bind(view)
+        _binding = FragmentLanguageSettingsBinding.bind(view)
 
         setupHeader()
+        configureSupportedLanguages()
         observeSelectedLanguage()
-        setupLanguageClicks()
     }
 
     private fun setupHeader() {
@@ -47,139 +47,66 @@ class LanguageSettingsFragment : Fragment(R.layout.fragment_language_settings) {
         )
     }
 
+    private fun configureSupportedLanguages() = with(binding) {
+        val unsupportedCards = listOf(
+            cardTurkish,
+            cardGerman,
+            cardFrench,
+            cardRussian,
+            cardChinese
+        )
+        unsupportedCards.forEach { card ->
+            card.isVisible = false
+            card.isEnabled = false
+            card.setOnClickListener(null)
+        }
+
+        cardEnglish.isVisible = true
+        cardEnglish.isEnabled = true
+        cardEnglish.setOnClickListener {
+            selectLanguage(SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG)
+        }
+        radioEnglish.setOnClickListener {
+            selectLanguage(SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG)
+        }
+    }
+
     private fun observeSelectedLanguage() {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             settingsOperations.languageCode.collectLatest { code ->
-                updateLanguageSelection(
-                    code
-                )
+                updateLanguageSelection(code)
             }
         }
     }
 
-    private fun setupLanguageClicks() =
-        with(binding) {
-
-            fun select(
-                code: String
-            ) {
-                viewLifecycleOwner.lifecycleScope.launch {
-                    settingsOperations.updateLanguage(
-                        code
-                    )
-
-                    applyLanguage(
-                        code
-                    )
-
-                    findNavController()
-                        .popBackStack()
-                }
-            }
-
-            cardTurkish.setOnClickListener {
-                select("tr")
-            }
-
-            radioTurkish.setOnClickListener {
-                select("tr")
-            }
-
-            cardEnglish.setOnClickListener {
-                select("en")
-            }
-
-            radioEnglish.setOnClickListener {
-                select("en")
-            }
-
-            cardGerman.setOnClickListener {
-                select("de")
-            }
-
-            radioGerman.setOnClickListener {
-                select("de")
-            }
-
-            cardFrench.setOnClickListener {
-                select("fr")
-            }
-
-            radioFrench.setOnClickListener {
-                select("fr")
-            }
-
-            cardRussian.setOnClickListener {
-                select("ru")
-            }
-
-            radioRussian.setOnClickListener {
-                select("ru")
-            }
-
-            cardChinese.setOnClickListener {
-                select("zh")
-            }
-
-            radioChinese.setOnClickListener {
-                select("zh")
-            }
+    private fun selectLanguage(code: String) {
+        val normalizedCode = SupportedLocaleRegistry.normalizeLanguageTag(code)
+        viewLifecycleOwner.lifecycleScope.launch {
+            settingsOperations.updateLanguage(normalizedCode)
+            applyLanguage(normalizedCode)
+            findNavController().popBackStack()
         }
+    }
 
-    private fun updateLanguageSelection(
-        code: String
-    ) = with(binding) {
-
-        radioTurkish.isChecked =
-            false
-
+    private fun updateLanguageSelection(code: String) = with(binding) {
+        radioTurkish.isChecked = false
+        radioGerman.isChecked = false
+        radioFrench.isChecked = false
+        radioRussian.isChecked = false
+        radioChinese.isChecked = false
         radioEnglish.isChecked =
-            false
-
-        radioGerman.isChecked =
-            false
-
-        radioFrench.isChecked =
-            false
-
-        radioRussian.isChecked =
-            false
-
-        radioChinese.isChecked =
-            false
-
-        when (code) {
-            "tr" -> radioTurkish.isChecked = true
-            "en" -> radioEnglish.isChecked = true
-            "de" -> radioGerman.isChecked = true
-            "fr" -> radioFrench.isChecked = true
-            "ru" -> radioRussian.isChecked = true
-            "zh" -> radioChinese.isChecked = true
-        }
+            SupportedLocaleRegistry.normalizeLanguageTag(code) ==
+                SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG
     }
 
-    private fun applyLanguage(
-        code: String
-    ) {
-        val safeCode =
-            code.ifBlank {
-                UserSettingsOperations.DEFAULT_LANGUAGE_CODE
-            }
-
-        val localeList =
-            LocaleListCompat.forLanguageTags(
-                safeCode
-            )
-
-        AppCompatDelegate.setApplicationLocales(
-            localeList
-        )
+    private fun applyLanguage(code: String) {
+        val normalizedCode = SupportedLocaleRegistry.normalizeLanguageTag(code)
+        val localeList = LocaleListCompat.forLanguageTags(normalizedCode)
+        AppCompatDelegate.setApplicationLocales(localeList)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-
-        _binding =
-            null
+        _binding = null
     }
 }
