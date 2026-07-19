@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <item name="aqua_touch_delegate_group" type="id" />
-    <item name="aqua_effective_touch_target_bounds" type="id" />
-</resources>
