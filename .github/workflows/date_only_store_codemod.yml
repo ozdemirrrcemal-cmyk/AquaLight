@@ -19,7 +19,7 @@ jobs:
           ref: agent/localization-accessibility-commercial
           fetch-depth: 0
 
-      - name: Apply exact date-only field replacements
+      - name: Apply exact Proto builder replacements
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -28,8 +28,8 @@ jobs:
           text = path.read_text(encoding='utf-8')
 
           replacements = {
-              'setupDateMillis': 'setupDateEpochDay',
-              'addedDateMillis': 'addedDateEpochDay',
+              'setSetupDateMillis': 'setSetupDateEpochDay',
+              'setAddedDateMillis': 'setAddedDateEpochDay',
           }
 
           for old, new in replacements.items():
@@ -51,5 +51,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add app/src/main/java/com/aqua/aqualight/data/aquarium/store/AquariumTankDataStoreManager.kt
-          git commit -m "Convert tank store date fields to epoch days"
+          git commit -m "Use epoch-day Proto builder fields"
           git push origin HEAD:agent/localization-accessibility-commercial
