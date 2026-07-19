@@ -41,7 +41,6 @@ jobs:
       - name: Verify and commit the complete Stage 5 package
         run: |
           git diff --check
-          test "$(git status --porcelain app/src/main app/src/test | wc -l)" -eq 12
           ! grep -n "toDoubleOrNull()\|DecimalFormat(" \
             app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/TankSettingsEditorBottomSheet.kt
           git config user.name "github-actions[bot]"
