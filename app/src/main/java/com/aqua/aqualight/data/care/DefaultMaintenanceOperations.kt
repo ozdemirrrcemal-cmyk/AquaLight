@@ -169,7 +169,7 @@ internal fun AquariumTankSnapshot.toDataTank(
     name = name,
     description = description,
     photoUri = photoUri,
-    setupDateMillis = setupDateMillis,
+    setupDateEpochDay = setupDateEpochDay,
     widthCm = widthCm,
     lengthCm = lengthCm,
     heightCm = heightCm,
@@ -210,6 +210,6 @@ private fun AquariumLivestock.toDataLivestock(): SavedAquariumLivestock =
         name = name,
         category = category,
         quantity = quantity,
-        addedDateMillis = addedDateMillis,
+        addedDateEpochDay = addedDateEpochDay,
         note = note
     )
