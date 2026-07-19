@@ -1,0 +1,43 @@
+name: Stage 11 Source Audit
+
+on:
+  pull_request:
+    paths:
+      - "app/**"
+      - "tools/**"
+      - ".github/workflows/stage11_source_audit.yml"
+
+concurrency:
+  group: stage11-source-audit-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Stage 11 source guards
+        shell: bash
+        run: |
+          set -o pipefail
+          {
+            python3 tools/localization_placeholder_guard.py
+            python3 tools/stage11_visual_diff_guard.py
+            python3 tools/accessibility_semantics_guard.py
+            python3 tools/ui_locale_boundary_guard.py
+          } 2>&1 | tee stage11-source-audit.log
+
+      - name: Upload Stage 11 source audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage11-source-audit-${{ github.run_number }}
+          path: stage11-source-audit.log
+          if-no-files-found: error
