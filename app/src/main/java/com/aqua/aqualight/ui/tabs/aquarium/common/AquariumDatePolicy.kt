@@ -8,6 +8,10 @@ object AquariumDatePolicy {
     private const val MIN_SETUP_YEAR = 2000
     private const val MAX_YEAR_OFFSET = 10
 
+    /** Retained for existing date-picker call sites; no locale is hardcoded. */
+    val setupDateLocale: Locale
+        get() = Locale.getDefault()
+
     fun minSetupYear(): Int = MIN_SETUP_YEAR
 
     fun maxSetupYear(): Int {
