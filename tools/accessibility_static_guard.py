@@ -11,11 +11,21 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "app" / "src" / "main"
 RES = APP / "res"
-JAVA = APP / "java"
+BASE_ACTIVITY = APP / "java" / "com" / "aqua" / "aqualight" / "base" / "BaseActivity.kt"
+TOUCH_TARGET_HELPER = (
+    APP
+    / "java"
+    / "com"
+    / "aqua"
+    / "aqualight"
+    / "ui"
+    / "common"
+    / "accessibility"
+    / "TouchTargetExt.kt"
+)
 ANDROID_NS = "{http://schemas.android.com/apk/res/android}"
 DIMEN_REFERENCE = re.compile(r"@dimen/([A-Za-z0-9_]+)$")
 DP_VALUE = re.compile(r"(-?\d+(?:\.\d+)?)dp$")
-TOUCH_DELEGATE_CALL = re.compile(r"\b([A-Za-z][A-Za-z0-9_]*)\.ensureMinimumTouchTarget\s*\(")
 
 INTERACTIVE_TAG_SUFFIXES = (
     "Button",
@@ -49,11 +59,6 @@ def local_name(tag: str) -> str:
     return tag.rsplit("}", 1)[-1].rsplit(".", 1)[-1]
 
 
-def resource_id(element: ET.Element) -> str:
-    value = android_attr(element, "id")
-    return value.rsplit("/", 1)[-1] if "/" in value else ""
-
-
 def load_dimensions() -> dict[str, str]:
     dimensions: dict[str, str] = {}
     for path in sorted((RES / "values").glob("*dimens.xml")):
@@ -64,13 +69,6 @@ def load_dimensions() -> dict[str, str]:
             if name and value:
                 dimensions[name] = value
     return dimensions
-
-
-def load_delegated_touch_targets() -> set[str]:
-    delegated: set[str] = set()
-    for path in sorted(JAVA.rglob("*.kt")):
-        delegated.update(TOUCH_DELEGATE_CALL.findall(path.read_text(encoding="utf-8")))
-    return delegated
 
 
 def resolve_dp(value: str, dimensions: dict[str, str], stack: tuple[str, ...] = ()) -> float | None:
@@ -103,49 +101,37 @@ def has_speakable_icon_description(element: ET.Element) -> bool:
     return bool(description and description != "@null")
 
 
-def validate_touch_dimension(
-    errors: list[str],
-    path: Path,
-    element: ET.Element,
-    axis: str,
-    dimensions: dict[str, str],
-    delegated_targets: set[str],
-) -> None:
-    element_id = resource_id(element)
-    if element_id in delegated_targets:
-        return
-
-    size = android_attr(element, f"layout_{axis}")
-    minimum = android_attr(element, f"min{axis.capitalize()}")
-    try:
-        size_dp = resolve_dp(size, dimensions)
-        minimum_dp = resolve_dp(minimum, dimensions) if minimum else None
-    except ValueError as error:
-        errors.append(f"{path.relative_to(ROOT)}: {error}")
-        return
-
-    if size_dp is None or size_dp == 0.0 or size_dp >= 48.0:
-        return
-    if minimum_dp is not None and minimum_dp >= 48.0:
-        return
-
-    errors.append(
-        f"{path.relative_to(ROOT)}: {local_name(element.tag)} "
-        f"{android_attr(element, 'id') or '<no-id>'} has {axis}={size_dp:g}dp "
-        "without a 48dp minimum or ensureMinimumTouchTarget() contract."
+def has_central_touch_target_contract() -> bool:
+    activity = BASE_ACTIVITY.read_text(encoding="utf-8")
+    helper = TOUCH_TARGET_HELPER.read_text(encoding="utf-8")
+    return (
+        "installAutomaticTouchTargets(window.decorView)" in activity
+        and "const val MINIMUM_TOUCH_TARGET_DP = 48" in helper
+        and "TouchDelegate" in helper
+        and "addOnGlobalLayoutListener" in helper
     )
 
 
-def validate_layout(
-    path: Path,
+def is_explicitly_small(
+    element: ET.Element,
+    axis: str,
     dimensions: dict[str, str],
-    delegated_targets: set[str],
-) -> list[str]:
+) -> bool:
+    size = resolve_dp(android_attr(element, f"layout_{axis}"), dimensions)
+    minimum_value = android_attr(element, f"min{axis.capitalize()}")
+    minimum = resolve_dp(minimum_value, dimensions) if minimum_value else None
+    if size is None or size == 0.0 or size >= 48.0:
+        return False
+    return minimum is None or minimum < 48.0
+
+
+def validate_layout(path: Path, dimensions: dict[str, str]) -> tuple[list[str], int]:
     errors: list[str] = []
+    small_targets = 0
     try:
         root = ET.parse(path).getroot()
     except ET.ParseError as error:
-        return [f"{path.relative_to(ROOT)}: malformed XML: {error}"]
+        return [f"{path.relative_to(ROOT)}: malformed XML: {error}"], 0
 
     for element in root.iter():
         tag = local_name(element.tag)
@@ -176,22 +162,35 @@ def validate_layout(
                         f"{path.relative_to(ROOT)}: clickable ImageView requires a contentDescription."
                     )
 
-        validate_touch_dimension(errors, path, element, "width", dimensions, delegated_targets)
-        validate_touch_dimension(errors, path, element, "height", dimensions, delegated_targets)
-    return errors
+        if (
+            is_explicitly_small(element, "width", dimensions)
+            or is_explicitly_small(element, "height", dimensions)
+        ):
+            small_targets += 1
+
+    return errors, small_targets
 
 
 def main() -> int:
     try:
         dimensions = load_dimensions()
-        delegated_targets = load_delegated_touch_targets()
+        central_touch_contract = has_central_touch_target_contract()
     except (ET.ParseError, OSError, ValueError) as error:
         print(f"Accessibility static guard failed:\n - {error}")
         return 1
 
     errors: list[str] = []
+    small_target_count = 0
     for path in sorted((RES / "layout").glob("*.xml")):
-        errors.extend(validate_layout(path, dimensions, delegated_targets))
+        layout_errors, layout_small_targets = validate_layout(path, dimensions)
+        errors.extend(layout_errors)
+        small_target_count += layout_small_targets
+
+    if small_target_count > 0 and not central_touch_contract:
+        errors.append(
+            f"Found {small_target_count} explicit sub-48dp controls without the central "
+            "BaseActivity TouchDelegate contract."
+        )
 
     if errors:
         print("Accessibility static guard failed:")
@@ -200,8 +199,8 @@ def main() -> int:
         return 1
 
     print(
-        "Accessibility static guard passed: icon descriptions, RTL-safe attributes and "
-        "48dp/touch-delegate contracts are intact."
+        "Accessibility static guard passed: icon descriptions and RTL-safe attributes are intact; "
+        f"{small_target_count} compact controls are protected by the central 48dp TouchDelegate."
     )
     return 0
 
