@@ -33,18 +33,26 @@ class LocaleFormatterTest {
     }
 
     @Test
-    fun percentagesAndDatesAreLocaleAware() {
+    fun percentagesDatesAndTimesAreLocaleAware() {
         assertEquals(
             "50%",
             LocaleFormatter.formatPercent(0.5, Locale.US)
         )
 
         val timestamp = 1_735_732_800_000L
-        val english = LocaleFormatter.formatDateTime(timestamp, Locale.US)
-        val german = LocaleFormatter.formatDateTime(timestamp, Locale.GERMANY)
+        val englishDate = LocaleFormatter.formatDate(timestamp, Locale.US)
+        val germanDate = LocaleFormatter.formatDate(timestamp, Locale.GERMANY)
+        val englishTime = LocaleFormatter.formatTime(timestamp, Locale.US)
+        val germanTime = LocaleFormatter.formatTime(timestamp, Locale.GERMANY)
+        val englishDateTime = LocaleFormatter.formatDateTime(timestamp, Locale.US)
+        val germanDateTime = LocaleFormatter.formatDateTime(timestamp, Locale.GERMANY)
 
-        assertTrue(english.isNotBlank())
-        assertTrue(german.isNotBlank())
-        assertNotEquals(english, german)
+        assertTrue(englishDate.isNotBlank())
+        assertTrue(germanDate.isNotBlank())
+        assertTrue(englishTime.isNotBlank())
+        assertTrue(germanTime.isNotBlank())
+        assertNotEquals(englishDate, germanDate)
+        assertNotEquals(englishTime, germanTime)
+        assertNotEquals(englishDateTime, germanDateTime)
     }
 }
