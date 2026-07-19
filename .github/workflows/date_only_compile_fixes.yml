@@ -1,0 +1,94 @@
+name: Date-only compile fixes
+
+on:
+  push:
+    branches:
+      - agent/localization-accessibility-commercial
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/localization-accessibility-commercial
+          fetch-depth: 0
+
+      - name: Apply exact calendar-day fixes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_exact(path_value, old, new, expected):
+              path = Path(path_value)
+              text = path.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != expected:
+                  raise SystemExit(f'{path}: {old!r} expected {expected}, found {count}')
+              path.write_text(text.replace(old, new), encoding='utf-8')
+
+          smart = 'app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareProfileBuilder.kt'
+          replace_exact(smart, 'import java.util.concurrent.TimeUnit', 'import java.time.Instant\nimport java.time.LocalDate\nimport java.time.ZoneId\nimport java.time.temporal.ChronoUnit', 1)
+          replace_exact(smart, 'setupDateMillis', 'setupDateEpochDay', 4)
+          replace_exact(
+              smart,
+              '''    val diffMillis = nowMillis - setupDateEpochDay
+
+              if (diffMillis < 0) {
+                return 1
+              }
+
+              return TimeUnit.MILLISECONDS.toDays(diffMillis).toInt() + 1''',
+              '''    val setupDate = LocalDate.ofEpochDay(setupDateEpochDay)
+              val nowDate = Instant.ofEpochMilli(nowMillis)
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate()
+              val elapsedDays = ChronoUnit.DAYS.between(setupDate, nowDate)
+
+              return elapsedDays.coerceAtLeast(0L).toInt() + 1''',
+              1
+          )
+
+          care_profile = 'app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/careprofile/CareProfileCalculator.kt'
+          replace_exact(care_profile, 'setupDateMillis', 'setupDateEpochDay', 2)
+
+          detail = 'app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailTankFragment.kt'
+          replace_exact(detail, 'import java.util.concurrent.TimeUnit', 'import com.aqua.aqualight.i18n.DateOnly\nimport java.time.LocalDate\nimport java.time.temporal.ChronoUnit', 1)
+          replace_exact(detail, 'setupDateMillis', 'setupDateEpochDay', 8)
+          replace_exact(
+              detail,
+              '''        val day = TimeUnit.MILLISECONDS
+                  .toDays(System.currentTimeMillis() - setupDateEpochDay)
+                  .coerceAtLeast(0)''',
+              '''        val setupDate = DateOnly.toLocalDate(setupDateEpochDay)
+              val day = ChronoUnit.DAYS
+                  .between(setupDate, LocalDate.now())
+                  .coerceAtLeast(0L)''',
+              1
+          )
+          replace_exact(detail, '            millis = setupDateEpochDay,', '            epochDay = setupDateEpochDay,', 1)
+
+          settings = 'app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsBasicFragment.kt'
+          replace_exact(
+              settings,
+              '''                    val epochDay = AquariumDatePolicy.epochDayFromPickerMillis(
+                  result.getLong(TankSettingsEditorBottomSheet.RESULT_MILLIS)
+              )''',
+              '''                    val epochDay = AquariumDatePolicy.epochDayFromPickerMillis(
+                          result.getLong(TankSettingsEditorBottomSheet.RESULT_MILLIS)
+                      )''',
+              1
+          )
+          PY
+
+      - name: Commit fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/java/com/aqua/aqualight
+          git commit -m "Complete timezone-safe date-only calculations"
+          git push origin HEAD:agent/localization-accessibility-commercial
