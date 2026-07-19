@@ -2,7 +2,6 @@ package com.aqua.aqualight.ui.common.material
 
 import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import android.content.Context
-import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.text.TextUtils
@@ -64,7 +63,7 @@ object AquaMaterialCategoryRowFactory {
             text = iconText
             gravity = Gravity.CENTER
             setTextSizeResource(R.dimen.aqua_text_size_status_micro)
-            setTextColor(Color.WHITE)
+            setTextColor(ContextCompat.getColor(context, R.color.aqua_content_on_dark))
             setTypeface(null, Typeface.BOLD)
             background = iconBackground
             includeFontPadding = false

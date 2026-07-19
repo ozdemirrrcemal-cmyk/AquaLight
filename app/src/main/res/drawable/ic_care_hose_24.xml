@@ -5,16 +5,16 @@
   android:viewportHeight="24">
 
   <path
-    android:fillColor="@android:color/transparent"
-    android:strokeColor="@android:color/white"
+    android:fillColor="@color/aqua_color_transparent"
+    android:strokeColor="@color/aqua_content_on_dark"
     android:strokeWidth="2.4"
     android:strokeLineCap="round"
     android:strokeLineJoin="round"
     android:pathData="M7,12c0,-3 2.4,-5.5 5.5,-5.5S18,9 18,12s-2.4,5.5 -5.5,5.5c-2.1,0 -3.8,-1.1 -4.7,-2.8" />
 
   <path
-    android:fillColor="@android:color/transparent"
-    android:strokeColor="@android:color/white"
+    android:fillColor="@color/aqua_color_transparent"
+    android:strokeColor="@color/aqua_content_on_dark"
     android:strokeWidth="2.1"
     android:strokeLineCap="round"
     android:pathData="M12.5,10c1.1,0 2,0.9 2,2s-0.9,2 -2,2s-2,-0.9 -2,-2" />

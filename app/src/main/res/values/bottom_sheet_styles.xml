@@ -2,18 +2,16 @@
 <resources>
 
     <style name="AquaBottomSheetDialogTheme" parent="ThemeOverlay.Material3.BottomSheetDialog">
-        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/aqua_color_transparent</item>
         <item name="android:backgroundDimEnabled">true</item>
         <item name="bottomSheetStyle">@style/Widget.Aqua.BottomSheet.Modal</item>
     </style>
 
-    <style name="Widget.Aqua.BottomSheet" parent="" />
 
-    <style name="Widget.Aqua.BottomSheet.Button" parent="" />
 
     <style name="Widget.Aqua.BottomSheet.Modal" parent="Widget.Material3.BottomSheet.Modal">
         <item name="android:background">@drawable/bg_bottomsheet_rounded</item>
-        <item name="backgroundTint">@android:color/transparent</item>
+        <item name="backgroundTint">@color/aqua_color_transparent</item>
         <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.Aqua.BottomSheet</item>
     </style>
 
@@ -156,5 +154,22 @@
         <item name="fontFamily">@font/inter_semibold</item>
         <item name="android:fontFamily">@font/inter_semibold</item>
     </style>
+
+
+    <style name="Widget.Aqua.BottomSheet.Button.EditorSave" parent="Widget.MaterialComponents.Button">
+        <item name="android:insetTop">@dimen/aqua_size_0</item>
+        <item name="android:insetBottom">@dimen/aqua_size_0</item>
+        <item name="android:minWidth">@dimen/aqua_size_0</item>
+        <item name="android:minHeight">@dimen/aqua_size_0</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textColor">@color/aqua_content_on_dark</item>
+        <item name="android:textSize">@dimen/aqua_text_size_body</item>
+        <item name="android:textStyle">bold</item>
+        <item name="backgroundTint">@color/aqua_accent_primary</item>
+        <item name="cornerRadius">@dimen/aqua_size_16</item>
+    </style>
+
+
+    <style name="Widget.Aqua.BottomSheet.Button.Text" parent="Widget.Material3.Button.TextButton" />
 
 </resources>

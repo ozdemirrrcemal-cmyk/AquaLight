@@ -21,7 +21,7 @@
         android:layout_width="@dimen/aqua_size_0"
         android:layout_height="@dimen/aqua_size_0"
         android:overScrollMode="never"
-        android:background="@android:color/transparent"
+        android:background="@color/aqua_color_transparent"
         app:layout_constraintTop_toBottomOf="@id/appHeader"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"

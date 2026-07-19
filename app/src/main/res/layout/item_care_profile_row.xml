@@ -33,7 +33,7 @@
         android:includeFontPadding="false"
         android:maxLines="1"
         android:text="@string/aquarium_care_profile_tank_name"
-        android:textColor="@android:color/white"
+        android:textColor="@color/aqua_content_on_dark"
         android:textSize="@dimen/aqua_text_size_body"
         android:textStyle="bold" />
 

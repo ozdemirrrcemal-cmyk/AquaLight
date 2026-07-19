@@ -352,9 +352,9 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
         if (type == null) {
             binding.taskTypeIconContainer.isVisible = false
             binding.tvTaskTypeTitle.text = getString(R.string.maintenance_select_care_task_type)
-            binding.tvTaskTypeTitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_8fa4be))
+            binding.tvTaskTypeTitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_secondary))
             binding.tvTaskTypeSubtitle.text = getString(R.string.maintenance_required)
-            binding.tvTaskTypeSubtitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_6f829b))
+            binding.tvTaskTypeSubtitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_add_care_task_fragment_tv_task_type_subtitle_content))
             return
         }
 
@@ -369,7 +369,7 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
             selected = true
         )
         binding.ivTaskTypeIcon.setImageResource(typeUi.iconRes)
-        binding.ivTaskTypeIcon.setColorFilter(Color.WHITE)
+        binding.ivTaskTypeIcon.setColorFilter(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
 
         binding.tvTaskTypeTitle.text = if (
             type == CareTaskType.WATER_CHANGE && selectedWaterChangePercent != null
@@ -382,7 +382,7 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
         } else {
             typeTitle
         }
-        binding.tvTaskTypeTitle.setTextColor(Color.WHITE)
+        binding.tvTaskTypeTitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
 
         binding.tvTaskTypeSubtitle.text = when {
             type == CareTaskType.WATER_CHANGE && selectedWaterChangePercent == null -> {
@@ -397,25 +397,25 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
             }
             else -> category
         }
-        binding.tvTaskTypeSubtitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_8fa4be))
+        binding.tvTaskTypeSubtitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_secondary))
     }
 
     private fun updateSelectedAquariumUi() {
         val selectedTank = latestTanks.firstOrNull { tank -> tank.id == selectedTankId }
         if (selectedTank == null) {
             binding.tvAquariumTitle.text = getString(R.string.maintenance_select_aquarium)
-            binding.tvAquariumTitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_8fa4be))
+            binding.tvAquariumTitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_secondary))
             binding.tvAquariumSubtitle.text = getString(R.string.maintenance_required)
-            binding.tvAquariumSubtitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_6f829b))
+            binding.tvAquariumSubtitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_add_care_task_fragment_tv_aquarium_subtitle_content))
             return
         }
 
         binding.tvAquariumTitle.text = selectedTank.name.ifBlank {
             getString(R.string.maintenance_unnamed_aquarium)
         }
-        binding.tvAquariumTitle.setTextColor(Color.WHITE)
+        binding.tvAquariumTitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
         binding.tvAquariumSubtitle.text = getString(R.string.maintenance_selected_aquarium)
-        binding.tvAquariumSubtitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_5fd6b4))
+        binding.tvAquariumSubtitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_accent_positive))
     }
 
     private fun updateDynamicSections() = with(binding) {
@@ -436,8 +436,8 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
         binding.btnSaveTask.backgroundTintList = ColorStateList.valueOf(
             ContextCompat.getColor(
                 requireContext(),
-                if (canSave) R.color.aqua_palette_hex_2196f3
-                else R.color.aqua_palette_hex_35506d
+                if (canSave) R.color.aqua_accent_primary
+                else R.color.aqua_add_care_task_fragment_color
             )
         )
     }

@@ -249,7 +249,7 @@ class CareTaskAdapter(
       titleText.text = title
       titleText.setTextSizeResource(R.dimen.aqua_text_size_micro_plus)
       titleText.setTypeface(null, Typeface.NORMAL)
-      titleText.setTextColor(Color.WHITE)
+      titleText.setTextColor(ContextCompat.getColor(binding.root.context, R.color.aqua_content_on_dark))
     }
   }
 
@@ -270,7 +270,7 @@ class CareTaskAdapter(
 
       binding.tvTaskTitle.text = item.title
       binding.tvTaskTitle.setTextSizeResource(R.dimen.aqua_text_size_body_precise)
-      binding.tvTaskTitle.setTextColor(Color.WHITE)
+      binding.tvTaskTitle.setTextColor(ContextCompat.getColor(binding.root.context, R.color.aqua_content_on_dark))
       binding.tvTaskTitle.setTypeface(
         null,
         if (item.status == CareTaskStatus.COMPLETED) {
@@ -288,9 +288,9 @@ class CareTaskAdapter(
 
       binding.tvSourceBadge.setTextColor(
         if (item.source == CareTaskSource.AUTOMATIC) {
-          ContextCompat.getColor(binding.root.context, R.color.aqua_palette_hex_5fd6b4)
+          ContextCompat.getColor(binding.root.context, R.color.aqua_accent_positive)
         } else {
-          ContextCompat.getColor(binding.root.context, R.color.aqua_palette_hex_b8c7d9)
+          ContextCompat.getColor(binding.root.context, R.color.aqua_content_tertiary)
         }
       )
 
@@ -298,9 +298,9 @@ class CareTaskAdapter(
       binding.tvTaskMeta.setTextSizeResource(R.dimen.aqua_text_size_micro_plus)
       binding.tvTaskMeta.setTextColor(
         if (item.isOverdue && item.status == CareTaskStatus.PENDING) {
-          ContextCompat.getColor(binding.root.context, R.color.aqua_palette_hex_d85c5c)
+          ContextCompat.getColor(binding.root.context, R.color.aqua_status_danger)
         } else {
-          ContextCompat.getColor(binding.root.context, R.color.aqua_palette_hex_b8c7d9)
+          ContextCompat.getColor(binding.root.context, R.color.aqua_content_tertiary)
         }
       )
 
@@ -309,13 +309,13 @@ class CareTaskAdapter(
       }
       binding.tvTaskSecondary.setTextSizeResource(R.dimen.aqua_text_size_micro_plus)
       binding.tvTaskSecondary.setTextColor(
-        ContextCompat.getColor(binding.root.context, R.color.aqua_palette_hex_b8c7d9)
+        ContextCompat.getColor(binding.root.context, R.color.aqua_content_tertiary)
       )
 
       binding.tvTaskDescription.text = item.description
       binding.tvTaskDescription.setTextSizeResource(R.dimen.aqua_text_size_body_precise_small)
       binding.tvTaskDescription.setTextColor(
-        ContextCompat.getColor(binding.root.context, R.color.aqua_palette_hex_8fa4be)
+        ContextCompat.getColor(binding.root.context, R.color.aqua_content_secondary)
       )
       binding.tvTaskDescription.isVisible =
       item.description.isNotBlank()
@@ -371,15 +371,15 @@ class CareTaskAdapter(
       source: CareTaskSource
     ): GradientDrawable {
       val color = if (source == CareTaskSource.AUTOMATIC) {
-        ContextCompat.getColor(binding.root.context, R.color.aqua_palette_hex_12382f)
+        ContextCompat.getColor(binding.root.context, R.color.aqua_surface_positive)
       } else {
-        ContextCompat.getColor(binding.root.context, R.color.aqua_palette_hex_1c3252)
+        ContextCompat.getColor(binding.root.context, R.color.aqua_surface_action)
       }
 
       val strokeColor = if (source == CareTaskSource.AUTOMATIC) {
-        ContextCompat.getColor(binding.root.context, R.color.aqua_palette_hex_2b6f5a)
+        ContextCompat.getColor(binding.root.context, R.color.aqua_outline_positive)
       } else {
-        ContextCompat.getColor(binding.root.context, R.color.aqua_palette_hex_2a4566)
+        ContextCompat.getColor(binding.root.context, R.color.aqua_care_task_adapter_color)
       }
 
       return GradientDrawable().apply {

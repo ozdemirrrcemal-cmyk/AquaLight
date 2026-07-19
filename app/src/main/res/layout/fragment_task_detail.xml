@@ -60,7 +60,7 @@
                             android:layout_height="@dimen/aqua_size_26"
                             android:layout_gravity="center"
                             android:scaleType="centerInside"
-                            app:tint="@android:color/white" />
+                            app:tint="@color/aqua_content_on_dark" />
 
                     </FrameLayout>
 
@@ -85,7 +85,7 @@
                                 android:ellipsize="end"
                                 android:includeFontPadding="false"
                                 android:maxLines="1"
-                                android:textColor="@android:color/white"
+                                android:textColor="@color/aqua_content_on_dark"
                                 android:textSize="@dimen/aqua_text_size_body_xlarge"
                                 android:textStyle="bold" />
 
@@ -99,7 +99,7 @@
                                 android:minWidth="@dimen/aqua_size_46"
                                 android:paddingStart="@dimen/aqua_size_9"
                                 android:paddingEnd="@dimen/aqua_size_9"
-                                android:textColor="@android:color/white"
+                                android:textColor="@color/aqua_content_on_dark"
                                 android:textSize="@dimen/aqua_text_size_micro_caption"
                                 android:textStyle="bold" />
 
@@ -126,7 +126,7 @@
                 android:layout_marginTop="@dimen/aqua_size_18"
                 android:includeFontPadding="false"
                 android:text="@string/maintenance_task_information"
-                android:textColor="@android:color/white"
+                android:textColor="@color/aqua_content_on_dark"
                 android:textSize="@dimen/aqua_text_size_body_small"
                 android:textStyle="bold" />
 
@@ -178,7 +178,7 @@
                 android:layout_marginTop="@dimen/aqua_size_18"
                 android:includeFontPadding="false"
                 android:text="@string/maintenance_description_label"
-                android:textColor="@android:color/white"
+                android:textColor="@color/aqua_content_on_dark"
                 android:textSize="@dimen/aqua_text_size_body_small"
                 android:textStyle="bold" />
 
@@ -199,7 +199,7 @@
                     android:paddingTop="@dimen/aqua_size_13"
                     android:paddingEnd="@dimen/aqua_size_14"
                     android:paddingBottom="@dimen/aqua_size_13"
-                    android:textColor="@color/aqua_palette_hex_b8c7d9"
+                    android:textColor="@color/aqua_content_tertiary"
                     android:textSize="@dimen/aqua_text_size_caption" />
 
             </com.google.android.material.card.MaterialCardView>
@@ -211,7 +211,7 @@
                 android:layout_marginTop="@dimen/aqua_size_18"
                 android:includeFontPadding="false"
                 android:text="@string/maintenance_note_label"
-                android:textColor="@android:color/white"
+                android:textColor="@color/aqua_content_on_dark"
                 android:textSize="@dimen/aqua_text_size_body_small"
                 android:textStyle="bold" />
 
@@ -233,7 +233,7 @@
                     android:paddingTop="@dimen/aqua_size_13"
                     android:paddingEnd="@dimen/aqua_size_14"
                     android:paddingBottom="@dimen/aqua_size_13"
-                    android:textColor="@color/aqua_palette_hex_b8c7d9"
+                    android:textColor="@color/aqua_content_tertiary"
                     android:textSize="@dimen/aqua_text_size_caption" />
 
             </com.google.android.material.card.MaterialCardView>
@@ -243,12 +243,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/aqua_size_18"
-                android:background="@color/aqua_palette_hex_12382f"
+                android:background="@color/aqua_surface_positive"
                 android:includeFontPadding="false"
                 android:lineSpacingExtra="@dimen/aqua_size_3"
                 android:padding="@dimen/aqua_size_14"
                 android:text="@string/maintenance_automatic_task_info"
-                android:textColor="@color/aqua_palette_hex_5fd6b4"
+                android:textColor="@color/aqua_accent_positive"
                 android:textSize="@dimen/aqua_text_size_caption"
                 android:visibility="gone" />
 

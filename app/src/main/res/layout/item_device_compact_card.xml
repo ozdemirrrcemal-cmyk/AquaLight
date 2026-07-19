@@ -14,7 +14,7 @@
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
     app:cardUseCompatPadding="false"
-    app:rippleColor="@color/aqua_palette_hex_24344a"
+    app:rippleColor="@color/aqua_card_ripple"
     app:strokeWidth="@dimen/aqua_size_1">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -68,7 +68,7 @@
                 android:ellipsize="end"
                 android:includeFontPadding="false"
                 android:maxLines="1"
-                android:textColor="@color/aqua_palette_hex_f2f6fa"
+                android:textColor="@color/aqua_content_primary"
                 android:textSize="@dimen/aqua_text_size_card_title"
                 android:textStyle="bold"
                 tools:text="WRGB Pro Elite" />
@@ -81,7 +81,7 @@
                 android:ellipsize="end"
                 android:includeFontPadding="false"
                 android:maxLines="1"
-                android:textColor="@color/aqua_palette_hex_90a1b5"
+                android:textColor="@color/aqua_content_muted"
                 android:textSize="@dimen/aqua_text_size_caption_plus"
                 tools:text="UID: AQL-LIGHT-123456" />
 
@@ -93,7 +93,7 @@
                 android:ellipsize="end"
                 android:includeFontPadding="false"
                 android:maxLines="1"
-                android:textColor="@color/aqua_palette_hex_5fd6b4"
+                android:textColor="@color/aqua_accent_positive"
                 android:textSize="@dimen/aqua_text_size_caption_plus"
                 tools:text="Light • 4CH / OTA" />
 
@@ -114,8 +114,8 @@
                 android:layout_gravity="center"
                 android:contentDescription="@string/app_name"
                 android:src="@drawable/ic_status_wifi"
-                app:tint="@color/aqua_palette_hex_5fd6b4"
-                tools:tint="@color/aqua_palette_hex_5fd6b4" />
+                app:tint="@color/aqua_accent_positive"
+                tools:tint="@color/aqua_accent_positive" />
 
             <TextView
                 style="@style/Widget.Aqua.Chip.Action"

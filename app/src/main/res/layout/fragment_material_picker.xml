@@ -44,7 +44,7 @@
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"
                 android:text="@string/material_picker_popular_keywords"
-                android:textColor="@color/aqua_palette_hex_8fa4be"
+                android:textColor="@color/aqua_content_secondary"
                 android:textSize="@dimen/aqua_text_size_body_small" />
 
             <HorizontalScrollView
@@ -95,7 +95,7 @@
             android:layout_height="wrap_content"
             android:includeFontPadding="false"
             android:text="@string/material_picker_selected_zero"
-            android:textColor="@color/aqua_palette_hex_8fa4be"
+            android:textColor="@color/aqua_content_secondary"
             android:textSize="@dimen/aqua_text_size_caption_plus" />
 
         <com.google.android.material.button.MaterialButton

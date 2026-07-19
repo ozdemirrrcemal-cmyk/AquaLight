@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.common
 
 import android.content.Context
+import androidx.annotation.StringRes
 import com.aqua.aqualight.R
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
@@ -27,24 +28,39 @@ object AquariumDimensionFormatter {
     }
 
     fun sizeText(
+        context: Context,
         widthCm: Int,
         lengthCm: Int,
         heightCm: Int,
         sizeUnit: String,
-        separator: String = " × "
+        @StringRes separatorRes: Int = R.string.aquarium_dimension_separator_spaced_multiply
     ): String {
+        val separator = context.getString(separatorRes)
         return if (sizeUnit.equals("in", ignoreCase = true)) {
             val widthIn = widthCm / 2.54
             val lengthIn = lengthCm / 2.54
             val heightIn = heightCm / 2.54
 
-            "${preciseFormatter.format(widthIn)} W${separator}${preciseFormatter.format(lengthIn)} L${separator}${preciseFormatter.format(heightIn)} H"
+            context.getString(
+                R.string.aquarium_dimension_format,
+                preciseFormatter.format(widthIn),
+                separator,
+                preciseFormatter.format(lengthIn),
+                preciseFormatter.format(heightIn)
+            )
         } else {
-            "$widthCm W${separator}$lengthCm L${separator}$heightCm H"
+            context.getString(
+                R.string.aquarium_dimension_format,
+                widthCm.toString(),
+                separator,
+                lengthCm.toString(),
+                heightCm.toString()
+            )
         }
     }
 
     fun volumeText(
+        context: Context,
         widthCm: Int,
         lengthCm: Int,
         heightCm: Int,
@@ -55,17 +71,15 @@ object AquariumDimensionFormatter {
 
         return if (volumeUnit.equals("gal", ignoreCase = true)) {
             val gallons = liters * GALLON_PER_LITER
-            if (rounded) {
-                "${gallons.roundToInt()} gal"
-            } else {
-                "${preciseFormatter.format(gallons)} gal"
-            }
+            context.getString(
+                R.string.aquarium_volume_gallon_format,
+                if (rounded) gallons.roundToInt().toString() else preciseFormatter.format(gallons)
+            )
         } else {
-            if (rounded) {
-                "${liters.roundToInt()} L"
-            } else {
-                "${preciseFormatter.format(liters)} L"
-            }
+            context.getString(
+                R.string.aquarium_volume_liter_format,
+                if (rounded) liters.roundToInt().toString() else preciseFormatter.format(liters)
+            )
         }
     }
 }

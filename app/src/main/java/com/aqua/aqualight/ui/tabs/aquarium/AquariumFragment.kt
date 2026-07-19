@@ -2,7 +2,6 @@ package com.aqua.aqualight.ui.tabs.aquarium
 
 import androidx.core.content.ContextCompat
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import androidx.core.view.isVisible
@@ -234,15 +233,15 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
     private fun applyPrimaryActionStyle() {
         val button = binding.appHeader.btnPrimaryAction
         if (isDeleteMode) {
-            button.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_ff8a8a))
-            button.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_321e2a))
+            button.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_aquarium_fragment_button_content))
+            button.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.aqua_aquarium_fragment_button_icon))
             button.strokeWidth = resources.getDimensionPixelOffset(R.dimen.aqua_size_1)
-            button.strokeColor = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_7a3344))
+            button.strokeColor = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.aqua_aquarium_fragment_button_outline))
         } else {
-            button.setTextColor(Color.WHITE)
-            button.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_1c3252))
+            button.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
+            button.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.aqua_surface_action))
             button.strokeWidth = 0
-            button.strokeColor = ColorStateList.valueOf(Color.TRANSPARENT)
+            button.strokeColor = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.aqua_color_transparent))
         }
     }
 

@@ -48,7 +48,7 @@
                 android:gravity="center"
                 android:includeFontPadding="false"
                 android:text="@string/maintenance_tab_all"
-                android:textColor="@android:color/white"
+                android:textColor="@color/aqua_content_on_dark"
                 android:textSize="@dimen/aqua_text_size_body_small"
                 android:textStyle="bold" />
 
@@ -129,7 +129,7 @@
                     android:gravity="center"
                     android:includeFontPadding="false"
                     android:text="@string/maintenance_warning_icon"
-                    android:textColor="@color/aqua_palette_hex_e0a84c"
+                    android:textColor="@color/aqua_content_warning"
                     android:textSize="@dimen/aqua_text_size_title_small"
                     android:textStyle="bold" />
 
@@ -151,7 +151,7 @@
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:text="@string/maintenance_care_profile_incomplete"
-                    android:textColor="@android:color/white"
+                    android:textColor="@color/aqua_content_on_dark"
                     android:textSize="@dimen/aqua_text_size_body_small"
                     android:textStyle="bold" />
 
@@ -177,7 +177,7 @@
                 android:gravity="center"
                 android:includeFontPadding="false"
                 tools:text="@string/maintenance_percent_preview"
-                android:textColor="@color/aqua_palette_hex_e0a84c"
+                android:textColor="@color/aqua_content_warning"
                 android:textSize="@dimen/aqua_text_size_caption"
                 android:textStyle="bold" />
 
@@ -256,7 +256,7 @@
                 android:layout_height="@dimen/aqua_size_38"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_care_water_change_24"
-                app:tint="@color/aqua_palette_hex_2196f3" />
+                app:tint="@color/aqua_accent_primary" />
 
         </FrameLayout>
 

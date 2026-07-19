@@ -27,7 +27,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:tabGravity="fill"
-        app:tabIndicatorColor="@color/aqua_palette_hex_2196f3"
+        app:tabIndicatorColor="@color/aqua_accent_primary"
         app:tabIndicatorFullWidth="false"
         app:tabIndicatorGravity="bottom"
         app:tabIndicatorHeight="@dimen/aqua_size_3"
@@ -35,7 +35,7 @@
         app:tabMode="fixed"
         app:tabPaddingEnd="@dimen/aqua_size_0"
         app:tabPaddingStart="@dimen/aqua_size_0"
-        app:tabSelectedTextColor="@android:color/white"
+        app:tabSelectedTextColor="@color/aqua_content_on_dark"
         app:tabTextAppearance="@style/TextAppearance.Aqua.SettingsTab"
         app:tabTextColor="@color/aqua_card_text_secondary" />
 

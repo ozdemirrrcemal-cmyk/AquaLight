@@ -27,6 +27,14 @@ RAW_UI_COPY = re.compile(
 LEGACY_STYLE = re.compile(r"\b(?:RedButton|BlackButton|WhiteButton)\b")
 PALETTE_NAME = re.compile(r"aqua_palette_hex_[0-9a-f]{6,8}")
 SIZE_NAME = re.compile(r"aqua_size_(?:negative_)?\d+(?:_\d+)?")
+ANDROID_COLOR_REFERENCE = re.compile(r"@android:color/[A-Za-z0-9_]+")
+PRIMITIVE_XML_COLOR = re.compile(r"@color/aqua_palette_hex_[0-9a-f]{6,8}")
+PRIMITIVE_KOTLIN_COLOR = re.compile(r"R\.color\.aqua_palette_hex_[0-9a-f]{6,8}")
+KOTLIN_COLOR_CONSTANT = re.compile(r"\bColor\.(?:WHITE|BLACK|TRANSPARENT)\b")
+VISIBLE_SYMBOL_LITERAL = re.compile(r'"[^"\n]*(?:✓|W/L/H|L/gal)[^"\n]*"')
+VISIBLE_UNIT_INTERPOLATION = re.compile(
+    r'"[^"\n]*\$(?:\{[^}]+}|[A-Za-z_][A-Za-z0-9_]*)[^"\n]*(?:\sW|\sL|\sH|\sgal)[^"\n]*"'
+)
 
 UI_COPY_ATTRIBUTE_NAMES = {
     "text",
@@ -46,7 +54,8 @@ REQUIRED_COMPONENT_STYLES = {
     "Widget.Aqua.Card",
     "Widget.Aqua.Chip.Status",
     "Widget.Aqua.BottomSheet.Root",
-    "Widget.Aqua.Dialog.Root",
+    "Widget.Aqua.BottomSheet.Button.EditorSave",
+    "Widget.Aqua.Card.Inline",
 }
 
 
@@ -67,6 +76,28 @@ def is_dimension_definition(path: Path) -> bool:
     return path.parent.name.startswith("values") and path.name.endswith("dimens.xml")
 
 
+def is_color_definition_layer(path: Path) -> bool:
+    return path.parent.name.startswith("values") and "color" in path.name
+
+
+def validate_component_style(errors: list[str], path: Path, element: ET.Element) -> None:
+    tag = element.tag.rsplit("}", 1)[-1]
+    expected_prefixes: tuple[str, ...] | None = None
+    if tag.endswith("MaterialButton"):
+        expected_prefixes = ("@style/Widget.Aqua.Button", "@style/Widget.Aqua.BottomSheet.Button")
+    elif tag.endswith("TextInputLayout"):
+        expected_prefixes = ("@style/Widget.Aqua.Input",)
+    elif tag.endswith("MaterialCardView"):
+        expected_prefixes = ("@style/Widget.Aqua.Card",)
+    if expected_prefixes is None:
+        return
+    style = element.attrib.get("style", "")
+    if not style.startswith(expected_prefixes):
+        errors.append(
+            f"{relative(path)}: {tag} must use an Aqua component style; found {style or '<missing>'}"
+        )
+
+
 def validate_xml(errors: list[str]) -> set[str]:
     style_names: set[str] = set()
     definitions: dict[tuple[str, str, str], list[str]] = defaultdict(list)
@@ -77,6 +108,9 @@ def validate_xml(errors: list[str]) -> set[str]:
             add_matches(errors, path, text, HEX_LITERAL, "raw color outside the primitive palette")
         if not is_dimension_definition(path):
             add_matches(errors, path, text, RAW_DIMENSION, "raw dp/sp outside a dimension resource")
+        add_matches(errors, path, text, ANDROID_COLOR_REFERENCE, "platform color bypasses semantic tokens")
+        if not is_color_definition_layer(path) and path.name != "palette_colors.xml":
+            add_matches(errors, path, text, PRIMITIVE_XML_COLOR, "primitive palette bypasses semantic tokens")
         add_matches(errors, path, text, LEGACY_STYLE, "legacy button style")
 
         try:
@@ -86,6 +120,7 @@ def validate_xml(errors: list[str]) -> set[str]:
             continue
 
         for element in root.iter():
+            validate_component_style(errors, path, element)
             for attribute, value in element.attrib.items():
                 namespace = attribute[1:].split("}", 1)[0] if attribute.startswith("{") else ""
                 attribute_name = attribute.rsplit("}", 1)[-1]
@@ -147,7 +182,13 @@ def validate_kotlin(errors: list[str]) -> None:
         text = path.read_text(encoding="utf-8")
         add_matches(errors, path, text, HEX_LITERAL, "raw Kotlin color")
         add_matches(errors, path, text, RAW_DP_CALL, "raw Kotlin dp conversion")
+        add_matches(errors, path, text, PRIMITIVE_KOTLIN_COLOR, "primitive palette bypasses semantic tokens")
+        add_matches(errors, path, text, KOTLIN_COLOR_CONSTANT, "raw platform color constant")
         add_matches(errors, path, text, LEGACY_STYLE, "legacy button style")
+        add_matches(errors, path, text, VISIBLE_SYMBOL_LITERAL, "visible symbol/unit literal must use a resource")
+        add_matches(errors, path, text, VISIBLE_UNIT_INTERPOLATION, "visible formatted unit must use a resource")
+        if "getIdentifier(" in text:
+            errors.append(f"{relative(path)}: dynamic resource lookup requires an explicit audited contract")
         if "Color.parseColor(" in text or "Color.rgb(" in text or "Color.argb(" in text:
             # Color.argb is allowed only for runtime alpha composition; literal palettes are caught above.
             if "Color.parseColor(" in text:
@@ -178,6 +219,21 @@ def validate_kotlin(errors: list[str]) -> None:
                 )
 
 
+def validate_dynamic_resource_contract(errors: list[str]) -> None:
+    keep_file = RES / "raw" / "aqua_dynamic_resource_keep.xml"
+    expected = ("@layout/ucrop_activity_photobox", "@string/ucrop_label_edit_photo")
+    if not keep_file.exists():
+        errors.append(f"{relative(keep_file)}: missing dynamic resource keep contract")
+    else:
+        text = keep_file.read_text(encoding="utf-8")
+        for resource in expected:
+            if resource not in text:
+                errors.append(f"{relative(keep_file)}: missing dynamic resource proof for {resource}")
+    audit = ROOT / "docs" / "stage10-unused-resources-audit.md"
+    if not audit.exists():
+        errors.append(f"{relative(audit)}: missing unused-resource classification audit")
+
+
 def validate_theme_contract(errors: list[str]) -> None:
     for path in (RES / "values" / "themes.xml", RES / "values-night" / "themes.xml"):
         text = path.read_text(encoding="utf-8")
@@ -191,6 +247,7 @@ def main() -> int:
     errors: list[str] = []
     validate_xml(errors)
     validate_kotlin(errors)
+    validate_dynamic_resource_contract(errors)
     validate_theme_contract(errors)
 
     if errors:

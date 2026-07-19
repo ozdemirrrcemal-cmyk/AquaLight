@@ -68,7 +68,7 @@
             android:layout_height="@dimen/aqua_size_24"
             android:layout_gravity="center"
             android:scaleType="centerInside"
-            app:tint="@android:color/white" />
+            app:tint="@color/aqua_content_on_dark" />
 
         </FrameLayout>
 
@@ -349,7 +349,7 @@
               android:layout_weight="1"
               android:includeFontPadding="false"
               android:text="@string/maintenance_repeat_every_label"
-              android:textColor="@color/aqua_palette_hex_b8c7d9"
+              android:textColor="@color/aqua_content_tertiary"
               android:textSize="@dimen/aqua_text_size_body_small" />
 
             <EditText
@@ -369,7 +369,7 @@
               android:layout_marginStart="@dimen/aqua_size_10"
               android:includeFontPadding="false"
               android:text="@string/maintenance_days_label"
-              android:textColor="@color/aqua_palette_hex_b8c7d9"
+              android:textColor="@color/aqua_content_tertiary"
               android:textSize="@dimen/aqua_text_size_body_small" />
 
           </LinearLayout>
@@ -491,7 +491,7 @@
                 android:layout_weight="1"
                 android:includeFontPadding="false"
                 android:text="@string/maintenance_repeat_missed_reminders_for_label"
-                android:textColor="@color/aqua_palette_hex_b8c7d9"
+                android:textColor="@color/aqua_content_tertiary"
                 android:textSize="@dimen/aqua_text_size_body_small" />
 
               <EditText
@@ -511,7 +511,7 @@
                 android:layout_marginStart="@dimen/aqua_size_10"
                 android:includeFontPadding="false"
                 android:text="@string/maintenance_days_label"
-                android:textColor="@color/aqua_palette_hex_b8c7d9"
+                android:textColor="@color/aqua_content_tertiary"
                 android:textSize="@dimen/aqua_text_size_body_small" />
 
             </LinearLayout>

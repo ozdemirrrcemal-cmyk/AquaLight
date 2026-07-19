@@ -56,7 +56,7 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnPermissionCancel"
-        style="@style/Widget.Material3.Button.TextButton"
+        style="@style/Widget.Aqua.BottomSheet.Button.Text"
         android:layout_width="match_parent"
         android:layout_height="@dimen/aqua_size_48"
         android:layout_marginTop="@dimen/aqua_size_2"

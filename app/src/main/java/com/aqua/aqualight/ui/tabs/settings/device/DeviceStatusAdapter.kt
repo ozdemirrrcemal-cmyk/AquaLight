@@ -48,8 +48,8 @@ class DeviceStatusAdapter : RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewH
             binding.ivPresenceIcon.imageTintList = ColorStateList.valueOf(
                 ContextCompat.getColor(
                     context,
-                    if (item.isOnline) R.color.aqua_palette_hex_5fd6b4
-                    else R.color.aqua_palette_hex_7b8794
+                    if (item.isOnline) R.color.aqua_accent_positive
+                    else R.color.aqua_device_status_adapter_color
                 )
             )
             binding.ivPresenceIcon.contentDescription = presenceText

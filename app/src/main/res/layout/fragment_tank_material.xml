@@ -25,7 +25,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/aqua_size_8"
             android:text="@string/aquarium_text_add_the_biological_materials_and_hardware_used_in_this_aquar"
-            android:textColor="@color/aqua_palette_hex_8fa4be"
+            android:textColor="@color/aqua_content_secondary"
             android:textSize="@dimen/aqua_text_size_body"
             android:lineSpacingExtra="@dimen/aqua_size_3" />
 

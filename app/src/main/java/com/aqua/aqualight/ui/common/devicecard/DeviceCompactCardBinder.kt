@@ -70,10 +70,10 @@ object DeviceCompactCardBinder {
         style: DeviceCompactStatusStyle
     ): Int {
         val colorRes = when (style) {
-            DeviceCompactStatusStyle.ONLINE -> R.color.aqua_palette_hex_5fd6b4
+            DeviceCompactStatusStyle.ONLINE -> R.color.aqua_accent_positive
             DeviceCompactStatusStyle.CONNECTING,
             DeviceCompactStatusStyle.WARNING,
-            DeviceCompactStatusStyle.OFFLINE -> R.color.aqua_palette_hex_7b8794
+            DeviceCompactStatusStyle.OFFLINE -> R.color.aqua_device_compact_card_binder_color
         }
         return ContextCompat.getColor(binding.root.context, colorRes)
     }

@@ -7,12 +7,12 @@
 
     <!-- Arka yuvarlak -->
     <path
-        android:fillColor="@color/aqua_palette_hex_020617"
+        android:fillColor="@color/aqua_ic_theme_dark_fill"
         android:pathData="M12,2a10,10 0 1,0 0,20a10,10 0 1,0 0,-20z" />
 
     <!-- Ay -->
     <path
-        android:fillColor="@color/aqua_palette_hex_a78bfa"
+        android:fillColor="@color/aqua_ic_theme_dark_fill_variant_2"
         android:pathData="
             M15.5,5.5
             A5.5,5.5 0 1,1 8,13
@@ -20,9 +20,9 @@
 
     <!-- Küçük yıldızlar -->
     <path
-        android:fillColor="@color/aqua_palette_hex_faccff"
+        android:fillColor="@color/aqua_ic_theme_dark_fill_variant_3"
         android:pathData="M6.5,7.2a0.9,0.9 0 1,0 1.8,0a0.9,0.9 0 1,0 -1.8,0z" />
     <path
-        android:fillColor="@color/aqua_palette_hex_faccff"
+        android:fillColor="@color/aqua_ic_theme_dark_fill_variant_3"
         android:pathData="M16.8,15.3a0.8,0.8 0 1,0 1.6,0a0.8,0.8 0 1,0 -1.6,0z" />
 </vector>

@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.common.bottomsheet
 
 import android.content.DialogInterface
-import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.ContextThemeWrapper
@@ -9,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.fragment.app.FragmentManager
 import com.aqua.aqualight.R
@@ -70,7 +70,7 @@ class GlobalActionBottomSheet : BottomSheetDialogFragment(
         super.onStart()
         (dialog as? BottomSheetDialog)?.findViewById<View>(
             com.google.android.material.R.id.design_bottom_sheet
-        )?.background = ColorDrawable(Color.TRANSPARENT)
+        )?.background = ColorDrawable(ContextCompat.getColor(requireContext(), R.color.aqua_color_transparent))
     }
 
     override fun onCancel(dialog: DialogInterface) {

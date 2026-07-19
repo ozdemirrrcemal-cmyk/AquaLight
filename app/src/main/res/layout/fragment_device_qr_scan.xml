@@ -21,7 +21,7 @@
         android:id="@+id/previewView"
         android:layout_width="@dimen/aqua_size_0"
         android:layout_height="@dimen/aqua_size_0"
-        android:background="@android:color/black"
+        android:background="@color/aqua_system_bar_surface"
         app:layout_constraintTop_toBottomOf="@id/appHeader"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -31,7 +31,7 @@
         android:id="@+id/topScrim"
         android:layout_width="@dimen/aqua_size_0"
         android:layout_height="@dimen/aqua_size_0"
-        android:background="@color/aqua_palette_hex_a6000000"
+        android:background="@color/aqua_overlay_scrim_strong"
         app:layout_constraintTop_toBottomOf="@id/appHeader"
         app:layout_constraintBottom_toTopOf="@id/scanFrame"
         app:layout_constraintStart_toStartOf="parent"
@@ -41,7 +41,7 @@
         android:id="@+id/bottomScrim"
         android:layout_width="@dimen/aqua_size_0"
         android:layout_height="@dimen/aqua_size_0"
-        android:background="@color/aqua_palette_hex_a6000000"
+        android:background="@color/aqua_overlay_scrim_strong"
         app:layout_constraintTop_toBottomOf="@id/scanFrame"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -51,7 +51,7 @@
         android:id="@+id/leftScrim"
         android:layout_width="@dimen/aqua_size_0"
         android:layout_height="@dimen/aqua_size_0"
-        android:background="@color/aqua_palette_hex_a6000000"
+        android:background="@color/aqua_overlay_scrim_strong"
         app:layout_constraintTop_toTopOf="@id/scanFrame"
         app:layout_constraintBottom_toBottomOf="@id/scanFrame"
         app:layout_constraintStart_toStartOf="parent"
@@ -61,20 +61,21 @@
         android:id="@+id/rightScrim"
         android:layout_width="@dimen/aqua_size_0"
         android:layout_height="@dimen/aqua_size_0"
-        android:background="@color/aqua_palette_hex_a6000000"
+        android:background="@color/aqua_overlay_scrim_strong"
         app:layout_constraintTop_toTopOf="@id/scanFrame"
         app:layout_constraintBottom_toBottomOf="@id/scanFrame"
         app:layout_constraintStart_toEndOf="@id/scanFrame"
         app:layout_constraintEnd_toEndOf="parent" />
 
     <com.google.android.material.card.MaterialCardView
+    style="@style/Widget.Aqua.Card.Inline"
         android:id="@+id/scanFrame"
         android:layout_width="@dimen/aqua_size_270"
         android:layout_height="@dimen/aqua_size_270"
-        app:cardBackgroundColor="@android:color/transparent"
+        app:cardBackgroundColor="@color/aqua_color_transparent"
         app:cardCornerRadius="@dimen/aqua_size_28"
         app:cardElevation="@dimen/aqua_size_0"
-        app:strokeColor="@color/aqua_palette_hex_5fd6b4"
+        app:strokeColor="@color/aqua_accent_positive"
         app:strokeWidth="@dimen/aqua_size_3"
         app:layout_constraintTop_toBottomOf="@id/appHeader"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -123,7 +124,7 @@
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"
                 android:text="@string/device_qr_align_title"
-                android:textColor="@color/aqua_palette_hex_f2f6fa"
+                android:textColor="@color/aqua_content_primary"
                 android:textSize="@dimen/aqua_text_size_title_small"
                 android:textStyle="bold" />
 
@@ -134,7 +135,7 @@
                 android:layout_marginTop="@dimen/aqua_size_7"
                 android:lineSpacingExtra="@dimen/aqua_size_2"
                 android:text="@string/device_qr_align_message"
-                android:textColor="@color/aqua_palette_hex_90a1b5"
+                android:textColor="@color/aqua_content_muted"
                 android:textSize="@dimen/aqua_text_size_caption_plus" />
 
             <com.google.android.material.button.MaterialButton

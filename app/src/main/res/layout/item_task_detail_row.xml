@@ -36,7 +36,7 @@
             android:gravity="end"
             android:includeFontPadding="false"
             android:maxLines="1"
-            android:textColor="@android:color/white"
+            android:textColor="@color/aqua_content_on_dark"
             android:textSize="@dimen/aqua_text_size_micro_plus" />
 
     </LinearLayout>

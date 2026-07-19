@@ -6,6 +6,6 @@
         android:width="@dimen/aqua_size_8"
         android:height="@dimen/aqua_size_8" />
 
-    <solid android:color="@color/aqua_palette_hex_f44336"/>
+    <solid android:color="@color/aqua_bg_offline_dot_fill"/>
 
 </shape>

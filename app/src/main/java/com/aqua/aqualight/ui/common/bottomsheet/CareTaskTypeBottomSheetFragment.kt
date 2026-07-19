@@ -66,7 +66,7 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
             com.google.android.material.R.id.design_bottom_sheet
         ) ?: return
 
-        bottomSheet.setBackgroundColor(Color.TRANSPARENT)
+        bottomSheet.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.aqua_color_transparent))
         val sheetHeight = (resources.displayMetrics.heightPixels * SHEET_HEIGHT_RATIO).toInt()
         bottomSheet.layoutParams = bottomSheet.layoutParams.apply { height = sheetHeight }
         bottomSheet.requestLayout()
@@ -196,7 +196,7 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
         val iconSize = resources.getDimensionPixelSize(R.dimen.care_sheet_icon_size)
         val icon = ImageView(requireContext()).apply {
             setImageResource(item.iconRes)
-            setColorFilter(Color.WHITE)
+            setColorFilter(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
             scaleType = ImageView.ScaleType.CENTER_INSIDE
             layoutParams = FrameLayout.LayoutParams(iconSize, iconSize, Gravity.CENTER)
         }

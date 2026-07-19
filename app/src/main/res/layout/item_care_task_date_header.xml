@@ -8,6 +8,6 @@
     android:paddingStart="@dimen/aqua_size_0"
     android:paddingTop="@dimen/aqua_size_6"
     android:paddingBottom="@dimen/aqua_size_10"
-    android:textColor="@android:color/white"
+    android:textColor="@color/aqua_content_on_dark"
     android:textSize="@dimen/aqua_text_size_micro_plus"
     android:textStyle="normal" />

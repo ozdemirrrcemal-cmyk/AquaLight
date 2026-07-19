@@ -58,8 +58,8 @@ class DeviceCardAdapter(
             }
             binding.root.strokeColor = ContextCompat.getColor(
                 itemView.context,
-                if (item.isSelected) R.color.aqua_palette_hex_5fd6b4
-                else R.color.aqua_palette_hex_22354d
+                if (item.isSelected) R.color.aqua_accent_positive
+                else R.color.aqua_device_card_adapter_color
             )
 
             binding.root.setOnClickListener {

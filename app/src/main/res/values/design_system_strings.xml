@@ -162,4 +162,11 @@
     </plurals>
     <string name="address_country_turkey">Turkey</string>
     <string name="auth_google_error_title">Google Error</string>
+    <string name="aqua_selected_symbol" translatable="false">✓</string>
+    <string name="aquarium_dimension_format">%1$s W%2$s%3$s L%2$s%4$s H</string>
+    <string name="aquarium_volume_liter_format">%1$s L</string>
+    <string name="aquarium_volume_gallon_format">%1$s gal</string>
+    <string name="aquarium_dimension_separator_spaced_multiply" translatable="false"> × </string>
+    <string name="aquarium_dimension_separator_spaced_x" translatable="false"> x </string>
+    <string name="aquarium_dimension_separator_multiply" translatable="false">×</string>
 </resources>

@@ -76,7 +76,7 @@
                     android:layout_width="@dimen/aqua_size_24"
                     android:layout_height="@dimen/aqua_size_24"
                     android:src="@drawable/ic_arrow_right"
-                    app:tint="@color/aqua_palette_hex_7f91aa"
+                    app:tint="@color/aqua_content_placeholder"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent" />
@@ -134,7 +134,7 @@
                     android:layout_width="@dimen/aqua_size_24"
                     android:layout_height="@dimen/aqua_size_24"
                     android:src="@drawable/ic_arrow_right"
-                    app:tint="@color/aqua_palette_hex_7f91aa"
+                    app:tint="@color/aqua_content_placeholder"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent" />
@@ -192,7 +192,7 @@
                     android:layout_width="@dimen/aqua_size_24"
                     android:layout_height="@dimen/aqua_size_24"
                     android:src="@drawable/ic_arrow_right"
-                    app:tint="@color/aqua_palette_hex_7f91aa"
+                    app:tint="@color/aqua_content_placeholder"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent" />
@@ -250,7 +250,7 @@
                     android:layout_width="@dimen/aqua_size_24"
                     android:layout_height="@dimen/aqua_size_24"
                     android:src="@drawable/ic_arrow_right"
-                    app:tint="@color/aqua_palette_hex_7f91aa"
+                    app:tint="@color/aqua_content_placeholder"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent" />
@@ -307,7 +307,7 @@
                     android:layout_width="@dimen/aqua_size_24"
                     android:layout_height="@dimen/aqua_size_24"
                     android:src="@drawable/ic_arrow_right"
-                    app:tint="@color/aqua_palette_hex_7f91aa"
+                    app:tint="@color/aqua_content_placeholder"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent" />

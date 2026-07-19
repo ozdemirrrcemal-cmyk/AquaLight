@@ -63,7 +63,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_6"
-                        android:textColor="@color/aqua_palette_hex_8fa4be"
+                        android:textColor="@color/aqua_content_secondary"
                         android:textSize="@dimen/aqua_text_size_caption"
                         tools:text="AQL-TIMER-123456" />
 
@@ -83,7 +83,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:text="@string/device_detail_connection_section_title"
-                                android:textColor="@color/aqua_palette_hex_8fa4be"
+                                android:textColor="@color/aqua_content_secondary"
                                 android:textSize="@dimen/aqua_text_size_caption" />
 
                             <TextView
@@ -125,7 +125,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_14"
-                        android:textColor="@color/aqua_palette_hex_dce7f3"
+                        android:textColor="@color/aqua_content_primary_soft"
                         android:textSize="@dimen/aqua_text_size_body"
                         tools:text="IP: 192.168.1.40" />
 
@@ -134,7 +134,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_10"
-                        android:textColor="@color/aqua_palette_hex_dce7f3"
+                        android:textColor="@color/aqua_content_primary_soft"
                         android:textSize="@dimen/aqua_text_size_body"
                         tools:text="Firmware: 1.0.0 / build 20260624" />
 
@@ -143,7 +143,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_10"
-                        android:textColor="@color/aqua_palette_hex_dce7f3"
+                        android:textColor="@color/aqua_content_primary_soft"
                         android:textSize="@dimen/aqua_text_size_body"
                         tools:text="Model: dose-pro-4" />
 
@@ -152,7 +152,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_10"
-                        android:textColor="@color/aqua_palette_hex_dce7f3"
+                        android:textColor="@color/aqua_content_primary_soft"
                         android:textSize="@dimen/aqua_text_size_body"
                         tools:text="Timer channels: 4" />
 
@@ -161,7 +161,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_10"
-                        android:textColor="@color/aqua_palette_hex_dce7f3"
+                        android:textColor="@color/aqua_content_primary_soft"
                         android:textSize="@dimen/aqua_text_size_body"
                         tools:text="Features: Timer, Time sync, OTA" />
                 </LinearLayout>
@@ -193,7 +193,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_8"
-                        android:textColor="@color/aqua_palette_hex_8fa4be"
+                        android:textColor="@color/aqua_content_secondary"
                         android:textSize="@dimen/aqua_text_size_body"
                         tools:text="Channel controls hazırlanıyor." />
                 </LinearLayout>
@@ -225,7 +225,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_8"
-                        android:textColor="@color/aqua_palette_hex_8fa4be"
+                        android:textColor="@color/aqua_content_secondary"
                         android:textSize="@dimen/aqua_text_size_body"
                         tools:text="Schedules hazırlanıyor." />
                 </LinearLayout>

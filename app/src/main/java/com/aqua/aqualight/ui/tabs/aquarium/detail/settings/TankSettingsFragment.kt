@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.settings
 
 import androidx.core.content.ContextCompat
-import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.View
@@ -474,9 +473,9 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         percent: Int
     ): Int {
         return when {
-            percent < 40 -> ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_d85c5c)
-            percent < 75 -> ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_e0a84c)
-            else -> ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_5fd6b4)
+            percent < 40 -> ContextCompat.getColor(requireContext(), R.color.aqua_status_danger)
+            percent < 75 -> ContextCompat.getColor(requireContext(), R.color.aqua_content_warning)
+            else -> ContextCompat.getColor(requireContext(), R.color.aqua_accent_positive)
         }
     }
     override fun onSaveInstanceState(

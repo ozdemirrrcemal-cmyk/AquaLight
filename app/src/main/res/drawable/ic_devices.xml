@@ -6,13 +6,13 @@
 
     <!-- Gri alt kısım -->
     <path
-        android:fillColor="@color/aqua_palette_hex_51514c"
+        android:fillColor="@color/aqua_ic_devices_fill"
         android:pathData="M77.547,120.684h-5.765l-1.698,3.012c-1.325,2.35-3.814,3.804-6.513,3.804h-0.003
             c-2.698,0-5.187-1.454-6.513-3.804l-1.698-3.012h-5.765v-4.06h27.956V120.684z"/>
 
     <!-- Orta gri halkalar -->
     <path
-        android:fillColor="@color/aqua_palette_hex_a7a79b"
+        android:fillColor="@color/aqua_ic_devices_fill_variant_2"
         android:pathData="M77.547,113.65H49.591v-4.279h27.956V113.65z
             M77.547,101.939H49.591v4.279h27.956V101.939z"/>
 
@@ -20,7 +20,7 @@
     <group android:name="lightGroup">
         <path
             android:name="lightGlow"
-            android:fillColor="@color/aqua_palette_hex_f4d100"
+            android:fillColor="@color/aqua_ic_devices_fill_variant_3"
             android:pathData="M116.134,69.363l-12.209-3.271l0.92-3.434l12.209,3.271L116.134,69.363z
                 M11.866,69.363l-0.92-3.434l12.209-3.271l0.92,3.434L11.866,69.363z
                 M104.845,44.45l-0.92-3.434l12.209-3.272l0.92,3.434L104.845,44.45z
@@ -32,7 +32,7 @@
 
         <path
             android:name="lightCore"
-            android:fillColor="@color/aqua_palette_hex_f4d100"
+            android:fillColor="@color/aqua_ic_devices_fill_variant_3"
             android:pathData="M59.802,64.141h7.535v34.934h-7.535V64.141z
                 M63.569,19.387c-18.485-0.53-33.631,14.817-33.631,33.824
                 c0,9.781,4.016,18.581,10.431,24.753c5.637,5.423,9.222,13.147,9.222,21.111h7.84V64.141H51.75

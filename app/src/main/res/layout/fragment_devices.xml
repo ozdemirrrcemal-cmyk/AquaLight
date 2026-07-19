@@ -34,13 +34,14 @@
         app:layout_constraintEnd_toEndOf="parent" />
 
     <com.google.android.material.card.MaterialCardView
+    style="@style/Widget.Aqua.Card.Inline"
         android:id="@+id/tvEmptyState"
         android:layout_width="@dimen/aqua_size_0"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/aqua_size_28"
         android:layout_marginEnd="@dimen/aqua_size_28"
         android:visibility="gone"
-        app:cardBackgroundColor="@android:color/transparent"
+        app:cardBackgroundColor="@color/aqua_color_transparent"
         app:cardCornerRadius="@dimen/aqua_size_24"
         app:cardElevation="@dimen/aqua_size_0"
         app:strokeWidth="@dimen/aqua_size_0"

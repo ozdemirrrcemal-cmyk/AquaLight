@@ -10,8 +10,7 @@
 
     <!-- Add Device / Scan -->
     <string name="device_add_title">Add Device</string>
-    <string name="device_add_qr_action_desc">Add with QR code</string>
-    <string name="device_add_scan_button">Scan</string>
+<string name="device_add_scan_button">Scan</string>
     <string name="device_add_scan_button_scanning">Scanning...</string>
     <string name="device_add_scan_badge_ready">Ready</string>
     <string name="device_add_scan_badge_scanning">Scanning</string>
@@ -22,29 +21,19 @@
     <string name="device_add_scan_badge_nearby">Nearby</string>
     <string name="device_add_ready_title">Add AquaLight securely</string>
     <string name="device_add_ready_message">Use QR for first setup. For an already paired device, hold SETUP/RESET for 5 seconds, release it, then scan nearby devices.</string>
-    <string name="device_add_scan_title_ready">Find nearby AquaLight devices</string>
-    <string name="device_add_scan_subtitle_ready">Press Scan when your device is in setup mode. Use the QR icon in the top-right for QR setup.</string>
-    <string name="device_add_scanning_secure_title">Scanning secure setup window</string>
+<string name="device_add_scanning_secure_title">Scanning secure setup window</string>
     <string name="device_add_scanning_secure_message">Keep the device close. Only AquaLight devices currently advertising setup mode will appear.</string>
-    <string name="device_add_setup_mode_title">Setup mode</string>
-    <string name="device_add_setup_mode_body">New devices enter setup mode automatically on first power-up. For a previously paired device, hold the setup button for 5 seconds, then scan again.</string>
-    <string name="device_add_available_devices_title">Available devices</string>
-    <string name="device_add_available_devices_hint">Select your device to continue setup.</string>
-    <string name="device_add_bluetooth_permission_title">Bluetooth permission required</string>
+<string name="device_add_available_devices_title">Available devices</string>
+<string name="device_add_bluetooth_permission_title">Bluetooth permission required</string>
     <string name="device_add_bluetooth_permission_message">Allow Bluetooth access to find nearby AquaLight devices in setup mode.</string>
     <string name="device_add_bluetooth_permission_empty_title">Permission required</string>
     <string name="device_add_bluetooth_permission_empty_message">After Bluetooth permission is granted, press Scan to search for nearby devices.</string>
-    <string name="device_add_scanning_title">Searching nearby devices</string>
-    <string name="device_add_scanning_message">Keep the device close to your phone. AquaLight devices in setup mode will appear here.</string>
-    <string name="device_add_scanning_empty_title">Scanning...</string>
+<string name="device_add_scanning_empty_title">Scanning...</string>
     <string name="device_add_scanning_empty_message">Searching for AquaLight devices in setup mode.</string>
     <string name="device_add_result_title_single">%1$d device found</string>
     <string name="device_add_result_title_multi">%1$d devices found</string>
-    <string name="device_add_result_message">Select the AquaLight device you want to set up.</string>
-    <string name="device_add_result_secure_message">Select the device. AquaLight will verify its firmware DeviceInfo before Wi‑Fi is sent.</string>
-    <string name="device_add_no_device_title">No device found</string>
-    <string name="device_add_no_device_message">Make sure the device is powered on. For a previously paired device, hold the setup button for 5 seconds and try again.</string>
-    <string name="device_add_no_nearby_title">No nearby devices</string>
+<string name="device_add_result_secure_message">Select the device. AquaLight will verify its firmware DeviceInfo before Wi‑Fi is sent.</string>
+<string name="device_add_no_nearby_title">No nearby devices</string>
     <string name="device_add_no_nearby_message">Put the device in setup mode, keep it close to your phone, then press Scan again. QR setup is available from the top-right icon.</string>
     <string name="device_add_no_setup_window_title">No setup window found</string>
     <string name="device_add_no_setup_window_message">For an already paired device, hold SETUP/RESET for 5 seconds, release it, then scan again. For first setup, use the secure QR code.</string>
@@ -68,19 +57,15 @@
     <string name="device_wifi_title">Wi-Fi Setup</string>
     <string name="device_wifi_default_device_name">AquaLight Device</string>
     <string name="device_wifi_serial_format">Serial: %1$s</string>
-    <string name="device_wifi_setup_mode">Setup mode</string>
-    <string name="device_wifi_card_title">Set up 2.4 GHz Wi‑Fi</string>
-    <string name="device_wifi_card_message">Enter the 2.4 GHz network name and password. Use current only as a shortcut when your phone is already on the correct network.</string>
-    <string name="device_wifi_icon_desc">Wi‑Fi</string>
+<string name="device_wifi_card_title">Set up 2.4 GHz Wi‑Fi</string>
+<string name="device_wifi_icon_desc">Wi‑Fi</string>
     <string name="device_wifi_network_hint">Wi‑Fi network</string>
-    <string name="device_wifi_use_current_action">Use current</string>
-    <string name="device_wifi_password_hint">Wi‑Fi password</string>
+<string name="device_wifi_password_hint">Wi‑Fi password</string>
     <string name="device_wifi_show_password">Show password</string>
     <string name="device_wifi_continue">Continue</string>
     <string name="device_wifi_privacy_hint">Your Wi‑Fi credentials are sent only to the selected AquaLight device over Bluetooth.</string>
     <string name="device_wifi_settings_open_failed">Unable to open Wi‑Fi settings. Enter the 2.4 GHz network name manually.</string>
-    <string name="device_wifi_network_not_read">The current phone network could not be read. Enter the 2.4 GHz network name manually.</string>
-    <string name="device_wifi_select_first">Enter a Wi‑Fi network name first.</string>
+<string name="device_wifi_select_first">Enter a Wi‑Fi network name first.</string>
     <string name="device_wifi_name_too_long">The Wi‑Fi network name is too long.</string>
     <string name="device_wifi_password_too_long">The Wi‑Fi password is too long.</string>
     <string name="device_wifi_invalid_details">The Wi‑Fi details are invalid.</string>
@@ -102,13 +87,9 @@
     <string name="device_qr_read_failed">QR code could not be read. Try again.</string>
     <string name="device_qr_flashlight_turn_on">Turn on flashlight</string>
     <string name="device_qr_flashlight_turn_off">Turn off flashlight</string>
-    <string name="device_qr_invalid_title">Invalid QR code</string>
-    <string name="device_qr_invalid_message">This is not an AquaLight setup code.</string>
-    <string name="device_qr_verified_title">QR code verified</string>
+<string name="device_qr_verified_title">QR code verified</string>
     <string name="device_qr_opening_wifi">Opening Wi‑Fi setup.</string>
-    <string name="device_qr_setup_label">QR setup</string>
-
-    <!-- Provisioning progress -->
+<!-- Provisioning progress -->
     <string name="device_provisioning_title">Provisioning</string>
     <string name="device_provisioning_try_again">Try again</string>
     <string name="device_provisioning_start_again">Start setup again</string>

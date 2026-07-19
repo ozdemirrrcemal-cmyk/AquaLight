@@ -36,8 +36,8 @@
         <item name="bottomSheetDialogTheme">@style/AquaBottomSheetDialogTheme</item>
 
         <!-- Sistem bar renkleri -->
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@android:color/black</item>
+        <item name="android:statusBarColor">@color/aqua_color_transparent</item>
+        <item name="android:navigationBarColor">@color/aqua_system_bar_surface</item>
 
         <!-- Koyu modda beyaz ikonlar -->
         <item name="android:windowLightStatusBar">false</item>

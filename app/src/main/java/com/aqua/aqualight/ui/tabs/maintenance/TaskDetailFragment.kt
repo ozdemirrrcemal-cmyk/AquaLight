@@ -178,9 +178,9 @@ class TaskDetailFragment :
 
     binding.tvSourceBadge.setTextColor(
       if (task.source == CareTaskSource.AUTOMATIC) {
-        ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_5fd6b4)
+        ContextCompat.getColor(requireContext(), R.color.aqua_accent_positive)
       } else {
-        ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_b8c7d9)
+        ContextCompat.getColor(requireContext(), R.color.aqua_content_tertiary)
       }
     )
 
@@ -434,15 +434,15 @@ class TaskDetailFragment :
     source: CareTaskSource
   ): GradientDrawable {
     val color = if (source == CareTaskSource.AUTOMATIC) {
-      ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_12382f)
+      ContextCompat.getColor(requireContext(), R.color.aqua_surface_positive)
     } else {
-      ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_1c3252)
+      ContextCompat.getColor(requireContext(), R.color.aqua_surface_action)
     }
 
     val strokeColor = if (source == CareTaskSource.AUTOMATIC) {
-      ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_2b6f5a)
+      ContextCompat.getColor(requireContext(), R.color.aqua_outline_positive)
     } else {
-      ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_2a4566)
+      ContextCompat.getColor(requireContext(), R.color.aqua_task_detail_fragment_color)
     }
 
     return GradientDrawable().apply {

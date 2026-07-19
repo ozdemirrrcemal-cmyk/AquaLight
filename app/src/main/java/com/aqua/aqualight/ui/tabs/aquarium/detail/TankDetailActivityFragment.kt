@@ -199,7 +199,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
             binding.tvNextCareTaskTitle.text = getString(R.string.aquarium_no_value_placeholder)
             binding.tvNextCareValue.text = getString(R.string.aquarium_no_upcoming_care)
             binding.tvNextCareValue.setTextColor(
-                ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_8fa4be)
+                ContextCompat.getColor(requireContext(), R.color.aqua_content_secondary)
             )
         } else {
             binding.tvNextCareTaskTitle.text = state.nextCareTask.title
@@ -219,20 +219,20 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
     ): Int {
         return when (status) {
             TankNextCareStatus.OVERDUE -> {
-                ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_d85c5c)
+                ContextCompat.getColor(requireContext(), R.color.aqua_status_danger)
             }
 
             TankNextCareStatus.TODAY -> {
-                ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_f2c94c)
+                ContextCompat.getColor(requireContext(), R.color.aqua_tank_detail_activity_fragment_color)
             }
 
             TankNextCareStatus.TOMORROW -> {
-                ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_5fd6b4)
+                ContextCompat.getColor(requireContext(), R.color.aqua_accent_positive)
             }
 
             TankNextCareStatus.NONE,
             TankNextCareStatus.FUTURE -> {
-                ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_8fa4be)
+                ContextCompat.getColor(requireContext(), R.color.aqua_content_secondary)
             }
         }
     }
@@ -418,7 +418,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
         val dateText = TextView(requireContext()).apply {
             text = formatActivityDate(millis)
             setTextSizeResource(R.dimen.aqua_text_size_caption_plus)
-            setTextColor(Color.WHITE)
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
             setTypeface(null, Typeface.NORMAL)
             includeFontPadding = false
             maxLines = 1
@@ -477,8 +477,8 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
         val card = MaterialCardView(requireContext()).apply {
             radius = resources.getDimensionPixelOffset(R.dimen.aqua_size_18).toFloat()
             strokeWidth = resources.getDimensionPixelOffset(R.dimen.aqua_size_1)
-            strokeColor = ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_223a57)
-            setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_10233a))
+            strokeColor = ContextCompat.getColor(requireContext(), R.color.aqua_tank_detail_activity_fragment_outline)
+            setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.aqua_surface_deep))
             cardElevation = 0f
             useCompatPadding = false
             isClickable = true
@@ -527,7 +527,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
 
         val icon = ImageView(requireContext()).apply {
             setImageResource(task.iconRes)
-            setColorFilter(Color.WHITE)
+            setColorFilter(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
 
             val params = FrameLayout.LayoutParams(
                 resources.getDimensionPixelOffset(R.dimen.aqua_size_19),
@@ -554,7 +554,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
         val titleText = TextView(requireContext()).apply {
             text = task.title
             setTextSizeResource(R.dimen.aqua_text_size_body_precise_medium)
-            setTextColor(Color.WHITE)
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
             setTypeface(null, Typeface.BOLD)
             includeFontPadding = false
             maxLines = 1
@@ -576,7 +576,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
         val metaText = TextView(requireContext()).apply {
             text = buildActivityMetaText(task)
             setTextSizeResource(R.dimen.aqua_text_size_caption)
-            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_b8c7d9))
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_tertiary))
             includeFontPadding = false
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
@@ -591,7 +591,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
         val completedText = TextView(requireContext()).apply {
             text = getString(R.string.aquarium_completed_label)
             setTextSizeResource(R.dimen.aqua_text_size_caption_precise)
-            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_5fd6b4))
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_accent_positive))
             setTypeface(null, Typeface.BOLD)
             includeFontPadding = false
             maxLines = 1

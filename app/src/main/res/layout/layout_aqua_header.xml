@@ -26,6 +26,7 @@
         app:tint="@color/aqua_toolbar_icon_tint" />
 
     <com.google.android.material.card.MaterialCardView
+    style="@style/Widget.Aqua.Card.Inline"
         android:id="@+id/searchContainer"
         android:layout_width="@dimen/aqua_size_0"
         android:layout_height="@dimen/aqua_size_44"
@@ -50,7 +51,7 @@
                 android:id="@+id/etHeaderSearch"
                 android:layout_width="@dimen/aqua_size_0"
                 android:layout_height="match_parent"
-                android:background="@android:color/transparent"
+                android:background="@color/aqua_color_transparent"
                 android:gravity="center_vertical"
                 android:hint="@string/catalog_search_hint"
                 android:inputType="text"
@@ -59,7 +60,7 @@
                 android:paddingEnd="@dimen/aqua_size_8"
                 android:singleLine="true"
                 android:textColor="?attr/colorOnSurface"
-                android:textColorHint="@color/aqua_palette_hex_8fa4be"
+                android:textColorHint="@color/aqua_content_secondary"
                 android:textCursorDrawable="@null"
                 android:textSize="@dimen/aqua_text_size_header_search"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -158,6 +159,7 @@
             tools:visibility="visible" />
 
         <com.google.android.material.card.MaterialCardView
+    style="@style/Widget.Aqua.Card.Inline"
             android:id="@+id/btnCardIconAction"
             android:layout_width="@dimen/aqua_size_32"
             android:layout_height="@dimen/aqua_size_32"
@@ -179,7 +181,7 @@
                 android:layout_gravity="center"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_check_24"
-                app:tint="@android:color/white" />
+                app:tint="@color/aqua_content_on_dark" />
 
         </com.google.android.material.card.MaterialCardView>
 
@@ -193,7 +195,7 @@
             android:minWidth="@dimen/aqua_size_58"
             android:paddingStart="@dimen/aqua_size_14"
             android:paddingEnd="@dimen/aqua_size_14"
-            android:textColor="@android:color/white"
+            android:textColor="@color/aqua_content_on_dark"
             android:textSize="@dimen/aqua_text_size_toolbar_pill_action"
             android:textStyle="bold"
             android:visibility="gone"
@@ -201,6 +203,7 @@
             tools:visibility="visible" />
 
         <com.google.android.material.card.MaterialCardView
+    style="@style/Widget.Aqua.Card.Inline"
             android:id="@+id/scoreContainer"
             android:layout_width="@dimen/aqua_size_36"
             android:layout_height="@dimen/aqua_size_36"
@@ -208,10 +211,10 @@
             android:focusable="true"
             android:foreground="?attr/selectableItemBackgroundBorderless"
             android:visibility="gone"
-            app:cardBackgroundColor="@android:color/transparent"
+            app:cardBackgroundColor="@color/aqua_color_transparent"
             app:cardCornerRadius="@dimen/aqua_size_18"
             app:cardElevation="@dimen/aqua_size_0"
-            app:strokeColor="@color/aqua_palette_hex_4caf50"
+            app:strokeColor="@color/aqua_status_success"
             app:strokeWidth="@dimen/aqua_size_2"
             tools:visibility="visible">
 
@@ -221,7 +224,7 @@
                 android:layout_height="match_parent"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:textColor="@color/aqua_palette_hex_4caf50"
+                android:textColor="@color/aqua_status_success"
                 android:textSize="@dimen/aqua_text_size_toolbar_score"
                 android:textStyle="bold"
                 tools:text="25" />
@@ -229,24 +232,11 @@
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.button.MaterialButton
+    style="@style/Widget.Aqua.Button.ToolbarPrimaryAction"
             android:id="@+id/btnPrimaryAction"
             android:layout_width="@dimen/aqua_size_78"
             android:layout_height="@dimen/aqua_size_34"
-            android:insetTop="@dimen/aqua_size_0"
-            android:insetBottom="@dimen/aqua_size_0"
-            android:minWidth="@dimen/aqua_size_0"
-            android:minHeight="@dimen/aqua_size_0"
-            android:paddingStart="@dimen/aqua_size_10"
-            android:paddingTop="@dimen/aqua_size_0"
-            android:paddingEnd="@dimen/aqua_size_10"
-            android:paddingBottom="@dimen/aqua_size_0"
-            android:textAllCaps="false"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="@dimen/aqua_text_size_toolbar_primary_action"
-            android:textStyle="bold"
             android:visibility="gone"
-            app:backgroundTint="@color/aqua_toolbar_primary_action_container"
-            app:cornerRadius="@dimen/aqua_size_17"
             tools:text="+ Add"
             tools:visibility="visible" />
 

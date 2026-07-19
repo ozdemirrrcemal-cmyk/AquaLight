@@ -216,6 +216,7 @@ fun LayoutAquaHeaderBinding.setupAquaHeader(
         ivCardIconAction.imageTintList =
             ColorStateList.valueOf(
                 cardIconAction.iconTintColor
+                    ?: ContextCompat.getColor(fragment.requireContext(), R.color.aqua_content_on_dark)
             )
 
         btnCardIconAction.setOnClickListener(
@@ -261,6 +262,7 @@ fun LayoutAquaHeaderBinding.setupAquaHeader(
 
         btnPillTextAction.setTextColor(
             pillTextAction.textColor
+                ?: ContextCompat.getColor(fragment.requireContext(), R.color.aqua_content_on_dark)
         )
 
         btnPillTextAction.setBackgroundResource(

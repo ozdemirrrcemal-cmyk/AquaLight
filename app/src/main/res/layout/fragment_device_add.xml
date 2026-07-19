@@ -39,10 +39,11 @@
             android:orientation="vertical">
 
             <com.google.android.material.card.MaterialCardView
+    style="@style/Widget.Aqua.Card.Inline"
                 android:id="@+id/cardHero"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="@android:color/transparent"
+                app:cardBackgroundColor="@color/aqua_color_transparent"
                 app:cardCornerRadius="@dimen/aqua_size_24"
                 app:cardElevation="@dimen/aqua_size_0"
                 app:strokeWidth="@dimen/aqua_size_0">

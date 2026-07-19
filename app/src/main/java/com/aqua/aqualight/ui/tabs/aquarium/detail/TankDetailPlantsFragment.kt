@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail
 
 import com.aqua.aqualight.ui.common.text.setTextSizeResource
-import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.TextUtils
@@ -87,7 +86,7 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
             text = "${index + 1}"
             gravity = Gravity.CENTER
             setTextSizeResource(R.dimen.aqua_text_size_body_small)
-            setTextColor(Color.WHITE)
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
             setTypeface(null, Typeface.NORMAL)
             setBackgroundResource(R.drawable.bg_plant_number_circle)
             includeFontPadding = false

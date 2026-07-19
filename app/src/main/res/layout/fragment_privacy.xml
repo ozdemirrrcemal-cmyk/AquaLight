@@ -20,7 +20,7 @@
         android:id="@+id/webViewPrivacy"
         android:layout_width="@dimen/aqua_size_0"
         android:layout_height="@dimen/aqua_size_0"
-        android:background="@android:color/transparent"
+        android:background="@color/aqua_color_transparent"
         android:overScrollMode="never"
         app:layout_constraintTop_toBottomOf="@id/appHeader"
         app:layout_constraintBottom_toBottomOf="parent"

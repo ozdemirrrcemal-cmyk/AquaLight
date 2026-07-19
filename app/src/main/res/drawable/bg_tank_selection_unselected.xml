@@ -1,7 +1,7 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="@color/aqua_palette_hex_66000000" />
+    <solid android:color="@color/aqua_bg_tank_selection_unselected_fill" />
     <stroke
         android:width="@dimen/aqua_size_1"
-        android:color="@color/aqua_palette_hex_ccffffff" />
+        android:color="@color/aqua_bg_tank_selection_unselected_fill_variant_2" />
     <corners android:radius="@dimen/aqua_size_50" />
 </shape>

@@ -3,5 +3,5 @@
     <item android:state_enabled="false" android:color="@color/aqua_input_stroke_disabled" />
     <item android:state_focused="true" android:color="@color/aqua_input_stroke_focused" />
     <item android:state_pressed="true" android:color="@color/aqua_input_stroke_focused" />
-    <item android:color="@color/aqua_palette_hex_3a5878" />
+    <item android:color="@color/aqua_aqua_input_feedback_stroke_color_fill" />
 </selector>

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="oval">
-    <solid android:color="@color/aqua_palette_hex_162a3e" />
+    <solid android:color="@color/aqua_bg_devices_empty_orb_fill" />
     <stroke
         android:width="@dimen/aqua_size_1"
-        android:color="@color/aqua_palette_hex_2a4663" />
+        android:color="@color/aqua_bg_devices_empty_orb_fill_variant_2" />
 </shape>

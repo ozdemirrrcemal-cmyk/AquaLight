@@ -3,8 +3,8 @@
     android:height="@dimen/aqua_size_24"
     android:viewportWidth="24"
     android:viewportHeight="24"
-    android:tint="@color/aqua_palette_hex_ffffff">
+    android:tint="@color/aqua_content_on_dark">
     <path
-        android:fillColor="@color/aqua_palette_hex_ffffff"
+        android:fillColor="@color/aqua_content_on_dark"
         android:pathData="M2,21l21,-9L2,3v7l15,2 -15,2v7z"/>
 </vector>

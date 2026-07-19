@@ -11,7 +11,5 @@
     <color name="aqua_input_hint_unfocused">@color/aqua_palette_hex_9aaec4</color>
 
     <color name="aqua_input_text_primary">@color/aqua_palette_hex_f4f8fc</color>
-    <color name="aqua_input_text_secondary">@color/aqua_palette_hex_9aaec4</color>
-
-    <color name="aqua_input_error">@color/aqua_palette_hex_ff5a52</color>
+<color name="aqua_input_error">@color/aqua_palette_hex_ff5a52</color>
 </resources>

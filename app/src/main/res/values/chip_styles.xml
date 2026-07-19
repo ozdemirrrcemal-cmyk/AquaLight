@@ -8,7 +8,7 @@
         <item name="android:includeFontPadding">false</item>
         <item name="android:paddingStart">@dimen/aqua_size_12</item>
         <item name="android:paddingEnd">@dimen/aqua_size_12</item>
-        <item name="android:textColor">@color/aqua_palette_hex_5fd6b4</item>
+        <item name="android:textColor">@color/aqua_accent_positive</item>
         <item name="android:textSize">@dimen/aqua_text_size_micro_plus</item>
         <item name="android:textStyle">bold</item>
     </style>

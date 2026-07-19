@@ -54,7 +54,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
-                        android:textColor="@color/aqua_palette_hex_f2f6fa"
+                        android:textColor="@color/aqua_content_primary"
                         android:textSize="@dimen/aqua_text_size_title_medium"
                         android:textStyle="bold"
                         tools:text="Dosing Pro 4" />
@@ -65,7 +65,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_7"
                         android:includeFontPadding="false"
-                        android:textColor="@color/aqua_palette_hex_90a1b5"
+                        android:textColor="@color/aqua_content_muted"
                         android:textSize="@dimen/aqua_text_size_caption_plus"
                         tools:text="Serial: AQL-DP4-336172" />
 
@@ -75,7 +75,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_6"
                         android:includeFontPadding="false"
-                        android:textColor="@color/aqua_palette_hex_5fd6b4"
+                        android:textColor="@color/aqua_accent_positive"
                         android:textSize="@dimen/aqua_text_size_caption_plus"
                         tools:text="QR setup" />
                 </LinearLayout>
@@ -98,7 +98,7 @@
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
                         android:text="@string/device_wifi_card_title"
-                        android:textColor="@color/aqua_palette_hex_f2f6fa"
+                        android:textColor="@color/aqua_content_primary"
                         android:textSize="@dimen/aqua_text_size_title_small"
                         android:textStyle="bold" />
 
@@ -108,7 +108,7 @@
                         android:layout_marginTop="@dimen/aqua_size_7"
                         android:lineSpacingExtra="@dimen/aqua_size_2"
                         android:text="@string/device_wifi_card_message_corrected"
-                        android:textColor="@color/aqua_palette_hex_90a1b5"
+                        android:textColor="@color/aqua_content_muted"
                         android:textSize="@dimen/aqua_text_size_caption_plus" />
 
                     <androidx.constraintlayout.widget.ConstraintLayout
@@ -129,7 +129,7 @@
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent"
-                            app:tint="@color/aqua_palette_hex_f2f6fa" />
+                            app:tint="@color/aqua_content_primary" />
 
                         <EditText
                             android:id="@+id/etWifiSsid"
@@ -160,7 +160,7 @@
                             android:includeFontPadding="false"
                             android:minWidth="@dimen/aqua_size_78"
                             android:text="@string/device_wifi_select_wifi_action"
-                            android:textColor="@color/aqua_palette_hex_5fd6b4"
+                            android:textColor="@color/aqua_accent_positive"
                             android:textSize="@dimen/aqua_text_size_caption"
                             android:textStyle="bold"
                             app:layout_constraintBottom_toBottomOf="parent"
@@ -185,9 +185,9 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_6"
-                        android:buttonTint="@color/aqua_palette_hex_5fd6b4"
+                        android:buttonTint="@color/aqua_accent_positive"
                         android:text="@string/device_wifi_show_password"
-                        android:textColor="@color/aqua_palette_hex_90a1b5"
+                        android:textColor="@color/aqua_content_muted"
                         android:textSize="@dimen/aqua_text_size_caption_plus" />
 
                     <com.google.android.material.button.MaterialButton
@@ -206,7 +206,7 @@
                         android:layout_marginTop="@dimen/aqua_size_12"
                         android:lineSpacingExtra="@dimen/aqua_size_2"
                         android:text="@string/device_wifi_privacy_hint"
-                        android:textColor="@color/aqua_palette_hex_90a1b5"
+                        android:textColor="@color/aqua_content_muted"
                         android:textSize="@dimen/aqua_text_size_caption" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

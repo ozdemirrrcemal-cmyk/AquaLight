@@ -11,8 +11,7 @@
     <color name="md_theme_light_secondaryContainer">@color/aqua_palette_hex_cce8e7</color>
     <color name="md_theme_light_onSecondaryContainer">@color/aqua_palette_hex_041f1f</color>
     <color name="md_theme_light_background">@color/aqua_palette_hex_152b45</color>
-    <color name="md_theme_light_onBackground">@color/aqua_palette_hex_ffffff</color>
-    <color name="md_theme_light_surface">@color/aqua_palette_hex_152b45</color>
+<color name="md_theme_light_surface">@color/aqua_palette_hex_152b45</color>
     <color name="md_theme_light_onSurface">@color/aqua_palette_hex_e0e6ed</color>
     <color name="md_theme_light_surfaceVariant">@color/aqua_palette_hex_233042</color>
     <color name="md_theme_light_onSurfaceVariant">@color/aqua_palette_hex_5c6b75</color>
@@ -32,8 +31,7 @@
     <color name="md_theme_dark_secondaryContainer">@color/aqua_palette_hex_0a192f</color>
     <color name="md_theme_dark_onSecondaryContainer">@color/aqua_palette_hex_ffffff</color>
     <color name="md_theme_dark_background">@color/aqua_palette_hex_0a192f</color>
-    <color name="md_theme_dark_onBackground">@color/aqua_palette_hex_ffffff</color>
-    <color name="md_theme_dark_surface">@color/aqua_palette_hex_0a192f</color>
+<color name="md_theme_dark_surface">@color/aqua_palette_hex_0a192f</color>
     <color name="md_theme_dark_onSurface">@color/aqua_palette_hex_e0e6ed</color>
     <color name="md_theme_dark_surfaceVariant">@color/aqua_palette_hex_121a24</color>
     <color name="md_theme_dark_onSurfaceVariant">@color/aqua_palette_hex_5c6b75</color>
@@ -43,9 +41,7 @@
     <color name="md_theme_dark_onError">@color/aqua_palette_hex_ffffff</color>
 
     <!-- 🪟 Yarı saydam yüzey (LIGHT) -->
-    <color name="colorSurfaceTransparent">@color/aqua_palette_hex_cc152b45</color>
-
-    <!-- 🌤 Dialog Icon Colors (LIGHT) -->
+<!-- 🌤 Dialog Icon Colors (LIGHT) -->
     <color name="dialog_icon_success">@color/aqua_palette_hex_4caf50</color>
     <color name="dialog_icon_warning">@color/aqua_palette_hex_ffc107</color>
     <color name="dialog_icon_error">@color/aqua_palette_hex_f44336</color>
@@ -57,64 +53,18 @@
     <color name="theme_option_system_icon">@color/aqua_palette_hex_2196f3</color>
 
     <!-- Auth metin & border (base) -->
-    <color name="auth_text_color">@color/aqua_palette_hex_ffffff</color>
-    <color name="auth_unfocused_color">@color/aqua_palette_hex_333333</color>
-    <color name="auth_focus_color">@color/aqua_palette_hex_2196f3</color>
-
-    <!-- 🧾 Settings ekranı (LIGHT) -->
+<!-- 🧾 Settings ekranı (LIGHT) -->
     <color name="settings_divider">@color/aqua_palette_hex_2d3f66</color>
 
     <!-- ⬇️ Bottom Navigation (LIGHT) -->
     <color name="bottom_nav_background">@color/aqua_palette_hex_1c3252</color>
-    <color name="bottom_nav_item_active">@color/aqua_palette_hex_ffffff</color>
-    <color name="bottom_nav_item_inactive">@color/aqua_palette_hex_a0a0a0</color>
-    <color name="crop_toolbar_bg">@color/aqua_palette_hex_0a192f</color>
+<color name="crop_toolbar_bg">@color/aqua_palette_hex_0a192f</color>
     <color name="aqua_button_blue">@color/aqua_palette_hex_1e90ff</color>
-    <color name="aqua_button_red">@color/aqua_palette_hex_ff3b30</color>
-    <color name="device_status_connected">@color/aqua_palette_hex_57d26a</color>
-    <color name="snackbar_success">@color/aqua_palette_hex_1faa59</color>
+<color name="snackbar_success">@color/aqua_palette_hex_1faa59</color>
     <color name="snackbar_error">@color/aqua_palette_hex_d32f2f</color>
     <color name="snackbar_warning">@color/aqua_palette_hex_f9a825</color>
     <color name="aqua_accent">@color/aqua_palette_hex_64ffda</color>
     <color name="white">@color/aqua_palette_hex_ffffff</color>
 
     <!-- Light device module palette -->
-    <color name="light_accent">@color/aqua_palette_hex_64ffda</color>
-    <color name="light_accent_soft">@color/aqua_palette_hex_2264ffda</color>
-    <color name="light_action_blue_end">@color/aqua_palette_hex_56ccf2</color>
-    <color name="light_action_blue_start">@color/aqua_palette_hex_2f80ed</color>
-    <color name="light_action_blue_stroke">@color/aqua_palette_hex_7dcbff</color>
-    <color name="light_action_cyan_end">@color/aqua_palette_hex_64d8ff</color>
-    <color name="light_action_cyan_start">@color/aqua_palette_hex_00b8d9</color>
-    <color name="light_action_cyan_stroke">@color/aqua_palette_hex_9eebff</color>
-    <color name="light_action_gold_end">@color/aqua_palette_hex_f2994a</color>
-    <color name="light_action_gold_start">@color/aqua_palette_hex_f2c94c</color>
-    <color name="light_action_gold_stroke">@color/aqua_palette_hex_ffe08a</color>
-    <color name="light_action_green_end">@color/aqua_palette_hex_6fcf97</color>
-    <color name="light_action_green_start">@color/aqua_palette_hex_27ae60</color>
-    <color name="light_action_green_stroke">@color/aqua_palette_hex_8fe6b0</color>
-    <color name="light_action_purple_end">@color/aqua_palette_hex_bb6bd9</color>
-    <color name="light_action_purple_start">@color/aqua_palette_hex_9b51e0</color>
-    <color name="light_action_purple_stroke">@color/aqua_palette_hex_d9a7ff</color>
-    <color name="light_action_red_end">@color/aqua_palette_hex_ff8a80</color>
-    <color name="light_action_red_start">@color/aqua_palette_hex_eb5757</color>
-    <color name="light_action_red_stroke">@color/aqua_palette_hex_ffb0a8</color>
-    <color name="light_card">@color/aqua_palette_hex_172b45</color>
-    <color name="light_card_elevated">@color/aqua_palette_hex_1d3656</color>
-    <color name="light_channel_blue">@color/aqua_palette_hex_4da3ff</color>
-    <color name="light_channel_green">@color/aqua_palette_hex_5cdb95</color>
-    <color name="light_channel_red">@color/aqua_palette_hex_ff6b6b</color>
-    <color name="light_channel_white">@color/aqua_palette_hex_f4f7ff</color>
-    <color name="light_chart_panel_bottom">@color/aqua_palette_hex_10243b</color>
-    <color name="light_chart_panel_middle">@color/aqua_palette_hex_162c48</color>
-    <color name="light_chart_panel_stroke">@color/aqua_palette_hex_33506f</color>
-    <color name="light_chart_panel_top">@color/aqua_palette_hex_1b3658</color>
-    <color name="light_chip_auto">@color/aqua_palette_hex_1a3a63</color>
-    <color name="light_gold">@color/aqua_palette_hex_ffd166</color>
-    <color name="light_header_gradient_bottom">@color/aqua_palette_hex_10243b</color>
-    <color name="light_header_gradient_top">@color/aqua_palette_hex_1c3b63</color>
-    <color name="light_surface">@color/aqua_palette_hex_152b45</color>
-    <color name="light_surface_deep">@color/aqua_palette_hex_0f1318</color>
-    <color name="light_text_tertiary">@color/aqua_palette_hex_8ea0b8</color>
-
 </resources>

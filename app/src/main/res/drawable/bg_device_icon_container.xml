@@ -1,9 +1,0 @@
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="rectangle">
-
-    <solid android:color="@color/aqua_palette_hex_0d1c2e" /> <!-- koyu mavi-lacivert, alpha ile saydam -->
-    <stroke
-        android:width="@dimen/aqua_size_1"
-        android:color="@color/aqua_palette_hex_1e3550" /> <!-- ince border -->
-    <corners android:radius="@dimen/aqua_size_12"/>
-</shape>

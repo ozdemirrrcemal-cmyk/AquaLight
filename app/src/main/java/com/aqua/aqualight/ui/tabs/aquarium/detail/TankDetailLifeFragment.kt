@@ -2,7 +2,6 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail
 
 import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import androidx.core.content.ContextCompat
-import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
@@ -147,8 +146,8 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
         val card = MaterialCardView(requireContext()).apply {
             radius = resources.getDimensionPixelOffset(R.dimen.aqua_size_18).toFloat()
             strokeWidth = resources.getDimensionPixelOffset(R.dimen.aqua_size_1)
-            strokeColor = ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_223a57)
-            setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_10233a))
+            strokeColor = ContextCompat.getColor(requireContext(), R.color.aqua_tank_detail_life_fragment_outline)
+            setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.aqua_surface_deep))
             cardElevation = 0f
             useCompatPadding = false
             isClickable = true
@@ -185,7 +184,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
                 getLivestockCategoryIcon(livestock.category)
             )
 
-            setColorFilter(Color.WHITE)
+            setColorFilter(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
 
             background = createLifeIconBackground(
                 color = getLivestockCategoryColor(livestock.category)
@@ -229,7 +228,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
             }
 
             setTextSizeResource(R.dimen.aqua_text_size_body_plus)
-            setTextColor(Color.WHITE)
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
             setTypeface(null, Typeface.BOLD)
             includeFontPadding = false
             maxLines = 1
@@ -243,7 +242,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
                 getLivestockQuantityText(livestock.quantity)
             )
             setTextSizeResource(R.dimen.aqua_text_size_caption_plus)
-            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_8fa4be))
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_secondary))
             includeFontPadding = false
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
@@ -259,7 +258,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
         val dateText = TextView(requireContext()).apply {
             text = getLivestockAddedDateText(livestock.addedDateMillis)
             setTextSizeResource(R.dimen.aqua_text_size_caption)
-            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_5fd6b4))
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_accent_positive))
             includeFontPadding = false
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
@@ -280,7 +279,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
             val noteText = TextView(requireContext()).apply {
                 text = livestock.note
                 setTextSizeResource(R.dimen.aqua_text_size_caption)
-                setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_8fa4be))
+                setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_secondary))
                 includeFontPadding = false
                 maxLines = 1
                 ellipsize = TextUtils.TruncateAt.END
@@ -298,7 +297,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
 
         val arrow = ImageView(requireContext()).apply {
             setImageResource(R.drawable.ic_arrow_right)
-            setColorFilter(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_8fa4be))
+            setColorFilter(ContextCompat.getColor(requireContext(), R.color.aqua_content_secondary))
             scaleType = ImageView.ScaleType.CENTER
 
             layoutParams = LinearLayout.LayoutParams(
@@ -363,12 +362,12 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
         category: String
     ): Int {
         return when (category) {
-            LivestockCategories.FISH -> R.color.aqua_palette_hex_1c5d8f
-            LivestockCategories.SHRIMP -> R.color.aqua_palette_hex_8f4a3a
-            LivestockCategories.SNAIL -> R.color.aqua_palette_hex_3e6b4a
-            LivestockCategories.CRAB_CRAYFISH -> R.color.aqua_palette_hex_7a4d2d
-            LivestockCategories.CORAL -> R.color.aqua_palette_hex_7a4e8f
-            else -> R.color.aqua_palette_hex_3e536b
+            LivestockCategories.FISH -> R.color.aqua_tank_detail_life_fragment_color
+            LivestockCategories.SHRIMP -> R.color.aqua_tank_detail_life_fragment_color_variant_2
+            LivestockCategories.SNAIL -> R.color.aqua_tank_detail_life_fragment_color_variant_3
+            LivestockCategories.CRAB_CRAYFISH -> R.color.aqua_tank_detail_life_fragment_color_variant_4
+            LivestockCategories.CORAL -> R.color.aqua_tank_detail_life_fragment_color_variant_5
+            else -> R.color.aqua_tank_detail_life_fragment_color_variant_6
         }
     }
 

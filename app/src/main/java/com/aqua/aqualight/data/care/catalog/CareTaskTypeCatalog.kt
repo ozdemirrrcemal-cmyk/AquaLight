@@ -42,7 +42,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_water_change,
       categoryRes = R.string.maintenance_category_water_care,
       iconRes = R.drawable.ic_care_water_change_24,
-      accentColorRes = R.color.aqua_palette_hex_2196f3,
+      accentColorRes = R.color.aqua_accent_primary,
       defaultDescriptionRes = R.string.maintenance_task_desc_water_change
     ),
     CareTaskTypeDefinition(
@@ -50,7 +50,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_water_test,
       categoryRes = R.string.maintenance_category_water_care,
       iconRes = R.drawable.ic_care_water_test_24,
-      accentColorRes = R.color.aqua_palette_hex_5c7cfa,
+      accentColorRes = R.color.aqua_care_task_type_catalog_color,
       defaultDescriptionRes = R.string.maintenance_task_desc_water_test
     ),
     CareTaskTypeDefinition(
@@ -58,7 +58,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_temperature_check,
       categoryRes = R.string.maintenance_category_water_care,
       iconRes = R.drawable.ic_care_temperature_24,
-      accentColorRes = R.color.aqua_palette_hex_ff8a4c,
+      accentColorRes = R.color.aqua_care_task_type_catalog_color_variant_2,
       defaultDescriptionRes = R.string.maintenance_task_desc_temperature_check
     ),
     CareTaskTypeDefinition(
@@ -66,7 +66,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_substrate_cleaning,
       categoryRes = R.string.maintenance_category_water_care,
       iconRes = R.drawable.ic_care_substrate_24,
-      accentColorRes = R.color.aqua_palette_hex_b7793e,
+      accentColorRes = R.color.aqua_care_task_type_catalog_color_variant_3,
       defaultDescriptionRes = R.string.maintenance_task_desc_substrate_cleaning
     ),
 
@@ -75,7 +75,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_filter_maintenance,
       categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_filter_24,
-      accentColorRes = R.color.aqua_palette_hex_f2a900,
+      accentColorRes = R.color.aqua_care_task_type_catalog_color_variant_4,
       defaultDescriptionRes = R.string.maintenance_task_desc_filter_maintenance
     ),
     CareTaskTypeDefinition(
@@ -83,7 +83,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_filter_change,
       categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_filter_change_24,
-      accentColorRes = R.color.aqua_palette_hex_d99a00,
+      accentColorRes = R.color.aqua_care_task_type_catalog_color_variant_5,
       defaultDescriptionRes = R.string.maintenance_task_desc_filter_change
     ),
     CareTaskTypeDefinition(
@@ -91,7 +91,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_pre_filter_cleaning,
       categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_prefilter_24,
-      accentColorRes = R.color.aqua_palette_hex_8ea9a0,
+      accentColorRes = R.color.aqua_care_task_type_catalog_color_variant_6,
       defaultDescriptionRes = R.string.maintenance_task_desc_pre_filter_cleaning
     ),
     CareTaskTypeDefinition(
@@ -99,7 +99,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_pipe_cleaning,
       categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_pipe_24,
-      accentColorRes = R.color.aqua_palette_hex_d8f3b0,
+      accentColorRes = R.color.aqua_care_task_type_catalog_color_variant_7,
       defaultDescriptionRes = R.string.maintenance_task_desc_pipe_cleaning
     ),
     CareTaskTypeDefinition(
@@ -107,7 +107,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_diffuser_cleaning,
       categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_diffuser_24,
-      accentColorRes = R.color.aqua_palette_hex_45d6b4,
+      accentColorRes = R.color.aqua_care_task_type_catalog_color_variant_8,
       defaultDescriptionRes = R.string.maintenance_task_desc_diffuser_cleaning
     ),
     CareTaskTypeDefinition(
@@ -115,7 +115,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_hose_cleaning,
       categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_hose_24,
-      accentColorRes = R.color.aqua_palette_hex_7b2cbf,
+      accentColorRes = R.color.aqua_care_task_type_catalog_color_variant_9,
       defaultDescriptionRes = R.string.maintenance_task_desc_hose_cleaning
     ),
     CareTaskTypeDefinition(
@@ -123,7 +123,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_device_check,
       categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_device_24,
-      accentColorRes = R.color.aqua_palette_hex_4a90e2,
+      accentColorRes = R.color.aqua_care_task_type_catalog_color_variant_10,
       defaultDescriptionRes = R.string.maintenance_task_desc_device_check
     ),
 
@@ -132,7 +132,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_glass_cleaning,
       categoryRes = R.string.maintenance_category_cleaning,
       iconRes = R.drawable.ic_care_glass_24,
-      accentColorRes = R.color.aqua_palette_hex_66c7f4,
+      accentColorRes = R.color.aqua_care_task_type_catalog_color_variant_11,
       defaultDescriptionRes = R.string.maintenance_task_desc_glass_cleaning
     ),
     CareTaskTypeDefinition(
@@ -140,7 +140,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_algae_cleaning,
       categoryRes = R.string.maintenance_category_cleaning,
       iconRes = R.drawable.ic_care_algae_24,
-      accentColorRes = R.color.aqua_palette_hex_4caf50,
+      accentColorRes = R.color.aqua_status_success,
       defaultDescriptionRes = R.string.maintenance_task_desc_algae_cleaning
     ),
 
@@ -149,7 +149,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_plant_trim,
       categoryRes = R.string.maintenance_category_plants,
       iconRes = R.drawable.ic_care_trim_24,
-      accentColorRes = R.color.aqua_palette_hex_4dd6a7,
+      accentColorRes = R.color.aqua_care_task_type_catalog_color_variant_12,
       defaultDescriptionRes = R.string.maintenance_task_desc_plant_trim
     ),
     CareTaskTypeDefinition(
@@ -157,7 +157,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_fertilizer_dosing,
       categoryRes = R.string.maintenance_category_plants,
       iconRes = R.drawable.ic_care_fertilizer_24,
-      accentColorRes = R.color.aqua_palette_hex_8bc34a,
+      accentColorRes = R.color.aqua_care_task_type_catalog_color_variant_13,
       defaultDescriptionRes = R.string.maintenance_task_desc_fertilizer_dosing
     ),
     CareTaskTypeDefinition(
@@ -165,7 +165,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_plant_health_check,
       categoryRes = R.string.maintenance_category_plants,
       iconRes = R.drawable.ic_care_plant_health_24,
-      accentColorRes = R.color.aqua_palette_hex_66bb6a,
+      accentColorRes = R.color.aqua_care_task_type_catalog_color_variant_14,
       defaultDescriptionRes = R.string.maintenance_task_desc_plant_health_check
     ),
 
@@ -174,7 +174,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_co2_check,
       categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_co2_24,
-      accentColorRes = R.color.aqua_palette_hex_00bcd4,
+      accentColorRes = R.color.aqua_care_task_type_catalog_color_variant_15,
       defaultDescriptionRes = R.string.maintenance_task_desc_co2_check
     ),
     CareTaskTypeDefinition(
@@ -182,7 +182,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_light_check,
       categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_light_24,
-      accentColorRes = R.color.aqua_palette_hex_ffd54f,
+      accentColorRes = R.color.aqua_care_task_type_catalog_color_variant_16,
       defaultDescriptionRes = R.string.maintenance_task_desc_light_check
     ),
 
@@ -191,7 +191,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_feeding,
       categoryRes = R.string.maintenance_category_livestock,
       iconRes = R.drawable.ic_care_feeding_24,
-      accentColorRes = R.color.aqua_palette_hex_7c4dff,
+      accentColorRes = R.color.aqua_care_task_type_catalog_color_variant_17,
       defaultDescriptionRes = R.string.maintenance_task_desc_feeding
     ),
     CareTaskTypeDefinition(
@@ -199,7 +199,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_livestock_check,
       categoryRes = R.string.maintenance_category_livestock,
       iconRes = R.drawable.ic_care_livestock_24,
-      accentColorRes = R.color.aqua_palette_hex_ff6b6b,
+      accentColorRes = R.color.aqua_care_task_type_catalog_color_variant_18,
       defaultDescriptionRes = R.string.maintenance_task_desc_livestock_check
     ),
 
@@ -208,7 +208,7 @@ object CareTaskTypeCatalog {
       titleRes = R.string.maintenance_task_type_custom,
       categoryRes = R.string.maintenance_category_other,
       iconRes = R.drawable.ic_care_custom_24,
-      accentColorRes = R.color.aqua_palette_hex_8fa4be,
+      accentColorRes = R.color.aqua_content_secondary,
       defaultDescriptionRes = R.string.maintenance_task_desc_custom
     )
   )

@@ -40,6 +40,7 @@ tools:context=".ui.tabs.settings.device.DeviceStatusFragment">
     app:layout_constraintEnd_toEndOf="parent"/>
 
 <com.google.android.material.card.MaterialCardView
+    style="@style/Widget.Aqua.Card.Inline"
     android:id="@+id/emptyStateContainer"
     android:layout_width="@dimen/aqua_size_0"
     android:layout_height="wrap_content"

@@ -7,7 +7,6 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
@@ -65,7 +64,7 @@ object TankPdfExporter {
       texts.noValue
     })
     writer.drawLabelValue(texts.labelSize, getSizeText(context, tank))
-    writer.drawLabelValue(texts.labelVolume, getVolumeText(tank))
+    writer.drawLabelValue(texts.labelVolume, getVolumeText(context, tank))
     writer.drawLabelValue(texts.labelSetupDate, getSetupDateText(
       setupDateMillis = tank.setupDateMillis,
       noValue = texts.noValue
@@ -286,6 +285,7 @@ object TankPdfExporter {
   }
 
   private fun getVolumeText(
+    context: Context,
     tank: AquariumTankSnapshot
   ): String {
     val liter = (
@@ -295,9 +295,15 @@ object TankPdfExporter {
     ) / 1000.0
 
     return if (tank.volumeUnit.equals("gal", ignoreCase = true)) {
-      "${volumeFormatter.format(liter * 0.264172)} gal"
+      context.getString(
+        R.string.aquarium_volume_gallon_format,
+        volumeFormatter.format(liter * 0.264172)
+      )
     } else {
-      "${volumeFormatter.format(liter)} L"
+      context.getString(
+        R.string.aquarium_volume_liter_format,
+        volumeFormatter.format(liter)
+      )
     }
   }
 
@@ -447,51 +453,51 @@ object TankPdfExporter {
     private var y = PAGE_MARGIN
 
     private val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = ContextCompat.getColor(context, R.color.aqua_palette_hex_10233a)
+      color = ContextCompat.getColor(context, R.color.aqua_surface_deep)
       textSize = 21f
       typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
 
     private val subtitlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = ContextCompat.getColor(context, R.color.aqua_palette_hex_667085)
+      color = ContextCompat.getColor(context, R.color.aqua_tank_pdf_exporter_color)
       textSize = 10.5f
     }
 
     private val sectionPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = ContextCompat.getColor(context, R.color.aqua_palette_hex_10233a)
+      color = ContextCompat.getColor(context, R.color.aqua_surface_deep)
       textSize = 15f
       typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
 
     private val categoryPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = ContextCompat.getColor(context, R.color.aqua_palette_hex_10233a)
+      color = ContextCompat.getColor(context, R.color.aqua_surface_deep)
       textSize = 12f
       typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
 
     private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = ContextCompat.getColor(context, R.color.aqua_palette_hex_475467)
+      color = ContextCompat.getColor(context, R.color.aqua_tank_pdf_exporter_color_variant_2)
       textSize = 10.5f
       typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
 
     private val valuePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = ContextCompat.getColor(context, R.color.aqua_palette_hex_101828)
+      color = ContextCompat.getColor(context, R.color.aqua_tank_pdf_exporter_color_variant_3)
       textSize = 11.5f
     }
 
     private val mutedPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = ContextCompat.getColor(context, R.color.aqua_palette_hex_8fa4be)
+      color = ContextCompat.getColor(context, R.color.aqua_content_secondary)
       textSize = 11.5f
     }
 
     private val footerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = ContextCompat.getColor(context, R.color.aqua_palette_hex_98a2b3)
+      color = ContextCompat.getColor(context, R.color.aqua_tank_pdf_exporter_color_variant_4)
       textSize = 9f
     }
 
     private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = ContextCompat.getColor(context, R.color.aqua_palette_hex_d0d5dd)
+      color = ContextCompat.getColor(context, R.color.aqua_tank_pdf_exporter_color_variant_5)
       strokeWidth = 1f
     }
 
@@ -514,7 +520,7 @@ object TankPdfExporter {
 
       page = document.startPage(pageInfo)
       canvas = page.canvas
-      canvas.drawColor(Color.WHITE)
+      canvas.drawColor(ContextCompat.getColor(context, R.color.aqua_content_on_dark))
       y = PAGE_MARGIN
     }
 
@@ -593,7 +599,7 @@ object TankPdfExporter {
       )
 
       val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = ContextCompat.getColor(context, R.color.aqua_palette_hex_f2f4f7)
+        color = ContextCompat.getColor(context, R.color.aqua_tank_pdf_exporter_color_variant_6)
       }
 
       canvas.drawRoundRect(
@@ -610,7 +616,7 @@ object TankPdfExporter {
         )
       } else {
         val noPhotoPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-          color = ContextCompat.getColor(context, R.color.aqua_palette_hex_8fa4be)
+          color = ContextCompat.getColor(context, R.color.aqua_content_secondary)
           textSize = 12f
           textAlign = Paint.Align.CENTER
         }

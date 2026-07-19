@@ -14,5 +14,5 @@
 
     <stroke
         android:width="@dimen/aqua_size_1"
-        android:color="@color/aqua_palette_hex_3348556b" />
+        android:color="@color/aqua_bg_dropdown_popup_fill" />
 </shape>

@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.tabs.aquarium.create.steps
 
 import androidx.core.content.ContextCompat
-import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
@@ -146,9 +145,9 @@ class TankInfoFragment :
         binding.tvSetupDateValue.text = formatSetupDate(draft.setupDateMillis)
         binding.tvSetupDateValue.setTextColor(
             if (draft.setupDateMillis == null) {
-                ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_7f91aa)
+                ContextCompat.getColor(requireContext(), R.color.aqua_content_placeholder)
             } else {
-                Color.WHITE
+                ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark)
             }
         )
 
@@ -161,18 +160,18 @@ class TankInfoFragment :
         }
         binding.tvTankTypeValue.setTextColor(
             if (draft.tankType.isBlank()) {
-                ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_7f91aa)
+                ContextCompat.getColor(requireContext(), R.color.aqua_content_placeholder)
             } else {
-                Color.WHITE
+                ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark)
             }
         )
 
         if (draft.tankStyle.isBlank()) {
             binding.tvStyleValue.text = getString(R.string.aquarium_common_not_selected)
-            binding.tvStyleValue.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_7f91aa))
+            binding.tvStyleValue.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_placeholder))
         } else {
             binding.tvStyleValue.text = draft.tankStyle
-            binding.tvStyleValue.setTextColor(Color.WHITE)
+            binding.tvStyleValue.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
         }
     }
 
@@ -245,6 +244,7 @@ class TankInfoFragment :
     private fun formatSize(): String {
         val draft = viewModel.tankDraft
         return AquariumDimensionFormatter.sizeText(
+            context = requireContext(),
             widthCm = draft.widthCm,
             lengthCm = draft.lengthCm,
             heightCm = draft.heightCm,
@@ -255,6 +255,7 @@ class TankInfoFragment :
     private fun formatVolume(): String {
         val draft = viewModel.tankDraft
         return AquariumDimensionFormatter.volumeText(
+            context = requireContext(),
             widthCm = draft.widthCm,
             lengthCm = draft.lengthCm,
             heightCm = draft.heightCm,

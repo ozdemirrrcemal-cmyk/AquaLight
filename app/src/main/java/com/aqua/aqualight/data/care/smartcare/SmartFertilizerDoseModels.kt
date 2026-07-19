@@ -48,7 +48,5 @@ data class FertilizerDoseRecommendation(
   val estimatedWaterVolumeL: Double,
   val normalDoseMl: Double,
   val startupDoseMl: Double,
-  val startupDoseFactor: Double,
-  val titleTr: String,
-  val messageTr: String
+  val startupDoseFactor: Double
 )

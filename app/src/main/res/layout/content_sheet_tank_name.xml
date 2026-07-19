@@ -19,20 +19,12 @@
     android:singleLine="true" />
 
   <com.google.android.material.button.MaterialButton
+    style="@style/Widget.Aqua.BottomSheet.Button.EditorSave"
     android:id="@+id/btnSave"
     android:layout_width="match_parent"
     android:layout_height="@dimen/aqua_size_50"
     android:layout_marginTop="@dimen/aqua_size_26"
-    android:insetTop="@dimen/aqua_size_0"
-    android:insetBottom="@dimen/aqua_size_0"
-    android:minHeight="@dimen/aqua_size_0"
-    android:minWidth="@dimen/aqua_size_0"
     android:text="@string/common_save"
-    android:textAllCaps="false"
-    android:textColor="@android:color/white"
-    android:textSize="@dimen/aqua_text_size_body"
-    android:textStyle="bold"
-    app:backgroundTint="@color/aqua_palette_hex_2196f3"
     app:cornerRadius="@dimen/aqua_size_16" />
 
   <TextView
@@ -43,7 +35,7 @@
     android:gravity="center"
     android:includeFontPadding="false"
     android:text="@string/common_cancel"
-    android:textColor="@color/aqua_palette_hex_8fa4be"
+    android:textColor="@color/aqua_content_secondary"
     android:textSize="@dimen/aqua_text_size_body" />
 
 </LinearLayout>

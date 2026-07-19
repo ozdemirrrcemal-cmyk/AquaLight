@@ -74,9 +74,9 @@
                         android:layout_height="wrap_content"
                         android:hint="@string/feedback_hint_category"
                         app:startIconDrawable="@drawable/ic_category"
-                        app:startIconTint="@color/aqua_palette_hex_64ffda"
+                        app:startIconTint="@color/aqua_accent_aqua"
                         app:endIconMode="dropdown_menu"
-                        app:endIconTint="@color/aqua_palette_hex_7a8ca3">
+                        app:endIconTint="@color/aqua_input_layout_category_end_icon_tint">
 
                         <AutoCompleteTextView
                             android:id="@+id/autoCategory"
@@ -99,7 +99,7 @@
                         android:layout_marginTop="@dimen/aqua_size_16"
                         android:hint="@string/feedback_hint_email"
                         app:startIconDrawable="@drawable/ic_email"
-                        app:startIconTint="@color/aqua_palette_hex_64ffda">
+                        app:startIconTint="@color/aqua_accent_aqua">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etEmail"
@@ -124,7 +124,7 @@
                             android:layout_height="wrap_content"
                             android:hint="@string/feedback_hint_message"
                             app:startIconDrawable="@drawable/ic_message"
-                            app:startIconTint="@color/aqua_palette_hex_64ffda"
+                            app:startIconTint="@color/aqua_accent_aqua"
                             app:counterEnabled="true"
                             app:counterMaxLength="500">
 

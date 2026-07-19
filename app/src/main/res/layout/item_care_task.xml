@@ -33,7 +33,7 @@
                 android:layout_height="@dimen/aqua_size_24"
                 android:layout_gravity="center"
                 android:scaleType="centerInside"
-                app:tint="@android:color/white" />
+                app:tint="@color/aqua_content_on_dark" />
 
         </FrameLayout>
 
@@ -60,7 +60,7 @@
                     android:ellipsize="end"
                     android:includeFontPadding="false"
                     android:maxLines="1"
-                    android:textColor="@android:color/white"
+                    android:textColor="@color/aqua_content_on_dark"
                     android:textSize="@dimen/aqua_text_size_body_precise"
                     android:textStyle="bold" />
 
@@ -75,7 +75,7 @@
                     android:minWidth="@dimen/aqua_size_46"
                     android:paddingStart="@dimen/aqua_size_9"
                     android:paddingEnd="@dimen/aqua_size_9"
-                    android:textColor="@android:color/white"
+                    android:textColor="@color/aqua_content_on_dark"
                     android:textSize="@dimen/aqua_text_size_micro_caption"
                     android:textStyle="bold" />
 
@@ -89,7 +89,7 @@
                 android:ellipsize="end"
                 android:includeFontPadding="false"
                 android:maxLines="1"
-                android:textColor="@color/aqua_palette_hex_b8c7d9"
+                android:textColor="@color/aqua_content_tertiary"
                 android:textSize="@dimen/aqua_text_size_caption" />
 
             <TextView
@@ -100,7 +100,7 @@
                 android:ellipsize="end"
                 android:includeFontPadding="false"
                 android:maxLines="1"
-                android:textColor="@color/aqua_palette_hex_b8c7d9"
+                android:textColor="@color/aqua_content_tertiary"
                 android:textSize="@dimen/aqua_text_size_caption" />
 
             <TextView
@@ -126,7 +126,7 @@
                 android:paddingStart="@dimen/aqua_size_11"
                 android:paddingEnd="@dimen/aqua_size_11"
                 android:text="@string/maintenance_status_completed"
-                android:textColor="@color/aqua_palette_hex_5fd6b4"
+                android:textColor="@color/aqua_accent_positive"
                 android:textSize="@dimen/aqua_text_size_micro_plus"
                 android:textStyle="bold"
                 android:visibility="gone" />

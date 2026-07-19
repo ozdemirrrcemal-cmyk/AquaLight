@@ -40,7 +40,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/aqua_size_8"
             android:layout_weight="1"
-            android:background="@android:color/transparent"
+            android:background="@color/aqua_color_transparent"
             android:hint="@string/address_info_country_search_hint"
             android:imeOptions="actionDone"
             android:minHeight="@dimen/aqua_size_0"

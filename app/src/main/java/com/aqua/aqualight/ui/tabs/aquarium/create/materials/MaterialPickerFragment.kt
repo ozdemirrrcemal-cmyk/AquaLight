@@ -4,7 +4,6 @@ import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.aquarium.catalog.material.AquariumMaterial
-import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.TextUtils
@@ -510,11 +509,11 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
         }
 
         val check = TextView(requireContext()).apply {
-            text = if (isSelected) "✓" else ""
+            text = if (isSelected) getString(R.string.aqua_selected_symbol) else ""
             gravity = Gravity.CENTER
             setTextSizeResource(R.dimen.aqua_text_size_caption)
             setTypeface(null, Typeface.BOLD)
-            setTextColor(Color.WHITE)
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
             includeFontPadding = false
             setBackgroundResource(
                 if (isSelected) {
@@ -545,11 +544,11 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
         return MaterialButton(requireContext()).apply {
             text = getString(R.string.material_picker_new_title, categoryTitle)
             setTextSizeResource(R.dimen.aqua_text_size_body)
-            setTextColor(Color.WHITE)
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
             setTypeface(null, Typeface.BOLD)
             setAllCaps(false)
             cornerRadius = resources.getDimensionPixelOffset(R.dimen.aqua_size_14)
-            setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.aqua_palette_hex_2196f3))
+            setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.aqua_accent_primary))
 
             val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,

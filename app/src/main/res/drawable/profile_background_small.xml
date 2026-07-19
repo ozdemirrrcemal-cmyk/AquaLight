@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="oval">
-    <solid android:color="@color/aqua_palette_hex_ffffff"/>
+    <solid android:color="@color/aqua_content_on_dark"/>
     <stroke
         android:width="@dimen/aqua_size_1"
-        android:color="@color/aqua_palette_hex_a0a0a0"/>
+        android:color="@color/aqua_content_disabled"/>
 </shape>

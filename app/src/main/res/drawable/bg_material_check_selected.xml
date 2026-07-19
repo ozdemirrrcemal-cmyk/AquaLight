@@ -2,10 +2,10 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="oval">
 
-    <solid android:color="@color/aqua_palette_hex_2196f3" />
+    <solid android:color="@color/aqua_accent_primary" />
 
     <stroke
         android:width="@dimen/aqua_size_1"
-        android:color="@color/aqua_palette_hex_5db8ff" />
+        android:color="@color/aqua_bg_material_check_selected_fill" />
 
 </shape>

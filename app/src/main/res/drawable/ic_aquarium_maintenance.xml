@@ -5,11 +5,11 @@
     <path android:pathData="M9,4h6c0.55,0 1,0.45 1,1v1.35c0,0.55 -0.45,1 -1,1H9c-0.55,0 -1,-0.45 -1,-1V5c0,-0.55 0.45,-1 1,-1z"
         android:fillColor="?attr/colorControlActivated"/>
     <path android:pathData="M8,11h7M8,14.5h4.5"
-        android:fillColor="@android:color/transparent" android:strokeColor="@android:color/white"
+        android:fillColor="@color/aqua_color_transparent" android:strokeColor="@color/aqua_content_on_dark"
         android:strokeWidth="1.55" android:strokeLineCap="round"/>
     <path android:pathData="M17.2,21.1a4.1,4.1 0,1 0,0 -8.2a4.1,4.1 0,0 0,0 8.2z"
         android:fillColor="?attr/colorControlActivated"/>
     <path android:pathData="M15.45,17.05l1.15,1.15l2.3,-2.5"
-        android:fillColor="@android:color/transparent" android:strokeColor="@android:color/white"
+        android:fillColor="@color/aqua_color_transparent" android:strokeColor="@color/aqua_content_on_dark"
         android:strokeWidth="1.8" android:strokeLineCap="round" android:strokeLineJoin="round"/>
 </vector>

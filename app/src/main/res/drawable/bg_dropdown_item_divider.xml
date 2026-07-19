@@ -4,7 +4,7 @@
     <!-- Arka plan (şeffaf bırakıyoruz) -->
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="@android:color/transparent" />
+            <solid android:color="@color/aqua_color_transparent" />
         </shape>
     </item>
 
@@ -13,7 +13,7 @@
         <shape android:shape="rectangle">
             <size android:height="@dimen/aqua_size_1" />
             <!-- Divider rengi: istersen değiştir -->
-            <solid android:color="@color/aqua_palette_hex_3348556b" />
+            <solid android:color="@color/aqua_bg_dropdown_item_divider_fill" />
         </shape>
     </item>
 

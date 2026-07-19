@@ -75,6 +75,5 @@
     <dimen name="aqua_size_240">240dp</dimen>
     <dimen name="aqua_size_270">270dp</dimen>
     <dimen name="aqua_size_999">999dp</dimen>
-    <dimen name="aqua_size_negative_12">-12dp</dimen>
-    <dimen name="aqua_size_negative_5">-5dp</dimen>
+<dimen name="aqua_size_negative_5">-5dp</dimen>
 </resources>

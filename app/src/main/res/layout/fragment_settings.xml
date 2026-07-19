@@ -73,6 +73,7 @@
     android:textSize="@dimen/aqua_text_size_caption"/>
 
 <com.google.android.material.card.MaterialCardView
+    style="@style/Widget.Aqua.Card.Inline"
     android:id="@+id/cardActiveDevices"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"

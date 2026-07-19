@@ -59,7 +59,7 @@
         android:layout_marginTop="@dimen/aqua_size_6"
         android:contentDescription="@string/signin_forgot_password_desc"
         android:text="@string/signin_forgot_password"
-        android:textColor="@android:color/white"
+        android:textColor="@color/aqua_content_on_dark"
         android:textSize="@dimen/aqua_text_size_caption"
         app:layout_constraintBottom_toTopOf="@id/btnLogin"
         app:layout_constraintStart_toStartOf="@id/passwordContainer"

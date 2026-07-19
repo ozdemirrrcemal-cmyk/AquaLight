@@ -22,6 +22,7 @@
         android:orientation="vertical">
 
         <com.google.android.material.card.MaterialCardView
+    style="@style/Widget.Aqua.Card.Inline"
             android:id="@+id/cardTankPhoto"
             android:layout_width="match_parent"
             android:layout_height="@dimen/aqua_size_180"
@@ -44,7 +45,7 @@
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="@color/aqua_palette_hex_22000000" />
+                    android:background="@color/aqua_fragment_tank_settings_basic_background" />
 
                 <com.google.android.material.card.MaterialCardView
             style="@style/Widget.Aqua.Card.PhotoOverlay"
@@ -65,7 +66,7 @@
                         android:layout_gravity="center"
                         android:contentDescription="@string/aquarium_content_desc_select_photo"
                         android:src="@drawable/ic_camera_24"
-                        app:tint="@android:color/white" />
+                        app:tint="@color/aqua_content_on_dark" />
 
                 </com.google.android.material.card.MaterialCardView>
 

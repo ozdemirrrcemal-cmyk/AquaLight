@@ -26,13 +26,13 @@ class TimelineAxisView @JvmOverloads constructor(
       invalidate()
     }
 
-  private val axisLineColor = ContextCompat.getColor(context, R.color.aqua_palette_hex_26384c)
+  private val axisLineColor = ContextCompat.getColor(context, R.color.aqua_timeline_axis_view_color)
 
-  private val todayNodeColor = ContextCompat.getColor(context, R.color.aqua_palette_hex_4fd6c8)
-  private val pastNodeColor = ContextCompat.getColor(context, R.color.aqua_palette_hex_45bfaf)
+  private val todayNodeColor = ContextCompat.getColor(context, R.color.aqua_timeline_axis_view_color_variant_2)
+  private val pastNodeColor = ContextCompat.getColor(context, R.color.aqua_timeline_axis_view_color_variant_3)
   private val upcomingNodeColor = axisLineColor
 
-  private val nodeCoverColor = ContextCompat.getColor(context, R.color.aqua_palette_hex_0b1d33)
+  private val nodeCoverColor = ContextCompat.getColor(context, R.color.aqua_timeline_axis_view_color_variant_4)
 
   private val axisOffsetX = resources.getDimension(R.dimen.aqua_size_negative_5)
 

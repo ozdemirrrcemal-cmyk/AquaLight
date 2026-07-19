@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.common.header
 
-import android.graphics.Color
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 
@@ -44,7 +43,7 @@ data class AquaHeaderCardIconAction(
     val tone: AquaHeaderCardIconTone = AquaHeaderCardIconTone.NEUTRAL,
     @ColorInt val backgroundColor: Int? = null,
     @ColorInt val strokeColor: Int? = null,
-    @ColorInt val iconTintColor: Int = Color.WHITE,
+    @ColorInt val iconTintColor: Int? = null,
     val enabled: Boolean = true,
     val onClick: () -> Unit
 )
@@ -53,7 +52,7 @@ data class AquaHeaderPillTextAction(
     val text: String,
     @DrawableRes val backgroundRes: Int,
     val contentDescription: String? = null,
-    @ColorInt val textColor: Int = Color.WHITE,
+    @ColorInt val textColor: Int? = null,
     val enabled: Boolean = true,
     val onClick: () -> Unit
 )

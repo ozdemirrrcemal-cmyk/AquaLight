@@ -1,10 +1,13 @@
 package com.aqua.aqualight.smoke
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.Lifecycle
@@ -22,6 +25,8 @@ import com.aqua.aqualight.ui.tabs.maintenance.AquariumMaintenanceFragment
 import com.aqua.aqualight.ui.tabs.settings.SettingsFragment
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
 
 /**
  * CI-only Activity packaged exclusively in the minified releaseSmoke variant.
@@ -33,8 +38,18 @@ class ReleaseSmokeActivity : BaseActivity() {
     private lateinit var navHostFragment: NavHostFragment
     private lateinit var navController: NavController
     private var smokeStarted = false
+    private val smokeTheme: String by lazy {
+        intent.getStringExtra(EXTRA_SMOKE_THEME).orEmpty().lowercase().ifBlank { THEME_LIGHT }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        AppCompatDelegate.setDefaultNightMode(
+            if (smokeTheme == THEME_DARK) {
+                AppCompatDelegate.MODE_NIGHT_YES
+            } else {
+                AppCompatDelegate.MODE_NIGHT_NO
+            }
+        )
         (application as AquaApp).replaceAppContainerForProcess(
             ReleaseSmokeAppContainer(applicationContext)
         )
@@ -91,9 +106,10 @@ class ReleaseSmokeActivity : BaseActivity() {
                     ) {
                         "${screen.name} did not reach STARTED"
                     }
+                    captureScreen(screen)
                 }
             }.onSuccess {
-                renderResult(PASS_MARKER)
+                renderResult("$PASS_MARKER:$smokeTheme")
             }.onFailure { error ->
                 renderResult(
                     "$FAIL_MARKER\n${error::class.java.name}\n${error.message.orEmpty()}"
@@ -149,6 +165,31 @@ class ReleaseSmokeActivity : BaseActivity() {
         )
     )
 
+
+    private fun captureScreen(screen: SmokeScreen) {
+        val root = window.decorView.rootView
+        check(root.width > 0 && root.height > 0) {
+            "${screen.name} has invalid render bounds ${root.width}x${root.height}"
+        }
+        val bitmap = Bitmap.createBitmap(root.width, root.height, Bitmap.Config.ARGB_8888)
+        root.draw(Canvas(bitmap))
+        val screenshotRoot = getExternalFilesDir(null) ?: filesDir
+        val directory = File(screenshotRoot, SCREENSHOT_DIRECTORY).apply { mkdirs() }
+        val output = File(
+            directory,
+            "${smokeTheme}-${screen.name.removeSuffix("Fragment").lowercase()}.png"
+        )
+        FileOutputStream(output).use { stream ->
+            check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)) {
+                "${screen.name} screenshot could not be encoded"
+            }
+        }
+        check(output.isFile && output.length() > MIN_SCREENSHOT_BYTES) {
+            "${screen.name} screenshot is empty"
+        }
+        bitmap.recycle()
+    }
+
     private fun renderResult(message: String) {
         supportFragmentManager.fragments.forEach { fragment ->
             supportFragmentManager.commitNow {
@@ -183,5 +224,10 @@ class ReleaseSmokeActivity : BaseActivity() {
         const val SCREEN_SETTLE_MILLIS = 700L
         const val PASS_MARKER = "RELEASE_SMOKE_PASS"
         const val FAIL_MARKER = "RELEASE_SMOKE_FAIL"
+        const val EXTRA_SMOKE_THEME = "aqua_smoke_theme"
+        const val THEME_LIGHT = "light"
+        const val THEME_DARK = "dark"
+        const val SCREENSHOT_DIRECTORY = "smoke-screens"
+        const val MIN_SCREENSHOT_BYTES = 1024L
     }
 }

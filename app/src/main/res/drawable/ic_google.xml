@@ -4,18 +4,18 @@
     android:viewportWidth="48"
     android:viewportHeight="48">
     <path
-        android:fillColor="@color/aqua_palette_hex_ea4335"
+        android:fillColor="@color/aqua_ic_google_fill"
         android:pathData="M24 9.5c3.5 0 6.6 1.2 9 3.4l6.7-6.7C35.3 2.5 29.9 0 24 0 14.6 0 6.4 5.4 2.5 13.3l7.9 6.2C12.3 13.1 17.6 9.5 24 9.5z" />
     <path
-        android:fillColor="@color/aqua_palette_hex_34a853"
+        android:fillColor="@color/aqua_ic_google_fill_variant_2"
         android:pathData="M46.1 24.5c0-1.6-.1-2.8-.4-4H24v8h12.6c-.6 3-2.5 5.5-5.3 7.2l8.1 6.3c4.7-4.3 6.7-10.5 6.7-17.5z" />
     <path
-        android:fillColor="@color/aqua_palette_hex_fbbc05"
+        android:fillColor="@color/aqua_ic_google_fill_variant_3"
         android:pathData="M10.4 28.5a14.5 14.5 0 0 1 0-9L2.5 13.3a24 24 0 0 0 0 21.4l7.9-6.2z" />
     <path
-        android:fillColor="@color/aqua_palette_hex_4285f4"
+        android:fillColor="@color/aqua_ic_google_fill_variant_4"
         android:pathData="M24 48c6.5 0 12-2.1 16-5.7l-8.1-6.3c-2.2 1.5-5.1 2.4-7.9 2.4-6.4 0-11.7-4.3-13.6-10.2l-7.9 6.2C6.4 42.6 14.6 48 24 48z" />
     <path
-        android:fillColor="@color/aqua_palette_hex_00000000"
+        android:fillColor="@color/aqua_color_transparent"
         android:pathData="M0 0h48v48H0z" />
 </vector>

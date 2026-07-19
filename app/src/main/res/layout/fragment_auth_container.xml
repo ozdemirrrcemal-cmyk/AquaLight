@@ -12,7 +12,7 @@
         android:layout_height="match_parent"
         app:resize_mode="zoom"
         app:use_controller="false"
-        android:background="@android:color/black" />
+        android:background="@color/aqua_system_bar_surface" />
 
     <!-- 🐟 Poster (video hazır olana kadar görünen görsel) -->
     <ImageView
@@ -53,7 +53,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/splasch_app_title"
-            android:textColor="@color/aqua_palette_hex_0a192f"
+            android:textColor="@color/aqua_tv_aqua_light_content"
             android:textSize="@dimen/aqua_text_size_title_medium"
             android:fontFamily="@font/poppins_bold"
             android:includeFontPadding="false" />
@@ -63,7 +63,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/splasch_app_subtitle"
-            android:textColor="@color/aqua_palette_hex_0a192f"
+            android:textColor="@color/aqua_tv_nature_aquarium_content"
             android:textSize="@dimen/aqua_text_size_body_large"
             android:fontFamily="@font/raleway_medium"
             android:includeFontPadding="false" />

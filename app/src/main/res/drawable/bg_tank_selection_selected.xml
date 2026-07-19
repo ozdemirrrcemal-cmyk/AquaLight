@@ -1,4 +1,4 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="@color/aqua_palette_hex_2196f3" />
+    <solid android:color="@color/aqua_accent_primary" />
     <corners android:radius="@dimen/aqua_size_50" />
 </shape>

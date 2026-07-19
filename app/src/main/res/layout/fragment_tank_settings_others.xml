@@ -238,7 +238,7 @@
             android:layout_marginTop="@dimen/aqua_size_26"
             android:includeFontPadding="false"
             android:text="@string/aquarium_text_danger_zone"
-            android:textColor="@color/aqua_palette_hex_e06a6a"
+            android:textColor="@color/aqua_tv_danger_zone_title_content"
             android:textSize="@dimen/aqua_text_size_body" />
 
         <com.google.android.material.button.MaterialButton

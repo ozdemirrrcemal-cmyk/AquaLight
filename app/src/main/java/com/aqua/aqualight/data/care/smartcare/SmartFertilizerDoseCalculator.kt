@@ -36,16 +36,7 @@ object SmartFertilizerDoseCalculator {
       estimatedWaterVolumeL = roundDose(estimatedWaterVolumeL),
       normalDoseMl = normalDoseMl,
       startupDoseMl = startupDoseMl,
-      startupDoseFactor = startupDoseFactor,
-      titleTr = buildTitle(rule),
-      messageTr = buildMessage(
-        rule = rule,
-        estimatedWaterVolumeL = estimatedWaterVolumeL,
-        normalDoseMl = normalDoseMl,
-        startupDoseMl = startupDoseMl,
-        startupDoseFactor = startupDoseFactor,
-        setupDay = setupDay
-      )
+      startupDoseFactor = startupDoseFactor
     )
   }
 
@@ -77,46 +68,6 @@ object SmartFertilizerDoseCalculator {
       )
     } else {
       baseFactor
-    }
-  }
-
-  private fun buildTitle(
-    rule: FertilizerDoseRule
-  ): String {
-    return "Gübre dozu önerisi"
-  }
-
-  private fun buildMessage(
-    rule: FertilizerDoseRule,
-    estimatedWaterVolumeL: Double,
-    normalDoseMl: Double,
-    startupDoseMl: Double,
-    startupDoseFactor: Double,
-    setupDay: Int?
-  ): String {
-    val frequencyText = getFrequencyText(rule.frequency)
-
-    return if (setupDay != null && setupDay <= 30) {
-      if (startupDoseFactor == 0.0) {
-        "Tankınız yeni kurulum döneminde. ${rule.productName} için ilk hafta gübrelemeyi ertelemek daha güvenli olabilir."
-      } else {
-        "Tahmini ${roundDose(estimatedWaterVolumeL)} L su hacmine göre ${rule.productName} için ${frequencyText} yaklaşık ${startupDoseMl} mL ile düşük doz başlamak daha güvenli olabilir."
-      }
-    } else {
-      "Tahmini ${roundDose(estimatedWaterVolumeL)} L su hacmine göre ${rule.productName} için ${frequencyText} yaklaşık ${normalDoseMl} mL önerilir."
-    }
-  }
-
-  private fun getFrequencyText(
-    frequency: FertilizerFrequency
-  ): String {
-    return when (frequency) {
-      FertilizerFrequency.DAILY -> "günlük"
-      FertilizerFrequency.WEEKLY -> "haftalık"
-      FertilizerFrequency.ONCE_OR_TWICE_WEEKLY -> "haftada 1-2 kez"
-      FertilizerFrequency.TWICE_WEEKLY -> "haftada 2 kez"
-      FertilizerFrequency.TWO_TO_THREE_TIMES_WEEKLY -> "haftada 2-3 kez"
-      FertilizerFrequency.AS_NEEDED -> "ihtiyaca göre"
     }
   }
 

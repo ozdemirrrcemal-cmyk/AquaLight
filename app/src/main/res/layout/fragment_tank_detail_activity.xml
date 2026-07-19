@@ -70,7 +70,7 @@
               android:gravity="center"
               android:includeFontPadding="false"
               android:text="@string/aquarium_text_days_ago"
-              android:textColor="@color/aqua_palette_hex_5fd6b4"
+              android:textColor="@color/aqua_accent_positive"
               android:textSize="@dimen/aqua_text_size_caption"
               android:textStyle="bold" />
 
@@ -111,7 +111,7 @@
               android:gravity="center"
               android:includeFontPadding="false"
               android:text="@string/aquarium_text_days_ago"
-              android:textColor="@color/aqua_palette_hex_5fd6b4"
+              android:textColor="@color/aqua_accent_positive"
               android:textSize="@dimen/aqua_text_size_caption"
               android:textStyle="bold" />
 
@@ -153,7 +153,7 @@
               android:includeFontPadding="false"
               android:maxLines="1"
               android:text="@string/aquarium_text_value"
-              android:textColor="@color/aqua_palette_hex_f2c94c"
+              android:textColor="@color/aqua_tv_next_care_task_title_content"
               android:textSize="@dimen/aqua_text_size_micro_label"
               android:textStyle="bold" />
 
@@ -206,7 +206,7 @@
               android:gravity="center"
               android:includeFontPadding="false"
               android:text="@string/aquarium_text_days_ago"
-              android:textColor="@color/aqua_palette_hex_5fd6b4"
+              android:textColor="@color/aqua_accent_positive"
               android:textSize="@dimen/aqua_text_size_caption"
               android:textStyle="bold" />
 
@@ -251,6 +251,7 @@
   </ScrollView>
 
   <com.google.android.material.card.MaterialCardView
+    style="@style/Widget.Aqua.Card.Inline"
     android:id="@+id/btnAddActivity"
     android:layout_width="@dimen/aqua_size_170"
     android:layout_height="@dimen/aqua_size_58"
@@ -259,10 +260,10 @@
     android:elevation="@dimen/aqua_size_18"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
-    app:cardBackgroundColor="@color/aqua_palette_hex_1c3252"
+    app:cardBackgroundColor="@color/aqua_surface_action"
     app:cardElevation="@dimen/aqua_size_0"
     app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Aqua.DockedActivityButton"
-    app:strokeColor="@color/aqua_palette_hex_2c4b72"
+    app:strokeColor="@color/aqua_btn_add_activity_outline"
     app:strokeWidth="@dimen/aqua_size_1"
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintEnd_toEndOf="parent">
@@ -274,10 +275,11 @@
       android:paddingEnd="@dimen/aqua_size_6">
 
       <com.google.android.material.card.MaterialCardView
+    style="@style/Widget.Aqua.Card.Inline"
         android:id="@+id/addActivityIconCircle"
         android:layout_width="@dimen/aqua_size_40"
         android:layout_height="@dimen/aqua_size_40"
-        app:cardBackgroundColor="@color/aqua_palette_hex_eaf4ff"
+        app:cardBackgroundColor="@color/aqua_add_activity_icon_circle_surface"
         app:cardCornerRadius="@dimen/aqua_size_20"
         app:cardElevation="@dimen/aqua_size_0"
         app:strokeWidth="@dimen/aqua_size_0"
@@ -290,7 +292,7 @@
           android:layout_height="@dimen/aqua_size_22"
           android:layout_gravity="center"
           android:src="@drawable/ic_add_24"
-          app:tint="@color/aqua_palette_hex_2196f3" />
+          app:tint="@color/aqua_accent_primary" />
 
       </com.google.android.material.card.MaterialCardView>
 

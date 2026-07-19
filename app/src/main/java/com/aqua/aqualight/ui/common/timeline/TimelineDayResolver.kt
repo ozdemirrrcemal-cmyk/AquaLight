@@ -44,9 +44,9 @@ object TimelineDayResolver {
     status: TimelineDayStatus
   ): Int {
     return when (status) {
-      TimelineDayStatus.TODAY -> R.color.aqua_palette_hex_4fd6c8
-      TimelineDayStatus.UPCOMING -> R.color.aqua_palette_hex_8fa0b5
-      TimelineDayStatus.PAST -> R.color.aqua_palette_hex_00000000
+      TimelineDayStatus.TODAY -> R.color.aqua_timeline_day_resolver_color
+      TimelineDayStatus.UPCOMING -> R.color.aqua_timeline_day_resolver_color_variant_2
+      TimelineDayStatus.PAST -> R.color.aqua_color_transparent
     }
   }
 

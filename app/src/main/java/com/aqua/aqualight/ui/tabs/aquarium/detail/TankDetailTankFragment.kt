@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail
 
 import com.aqua.aqualight.ui.common.text.setTextSizeResource
-import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.TextUtils
@@ -250,7 +249,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
                     R.dimen.aqua_text_size_caption
                 }
             )
-            setTextColor(Color.WHITE)
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
             setTypeface(null, Typeface.BOLD)
             setBackgroundResource(R.drawable.bg_material_icon_box)
             includeFontPadding = false
@@ -340,6 +339,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
         volumeUnit: String
     ): String {
         return AquariumDimensionFormatter.volumeText(
+            context = requireContext(),
             widthCm = tank.widthCm,
             lengthCm = tank.lengthCm,
             heightCm = tank.heightCm,
@@ -350,11 +350,12 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
 
     private fun getTankSizeText(tank: AquariumTankSnapshot): String {
         return AquariumDimensionFormatter.sizeText(
+            context = requireContext(),
             widthCm = tank.widthCm,
             lengthCm = tank.lengthCm,
             heightCm = tank.heightCm,
             sizeUnit = tank.sizeUnit,
-            separator = "×"
+            separatorRes = R.string.aquarium_dimension_separator_multiply
         )
     }
 

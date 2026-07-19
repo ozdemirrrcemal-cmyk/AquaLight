@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import androidx.annotation.DrawableRes
 import androidx.annotation.ColorRes
@@ -268,7 +267,7 @@ class AndroidNotificationRenderer(
 
         val drawable = ContextCompat.getDrawable(appContext, iconRes) ?: return bitmap
         val wrapped = DrawableCompat.wrap(drawable.mutate())
-        DrawableCompat.setTint(wrapped, Color.WHITE)
+        DrawableCompat.setTint(wrapped, ContextCompat.getColor(appContext, R.color.aqua_content_on_dark))
         val left = (size - iconSize) / 2
         val top = (size - iconSize) / 2
         wrapped.setBounds(left, top, left + iconSize, top + iconSize)

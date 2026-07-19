@@ -24,13 +24,14 @@
         android:layout_marginEnd="@dimen/aqua_size_24"
         android:lineSpacingExtra="@dimen/aqua_size_3"
         android:text="@string/aquarium_text_tap_on_the_aquarium_photo_to_select_and_tag_the_plants_used"
-        android:textColor="@color/aqua_palette_hex_8fa4be"
+        android:textColor="@color/aqua_content_secondary"
         android:textSize="@dimen/aqua_text_size_body"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/appHeader" />
 
     <com.google.android.material.card.MaterialCardView
+    style="@style/Widget.Aqua.Card.Inline"
         android:id="@+id/cardImage"
         android:layout_width="@dimen/aqua_size_0"
         android:layout_height="@dimen/aqua_size_240"
@@ -62,7 +63,7 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@color/aqua_palette_hex_22000000" />
+                android:background="@color/aqua_fragment_plant_tag_background" />
 
             <FrameLayout
                 android:id="@+id/markerContainer"

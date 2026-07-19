@@ -1,11 +1,11 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
   android:shape="rectangle">
 
-  <solid android:color="@color/aqua_palette_hex_12382f" />
+  <solid android:color="@color/aqua_surface_positive" />
 
   <stroke
     android:width="@dimen/aqua_size_1"
-    android:color="@color/aqua_palette_hex_2b6f5a" />
+    android:color="@color/aqua_outline_positive" />
 
   <corners android:radius="@dimen/aqua_size_16" />
 

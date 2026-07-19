@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail
 
 import com.aqua.aqualight.ui.common.text.setTextSizeResource
-import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
@@ -399,7 +398,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
             getCategoryIcon(selectedCategory)
         )
 
-        binding.ivLifeIconPreview.setColorFilter(Color.WHITE)
+        binding.ivLifeIconPreview.setColorFilter(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
 
         binding.ivLifeIconPreview.background = createIconBackground(
             color = getCategoryColor(selectedCategory)
@@ -586,12 +585,12 @@ Fragment(R.layout.fragment_tank_livestock_form) {
         category: String
     ): Int {
         return when (category) {
-            LivestockCategories.FISH -> R.color.aqua_palette_hex_1c5d8f
-            LivestockCategories.SHRIMP -> R.color.aqua_palette_hex_8f4a3a
-            LivestockCategories.SNAIL -> R.color.aqua_palette_hex_3e6b4a
-            LivestockCategories.CRAB_CRAYFISH -> R.color.aqua_palette_hex_7a4d2d
-            LivestockCategories.CORAL -> R.color.aqua_palette_hex_7a4e8f
-            else -> R.color.aqua_palette_hex_3e536b
+            LivestockCategories.FISH -> R.color.aqua_tank_detail_livestock_form_fragment_color
+            LivestockCategories.SHRIMP -> R.color.aqua_tank_detail_livestock_form_fragment_color_variant_2
+            LivestockCategories.SNAIL -> R.color.aqua_tank_detail_livestock_form_fragment_color_variant_3
+            LivestockCategories.CRAB_CRAYFISH -> R.color.aqua_tank_detail_livestock_form_fragment_color_variant_4
+            LivestockCategories.CORAL -> R.color.aqua_tank_detail_livestock_form_fragment_color_variant_5
+            else -> R.color.aqua_tank_detail_livestock_form_fragment_color_variant_6
         }
     }
 

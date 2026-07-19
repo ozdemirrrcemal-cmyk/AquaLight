@@ -13,7 +13,7 @@
             android:pathData="M17.71,7.71L12,2v7.59L7.41,5 6,6.41 11.59,12 6,17.59 7.41,19 12,14.41V22l5.71,-5.71L13.41,12l4.3,-4.29zM14,6.83l0.88,0.88L14,8.59V6.83zM14,17.17v-1.76l0.88,0.88L14,17.17z" />
     </group>
     <path
-        android:fillColor="@android:color/transparent"
+        android:fillColor="@color/aqua_color_transparent"
         android:pathData="M18.2,8.2L21,12l-2.8,3.8"
         android:strokeColor="@color/aqua_permission_icon_foreground"
         android:strokeLineCap="round"

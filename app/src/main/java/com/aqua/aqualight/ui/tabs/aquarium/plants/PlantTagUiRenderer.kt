@@ -2,7 +2,6 @@ package com.aqua.aqualight.ui.tabs.aquarium.plants
 
 import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import android.content.Context
-import android.graphics.Color
 import android.graphics.Typeface
 import android.view.Gravity
 import android.widget.FrameLayout
@@ -98,7 +97,7 @@ object PlantTagUiRenderer {
             gravity = Gravity.CENTER
             setTextSizeResource(R.dimen.aqua_text_size_body_small)
             includeFontPadding = false
-            setTextColor(Color.WHITE)
+            setTextColor(ContextCompat.getColor(context, R.color.aqua_content_on_dark))
             setTypeface(null, Typeface.BOLD)
             setBackgroundResource(R.drawable.bg_plant_number_circle)
             layoutParams = LinearLayout.LayoutParams(context.dp(38), context.dp(38))
@@ -127,7 +126,7 @@ object PlantTagUiRenderer {
             setTextSizeResource(R.dimen.aqua_text_size_body)
             includeFontPadding = false
             maxLines = 2
-            setTextColor(Color.WHITE)
+            setTextColor(ContextCompat.getColor(context, R.color.aqua_content_on_dark))
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT

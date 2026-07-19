@@ -41,24 +41,13 @@
     parent="TextAppearance.Material3.TitleLarge">
     <item name="fontFamily">@font/inter_semibold</item>
     <item name="android:fontFamily">@font/inter_semibold</item>
-    <item name="android:textColor">@android:color/white</item>
+    <item name="android:textColor">@color/aqua_content_on_dark</item>
     <item name="android:textSize">@dimen/aqua_text_size_toolbar_title</item>
 </style>
 
 
 <!-- 🔹 Step başlık textAppearance -->
-<style name="TextAppearance.Aqua.StepTitle"
-    parent="TextAppearance.Material3.TitleSmall">
-    <item name="fontFamily">@font/inter_regular</item>
-    <item name="android:fontFamily">@font/inter_regular</item>
-    <item name="android:textColor">@android:color/white</item>
-    <item name="android:textSize">@dimen/aqua_text_size_step_title</item>
-    <item name="android:lineSpacingExtra">@dimen/aqua_size_2</item>
-</style>
-
 <!-- 🔹 Primary (mavi) buton – eski inline görünüme uygun -->
-<style name="Widget.Aqua.PrimaryButton" parent="Widget.Aqua.Button.Primary" />
-<style name="Widget.Aqua.DangerButton" parent="Widget.Aqua.Button.Danger" />
 
 <!-- Feedback üst açıklama -->
 <style name="TextAppearance.Aqua.Feedback.SubInfo"
@@ -79,14 +68,6 @@
 </style>
 
 <!-- Feedback success mesajı -->
-<style name="TextAppearance.Aqua.Feedback.Success"
-    parent="TextAppearance.Material3.BodyMedium">
-    <item name="fontFamily">@font/inter_medium</item>
-    <item name="android:fontFamily">@font/inter_medium</item>
-    <item name="android:textColor">@color/aqua_palette_hex_64ffda</item>
-    <item name="android:textSize">@dimen/aqua_text_size_feedback_success</item>
-</style>
-
 <!-- ⚙️ Ayarlar ekranı RadioButton stili -->
 <style name="Widget.Aqua.SettingsRadio"
     parent="Widget.Material3.CompoundButton.RadioButton">
@@ -95,7 +76,7 @@
     <item name="android:buttonTint">?attr/colorPrimary</item>
 
     <!-- Arkaplanı şeffaf tut -->
-    <item name="android:background">@android:color/transparent</item>
+    <item name="android:background">@color/aqua_color_transparent</item>
 
     <!-- Fazla boşluk olmasın diye min boyutları küçült -->
     <item name="android:minWidth">@dimen/aqua_size_0</item>
@@ -103,30 +84,6 @@
 </style>
 
 
-<style name="TextAppearance.Aqua.Body" parent="TextAppearance.Material3.BodyMedium">
-    <item name="android:textSize">@dimen/aqua_text_size_body</item>
-</style>
-
-<style name="TextAppearance.Aqua.BodyBold" parent="TextAppearance.Material3.BodyLarge">
-    <item name="android:textStyle">bold</item>
-</style>
-
-<style name="TextAppearance.Aqua.Caption" parent="TextAppearance.Material3.LabelMedium">
-    <item name="android:textSize">@dimen/aqua_text_size_caption</item>
-</style>
-
-  <style name="Aqua" />
-
-<style name="Aqua.DeviceMenuRow" parent="Aqua">
-    <item name="android:layout_width">match_parent</item>
-    <item name="android:layout_height">@dimen/aqua_size_48</item>
-    <item name="android:gravity">center_vertical</item>
-    <item name="android:paddingLeft">@dimen/aqua_size_12</item>
-    <item name="android:paddingRight">@dimen/aqua_size_12</item>
-    <item name="android:background">?attr/selectableItemBackground</item>
-    <!-- 🔹 Lint’in istediği satır -->
-    <item name="android:orientation">horizontal</item>
-</style>
 
 <style name="ShapeAppearanceOverlay.Aqua.DockedActivityButton" parent="">
   <item name="cornerFamily">rounded</item>

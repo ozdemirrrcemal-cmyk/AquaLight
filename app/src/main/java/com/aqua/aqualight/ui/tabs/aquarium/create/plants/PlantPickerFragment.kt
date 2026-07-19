@@ -3,7 +3,6 @@ package com.aqua.aqualight.ui.tabs.aquarium.create.plants
 import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import com.aqua.aqualight.data.aquarium.catalog.plant.PlantCatalog
 import com.aqua.aqualight.data.aquarium.catalog.plant.AquariumPlant
-import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View

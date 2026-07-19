@@ -39,37 +39,57 @@ SMOKE_APK="$(cat release-smoke-apk-path.txt)"
 adb install "$SMOKE_APK" 2>&1 | tee "${SMOKE_PREFIX}-install.txt"
 adb shell pm path "$PACKAGE_NAME" 2>&1 | tee "${SMOKE_PREFIX}-package-path.txt"
 adb logcat -c
-adb shell am force-stop "$PACKAGE_NAME"
+rm -rf release-smoke-screens
+mkdir -p release-smoke-screens
 
-set +e
-adb shell am start -W -S -n "$SMOKE_COMPONENT" \
-  2>&1 | tee "${SMOKE_PREFIX}-start.txt"
-START_STATUS=${PIPESTATUS[0]}
-set -e
+run_theme_smoke() {
+  theme="$1"
+  theme_dump="${SMOKE_PREFIX}-${theme}-window.xml"
+  remote_theme_dump="/sdcard/${theme_dump}"
 
-if [ "$START_STATUS" -ne 0 ]; then
-  echo "Smoke Activity could not be started on API ${API_LEVEL}."
-  exit "$START_STATUS"
-fi
+  adb shell am force-stop "$PACKAGE_NAME"
+  set +e
+  adb shell am start -W -S -n "$SMOKE_COMPONENT" \
+    --es aqua_smoke_theme "$theme" \
+    2>&1 | tee "${SMOKE_PREFIX}-${theme}-start.txt"
+  start_status=${PIPESTATUS[0]}
+  set -e
 
-rm -f "$WINDOW_DUMP"
-for attempt in $(seq 1 40); do
-  adb shell uiautomator dump "$REMOTE_WINDOW_DUMP" >/dev/null 2>&1 || true
-  adb pull "$REMOTE_WINDOW_DUMP" "$WINDOW_DUMP" >/dev/null 2>&1 || true
-
-  if grep -q "RELEASE_SMOKE_PASS" "$WINDOW_DUMP" 2>/dev/null; then
-    echo "Minified release smoke passed on API ${API_LEVEL}."
-    exit 0
+  if [ "$start_status" -ne 0 ]; then
+    echo "Smoke Activity could not be started in ${theme} mode on API ${API_LEVEL}."
+    return "$start_status"
   fi
 
-  if grep -q "RELEASE_SMOKE_FAIL" "$WINDOW_DUMP" 2>/dev/null; then
-    echo "Minified release smoke reported an application failure on API ${API_LEVEL}."
-    cat "$WINDOW_DUMP" || true
-    exit 1
-  fi
+  rm -f "$theme_dump"
+  for attempt in $(seq 1 50); do
+    adb shell uiautomator dump "$remote_theme_dump" >/dev/null 2>&1 || true
+    adb pull "$remote_theme_dump" "$theme_dump" >/dev/null 2>&1 || true
 
-  sleep 1
-done
+    if grep -q "${PASS_MARKER:-RELEASE_SMOKE_PASS}" "$theme_dump" 2>/dev/null; then
+      adb pull "/sdcard/Android/data/${PACKAGE_NAME}/files/smoke-screens/." \
+        "release-smoke-screens/" >/dev/null
+      screenshot_count="$(find release-smoke-screens -type f -name "${theme}-*.png" | wc -l | tr -d ' ')"
+      if [ "$screenshot_count" -ne 4 ]; then
+        echo "Expected 4 ${theme} screenshots, found ${screenshot_count}."
+        return 1
+      fi
+      echo "${theme} visual smoke passed with ${screenshot_count} screenshots on API ${API_LEVEL}."
+      return 0
+    fi
 
-echo "Minified release smoke timed out on API ${API_LEVEL}."
-exit 1
+    if grep -q "RELEASE_SMOKE_FAIL" "$theme_dump" 2>/dev/null; then
+      echo "Minified release smoke reported an application failure in ${theme} mode on API ${API_LEVEL}."
+      cat "$theme_dump" || true
+      return 1
+    fi
+    sleep 1
+  done
+
+  echo "Minified release smoke timed out in ${theme} mode on API ${API_LEVEL}."
+  return 1
+}
+
+run_theme_smoke light
+run_theme_smoke dark
+cp "${SMOKE_PREFIX}-dark-window.xml" "$WINDOW_DUMP"
+echo "Minified light/dark visual smoke passed on API ${API_LEVEL}."

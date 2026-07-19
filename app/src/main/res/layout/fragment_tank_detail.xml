@@ -16,6 +16,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.card.MaterialCardView
+    style="@style/Widget.Aqua.Card.Inline"
         android:id="@+id/cardTankImage"
         android:layout_width="@dimen/aqua_size_0"
         android:layout_height="@dimen/aqua_size_190"
@@ -45,7 +46,7 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@color/aqua_palette_hex_22000000" />
+                android:background="@color/aqua_fragment_tank_detail_background" />
 
             <FrameLayout
                 android:id="@+id/markerContainer"
@@ -69,7 +70,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/cardTankImage"
         app:tabGravity="fill"
-        app:tabIndicatorColor="@color/aqua_palette_hex_2196f3"
+        app:tabIndicatorColor="@color/aqua_accent_primary"
         app:tabIndicatorFullWidth="false"
         app:tabIndicatorGravity="bottom"
         app:tabIndicatorHeight="@dimen/aqua_size_3"
@@ -77,10 +78,10 @@
         app:tabMode="fixed"
         app:tabPaddingEnd="@dimen/aqua_size_0"
         app:tabPaddingStart="@dimen/aqua_size_0"
-        app:tabRippleColor="@android:color/transparent"
-        app:tabSelectedTextColor="@android:color/white"
+        app:tabRippleColor="@color/aqua_color_transparent"
+        app:tabSelectedTextColor="@color/aqua_content_on_dark"
         app:tabTextAppearance="@style/TextAppearance.Aqua.TankTab"
-        app:tabTextColor="@color/aqua_palette_hex_8fa4be" />
+        app:tabTextColor="@color/aqua_content_secondary" />
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/tankDetailPager"

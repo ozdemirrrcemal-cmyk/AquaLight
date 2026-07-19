@@ -7,20 +7,20 @@
 
     <!-- Arka yuvarlak -->
     <path
-        android:fillColor="@color/aqua_palette_hex_1e3a8a"
+        android:fillColor="@color/aqua_ic_theme_light_fill"
         android:pathData="M12,2a10,10 0 1,0 0,20a10,10 0 1,0 0,-20z" />
 
     <!-- Güneş gövdesi -->
     <path
-        android:fillColor="@color/aqua_palette_hex_ffd85c"
+        android:fillColor="@color/aqua_ic_theme_light_fill_variant_2"
         android:pathData="M12,8a4,4 0 1,0 0,8a4,4 0 1,0 0,-8z" />
 
     <!-- Işınlar -->
     <path
         android:strokeWidth="1.4"
-        android:strokeColor="@color/aqua_palette_hex_ffe58a"
+        android:strokeColor="@color/aqua_ic_theme_light_outline"
         android:strokeLineCap="round"
-        android:fillColor="@android:color/transparent"
+        android:fillColor="@color/aqua_color_transparent"
         android:pathData="
             M12,3 L12,5.2
             M12,18.8 L12,21
