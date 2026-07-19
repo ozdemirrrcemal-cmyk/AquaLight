@@ -1,5 +1,6 @@
 package com.aqua.aqualight.application.user
 
+import com.aqua.aqualight.localization.SupportedLocaleRegistry
 import kotlinx.coroutines.flow.Flow
 
 /** Application-facing non-notification settings boundary. */
@@ -14,7 +15,7 @@ interface UserSettingsOperations {
     suspend fun updateAutoUpdateEnabled(enabled: Boolean)
 
     companion object {
-        const val DEFAULT_LANGUAGE_CODE = "en"
+        const val DEFAULT_LANGUAGE_CODE = SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG
     }
 }
 
