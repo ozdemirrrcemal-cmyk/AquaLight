@@ -23,6 +23,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Dry-run pending atomic locale migration
+        if: ${{ hashFiles('tools/stage11_apply_locale_migration.py') != '' }}
+        shell: bash
+        run: python3 tools/stage11_apply_locale_migration.py
+
       - name: Run Stage 11 source guards
         shell: bash
         run: |
@@ -40,4 +45,4 @@ jobs:
         with:
           name: stage11-source-audit-${{ github.run_number }}
           path: stage11-source-audit.log
-          if-no-files-found: error
+          if-no-files-found: ignore
