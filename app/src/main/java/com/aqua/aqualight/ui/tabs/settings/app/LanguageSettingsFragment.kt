@@ -8,9 +8,9 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.user.UserSettingsOperations
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentLanguageSettingsBinding
+import com.aqua.aqualight.localization.SupportedLocaleRegistry
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -28,158 +28,64 @@ class LanguageSettingsFragment : Fragment(R.layout.fragment_language_settings) {
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
-
-        _binding =
-            FragmentLanguageSettingsBinding.bind(view)
+        super.onViewCreated(view, savedInstanceState)
+        _binding = FragmentLanguageSettingsBinding.bind(view)
 
         setupHeader()
+        removeUnsupportedLanguageRows()
+        setupSupportedLanguageClick()
         observeSelectedLanguage()
-        setupLanguageClicks()
     }
 
     private fun setupHeader() {
-        binding.appHeader.setupAquaHeader(
-            fragment = this
-        )
+        binding.appHeader.setupAquaHeader(fragment = this)
+    }
+
+    private fun removeUnsupportedLanguageRows() = with(binding) {
+        listOf(
+            cardTurkish,
+            cardGerman,
+            cardFrench,
+            cardRussian,
+            cardChinese
+        ).forEach { card ->
+            card.setOnClickListener(null)
+            card.isEnabled = false
+            card.visibility = View.GONE
+        }
+    }
+
+    private fun setupSupportedLanguageClick() = with(binding) {
+        val selectEnglish = View.OnClickListener {
+            selectLanguage(SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG)
+        }
+        cardEnglish.setOnClickListener(selectEnglish)
+        radioEnglish.setOnClickListener(selectEnglish)
     }
 
     private fun observeSelectedLanguage() {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             settingsOperations.languageCode.collectLatest { code ->
-                updateLanguageSelection(
-                    code
-                )
+                binding.radioEnglish.isChecked =
+                    SupportedLocaleRegistry.normalize(code) ==
+                    SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG
             }
         }
     }
 
-    private fun setupLanguageClicks() =
-        with(binding) {
-
-            fun select(
-                code: String
-            ) {
-                viewLifecycleOwner.lifecycleScope.launch {
-                    settingsOperations.updateLanguage(
-                        code
-                    )
-
-                    applyLanguage(
-                        code
-                    )
-
-                    findNavController()
-                        .popBackStack()
-                }
-            }
-
-            cardTurkish.setOnClickListener {
-                select("tr")
-            }
-
-            radioTurkish.setOnClickListener {
-                select("tr")
-            }
-
-            cardEnglish.setOnClickListener {
-                select("en")
-            }
-
-            radioEnglish.setOnClickListener {
-                select("en")
-            }
-
-            cardGerman.setOnClickListener {
-                select("de")
-            }
-
-            radioGerman.setOnClickListener {
-                select("de")
-            }
-
-            cardFrench.setOnClickListener {
-                select("fr")
-            }
-
-            radioFrench.setOnClickListener {
-                select("fr")
-            }
-
-            cardRussian.setOnClickListener {
-                select("ru")
-            }
-
-            radioRussian.setOnClickListener {
-                select("ru")
-            }
-
-            cardChinese.setOnClickListener {
-                select("zh")
-            }
-
-            radioChinese.setOnClickListener {
-                select("zh")
-            }
-        }
-
-    private fun updateLanguageSelection(
-        code: String
-    ) = with(binding) {
-
-        radioTurkish.isChecked =
-            false
-
-        radioEnglish.isChecked =
-            false
-
-        radioGerman.isChecked =
-            false
-
-        radioFrench.isChecked =
-            false
-
-        radioRussian.isChecked =
-            false
-
-        radioChinese.isChecked =
-            false
-
-        when (code) {
-            "tr" -> radioTurkish.isChecked = true
-            "en" -> radioEnglish.isChecked = true
-            "de" -> radioGerman.isChecked = true
-            "fr" -> radioFrench.isChecked = true
-            "ru" -> radioRussian.isChecked = true
-            "zh" -> radioChinese.isChecked = true
-        }
-    }
-
-    private fun applyLanguage(
-        code: String
-    ) {
-        val safeCode =
-            code.ifBlank {
-                UserSettingsOperations.DEFAULT_LANGUAGE_CODE
-            }
-
-        val localeList =
-            LocaleListCompat.forLanguageTags(
-                safeCode
+    private fun selectLanguage(code: String) {
+        val normalizedCode = SupportedLocaleRegistry.normalize(code)
+        viewLifecycleOwner.lifecycleScope.launch {
+            settingsOperations.updateLanguage(normalizedCode)
+            AppCompatDelegate.setApplicationLocales(
+                LocaleListCompat.forLanguageTags(normalizedCode)
             )
-
-        AppCompatDelegate.setApplicationLocales(
-            localeList
-        )
+            findNavController().popBackStack()
+        }
     }
 
     override fun onDestroyView() {
+        _binding = null
         super.onDestroyView()
-
-        _binding =
-            null
     }
 }
