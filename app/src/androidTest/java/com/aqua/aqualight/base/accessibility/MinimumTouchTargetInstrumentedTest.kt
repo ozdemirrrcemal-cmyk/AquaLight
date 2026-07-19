@@ -73,6 +73,7 @@ class MinimumTouchTargetInstrumentedTest {
                     y = dp(40, density).toFloat()
                 )
             }
+            instrumentation.waitForIdleSync()
 
             assertEquals(0, firstClicks.get())
             assertEquals(1, secondClicks.get())
@@ -94,6 +95,7 @@ class MinimumTouchTargetInstrumentedTest {
                     y = dp(40, density).toFloat()
                 )
             }
+            instrumentation.waitForIdleSync()
 
             assertEquals(0, firstClicks.get())
             assertEquals(1, secondClicks.get())
