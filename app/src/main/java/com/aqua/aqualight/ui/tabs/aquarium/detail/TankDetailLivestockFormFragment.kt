@@ -20,6 +20,7 @@ import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentTankLivestockFormBinding
+import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.dialog.AppDatePickerDialogFragment
 import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
@@ -27,10 +28,7 @@ import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCategories
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.data.aquarium.util.AquariumIdGenerator
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
-import java.util.Locale
 import android.text.Editable
 import android.text.TextWatcher
 import androidx.navigation.fragment.findNavController
@@ -98,7 +96,6 @@ Fragment(R.layout.fragment_tank_livestock_form) {
             selectedAddedDateMillis = result.getLong(AppDatePickerDialogFragment.RESULT_MILLIS)
             updateDateText()
         }
-
         childFragmentManager.setFragmentResultListener(
             LIVESTOCK_DELETE_REQUEST_KEY,
             viewLifecycleOwner
@@ -107,7 +104,6 @@ Fragment(R.layout.fragment_tank_livestock_form) {
                 FeedbackBottomSheet.RESULT_PRIMARY
             ) deleteLivestock()
         }
-
         childFragmentManager.setFragmentResultListener(
             LIVESTOCK_MISSING_REQUEST_KEY,
             viewLifecycleOwner
@@ -408,17 +404,16 @@ Fragment(R.layout.fragment_tank_livestock_form) {
     }
 
     private fun updateQuantity() {
-        binding.tvQuantityValue.text = selectedQuantity.toString()
+        binding.tvQuantityValue.text = LocaleFormatter.formatInteger(
+            requireContext(),
+            selectedQuantity
+        )
     }
 
     private fun updateDateText() {
-        val formatter = SimpleDateFormat(
-            "dd MMM yyyy",
-            Locale.getDefault()
-        )
-
-        binding.tvAddedDateValue.text = formatter.format(
-            Date(selectedAddedDateMillis)
+        binding.tvAddedDateValue.text = LocaleFormatter.formatDate(
+            requireContext(),
+            selectedAddedDateMillis
         )
     }
 
