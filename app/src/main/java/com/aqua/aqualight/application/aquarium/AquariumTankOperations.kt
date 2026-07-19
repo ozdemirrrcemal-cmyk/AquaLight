@@ -15,7 +15,7 @@ interface AquariumTankOperations {
     suspend fun updateTankType(tankId: Long, tankType: String)
     suspend fun updateTankSize(tankId: Long, size: AquariumTankSize)
     suspend fun updateTankVolumeUnit(tankId: Long, volumeUnit: String)
-    suspend fun updateTankSetupDate(tankId: Long, setupDateMillis: Long)
+    suspend fun updateTankSetupDate(tankId: Long, setupDateEpochDay: Long)
     suspend fun updateTankStyle(tankId: Long, tankStyle: String)
     suspend fun updateTankDescription(tankId: Long, description: String)
     suspend fun updateTankMaterials(
@@ -36,7 +36,7 @@ data class AquariumTankSnapshot(
     val name: String,
     val description: String,
     val photoUri: String?,
-    val setupDateMillis: Long?,
+    val setupDateEpochDay: Long?,
     val widthCm: Int,
     val lengthCm: Int,
     val heightCm: Int,
@@ -59,7 +59,7 @@ data class AquariumTankDraft(
     val plants: List<AquariumPlantTag> = emptyList(),
     val materials: List<AquariumMaterialSelection> = emptyList(),
     val info: String = "",
-    val setupDateMillis: Long? = null,
+    val setupDateEpochDay: Long? = null,
     val widthCm: Int = 10,
     val lengthCm: Int = 10,
     val heightCm: Int = 10,
@@ -99,7 +99,7 @@ data class AquariumLivestock(
     val name: String = "",
     val category: String = "",
     val quantity: Int = 1,
-    val addedDateMillis: Long? = null,
+    val addedDateEpochDay: Long? = null,
     val note: String = ""
 )
 
