@@ -10,9 +10,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.accessibility.installAutomaticTouchTargets
 import com.aqua.aqualight.base.loading.LoadingOverlayDialogFragment
 import com.aqua.aqualight.composition.requireAppContainer
-import com.aqua.aqualight.ui.common.accessibility.installAutomaticTouchTargets
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.snackbar.Snackbar
@@ -54,10 +54,6 @@ open class BaseActivity : AppCompatActivity() {
             )
         }
 
-        // Android can terminate the app process when a runtime permission is revoked.
-        // In-memory owner repositories do not survive that event, so an owner Fragment
-        // graph saved by the previous process must not be restored before session commit.
-        // Configuration changes inside the current process keep their normal restoration.
         super.onCreate(stateFromCurrentProcess)
 
         stateFromCurrentProcess
