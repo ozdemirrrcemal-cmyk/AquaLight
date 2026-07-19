@@ -35,6 +35,8 @@ CONTRACTS = (
     ContrastContract("aqua_accent_positive", "aqua_surface_positive", 4.5, "positive state text"),
     ContrastContract("aqua_content_primary", "bottom_nav_background", 4.5, "bottom navigation text"),
     ContrastContract("aqua_content_on_dark", "aqua_system_bar_surface", 4.5, "system bar content"),
+    ContrastContract("aqua_card_text_primary", "aqua_card_surface", 4.5, "language card primary label"),
+    ContrastContract("aqua_card_text_secondary", "aqua_card_surface", 4.5, "card secondary label"),
 )
 
 
