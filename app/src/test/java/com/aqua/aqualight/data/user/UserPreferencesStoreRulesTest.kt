@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.user
 
 import com.aqua.aqualight.data.store.CommercialStoreSchema
 import com.aqua.aqualight.data.store.StoreInvariantViolation
+import com.aqua.aqualight.localization.SupportedLocaleRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
@@ -15,6 +16,10 @@ class UserPreferencesStoreRulesTest {
         assertEquals(
             CommercialStoreSchema.USER_PREFERENCES_VERSION,
             preferences.schemaVersion
+        )
+        assertEquals(
+            SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG,
+            preferences.languageCode
         )
         assertEquals(
             preferences,
@@ -88,6 +93,20 @@ class UserPreferencesStoreRulesTest {
             val preferences = UserPreferencesStoreRules.defaultPreferences()
                 .toBuilder()
                 .setLanguageCode(invalidLanguage)
+                .build()
+
+            assertThrows(StoreInvariantViolation::class.java) {
+                UserPreferencesStoreRules.validate(preferences)
+            }
+        }
+    }
+
+    @Test
+    fun plannedAndRemovedLocalesCannotBePersisted() {
+        listOf("tr", "de", "fr", "ru", "zh").forEach { unavailableLanguage ->
+            val preferences = UserPreferencesStoreRules.defaultPreferences()
+                .toBuilder()
+                .setLanguageCode(unavailableLanguage)
                 .build()
 
             assertThrows(StoreInvariantViolation::class.java) {
