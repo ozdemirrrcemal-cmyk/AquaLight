@@ -9,14 +9,11 @@ import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "app" / "src" / "main"
 RES = APP / "res"
 JAVA = APP / "java"
-ANDROID_NS = "http://schemas.android.com/apk/res/android"
-ANDROID = f"{{{ANDROID_NS}}}"
-
+ANDROID = "{http://schemas.android.com/apk/res/android}"
 PLACEHOLDER = re.compile(
     r"%(?!%)(?:(\d+)\$)?[-#+ 0,(]*\d*(?:\.\d+)?([a-zA-Z])"
 )
@@ -44,10 +41,9 @@ def locale_config_tags(errors: list[str]) -> set[str]:
         errors.append(f"{relative(path)} is missing")
         return set()
 
-    root = parse_xml(path)
     tags = {
-        element.attrib.get(f"{ANDROID}name", "").strip()
-        for element in root.findall("locale")
+        node.attrib.get(f"{ANDROID}name", "").strip()
+        for node in parse_xml(path).findall("locale")
     }
     tags.discard("")
     if not tags:
@@ -56,7 +52,7 @@ def locale_config_tags(errors: list[str]) -> set[str]:
 
 
 def registry_tags(errors: list[str]) -> set[str]:
-    path = JAVA / "com" / "aqua" / "aqualight" / "i18n" / "SupportedLocaleRegistry.kt"
+    path = JAVA / "com/aqua/aqualight/i18n/SupportedLocaleRegistry.kt"
     if not path.exists():
         errors.append(f"{relative(path)} is missing")
         return set()
@@ -72,7 +68,7 @@ def registry_tags(errors: list[str]) -> set[str]:
         re.DOTALL,
     )
     if default_match is None or block_match is None:
-        errors.append(f"{relative(path)} does not expose the expected registry contract")
+        errors.append(f"{relative(path)} does not expose the registry contract")
         return set()
 
     default = default_match.group(1)
@@ -81,7 +77,7 @@ def registry_tags(errors: list[str]) -> set[str]:
     if "DEFAULT_LANGUAGE_TAG" in block:
         tags.add(default)
     if default not in tags:
-        errors.append("SupportedLocaleRegistry default must be included in supported locales")
+        errors.append("SupportedLocaleRegistry default must be supported")
     return tags
 
 
@@ -94,21 +90,22 @@ def resource_entries(directory: Path) -> dict[tuple[str, str], str]:
         root = parse_xml(path)
         if root.tag != "resources":
             continue
-        for element in root:
-            name = element.attrib.get("name", "").strip()
-            if not name or element.attrib.get("translatable") == "false":
+        for node in root:
+            name = node.attrib.get("name", "").strip()
+            if not name or node.attrib.get("translatable") == "false":
                 continue
-            if element.tag not in {"string", "plurals", "string-array"}:
-                continue
-            entries[(element.tag, name)] = "".join(element.itertext())
+            if node.tag in {"string", "plurals", "string-array"}:
+                entries[(node.tag, name)] = "".join(node.itertext())
     return entries
 
 
 def qualifier_directory(language_tag: str) -> Path:
     parts = language_tag.split("-")
-    if len(parts) == 1:
-        return RES / f"values-{parts[0]}"
-    return RES / ("values-b+" + "+".join(parts))
+    return (
+        RES / f"values-{parts[0]}"
+        if len(parts) == 1
+        else RES / ("values-b+" + "+".join(parts))
+    )
 
 
 def placeholder_signature(value: str) -> list[tuple[str, str]]:
@@ -129,7 +126,7 @@ def validate_localized_resources(
 ) -> None:
     base = resource_entries(RES / "values")
     if not base:
-        errors.append("base values resources do not contain translatable strings")
+        errors.append("base values resources have no translatable entries")
         return
 
     for language_tag in sorted(supported_tags):
@@ -140,32 +137,30 @@ def validate_localized_resources(
             localized = resource_entries(directory)
             if not localized:
                 errors.append(
-                    f"supported locale {language_tag} requires complete resources in "
-                    f"{relative(directory)}"
+                    f"supported locale {language_tag} requires a complete "
+                    f"{relative(directory)} resource pack"
                 )
                 continue
 
-        missing = sorted(set(base) - set(localized))
-        for resource_type, name in missing:
+        for resource_type, name in sorted(set(base) - set(localized)):
             errors.append(
                 f"locale {language_tag} is missing {resource_type}/{name}"
             )
 
         for key in sorted(set(base) & set(localized)):
-            base_signature = placeholder_signature(base[key])
-            localized_signature = placeholder_signature(localized[key])
-            if base_signature != localized_signature:
+            expected = placeholder_signature(base[key])
+            actual = placeholder_signature(localized[key])
+            if expected != actual:
                 resource_type, name = key
                 errors.append(
                     f"locale {language_tag} placeholder mismatch for "
-                    f"{resource_type}/{name}: {base_signature} != {localized_signature}"
+                    f"{resource_type}/{name}: {expected} != {actual}"
                 )
 
 
 def validate_manifest(errors: list[str]) -> None:
     path = APP / "AndroidManifest.xml"
-    root = parse_xml(path)
-    application = root.find("application")
+    application = parse_xml(path).find("application")
     if application is None:
         errors.append("AndroidManifest.xml has no application element")
         return
@@ -176,7 +171,7 @@ def validate_manifest(errors: list[str]) -> None:
 
 
 def validate_icon_descriptions(errors: list[str]) -> None:
-    allowed_dynamic_header_ids = {
+    dynamic_header_ids = {
         "btnActionOne",
         "btnActionTwo",
         "btnActionThree",
@@ -184,65 +179,37 @@ def validate_icon_descriptions(errors: list[str]) -> None:
     }
 
     for path in sorted((RES / "layout").glob("*.xml")):
-        root = parse_xml(path)
-        for element in root.iter():
-            tag = element.tag.rsplit("}", 1)[-1]
+        for node in parse_xml(path).iter():
+            tag = node.tag.rsplit("}", 1)[-1]
             if not tag.endswith("ImageButton"):
                 continue
-
-            view_id = element.attrib.get(f"{ANDROID}id", "").rsplit("/", 1)[-1]
-            description = element.attrib.get(f"{ANDROID}contentDescription", "").strip()
-            if not description and view_id not in allowed_dynamic_header_ids:
+            view_id = node.attrib.get(f"{ANDROID}id", "").rsplit("/", 1)[-1]
+            description = node.attrib.get(f"{ANDROID}contentDescription", "").strip()
+            if not description and view_id not in dynamic_header_ids:
                 errors.append(
                     f"{relative(path)} icon-only control {view_id or '<no-id>'} "
                     "requires a content description"
                 )
 
-    binding_path = (
-        JAVA
-        / "com"
-        / "aqua"
-        / "aqualight"
-        / "ui"
-        / "common"
-        / "header"
-        / "AquaHeaderBindingExt.kt"
-    )
+    binding_path = JAVA / "com/aqua/aqualight/ui/common/header/AquaHeaderBindingExt.kt"
     binding = binding_path.read_text(encoding="utf-8")
-    required_fragments = (
-        "button.contentDescription",
-        "action.contentDescription",
-        "btnFilledIconAction.contentDescription",
-        "filledIconAction.contentDescription",
-        "btnCardIconAction.contentDescription",
-        "cardIconAction.contentDescription",
+    assignments = (
+        ("button.contentDescription", "action.contentDescription"),
+        ("btnFilledIconAction.contentDescription", "filledIconAction.contentDescription"),
+        ("btnCardIconAction.contentDescription", "cardIconAction.contentDescription"),
     )
-    for fragment in required_fragments:
-        if fragment not in binding:
+    for target, source in assignments:
+        if target not in binding or source not in binding:
             errors.append(
-                f"{relative(binding_path)} is missing dynamic icon label contract: {fragment}"
+                f"{relative(binding_path)} is missing dynamic icon label assignment "
+                f"{target} <- {source}"
             )
 
 
 def validate_dynamic_device_status(errors: list[str]) -> None:
     paths = (
-        JAVA
-        / "com"
-        / "aqua"
-        / "aqualight"
-        / "ui"
-        / "common"
-        / "devicecard"
-        / "DeviceCompactCardBinder.kt",
-        JAVA
-        / "com"
-        / "aqua"
-        / "aqualight"
-        / "ui"
-        / "tabs"
-        / "settings"
-        / "device"
-        / "DeviceStatusAdapter.kt",
+        JAVA / "com/aqua/aqualight/ui/common/devicecard/DeviceCompactCardBinder.kt",
+        JAVA / "com/aqua/aqualight/ui/tabs/settings/device/DeviceStatusAdapter.kt",
     )
     for path in paths:
         text = path.read_text(encoding="utf-8")
@@ -251,27 +218,19 @@ def validate_dynamic_device_status(errors: list[str]) -> None:
             text,
         ):
             errors.append(
-                f"{relative(path)} must expose Online/Offline through contentDescription"
+                f"{relative(path)} must announce dynamic Online/Offline state"
             )
         if not re.search(r"root\.contentDescription\s*=", text):
             errors.append(
-                f"{relative(path)} must expose the complete device status row description"
+                f"{relative(path)} must expose a complete row description"
             )
 
 
 def validate_touch_target_contract(errors: list[str]) -> None:
-    installer = (
-        JAVA
-        / "com"
-        / "aqua"
-        / "aqualight"
-        / "ui"
-        / "common"
-        / "accessibility"
-        / "MinimumTouchTargetInstaller.kt"
-    )
-    runtime = installer.with_name("AccessibilityRuntimeInstaller.kt")
-    app = JAVA / "com" / "aqua" / "aqualight" / "app" / "AquaApp.kt"
+    directory = JAVA / "com/aqua/aqualight/base/accessibility"
+    installer = directory / "MinimumTouchTargetInstaller.kt"
+    runtime = directory / "AccessibilityRuntimeInstaller.kt"
+    app = JAVA / "com/aqua/aqualight/app/AquaApp.kt"
 
     for path in (installer, runtime, app):
         if not path.exists():
@@ -282,13 +241,18 @@ def validate_touch_target_contract(errors: list[str]) -> None:
     if "MIN_TOUCH_TARGET_DP = 48" not in installer_text:
         errors.append("minimum touch target contract must remain 48dp")
     if "TouchDelegate" not in installer_text:
-        errors.append("minimum touch targets must expand hit areas without resizing views")
+        errors.append("touch targets must expand without resizing rendered controls")
+    if "offsetDescendantRectToMyCoords" not in installer_text:
+        errors.append("touch target expansion must use root coordinates")
 
     app_text = app.read_text(encoding="utf-8")
+    expected_import = (
+        "import com.aqua.aqualight.base.accessibility.AccessibilityRuntimeInstaller"
+    )
+    if expected_import not in app_text:
+        errors.append("AquaApp must install accessibility from the base layer")
     if "registerActivityLifecycleCallbacks" not in app_text:
-        errors.append("AquaApp must install accessibility lifecycle callbacks")
-    if "AccessibilityRuntimeInstaller()" not in app_text:
-        errors.append("AquaApp must register AccessibilityRuntimeInstaller")
+        errors.append("AquaApp must register accessibility lifecycle callbacks")
 
 
 def parse_base_colors() -> dict[str, str]:
@@ -297,25 +261,28 @@ def parse_base_colors() -> dict[str, str]:
         root = parse_xml(path)
         if root.tag != "resources":
             continue
-        for element in root.findall("color"):
-            name = element.attrib.get("name", "").strip()
-            value = "".join(element.itertext()).strip()
+        for node in root.findall("color"):
+            name = node.attrib.get("name", "").strip()
             if name:
-                colors[name] = value
+                colors[name] = "".join(node.itertext()).strip()
     return colors
 
 
-def resolve_color(name: str, colors: dict[str, str], seen: set[str] | None = None) -> str:
-    seen = set() if seen is None else seen
-    if name in seen:
+def resolve_color(
+    name: str,
+    colors: dict[str, str],
+    seen: set[str] | None = None,
+) -> str:
+    visited = set() if seen is None else seen
+    if name in visited:
         raise GuardFailure(f"cyclic color alias at {name}")
-    seen.add(name)
+    visited.add(name)
 
     value = colors.get(name)
     if value is None:
         raise GuardFailure(f"missing color resource {name}")
     if value.startswith("@color/"):
-        return resolve_color(value.split("/", 1)[1], colors, seen)
+        return resolve_color(value.split("/", 1)[1], colors, visited)
     return value
 
 
@@ -325,11 +292,14 @@ def rgb_from_hex(value: str) -> tuple[int, int, int]:
         normalized = normalized[2:]
     if len(normalized) != 6:
         raise GuardFailure(f"unsupported contrast color {value}")
-    return tuple(int(normalized[index : index + 2], 16) for index in (0, 2, 4))
+    return tuple(
+        int(normalized[index : index + 2], 16)
+        for index in (0, 2, 4)
+    )
 
 
 def luminance(rgb: tuple[int, int, int]) -> float:
-    channels = []
+    channels: list[float] = []
     for channel in rgb:
         value = channel / 255.0
         channels.append(
@@ -340,7 +310,10 @@ def luminance(rgb: tuple[int, int, int]) -> float:
     return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2]
 
 
-def contrast_ratio(first: tuple[int, int, int], second: tuple[int, int, int]) -> float:
+def contrast_ratio(
+    first: tuple[int, int, int],
+    second: tuple[int, int, int],
+) -> float:
     first_luminance = luminance(first)
     second_luminance = luminance(second)
     lighter = max(first_luminance, second_luminance)
@@ -356,7 +329,6 @@ def validate_contrast(errors: list[str]) -> None:
         ("md_theme_light_onSurface", "md_theme_light_background"),
         ("md_theme_dark_onSurface", "md_theme_dark_background"),
     )
-
     for foreground, background in pairs:
         try:
             ratio = contrast_ratio(
@@ -368,65 +340,59 @@ def validate_contrast(errors: list[str]) -> None:
             continue
         if ratio < 4.5:
             errors.append(
-                f"WCAG AA contrast failed for {foreground} on {background}: {ratio:.2f}:1"
+                f"WCAG AA contrast failed for {foreground} on {background}: "
+                f"{ratio:.2f}:1"
             )
 
 
 def validate_locale_formatting(errors: list[str]) -> None:
-    formatter = JAVA / "com" / "aqua" / "aqualight" / "i18n" / "LocaleFormatter.kt"
+    formatter = JAVA / "com/aqua/aqualight/i18n/LocaleFormatter.kt"
     if not formatter.exists():
         errors.append(f"{relative(formatter)} is missing")
         return
 
     dimension_formatter = (
         JAVA
-        / "com"
-        / "aqua"
-        / "aqualight"
-        / "ui"
-        / "tabs"
-        / "aquarium"
-        / "common"
-        / "AquariumDimensionFormatter.kt"
+        / "com/aqua/aqualight/ui/tabs/aquarium/common/AquariumDimensionFormatter.kt"
     )
-    dimension_text = dimension_formatter.read_text(encoding="utf-8")
-    if "Locale.US" in dimension_text or "DecimalFormatSymbols" in dimension_text:
+    text = dimension_formatter.read_text(encoding="utf-8")
+    if "Locale.US" in text or "DecimalFormatSymbols" in text:
         errors.append(
             f"{relative(dimension_formatter)} must not force US display formatting"
         )
-    if "LocaleFormatter" not in dimension_text:
+    if "LocaleFormatter" not in text:
         errors.append(
-            f"{relative(dimension_formatter)} must use the locale formatting boundary"
+            f"{relative(dimension_formatter)} must use LocaleFormatter"
         )
 
 
 def validate_visual_smoke_contract(errors: list[str]) -> None:
-    script = ROOT / "tools" / "run_release_smoke.sh"
+    script = ROOT / "tools/run_release_smoke.sh"
     text = script.read_text(encoding="utf-8")
-    for required in (
+    required = (
         "large-font-light",
         "large-font-dark",
         "rtl-light",
         "rtl-dark",
         "font_scale",
         "debug.force_rtl",
-    ):
-        if required not in text:
+    )
+    for token in required:
+        if token not in text:
             errors.append(
-                f"{relative(script)} is missing visual accessibility profile {required}"
+                f"{relative(script)} is missing visual profile token {token}"
             )
 
 
 def main() -> int:
     errors: list[str] = []
-
     try:
         configured = locale_config_tags(errors)
         registered = registry_tags(errors)
         if configured != registered:
             errors.append(
-                f"locale registry {sorted(registered)} does not match locale config "
-                f"{sorted(configured)}"
+                f"locale registry {sorted(registered)} does not match "
+                f"locale config {sorted(configured)}"
             )
 
         validate_manifest(errors)
