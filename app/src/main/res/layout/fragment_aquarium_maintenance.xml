@@ -75,7 +75,7 @@
                 android:contentDescription="@string/maintenance_tab_upcoming"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:tag="aqua_large_font_text:maintenance_tab_next"
+                android:tag="@id/aqua_large_font_maintenance_tab_next"
                 android:text="@string/maintenance_tab_upcoming"
                 android:textColor="@color/aqua_card_text_secondary"
                 android:textSize="@dimen/aqua_text_size_body_small" />
@@ -293,7 +293,7 @@
             android:layout_height="@dimen/aqua_button_height"
             android:layout_marginTop="@dimen/aqua_size_22"
             android:contentDescription="@string/maintenance_action_add_care_task"
-            android:tag="aqua_large_font_text:maintenance_action_add"
+            android:tag="@id/aqua_large_font_maintenance_action_add"
             android:text="@string/maintenance_action_add_task"
             android:textStyle="bold" />
 
