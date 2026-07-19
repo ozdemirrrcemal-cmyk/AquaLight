@@ -22,7 +22,7 @@ object UserPreferencesStoreRules {
     fun defaultPreferences(): UserPreferences = UserPreferences.newBuilder()
         .setSchemaVersion(CommercialStoreSchema.USER_PREFERENCES_VERSION)
         .setThemeMode(UserPreferencesManager.DEFAULT_THEME_MODE)
-        .setLanguageCode(SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG)
+        .setLanguageCode(SupportedLocaleRegistry.deviceDefault())
         .build()
 
     fun validate(preferences: UserPreferences): UserPreferences {
@@ -63,9 +63,9 @@ object UserPreferencesStoreRules {
             field = "languageCode",
             value = preferences.languageCode
         )
-        val normalizedLanguage =
-            SupportedLocaleRegistry.normalizeStoredLanguageTag(language)
-                ?: violation("languageCode is not a supported locale identifier.")
+        if (SupportedLocaleRegistry.normalizeStoredLanguageTag(language) == null) {
+            violation("languageCode is not a supported locale identifier.")
+        }
 
         requireNonNegative("weeklyAutomationCount", preferences.weeklyAutomationCount)
         requireNonNegative("weeklyAlertCount", preferences.weeklyAlertCount)
@@ -87,13 +87,7 @@ object UserPreferencesStoreRules {
             validateProfileCache(cache)
         }
 
-        return if (normalizedLanguage == language) {
-            preferences
-        } else {
-            preferences.toBuilder()
-                .setLanguageCode(normalizedLanguage)
-                .build()
-        }
+        return preferences
     }
 
     private fun validateProfileCache(cache: UserProfileCache) {
