@@ -353,7 +353,7 @@ class AquariumTankDataStoreManager(
     ) {
         updateCurrentOwnerTank(tankId) { storedTank ->
             storedTank.toBuilder()
-                .setSetupDateMillis(setupDateEpochDay)
+                .setSetupDateEpochDay(setupDateEpochDay)
                 .build()
         }
     }
@@ -541,7 +541,7 @@ class AquariumTankDataStoreManager(
             .setName(name.trim())
             .setDescription(description.trim())
             .setPhotoUri(photoUri.orEmpty().trim())
-            .setSetupDateMillis(setupDateEpochDay ?: 0L)
+            .setSetupDateEpochDay(setupDateEpochDay ?: 0L)
             .setWidthCm(widthCm)
             .setLengthCm(lengthCm)
             .setHeightCm(heightCm)
@@ -599,7 +599,7 @@ class AquariumTankDataStoreManager(
             .setName(name.trim())
             .setCategory(category.trim())
             .setQuantity(quantity)
-            .setAddedDateMillis(addedDateEpochDay ?: 0L)
+            .setAddedDateEpochDay(addedDateEpochDay ?: 0L)
             .setNote(note.trim())
             .build()
     }
