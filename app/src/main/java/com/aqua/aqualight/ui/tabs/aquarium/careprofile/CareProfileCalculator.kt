@@ -77,12 +77,12 @@ object CareProfileCalculator {
 
     items += Item(
       title = context.getString(R.string.aquarium_care_profile_setup_date),
-      subtitle = if (tank.setupDateMillis != null) {
+      subtitle = if (tank.setupDateEpochDay != null) {
         context.getString(R.string.aquarium_care_profile_selected)
       } else {
         context.getString(R.string.aquarium_care_profile_missing_setup_date)
       },
-      completed = tank.setupDateMillis != null,
+      completed = tank.setupDateEpochDay != null,
       actionKey = ActionKey.SETUP_DATE
     )
 
