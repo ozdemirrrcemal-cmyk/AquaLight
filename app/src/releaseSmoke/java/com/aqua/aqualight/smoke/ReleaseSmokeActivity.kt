@@ -5,7 +5,10 @@ import android.graphics.Canvas
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
@@ -23,15 +26,15 @@ import com.aqua.aqualight.ui.tabs.aquarium.AquariumFragment
 import com.aqua.aqualight.ui.tabs.devices.DevicesFragment
 import com.aqua.aqualight.ui.tabs.maintenance.AquariumMaintenanceFragment
 import com.aqua.aqualight.ui.tabs.settings.SettingsFragment
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * CI-only Activity packaged exclusively in the minified releaseSmoke variant.
- * It exercises the real Fragment lifecycle, navigation environment and release-smoke
- * ViewModel factory callsites without opening Firebase, BLE or WebSocket infrastructure.
+ * It exercises real Fragment lifecycle, accessibility labels and visual profiles without
+ * opening Firebase, BLE or WebSocket infrastructure.
  */
 class ReleaseSmokeActivity : BaseActivity() {
 
@@ -40,6 +43,9 @@ class ReleaseSmokeActivity : BaseActivity() {
     private var smokeStarted = false
     private val smokeTheme: String by lazy {
         intent.getStringExtra(EXTRA_SMOKE_THEME).orEmpty().lowercase().ifBlank { THEME_LIGHT }
+    }
+    private val smokeProfile: String by lazy {
+        intent.getStringExtra(EXTRA_SMOKE_PROFILE).orEmpty().lowercase().ifBlank { smokeTheme }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -106,10 +112,12 @@ class ReleaseSmokeActivity : BaseActivity() {
                     ) {
                         "${screen.name} did not reach STARTED"
                     }
+
+                    verifyIconAccessibility(fragment.requireView())
                     captureScreen(screen)
                 }
             }.onSuccess {
-                renderResult("$PASS_MARKER:$smokeTheme")
+                renderResult("$PASS_MARKER:$smokeProfile")
             }.onFailure { error ->
                 renderResult(
                     "$FAIL_MARKER\n${error::class.java.name}\n${error.message.orEmpty()}"
@@ -165,6 +173,37 @@ class ReleaseSmokeActivity : BaseActivity() {
         )
     )
 
+    private fun verifyIconAccessibility(root: View) {
+        fun visit(view: View) {
+            if (view.visibility != View.VISIBLE) return
+
+            val iconOnlyControl =
+                view is ImageButton ||
+                    view is ImageView && view.isClickable
+
+            if (iconOnlyControl && view.isEnabled && view.isShown) {
+                check(!view.contentDescription.isNullOrBlank()) {
+                    "Visible icon control ${view.debugName()} has no content description"
+                }
+            }
+
+            if (view is ViewGroup) {
+                for (index in 0 until view.childCount) {
+                    visit(view.getChildAt(index))
+                }
+            }
+        }
+
+        visit(root)
+    }
+
+    private fun View.debugName(): String {
+        return runCatching {
+            resources.getResourceEntryName(id)
+        }.getOrElse {
+            this::class.java.simpleName
+        }
+    }
 
     private fun captureScreen(screen: SmokeScreen) {
         val root = window.decorView.rootView
@@ -177,7 +216,7 @@ class ReleaseSmokeActivity : BaseActivity() {
         val directory = File(screenshotRoot, SCREENSHOT_DIRECTORY).apply { mkdirs() }
         val output = File(
             directory,
-            "${smokeTheme}-${screen.name.removeSuffix("Fragment").lowercase()}.png"
+            "$smokeProfile-${screen.name.removeSuffix("Fragment").lowercase()}.png"
         )
         FileOutputStream(output).use { stream ->
             check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)) {
@@ -225,6 +264,7 @@ class ReleaseSmokeActivity : BaseActivity() {
         const val PASS_MARKER = "RELEASE_SMOKE_PASS"
         const val FAIL_MARKER = "RELEASE_SMOKE_FAIL"
         const val EXTRA_SMOKE_THEME = "aqua_smoke_theme"
+        const val EXTRA_SMOKE_PROFILE = "aqua_smoke_profile"
         const val THEME_LIGHT = "light"
         const val THEME_DARK = "dark"
         const val SCREENSHOT_DIRECTORY = "smoke-screens"
