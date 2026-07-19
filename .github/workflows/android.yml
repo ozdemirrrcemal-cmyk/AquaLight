@@ -34,7 +34,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
           fetch-depth: 0
 
-      - name: Correct pending migration transforms
+      - name: Prepare pending locale migration
         if: ${{ github.event_name == 'pull_request' && hashFiles('tools/stage11_apply_locale_migration.py') != '' }}
         shell: bash
         run: |
@@ -43,28 +43,19 @@ jobs:
 
           path = Path("tools/stage11_apply_locale_migration.py")
           source = path.read_text(encoding="utf-8")
-
-          old_feedback = '    ensure_import(relative, "import com.aqua.aqualight.localization.LocaleFormatters\\n")\n    replace_exact(\n        relative,\n        "private val localeTagProvider:'
-          new_feedback = '    ensure_import(\n        relative,\n        "import com.aqua.aqualight.localization.LocaleFormatters\\n",\n        anchor="import com.aqua.aqualight.BuildConfig\\n"\n    )\n    replace_exact(\n        relative,\n        "private val localeTagProvider:'
-          if source.count(old_feedback) != 1:
-              raise SystemExit("Feedback migration transform anchor mismatch")
-          source = source.replace(old_feedback, new_feedback, 1)
-
-          old_template = '''      return LocaleFormatters.formatTemplate(\\n"
-        "        locale = locale,\\n"
-        "        template = pageFormat,\\n"
-        "        pageNumber\\n"
-        "      )\\n",'''
-          new_template = '''      return LocaleFormatters.formatTemplate(\\n"
-        "        locale,\\n"
-        "        pageFormat,\\n"
-        "        pageNumber\\n"
-        "      )\\n",'''
-          if source.count(old_template) != 1:
-              raise SystemExit("PDF template migration transform mismatch")
-          source = source.replace(old_template, new_template, 1)
-
-          path.write_text(source, encoding="utf-8")
+          old = '''    if anchor not in source:
+              raise RuntimeError(f"{relative}: import anchor missing: {anchor!r}")
+          '''
+          new = '''    if anchor not in source:
+              build_config_anchor = "import com.aqua.aqualight.BuildConfig\\n"
+              if build_config_anchor in source:
+                  anchor = build_config_anchor
+              else:
+                  raise RuntimeError(f"{relative}: import anchor missing: {anchor!r}")
+          '''
+          if source.count(old) != 1:
+              raise SystemExit("Migration import helper transform mismatch")
+          path.write_text(source.replace(old, new, 1), encoding="utf-8")
           PY
 
       - name: Apply pending atomic locale migration
@@ -74,6 +65,25 @@ jobs:
         run: |
           set -o pipefail
           python3 tools/stage11_apply_locale_migration.py 2>&1 | tee stage11-migration.log
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt")
+          source = path.read_text(encoding="utf-8")
+          old = '''      return LocaleFormatters.formatTemplate(
+                  locale = locale,
+                  template = pageFormat,
+                  pageNumber
+                )'''
+          new = '''      return LocaleFormatters.formatTemplate(
+                  locale,
+                  pageFormat,
+                  pageNumber
+                )'''
+          if source.count(old) != 1:
+              raise SystemExit("TankPdfExporter locale template transform mismatch")
+          path.write_text(source.replace(old, new, 1), encoding="utf-8")
+          PY
           rm -f tools/stage11_apply_locale_migration.py
           rm -f .github/workflows/stage11_apply_locale_migration.yml
           rm -f .github/workflows/stage11_patch_locale_migration.yml
