@@ -221,7 +221,11 @@ def validate_kotlin(errors: list[str]) -> None:
 
 def validate_dynamic_resource_contract(errors: list[str]) -> None:
     keep_file = RES / "raw" / "aqua_dynamic_resource_keep.xml"
-    expected = ("@layout/ucrop_activity_photobox", "@string/ucrop_label_edit_photo")
+    expected = (
+        "@layout/ucrop_activity_photobox",
+        "@string/ucrop_label_edit_photo",
+        "@dimen/aqua_size_negative_12",
+    )
     if not keep_file.exists():
         errors.append(f"{relative(keep_file)}: missing dynamic resource keep contract")
     else:
@@ -229,6 +233,13 @@ def validate_dynamic_resource_contract(errors: list[str]) -> None:
         for resource in expected:
             if resource not in text:
                 errors.append(f"{relative(keep_file)}: missing dynamic resource proof for {resource}")
+
+    layout = RES / "layout" / "ucrop_activity_photobox.xml"
+    if not layout.exists():
+        errors.append(f"{relative(layout)}: missing dynamically loaded uCrop layout")
+    elif "@dimen/aqua_size_negative_12" not in layout.read_text(encoding="utf-8"):
+        errors.append(f"{relative(layout)}: missing audited uCrop dimension dependency")
+
     audit = ROOT / "docs" / "stage10-unused-resources-audit.md"
     if not audit.exists():
         errors.append(f"{relative(audit)}: missing unused-resource classification audit")
