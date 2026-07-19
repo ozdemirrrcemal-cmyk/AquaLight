@@ -47,17 +47,16 @@ fun View.ensureMinimumTouchTarget(minimumSizeDp: Int = MINIMUM_TOUCH_TARGET_DP) 
     val updateDelegate = {
         if (visibility == View.VISIBLE && width > 0 && height > 0) {
             val minimumPx = ceil(minimumSizeDp * resources.displayMetrics.density).toInt()
-            if (width >= minimumPx && height >= minimumPx) {
-                return@let
-            }
-            val bounds = Rect().also(::getHitRect)
-            val horizontalExpansion = ((minimumPx - bounds.width()).coerceAtLeast(0) + 1) / 2
-            val verticalExpansion = ((minimumPx - bounds.height()).coerceAtLeast(0) + 1) / 2
-            bounds.inset(-horizontalExpansion, -verticalExpansion)
+            if (width < minimumPx || height < minimumPx) {
+                val bounds = Rect().also(::getHitRect)
+                val horizontalExpansion = ((minimumPx - bounds.width()).coerceAtLeast(0) + 1) / 2
+                val verticalExpansion = ((minimumPx - bounds.height()).coerceAtLeast(0) + 1) / 2
+                bounds.inset(-horizontalExpansion, -verticalExpansion)
 
-            val group = (parentView.touchDelegate as? CompositeTouchDelegate)
-                ?: CompositeTouchDelegate(parentView).also { parentView.touchDelegate = it }
-            group.put(this, bounds)
+                val group = (parentView.touchDelegate as? CompositeTouchDelegate)
+                    ?: CompositeTouchDelegate(parentView).also { parentView.touchDelegate = it }
+                group.put(this, bounds)
+            }
         }
     }
 
