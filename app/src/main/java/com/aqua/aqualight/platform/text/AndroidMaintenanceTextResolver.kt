@@ -5,6 +5,7 @@ import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.care.CareTaskSource
 import com.aqua.aqualight.application.care.CareTaskType
+import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.tabs.maintenance.text.CareTaskTypeCatalog
 import com.aqua.aqualight.ui.tabs.maintenance.text.CareTaskTypePresentation
 import com.aqua.aqualight.ui.tabs.maintenance.text.MaintenanceTextResolver
@@ -36,6 +37,9 @@ class AndroidMaintenanceTextResolver(
         CareTaskSource.MANUAL -> appContext.getString(R.string.maintenance_manual_source)
         CareTaskSource.AUTOMATIC -> appContext.getString(R.string.maintenance_smart_source)
     }
+
+    override fun formatTime(timeMillis: Long): String =
+        LocaleFormatter.formatTime(appContext, timeMillis)
 
     override fun completedStatus(): String =
         appContext.getString(R.string.maintenance_status_completed)
