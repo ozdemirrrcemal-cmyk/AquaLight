@@ -51,14 +51,26 @@ jobs:
       - name: Pre-commit unit, lint and debug build
         run: |
           chmod +x gradlew
+          set +e
           ./gradlew --no-daemon --stacktrace \
             :app:testDebugUnitTest \
             :app:lintDebug \
-            :app:assembleDebug
+            :app:assembleDebug > /tmp/final-validation.log 2>&1
+          status=$?
+          set -e
+          if [ "$status" -ne 0 ]; then
+            tail -n 240 /tmp/final-validation.log > .final-fix-error.txt
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add .final-fix-error.txt
+            git commit -m "Record final validation failure"
+            git push origin HEAD:agent/final-commercial-fix-candidate-2
+            exit "$status"
+          fi
 
       - name: Commit validated product changes
         run: |
-          rm -f tools/final_commercial_fix.py .github/workflows/final_commercial_fix_apply.yml
+          rm -f tools/final_commercial_fix.py .github/workflows/final_commercial_fix_apply.yml .final-fix-error.txt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
