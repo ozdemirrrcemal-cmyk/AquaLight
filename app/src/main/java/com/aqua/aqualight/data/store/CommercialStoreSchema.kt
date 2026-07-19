@@ -1,14 +1,14 @@
 package com.aqua.aqualight.data.store
 
 /**
- * First commercial local-store schema baseline.
+ * Commercial local-store schema baselines.
  *
- * AquaLight has not shipped a previous public store contract, so version 1 is
- * intentionally strict: unsupported or missing versions are corruption, not a
- * legacy compatibility path.
+ * AquaLight has not shipped a previous public store contract. Unsupported or missing versions are
+ * corruption, not a legacy compatibility path. Aquarium tanks V2 replaces timezone-dependent
+ * calendar-date milliseconds with epoch-day fields.
  */
 object CommercialStoreSchema {
-    const val AQUARIUM_TANKS_VERSION = 1
+    const val AQUARIUM_TANKS_VERSION = 2
     const val CARE_TASKS_VERSION = 1
     const val USER_PREFERENCES_VERSION = 1
 
