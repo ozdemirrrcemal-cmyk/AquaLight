@@ -1,6 +1,7 @@
 package com.aqua.aqualight.base.accessibility
 
 import android.graphics.Rect
+import android.os.Build
 import android.view.MotionEvent
 import android.view.TouchDelegate
 import android.view.View
@@ -134,6 +135,9 @@ private class CompositeTouchDelegate(
     }
 
     override fun onTouchExplorationHoverEvent(event: MotionEvent): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            return false
+        }
         if (event.actionMasked == MotionEvent.ACTION_HOVER_ENTER) {
             activeEntry = entries.values.firstOrNull { entry ->
                 entry.bounds.contains(event.x.toInt(), event.y.toInt())
