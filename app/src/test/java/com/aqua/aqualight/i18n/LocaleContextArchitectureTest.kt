@@ -66,7 +66,7 @@ class LocaleContextArchitectureTest {
     }
 
     @Test
-    fun frameworkPickersUseThePerAppLanguageContext() {
+    fun frameworkPickersUseTheLiveActivityWindowContext() {
         listOf(
             "app/src/main/java/com/aqua/aqualight/ui/common/dialog/" +
                 "AppDatePickerDialogFragment.kt",
@@ -76,13 +76,18 @@ class LocaleContextArchitectureTest {
             val source = File(repositoryRoot, relativePath).readText()
 
             assertTrue(
-                "$relativePath must obtain the AndroidX per-app language context.",
-                source.contains("LocaleFormatter.localizedContext(requireContext())")
+                "$relativePath must obtain its window-owning Activity context.",
+                source.contains("val hostActivity = requireActivity()")
+            )
+            assertTrue(
+                "$relativePath must construct its picker from the live Activity context.",
+                source.contains("DatePickerDialog(\n            hostActivity") ||
+                    source.contains("TimePickerDialog(\n            hostActivity")
             )
             assertFalse(
-                "$relativePath must not construct a picker directly from requireContext().",
-                source.contains("DatePickerDialog(\n            requireContext()") ||
-                    source.contains("TimePickerDialog(\n            requireContext()")
+                "$relativePath must not create a dialog from a tokenless configuration context.",
+                source.contains("LocaleFormatter.localizedContext(") ||
+                    source.contains("createConfigurationContext(")
             )
             assertFalse(
                 "$relativePath must not read the process or device default locale.",
