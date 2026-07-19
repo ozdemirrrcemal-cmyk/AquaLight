@@ -34,6 +34,19 @@ On first launch, a Turkish device locale selects Turkish. Every other device loc
 - Load-bearing semantic text/background pairs are checked against WCAG AA 4.5:1 contrast.
 - The localization/accessibility guard runs in Debug CI, Release CI and CodeQL validation.
 
+## Calendar-only and measurement contracts
+
+- Tank setup dates and livestock-added dates are stored as `epochDay`, not timezone-dependent epoch milliseconds.
+- Picker milliseconds exist only at the Android UI boundary and are converted immediately to or from a calendar day.
+- Tank store schema V2 deliberately rejects the unreleased timestamp-based V1 contract; no compatibility alias or migration layer is retained.
+- Date-only tests verify that the selected calendar day survives multiple device time zones.
+- Decimal tank measurements are formatted and parsed using the active AquaLight application locale.
+- Turkish comma decimals and English point decimals are first-class inputs. The alternate decimal separator is accepted for keyboard compatibility, while grouping, mixed separators, partial values and non-finite numbers are rejected.
+- Changing between centimeters and inches converts the values currently typed by the user instead of restoring stale persisted values.
+- Canonical persisted dimensions remain integer centimeters and must stay within the commercial `1..5000 cm` contract.
+- Aquarium, Smart Care and PDF volume calculations use one shared calculator that converts operands to `Double` before multiplication, preventing `Int` overflow at maximum supported dimensions.
+- Architecture tests prevent direct three-dimension volume multiplication and locale-bypassing decimal parsing from returning to production code.
+
 ## Visual invariant
 
 Stage 11 must not modify product layout dimensions, component styles, color resources or typography tokens merely to satisfy touch-target requirements. The minimum target is implemented as an invisible interaction-area expansion. Language-specific flag assets may be removed when their language is removed. Screenshot artifacts are the regression evidence for layout preservation.
