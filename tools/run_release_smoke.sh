@@ -56,7 +56,8 @@ run_visual_smoke() {
 
   adb shell settings put system font_scale "$font_scale"
   actual_font_scale="$(adb shell settings get system font_scale | tr -d '\r')"
-  if [ "$actual_font_scale" != "$font_scale" ]; then
+  if ! awk -v expected="$font_scale" -v actual="$actual_font_scale" \
+    'BEGIN { exit ((actual + 0) == (expected + 0) ? 0 : 1) }'; then
     echo "Expected font scale ${font_scale}, found ${actual_font_scale}."
     return 1
   fi
@@ -81,7 +82,7 @@ run_visual_smoke() {
     adb shell uiautomator dump "$remote_variant_dump" >/dev/null 2>&1 || true
     adb pull "$remote_variant_dump" "$variant_dump" >/dev/null 2>&1 || true
 
-    if grep -q "${PASS_MARKER:-RELEASE_SMOKE_PASS}:${variant}" "$variant_dump" 2>/dev/null; then
+    if grep -q "RELEASE_SMOKE_PASS:${variant}" "$variant_dump" 2>/dev/null; then
       adb pull "/sdcard/Android/data/${PACKAGE_NAME}/files/smoke-screens/." \
         "release-smoke-screens/" >/dev/null
       screenshot_count="$(find release-smoke-screens -type f -name "${variant}-*.png" | wc -l | tr -d ' ')"
