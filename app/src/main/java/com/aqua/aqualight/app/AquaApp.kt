@@ -3,6 +3,7 @@ package com.aqua.aqualight.app
 import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
+import com.aqua.aqualight.base.accessibility.AccessibilityRuntimeInstaller
 import com.aqua.aqualight.base.theme.AppThemeController
 import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.composition.DefaultAppContainer
@@ -11,7 +12,6 @@ import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.i18n.SupportedLocaleRegistry
-import com.aqua.aqualight.ui.common.accessibility.AccessibilityRuntimeInstaller
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
