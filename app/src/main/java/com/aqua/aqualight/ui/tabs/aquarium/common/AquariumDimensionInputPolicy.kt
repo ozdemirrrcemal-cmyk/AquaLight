@@ -58,8 +58,14 @@ object AquariumDimensionInputPolicy {
         val centimeters = toCentimeters(displayedValue, fromUnit)
         if (!AquariumMeasurementPolicy.isValidDimensionCm(centimeters)) return null
 
+        val convertedValue = if (isInches(toUnit)) {
+            fromCentimeters(centimeters, toUnit)
+        } else {
+            centimeters.roundToInt().toDouble()
+        }
+
         return LocaleFormatter.formatDecimal(
-            value = fromCentimeters(centimeters, toUnit),
+            value = convertedValue,
             locale = locale
         )
     }
