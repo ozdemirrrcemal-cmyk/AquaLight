@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -29,13 +28,9 @@ class LanguageSettingsFragment : Fragment(R.layout.fragment_language_settings) {
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
+        super.onViewCreated(view, savedInstanceState)
 
-        _binding =
-            FragmentLanguageSettingsBinding.bind(view)
+        _binding = FragmentLanguageSettingsBinding.bind(view)
 
         setupHeader()
         setupLanguageOptions()
@@ -43,72 +38,33 @@ class LanguageSettingsFragment : Fragment(R.layout.fragment_language_settings) {
     }
 
     private fun setupHeader() {
-        binding.appHeader.setupAquaHeader(
-            fragment = this
-        )
+        binding.appHeader.setupAquaHeader(fragment = this)
     }
 
     private fun observeSelectedLanguage() {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-            settingsOperations.languageCode.collectLatest { code ->
-                updateLanguageSelection(
-                    code
-                )
-            }
+            settingsOperations.languageCode.collectLatest(::updateLanguageSelection)
         }
     }
 
-    private fun setupLanguageOptions() =
-        with(binding) {
-            bindLanguageOption(
-                code = "tr",
-                card = cardTurkish,
-                radio = radioTurkish
-            )
-            bindLanguageOption(
-                code = "en",
-                card = cardEnglish,
-                radio = radioEnglish
-            )
-            bindLanguageOption(
-                code = "de",
-                card = cardGerman,
-                radio = radioGerman
-            )
-            bindLanguageOption(
-                code = "fr",
-                card = cardFrench,
-                radio = radioFrench
-            )
-            bindLanguageOption(
-                code = "ru",
-                card = cardRussian,
-                radio = radioRussian
-            )
-            bindLanguageOption(
-                code = "zh",
-                card = cardChinese,
-                radio = radioChinese
-            )
-        }
+    private fun setupLanguageOptions() = with(binding) {
+        bindLanguageOption(
+            code = SupportedLocaleRegistry.TURKISH_LANGUAGE_TAG,
+            card = cardTurkish,
+            radio = radioTurkish
+        )
+        bindLanguageOption(
+            code = SupportedLocaleRegistry.ENGLISH_LANGUAGE_TAG,
+            card = cardEnglish,
+            radio = radioEnglish
+        )
+    }
 
     private fun bindLanguageOption(
         code: String,
         card: View,
         radio: View
     ) {
-        val supported =
-            SupportedLocaleRegistry.isSupported(code)
-
-        card.isVisible = supported
-        radio.isVisible = supported
-
-        if (!supported) {
-            card.setOnClickListener(null)
-            radio.setOnClickListener(null)
-            return
-        }
-
         val listener = View.OnClickListener {
             selectLanguage(code)
         }
@@ -117,68 +73,27 @@ class LanguageSettingsFragment : Fragment(R.layout.fragment_language_settings) {
     }
 
     private fun selectLanguage(code: String) {
-        val supportedCode =
-            SupportedLocaleRegistry.supportedCanonicalOrNull(code)
-                ?: return
+        val supportedCode = SupportedLocaleRegistry.supportedCanonicalOrNull(code) ?: return
 
         viewLifecycleOwner.lifecycleScope.launch {
-            settingsOperations.updateLanguage(
-                supportedCode
+            settingsOperations.updateLanguage(supportedCode)
+            AppCompatDelegate.setApplicationLocales(
+                LocaleListCompat.forLanguageTags(supportedCode)
             )
-
-            applyLanguage(
-                supportedCode
-            )
-
-            findNavController()
-                .popBackStack()
+            findNavController().popBackStack()
         }
     }
 
-    private fun updateLanguageSelection(
-        code: String
-    ) = with(binding) {
-
+    private fun updateLanguageSelection(code: String) = with(binding) {
+        val selectedCode = SupportedLocaleRegistry.resolve(code)
         radioTurkish.isChecked =
-            false
-
+            selectedCode == SupportedLocaleRegistry.TURKISH_LANGUAGE_TAG
         radioEnglish.isChecked =
-            false
-
-        radioGerman.isChecked =
-            false
-
-        radioFrench.isChecked =
-            false
-
-        radioRussian.isChecked =
-            false
-
-        radioChinese.isChecked =
-            false
-
-        when (SupportedLocaleRegistry.resolve(code)) {
-            "en" -> radioEnglish.isChecked = true
-        }
-    }
-
-    private fun applyLanguage(
-        code: String
-    ) {
-        val localeList =
-            LocaleListCompat.forLanguageTags(
-                SupportedLocaleRegistry.resolve(code)
-            )
-
-        AppCompatDelegate.setApplicationLocales(
-            localeList
-        )
+            selectedCode == SupportedLocaleRegistry.ENGLISH_LANGUAGE_TAG
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-
-        _binding =
-            null
+        _binding = null
     }
 }
