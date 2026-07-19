@@ -10,6 +10,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -32,12 +33,11 @@ class LocaleContextInstrumentedTest {
 
         val localizedContext = LocaleFormatter.localizedContext(chineseDeviceContext)
         val localizedLocale = localizedContext.resources.configuration.locales[0]
+        val expectedLanguage = SupportedLocaleRegistry.deviceDefault()
 
         assertNotEquals("zh", localizedLocale.language)
-        assertEquals(
-            SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG,
-            localizedLocale.language
-        )
+        assertTrue(localizedLocale.language in SupportedLocaleRegistry.all)
+        assertEquals(expectedLanguage, localizedLocale.language)
 
         InstrumentationRegistry.getInstrumentation().runOnMainSync {
             val dateDialog = DatePickerDialog(localizedContext)
@@ -50,11 +50,11 @@ class LocaleContextInstrumentedTest {
             )
 
             assertEquals(
-                SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG,
+                expectedLanguage,
                 dateDialog.context.resources.configuration.locales[0].language
             )
             assertEquals(
-                SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG,
+                expectedLanguage,
                 timeDialog.context.resources.configuration.locales[0].language
             )
 
