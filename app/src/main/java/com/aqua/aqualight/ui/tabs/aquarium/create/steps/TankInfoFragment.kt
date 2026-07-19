@@ -183,7 +183,7 @@ class TankInfoFragment :
             currentMillis = viewModel.tankDraft.setupDateMillis,
             minYear = AquariumDatePolicy.minSetupYear(),
             maxYear = AquariumDatePolicy.maxSetupYear(),
-            locale = AquariumDatePolicy.setupDateLocale
+            locale = AquariumDatePolicy.setupDateLocale(requireContext())
         )
     }
 
@@ -229,6 +229,7 @@ class TankInfoFragment :
 
     private fun formatSetupDate(millis: Long?): String {
         return AquariumDatePolicy.formatSetupDate(
+            context = requireContext(),
             millis = millis,
             emptyText = getString(R.string.aquarium_common_not_selected)
         )
