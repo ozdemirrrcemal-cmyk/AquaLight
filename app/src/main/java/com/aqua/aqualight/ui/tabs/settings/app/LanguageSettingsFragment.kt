@@ -56,7 +56,7 @@ class LanguageSettingsFragment : Fragment(R.layout.fragment_language_settings) {
         )
 
         // Russian and Chinese are not part of the Stage 11 product locale contract.
-        // Keep the current XML geometry untouched while removing them from the user-facing list.
+        // The existing XML geometry is intentionally untouched to preserve the approved visual style.
         cardRussian.isVisible = false
         cardChinese.isVisible = false
 
@@ -119,9 +119,9 @@ class LanguageSettingsFragment : Fragment(R.layout.fragment_language_settings) {
                 row.card,
                 getString(
                     if (selected) {
-                        R.string.accessibility_state_selected
+                        R.string.language_option_selected_state
                     } else {
-                        R.string.accessibility_state_not_selected
+                        R.string.language_option_not_selected_state
                     }
                 )
             )
