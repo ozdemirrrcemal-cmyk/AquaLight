@@ -11,9 +11,7 @@
     <color name="aqua_button_neutral_container">@color/aqua_palette_hex_132237</color>
     <color name="aqua_button_neutral_content">@color/aqua_palette_hex_ffffff</color>
 
-    <color name="aqua_button_outline_container">@color/aqua_palette_hex_00000000</color>
     <color name="aqua_button_outline_stroke">@color/aqua_palette_hex_2a425f</color>
-    <color name="aqua_button_outline_content">@color/aqua_palette_hex_dde8f5</color>
 
     <color name="aqua_button_danger_container">@color/aqua_palette_hex_3a1728</color>
     <color name="aqua_button_danger_stroke">@color/aqua_palette_hex_90415a</color>
