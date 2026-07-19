@@ -12,6 +12,19 @@ class LocaleContextArchitectureTest {
     private val productionJava = File(repositoryRoot, "app/src/main/java")
 
     @Test
+    fun applicationAppliesCachedLocaleBeforeActivityAndPickerCreation() {
+        val source = File(
+            repositoryRoot,
+            "app/src/main/java/com/aqua/aqualight/app/AquaApp.kt"
+        ).readText()
+
+        assertTrue(source.contains("override fun attachBaseContext(base: Context)"))
+        assertTrue(source.contains("StartupAppearanceCache.create(base)"))
+        assertTrue(source.contains("AppCompatDelegate.setApplicationLocales("))
+        assertTrue(source.indexOf("override fun attachBaseContext") < source.indexOf("override fun onCreate"))
+    }
+
+    @Test
     fun frameworkPickersUseThePerAppLanguageContext() {
         listOf(
             "app/src/main/java/com/aqua/aqualight/ui/common/dialog/" +
