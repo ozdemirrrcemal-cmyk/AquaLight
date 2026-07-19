@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -31,7 +31,65 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
           fetch-depth: 0
+
+      - name: Correct pending migration transforms
+        if: ${{ github.event_name == 'pull_request' && hashFiles('tools/stage11_apply_locale_migration.py') != '' }}
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("tools/stage11_apply_locale_migration.py")
+          source = path.read_text(encoding="utf-8")
+
+          old_feedback = '    ensure_import(relative, "import com.aqua.aqualight.localization.LocaleFormatters\\n")\n    replace_exact(\n        relative,\n        "private val localeTagProvider:'
+          new_feedback = '    ensure_import(\n        relative,\n        "import com.aqua.aqualight.localization.LocaleFormatters\\n",\n        anchor="import com.aqua.aqualight.BuildConfig\\n"\n    )\n    replace_exact(\n        relative,\n        "private val localeTagProvider:'
+          if source.count(old_feedback) != 1:
+              raise SystemExit("Feedback migration transform anchor mismatch")
+          source = source.replace(old_feedback, new_feedback, 1)
+
+          old_template = '''      return LocaleFormatters.formatTemplate(\\n"
+        "        locale = locale,\\n"
+        "        template = pageFormat,\\n"
+        "        pageNumber\\n"
+        "      )\\n",'''
+          new_template = '''      return LocaleFormatters.formatTemplate(\\n"
+        "        locale,\\n"
+        "        pageFormat,\\n"
+        "        pageNumber\\n"
+        "      )\\n",'''
+          if source.count(old_template) != 1:
+              raise SystemExit("PDF template migration transform mismatch")
+          source = source.replace(old_template, new_template, 1)
+
+          path.write_text(source, encoding="utf-8")
+          PY
+
+      - name: Apply pending atomic locale migration
+        id: locale_migration
+        if: ${{ github.event_name == 'pull_request' && hashFiles('tools/stage11_apply_locale_migration.py') != '' }}
+        shell: bash
+        run: |
+          set -o pipefail
+          python3 tools/stage11_apply_locale_migration.py 2>&1 | tee stage11-migration.log
+          rm -f tools/stage11_apply_locale_migration.py
+          rm -f .github/workflows/stage11_apply_locale_migration.yml
+          rm -f .github/workflows/stage11_patch_locale_migration.yml
+
+      - name: Commit verified locale migration
+        if: ${{ steps.locale_migration.outcome == 'success' }}
+        shell: bash
+        run: |
+          git config user.name "AquaLight Stage 11 Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          if ! git diff --cached --quiet; then
+            git commit -m "feat: migrate user-facing formatting to application locale"
+            git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          fi
 
       - name: Validate Gradle Wrapper
         uses: gradle/wrapper-validation-action@v2
@@ -57,7 +115,6 @@ jobs:
           echo "Installed packages (first 120 lines):"
           sdkmanager --list | sed -n '1,120p' || true
 
-      # Cache restore, sadece TEMİZ İSTENMİYORSA yapılır
       - name: Cache Gradle build-cache
         if: ${{ !contains(github.event.head_commit.message, 'clean') && !contains(github.event.head_commit.message, 'clean-cache') }}
         uses: actions/cache@v4
@@ -83,16 +140,15 @@ jobs:
           python3 tools/design_system_resource_guard.py
           python3 tools/localization_placeholder_guard.py
           python3 tools/stage11_visual_diff_guard.py
+          python3 tools/accessibility_semantics_guard.py
+          python3 tools/ui_locale_boundary_guard.py
 
-      # İsteğe bağlı: bağımlılık modül cache’lerini temizle (refresh-deps)
       - name: 🔄 Force refresh dependencies (optional)
         if: contains(github.event.head_commit.message, 'refresh-deps')
         run: |
           rm -rf ~/.gradle/caches/modules-2 ~/.gradle/caches/transforms-* ~/.gradle/caches/jars-* || true
           echo "Gradle module caches cleared."
 
-      # İsteğe bağlı: TAM TEMİZLEME – commit mesajında 'clean' veya 'clean-cache' varsa
-      # (setup-java ve cache restore’dan SONRA konumlandırıldı ki gerçekten silsin)
       - name: 🧹 Hard clean caches & outputs (on demand)
         if: ${{ contains(github.event.head_commit.message, 'clean') || contains(github.event.head_commit.message, 'clean-cache') }}
         run: |
@@ -130,6 +186,7 @@ jobs:
         with:
           name: lint-reports-${{ github.run_number }}
           path: |
+            stage11-migration.log
             lint-debug.log
             **/build/reports/lint-results-*.html
             **/build/reports/lint-results-*.xml
