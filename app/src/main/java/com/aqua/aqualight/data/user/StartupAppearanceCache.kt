@@ -4,9 +4,11 @@ import android.content.Context
 import com.aqua.aqualight.i18n.SupportedLocaleRegistry
 
 /**
- * Tiny synchronous mirror for values required before the first Activity is
- * inflated. The encrypted Proto DataStore remains authoritative; this cache only
- * prevents Application.onCreate() from blocking on disk/decryption.
+ * Tiny synchronous mirror for values required before the first Activity is inflated.
+ *
+ * Theme state mirrors encrypted Proto DataStore. Language state mirrors the effective
+ * Android/AppCompat application locale and bootstraps that locale before Activity creation on
+ * Android 12 and lower. The cache is never an independent user-visible language source.
  */
 class StartupAppearanceCache private constructor(
     context: Context
