@@ -14,9 +14,7 @@ class AquariumMeasurementArchitectureTest {
     fun onlyTheSharedCalculatorOwnsThreeDimensionMultiplication() {
         val productionRoot = File(repositoryRoot, "app/src/main/java")
         val directVolumePattern = Regex(
-            "(?:[A-Za-z0-9_]+\.)?widthCm\s*\*\s*" +
-                "(?:[A-Za-z0-9_]+\.)?lengthCm\s*\*\s*" +
-                "(?:[A-Za-z0-9_]+\.)?heightCm"
+            """(?:[A-Za-z0-9_]+\.)?widthCm(?:\.to(?:Double|Long)\(\))?\s*\*\s*(?:[A-Za-z0-9_]+\.)?lengthCm(?:\.to(?:Double|Long)\(\))?\s*\*\s*(?:[A-Za-z0-9_]+\.)?heightCm"""
         )
         val owners = productionRoot.walkTopDown()
             .filter(File::isFile)
