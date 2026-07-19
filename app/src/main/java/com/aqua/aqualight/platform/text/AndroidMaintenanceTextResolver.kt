@@ -3,6 +3,7 @@ package com.aqua.aqualight.platform.text
 import android.content.Context
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
+import com.aqua.aqualight.localization.LocaleFormatters
 import com.aqua.aqualight.application.care.CareTaskSource
 import com.aqua.aqualight.application.care.CareTaskType
 import com.aqua.aqualight.ui.tabs.maintenance.text.CareTaskTypeCatalog
@@ -76,4 +77,11 @@ class AndroidMaintenanceTextResolver(
 
     override fun unknownAquarium(): String =
         appContext.getString(R.string.maintenance_unknown_aquarium)
+
+    override fun formatTime(millis: Long): String =
+        LocaleFormatters.formatPattern(
+            context = appContext,
+            millis = millis,
+            pattern = "HH:mm"
+        )
 }

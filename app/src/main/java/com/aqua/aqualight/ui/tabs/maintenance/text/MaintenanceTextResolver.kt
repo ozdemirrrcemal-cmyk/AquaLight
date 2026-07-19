@@ -35,6 +35,8 @@ interface MaintenanceTextResolver {
     fun daysAgo(days: Long): String
 
     fun unknownAquarium(): String
+
+    fun formatTime(millis: Long): String
 }
 
 data class CareTaskTypePresentation(

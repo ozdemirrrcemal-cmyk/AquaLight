@@ -12,13 +12,13 @@ import coil3.load
 import coil3.request.crossfade
 import coil3.request.error
 import com.aqua.aqualight.R
+import com.aqua.aqualight.localization.LocaleFormatters
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.databinding.ItemAquariumTankBinding
 import com.aqua.aqualight.ui.tabs.maintenance.TankCareSummaryUi
 import com.aqua.aqualight.ui.common.text.resolve
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 class AquariumTankAdapter(
@@ -220,7 +220,7 @@ class AquariumTankAdapter(
 
       val formatter = SimpleDateFormat(
         "yyyy/MM/dd",
-        Locale.getDefault()
+        LocaleFormatters.currentLocale(context)
       )
 
       return context.getString(

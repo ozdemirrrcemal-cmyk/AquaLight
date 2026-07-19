@@ -9,6 +9,7 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.aqua.aqualight.BuildConfig
+import com.aqua.aqualight.localization.LocaleFormatters
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionFailure
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionFailureKind
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionRequest
@@ -18,7 +19,6 @@ import com.aqua.aqualight.platform.media.FeedbackMediaFailureKind
 import com.aqua.aqualight.platform.media.FeedbackMediaProcessingResult
 import com.aqua.aqualight.platform.media.FeedbackMediaProcessor
 import com.aqua.aqualight.platform.media.ProcessedFeedbackMedia
-import java.util.Locale
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +38,7 @@ class FeedbackViewModel(
     private val submissionUseCase: FeedbackSubmissionUseCase,
     private val mediaProcessor: FeedbackMediaProcessor,
     private val appVersionProvider: () -> String = { BuildConfig.VERSION_NAME },
-    private val localeTagProvider: () -> String = { Locale.getDefault().toLanguageTag() }
+    private val localeTagProvider: () -> String = LocaleFormatters::currentLanguageTag
 ) : ViewModel() {
 
     private val restoredMedia = mediaProcessor.restore(
@@ -272,7 +272,7 @@ class FeedbackViewModel(
             submissionUseCase: FeedbackSubmissionUseCase,
             mediaProcessor: FeedbackMediaProcessor,
             appVersionProvider: () -> String = { BuildConfig.VERSION_NAME },
-            localeTagProvider: () -> String = { Locale.getDefault().toLanguageTag() }
+            localeTagProvider: () -> String = LocaleFormatters::currentLanguageTag
         ): ViewModelProvider.Factory {
             return object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(

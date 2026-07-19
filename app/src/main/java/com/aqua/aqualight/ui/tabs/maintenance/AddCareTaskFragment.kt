@@ -17,6 +17,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.localization.LocaleFormatters
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.application.care.CareTaskInputLimits
 import com.aqua.aqualight.application.care.CareTaskSource
@@ -42,7 +43,6 @@ import com.aqua.aqualight.ui.tabs.maintenance.text.CareTaskTypeCatalog
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
-import java.util.Locale
 import kotlinx.coroutines.launch
 
 class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
@@ -461,11 +461,11 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
     private fun updateDateTimeText() {
         binding.tvDueDateValue.text = SimpleDateFormat(
             "dd MMM yyyy",
-            Locale.getDefault()
+            LocaleFormatters.currentLocale(requireContext())
         ).format(Date(selectedCalendar.timeInMillis))
         binding.tvDueTimeValue.text = SimpleDateFormat(
             "HH:mm",
-            Locale.getDefault()
+            LocaleFormatters.currentLocale(requireContext())
         ).format(Date(selectedCalendar.timeInMillis))
     }
 

@@ -12,7 +12,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
-import java.util.Locale
+import com.aqua.aqualight.localization.LocaleFormatters
 
 object AquaMaterialCategoryRowFactory {
 
@@ -20,7 +20,7 @@ object AquaMaterialCategoryRowFactory {
         context: Context,
         title: String,
         summary: String,
-        iconText: String = title.take(2).uppercase(Locale.getDefault()),
+        iconText: String = title.take(2).uppercase(LocaleFormatters.currentLocale(context)),
         onClick: () -> Unit
     ): View {
         val row = LinearLayout(context).apply {

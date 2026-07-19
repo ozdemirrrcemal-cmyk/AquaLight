@@ -507,8 +507,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
             title = getString(R.string.aquarium_setup_date_title),
             currentMillis = tank.setupDateMillis,
             minYear = AquariumDatePolicy.minSetupYear(),
-            maxYear = AquariumDatePolicy.maxSetupYear(),
-            locale = AquariumDatePolicy.setupDateLocale
+            maxYear = AquariumDatePolicy.maxSetupYear()
         )
     }
 
@@ -561,6 +560,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
 
     private fun getSetupDateText(setupDateMillis: Long?): String {
         return AquariumDatePolicy.formatSetupDate(
+            context = requireContext(),
             millis = setupDateMillis,
             emptyText = getString(R.string.aquarium_no_value_placeholder)
         )

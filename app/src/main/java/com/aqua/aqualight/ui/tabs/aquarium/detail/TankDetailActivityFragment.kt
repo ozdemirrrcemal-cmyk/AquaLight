@@ -20,6 +20,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.aqua.aqualight.R
+import com.aqua.aqualight.localization.LocaleFormatters
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.databinding.FragmentTankDetailActivityBinding
@@ -43,7 +44,6 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
-import java.util.Locale
 import com.google.android.material.card.MaterialCardView
 
 class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activity) {
@@ -638,7 +638,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
     ): String {
         return SimpleDateFormat(
             "dd.MM.yyyy HH:mm",
-            Locale.getDefault()
+            LocaleFormatters.currentLocale(requireContext())
         ).format(Date(millis))
     }
 
@@ -647,7 +647,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
     ): String {
         val dateText = SimpleDateFormat(
             "dd.MM.yyyy",
-            Locale.getDefault()
+            LocaleFormatters.currentLocale(requireContext())
         ).format(Date(millis))
 
         return when {
@@ -674,7 +674,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
     ): String {
         return SimpleDateFormat(
             "HH:mm",
-            Locale.getDefault()
+            LocaleFormatters.currentLocale(requireContext())
         ).format(Date(millis))
     }
 
@@ -683,7 +683,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
     ): String {
         return SimpleDateFormat(
             "yyyyMMdd",
-            Locale.getDefault()
+            LocaleFormatters.currentLocale(requireContext())
         ).format(Date(millis))
     }
 

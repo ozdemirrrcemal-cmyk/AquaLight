@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
+import com.aqua.aqualight.localization.LocaleFormatters
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.databinding.FragmentTaskDetailBinding
 import com.aqua.aqualight.databinding.ItemTaskDetailRowBinding
@@ -29,7 +30,6 @@ import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 import androidx.navigation.fragment.navArgs
 
 class TaskDetailFragment :
@@ -473,7 +473,7 @@ class TaskDetailFragment :
   ): String {
     return SimpleDateFormat(
       "dd.MM.yyyy",
-      Locale.getDefault()
+      LocaleFormatters.currentLocale(requireContext())
     ).format(Date(millis))
   }
 
@@ -482,7 +482,7 @@ class TaskDetailFragment :
   ): String {
     return SimpleDateFormat(
       "HH:mm",
-      Locale.getDefault()
+      LocaleFormatters.currentLocale(requireContext())
     ).format(Date(millis))
   }
 
@@ -491,7 +491,7 @@ class TaskDetailFragment :
   ): String {
     return SimpleDateFormat(
       "dd.MM.yyyy HH:mm",
-      Locale.getDefault()
+      LocaleFormatters.currentLocale(requireContext())
     ).format(Date(millis))
   }
   override fun onDestroyView() {

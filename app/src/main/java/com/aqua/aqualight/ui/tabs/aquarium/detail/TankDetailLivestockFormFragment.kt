@@ -18,6 +18,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.localization.LocaleFormatters
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentTankLivestockFormBinding
 import com.aqua.aqualight.ui.common.dialog.AppDatePickerDialogFragment
@@ -30,7 +31,6 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
-import java.util.Locale
 import android.text.Editable
 import android.text.TextWatcher
 import androidx.navigation.fragment.findNavController
@@ -414,7 +414,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
     private fun updateDateText() {
         val formatter = SimpleDateFormat(
             "dd MMM yyyy",
-            Locale.getDefault()
+            LocaleFormatters.currentLocale(requireContext())
         )
 
         binding.tvAddedDateValue.text = formatter.format(

@@ -228,6 +228,7 @@ class MaintenanceViewModelBoundaryTest {
         override fun oneDayAgo() = "one day ago"
         override fun daysAgo(days: Long) = days.toString()
         override fun unknownAquarium() = "unknown"
+        override fun formatTime(millis: Long) = "00:00"
     }
 
     private fun tank(id: Long, name: String): AquariumTankSnapshot = AquariumTankSnapshot(

@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
+import com.aqua.aqualight.localization.LocaleFormatters
 import com.aqua.aqualight.databinding.ItemCareTaskBinding
 import com.aqua.aqualight.application.care.CareTaskSource
 import com.aqua.aqualight.application.care.CareTaskStatus
@@ -22,7 +23,6 @@ import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
-import java.util.Locale
 
 class CareTaskAdapter(
   private val context: Context,
@@ -151,7 +151,7 @@ class CareTaskAdapter(
   ): String {
     val dateText = SimpleDateFormat(
       "dd.MM.yyyy",
-      Locale.getDefault()
+      LocaleFormatters.currentLocale(context)
     ).format(Date(millis))
 
     return when {
@@ -188,7 +188,7 @@ class CareTaskAdapter(
   ): String {
     return SimpleDateFormat(
       "yyyyMMdd",
-      Locale.getDefault()
+      LocaleFormatters.currentLocale(context)
     ).format(Date(millis))
   }
 

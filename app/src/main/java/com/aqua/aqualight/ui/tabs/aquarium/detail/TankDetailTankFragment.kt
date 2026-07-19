@@ -14,6 +14,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
+import com.aqua.aqualight.localization.LocaleFormatters
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
@@ -27,7 +28,6 @@ import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
-import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
@@ -240,7 +240,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
         }
 
         val iconBox = TextView(requireContext()).apply {
-            text = shortCode.uppercase(Locale.getDefault())
+            text = shortCode.uppercase(LocaleFormatters.currentLocale(requireContext()))
             gravity = Gravity.CENTER
             setTextSizeResource(
                 if (shortCode.length > 2) {
@@ -361,6 +361,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
 
     private fun getTankSetupDateText(setupDateMillis: Long?): String {
         return AquariumDatePolicy.formatSetupDate(
+            context = requireContext(),
             millis = setupDateMillis,
             emptyText = VALUE_EMPTY
         )

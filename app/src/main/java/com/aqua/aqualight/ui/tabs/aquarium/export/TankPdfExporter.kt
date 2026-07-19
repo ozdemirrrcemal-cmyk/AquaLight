@@ -16,15 +16,13 @@ import android.net.Uri
 import androidx.core.content.FileProvider
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
+import com.aqua.aqualight.localization.LocaleFormatters
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import java.util.concurrent.TimeUnit
 import java.io.File
 import java.io.FileOutputStream
-import java.text.DecimalFormat
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -37,8 +35,6 @@ object TankPdfExporter {
   private const val PAGE_BOTTOM = 790f
 
   private const val PHOTO_HEIGHT = 125f
-
-  private val volumeFormatter = DecimalFormat("#.##")
 
   fun createTankReportPdf(
     context: Context,
@@ -54,7 +50,7 @@ object TankPdfExporter {
 
     writer.drawReportHeader(
       tankName = tank.name,
-      generatedDate = getGeneratedDateText()
+      generatedDate = getGeneratedDateText(context)
     )
 
     writer.drawSectionTitle(texts.sectionTankSummary)
@@ -66,6 +62,7 @@ object TankPdfExporter {
     writer.drawLabelValue(texts.labelSize, getSizeText(context, tank))
     writer.drawLabelValue(texts.labelVolume, getVolumeText(context, tank))
     writer.drawLabelValue(texts.labelSetupDate, getSetupDateText(
+      context = context,
       setupDateMillis = tank.setupDateMillis,
       noValue = texts.noValue
     ))
@@ -251,14 +248,15 @@ object TankPdfExporter {
     )
   }
 
-  private fun getGeneratedDateText(): String {
-    return SimpleDateFormat(
-      "dd MMM yyyy HH:mm",
-      Locale.getDefault()
-    ).format(Date())
-  }
+  private fun getGeneratedDateText(context: Context): String =
+    LocaleFormatters.formatPattern(
+      context = context,
+      millis = System.currentTimeMillis(),
+      pattern = "dd MMM yyyy HH:mm"
+    )
 
   private fun getSetupDateText(
+    context: Context,
     setupDateMillis: Long?,
     noValue: String
   ): String {
@@ -266,10 +264,11 @@ object TankPdfExporter {
       return noValue
     }
 
-    return SimpleDateFormat(
-      "dd MMM yyyy",
-      Locale.getDefault()
-    ).format(Date(setupDateMillis))
+    return LocaleFormatters.formatPattern(
+      context = context,
+      millis = setupDateMillis,
+      pattern = "dd MMM yyyy"
+    )
   }
 
   private fun getSizeText(
@@ -297,12 +296,12 @@ object TankPdfExporter {
     return if (tank.volumeUnit.equals("gal", ignoreCase = true)) {
       context.getString(
         R.string.aquarium_volume_gallon_format,
-        volumeFormatter.format(liter * 0.264172)
+        LocaleFormatters.formatNumber(context, liter * 0.264172)
       )
     } else {
       context.getString(
         R.string.aquarium_volume_liter_format,
-        volumeFormatter.format(liter)
+        LocaleFormatters.formatNumber(context, liter)
       )
     }
   }
@@ -354,6 +353,7 @@ object TankPdfExporter {
   }
 
   private data class TankPdfTexts(
+    val locale: Locale,
     val reportTitle: String,
     val sectionTankSummary: String,
     val sectionTankPhoto: String,
@@ -391,8 +391,8 @@ object TankPdfExporter {
     fun pageText(
       pageNumber: Int
     ): String {
-      return String.format(
-        Locale.getDefault(),
+      return LocaleFormatters.formatTemplate(
+        locale,
         pageFormat,
         pageNumber
       )
@@ -403,6 +403,7 @@ object TankPdfExporter {
         context: Context
       ): TankPdfTexts {
         return TankPdfTexts(
+          locale = LocaleFormatters.currentLocale(context),
           reportTitle = context.getString(R.string.tank_pdf_report_title),
           sectionTankSummary = context.getString(R.string.tank_pdf_section_tank_summary),
           sectionTankPhoto = context.getString(R.string.tank_pdf_section_tank_photo),

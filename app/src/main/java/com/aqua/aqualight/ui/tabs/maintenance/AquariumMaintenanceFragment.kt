@@ -22,6 +22,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.localization.LocaleFormatters
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.databinding.FragmentAquariumMaintenanceBinding
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetAction
@@ -46,7 +47,6 @@ import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 
 class AquariumMaintenanceFragment :
     Fragment(R.layout.fragment_aquarium_maintenance) {
@@ -830,7 +830,7 @@ class AquariumMaintenanceFragment :
     ): String {
         return SimpleDateFormat(
             "dd.MM.yyyy",
-            Locale.getDefault()
+            LocaleFormatters.currentLocale(requireContext())
         ).format(Date(millis))
     }
 
@@ -839,7 +839,7 @@ class AquariumMaintenanceFragment :
     ): String {
         return SimpleDateFormat(
             "HH:mm",
-            Locale.getDefault()
+            LocaleFormatters.currentLocale(requireContext())
         ).format(Date(millis))
     }
 
@@ -848,7 +848,7 @@ class AquariumMaintenanceFragment :
     ): String {
         return SimpleDateFormat(
             "dd.MM.yyyy HH:mm",
-            Locale.getDefault()
+            LocaleFormatters.currentLocale(requireContext())
         ).format(Date(millis))
     }
 
@@ -857,7 +857,7 @@ class AquariumMaintenanceFragment :
     ): String {
         return SimpleDateFormat(
             "yyyyMMdd",
-            Locale.getDefault()
+            LocaleFormatters.currentLocale(requireContext())
         ).format(Date(millis))
     }
 

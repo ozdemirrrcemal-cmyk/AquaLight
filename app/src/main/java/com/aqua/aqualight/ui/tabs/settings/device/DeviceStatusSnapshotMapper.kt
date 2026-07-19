@@ -47,7 +47,7 @@ object DeviceStatusSnapshotMapper {
         return statuses
             .sortedWith(
                 compareBy<OwnerDeviceStatusSnapshot> { status ->
-                    status.displayName.lowercase(Locale.US)
+                    status.displayName.lowercase(Locale.ROOT)
                 }.thenBy { status -> status.deviceUid }
             )
             .map { status -> status.toStatusItem(nowMillis) }
