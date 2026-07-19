@@ -3,6 +3,7 @@ package com.aqua.aqualight.i18n
 import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -30,6 +31,20 @@ class LocaleFormatterTest {
             "12,5",
             LocaleFormatter.formatDecimal(12.5, Locale.GERMANY)
         )
+    }
+
+    @Test
+    fun decimalInputAcceptsAppAndImeSeparatorsButRejectsGroupingAndMixedValues() {
+        val turkish = Locale("tr", "TR")
+
+        assertEquals(12.5, requireNotNull(LocaleFormatter.parseDecimal("12,5", turkish)), 0.0)
+        assertEquals(12.5, requireNotNull(LocaleFormatter.parseDecimal("12.5", turkish)), 0.0)
+        assertEquals(12.5, requireNotNull(LocaleFormatter.parseDecimal("12.5", Locale.US)), 0.0)
+        assertEquals(12.5, requireNotNull(LocaleFormatter.parseDecimal("12,5", Locale.US)), 0.0)
+        assertNull(LocaleFormatter.parseDecimal("1,234.5", Locale.US))
+        assertNull(LocaleFormatter.parseDecimal("1.234,5", turkish))
+        assertNull(LocaleFormatter.parseDecimal("12,", turkish))
+        assertNull(LocaleFormatter.parseDecimal("NaN", Locale.US))
     }
 
     @Test

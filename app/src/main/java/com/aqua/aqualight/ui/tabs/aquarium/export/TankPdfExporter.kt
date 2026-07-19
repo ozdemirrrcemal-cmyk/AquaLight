@@ -19,11 +19,11 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
+import com.aqua.aqualight.application.aquarium.AquariumVolumeCalculator
 import com.aqua.aqualight.i18n.LocaleFormatter
 import java.util.concurrent.TimeUnit
 import java.io.File
 import java.io.FileOutputStream
-import java.text.DecimalFormat
 import java.util.Locale
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -36,8 +36,6 @@ object TankPdfExporter {
   private const val PAGE_BOTTOM = 790f
 
   private const val PHOTO_HEIGHT = 125f
-
-  private val volumeFormatter = DecimalFormat("#.##")
 
   fun createTankReportPdf(
     context: Context,
@@ -288,21 +286,24 @@ object TankPdfExporter {
     context: Context,
     tank: AquariumTankSnapshot
   ): String {
-    val liter = (
-      tank.widthCm *
-      tank.lengthCm *
-      tank.heightCm
-    ) / 1000.0
+    val liters = AquariumVolumeCalculator.grossLiters(
+      widthCm = tank.widthCm,
+      lengthCm = tank.lengthCm,
+      heightCm = tank.heightCm
+    )
 
     return if (tank.volumeUnit.equals("gal", ignoreCase = true)) {
       context.getString(
         R.string.aquarium_volume_gallon_format,
-        volumeFormatter.format(liter * 0.264172)
+        LocaleFormatter.formatDecimal(
+          context,
+          AquariumVolumeCalculator.litersToGallons(liters)
+        )
       )
     } else {
       context.getString(
         R.string.aquarium_volume_liter_format,
-        volumeFormatter.format(liter)
+        LocaleFormatter.formatDecimal(context, liters)
       )
     }
   }

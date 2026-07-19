@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import android.text.format.DateFormat as AndroidDateFormat
 import androidx.core.content.ContextCompat
 import java.text.DateFormat as JavaDateFormat
+import java.text.DecimalFormatSymbols
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.time.format.DateTimeFormatter
@@ -14,6 +15,8 @@ import java.util.Locale
 
 /** Locale-aware, per-call formatters. NumberFormat and DateFormat are not shared across threads. */
 object LocaleFormatter {
+
+    private val decimalInputPattern = Regex("^[+-]?(?:\\d+(?:\\.\\d+)?|\\.\\d+)$")
 
     /**
      * Returns a context whose resources follow the AndroidX per-app language selection.
@@ -71,6 +74,14 @@ object LocaleFormatter {
         return formatDecimal(value, appLocale(context), maximumFractionDigits)
     }
 
+    /**
+     * Parses a decimal input using the active app locale. The alternate dot/comma separator is
+     * accepted for IME compatibility, but grouping, mixed separators and partial values are not.
+     */
+    fun parseDecimal(context: Context, value: CharSequence): Double? {
+        return parseDecimal(value.toString(), appLocale(context))
+    }
+
     fun formatPercent(
         context: Context,
         fraction: Number,
@@ -120,6 +131,26 @@ object LocaleFormatter {
             minimumFractionDigits = 0
             this.maximumFractionDigits = maximumFractionDigits.coerceAtLeast(0)
         }.format(value)
+    }
+
+    internal fun parseDecimal(value: String, locale: Locale): Double? {
+        val trimmed = value.trim()
+        if (trimmed.isEmpty()) return null
+
+        val localeSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
+        val alternateSeparator = if (localeSeparator == ',') '.' else ','
+        val localeSeparatorCount = trimmed.count { it == localeSeparator }
+        val alternateSeparatorCount = trimmed.count { it == alternateSeparator }
+
+        if (localeSeparatorCount > 1 || alternateSeparatorCount > 1) return null
+        if (localeSeparatorCount > 0 && alternateSeparatorCount > 0) return null
+
+        val normalized = trimmed
+            .replace(localeSeparator, '.')
+            .replace(alternateSeparator, '.')
+        if (!decimalInputPattern.matches(normalized)) return null
+
+        return normalized.toDoubleOrNull()?.takeIf { it.isFinite() }
     }
 
     internal fun formatPercent(

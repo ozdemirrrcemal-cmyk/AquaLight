@@ -3,12 +3,11 @@ package com.aqua.aqualight.ui.tabs.aquarium.common
 import android.content.Context
 import androidx.annotation.StringRes
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.AquariumVolumeCalculator
 import com.aqua.aqualight.i18n.LocaleFormatter
 import kotlin.math.roundToInt
 
 object AquariumDimensionFormatter {
-    private const val GALLON_PER_LITER = 0.264172
-
     fun sizeTitle(
         context: Context,
         sizeUnit: String
@@ -60,10 +59,14 @@ object AquariumDimensionFormatter {
         volumeUnit: String,
         rounded: Boolean = false
     ): String {
-        val liters = (widthCm * lengthCm * heightCm) / 1000.0
+        val liters = AquariumVolumeCalculator.grossLiters(
+            widthCm = widthCm,
+            lengthCm = lengthCm,
+            heightCm = heightCm
+        )
 
         return if (volumeUnit.equals("gal", ignoreCase = true)) {
-            val gallons = liters * GALLON_PER_LITER
+            val gallons = AquariumVolumeCalculator.litersToGallons(liters)
             context.getString(
                 R.string.aquarium_volume_gallon_format,
                 if (rounded) {
