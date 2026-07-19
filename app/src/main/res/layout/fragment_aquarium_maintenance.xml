@@ -75,7 +75,8 @@
                 android:contentDescription="@string/maintenance_tab_upcoming"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:text="@string/maintenance_tab_next"
+                android:tag="aqua_large_font_text:maintenance_tab_next"
+                android:text="@string/maintenance_tab_upcoming"
                 android:textColor="@color/aqua_card_text_secondary"
                 android:textSize="@dimen/aqua_text_size_body_small" />
 
@@ -96,8 +97,8 @@
     </HorizontalScrollView>
 
     <com.google.android.material.card.MaterialCardView
-                style="@style/Widget.Aqua.Card.Metric"
         android:id="@+id/cardCareProfileWarning"
+        style="@style/Widget.Aqua.Card.Metric"
         android:layout_width="@dimen/aqua_size_0"
         android:layout_height="@dimen/aqua_size_72"
         android:layout_marginStart="@dimen/aqua_size_16"
@@ -177,10 +178,10 @@
                 android:background="@drawable/bg_maintenance_profile_percent_warning"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                tools:text="@string/maintenance_percent_preview"
                 android:textColor="@color/aqua_content_warning"
                 android:textSize="@dimen/aqua_text_size_caption"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                tools:text="@string/maintenance_percent_preview" />
 
         </LinearLayout>
 
@@ -286,13 +287,14 @@
             android:textSize="@dimen/aqua_text_size_state_body" />
 
         <com.google.android.material.button.MaterialButton
-            style="@style/Widget.Aqua.Button.Primary"
             android:id="@+id/btnEmptyAddCareTask"
+            style="@style/Widget.Aqua.Button.Primary"
             android:layout_width="@dimen/aqua_size_180"
             android:layout_height="@dimen/aqua_button_height"
             android:layout_marginTop="@dimen/aqua_size_22"
             android:contentDescription="@string/maintenance_action_add_care_task"
-            android:text="@string/maintenance_action_add"
+            android:tag="aqua_large_font_text:maintenance_action_add"
+            android:text="@string/maintenance_action_add_task"
             android:textStyle="bold" />
 
     </LinearLayout>
