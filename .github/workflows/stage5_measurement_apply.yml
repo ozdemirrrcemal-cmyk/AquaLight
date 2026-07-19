@@ -40,6 +40,42 @@ jobs:
                   line[10:] if line.startswith('          ') else line
                   for line in raw_script.splitlines()
               )
+
+              fragile_start = script.index(
+                  "text = replace_once(\n    text,\n    '''    internal fun formatDecimal("
+              )
+              fragile_end = script.index('write(locale_path, text)', fragile_start)
+              parser_insertion = '''parse_marker = "    internal fun formatPercent(\\n"
+if text.count(parse_marker) != 1:
+    raise SystemExit(f"{locale_path}: expected one formatPercent insertion boundary")
+text = text.replace(
+    parse_marker,
+    ''' + "'''" + '''    internal fun parseDecimal(value: String, locale: Locale): Double? {
+        val trimmed = value.trim()
+        if (trimmed.isEmpty()) return null
+
+        val localeSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
+        val alternateSeparator = if (localeSeparator == ',') '.' else ','
+        val localeSeparatorCount = trimmed.count { it == localeSeparator }
+        val alternateSeparatorCount = trimmed.count { it == alternateSeparator }
+
+        if (localeSeparatorCount > 1 || alternateSeparatorCount > 1) return null
+        if (localeSeparatorCount > 0 && alternateSeparatorCount > 0) return null
+
+        val normalized = trimmed
+            .replace(localeSeparator, '.')
+            .replace(alternateSeparator, '.')
+        if (!decimalInputPattern.matches(normalized)) return null
+
+        return normalized.toDoubleOrNull()?.takeIf { it.isFinite() }
+    }
+
+    internal fun formatPercent(
+''' + "'''" + ''',
+    1
+)
+'''
+              script = script[:fragile_start] + parser_insertion + script[fragile_end:]
               exec(compile(script, '<stage5-measurement-codemod>', 'exec'))
           except BaseException as error:
               Path('.stage5-codemod-error.txt').write_text(
