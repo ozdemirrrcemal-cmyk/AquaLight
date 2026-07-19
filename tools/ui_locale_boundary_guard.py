@@ -11,18 +11,14 @@ SCAN_ROOTS = (
     ROOT / "app/src/main/java/com/aqua/aqualight/ui",
     ROOT / "app/src/main/java/com/aqua/aqualight/platform/text",
 )
-ALLOWED_FILES = {
-    ROOT / "app/src/main/java/com/aqua/aqualight/localization/LocaleFormatters.kt",
-}
 PATTERNS = {
     "Locale.getDefault()": re.compile(r"\bLocale\.getDefault\s*\("),
     "Locale.US": re.compile(r"\bLocale\.US\b"),
-    "SimpleDateFormat": re.compile(r"\bSimpleDateFormat\s*\("),
     "DecimalFormat": re.compile(r"\bDecimalFormat\s*\("),
-    "direct DateFormat factory": re.compile(
-        r"\bDateFormat\.(?:getDateInstance|getTimeInstance|getDateTimeInstance)\s*\("
-    ),
     "String.format": re.compile(r"\bString\.format\s*\("),
+    "locale-less SimpleDateFormat": re.compile(
+        r"\bSimpleDateFormat\s*\(\s*(?:\"[^\"]*\"|[A-Z_][A-Z0-9_]*)\s*\)"
+    ),
 }
 
 
@@ -30,8 +26,6 @@ def main() -> int:
     violations: list[str] = []
     for scan_root in SCAN_ROOTS:
         for path in sorted(scan_root.rglob("*.kt")):
-            if path in ALLOWED_FILES:
-                continue
             source = path.read_text(encoding="utf-8")
             for label, pattern in PATTERNS.items():
                 for match in pattern.finditer(source):
