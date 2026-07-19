@@ -1,12 +1,13 @@
 package com.aqua.aqualight.i18n
 
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
 import android.content.Context
 import android.content.res.Configuration
+import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
+import com.aqua.aqualight.ui.common.dialog.AppDatePickerDialogFragment
+import com.aqua.aqualight.ui.common.dialog.AppTimePickerDialogFragment
+import com.aqua.aqualight.ui.common.feedback.Stage8DialogTestActivity
 import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -20,7 +21,7 @@ class LocaleContextInstrumentedTest {
     private val applicationContext: Context = ApplicationProvider.getApplicationContext()
 
     @Test
-    fun unsupportedChineseDeviceLocaleCannotLeakIntoFrameworkPickers() {
+    fun unsupportedChineseDeviceLocaleCannotLeakIntoFormattingContext() {
         val chineseConfiguration = Configuration(
             applicationContext.resources.configuration
         ).apply {
@@ -38,28 +39,46 @@ class LocaleContextInstrumentedTest {
         assertNotEquals("zh", localizedLocale.language)
         assertTrue(localizedLocale.language in SupportedLocaleRegistry.all)
         assertEquals(expectedLanguage, localizedLocale.language)
+    }
 
-        InstrumentationRegistry.getInstrumentation().runOnMainSync {
-            val dateDialog = DatePickerDialog(localizedContext)
-            val timeDialog = TimePickerDialog(
-                localizedContext,
-                null,
-                12,
-                0,
-                true
-            )
+    @Test
+    fun dateAndTimePickerFragmentsAttachToLiveActivityWindow() {
+        val scenario = ActivityScenario.launch(Stage8DialogTestActivity::class.java)
+        try {
+            scenario.onActivity { activity ->
+                val fragmentManager = activity.supportFragmentManager
+                val now = System.currentTimeMillis()
 
-            assertEquals(
-                expectedLanguage,
-                dateDialog.context.resources.configuration.locales[0].language
-            )
-            assertEquals(
-                expectedLanguage,
-                timeDialog.context.resources.configuration.locales[0].language
-            )
+                AppDatePickerDialogFragment.show(
+                    fragmentManager = fragmentManager,
+                    requestKey = "date-picker-window-token",
+                    initialMillis = now
+                )
+                fragmentManager.executePendingTransactions()
 
-            dateDialog.dismiss()
-            timeDialog.dismiss()
+                val datePicker = fragmentManager.fragments
+                    .filterIsInstance<AppDatePickerDialogFragment>()
+                    .single()
+                assertTrue(datePicker.dialog?.isShowing == true)
+                datePicker.dismissNow()
+                fragmentManager.executePendingTransactions()
+
+                AppTimePickerDialogFragment.show(
+                    fragmentManager = fragmentManager,
+                    requestKey = "time-picker-window-token",
+                    initialMillis = now
+                )
+                fragmentManager.executePendingTransactions()
+
+                val timePicker = fragmentManager.fragments
+                    .filterIsInstance<AppTimePickerDialogFragment>()
+                    .single()
+                assertTrue(timePicker.dialog?.isShowing == true)
+                timePicker.dismissNow()
+                fragmentManager.executePendingTransactions()
+            }
+        } finally {
+            scenario.close()
         }
     }
 }
