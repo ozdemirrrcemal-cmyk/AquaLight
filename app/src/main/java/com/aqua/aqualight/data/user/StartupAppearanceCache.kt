@@ -16,7 +16,9 @@ class StartupAppearanceCache private constructor(
         val languageCode: String
     )
 
-    private val preferences = context.applicationContext.getSharedPreferences(
+    // During Application.attachBaseContext() the framework ContextImpl is usable,
+    // while context.applicationContext can still be null on older Android releases.
+    private val preferences = context.getSharedPreferences(
         FILE_NAME,
         Context.MODE_PRIVATE
     )
@@ -92,7 +94,9 @@ class StartupAppearanceCache private constructor(
         fun create(
             context: Context
         ): StartupAppearanceCache {
-            return StartupAppearanceCache(context.applicationContext)
+            return StartupAppearanceCache(
+                context.applicationContext ?: context
+            )
         }
     }
 }
