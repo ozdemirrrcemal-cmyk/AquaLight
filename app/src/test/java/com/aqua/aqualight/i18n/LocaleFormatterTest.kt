@@ -55,4 +55,21 @@ class LocaleFormatterTest {
         assertNotEquals(englishTime, germanTime)
         assertNotEquals(englishDateTime, germanDateTime)
     }
+
+    @Test
+    fun unsupportedConfiguredLocaleFallsBackToCommercialDefault() {
+        val resolved = LocaleFormatter.resolveSupportedLocale(Locale.SIMPLIFIED_CHINESE)
+
+        assertEquals(
+            SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG,
+            resolved.toLanguageTag()
+        )
+    }
+
+    @Test
+    fun supportedConfiguredLocaleRemainsSelected() {
+        val resolved = LocaleFormatter.resolveSupportedLocale(Locale.ENGLISH)
+
+        assertEquals("en", resolved.toLanguageTag())
+    }
 }
