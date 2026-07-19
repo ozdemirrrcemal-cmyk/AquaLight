@@ -8,6 +8,7 @@ import android.text.format.DateFormat
 import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
+import com.aqua.aqualight.i18n.LocaleFormatter
 import java.util.Calendar
 
 /** Framework-recreatable time picker that returns its value through Fragment Result. */
@@ -20,8 +21,9 @@ class AppTimePickerDialogFragment : DialogFragment() {
         val calendar = Calendar.getInstance().apply {
             timeInMillis = args.getLong(ARG_INITIAL_MILLIS)
         }
+        val localizedContext = LocaleFormatter.localizedContext(requireContext())
         return TimePickerDialog(
-            requireContext(),
+            localizedContext,
             { _, hourOfDay, minute ->
                 calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
                 calendar.set(Calendar.MINUTE, minute)
@@ -29,7 +31,7 @@ class AppTimePickerDialogFragment : DialogFragment() {
             },
             calendar.get(Calendar.HOUR_OF_DAY),
             calendar.get(Calendar.MINUTE),
-            DateFormat.is24HourFormat(requireContext())
+            DateFormat.is24HourFormat(localizedContext)
         )
     }
 
