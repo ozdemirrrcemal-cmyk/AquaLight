@@ -33,7 +33,7 @@ jobs:
 
           smart = 'app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareProfileBuilder.kt'
           replace_exact(smart, 'import java.util.concurrent.TimeUnit', 'import java.time.Instant\nimport java.time.LocalDate\nimport java.time.ZoneId\nimport java.time.temporal.ChronoUnit', 1)
-          replace_exact(smart, 'setupDateMillis', 'setupDateEpochDay', 4)
+          replace_exact(smart, 'setupDateMillis', 'setupDateEpochDay', 5)
           replace_exact(
               smart,
               '''    val diffMillis = nowMillis - setupDateEpochDay
@@ -58,7 +58,7 @@ jobs:
 
           detail = 'app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailTankFragment.kt'
           replace_exact(detail, 'import java.util.concurrent.TimeUnit', 'import com.aqua.aqualight.i18n.DateOnly\nimport java.time.LocalDate\nimport java.time.temporal.ChronoUnit', 1)
-          replace_exact(detail, 'setupDateMillis', 'setupDateEpochDay', 8)
+          replace_exact(detail, 'setupDateMillis', 'setupDateEpochDay', 7)
           replace_exact(
               detail,
               '''        val day = TimeUnit.MILLISECONDS
