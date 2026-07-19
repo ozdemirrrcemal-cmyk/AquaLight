@@ -6,7 +6,6 @@
     <string name="language_option_not_selected_state">Not selected</string>
 
     <!-- Dynamic device-state accessibility. -->
-    <string name="device_presence_state_announcement">%1$s is now %2$s</string>
     <string name="device_card_accessibility_with_tank">%1$s, UID: %2$s, aquarium: %3$s, %4$s</string>
     <string name="device_card_accessibility_without_tank">%1$s, UID: %2$s, %3$s</string>
 </resources>
