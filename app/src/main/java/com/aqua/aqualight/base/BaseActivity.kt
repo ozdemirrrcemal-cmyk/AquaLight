@@ -12,6 +12,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.loading.LoadingOverlayDialogFragment
 import com.aqua.aqualight.composition.requireAppContainer
+import com.aqua.aqualight.ui.common.accessibility.installAutomaticTouchTargets
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.snackbar.Snackbar
@@ -68,6 +69,7 @@ open class BaseActivity : AppCompatActivity() {
     override fun onPostResume() {
         super.onPostResume()
         renderGlobalLoading()
+        installAutomaticTouchTargets(window.decorView)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
