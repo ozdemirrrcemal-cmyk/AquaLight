@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
@@ -31,81 +31,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
           fetch-depth: 0
-
-      - name: Prepare pending locale migration
-        if: ${{ github.event_name == 'pull_request' && hashFiles('tools/stage11_apply_locale_migration.py') != '' }}
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path("tools/stage11_apply_locale_migration.py")
-          source = path.read_text(encoding="utf-8")
-          old = (
-              "    if anchor not in source:\n"
-              "        raise RuntimeError(f\"{relative}: import anchor missing: {anchor!r}\")\n"
-          )
-          new = (
-              "    if anchor not in source:\n"
-              "        build_config_anchor = \"import com.aqua.aqualight.BuildConfig\\n\"\n"
-              "        if build_config_anchor in source:\n"
-              "            anchor = build_config_anchor\n"
-              "        else:\n"
-              "            raise RuntimeError(f\"{relative}: import anchor missing: {anchor!r}\")\n"
-          )
-          if source.count(old) != 1:
-              raise SystemExit("Migration import helper transform mismatch")
-          path.write_text(source.replace(old, new, 1), encoding="utf-8")
-          PY
-
-      - name: Apply pending atomic locale migration
-        id: locale_migration
-        if: ${{ github.event_name == 'pull_request' && hashFiles('tools/stage11_apply_locale_migration.py') != '' }}
-        shell: bash
-        run: |
-          set -o pipefail
-          python3 tools/stage11_apply_locale_migration.py 2>&1 | tee stage11-migration.log
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path("app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt")
-          source = path.read_text(encoding="utf-8")
-          old = (
-              "      return LocaleFormatters.formatTemplate(\n"
-              "        locale = locale,\n"
-              "        template = pageFormat,\n"
-              "        pageNumber\n"
-              "      )"
-          )
-          new = (
-              "      return LocaleFormatters.formatTemplate(\n"
-              "        locale,\n"
-              "        pageFormat,\n"
-              "        pageNumber\n"
-              "      )"
-          )
-          if source.count(old) != 1:
-              raise SystemExit("TankPdfExporter locale template transform mismatch")
-          path.write_text(source.replace(old, new, 1), encoding="utf-8")
-          PY
-          rm -f tools/stage11_apply_locale_migration.py
-          rm -f .github/workflows/stage11_apply_locale_migration.yml
-          rm -f .github/workflows/stage11_patch_locale_migration.yml
-
-      - name: Commit verified locale migration
-        if: ${{ steps.locale_migration.outcome == 'success' }}
-        shell: bash
-        run: |
-          git config user.name "AquaLight Stage 11 Bot"
-          git config user.email "actions@users.noreply.github.com"
-          git add -A
-          git diff --cached --check
-          if ! git diff --cached --quiet; then
-            git commit -m "feat: migrate user-facing formatting to application locale"
-            git push origin HEAD:${{ github.event.pull_request.head.ref }}
-          fi
 
       - name: Validate Gradle Wrapper
         uses: gradle/wrapper-validation-action@v2
@@ -145,19 +71,23 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Run Architecture Guard
+        shell: bash
         run: |
-          python3 tools/architecture_guard.py
-          python3 tools/navigation_guard.py
-          python3 tools/ws_protocol_guard.py
-          python3 tools/permission_architecture_guard.py
-          python3 tools/notification_reminder_architecture_guard.py
-          python3 tools/process_safe_feedback_guard.py
-          python3 tools/stage9_feedback_media_guard.py
-          python3 tools/design_system_resource_guard.py
-          python3 tools/localization_placeholder_guard.py
-          python3 tools/stage11_visual_diff_guard.py
-          python3 tools/accessibility_semantics_guard.py
-          python3 tools/ui_locale_boundary_guard.py
+          set -o pipefail
+          {
+            python3 tools/architecture_guard.py
+            python3 tools/navigation_guard.py
+            python3 tools/ws_protocol_guard.py
+            python3 tools/permission_architecture_guard.py
+            python3 tools/notification_reminder_architecture_guard.py
+            python3 tools/process_safe_feedback_guard.py
+            python3 tools/stage9_feedback_media_guard.py
+            python3 tools/design_system_resource_guard.py
+            python3 tools/localization_placeholder_guard.py
+            python3 tools/stage11_visual_diff_guard.py
+            python3 tools/accessibility_semantics_guard.py
+            python3 tools/ui_locale_boundary_guard.py
+          } 2>&1 | tee architecture-guards.log
 
       - name: 🔄 Force refresh dependencies (optional)
         if: contains(github.event.head_commit.message, 'refresh-deps')
@@ -200,9 +130,9 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: lint-reports-${{ github.run_number }}
+          name: android-ci-reports-${{ github.run_number }}
           path: |
-            stage11-migration.log
+            architecture-guards.log
             lint-debug.log
             **/build/reports/lint-results-*.html
             **/build/reports/lint-results-*.xml
