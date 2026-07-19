@@ -12,74 +12,16 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   audit:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Stage 11 head branch
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
-
-      - name: Correct pending migration transforms
-        if: ${{ hashFiles('tools/stage11_apply_locale_migration.py') != '' }}
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path("tools/stage11_apply_locale_migration.py")
-          source = path.read_text(encoding="utf-8")
-
-          old_feedback = '    ensure_import(relative, "import com.aqua.aqualight.localization.LocaleFormatters\\n")\n    replace_exact(\n        relative,\n        "private val localeTagProvider:'
-          new_feedback = '    ensure_import(\n        relative,\n        "import com.aqua.aqualight.localization.LocaleFormatters\\n",\n        anchor="import com.aqua.aqualight.BuildConfig\\n"\n    )\n    replace_exact(\n        relative,\n        "private val localeTagProvider:'
-          if source.count(old_feedback) != 1:
-              raise SystemExit("Feedback migration transform anchor mismatch")
-          source = source.replace(old_feedback, new_feedback, 1)
-
-          old_template = '''      return LocaleFormatters.formatTemplate(\\n"
-        "        locale = locale,\\n"
-        "        template = pageFormat,\\n"
-        "        pageNumber\\n"
-        "      )\\n",'''
-          new_template = '''      return LocaleFormatters.formatTemplate(\\n"
-        "        locale,\\n"
-        "        pageFormat,\\n"
-        "        pageNumber\\n"
-        "      )\\n",'''
-          if source.count(old_template) != 1:
-              raise SystemExit("PDF template migration transform mismatch")
-          source = source.replace(old_template, new_template, 1)
-
-          path.write_text(source, encoding="utf-8")
-          PY
-
-      - name: Apply pending atomic locale migration
-        id: locale_migration
-        if: ${{ hashFiles('tools/stage11_apply_locale_migration.py') != '' }}
-        shell: bash
-        run: |
-          set -o pipefail
-          python3 tools/stage11_apply_locale_migration.py 2>&1 | tee stage11-migration.log
-          rm -f tools/stage11_apply_locale_migration.py
-          rm -f .github/workflows/stage11_apply_locale_migration.yml
-          rm -f .github/workflows/stage11_patch_locale_migration.yml
-
-      - name: Commit verified locale migration
-        if: ${{ steps.locale_migration.outcome == 'success' }}
-        shell: bash
-        run: |
-          git config user.name "AquaLight Stage 11 Bot"
-          git config user.email "actions@users.noreply.github.com"
-          git add -A
-          git diff --cached --check
-          if ! git diff --cached --quiet; then
-            git commit -m "feat: migrate user-facing formatting to application locale"
-            git push origin HEAD:${{ github.event.pull_request.head.ref }}
-          fi
 
       - name: Run Stage 11 source guards
         shell: bash
@@ -97,7 +39,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: stage11-source-audit-${{ github.run_number }}
-          path: |
-            stage11-migration.log
-            stage11-source-audit.log
-          if-no-files-found: ignore
+          path: stage11-source-audit.log
+          if-no-files-found: error
