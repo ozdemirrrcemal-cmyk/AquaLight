@@ -10,6 +10,7 @@ import com.aqua.aqualight.data.media.AppMediaRecoveryManager
 import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.aqua.aqualight.data.user.UserPreferencesManager
+import com.aqua.aqualight.localization.SupportedLocaleRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -46,9 +47,11 @@ class AquaApp : Application() {
             val resolvedThemeMode = preferences.themeMode.ifBlank {
                 UserPreferencesManager.DEFAULT_THEME_MODE
             }
-            val resolvedLanguageCode = preferences.languageCode.ifBlank {
-                UserPreferencesManager.DEFAULT_LANGUAGE_CODE
-            }
+            val resolvedLanguageCode = SupportedLocaleRegistry.normalize(
+                preferences.languageCode.ifBlank {
+                    UserPreferencesManager.DEFAULT_LANGUAGE_CODE
+                }
+            )
 
             appearanceCache.write(
                 themeMode = resolvedThemeMode,
@@ -57,7 +60,7 @@ class AquaApp : Application() {
 
             if (
                 cachedAppearance.themeMode != resolvedThemeMode ||
-                cachedAppearance.languageCode != resolvedLanguageCode
+                SupportedLocaleRegistry.normalize(cachedAppearance.languageCode) != resolvedLanguageCode
             ) {
                 withContext(Dispatchers.Main.immediate) {
                     applyTheme(resolvedThemeMode)
@@ -104,7 +107,7 @@ class AquaApp : Application() {
     }
 
     private fun applyLanguage(code: String) {
-        val safeCode = code.ifBlank { UserPreferencesManager.DEFAULT_LANGUAGE_CODE }
+        val safeCode = SupportedLocaleRegistry.normalize(code)
         val localeList = LocaleListCompat.forLanguageTags(safeCode)
         AppCompatDelegate.setApplicationLocales(localeList)
     }
