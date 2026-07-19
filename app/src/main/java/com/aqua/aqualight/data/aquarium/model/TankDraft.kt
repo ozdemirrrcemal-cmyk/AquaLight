@@ -1,8 +1,5 @@
 package com.aqua.aqualight.data.aquarium.model
 
-import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
-import com.aqua.aqualight.data.aquarium.model.TankPlantTag
-
 data class TankDraft(
     val name: String = "",
     val description: String = "",
@@ -10,7 +7,7 @@ data class TankDraft(
     val plants: List<TankPlantTag> = emptyList(),
     val materials: List<TankMaterialSelection> = emptyList(),
     val info: String = "",
-    val setupDateMillis: Long? = null,
+    val setupDateEpochDay: Long? = null,
     val widthCm: Int = 10,
     val lengthCm: Int = 10,
     val heightCm: Int = 10,
