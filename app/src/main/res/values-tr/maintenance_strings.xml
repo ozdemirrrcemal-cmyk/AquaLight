@@ -222,8 +222,8 @@
     <string name="maintenance_smart_rule_co2_system_check_message">CO₂ zamanlamasını, kabarcık hızını, drop checker rengini ve canlı davranışlarını kontrol edin.</string>
     <string name="maintenance_smart_rule_livestock_health_check_message">İştahı, davranışı, solunumu ve görünür stres belirtilerini kontrol edin.</string>
 
-    <string name="maintenance_smart_msg_water_change_day">%1$d. gün. Akvaryumun dengeli kalmasına yardımcı olmak için suyun yaklaşık %%2$d kadarını değiştirin.</string>
-    <string name="maintenance_smart_msg_water_change">Akvaryumun dengeli kalmasına yardımcı olmak için suyun yaklaşık %%1$d kadarını değiştirin.</string>
+    <string name="maintenance_smart_msg_water_change_day">%1$d. gün. Akvaryumun dengeli kalmasına yardımcı olmak için suyun yaklaşık %2$d%% kadarını değiştirin.</string>
+    <string name="maintenance_smart_msg_water_change">Akvaryumun dengeli kalmasına yardımcı olmak için suyun yaklaşık %1$d%% kadarını değiştirin.</string>
     <string name="maintenance_smart_msg_fertilizer_missing_day">%1$d. gün. Otomatik dozaj önerilerini iyileştirmek için gübre ürününüzü ekleyin.</string>
     <string name="maintenance_smart_msg_fertilizer_missing">Otomatik dozaj önerilerini iyileştirmek için gübre ürününüzü ekleyin.</string>
     <string name="maintenance_smart_msg_delay_fertilizer_day">%1$d. gün. Şimdilik %2$s dozajını erteleyin ve bitki tepkisini izleyin.</string>
