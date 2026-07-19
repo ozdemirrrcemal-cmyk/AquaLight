@@ -3,8 +3,8 @@ package com.aqua.aqualight.ui.tabs.settings.device
 import android.content.res.ColorStateList
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.recyclerview.widget.RecyclerView
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemDeviceStatusBinding
 import com.aqua.aqualight.ui.common.text.resolve
@@ -34,6 +34,10 @@ class DeviceStatusAdapter : RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewH
             val presenceText = context.getString(
                 if (item.isOnline) R.string.device_online else R.string.device_offline
             )
+            val presenceAnnouncement = context.getString(
+                R.string.accessibility_device_status_changed,
+                presenceText
+            )
 
             binding.tvDeviceName.text = name
             binding.ivDeviceIcon.setImageResource(item.iconRes)
@@ -52,7 +56,7 @@ class DeviceStatusAdapter : RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewH
                     else R.color.aqua_device_status_adapter_color
                 )
             )
-            binding.ivPresenceIcon.contentDescription = presenceText
+            binding.ivPresenceIcon.contentDescription = presenceAnnouncement
             binding.root.contentDescription = context.getString(
                 R.string.device_status_accessibility,
                 name,
@@ -76,5 +80,4 @@ class DeviceStatusAdapter : RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewH
     }
 
     override fun getItemCount(): Int = items.size
-
 }
