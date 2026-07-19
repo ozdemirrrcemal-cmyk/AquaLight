@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Screen titles -->
+    <string name="screen_title_devices">Cihazlar</string>
+    <string name="screen_title_device">Cihaz</string>
+    <string name="screen_title_unsupported_device">Desteklenmeyen Cihaz</string>
+    <string name="screen_title_settings">Ayarlar</string>
+    <string name="screen_title_edit_profile">Profili Düzenle</string>
+    <string name="screen_title_user_info">Kullanıcı Bilgileri</string>
+    <string name="screen_title_user_address">Kullanıcı Adresi</string>
+    <string name="screen_title_device_status">Cihaz Durumu</string>
+    <string name="screen_title_app_settings">Uygulama Ayarları</string>
+    <string name="screen_title_usage">Kullanım</string>
+    <string name="screen_title_privacy">Gizlilik</string>
+    <string name="screen_title_feedback">Geri Bildirim</string>
+    <string name="screen_title_logout">Çıkış Yap</string>
+    <string name="screen_title_change_password">Şifreyi Değiştir</string>
+    <string name="screen_title_change_email">E-postayı Değiştir</string>
+    <string name="screen_title_security_settings">Güvenlik Ayarları</string>
+    <string name="screen_title_re_authenticate">Kimliği Yeniden Doğrula</string>
+    <string name="screen_title_language">Dil</string>
+    <string name="screen_title_about">Hakkında</string>
+    <string name="screen_title_terms_of_use">Kullanım Koşulları</string>
+    <string name="screen_title_open_source_licenses">Açık Kaynak Lisansları</string>
+
+    <!-- Catalog picker -->
+    <string name="screen_title_material_picker">Malzeme Seçici</string>
+    <string name="screen_title_plant_picker">Bitki Seçici</string>
+    <string name="catalog_search_hint">Aramak için buraya yazın...</string>
+    <string name="material_picker_no_materials_found">Malzeme bulunamadı</string>
+    <string name="material_picker_new_title">Yeni %1$s</string>
+    <string name="material_picker_new_material">Yeni Malzeme</string>
+    <string name="material_picker_material_name">Malzeme Adı</string>
+    <string name="material_picker_enter_material_name">Malzeme adını girin</string>
+    <string name="material_picker_category">Kategori</string>
+    <string name="material_picker_required">Zorunlu</string>
+    <string name="material_picker_save">Kaydet</string>
+    <string name="material_picker_cancel">İptal</string>
+    <string name="material_picker_no_materials_selected">Malzeme seçilmedi</string>
+    <string name="material_picker_selected_count">%1$d seçildi</string>
+    <string name="material_picker_not_selected">Seçilmedi</string>
+    <string name="material_picker_more_count">%1$s +%2$d daha</string>
+    <string name="material_picker_popular_keywords">Popüler anahtar kelimeler</string>
+    <string name="material_picker_selected_zero">0 seçildi</string>
+    <string name="plant_picker_title">Akvaryum Bitkileri</string>
+    <string name="plant_picker_found">%1$d bitki bulundu</string>
+    <string name="plant_picker_empty">Bitki bulunamadı</string>
+
+    <!-- Device menu -->
+    <string name="device_menu_default_title">Cihaz</string>
+    <string name="device_menu_offline_dialog_title">Cihaz Çevrimdışı</string>
+    <string name="device_menu_offline_dialog_message">%1$s şu anda çevrimdışı.\n\n%2$s</string>
+    <string name="device_menu_offline_message">Cihazın açık ve telefonunuzla aynı Wi-Fi ağına bağlı olduğundan emin olun.</string>
+
+    <!-- Permission sheet -->
+    <string name="permission_sheet_allow">İzin ver</string>
+    <string name="permission_sheet_open_settings">Ayarları aç</string>
+    <string name="permission_sheet_not_now">Şimdi değil</string>
+    <string name="permission_camera_photo_rationale_title">Fotoğraflar için kamera erişimi</string>
+    <string name="permission_camera_photo_rationale_message">Akvaryum veya profil fotoğrafı çekmek için kamera erişimine izin verin. AquaLight kamerayı yalnızca fotoğraf çekimini başlattığınızda kullanır.</string>
+    <string name="permission_camera_photo_settings_title">Kamera erişimini etkinleştirin</string>
+    <string name="permission_camera_photo_settings_message">Kamera erişimi şu anda engellenmiş. Fotoğraf çekmeye devam etmek için AquaLight ayarlarını açıp Kamera iznini etkinleştirin.</string>
+    <string name="permission_camera_qr_rationale_title">QR kurulumu için kamera erişimi</string>
+    <string name="permission_camera_qr_rationale_message">AquaLight cihaz kurulum QR kodunu okuyabilsin diye kamera erişimine izin verin. Kamera kareleri yalnızca cihaz kurulumu için işlenir.</string>
+    <string name="permission_camera_qr_settings_title">QR kamera erişimini etkinleştirin</string>
+    <string name="permission_camera_qr_settings_message">Kamera erişimi şu anda engellenmiş. Cihaz QR kodunu taramak için AquaLight ayarlarını açıp Kamera iznini etkinleştirin.</string>
+    <string name="permission_ble_scan_rationale_title">Yakındaki cihazlara erişim</string>
+    <string name="permission_ble_scan_rationale_message">AquaLight kurulum sırasında uyumlu cihazları bulabilsin diye yakındaki cihazlara erişime izin verin.</string>
+    <string name="permission_ble_scan_settings_title">Yakındaki cihazlara erişimi etkinleştirin</string>
+    <string name="permission_ble_scan_settings_message">Yakındaki cihazlara erişim şu anda engellenmiş. Cihazları taramak için AquaLight ayarlarını açıp gerekli izni etkinleştirin.</string>
+    <string name="permission_ble_connect_rationale_title">Bluetooth bağlantı erişimi</string>
+    <string name="permission_ble_connect_rationale_message">AquaLight seçili cihazı güvenli biçimde yapılandırabilsin diye Bluetooth bağlantı erişimine izin verin.</string>
+    <string name="permission_ble_connect_settings_title">Bluetooth bağlantı erişimini etkinleştirin</string>
+    <string name="permission_ble_connect_settings_message">Bluetooth bağlantı erişimi şu anda engellenmiş. Kuruluma devam etmek için AquaLight ayarlarını açıp gerekli izni etkinleştirin.</string>
+    <string name="permission_ble_provisioning_rationale_title">Yakındaki cihazlara erişim</string>
+    <string name="permission_ble_provisioning_rationale_message">AquaLight cihazınızı bulup güvenli biçimde yapılandırabilsin diye yakındaki cihazlara erişime izin verin.</string>
+    <string name="permission_ble_provisioning_settings_title">Yakındaki cihazlara erişimi etkinleştirin</string>
+    <string name="permission_ble_provisioning_settings_message">Cihaz kurulumu için gereken izinler şu anda engellenmiş. AquaLight ayarlarını açıp Yakındaki cihazlar iznini etkinleştirin.</string>
+    <string name="permission_wifi_ssid_rationale_title">Geçerli Wi-Fi ağı</string>
+    <string name="permission_wifi_ssid_rationale_message">Android, telefonun bağlı olduğu Wi-Fi ağının adını okuyabilmek için konum izni ister. AquaLight bu izni yalnızca cihaz kurulumu sırasında ağ adını doldurmak için kullanır.</string>
+    <string name="permission_wifi_ssid_settings_title">Wi-Fi ağı erişimini etkinleştirin</string>
+    <string name="permission_wifi_ssid_settings_message">Geçerli Wi-Fi ağının adına erişim engellenmiş. Ağ adını otomatik doldurmak için AquaLight ayarlarını açıp Konum iznini etkinleştirin.</string>
+    <string name="permission_notifications_rationale_title">Bildirimlere izin verin</string>
+    <string name="permission_notifications_rationale_message">Akvaryum bakım hatırlatıcıları ve önemli cihaz uyarıları almak için bildirimlere izin verin. Bu ayarı daha sonra Uygulama Ayarları bölümünden değiştirebilirsiniz.</string>
+    <string name="permission_notifications_settings_title">Bildirimleri etkinleştirin</string>
+    <string name="permission_notifications_settings_message">Bildirimler Android tarafından engellenmiş. Bildirim ayarlarını açıp AquaLight bildirimlerine izin verin.</string>
+    <string name="permission_precise_reminders_rationale_title">Zamanında bakım hatırlatıcıları</string>
+    <string name="permission_precise_reminders_rationale_message">Uygulama kapalıyken bile bakım bildirimlerinin seçtiğiniz saatte gelebilmesi için AquaLight uygulamasının alarm ve hatırlatıcı planlamasına izin verin.</string>
+    <string name="permission_precise_reminders_settings_title">Alarm ve hatırlatıcılara izin verin</string>
+    <string name="permission_precise_reminders_settings_message">Android şu anda yalnızca yaklaşık hatırlatma zamanlamasına izin veriyor. Alarm ve hatırlatıcılar ayarını açıp AquaLight uygulamasının seçilen saatte bildirim göndermesine izin verin.</string>
+    <string name="settings_notifications_subtitle_precise_reminders_blocked">Zamanında bakım bildirimleri için Alarm ve hatırlatıcılar erişimi gereklidir.</string>
+
+    <!-- QR preflight -->
+    <string name="device_qr_preflight_checking_title">QR cihazı doğrulanıyor</string>
+    <string name="device_qr_preflight_checking_message">Bu QR kodunun yakındaki AquaLight cihazıyla eşleşip eşleşmediği kontrol ediliyor.</string>
+    <string name="device_qr_preflight_scan_again">Yeniden tara</string>
+    <string name="device_qr_preflight_allow_bluetooth_permission">Bluetooth iznine izin ver</string>
+    <string name="device_qr_preflight_open_bluetooth_settings">Bluetooth ayarlarını aç</string>
+    <string name="device_qr_preflight_bluetooth_permission_title">Bluetooth izni gerekli</string>
+    <string name="device_qr_preflight_bluetooth_permission_message">Wi-Fi kurulumundan önce QR cihazını doğrulamak için Bluetooth erişimine izin verin.</string>
+    <string name="device_qr_preflight_invalid_title">Bu bir AquaLight QR kodu değil.</string>
+    <string name="device_qr_preflight_invalid_message">Lütfen cihaz etiketindeki QR kodunu tarayın.</string>
+    <string name="device_qr_preflight_not_found_title">Cihaz bulunamadı.</string>
+    <string name="device_qr_preflight_not_found_message">Cihazın açık ve kurulum modunda olduğundan emin olun.</string>
+    <string name="device_qr_preflight_mismatch_title">Bu QR kodu yakındaki cihazla eşleşmiyor.</string>
+    <string name="device_qr_preflight_mismatch_message">Cihaz etiketindeki doğru QR kodunu tarayın.</string>
+    <string name="device_qr_preflight_already_added_title">Bu cihaz zaten eklenmiş.</string>
+    <string name="device_qr_preflight_already_added_message">Yinelenen cihaz oluşturulmadı.</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_care_reminders_name">Akvaryum bakım hatırlatıcıları</string>
+    <string name="notification_channel_care_reminders_description">Bakım, besleme, su testi ve diğer akvaryum bakım hatırlatıcıları.</string>
+    <string name="notification_channel_device_alerts_name">Cihaz uyarıları</string>
+    <string name="notification_channel_device_alerts_description">AquaLight cihazlarıyla ilgili önemli bağlantı, güvenlik ve çalışma uyarıları.</string>
+    <string name="notification_channel_device_updates_name">Cihaz güncellemeleri</string>
+    <string name="notification_channel_device_updates_description">AquaLight cihazları için aygıt yazılımı güncelleme kullanılabilirliği, ilerlemesi, tamamlanması ve hataları.</string>
+    <string name="settings_notifications_subtitle_enabled">Akvaryum bakım hatırlatıcılarını, cihaz uyarılarını ve cihaz güncelleme bildirimlerini alın.</string>
+    <string name="settings_notifications_subtitle_disabled">Bu hesap için AquaLight bildirimleri kapalı.</string>
+    <string name="settings_notifications_subtitle_system_blocked">AquaLight içinde etkin, ancak Android tarafından engellenmiş. Bildirim ayarlarını açmak için bu karta dokunun.</string>
+    <string name="settings_notifications_subtitle_channel_blocked">AquaLight içinde etkin, ancak bir veya daha fazla bildirim kategorisi engellenmiş. Kategori ayarlarını düzeltmek için bu karta dokunun.</string>
+
+    <!-- Compact accessibility copy -->
+    <string name="maintenance_tab_next">Sonraki</string>
+
+    <!-- Feedback categories -->
+    <string-array name="feedback_categories">
+        <item>Hata bildirimi</item>
+        <item>Özellik isteği</item>
+        <item>Tasarım / Arayüz</item>
+        <item>Performans</item>
+        <item>Diğer</item>
+    </string-array>
+
+    <!-- Wi-Fi setup patch -->
+    <string name="device_wifi_card_message_corrected">Telefonunuzu 2.4 GHz bir Wi-Fi ağına bağlayıp AquaLight uygulamasına geri dönün. Ağ adı görünmezse elle girin.</string>
+    <string name="device_wifi_select_wifi_action">Wi-Fi seç</string>
+
+    <!-- Tank-device assignment -->
+    <string name="tank_device_assignment_conflict_title">Cihaz Zaten Atanmış</string>
+    <string name="tank_device_assignment_conflict_message">Bu cihaz başka bir akvaryuma atanmış. Buraya atamadan önce cihazı mevcut akvaryumundan kaldırın.</string>
+    <string name="tank_device_assignment_failed_title">Atama Başarısız</string>
+    <string name="tank_device_assignment_failed_message">Cihaz atanamadı. Mevcut atamalarınız değiştirilmedi. Lütfen yeniden deneyin.</string>
+    <string name="tank_device_load_failed_title">Cihazlar Kullanılamıyor</string>
+    <string name="tank_device_load_failed_message">Kayıtlı cihazlar yüklenemedi. Lütfen bu ekranı kapatıp yeniden deneyin.</string>
+    <string name="tank_device_remove_failed_title">Kaldırma Başarısız</string>
+
+    <!-- Aquarium empty state -->
+    <string name="aquarium_empty_title">Henüz akvaryum yok</string>
+    <string name="aquarium_empty_message">Tankları, bakım görevlerini ve cihazları takip etmeye başlamak için ilk akvaryumunuzu oluşturun.</string>
+    <string name="aquarium_empty_icon_desc">Boş akvaryum durumu simgesi</string>
+</resources>
