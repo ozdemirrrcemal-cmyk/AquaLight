@@ -203,4 +203,8 @@
 <color name="aqua_palette_hex_ffe58a">#FFE58A</color>
     <color name="aqua_palette_hex_ffffff">#FFFFFF</color>
     <color name="aqua_palette_hex_ffffffff">#FFFFFFFF</color>
+    <!-- Retained because values-night qualifiers resolve these during resource linking. -->
+    <color name="aqua_palette_hex_cc0a192f">#CC0A192F</color>
+    <color name="aqua_palette_hex_dde8f5">#DDE8F5</color>
+    <color name="aqua_palette_hex_ff3b30">#FF3B30</color>
 </resources>
