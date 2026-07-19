@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.common
 
 import android.content.Context
+import androidx.appcompat.app.AppCompatDelegate
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.i18n.SupportedLocaleRegistry
 import java.util.Calendar
@@ -15,15 +16,12 @@ object AquariumDatePolicy {
     }
 
     /**
-     * Temporary source-compatible bridge for existing setup-date callers.
-     * It deliberately uses the supported commercial default and never the device locale.
+     * Source-compatible locale boundary for picker APIs that accept a Locale argument.
+     * It follows the AppCompat per-app language and never falls back to an unsupported
+     * device locale.
      */
-    @Deprecated(
-        message = "Pass a Context so the per-app locale is used.",
-        replaceWith = ReplaceWith("setupDateLocale(context)")
-    )
     val setupDateLocale: Locale
-        get() = Locale.forLanguageTag(SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG)
+        get() = currentApplicationLocale()
 
     fun minSetupYear(): Int = MIN_SETUP_YEAR
 
@@ -43,14 +41,7 @@ object AquariumDatePolicy {
         return LocaleFormatter.formatDate(context, millis)
     }
 
-    /**
-     * Temporary source-compatible bridge for existing display callers.
-     * It prevents unsupported device locales from leaking before those callers migrate.
-     */
-    @Deprecated(
-        message = "Pass a Context so the per-app locale is used.",
-        replaceWith = ReplaceWith("formatSetupDate(context, millis, emptyText)")
-    )
+    /** Source-compatible display boundary for callers that do not own a Context. */
     fun formatSetupDate(
         millis: Long?,
         emptyText: String
@@ -61,7 +52,19 @@ object AquariumDatePolicy {
 
         return LocaleFormatter.formatDate(
             millis,
-            Locale.forLanguageTag(SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG)
+            currentApplicationLocale()
         )
+    }
+
+    private fun currentApplicationLocale(): Locale {
+        val locales = AppCompatDelegate.getApplicationLocales()
+        val configuredLocale = if (locales.isEmpty) {
+            Locale.forLanguageTag(SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG)
+        } else {
+            locales[0] ?: Locale.forLanguageTag(
+                SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG
+            )
+        }
+        return LocaleFormatter.resolveSupportedLocale(configuredLocale)
     }
 }
