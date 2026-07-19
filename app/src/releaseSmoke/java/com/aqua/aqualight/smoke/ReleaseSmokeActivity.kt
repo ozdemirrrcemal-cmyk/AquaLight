@@ -5,7 +5,10 @@ import android.graphics.Canvas
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
@@ -23,10 +26,10 @@ import com.aqua.aqualight.ui.tabs.aquarium.AquariumFragment
 import com.aqua.aqualight.ui.tabs.devices.DevicesFragment
 import com.aqua.aqualight.ui.tabs.maintenance.AquariumMaintenanceFragment
 import com.aqua.aqualight.ui.tabs.settings.SettingsFragment
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * CI-only Activity packaged exclusively in the minified releaseSmoke variant.
@@ -38,8 +41,24 @@ class ReleaseSmokeActivity : BaseActivity() {
     private lateinit var navHostFragment: NavHostFragment
     private lateinit var navController: NavController
     private var smokeStarted = false
+
     private val smokeTheme: String by lazy {
-        intent.getStringExtra(EXTRA_SMOKE_THEME).orEmpty().lowercase().ifBlank { THEME_LIGHT }
+        intent.getStringExtra(EXTRA_SMOKE_THEME)
+            .orEmpty()
+            .lowercase()
+            .ifBlank { THEME_LIGHT }
+    }
+
+    private val smokeVariant: String by lazy {
+        intent.getStringExtra(EXTRA_SMOKE_VARIANT)
+            .orEmpty()
+            .lowercase()
+            .replace(Regex("[^a-z0-9_-]"), "-")
+            .ifBlank { smokeTheme }
+    }
+
+    private val smokeRtl: Boolean by lazy {
+        intent.getBooleanExtra(EXTRA_SMOKE_RTL, false)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,9 +74,17 @@ class ReleaseSmokeActivity : BaseActivity() {
         )
         super.onCreate(savedInstanceState)
 
+        val layoutDirection = if (smokeRtl) {
+            View.LAYOUT_DIRECTION_RTL
+        } else {
+            View.LAYOUT_DIRECTION_LTR
+        }
+        window.decorView.layoutDirection = layoutDirection
+
         setContentView(
             FrameLayout(this).apply {
                 id = SMOKE_CONTAINER_ID
+                this.layoutDirection = layoutDirection
             }
         )
 
@@ -96,7 +123,7 @@ class ReleaseSmokeActivity : BaseActivity() {
                     check(fragment.isAdded) {
                         "${screen.name} was not added"
                     }
-                    check(fragment.view != null) {
+                    val fragmentView = checkNotNull(fragment.view) {
                         "${screen.name} did not create a view"
                     }
                     check(
@@ -106,10 +133,11 @@ class ReleaseSmokeActivity : BaseActivity() {
                     ) {
                         "${screen.name} did not reach STARTED"
                     }
+                    verifyVisibleIconControlDescriptions(fragmentView, screen.name)
                     captureScreen(screen)
                 }
             }.onSuccess {
-                renderResult("$PASS_MARKER:$smokeTheme")
+                renderResult("$PASS_MARKER:$smokeVariant")
             }.onFailure { error ->
                 renderResult(
                     "$FAIL_MARKER\n${error::class.java.name}\n${error.message.orEmpty()}"
@@ -165,6 +193,34 @@ class ReleaseSmokeActivity : BaseActivity() {
         )
     )
 
+    private fun verifyVisibleIconControlDescriptions(root: View, screenName: String) {
+        val missingDescriptions = mutableListOf<String>()
+        root.forEachDescendantInclusive { view ->
+            if (view.visibility != View.VISIBLE || !view.isEnabled) return@forEachDescendantInclusive
+            val isIconOnlyControl = view is ImageButton || (view is ImageView && view.isClickable)
+            if (!isIconOnlyControl) return@forEachDescendantInclusive
+
+            if (view.contentDescription?.toString().isNullOrBlank()) {
+                val resourceName = runCatching {
+                    resources.getResourceEntryName(view.id)
+                }.getOrDefault(view.javaClass.simpleName)
+                missingDescriptions += resourceName
+            }
+        }
+        check(missingDescriptions.isEmpty()) {
+            "$screenName has visible icon-only controls without content descriptions: " +
+                missingDescriptions.joinToString()
+        }
+    }
+
+    private inline fun View.forEachDescendantInclusive(block: (View) -> Unit) {
+        block(this)
+        if (this is ViewGroup) {
+            for (index in 0 until childCount) {
+                getChildAt(index).forEachDescendantInclusive(block)
+            }
+        }
+    }
 
     private fun captureScreen(screen: SmokeScreen) {
         val root = window.decorView.rootView
@@ -177,7 +233,7 @@ class ReleaseSmokeActivity : BaseActivity() {
         val directory = File(screenshotRoot, SCREENSHOT_DIRECTORY).apply { mkdirs() }
         val output = File(
             directory,
-            "${smokeTheme}-${screen.name.removeSuffix("Fragment").lowercase()}.png"
+            "${smokeVariant}-${screen.name.removeSuffix("Fragment").lowercase()}.png"
         )
         FileOutputStream(output).use { stream ->
             check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)) {
@@ -225,6 +281,8 @@ class ReleaseSmokeActivity : BaseActivity() {
         const val PASS_MARKER = "RELEASE_SMOKE_PASS"
         const val FAIL_MARKER = "RELEASE_SMOKE_FAIL"
         const val EXTRA_SMOKE_THEME = "aqua_smoke_theme"
+        const val EXTRA_SMOKE_VARIANT = "aqua_smoke_variant"
+        const val EXTRA_SMOKE_RTL = "aqua_smoke_rtl"
         const val THEME_LIGHT = "light"
         const val THEME_DARK = "dark"
         const val SCREENSHOT_DIRECTORY = "smoke-screens"
