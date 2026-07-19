@@ -24,6 +24,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.databinding.FragmentAquariumMaintenanceBinding
+import com.aqua.aqualight.i18n.LocalDayKey
+import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetAction
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetActionStyle
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetDetailRow
@@ -44,9 +46,6 @@ import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.ui.tabs.maintenance.model.MaintenanceTab
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class AquariumMaintenanceFragment :
     Fragment(R.layout.fragment_aquarium_maintenance) {
@@ -828,38 +827,24 @@ class AquariumMaintenanceFragment :
     private fun formatHistoryDate(
         millis: Long
     ): String {
-        return SimpleDateFormat(
-            "dd.MM.yyyy",
-            Locale.getDefault()
-        ).format(Date(millis))
+        return LocaleFormatter.formatDate(requireContext(), millis)
     }
 
     private fun formatHistoryTime(
         millis: Long
     ): String {
-        return SimpleDateFormat(
-            "HH:mm",
-            Locale.getDefault()
-        ).format(Date(millis))
+        return LocaleFormatter.formatTime(requireContext(), millis)
     }
 
     private fun formatHistoryDateTime(
         millis: Long
     ): String {
-        return SimpleDateFormat(
-            "dd.MM.yyyy HH:mm",
-            Locale.getDefault()
-        ).format(Date(millis))
+        return LocaleFormatter.formatDateTime(requireContext(), millis)
     }
 
     private fun getHistoryDateKey(
         millis: Long
-    ): String {
-        return SimpleDateFormat(
-            "yyyyMMdd",
-            Locale.getDefault()
-        ).format(Date(millis))
-    }
+    ) = LocalDayKey.fromEpochMillis(millis)
 
     private fun createHistoryIconBackground(
         color: Int
