@@ -33,22 +33,20 @@
 
         <LinearLayout
             android:id="@+id/tabsContainer"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/tabAll"
-                android:layout_width="wrap_content"
-                android:layout_height="@dimen/aqua_size_48"
+                android:layout_width="@dimen/aqua_size_0"
+                android:layout_height="@dimen/aqua_size_38"
                 android:layout_marginEnd="@dimen/aqua_size_8"
+                android:layout_weight="1"
                 android:background="@drawable/bg_maintenance_tab_selected"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:maxLines="1"
-                android:minWidth="@dimen/aqua_size_72"
-                android:paddingHorizontal="@dimen/aqua_size_12"
                 android:text="@string/maintenance_tab_all"
                 android:textColor="@color/aqua_content_on_dark"
                 android:textSize="@dimen/aqua_text_size_body_small"
@@ -56,44 +54,38 @@
 
             <TextView
                 android:id="@+id/tabToday"
-                android:layout_width="wrap_content"
-                android:layout_height="@dimen/aqua_size_48"
+                android:layout_width="@dimen/aqua_size_0"
+                android:layout_height="@dimen/aqua_size_38"
                 android:layout_marginEnd="@dimen/aqua_size_8"
+                android:layout_weight="1"
                 android:background="@drawable/bg_maintenance_tab_unselected"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:maxLines="1"
-                android:minWidth="@dimen/aqua_size_72"
-                android:paddingHorizontal="@dimen/aqua_size_12"
                 android:text="@string/maintenance_tab_today"
                 android:textColor="@color/aqua_card_text_secondary"
                 android:textSize="@dimen/aqua_text_size_caption" />
 
             <TextView
                 android:id="@+id/tabUpcoming"
-                android:layout_width="wrap_content"
-                android:layout_height="@dimen/aqua_size_48"
+                android:layout_width="@dimen/aqua_size_0"
+                android:layout_height="@dimen/aqua_size_38"
                 android:layout_marginEnd="@dimen/aqua_size_8"
+                android:layout_weight="1"
                 android:background="@drawable/bg_maintenance_tab_unselected"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:maxLines="1"
-                android:minWidth="@dimen/aqua_size_72"
-                android:paddingHorizontal="@dimen/aqua_size_12"
                 android:text="@string/maintenance_tab_upcoming"
                 android:textColor="@color/aqua_card_text_secondary"
                 android:textSize="@dimen/aqua_text_size_body_small" />
 
             <TextView
                 android:id="@+id/tabHistory"
-                android:layout_width="wrap_content"
-                android:layout_height="@dimen/aqua_size_48"
+                android:layout_width="@dimen/aqua_size_0"
+                android:layout_height="@dimen/aqua_size_38"
+                android:layout_weight="1"
                 android:background="@drawable/bg_maintenance_tab_unselected"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:maxLines="1"
-                android:minWidth="@dimen/aqua_size_72"
-                android:paddingHorizontal="@dimen/aqua_size_12"
                 android:text="@string/maintenance_tab_history"
                 android:textColor="@color/aqua_card_text_secondary"
                 android:textSize="@dimen/aqua_text_size_body_small" />
@@ -132,8 +124,8 @@
 
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.Aqua.Card.IconAccent"
-                android:layout_width="@dimen/aqua_size_48"
-                android:layout_height="@dimen/aqua_size_48">
+                android:layout_width="@dimen/aqua_size_40"
+                android:layout_height="@dimen/aqua_size_40">
 
                 <TextView
                     android:layout_width="match_parent"
