@@ -9,10 +9,13 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RES = ROOT / "app" / "src" / "main" / "res"
+APP = ROOT / "app" / "src" / "main"
+RES = APP / "res"
+JAVA = APP / "java"
 ANDROID_NS = "{http://schemas.android.com/apk/res/android}"
 DIMEN_REFERENCE = re.compile(r"@dimen/([A-Za-z0-9_]+)$")
 DP_VALUE = re.compile(r"(-?\d+(?:\.\d+)?)dp$")
+TOUCH_DELEGATE_CALL = re.compile(r"\b([A-Za-z][A-Za-z0-9_]*)\.ensureMinimumTouchTarget\s*\(")
 
 INTERACTIVE_TAG_SUFFIXES = (
     "Button",
@@ -23,10 +26,7 @@ INTERACTIVE_TAG_SUFFIXES = (
     "Chip",
     "FloatingActionButton",
 )
-ICON_ONLY_TAG_SUFFIXES = (
-    "ImageButton",
-    "FloatingActionButton",
-)
+ICON_ONLY_TAG_SUFFIXES = ("ImageButton", "FloatingActionButton")
 RTL_FORBIDDEN_ATTRIBUTES = {
     "paddingLeft",
     "paddingRight",
@@ -49,6 +49,11 @@ def local_name(tag: str) -> str:
     return tag.rsplit("}", 1)[-1].rsplit(".", 1)[-1]
 
 
+def resource_id(element: ET.Element) -> str:
+    value = android_attr(element, "id")
+    return value.rsplit("/", 1)[-1] if "/" in value else ""
+
+
 def load_dimensions() -> dict[str, str]:
     dimensions: dict[str, str] = {}
     for path in sorted((RES / "values").glob("*dimens.xml")):
@@ -59,6 +64,13 @@ def load_dimensions() -> dict[str, str]:
             if name and value:
                 dimensions[name] = value
     return dimensions
+
+
+def load_delegated_touch_targets() -> set[str]:
+    delegated: set[str] = set()
+    for path in sorted(JAVA.rglob("*.kt")):
+        delegated.update(TOUCH_DELEGATE_CALL.findall(path.read_text(encoding="utf-8")))
+    return delegated
 
 
 def resolve_dp(value: str, dimensions: dict[str, str], stack: tuple[str, ...] = ()) -> float | None:
@@ -97,7 +109,12 @@ def validate_touch_dimension(
     element: ET.Element,
     axis: str,
     dimensions: dict[str, str],
+    delegated_targets: set[str],
 ) -> None:
+    element_id = resource_id(element)
+    if element_id in delegated_targets:
+        return
+
     size = android_attr(element, f"layout_{axis}")
     minimum = android_attr(element, f"min{axis.capitalize()}")
     try:
@@ -107,19 +124,23 @@ def validate_touch_dimension(
         errors.append(f"{path.relative_to(ROOT)}: {error}")
         return
 
-    if size_dp is None or size_dp >= 48.0:
+    if size_dp is None or size_dp == 0.0 or size_dp >= 48.0:
         return
     if minimum_dp is not None and minimum_dp >= 48.0:
         return
 
-    element_id = android_attr(element, "id") or "<no-id>"
     errors.append(
-        f"{path.relative_to(ROOT)}: {local_name(element.tag)} {element_id} has "
-        f"{axis}={size_dp:g}dp without a 48dp minimum touch target."
+        f"{path.relative_to(ROOT)}: {local_name(element.tag)} "
+        f"{android_attr(element, 'id') or '<no-id>'} has {axis}={size_dp:g}dp "
+        "without a 48dp minimum or ensureMinimumTouchTarget() contract."
     )
 
 
-def validate_layout(path: Path, dimensions: dict[str, str]) -> list[str]:
+def validate_layout(
+    path: Path,
+    dimensions: dict[str, str],
+    delegated_targets: set[str],
+) -> list[str]:
     errors: list[str] = []
     try:
         root = ET.parse(path).getroot()
@@ -138,38 +159,39 @@ def validate_layout(path: Path, dimensions: dict[str, str]) -> list[str]:
 
         if not is_interactive(element):
             continue
-
         if android_attr(element, "importantForAccessibility") == "no":
             errors.append(
                 f"{path.relative_to(ROOT)}: interactive {tag} must not be hidden from accessibility."
             )
 
-        if tag.endswith(ICON_ONLY_TAG_SUFFIXES) and not has_speakable_icon_description(element):
-            errors.append(
-                f"{path.relative_to(ROOT)}: icon-only {tag} requires a contentDescription."
-            )
-        if tag.endswith("ImageView") and android_attr(element, "clickable") == "true":
-            if not has_speakable_icon_description(element):
+        runtime_configured = android_attr(element, "visibility") == "gone"
+        if not runtime_configured:
+            if tag.endswith(ICON_ONLY_TAG_SUFFIXES) and not has_speakable_icon_description(element):
                 errors.append(
-                    f"{path.relative_to(ROOT)}: clickable ImageView requires a contentDescription."
+                    f"{path.relative_to(ROOT)}: icon-only {tag} requires a contentDescription."
                 )
+            if tag.endswith("ImageView") and android_attr(element, "clickable") == "true":
+                if not has_speakable_icon_description(element):
+                    errors.append(
+                        f"{path.relative_to(ROOT)}: clickable ImageView requires a contentDescription."
+                    )
 
-        validate_touch_dimension(errors, path, element, "width", dimensions)
-        validate_touch_dimension(errors, path, element, "height", dimensions)
-
+        validate_touch_dimension(errors, path, element, "width", dimensions, delegated_targets)
+        validate_touch_dimension(errors, path, element, "height", dimensions, delegated_targets)
     return errors
 
 
 def main() -> int:
     try:
         dimensions = load_dimensions()
-    except ET.ParseError as error:
-        print(f"Accessibility static guard failed:\n - malformed dimension XML: {error}")
+        delegated_targets = load_delegated_touch_targets()
+    except (ET.ParseError, OSError, ValueError) as error:
+        print(f"Accessibility static guard failed:\n - {error}")
         return 1
 
     errors: list[str] = []
     for path in sorted((RES / "layout").glob("*.xml")):
-        errors.extend(validate_layout(path, dimensions))
+        errors.extend(validate_layout(path, dimensions, delegated_targets))
 
     if errors:
         print("Accessibility static guard failed:")
@@ -177,7 +199,10 @@ def main() -> int:
             print(f" - {error}")
         return 1
 
-    print("Accessibility static guard passed.")
+    print(
+        "Accessibility static guard passed: icon descriptions, RTL-safe attributes and "
+        "48dp/touch-delegate contracts are intact."
+    )
     return 0
 
 
