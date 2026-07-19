@@ -24,29 +24,71 @@ object MinimumTouchTargetInstaller {
             if (!root.isAttachedToWindow) return@post
 
             val host = resolveWindowContentHost(root) ?: return@post
-            if (host.width <= 0 || host.height <= 0) return@post
-
-            val minimumPixels = (
-                MIN_TOUCH_TARGET_DP * host.resources.displayMetrics.density
-            ).roundToInt()
-
-            val entries = collectClickableViews(host)
-                .asSequence()
-                .filter { child ->
-                    child !== host &&
-                        (child.width < minimumPixels || child.height < minimumPixels)
-                }
-                .mapNotNull { child ->
-                    createTouchEntry(
-                        host = host,
-                        child = child,
-                        minimumPixels = minimumPixels
-                    )
-                }
-                .toList()
-
-            replaceOwnedDelegate(host, entries)
+            installOnLayoutReady(host)
         }
+    }
+
+    private fun installOnLayoutReady(host: ViewGroup) {
+        val clickableViews = collectClickableViews(host)
+        val layoutPending = host.width <= 0 ||
+            host.height <= 0 ||
+            host.isLayoutRequested ||
+            clickableViews.any { child ->
+                child !== host &&
+                    (child.width <= 0 || child.height <= 0 || child.isLayoutRequested)
+            }
+
+        if (!layoutPending) {
+            rebuildDelegate(host, clickableViews)
+            return
+        }
+
+        val listener = object : View.OnLayoutChangeListener {
+            override fun onLayoutChange(
+                view: View,
+                left: Int,
+                top: Int,
+                right: Int,
+                bottom: Int,
+                oldLeft: Int,
+                oldTop: Int,
+                oldRight: Int,
+                oldBottom: Int
+            ) {
+                host.removeOnLayoutChangeListener(this)
+                if (!host.isAttachedToWindow || host.width <= 0 || host.height <= 0) return
+                rebuildDelegate(host, collectClickableViews(host))
+            }
+        }
+
+        host.addOnLayoutChangeListener(listener)
+        host.requestLayout()
+    }
+
+    private fun rebuildDelegate(
+        host: ViewGroup,
+        clickableViews: List<View>
+    ) {
+        val minimumPixels = (
+            MIN_TOUCH_TARGET_DP * host.resources.displayMetrics.density
+        ).roundToInt()
+
+        val entries = clickableViews
+            .asSequence()
+            .filter { child ->
+                child !== host &&
+                    (child.width < minimumPixels || child.height < minimumPixels)
+            }
+            .mapNotNull { child ->
+                createTouchEntry(
+                    host = host,
+                    child = child,
+                    minimumPixels = minimumPixels
+                )
+            }
+            .toList()
+
+        replaceOwnedDelegate(host, entries)
     }
 
     private fun resolveWindowContentHost(root: View): ViewGroup? {
