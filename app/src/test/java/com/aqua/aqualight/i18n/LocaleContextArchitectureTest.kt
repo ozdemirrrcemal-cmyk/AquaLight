@@ -157,7 +157,7 @@ class LocaleContextArchitectureTest {
     }
 
     @Test
-    fun localeFormatterUsesTheOfficialAndroidXLanguageContextApiAndSafeFallback() {
+    fun localeFormatterUsesSupportedAppLocaleAndAndroidHourPreference() {
         val source = File(
             repositoryRoot,
             "app/src/main/java/com/aqua/aqualight/i18n/LocaleFormatter.kt"
@@ -166,6 +166,10 @@ class LocaleContextArchitectureTest {
         assertTrue(source.contains("ContextCompat.getContextForLanguage(context)"))
         assertTrue(source.contains("createConfigurationContext(configuration)"))
         assertTrue(source.contains("resolveSupportedLocale(configuredLocale)"))
+        assertTrue(source.contains("AndroidDateFormat.is24HourFormat(localizedContext)"))
+        assertTrue(source.contains("AndroidDateFormat.getBestDateTimePattern(locale, skeleton)"))
+        assertTrue(source.contains("if (is24Hour) \"Hm\" else \"hm\""))
+        assertTrue(source.contains("if (is24Hour) \"yMMMdHm\" else \"yMMMdhm\""))
     }
 
     private fun kotlinSourcesContaining(token: String): Set<String> {
