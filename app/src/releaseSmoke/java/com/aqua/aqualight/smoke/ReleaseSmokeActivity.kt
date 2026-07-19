@@ -2,6 +2,7 @@ package com.aqua.aqualight.smoke
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Rect
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
@@ -23,6 +24,7 @@ import androidx.navigation.fragment.FragmentNavigator
 import androidx.navigation.fragment.NavHostFragment
 import com.aqua.aqualight.app.AquaApp
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.ui.common.accessibility.EffectiveTouchTargetManager
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumFragment
 import com.aqua.aqualight.ui.tabs.devices.DevicesFragment
 import com.aqua.aqualight.ui.tabs.maintenance.AquariumMaintenanceFragment
@@ -139,7 +141,10 @@ class ReleaseSmokeActivity : BaseActivity() {
                         "${screen.name} did not reach STARTED"
                     }
 
+                    val activityRoot = checkNotNull(findViewById<View>(android.R.id.content))
+                    EffectiveTouchTargetManager.refresh(activityRoot)
                     verifyVisibleIconControlDescriptions(fragmentView, screen.name)
+                    verifyVisibleEffectiveTouchTargets(fragmentView, screen.name)
                     captureScreen(screen)
                 }
             }.onSuccess {
@@ -225,6 +230,50 @@ class ReleaseSmokeActivity : BaseActivity() {
         }
     }
 
+    private fun verifyVisibleEffectiveTouchTargets(root: View, screenName: String) {
+        val density = resources.displayMetrics.density
+        val minimumPx = MIN_TOUCH_TARGET_DP * density
+        val undersizedTargets = mutableListOf<String>()
+
+        root.forEachDescendantInclusive { view ->
+            if (
+                view.visibility != View.VISIBLE ||
+                !view.isEnabled ||
+                !view.isClickable ||
+                view.width <= 0 ||
+                view.height <= 0
+            ) {
+                return@forEachDescendantInclusive
+            }
+
+            val bounds = EffectiveTouchTargetManager.effectiveBoundsInScreen(view)
+                ?: view.visualBoundsInScreen()
+            if (
+                bounds.width() + TOUCH_TARGET_TOLERANCE_PX < minimumPx ||
+                bounds.height() + TOUCH_TARGET_TOLERANCE_PX < minimumPx
+            ) {
+                undersizedTargets +=
+                    "${view.debugName()} (${bounds.width() / density}x${bounds.height() / density}dp)"
+            }
+        }
+
+        check(undersizedTargets.isEmpty()) {
+            "$screenName has effective touch targets below ${MIN_TOUCH_TARGET_DP.toInt()}dp: " +
+                undersizedTargets.joinToString()
+        }
+    }
+
+    private fun View.visualBoundsInScreen(): Rect {
+        val location = IntArray(2)
+        getLocationOnScreen(location)
+        return Rect(
+            location[0],
+            location[1],
+            location[0] + width,
+            location[1] + height
+        )
+    }
+
     private fun View.debugName(): String = runCatching {
         resources.getResourceEntryName(id)
     }.getOrDefault(javaClass.simpleName)
@@ -304,5 +353,7 @@ class ReleaseSmokeActivity : BaseActivity() {
         const val SMOKE_LANGUAGE_TAG = "en"
         const val SCREENSHOT_DIRECTORY = "smoke-screens"
         const val MIN_SCREENSHOT_BYTES = 1024L
+        const val MIN_TOUCH_TARGET_DP = 48f
+        const val TOUCH_TARGET_TOLERANCE_PX = 1f
     }
 }
