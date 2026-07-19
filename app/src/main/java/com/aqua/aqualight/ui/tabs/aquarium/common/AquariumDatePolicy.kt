@@ -1,31 +1,20 @@
 package com.aqua.aqualight.ui.tabs.aquarium.common
 
+import android.content.Context
 import com.aqua.aqualight.localization.LocaleFormatters
 import java.util.Calendar
-import java.util.Locale
 
 object AquariumDatePolicy {
     private const val MIN_SETUP_YEAR = 2000
     private const val MAX_YEAR_OFFSET = 10
 
-    /** Retained for existing date-picker call sites; no locale is hardcoded. */
-    val setupDateLocale: Locale
-        get() = Locale.getDefault()
-
     fun minSetupYear(): Int = MIN_SETUP_YEAR
 
-    fun maxSetupYear(): Int {
-        return Calendar.getInstance().get(Calendar.YEAR) + MAX_YEAR_OFFSET
-    }
+    fun maxSetupYear(): Int = Calendar.getInstance().get(Calendar.YEAR) + MAX_YEAR_OFFSET
 
     fun formatSetupDate(
+        context: Context,
         millis: Long?,
-        emptyText: String,
-        locale: Locale = Locale.getDefault()
-    ): String {
-        if (millis == null) {
-            return emptyText
-        }
-        return LocaleFormatters.formatDate(millis, locale)
-    }
+        emptyText: String
+    ): String = millis?.let { LocaleFormatters.formatDate(context, it) } ?: emptyText
 }
