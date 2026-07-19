@@ -9,10 +9,8 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.user.UsageAnalyticsSnapshot
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentUsageBinding
+import com.aqua.aqualight.localization.AppLocaleFormatter
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -61,17 +59,10 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
     private fun bindUsageToUi(
         usage: UsageAnalyticsSnapshot
     ) {
-        binding.tvTotalSessionsValue.text =
-            usage.weeklyAutomationCount.toString()
-
-        binding.tvTotalTimeValue.text =
-            usage.weeklyAlertCount.toString()
-
-        binding.tvTodaySessionsValue.text =
-            usage.todayAutomationCount.toString()
-
-        binding.tvTodayTimeValue.text =
-            usage.todayManualActionCount.toString()
+        binding.tvTotalSessionsValue.text = formatCount(usage.weeklyAutomationCount)
+        binding.tvTotalTimeValue.text = formatCount(usage.weeklyAlertCount)
+        binding.tvTodaySessionsValue.text = formatCount(usage.todayAutomationCount)
+        binding.tvTodayTimeValue.text = formatCount(usage.todayManualActionCount)
 
         binding.tvLastOpenValue.text =
             formatLastEventTime(
@@ -86,6 +77,14 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
             }
     }
 
+    private fun formatCount(value: Int): String {
+        return AppLocaleFormatter.formatNumber(
+            context = requireContext(),
+            value = value,
+            maximumFractionDigits = 0
+        )
+    }
+
     private fun formatLastEventTime(
         timeMillis: Long
     ): String {
@@ -97,17 +96,9 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
             )
         }
 
-        val date =
-            Date(timeMillis)
-
-        val formatter =
-            SimpleDateFormat(
-                "MMM d, HH:mm",
-                Locale.getDefault()
-            )
-
-        return formatter.format(
-            date
+        return AppLocaleFormatter.formatDateTime(
+            context = requireContext(),
+            epochMillis = timeMillis
         )
     }
 
