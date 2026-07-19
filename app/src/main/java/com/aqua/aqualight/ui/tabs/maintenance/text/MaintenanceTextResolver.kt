@@ -12,6 +12,8 @@ interface MaintenanceTextResolver {
 
     fun sourceLabel(source: CareTaskSource): String
 
+    fun formatTime(timeMillis: Long): String
+
     fun completedStatus(): String
 
     fun completedTime(timeText: String): String
