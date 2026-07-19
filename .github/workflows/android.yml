@@ -30,6 +30,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Validate Gradle Wrapper
         uses: gradle/wrapper-validation-action@v2
@@ -79,6 +81,8 @@ jobs:
           python3 tools/process_safe_feedback_guard.py
           python3 tools/stage9_feedback_media_guard.py
           python3 tools/design_system_resource_guard.py
+          python3 tools/localization_placeholder_guard.py
+          python3 tools/stage11_visual_diff_guard.py
 
       # İsteğe bağlı: bağımlılık modül cache’lerini temizle (refresh-deps)
       - name: 🔄 Force refresh dependencies (optional)
