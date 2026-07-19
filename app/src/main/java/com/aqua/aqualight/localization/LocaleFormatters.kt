@@ -17,6 +17,12 @@ import java.util.Locale
  */
 object LocaleFormatters {
 
+    fun currentLanguageTag(): String = SupportedLocaleRegistry.normalizeLanguageTag(
+        AppCompatDelegate.getApplicationLocales()
+            .get(0)
+            ?.toLanguageTag()
+    )
+
     fun currentLocale(context: Context): Locale {
         val appLocaleTag = AppCompatDelegate.getApplicationLocales()
             .get(0)
@@ -91,6 +97,22 @@ object LocaleFormatters {
         pattern: String,
         locale: Locale
     ): String = SimpleDateFormat(pattern, locale).format(Date(millis))
+
+    fun formatTemplate(
+        context: Context,
+        template: String,
+        vararg arguments: Any
+    ): String = formatTemplate(
+        locale = currentLocale(context),
+        template = template,
+        arguments = arguments
+    )
+
+    fun formatTemplate(
+        locale: Locale,
+        template: String,
+        vararg arguments: Any
+    ): String = String.format(locale, template, *arguments)
 
     fun formatInteger(context: Context, value: Long): String =
         formatInteger(value, currentLocale(context))
