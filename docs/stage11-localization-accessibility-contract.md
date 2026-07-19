@@ -47,6 +47,16 @@ On first launch, a Turkish device locale selects Turkish. Every other device loc
 - Aquarium, Smart Care and PDF volume calculations use one shared calculator that converts operands to `Double` before multiplication, preventing `Int` overflow at maximum supported dimensions.
 - Architecture tests prevent direct three-dimension volume multiplication and locale-bypassing decimal parsing from returning to production code.
 
+## Minimum touch-target ownership
+
+- Every Activity or dialog window has one canonical Android content host for invisible touch-target expansion.
+- Fragment creation and Activity resume callbacks replace the delegate on that same host rather than stacking delegates on nested fragment roots.
+- Fragment view destruction schedules a fresh target collection so removed views cannot remain referenced by an old delegate.
+- Expanded areas that overlap are partitioned deterministically: a point inside a real visual control selects that control; otherwise the nearest real visual bounds win.
+- Nested clickable controls use the smaller visual target when both real bounds contain the point.
+- The installer clears only the delegate marked with AquaLight's private ownership ID when a window no longer contains undersized clickable controls.
+- JVM geometry tests, an architecture ownership test and a real-window API 27/API 35 instrumentation test protect overlap routing and stale-target cleanup.
+
 ## Visual invariant
 
 Stage 11 must not modify product layout dimensions, component styles, color resources or typography tokens merely to satisfy touch-target requirements. The minimum target is implemented as an invisible interaction-area expansion. Language-specific flag assets may be removed when their language is removed. Screenshot artifacts are the regression evidence for layout preservation.
