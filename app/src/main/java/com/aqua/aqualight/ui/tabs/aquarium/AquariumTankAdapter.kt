@@ -14,10 +14,12 @@ import coil3.request.error
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.databinding.ItemAquariumTankBinding
+import com.aqua.aqualight.i18n.DateOnly
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.text.resolve
 import com.aqua.aqualight.ui.tabs.maintenance.TankCareSummaryUi
-import java.util.concurrent.TimeUnit
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 class AquariumTankAdapter(
   private val onTankClick: (AquariumTankSnapshot) -> Unit,
@@ -26,48 +28,30 @@ class AquariumTankAdapter(
 
   private var isDeleteMode: Boolean = false
   private var selectedTankIds: Set<Long> = emptySet()
-
   private var careSummaryByTankId: Map<Long, TankCareSummaryUi> = emptyMap()
 
-  fun setDeleteMode(
-    enabled: Boolean,
-    selectedIds: Set<Long>
-  ) {
+  fun setDeleteMode(enabled: Boolean, selectedIds: Set<Long>) {
     isDeleteMode = enabled
     selectedTankIds = selectedIds.toSet()
     notifyDataSetChanged()
   }
 
-  fun setCareSummaryByTankId(
-    summaries: Map<Long, TankCareSummaryUi>
-  ) {
+  fun setCareSummaryByTankId(summaries: Map<Long, TankCareSummaryUi>) {
     careSummaryByTankId = summaries
     notifyDataSetChanged()
   }
 
-  override fun onCreateViewHolder(
-    parent: ViewGroup,
-    viewType: Int
-  ): TankViewHolder {
+  override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TankViewHolder {
     val binding = ItemAquariumTankBinding.inflate(
       LayoutInflater.from(parent.context),
       parent,
       false
     )
-
-    return TankViewHolder(
-      binding = binding,
-      onTankClick = onTankClick,
-      onTankLongClick = onTankLongClick
-    )
+    return TankViewHolder(binding, onTankClick, onTankLongClick)
   }
 
-  override fun onBindViewHolder(
-    holder: TankViewHolder,
-    position: Int
-  ) {
+  override fun onBindViewHolder(holder: TankViewHolder, position: Int) {
     val tank = getItem(position)
-
     holder.bind(
       tank = tank,
       careSummary = careSummaryByTankId[tank.id],
@@ -93,85 +77,42 @@ class AquariumTankAdapter(
 
       binding.tvTankDay.text = getTankDayText(
         context = context,
-        setupDateMillis = tank.setupDateMillis
+        setupDateEpochDay = tank.setupDateEpochDay
       )
-
-      binding.tvCareInfo.text = getCareInfoText(
-        context = context,
-        careSummary = careSummary
-      )
-
-      binding.tvTankSize.text = getTankSizeText(
-        context = context,
-        tank = tank
-      )
+      binding.tvCareInfo.text = getCareInfoText(context, careSummary)
+      binding.tvTankSize.text = getTankSizeText(context, tank)
       binding.tvSetupDate.text = getSetupDateText(
         context = context,
-        setupDateMillis = tank.setupDateMillis
+        setupDateEpochDay = tank.setupDateEpochDay
       )
 
       bindTankPhoto(tank)
-
       binding.selectionCircle.isVisible = isDeleteMode
-
-      binding.selectionCircle.setImageResource(
-        if (isSelected) {
-          R.drawable.ic_check
-        } else {
-          0
-        }
-      )
-
+      binding.selectionCircle.setImageResource(if (isSelected) R.drawable.ic_check else 0)
       binding.selectionCircle.setBackgroundResource(
-        if (isSelected) {
-          R.drawable.bg_tank_selection_selected
-        } else {
-          R.drawable.bg_tank_selection_unselected
-        }
+        if (isSelected) R.drawable.bg_tank_selection_selected
+        else R.drawable.bg_tank_selection_unselected
       )
-
-      binding.root.alpha = if (isDeleteMode && !isSelected) {
-        0.72f
-      } else {
-        1f
-      }
-
-      binding.root.setOnClickListener {
-        onTankClick(tank)
-      }
-
+      binding.root.alpha = if (isDeleteMode && !isSelected) 0.72f else 1f
+      binding.root.setOnClickListener { onTankClick(tank) }
       binding.root.setOnLongClickListener {
         onTankLongClick(tank)
         true
       }
     }
 
-    private fun bindTankPhoto(
-      tank: AquariumTankSnapshot
-    ) {
-      val photoUri = tank.photoUri
-        ?.trim()
-        ?.takeIf { value ->
-          value.isNotEmpty()
-        }
-
+    private fun bindTankPhoto(tank: AquariumTankSnapshot) {
+      val photoUri = tank.photoUri?.trim()?.takeIf(String::isNotEmpty)
       val photoKey = photoUri ?: DEFAULT_TANK_PHOTO_KEY
-
-      if (binding.imgTankPhoto.tag == photoKey) {
-        return
-      }
-
+      if (binding.imgTankPhoto.tag == photoKey) return
       binding.imgTankPhoto.tag = photoKey
 
       if (photoUri == null) {
-        binding.imgTankPhoto.load(R.drawable.nature_aquarium) {
-          crossfade(false)
-        }
+        binding.imgTankPhoto.load(R.drawable.nature_aquarium) { crossfade(false) }
         return
       }
 
       binding.imgTankPhoto.setImageDrawable(null)
-
       binding.imgTankPhoto.load(Uri.parse(photoUri)) {
         error(R.drawable.nature_aquarium)
         crossfade(false)
@@ -196,10 +137,7 @@ class AquariumTankAdapter(
       )
     }
 
-    private fun getTankSizeText(
-      context: Context,
-      tank: AquariumTankSnapshot
-    ): String {
+    private fun getTankSizeText(context: Context, tank: AquariumTankSnapshot): String {
       return context.getString(
         R.string.aquarium_tank_size_card_format,
         tank.widthCm,
@@ -210,33 +148,30 @@ class AquariumTankAdapter(
 
     private fun getSetupDateText(
       context: Context,
-      setupDateMillis: Long?
+      setupDateEpochDay: Long?
     ): String {
-      if (setupDateMillis == null) {
+      if (setupDateEpochDay == null) {
         return context.getString(R.string.aquarium_setup_date_empty)
       }
 
       return context.getString(
         R.string.aquarium_setup_date_card_format,
-        LocaleFormatter.formatDate(context, setupDateMillis)
+        LocaleFormatter.formatDateEpochDay(context, setupDateEpochDay)
       )
     }
 
     private fun getTankDayText(
       context: Context,
-      setupDateMillis: Long?
+      setupDateEpochDay: Long?
     ): String {
-      val setupMillis = setupDateMillis ?: System.currentTimeMillis()
-      val nowMillis = System.currentTimeMillis()
+      val setupDate = setupDateEpochDay
+        ?.let(DateOnly::toLocalDate)
+        ?: LocalDate.now()
+      val day = ChronoUnit.DAYS
+        .between(setupDate, LocalDate.now())
+        .coerceAtLeast(0L)
 
-      val day = TimeUnit.MILLISECONDS
-        .toDays(nowMillis - setupMillis)
-        .coerceAtLeast(0)
-
-      return context.getString(
-        R.string.aquarium_day_format,
-        day
-      )
+      return context.getString(R.string.aquarium_day_format, day)
     }
 
     companion object {
@@ -245,19 +180,14 @@ class AquariumTankAdapter(
   }
 
   private object DiffCallback : DiffUtil.ItemCallback<AquariumTankSnapshot>() {
-
     override fun areItemsTheSame(
       oldItem: AquariumTankSnapshot,
       newItem: AquariumTankSnapshot
-    ): Boolean {
-      return oldItem.id == newItem.id
-    }
+    ): Boolean = oldItem.id == newItem.id
 
     override fun areContentsTheSame(
       oldItem: AquariumTankSnapshot,
       newItem: AquariumTankSnapshot
-    ): Boolean {
-      return oldItem == newItem
-    }
+    ): Boolean = oldItem == newItem
   }
 }
