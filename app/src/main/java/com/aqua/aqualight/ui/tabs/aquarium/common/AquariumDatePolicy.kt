@@ -1,16 +1,17 @@
 package com.aqua.aqualight.ui.tabs.aquarium.common
 
-import java.text.DateFormat
+import android.content.Context
+import com.aqua.aqualight.i18n.LocaleFormatter
 import java.util.Calendar
-import java.util.Date
 import java.util.Locale
 
 object AquariumDatePolicy {
     private const val MIN_SETUP_YEAR = 2000
     private const val MAX_YEAR_OFFSET = 10
 
-    val setupDateLocale: Locale
-        get() = Locale.getDefault()
+    fun setupDateLocale(context: Context): Locale {
+        return LocaleFormatter.appLocale(context)
+    }
 
     fun minSetupYear(): Int = MIN_SETUP_YEAR
 
@@ -19,6 +20,7 @@ object AquariumDatePolicy {
     }
 
     fun formatSetupDate(
+        context: Context,
         millis: Long?,
         emptyText: String
     ): String {
@@ -26,9 +28,6 @@ object AquariumDatePolicy {
             return emptyText
         }
 
-        return DateFormat.getDateInstance(
-            DateFormat.MEDIUM,
-            setupDateLocale
-        ).format(Date(millis))
+        return LocaleFormatter.formatDate(context, millis)
     }
 }
