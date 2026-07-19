@@ -25,6 +25,10 @@ PLACEHOLDER = re.compile(
     r"%(?:(?P<index>\d+)\$)?(?P<flags>[-#+ 0,(<]*)"
     r"(?P<width>\d*)(?:\.(?P<precision>\d+))?(?P<type>[a-zA-Z%])"
 )
+LOCALE_ENTRY = re.compile(
+    r"^\s{8}SupportedLocale\(\n(?P<body>.*?)^\s{8}\)",
+    flags=re.DOTALL | re.MULTILINE,
+)
 
 
 @dataclass(frozen=True)
@@ -51,7 +55,8 @@ def parse_registry(errors: list[str]) -> tuple[str, list[LocaleEntry]]:
         default_tag = default_match.group(1)
 
     entries: list[LocaleEntry] = []
-    for block in re.findall(r"SupportedLocale\((.*?)\n\s*\)", text, flags=re.DOTALL):
+    for match in LOCALE_ENTRY.finditer(text):
+        block = match.group("body")
         tag_match = re.search(r"languageTag\s*=\s*(?:\"([^\"]+)\"|DEFAULT_LANGUAGE_TAG)", block)
         availability_match = re.search(r"LocaleAvailability\.(PUBLISHED|PLANNED)", block)
         if tag_match is None or availability_match is None:
@@ -59,6 +64,9 @@ def parse_registry(errors: list[str]) -> tuple[str, list[LocaleEntry]]:
             continue
         tag = tag_match.group(1) or default_tag
         entries.append(LocaleEntry(tag, availability_match.group(1)))
+
+    if not entries:
+        errors.append("SupportedLocaleRegistry must declare at least one locale entry.")
 
     tags = [entry.language_tag for entry in entries]
     if len(tags) != len(set(tags)):
