@@ -15,14 +15,12 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
-import com.aqua.aqualight.databinding.ItemCareTaskBinding
 import com.aqua.aqualight.application.care.CareTaskSource
 import com.aqua.aqualight.application.care.CareTaskStatus
+import com.aqua.aqualight.databinding.ItemCareTaskBinding
+import com.aqua.aqualight.localization.AppLocaleFormatter
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
-import java.util.Locale
 
 class CareTaskAdapter(
   private val context: Context,
@@ -149,10 +147,10 @@ class CareTaskAdapter(
   private fun formatDateHeaderWithRelative(
     millis: Long
   ): String {
-    val dateText = SimpleDateFormat(
-      "dd.MM.yyyy",
-      Locale.getDefault()
-    ).format(Date(millis))
+    val dateText = AppLocaleFormatter.formatDate(
+      context = context,
+      epochMillis = millis
+    )
 
     return when {
       isToday(millis) -> {
@@ -186,10 +184,10 @@ class CareTaskAdapter(
   private fun formatDateKey(
     millis: Long
   ): String {
-    return SimpleDateFormat(
-      "yyyyMMdd",
-      Locale.getDefault()
-    ).format(Date(millis))
+    val calendar = Calendar.getInstance().apply {
+      timeInMillis = millis
+    }
+    return "${calendar.get(Calendar.YEAR)}-${calendar.get(Calendar.DAY_OF_YEAR)}"
   }
 
   private fun isToday(
@@ -249,7 +247,12 @@ class CareTaskAdapter(
       titleText.text = title
       titleText.setTextSizeResource(R.dimen.aqua_text_size_micro_plus)
       titleText.setTypeface(null, Typeface.NORMAL)
-      titleText.setTextColor(ContextCompat.getColor(titleText.context, R.color.aqua_content_on_dark))
+      titleText.setTextColor(
+        ContextCompat.getColor(
+          titleText.context,
+          R.color.aqua_content_on_dark
+        )
+      )
     }
   }
 
@@ -270,7 +273,12 @@ class CareTaskAdapter(
 
       binding.tvTaskTitle.text = item.title
       binding.tvTaskTitle.setTextSizeResource(R.dimen.aqua_text_size_body_precise)
-      binding.tvTaskTitle.setTextColor(ContextCompat.getColor(binding.root.context, R.color.aqua_content_on_dark))
+      binding.tvTaskTitle.setTextColor(
+        ContextCompat.getColor(
+          binding.root.context,
+          R.color.aqua_content_on_dark
+        )
+      )
       binding.tvTaskTitle.setTypeface(
         null,
         if (item.status == CareTaskStatus.COMPLETED) {
@@ -350,7 +358,9 @@ class CareTaskAdapter(
     ): GradientDrawable {
       return GradientDrawable().apply {
         shape = GradientDrawable.RECTANGLE
-        cornerRadius = binding.root.resources.getDimensionPixelOffset(R.dimen.aqua_size_14).toFloat()
+        cornerRadius = binding.root.resources
+          .getDimensionPixelOffset(R.dimen.aqua_size_14)
+          .toFloat()
         setColor(
           applyAlpha(
             color = color,
@@ -384,7 +394,9 @@ class CareTaskAdapter(
 
       return GradientDrawable().apply {
         shape = GradientDrawable.RECTANGLE
-        cornerRadius = binding.root.resources.getDimensionPixelOffset(R.dimen.aqua_size_11).toFloat()
+        cornerRadius = binding.root.resources
+          .getDimensionPixelOffset(R.dimen.aqua_size_11)
+          .toFloat()
         setColor(color)
         setStroke(
           binding.root.resources.getDimensionPixelOffset(R.dimen.aqua_size_1),
@@ -416,38 +428,38 @@ class CareTaskAdapter(
     data class TaskItem(
       val task: CareTaskUi
     ) : CareTaskListItem()
-    }
+  }
 
-    private object CareTaskListDiffCallback :
+  private object CareTaskListDiffCallback :
     DiffUtil.ItemCallback<CareTaskListItem>() {
 
-      override fun areItemsTheSame(
-        oldItem: CareTaskListItem,
-        newItem: CareTaskListItem
-      ): Boolean {
-        return when {
-          oldItem is CareTaskListItem.DateHeader &&
-          newItem is CareTaskListItem.DateHeader -> {
-            oldItem.key == newItem.key
-          }
-
-          oldItem is CareTaskListItem.TaskItem &&
-          newItem is CareTaskListItem.TaskItem -> {
-            oldItem.task.id == newItem.task.id
-          } else -> false
+    override fun areItemsTheSame(
+      oldItem: CareTaskListItem,
+      newItem: CareTaskListItem
+    ): Boolean {
+      return when {
+        oldItem is CareTaskListItem.DateHeader &&
+        newItem is CareTaskListItem.DateHeader -> {
+          oldItem.key == newItem.key
         }
-      }
 
-      override fun areContentsTheSame(
-        oldItem: CareTaskListItem,
-        newItem: CareTaskListItem
-      ): Boolean {
-        return oldItem == newItem
+        oldItem is CareTaskListItem.TaskItem &&
+        newItem is CareTaskListItem.TaskItem -> {
+          oldItem.task.id == newItem.task.id
+        } else -> false
       }
     }
 
-    companion object {
-      private const val VIEW_TYPE_DATE_HEADER = 1
-      private const val VIEW_TYPE_TASK = 2
+    override fun areContentsTheSame(
+      oldItem: CareTaskListItem,
+      newItem: CareTaskListItem
+    ): Boolean {
+      return oldItem == newItem
     }
   }
+
+  companion object {
+    private const val VIEW_TYPE_DATE_HEADER = 1
+    private const val VIEW_TYPE_TASK = 2
+  }
+}
