@@ -9,10 +9,8 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.user.UsageAnalyticsSnapshot
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentUsageBinding
+import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -62,16 +60,28 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
         usage: UsageAnalyticsSnapshot
     ) {
         binding.tvTotalSessionsValue.text =
-            usage.weeklyAutomationCount.toString()
+            LocaleFormatter.formatInteger(
+                requireContext(),
+                usage.weeklyAutomationCount
+            )
 
         binding.tvTotalTimeValue.text =
-            usage.weeklyAlertCount.toString()
+            LocaleFormatter.formatInteger(
+                requireContext(),
+                usage.weeklyAlertCount
+            )
 
         binding.tvTodaySessionsValue.text =
-            usage.todayAutomationCount.toString()
+            LocaleFormatter.formatInteger(
+                requireContext(),
+                usage.todayAutomationCount
+            )
 
         binding.tvTodayTimeValue.text =
-            usage.todayManualActionCount.toString()
+            LocaleFormatter.formatInteger(
+                requireContext(),
+                usage.todayManualActionCount
+            )
 
         binding.tvLastOpenValue.text =
             formatLastEventTime(
@@ -97,17 +107,9 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
             )
         }
 
-        val date =
-            Date(timeMillis)
-
-        val formatter =
-            SimpleDateFormat(
-                "MMM d, HH:mm",
-                Locale.getDefault()
-            )
-
-        return formatter.format(
-            date
+        return LocaleFormatter.formatDateTime(
+            requireContext(),
+            timeMillis
         )
     }
 
