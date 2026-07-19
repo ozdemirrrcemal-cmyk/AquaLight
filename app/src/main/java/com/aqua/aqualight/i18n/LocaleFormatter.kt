@@ -13,14 +13,14 @@ object LocaleFormatter {
 
     /**
      * Returns a context whose resources follow the AndroidX per-app language selection.
-     * If startup has not applied the persisted locale yet, unsupported device locales are
-     * replaced with the commercial default instead of leaking into framework dialogs.
+     * Before an explicit user choice is available, Turkish devices use Turkish and every other
+     * device uses English. Unsupported framework locales can therefore never leak into dialogs.
      */
     fun localizedContext(context: Context): Context {
         val languageContext = ContextCompat.getContextForLanguage(context)
         val locales = languageContext.resources.configuration.locales
         val configuredLocale = if (locales.isEmpty) {
-            Locale.forLanguageTag(SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG)
+            Locale.forLanguageTag(SupportedLocaleRegistry.deviceDefault())
         } else {
             locales[0]
         }
@@ -40,7 +40,7 @@ object LocaleFormatter {
     fun appLocale(context: Context): Locale {
         val locales = localizedContext(context).resources.configuration.locales
         return if (locales.isEmpty) {
-            Locale.forLanguageTag(SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG)
+            Locale.forLanguageTag(SupportedLocaleRegistry.deviceDefault())
         } else {
             resolveSupportedLocale(locales[0])
         }
