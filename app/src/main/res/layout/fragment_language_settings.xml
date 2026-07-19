@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout 
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -8,17 +8,15 @@
     android:background="@color/background_color"
     tools:context=".ui.tabs.settings.app.LanguageSettingsFragment">
 
-    <!-- 🔹 Üst Bar (Yeni stil) -->
-   <include
-    android:id="@+id/appHeader"
-    layout="@layout/layout_aqua_header"
-    android:layout_width="@dimen/aqua_size_0"
-    android:layout_height="wrap_content"
-    app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintEnd_toEndOf="parent" />
+    <include
+        android:id="@+id/appHeader"
+        layout="@layout/layout_aqua_header"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- 🔹 İçerik -->
     <ScrollView
         android:id="@+id/scrollContainer"
         android:layout_width="@dimen/aqua_size_0"
@@ -40,77 +38,47 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/aqua_size_4"
+                android:layout_marginBottom="@dimen/aqua_size_12"
+                android:text="@string/language_available_description"
+                android:textColor="@color/aqua_content_secondary"
+                android:textSize="@dimen/aqua_text_size_body" />
+
             <RadioGroup
                 android:id="@+id/radioGroupLanguages"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <!-- 🇹🇷 Turkish -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardTurkish"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/aqua_size_12"
-                    style="@style/Widget.Aqua.Card">
-
-                    <LinearLayout
-                        android:orientation="horizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:padding="@dimen/aqua_size_12"
-                        android:gravity="center_vertical"
-                        android:contentDescription="@string/language_turkish_row_desc">
-
-                        <ImageView
-                            android:layout_width="@dimen/aqua_size_32"
-                            android:layout_height="@dimen/aqua_size_32"
-                            android:src="@drawable/flag_tr"
-                            android:layout_marginEnd="@dimen/aqua_size_12"
-                            android:contentDescription="@string/language_turkish_flag_desc" />
-
-                        <TextView
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/language_turkish"
-                            android:textColor="@color/aqua_card_text_primary"
-                            android:textSize="@dimen/aqua_text_size_body"
-                            android:textStyle="bold" />
-
-                        <com.google.android.material.radiobutton.MaterialRadioButton
-                            android:id="@+id/radioTurkish"
-                            style="@style/Widget.Aqua.SettingsRadio"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:focusable="false"
-                            android:clickable="false"
-                            android:contentDescription="@string/language_turkish_radio_desc" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- 🇬🇧 English -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardEnglish"
+                    style="@style/Widget.Aqua.Card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="@dimen/aqua_size_12"
-                    style="@style/Widget.Aqua.Card">
+                    android:clickable="true"
+                    android:contentDescription="@string/language_english_row_desc"
+                    android:focusable="true"
+                    android:minHeight="@dimen/aqua_size_56">
 
                     <LinearLayout
-                        android:orientation="horizontal"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:padding="@dimen/aqua_size_12"
                         android:gravity="center_vertical"
-                        android:contentDescription="@string/language_english_row_desc">
+                        android:minHeight="@dimen/aqua_size_56"
+                        android:orientation="horizontal"
+                        android:padding="@dimen/aqua_size_12">
 
                         <ImageView
                             android:layout_width="@dimen/aqua_size_32"
                             android:layout_height="@dimen/aqua_size_32"
-                            android:src="@drawable/flag_en"
                             android:layout_marginEnd="@dimen/aqua_size_12"
-                            android:contentDescription="@string/language_english_flag_desc" />
+                            android:contentDescription="@null"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/flag_en" />
 
                         <TextView
                             android:layout_width="@dimen/aqua_size_0"
@@ -126,184 +94,13 @@
                             style="@style/Widget.Aqua.SettingsRadio"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:focusable="false"
                             android:clickable="false"
-                            android:contentDescription="@string/language_english_radio_desc" />
+                            android:contentDescription="@string/language_english_radio_desc"
+                            android:focusable="false"
+                            android:minWidth="@dimen/aqua_size_48"
+                            android:minHeight="@dimen/aqua_size_48" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
-
-                <!-- 🇩🇪 German -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardGerman"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/aqua_size_12"
-                    style="@style/Widget.Aqua.Card">
-
-                    <LinearLayout
-                        android:orientation="horizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:padding="@dimen/aqua_size_12"
-                        android:gravity="center_vertical"
-                        android:contentDescription="@string/language_german_row_desc">
-
-                        <ImageView
-                            android:layout_width="@dimen/aqua_size_32"
-                            android:layout_height="@dimen/aqua_size_32"
-                            android:src="@drawable/flag_de"
-                            android:layout_marginEnd="@dimen/aqua_size_12"
-                            android:contentDescription="@string/language_german_flag_desc" />
-
-                        <TextView
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/language_german"
-                            android:textColor="@color/aqua_card_text_primary"
-                            android:textSize="@dimen/aqua_text_size_body"
-                            android:textStyle="bold" />
-
-                        <com.google.android.material.radiobutton.MaterialRadioButton
-                            android:id="@+id/radioGerman"
-                            style="@style/Widget.Aqua.SettingsRadio"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:focusable="false"
-                            android:clickable="false"
-                            android:contentDescription="@string/language_german_radio_desc" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- 🇫🇷 French -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardFrench"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/aqua_size_12"
-                    style="@style/Widget.Aqua.Card">
-
-                    <LinearLayout
-                        android:orientation="horizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:padding="@dimen/aqua_size_12"
-                        android:gravity="center_vertical"
-                        android:contentDescription="@string/language_french_row_desc">
-
-                        <ImageView
-                            android:layout_width="@dimen/aqua_size_32"
-                            android:layout_height="@dimen/aqua_size_32"
-                            android:src="@drawable/flag_fr"
-                            android:layout_marginEnd="@dimen/aqua_size_12"
-                            android:contentDescription="@string/language_french_flag_desc" />
-
-                        <TextView
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/language_french"
-                            android:textColor="@color/aqua_card_text_primary"
-                            android:textSize="@dimen/aqua_text_size_body"
-                            android:textStyle="bold" />
-
-                        <com.google.android.material.radiobutton.MaterialRadioButton
-                            android:id="@+id/radioFrench"
-                            style="@style/Widget.Aqua.SettingsRadio"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:focusable="false"
-                            android:clickable="false"
-                            android:contentDescription="@string/language_french_radio_desc" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- 🇷🇺 Russian -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardRussian"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/aqua_size_12"
-                    style="@style/Widget.Aqua.Card">
-
-                    <LinearLayout
-                        android:orientation="horizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:padding="@dimen/aqua_size_12"
-                        android:gravity="center_vertical"
-                        android:contentDescription="@string/language_russian_row_desc">
-
-                        <ImageView
-                            android:layout_width="@dimen/aqua_size_32"
-                            android:layout_height="@dimen/aqua_size_32"
-                            android:src="@drawable/flag_ru"
-                            android:layout_marginEnd="@dimen/aqua_size_12"
-                            android:contentDescription="@string/language_russian_flag_desc" />
-
-                        <TextView
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/language_russian"
-                            android:textColor="@color/aqua_card_text_primary"
-                            android:textSize="@dimen/aqua_text_size_body"
-                            android:textStyle="bold" />
-
-                        <com.google.android.material.radiobutton.MaterialRadioButton
-                            android:id="@+id/radioRussian"
-                            style="@style/Widget.Aqua.SettingsRadio"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:focusable="false"
-                            android:clickable="false"
-                            android:contentDescription="@string/language_russian_radio_desc" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- 🇨🇳 Chinese -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardChinese"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/aqua_size_12"
-                    style="@style/Widget.Aqua.Card">
-
-                    <LinearLayout
-                        android:orientation="horizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:padding="@dimen/aqua_size_12"
-                        android:gravity="center_vertical"
-                        android:contentDescription="@string/language_chinese_row_desc">
-
-                        <ImageView
-                            android:layout_width="@dimen/aqua_size_32"
-                            android:layout_height="@dimen/aqua_size_32"
-                            android:src="@drawable/flag_cn"
-                            android:layout_marginEnd="@dimen/aqua_size_12"
-                            android:contentDescription="@string/language_chinese_flag_desc" />
-
-                        <TextView
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/language_chinese"
-                            android:textColor="@color/aqua_card_text_primary"
-                            android:textSize="@dimen/aqua_text_size_body"
-                            android:textStyle="bold" />
-
-                        <com.google.android.material.radiobutton.MaterialRadioButton
-                            android:id="@+id/radioChinese"
-                            style="@style/Widget.Aqua.SettingsRadio"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:focusable="false"
-                            android:clickable="false"
-                            android:contentDescription="@string/language_chinese_radio_desc" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
             </RadioGroup>
         </LinearLayout>
     </ScrollView>
