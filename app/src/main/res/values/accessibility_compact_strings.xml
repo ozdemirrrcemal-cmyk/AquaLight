@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Compact visible copy keeps fixed commercial controls readable at 200% font scale. -->
+    <string name="maintenance_tab_next">Next</string>
+</resources>
