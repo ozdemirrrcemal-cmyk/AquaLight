@@ -23,7 +23,7 @@ jobs:
   instrumentation:
     name: Emulator API ${{ matrix.api-level }}
     runs-on: ubuntu-latest
-    timeout-minutes: 55
+    timeout-minutes: 65
 
     strategy:
       fail-fast: false
@@ -58,6 +58,10 @@ jobs:
           grep -Fq "bash tools/verify_uninstall_clears_data.sh" tools/run_release_smoke.sh
           grep -Fq "RELEASE_SMOKE_PASS" tools/run_release_smoke.sh
           grep -Fq "ReleaseSmokeActivity" tools/run_release_smoke.sh
+          grep -Fq "run_visual_smoke font200" tools/run_release_smoke.sh
+          grep -Fq "run_visual_smoke rtl" tools/run_release_smoke.sh
+          grep -Fq "verifyVisibleIconControlDescriptions" \
+            app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeActivity.kt
 
       - name: Generate CI-only release keystore
         run: |
