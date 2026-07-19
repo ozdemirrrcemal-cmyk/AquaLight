@@ -2,7 +2,9 @@ package com.aqua.aqualight.data.user
 
 import com.aqua.aqualight.application.user.UsageAnalyticsSnapshot
 import com.aqua.aqualight.application.user.UserSettingsOperations
+import com.aqua.aqualight.localization.SupportedLocaleRegistry
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
 /** Existing non-notification settings behavior wired behind the application contract. */
@@ -13,6 +15,8 @@ class DefaultUserSettingsOperations(
 
     override val themeMode: Flow<String> = preferences.themeMode
     override val languageCode: Flow<String> = preferences.languageCode
+        .map(SupportedLocaleRegistry::normalize)
+        .distinctUntilChanged()
     override val autoUpdateEnabled: Flow<Boolean> = preferences.autoUpdateEnabled
     override val usageAnalytics: Flow<UsageAnalyticsSnapshot> =
         preferences.usageAnalyticsFlow.map { usage ->
@@ -32,8 +36,9 @@ class DefaultUserSettingsOperations(
     }
 
     override suspend fun updateLanguage(code: String) {
-        preferences.updateLanguage(code)
-        startupAppearanceCache.writeLanguageCode(code)
+        val normalizedCode = SupportedLocaleRegistry.normalize(code)
+        preferences.updateLanguage(normalizedCode)
+        startupAppearanceCache.writeLanguageCode(normalizedCode)
     }
 
     override suspend fun updateAutoUpdateEnabled(enabled: Boolean) {
