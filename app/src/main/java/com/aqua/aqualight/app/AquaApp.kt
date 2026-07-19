@@ -10,6 +10,8 @@ import com.aqua.aqualight.data.media.AppMediaRecoveryManager
 import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.aqua.aqualight.data.user.UserPreferencesManager
+import com.aqua.aqualight.i18n.SupportedLocaleRegistry
+import com.aqua.aqualight.ui.common.accessibility.AccessibilityRuntimeInstaller
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -29,6 +31,10 @@ class AquaApp : Application() {
     override fun onCreate() {
         super.onCreate()
 
+        registerActivityLifecycleCallbacks(
+            AccessibilityRuntimeInstaller()
+        )
+
         appContainer = DefaultAppContainer(this)
         LocalDataRecoveryTracker.initialize(this)
 
@@ -46,9 +52,9 @@ class AquaApp : Application() {
             val resolvedThemeMode = preferences.themeMode.ifBlank {
                 UserPreferencesManager.DEFAULT_THEME_MODE
             }
-            val resolvedLanguageCode = preferences.languageCode.ifBlank {
-                UserPreferencesManager.DEFAULT_LANGUAGE_CODE
-            }
+            val resolvedLanguageCode = SupportedLocaleRegistry.resolve(
+                preferences.languageCode
+            )
 
             appearanceCache.write(
                 themeMode = resolvedThemeMode,
@@ -57,7 +63,7 @@ class AquaApp : Application() {
 
             if (
                 cachedAppearance.themeMode != resolvedThemeMode ||
-                cachedAppearance.languageCode != resolvedLanguageCode
+                SupportedLocaleRegistry.resolve(cachedAppearance.languageCode) != resolvedLanguageCode
             ) {
                 withContext(Dispatchers.Main.immediate) {
                     applyTheme(resolvedThemeMode)
@@ -104,8 +110,9 @@ class AquaApp : Application() {
     }
 
     private fun applyLanguage(code: String) {
-        val safeCode = code.ifBlank { UserPreferencesManager.DEFAULT_LANGUAGE_CODE }
-        val localeList = LocaleListCompat.forLanguageTags(safeCode)
+        val localeList = LocaleListCompat.forLanguageTags(
+            SupportedLocaleRegistry.resolve(code)
+        )
         AppCompatDelegate.setApplicationLocales(localeList)
     }
 }
