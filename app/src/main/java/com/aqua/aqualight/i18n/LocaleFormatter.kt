@@ -1,6 +1,7 @@
 package com.aqua.aqualight.i18n
 
 import android.content.Context
+import android.content.res.Configuration
 import androidx.core.content.ContextCompat
 import java.text.DateFormat
 import java.text.NumberFormat
@@ -12,20 +13,37 @@ object LocaleFormatter {
 
     /**
      * Returns a context whose resources follow the AndroidX per-app language selection.
-     * This is required for framework dialogs and non-AppCompat contexts on API 32 and lower.
+     * If startup has not applied the persisted locale yet, unsupported device locales are
+     * replaced with the commercial default instead of leaking into framework dialogs.
      */
     fun localizedContext(context: Context): Context {
-        return ContextCompat.getContextForLanguage(context)
-    }
-
-    fun appLocale(context: Context): Locale {
-        val locales = localizedContext(context).resources.configuration.locales
+        val languageContext = ContextCompat.getContextForLanguage(context)
+        val locales = languageContext.resources.configuration.locales
         val configuredLocale = if (locales.isEmpty) {
             Locale.forLanguageTag(SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG)
         } else {
             locales[0]
         }
-        return resolveSupportedLocale(configuredLocale)
+        val supportedLocale = resolveSupportedLocale(configuredLocale)
+
+        if (configuredLocale.toLanguageTag() == supportedLocale.toLanguageTag()) {
+            return languageContext
+        }
+
+        val configuration = Configuration(languageContext.resources.configuration).apply {
+            setLocale(supportedLocale)
+            setLayoutDirection(supportedLocale)
+        }
+        return languageContext.createConfigurationContext(configuration)
+    }
+
+    fun appLocale(context: Context): Locale {
+        val locales = localizedContext(context).resources.configuration.locales
+        return if (locales.isEmpty) {
+            Locale.forLanguageTag(SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG)
+        } else {
+            resolveSupportedLocale(locales[0])
+        }
     }
 
     internal fun resolveSupportedLocale(configuredLocale: Locale): Locale {
