@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.maintenance
 
+import com.aqua.aqualight.localization.LocaleFormatters
+
 import androidx.core.content.ContextCompat
 import android.content.res.ColorStateList
 import android.graphics.Color
@@ -39,10 +41,7 @@ import com.aqua.aqualight.ui.common.permission.CapabilityPermissionCoordinator
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.ui.tabs.maintenance.text.CareTaskTypeCatalog
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
-import java.util.Locale
 import kotlinx.coroutines.launch
 
 class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
@@ -459,14 +458,8 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
     }
 
     private fun updateDateTimeText() {
-        binding.tvDueDateValue.text = SimpleDateFormat(
-            "dd MMM yyyy",
-            Locale.getDefault()
-        ).format(Date(selectedCalendar.timeInMillis))
-        binding.tvDueTimeValue.text = SimpleDateFormat(
-            "HH:mm",
-            Locale.getDefault()
-        ).format(Date(selectedCalendar.timeInMillis))
+        binding.tvDueDateValue.text = LocaleFormatters.formatDate(requireContext(), selectedCalendar.timeInMillis)
+        binding.tvDueTimeValue.text = LocaleFormatters.formatTime(requireContext(), selectedCalendar.timeInMillis)
     }
 
     private fun saveTask() {

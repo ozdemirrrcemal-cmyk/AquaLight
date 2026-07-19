@@ -75,7 +75,7 @@
     <color name="aqua_content_muted">@color/aqua_palette_hex_90a1b5</color>
     <color name="aqua_content_on_dark">@color/aqua_palette_hex_ffffff</color>
     <color name="aqua_content_on_dark_argb">@color/aqua_palette_hex_ffffffff</color>
-    <color name="aqua_content_placeholder">@color/aqua_palette_hex_7f91aa</color>
+    <color name="aqua_content_placeholder">@color/aqua_palette_hex_8fa0b5</color>
     <color name="aqua_content_primary">@color/aqua_palette_hex_f2f6fa</color>
     <color name="aqua_content_primary_soft">@color/aqua_palette_hex_dce7f3</color>
     <color name="aqua_content_secondary">@color/aqua_palette_hex_8fa4be</color>
@@ -122,7 +122,7 @@
     <color name="aqua_profile_background_start_color">@color/aqua_palette_hex_1e3a8a</color>
     <color name="aqua_progress_bar_progress_background_tint">@color/aqua_palette_hex_2d3a4f</color>
     <color name="aqua_progress_bar_progress_tint">@color/aqua_palette_hex_1faa59</color>
-    <color name="aqua_status_danger">@color/aqua_palette_hex_d85c5c</color>
+    <color name="aqua_status_danger">@color/aqua_palette_hex_ff6b6b</color>
     <color name="aqua_status_success">@color/aqua_palette_hex_4caf50</color>
     <color name="aqua_surface_action">@color/aqua_palette_hex_1c3252</color>
     <color name="aqua_surface_deep">@color/aqua_palette_hex_10233a</color>

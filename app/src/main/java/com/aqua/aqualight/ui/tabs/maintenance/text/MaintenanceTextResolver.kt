@@ -16,6 +16,8 @@ interface MaintenanceTextResolver {
 
     fun completedTime(timeText: String): String
 
+    fun formatTime(epochMillis: Long): String
+
     fun repeatTime(timeText: String, repeatDays: Int): String
 
     fun reminderWithMissedDays(days: Int): String

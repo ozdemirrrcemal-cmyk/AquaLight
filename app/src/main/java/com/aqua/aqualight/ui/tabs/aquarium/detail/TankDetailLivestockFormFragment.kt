@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail
 
+import com.aqua.aqualight.localization.LocaleFormatters
+
 import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -27,10 +29,7 @@ import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCategories
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.data.aquarium.util.AquariumIdGenerator
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
-import java.util.Locale
 import android.text.Editable
 import android.text.TextWatcher
 import androidx.navigation.fragment.findNavController
@@ -362,7 +361,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
 
             val params = GridLayout.LayoutParams().apply {
                 width = 0
-                height = resources.getDimensionPixelOffset(R.dimen.aqua_size_46)
+                height = resources.getDimensionPixelOffset(R.dimen.aqua_size_48)
                 columnSpec = GridLayout.spec(
                     GridLayout.UNDEFINED,
                     1f
@@ -408,18 +407,11 @@ Fragment(R.layout.fragment_tank_livestock_form) {
     }
 
     private fun updateQuantity() {
-        binding.tvQuantityValue.text = selectedQuantity.toString()
+        binding.tvQuantityValue.text = LocaleFormatters.formatInteger(requireContext(), selectedQuantity.toLong())
     }
 
     private fun updateDateText() {
-        val formatter = SimpleDateFormat(
-            "dd MMM yyyy",
-            Locale.getDefault()
-        )
-
-        binding.tvAddedDateValue.text = formatter.format(
-            Date(selectedAddedDateMillis)
-        )
+        binding.tvAddedDateValue.text = LocaleFormatters.formatDate(requireContext(), selectedAddedDateMillis)
     }
 
     private fun saveLivestock() {

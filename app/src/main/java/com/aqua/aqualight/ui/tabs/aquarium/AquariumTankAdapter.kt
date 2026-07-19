@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium
 
+import com.aqua.aqualight.localization.LocaleFormatters
+
 import android.content.Context
 import android.net.Uri
 import android.view.LayoutInflater
@@ -16,9 +18,6 @@ import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.databinding.ItemAquariumTankBinding
 import com.aqua.aqualight.ui.tabs.maintenance.TankCareSummaryUi
 import com.aqua.aqualight.ui.common.text.resolve
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 class AquariumTankAdapter(
@@ -218,14 +217,9 @@ class AquariumTankAdapter(
         return context.getString(R.string.aquarium_setup_date_empty)
       }
 
-      val formatter = SimpleDateFormat(
-        "yyyy/MM/dd",
-        Locale.getDefault()
-      )
-
       return context.getString(
         R.string.aquarium_setup_date_card_format,
-        formatter.format(Date(setupDateMillis))
+        LocaleFormatters.formatDate(context, setupDateMillis)
       )
     }
 

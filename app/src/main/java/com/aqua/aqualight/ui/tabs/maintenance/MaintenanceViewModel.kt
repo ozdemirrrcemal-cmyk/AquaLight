@@ -15,10 +15,7 @@ import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.ui.tabs.maintenance.model.MaintenanceTab
 import com.aqua.aqualight.ui.tabs.maintenance.text.MaintenanceTextResolver
 import com.aqua.aqualight.ui.common.text.AquaUiText
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
-import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -382,11 +379,11 @@ class MaintenanceViewModel(
             return if (completedAt == null || completedAt <= 0L) {
                 textResolver.completedStatus()
             } else {
-                textResolver.completedTime(formatTime(completedAt))
+                textResolver.completedTime(textResolver.formatTime(completedAt))
             }
         }
 
-        val timeText = formatTime(task.dueAtMillis)
+        val timeText = textResolver.formatTime(task.dueAtMillis)
         return if (task.repeatEnabled) {
             textResolver.repeatTime(
                 timeText = timeText,
@@ -526,8 +523,4 @@ class MaintenanceViewModel(
             set(Calendar.MILLISECOND, 0)
         }.timeInMillis
 
-    private fun formatTime(millis: Long): String = SimpleDateFormat(
-        "HH:mm",
-        Locale.getDefault()
-    ).format(Date(millis))
 }

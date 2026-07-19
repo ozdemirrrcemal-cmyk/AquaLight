@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail
 
+import com.aqua.aqualight.localization.LocaleFormatters
+
 import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import androidx.core.content.ContextCompat
 import android.graphics.Color
@@ -40,10 +42,7 @@ import com.aqua.aqualight.ui.tabs.maintenance.TankNextCareStatus
 import com.aqua.aqualight.application.care.CareTaskType
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
-import java.util.Locale
 import com.google.android.material.card.MaterialCardView
 
 class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activity) {
@@ -636,19 +635,13 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
     private fun formatActivityDateTime(
         millis: Long
     ): String {
-        return SimpleDateFormat(
-            "dd.MM.yyyy HH:mm",
-            Locale.getDefault()
-        ).format(Date(millis))
+        return LocaleFormatters.formatDateTime(requireContext(), millis)
     }
 
     private fun formatActivityDate(
         millis: Long
     ): String {
-        val dateText = SimpleDateFormat(
-            "dd.MM.yyyy",
-            Locale.getDefault()
-        ).format(Date(millis))
+        val dateText = LocaleFormatters.formatDate(requireContext(), millis)
 
         return when {
             isActivityToday(millis) -> {
@@ -672,19 +665,13 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
     private fun formatActivityTime(
         millis: Long
     ): String {
-        return SimpleDateFormat(
-            "HH:mm",
-            Locale.getDefault()
-        ).format(Date(millis))
+        return LocaleFormatters.formatTime(requireContext(), millis)
     }
 
     private fun formatActivityDateKey(
         millis: Long
     ): String {
-        return SimpleDateFormat(
-            "yyyyMMdd",
-            Locale.getDefault()
-        ).format(Date(millis))
+        return LocaleFormatters.localDayKey(millis)
     }
 
     private fun isActivityToday(

@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.maintenance
 
+import com.aqua.aqualight.localization.LocaleFormatters
+
 import androidx.core.content.ContextCompat
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
@@ -27,9 +29,6 @@ import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import androidx.navigation.fragment.navArgs
 
 class TaskDetailFragment :
@@ -471,28 +470,19 @@ class TaskDetailFragment :
   private fun formatDate(
     millis: Long
   ): String {
-    return SimpleDateFormat(
-      "dd.MM.yyyy",
-      Locale.getDefault()
-    ).format(Date(millis))
+    return LocaleFormatters.formatDate(requireContext(), millis)
   }
 
   private fun formatTime(
     millis: Long
   ): String {
-    return SimpleDateFormat(
-      "HH:mm",
-      Locale.getDefault()
-    ).format(Date(millis))
+    return LocaleFormatters.formatTime(requireContext(), millis)
   }
 
   private fun formatDateTime(
     millis: Long
   ): String {
-    return SimpleDateFormat(
-      "dd.MM.yyyy HH:mm",
-      Locale.getDefault()
-    ).format(Date(millis))
+    return LocaleFormatters.formatDateTime(requireContext(), millis)
   }
   override fun onDestroyView() {
     _binding = null

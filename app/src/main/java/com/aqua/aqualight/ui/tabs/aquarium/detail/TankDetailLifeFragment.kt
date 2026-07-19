@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail
 
+import com.aqua.aqualight.localization.LocaleFormatters
+
 import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import androidx.core.content.ContextCompat
 import android.graphics.Typeface
@@ -21,9 +23,6 @@ import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCategories
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.google.android.material.card.MaterialCardView
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.TankDetailTabArgs
@@ -334,14 +333,9 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
             return getString(R.string.aquarium_livestock_added_date_not_set)
         }
 
-        val formatter = SimpleDateFormat(
-            "dd MMM yyyy",
-            Locale.getDefault()
-        )
-
         return getString(
             R.string.aquarium_livestock_added_date_format,
-            formatter.format(Date(addedDateMillis))
+            LocaleFormatters.formatDate(requireContext(), addedDateMillis)
         )
     }
 

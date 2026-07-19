@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.maintenance
 
+import com.aqua.aqualight.localization.LocaleFormatters
+
 import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import androidx.core.content.ContextCompat
 import android.content.Context
@@ -19,10 +21,7 @@ import com.aqua.aqualight.databinding.ItemCareTaskBinding
 import com.aqua.aqualight.application.care.CareTaskSource
 import com.aqua.aqualight.application.care.CareTaskStatus
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
-import java.util.Locale
 
 class CareTaskAdapter(
   private val context: Context,
@@ -149,10 +148,7 @@ class CareTaskAdapter(
   private fun formatDateHeaderWithRelative(
     millis: Long
   ): String {
-    val dateText = SimpleDateFormat(
-      "dd.MM.yyyy",
-      Locale.getDefault()
-    ).format(Date(millis))
+    val dateText = LocaleFormatters.formatDate(context, millis)
 
     return when {
       isToday(millis) -> {
@@ -186,10 +182,7 @@ class CareTaskAdapter(
   private fun formatDateKey(
     millis: Long
   ): String {
-    return SimpleDateFormat(
-      "yyyyMMdd",
-      Locale.getDefault()
-    ).format(Date(millis))
+    return LocaleFormatters.localDayKey(millis)
   }
 
   private fun isToday(

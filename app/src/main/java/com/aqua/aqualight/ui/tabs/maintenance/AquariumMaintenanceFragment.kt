@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.maintenance
 
+import com.aqua.aqualight.localization.LocaleFormatters
+
 import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import androidx.core.content.ContextCompat
 import android.graphics.Color
@@ -44,9 +46,6 @@ import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.ui.tabs.maintenance.model.MaintenanceTab
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class AquariumMaintenanceFragment :
     Fragment(R.layout.fragment_aquarium_maintenance) {
@@ -828,37 +827,25 @@ class AquariumMaintenanceFragment :
     private fun formatHistoryDate(
         millis: Long
     ): String {
-        return SimpleDateFormat(
-            "dd.MM.yyyy",
-            Locale.getDefault()
-        ).format(Date(millis))
+        return LocaleFormatters.formatDate(requireContext(), millis)
     }
 
     private fun formatHistoryTime(
         millis: Long
     ): String {
-        return SimpleDateFormat(
-            "HH:mm",
-            Locale.getDefault()
-        ).format(Date(millis))
+        return LocaleFormatters.formatTime(requireContext(), millis)
     }
 
     private fun formatHistoryDateTime(
         millis: Long
     ): String {
-        return SimpleDateFormat(
-            "dd.MM.yyyy HH:mm",
-            Locale.getDefault()
-        ).format(Date(millis))
+        return LocaleFormatters.formatDateTime(requireContext(), millis)
     }
 
     private fun getHistoryDateKey(
         millis: Long
     ): String {
-        return SimpleDateFormat(
-            "yyyyMMdd",
-            Locale.getDefault()
-        ).format(Date(millis))
+        return LocaleFormatters.localDayKey(millis)
     }
 
     private fun createHistoryIconBackground(

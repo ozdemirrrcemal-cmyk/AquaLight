@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.annotation.StringRes
 import com.aqua.aqualight.R
 import com.aqua.aqualight.localization.LocaleFormatters
-import java.util.Locale
 import kotlin.math.roundToInt
 
 object AquariumDimensionFormatter {
@@ -29,7 +28,7 @@ object AquariumDimensionFormatter {
         sizeUnit: String,
         @StringRes separatorRes: Int = R.string.aquarium_dimension_separator_spaced_multiply
     ): String {
-        val locale = context.currentLocale()
+        val locale = LocaleFormatters.currentLocale(context)
         val separator = context.getString(separatorRes)
         return if (sizeUnit.equals("in", ignoreCase = true)) {
             context.getString(
@@ -58,7 +57,7 @@ object AquariumDimensionFormatter {
         volumeUnit: String,
         rounded: Boolean = false
     ): String {
-        val locale = context.currentLocale()
+        val locale = LocaleFormatters.currentLocale(context)
         val liters = (widthCm * lengthCm * heightCm) / 1000.0
 
         return if (volumeUnit.equals("gal", ignoreCase = true)) {
@@ -83,8 +82,4 @@ object AquariumDimensionFormatter {
         }
     }
 
-    private fun Context.currentLocale(): Locale {
-        val locales = resources.configuration.locales
-        return if (locales.isEmpty) Locale.getDefault() else locales[0]
-    }
 }

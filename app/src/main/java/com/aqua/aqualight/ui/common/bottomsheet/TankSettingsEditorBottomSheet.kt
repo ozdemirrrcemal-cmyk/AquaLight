@@ -19,10 +19,9 @@ import com.aqua.aqualight.databinding.ContentSheetTankStyleBinding
 import com.aqua.aqualight.databinding.ContentSheetTankTypeBinding
 import com.aqua.aqualight.databinding.DialogSettingsBottomSheetBinding
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.aqua.aqualight.localization.LocaleFormatters
 import java.text.DateFormatSymbols
-import java.text.DecimalFormat
 import java.util.Calendar
-import java.util.Locale
 import kotlin.math.roundToInt
 
 /**
@@ -136,7 +135,7 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
 
     private fun bindSizeEditor() {
         val binding = ContentSheetTankSizeBinding.inflate(layoutInflater)
-        val formatter = DecimalFormat("#.##")
+        val locale = LocaleFormatters.currentLocale(requireContext())
 
         fun unitLabel(): String = getString(
             if (selectedUnit == UNIT_IN) {
@@ -148,7 +147,7 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
 
         fun formatValue(cmValue: Int): String {
             val value = if (selectedUnit == UNIT_IN) cmValue / CM_PER_INCH else cmValue.toDouble()
-            return formatter.format(value)
+            return LocaleFormatters.formatNumber(value, locale)
         }
 
         fun renderUnit() {
@@ -166,9 +165,9 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         }
         binding.btnCancel.setOnClickListener { cancelAndDismiss() }
         binding.btnSave.setOnClickListener {
-            val width = binding.inputWidth.text.toString().trim().toDoubleOrNull()
-            val length = binding.inputLength.text.toString().trim().toDoubleOrNull()
-            val height = binding.inputHeight.text.toString().trim().toDoubleOrNull()
+            val width = LocaleFormatters.parseNumber(binding.inputWidth.text, locale)?.toDouble()
+            val length = LocaleFormatters.parseNumber(binding.inputLength.text, locale)?.toDouble()
+            val height = LocaleFormatters.parseNumber(binding.inputHeight.text, locale)?.toDouble()
             val validationMessage = requireArguments().getString(ARG_VALIDATION_MESSAGE).orEmpty()
 
             var invalid = false
@@ -203,9 +202,7 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         val args = requireArguments()
         val minYear = args.getInt(ARG_MIN_YEAR)
         val maxYear = args.getInt(ARG_MAX_YEAR)
-        val locale = Locale.forLanguageTag(args.getString(ARG_LOCALE_TAG).orEmpty())
-            .takeUnless { it.language.isBlank() }
-            ?: Locale.getDefault()
+        val locale = LocaleFormatters.currentLocale(requireContext())
         val calendar = Calendar.getInstance().apply {
             val currentMillis = args.getLong(ARG_CURRENT_MILLIS, NO_DATE)
             if (currentMillis != NO_DATE) timeInMillis = currentMillis
@@ -426,7 +423,6 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         private const val ARG_CURRENT_MILLIS = "arg_current_millis"
         private const val ARG_MIN_YEAR = "arg_min_year"
         private const val ARG_MAX_YEAR = "arg_max_year"
-        private const val ARG_LOCALE_TAG = "arg_locale_tag"
         private const val ARG_WIDTH_CM = "arg_width_cm"
         private const val ARG_LENGTH_CM = "arg_length_cm"
         private const val ARG_HEIGHT_CM = "arg_height_cm"
@@ -451,7 +447,6 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
             currentMillis: Long? = null,
             minYear: Int = 0,
             maxYear: Int = 0,
-            locale: Locale = Locale.getDefault(),
             widthCm: Int = 0,
             lengthCm: Int = 0,
             heightCm: Int = 0,
@@ -468,7 +463,6 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
                     ARG_CURRENT_MILLIS to (currentMillis ?: NO_DATE),
                     ARG_MIN_YEAR to minYear,
                     ARG_MAX_YEAR to maxYear,
-                    ARG_LOCALE_TAG to locale.toLanguageTag(),
                     ARG_WIDTH_CM to widthCm,
                     ARG_LENGTH_CM to lengthCm,
                     ARG_HEIGHT_CM to heightCm,

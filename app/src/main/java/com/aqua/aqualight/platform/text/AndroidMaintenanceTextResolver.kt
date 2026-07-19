@@ -8,6 +8,7 @@ import com.aqua.aqualight.application.care.CareTaskType
 import com.aqua.aqualight.ui.tabs.maintenance.text.CareTaskTypeCatalog
 import com.aqua.aqualight.ui.tabs.maintenance.text.CareTaskTypePresentation
 import com.aqua.aqualight.ui.tabs.maintenance.text.MaintenanceTextResolver
+import com.aqua.aqualight.localization.LocaleFormatters
 
 class AndroidMaintenanceTextResolver(
     context: Context
@@ -42,6 +43,9 @@ class AndroidMaintenanceTextResolver(
 
     override fun completedTime(timeText: String): String =
         appContext.getString(R.string.maintenance_completed_time, timeText)
+
+    override fun formatTime(epochMillis: Long): String =
+        LocaleFormatters.formatTime(appContext, epochMillis)
 
     override fun repeatTime(timeText: String, repeatDays: Int): String =
         appContext.getString(

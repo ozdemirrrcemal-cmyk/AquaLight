@@ -5,6 +5,7 @@ import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceStatusSnapshot
 import com.aqua.aqualight.ui.common.devicecard.DeviceFamilyIconMapper
 import com.aqua.aqualight.ui.common.text.AquaUiText
+import java.text.Collator
 import java.util.Locale
 import kotlin.math.max
 
@@ -42,14 +43,16 @@ object DeviceStatusSnapshotMapper {
 
     fun items(
         statuses: List<OwnerDeviceStatusSnapshot>,
-        nowMillis: Long
+        nowMillis: Long,
+        locale: Locale = Locale.getDefault()
     ): List<DeviceStatusItem> {
+        val collator = Collator.getInstance(locale)
         return statuses
-            .sortedWith(
-                compareBy<OwnerDeviceStatusSnapshot> { status ->
-                    status.displayName.lowercase(Locale.US)
-                }.thenBy { status -> status.deviceUid }
-            )
+            .sortedWith { first, second ->
+                collator.compare(first.displayName, second.displayName)
+                    .takeIf { it != 0 }
+                    ?: first.deviceUid.compareTo(second.deviceUid)
+            }
             .map { status -> status.toStatusItem(nowMillis) }
     }
 

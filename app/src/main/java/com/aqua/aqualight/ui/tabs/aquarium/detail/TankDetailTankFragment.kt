@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail
 
+import com.aqua.aqualight.localization.LocaleFormatters
+
 import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import android.graphics.Typeface
 import android.os.Bundle
@@ -27,7 +29,6 @@ import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
-import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
@@ -240,7 +241,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
         }
 
         val iconBox = TextView(requireContext()).apply {
-            text = shortCode.uppercase(Locale.getDefault())
+            text = shortCode.uppercase(LocaleFormatters.currentLocale(requireContext()))
             gravity = Gravity.CENTER
             setTextSizeResource(
                 if (shortCode.length > 2) {
@@ -361,6 +362,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
 
     private fun getTankSetupDateText(setupDateMillis: Long?): String {
         return AquariumDatePolicy.formatSetupDate(
+            context = requireContext(),
             millis = setupDateMillis,
             emptyText = VALUE_EMPTY
         )

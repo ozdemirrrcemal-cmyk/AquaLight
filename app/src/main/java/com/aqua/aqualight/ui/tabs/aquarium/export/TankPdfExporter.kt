@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.export
 
+import com.aqua.aqualight.localization.LocaleFormatters
+
 import android.app.Activity
 import android.content.ContentResolver
 import android.content.Context
@@ -22,9 +24,6 @@ import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import java.util.concurrent.TimeUnit
 import java.io.File
 import java.io.FileOutputStream
-import java.text.DecimalFormat
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -37,8 +36,6 @@ object TankPdfExporter {
   private const val PAGE_BOTTOM = 790f
 
   private const val PHOTO_HEIGHT = 125f
-
-  private val volumeFormatter = DecimalFormat("#.##")
 
   fun createTankReportPdf(
     context: Context,
@@ -54,7 +51,7 @@ object TankPdfExporter {
 
     writer.drawReportHeader(
       tankName = tank.name,
-      generatedDate = getGeneratedDateText()
+      generatedDate = getGeneratedDateText(context)
     )
 
     writer.drawSectionTitle(texts.sectionTankSummary)
@@ -66,6 +63,7 @@ object TankPdfExporter {
     writer.drawLabelValue(texts.labelSize, getSizeText(context, tank))
     writer.drawLabelValue(texts.labelVolume, getVolumeText(context, tank))
     writer.drawLabelValue(texts.labelSetupDate, getSetupDateText(
+      context = context,
       setupDateMillis = tank.setupDateMillis,
       noValue = texts.noValue
     ))
@@ -251,14 +249,11 @@ object TankPdfExporter {
     )
   }
 
-  private fun getGeneratedDateText(): String {
-    return SimpleDateFormat(
-      "dd MMM yyyy HH:mm",
-      Locale.getDefault()
-    ).format(Date())
-  }
+  private fun getGeneratedDateText(context: Context): String =
+    LocaleFormatters.formatDateTime(context, System.currentTimeMillis())
 
   private fun getSetupDateText(
+    context: Context,
     setupDateMillis: Long?,
     noValue: String
   ): String {
@@ -266,10 +261,7 @@ object TankPdfExporter {
       return noValue
     }
 
-    return SimpleDateFormat(
-      "dd MMM yyyy",
-      Locale.getDefault()
-    ).format(Date(setupDateMillis))
+    return LocaleFormatters.formatDate(context, setupDateMillis)
   }
 
   private fun getSizeText(
@@ -297,12 +289,12 @@ object TankPdfExporter {
     return if (tank.volumeUnit.equals("gal", ignoreCase = true)) {
       context.getString(
         R.string.aquarium_volume_gallon_format,
-        volumeFormatter.format(liter * 0.264172)
+        LocaleFormatters.formatNumber(context, liter * 0.264172)
       )
     } else {
       context.getString(
         R.string.aquarium_volume_liter_format,
-        volumeFormatter.format(liter)
+        LocaleFormatters.formatNumber(context, liter)
       )
     }
   }
