@@ -1,6 +1,7 @@
 package com.aqua.aqualight.i18n
 
 import android.content.Context
+import androidx.core.content.ContextCompat
 import java.text.DateFormat
 import java.text.NumberFormat
 import java.util.Date
@@ -9,9 +10,24 @@ import java.util.Locale
 /** Locale-aware, per-call formatters. NumberFormat and DateFormat are not shared across threads. */
 object LocaleFormatter {
 
+    /**
+     * Returns a context whose resources follow the AndroidX per-app language selection.
+     * This is required for framework dialogs and non-AppCompat contexts on API 32 and lower.
+     */
+    fun localizedContext(context: Context): Context {
+        return ContextCompat.getContextForLanguage(context)
+    }
+
     fun appLocale(context: Context): Locale {
-        val locales = context.resources.configuration.locales
-        return if (locales.isEmpty) Locale.getDefault() else locales[0]
+        val locales = localizedContext(context).resources.configuration.locales
+        val configuredLocale = if (locales.isEmpty) {
+            Locale.forLanguageTag(SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG)
+        } else {
+            locales[0]
+        }
+        return Locale.forLanguageTag(
+            SupportedLocaleRegistry.resolve(configuredLocale.toLanguageTag())
+        )
     }
 
     fun formatInteger(context: Context, value: Number): String {
