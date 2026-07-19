@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Language picker accessibility. Language names intentionally remain native-language labels. -->
+    <string name="language_option_accessibility">%1$s language</string>
     <string name="language_option_selected_state">Selected</string>
     <string name="language_option_not_selected_state">Not selected</string>
 
