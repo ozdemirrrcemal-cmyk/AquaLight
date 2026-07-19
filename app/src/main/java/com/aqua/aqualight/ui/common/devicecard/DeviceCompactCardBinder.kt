@@ -1,7 +1,9 @@
 package com.aqua.aqualight.ui.common.devicecard
 
 import android.content.res.ColorStateList
+import android.view.View
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
 import androidx.core.view.isVisible
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemDeviceCompactCardBinding
@@ -43,6 +45,10 @@ object DeviceCompactCardBinder {
         )
         binding.ivPresenceIcon.contentDescription = presenceText
         binding.ivPresenceIcon.isVisible = !item.showAction
+        ViewCompat.setAccessibilityLiveRegion(
+            binding.ivPresenceIcon,
+            View.ACCESSIBILITY_LIVE_REGION_POLITE
+        )
 
         binding.tvCardAction.text = item.actionText
         binding.tvCardAction.isVisible = item.showAction && item.actionText.isNotBlank()
@@ -63,6 +69,7 @@ object DeviceCompactCardBinder {
                 trailingText
             )
         }
+        ViewCompat.setStateDescription(binding.root, presenceText)
     }
 
     private fun presenceIconColor(
