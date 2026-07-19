@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stage 11 localization/accessibility contract guard."""
+"""Authoritative Stage 11 localization and accessibility contract guard."""
 
 from __future__ import annotations
 
@@ -10,6 +10,9 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
 
+import accessibility_static_guard
+import wcag_contrast_guard
+
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "app" / "src" / "main"
 RES = APP / "res"
@@ -19,7 +22,6 @@ LANGUAGE_LAYOUT = RES / "layout" / "fragment_language_settings.xml"
 LOCALE_CONFIG = RES / "xml" / "locales_config.xml"
 MANIFEST = APP / "AndroidManifest.xml"
 ANDROID_NS = "{http://schemas.android.com/apk/res/android}"
-
 REMOVED_TAGS = {"ru", "zh"}
 PLACEHOLDER = re.compile(
     r"%(?:(?P<index>\d+)\$)?(?P<flags>[-#+ 0,(<]*)"
@@ -62,12 +64,15 @@ def parse_registry(errors: list[str]) -> tuple[str, list[LocaleEntry]]:
         if tag_match is None or availability_match is None:
             errors.append("Every SupportedLocale entry must declare a tag and availability.")
             continue
-        tag = tag_match.group(1) or default_tag
-        entries.append(LocaleEntry(tag, availability_match.group(1)))
+        entries.append(
+            LocaleEntry(
+                language_tag=tag_match.group(1) or default_tag,
+                availability=availability_match.group(1),
+            )
+        )
 
     if not entries:
         errors.append("SupportedLocaleRegistry must declare at least one locale entry.")
-
     tags = [entry.language_tag for entry in entries]
     if len(tags) != len(set(tags)):
         errors.append("SupportedLocaleRegistry contains duplicate language tags.")
@@ -79,7 +84,6 @@ def parse_registry(errors: list[str]) -> tuple[str, list[LocaleEntry]]:
         errors.append("Until reviewed translations exist, English must be the only PUBLISHED locale.")
     if [entry.language_tag for entry in entries if not entry.published] != ["tr", "de", "fr"]:
         errors.append("Planned locale order must remain tr, de, fr.")
-
     return default_tag, entries
 
 
@@ -97,7 +101,6 @@ def validate_registry_and_manifest(errors: list[str]) -> list[LocaleEntry]:
     default_tag, entries = parse_registry(errors)
     published_tags = [entry.language_tag for entry in entries if entry.published]
     config_tags = parse_locale_config(errors)
-
     if config_tags != published_tags:
         errors.append(
             "LocaleConfig must exactly match PUBLISHED registry tags: "
@@ -111,7 +114,6 @@ def validate_registry_and_manifest(errors: list[str]) -> list[LocaleEntry]:
         errors.append("AndroidManifest.xml must keep RTL support enabled.")
     if default_tag != "en":
         errors.append("The base values resources are English; default locale must remain en.")
-
     return entries
 
 
@@ -128,10 +130,8 @@ def android_values_directory(language_tag: str) -> Path:
 
 def resource_key(element: ET.Element) -> tuple[str, str] | None:
     name = element.attrib.get("name")
-    if not name:
-        return None
     tag = element.tag.rsplit("}", 1)[-1]
-    if tag not in {"string", "plurals", "string-array"}:
+    if not name or tag not in {"string", "plurals", "string-array"}:
         return None
     return tag, name
 
@@ -163,9 +163,8 @@ def placeholder_signature(text: str) -> collections.Counter[tuple[str, str]]:
     signature: collections.Counter[tuple[str, str]] = collections.Counter()
     for match in PLACEHOLDER.finditer(text):
         conversion_type = match.group("type")
-        if conversion_type == "%":
-            continue
-        signature[(match.group("index") or "implicit", conversion_type)] += 1
+        if conversion_type != "%":
+            signature[(match.group("index") or "implicit", conversion_type)] += 1
     return signature
 
 
@@ -187,7 +186,6 @@ def validate_translation_packs(errors: list[str], entries: list[LocaleEntry]) ->
                     "Do not ship empty or fallback translation packs."
                 )
             continue
-
         if not directory.exists():
             errors.append(f"Published locale {entry.language_tag} requires {directory.name}.")
             continue
@@ -201,7 +199,7 @@ def validate_translation_packs(errors: list[str], entries: list[LocaleEntry]) ->
         missing = sorted(set(base_resources) - set(translated))
         extra = sorted(set(translated) - set(base_resources))
         if missing:
-            errors.append(f"{directory.name} is missing {len(missing)} translatable resources: {missing[:10]}")
+            errors.append(f"{directory.name} is missing {len(missing)} resources: {missing[:10]}")
         if extra:
             errors.append(f"{directory.name} contains unknown resources: {extra[:10]}")
 
@@ -256,9 +254,17 @@ def validate_language_screen(errors: list[str]) -> None:
 
 def main() -> int:
     errors: list[str] = []
-    entries = validate_registry_and_manifest(errors)
-    validate_translation_packs(errors, entries)
-    validate_language_screen(errors)
+    try:
+        entries = validate_registry_and_manifest(errors)
+        validate_translation_packs(errors, entries)
+        validate_language_screen(errors)
+    except (OSError, ET.ParseError, ValueError) as error:
+        errors.append(str(error))
+
+    if accessibility_static_guard.main() != 0:
+        errors.append("Accessibility static sub-guard failed.")
+    if wcag_contrast_guard.main() != 0:
+        errors.append("WCAG contrast sub-guard failed.")
 
     if errors:
         print("Stage 11 localization/accessibility guard failed:")
