@@ -1,0 +1,99 @@
+name: Date-only test contract codemod
+
+on:
+  push:
+    branches:
+      - agent/localization-accessibility-commercial
+
+permissions:
+  contents: write
+
+jobs:
+  update-tests:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/localization-accessibility-commercial
+          fetch-depth: 0
+
+      - name: Update exactly the reported date-only tests
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          files = [
+              'app/src/test/java/com/aqua/aqualight/data/aquarium/DefaultAquariumTankOperationsMapperTest.kt',
+              'app/src/test/java/com/aqua/aqualight/data/aquarium/store/TankStoreRulesTest.kt',
+              'app/src/test/java/com/aqua/aqualight/data/care/DefaultMaintenanceOperationsMapperTest.kt',
+              'app/src/test/java/com/aqua/aqualight/data/care/reminder/CareReminderDeliveryPolicyTest.kt',
+              'app/src/test/java/com/aqua/aqualight/data/store/CommercialStoreConcurrencyTest.kt',
+              'app/src/test/java/com/aqua/aqualight/data/store/CommercialStoreSerializerTest.kt',
+              'app/src/test/java/com/aqua/aqualight/ui/tabs/aquarium/AquariumTankViewModelBoundaryTest.kt',
+              'app/src/test/java/com/aqua/aqualight/ui/tabs/maintenance/MaintenanceViewModelBoundaryTest.kt',
+          ]
+
+          changed = []
+          for relative in files:
+              path = Path(relative)
+              text = path.read_text(encoding='utf-8')
+              original = text
+              text = text.replace('setSetupDateMillis', 'setSetupDateEpochDay')
+              text = text.replace('setupDateMillis', 'setupDateEpochDay')
+              text = text.replace('addedDateMillis', 'addedDateEpochDay')
+              if text == original:
+                  raise SystemExit(f'Expected date-only references in {relative}')
+              path.write_text(text, encoding='utf-8')
+              changed.append(relative)
+
+          exact_replacements = {
+              'app/src/test/java/com/aqua/aqualight/data/aquarium/store/TankStoreRulesTest.kt': [
+                  ('setSetupDateEpochDay(1_767_225_600_000L)', 'setSetupDateEpochDay(20_454L)'),
+                  ('fun schemaConstantMatchesFirstCommercialVersion()', 'fun schemaConstantMatchesCurrentCommercialVersion()'),
+              ],
+              'app/src/test/java/com/aqua/aqualight/data/store/CommercialStoreConcurrencyTest.kt': [
+                  ('setSetupDateEpochDay(FIXED_NOW_MILLIS)', 'setSetupDateEpochDay(FIXED_SETUP_EPOCH_DAY)'),
+                  ('const val FIXED_NOW_MILLIS = 1_767_225_600_000L', 'const val FIXED_SETUP_EPOCH_DAY = 20_454L\n        const val FIXED_NOW_MILLIS = 1_767_225_600_000L'),
+              ],
+              'app/src/test/java/com/aqua/aqualight/data/store/CommercialStoreSerializerTest.kt': [
+                  ('setSetupDateEpochDay(1_767_225_600_000L)', 'setSetupDateEpochDay(20_454L)'),
+              ],
+          }
+
+          for relative, replacements in exact_replacements.items():
+              path = Path(relative)
+              text = path.read_text(encoding='utf-8')
+              for old, new in replacements:
+                  count = text.count(old)
+                  if count != 1:
+                      raise SystemExit(f'{relative}: expected one {old!r}, found {count}')
+                  text = text.replace(old, new, 1)
+              path.write_text(text, encoding='utf-8')
+
+          print('\n'.join(changed))
+          PY
+
+      - name: Verify only the expected tests changed
+        run: |
+          actual="$(git diff --name-only | sort)"
+          expected="$(cat <<'EOF' | sort
+          app/src/test/java/com/aqua/aqualight/data/aquarium/DefaultAquariumTankOperationsMapperTest.kt
+          app/src/test/java/com/aqua/aqualight/data/aquarium/store/TankStoreRulesTest.kt
+          app/src/test/java/com/aqua/aqualight/data/care/DefaultMaintenanceOperationsMapperTest.kt
+          app/src/test/java/com/aqua/aqualight/data/care/reminder/CareReminderDeliveryPolicyTest.kt
+          app/src/test/java/com/aqua/aqualight/data/store/CommercialStoreConcurrencyTest.kt
+          app/src/test/java/com/aqua/aqualight/data/store/CommercialStoreSerializerTest.kt
+          app/src/test/java/com/aqua/aqualight/ui/tabs/aquarium/AquariumTankViewModelBoundaryTest.kt
+          app/src/test/java/com/aqua/aqualight/ui/tabs/maintenance/MaintenanceViewModelBoundaryTest.kt
+          EOF
+          )"
+          test "$actual" = "$expected"
+
+      - name: Commit test contract update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/test/java
+          git commit -m "Update date-only tests for epoch-day schema"
+          git push origin HEAD:agent/localization-accessibility-commercial
