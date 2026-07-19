@@ -218,6 +218,7 @@ class MaintenanceViewModelBoundaryTest {
         override fun sourceLabel(source: CareTaskSource) = source.name
         override fun completedStatus() = "completed"
         override fun completedTime(timeText: String) = timeText
+        override fun formatTime(epochMillis: Long) = "time:$epochMillis"
         override fun repeatTime(timeText: String, repeatDays: Int) = timeText
         override fun reminderWithMissedDays(days: Int) = days.toString()
         override fun reminderActive() = "active"
