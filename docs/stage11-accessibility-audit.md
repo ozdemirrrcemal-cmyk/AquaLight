@@ -5,7 +5,7 @@
 A Release Candidate is rejected when any of these checks fails:
 
 - Every XML layout is parsed. Icon-only controls require a meaningful description or an explicit decorative exclusion.
-- Every XML control with an explicit fixed interactive size must be at least 48dp in both dimensions.
+- Every XML control with an explicit fixed interactive size must be at least 48dp in both dimensions. ConstraintLayout `0dp` match-constraint dimensions are measured at runtime rather than treated as a zero-sized target.
 - Every XML layout is inflated by the minified `releaseSmoke` build on API 27 and API 35. Visible, enabled click targets are measured at runtime and must be at least 48dp.
 - Kotlin-created clickable image controls are statically rejected when they do not assign a content description.
 - Kotlin-created click handling may not retain the legacy 46dp interactive size.
