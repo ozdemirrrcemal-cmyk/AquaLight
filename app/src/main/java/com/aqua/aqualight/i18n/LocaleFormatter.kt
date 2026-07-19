@@ -34,6 +34,14 @@ object LocaleFormatter {
         return formatPercent(fraction, appLocale(context), maximumFractionDigits)
     }
 
+    fun formatDate(context: Context, timeMillis: Long): String {
+        return formatDate(timeMillis, appLocale(context))
+    }
+
+    fun formatTime(context: Context, timeMillis: Long): String {
+        return formatTime(timeMillis, appLocale(context))
+    }
+
     fun formatDateTime(context: Context, timeMillis: Long): String {
         return formatDateTime(timeMillis, appLocale(context))
     }
@@ -63,6 +71,20 @@ object LocaleFormatter {
             minimumFractionDigits = 0
             this.maximumFractionDigits = maximumFractionDigits.coerceAtLeast(0)
         }.format(fraction)
+    }
+
+    internal fun formatDate(timeMillis: Long, locale: Locale): String {
+        return DateFormat.getDateInstance(
+            DateFormat.MEDIUM,
+            locale
+        ).format(Date(timeMillis))
+    }
+
+    internal fun formatTime(timeMillis: Long, locale: Locale): String {
+        return DateFormat.getTimeInstance(
+            DateFormat.SHORT,
+            locale
+        ).format(Date(timeMillis))
     }
 
     internal fun formatDateTime(timeMillis: Long, locale: Locale): String {
