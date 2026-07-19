@@ -12,7 +12,6 @@ import re
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
 RES = ROOT / "app" / "src" / "main" / "res"
@@ -34,6 +33,26 @@ PLACEHOLDER_RE = re.compile(
     r"(?<!%)%(?!%)(?:(?P<index>\d+)\$)?[-+#, 0(<]*\d*(?:\.\d+)?(?P<type>[a-zA-Z])"
 )
 STAGING_LOCALES = {"tr", "de", "fr", "ru", "zh"}
+RUNTIME_MANAGED_ICON_CONTROLS = {
+    ("layout_aqua_header.xml", "@+id/btnActionOne"),
+    ("layout_aqua_header.xml", "@+id/btnActionTwo"),
+    ("layout_aqua_header.xml", "@+id/btnActionThree"),
+    ("layout_aqua_header.xml", "@+id/btnFilledIconAction"),
+}
+HEADER_BINDER = (
+    ROOT
+    / "app"
+    / "src"
+    / "main"
+    / "java"
+    / "com"
+    / "aqua"
+    / "aqualight"
+    / "ui"
+    / "common"
+    / "header"
+    / "AquaHeaderBindingExt.kt"
+)
 
 
 class GuardFailure(RuntimeError):
@@ -171,7 +190,21 @@ def dp_value(raw: str | None) -> float | None:
     return float(match.group(1)) if match else None
 
 
+def check_runtime_managed_header_descriptions() -> None:
+    source = HEADER_BINDER.read_text(encoding="utf-8")
+    required_assignments = [
+        "button.contentDescription =",
+        "action.contentDescription",
+        "btnFilledIconAction.contentDescription =",
+        "filledIconAction.contentDescription",
+    ]
+    missing = [token for token in required_assignments if token not in source]
+    if missing:
+        fail(f"Runtime-managed header icon descriptions are incomplete: {missing}")
+
+
 def check_icon_controls_and_explicit_touch_targets() -> None:
+    check_runtime_managed_header_descriptions()
     failures: list[str] = []
     for path in sorted((RES / "layout").glob("*.xml")):
         try:
@@ -192,7 +225,8 @@ def check_icon_controls_and_explicit_touch_targets() -> None:
             description = view.attrib.get(f"{ANDROID_NS}contentDescription", "").strip()
             view_id = view.attrib.get(f"{ANDROID_NS}id", simple_name)
             location = f"{path.relative_to(ROOT)}:{view_id}"
-            if not ignored and (not description or description == "@null"):
+            runtime_managed = (path.name, view_id) in RUNTIME_MANAGED_ICON_CONTROLS
+            if not runtime_managed and not ignored and (not description or description == "@null"):
                 failures.append(f"{location} has no accessibility description")
 
             width = dp_value(view.attrib.get(f"{ANDROID_NS}layout_width"))
