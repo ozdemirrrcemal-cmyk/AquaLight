@@ -1,6 +1,8 @@
 package com.aqua.aqualight.app
 
 import android.app.Application
+import android.content.Context
+import android.os.Build
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import com.aqua.aqualight.base.accessibility.AccessibilityRuntimeInstaller
@@ -10,6 +12,7 @@ import com.aqua.aqualight.composition.DefaultAppContainer
 import com.aqua.aqualight.data.media.AppMediaRecoveryManager
 import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
+import com.aqua.aqualight.data.user.StartupAppearanceCache
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.i18n.SupportedLocaleRegistry
 import kotlinx.coroutines.CoroutineScope
@@ -27,6 +30,20 @@ class AquaApp : Application() {
 
     lateinit var appContainer: AppContainer
         private set
+
+    override fun attachBaseContext(base: Context) {
+        // AppCompat does not have framework-managed per-app locale storage before API 33.
+        // Apply the synchronous startup mirror before any Activity or framework picker is created.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            val cachedLanguage = StartupAppearanceCache.create(base)
+                .read()
+                .languageCode
+            AppCompatDelegate.setApplicationLocales(
+                localeList(cachedLanguage)
+            )
+        }
+        super.attachBaseContext(base)
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -110,9 +127,14 @@ class AquaApp : Application() {
     }
 
     private fun applyLanguage(code: String) {
-        val localeList = LocaleListCompat.forLanguageTags(
+        AppCompatDelegate.setApplicationLocales(
+            localeList(code)
+        )
+    }
+
+    private fun localeList(code: String): LocaleListCompat {
+        return LocaleListCompat.forLanguageTags(
             SupportedLocaleRegistry.resolve(code)
         )
-        AppCompatDelegate.setApplicationLocales(localeList)
     }
 }
