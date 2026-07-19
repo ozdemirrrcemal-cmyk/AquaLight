@@ -14,10 +14,27 @@ APP = ROOT / "app" / "src" / "main"
 RES = APP / "res"
 JAVA = APP / "java"
 ANDROID = "{http://schemas.android.com/apk/res/android}"
+EXPECTED_SUPPORTED_LOCALES = {"en", "tr"}
+REMOVED_LANGUAGE_ARTIFACTS = (
+    RES / "drawable" / "flag_de.png",
+    RES / "drawable" / "flag_fr.png",
+    RES / "drawable" / "flag_ru.png",
+    RES / "drawable" / "flag_cn.png",
+)
+REMOVED_LANGUAGE_RESOURCE_PREFIXES = (
+    "language_german",
+    "language_french",
+    "language_russian",
+    "language_chinese",
+)
 PLACEHOLDER = re.compile(
     r"%(?!%)(?:(\d+)\$)?[-#+ 0,(]*\d*(?:\.\d+)?([a-zA-Z])"
 )
 STRING_LITERAL = re.compile(r'"([^"\\]*(?:\\.[^"\\]*)*)"')
+CONST_STRING = re.compile(
+    r'const\s+val\s+([A-Z][A-Z0-9_]*)\s*=\s*"([^"\\]*(?:\\.[^"\\]*)*)"'
+)
+CONST_REFERENCE = re.compile(r"\b[A-Z][A-Z0-9_]*\b")
 
 
 class GuardFailure(Exception):
@@ -58,8 +75,10 @@ def registry_tags(errors: list[str]) -> set[str]:
         return set()
 
     text = path.read_text(encoding="utf-8")
+    constants = dict(CONST_STRING.findall(text))
     default_match = re.search(
-        r'const\s+val\s+DEFAULT_LANGUAGE_TAG\s*=\s*"([^"]+)"',
+        r"const\s+val\s+DEFAULT_LANGUAGE_TAG\s*=\s*"
+        r'(?:"([^"\\]*(?:\\.[^"\\]*)*)"|([A-Z][A-Z0-9_]*))',
         text,
     )
     block_match = re.search(
@@ -71,11 +90,19 @@ def registry_tags(errors: list[str]) -> set[str]:
         errors.append(f"{relative(path)} does not expose the registry contract")
         return set()
 
-    default = default_match.group(1)
+    default_literal, default_reference = default_match.groups()
+    default = default_literal or constants.get(default_reference or "")
+    if default is None:
+        errors.append("SupportedLocaleRegistry default constant cannot be resolved")
+        return set()
+
     block = block_match.group(1)
     tags = {match.group(1) for match in STRING_LITERAL.finditer(block)}
-    if "DEFAULT_LANGUAGE_TAG" in block:
-        tags.add(default)
+    for reference in CONST_REFERENCE.findall(block):
+        value = constants.get(reference)
+        if value is not None:
+            tags.add(value)
+
     if default not in tags:
         errors.append("SupportedLocaleRegistry default must be supported")
     return tags
@@ -83,6 +110,7 @@ def registry_tags(errors: list[str]) -> set[str]:
 
 def resource_entries(directory: Path) -> dict[tuple[str, str], str]:
     entries: dict[tuple[str, str], str] = {}
+    source_paths: dict[tuple[str, str], Path] = {}
     if not directory.exists():
         return entries
 
@@ -94,8 +122,18 @@ def resource_entries(directory: Path) -> dict[tuple[str, str], str]:
             name = node.attrib.get("name", "").strip()
             if not name or node.attrib.get("translatable") == "false":
                 continue
-            if node.tag in {"string", "plurals", "string-array"}:
-                entries[(node.tag, name)] = "".join(node.itertext())
+            if node.tag not in {"string", "plurals", "string-array"}:
+                continue
+
+            key = (node.tag, name)
+            previous_path = source_paths.get(key)
+            if previous_path is not None:
+                raise GuardFailure(
+                    f"duplicate {node.tag}/{name} in {relative(previous_path)} "
+                    f"and {relative(path)}"
+                )
+            source_paths[key] = path
+            entries[key] = "".join(node.itertext())
     return entries
 
 
@@ -147,6 +185,11 @@ def validate_localized_resources(
                 f"locale {language_tag} is missing {resource_type}/{name}"
             )
 
+        for resource_type, name in sorted(set(localized) - set(base)):
+            errors.append(
+                f"locale {language_tag} contains unknown {resource_type}/{name}"
+            )
+
         for key in sorted(set(base) & set(localized)):
             expected = placeholder_signature(base[key])
             actual = placeholder_signature(localized[key])
@@ -156,6 +199,27 @@ def validate_localized_resources(
                     f"locale {language_tag} placeholder mismatch for "
                     f"{resource_type}/{name}: {expected} != {actual}"
                 )
+
+
+def validate_removed_languages(errors: list[str]) -> None:
+    for path in REMOVED_LANGUAGE_ARTIFACTS:
+        if path.exists():
+            errors.append(f"unsupported language asset must be removed: {relative(path)}")
+
+    for directory in (RES / "values", RES / "values-tr"):
+        if not directory.exists():
+            continue
+        for path in sorted(directory.glob("*.xml")):
+            root = parse_xml(path)
+            if root.tag != "resources":
+                continue
+            for node in root:
+                name = node.attrib.get("name", "").strip()
+                if name.startswith(REMOVED_LANGUAGE_RESOURCE_PREFIXES):
+                    errors.append(
+                        f"unsupported language resource must be removed: "
+                        f"{relative(path)} {node.tag}/{name}"
+                    )
 
 
 def validate_manifest(errors: list[str]) -> None:
@@ -238,12 +302,15 @@ def validate_touch_target_contract(errors: list[str]) -> None:
             return
 
     installer_text = installer.read_text(encoding="utf-8")
+    runtime_text = runtime.read_text(encoding="utf-8")
     if "MIN_TOUCH_TARGET_DP = 48" not in installer_text:
         errors.append("minimum touch target contract must remain 48dp")
     if "TouchDelegate" not in installer_text:
         errors.append("touch targets must expand without resizing rendered controls")
     if "offsetDescendantRectToMyCoords" not in installer_text:
         errors.append("touch target expansion must use root coordinates")
+    if "MinimumTouchTargetInstaller.install" not in runtime_text:
+        errors.append("accessibility runtime must install minimum touch targets")
 
     app_text = app.read_text(encoding="utf-8")
     expected_import = (
@@ -389,6 +456,11 @@ def main() -> int:
     try:
         configured = locale_config_tags(errors)
         registered = registry_tags(errors)
+        if registered != EXPECTED_SUPPORTED_LOCALES:
+            errors.append(
+                f"supported locales must be exactly "
+                f"{sorted(EXPECTED_SUPPORTED_LOCALES)}, got {sorted(registered)}"
+            )
         if configured != registered:
             errors.append(
                 f"locale registry {sorted(registered)} does not match "
@@ -397,6 +469,7 @@ def main() -> int:
 
         validate_manifest(errors)
         validate_localized_resources(errors, registered)
+        validate_removed_languages(errors)
         validate_locale_formatting(errors)
         validate_icon_descriptions(errors)
         validate_dynamic_device_status(errors)
