@@ -39,9 +39,14 @@ class SupportedLocaleRegistryTest {
 
     @Test
     fun runtimeResolutionSupportsRegionalVariantsWithoutAddingLanguages() {
-        assertEquals("en", SupportedLocaleRegistry.resolve("en"))
+        assertEquals("en", SupportedLocaleRegistry.runtimeSupportedOrNull("en"))
+        assertEquals("en", SupportedLocaleRegistry.runtimeSupportedOrNull("en-US"))
+        assertEquals("tr", SupportedLocaleRegistry.runtimeSupportedOrNull("tr"))
+        assertEquals("tr", SupportedLocaleRegistry.runtimeSupportedOrNull("tr-TR"))
+        assertNull(SupportedLocaleRegistry.runtimeSupportedOrNull("de-DE"))
+        assertNull(SupportedLocaleRegistry.runtimeSupportedOrNull(""))
+
         assertEquals("en", SupportedLocaleRegistry.resolve("en-US"))
-        assertEquals("tr", SupportedLocaleRegistry.resolve("tr"))
         assertEquals("tr", SupportedLocaleRegistry.resolve("tr-TR"))
     }
 }
