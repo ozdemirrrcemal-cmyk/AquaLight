@@ -5,5 +5,9 @@
             android:name="com.aqua.aqualight.ui.common.feedback.Stage8DialogTestActivity"
             android:exported="false"
             android:theme="@style/AppTheme" />
+        <activity
+            android:name="com.aqua.aqualight.smoke.ReleaseSmokeActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme" />
     </application>
 </manifest>
