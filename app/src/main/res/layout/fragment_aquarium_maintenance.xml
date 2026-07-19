@@ -41,7 +41,7 @@
             <TextView
                 android:id="@+id/tabAll"
                 android:layout_width="@dimen/aqua_size_0"
-                android:layout_height="@dimen/aqua_size_38"
+                android:layout_height="@dimen/aqua_size_48"
                 android:layout_marginEnd="@dimen/aqua_size_8"
                 android:layout_weight="1"
                 android:background="@drawable/bg_maintenance_tab_selected"
@@ -55,7 +55,7 @@
             <TextView
                 android:id="@+id/tabToday"
                 android:layout_width="@dimen/aqua_size_0"
-                android:layout_height="@dimen/aqua_size_38"
+                android:layout_height="@dimen/aqua_size_48"
                 android:layout_marginEnd="@dimen/aqua_size_8"
                 android:layout_weight="1"
                 android:background="@drawable/bg_maintenance_tab_unselected"
@@ -68,7 +68,7 @@
             <TextView
                 android:id="@+id/tabUpcoming"
                 android:layout_width="@dimen/aqua_size_0"
-                android:layout_height="@dimen/aqua_size_38"
+                android:layout_height="@dimen/aqua_size_48"
                 android:layout_marginEnd="@dimen/aqua_size_8"
                 android:layout_weight="1"
                 android:background="@drawable/bg_maintenance_tab_unselected"
@@ -81,7 +81,7 @@
             <TextView
                 android:id="@+id/tabHistory"
                 android:layout_width="@dimen/aqua_size_0"
-                android:layout_height="@dimen/aqua_size_38"
+                android:layout_height="@dimen/aqua_size_48"
                 android:layout_weight="1"
                 android:background="@drawable/bg_maintenance_tab_unselected"
                 android:gravity="center"
@@ -95,16 +95,17 @@
     </HorizontalScrollView>
 
     <com.google.android.material.card.MaterialCardView
-                style="@style/Widget.Aqua.Card.Metric"
         android:id="@+id/cardCareProfileWarning"
+        style="@style/Widget.Aqua.Card.Metric"
         android:layout_width="@dimen/aqua_size_0"
-        android:layout_height="@dimen/aqua_size_72"
+        android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/aqua_size_16"
         android:layout_marginTop="@dimen/aqua_size_14"
         android:layout_marginEnd="@dimen/aqua_size_16"
         android:clickable="true"
         android:focusable="true"
         android:foreground="?attr/selectableItemBackground"
+        android:minHeight="@dimen/aqua_size_72"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -112,16 +113,19 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:gravity="center_vertical"
+            android:minHeight="@dimen/aqua_size_72"
             android:orientation="horizontal"
             android:paddingStart="@dimen/aqua_size_16"
-            android:paddingEnd="@dimen/aqua_size_14">
+            android:paddingTop="@dimen/aqua_size_10"
+            android:paddingEnd="@dimen/aqua_size_14"
+            android:paddingBottom="@dimen/aqua_size_10">
 
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.Aqua.Card.IconAccent"
-                android:layout_width="@dimen/aqua_size_40"
-                android:layout_height="@dimen/aqua_size_40">
+                android:layout_width="@dimen/aqua_size_48"
+                android:layout_height="@dimen/aqua_size_48">
 
                 <TextView
                     android:layout_width="match_parent"
@@ -147,9 +151,8 @@
                     android:id="@+id/tvCareProfileWarningTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:ellipsize="end"
                     android:includeFontPadding="false"
-                    android:maxLines="1"
+                    android:maxLines="2"
                     android:text="@string/maintenance_care_profile_incomplete"
                     android:textColor="@color/aqua_content_on_dark"
                     android:textSize="@dimen/aqua_text_size_body_small"
@@ -160,9 +163,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/aqua_size_7"
-                    android:ellipsize="end"
                     android:includeFontPadding="false"
-                    android:maxLines="1"
+                    android:maxLines="3"
                     android:text="@string/maintenance_improve_automatic_care_tasks"
                     android:textColor="@color/aqua_card_text_secondary"
                     android:textSize="@dimen/aqua_text_size_micro_plus" />
@@ -171,15 +173,18 @@
 
             <TextView
                 android:id="@+id/tvCareProfileWarningPercent"
-                android:layout_width="@dimen/aqua_size_48"
-                android:layout_height="@dimen/aqua_size_28"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:background="@drawable/bg_maintenance_profile_percent_warning"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                tools:text="@string/maintenance_percent_preview"
+                android:minWidth="@dimen/aqua_size_48"
+                android:minHeight="@dimen/aqua_size_32"
+                android:paddingHorizontal="@dimen/aqua_size_6"
                 android:textColor="@color/aqua_content_warning"
                 android:textSize="@dimen/aqua_text_size_caption"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                tools:text="@string/maintenance_percent_preview" />
 
         </LinearLayout>
 
@@ -255,6 +260,7 @@
                 android:layout_width="@dimen/aqua_size_38"
                 android:layout_height="@dimen/aqua_size_38"
                 android:layout_gravity="center"
+                android:importantForAccessibility="no"
                 android:src="@drawable/ic_care_water_change_24"
                 app:tint="@color/aqua_accent_primary" />
 
@@ -285,11 +291,13 @@
             android:textSize="@dimen/aqua_text_size_state_body" />
 
         <com.google.android.material.button.MaterialButton
-            style="@style/Widget.Aqua.Button.Primary"
             android:id="@+id/btnEmptyAddCareTask"
-            android:layout_width="@dimen/aqua_size_180"
-            android:layout_height="@dimen/aqua_button_height"
+            style="@style/Widget.Aqua.Button.Primary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/aqua_size_22"
+            android:minWidth="@dimen/aqua_size_180"
+            android:minHeight="@dimen/aqua_button_height"
             android:text="@string/maintenance_action_add_task"
             android:textStyle="bold" />
 
