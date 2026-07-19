@@ -118,16 +118,22 @@ class LocaleContextArchitectureTest {
     }
 
     @Test
-    fun pickerBackedFormsUseTheSharedLocaleFormatter() {
-        listOf(
+    fun pickerBackedFormsUseTheCorrectSharedDateBoundary() {
+        val livestockForm = File(
+            repositoryRoot,
             "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/" +
-                "TankDetailLivestockFormFragment.kt",
+                "TankDetailLivestockFormFragment.kt"
+        ).readText()
+        val careTaskForm = File(
+            repositoryRoot,
             "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/" +
                 "AddCareTaskFragment.kt"
-        ).forEach { relativePath ->
-            val source = File(repositoryRoot, relativePath).readText()
+        ).readText()
 
-            assertTrue(source.contains("LocaleFormatter.formatDate("))
+        assertTrue(livestockForm.contains("LocaleFormatter.formatDateEpochDay("))
+        assertTrue(careTaskForm.contains("LocaleFormatter.formatDate("))
+
+        listOf(livestockForm, careTaskForm).forEach { source ->
             assertFalse(source.contains("Locale.getDefault()"))
             assertFalse(source.contains("SimpleDateFormat("))
         }
