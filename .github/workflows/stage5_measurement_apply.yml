@@ -1,4 +1,4 @@
-name: One-shot Stage 5 measurement applicator
+name: One-shot Stage 5 temporary cleanup
 
 on:
   pull_request:
@@ -6,13 +6,12 @@ on:
       - main
     paths:
       - ".github/workflows/stage5_measurement_apply.yml"
-      - "tools/stage5_measurement_codemod.py"
 
 permissions:
   contents: write
 
 jobs:
-  apply:
+  cleanup:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
@@ -21,30 +20,14 @@ jobs:
           ref: agent/localization-accessibility-commercial
           fetch-depth: 0
 
-      - name: Apply the reviewed Stage 5 package
+      - name: Remove every Stage 5 temporary artifact
         run: |
-          set +e
-          python3 tools/stage5_measurement_codemod.py > /tmp/stage5-codemod.log 2>&1
-          status=$?
-          set -e
-          cat /tmp/stage5-codemod.log
-          if [ "$status" -ne 0 ]; then
-            tail -n 20 /tmp/stage5-codemod.log > .stage5-codemod-error.txt
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add .stage5-codemod-error.txt
-            git commit -m "Record Stage 5 codemod diagnostic"
-            git push origin HEAD:agent/localization-accessibility-commercial
-            exit "$status"
-          fi
-
-      - name: Verify and commit the complete Stage 5 package
-        run: |
-          git diff --check
-          ! grep -n "toDoubleOrNull()\|DecimalFormat(" \
-            app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/TankSettingsEditorBottomSheet.kt
+          git rm -f \
+            .github/workflows/stage5_measurement_apply.yml \
+            .github/workflows/stage5_measurement_codemod.yml \
+            tools/stage5_measurement_codemod.py \
+            .stage5-codemod-error.txt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app/src/main app/src/test
-          git commit -m "Harden locale measurement input and volume calculations"
+          git commit -m "Remove Stage 5 temporary automation"
           git push origin HEAD:agent/localization-accessibility-commercial
