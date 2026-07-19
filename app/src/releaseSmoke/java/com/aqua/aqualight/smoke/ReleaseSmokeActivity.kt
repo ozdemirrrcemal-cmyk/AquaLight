@@ -3,6 +3,7 @@ package com.aqua.aqualight.smoke
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.os.Bundle
+import android.text.Layout
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -20,6 +21,7 @@ import androidx.navigation.NavGraph
 import androidx.navigation.NavGraphNavigator
 import androidx.navigation.fragment.FragmentNavigator
 import androidx.navigation.fragment.NavHostFragment
+import com.aqua.aqualight.R
 import com.aqua.aqualight.app.AquaApp
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumFragment
@@ -61,9 +63,12 @@ class ReleaseSmokeActivity : BaseActivity() {
         )
         super.onCreate(savedInstanceState)
 
+        val requestedDirection = requestedLayoutDirection()
+        window.decorView.layoutDirection = requestedDirection
         setContentView(
             FrameLayout(this).apply {
                 id = SMOKE_CONTAINER_ID
+                layoutDirection = requestedDirection
             }
         )
 
@@ -113,7 +118,12 @@ class ReleaseSmokeActivity : BaseActivity() {
                         "${screen.name} did not reach STARTED"
                     }
 
-                    verifyIconAccessibility(fragment.requireView())
+                    val fragmentRoot = fragment.requireView()
+                    applyRequestedLayoutDirection(fragmentRoot)
+                    delay(LAYOUT_DIRECTION_SETTLE_MILLIS)
+                    verifyRequestedLayoutDirection(fragmentRoot)
+                    verifyIconAccessibility(fragmentRoot)
+                    verifyLargeFontText(fragmentRoot)
                     captureScreen(screen)
                 }
             }.onSuccess {
@@ -173,6 +183,27 @@ class ReleaseSmokeActivity : BaseActivity() {
         )
     )
 
+    private fun requestedLayoutDirection(): Int {
+        return if (smokeProfile.startsWith(RTL_PROFILE_PREFIX)) {
+            View.LAYOUT_DIRECTION_RTL
+        } else {
+            View.LAYOUT_DIRECTION_LTR
+        }
+    }
+
+    private fun applyRequestedLayoutDirection(root: View) {
+        val direction = requestedLayoutDirection()
+        window.decorView.layoutDirection = direction
+        root.layoutDirection = direction
+        root.requestLayout()
+    }
+
+    private fun verifyRequestedLayoutDirection(root: View) {
+        check(root.layoutDirection == requestedLayoutDirection()) {
+            "${root.debugName()} did not apply the $smokeProfile layout direction"
+        }
+    }
+
     private fun verifyIconAccessibility(root: View) {
         fun visit(view: View) {
             if (view.visibility != View.VISIBLE) return
@@ -184,6 +215,44 @@ class ReleaseSmokeActivity : BaseActivity() {
             if (iconOnlyControl && view.isEnabled && view.isShown) {
                 check(!view.contentDescription.isNullOrBlank()) {
                     "Visible icon control ${view.debugName()} has no content description"
+                }
+            }
+
+            if (view is ViewGroup) {
+                for (index in 0 until view.childCount) {
+                    visit(view.getChildAt(index))
+                }
+            }
+        }
+
+        visit(root)
+    }
+
+    private fun verifyLargeFontText(root: View) {
+        if (!smokeProfile.startsWith(LARGE_FONT_PROFILE_PREFIX)) return
+
+        fun visit(view: View) {
+            if (view.visibility != View.VISIBLE || !view.isShown) return
+
+            if (view is TextView && view.text.isNotBlank()) {
+                val textLayout = view.layout
+                if (textLayout != null) {
+                    for (line in 0 until textLayout.lineCount) {
+                        check(textLayout.getEllipsisCount(line) == 0) {
+                            "${view.debugName()} ellipsized text at 200% font scale"
+                        }
+                    }
+                }
+
+                if (view.id in STRICT_SINGLE_LINE_TEXT_IDS) {
+                    val availableWidth = (
+                        view.width - view.compoundPaddingLeft - view.compoundPaddingRight
+                    ).coerceAtLeast(0)
+                    val desiredWidth = Layout.getDesiredWidth(view.text, view.paint)
+                    check(desiredWidth <= availableWidth + TEXT_WIDTH_TOLERANCE_PX) {
+                        "${view.debugName()} clipped text at 200% font scale: " +
+                            "$desiredWidth > $availableWidth"
+                    }
                 }
             }
 
@@ -261,13 +330,25 @@ class ReleaseSmokeActivity : BaseActivity() {
         const val DESTINATION_SETTINGS = 0x5A030104
         const val SMOKE_NAV_HOST_TAG = "release_smoke_nav_host"
         const val SCREEN_SETTLE_MILLIS = 700L
+        const val LAYOUT_DIRECTION_SETTLE_MILLIS = 200L
         const val PASS_MARKER = "RELEASE_SMOKE_PASS"
         const val FAIL_MARKER = "RELEASE_SMOKE_FAIL"
         const val EXTRA_SMOKE_THEME = "aqua_smoke_theme"
         const val EXTRA_SMOKE_PROFILE = "aqua_smoke_profile"
         const val THEME_LIGHT = "light"
         const val THEME_DARK = "dark"
+        const val LARGE_FONT_PROFILE_PREFIX = "large-font-"
+        const val RTL_PROFILE_PREFIX = "rtl-"
         const val SCREENSHOT_DIRECTORY = "smoke-screens"
         const val MIN_SCREENSHOT_BYTES = 1024L
+        const val TEXT_WIDTH_TOLERANCE_PX = 1f
+
+        val STRICT_SINGLE_LINE_TEXT_IDS = setOf(
+            R.id.tabAll,
+            R.id.tabToday,
+            R.id.tabUpcoming,
+            R.id.tabHistory,
+            R.id.btnEmptyAddCareTask
+        )
     }
 }
