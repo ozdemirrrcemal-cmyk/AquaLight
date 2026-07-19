@@ -79,6 +79,7 @@ jobs:
           python3 tools/process_safe_feedback_guard.py
           python3 tools/stage9_feedback_media_guard.py
           python3 tools/design_system_resource_guard.py
+          python3 tools/localization_accessibility_guard.py
 
       # İsteğe bağlı: bağımlılık modül cache’lerini temizle (refresh-deps)
       - name: 🔄 Force refresh dependencies (optional)
