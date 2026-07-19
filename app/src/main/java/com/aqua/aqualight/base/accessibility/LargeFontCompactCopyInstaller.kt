@@ -3,6 +3,8 @@ package com.aqua.aqualight.base.accessibility
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.annotation.StringRes
+import com.aqua.aqualight.R
 
 /**
  * Replaces only explicitly tagged labels when the system font scale approaches 200%.
@@ -10,27 +12,14 @@ import android.widget.TextView
  */
 object LargeFontCompactCopyInstaller {
 
-    private const val COMPACT_TAG_PREFIX = "aqua_large_font_text:"
     private const val COMPACT_FONT_SCALE_THRESHOLD = 1.8f
 
     fun install(root: View) {
         if (root.resources.configuration.fontScale < COMPACT_FONT_SCALE_THRESHOLD) return
 
         fun visit(view: View) {
-            val compactResourceName = (view.tag as? String)
-                ?.takeIf { tag -> tag.startsWith(COMPACT_TAG_PREFIX) }
-                ?.removePrefix(COMPACT_TAG_PREFIX)
-                ?.takeIf(String::isNotBlank)
-
-            if (view is TextView && compactResourceName != null) {
-                val compactTextRes = view.resources.getIdentifier(
-                    compactResourceName,
-                    "string",
-                    view.context.packageName
-                )
-                check(compactTextRes != 0) {
-                    "Missing compact large-font string: $compactResourceName"
-                }
+            val compactTextRes = compactTextResource(view.tag)
+            if (view is TextView && compactTextRes != null) {
                 view.setText(compactTextRes)
             }
 
@@ -42,5 +31,18 @@ object LargeFontCompactCopyInstaller {
         }
 
         visit(root)
+    }
+
+    @StringRes
+    private fun compactTextResource(tag: Any?): Int? {
+        return when (tag) {
+            R.id.aqua_large_font_maintenance_tab_next ->
+                R.string.maintenance_tab_next
+
+            R.id.aqua_large_font_maintenance_action_add ->
+                R.string.maintenance_action_add
+
+            else -> null
+        }
     }
 }
