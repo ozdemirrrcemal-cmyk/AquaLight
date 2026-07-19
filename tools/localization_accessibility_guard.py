@@ -149,7 +149,8 @@ def qualifier_directory(language_tag: str) -> Path:
 def placeholder_signature(value: str) -> list[tuple[str, str]]:
     signature: list[tuple[str, str]] = []
     implicit_position = 1
-    for match in PLACEHOLDER.finditer(value):
+    value_without_escaped_percent = value.replace("%%", "")
+    for match in PLACEHOLDER.finditer(value_without_escaped_percent):
         position = match.group(1)
         if position is None:
             position = str(implicit_position)
