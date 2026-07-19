@@ -3,26 +3,21 @@ package com.aqua.aqualight.i18n
 import java.util.Locale
 
 /**
- * Single commercial source of truth for languages that have complete, reviewed resources.
+ * Single commercial source of truth for complete, reviewed application languages.
  *
- * A language must not be added here until its values-xx resources are complete and the
- * localization guard passes. Previously advertised but untranslated choices are migrated
- * safely to English instead of leaving the application in a falsely supported locale.
+ * Persisted user choices are intentionally strict: only the canonical language tags declared
+ * here are accepted. Runtime locale variants such as tr-TR and en-US are reduced to their
+ * supported language without creating hidden compatibility or migration paths.
  */
 object SupportedLocaleRegistry {
 
-    const val DEFAULT_LANGUAGE_TAG = "en"
+    const val ENGLISH_LANGUAGE_TAG = "en"
+    const val TURKISH_LANGUAGE_TAG = "tr"
+    const val DEFAULT_LANGUAGE_TAG = ENGLISH_LANGUAGE_TAG
 
     private val supportedLanguageTags = linkedSetOf(
-        DEFAULT_LANGUAGE_TAG
-    )
-
-    private val legacyAdvertisedLanguageTags = setOf(
-        "tr",
-        "de",
-        "fr",
-        "ru",
-        "zh"
+        ENGLISH_LANGUAGE_TAG,
+        TURKISH_LANGUAGE_TAG
     )
 
     val all: Set<String>
@@ -32,6 +27,7 @@ object SupportedLocaleRegistry {
         return supportedCanonicalOrNull(languageTag) != null
     }
 
+    /** Accepts only exact canonical values that may be persisted as an explicit user choice. */
     fun supportedCanonicalOrNull(languageTag: String): String? {
         val canonical = canonicalize(languageTag) ?: return null
         return canonical.takeIf {
@@ -40,26 +36,30 @@ object SupportedLocaleRegistry {
     }
 
     /**
-     * Normalizes persisted settings without silently accepting arbitrary unsupported locales.
-     * Canonical legacy choices from the old language screen migrate to English.
+     * Validates persisted settings without migrating removed or arbitrary languages.
+     * The application has not shipped, so unsupported historical values are rejected cleanly.
      */
     fun normalizeStoredLanguageTag(languageTag: String): String? {
-        val canonical = canonicalize(languageTag) ?: return null
-        if (canonical != languageTag) return null
-
-        return when (canonical) {
-            in supportedLanguageTags -> canonical
-            in legacyAdvertisedLanguageTags -> DEFAULT_LANGUAGE_TAG
-            else -> null
-        }
+        return supportedCanonicalOrNull(languageTag)
     }
 
-    /** Resolves process/runtime input fail-safely to a genuinely supported language. */
-    fun resolve(languageTag: String?): String {
-        val canonical = canonicalize(languageTag.orEmpty())
-        return canonical
-            ?.takeIf(supportedLanguageTags::contains)
+    /** Uses Turkish on Turkish devices and English for every other device language. */
+    fun deviceDefault(deviceLocale: Locale = Locale.getDefault()): String {
+        val language = deviceLocale.language.lowercase(Locale.ROOT)
+        return language.takeIf(supportedLanguageTags::contains)
             ?: DEFAULT_LANGUAGE_TAG
+    }
+
+    /**
+     * Resolves framework/runtime locale variants to one of the two supported application
+     * languages. Missing or unsupported runtime input follows the supported device default.
+     */
+    fun resolve(languageTag: String?): String {
+        val language = canonicalize(languageTag.orEmpty())
+            ?.substringBefore('-')
+            ?.takeIf(supportedLanguageTags::contains)
+
+        return language ?: deviceDefault()
     }
 
     private fun canonicalize(languageTag: String): String? {
