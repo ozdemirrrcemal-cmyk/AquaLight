@@ -2,7 +2,6 @@ package com.aqua.aqualight.data.user
 
 import com.aqua.aqualight.data.store.CommercialStoreSchema
 import com.aqua.aqualight.data.store.StoreInvariantViolation
-import com.aqua.aqualight.i18n.SupportedLocaleRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
@@ -85,7 +84,7 @@ class UserPreferencesStoreRulesTest {
             }
         }
 
-        listOf("", " ", " en ", "EN").forEach { invalidLanguage ->
+        listOf("", " ", " en ", "EN", "TR", "tr-TR").forEach { invalidLanguage ->
             val preferences = UserPreferencesStoreRules.defaultPreferences()
                 .toBuilder()
                 .setLanguageCode(invalidLanguage)
@@ -98,31 +97,31 @@ class UserPreferencesStoreRulesTest {
     }
 
     @Test
-    fun legacyAdvertisedLanguagesMigrateToEnglish() {
-        listOf("tr", "de", "fr", "ru", "zh").forEach { legacyLanguage ->
+    fun TurkishAndEnglishUserChoicesArePreservedExactly() {
+        listOf("tr", "en").forEach { language ->
             val preferences = UserPreferencesStoreRules.defaultPreferences()
                 .toBuilder()
-                .setLanguageCode(legacyLanguage)
+                .setLanguageCode(language)
                 .build()
 
-            val normalized = UserPreferencesStoreRules.validate(preferences)
-
             assertEquals(
-                SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG,
-                normalized.languageCode
+                preferences,
+                UserPreferencesStoreRules.validate(preferences)
             )
         }
     }
 
     @Test
-    fun arbitraryUnsupportedLanguageIsRejected() {
-        val preferences = UserPreferencesStoreRules.defaultPreferences()
-            .toBuilder()
-            .setLanguageCode("es")
-            .build()
+    fun removedAndArbitraryLanguagesAreRejectedWithoutMigration() {
+        listOf("de", "fr", "ru", "zh", "es").forEach { language ->
+            val preferences = UserPreferencesStoreRules.defaultPreferences()
+                .toBuilder()
+                .setLanguageCode(language)
+                .build()
 
-        assertThrows(StoreInvariantViolation::class.java) {
-            UserPreferencesStoreRules.validate(preferences)
+            assertThrows(StoreInvariantViolation::class.java) {
+                UserPreferencesStoreRules.validate(preferences)
+            }
         }
     }
 
