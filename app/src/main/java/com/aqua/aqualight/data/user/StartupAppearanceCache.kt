@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.user
 
 import android.content.Context
+import com.aqua.aqualight.i18n.SupportedLocaleRegistry
 
 /**
  * Tiny synchronous mirror for values required before the first Activity is
@@ -24,6 +25,7 @@ class StartupAppearanceCache private constructor(
     )
 
     fun read(): Appearance {
+        val defaultLanguage = SupportedLocaleRegistry.deviceDefault()
         return Appearance(
             themeMode = preferences.getString(
                 KEY_THEME_MODE,
@@ -33,9 +35,9 @@ class StartupAppearanceCache private constructor(
             },
             languageCode = preferences.getString(
                 KEY_LANGUAGE_CODE,
-                UserPreferencesManager.DEFAULT_LANGUAGE_CODE
+                defaultLanguage
             ).orEmpty().ifBlank {
-                UserPreferencesManager.DEFAULT_LANGUAGE_CODE
+                defaultLanguage
             }
         )
     }
@@ -53,9 +55,7 @@ class StartupAppearanceCache private constructor(
             )
             .putString(
                 KEY_LANGUAGE_CODE,
-                languageCode.ifBlank {
-                    UserPreferencesManager.DEFAULT_LANGUAGE_CODE
-                }
+                requireSupportedLanguage(languageCode)
             )
             .apply()
     }
@@ -79,11 +79,17 @@ class StartupAppearanceCache private constructor(
         preferences.edit()
             .putString(
                 KEY_LANGUAGE_CODE,
-                languageCode.ifBlank {
-                    UserPreferencesManager.DEFAULT_LANGUAGE_CODE
-                }
+                requireSupportedLanguage(languageCode)
             )
             .apply()
+    }
+
+    private fun requireSupportedLanguage(languageCode: String): String {
+        return requireNotNull(
+            SupportedLocaleRegistry.supportedCanonicalOrNull(languageCode)
+        ) {
+            "Startup language must be an explicit supported locale."
+        }
     }
 
     companion object {
