@@ -249,7 +249,7 @@ class CareTaskAdapter(
       titleText.text = title
       titleText.setTextSizeResource(R.dimen.aqua_text_size_micro_plus)
       titleText.setTypeface(null, Typeface.NORMAL)
-      titleText.setTextColor(ContextCompat.getColor(binding.root.context, R.color.aqua_content_on_dark))
+      titleText.setTextColor(ContextCompat.getColor(titleText.context, R.color.aqua_content_on_dark))
     }
   }
 
