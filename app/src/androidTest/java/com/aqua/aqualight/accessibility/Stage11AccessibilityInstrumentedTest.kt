@@ -16,6 +16,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withContentDescription
 import androidx.test.espresso.matcher.ViewMatchers.withTagValue
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
+import androidx.test.filters.SdkSuppress
 import com.aqua.aqualight.smoke.ReleaseSmokeActivity
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.Matcher
@@ -26,6 +27,7 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 @LargeTest
+@SdkSuppress(minSdkVersion = 29)
 class Stage11AccessibilityInstrumentedTest {
 
     @Test
