@@ -25,6 +25,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install JDK 17
         uses: actions/setup-java@v4
@@ -67,6 +69,8 @@ jobs:
             python3 tools/process_safe_feedback_guard.py
             python3 tools/stage9_feedback_media_guard.py
             python3 tools/design_system_resource_guard.py
+            python3 tools/localization_placeholder_guard.py
+            python3 tools/stage11_visual_diff_guard.py
           } 2>&1 | tee architecture-guards.log
 
       - name: Initialize CodeQL
