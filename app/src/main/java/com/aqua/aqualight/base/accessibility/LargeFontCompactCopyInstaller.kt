@@ -1,5 +1,6 @@
 package com.aqua.aqualight.base.accessibility
 
+import android.content.res.Resources
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -18,7 +19,10 @@ object LargeFontCompactCopyInstaller {
         if (root.resources.configuration.fontScale < COMPACT_FONT_SCALE_THRESHOLD) return
 
         fun visit(view: View) {
-            val compactTextRes = compactTextResource(view.tag)
+            val compactTextRes = compactTextResource(
+                resources = view.resources,
+                tag = view.tag
+            )
             if (view is TextView && compactTextRes != null) {
                 view.setText(compactTextRes)
             }
@@ -34,12 +38,16 @@ object LargeFontCompactCopyInstaller {
     }
 
     @StringRes
-    private fun compactTextResource(tag: Any?): Int? {
-        return when (tag) {
-            R.id.aqua_large_font_maintenance_tab_next ->
+    private fun compactTextResource(
+        resources: Resources,
+        tag: Any?
+    ): Int? {
+        val token = (tag as? CharSequence)?.toString() ?: return null
+        return when (token) {
+            resources.getString(R.string.aqua_large_font_tag_maintenance_tab_next) ->
                 R.string.maintenance_tab_next
 
-            R.id.aqua_large_font_maintenance_action_add ->
+            resources.getString(R.string.aqua_large_font_tag_maintenance_action_add) ->
                 R.string.maintenance_action_add
 
             else -> null
