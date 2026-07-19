@@ -104,7 +104,6 @@ class DefaultAquariumTankOperations(
                     throw error
                 }
 
-                // The durable tank record owns the new URI. Cleanup cannot invalidate that commit.
                 runCatching { AppMediaStorage.commitPendingMedia(appContext, photoUri) }
                 runCatching {
                     AppMediaStorage.deleteAfterCommit(
@@ -135,8 +134,8 @@ class DefaultAquariumTankOperations(
     override suspend fun updateTankVolumeUnit(tankId: Long, volumeUnit: String) =
         tankStore.updateTankVolumeUnit(tankId, volumeUnit)
 
-    override suspend fun updateTankSetupDate(tankId: Long, setupDateMillis: Long) =
-        tankStore.updateTankSetupDate(tankId, setupDateMillis)
+    override suspend fun updateTankSetupDate(tankId: Long, setupDateEpochDay: Long) =
+        tankStore.updateTankSetupDate(tankId, setupDateEpochDay)
 
     override suspend fun updateTankStyle(tankId: Long, tankStyle: String) =
         tankStore.updateTankStyle(tankId, tankStyle)
@@ -204,7 +203,7 @@ internal fun SavedAquariumTank.toApplicationSnapshot(): AquariumTankSnapshot =
         name = name,
         description = description,
         photoUri = photoUri,
-        setupDateMillis = setupDateMillis,
+        setupDateEpochDay = setupDateEpochDay,
         widthCm = widthCm,
         lengthCm = lengthCm,
         heightCm = heightCm,
@@ -241,7 +240,7 @@ internal fun SavedAquariumTank.toApplicationSnapshot(): AquariumTankSnapshot =
                 name = item.name,
                 category = item.category,
                 quantity = item.quantity,
-                addedDateMillis = item.addedDateMillis,
+                addedDateEpochDay = item.addedDateEpochDay,
                 note = item.note
             )
         }
@@ -254,7 +253,7 @@ internal fun AquariumTankDraft.toDataDraft(): TankDraft = TankDraft(
     plants = plants.map(AquariumPlantTag::toDataTag),
     materials = materials.map(AquariumMaterialSelection::toDataSelection),
     info = info,
-    setupDateMillis = setupDateMillis,
+    setupDateEpochDay = setupDateEpochDay,
     widthCm = widthCm,
     lengthCm = lengthCm,
     heightCm = heightCm,
@@ -289,6 +288,6 @@ private fun AquariumLivestock.toDataLivestock(): SavedAquariumLivestock =
         name = name,
         category = category,
         quantity = quantity,
-        addedDateMillis = addedDateMillis,
+        addedDateEpochDay = addedDateEpochDay,
         note = note
     )
