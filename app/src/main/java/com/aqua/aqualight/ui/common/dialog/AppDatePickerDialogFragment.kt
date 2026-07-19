@@ -7,7 +7,6 @@ import android.os.Bundle
 import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
-import com.aqua.aqualight.i18n.LocaleFormatter
 import java.util.Calendar
 
 /** Framework-recreatable date picker that returns its value through Fragment Result. */
@@ -20,9 +19,9 @@ class AppDatePickerDialogFragment : DialogFragment() {
         val calendar = Calendar.getInstance().apply {
             timeInMillis = args.getLong(ARG_INITIAL_MILLIS)
         }
-        val localizedContext = LocaleFormatter.localizedContext(requireContext())
+        val hostActivity = requireActivity()
         return DatePickerDialog(
-            localizedContext,
+            hostActivity,
             { _, year, month, dayOfMonth ->
                 calendar.set(Calendar.YEAR, year)
                 calendar.set(Calendar.MONTH, month)
