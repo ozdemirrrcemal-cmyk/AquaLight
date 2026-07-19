@@ -18,7 +18,7 @@ import org.junit.runner.RunWith
 class MinimumTouchTargetInstrumentedTest {
 
     @Test
-    fun visualTargetWinsExpandedOverlapAndRemovedTargetsAreReleased() {
+    fun nearestExpandedTargetWinsOverlapGapAndRemovedTargetsAreReleased() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val firstClicks = AtomicInteger(0)
         val secondClicks = AtomicInteger(0)
@@ -68,7 +68,8 @@ class MinimumTouchTargetInstrumentedTest {
                 val density = host.resources.displayMetrics.density
                 dispatchTap(
                     host = host,
-                    x = dp(50, density).toFloat(),
+                    // 45dp is outside both 20dp visual controls but inside both 48dp targets.
+                    x = dp(45, density).toFloat(),
                     y = dp(40, density).toFloat()
                 )
             }
@@ -89,7 +90,7 @@ class MinimumTouchTargetInstrumentedTest {
                 val density = host.resources.displayMetrics.density
                 dispatchTap(
                     host = host,
-                    x = dp(50, density).toFloat(),
+                    x = dp(45, density).toFloat(),
                     y = dp(40, density).toFloat()
                 )
             }
