@@ -20,6 +20,7 @@ import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentTankLivestockFormBinding
+import com.aqua.aqualight.i18n.DateOnly
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.dialog.AppDatePickerDialogFragment
 import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
@@ -53,7 +54,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
     private var editingLivestockId: Long = 0L
     private var selectedCategory: String = LivestockCategories.FISH
     private var selectedQuantity: Int = 1
-    private var selectedAddedDateMillis: Long = System.currentTimeMillis()
+    private var selectedAddedDateEpochDay: Long = DateOnly.todayEpochDay()
     private var hasLoadedEditingLivestock: Boolean = false
     private var hasShownMissingDataDialog: Boolean = false
     private var isDeletingLivestock: Boolean = false
@@ -93,7 +94,9 @@ Fragment(R.layout.fragment_tank_livestock_form) {
             if (result.getString(AppDatePickerDialogFragment.RESULT_KEY) !=
                 AppDatePickerDialogFragment.RESULT_SELECTED
             ) return@setFragmentResultListener
-            selectedAddedDateMillis = result.getLong(AppDatePickerDialogFragment.RESULT_MILLIS)
+            selectedAddedDateEpochDay = DateOnly.fromPickerMillis(
+                result.getLong(AppDatePickerDialogFragment.RESULT_MILLIS)
+            )
             updateDateText()
         }
         childFragmentManager.setFragmentResultListener(
@@ -116,7 +119,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
 
         selectedCategory = LivestockCategories.FISH
         selectedQuantity = 1
-        selectedAddedDateMillis = System.currentTimeMillis()
+        selectedAddedDateEpochDay = DateOnly.todayEpochDay()
     }
 
     private fun observeEditingLivestockIfNeeded() {
@@ -177,11 +180,9 @@ Fragment(R.layout.fragment_tank_livestock_form) {
 
         selectedQuantity = livestock.quantity.coerceAtLeast(1)
 
-        selectedAddedDateMillis = livestock.addedDateMillis
-        ?.takeIf {
-            millis ->
-            millis > 0L
-        } ?: System.currentTimeMillis()
+        selectedAddedDateEpochDay = livestock.addedDateEpochDay
+            ?.takeIf { epochDay -> epochDay > 0L }
+            ?: DateOnly.todayEpochDay()
 
         binding.etLifeName.setText(livestock.name)
         binding.etLifeNote.setText(livestock.note)
@@ -411,9 +412,9 @@ Fragment(R.layout.fragment_tank_livestock_form) {
     }
 
     private fun updateDateText() {
-        binding.tvAddedDateValue.text = LocaleFormatter.formatDate(
+        binding.tvAddedDateValue.text = LocaleFormatter.formatDateEpochDay(
             requireContext(),
-            selectedAddedDateMillis
+            selectedAddedDateEpochDay
         )
     }
 
@@ -443,7 +444,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
             name = name,
             category = selectedCategory,
             quantity = selectedQuantity.coerceAtLeast(1),
-            addedDateMillis = selectedAddedDateMillis,
+            addedDateEpochDay = selectedAddedDateEpochDay,
             note = binding.etLifeNote.text
             .toString()
             .trim()
@@ -528,7 +529,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
         AppDatePickerDialogFragment.show(
             fragmentManager = childFragmentManager,
             requestKey = LIVESTOCK_DATE_REQUEST_KEY,
-            initialMillis = selectedAddedDateMillis,
+            initialMillis = DateOnly.toPickerMillis(selectedAddedDateEpochDay),
             minMillis = minMillis,
             maxMillis = maxMillis
         )

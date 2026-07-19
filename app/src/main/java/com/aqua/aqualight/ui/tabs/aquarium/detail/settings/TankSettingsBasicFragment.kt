@@ -222,9 +222,11 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
                 }
 
                 TankSettingsEditorBottomSheet.Mode.SETUP_DATE -> {
-                    val millis = result.getLong(TankSettingsEditorBottomSheet.RESULT_MILLIS)
+                    val epochDay = AquariumDatePolicy.epochDayFromPickerMillis(
+                result.getLong(TankSettingsEditorBottomSheet.RESULT_MILLIS)
+            )
                     runTankUpdate(getString(R.string.aquarium_error_setup_date_save_failed)) {
-                        aquariumTankViewModel.updateTankSetupDate(tankId, millis)
+                        aquariumTankViewModel.updateTankSetupDate(tankId, epochDay)
                     }
                 }
 
@@ -275,7 +277,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
         binding.tvSettingSizeTitle.text = getSizeTitleText(tank)
         binding.tvSettingSize.text = getSizeText(tank)
         binding.tvSettingVolume.text = getVolumeText(tank)
-        binding.tvSettingSetupDate.text = getSetupDateText(tank.setupDateMillis)
+        binding.tvSettingSetupDate.text = getSetupDateText(tank.setupDateEpochDay)
         binding.tvSettingStyle.text = tank.tankStyle.ifBlank {
             getString(R.string.aquarium_no_value_placeholder)
         }
@@ -505,7 +507,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
             fragmentManager = childFragmentManager,
             mode = TankSettingsEditorBottomSheet.Mode.SETUP_DATE,
             title = getString(R.string.aquarium_setup_date_title),
-            currentMillis = tank.setupDateMillis,
+            currentMillis = AquariumDatePolicy.pickerMillis(tank.setupDateEpochDay),
             minYear = AquariumDatePolicy.minSetupYear(),
             maxYear = AquariumDatePolicy.maxSetupYear(),
             locale = AquariumDatePolicy.setupDateLocale
@@ -559,9 +561,9 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
         )
     }
 
-    private fun getSetupDateText(setupDateMillis: Long?): String {
+    private fun getSetupDateText(setupDateEpochDay: Long?): String {
         return AquariumDatePolicy.formatSetupDate(
-            millis = setupDateMillis,
+            epochDay = setupDateEpochDay,
             emptyText = getString(R.string.aquarium_no_value_placeholder)
         )
     }

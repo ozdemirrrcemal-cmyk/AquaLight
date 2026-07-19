@@ -66,7 +66,7 @@ object TankPdfExporter {
     writer.drawLabelValue(texts.labelVolume, getVolumeText(context, tank))
     writer.drawLabelValue(texts.labelSetupDate, getSetupDateText(
       context = context,
-      setupDateMillis = tank.setupDateMillis,
+      setupDateEpochDay = tank.setupDateEpochDay,
       noValue = texts.noValue
     ))
     writer.drawLabelValue(texts.labelTankStyle, tank.tankStyle.ifBlank {
@@ -262,14 +262,14 @@ object TankPdfExporter {
 
   private fun getSetupDateText(
     context: Context,
-    setupDateMillis: Long?,
+    setupDateEpochDay: Long?,
     noValue: String
   ): String {
-    if (setupDateMillis == null) {
+    if (setupDateEpochDay == null) {
       return noValue
     }
 
-    return LocaleFormatter.formatDate(context, setupDateMillis)
+    return LocaleFormatter.formatDateEpochDay(context, setupDateEpochDay)
   }
 
   private fun getSizeText(

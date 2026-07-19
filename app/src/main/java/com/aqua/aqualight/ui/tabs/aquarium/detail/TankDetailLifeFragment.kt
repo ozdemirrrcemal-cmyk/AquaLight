@@ -254,7 +254,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
         }
 
         val dateText = TextView(requireContext()).apply {
-            text = getLivestockAddedDateText(livestock.addedDateMillis)
+            text = getLivestockAddedDateText(livestock.addedDateEpochDay)
             setTextSizeResource(R.dimen.aqua_text_size_caption)
             setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_accent_positive))
             includeFontPadding = false
@@ -326,15 +326,15 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
     }
 
     private fun getLivestockAddedDateText(
-        addedDateMillis: Long?
+        addedDateEpochDay: Long?
     ): String {
-        if (addedDateMillis == null || addedDateMillis <= 0L) {
+        if (addedDateEpochDay == null || addedDateEpochDay <= 0L) {
             return getString(R.string.aquarium_livestock_added_date_not_set)
         }
 
         return getString(
             R.string.aquarium_livestock_added_date_format,
-            LocaleFormatter.formatDate(requireContext(), addedDateMillis)
+            LocaleFormatter.formatDateEpochDay(requireContext(), addedDateEpochDay)
         )
     }
 
