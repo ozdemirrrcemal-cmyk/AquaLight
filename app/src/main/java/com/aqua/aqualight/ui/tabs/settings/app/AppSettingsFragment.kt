@@ -12,6 +12,7 @@ import com.aqua.aqualight.application.notifications.NotificationChannelState
 import com.aqua.aqualight.application.notifications.NotificationPreferenceSnapshot
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentAppSettingsBinding
+import com.aqua.aqualight.localization.SupportedLocaleRegistry
 import com.aqua.aqualight.platform.permissions.AppCapability
 import com.aqua.aqualight.ui.common.bottomsheet.ThemeBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -257,15 +258,10 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
     private fun observeLanguageSummary() {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-            settingsOperations.languageCode.collectLatest { code ->
-                binding.tvLanguageSubtitle.text = when (code) {
-                    "tr" -> getString(R.string.language_turkish)
-                    "de" -> getString(R.string.language_german)
-                    "fr" -> getString(R.string.language_french)
-                    "ru" -> getString(R.string.language_russian)
-                    "zh" -> getString(R.string.language_chinese)
-                    else -> getString(R.string.language_english)
-                }
+            settingsOperations.languageCode.collectLatest { languageTag ->
+                binding.tvLanguageSubtitle.setText(
+                    SupportedLocaleRegistry.displayNameRes(languageTag)
+                )
             }
         }
     }
