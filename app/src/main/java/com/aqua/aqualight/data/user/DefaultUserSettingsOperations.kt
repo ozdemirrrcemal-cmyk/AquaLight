@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.user
 
 import com.aqua.aqualight.application.user.UsageAnalyticsSnapshot
 import com.aqua.aqualight.application.user.UserSettingsOperations
+import com.aqua.aqualight.localization.SupportedLocaleRegistry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -12,7 +13,9 @@ class DefaultUserSettingsOperations(
 ) : UserSettingsOperations {
 
     override val themeMode: Flow<String> = preferences.themeMode
-    override val languageCode: Flow<String> = preferences.languageCode
+    override val languageCode: Flow<String> = preferences.languageCode.map(
+        SupportedLocaleRegistry::normalize
+    )
     override val autoUpdateEnabled: Flow<Boolean> = preferences.autoUpdateEnabled
     override val usageAnalytics: Flow<UsageAnalyticsSnapshot> =
         preferences.usageAnalyticsFlow.map { usage ->
@@ -32,8 +35,9 @@ class DefaultUserSettingsOperations(
     }
 
     override suspend fun updateLanguage(code: String) {
-        preferences.updateLanguage(code)
-        startupAppearanceCache.writeLanguageCode(code)
+        val safeCode = SupportedLocaleRegistry.normalize(code)
+        preferences.updateLanguage(safeCode)
+        startupAppearanceCache.writeLanguageCode(safeCode)
     }
 
     override suspend fun updateAutoUpdateEnabled(enabled: Boolean) {
