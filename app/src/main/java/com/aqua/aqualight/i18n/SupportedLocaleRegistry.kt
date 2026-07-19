@@ -51,15 +51,21 @@ object SupportedLocaleRegistry {
     }
 
     /**
+     * Returns a supported language for framework/runtime variants, or null when no supported
+     * application locale is currently selected.
+     */
+    fun runtimeSupportedOrNull(languageTag: String?): String? {
+        return canonicalize(languageTag.orEmpty())
+            ?.substringBefore('-')
+            ?.takeIf(supportedLanguageTags::contains)
+    }
+
+    /**
      * Resolves framework/runtime locale variants to one of the two supported application
      * languages. Missing or unsupported runtime input follows the supported device default.
      */
     fun resolve(languageTag: String?): String {
-        val language = canonicalize(languageTag.orEmpty())
-            ?.substringBefore('-')
-            ?.takeIf(supportedLanguageTags::contains)
-
-        return language ?: deviceDefault()
+        return runtimeSupportedOrNull(languageTag) ?: deviceDefault()
     }
 
     private fun canonicalize(languageTag: String): String? {
