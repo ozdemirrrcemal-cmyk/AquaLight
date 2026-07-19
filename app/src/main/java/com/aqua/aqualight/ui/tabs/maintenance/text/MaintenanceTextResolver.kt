@@ -41,5 +41,5 @@ data class CareTaskTypePresentation(
     val title: String,
     val defaultDescription: String,
     val iconRes: Int,
-    val accentColor: Int
+    @ColorInt val accentColor: Int
 )
