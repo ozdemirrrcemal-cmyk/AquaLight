@@ -62,6 +62,8 @@ jobs:
           grep -Fq "run_visual_smoke rtl" tools/run_release_smoke.sh
           grep -Fq "verifyVisibleIconControlDescriptions" \
             app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeActivity.kt
+          grep -Fq "verifyVisibleTouchTargets" \
+            app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeActivity.kt
 
       - name: Generate CI-only release keystore
         run: |
