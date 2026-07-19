@@ -18,8 +18,7 @@ TOUCH_TARGET_HELPER = (
     / "com"
     / "aqua"
     / "aqualight"
-    / "ui"
-    / "common"
+    / "base"
     / "accessibility"
     / "TouchTargetExt.kt"
 )
@@ -112,11 +111,7 @@ def has_central_touch_target_contract() -> bool:
     )
 
 
-def is_explicitly_small(
-    element: ET.Element,
-    axis: str,
-    dimensions: dict[str, str],
-) -> bool:
+def is_explicitly_small(element: ET.Element, axis: str, dimensions: dict[str, str]) -> bool:
     size = resolve_dp(android_attr(element, f"layout_{axis}"), dimensions)
     minimum_value = android_attr(element, f"min{axis.capitalize()}")
     minimum = resolve_dp(minimum_value, dimensions) if minimum_value else None
