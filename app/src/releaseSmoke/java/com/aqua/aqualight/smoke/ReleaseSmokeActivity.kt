@@ -134,6 +134,7 @@ class ReleaseSmokeActivity : BaseActivity() {
                         "${screen.name} did not reach STARTED"
                     }
                     verifyVisibleIconControlDescriptions(fragmentView, screen.name)
+                    verifyVisibleTouchTargets(fragmentView, screen.name)
                     captureScreen(screen)
                 }
             }.onSuccess {
@@ -201,16 +202,51 @@ class ReleaseSmokeActivity : BaseActivity() {
             if (!isIconOnlyControl) return@forEachDescendantInclusive
 
             if (view.contentDescription?.toString().isNullOrBlank()) {
-                val resourceName = runCatching {
-                    resources.getResourceEntryName(view.id)
-                }.getOrDefault(view.javaClass.simpleName)
-                missingDescriptions += resourceName
+                missingDescriptions += view.debugName()
             }
         }
         check(missingDescriptions.isEmpty()) {
             "$screenName has visible icon-only controls without content descriptions: " +
                 missingDescriptions.joinToString()
         }
+    }
+
+    private fun verifyVisibleTouchTargets(root: View, screenName: String) {
+        val density = resources.displayMetrics.density
+        val undersizedTargets = mutableListOf<String>()
+
+        root.forEachDescendantInclusive { view ->
+            if (
+                view.visibility != View.VISIBLE ||
+                !view.isEnabled ||
+                !view.isClickable ||
+                view.width <= 0 ||
+                view.height <= 0
+            ) {
+                return@forEachDescendantInclusive
+            }
+
+            val widthDp = view.width / density
+            val heightDp = view.height / density
+            if (
+                widthDp + TOUCH_TARGET_TOLERANCE_DP < MIN_TOUCH_TARGET_DP ||
+                heightDp + TOUCH_TARGET_TOLERANCE_DP < MIN_TOUCH_TARGET_DP
+            ) {
+                undersizedTargets +=
+                    "${view.debugName()} (${widthDp.toInt()}x${heightDp.toInt()}dp)"
+            }
+        }
+
+        check(undersizedTargets.isEmpty()) {
+            "$screenName has visible clickable targets below ${MIN_TOUCH_TARGET_DP.toInt()}dp: " +
+                undersizedTargets.joinToString()
+        }
+    }
+
+    private fun View.debugName(): String {
+        return runCatching {
+            resources.getResourceEntryName(id)
+        }.getOrDefault(javaClass.simpleName)
     }
 
     private fun View.forEachDescendantInclusive(block: (View) -> Unit) {
@@ -287,5 +323,7 @@ class ReleaseSmokeActivity : BaseActivity() {
         const val THEME_DARK = "dark"
         const val SCREENSHOT_DIRECTORY = "smoke-screens"
         const val MIN_SCREENSHOT_BYTES = 1024L
+        const val MIN_TOUCH_TARGET_DP = 48f
+        const val TOUCH_TARGET_TOLERANCE_DP = 0.5f
     }
 }
