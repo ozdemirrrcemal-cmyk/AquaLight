@@ -53,8 +53,12 @@ fun View.ensureMinimumTouchTarget(minimumSizeDp: Int = MINIMUM_TOUCH_TARGET_DP) 
                 val verticalExpansion = ((minimumPx - bounds.height()).coerceAtLeast(0) + 1) / 2
                 bounds.inset(-horizontalExpansion, -verticalExpansion)
 
-                val group = (parentView.touchDelegate as? CompositeTouchDelegate)
-                    ?: CompositeTouchDelegate(parentView).also { parentView.touchDelegate = it }
+                val currentDelegate = parentView.touchDelegate
+                val group = (currentDelegate as? CompositeTouchDelegate)
+                    ?: CompositeTouchDelegate(
+                        host = parentView,
+                        fallback = currentDelegate
+                    ).also { parentView.touchDelegate = it }
                 group.put(this, bounds)
             }
         }
@@ -64,7 +68,7 @@ fun View.ensureMinimumTouchTarget(minimumSizeDp: Int = MINIMUM_TOUCH_TARGET_DP) 
     parentView.post(updateDelegate)
 }
 
-private inline fun View.forEachDescendant(action: (View) -> Unit) {
+private fun View.forEachDescendant(action: (View) -> Unit) {
     action(this)
     if (this !is ViewGroup) return
     for (index in 0 until childCount) {
@@ -95,7 +99,8 @@ private object TouchTargetRegistration {
 }
 
 private class CompositeTouchDelegate(
-    host: View
+    host: View,
+    private val fallback: TouchDelegate?
 ) : TouchDelegate(Rect(), host) {
 
     private data class Entry(
@@ -116,7 +121,9 @@ private class CompositeTouchDelegate(
                 entry.bounds.contains(event.x.toInt(), event.y.toInt())
             }
         }
-        val handled = activeEntry?.delegate?.onTouchEvent(event) == true
+        val handled = activeEntry?.delegate?.onTouchEvent(event)
+            ?: fallback?.onTouchEvent(event)
+            ?: false
         if (
             event.actionMasked == MotionEvent.ACTION_UP ||
             event.actionMasked == MotionEvent.ACTION_CANCEL
@@ -132,7 +139,9 @@ private class CompositeTouchDelegate(
                 entry.bounds.contains(event.x.toInt(), event.y.toInt())
             }
         }
-        val handled = activeEntry?.delegate?.onTouchExplorationHoverEvent(event) == true
+        val handled = activeEntry?.delegate?.onTouchExplorationHoverEvent(event)
+            ?: fallback?.onTouchExplorationHoverEvent(event)
+            ?: false
         if (event.actionMasked == MotionEvent.ACTION_HOVER_EXIT) {
             activeEntry = null
         }
