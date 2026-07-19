@@ -12,6 +12,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.loading.LoadingOverlayDialogFragment
 import com.aqua.aqualight.composition.requireAppContainer
+import com.aqua.aqualight.ui.common.accessibility.EffectiveTouchTargetManager
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.snackbar.Snackbar
@@ -43,6 +44,8 @@ open class BaseActivity : AppCompatActivity() {
     private val legacyLoadingOwner =
         "${BaseActivity::class.java.name}.LegacyLoadingOwner"
 
+    private var touchTargetRoot: View? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val stateFromCurrentProcess = savedInstanceState?.takeIf { state ->
             ProcessUiStateRestorePolicy.canRestore(
@@ -68,6 +71,18 @@ open class BaseActivity : AppCompatActivity() {
     override fun onPostResume() {
         super.onPostResume()
         renderGlobalLoading()
+        attachEffectiveTouchTargets()
+    }
+
+    private fun attachEffectiveTouchTargets() {
+        val currentRoot = findViewById<View>(android.R.id.content) ?: return
+        if (touchTargetRoot !== currentRoot) {
+            touchTargetRoot?.let(EffectiveTouchTargetManager::detach)
+            touchTargetRoot = currentRoot
+            EffectiveTouchTargetManager.attach(currentRoot)
+        } else {
+            EffectiveTouchTargetManager.refresh(currentRoot)
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -236,6 +251,8 @@ open class BaseActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        touchTargetRoot?.let(EffectiveTouchTargetManager::detach)
+        touchTargetRoot = null
         activityJob.cancel()
         if (isFinishing) loadingOwners.clear()
         super.onDestroy()
