@@ -26,7 +26,9 @@ jobs:
       - name: Dry-run pending atomic locale migration
         if: ${{ hashFiles('tools/stage11_apply_locale_migration.py') != '' }}
         shell: bash
-        run: python3 tools/stage11_apply_locale_migration.py
+        run: |
+          set -o pipefail
+          python3 tools/stage11_apply_locale_migration.py 2>&1 | tee stage11-migration-dry-run.log
 
       - name: Run Stage 11 source guards
         shell: bash
@@ -44,5 +46,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: stage11-source-audit-${{ github.run_number }}
-          path: stage11-source-audit.log
+          path: |
+            stage11-migration-dry-run.log
+            stage11-source-audit.log
           if-no-files-found: ignore
