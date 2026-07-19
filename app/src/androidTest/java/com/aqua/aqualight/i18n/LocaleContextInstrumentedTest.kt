@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.res.Configuration
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -38,25 +39,27 @@ class LocaleContextInstrumentedTest {
             localizedLocale.language
         )
 
-        val dateDialog = DatePickerDialog(localizedContext)
-        val timeDialog = TimePickerDialog(
-            localizedContext,
-            null,
-            12,
-            0,
-            true
-        )
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            val dateDialog = DatePickerDialog(localizedContext)
+            val timeDialog = TimePickerDialog(
+                localizedContext,
+                null,
+                12,
+                0,
+                true
+            )
 
-        assertEquals(
-            SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG,
-            dateDialog.context.resources.configuration.locales[0].language
-        )
-        assertEquals(
-            SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG,
-            timeDialog.context.resources.configuration.locales[0].language
-        )
+            assertEquals(
+                SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG,
+                dateDialog.context.resources.configuration.locales[0].language
+            )
+            assertEquals(
+                SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG,
+                timeDialog.context.resources.configuration.locales[0].language
+            )
 
-        dateDialog.dismiss()
-        timeDialog.dismiss()
+            dateDialog.dismiss()
+            timeDialog.dismiss()
+        }
     }
 }
