@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.os.Bundle
 import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -20,6 +21,7 @@ import androidx.navigation.NavGraph
 import androidx.navigation.NavGraphNavigator
 import androidx.navigation.fragment.FragmentNavigator
 import androidx.navigation.fragment.NavHostFragment
+import com.aqua.aqualight.R
 import com.aqua.aqualight.app.AquaApp
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumFragment
@@ -33,8 +35,8 @@ import kotlinx.coroutines.launch
 
 /**
  * CI-only Activity packaged exclusively in the minified releaseSmoke variant.
- * It exercises the real Fragment lifecycle, navigation environment and release-smoke
- * ViewModel factory callsites without opening Firebase, BLE or WebSocket infrastructure.
+ * It exercises every XML layout plus the real core Fragment lifecycle and navigation environment
+ * without opening Firebase, BLE or WebSocket infrastructure.
  */
 class ReleaseSmokeActivity : BaseActivity() {
 
@@ -105,6 +107,7 @@ class ReleaseSmokeActivity : BaseActivity() {
 
         lifecycleScope.launch {
             runCatching {
+                verifyAllInflatableLayouts()
                 smokeScreens().forEach { screen ->
                     if (navController.currentDestination?.id != screen.destinationId) {
                         navController.navigate(screen.destinationId)
@@ -193,6 +196,31 @@ class ReleaseSmokeActivity : BaseActivity() {
             fragmentClass = SettingsFragment::class.java
         )
     )
+
+    private fun verifyAllInflatableLayouts() {
+        val inflater = LayoutInflater.from(this)
+        val widthPixels = resources.displayMetrics.widthPixels
+        val heightPixels = resources.displayMetrics.heightPixels
+        val widthSpec = View.MeasureSpec.makeMeasureSpec(widthPixels, View.MeasureSpec.EXACTLY)
+        val heightSpec = View.MeasureSpec.makeMeasureSpec(heightPixels, View.MeasureSpec.AT_MOST)
+
+        R.layout::class.java.fields
+            .mapNotNull { field ->
+                runCatching { field.name to field.getInt(null) }.getOrNull()
+            }
+            .sortedBy { (name, _) -> name }
+            .forEach { (name, layoutId) ->
+                val parent = FrameLayout(this).apply {
+                    layoutParams = ViewGroup.LayoutParams(widthPixels, heightPixels)
+                }
+                val root = inflater.inflate(layoutId, parent, false)
+                parent.addView(root)
+                parent.measure(widthSpec, heightSpec)
+                parent.layout(0, 0, parent.measuredWidth, parent.measuredHeight)
+                verifyVisibleIconControlDescriptions(parent, "layout/$name")
+                verifyVisibleTouchTargets(parent, "layout/$name")
+            }
+    }
 
     private fun verifyVisibleIconControlDescriptions(root: View, screenName: String) {
         val missingDescriptions = mutableListOf<String>()
