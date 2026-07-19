@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - ".github/workflows/stage5_measurement_apply.yml"
-      - ".github/workflows/stage5_measurement_codemod.yml"
+      - "tools/stage5_measurement_codemod.py"
 
 permissions:
   contents: write
@@ -21,80 +21,22 @@ jobs:
           ref: agent/localization-accessibility-commercial
           fetch-depth: 0
 
-      - name: Execute the reviewed Stage 5 codemod
+      - name: Apply the reviewed Stage 5 package
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import subprocess
-
-          workflow = Path('.github/workflows/stage5_measurement_codemod.yml').read_text(
-              encoding='utf-8'
-          )
-          marker = "          python3 - <<'PY'\n"
-          end_marker = "\n          PY\n"
-          try:
-              if workflow.count(marker) != 1 or workflow.count(end_marker) != 1:
-                  raise SystemExit('Unable to isolate the reviewed Stage 5 codemod')
-              raw_script = workflow.split(marker, 1)[1].split(end_marker, 1)[0]
-              script = '\n'.join(
-                  line[10:] if line.startswith('          ') else line
-                  for line in raw_script.splitlines()
-              )
-
-              fragile_start = script.index(
-                  "text = replace_once(\n    text,\n    '''    internal fun formatDecimal("
-              )
-              fragile_end = script.index('write(locale_path, text)', fragile_start)
-              parser_insertion = '''parse_marker = "    internal fun formatPercent(\\n"
-if text.count(parse_marker) != 1:
-    raise SystemExit(f"{locale_path}: expected one formatPercent insertion boundary")
-text = text.replace(
-    parse_marker,
-    ''' + "'''" + '''    internal fun parseDecimal(value: String, locale: Locale): Double? {
-        val trimmed = value.trim()
-        if (trimmed.isEmpty()) return null
-
-        val localeSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
-        val alternateSeparator = if (localeSeparator == ',') '.' else ','
-        val localeSeparatorCount = trimmed.count { it == localeSeparator }
-        val alternateSeparatorCount = trimmed.count { it == alternateSeparator }
-
-        if (localeSeparatorCount > 1 || alternateSeparatorCount > 1) return null
-        if (localeSeparatorCount > 0 && alternateSeparatorCount > 0) return null
-
-        val normalized = trimmed
-            .replace(localeSeparator, '.')
-            .replace(alternateSeparator, '.')
-        if (!decimalInputPattern.matches(normalized)) return null
-
-        return normalized.toDoubleOrNull()?.takeIf { it.isFinite() }
-    }
-
-    internal fun formatPercent(
-''' + "'''" + ''',
-    1
-)
-'''
-              script = script[:fragile_start] + parser_insertion + script[fragile_end:]
-              exec(compile(script, '<stage5-measurement-codemod>', 'exec'))
-          except BaseException as error:
-              Path('.stage5-codemod-error.txt').write_text(
-                  f'{type(error).__name__}: {error}\n',
-                  encoding='utf-8'
-              )
-              subprocess.run(['git', 'config', 'user.name', 'github-actions[bot]'], check=True)
-              subprocess.run(
-                  ['git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'],
-                  check=True
-              )
-              subprocess.run(['git', 'add', '.stage5-codemod-error.txt'], check=True)
-              subprocess.run(['git', 'commit', '-m', 'Record Stage 5 codemod diagnostic'], check=True)
-              subprocess.run(
-                  ['git', 'push', 'origin', 'HEAD:agent/localization-accessibility-commercial'],
-                  check=True
-              )
-              raise
-          PY
+          set +e
+          python3 tools/stage5_measurement_codemod.py > /tmp/stage5-codemod.log 2>&1
+          status=$?
+          set -e
+          cat /tmp/stage5-codemod.log
+          if [ "$status" -ne 0 ]; then
+            tail -n 20 /tmp/stage5-codemod.log > .stage5-codemod-error.txt
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add .stage5-codemod-error.txt
+            git commit -m "Record Stage 5 codemod diagnostic"
+            git push origin HEAD:agent/localization-accessibility-commercial
+            exit "$status"
+          fi
 
       - name: Verify and commit the complete Stage 5 package
         run: |
