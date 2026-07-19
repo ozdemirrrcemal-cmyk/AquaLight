@@ -57,19 +57,25 @@ class LocaleFormatterTest {
     }
 
     @Test
-    fun unsupportedConfiguredLocaleFallsBackToCommercialDefault() {
+    fun unsupportedConfiguredLocaleUsesSupportedDeviceDefault() {
         val resolved = LocaleFormatter.resolveSupportedLocale(Locale.SIMPLIFIED_CHINESE)
 
         assertEquals(
-            SupportedLocaleRegistry.DEFAULT_LANGUAGE_TAG,
+            SupportedLocaleRegistry.deviceDefault(),
             resolved.toLanguageTag()
         )
+        assertTrue(resolved.toLanguageTag() in SupportedLocaleRegistry.all)
     }
 
     @Test
-    fun supportedConfiguredLocaleRemainsSelected() {
-        val resolved = LocaleFormatter.resolveSupportedLocale(Locale.ENGLISH)
-
-        assertEquals("en", resolved.toLanguageTag())
+    fun supportedConfiguredLocalesRemainSelected() {
+        assertEquals(
+            "en",
+            LocaleFormatter.resolveSupportedLocale(Locale.ENGLISH).toLanguageTag()
+        )
+        assertEquals(
+            "tr",
+            LocaleFormatter.resolveSupportedLocale(Locale("tr", "TR")).toLanguageTag()
+        )
     }
 }
