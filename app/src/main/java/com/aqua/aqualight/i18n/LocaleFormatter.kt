@@ -7,6 +7,8 @@ import androidx.core.content.ContextCompat
 import java.text.DateFormat as JavaDateFormat
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.Date
 import java.util.Locale
 
@@ -81,6 +83,11 @@ object LocaleFormatter {
         return formatDate(timeMillis, appLocale(context))
     }
 
+    /** Formats a calendar-only value without converting it through a timezone-dependent instant. */
+    fun formatDateEpochDay(context: Context, epochDay: Long): String {
+        return formatDateEpochDay(epochDay, appLocale(context))
+    }
+
     fun formatTime(context: Context, timeMillis: Long): String {
         val localizedContext = localizedContext(context)
         return formatTime(
@@ -131,6 +138,12 @@ object LocaleFormatter {
             JavaDateFormat.MEDIUM,
             locale
         ).format(Date(timeMillis))
+    }
+
+    internal fun formatDateEpochDay(epochDay: Long, locale: Locale): String {
+        return DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+            .withLocale(locale)
+            .format(DateOnly.toLocalDate(epochDay))
     }
 
     /** Locale-default overload retained for deterministic JVM formatter coverage. */
