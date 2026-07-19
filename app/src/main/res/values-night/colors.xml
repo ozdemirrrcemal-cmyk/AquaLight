@@ -11,7 +11,6 @@
     <color name="md_theme_dark_secondaryContainer">@color/aqua_palette_hex_0a192f</color>
     <color name="md_theme_dark_onSecondaryContainer">@color/aqua_palette_hex_ffffff</color>
     <color name="md_theme_dark_background">@color/aqua_palette_hex_0a192f</color>
-    <color name="md_theme_dark_onBackground">@color/aqua_palette_hex_ffffff</color>
     <color name="md_theme_dark_surface">@color/aqua_palette_hex_0a192f</color>
     <color name="md_theme_dark_onSurface">@color/aqua_palette_hex_e0e6ed</color>
 
@@ -22,9 +21,6 @@
     <color name="md_theme_dark_outlineVariant">@color/aqua_palette_hex_37474f</color>
     <color name="md_theme_dark_error">@color/aqua_palette_hex_b3261e</color>
     <color name="md_theme_dark_onError">@color/aqua_palette_hex_ffffff</color>
-
-    <!-- 🪟 Yarı saydam yüzey -->
-    <color name="colorSurfaceTransparent">@color/aqua_palette_hex_cc0a192f</color>
 
     <!-- 🌙 Dialog Icon Colors (Dark Mode tonları) -->
     <color name="dialog_icon_success">@color/aqua_palette_hex_81c784</color>
@@ -37,21 +33,13 @@
     <color name="theme_option_dark_icon">@color/aqua_palette_hex_b39dff</color>
     <color name="theme_option_system_icon">@color/aqua_palette_hex_29a9ff</color>
 
-    <!-- 🔤 Auth metin & border renkleri (DARK THEME) -->
-    <color name="auth_text_color">@color/aqua_content_on_dark</color>
-    <color name="auth_unfocused_color">@color/aqua_card_text_secondary</color>
-    <color name="auth_focus_color">@color/aqua_palette_hex_1e90ff</color>
-
     <!-- 🧾 Settings ekranı -->
-    <color name="background_color">@color/aqua_palette_hex_0a192f</color>              <!-- Ana arka plan -->
-    <color name="settings_divider">@color/aqua_palette_hex_223355</color>              <!-- Divider çizgisi -->
+    <color name="background_color">@color/aqua_palette_hex_0a192f</color>
+    <color name="settings_divider">@color/aqua_palette_hex_223355</color>
 
     <!-- ⬇️ Bottom Navigation -->
     <color name="bottom_nav_background">@color/aqua_palette_hex_112240</color>
-    <color name="bottom_nav_item_active">@color/aqua_palette_hex_ffffff</color>
-    <color name="bottom_nav_item_inactive">@color/aqua_palette_hex_a0a0a0</color>
     <color name="crop_toolbar_bg">@color/aqua_palette_hex_0a192f</color>
     <color name="aqua_button_blue">@color/aqua_palette_hex_1e90ff</color>
-    <color name="aqua_button_red">@color/aqua_palette_hex_ff3b30</color>
 
 </resources>
