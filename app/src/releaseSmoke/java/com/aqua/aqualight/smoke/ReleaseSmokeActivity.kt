@@ -8,6 +8,7 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.Lifecycle
@@ -23,23 +24,44 @@ import com.aqua.aqualight.ui.tabs.aquarium.AquariumFragment
 import com.aqua.aqualight.ui.tabs.devices.DevicesFragment
 import com.aqua.aqualight.ui.tabs.maintenance.AquariumMaintenanceFragment
 import com.aqua.aqualight.ui.tabs.settings.SettingsFragment
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * CI-only Activity packaged exclusively in the minified releaseSmoke variant.
- * It exercises the real Fragment lifecycle, navigation environment and release-smoke
- * ViewModel factory callsites without opening Firebase, BLE or WebSocket infrastructure.
+ * It exercises real Fragment lifecycle/rendering without opening Firebase, BLE or WebSocket
+ * infrastructure. Locale, theme and font-scale labels are supplied by the emulator runner.
  */
 class ReleaseSmokeActivity : BaseActivity() {
 
     private lateinit var navHostFragment: NavHostFragment
     private lateinit var navController: NavController
     private var smokeStarted = false
+
     private val smokeTheme: String by lazy {
-        intent.getStringExtra(EXTRA_SMOKE_THEME).orEmpty().lowercase().ifBlank { THEME_LIGHT }
+        intent.getStringExtra(EXTRA_SMOKE_THEME)
+            .orEmpty()
+            .lowercase()
+            .ifBlank { THEME_LIGHT }
+    }
+    private val smokeLocaleTag: String by lazy {
+        intent.getStringExtra(EXTRA_SMOKE_LOCALE)
+            .orEmpty()
+            .ifBlank { DEFAULT_LOCALE }
+    }
+    private val smokeFontScaleLabel: String by lazy {
+        intent.getStringExtra(EXTRA_SMOKE_FONT_SCALE)
+            .orEmpty()
+            .ifBlank { DEFAULT_FONT_SCALE_LABEL }
+    }
+    private val smokeModeKey: String by lazy {
+        listOf(
+            smokeLocaleTag.lowercase().replace('-', '_'),
+            smokeTheme,
+            "font${smokeFontScaleLabel.replace('.', '_')}"
+        ).joinToString("-")
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,6 +71,9 @@ class ReleaseSmokeActivity : BaseActivity() {
             } else {
                 AppCompatDelegate.MODE_NIGHT_NO
             }
+        )
+        AppCompatDelegate.setApplicationLocales(
+            LocaleListCompat.forLanguageTags(smokeLocaleTag)
         )
         (application as AquaApp).replaceAppContainerForProcess(
             ReleaseSmokeAppContainer(applicationContext)
@@ -109,7 +134,7 @@ class ReleaseSmokeActivity : BaseActivity() {
                     captureScreen(screen)
                 }
             }.onSuccess {
-                renderResult("$PASS_MARKER:$smokeTheme")
+                renderResult("$PASS_MARKER:$smokeModeKey")
             }.onFailure { error ->
                 renderResult(
                     "$FAIL_MARKER\n${error::class.java.name}\n${error.message.orEmpty()}"
@@ -165,7 +190,6 @@ class ReleaseSmokeActivity : BaseActivity() {
         )
     )
 
-
     private fun captureScreen(screen: SmokeScreen) {
         val root = window.decorView.rootView
         check(root.width > 0 && root.height > 0) {
@@ -177,7 +201,7 @@ class ReleaseSmokeActivity : BaseActivity() {
         val directory = File(screenshotRoot, SCREENSHOT_DIRECTORY).apply { mkdirs() }
         val output = File(
             directory,
-            "${smokeTheme}-${screen.name.removeSuffix("Fragment").lowercase()}.png"
+            "$smokeModeKey-${screen.name.removeSuffix("Fragment").lowercase()}.png"
         )
         FileOutputStream(output).use { stream ->
             check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)) {
@@ -225,8 +249,12 @@ class ReleaseSmokeActivity : BaseActivity() {
         const val PASS_MARKER = "RELEASE_SMOKE_PASS"
         const val FAIL_MARKER = "RELEASE_SMOKE_FAIL"
         const val EXTRA_SMOKE_THEME = "aqua_smoke_theme"
+        const val EXTRA_SMOKE_LOCALE = "aqua_smoke_locale"
+        const val EXTRA_SMOKE_FONT_SCALE = "aqua_smoke_font_scale"
         const val THEME_LIGHT = "light"
         const val THEME_DARK = "dark"
+        const val DEFAULT_LOCALE = "en"
+        const val DEFAULT_FONT_SCALE_LABEL = "1.0"
         const val SCREENSHOT_DIRECTORY = "smoke-screens"
         const val MIN_SCREENSHOT_BYTES = 1024L
     }
