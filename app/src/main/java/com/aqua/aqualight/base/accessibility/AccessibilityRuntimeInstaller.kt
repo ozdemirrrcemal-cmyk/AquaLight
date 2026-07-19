@@ -24,6 +24,15 @@ class AccessibilityRuntimeInstaller : Application.ActivityLifecycleCallbacks {
                     LargeFontCompactCopyInstaller.install(view)
                     MinimumTouchTargetInstaller.install(view)
                 }
+
+                override fun onFragmentViewDestroyed(
+                    fragmentManager: FragmentManager,
+                    fragment: Fragment
+                ) {
+                    fragment.activity?.window?.decorView?.let(
+                        MinimumTouchTargetInstaller::install
+                    )
+                }
             },
             true
         )
