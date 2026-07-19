@@ -32,6 +32,7 @@ jobs:
             python3 tools/stage11_visual_diff_guard.py
             python3 tools/accessibility_semantics_guard.py
             python3 tools/ui_locale_boundary_guard.py
+            python3 tools/accessibility_contrast_guard.py
           } 2>&1 | tee stage11-source-audit.log
 
       - name: Upload Stage 11 source audit
