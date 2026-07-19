@@ -19,6 +19,7 @@ import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.databinding.FragmentTankDetailTankBinding
+import com.aqua.aqualight.i18n.DateOnly
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDatePolicy
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDimensionFormatter
@@ -27,8 +28,9 @@ import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 
 class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
 
@@ -157,11 +159,11 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
     }
 
     private fun renderTankSection(tank: AquariumTankSnapshot) {
-        binding.tvTankDaysValue.text = getTankDaysText(tank.setupDateMillis)
+        binding.tvTankDaysValue.text = getTankDaysText(tank.setupDateEpochDay)
         binding.tvTankVolumeValue.text = getTankVolumeText(tank, tank.volumeUnit)
         binding.tvTankSizeValue.text = getTankSizeText(tank)
         binding.tvTankTypeValue.text = tank.tankType.ifBlank { VALUE_EMPTY }
-        binding.tvTankSetupDateValue.text = getTankSetupDateText(tank.setupDateMillis)
+        binding.tvTankSetupDateValue.text = getTankSetupDateText(tank.setupDateEpochDay)
         binding.tvTankStyleValue.text = tank.tankStyle.ifBlank { VALUE_EMPTY }
 
         renderTankComponents(tank)
@@ -318,14 +320,15 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
         )
     }
 
-    private fun getTankDaysText(setupDateMillis: Long?): String {
-        if (setupDateMillis == null) {
+    private fun getTankDaysText(setupDateEpochDay: Long?): String {
+        if (setupDateEpochDay == null) {
             return VALUE_EMPTY
         }
 
-        val day = TimeUnit.MILLISECONDS
-            .toDays(System.currentTimeMillis() - setupDateMillis)
-            .coerceAtLeast(0)
+        val setupDate = DateOnly.toLocalDate(setupDateEpochDay)
+        val day = ChronoUnit.DAYS
+            .between(setupDate, LocalDate.now())
+            .coerceAtLeast(0L)
 
         return resources.getQuantityString(
             R.plurals.aquarium_tank_age_days,
@@ -359,9 +362,9 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
         )
     }
 
-    private fun getTankSetupDateText(setupDateMillis: Long?): String {
+    private fun getTankSetupDateText(setupDateEpochDay: Long?): String {
         return AquariumDatePolicy.formatSetupDate(
-            millis = setupDateMillis,
+            epochDay = setupDateEpochDay,
             emptyText = VALUE_EMPTY
         )
     }
