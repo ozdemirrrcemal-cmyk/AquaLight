@@ -349,11 +349,11 @@ class AquariumTankDataStoreManager(
 
     suspend fun updateTankSetupDate(
         tankId: Long,
-        setupDateMillis: Long
+        setupDateEpochDay: Long
     ) {
         updateCurrentOwnerTank(tankId) { storedTank ->
             storedTank.toBuilder()
-                .setSetupDateMillis(setupDateMillis)
+                .setSetupDateMillis(setupDateEpochDay)
                 .build()
         }
     }
@@ -541,7 +541,7 @@ class AquariumTankDataStoreManager(
             .setName(name.trim())
             .setDescription(description.trim())
             .setPhotoUri(photoUri.orEmpty().trim())
-            .setSetupDateMillis(setupDateMillis ?: 0L)
+            .setSetupDateMillis(setupDateEpochDay ?: 0L)
             .setWidthCm(widthCm)
             .setLengthCm(lengthCm)
             .setHeightCm(heightCm)
@@ -599,7 +599,7 @@ class AquariumTankDataStoreManager(
             .setName(name.trim())
             .setCategory(category.trim())
             .setQuantity(quantity)
-            .setAddedDateMillis(addedDateMillis ?: 0L)
+            .setAddedDateMillis(addedDateEpochDay ?: 0L)
             .setNote(note.trim())
             .build()
     }
@@ -612,7 +612,7 @@ class AquariumTankDataStoreManager(
             name = name,
             description = description,
             photoUri = photoUri.takeIf(String::isNotBlank),
-            setupDateMillis = setupDateMillis.takeIf { value -> value > 0L },
+            setupDateEpochDay = setupDateEpochDay.takeIf { value -> value > 0L },
             widthCm = widthCm,
             lengthCm = lengthCm,
             heightCm = heightCm,
@@ -649,7 +649,7 @@ class AquariumTankDataStoreManager(
                     name = livestock.name,
                     category = livestock.category,
                     quantity = livestock.quantity,
-                    addedDateMillis = livestock.addedDateMillis.takeIf { value -> value > 0L },
+                    addedDateEpochDay = livestock.addedDateEpochDay.takeIf { value -> value > 0L },
                     note = livestock.note
                 )
             }
