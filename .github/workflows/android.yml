@@ -43,16 +43,18 @@ jobs:
 
           path = Path("tools/stage11_apply_locale_migration.py")
           source = path.read_text(encoding="utf-8")
-          old = '''    if anchor not in source:
-              raise RuntimeError(f"{relative}: import anchor missing: {anchor!r}")
-          '''
-          new = '''    if anchor not in source:
-              build_config_anchor = "import com.aqua.aqualight.BuildConfig\\n"
-              if build_config_anchor in source:
-                  anchor = build_config_anchor
-              else:
-                  raise RuntimeError(f"{relative}: import anchor missing: {anchor!r}")
-          '''
+          old = (
+              "    if anchor not in source:\n"
+              "        raise RuntimeError(f\"{relative}: import anchor missing: {anchor!r}\")\n"
+          )
+          new = (
+              "    if anchor not in source:\n"
+              "        build_config_anchor = \"import com.aqua.aqualight.BuildConfig\\n\"\n"
+              "        if build_config_anchor in source:\n"
+              "            anchor = build_config_anchor\n"
+              "        else:\n"
+              "            raise RuntimeError(f\"{relative}: import anchor missing: {anchor!r}\")\n"
+          )
           if source.count(old) != 1:
               raise SystemExit("Migration import helper transform mismatch")
           path.write_text(source.replace(old, new, 1), encoding="utf-8")
@@ -70,16 +72,20 @@ jobs:
 
           path = Path("app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt")
           source = path.read_text(encoding="utf-8")
-          old = '''      return LocaleFormatters.formatTemplate(
-                  locale = locale,
-                  template = pageFormat,
-                  pageNumber
-                )'''
-          new = '''      return LocaleFormatters.formatTemplate(
-                  locale,
-                  pageFormat,
-                  pageNumber
-                )'''
+          old = (
+              "      return LocaleFormatters.formatTemplate(\n"
+              "        locale = locale,\n"
+              "        template = pageFormat,\n"
+              "        pageNumber\n"
+              "      )"
+          )
+          new = (
+              "      return LocaleFormatters.formatTemplate(\n"
+              "        locale,\n"
+              "        pageFormat,\n"
+              "        pageNumber\n"
+              "      )"
+          )
           if source.count(old) != 1:
               raise SystemExit("TankPdfExporter locale template transform mismatch")
           path.write_text(source.replace(old, new, 1), encoding="utf-8")
