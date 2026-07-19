@@ -123,6 +123,9 @@ jobs:
             release-smoke-install.txt
             release-smoke-package-path.txt
             release-smoke-start.txt
+            release-smoke-*-start.txt
+            release-smoke-*-window.xml
+            release-smoke-screens/**
           if-no-files-found: ignore
 
       - name: Remove CI-only release keystore
