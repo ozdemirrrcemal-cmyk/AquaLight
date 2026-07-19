@@ -11,6 +11,7 @@ on:
       - "gradle.properties"
       - "settings.gradle"
       - "tools/run_release_smoke.sh"
+      - "tools/localization_accessibility_guard.py"
 
 concurrency:
   group: android-emulator-${{ github.event.pull_request.number || github.ref }}
@@ -51,6 +52,9 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+
+      - name: Run Stage 11 localization accessibility guard
+        run: python3 tools/localization_accessibility_guard.py
 
       - name: Verify release-smoke runner contract
         run: |
