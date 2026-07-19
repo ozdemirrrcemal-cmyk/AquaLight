@@ -359,7 +359,7 @@
     <string name="security_feature_in_development_title">Güvenlik özelliği kullanılamıyor</string>
     <string name="feedback_error_upload">Ekran görüntüsü yüklenemedi</string>
     <string name="feedback_sent_success">Geri bildirim başarıyla gönderildi</string>
-    <string name="feedback_error_file_too_large">Ekran görüntüsü 3 MB'den küçük olmalıdır</string>
+    <string name="feedback_error_file_too_large">Ekran görüntüsü 3 MB sınırının altında olmalıdır</string>
     <string name="user_info_username_too_short">Kullanıcı adı en az 3 karakter olmalıdır</string>
     <string name="user_info_username_invalid">Yalnızca harf, rakam, alt çizgi ve nokta kullanılabilir</string>
     <string name="user_info_saved_success">Profil başarıyla güncellendi</string>
