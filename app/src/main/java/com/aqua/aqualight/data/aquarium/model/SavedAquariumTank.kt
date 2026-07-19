@@ -8,7 +8,7 @@ data class SavedAquariumTank(
     val name: String,
     val description: String,
     val photoUri: String?,
-    val setupDateMillis: Long?,
+    val setupDateEpochDay: Long?,
     val widthCm: Int,
     val lengthCm: Int,
     val heightCm: Int,
@@ -47,6 +47,6 @@ data class SavedAquariumLivestock(
     val name: String = "",
     val category: String = "",
     val quantity: Int = 1,
-    val addedDateMillis: Long? = null,
+    val addedDateEpochDay: Long? = null,
     val note: String = ""
 )
