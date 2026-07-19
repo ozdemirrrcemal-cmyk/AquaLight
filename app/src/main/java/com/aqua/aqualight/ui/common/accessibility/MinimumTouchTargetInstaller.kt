@@ -19,17 +19,32 @@ object MinimumTouchTargetInstaller {
 
     fun install(root: View) {
         root.post {
+            val host = root as? ViewGroup ?: return@post
+            if (host.width <= 0 || host.height <= 0) return@post
+
             val minimumPixels = (
-                MIN_TOUCH_TARGET_DP * root.resources.displayMetrics.density
+                MIN_TOUCH_TARGET_DP * host.resources.displayMetrics.density
             ).roundToInt()
 
-            collectClickableViews(root)
-                .groupBy { it.parent as? ViewGroup }
-                .forEach { (parent, children) ->
-                    if (parent != null && parent.width > 0 && parent.height > 0) {
-                        installForParent(parent, children, minimumPixels)
-                    }
+            val entries = collectClickableViews(host)
+                .asSequence()
+                .filter { child ->
+                    child !== host &&
+                        (child.width < minimumPixels || child.height < minimumPixels)
                 }
+                .sortedBy { child -> child.width.toLong() * child.height.toLong() }
+                .mapNotNull { child ->
+                    createTouchEntry(
+                        host = host,
+                        child = child,
+                        minimumPixels = minimumPixels
+                    )
+                }
+                .toList()
+
+            if (entries.isNotEmpty()) {
+                host.touchDelegate = CompositeTouchDelegate(host, entries)
+            }
         }
     }
 
@@ -54,44 +69,35 @@ object MinimumTouchTargetInstaller {
         return result
     }
 
-    private fun installForParent(
-        parent: ViewGroup,
-        children: List<View>,
+    private fun createTouchEntry(
+        host: ViewGroup,
+        child: View,
         minimumPixels: Int
-    ) {
-        val entries = children.mapNotNull { child ->
-            if (child.width >= minimumPixels && child.height >= minimumPixels) {
-                return@mapNotNull null
-            }
+    ): TouchEntry? {
+        val bounds = Rect()
+        child.getDrawingRect(bounds)
+        host.offsetDescendantRectToMyCoords(child, bounds)
 
-            val bounds = Rect()
-            child.getHitRect(bounds)
+        val horizontalExpansion = max(0, minimumPixels - bounds.width())
+        val verticalExpansion = max(0, minimumPixels - bounds.height())
 
-            val horizontalExpansion = max(0, minimumPixels - bounds.width())
-            val verticalExpansion = max(0, minimumPixels - bounds.height())
+        bounds.left -= horizontalExpansion / 2
+        bounds.right += horizontalExpansion - horizontalExpansion / 2
+        bounds.top -= verticalExpansion / 2
+        bounds.bottom += verticalExpansion - verticalExpansion / 2
 
-            bounds.left -= horizontalExpansion / 2
-            bounds.right += horizontalExpansion - horizontalExpansion / 2
-            bounds.top -= verticalExpansion / 2
-            bounds.bottom += verticalExpansion - verticalExpansion / 2
+        bounds.left = max(0, bounds.left)
+        bounds.top = max(0, bounds.top)
+        bounds.right = min(host.width, bounds.right)
+        bounds.bottom = min(host.height, bounds.bottom)
 
-            bounds.left = max(0, bounds.left)
-            bounds.top = max(0, bounds.top)
-            bounds.right = min(parent.width, bounds.right)
-            bounds.bottom = min(parent.height, bounds.bottom)
-
-            if (bounds.width() <= 0 || bounds.height() <= 0) {
-                null
-            } else {
-                TouchEntry(
-                    bounds = bounds,
-                    delegate = TouchDelegate(bounds, child)
-                )
-            }
-        }
-
-        if (entries.isNotEmpty()) {
-            parent.touchDelegate = CompositeTouchDelegate(parent, entries)
+        return if (bounds.width() <= 0 || bounds.height() <= 0) {
+            null
+        } else {
+            TouchEntry(
+                bounds = bounds,
+                delegate = TouchDelegate(bounds, child)
+            )
         }
     }
 
