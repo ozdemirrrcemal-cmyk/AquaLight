@@ -71,18 +71,6 @@ jobs:
               1
           )
           replace_exact(detail, '            millis = setupDateEpochDay,', '            epochDay = setupDateEpochDay,', 1)
-
-          settings = 'app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsBasicFragment.kt'
-          replace_exact(
-              settings,
-              '''                    val epochDay = AquariumDatePolicy.epochDayFromPickerMillis(
-                  result.getLong(TankSettingsEditorBottomSheet.RESULT_MILLIS)
-              )''',
-              '''                    val epochDay = AquariumDatePolicy.epochDayFromPickerMillis(
-                          result.getLong(TankSettingsEditorBottomSheet.RESULT_MILLIS)
-                      )''',
-              1
-          )
           PY
 
       - name: Commit fixes
