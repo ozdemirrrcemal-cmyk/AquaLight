@@ -155,7 +155,8 @@ internal fun CareTask.toApplicationSnapshot(): CareTaskSnapshot = CareTaskSnapsh
     missedReminderDays = missedReminderDays,
     waterChangePercent = waterChangePercent,
     note = note,
-    createdAtMillis = createdAtMillis
+    createdAtMillis = createdAtMillis,
+    generatedRuleKey = generatedRuleKey
 )
 
 internal fun AppCareTaskType.toDataType(): DataCareTaskType =
