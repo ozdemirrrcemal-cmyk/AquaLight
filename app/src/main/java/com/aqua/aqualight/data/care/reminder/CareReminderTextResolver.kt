@@ -23,7 +23,7 @@ internal data class CareReminderText(
  */
 internal class CareReminderTextResolver(
     context: Context,
-    private val localizedContextProvider: (Context) -> Context = LocaleFormatter::localizedContext
+    private val localizedContextProvider: ((Context) -> Context)? = null
 ) {
     private val appContext = context.applicationContext
     private val maintenanceTextResolver = AndroidMaintenanceTextResolver(
@@ -35,7 +35,8 @@ internal class CareReminderTextResolver(
         task: CareTask,
         tank: SavedAquariumTank?
     ): CareReminderText {
-        val localizedContext = localizedContextProvider(appContext)
+        val localizedContext = localizedContextProvider?.invoke(appContext)
+            ?: LocaleFormatter.localizedContext(appContext)
         val taskPresentation = maintenanceTextResolver.taskPresentation(
             task = task.toCareSnapshot(),
             tank = tank?.toAquariumSnapshot()
