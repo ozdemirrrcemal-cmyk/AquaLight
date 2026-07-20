@@ -1,11 +1,9 @@
 package com.aqua.aqualight.data.care.reminder
 
 import android.content.Context
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.os.LocaleListCompat
+import android.content.res.Configuration
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.care.catalog.CareTaskTypeCatalog
@@ -13,10 +11,8 @@ import com.aqua.aqualight.data.care.model.CareTask
 import com.aqua.aqualight.data.care.model.CareTaskSource
 import com.aqua.aqualight.data.care.model.CareTaskStatus
 import com.aqua.aqualight.data.care.model.CareTaskType
-import com.aqua.aqualight.i18n.AppLanguageController
-import com.aqua.aqualight.i18n.LocaleFormatter
 import java.time.LocalDate
-import org.junit.After
+import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -27,18 +23,6 @@ import org.junit.runner.RunWith
 class CareReminderLocaleInstrumentedTest {
 
     private val applicationContext: Context = ApplicationProvider.getApplicationContext()
-    private val originalLanguageTags = AppCompatDelegate.getApplicationLocales().toLanguageTags()
-    private val resolver = CareReminderTextResolver(applicationContext)
-
-    @After
-    fun restoreApplicationLocale() {
-        InstrumentationRegistry.getInstrumentation().runOnMainSync {
-            AppCompatDelegate.setApplicationLocales(
-                LocaleListCompat.forLanguageTags(originalLanguageTags)
-            )
-        }
-        InstrumentationRegistry.getInstrumentation().waitForIdleSync()
-    }
 
     @Test
     fun standardManualReminderRelocalizesTurkishEnglishTurkish() {
@@ -58,8 +42,8 @@ class CareReminderLocaleInstrumentedTest {
         assertEquals(firstTurkish, secondTurkish)
         assertNotEquals(firstTurkish.title, english.title)
         assertNotEquals(firstTurkish.message, english.message)
-        assertEquals(expectedStandardTitle(task), secondTurkish.title)
-        assertEquals(expectedStandardMessage(task, tank), secondTurkish.message)
+        assertEquals(expectedStandardTitle("tr", task), secondTurkish.title)
+        assertEquals(expectedStandardMessage("tr", task, tank), secondTurkish.message)
         assertTrue(english.message.contains(tank.name))
         assertTrue(secondTurkish.message.contains(tank.name))
     }
@@ -83,7 +67,7 @@ class CareReminderLocaleInstrumentedTest {
         assertNotEquals(turkish.title, english.title)
         assertNotEquals(turkish.message, english.message)
         assertEquals(
-            localizedContext().getString(
+            contextFor("tr").getString(
                 R.string.maintenance_smart_rule_initial_setup_check_title
             ),
             turkishAgain.title
@@ -119,15 +103,15 @@ class CareReminderLocaleInstrumentedTest {
         task: CareTask,
         tank: SavedAquariumTank
     ): CareReminderText {
-        InstrumentationRegistry.getInstrumentation().runOnMainSync {
-            AppLanguageController.apply(language)
-        }
-        InstrumentationRegistry.getInstrumentation().waitForIdleSync()
-        return resolver.resolve(task, tank)
+        val localizedContext = contextFor(language)
+        return CareReminderTextResolver(
+            context = applicationContext,
+            localizedContextProvider = { localizedContext }
+        ).resolve(task, tank)
     }
 
-    private fun expectedStandardTitle(task: CareTask): String {
-        val context = localizedContext()
+    private fun expectedStandardTitle(language: String, task: CareTask): String {
+        val context = contextFor(language)
         val definition = CareTaskTypeCatalog.get(task.type)
         val typeTitle = definition.title(context)
         val percent = requireNotNull(task.waterChangePercent)
@@ -139,10 +123,11 @@ class CareReminderLocaleInstrumentedTest {
     }
 
     private fun expectedStandardMessage(
+        language: String,
         task: CareTask,
         tank: SavedAquariumTank
     ): String {
-        val context = localizedContext()
+        val context = contextFor(language)
         val description = CareTaskTypeCatalog.get(task.type).defaultDescription(context)
         return context.getString(
             R.string.maintenance_notification_message_with_aquarium,
@@ -151,7 +136,14 @@ class CareReminderLocaleInstrumentedTest {
         )
     }
 
-    private fun localizedContext(): Context = LocaleFormatter.localizedContext(applicationContext)
+    private fun contextFor(language: String): Context {
+        val locale = Locale.forLanguageTag(language)
+        val configuration = Configuration(applicationContext.resources.configuration).apply {
+            setLocale(locale)
+            setLayoutDirection(locale)
+        }
+        return applicationContext.createConfigurationContext(configuration)
+    }
 
     private fun task(
         type: CareTaskType,
