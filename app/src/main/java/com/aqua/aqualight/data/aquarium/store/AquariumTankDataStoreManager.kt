@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStore
+import com.aqua.aqualight.R
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumPlant
@@ -724,11 +725,15 @@ class AquariumTankDataStoreManager(
 
         var copyNumber = 1
         while (true) {
-            val suffix = if (copyNumber == 1) {
-                " Copy"
+            val suffixText = if (copyNumber == 1) {
+                context.getString(R.string.aquarium_duplicate_name_suffix)
             } else {
-                " Copy $copyNumber"
+                context.getString(
+                    R.string.aquarium_duplicate_name_numbered_suffix,
+                    copyNumber
+                )
             }
+            val suffix = " " + suffixText
             val maxBaseLength = TankStoreRules.MAX_NAME_CHARS - suffix.length
             if (maxBaseLength <= 0) {
                 throw StoreInvariantViolation(

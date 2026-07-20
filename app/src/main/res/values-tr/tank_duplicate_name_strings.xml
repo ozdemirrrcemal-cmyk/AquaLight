@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="aquarium_duplicate_name_suffix">Kopya</string>
+    <string name="aquarium_duplicate_name_numbered_suffix">Kopya %1$d</string>
+</resources>
