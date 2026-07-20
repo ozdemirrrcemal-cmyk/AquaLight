@@ -8,7 +8,7 @@ import com.aqua.aqualight.application.care.CareTaskType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
-/** Presentation-only text/icon boundary for maintenance screens. */
+/** Presentation-only text/icon boundary for maintenance screens and reminder delivery. */
 interface MaintenanceTextResolver {
     /** Re-emits presentation state whenever the active application language changes. */
     val localeChanges: Flow<String>
@@ -20,6 +20,53 @@ interface MaintenanceTextResolver {
         task: CareTaskSnapshot,
         tank: AquariumTankSnapshot?
     ): CareTaskTextPresentation? = null
+
+    /**
+     * Resolves the application-owned title and description from semantic task data.
+     *
+     * Standard manual copy and Smart Care copy follow the active app locale. Custom manual titles
+     * remain user-owned. Persisted automatic strings are used only as a defensive fallback when a
+     * semantic Smart Care rule cannot be resolved.
+     */
+    fun taskPresentation(
+        task: CareTaskSnapshot,
+        tank: AquariumTankSnapshot?
+    ): CareTaskTextPresentation {
+        val typePresentation = typePresentation(task.type)
+        val automaticPresentation = if (task.source == CareTaskSource.AUTOMATIC) {
+            automaticTaskPresentation(task, tank)
+        } else {
+            null
+        }
+
+        val title = when {
+            task.source == CareTaskSource.AUTOMATIC -> {
+                automaticPresentation?.title?.takeIf(String::isNotBlank)
+                    ?: task.title.ifBlank { typePresentation.title }
+            }
+            task.type == CareTaskType.CUSTOM -> {
+                task.title.ifBlank { typePresentation.title }
+            }
+            task.type == CareTaskType.WATER_CHANGE &&
+                task.waterChangePercent != null &&
+                task.waterChangePercent > 0 -> {
+                waterChangeTitle(typePresentation.title, task.waterChangePercent)
+            }
+            else -> typePresentation.title
+        }
+
+        val description = if (task.source == CareTaskSource.AUTOMATIC) {
+            automaticPresentation?.description?.takeIf(String::isNotBlank)
+                ?: task.description.ifBlank { typePresentation.defaultDescription }
+        } else {
+            typePresentation.defaultDescription
+        }
+
+        return CareTaskTextPresentation(
+            title = title,
+            description = description
+        )
+    }
 
     fun waterChangeTitle(typeTitle: String, percent: Int): String
 
