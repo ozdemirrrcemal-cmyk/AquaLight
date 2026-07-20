@@ -20,10 +20,10 @@ import java.time.ZoneId
 /**
  * Rebuilds automatic task copy from its stable Smart Care rule identity.
  *
- * Persisted title/description strings are deliberately not the display source. They remain useful
- * for notification durability, while cards and task details always resolve application-owned copy
- * from the currently active locale. User-authored manual notes and custom titles never pass through
- * this resolver.
+ * Persisted title/description strings are deliberately not the presentation source. Cards, task
+ * details and reminder notifications resolve application-owned copy from the currently active
+ * locale. Persisted strings remain only as a defensive fallback when semantic identity cannot be
+ * resolved; user-authored manual notes and custom titles never pass through this resolver.
  */
 internal class AndroidSmartCareTextResolver(
     private val localizedContext: Context
