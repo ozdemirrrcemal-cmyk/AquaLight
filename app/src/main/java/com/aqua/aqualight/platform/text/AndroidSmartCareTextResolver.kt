@@ -114,9 +114,9 @@ internal class AndroidSmartCareTextResolver(
         createdAtMillis = createdAtMillis,
         smartCareEnabled = smartCareEnabled,
         careRemindersEnabled = careRemindersEnabled,
-        plants = plants.map(AquariumPlantTag::toSavedPlant),
-        materials = materials.map(AquariumMaterialSelection::toSavedMaterial),
-        livestock = livestock.map(AquariumLivestock::toSavedLivestock)
+        plants = plants.map { plant -> plant.toSavedPlant() },
+        materials = materials.map { material -> material.toSavedMaterial() },
+        livestock = livestock.map { item -> item.toSavedLivestock() }
     )
 
     private fun AquariumPlantTag.toSavedPlant(): SavedAquariumPlant = SavedAquariumPlant(
