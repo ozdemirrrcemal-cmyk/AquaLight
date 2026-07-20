@@ -16,7 +16,8 @@ import com.aqua.aqualight.ui.tabs.maintenance.text.MaintenanceTextResolver
 import kotlinx.coroutines.flow.Flow
 
 class AndroidMaintenanceTextResolver(
-    context: Context
+    context: Context,
+    private val localizedContextProvider: (Context) -> Context = LocaleFormatter::localizedContext
 ) : MaintenanceTextResolver {
 
     private val appContext = context.applicationContext
@@ -96,5 +97,5 @@ class AndroidMaintenanceTextResolver(
     override fun unknownAquarium(): String =
         localizedContext().getString(R.string.maintenance_unknown_aquarium)
 
-    private fun localizedContext(): Context = LocaleFormatter.localizedContext(appContext)
+    private fun localizedContext(): Context = localizedContextProvider(appContext)
 }
