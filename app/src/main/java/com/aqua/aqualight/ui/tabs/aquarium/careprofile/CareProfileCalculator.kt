@@ -4,6 +4,7 @@ import android.content.Context
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
+import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDimensionFormatter
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -62,11 +63,13 @@ object CareProfileCalculator {
     items += Item(
       title = context.getString(R.string.aquarium_care_profile_tank_size),
       subtitle = if (hasValidTankSize(tank)) {
-        context.getString(
-          R.string.tank_pdf_size_format,
-          tank.widthCm,
-          tank.lengthCm,
-          tank.heightCm
+        AquariumDimensionFormatter.labeledSizeText(
+          context = context,
+          widthCm = tank.widthCm,
+          lengthCm = tank.lengthCm,
+          heightCm = tank.heightCm,
+          sizeUnit = tank.sizeUnit,
+          formatRes = R.string.tank_pdf_size_localized_format
         )
       } else {
         context.getString(R.string.aquarium_care_profile_missing_tank_dimensions)

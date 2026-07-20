@@ -17,6 +17,7 @@ import com.aqua.aqualight.databinding.ItemAquariumTankBinding
 import com.aqua.aqualight.i18n.DateOnly
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.text.resolve
+import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDimensionFormatter
 import com.aqua.aqualight.ui.tabs.maintenance.TankCareSummaryUi
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -138,11 +139,13 @@ class AquariumTankAdapter(
     }
 
     private fun getTankSizeText(context: Context, tank: AquariumTankSnapshot): String {
-      return context.getString(
-        R.string.aquarium_tank_size_card_format,
-        tank.widthCm,
-        tank.lengthCm,
-        tank.heightCm
+      return AquariumDimensionFormatter.labeledSizeText(
+        context = context,
+        widthCm = tank.widthCm,
+        lengthCm = tank.lengthCm,
+        heightCm = tank.heightCm,
+        sizeUnit = tank.sizeUnit,
+        formatRes = R.string.aquarium_tank_size_card_localized_format
       )
     }
 

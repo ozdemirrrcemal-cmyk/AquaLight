@@ -115,7 +115,6 @@
     <string name="tank_pdf_page_format">Sayfa %1$d</string>
     <string name="tank_pdf_share_subject">AquaLight Tank Raporu - %1$s</string>
     <string name="tank_pdf_share_chooser">Tank Verilerini Dışa Aktar</string>
-    <string name="tank_pdf_size_format">%1$d G × %2$d U × %3$d Y</string>
 
     <string name="aquarium_hint_tank_idea">Akvaryum fikrinizi veya konseptinizi yazın...</string>
     <string name="aquarium_hint_tank_name">Tank adını girin</string>
@@ -137,7 +136,6 @@
     <string name="aquarium_validation_tank_description_required">Akvaryum konsepti zorunludur</string>
     <string name="aquarium_validation_tank_description_min">Lütfen en az 10 karakter girin</string>
     <string name="aquarium_care_info_format">Son Su Değişimi: %1$s | Son Budama: %2$s</string>
-    <string name="aquarium_tank_size_card_format">%1$dG x %2$dU x %3$dY</string>
     <string name="aquarium_setup_date_empty">Kurulum Tarihi: -</string>
     <string name="aquarium_setup_date_card_format">Kurulum Tarihi: %1$s</string>
     <string name="aquarium_day_format">%1$d. Gün</string>

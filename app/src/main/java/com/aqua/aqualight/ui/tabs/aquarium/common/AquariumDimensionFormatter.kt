@@ -27,28 +27,44 @@ object AquariumDimensionFormatter {
         sizeUnit: String,
         @StringRes separatorRes: Int = R.string.aquarium_dimension_separator_spaced_multiply
     ): String {
-        val separator = context.getString(separatorRes)
-        return if (sizeUnit.equals("in", ignoreCase = true)) {
-            val widthIn = widthCm / 2.54
-            val lengthIn = lengthCm / 2.54
-            val heightIn = heightCm / 2.54
+        val values = dimensionValues(
+            context = context,
+            widthCm = widthCm,
+            lengthCm = lengthCm,
+            heightCm = heightCm,
+            sizeUnit = sizeUnit
+        )
+        return context.getString(
+            R.string.aquarium_dimension_format,
+            values.width,
+            context.getString(separatorRes),
+            values.length,
+            values.height
+        )
+    }
 
-            context.getString(
-                R.string.aquarium_dimension_format,
-                LocaleFormatter.formatDecimal(context, widthIn),
-                separator,
-                LocaleFormatter.formatDecimal(context, lengthIn),
-                LocaleFormatter.formatDecimal(context, heightIn)
-            )
-        } else {
-            context.getString(
-                R.string.aquarium_dimension_format,
-                LocaleFormatter.formatInteger(context, widthCm),
-                separator,
-                LocaleFormatter.formatInteger(context, lengthCm),
-                LocaleFormatter.formatInteger(context, heightCm)
-            )
-        }
+    fun labeledSizeText(
+        context: Context,
+        widthCm: Int,
+        lengthCm: Int,
+        heightCm: Int,
+        sizeUnit: String,
+        @StringRes formatRes: Int
+    ): String {
+        val values = dimensionValues(
+            context = context,
+            widthCm = widthCm,
+            lengthCm = lengthCm,
+            heightCm = heightCm,
+            sizeUnit = sizeUnit
+        )
+        return context.getString(
+            formatRes,
+            values.width,
+            values.length,
+            values.height,
+            values.unit
+        )
     }
 
     fun volumeText(
@@ -86,4 +102,39 @@ object AquariumDimensionFormatter {
             )
         }
     }
+
+    private fun dimensionValues(
+        context: Context,
+        widthCm: Int,
+        lengthCm: Int,
+        heightCm: Int,
+        sizeUnit: String
+    ): DimensionValues {
+        val canonicalUnit = if (sizeUnit.equals("in", ignoreCase = true)) "in" else "cm"
+        return DimensionValues(
+            width = AquariumDimensionInputPolicy.format(
+                context = context,
+                centimeters = widthCm,
+                unit = canonicalUnit
+            ),
+            length = AquariumDimensionInputPolicy.format(
+                context = context,
+                centimeters = lengthCm,
+                unit = canonicalUnit
+            ),
+            height = AquariumDimensionInputPolicy.format(
+                context = context,
+                centimeters = heightCm,
+                unit = canonicalUnit
+            ),
+            unit = canonicalUnit
+        )
+    }
+
+    private data class DimensionValues(
+        val width: String,
+        val length: String,
+        val height: String,
+        val unit: String
+    )
 }

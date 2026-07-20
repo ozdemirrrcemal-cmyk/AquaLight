@@ -9,32 +9,63 @@ import org.junit.Test
 
 class LocaleFormatterTest {
 
+    private val turkish = Locale.forLanguageTag("tr-TR")
+    private val english = Locale.ENGLISH
+
     @Test
-    fun integersAreLanguageNeutralWithoutGrouping() {
-        assertEquals("1234", LocaleFormatter.formatInteger(1_234, Locale.US))
-        assertEquals("1234", LocaleFormatter.formatInteger(1_234, Locale.GERMANY))
+    fun integersFollowAppLocaleWithoutGrouping() {
+        assertEquals("1234", LocaleFormatter.formatInteger(1_234, english))
+        assertEquals("1234", LocaleFormatter.formatInteger(1_234, turkish))
     }
 
     @Test
-    fun decimalsAreLanguageNeutralAndUseDot() {
-        assertEquals("12.5", LocaleFormatter.formatDecimal(12.5, Locale.US))
-        assertEquals("12.5", LocaleFormatter.formatDecimal(12.5, Locale.GERMANY))
+    fun decimalsUseTurkishCommaAndEnglishPointWithoutGrouping() {
+        assertEquals("12.5", LocaleFormatter.formatDecimal(12.5, english))
+        assertEquals("12,5", LocaleFormatter.formatDecimal(12.5, turkish))
+        assertEquals("1234.5", LocaleFormatter.formatDecimal(1_234.5, english))
+        assertEquals("1234,5", LocaleFormatter.formatDecimal(1_234.5, turkish))
     }
 
     @Test
-    fun decimalInputAcceptsAppAndImeSeparatorsButRejectsGroupingAndMixedValues() {
-        val turkish = Locale("tr", "TR")
-
+    fun decimalInputAcceptsPrimaryAndUnambiguousAlternateSeparators() {
         assertEquals(12.5, requireNotNull(LocaleFormatter.parseDecimal("12,5", turkish)), 0.0)
         assertEquals(12.5, requireNotNull(LocaleFormatter.parseDecimal("12.5", turkish)), 0.0)
-        assertEquals(12.5, requireNotNull(LocaleFormatter.parseDecimal("12.5", Locale.US)), 0.0)
-        assertEquals(12.5, requireNotNull(LocaleFormatter.parseDecimal("12,5", Locale.US)), 0.0)
-        assertEquals(1.234, requireNotNull(LocaleFormatter.parseDecimal("1,234", Locale.US)), 0.0)
-        assertEquals(1.234, requireNotNull(LocaleFormatter.parseDecimal("1.234", turkish)), 0.0)
-        assertNull(LocaleFormatter.parseDecimal("1,234.5", Locale.US))
-        assertNull(LocaleFormatter.parseDecimal("1.234,5", turkish))
-        assertNull(LocaleFormatter.parseDecimal("12,", turkish))
-        assertNull(LocaleFormatter.parseDecimal("NaN", Locale.US))
+        assertEquals(12.5, requireNotNull(LocaleFormatter.parseDecimal("12.5", english)), 0.0)
+        assertEquals(12.5, requireNotNull(LocaleFormatter.parseDecimal("12,5", english)), 0.0)
+        assertEquals(12.5, requireNotNull(LocaleFormatter.parseDecimal("12,50", turkish)), 0.0)
+        assertEquals(12.5, requireNotNull(LocaleFormatter.parseDecimal("12.50", english)), 0.0)
+        assertEquals(0.5, requireNotNull(LocaleFormatter.parseDecimal(",5", turkish)), 0.0)
+        assertEquals(0.5, requireNotNull(LocaleFormatter.parseDecimal(".5", english)), 0.0)
+        assertEquals(1234.0, requireNotNull(LocaleFormatter.parseDecimal("1234", turkish)), 0.0)
+    }
+
+    @Test
+    fun ambiguousGroupingLikeInputsAreRejectedInBothLanguages() {
+        listOf("1.234", "1,234").forEach { ambiguous ->
+            assertNull(LocaleFormatter.parseDecimal(ambiguous, turkish))
+            assertNull(LocaleFormatter.parseDecimal(ambiguous, english))
+        }
+    }
+
+    @Test
+    fun malformedSignedAndNonFiniteDecimalInputsAreRejected() {
+        listOf(
+            "1,234.5",
+            "1.234,5",
+            "12,",
+            "12.",
+            "12,,5",
+            "12..5",
+            "+12.5",
+            "-12.5",
+            "NaN",
+            "Infinity",
+            "1 234",
+            ""
+        ).forEach { invalid ->
+            assertNull(LocaleFormatter.parseDecimal(invalid, turkish))
+            assertNull(LocaleFormatter.parseDecimal(invalid, english))
+        }
     }
 
     @Test
@@ -80,7 +111,7 @@ class LocaleFormatterTest {
         )
         assertEquals(
             "tr",
-            LocaleFormatter.resolveSupportedLocale(Locale("tr", "TR")).toLanguageTag()
+            LocaleFormatter.resolveSupportedLocale(turkish).toLanguageTag()
         )
     }
 }

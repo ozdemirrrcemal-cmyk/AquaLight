@@ -10,6 +10,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.util.Locale
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
 class PopulatedTankLocalizationContractTest {
@@ -93,7 +94,7 @@ class PopulatedTankLocalizationContractTest {
             LocaleFormatter.formatDateEpochDay(requireNotNull(tank.setupDateEpochDay), english)
         )
         assertEquals(
-            "23.62",
+            "23,62",
             AquariumDimensionInputPolicy.format(tank.widthCm.toDouble(), tank.sizeUnit, turkish)
         )
         assertEquals(
@@ -108,9 +109,9 @@ class PopulatedTankLocalizationContractTest {
         )
         val gallons = AquariumVolumeCalculator.litersToGallons(liters)
         assertEquals(96.0, liters, 0.0)
-        assertEquals("25.36", LocaleFormatter.formatDecimal(gallons, turkish))
+        assertEquals("25,36", LocaleFormatter.formatDecimal(gallons, turkish))
         assertEquals("25.36", LocaleFormatter.formatDecimal(gallons, english))
-        assertEquals(
+        assertNotEquals(
             LocaleFormatter.formatDecimal(gallons, turkish),
             LocaleFormatter.formatDecimal(gallons, english)
         )

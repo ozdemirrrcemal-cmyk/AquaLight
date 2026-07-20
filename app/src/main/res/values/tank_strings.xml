@@ -291,7 +291,6 @@
     <string name="tank_pdf_page_format">Page %1$d</string>
     <string name="tank_pdf_share_subject">AquaLight Tank Report - %1$s</string>
     <string name="tank_pdf_share_chooser">Export Tank Data</string>
-    <string name="tank_pdf_size_format">%1$d W × %2$d L × %3$d H</string>
 
 
     <!-- Aquarium remaining UI text -->
@@ -315,7 +314,6 @@
     <string name="aquarium_validation_tank_description_required">Aquarium concept is required</string>
     <string name="aquarium_validation_tank_description_min">Please enter at least 10 characters</string>
     <string name="aquarium_care_info_format">Last Water Change: %1$s | Last Trim: %2$s</string>
-    <string name="aquarium_tank_size_card_format">%1$dW x %2$dL x %3$dH</string>
     <string name="aquarium_setup_date_empty">Setup Date: -</string>
     <string name="aquarium_setup_date_card_format">Setup Date: %1$s</string>
     <string name="aquarium_day_format">Day %1$d</string>

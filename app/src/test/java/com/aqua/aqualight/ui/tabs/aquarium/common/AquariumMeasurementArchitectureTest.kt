@@ -32,23 +32,106 @@ class AquariumMeasurementArchitectureTest {
     }
 
     @Test
-    fun tankEditorAndPdfCannotBypassLocaleAndMeasurementBoundaries() {
+    fun everyUserVisibleTankMeasurementUsesTheSharedBoundaries() {
+        val requiredFormatterSurfaces = listOf(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/" +
+                "TankInfoFragment.kt",
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/" +
+                "TankDetailTankFragment.kt",
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/" +
+                "TankSettingsBasicFragment.kt",
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/" +
+                "AquariumTankAdapter.kt",
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/careprofile/" +
+                "CareProfileCalculator.kt",
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/" +
+                "TankPdfExporter.kt"
+        )
+
+        requiredFormatterSurfaces.forEach { relativePath ->
+            val source = File(repositoryRoot, relativePath).readText()
+            assertTrue(
+                "$relativePath must use AquariumDimensionFormatter.",
+                source.contains("AquariumDimensionFormatter.")
+            )
+        }
+
         val editor = File(
             repositoryRoot,
             "app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/" +
                 "TankSettingsEditorBottomSheet.kt"
         ).readText()
+        assertTrue(editor.contains("AquariumDimensionInputPolicy.parseCentimeters("))
+        assertTrue(editor.contains("AquariumDimensionInputPolicy.convert("))
+    }
+
+    @Test
+    fun measurementSurfacesCannotRestoreRawParsingOrLegacyIntegerFormats() {
+        val productionRoot = File(
+            repositoryRoot,
+            "app/src/main/java/com/aqua/aqualight/ui"
+        )
+        val measurementFiles = productionRoot.walkTopDown()
+            .filter(File::isFile)
+            .filter { it.extension == "kt" }
+            .filter { file ->
+                val source = file.readText()
+                source.contains("widthCm") ||
+                    source.contains("lengthCm") ||
+                    source.contains("heightCm") ||
+                    source.contains("sizeUnit") ||
+                    source.contains("volumeUnit")
+            }
+            .toList()
+
+        val forbiddenFragments = listOf(
+            "toDoubleOrNull()",
+            "DecimalFormat(",
+            "NumberFormat.getNumberInstance(",
+            ".replace(',', '.')",
+            ".replace('.', ',')",
+            "R.string.aquarium_tank_size_card_format",
+            "R.string.tank_pdf_size_format"
+        )
+
+        val violations = measurementFiles.flatMap { file ->
+            val source = file.readText()
+            forbiddenFragments
+                .filter(source::contains)
+                .map { fragment ->
+                    "${file.relativeTo(repositoryRoot).invariantSeparatorsPath}: $fragment"
+                }
+        }
+
+        assertTrue(
+            "Measurement code bypasses the commercial locale boundary: $violations",
+            violations.isEmpty()
+        )
+    }
+
+    @Test
+    fun tankEditorKeepsTheExistingDecimalKeyboardFlow() {
+        val layout = File(
+            repositoryRoot,
+            "app/src/main/res/layout/content_sheet_tank_size.xml"
+        ).readText()
+        val decimalInputs = Regex("android:inputType=\"numberDecimal\"")
+            .findAll(layout)
+            .count()
+
+        assertEquals(3, decimalInputs)
+        assertFalse(layout.contains("numberSigned"))
+    }
+
+    @Test
+    fun pdfUsesSharedDimensionAndVolumePolicies() {
         val pdf = File(
             repositoryRoot,
             "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/" +
                 "TankPdfExporter.kt"
         ).readText()
 
-        assertTrue(editor.contains("AquariumDimensionInputPolicy.parseCentimeters("))
-        assertTrue(editor.contains("AquariumDimensionInputPolicy.convert("))
-        assertFalse(editor.contains("toDoubleOrNull()"))
-        assertFalse(editor.contains("DecimalFormat("))
-
+        assertTrue(pdf.contains("AquariumDimensionFormatter.labeledSizeText("))
         assertTrue(pdf.contains("AquariumVolumeCalculator.grossLiters("))
         assertTrue(pdf.contains("LocaleFormatter.formatDecimal("))
         assertFalse(pdf.contains("DecimalFormat("))

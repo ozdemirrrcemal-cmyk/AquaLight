@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import android.text.format.DateFormat as AndroidDateFormat
 import androidx.core.content.ContextCompat
 import java.text.DateFormat as JavaDateFormat
+import java.text.DecimalFormatSymbols
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.time.format.DateTimeFormatter
@@ -15,7 +16,8 @@ import java.util.Locale
 /** Locale-aware, per-call formatters. NumberFormat and DateFormat are not shared across threads. */
 object LocaleFormatter {
 
-    private val decimalInputPattern = Regex("^[+-]?(?:\\d+(?:\\.\\d+)?|\\.\\d+)$")
+    private val unsignedIntegerInputPattern = Regex("^\\d+$")
+    private val unsignedDecimalInputPattern = Regex("^(\\d*)([.,])(\\d{1,2})$")
 
     /**
      * Returns a context whose resources follow the AndroidX per-app language selection.
@@ -74,8 +76,12 @@ object LocaleFormatter {
     }
 
     /**
-     * Parses a decimal input using the active app locale. The alternate dot/comma separator is
-     * accepted for IME compatibility, but grouping, mixed separators and partial values are not.
+     * Parses an unsigned product decimal using the active app locale.
+     *
+     * Turkish comma and English point are the primary separators. The alternate separator remains
+     * accepted for IME and paste compatibility only when it unambiguously contains one or two
+     * fractional digits. Grouping, mixed separators, signs, partial values, three-or-more
+     * fractional digits and non-finite values are rejected instead of being silently reinterpreted.
      */
     fun parseDecimal(context: Context, value: CharSequence): Double? {
         return parseDecimal(value.toString(), appLocale(context))
@@ -116,20 +122,20 @@ object LocaleFormatter {
         )
     }
 
-    /** Product numeric values are language-neutral and never use grouping separators. */
+    /** Product integers follow the active app locale and never use grouping separators. */
     internal fun formatInteger(value: Number, locale: Locale): String {
-        return NumberFormat.getIntegerInstance(Locale.US).apply {
+        return NumberFormat.getIntegerInstance(locale).apply {
             isGroupingUsed = false
         }.format(value)
     }
 
-    /** Product numeric values use a stable dot decimal separator in every app language. */
+    /** Product decimals follow the active app locale and never use grouping separators. */
     internal fun formatDecimal(
         value: Number,
         locale: Locale,
         maximumFractionDigits: Int = 2
     ): String {
-        return NumberFormat.getNumberInstance(Locale.US).apply {
+        return NumberFormat.getNumberInstance(locale).apply {
             isGroupingUsed = false
             minimumFractionDigits = 0
             this.maximumFractionDigits = maximumFractionDigits.coerceAtLeast(0)
@@ -139,12 +145,27 @@ object LocaleFormatter {
     internal fun parseDecimal(value: String, locale: Locale): Double? {
         val trimmed = value.trim()
         if (trimmed.isEmpty()) return null
-        if (trimmed.count { it == '.' } > 1 || trimmed.count { it == ',' } > 1) return null
-        if ('.' in trimmed && ',' in trimmed) return null
 
-        val normalized = trimmed.replace(',', '.')
-        if (!decimalInputPattern.matches(normalized)) return null
-        return normalized.toDoubleOrNull()?.takeIf { it.isFinite() }
+        val normalized = when {
+            unsignedIntegerInputPattern.matches(trimmed) -> trimmed
+            else -> {
+                val match = unsignedDecimalInputPattern.matchEntire(trimmed) ?: return null
+                val primarySeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
+                val alternateSeparator = if (primarySeparator == ',') '.' else ','
+                val suppliedSeparator = match.groupValues[2].single()
+                if (suppliedSeparator != primarySeparator && suppliedSeparator != alternateSeparator) {
+                    return null
+                }
+
+                val integerPart = match.groupValues[1].ifEmpty { "0" }
+                val fractionalPart = match.groupValues[3]
+                "$integerPart.$fractionalPart"
+            }
+        }
+
+        return normalized.toBigDecimalOrNull()
+            ?.toDouble()
+            ?.takeIf { it.isFinite() }
     }
 
     internal fun formatPercent(

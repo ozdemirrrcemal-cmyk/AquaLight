@@ -41,12 +41,15 @@ On first launch, a Turkish device locale selects Turkish. Every other device loc
 - Tank store schema version `1` is the first commercial contract and stores epoch-day values directly; no compatibility alias or migration layer exists.
 - Date-only tests verify that the selected calendar day survives multiple device time zones.
 - A populated tank fixture jointly verifies Turkish and English dates, decimals and volume output while both tank and livestock calendar days round-trip through Istanbul, Los Angeles and Tokyo.
-- Decimal tank measurements are formatted and parsed using the active AquaLight application locale.
-- Turkish comma decimals and English point decimals are first-class inputs. The alternate decimal separator is accepted for keyboard compatibility, while grouping, mixed separators, partial values and non-finite numbers are rejected.
+- Decimal tank measurements are formatted and parsed using the active AquaLight application locale. Turkish displays use a comma and English displays use a point; grouping separators are never emitted.
+- The active-language separator is primary. The alternate keyboard separator is accepted only when it contains one or two unambiguous fractional digits.
+- Grouping-like or ambiguous values such as `1.234` and `1,234`, mixed separators, repeated separators, partial values, signed values, more than two fractional digits and non-finite values are rejected instead of being silently reinterpreted.
+- The application never inserts a decimal separator into digits typed by the user. Locale-aware formatting occurs only for calculated, converted or redisplayed values, so the existing measurement-entry flow and cursor behavior remain unchanged.
+- Aquarium creation, detail, settings, tank cards, Smart Care and PDF output use the same dimension formatter. The editor, unit conversion and persistence boundary use the same strict input policy.
 - Changing between centimeters and inches converts the values currently typed by the user instead of restoring stale persisted values.
 - Canonical persisted dimensions remain integer centimeters and must stay within the commercial `1..5000 cm` contract.
 - Aquarium, Smart Care and PDF volume calculations use one shared calculator that converts operands to `Double` before multiplication, preventing `Int` overflow at maximum supported dimensions.
-- Architecture tests prevent direct three-dimension volume multiplication and locale-bypassing decimal parsing from returning to production code.
+- Architecture tests prevent direct three-dimension volume multiplication, raw user-visible dimension formatting and locale-bypassing decimal parsing from returning to production code.
 
 ## Minimum touch-target ownership
 
