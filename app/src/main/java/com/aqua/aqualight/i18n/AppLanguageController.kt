@@ -2,6 +2,9 @@ package com.aqua.aqualight.i18n
 
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Authoritative boundary for the language that Android/AppCompat is actually applying.
@@ -10,6 +13,11 @@ import androidx.core.os.LocaleListCompat
  * different selected language from the locale currently rendering the application.
  */
 object AppLanguageController {
+
+    private val mutableLanguageChanges = MutableStateFlow(current())
+
+    /** Emits whenever AquaLight applies a supported application language in this process. */
+    val languageChanges: StateFlow<String> = mutableLanguageChanges.asStateFlow()
 
     fun currentOrNull(): String? {
         val languageTags = AppCompatDelegate.getApplicationLocales().toLanguageTags()
@@ -35,5 +43,6 @@ object AppLanguageController {
         AppCompatDelegate.setApplicationLocales(
             LocaleListCompat.forLanguageTags(supportedLanguage)
         )
+        mutableLanguageChanges.value = supportedLanguage
     }
 }

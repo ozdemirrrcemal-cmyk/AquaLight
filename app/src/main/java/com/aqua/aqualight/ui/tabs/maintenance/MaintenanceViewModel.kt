@@ -84,7 +84,11 @@ class MaintenanceViewModel(
     }
 
     val tankCareSummaryItems: StateFlow<Map<Long, TankCareSummaryUi>> =
-        combine(operations.tasks, tanksFlow) { tasks, tanks ->
+        combine(
+            operations.tasks,
+            tanksFlow,
+            textResolver.localeChanges
+        ) { tasks, tanks, _ ->
             tanks.associate { tank ->
                 tank.id to buildTankCareSummary(
                     tankId = tank.id,
@@ -101,11 +105,12 @@ class MaintenanceViewModel(
         combine(
             operations.tasks,
             tanksFlow,
-            selectedTabFlow
-        ) { tasks, tanks, selectedTab ->
+            selectedTabFlow,
+            textResolver.localeChanges
+        ) { tasks, tanks, selectedTab, _ ->
             filterTasksByTab(tasks, selectedTab).map { task ->
                 task.toCareTaskUi(
-                    tankName = getTankName(task.tankId, tanks)
+                    tank = getTank(task.tankId, tanks)
                 )
             }
         }.stateIn(
@@ -117,17 +122,22 @@ class MaintenanceViewModel(
     fun taskByIdFlow(taskId: Long): Flow<CareTaskUi?> {
         return combine(
             operations.task(taskId),
-            tanksFlow
-        ) { task, tanks ->
+            tanksFlow,
+            textResolver.localeChanges
+        ) { task, tanks, _ ->
             task?.toCareTaskUi(
-                tankName = getTankName(task.tankId, tanks)
+                tank = getTank(task.tankId, tanks)
             )
         }
     }
 
     fun tankActivityStateFlow(tankId: Long): Flow<TankActivityUiState> {
-        return combine(operations.tasks, tanksFlow) { tasks, tanks ->
-            val tankName = getTankName(tankId, tanks)
+        return combine(
+            operations.tasks,
+            tanksFlow,
+            textResolver.localeChanges
+        ) { tasks, tanks, _ ->
+            val tank = getTank(tankId, tanks)
             val tankTasks = tasks.filter { task -> task.tankId == tankId }
             val completedTasks = tankTasks
                 .filter { task -> task.status == CareTaskStatus.COMPLETED }
@@ -158,9 +168,9 @@ class MaintenanceViewModel(
                     ?: AquaUiText.Resource(R.string.common_not_available_double_symbol),
                 nextCareStatus = nextCareTask?.let(::getNextCareStatus)
                     ?: TankNextCareStatus.NONE,
-                nextCareTask = nextCareTask?.toCareTaskUi(tankName),
+                nextCareTask = nextCareTask?.toCareTaskUi(tank),
                 completedTasks = completedTasks.map { task ->
-                    task.toCareTaskUi(tankName)
+                    task.toCareTaskUi(tank)
                 }
             )
         }
@@ -326,16 +336,34 @@ class MaintenanceViewModel(
         )
     }
 
-    private fun CareTaskSnapshot.toCareTaskUi(tankName: String): CareTaskUi {
-        val presentation = textResolver.typePresentation(type)
+    private fun CareTaskSnapshot.toCareTaskUi(
+        tank: AquariumTankSnapshot?
+    ): CareTaskUi {
+        val typePresentation = textResolver.typePresentation(type)
+        val automaticPresentation = if (source == CareTaskSource.AUTOMATIC) {
+            textResolver.automaticTaskPresentation(this, tank)
+        } else {
+            null
+        }
+        val resolvedTitle = getTaskTitle(
+            task = this,
+            typeTitle = typePresentation.title,
+            automaticTitle = automaticPresentation?.title
+        )
+        val resolvedDescription = getTaskDescription(
+            task = this,
+            defaultDescription = typePresentation.defaultDescription,
+            automaticDescription = automaticPresentation?.description
+        )
+
         return CareTaskUi(
             id = id,
             tankId = tankId,
-            tankName = tankName,
-            title = getTaskTitle(this, presentation.title),
-            description = description.ifBlank { presentation.defaultDescription },
+            tankName = tank?.name ?: textResolver.unknownAquarium(),
+            title = resolvedTitle,
+            description = resolvedDescription,
             type = type,
-            typeTitle = presentation.title,
+            typeTitle = typePresentation.title,
             source = source,
             sourceLabel = textResolver.sourceLabel(source),
             status = status,
@@ -349,28 +377,52 @@ class MaintenanceViewModel(
             missedReminderDays = missedReminderDays,
             waterChangePercent = waterChangePercent,
             note = note,
-            iconRes = presentation.iconRes,
-            accentColor = presentation.accentColor,
+            iconRes = typePresentation.iconRes,
+            accentColor = typePresentation.accentColor,
             isOverdue = status == CareTaskStatus.PENDING &&
                 dueAtMillis < getTodayStartMillis(),
             primaryTimeText = getPrimaryTimeText(this),
-            secondaryText = getSecondaryText(this)
+            secondaryText = getSecondaryText(this, resolvedDescription)
         )
     }
 
     private fun getTaskTitle(
         task: CareTaskSnapshot,
-        typeTitle: String
+        typeTitle: String,
+        automaticTitle: String?
     ): String {
+        if (task.source == CareTaskSource.AUTOMATIC) {
+            return automaticTitle?.takeIf(String::isNotBlank)
+                ?: task.title.ifBlank { typeTitle }
+        }
+
+        if (task.type == CareTaskType.CUSTOM) {
+            return task.title.ifBlank { typeTitle }
+        }
+
         val percent = task.waterChangePercent
-        if (
+        return if (
             task.type == CareTaskType.WATER_CHANGE &&
             percent != null &&
             percent > 0
         ) {
-            return textResolver.waterChangeTitle(typeTitle, percent)
+            textResolver.waterChangeTitle(typeTitle, percent)
+        } else {
+            typeTitle
         }
-        return task.title.ifBlank { typeTitle }
+    }
+
+    private fun getTaskDescription(
+        task: CareTaskSnapshot,
+        defaultDescription: String,
+        automaticDescription: String?
+    ): String {
+        return if (task.source == CareTaskSource.AUTOMATIC) {
+            automaticDescription?.takeIf(String::isNotBlank)
+                ?: task.description.ifBlank { defaultDescription }
+        } else {
+            defaultDescription
+        }
     }
 
     private fun getPrimaryTimeText(task: CareTaskSnapshot): String {
@@ -394,12 +446,15 @@ class MaintenanceViewModel(
         }
     }
 
-    private fun getSecondaryText(task: CareTaskSnapshot): String {
+    private fun getSecondaryText(
+        task: CareTaskSnapshot,
+        resolvedDescription: String
+    ): String {
         if (
             task.source == CareTaskSource.AUTOMATIC &&
-            task.description.isNotBlank()
+            resolvedDescription.isNotBlank()
         ) {
-            return task.description
+            return resolvedDescription
         }
 
         return when {
@@ -409,7 +464,7 @@ class MaintenanceViewModel(
                     task.missedReminderDays.coerceAtLeast(1)
                 )
             task.reminderEnabled -> textResolver.reminderActive()
-            else -> task.description
+            else -> resolvedDescription
         }
     }
 
@@ -493,11 +548,10 @@ class MaintenanceViewModel(
         }
     }
 
-    private fun getTankName(
+    private fun getTank(
         tankId: Long,
         tanks: List<AquariumTankSnapshot>
-    ): String = tanks.firstOrNull { tank -> tank.id == tankId }?.name
-        ?: textResolver.unknownAquarium()
+    ): AquariumTankSnapshot? = tanks.firstOrNull { tank -> tank.id == tankId }
 
     private fun getTodayStartMillis(): Long = Calendar.getInstance().apply {
         set(Calendar.HOUR_OF_DAY, 0)

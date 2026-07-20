@@ -173,11 +173,14 @@ class LocaleContextArchitectureTest {
         assertFalse(adapter.contains("dd.MM.yyyy"))
 
         assertTrue(viewModel.contains("textResolver.formatTime(millis)"))
+        assertTrue(viewModel.contains("textResolver.localeChanges"))
         assertFalse(viewModel.contains("SimpleDateFormat("))
         assertFalse(viewModel.contains("Locale.getDefault()"))
         assertFalse(viewModel.contains("HH:mm"))
 
-        assertTrue(resolver.contains("LocaleFormatter.formatTime(appContext, timeMillis)"))
+        assertTrue(resolver.contains("AppLanguageController.languageChanges"))
+        assertTrue(resolver.contains("LocaleFormatter.localizedContext(appContext)"))
+        assertTrue(resolver.contains("LocaleFormatter.formatTime(localizedContext(), timeMillis)"))
     }
 
     @Test
