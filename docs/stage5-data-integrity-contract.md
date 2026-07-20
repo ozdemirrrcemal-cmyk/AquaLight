@@ -1,6 +1,6 @@
 # Stage 5 — Commercial tank and care data integrity
 
-This stage defines the commercial local-store contracts for AquaLight.
+This stage defines the first commercial local-store contract for AquaLight.
 The application has not shipped a previous public store schema, so this work
 intentionally provides no legacy compatibility or downgrade path.
 
@@ -12,8 +12,8 @@ intentionally provides no legacy compatibility or downgrade path.
 
 ## Required guarantees
 
-1. Every persisted root store carries an explicit schema version. Aquarium tanks use version `2`; care tasks and encrypted user preferences use version `1`.
-2. Aquarium tank version `2` stores calendar-only tank setup and livestock-added dates as epoch days, never epoch milliseconds.
+1. Every persisted root store carries schema version `1`.
+2. Aquarium tank calendar-only setup and livestock-added dates are stored as epoch days, never epoch milliseconds.
 3. Unsupported or missing schema versions fail closed as corruption.
 4. Owner identifiers are canonical and every record is owner-scoped.
 5. Tank and care-task identifiers are positive and unique per owner.
@@ -40,22 +40,18 @@ intentionally provides no legacy compatibility or downgrade path.
 
 ## Migration status
 
-**Status: no public migration source exists.**
+**Status: N/A for the first commercial release schema.**
 
 AquaLight has not shipped a public Tank, Care Task, or encrypted User
-Preferences schema. The timestamp-based aquarium tank version `1` was an
-unreleased development contract and is deliberately rejected rather than
-migrated. The clean commercial tank contract is version `2`, with date-only
-values stored as epoch days. No legacy `DataMigration`, alias, or compatibility
-reader is installed.
+Preferences schema. Therefore there is no legitimate source schema to migrate
+and no legacy `DataMigration` is installed. Clean installation is the required
+validation baseline for this unreleased build.
 
-Care Task and encrypted User Preferences stores remain at version `1` because
-their commercial contracts did not require a pre-release schema replacement.
-Missing version `0`, the rejected tank version `1`, and unknown future versions
-fail closed. After public release, every schema change must increment the
-relevant version constant, add an explicit reviewed migration when a legitimate
-public source schema exists, and include upgrade, interruption,
-rollback-safety, and downgrade-rejection tests before release.
+Version `1` is explicit and tested for all three stores. Missing version `0`
+and unknown future versions fail closed. The first post-release schema change
+must increment the relevant version constant, add an explicit reviewed
+migration when a legitimate public source schema exists, and include upgrade,
+interruption, rollback-safety, and downgrade-rejection tests before release.
 
 ## Delivery rule
 

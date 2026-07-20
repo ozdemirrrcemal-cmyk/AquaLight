@@ -9,22 +9,40 @@ import org.junit.Test
 class DateOnlyStoreSchemaTest {
 
     @Test
-    fun currentTankStoreSchemaIsDateOnlyV2() {
-        assertEquals(2, CommercialStoreSchema.AQUARIUM_TANKS_VERSION)
-        assertEquals(
-            CommercialStoreSchema.AQUARIUM_TANKS_VERSION,
-            TankStoreRules.defaultStore().schemaVersion
-        )
+    fun firstCommercialTankStoreSchemaUsesDateOnlyContract() {
+        assertEquals(1, CommercialStoreSchema.AQUARIUM_TANKS_VERSION)
+
+        val store = TankStoreRules.defaultStore().toBuilder()
+            .addTanks(
+                StoredTank.newBuilder()
+                    .setId(1L)
+                    .setOwnerUid("owner-date-only")
+                    .setName("Date-only Tank")
+                    .setDescription("")
+                    .setSetupDateEpochDay(20_454L)
+                    .setWidthCm(60)
+                    .setLengthCm(40)
+                    .setHeightCm(40)
+                    .setSizeUnit("cm")
+                    .setVolumeUnit("L")
+                    .setTankType("Planted")
+                    .setTankStyle("Nature Aquarium")
+                    .setCreatedAtMillis(1_767_225_600_000L)
+                    .build()
+            )
+            .build()
+
+        assertEquals(store, TankStoreRules.validateStore(store))
     }
 
     @Test
-    fun timestampBasedV1TankStoreIsRejectedInsteadOfMigrated() {
-        val v1Store = AquariumTanksStore.newBuilder()
-            .setSchemaVersion(1)
+    fun unknownTankStoreVersionIsRejected() {
+        val unsupportedStore = AquariumTanksStore.newBuilder()
+            .setSchemaVersion(CommercialStoreSchema.AQUARIUM_TANKS_VERSION + 1)
             .build()
 
         assertThrows(StoreInvariantViolation::class.java) {
-            TankStoreRules.validateStore(v1Store)
+            TankStoreRules.validateStore(unsupportedStore)
         }
     }
 }

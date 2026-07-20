@@ -8,8 +8,8 @@ import org.junit.Test
 class CommercialStoreMigrationPolicyTest {
 
     @Test
-    fun unreleasedTankV1IsRejectedAndCommercialDateOnlyContractIsV2() {
-        assertEquals(2, CommercialStoreSchema.AQUARIUM_TANKS_VERSION)
+    fun firstCommercialSchemasStartAtVersionOneWithoutMigrationLayer() {
+        assertEquals(1, CommercialStoreSchema.AQUARIUM_TANKS_VERSION)
         assertEquals(1, CommercialStoreSchema.CARE_TASKS_VERSION)
         assertEquals(1, CommercialStoreSchema.USER_PREFERENCES_VERSION)
 
@@ -19,16 +19,27 @@ class CommercialStoreMigrationPolicyTest {
         ).readText()
         val normalizedPolicy = policy.replace(Regex("\\s+"), " ")
 
-        assertTrue(normalizedPolicy.contains("Status: no public migration source exists"))
+        assertTrue(
+            normalizedPolicy.contains(
+                "Status: N/A for the first commercial release schema"
+            )
+        )
         assertTrue(
             normalizedPolicy.contains(
                 "has not shipped a public Tank, Care Task, or encrypted User Preferences schema"
             )
         )
-        assertTrue(normalizedPolicy.contains("unreleased development contract"))
-        assertTrue(normalizedPolicy.contains("deliberately rejected rather than migrated"))
-        assertTrue(normalizedPolicy.contains("No legacy `DataMigration`, alias, or compatibility"))
-        assertTrue(normalizedPolicy.contains("After public release, every schema change must increment"))
+        assertTrue(
+            normalizedPolicy.contains(
+                "there is no legitimate source schema to migrate"
+            )
+        )
+        assertTrue(normalizedPolicy.contains("no legacy `DataMigration` is installed"))
+        assertTrue(
+            normalizedPolicy.contains(
+                "The first post-release schema change must increment"
+            )
+        )
     }
 
     private fun locateRepositoryRoot(): File {

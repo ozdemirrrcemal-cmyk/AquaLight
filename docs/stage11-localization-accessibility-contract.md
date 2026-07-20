@@ -38,7 +38,7 @@ On first launch, a Turkish device locale selects Turkish. Every other device loc
 
 - Tank setup dates and livestock-added dates are stored as `epochDay`, not timezone-dependent epoch milliseconds.
 - Picker milliseconds exist only at the Android UI boundary and are converted immediately to or from a calendar day.
-- Tank store schema V2 deliberately rejects the unreleased timestamp-based V1 contract; no compatibility alias or migration layer is retained.
+- Tank store schema version `1` is the first commercial contract and stores epoch-day values directly; no compatibility alias or migration layer exists.
 - Date-only tests verify that the selected calendar day survives multiple device time zones.
 - A populated tank fixture jointly verifies Turkish and English dates, decimals and volume output while both tank and livestock calendar days round-trip through Istanbul, Los Angeles and Tokyo.
 - Decimal tank measurements are formatted and parsed using the active AquaLight application locale.

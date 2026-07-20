@@ -6,7 +6,7 @@ option java_multiple_files = true;
 message AquariumTanksStore {
   repeated StoredTank tanks = 1;
 
-  // Commercial schema V2 stores calendar-only values as epoch days, never epoch milliseconds.
+  // First commercial schema stores calendar-only values as epoch days, never epoch milliseconds.
   // Unsupported versions are rejected and recovered as a clean store; no legacy migration exists.
   uint32 schema_version = 100;
 }
