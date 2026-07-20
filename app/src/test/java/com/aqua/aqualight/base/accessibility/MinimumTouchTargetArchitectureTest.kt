@@ -11,7 +11,7 @@ class MinimumTouchTargetArchitectureTest {
     private val repositoryRoot = locateRepositoryRoot()
 
     @Test
-    fun oneWindowHostOwnsReplacementAndStaleCleanup() {
+    fun oneWindowHostPreservesForeignOwnershipAndObservesDynamicHierarchyChanges() {
         val installer = File(
             repositoryRoot,
             "app/src/main/java/com/aqua/aqualight/base/accessibility/" +
@@ -25,8 +25,14 @@ class MinimumTouchTargetArchitectureTest {
 
         assertTrue(installer.contains("findViewById<View>(android.R.id.content)"))
         assertTrue(installer.contains("aqua_minimum_touch_target_delegate_owner"))
-        assertTrue(installer.contains("host.touchDelegate = null"))
+        assertTrue(installer.contains("ViewTreeObserver.OnGlobalLayoutListener"))
+        assertTrue(installer.contains("foreignDelegate"))
+        assertTrue(installer.contains("captureExternalDelegate()"))
+        assertTrue(installer.contains("host.touchDelegate === installedDelegate"))
+        assertTrue(installer.contains("foreignDelegate?.onTouchEvent(event)"))
         assertTrue(installer.contains("MinimumTouchTargetSelector.selectIndex("))
+        assertFalse(installer.contains("host.touchDelegate = null"))
+        assertFalse(installer.contains("setOnHierarchyChangeListener"))
         assertFalse(installer.contains("entries.firstOrNull"))
         assertTrue(runtime.contains("override fun onFragmentViewDestroyed("))
 

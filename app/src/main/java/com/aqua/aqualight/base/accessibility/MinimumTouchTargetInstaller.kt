@@ -5,6 +5,7 @@ import android.view.MotionEvent
 import android.view.TouchDelegate
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import com.aqua.aqualight.R
 import kotlin.math.max
 import kotlin.math.min
@@ -12,8 +13,13 @@ import kotlin.math.roundToInt
 
 /**
  * Expands undersized clickable hit areas to 48dp without changing rendered width, height,
- * padding, color, shape or spacing. Every window owns one replaceable delegate on its content
- * host, so fragment callbacks cannot stack competing delegates or retain stale target views.
+ * padding, color, shape or spacing.
+ *
+ * Every window content host owns one AquaLight installation. A delegate already owned by the
+ * framework or another library is retained as the upstream delegate, receives first refusal for
+ * every gesture and is restored unchanged whenever AquaLight has no expanded targets. A global
+ * layout observer keeps dynamic and recycled view hierarchies current without replacing a foreign
+ * hierarchy listener or stacking delegates from fragment callbacks.
  */
 object MinimumTouchTargetInstaller {
 
@@ -24,11 +30,34 @@ object MinimumTouchTargetInstaller {
             if (!root.isAttachedToWindow) return@post
 
             val host = resolveWindowContentHost(root) ?: return@post
-            installOnLayoutReady(host)
+            installationFor(host).scheduleRebuild()
         }
     }
 
-    private fun installOnLayoutReady(host: ViewGroup) {
+    private fun installationFor(host: ViewGroup): Installation {
+        val existing = host.getTag(
+            R.id.aqua_minimum_touch_target_delegate_owner
+        ) as? Installation
+        if (existing != null) {
+            existing.ensureObserving()
+            return existing
+        }
+
+        return Installation(host).also { installation ->
+            host.setTag(
+                R.id.aqua_minimum_touch_target_delegate_owner,
+                installation
+            )
+        }
+    }
+
+    private fun resolveWindowContentHost(root: View): ViewGroup? {
+        val windowRoot = root.rootView
+        val contentHost = windowRoot.findViewById<View>(android.R.id.content) as? ViewGroup
+        return contentHost ?: windowRoot as? ViewGroup ?: root as? ViewGroup
+    }
+
+    private fun collectTouchEntries(host: ViewGroup): List<TouchEntry>? {
         val clickableViews = collectClickableViews(host)
         val layoutPending = host.width <= 0 ||
             host.height <= 0 ||
@@ -38,42 +67,13 @@ object MinimumTouchTargetInstaller {
                     (child.width <= 0 || child.height <= 0 || child.isLayoutRequested)
             }
 
-        if (!layoutPending) {
-            rebuildDelegate(host, clickableViews)
-            return
-        }
+        if (layoutPending) return null
 
-        val listener = object : View.OnLayoutChangeListener {
-            override fun onLayoutChange(
-                view: View,
-                left: Int,
-                top: Int,
-                right: Int,
-                bottom: Int,
-                oldLeft: Int,
-                oldTop: Int,
-                oldRight: Int,
-                oldBottom: Int
-            ) {
-                host.removeOnLayoutChangeListener(this)
-                if (!host.isAttachedToWindow || host.width <= 0 || host.height <= 0) return
-                rebuildDelegate(host, collectClickableViews(host))
-            }
-        }
-
-        host.addOnLayoutChangeListener(listener)
-        host.requestLayout()
-    }
-
-    private fun rebuildDelegate(
-        host: ViewGroup,
-        clickableViews: List<View>
-    ) {
         val minimumPixels = (
             MIN_TOUCH_TARGET_DP * host.resources.displayMetrics.density
         ).roundToInt()
 
-        val entries = clickableViews
+        return clickableViews
             .asSequence()
             .filter { child ->
                 child !== host &&
@@ -87,33 +87,6 @@ object MinimumTouchTargetInstaller {
                 )
             }
             .toList()
-
-        replaceOwnedDelegate(host, entries)
-    }
-
-    private fun resolveWindowContentHost(root: View): ViewGroup? {
-        val windowRoot = root.rootView
-        val contentHost = windowRoot.findViewById<View>(android.R.id.content) as? ViewGroup
-        return contentHost ?: windowRoot as? ViewGroup ?: root as? ViewGroup
-    }
-
-    private fun replaceOwnedDelegate(
-        host: ViewGroup,
-        entries: List<TouchEntry>
-    ) {
-        val installedOwner = host.getTag(R.id.aqua_minimum_touch_target_delegate_owner)
-
-        if (entries.isEmpty()) {
-            if (installedOwner is CompositeTouchDelegate) {
-                host.touchDelegate = null
-                host.setTag(R.id.aqua_minimum_touch_target_delegate_owner, null)
-            }
-            return
-        }
-
-        val delegate = CompositeTouchDelegate(host, entries)
-        host.touchDelegate = delegate
-        host.setTag(R.id.aqua_minimum_touch_target_delegate_owner, delegate)
     }
 
     private fun collectClickableViews(root: View): List<View> {
@@ -165,11 +138,11 @@ object MinimumTouchTargetInstaller {
         if (expandedBounds.width() <= 0 || expandedBounds.height() <= 0) return null
 
         return TouchEntry(
+            target = child,
             geometry = TouchTargetGeometry(
                 visualBounds = visualBounds.toTargetRect(),
                 expandedBounds = expandedBounds.toTargetRect()
-            ),
-            delegate = TouchDelegate(expandedBounds, child)
+            )
         )
     }
 
@@ -183,38 +156,200 @@ object MinimumTouchTargetInstaller {
     }
 
     private data class TouchEntry(
-        val geometry: TouchTargetGeometry,
-        val delegate: TouchDelegate
+        val target: View,
+        val geometry: TouchTargetGeometry
     )
+
+    private class Installation(
+        private val host: ViewGroup
+    ) : ViewTreeObserver.OnGlobalLayoutListener, View.OnAttachStateChangeListener {
+
+        private var observedTree: ViewTreeObserver? = null
+        private var rebuildScheduled = false
+        private var activeEntries: List<TouchEntry> = emptyList()
+        private var installedDelegate: CompositeTouchDelegate? = null
+        private var foreignDelegate: TouchDelegate? = unwrapForeignDelegate(host.touchDelegate)
+
+        init {
+            host.addOnAttachStateChangeListener(this)
+            ensureObserving()
+        }
+
+        fun ensureObserving() {
+            if (!host.isAttachedToWindow) return
+
+            val currentTree = host.viewTreeObserver
+            if (observedTree === currentTree) return
+
+            stopObserving()
+            if (currentTree.isAlive) {
+                currentTree.addOnGlobalLayoutListener(this)
+                observedTree = currentTree
+            }
+        }
+
+        fun scheduleRebuild() {
+            ensureObserving()
+            if (!host.isAttachedToWindow || rebuildScheduled) return
+
+            rebuildScheduled = true
+            host.post {
+                rebuildScheduled = false
+                if (!host.isAttachedToWindow) return@post
+                rebuild()
+            }
+        }
+
+        override fun onGlobalLayout() {
+            scheduleRebuild()
+        }
+
+        override fun onViewAttachedToWindow(view: View) {
+            ensureObserving()
+            scheduleRebuild()
+        }
+
+        override fun onViewDetachedFromWindow(view: View) {
+            stopObserving()
+            restoreForeignDelegateIfOwned()
+            activeEntries = emptyList()
+            installedDelegate = null
+        }
+
+        private fun rebuild() {
+            val foreignChanged = captureExternalDelegate()
+            val entries = collectTouchEntries(host) ?: return
+            val currentDelegate = host.touchDelegate
+
+            val installationStillCurrent = if (entries.isEmpty()) {
+                installedDelegate == null && currentDelegate === foreignDelegate
+            } else {
+                currentDelegate === installedDelegate
+            }
+            if (!foreignChanged && entries == activeEntries && installationStillCurrent) return
+
+            activeEntries = entries
+            if (entries.isEmpty()) {
+                restoreForeignDelegateIfOwned()
+                installedDelegate = null
+                return
+            }
+
+            val delegate = CompositeTouchDelegate(
+                host = host,
+                entries = entries,
+                foreignDelegate = foreignDelegate
+            )
+            installedDelegate = delegate
+            host.touchDelegate = delegate
+        }
+
+        private fun captureExternalDelegate(): Boolean {
+            val currentDelegate = host.touchDelegate
+            if (currentDelegate === installedDelegate) return false
+
+            val unwrapped = unwrapForeignDelegate(currentDelegate)
+            val changed = unwrapped !== foreignDelegate
+            foreignDelegate = unwrapped
+            return changed
+        }
+
+        private fun restoreForeignDelegateIfOwned() {
+            if (host.touchDelegate === installedDelegate) {
+                host.touchDelegate = foreignDelegate
+            }
+        }
+
+        private fun stopObserving() {
+            observedTree?.let { observer ->
+                if (observer.isAlive) {
+                    observer.removeOnGlobalLayoutListener(this)
+                }
+            }
+            observedTree = null
+        }
+    }
 
     private class CompositeTouchDelegate(
         host: View,
-        private val entries: List<TouchEntry>
+        private val entries: List<TouchEntry>,
+        internal val foreignDelegate: TouchDelegate?
     ) : TouchDelegate(Rect(), host) {
 
+        private enum class ActiveRoute {
+            NONE,
+            FOREIGN,
+            AQUA
+        }
+
         private val targetGeometry = entries.map(TouchEntry::geometry)
-        private var activeDelegate: TouchDelegate? = null
+        private val aquaDelegates = entries.map { entry ->
+            TouchDelegate(entry.geometry.expandedBounds.toRect(), entry.target)
+        }
+        private var activeRoute = ActiveRoute.NONE
+        private var activeAquaDelegate: TouchDelegate? = null
 
         override fun onTouchEvent(event: MotionEvent): Boolean {
             if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-                activeDelegate = MinimumTouchTargetSelector.selectIndex(
-                    targets = targetGeometry,
-                    x = event.x.toInt(),
-                    y = event.y.toInt()
-                )?.let { index -> entries[index].delegate }
+                resetGesture()
+                return beginGesture(event)
             }
 
-            val handled = activeDelegate?.onTouchEvent(event) == true
+            val hadActiveRoute = activeRoute != ActiveRoute.NONE
+            val handled = when (activeRoute) {
+                ActiveRoute.FOREIGN -> foreignDelegate?.onTouchEvent(event) == true
+                ActiveRoute.AQUA -> activeAquaDelegate?.onTouchEvent(event) == true
+                ActiveRoute.NONE -> false
+            }
 
             if (
                 event.actionMasked == MotionEvent.ACTION_UP ||
                 event.actionMasked == MotionEvent.ACTION_CANCEL
             ) {
-                activeDelegate = null
+                resetGesture()
             }
 
-            return handled
+            return handled || hadActiveRoute
         }
+
+        private fun beginGesture(event: MotionEvent): Boolean {
+            val originalX = event.x
+            val originalY = event.y
+            if (foreignDelegate?.onTouchEvent(event) == true) {
+                activeRoute = ActiveRoute.FOREIGN
+                return true
+            }
+
+            event.setLocation(originalX, originalY)
+            activeAquaDelegate = MinimumTouchTargetSelector.selectIndex(
+                targets = targetGeometry,
+                x = originalX.toInt(),
+                y = originalY.toInt()
+            )?.let(aquaDelegates::get)
+
+            val handled = activeAquaDelegate?.onTouchEvent(event) == true
+            if (handled) {
+                activeRoute = ActiveRoute.AQUA
+                return true
+            }
+
+            event.setLocation(originalX, originalY)
+            resetGesture()
+            return false
+        }
+
+        private fun resetGesture() {
+            activeRoute = ActiveRoute.NONE
+            activeAquaDelegate = null
+        }
+    }
+
+    private fun unwrapForeignDelegate(delegate: TouchDelegate?): TouchDelegate? {
+        return (delegate as? CompositeTouchDelegate)?.foreignDelegate ?: delegate
+    }
+
+    private fun TouchTargetRect.toRect(): Rect {
+        return Rect(left, top, right, bottom)
     }
 }
 
