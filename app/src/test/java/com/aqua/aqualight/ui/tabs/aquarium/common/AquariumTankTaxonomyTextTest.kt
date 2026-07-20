@@ -6,6 +6,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
+/** Visible labels may change with language; persisted taxonomy codes must never change. */
 class AquariumTankTaxonomyTextTest {
     private val turkishLabels = mapOf(
         R.string.aquarium_tank_type_fish to "Balık",
