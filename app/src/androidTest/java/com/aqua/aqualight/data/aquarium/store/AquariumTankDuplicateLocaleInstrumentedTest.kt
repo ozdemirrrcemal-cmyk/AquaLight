@@ -27,10 +27,10 @@ class AquariumTankDuplicateLocaleInstrumentedTest {
     @Test
     fun duplicateNamesFollowActivePerAppLocaleFromApplicationContext() = runBlocking {
         val ownerUid = "tank-duplicate-locale-${UUID.randomUUID()}"
+        val scenario = ActivityScenario.launch(Stage8DialogTestActivity::class.java)
         val previousLanguageTags = AppCompatDelegate
             .getApplicationLocales()
             .toLanguageTags()
-        val scenario = ActivityScenario.launch(Stage8DialogTestActivity::class.java)
         val tankStore = AquariumTankDataStoreManager(applicationContext)
 
         try {
