@@ -2,7 +2,6 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'com.google.gms.google-services'
-    id 'com.google.firebase.crashlytics'
     id 'com.google.protobuf'
     id 'androidx.navigation.safeargs.kotlin'
 }
@@ -108,16 +107,10 @@ dependencies {
     // Firebase BoM
     implementation platform("com.google.firebase:firebase-bom:34.5.0")
 
-    // Firebase (ANA modüller)
-    implementation "com.google.firebase:firebase-analytics"
+    // Firebase services required by current product flows
     implementation "com.google.firebase:firebase-auth"
     implementation "com.google.firebase:firebase-firestore"
-    implementation "com.google.firebase:firebase-database"
     implementation "com.google.firebase:firebase-storage"
-    implementation "com.google.firebase:firebase-messaging"
-    implementation "com.google.firebase:firebase-config"
-    implementation "com.google.firebase:firebase-perf"
-    implementation "com.google.firebase:firebase-crashlytics"
 
     // AndroidX
     implementation "androidx.core:core-ktx:1.17.0"
