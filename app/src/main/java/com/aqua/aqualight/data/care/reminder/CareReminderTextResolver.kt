@@ -22,16 +22,20 @@ internal data class CareReminderText(
  * titles, notes and aquarium names are preserved verbatim and are never translated or overwritten.
  */
 internal class CareReminderTextResolver(
-    context: Context
+    context: Context,
+    private val localizedContextProvider: (Context) -> Context = LocaleFormatter::localizedContext
 ) {
     private val appContext = context.applicationContext
-    private val maintenanceTextResolver = AndroidMaintenanceTextResolver(appContext)
+    private val maintenanceTextResolver = AndroidMaintenanceTextResolver(
+        context = appContext,
+        localizedContextProvider = localizedContextProvider
+    )
 
     fun resolve(
         task: CareTask,
         tank: SavedAquariumTank?
     ): CareReminderText {
-        val localizedContext = LocaleFormatter.localizedContext(appContext)
+        val localizedContext = localizedContextProvider(appContext)
         val taskPresentation = maintenanceTextResolver.taskPresentation(
             task = task.toCareSnapshot(),
             tank = tank?.toAquariumSnapshot()
