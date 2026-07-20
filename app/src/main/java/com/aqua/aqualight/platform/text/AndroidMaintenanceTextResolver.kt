@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.Flow
 
 class AndroidMaintenanceTextResolver(
     context: Context,
-    private val localizedContextProvider: (Context) -> Context = LocaleFormatter::localizedContext
+    private val localizedContextProvider: ((Context) -> Context)? = null
 ) : MaintenanceTextResolver {
 
     private val appContext = context.applicationContext
@@ -97,5 +97,7 @@ class AndroidMaintenanceTextResolver(
     override fun unknownAquarium(): String =
         localizedContext().getString(R.string.maintenance_unknown_aquarium)
 
-    private fun localizedContext(): Context = localizedContextProvider(appContext)
+    private fun localizedContext(): Context =
+        localizedContextProvider?.invoke(appContext)
+            ?: LocaleFormatter.localizedContext(appContext)
 }
