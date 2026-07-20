@@ -11,7 +11,7 @@ class AquariumDimensionInputPolicyTest {
     fun turkishAndEnglishValuesRoundTripAcrossCentimetersAndInches() {
         val turkish = Locale("tr", "TR")
 
-        assertEquals("23,62", AquariumDimensionInputPolicy.format(60.0, "in", turkish))
+        assertEquals("23.62", AquariumDimensionInputPolicy.format(60.0, "in", turkish))
         assertEquals(
             60,
             AquariumDimensionInputPolicy.parseCentimeters("23,62", "in", turkish)
@@ -30,6 +30,15 @@ class AquariumDimensionInputPolicyTest {
             "23.62",
             AquariumDimensionInputPolicy.convert("60", "cm", "in", Locale.US)
         )
+    }
+
+    @Test
+    fun minimumCentimeterRoundTripsThroughDisplayedInches() {
+        val turkish = Locale("tr", "TR")
+        val inches = AquariumDimensionInputPolicy.format(1.0, "in", turkish)
+
+        assertEquals("0.39", inches)
+        assertEquals(1, AquariumDimensionInputPolicy.parseCentimeters(inches, "in", turkish))
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.aquarium.store
 
+import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
 import com.aqua.aqualight.data.store.CommercialStoreSchema
 import com.aqua.aqualight.data.store.StoreInvariantViolation
 import java.time.LocalDate
@@ -26,17 +27,7 @@ object TankStoreRules {
 
     private val allowedSizeUnits = setOf("cm", "in")
     private val allowedVolumeUnits = setOf("L", "gal")
-    private val allowedTankTypes = setOf(
-        "Fish",
-        "Shrimp",
-        "Planted",
-        "Marine",
-        "Softies",
-        "Mixed Reef",
-        "SPS",
-        "Coral",
-        "Other"
-    )
+    private val allowedTankTypes = AquariumTankTaxonomy.tankTypeCodes
 
     fun defaultStore(): AquariumTanksStore = AquariumTanksStore.newBuilder()
         .setSchemaVersion(CommercialStoreSchema.AQUARIUM_TANKS_VERSION)

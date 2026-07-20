@@ -68,8 +68,9 @@ class MinimumTouchTargetInstrumentedTest {
                 val density = host.resources.displayMetrics.density
                 dispatchTap(
                     host = host,
-                    // 45dp is outside both 20dp visual controls but inside both 48dp targets.
-                    x = dp(45, density).toFloat(),
+                    // 49dp is outside both visuals, inside both expanded targets, and clearly
+                    // nearer to the second visual control.
+                    x = dp(49, density).toFloat(),
                     y = dp(40, density).toFloat()
                 )
             }
@@ -91,7 +92,7 @@ class MinimumTouchTargetInstrumentedTest {
                 val density = host.resources.displayMetrics.density
                 dispatchTap(
                     host = host,
-                    x = dp(45, density).toFloat(),
+                    x = dp(49, density).toFloat(),
                     y = dp(40, density).toFloat()
                 )
             }
