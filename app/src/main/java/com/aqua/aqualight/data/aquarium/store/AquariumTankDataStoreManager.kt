@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.aquarium.store
 
 import android.content.Context
+import androidx.core.content.ContextCompat
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStore
@@ -110,6 +111,10 @@ class AquariumTankDataStoreManager(
             throw IllegalStateException("Tank photo could not be copied with independent ownership.")
         }
 
+        // Freeze the active per-app language before entering the retryable DataStore transform.
+        // This keeps every retry deterministic and supports non-Activity contexts on API 17+.
+        val duplicateNameContext = ContextCompat.getContextForLanguage(context)
+
         try {
             context.aquariumTanksDataStore.updateData { currentStore ->
                 requireOwnerScope(ownerUid)
@@ -133,7 +138,8 @@ class AquariumTankDataStoreManager(
                     .setName(
                         createDuplicateTankName(
                             originalName = sourceTank.name,
-                            existingNames = existingNames
+                            existingNames = existingNames,
+                            localizedContext = duplicateNameContext
                         )
                     )
                     .setPhotoUri(duplicatedPhotoUri.orEmpty().trim())
@@ -257,7 +263,6 @@ class AquariumTankDataStoreManager(
     ): String? {
         val normalizedPhotoUri = photoUri.orEmpty().trim()
         var previousPhotoUri: String? = null
-
         updateCurrentOwnerTank(tankId) { storedTank ->
             previousPhotoUri = storedTank.photoUri.takeIf { uri ->
                 uri.isNotBlank() && uri != normalizedPhotoUri
@@ -716,7 +721,8 @@ class AquariumTankDataStoreManager(
 
     private fun createDuplicateTankName(
         originalName: String,
-        existingNames: Set<String>
+        existingNames: Set<String>,
+        localizedContext: Context
     ): String {
         val baseName = originalName.trim()
         require(baseName.isNotBlank()) {
@@ -726,9 +732,9 @@ class AquariumTankDataStoreManager(
         var copyNumber = 1
         while (true) {
             val suffixText = if (copyNumber == 1) {
-                context.getString(R.string.aquarium_duplicate_name_suffix)
+                localizedContext.getString(R.string.aquarium_duplicate_name_suffix)
             } else {
-                context.getString(
+                localizedContext.getString(
                     R.string.aquarium_duplicate_name_numbered_suffix,
                     copyNumber
                 )
