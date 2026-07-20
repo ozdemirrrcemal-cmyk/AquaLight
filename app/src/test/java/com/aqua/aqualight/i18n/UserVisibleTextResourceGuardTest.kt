@@ -80,7 +80,7 @@ class UserVisibleTextResourceGuardTest {
     }
 
     @Test
-    fun duplicateTankNameGenerationUsesStringResourcesInsteadOfLanguageLiterals() {
+    fun duplicateTankNameGenerationUsesLocaleAwareStringResourcesInsteadOfLanguageLiterals() {
         val root = projectRoot()
         val sourceFile = root.resolve(
             "app/src/main/java/com/aqua/aqualight/data/aquarium/store/" +
@@ -92,9 +92,11 @@ class UserVisibleTextResourceGuardTest {
         )
 
         assertTrue(source.contains("import com.aqua.aqualight.R"))
+        assertTrue(source.contains("import androidx.core.content.ContextCompat"))
+        assertTrue(source.contains("ContextCompat.getContextForLanguage(context)"))
         assertTrue(source.contains("R.string.aquarium_duplicate_name_suffix"))
         assertTrue(source.contains("R.string.aquarium_duplicate_name_numbered_suffix"))
-        assertTrue(source.contains("context.getString"))
+        assertTrue(source.contains("localizedContext.getString"))
 
         val forbiddenLiteral = Regex("\"[^\"\\n]*(?:Copy|Kopya)[^\"\\n]*\"")
             .find(source)
