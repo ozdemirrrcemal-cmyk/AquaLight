@@ -27,6 +27,7 @@ import com.aqua.aqualight.application.notifications.NotificationChannelState
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentAddCareTaskBinding
+import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.platform.permissions.AppCapability
 import com.aqua.aqualight.ui.common.bottomsheet.CareTaskTypeBottomSheetFragment
 import com.aqua.aqualight.ui.common.bottomsheet.SingleChoiceBottomSheet
@@ -39,10 +40,7 @@ import com.aqua.aqualight.ui.common.permission.CapabilityPermissionCoordinator
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.ui.tabs.maintenance.text.CareTaskTypeCatalog
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
-import java.util.Locale
 import kotlinx.coroutines.launch
 
 class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
@@ -147,7 +145,6 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
         switchMissedReminder.setOnCheckedChangeListener { _, _ -> updateDynamicSections() }
         btnSaveTask.setOnClickListener { saveTask() }
     }
-
 
     private fun setupPickerResultListeners() {
         childFragmentManager.setFragmentResultListener(
@@ -459,14 +456,14 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
     }
 
     private fun updateDateTimeText() {
-        binding.tvDueDateValue.text = SimpleDateFormat(
-            "dd MMM yyyy",
-            Locale.getDefault()
-        ).format(Date(selectedCalendar.timeInMillis))
-        binding.tvDueTimeValue.text = SimpleDateFormat(
-            "HH:mm",
-            Locale.getDefault()
-        ).format(Date(selectedCalendar.timeInMillis))
+        binding.tvDueDateValue.text = LocaleFormatter.formatDate(
+            requireContext(),
+            selectedCalendar.timeInMillis
+        )
+        binding.tvDueTimeValue.text = LocaleFormatter.formatTime(
+            requireContext(),
+            selectedCalendar.timeInMillis
+        )
     }
 
     private fun saveTask() {

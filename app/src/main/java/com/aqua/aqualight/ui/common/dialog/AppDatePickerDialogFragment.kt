@@ -19,8 +19,9 @@ class AppDatePickerDialogFragment : DialogFragment() {
         val calendar = Calendar.getInstance().apply {
             timeInMillis = args.getLong(ARG_INITIAL_MILLIS)
         }
+        val hostActivity = requireActivity()
         return DatePickerDialog(
-            requireContext(),
+            hostActivity,
             { _, year, month, dayOfMonth ->
                 calendar.set(Calendar.YEAR, year)
                 calendar.set(Calendar.MONTH, month)

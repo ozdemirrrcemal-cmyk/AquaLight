@@ -1,7 +1,9 @@
 package com.aqua.aqualight.data.aquarium.store
 
+import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
 import com.aqua.aqualight.data.store.CommercialStoreSchema
 import com.aqua.aqualight.data.store.StoreInvariantViolation
+import java.time.LocalDate
 
 /** Authoritative invariant rules for the commercial tank store. */
 object TankStoreRules {
@@ -18,22 +20,14 @@ object TankStoreRules {
     const val MAX_NOTE_CHARS = 1_000
     const val MAX_PRODUCT_ID_CHARS = 160
 
-    private const val MIN_DATE_MILLIS = 946_684_800_000L // 2000-01-01 UTC
-    private const val MAX_DATE_MILLIS = 4_102_444_800_000L // 2100-01-01 UTC
+    private const val MIN_TIMESTAMP_MILLIS = 946_684_800_000L // 2000-01-01 UTC
+    private const val MAX_TIMESTAMP_MILLIS = 4_102_444_800_000L // 2100-01-01 UTC
+    private val minDateEpochDay = LocalDate.of(2000, 1, 1).toEpochDay()
+    private val maxDateEpochDay = LocalDate.of(2100, 12, 31).toEpochDay()
 
     private val allowedSizeUnits = setOf("cm", "in")
     private val allowedVolumeUnits = setOf("L", "gal")
-    private val allowedTankTypes = setOf(
-        "Fish",
-        "Shrimp",
-        "Planted",
-        "Marine",
-        "Softies",
-        "Mixed Reef",
-        "SPS",
-        "Coral",
-        "Other"
-    )
+    private val allowedTankTypes = AquariumTankTaxonomy.tankTypeCodes
 
     fun defaultStore(): AquariumTanksStore = AquariumTanksStore.newBuilder()
         .setSchemaVersion(CommercialStoreSchema.AQUARIUM_TANKS_VERSION)
@@ -66,8 +60,8 @@ object TankStoreRules {
         requireCanonicalRequiredText("tank.name", tank.name, MAX_NAME_CHARS)
         requireCanonicalOptionalText("tank.description", tank.description, MAX_DESCRIPTION_CHARS)
         requireCanonicalOptionalText("tank.photoUri", tank.photoUri, MAX_URI_CHARS)
-        requireOptionalDate("tank.setupDateMillis", tank.setupDateMillis)
-        requireDate("tank.createdAtMillis", tank.createdAtMillis)
+        requireOptionalEpochDay("tank.setupDateEpochDay", tank.setupDateEpochDay)
+        requireTimestamp("tank.createdAtMillis", tank.createdAtMillis)
         requireDimension("tank.widthCm", tank.widthCm)
         requireDimension("tank.lengthCm", tank.lengthCm)
         requireDimension("tank.heightCm", tank.heightCm)
@@ -172,7 +166,10 @@ object TankStoreRules {
             if (livestock.quantity !in 1..100_000) {
                 violation("livestock.quantity must be between 1 and 100000.")
             }
-            requireOptionalDate("livestock.addedDateMillis", livestock.addedDateMillis)
+            requireOptionalEpochDay(
+                "livestock.addedDateEpochDay",
+                livestock.addedDateEpochDay
+            )
             requireCanonicalOptionalText("livestock.note", livestock.note, MAX_NOTE_CHARS)
         }
     }
@@ -235,15 +232,15 @@ object TankStoreRules {
         }
     }
 
-    private fun requireOptionalDate(field: String, value: Long) {
-        if (value != 0L) {
-            requireDate(field, value)
+    private fun requireOptionalEpochDay(field: String, value: Long) {
+        if (value != 0L && value !in minDateEpochDay..maxDateEpochDay) {
+            violation("$field is outside the supported commercial calendar-date range.")
         }
     }
 
-    private fun requireDate(field: String, value: Long) {
-        if (value !in MIN_DATE_MILLIS..MAX_DATE_MILLIS) {
-            violation("$field is outside the supported commercial date range.")
+    private fun requireTimestamp(field: String, value: Long) {
+        if (value !in MIN_TIMESTAMP_MILLIS..MAX_TIMESTAMP_MILLIS) {
+            violation("$field is outside the supported commercial timestamp range.")
         }
     }
 

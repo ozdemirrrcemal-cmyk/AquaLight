@@ -19,12 +19,13 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
+import com.aqua.aqualight.application.aquarium.AquariumVolumeCalculator
+import com.aqua.aqualight.i18n.LocaleFormatter
+import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDimensionFormatter
+import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumTankTaxonomyText
 import java.util.concurrent.TimeUnit
 import java.io.File
 import java.io.FileOutputStream
-import java.text.DecimalFormat
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -37,8 +38,6 @@ object TankPdfExporter {
   private const val PAGE_BOTTOM = 790f
 
   private const val PHOTO_HEIGHT = 125f
-
-  private val volumeFormatter = DecimalFormat("#.##")
 
   fun createTankReportPdf(
     context: Context,
@@ -54,24 +53,31 @@ object TankPdfExporter {
 
     writer.drawReportHeader(
       tankName = tank.name,
-      generatedDate = getGeneratedDateText()
+      generatedDate = getGeneratedDateText(context)
     )
 
     writer.drawSectionTitle(texts.sectionTankSummary)
 
     writer.drawLabelValue(texts.labelTankName, tank.name)
-    writer.drawLabelValue(texts.labelTankType, tank.tankType.ifBlank {
-      texts.noValue
-    })
+    writer.drawLabelValue(
+      texts.labelTankType,
+      tank.tankType.takeIf(String::isNotBlank)
+        ?.let { AquariumTankTaxonomyText.tankTypeLabel(context, it) }
+        ?: texts.noValue
+    )
     writer.drawLabelValue(texts.labelSize, getSizeText(context, tank))
     writer.drawLabelValue(texts.labelVolume, getVolumeText(context, tank))
     writer.drawLabelValue(texts.labelSetupDate, getSetupDateText(
-      setupDateMillis = tank.setupDateMillis,
+      context = context,
+      setupDateEpochDay = tank.setupDateEpochDay,
       noValue = texts.noValue
     ))
-    writer.drawLabelValue(texts.labelTankStyle, tank.tankStyle.ifBlank {
-      texts.noValue
-    })
+    writer.drawLabelValue(
+      texts.labelTankStyle,
+      tank.tankStyle.takeIf(String::isNotBlank)
+        ?.let { AquariumTankTaxonomyText.tankStyleLabel(context, it) }
+        ?: texts.noValue
+    )
     writer.drawLabelValue(texts.labelIdea, tank.description.ifBlank {
       texts.noValue
     })
@@ -112,7 +118,7 @@ object TankPdfExporter {
     if (tank.plants.isEmpty()) {
       writer.drawMutedText(texts.noPlants)
     } else {
-      tank.plants.forEachIndexed {
+     tank.plants.forEachIndexed {
         index, plant ->
         writer.drawPlantText(
           number = index + 1,
@@ -134,7 +140,7 @@ object TankPdfExporter {
       writer.drawMaterialCategory(
         title = category.title(context),
         materials = materials
-      )
+     )
     }
 
     writer.drawSectionTitle(texts.sectionHardwareComponents)
@@ -179,7 +185,7 @@ object TankPdfExporter {
       context,
       "${context.packageName}.fileprovider",
       outputFile
-    )
+   )
   }
 
   fun shareTankReportPdf(
@@ -197,7 +203,7 @@ object TankPdfExporter {
     val chooser = Intent.createChooser(
       shareIntent,
       context.getString(R.string.tank_pdf_share_chooser)
-    )
+   )
 
     if (context !is Activity) {
       chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -251,36 +257,38 @@ object TankPdfExporter {
     )
   }
 
-  private fun getGeneratedDateText(): String {
-    return SimpleDateFormat(
-      "dd MMM yyyy HH:mm",
-      Locale.getDefault()
-    ).format(Date())
+  private fun getGeneratedDateText(
+    context: Context
+  ): String {
+    return LocaleFormatter.formatDateTime(
+      context = context,
+      timeMillis = System.currentTimeMillis()
+    )
   }
 
   private fun getSetupDateText(
-    setupDateMillis: Long?,
+    context: Context,
+    setupDateEpochDay: Long?,
     noValue: String
   ): String {
-    if (setupDateMillis == null) {
+    if (setupDateEpochDay == null) {
       return noValue
     }
 
-    return SimpleDateFormat(
-      "dd MMM yyyy",
-      Locale.getDefault()
-    ).format(Date(setupDateMillis))
+    return LocaleFormatter.formatDateEpochDay(context, setupDateEpochDay)
   }
 
   private fun getSizeText(
     context: Context,
     tank: AquariumTankSnapshot
   ): String {
-    return context.getString(
-      R.string.tank_pdf_size_format,
-      tank.widthCm,
-      tank.lengthCm,
-      tank.heightCm
+    return AquariumDimensionFormatter.labeledSizeText(
+      context = context,
+      widthCm = tank.widthCm,
+      lengthCm = tank.lengthCm,
+      heightCm = tank.heightCm,
+      sizeUnit = tank.sizeUnit,
+      formatRes = R.string.tank_pdf_size_localized_format
     )
   }
 
@@ -288,21 +296,24 @@ object TankPdfExporter {
     context: Context,
     tank: AquariumTankSnapshot
   ): String {
-    val liter = (
-      tank.widthCm *
-      tank.lengthCm *
-      tank.heightCm
-    ) / 1000.0
+    val liters = AquariumVolumeCalculator.grossLiters(
+      widthCm = tank.widthCm,
+      lengthCm = tank.lengthCm,
+      heightCm = tank.heightCm
+    )
 
     return if (tank.volumeUnit.equals("gal", ignoreCase = true)) {
       context.getString(
         R.string.aquarium_volume_gallon_format,
-        volumeFormatter.format(liter * 0.264172)
+        LocaleFormatter.formatDecimal(
+          context,
+          AquariumVolumeCalculator.litersToGallons(liters)
+        )
       )
     } else {
       context.getString(
         R.string.aquarium_volume_liter_format,
-        volumeFormatter.format(liter)
+        LocaleFormatter.formatDecimal(context, liters)
       )
     }
   }
@@ -315,7 +326,7 @@ object TankPdfExporter {
       "aquarium"
     }
     .replace(
-      Regex("[^a-zA-Z0-9._-]"),
+      Regex("[^a-zA,Z0-9._-]"),
       "_"
     )
     .take(45)
@@ -386,22 +397,23 @@ object TankPdfExporter {
     val unnamedMaterial: String,
     val generatedBy: String,
     val pageFormat: String,
-    val noValue: String
+    val noValue: String,
+    val locale: Locale
   ) {
     fun pageText(
       pageNumber: Int
     ): String {
       return String.format(
-        Locale.getDefault(),
+        locale,
         pageFormat,
         pageNumber
-      )
+     )
     }
 
     companion object {
       fun from(
         context: Context
-      ): TankPdfTexts {
+     ): TankPdfTexts {
         return TankPdfTexts(
           reportTitle = context.getString(R.string.tank_pdf_report_title),
           sectionTankSummary = context.getString(R.string.tank_pdf_section_tank_summary),
@@ -435,7 +447,8 @@ object TankPdfExporter {
           unnamedMaterial = context.getString(R.string.tank_pdf_unnamed_material),
           generatedBy = context.getString(R.string.tank_pdf_generated_by),
           pageFormat = context.getString(R.string.tank_pdf_page_format),
-          noValue = context.getString(R.string.aquarium_no_value_placeholder)
+          noValue = context.getString(R.string.aquarium_no_value_placeholder),
+          locale = LocaleFormatter.appLocale(context)
         )
       }
     }
@@ -477,7 +490,7 @@ object TankPdfExporter {
 
     private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
       color = ContextCompat.getColor(context, R.color.aqua_tank_pdf_exporter_color_variant_2)
-      textSize = 10.5f
+      textSize =10.5f
       typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
 
@@ -521,7 +534,7 @@ object TankPdfExporter {
       page = document.startPage(pageInfo)
       canvas = page.canvas
       canvas.drawColor(ContextCompat.getColor(context, R.color.aqua_content_on_dark))
-      y = PAGE_MARGIN
+     y = PAGE_MARGIN
     }
 
     private fun finishCurrentPage() {
@@ -555,25 +568,25 @@ object TankPdfExporter {
         titlePaint
       )
 
-      y += 23f
+     y += 23f
 
       canvas.drawText(
         "${texts.labelTankName}: ${tankName.ifBlank { texts.noValue }}",
         PAGE_MARGIN,
         y,
         subtitlePaint
-      )
+    )
 
       y += 15f
 
       canvas.drawText(
         "${texts.labelGenerated}: $generatedDate",
         PAGE_MARGIN,
-        y,
+       y,
         subtitlePaint
-      )
+    )
 
-      y += 16f
+    y += 16f
 
       canvas.drawLine(
         PAGE_MARGIN,
@@ -583,7 +596,7 @@ object TankPdfExporter {
         linePaint
       )
 
-      y += 20f
+    y += 20f
     }
 
     fun drawTankPhoto(
@@ -593,7 +606,7 @@ object TankPdfExporter {
 
       val photoRect = RectF(
         PAGE_MARGIN,
-        y,
+       y,
         PAGE_WIDTH - PAGE_MARGIN,
         y + PHOTO_HEIGHT
       )
@@ -609,7 +622,7 @@ object TankPdfExporter {
         backgroundPaint
       )
 
-      if (bitmap != null) {
+    if (bitmap != null) {
         drawBitmapCenterCrop(
           bitmap = bitmap,
           destination = photoRect
@@ -619,7 +632,7 @@ object TankPdfExporter {
           color = ContextCompat.getColor(context, R.color.aqua_content_secondary)
           textSize = 12f
           textAlign = Paint.Align.CENTER
-        }
+      }
 
         canvas.drawText(
           texts.noTankPhoto,
@@ -651,12 +664,12 @@ object TankPdfExporter {
       y += 16f
 
       canvas.drawLine(
-        PAGE_MARGIN,
+       PAGE_MARGIN,
         y,
         PAGE_WIDTH - PAGE_MARGIN,
         y,
         linePaint
-      )
+     )
 
       y += 13f
     }
@@ -664,7 +677,7 @@ object TankPdfExporter {
     fun drawLabelValue(
       label: String,
       value: String
-    ) {
+   ) {
       val valueX = PAGE_MARGIN + 125f
       val maxValueWidth = PAGE_WIDTH - PAGE_MARGIN - valueX
 
@@ -672,7 +685,7 @@ object TankPdfExporter {
         text = value,
         paint = valuePaint,
         maxWidth = maxValueWidth
-      )
+     )
 
       val requiredHeight = max(
         19f,
@@ -686,7 +699,7 @@ object TankPdfExporter {
         PAGE_MARGIN,
         y,
         labelPaint
-      )
+     )
 
       lines.forEachIndexed {
         index, line ->
@@ -695,7 +708,7 @@ object TankPdfExporter {
           valueX,
           y + (index * 14f),
           valuePaint
-        )
+       )
       }
 
       y += requiredHeight
@@ -717,9 +730,9 @@ object TankPdfExporter {
         canvas.drawText(
           line,
           PAGE_MARGIN,
-          y,
+         y,
           mutedPaint
-        )
+       )
 
         y += 14f
       }
@@ -771,7 +784,7 @@ object TankPdfExporter {
       name: String,
       category: String,
       quantity: String
-    ) {
+   ) {
       ensureSpace(70f)
 
       canvas.drawText(
@@ -812,12 +825,12 @@ object TankPdfExporter {
         },
         paint = valuePaint,
         maxWidth = maxValueWidth
-      )
+     )
 
       val requiredHeight = max(
         15f,
-        lines.size * 13f + 3f
-      )
+       lines.size * 13f + 3f
+    )
 
       ensureSpace(requiredHeight)
 
@@ -835,7 +848,7 @@ object TankPdfExporter {
           valueX,
           y + (index * 13f),
           valuePaint
-        )
+       )
       }
 
       y += requiredHeight
@@ -845,7 +858,7 @@ object TankPdfExporter {
       number: Int,
       name: String,
       category: String
-    ) {
+   ) {
       val prefix = "$number. "
       val prefixWidth = valuePaint.measureText(prefix)
       val nameX = PAGE_MARGIN + prefixWidth
@@ -857,7 +870,7 @@ object TankPdfExporter {
         },
         paint = valuePaint,
         maxWidth = maxNameWidth
-      )
+     )
 
       val categoryLines = wrapText(
         text = category.ifBlank {
@@ -900,7 +913,7 @@ object TankPdfExporter {
           nameX,
           y,
           mutedPaint
-        )
+       )
 
         y += 13f
       }
@@ -918,7 +931,7 @@ object TankPdfExporter {
         text = title,
         paint = valuePaint,
         maxWidth = maxWidth
-      )
+    )
 
       val subtitleLines = wrapText(
         text = subtitle,
@@ -959,7 +972,7 @@ object TankPdfExporter {
           PAGE_MARGIN + 14f,
           y,
           mutedPaint
-        )
+       )
 
         y += 13f
       }
@@ -970,7 +983,7 @@ object TankPdfExporter {
     fun drawMaterialCategory(
       title: String,
       materials: List<AquariumMaterialSelection>
-    ) {
+   ) {
       ensureSpace(26f)
 
       canvas.drawText(
@@ -1009,7 +1022,7 @@ object TankPdfExporter {
         text = text,
         paint = valuePaint,
         maxWidth = maxWidth
-      )
+    )
 
       val requiredHeight = lines.size * 14f + 6f
 
@@ -1020,7 +1033,7 @@ object TankPdfExporter {
         PAGE_MARGIN,
         y,
         valuePaint
-      )
+     )
 
       lines.forEachIndexed {
         index, line ->
@@ -1061,7 +1074,7 @@ object TankPdfExporter {
         PAGE_WIDTH - PAGE_MARGIN - pageTextWidth,
         PAGE_BOTTOM + 34f,
         footerPaint
-      )
+     )
     }
 
     private fun drawBitmapCenterCrop(
@@ -1146,13 +1159,13 @@ object TankPdfExporter {
             if (brokenWordLines.isNotEmpty()) {
               lines.addAll(
                 brokenWordLines.dropLast(1)
-              )
+             )
               currentLine = brokenWordLines.last()
             } else {
               currentLine = word
-            }
           }
         }
+      }
       }
 
       if (currentLine.isNotBlank()) {

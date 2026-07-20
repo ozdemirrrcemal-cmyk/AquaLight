@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="aquarium_tank_size_card_localized_format">%1$sG x %2$sU x %3$sY %4$s</string>
+    <string name="tank_pdf_size_localized_format">%1$s G × %2$s U × %3$s Y (%4$s)</string>
+</resources>

@@ -23,6 +23,8 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.databinding.FragmentTankDetailActivityBinding
+import com.aqua.aqualight.i18n.LocalDayKey
+import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetAction
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetActionStyle
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetDetailRow
@@ -40,10 +42,7 @@ import com.aqua.aqualight.ui.tabs.maintenance.TankNextCareStatus
 import com.aqua.aqualight.application.care.CareTaskType
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
-import java.util.Locale
 import com.google.android.material.card.MaterialCardView
 
 class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activity) {
@@ -636,19 +635,13 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
     private fun formatActivityDateTime(
         millis: Long
     ): String {
-        return SimpleDateFormat(
-            "dd.MM.yyyy HH:mm",
-            Locale.getDefault()
-        ).format(Date(millis))
+        return LocaleFormatter.formatDateTime(requireContext(), millis)
     }
 
     private fun formatActivityDate(
         millis: Long
     ): String {
-        val dateText = SimpleDateFormat(
-            "dd.MM.yyyy",
-            Locale.getDefault()
-        ).format(Date(millis))
+        val dateText = LocaleFormatter.formatDate(requireContext(), millis)
 
         return when {
             isActivityToday(millis) -> {
@@ -672,20 +665,12 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
     private fun formatActivityTime(
         millis: Long
     ): String {
-        return SimpleDateFormat(
-            "HH:mm",
-            Locale.getDefault()
-        ).format(Date(millis))
+        return LocaleFormatter.formatTime(requireContext(), millis)
     }
 
     private fun formatActivityDateKey(
         millis: Long
-    ): String {
-        return SimpleDateFormat(
-            "yyyyMMdd",
-            Locale.getDefault()
-        ).format(Date(millis))
-    }
+    ) = LocalDayKey.fromEpochMillis(millis)
 
     private fun isActivityToday(
         millis: Long

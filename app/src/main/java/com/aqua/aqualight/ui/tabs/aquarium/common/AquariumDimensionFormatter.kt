@@ -3,19 +3,11 @@ package com.aqua.aqualight.ui.tabs.aquarium.common
 import android.content.Context
 import androidx.annotation.StringRes
 import com.aqua.aqualight.R
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
-import java.util.Locale
+import com.aqua.aqualight.application.aquarium.AquariumVolumeCalculator
+import com.aqua.aqualight.i18n.LocaleFormatter
 import kotlin.math.roundToInt
 
 object AquariumDimensionFormatter {
-    private const val GALLON_PER_LITER = 0.264172
-
-    private val preciseFormatter = DecimalFormat(
-        "#0.##",
-        DecimalFormatSymbols(Locale.US)
-    )
-
     fun sizeTitle(
         context: Context,
         sizeUnit: String
@@ -35,28 +27,44 @@ object AquariumDimensionFormatter {
         sizeUnit: String,
         @StringRes separatorRes: Int = R.string.aquarium_dimension_separator_spaced_multiply
     ): String {
-        val separator = context.getString(separatorRes)
-        return if (sizeUnit.equals("in", ignoreCase = true)) {
-            val widthIn = widthCm / 2.54
-            val lengthIn = lengthCm / 2.54
-            val heightIn = heightCm / 2.54
+        val values = dimensionValues(
+            context = context,
+            widthCm = widthCm,
+            lengthCm = lengthCm,
+            heightCm = heightCm,
+            sizeUnit = sizeUnit
+        )
+        return context.getString(
+            R.string.aquarium_dimension_format,
+            values.width,
+            context.getString(separatorRes),
+            values.length,
+            values.height
+        )
+    }
 
-            context.getString(
-                R.string.aquarium_dimension_format,
-                preciseFormatter.format(widthIn),
-                separator,
-                preciseFormatter.format(lengthIn),
-                preciseFormatter.format(heightIn)
-            )
-        } else {
-            context.getString(
-                R.string.aquarium_dimension_format,
-                widthCm.toString(),
-                separator,
-                lengthCm.toString(),
-                heightCm.toString()
-            )
-        }
+    fun labeledSizeText(
+        context: Context,
+        widthCm: Int,
+        lengthCm: Int,
+        heightCm: Int,
+        sizeUnit: String,
+        @StringRes formatRes: Int
+    ): String {
+        val values = dimensionValues(
+            context = context,
+            widthCm = widthCm,
+            lengthCm = lengthCm,
+            heightCm = heightCm,
+            sizeUnit = sizeUnit
+        )
+        return context.getString(
+            formatRes,
+            values.width,
+            values.length,
+            values.height,
+            values.unit
+        )
     }
 
     fun volumeText(
@@ -67,19 +75,66 @@ object AquariumDimensionFormatter {
         volumeUnit: String,
         rounded: Boolean = false
     ): String {
-        val liters = (widthCm * lengthCm * heightCm) / 1000.0
+        val liters = AquariumVolumeCalculator.grossLiters(
+            widthCm = widthCm,
+            lengthCm = lengthCm,
+            heightCm = heightCm
+        )
 
         return if (volumeUnit.equals("gal", ignoreCase = true)) {
-            val gallons = liters * GALLON_PER_LITER
+            val gallons = AquariumVolumeCalculator.litersToGallons(liters)
             context.getString(
                 R.string.aquarium_volume_gallon_format,
-                if (rounded) gallons.roundToInt().toString() else preciseFormatter.format(gallons)
+                if (rounded) {
+                    LocaleFormatter.formatInteger(context, gallons.roundToInt())
+                } else {
+                    LocaleFormatter.formatDecimal(context, gallons)
+                }
             )
         } else {
             context.getString(
                 R.string.aquarium_volume_liter_format,
-                if (rounded) liters.roundToInt().toString() else preciseFormatter.format(liters)
+                if (rounded) {
+                    LocaleFormatter.formatInteger(context, liters.roundToInt())
+                } else {
+                    LocaleFormatter.formatDecimal(context, liters)
+                }
             )
         }
     }
+
+    private fun dimensionValues(
+        context: Context,
+        widthCm: Int,
+        lengthCm: Int,
+        heightCm: Int,
+        sizeUnit: String
+    ): DimensionValues {
+        val canonicalUnit = if (sizeUnit.equals("in", ignoreCase = true)) "in" else "cm"
+        return DimensionValues(
+            width = AquariumDimensionInputPolicy.format(
+                context = context,
+                centimeters = widthCm,
+                unit = canonicalUnit
+            ),
+            length = AquariumDimensionInputPolicy.format(
+                context = context,
+                centimeters = lengthCm,
+                unit = canonicalUnit
+            ),
+            height = AquariumDimensionInputPolicy.format(
+                context = context,
+                centimeters = heightCm,
+                unit = canonicalUnit
+            ),
+            unit = canonicalUnit
+        )
+    }
+
+    private data class DimensionValues(
+        val width: String,
+        val length: String,
+        val height: String,
+        val unit: String
+    )
 }

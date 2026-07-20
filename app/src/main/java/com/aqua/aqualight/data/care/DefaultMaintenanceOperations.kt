@@ -155,7 +155,8 @@ internal fun CareTask.toApplicationSnapshot(): CareTaskSnapshot = CareTaskSnapsh
     missedReminderDays = missedReminderDays,
     waterChangePercent = waterChangePercent,
     note = note,
-    createdAtMillis = createdAtMillis
+    createdAtMillis = createdAtMillis,
+    generatedRuleKey = generatedRuleKey
 )
 
 internal fun AppCareTaskType.toDataType(): DataCareTaskType =
@@ -169,7 +170,7 @@ internal fun AquariumTankSnapshot.toDataTank(
     name = name,
     description = description,
     photoUri = photoUri,
-    setupDateMillis = setupDateMillis,
+    setupDateEpochDay = setupDateEpochDay,
     widthCm = widthCm,
     lengthCm = lengthCm,
     heightCm = heightCm,
@@ -210,6 +211,6 @@ private fun AquariumLivestock.toDataLivestock(): SavedAquariumLivestock =
         name = name,
         category = category,
         quantity = quantity,
-        addedDateMillis = addedDateMillis,
+        addedDateEpochDay = addedDateEpochDay,
         note = note
     )

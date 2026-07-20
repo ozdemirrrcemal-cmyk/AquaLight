@@ -18,12 +18,11 @@ import com.aqua.aqualight.databinding.ContentSheetTankSizeBinding
 import com.aqua.aqualight.databinding.ContentSheetTankStyleBinding
 import com.aqua.aqualight.databinding.ContentSheetTankTypeBinding
 import com.aqua.aqualight.databinding.DialogSettingsBottomSheetBinding
+import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDimensionInputPolicy
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import java.text.DateFormatSymbols
-import java.text.DecimalFormat
 import java.util.Calendar
 import java.util.Locale
-import kotlin.math.roundToInt
 
 /**
  * Re-creatable editor sheet for the basic tank settings forms.
@@ -136,7 +135,7 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
 
     private fun bindSizeEditor() {
         val binding = ContentSheetTankSizeBinding.inflate(layoutInflater)
-        val formatter = DecimalFormat("#.##")
+        val validationMessage = requireArguments().getString(ARG_VALIDATION_MESSAGE).orEmpty()
 
         fun unitLabel(): String = getString(
             if (selectedUnit == UNIT_IN) {
@@ -147,12 +146,46 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         )
 
         fun formatValue(cmValue: Int): String {
-            val value = if (selectedUnit == UNIT_IN) cmValue / CM_PER_INCH else cmValue.toDouble()
-            return formatter.format(value)
+            return AquariumDimensionInputPolicy.format(
+                context = requireContext(),
+                centimeters = cmValue,
+                unit = selectedUnit
+            )
         }
 
         fun renderUnit() {
             binding.tvUnitValue.text = unitLabel()
+        }
+
+        fun inputViews() = listOf(
+            binding.inputWidth,
+            binding.inputLength,
+            binding.inputHeight
+        )
+
+        fun convertInputsTo(newUnit: String): Boolean {
+            val inputs = inputViews()
+            val converted = inputs.map { input ->
+                AquariumDimensionInputPolicy.convert(
+                    context = requireContext(),
+                    value = input.text,
+                    fromUnit = selectedUnit,
+                    toUnit = newUnit
+                )
+            }
+
+            if (converted.any { it == null }) {
+                converted.forEachIndexed { index, value ->
+                    if (value == null) inputs[index].error = validationMessage
+                }
+                return false
+            }
+
+            inputs.forEachIndexed { index, input ->
+                input.error = null
+                input.setText(requireNotNull(converted[index]))
+            }
+            return true
         }
 
         binding.inputWidth.setText(formatValue(requireArguments().getInt(ARG_WIDTH_CM)))
@@ -161,26 +194,40 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         renderUnit()
 
         binding.unitRow.setOnClickListener {
-            selectedUnit = if (selectedUnit == UNIT_IN) UNIT_CM else UNIT_IN
-            renderUnit()
+            val newUnit = if (selectedUnit == UNIT_IN) UNIT_CM else UNIT_IN
+            if (convertInputsTo(newUnit)) {
+                selectedUnit = newUnit
+                renderUnit()
+            }
         }
         binding.btnCancel.setOnClickListener { cancelAndDismiss() }
         binding.btnSave.setOnClickListener {
-            val width = binding.inputWidth.text.toString().trim().toDoubleOrNull()
-            val length = binding.inputLength.text.toString().trim().toDoubleOrNull()
-            val height = binding.inputHeight.text.toString().trim().toDoubleOrNull()
-            val validationMessage = requireArguments().getString(ARG_VALIDATION_MESSAGE).orEmpty()
+            val widthCm = AquariumDimensionInputPolicy.parseCentimeters(
+                requireContext(),
+                binding.inputWidth.text,
+                selectedUnit
+            )
+            val lengthCm = AquariumDimensionInputPolicy.parseCentimeters(
+                requireContext(),
+                binding.inputLength.text,
+                selectedUnit
+            )
+            val heightCm = AquariumDimensionInputPolicy.parseCentimeters(
+                requireContext(),
+                binding.inputHeight.text,
+                selectedUnit
+            )
 
             var invalid = false
-            if (width == null || width <= 0.0) {
+            if (widthCm == null) {
                 binding.inputWidth.error = validationMessage
                 invalid = true
             }
-            if (length == null || length <= 0.0) {
+            if (lengthCm == null) {
                 binding.inputLength.error = validationMessage
                 invalid = true
             }
-            if (height == null || height <= 0.0) {
+            if (heightCm == null) {
                 binding.inputHeight.error = validationMessage
                 invalid = true
             }
@@ -188,9 +235,9 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
 
             publishResult(
                 status = RESULT_SAVED,
-                widthCm = toCentimeters(width!!),
-                lengthCm = toCentimeters(length!!),
-                heightCm = toCentimeters(height!!),
+                widthCm = requireNotNull(widthCm),
+                lengthCm = requireNotNull(lengthCm),
+                heightCm = requireNotNull(heightCm),
                 unit = selectedUnit
             )
             dismiss()
@@ -368,11 +415,6 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         dismiss()
     }
 
-    private fun toCentimeters(value: Double): Int {
-        val centimeters = if (selectedUnit == UNIT_IN) value * CM_PER_INCH else value
-        return centimeters.roundToInt().coerceAtLeast(1)
-    }
-
     private fun publishResult(
         status: String,
         textValue: String? = null,
@@ -438,7 +480,6 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         private const val MIN_TANK_NAME_LENGTH = 2
         private const val MONTH_COUNT = 12
         private const val NO_DATE = Long.MIN_VALUE
-        private const val CM_PER_INCH = 2.54
         private const val UNIT_CM = "cm"
         private const val UNIT_IN = "in"
 

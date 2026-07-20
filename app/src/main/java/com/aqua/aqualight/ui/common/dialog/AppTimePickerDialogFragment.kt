@@ -20,8 +20,9 @@ class AppTimePickerDialogFragment : DialogFragment() {
         val calendar = Calendar.getInstance().apply {
             timeInMillis = args.getLong(ARG_INITIAL_MILLIS)
         }
+        val hostActivity = requireActivity()
         return TimePickerDialog(
-            requireContext(),
+            hostActivity,
             { _, hourOfDay, minute ->
                 calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
                 calendar.set(Calendar.MINUTE, minute)
@@ -29,7 +30,7 @@ class AppTimePickerDialogFragment : DialogFragment() {
             },
             calendar.get(Calendar.HOUR_OF_DAY),
             calendar.get(Calendar.MINUTE),
-            DateFormat.is24HourFormat(requireContext())
+            DateFormat.is24HourFormat(hostActivity)
         )
     }
 

@@ -25,7 +25,6 @@ class UserPreferencesManager private constructor(
         private var INSTANCE: UserPreferencesManager? = null
 
         const val DEFAULT_THEME_MODE = "dark"
-        const val DEFAULT_LANGUAGE_CODE = "en"
 
         fun create(context: Context): UserPreferencesManager {
             return INSTANCE ?: synchronized(this) {

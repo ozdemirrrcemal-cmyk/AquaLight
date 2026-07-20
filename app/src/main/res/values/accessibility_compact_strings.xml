@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Compact visible copy keeps fixed commercial controls readable at 200% font scale. -->
+    <string name="maintenance_tab_next">Next</string>
+
+    <!-- Non-user-facing tokens bind XML views to the static compact-copy registry. -->
+    <string name="aqua_large_font_tag_maintenance_tab_next" translatable="false">aqua_large_font:maintenance_tab_next</string>
+    <string name="aqua_large_font_tag_maintenance_action_add" translatable="false">aqua_large_font:maintenance_action_add</string>
+</resources>

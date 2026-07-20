@@ -1,7 +1,5 @@
 package com.aqua.aqualight.ui.tabs.maintenance
 
-import com.aqua.aqualight.ui.common.text.setTextSizeResource
-import androidx.core.content.ContextCompat
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
@@ -10,19 +8,19 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
-import com.aqua.aqualight.databinding.ItemCareTaskBinding
 import com.aqua.aqualight.application.care.CareTaskSource
 import com.aqua.aqualight.application.care.CareTaskStatus
+import com.aqua.aqualight.databinding.ItemCareTaskBinding
+import com.aqua.aqualight.i18n.LocaleFormatter
+import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
-import java.util.Locale
 
 class CareTaskAdapter(
   private val context: Context,
@@ -149,10 +147,7 @@ class CareTaskAdapter(
   private fun formatDateHeaderWithRelative(
     millis: Long
   ): String {
-    val dateText = SimpleDateFormat(
-      "dd.MM.yyyy",
-      Locale.getDefault()
-    ).format(Date(millis))
+    val dateText = LocaleFormatter.formatDate(context, millis)
 
     return when {
       isToday(millis) -> {
@@ -186,10 +181,13 @@ class CareTaskAdapter(
   private fun formatDateKey(
     millis: Long
   ): String {
-    return SimpleDateFormat(
-      "yyyyMMdd",
-      Locale.getDefault()
-    ).format(Date(millis))
+    return Calendar.getInstance().apply {
+      timeInMillis = millis
+      set(Calendar.HOUR_OF_DAY, 0)
+      set(Calendar.MINUTE, 0)
+      set(Calendar.SECOND, 0)
+      set(Calendar.MILLISECOND, 0)
+    }.timeInMillis.toString()
   }
 
   private fun isToday(

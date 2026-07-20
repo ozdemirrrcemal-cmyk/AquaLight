@@ -1,11 +1,10 @@
 package com.aqua.aqualight.data.store
 
 /**
- * First commercial local-store schema baseline.
+ * First commercial local-store schema baselines.
  *
- * AquaLight has not shipped a previous public store contract, so version 1 is
- * intentionally strict: unsupported or missing versions are corruption, not a
- * legacy compatibility path.
+ * AquaLight has not shipped a previous public store contract. Every current store starts at
+ * version 1; unsupported or missing versions are corruption, not a legacy compatibility path.
  */
 object CommercialStoreSchema {
     const val AQUARIUM_TANKS_VERSION = 1

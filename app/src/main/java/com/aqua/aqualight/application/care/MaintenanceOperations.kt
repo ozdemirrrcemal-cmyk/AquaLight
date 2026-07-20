@@ -43,7 +43,9 @@ data class CareTaskSnapshot(
     val missedReminderDays: Int,
     val waterChangePercent: Int?,
     val note: String,
-    val createdAtMillis: Long
+    val createdAtMillis: Long,
+    /** Stable Smart Care identity used to resolve application-owned copy in the active locale. */
+    val generatedRuleKey: String = ""
 )
 
 data class CompletedCareActivityInput(

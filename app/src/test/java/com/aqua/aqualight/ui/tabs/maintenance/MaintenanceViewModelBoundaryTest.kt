@@ -216,6 +216,7 @@ class MaintenanceViewModelBoundaryTest {
             "$typeTitle $percent"
 
         override fun sourceLabel(source: CareTaskSource) = source.name
+        override fun formatTime(timeMillis: Long) = timeMillis.toString()
         override fun completedStatus() = "completed"
         override fun completedTime(timeText: String) = timeText
         override fun repeatTime(timeText: String, repeatDays: Int) = timeText
@@ -235,7 +236,7 @@ class MaintenanceViewModelBoundaryTest {
         name = name,
         description = "",
         photoUri = null,
-        setupDateMillis = null,
+        setupDateEpochDay = null,
         widthCm = 10,
         lengthCm = 10,
         heightCm = 10,

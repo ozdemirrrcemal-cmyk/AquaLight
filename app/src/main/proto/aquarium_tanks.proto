@@ -6,8 +6,8 @@ option java_multiple_files = true;
 message AquariumTanksStore {
   repeated StoredTank tanks = 1;
 
-  // First commercial local-store schema. Unsupported values are corruption;
-  // AquaLight has no shipped legacy tank-store compatibility contract.
+  // First commercial schema stores calendar-only values as epoch days, never epoch milliseconds.
+  // Unsupported versions are rejected and recovered as a clean store; no legacy migration exists.
   uint32 schema_version = 100;
 }
 
@@ -16,7 +16,7 @@ message StoredTank {
   string name = 2;
   string description = 3;
   string photoUri = 4;
-  int64 setupDateMillis = 5;
+  int64 setup_date_epoch_day = 5;
 
   int32 widthCm = 6;
   int32 lengthCm = 7;
@@ -60,6 +60,6 @@ message StoredLivestock {
   string name = 2;
   string category = 3;
   int32 quantity = 4;
-  int64 addedDateMillis = 5;
+  int64 added_date_epoch_day = 5;
   string note = 6;
 }

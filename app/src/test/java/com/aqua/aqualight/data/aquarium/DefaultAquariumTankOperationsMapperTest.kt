@@ -25,7 +25,7 @@ class DefaultAquariumTankOperationsMapperTest {
             name = "Reef",
             description = "Mixed reef",
             photoUri = "content://tank/7",
-            setupDateMillis = 100L,
+            setupDateEpochDay = 100L,
             widthCm = 80,
             lengthCm = 40,
             heightCm = 45,
@@ -62,7 +62,7 @@ class DefaultAquariumTankOperationsMapperTest {
                     name = "Clownfish",
                     category = "Fish",
                     quantity = 2,
-                    addedDateMillis = 300L,
+                    addedDateEpochDay = 300L,
                     note = "Pair"
                 )
             )
@@ -74,7 +74,7 @@ class DefaultAquariumTankOperationsMapperTest {
         assertEquals("Reef", mapped.name)
         assertEquals("Mixed reef", mapped.description)
         assertEquals("content://tank/7", mapped.photoUri)
-        assertEquals(100L, mapped.setupDateMillis)
+        assertEquals(100L, mapped.setupDateEpochDay)
         assertEquals(80, mapped.widthCm)
         assertEquals(40, mapped.lengthCm)
         assertEquals(45, mapped.heightCm)
@@ -126,7 +126,7 @@ class DefaultAquariumTankOperationsMapperTest {
                 )
             ),
             info = "CO2",
-            setupDateMillis = 500L,
+            setupDateEpochDay = 500L,
             widthCm = 60,
             lengthCm = 35,
             heightCm = 36,
@@ -142,7 +142,7 @@ class DefaultAquariumTankOperationsMapperTest {
         assertEquals(source.description, mapped.description)
         assertEquals(source.photoUri, mapped.photoUri)
         assertEquals(source.info, mapped.info)
-        assertEquals(source.setupDateMillis, mapped.setupDateMillis)
+        assertEquals(source.setupDateEpochDay, mapped.setupDateEpochDay)
         assertEquals(source.widthCm, mapped.widthCm)
         assertEquals(source.lengthCm, mapped.lengthCm)
         assertEquals(source.heightCm, mapped.heightCm)

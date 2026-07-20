@@ -84,10 +84,39 @@ class UserPreferencesStoreRulesTest {
             }
         }
 
-        listOf("", " ", " en ", "EN").forEach { invalidLanguage ->
+        listOf("", " ", " en ", "EN", "TR", "tr-TR").forEach { invalidLanguage ->
             val preferences = UserPreferencesStoreRules.defaultPreferences()
                 .toBuilder()
                 .setLanguageCode(invalidLanguage)
+                .build()
+
+            assertThrows(StoreInvariantViolation::class.java) {
+                UserPreferencesStoreRules.validate(preferences)
+            }
+        }
+    }
+
+    @Test
+    fun TurkishAndEnglishUserChoicesArePreservedExactly() {
+        listOf("tr", "en").forEach { language ->
+            val preferences = UserPreferencesStoreRules.defaultPreferences()
+                .toBuilder()
+                .setLanguageCode(language)
+                .build()
+
+            assertEquals(
+                preferences,
+                UserPreferencesStoreRules.validate(preferences)
+            )
+        }
+    }
+
+    @Test
+    fun removedAndArbitraryLanguagesAreRejectedWithoutMigration() {
+        listOf("de", "fr", "ru", "zh", "es").forEach { language ->
+            val preferences = UserPreferencesStoreRules.defaultPreferences()
+                .toBuilder()
+                .setLanguageCode(language)
                 .build()
 
             assertThrows(StoreInvariantViolation::class.java) {

@@ -10,14 +10,12 @@ import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import com.aqua.aqualight.R
 import com.aqua.aqualight.application.notifications.CareReminderKind
 import com.aqua.aqualight.application.notifications.CareReminderNotification
 import com.aqua.aqualight.application.notifications.NotificationCategory
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.auth.FirebaseAuthenticatedOwnerProvider
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
-import com.aqua.aqualight.data.care.catalog.CareTaskTypeCatalog
 import com.aqua.aqualight.data.care.model.CareTask
 import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.user.UserDataScope
@@ -96,48 +94,17 @@ class CareReminderDeliveryWorker(
         // Account switching can occur while persistent state is read.
         if (ownerProvider.currentOwnerUid() != ownerUid) return
 
-        val typeUi = CareTaskTypeCatalog.get(ownerTask.type)
-        val baseTitle = ownerTask.title.ifBlank { typeUi.title(applicationContext) }
-        val title = if (
-            ownerTask.waterChangePercent != null &&
-            ownerTask.waterChangePercent > 0 &&
-            !baseTitle.contains("%")
-        ) {
-            applicationContext.getString(
-                R.string.maintenance_task_title_with_percent,
-                baseTitle,
-                ownerTask.waterChangePercent
-            )
-        } else {
-            baseTitle
-        }
-
-        val bodyText = when {
-            ownerTask.note.isNotBlank() -> ownerTask.note
-            ownerTask.description.isNotBlank() -> ownerTask.description
-            typeUi.defaultDescription(applicationContext).isNotBlank() -> {
-                typeUi.defaultDescription(applicationContext)
-            }
-            else -> applicationContext.getString(R.string.maintenance_notification_due_now)
-        }
-
-        val message = if (tank?.name?.isNotBlank() == true) {
-            applicationContext.getString(
-                R.string.maintenance_notification_message_with_aquarium,
-                tank.name,
-                bodyText
-            )
-        } else {
-            bodyText
-        }
-
+        val notificationText = CareReminderTextResolver(applicationContext).resolve(
+            task = ownerTask,
+            tank = tank
+        )
         platform.dispatchUseCase.dispatchCareReminder(
             CareReminderNotification(
                 ownerUid = ownerUid,
                 taskId = ownerTask.id,
                 kind = CareReminderKind.valueOf(ownerTask.type.name),
-                title = title,
-                message = message
+                title = notificationText.title,
+                message = notificationText.message
             )
         )
         platform.scheduler.scheduleCareTask(ownerUid, ownerTask.id)

@@ -54,8 +54,8 @@ class CreateTankViewModel(
 
     fun updateTankInfo(info: String) = updateDraft { copy(info = info) }
 
-    fun updateSetupDate(setupDateMillis: Long?) = updateDraft {
-        copy(setupDateMillis = setupDateMillis)
+    fun updateSetupDate(setupDateEpochDay: Long?) = updateDraft {
+        copy(setupDateEpochDay = setupDateEpochDay)
     }
 
     fun updateTankSize(

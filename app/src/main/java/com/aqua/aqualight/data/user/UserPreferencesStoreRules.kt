@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.user
 
 import com.aqua.aqualight.data.store.CommercialStoreSchema
 import com.aqua.aqualight.data.store.StoreInvariantViolation
+import com.aqua.aqualight.i18n.SupportedLocaleRegistry
 
 /** Authoritative invariant rules for encrypted user preferences. */
 object UserPreferencesStoreRules {
@@ -17,12 +18,11 @@ object UserPreferencesStoreRules {
     private const val MAX_DATE_MILLIS = 4_102_444_800_000L // 2100-01-01 UTC
 
     private val allowedThemeModes = setOf("dark", "light", "system")
-    private val localePattern = Regex("^[a-z]{2,3}([_-][A-Z]{2})?$")
 
     fun defaultPreferences(): UserPreferences = UserPreferences.newBuilder()
         .setSchemaVersion(CommercialStoreSchema.USER_PREFERENCES_VERSION)
         .setThemeMode(UserPreferencesManager.DEFAULT_THEME_MODE)
-        .setLanguageCode(UserPreferencesManager.DEFAULT_LANGUAGE_CODE)
+        .setLanguageCode(SupportedLocaleRegistry.deviceDefault())
         .build()
 
     fun validate(preferences: UserPreferences): UserPreferences {
@@ -63,7 +63,7 @@ object UserPreferencesStoreRules {
             field = "languageCode",
             value = preferences.languageCode
         )
-        if (!localePattern.matches(language)) {
+        if (SupportedLocaleRegistry.normalizeStoredLanguageTag(language) == null) {
             violation("languageCode is not a supported locale identifier.")
         }
 

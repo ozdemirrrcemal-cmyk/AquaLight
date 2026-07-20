@@ -20,10 +20,8 @@ import com.aqua.aqualight.databinding.FragmentTankDetailLifeBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCategories
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
+import com.aqua.aqualight.i18n.LocaleFormatter
 import com.google.android.material.card.MaterialCardView
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.TankDetailTabArgs
@@ -256,7 +254,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
         }
 
         val dateText = TextView(requireContext()).apply {
-            text = getLivestockAddedDateText(livestock.addedDateMillis)
+            text = getLivestockAddedDateText(livestock.addedDateEpochDay)
             setTextSizeResource(R.dimen.aqua_text_size_caption)
             setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_accent_positive))
             includeFontPadding = false
@@ -328,20 +326,15 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
     }
 
     private fun getLivestockAddedDateText(
-        addedDateMillis: Long?
+        addedDateEpochDay: Long?
     ): String {
-        if (addedDateMillis == null || addedDateMillis <= 0L) {
+        if (addedDateEpochDay == null || addedDateEpochDay <= 0L) {
             return getString(R.string.aquarium_livestock_added_date_not_set)
         }
 
-        val formatter = SimpleDateFormat(
-            "dd MMM yyyy",
-            Locale.getDefault()
-        )
-
         return getString(
             R.string.aquarium_livestock_added_date_format,
-            formatter.format(Date(addedDateMillis))
+            LocaleFormatter.formatDateEpochDay(requireContext(), addedDateEpochDay)
         )
     }
 

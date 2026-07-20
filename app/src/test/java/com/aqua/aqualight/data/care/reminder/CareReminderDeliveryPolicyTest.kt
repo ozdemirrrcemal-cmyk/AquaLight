@@ -90,7 +90,7 @@ class CareReminderDeliveryPolicyTest {
             name = "Tank 1",
             description = "",
             photoUri = null,
-            setupDateMillis = null,
+            setupDateEpochDay = null,
             widthCm = 60,
             lengthCm = 40,
             heightCm = 40,

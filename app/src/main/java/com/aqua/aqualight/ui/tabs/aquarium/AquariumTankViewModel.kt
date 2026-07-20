@@ -53,8 +53,8 @@ class AquariumTankViewModel(
     suspend fun updateTankVolumeUnit(tankId: Long, volumeUnit: String) =
         operations.updateTankVolumeUnit(tankId, volumeUnit)
 
-    suspend fun updateTankSetupDate(tankId: Long, setupDateMillis: Long) =
-        operations.updateTankSetupDate(tankId, setupDateMillis)
+    suspend fun updateTankSetupDate(tankId: Long, setupDateEpochDay: Long) =
+        operations.updateTankSetupDate(tankId, setupDateEpochDay)
 
     suspend fun updateTankStyle(tankId: Long, tankStyle: String) =
         operations.updateTankStyle(tankId, tankStyle)

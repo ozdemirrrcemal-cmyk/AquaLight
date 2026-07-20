@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="local_data_recovery_title">Yerel veriler kurtarıldı</string>
+    <string name="local_data_recovery_tanks_message">Hasarlı bir akvaryum kaydı güvenli biçimde sıfırlandı. Etkilenen tankların ve bunlarla ilişkili yerel verilerin yeniden eklenmesi gerekir.</string>
+    <string name="local_data_recovery_care_tasks_message">Hasarlı bir bakım görevi kaydı güvenli biçimde sıfırlandı. Lütfen etkilenen bakım hatırlatıcılarını gözden geçirip yeniden oluşturun.</string>
+    <string name="local_data_recovery_devices_message">Hasarlı bir yerel cihaz kaydı güvenli biçimde sıfırlandı. Güvenliğiniz için etkilenen cihazların yeniden eklenmesi gerekir.</string>
+    <string name="local_data_recovery_assignments_message">Hasarlı bir tank-cihaz atama kaydı güvenli biçimde sıfırlandı. Lütfen tank cihaz atamalarınızı gözden geçirin.</string>
+    <string name="local_data_recovery_combined_message">Bazı hasarlı yerel veriler güvenli biçimde sıfırlandı. Lütfen akvaryumlarınızı, bakım görevlerinizi, cihazlarınızı ve tank atamalarınızı gözden geçirin.</string>
+    <string name="session_startup_failed_title">Yerel Veriler Kullanılamıyor</string>
+    <string name="session_startup_failed_message">AquaLight yerel oturumunuzu güvenli biçimde açamadı. Lütfen yeniden giriş yapmayı deneyin. Sorun devam ederse uygulamayı yeniden başlatın.</string>
+    <string name="device_provisioning_cancelling_title">Kurulum iptal ediliyor</string>
+    <string name="device_provisioning_cancelling_message">AquaLight tamamlanmamış cihaz kurulumunu güvenli biçimde geri alıyor.</string>
+    <string name="device_provisioning_cancelling_step">Tamamlanmamış kurulum verileri kaldırılıyor…</string>
+    <string name="device_provisioning_cancel_failed_title">Kurulum iptal edilemedi</string>
+    <string name="device_provisioning_cancel_failed_message">Tamamlanmamış cihaz verileri güvenli biçimde kaldırılamadı. Lütfen depolama erişimini kontrol edip yeniden geri dönmeyi deneyin.</string>
+    <string name="devices_add_action">+ Ekle</string>
+    <string name="devices_add_content_description">Cihaz ekle</string>
+    <string name="devices_delete_partial_title">Bazı Cihazlar Kaldırılamadı</string>
+    <plurals name="devices_delete_removed_sentence">
+        <item quantity="one">%1$d cihaz kaldırıldı.</item>
+        <item quantity="other">%1$d cihaz kaldırıldı.</item>
+    </plurals>
+    <plurals name="devices_delete_remain_selected_sentence">
+        <item quantity="one">%1$d cihaz kaldırılamadı ve yeniden deneyebilmeniz için seçili bırakıldı.</item>
+        <item quantity="other">%1$d cihaz kaldırılamadı ve yeniden deneyebilmeniz için seçili bırakıldı.</item>
+    </plurals>
+    <string name="devices_delete_failed_title">Cihazlar Kaldırılamadı</string>
+    <plurals name="devices_delete_failed_message">
+        <item quantity="one">Seçili cihaz kaldırılamadı ve seçili bırakıldı. Lütfen yeniden deneyin.</item>
+        <item quantity="other">Seçili %1$d cihaz kaldırılamadı ve seçili bırakıldı. Lütfen yeniden deneyin.</item>
+    </plurals>
+</resources>

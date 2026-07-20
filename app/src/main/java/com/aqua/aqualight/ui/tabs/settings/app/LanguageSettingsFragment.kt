@@ -2,15 +2,13 @@ package com.aqua.aqualight.ui.tabs.settings.app
 
 import android.os.Bundle
 import android.view.View
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.os.LocaleListCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.user.UserSettingsOperations
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentLanguageSettingsBinding
+import com.aqua.aqualight.i18n.SupportedLocaleRegistry
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -28,158 +26,69 @@ class LanguageSettingsFragment : Fragment(R.layout.fragment_language_settings) {
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
+        super.onViewCreated(view, savedInstanceState)
 
-        _binding =
-            FragmentLanguageSettingsBinding.bind(view)
+        _binding = FragmentLanguageSettingsBinding.bind(view)
 
         setupHeader()
+        setupLanguageOptions()
         observeSelectedLanguage()
-        setupLanguageClicks()
     }
 
     private fun setupHeader() {
-        binding.appHeader.setupAquaHeader(
-            fragment = this
-        )
+        binding.appHeader.setupAquaHeader(fragment = this)
     }
 
     private fun observeSelectedLanguage() {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-            settingsOperations.languageCode.collectLatest { code ->
-                updateLanguageSelection(
-                    code
-                )
-            }
+            settingsOperations.languageCode.collectLatest(::updateLanguageSelection)
         }
     }
 
-    private fun setupLanguageClicks() =
-        with(binding) {
-
-            fun select(
-                code: String
-            ) {
-                viewLifecycleOwner.lifecycleScope.launch {
-                    settingsOperations.updateLanguage(
-                        code
-                    )
-
-                    applyLanguage(
-                        code
-                    )
-
-                    findNavController()
-                        .popBackStack()
-                }
-            }
-
-            cardTurkish.setOnClickListener {
-                select("tr")
-            }
-
-            radioTurkish.setOnClickListener {
-                select("tr")
-            }
-
-            cardEnglish.setOnClickListener {
-                select("en")
-            }
-
-            radioEnglish.setOnClickListener {
-                select("en")
-            }
-
-            cardGerman.setOnClickListener {
-                select("de")
-            }
-
-            radioGerman.setOnClickListener {
-                select("de")
-            }
-
-            cardFrench.setOnClickListener {
-                select("fr")
-            }
-
-            radioFrench.setOnClickListener {
-                select("fr")
-            }
-
-            cardRussian.setOnClickListener {
-                select("ru")
-            }
-
-            radioRussian.setOnClickListener {
-                select("ru")
-            }
-
-            cardChinese.setOnClickListener {
-                select("zh")
-            }
-
-            radioChinese.setOnClickListener {
-                select("zh")
-            }
-        }
-
-    private fun updateLanguageSelection(
-        code: String
-    ) = with(binding) {
-
-        radioTurkish.isChecked =
-            false
-
-        radioEnglish.isChecked =
-            false
-
-        radioGerman.isChecked =
-            false
-
-        radioFrench.isChecked =
-            false
-
-        radioRussian.isChecked =
-            false
-
-        radioChinese.isChecked =
-            false
-
-        when (code) {
-            "tr" -> radioTurkish.isChecked = true
-            "en" -> radioEnglish.isChecked = true
-            "de" -> radioGerman.isChecked = true
-            "fr" -> radioFrench.isChecked = true
-            "ru" -> radioRussian.isChecked = true
-            "zh" -> radioChinese.isChecked = true
-        }
-    }
-
-    private fun applyLanguage(
-        code: String
-    ) {
-        val safeCode =
-            code.ifBlank {
-                UserSettingsOperations.DEFAULT_LANGUAGE_CODE
-            }
-
-        val localeList =
-            LocaleListCompat.forLanguageTags(
-                safeCode
-            )
-
-        AppCompatDelegate.setApplicationLocales(
-            localeList
+    private fun setupLanguageOptions() = with(binding) {
+        bindLanguageOption(
+            code = SupportedLocaleRegistry.TURKISH_LANGUAGE_TAG,
+            card = cardTurkish,
+            radio = radioTurkish
         )
+        bindLanguageOption(
+            code = SupportedLocaleRegistry.ENGLISH_LANGUAGE_TAG,
+            card = cardEnglish,
+            radio = radioEnglish
+        )
+    }
+
+    private fun bindLanguageOption(
+        code: String,
+        card: View,
+        radio: View
+    ) {
+        val listener = View.OnClickListener {
+            selectLanguage(code)
+        }
+        card.setOnClickListener(listener)
+        radio.setOnClickListener(listener)
+    }
+
+    private fun selectLanguage(code: String) {
+        val supportedCode = SupportedLocaleRegistry.supportedCanonicalOrNull(code) ?: return
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            settingsOperations.updateLanguage(supportedCode)
+            findNavController().popBackStack()
+        }
+    }
+
+    private fun updateLanguageSelection(code: String) = with(binding) {
+        val selectedCode = SupportedLocaleRegistry.resolve(code)
+        radioTurkish.isChecked =
+            selectedCode == SupportedLocaleRegistry.TURKISH_LANGUAGE_TAG
+        radioEnglish.isChecked =
+            selectedCode == SupportedLocaleRegistry.ENGLISH_LANGUAGE_TAG
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-
-        _binding =
-            null
+        _binding = null
     }
 }

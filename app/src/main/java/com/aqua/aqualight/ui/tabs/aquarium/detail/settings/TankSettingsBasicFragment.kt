@@ -31,6 +31,7 @@ import com.aqua.aqualight.ui.common.permission.CapabilityPermissionCoordinator
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDatePolicy
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDimensionFormatter
+import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumTankTaxonomyText
 import com.yalantis.ucrop.UCrop
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -189,7 +190,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
 
                 TankSettingsEditorBottomSheet.Mode.TYPE -> {
                     val value = result.getString(TankSettingsEditorBottomSheet.RESULT_TEXT)
-                        ?.takeIf(String::isNotBlank)
+                        ?.let { AquariumTankTaxonomyText.canonicalTankType(requireContext(), it) }
                         ?: return@setFragmentResultListener
                     runTankUpdate(getString(R.string.aquarium_error_tank_type_save_failed)) {
                         aquariumTankViewModel.updateTankType(tankId, value)
@@ -222,14 +223,17 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
                 }
 
                 TankSettingsEditorBottomSheet.Mode.SETUP_DATE -> {
-                    val millis = result.getLong(TankSettingsEditorBottomSheet.RESULT_MILLIS)
+                    val epochDay = AquariumDatePolicy.epochDayFromPickerMillis(
+                result.getLong(TankSettingsEditorBottomSheet.RESULT_MILLIS)
+            )
                     runTankUpdate(getString(R.string.aquarium_error_setup_date_save_failed)) {
-                        aquariumTankViewModel.updateTankSetupDate(tankId, millis)
+                        aquariumTankViewModel.updateTankSetupDate(tankId, epochDay)
                     }
                 }
 
                 TankSettingsEditorBottomSheet.Mode.STYLE -> {
                     val value = result.getString(TankSettingsEditorBottomSheet.RESULT_TEXT)
+                        ?.let { AquariumTankTaxonomyText.canonicalTankStyle(requireContext(), it) }
                         ?.takeIf(String::isNotBlank)
                         ?: return@setFragmentResultListener
                     runTankUpdate(getString(R.string.aquarium_error_tank_style_save_failed)) {
@@ -269,16 +273,18 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
         }
 
         binding.tvSettingTankName.text = tank.name
-        binding.tvSettingTankType.text = tank.tankType.ifBlank {
-            getString(R.string.aquarium_no_value_placeholder)
-        }
+        binding.tvSettingTankType.text = tank.tankType
+            .takeIf(String::isNotBlank)
+            ?.let { AquariumTankTaxonomyText.tankTypeLabel(requireContext(), it) }
+            ?: getString(R.string.aquarium_no_value_placeholder)
         binding.tvSettingSizeTitle.text = getSizeTitleText(tank)
         binding.tvSettingSize.text = getSizeText(tank)
         binding.tvSettingVolume.text = getVolumeText(tank)
-        binding.tvSettingSetupDate.text = getSetupDateText(tank.setupDateMillis)
-        binding.tvSettingStyle.text = tank.tankStyle.ifBlank {
-            getString(R.string.aquarium_no_value_placeholder)
-        }
+        binding.tvSettingSetupDate.text = getSetupDateText(tank.setupDateEpochDay)
+        binding.tvSettingStyle.text = tank.tankStyle
+            .takeIf(String::isNotBlank)
+            ?.let { AquariumTankTaxonomyText.tankStyleLabel(requireContext(), it) }
+            ?: getString(R.string.aquarium_no_value_placeholder)
         binding.tvSettingIdea.text = tank.description.ifBlank {
             getString(R.string.aquarium_no_idea_added)
         }
@@ -473,7 +479,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
             fragmentManager = childFragmentManager,
             mode = TankSettingsEditorBottomSheet.Mode.TYPE,
             title = getString(R.string.aquarium_tank_type_title),
-            currentText = tank.tankType
+            currentText = AquariumTankTaxonomyText.tankTypeLabel(requireContext(), tank.tankType)
         )
     }
 
@@ -505,7 +511,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
             fragmentManager = childFragmentManager,
             mode = TankSettingsEditorBottomSheet.Mode.SETUP_DATE,
             title = getString(R.string.aquarium_setup_date_title),
-            currentMillis = tank.setupDateMillis,
+            currentMillis = AquariumDatePolicy.pickerMillis(tank.setupDateEpochDay),
             minYear = AquariumDatePolicy.minSetupYear(),
             maxYear = AquariumDatePolicy.maxSetupYear(),
             locale = AquariumDatePolicy.setupDateLocale
@@ -518,7 +524,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
             fragmentManager = childFragmentManager,
             mode = TankSettingsEditorBottomSheet.Mode.STYLE,
             title = getString(R.string.aquarium_tank_style_title),
-            currentText = tank.tankStyle,
+            currentText = AquariumTankTaxonomyText.tankStyleLabel(requireContext(), tank.tankStyle),
             validationMessage = getString(R.string.aquarium_error_tank_style_save_failed)
         )
     }
@@ -559,9 +565,9 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
         )
     }
 
-    private fun getSetupDateText(setupDateMillis: Long?): String {
+    private fun getSetupDateText(setupDateEpochDay: Long?): String {
         return AquariumDatePolicy.formatSetupDate(
-            millis = setupDateMillis,
+            epochDay = setupDateEpochDay,
             emptyText = getString(R.string.aquarium_no_value_placeholder)
         )
     }

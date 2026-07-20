@@ -12,10 +12,6 @@ interface UserSettingsOperations {
     suspend fun updateThemeMode(mode: String)
     suspend fun updateLanguage(code: String)
     suspend fun updateAutoUpdateEnabled(enabled: Boolean)
-
-    companion object {
-        const val DEFAULT_LANGUAGE_CODE = "en"
-    }
 }
 
 data class UsageAnalyticsSnapshot(

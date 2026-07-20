@@ -192,7 +192,7 @@ class CommercialStoreSerializerTest {
         .setOwnerUid("owner-a")
         .setName("Display Tank")
         .setDescription("")
-        .setSetupDateMillis(1_767_225_600_000L)
+        .setSetupDateEpochDay(20_454L)
         .setWidthCm(60)
         .setLengthCm(40)
         .setHeightCm(40)

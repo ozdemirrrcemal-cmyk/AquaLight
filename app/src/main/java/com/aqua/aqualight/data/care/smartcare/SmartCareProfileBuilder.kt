@@ -1,10 +1,14 @@
 package com.aqua.aqualight.data.care.smartcare
 
+import com.aqua.aqualight.application.aquarium.AquariumVolumeCalculator
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import java.util.Locale
-import java.util.concurrent.TimeUnit
-import kotlin.math.roundToInt
+import kotlin.math.round
 
 data class SmartCareTankProfile(
   val tankId: Long,
@@ -37,7 +41,7 @@ object SmartCareProfileBuilder {
     nowMillis: Long = System.currentTimeMillis()
   ): SmartCareTankProfile {
     val setupDay = calculateSetupDay(
-      setupDateMillis = tank.setupDateMillis,
+      setupDateEpochDay = tank.setupDateEpochDay,
       nowMillis = nowMillis
     )
 
@@ -193,40 +197,32 @@ object SmartCareProfileBuilder {
   }
 
   private fun calculateSetupDay(
-    setupDateMillis: Long?,
+    setupDateEpochDay: Long?,
     nowMillis: Long
   ): Int? {
-    if (setupDateMillis == null) {
+    if (setupDateEpochDay == null) {
       return null
     }
 
-    val diffMillis = nowMillis - setupDateMillis
+    val setupDate = LocalDate.ofEpochDay(setupDateEpochDay)
+    val nowDate = Instant.ofEpochMilli(nowMillis)
+      .atZone(ZoneId.systemDefault())
+      .toLocalDate()
+    val elapsedDays = ChronoUnit.DAYS.between(setupDate, nowDate)
 
-    if (diffMillis < 0) {
-      return 1
-    }
-
-    return TimeUnit.MILLISECONDS.toDays(diffMillis).toInt() + 1
+    return elapsedDays.coerceAtLeast(0L).toInt() + 1
   }
 
   private fun calculateGrossVolumeL(
     tank: SavedAquariumTank
   ): Double {
-    if (
-      tank.widthCm <= 0 ||
-      tank.lengthCm <= 0 ||
-      tank.heightCm <= 0
-    ) {
-      return 0.0
-    }
+    val volume = AquariumVolumeCalculator.grossLiters(
+      widthCm = tank.widthCm,
+      lengthCm = tank.lengthCm,
+      heightCm = tank.heightCm
+    )
 
-    val volume = (
-      tank.widthCm *
-        tank.lengthCm *
-        tank.heightCm
-      ) / 1000.0
-
-    return (volume * 10.0).roundToInt() / 10.0
+    return round(volume * 10.0) / 10.0
   }
 
   private fun buildConditions(

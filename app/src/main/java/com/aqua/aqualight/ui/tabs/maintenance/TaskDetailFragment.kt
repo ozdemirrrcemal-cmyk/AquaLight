@@ -1,10 +1,10 @@
 package com.aqua.aqualight.ui.tabs.maintenance
 
-import androidx.core.content.ContextCompat
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.View
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -12,25 +12,23 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
-import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
+import com.aqua.aqualight.application.care.CareTaskSource
+import com.aqua.aqualight.application.care.CareTaskStatus
 import com.aqua.aqualight.databinding.FragmentTaskDetailBinding
 import com.aqua.aqualight.databinding.ItemTaskDetailRowBinding
+import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderPillTextAction
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.application.care.CareTaskSource
-import com.aqua.aqualight.application.care.CareTaskStatus
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import androidx.navigation.fragment.navArgs
 
 class TaskDetailFragment :
   Fragment(R.layout.fragment_task_detail) {
@@ -70,7 +68,6 @@ class TaskDetailFragment :
     observeTanks()
     observeTask()
   }
-
 
   private fun setupFeedbackResultListener() {
     childFragmentManager.setFragmentResultListener(
@@ -468,32 +465,15 @@ class TaskDetailFragment :
     )
   }
 
-  private fun formatDate(
-    millis: Long
-  ): String {
-    return SimpleDateFormat(
-      "dd.MM.yyyy",
-      Locale.getDefault()
-    ).format(Date(millis))
-  }
+  private fun formatDate(millis: Long): String =
+    LocaleFormatter.formatDate(requireContext(), millis)
 
-  private fun formatTime(
-    millis: Long
-  ): String {
-    return SimpleDateFormat(
-      "HH:mm",
-      Locale.getDefault()
-    ).format(Date(millis))
-  }
+  private fun formatTime(millis: Long): String =
+    LocaleFormatter.formatTime(requireContext(), millis)
 
-  private fun formatDateTime(
-    millis: Long
-  ): String {
-    return SimpleDateFormat(
-      "dd.MM.yyyy HH:mm",
-      Locale.getDefault()
-    ).format(Date(millis))
-  }
+  private fun formatDateTime(millis: Long): String =
+    LocaleFormatter.formatDateTime(requireContext(), millis)
+
   override fun onDestroyView() {
     _binding = null
     super.onDestroyView()

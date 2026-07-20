@@ -64,7 +64,7 @@ class TankStoreRulesTest {
     }
 
     @Test
-    fun schemaConstantMatchesFirstCommercialVersion() {
+    fun schemaConstantMatchesCurrentCommercialVersion() {
         assertEquals(
             CommercialStoreSchema.AQUARIUM_TANKS_VERSION,
             TankStoreRules.defaultStore().schemaVersion
@@ -79,7 +79,7 @@ class TankStoreRulesTest {
         .setOwnerUid(ownerUid)
         .setName("Display Tank")
         .setDescription("Commercial test tank")
-        .setSetupDateMillis(1_767_225_600_000L)
+        .setSetupDateEpochDay(20_454L)
         .setWidthCm(60)
         .setLengthCm(40)
         .setHeightCm(40)

@@ -1,15 +1,19 @@
 package com.aqua.aqualight.app
 
 import android.app.Application
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.os.LocaleListCompat
+import android.content.Context
+import android.os.Build
+import com.aqua.aqualight.base.accessibility.AccessibilityRuntimeInstaller
 import com.aqua.aqualight.base.theme.AppThemeController
 import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.composition.DefaultAppContainer
 import com.aqua.aqualight.data.media.AppMediaRecoveryManager
 import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
+import com.aqua.aqualight.data.user.StartupAppearanceCache
 import com.aqua.aqualight.data.user.UserPreferencesManager
+import com.aqua.aqualight.i18n.AppLanguageController
+import com.aqua.aqualight.i18n.SupportedLocaleRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -26,8 +30,29 @@ class AquaApp : Application() {
     lateinit var appContainer: AppContainer
         private set
 
+    override fun attachBaseContext(base: Context) {
+        // Attach the framework ContextImpl first. On older Android versions the
+        // Application's applicationContext is not guaranteed to exist before this call.
+        super.attachBaseContext(base)
+
+        // Before API 33 AppCompat has no framework-managed per-app locale storage. The startup
+        // mirror is applied before any Activity is created so the first frame uses the right locale.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            val cachedLanguage = StartupAppearanceCache.create(this)
+                .read()
+                .languageCode
+            AppLanguageController.apply(
+                SupportedLocaleRegistry.resolve(cachedLanguage)
+            )
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
+
+        registerActivityLifecycleCallbacks(
+            AccessibilityRuntimeInstaller()
+        )
 
         appContainer = DefaultAppContainer(this)
         LocalDataRecoveryTracker.initialize(this)
@@ -35,10 +60,18 @@ class AquaApp : Application() {
         val appearanceCache = appContainer.startupAppearanceCache
         val cachedAppearance = appearanceCache.read()
 
-        // The first frame uses a tiny SharedPreferences mirror. Encrypted Proto
-        // DataStore is reconciled asynchronously and never blocks app startup.
         applyTheme(cachedAppearance.themeMode)
-        applyLanguage(cachedAppearance.languageCode)
+
+        // Android/AppCompat is the language source of truth. When no explicit app locale exists,
+        // initialize the supported device default and then mirror that effective language locally.
+        val startupLanguage = AppLanguageController.current()
+        if (AppLanguageController.currentOrNull() == null) {
+            AppLanguageController.apply(startupLanguage)
+        }
+        appearanceCache.write(
+            themeMode = cachedAppearance.themeMode,
+            languageCode = startupLanguage
+        )
 
         val userPrefs = appContainer.userPreferencesManager
         applicationScope.launch {
@@ -46,22 +79,22 @@ class AquaApp : Application() {
             val resolvedThemeMode = preferences.themeMode.ifBlank {
                 UserPreferencesManager.DEFAULT_THEME_MODE
             }
-            val resolvedLanguageCode = preferences.languageCode.ifBlank {
-                UserPreferencesManager.DEFAULT_LANGUAGE_CODE
+            val effectiveLanguage = AppLanguageController.current()
+
+            // A previous installation can leave a valid but stale preference value. Never let that
+            // mirror disagree with the locale that is actually rendering the application.
+            if (preferences.languageCode != effectiveLanguage) {
+                userPrefs.updateLanguage(effectiveLanguage)
             }
 
             appearanceCache.write(
                 themeMode = resolvedThemeMode,
-                languageCode = resolvedLanguageCode
+                languageCode = effectiveLanguage
             )
 
-            if (
-                cachedAppearance.themeMode != resolvedThemeMode ||
-                cachedAppearance.languageCode != resolvedLanguageCode
-            ) {
+            if (cachedAppearance.themeMode != resolvedThemeMode) {
                 withContext(Dispatchers.Main.immediate) {
                     applyTheme(resolvedThemeMode)
-                    applyLanguage(resolvedLanguageCode)
                 }
             }
         }
@@ -101,11 +134,5 @@ class AquaApp : Application() {
             context = this,
             mode = mode
         )
-    }
-
-    private fun applyLanguage(code: String) {
-        val safeCode = code.ifBlank { UserPreferencesManager.DEFAULT_LANGUAGE_CODE }
-        val localeList = LocaleListCompat.forLanguageTags(safeCode)
-        AppCompatDelegate.setApplicationLocales(localeList)
     }
 }

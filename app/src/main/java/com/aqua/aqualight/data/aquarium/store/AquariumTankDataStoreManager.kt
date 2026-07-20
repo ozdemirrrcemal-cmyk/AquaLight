@@ -1,9 +1,11 @@
 package com.aqua.aqualight.data.aquarium.store
 
 import android.content.Context
+import androidx.core.content.ContextCompat
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStore
+import com.aqua.aqualight.R
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumPlant
@@ -109,6 +111,10 @@ class AquariumTankDataStoreManager(
             throw IllegalStateException("Tank photo could not be copied with independent ownership.")
         }
 
+        // Freeze the active per-app language before entering the retryable DataStore transform.
+        // This keeps every retry deterministic and supports non-Activity contexts on API 17+.
+        val duplicateNameContext = ContextCompat.getContextForLanguage(context)
+
         try {
             context.aquariumTanksDataStore.updateData { currentStore ->
                 requireOwnerScope(ownerUid)
@@ -132,7 +138,8 @@ class AquariumTankDataStoreManager(
                     .setName(
                         createDuplicateTankName(
                             originalName = sourceTank.name,
-                            existingNames = existingNames
+                            existingNames = existingNames,
+                            localizedContext = duplicateNameContext
                         )
                     )
                     .setPhotoUri(duplicatedPhotoUri.orEmpty().trim())
@@ -256,7 +263,6 @@ class AquariumTankDataStoreManager(
     ): String? {
         val normalizedPhotoUri = photoUri.orEmpty().trim()
         var previousPhotoUri: String? = null
-
         updateCurrentOwnerTank(tankId) { storedTank ->
             previousPhotoUri = storedTank.photoUri.takeIf { uri ->
                 uri.isNotBlank() && uri != normalizedPhotoUri
@@ -349,11 +355,11 @@ class AquariumTankDataStoreManager(
 
     suspend fun updateTankSetupDate(
         tankId: Long,
-        setupDateMillis: Long
+        setupDateEpochDay: Long
     ) {
         updateCurrentOwnerTank(tankId) { storedTank ->
             storedTank.toBuilder()
-                .setSetupDateMillis(setupDateMillis)
+                .setSetupDateEpochDay(setupDateEpochDay)
                 .build()
         }
     }
@@ -541,7 +547,7 @@ class AquariumTankDataStoreManager(
             .setName(name.trim())
             .setDescription(description.trim())
             .setPhotoUri(photoUri.orEmpty().trim())
-            .setSetupDateMillis(setupDateMillis ?: 0L)
+            .setSetupDateEpochDay(setupDateEpochDay ?: 0L)
             .setWidthCm(widthCm)
             .setLengthCm(lengthCm)
             .setHeightCm(heightCm)
@@ -599,7 +605,7 @@ class AquariumTankDataStoreManager(
             .setName(name.trim())
             .setCategory(category.trim())
             .setQuantity(quantity)
-            .setAddedDateMillis(addedDateMillis ?: 0L)
+            .setAddedDateEpochDay(addedDateEpochDay ?: 0L)
             .setNote(note.trim())
             .build()
     }
@@ -612,7 +618,7 @@ class AquariumTankDataStoreManager(
             name = name,
             description = description,
             photoUri = photoUri.takeIf(String::isNotBlank),
-            setupDateMillis = setupDateMillis.takeIf { value -> value > 0L },
+            setupDateEpochDay = setupDateEpochDay.takeIf { value -> value > 0L },
             widthCm = widthCm,
             lengthCm = lengthCm,
             heightCm = heightCm,
@@ -649,7 +655,7 @@ class AquariumTankDataStoreManager(
                     name = livestock.name,
                     category = livestock.category,
                     quantity = livestock.quantity,
-                    addedDateMillis = livestock.addedDateMillis.takeIf { value -> value > 0L },
+                    addedDateEpochDay = livestock.addedDateEpochDay.takeIf { value -> value > 0L },
                     note = livestock.note
                 )
             }
@@ -715,7 +721,8 @@ class AquariumTankDataStoreManager(
 
     private fun createDuplicateTankName(
         originalName: String,
-        existingNames: Set<String>
+        existingNames: Set<String>,
+        localizedContext: Context
     ): String {
         val baseName = originalName.trim()
         require(baseName.isNotBlank()) {
@@ -724,11 +731,15 @@ class AquariumTankDataStoreManager(
 
         var copyNumber = 1
         while (true) {
-            val suffix = if (copyNumber == 1) {
-                " Copy"
+            val suffixText = if (copyNumber == 1) {
+                localizedContext.getString(R.string.aquarium_duplicate_name_suffix)
             } else {
-                " Copy $copyNumber"
+                localizedContext.getString(
+                    R.string.aquarium_duplicate_name_numbered_suffix,
+                    copyNumber
+                )
             }
+            val suffix = " " + suffixText
             val maxBaseLength = TankStoreRules.MAX_NAME_CHARS - suffix.length
             if (maxBaseLength <= 0) {
                 throw StoreInvariantViolation(

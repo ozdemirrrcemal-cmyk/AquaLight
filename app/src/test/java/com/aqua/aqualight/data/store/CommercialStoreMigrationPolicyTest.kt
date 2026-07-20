@@ -8,7 +8,7 @@ import org.junit.Test
 class CommercialStoreMigrationPolicyTest {
 
     @Test
-    fun firstCommercialSchemaDocumentsMigrationAsNotApplicable() {
+    fun firstCommercialSchemasStartAtVersionOneWithoutMigrationLayer() {
         assertEquals(1, CommercialStoreSchema.AQUARIUM_TANKS_VERSION)
         assertEquals(1, CommercialStoreSchema.CARE_TASKS_VERSION)
         assertEquals(1, CommercialStoreSchema.USER_PREFERENCES_VERSION)
@@ -17,18 +17,28 @@ class CommercialStoreMigrationPolicyTest {
             locateRepositoryRoot(),
             "docs/stage5-data-integrity-contract.md"
         ).readText()
+        val normalizedPolicy = policy.replace(Regex("\\s+"), " ")
 
         assertTrue(
-            policy.contains("Status: N/A for the first commercial release schema")
+            normalizedPolicy.contains(
+                "Status: N/A for the first commercial release schema"
+            )
         )
         assertTrue(
-            policy.contains("has not shipped a public Tank, Care Task, or encrypted User")
+            normalizedPolicy.contains(
+                "has not shipped a public Tank, Care Task, or encrypted User Preferences schema"
+            )
         )
         assertTrue(
-            policy.contains("The first post-release schema change must increment")
+            normalizedPolicy.contains(
+                "there is no legitimate source schema to migrate"
+            )
         )
+        assertTrue(normalizedPolicy.contains("no legacy `DataMigration` is installed"))
         assertTrue(
-            policy.contains("add an explicit `DataMigration`")
+            normalizedPolicy.contains(
+                "The first post-release schema change must increment"
+            )
         )
     }
 

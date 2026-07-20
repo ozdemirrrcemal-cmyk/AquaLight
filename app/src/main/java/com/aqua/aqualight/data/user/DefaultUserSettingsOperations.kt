@@ -2,8 +2,13 @@ package com.aqua.aqualight.data.user
 
 import com.aqua.aqualight.application.user.UsageAnalyticsSnapshot
 import com.aqua.aqualight.application.user.UserSettingsOperations
+import com.aqua.aqualight.i18n.AppLanguageController
+import com.aqua.aqualight.i18n.SupportedLocaleRegistry
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 
 /** Existing non-notification settings behavior wired behind the application contract. */
 class DefaultUserSettingsOperations(
@@ -13,6 +18,8 @@ class DefaultUserSettingsOperations(
 
     override val themeMode: Flow<String> = preferences.themeMode
     override val languageCode: Flow<String> = preferences.languageCode
+        .map { AppLanguageController.current() }
+        .distinctUntilChanged()
     override val autoUpdateEnabled: Flow<Boolean> = preferences.autoUpdateEnabled
     override val usageAnalytics: Flow<UsageAnalyticsSnapshot> =
         preferences.usageAnalyticsFlow.map { usage ->
@@ -32,8 +39,17 @@ class DefaultUserSettingsOperations(
     }
 
     override suspend fun updateLanguage(code: String) {
-        preferences.updateLanguage(code)
-        startupAppearanceCache.writeLanguageCode(code)
+        val supportedCode = requireNotNull(
+            SupportedLocaleRegistry.supportedCanonicalOrNull(code)
+        ) {
+            "Selected language must be an explicit supported locale."
+        }
+
+        preferences.updateLanguage(supportedCode)
+        startupAppearanceCache.writeLanguageCode(supportedCode)
+        withContext(Dispatchers.Main.immediate) {
+            AppLanguageController.apply(supportedCode)
+        }
     }
 
     override suspend fun updateAutoUpdateEnabled(enabled: Boolean) {
