@@ -21,6 +21,7 @@ import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.application.aquarium.AquariumVolumeCalculator
 import com.aqua.aqualight.i18n.LocaleFormatter
+import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumTankTaxonomyText
 import java.util.concurrent.TimeUnit
 import java.io.File
 import java.io.FileOutputStream
@@ -57,9 +58,12 @@ object TankPdfExporter {
     writer.drawSectionTitle(texts.sectionTankSummary)
 
     writer.drawLabelValue(texts.labelTankName, tank.name)
-    writer.drawLabelValue(texts.labelTankType, tank.tankType.ifBlank {
-      texts.noValue
-    })
+    writer.drawLabelValue(
+      texts.labelTankType,
+      tank.tankType.takeIf(String::isNotBlank)
+        ?.let { AquariumTankTaxonomyText.tankTypeLabel(context, it) }
+        ?: texts.noValue
+    )
     writer.drawLabelValue(texts.labelSize, getSizeText(context, tank))
     writer.drawLabelValue(texts.labelVolume, getVolumeText(context, tank))
     writer.drawLabelValue(texts.labelSetupDate, getSetupDateText(
@@ -67,9 +71,12 @@ object TankPdfExporter {
       setupDateEpochDay = tank.setupDateEpochDay,
       noValue = texts.noValue
     ))
-    writer.drawLabelValue(texts.labelTankStyle, tank.tankStyle.ifBlank {
-      texts.noValue
-    })
+    writer.drawLabelValue(
+      texts.labelTankStyle,
+      tank.tankStyle.takeIf(String::isNotBlank)
+        ?.let { AquariumTankTaxonomyText.tankStyleLabel(context, it) }
+        ?: texts.noValue
+    )
     writer.drawLabelValue(texts.labelIdea, tank.description.ifBlank {
       texts.noValue
     })

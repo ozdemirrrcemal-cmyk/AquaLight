@@ -41,11 +41,7 @@ object AquariumDimensionInputPolicy {
 
     internal fun parseCentimeters(value: String, unit: String, locale: Locale): Int? {
         val displayedValue = LocaleFormatter.parseDecimal(value, locale) ?: return null
-        val centimeters = toCentimeters(displayedValue, unit)
-        if (!AquariumMeasurementPolicy.isValidDimensionCm(centimeters)) return null
-
-        return centimeters.roundToInt()
-            .takeIf(AquariumMeasurementPolicy::isValidDimensionCm)
+        return canonicalCentimeters(displayedValue, unit)
     }
 
     internal fun convert(
@@ -55,19 +51,25 @@ object AquariumDimensionInputPolicy {
         locale: Locale
     ): String? {
         val displayedValue = LocaleFormatter.parseDecimal(value, locale) ?: return null
-        val centimeters = toCentimeters(displayedValue, fromUnit)
-        if (!AquariumMeasurementPolicy.isValidDimensionCm(centimeters)) return null
-
-        val convertedValue = if (isInches(toUnit)) {
-            fromCentimeters(centimeters, toUnit)
-        } else {
-            centimeters.roundToInt().toDouble()
-        }
+        val centimeters = canonicalCentimeters(displayedValue, fromUnit) ?: return null
+        val convertedValue = fromCentimeters(centimeters.toDouble(), toUnit)
 
         return LocaleFormatter.formatDecimal(
             value = convertedValue,
             locale = locale
         )
+    }
+
+    private fun canonicalCentimeters(value: Double, unit: String): Int? {
+        if (!value.isFinite()) return null
+        val centimeters = toCentimeters(value, unit)
+        if (centimeters <= 0.0 ||
+            centimeters > AquariumMeasurementPolicy.MAX_DIMENSION_CM.toDouble()
+        ) {
+            return null
+        }
+        return centimeters.roundToInt()
+            .takeIf(AquariumMeasurementPolicy::isValidDimensionCm)
     }
 
     private fun toCentimeters(value: Double, unit: String): Double {

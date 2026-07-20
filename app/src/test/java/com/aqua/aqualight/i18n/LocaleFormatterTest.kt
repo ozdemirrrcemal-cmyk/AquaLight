@@ -10,27 +10,15 @@ import org.junit.Test
 class LocaleFormatterTest {
 
     @Test
-    fun integersUseLocaleSpecificGrouping() {
-        assertEquals(
-            "1,234",
-            LocaleFormatter.formatInteger(1_234, Locale.US)
-        )
-        assertEquals(
-            "1.234",
-            LocaleFormatter.formatInteger(1_234, Locale.GERMANY)
-        )
+    fun integersAreLanguageNeutralWithoutGrouping() {
+        assertEquals("1234", LocaleFormatter.formatInteger(1_234, Locale.US))
+        assertEquals("1234", LocaleFormatter.formatInteger(1_234, Locale.GERMANY))
     }
 
     @Test
-    fun decimalsUseLocaleSpecificSeparators() {
-        assertEquals(
-            "12.5",
-            LocaleFormatter.formatDecimal(12.5, Locale.US)
-        )
-        assertEquals(
-            "12,5",
-            LocaleFormatter.formatDecimal(12.5, Locale.GERMANY)
-        )
+    fun decimalsAreLanguageNeutralAndUseDot() {
+        assertEquals("12.5", LocaleFormatter.formatDecimal(12.5, Locale.US))
+        assertEquals("12.5", LocaleFormatter.formatDecimal(12.5, Locale.GERMANY))
     }
 
     @Test
@@ -41,6 +29,8 @@ class LocaleFormatterTest {
         assertEquals(12.5, requireNotNull(LocaleFormatter.parseDecimal("12.5", turkish)), 0.0)
         assertEquals(12.5, requireNotNull(LocaleFormatter.parseDecimal("12.5", Locale.US)), 0.0)
         assertEquals(12.5, requireNotNull(LocaleFormatter.parseDecimal("12,5", Locale.US)), 0.0)
+        assertEquals(1.234, requireNotNull(LocaleFormatter.parseDecimal("1,234", Locale.US)), 0.0)
+        assertEquals(1.234, requireNotNull(LocaleFormatter.parseDecimal("1.234", turkish)), 0.0)
         assertNull(LocaleFormatter.parseDecimal("1,234.5", Locale.US))
         assertNull(LocaleFormatter.parseDecimal("1.234,5", turkish))
         assertNull(LocaleFormatter.parseDecimal("12,", turkish))

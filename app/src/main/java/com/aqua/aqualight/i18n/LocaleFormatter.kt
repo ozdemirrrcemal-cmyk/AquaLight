@@ -5,7 +5,6 @@ import android.content.res.Configuration
 import android.text.format.DateFormat as AndroidDateFormat
 import androidx.core.content.ContextCompat
 import java.text.DateFormat as JavaDateFormat
-import java.text.DecimalFormatSymbols
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.time.format.DateTimeFormatter
@@ -117,16 +116,20 @@ object LocaleFormatter {
         )
     }
 
+    /** Product numeric values are language-neutral and never use grouping separators. */
     internal fun formatInteger(value: Number, locale: Locale): String {
-        return NumberFormat.getIntegerInstance(locale).format(value)
+        return NumberFormat.getIntegerInstance(Locale.US).apply {
+            isGroupingUsed = false
+        }.format(value)
     }
 
+    /** Product numeric values use a stable dot decimal separator in every app language. */
     internal fun formatDecimal(
         value: Number,
         locale: Locale,
         maximumFractionDigits: Int = 2
     ): String {
-        return NumberFormat.getNumberInstance(locale).apply {
+        return NumberFormat.getNumberInstance(Locale.US).apply {
             isGroupingUsed = false
             minimumFractionDigits = 0
             this.maximumFractionDigits = maximumFractionDigits.coerceAtLeast(0)
@@ -136,20 +139,11 @@ object LocaleFormatter {
     internal fun parseDecimal(value: String, locale: Locale): Double? {
         val trimmed = value.trim()
         if (trimmed.isEmpty()) return null
+        if (trimmed.count { it == '.' } > 1 || trimmed.count { it == ',' } > 1) return null
+        if ('.' in trimmed && ',' in trimmed) return null
 
-        val localeSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
-        val alternateSeparator = if (localeSeparator == ',') '.' else ','
-        val localeSeparatorCount = trimmed.count { it == localeSeparator }
-        val alternateSeparatorCount = trimmed.count { it == alternateSeparator }
-
-        if (localeSeparatorCount > 1 || alternateSeparatorCount > 1) return null
-        if (localeSeparatorCount > 0 && alternateSeparatorCount > 0) return null
-
-        val normalized = trimmed
-            .replace(localeSeparator, '.')
-            .replace(alternateSeparator, '.')
+        val normalized = trimmed.replace(',', '.')
         if (!decimalInputPattern.matches(normalized)) return null
-
         return normalized.toDoubleOrNull()?.takeIf { it.isFinite() }
     }
 

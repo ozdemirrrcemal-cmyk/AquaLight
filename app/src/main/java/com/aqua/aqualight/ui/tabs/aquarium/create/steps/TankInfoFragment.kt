@@ -12,6 +12,7 @@ import com.aqua.aqualight.ui.common.bottomsheet.TankSettingsEditorBottomSheet
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDatePolicy
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDimensionFormatter
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumMeasurementPolicy
+import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumTankTaxonomyText
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
 
 class TankInfoFragment :
@@ -91,12 +92,13 @@ class TankInfoFragment :
 
                 TankSettingsEditorBottomSheet.Mode.TYPE -> {
                     result.getString(TankSettingsEditorBottomSheet.RESULT_TEXT)
-                        ?.takeIf(String::isNotBlank)
+                        ?.let { AquariumTankTaxonomyText.canonicalTankType(requireContext(), it) }
                         ?.let(viewModel::updateTankType)
                 }
 
                 TankSettingsEditorBottomSheet.Mode.STYLE -> {
                     result.getString(TankSettingsEditorBottomSheet.RESULT_TEXT)
+                        ?.let { AquariumTankTaxonomyText.canonicalTankStyle(requireContext(), it) }
                         ?.takeIf(String::isNotBlank)
                         ?.let(viewModel::updateTankStyle)
                 }
@@ -133,9 +135,10 @@ class TankInfoFragment :
         binding.tvSizeValue.text = formatSize()
         binding.tvVolumeValue.text = formatVolume()
 
-        binding.tvTankTypeValue.text = draft.tankType.ifBlank {
-            getString(R.string.aquarium_common_not_selected)
-        }
+        binding.tvTankTypeValue.text = draft.tankType
+            .takeIf(String::isNotBlank)
+            ?.let { AquariumTankTaxonomyText.tankTypeLabel(requireContext(), it) }
+            ?: getString(R.string.aquarium_common_not_selected)
         binding.tvTankTypeValue.setTextColor(
             if (draft.tankType.isBlank()) {
                 ContextCompat.getColor(requireContext(), R.color.aqua_content_placeholder)
@@ -150,7 +153,10 @@ class TankInfoFragment :
                 ContextCompat.getColor(requireContext(), R.color.aqua_content_placeholder)
             )
         } else {
-            binding.tvStyleValue.text = draft.tankStyle
+            binding.tvStyleValue.text = AquariumTankTaxonomyText.tankStyleLabel(
+                requireContext(),
+                draft.tankStyle
+            )
             binding.tvStyleValue.setTextColor(
                 ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark)
             )
@@ -190,7 +196,10 @@ class TankInfoFragment :
             fragmentManager = childFragmentManager,
             mode = TankSettingsEditorBottomSheet.Mode.TYPE,
             title = getString(R.string.aquarium_tank_type_title),
-            currentText = viewModel.tankDraft.tankType
+            currentText = AquariumTankTaxonomyText.tankTypeLabel(
+                requireContext(),
+                viewModel.tankDraft.tankType
+            )
         )
     }
 
@@ -199,7 +208,10 @@ class TankInfoFragment :
             fragmentManager = childFragmentManager,
             mode = TankSettingsEditorBottomSheet.Mode.STYLE,
             title = getString(R.string.aquarium_tank_style_title),
-            currentText = viewModel.tankDraft.tankStyle,
+            currentText = AquariumTankTaxonomyText.tankStyleLabel(
+                requireContext(),
+                viewModel.tankDraft.tankStyle
+            ),
             validationMessage = getString(R.string.aquarium_error_tank_style_save_failed)
         )
     }

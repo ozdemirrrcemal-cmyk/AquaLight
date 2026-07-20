@@ -23,6 +23,7 @@ import com.aqua.aqualight.i18n.DateOnly
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDatePolicy
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDimensionFormatter
+import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumTankTaxonomyText
 import com.aqua.aqualight.ui.tabs.aquarium.materials.MaterialSummaryFormatter
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
@@ -162,9 +163,13 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
         binding.tvTankDaysValue.text = getTankDaysText(tank.setupDateEpochDay)
         binding.tvTankVolumeValue.text = getTankVolumeText(tank, tank.volumeUnit)
         binding.tvTankSizeValue.text = getTankSizeText(tank)
-        binding.tvTankTypeValue.text = tank.tankType.ifBlank { VALUE_EMPTY }
+        binding.tvTankTypeValue.text = tank.tankType.takeIf(String::isNotBlank)
+            ?.let { AquariumTankTaxonomyText.tankTypeLabel(requireContext(), it) }
+            ?: VALUE_EMPTY
         binding.tvTankSetupDateValue.text = getTankSetupDateText(tank.setupDateEpochDay)
-        binding.tvTankStyleValue.text = tank.tankStyle.ifBlank { VALUE_EMPTY }
+        binding.tvTankStyleValue.text = tank.tankStyle.takeIf(String::isNotBlank)
+            ?.let { AquariumTankTaxonomyText.tankStyleLabel(requireContext(), it) }
+            ?: VALUE_EMPTY
 
         renderTankComponents(tank)
     }
