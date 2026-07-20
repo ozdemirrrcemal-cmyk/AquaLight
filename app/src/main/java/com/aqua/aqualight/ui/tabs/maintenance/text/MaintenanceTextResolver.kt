@@ -1,12 +1,23 @@
 package com.aqua.aqualight.ui.tabs.maintenance.text
 
 import androidx.annotation.ColorInt
+import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
+import com.aqua.aqualight.application.care.CareTaskSnapshot
 import com.aqua.aqualight.application.care.CareTaskSource
 import com.aqua.aqualight.application.care.CareTaskType
+import kotlinx.coroutines.flow.Flow
 
 /** Presentation-only text/icon boundary for maintenance screens. */
 interface MaintenanceTextResolver {
+    /** Re-emits presentation state whenever the active application language changes. */
+    val localeChanges: Flow<String>
+
     fun typePresentation(type: CareTaskType): CareTaskTypePresentation
+
+    fun automaticTaskPresentation(
+        task: CareTaskSnapshot,
+        tank: AquariumTankSnapshot?
+    ): CareTaskTextPresentation?
 
     fun waterChangeTitle(typeTitle: String, percent: Int): String
 
@@ -38,6 +49,11 @@ interface MaintenanceTextResolver {
 
     fun unknownAquarium(): String
 }
+
+data class CareTaskTextPresentation(
+    val title: String,
+    val description: String
+)
 
 data class CareTaskTypePresentation(
     val title: String,
