@@ -2,22 +2,23 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    match /feedback_screenshots/{ownerUid}/{fileName} {
+    match /feedback_screenshots/{ownerUid}/{objectPath=**} {
       function isOwner() {
         return request.auth != null && request.auth.uid == ownerUid;
       }
 
-      function isFeedbackJpeg() {
-        return fileName.matches('^[^/]+\\.jpg$')
+      function isDirectFeedbackJpeg() {
+        return objectPath.matches('^[^/]+\\.jpg$')
           && request.resource.size > 0
           && request.resource.size <= 3 * 1024 * 1024
           && request.resource.contentType == 'image/jpeg';
       }
 
-      // Feedback media is private to its immutable path owner. The application stores
-      // only Firebase download URLs after a successful owner-authorized upload.
+      // Owners may enumerate and delete their complete prefix during account deletion,
+      // including orphaned or future nested objects. New application uploads remain
+      // restricted to immutable, direct JPEG objects under the owner's prefix.
       allow read: if isOwner();
-      allow create: if isOwner() && isFeedbackJpeg();
+      allow create: if isOwner() && isDirectFeedbackJpeg();
       allow update: if false;
       allow delete: if isOwner();
     }
