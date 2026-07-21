@@ -6,9 +6,16 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == ownerUid;
     }
 
-    function textFeedbackIsValid() {
+    function validSubmissionId(submissionId) {
+      return submissionId is string
+        && submissionId.size() == 36
+        && submissionId.matches('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$');
+    }
+
+    function textFeedbackIsValid(ownerUid, submissionId) {
       let data = request.resource.data;
       return data.keys().hasAll([
+          'submissionId',
           'category',
           'email',
           'message',
@@ -20,6 +27,7 @@ service cloud.firestore {
           'createdAt'
         ])
         && data.keys().hasOnly([
+          'submissionId',
           'category',
           'email',
           'message',
@@ -30,7 +38,10 @@ service cloud.firestore {
           'userId',
           'createdAt'
         ])
-        && isAuthenticatedOwner(data.userId)
+        && isAuthenticatedOwner(ownerUid)
+        && validSubmissionId(submissionId)
+        && data.submissionId == submissionId
+        && data.userId == ownerUid
         && data.status == 'new'
         && data.platform == 'android'
         && data.category is string
@@ -59,13 +70,14 @@ service cloud.firestore {
         && data.createdAt == request.time;
     }
 
-    match /feedback_items/{feedbackId} {
-      allow create: if textFeedbackIsValid();
-      allow get, delete: if request.auth != null
-        && resource.data.userId == request.auth.uid;
-      allow list: if request.auth != null
-        && resource.data.userId == request.auth.uid;
-      allow update: if false;
+    match /feedback_items/{ownerUid} {
+      allow read, write: if false;
+
+      match /submissions/{submissionId} {
+        allow create: if textFeedbackIsValid(ownerUid, submissionId);
+        allow get, list, delete: if isAuthenticatedOwner(ownerUid);
+        allow update: if false;
+      }
     }
   }
 }
