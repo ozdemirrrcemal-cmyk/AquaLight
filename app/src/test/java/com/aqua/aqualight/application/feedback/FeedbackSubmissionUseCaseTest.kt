@@ -24,6 +24,7 @@ class FeedbackSubmissionUseCaseTest {
         )
 
         assertEquals(expected, actual)
+        assertEquals(SUBMISSION_ID, repository.request?.submissionId)
         assertEquals("Bug", repository.request?.category)
         assertEquals("user+tag@example.com", repository.request?.email)
         assertEquals("A reproducible feedback message", repository.request?.message)
@@ -35,6 +36,18 @@ class FeedbackSubmissionUseCaseTest {
         val useCase = FeedbackSubmissionUseCase(repository)
 
         val result = useCase.submit(request().copy(message = "short"))
+
+        val failure = (result as FeedbackSubmissionResult.Failure).failure
+        assertEquals(FeedbackSubmissionFailureKind.VALIDATION, failure.kind)
+        assertNull(repository.request)
+    }
+
+    @Test
+    fun invalidSubmissionIdentityIsRejectedBeforeRepositoryCall() = runTest {
+        val repository = FakeFeedbackRepository()
+        val result = FeedbackSubmissionUseCase(repository).submit(
+            request().copy(submissionId = "not-a-uuid")
+        )
 
         val failure = (result as FeedbackSubmissionResult.Failure).failure
         assertEquals(FeedbackSubmissionFailureKind.VALIDATION, failure.kind)
@@ -61,6 +74,7 @@ class FeedbackSubmissionUseCaseTest {
 
     private fun request(): FeedbackSubmissionRequest {
         return FeedbackSubmissionRequest(
+            submissionId = SUBMISSION_ID,
             category = "Bug",
             email = "user@example.com",
             message = "A reproducible feedback message",
@@ -80,5 +94,9 @@ class FeedbackSubmissionUseCaseTest {
             this.request = request
             return submitResult
         }
+    }
+
+    private companion object {
+        const val SUBMISSION_ID = "123e4567-e89b-42d3-a456-426614174000"
     }
 }
