@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Stage 12 privacy/legal guard.
 
-Default mode is the commercial release gate. Use --technical in pull-request CI to
-validate code and document invariants without pretending that external legal or
-Firebase Console verification has been completed.
+Use --technical in pull-request CI. Default mode additionally enforces external
+commercial-release evidence and qualified legal approval.
 """
 
 from __future__ import annotations
@@ -15,8 +14,6 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-APP_GRADLE = ROOT / "app" / "build.gradle"
-SETTINGS_GRADLE = ROOT / "settings.gradle"
 APP = ROOT / "app" / "src" / "main"
 APPROVAL = ROOT / "docs" / "stage12-release-approval.json"
 
@@ -34,24 +31,23 @@ class Guard:
         return path.read_text(encoding="utf-8") if path.is_file() else ""
 
 
-def html_h2_count(value: str) -> int:
+def h2_count(value: str) -> int:
     return len(re.findall(r"<h2(?:\s[^>]*)?>", value, flags=re.IGNORECASE))
 
 
 def technical_checks(guard: Guard) -> None:
-    app_gradle = guard.text(APP_GRADLE)
-    settings_gradle = guard.text(SETTINGS_GRADLE)
+    app_gradle = guard.text(ROOT / "app" / "build.gradle")
+    settings_gradle = guard.text(ROOT / "settings.gradle")
+    combined_gradle = app_gradle + "\n" + settings_gradle
 
-    forbidden_dependencies = (
+    for dependency in (
         "firebase-analytics",
         "firebase-crashlytics",
         "firebase-perf",
         "firebase-database",
         "firebase-messaging",
         "firebase-config",
-    )
-    combined_gradle = app_gradle + "\n" + settings_gradle
-    for dependency in forbidden_dependencies:
+    ):
         guard.require(
             dependency not in combined_gradle,
             f"Forbidden Firebase telemetry/unused dependency remains: {dependency}",
@@ -63,36 +59,34 @@ def technical_checks(guard: Guard) -> None:
             f"Required Firebase product dependency is missing: {dependency}",
         )
 
-    legal_assets = {
+    legal_paths = {
         "privacy_en": APP / "assets" / "privacy_policy_en.html",
         "privacy_tr": APP / "assets" / "privacy_policy_tr.html",
         "terms_en": APP / "assets" / "terms_of_use_en.html",
         "terms_tr": APP / "assets" / "terms_of_use_tr.html",
     }
-    legal_text = {name: guard.text(path) for name, path in legal_assets.items()}
+    legal = {name: guard.text(path) for name, path in legal_paths.items()}
 
     guard.require(
-        html_h2_count(legal_text["privacy_en"]) == html_h2_count(legal_text["privacy_tr"]),
+        h2_count(legal["privacy_en"]) == h2_count(legal["privacy_tr"]),
         "English and Turkish Privacy Policy section counts differ.",
     )
     guard.require(
-        html_h2_count(legal_text["terms_en"]) == html_h2_count(legal_text["terms_tr"]),
+        h2_count(legal["terms_en"]) == h2_count(legal["terms_tr"]),
         "English and Turkish Terms section counts differ.",
     )
-    guard.require("18 and over" in legal_text["privacy_en"], "English Privacy age policy is not 18+.")
-    guard.require("18 yaş" in legal_text["privacy_tr"], "Turkish Privacy age policy is not 18+.")
-    guard.require("at least 18" in legal_text["terms_en"], "English Terms age policy is not 18+.")
-    guard.require("En az 18" in legal_text["terms_tr"], "Turkish Terms age policy is not 18+.")
-
-    obsolete_remote_claim = "tank details, measurements, notes, and photos may be stored remotely"
+    guard.require("18 and over" in legal["privacy_en"], "English Privacy age policy is not 18+.")
+    guard.require("18 yaş" in legal["privacy_tr"], "Turkish Privacy age policy is not 18+.")
+    guard.require("at least 18" in legal["terms_en"], "English Terms age policy is not 18+.")
+    guard.require("En az 18" in legal["terms_tr"], "Turkish Terms age policy is not 18+.")
     guard.require(
-        obsolete_remote_claim not in legal_text["terms_en"].lower(),
+        "tank details, measurements, notes, and photos may be stored remotely"
+        not in legal["terms_en"].lower(),
         "Obsolete remote tank-storage claim remains in Terms.",
     )
 
     webview = guard.text(
-        APP / "java" / "com" / "aqua" / "aqualight" / "ui" / "common" / "web" /
-        "LegalDocumentWebView.kt"
+        APP / "java/com/aqua/aqualight/ui/common/web/LegalDocumentWebView.kt"
     )
     for token in (
         "WebViewAssetLoader",
@@ -101,45 +95,52 @@ def technical_checks(guard: Guard) -> None:
         "allowContentAccess = false",
         "blockNetworkLoads = true",
         "MIXED_CONTENT_NEVER_ALLOW",
-        "LegalDocumentAsset.PRIVACY_POLICY" if False else "PRIVACY_POLICY",
+        "PRIVACY_POLICY",
         "TERMS_OF_USE",
     ):
         guard.require(token in webview, f"Secure legal WebView invariant missing: {token}")
 
     privacy_fragment = guard.text(
-        APP / "java" / "com" / "aqua" / "aqualight" / "ui" / "tabs" / "settings" /
-        "privacy" / "PrivacyFragment.kt"
+        APP / "java/com/aqua/aqualight/ui/tabs/settings/privacy/PrivacyFragment.kt"
     )
     terms_fragment = guard.text(
-        APP / "java" / "com" / "aqua" / "aqualight" / "ui" / "tabs" / "settings" /
-        "app" / "TermsOfUseFragment.kt"
+        APP / "java/com/aqua/aqualight/ui/tabs/settings/app/TermsOfUseFragment.kt"
     )
-    guard.require("file:///android_asset" not in privacy_fragment + terms_fragment,
-                  "Legal fragments still load file:// Android assets.")
+    guard.require(
+        "file:///android_asset" not in privacy_fragment + terms_fragment,
+        "Legal fragments still load file:// Android assets.",
+    )
 
-    feedback_en = guard.text(APP / "res" / "values" / "stage12_privacy_strings.xml")
-    feedback_tr = guard.text(APP / "res" / "values-tr" / "stage12_privacy_strings.xml")
-    guard.require("feedback_privacy_notice" in feedback_en and "Firebase" in feedback_en,
-                  "English feedback pre-submit disclosure is missing.")
-    guard.require("feedback_privacy_notice" in feedback_tr and "Firebase" in feedback_tr,
-                  "Turkish feedback pre-submit disclosure is missing.")
+    feedback_en = guard.text(APP / "res/values/stage12_privacy_strings.xml")
+    feedback_tr = guard.text(APP / "res/values-tr/stage12_privacy_strings.xml")
+    guard.require(
+        "feedback_privacy_notice" in feedback_en and "Firebase" in feedback_en,
+        "English feedback pre-submit disclosure is missing.",
+    )
+    guard.require(
+        "feedback_privacy_notice" in feedback_tr and "Firebase" in feedback_tr,
+        "Turkish feedback pre-submit disclosure is missing.",
+    )
 
     storage_rules = guard.text(ROOT / "storage.rules")
     for token in (
         "rules_version = '2'",
-        "/feedback_screenshots/{ownerUid}/{objectPath=**}",
-        "allow read: if isOwner()",
-        "allow delete: if isOwner()",
+        "/feedback_screenshots/{ownerUid}/{nestedPath=**}",
+        "allow read, delete: if isOwner()",
+        "allow create, update: if false",
         "isDirectFeedbackJpeg",
     ):
         guard.require(token in storage_rules, f"Storage owner-cleanup invariant missing: {token}")
 
     cloud_cleaner = guard.text(
-        APP / "java" / "com" / "aqua" / "aqualight" / "data" / "user" /
-        "CloudUserDataCleaner.kt"
+        APP / "java/com/aqua/aqualight/data/user/CloudUserDataCleaner.kt"
     )
-    for token in ("feedbackObjectCleaner.deleteAll(uid)", "feedbackDocumentCleaner.deleteAll(uid)",
-                  ".list(LIST_PAGE_SIZE", "deleteTree(ownerRoot)"):
+    for token in (
+        "feedbackObjectCleaner.deleteAll(uid)",
+        "feedbackDocumentCleaner.deleteAll(uid)",
+        ".list(LIST_PAGE_SIZE",
+        "deleteTree(ownerRoot)",
+    ):
         guard.require(token in cloud_cleaner, f"Complete cloud deletion invariant missing: {token}")
 
     for required_doc in (
@@ -147,7 +148,10 @@ def technical_checks(guard: Guard) -> None:
         "stage12-firebase-provider-region-register.md",
         "stage12-kvkk-gdpr-compliance-matrix.md",
     ):
-        guard.require((ROOT / "docs" / required_doc).is_file(), f"Missing Stage 12 register: {required_doc}")
+        guard.require(
+            (ROOT / "docs" / required_doc).is_file(),
+            f"Missing Stage 12 register: {required_doc}",
+        )
 
 
 def release_checks(guard: Guard) -> None:
@@ -166,27 +170,44 @@ def release_checks(guard: Guard) -> None:
     guard.require(legal.get("status") == "approved", "Qualified legal review is not approved.")
     guard.require(bool(str(legal.get("reviewer", "")).strip()), "Legal reviewer identity is missing.")
     guard.require(bool(str(legal.get("review_date", "")).strip()), "Legal review date is missing.")
-    guard.require(bool(re.fullmatch(r"[0-9a-f]{40}", str(legal.get("reviewed_commit", "")))),
-                  "Legal reviewed_commit must be a full 40-character commit SHA.")
+    guard.require(
+        bool(re.fullmatch(r"[0-9a-f]{40}", str(legal.get("reviewed_commit", "")))),
+        "Legal reviewed_commit must be a full 40-character commit SHA.",
+    )
 
     for field in ("firestore_location", "storage_location"):
         value = str(firebase.get(field, "")).strip()
-        guard.require(bool(value) and value.upper() != "UNVERIFIED",
-                      f"Firebase production field is not verified: {field}")
+        guard.require(
+            bool(value) and value.upper() != "UNVERIFIED",
+            f"Firebase production field is not verified: {field}",
+        )
 
-    guard.require(retention.get("firestore_ttl_verified") is True,
-                  "Firestore TTL deployment has not been verified.")
-    guard.require(retention.get("storage_lifecycle_verified") is True,
-                  "Storage lifecycle deployment has not been verified.")
-    guard.require(retention.get("account_deletion_test_verified") is True,
-                  "Production account-deletion verification is missing.")
+    guard.require(
+        retention.get("firestore_ttl_verified") is True,
+        "Firestore TTL deployment has not been verified.",
+    )
+    guard.require(
+        retention.get("storage_lifecycle_verified") is True,
+        "Storage lifecycle deployment has not been verified.",
+    )
+    guard.require(
+        retention.get("account_deletion_test_verified") is True,
+        "Production account-deletion verification is missing.",
+    )
 
     policy_url = str(play.get("privacy_policy_url", "")).strip()
-    guard.require(policy_url.startswith("https://"), "Google Play privacy policy URL is missing or not HTTPS.")
-    guard.require(play.get("data_safety_reviewed") is True,
-                  "Google Play Data Safety declaration is not reviewed.")
-    guard.require(approval.get("release_approved") is True,
-                  "Stage 12 commercial release approval remains false.")
+    guard.require(
+        policy_url.startswith("https://"),
+        "Google Play privacy policy URL is missing or not HTTPS.",
+    )
+    guard.require(
+        play.get("data_safety_reviewed") is True,
+        "Google Play Data Safety declaration is not reviewed.",
+    )
+    guard.require(
+        approval.get("release_approved") is True,
+        "Stage 12 commercial release approval remains false.",
+    )
 
 
 def main() -> int:
@@ -194,7 +215,7 @@ def main() -> int:
     parser.add_argument(
         "--technical",
         action="store_true",
-        help="Run repository technical checks only; do not require external approval evidence.",
+        help="Run repository checks without requiring external approval evidence.",
     )
     args = parser.parse_args()
 
