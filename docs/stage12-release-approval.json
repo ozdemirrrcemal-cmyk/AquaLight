@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "legal_review": {
+    "status": "pending",
+    "reviewer": "",
+    "review_date": "",
+    "reviewed_commit": "",
+    "notes": "Must be completed by a qualified privacy/legal professional before commercial release."
+  },
+  "firebase": {
+    "firestore_location": "UNVERIFIED",
+    "storage_location": "UNVERIFIED",
+    "verification_date": "",
+    "verified_by": "",
+    "evidence_reference": ""
+  },
+  "retention": {
+    "firestore_ttl_verified": false,
+    "storage_lifecycle_verified": false,
+    "account_deletion_test_verified": false,
+    "verification_date": "",
+    "verified_by": "",
+    "evidence_reference": ""
+  },
+  "google_play": {
+    "privacy_policy_url": "",
+    "data_safety_reviewed": false,
+    "review_date": "",
+    "reviewed_by": ""
+  },
+  "release_approved": false
+}

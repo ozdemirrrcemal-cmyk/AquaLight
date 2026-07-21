@@ -9,7 +9,12 @@ on:
       - "app/**"
       - "protocol/**"
       - "tools/**"
+      - "docs/stage12-*"
+      - "storage.rules"
+      - "firestore.rules"
+      - "settings.gradle"
       - ".github/workflows/android.yml"
+      - ".github/workflows/android_release.yml"
 
 concurrency:
   group: android-ci-${{ github.ref }}
@@ -80,6 +85,7 @@ jobs:
           python3 tools/stage9_feedback_media_guard.py
           python3 tools/design_system_resource_guard.py
           python3 tools/localization_accessibility_guard.py
+          python3 tools/stage12_privacy_legal_guard.py --technical
 
       # İsteğe bağlı: bağımlılık modül cache'lerini temizle (refresh-deps)
       - name: 🔄 Force refresh dependencies (optional)
