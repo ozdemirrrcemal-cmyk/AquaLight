@@ -226,13 +226,25 @@
 
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- DATA DISCLOSURE -->
+            <TextView
+                android:id="@+id/tvFeedbackPrivacyNotice"
+                style="@style/TextAppearance.Aqua.Feedback.Footer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_16"
+                android:gravity="start"
+                android:lineSpacingExtra="@dimen/aqua_size_3"
+                android:text="@string/feedback_privacy_notice"
+                android:contentDescription="@string/feedback_privacy_notice" />
+
             <!-- SEND BUTTON -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSend"
                 style="@style/Widget.Aqua.Button.Primary"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/aqua_button_height"
-                android:layout_marginTop="@dimen/aqua_size_24"
+                android:layout_marginTop="@dimen/aqua_size_16"
                 android:text="@string/feedback_send"
                 android:textAllCaps="false"
                 android:contentDescription="@string/feedback_send_desc"

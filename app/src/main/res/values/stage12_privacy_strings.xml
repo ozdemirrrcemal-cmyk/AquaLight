@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feedback_privacy_notice">By sending, you submit the category, message, optional email, app version, app language and, when signed in, your user ID to Firebase. An attached screenshot is uploaded to Firebase Storage. Do not include unnecessary personal or sensitive information. See Privacy Policy in Settings for details.</string>
+</resources>
