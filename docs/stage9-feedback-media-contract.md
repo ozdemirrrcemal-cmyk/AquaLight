@@ -6,6 +6,9 @@ AquaLight has not been commercially released. This is the first production relea
 contains no backward-compatibility aliases, legacy cache paths, migration wrappers or support for the
 removed feedback screenshot feature.
 
+The feedback implementation must remain compatible with the Firebase Spark plan. Cloud Functions,
+App Check and Play Integrity are not dependencies of this feature.
+
 ## Commercial objective
 
 Feedback submission is authenticated and text-only. Profile and aquarium photo flows remain
@@ -23,13 +26,19 @@ Android UI ownership of business or platform operations.
 5. Category is limited to 80 characters, optional email to 254 characters with a 64-character local
    part, and message to 10–500 characters.
 6. The repository rejects a missing authenticated owner and never writes anonymous feedback.
-7. The repository writes exactly one field-allowlisted Firestore document on an IO dispatcher.
-8. Firestore rules require the document owner to match `request.auth.uid`, deny updates, allow only
-   owner-scoped reads/deletes and enforce the same field limits.
-9. Firebase callbacks terminate inside the data adapter and never reach a Fragment or Activity.
-10. Cancellation propagates and is never converted into a normal persistence failure.
-11. No upload, local upload journal, Firebase Storage dependency, remote object path, transaction
-    fence, migration or orphan-recovery path is part of feedback submission.
+7. Each unchanged form owns one UUID v4 submission identity stored in `SavedStateHandle`.
+8. Firestore data is stored below `feedback_items/{ownerUid}/submissions/{submissionId}`.
+9. Submission uses a Firestore transaction rather than an offline-capable direct `set()`.
+10. Firestore transactions fail offline; a 15-second client timeout also terminates the loading state.
+11. If an earlier transaction completes after a timeout, retrying the unchanged form reads the same
+    document and returns success without creating a duplicate.
+12. Editing category, email or message invalidates the UUID and starts a new logical submission.
+13. Firestore rules require the path owner to match `request.auth.uid`, deny updates and enforce the
+    same field limits.
+14. The loading state is cleared before success/failure events are rendered. Failures preserve the
+    form and re-enable the send button.
+15. No Cloud Function, App Check provider, Play Integrity registration, Firebase Storage dependency,
+    upload journal, migration or orphan-recovery path is part of feedback submission.
 
 ## Shared profile and aquarium photos
 
@@ -57,26 +66,28 @@ Android UI ownership of business or platform operations.
 
 ## Account deletion
 
-The Android account-deletion path queries feedback with `whereEqualTo("userId", ownerUid)` and then
-batch-deletes the owner's documents before deleting the Firebase account. Firestore rules therefore
-permit only owner-constrained list/get/delete operations and deny broad or cross-owner access. Rules
-emulator tests must prove the exact query and delete contract.
+The Android account-deletion path reads only the authenticated owner's
+`feedback_items/{ownerUid}/submissions` collection from the Firestore server. Documents are deleted
+in bounded Firestore transactions before the Firebase account is deleted. Server-only reads prevent
+stale local cache data from being treated as authoritative; transaction deletes are not queued as
+offline writes.
 
 ## Required tests
 
 - text form restoration without automatic submission replay
-- shared policy normalization, email constraints and 10–500 message enforcement
+- shared policy normalization, UUID validation, email constraints and 10–500 message enforcement
 - synchronous duplicate-submit protection and immutable validated request snapshots
-- authenticated Firestore persistence and missing-session rejection
-- typed validation, authentication, persistence failure and cancellation propagation
-- Firestore field allowlist, anonymous denial, owner-scoped query/delete and cross-owner denial
+- network failure and timeout terminate loading, preserve the form and reuse the same UUID
+- editing after a failed attempt creates a new UUID
+- authenticated Firestore transaction persistence and missing-session rejection
+- typed validation, authentication, network, persistence failure and cancellation propagation
+- Firestore field allowlist, anonymous denial, owner-path isolation, immutable documents and delete
+- server-only account cleanup with transaction deletion
 - bounds-first and sampled decoding for oversized images
-- declared-length and unknown-length byte enforcement
-- corrupt image, binary MIME and explicit non-image rejection
 - source closure and temporary-file cleanup on every terminal path
 - camera/crop state recreation, commit and rollback cleanup
 - owner-isolated pending-media reconciliation
-- architecture guard proving all `FeedbackMedia*` and `feedback_media` compatibility tokens absent
+- architecture guard proving Cloud Functions/App Check and all media compatibility shims are absent
 - API 27 and current API instrumentation coverage
 - minified release-smoke validation
 
@@ -84,4 +95,5 @@ emulator tests must prove the exact query and delete contract.
 
 Stage 9 is complete only when architecture guards, Firestore rules tests, lint, Debug/Release unit
 tests, API 27/current API instrumentation, minified release build and CodeQL are green. Focused
-physical tests cover authenticated text feedback plus profile and aquarium camera/gallery flows.
+physical tests cover offline/online feedback, unchanged-form retry, account deletion and profile/tank
+camera/gallery flows.
