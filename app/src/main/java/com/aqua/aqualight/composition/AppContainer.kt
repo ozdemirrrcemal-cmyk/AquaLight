@@ -26,9 +26,7 @@ import com.aqua.aqualight.data.user.StartupAppearanceCache
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.platform.auth.DefaultGoogleIdentityClient
 import com.aqua.aqualight.platform.auth.GoogleIdentityClient
-import com.aqua.aqualight.platform.media.AndroidFeedbackMediaProcessor
 import com.aqua.aqualight.platform.media.AndroidImageMediaProcessor
-import com.aqua.aqualight.platform.media.FeedbackMediaProcessor
 import com.aqua.aqualight.platform.media.ImageMediaProcessor
 import com.aqua.aqualight.platform.vision.MlKitProvisioningQrFrameDecoderFactory
 import com.aqua.aqualight.platform.vision.ProvisioningQrFrameDecoderFactory
@@ -50,14 +48,7 @@ interface AppContainer {
     val authenticatedOwnerIdentity: AuthenticatedOwnerIdentity
     val userProfileOperations: UserProfileOperations
     val feedbackSubmissionOperations: FeedbackSubmissionUseCase
-
-    /** Preferred domain-neutral media entry point for profile and aquarium photo flows. */
     val imageMediaProcessor: ImageMediaProcessor
-        get() = feedbackMediaProcessor
-
-    /** Source-compatible legacy name retained during the media naming migration. */
-    val feedbackMediaProcessor: FeedbackMediaProcessor
-
     val provisioningDraftOperations: ProvisioningDraftOperations
     val provisioningQrFrameDecoderFactory: ProvisioningQrFrameDecoderFactory
     val authViewModelFactory: ViewModelProvider.Factory
@@ -120,23 +111,11 @@ internal class DefaultAppContainer(
         )
     }
 
-    private val boundedImageMediaProcessor: FeedbackMediaProcessor by lazy(
-        LazyThreadSafetyMode.SYNCHRONIZED
-    ) {
-        AndroidFeedbackMediaProcessor(appContext)
-    }
-
     override val imageMediaProcessor: ImageMediaProcessor by lazy(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
-        AndroidImageMediaProcessor(
-            context = appContext,
-            delegate = boundedImageMediaProcessor
-        )
+        AndroidImageMediaProcessor(appContext)
     }
-
-    override val feedbackMediaProcessor: FeedbackMediaProcessor
-        get() = imageMediaProcessor
 
     private val ownerGraphResolver: OwnerDependencyGraphResolver by lazy(
         LazyThreadSafetyMode.SYNCHRONIZED
