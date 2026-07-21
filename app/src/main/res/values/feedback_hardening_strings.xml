@@ -3,4 +3,5 @@
     <string name="feedback_error_message_length">Feedback must be between 10 and 500 characters.</string>
     <string name="feedback_error_auth_required">Your session has expired. Please sign in again before sending feedback.</string>
     <string name="feedback_error_validation">Please review the form and correct the highlighted fields.</string>
+    <string name="feedback_error_network">No internet connection is available. Check your connection and try again.</string>
 </resources>
