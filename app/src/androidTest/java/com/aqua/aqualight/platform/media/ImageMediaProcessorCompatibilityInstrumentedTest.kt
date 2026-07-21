@@ -38,6 +38,7 @@ class ImageMediaProcessorCompatibilityInstrumentedTest {
                 legacyFile
             )
             assertEquals("content", contentUri.scheme)
+            assertEquals("feedback_media", contentUri.pathSegments.first())
 
             val processor = AndroidImageMediaProcessor(
                 context = context,
