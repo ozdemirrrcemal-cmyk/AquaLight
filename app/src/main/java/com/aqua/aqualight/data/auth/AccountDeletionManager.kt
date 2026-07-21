@@ -11,8 +11,12 @@ import com.google.firebase.auth.auth
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 
 /**
@@ -101,37 +105,6 @@ class AccountDeletionManager private constructor(
             )
         }
 
-        // Complete every potentially slow cleanup before Firebase changes the authenticated
-        // owner. ReAuthenticateFragment keeps the original navigation flow and must receive the
-        // deletion result immediately after user.delete() completes.
-        val firstLocalCleanupResult = userDataCleaner.clearLocalUserData(
-            ownerUid = ownerUid,
-            clearUserPreferences = true,
-            stopSessionBoundServices = true
-        )
-        val localCleanupResult = if (firstLocalCleanupResult.hasErrors) {
-            userDataCleaner.clearLocalUserData(
-                ownerUid = ownerUid,
-                clearUserPreferences = true,
-                stopSessionBoundServices = true
-            )
-        } else {
-            firstLocalCleanupResult
-        }
-
-        val googleRevokeError = if (revokeGoogleAccess) {
-            runBoundedOperation(
-                timeoutMillis = GOOGLE_REVOKE_TIMEOUT_MILLIS
-            ) {
-                GoogleSignInClientFactory.create(
-                    appContext
-                ).revokeAccess()
-                    .awaitCompletion()
-            }
-        } else {
-            null
-        }
-
         val accountDeleteError = runBoundedOperation(
             timeoutMillis = FIREBASE_ACCOUNT_DELETE_TIMEOUT_MILLIS
         ) {
@@ -141,24 +114,56 @@ class AccountDeletionManager private constructor(
         if (accountDeleteError != null) {
             return DeleteResult(
                 accountDeleteError = accountDeleteError,
-                cloudCleanupResult = cloudCleanupResult,
-                localCleanupResult = localCleanupResult,
-                googleRevokeError = googleRevokeError
+                cloudCleanupResult = cloudCleanupResult
             )
         }
 
-        // Firebase deletion already transitions the session to unauthenticated. Keep this final
-        // fallback synchronous so no long-running work remains after the auth-state transition.
-        val firebaseSignOutError = runCatching {
-            firebaseAuth.signOut()
-        }.exceptionOrNull()
+        val postDeleteResult = withContext(NonCancellable) {
+            val firstLocalCleanupResult = userDataCleaner.clearLocalUserData(
+                ownerUid = ownerUid,
+                clearUserPreferences = true,
+                stopSessionBoundServices = true
+            )
+            val localCleanupResult = if (firstLocalCleanupResult.hasErrors) {
+                userDataCleaner.clearLocalUserData(
+                    ownerUid = ownerUid,
+                    clearUserPreferences = true,
+                    stopSessionBoundServices = true
+                )
+            } else {
+                firstLocalCleanupResult
+            }
 
-        return DeleteResult(
-            cloudCleanupResult = cloudCleanupResult,
-            localCleanupResult = localCleanupResult,
-            googleRevokeError = googleRevokeError,
-            firebaseSignOutError = firebaseSignOutError
-        )
+            val googleRevokeError = if (revokeGoogleAccess) {
+                runBoundedOperation(
+                    timeoutMillis = GOOGLE_REVOKE_TIMEOUT_MILLIS
+                ) {
+                    GoogleSignInClientFactory.create(
+                        appContext
+                    ).revokeAccess()
+                        .awaitCompletion()
+                }
+            } else {
+                null
+            }
+
+            val firebaseSignOutError = runCatching {
+                firebaseAuth.signOut()
+            }.exceptionOrNull()
+
+            DeleteResult(
+                cloudCleanupResult = cloudCleanupResult,
+                localCleanupResult = localCleanupResult,
+                googleRevokeError = googleRevokeError,
+                firebaseSignOutError = firebaseSignOutError
+            )
+        }
+
+        // Account deletion may replace the root graph while post-delete cleanup is running.
+        // Re-check the caller lifecycle before returning so the unchanged Fragment never resumes
+        // against a destroyed view binding.
+        currentCoroutineContext().ensureActive()
+        return postDeleteResult
     }
 
     private suspend fun Task<Void>.awaitCompletion() {
