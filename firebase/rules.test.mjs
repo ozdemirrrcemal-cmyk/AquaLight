@@ -5,10 +5,15 @@ import {
   initializeTestEnvironment,
 } from '@firebase/rules-unit-testing';
 import {
+  collection,
+  deleteDoc,
   doc,
   getDoc,
+  getDocs,
+  query,
   serverTimestamp,
   setDoc,
+  where,
 } from 'firebase/firestore';
 
 const PROJECT_ID = 'demo-aqualight-feedback';
@@ -22,17 +27,18 @@ const testEnvironment = await initializeTestEnvironment({
   },
 });
 
-function textFeedback(ownerUid, message = 'A reproducible commercial feedback issue.') {
+function textFeedback(ownerUid, overrides = {}) {
   return {
     category: 'Bug',
     email: null,
-    message,
+    message: 'A reproducible commercial feedback issue.',
     platform: 'android',
     appVersion: '1.0.0',
     locale: 'tr-TR',
     status: 'new',
     userId: ownerUid,
     createdAt: serverTimestamp(),
+    ...overrides,
   };
 }
 
@@ -43,8 +49,17 @@ try {
   const otherDb = testEnvironment.authenticatedContext(OTHER_OWNER).firestore();
   const anonymousDb = testEnvironment.unauthenticatedContext().firestore();
   const ownerRef = doc(ownerDb, 'feedback_items', 'owner-feedback');
+  const otherRef = doc(otherDb, 'feedback_items', 'other-feedback');
 
   await assertSucceeds(setDoc(ownerRef, textFeedback(OWNER)));
+  await assertSucceeds(
+    setDoc(
+      doc(ownerDb, 'feedback_items', 'owner-feedback-with-email'),
+      textFeedback(OWNER, { email: 'user+tag@example.com' }),
+    ),
+  );
+  await assertSucceeds(setDoc(otherRef, textFeedback(OTHER_OWNER)));
+
   await assertSucceeds(getDoc(ownerRef));
   await assertFails(getDoc(doc(otherDb, 'feedback_items', 'owner-feedback')));
 
@@ -54,8 +69,7 @@ try {
       textFeedback(OWNER),
     ),
   );
-
-  await assertSucceeds(
+  await assertFails(
     setDoc(
       doc(anonymousDb, 'feedback_items', 'anonymous-feedback'),
       textFeedback('anonymous'),
@@ -63,15 +77,14 @@ try {
   );
   await assertFails(
     setDoc(
-      doc(anonymousDb, 'feedback_items', 'anonymous-spoof'),
-      textFeedback(OWNER),
+      doc(ownerDb, 'feedback_items', 'invalid-email'),
+      textFeedback(OWNER, { email: 'invalid-email' }),
     ),
   );
-
   await assertFails(
     setDoc(
-      doc(anonymousDb, 'feedback_items', 'oversized-message'),
-      textFeedback('anonymous', 'x'.repeat(4001)),
+      doc(ownerDb, 'feedback_items', 'oversized-message'),
+      textFeedback(OWNER, { message: 'x'.repeat(501) }),
     ),
   );
   await assertFails(
@@ -80,6 +93,22 @@ try {
       { ...textFeedback(OWNER), unexpected: true },
     ),
   );
+
+  const ownerQuery = query(
+    collection(ownerDb, 'feedback_items'),
+    where('userId', '==', OWNER),
+  );
+  await assertSucceeds(getDocs(ownerQuery));
+
+  const crossOwnerQuery = query(
+    collection(otherDb, 'feedback_items'),
+    where('userId', '==', OWNER),
+  );
+  await assertFails(getDocs(crossOwnerQuery));
+  await assertFails(getDocs(collection(ownerDb, 'feedback_items')));
+
+  await assertFails(deleteDoc(doc(otherDb, 'feedback_items', 'owner-feedback')));
+  await assertSucceeds(deleteDoc(ownerRef));
 
   console.log('Feedback Firestore rules tests passed.');
 } finally {
