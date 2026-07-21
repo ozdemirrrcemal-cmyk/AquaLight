@@ -1,23 +1,59 @@
 package com.aqua.aqualight.application.feedback
 
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertSame
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class FeedbackSubmissionUseCaseTest {
 
     @Test
-    fun submitForwardsRequestToRepository() = runTest {
+    fun submitNormalizesAndForwardsValidRequestToRepository() = runTest {
         val repository = FakeFeedbackRepository()
         val useCase = FeedbackSubmissionUseCase(repository)
-        val request = request()
         val expected = FeedbackSubmissionResult.Success("document-1")
         repository.submitResult = expected
 
-        val actual = useCase.submit(request)
+        val actual = useCase.submit(
+            request().copy(
+                category = "  Bug  ",
+                email = "  user+tag@example.com  ",
+                message = "  A reproducible feedback message  "
+            )
+        )
 
-        assertSame(request, repository.request)
-        assertSame(expected, actual)
+        assertEquals(expected, actual)
+        assertEquals("Bug", repository.request?.category)
+        assertEquals("user+tag@example.com", repository.request?.email)
+        assertEquals("A reproducible feedback message", repository.request?.message)
+    }
+
+    @Test
+    fun invalidRequestReturnsValidationFailureWithoutRepositoryCall() = runTest {
+        val repository = FakeFeedbackRepository()
+        val useCase = FeedbackSubmissionUseCase(repository)
+
+        val result = useCase.submit(request().copy(message = "short"))
+
+        val failure = (result as FeedbackSubmissionResult.Failure).failure
+        assertEquals(FeedbackSubmissionFailureKind.VALIDATION, failure.kind)
+        assertNull(repository.request)
+    }
+
+    @Test
+    fun commercialEmailPolicyAcceptsPlusAddressAndRejectsUnsafeForms() {
+        assertTrue(FeedbackSubmissionPolicy.isEmailValid("user+tag@sub.example.co.uk"))
+        assertTrue(FeedbackSubmissionPolicy.isEmailValid(""))
+        assertEquals(false, FeedbackSubmissionPolicy.isEmailValid("user@localhost"))
+        assertEquals(
+            false,
+            FeedbackSubmissionPolicy.isEmailValid("a".repeat(65) + "@example.com")
+        )
+        assertEquals(
+            false,
+            FeedbackSubmissionPolicy.isEmailValid("a".repeat(243) + "@example.com")
+        )
     }
 
     private fun request(): FeedbackSubmissionRequest {
