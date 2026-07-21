@@ -54,7 +54,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
             ownerToken = tankId.toString(),
             ownerUid = container.authenticatedOwnerIdentity.requireOwnerUid(),
             cropSpec = MediaCropSpec.TANK,
-            mediaProcessor = container.feedbackMediaProcessor
+            mediaProcessor = container.imageMediaProcessor
         )
     }
 
@@ -224,8 +224,8 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
 
                 TankSettingsEditorBottomSheet.Mode.SETUP_DATE -> {
                     val epochDay = AquariumDatePolicy.epochDayFromPickerMillis(
-                result.getLong(TankSettingsEditorBottomSheet.RESULT_MILLIS)
-            )
+                        result.getLong(TankSettingsEditorBottomSheet.RESULT_MILLIS)
+                    )
                     runTankUpdate(getString(R.string.aquarium_error_setup_date_save_failed)) {
                         aquariumTankViewModel.updateTankSetupDate(tankId, epochDay)
                     }
