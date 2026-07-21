@@ -4,7 +4,7 @@ package com.aqua.aqualight.data.devices.contract
  * Android mirror of the firmware UDP discovery contract.
  *
  * UDP is only the public LAN beacon used to find the authenticated WebSocket runtime endpoint.
- * There is one accepted contract shape; unpublished legacy discovery packets are rejected.
+ * There is one accepted contract shape; noncanonical discovery packets are rejected.
  */
 object AqlDiscoveryContract {
     const val SCHEMA = "aql.discovery.v1"

@@ -56,9 +56,9 @@ Rules:
 
 ### Feedback
 
-- Feedback UI previously coordinated Firebase Auth, Firestore and screenshot Storage directly.
-- The completed boundary migration removes vendor SDK access from UI. Feedback is text-only; shared
-  bitmap processing belongs exclusively to profile and aquarium photo flows.
+- Feedback UI depends only on `FeedbackSubmissionUseCase` and renderable state.
+- Firebase Auth and Firestore stay behind `FirebaseFeedbackRepository`; local photo processing
+  belongs exclusively to profile and aquarium flows.
 
 ## Completed architecture workstreams
 
@@ -91,11 +91,10 @@ Rules:
 
 ### Feedback vendor isolation
 
-- Moved Firebase Auth and Firestore calls behind a text-only feedback application contract.
-- Removed screenshot selection, upload, local transaction journal, rollback and orphan cleanup from
-  the feedback boundary.
-- Kept the bounded image processor available to profile and aquarium photo consumers only.
-- Added fake text-submission tests and fail-closed result handling.
+- Firebase Auth and Firestore calls stay behind the feedback application contract.
+- Missing authentication fails closed before a document ID or write is created.
+- The bounded image processor is available only to profile and aquarium photo consumers.
+- Fake-backed submission tests cover fail-closed and retry behavior.
 
 ### Final architecture enforcement
 
@@ -121,7 +120,7 @@ The architecture is considered complete only while all of the following remain t
 
 - one central composition root owns concrete application wiring;
 - Fragments and ViewModels do not construct repositories, managers or providers;
-- UI has no direct Firebase Auth, Firestore or Storage access;
+- UI has no direct Firebase Auth or Firestore access;
 - ViewModels receive dependencies through constructors and factories;
 - application contracts are Android/vendor independent;
 - fake implementations drive migrated ViewModel and use-case tests;

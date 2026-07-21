@@ -77,10 +77,9 @@ for token in (
     "org.json",
     "JSONArray",
     "JSONObject",
-    "tank_device_assignments_v2",
     "KEY_ASSIGNMENTS_JSON",
 ):
-    forbid(assignment_path, assignment_store, token, "legacy assignment persistence is forbidden")
+    forbid(assignment_path, assignment_store, token, "non-Proto assignment persistence is forbidden")
 require(
     assignment_path,
     assignment_store,
@@ -102,9 +101,8 @@ for token in (
     "org.json",
     "JSONArray",
     "JSONObject",
-    "aql_known_devices_v2",
 ):
-    forbid(known_path, known_store, token, "legacy known-device persistence is forbidden")
+    forbid(known_path, known_store, token, "non-Proto known-device persistence is forbidden")
 require(
     known_path,
     known_store,
@@ -129,7 +127,6 @@ credential_path = (
 )
 credential_store = read(credential_path)
 for token in (
-    "aql_device_credentials_v2",
     "fun clearAll(",
     ".clear()",
 ):
@@ -392,7 +389,7 @@ for token, reason in (
     ("api-level: [27, 35]", "emulator CI must cover min and modern Android APIs"),
     (
         "android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d",
-        "emulator CI action must remain pinned to its reviewed v2.38.0 commit",
+        "emulator CI action must remain pinned to its reviewed immutable commit",
     ),
 ):
     require(emulator_workflow_path, emulator_workflow, token, reason)
@@ -436,21 +433,6 @@ proto_dir = ROOT / "app/src/main/proto"
 for required_proto in ("tank_device_assignments.proto", "known_devices.proto"):
     if not (proto_dir / required_proto).exists():
         errors.append(f"app/src/main/proto/{required_proto}: required Proto source is missing")
-
-legacy_tokens = (
-    "tank_device_assignments_v2",
-    "aql_known_devices_v2",
-    "aql_device_credentials_v2",
-)
-for source_file in (ROOT / "app/src/main").rglob("*"):
-    if not source_file.is_file() or source_file.suffix not in {".kt", ".java", ".xml", ".proto"}:
-        continue
-    text = source_file.read_text(encoding="utf-8", errors="ignore")
-    for token in legacy_tokens:
-        if token in text:
-            errors.append(
-                f"{source_file.relative_to(ROOT)}: legacy storage identifier is forbidden: {token}"
-            )
 
 if errors:
     print("Architecture guard failed:", file=sys.stderr)

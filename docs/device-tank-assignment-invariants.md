@@ -33,7 +33,7 @@
 
 Exit criteria:
 
-- No `tank_device_assignments_v2`, JSON, `JSONArray`, or `JSONObject` assignment path remains.
+- No Preferences, JSON, `JSONArray`, or `JSONObject` assignment path remains.
 - Assignment UI never navigates back on a failed write.
 - Duplicate and cross-owner assignments are rejected by tests.
 

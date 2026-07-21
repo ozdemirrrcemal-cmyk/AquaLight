@@ -40,6 +40,8 @@ Thumbs.db
 *~
 *.save
 *.old
+__pycache__/
+*.pyc
 
 # --- AIDE özel ---
 /.aide/
@@ -64,3 +66,6 @@ reports/
 
 # --- (Opsiyonel) Firebase dosyası ---
 **/google-services.json
+
+# --- Node.js tooling ---
+/firebase/node_modules/

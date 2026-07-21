@@ -20,7 +20,7 @@ import org.json.JSONObject
  * src/network/AqlDiscoveryService.hpp BuildDiscoveryJson().
  *
  * UDP discovery is only the LAN WebSocket endpoint handoff. Android accepts exactly one
- * unpublished commercial contract shape and rejects legacy/alternate packet layouts.
+ * commercial contract shape and rejects alternate packet layouts.
  */
 object AqlDiscoveryParser {
 

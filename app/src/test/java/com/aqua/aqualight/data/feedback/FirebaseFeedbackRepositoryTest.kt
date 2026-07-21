@@ -7,15 +7,14 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class FirebaseFeedbackSubmissionOperationsTest {
+class FirebaseFeedbackRepositoryTest {
 
     @Test
-    fun authenticatedTextSubmissionPersistsOnlyFeedbackFields() = runTest {
+    fun authenticatedSubmissionPersistsExactFeedbackSchema() = runTest {
         val documentStore = FakeDocumentStore()
         val repository = repository(ownerUid = "owner", documentStore = documentStore)
 
@@ -44,20 +43,31 @@ class FirebaseFeedbackSubmissionOperationsTest {
             ),
             documentStore.savedData?.keys
         )
-        assertFalse(documentStore.savedData.orEmpty().keys.any(::isRetiredMediaField))
     }
 
     @Test
-    fun missingAuthenticatedOwnerPersistsAnonymousTextFeedback() = runTest {
+    fun blankOptionalEmailIsPersistedAsNull() = runTest {
         val documentStore = FakeDocumentStore()
-        val repository = repository(ownerUid = null, documentStore = documentStore)
+        val repository = repository(ownerUid = "owner", documentStore = documentStore)
 
         val result = repository.submit(request(email = ""))
 
-        assertTrue(result is FeedbackSubmissionResult.Success)
-        assertEquals("anonymous", documentStore.savedData?.get("userId"))
-        assertEquals(null, documentStore.savedData?.get("email"))
-        assertFalse(documentStore.savedData.orEmpty().keys.any(::isRetiredMediaField))
+        assertEquals(FeedbackSubmissionResult.Success("document-1"), result)
+        assertNull(documentStore.savedData?.get("email"))
+    }
+
+    @Test
+    fun missingAuthenticatedOwnerFailsClosedWithoutCreatingDocument() = runTest {
+        val documentStore = FakeDocumentStore()
+        val repository = repository(ownerUid = null, documentStore = documentStore)
+
+        val result = repository.submit(request())
+
+        val failure = (result as FeedbackSubmissionResult.Failure).failure
+        assertEquals(FeedbackSubmissionFailureKind.AUTHENTICATION, failure.kind)
+        assertNull(failure.cause)
+        assertNull(documentStore.savedDocumentId)
+        assertNull(documentStore.savedData)
     }
 
     @Test
@@ -93,7 +103,7 @@ class FirebaseFeedbackSubmissionOperationsTest {
     private fun repository(
         ownerUid: String?,
         documentStore: FakeDocumentStore
-    ) = FirebaseFeedbackSubmissionOperations(
+    ) = FirebaseFeedbackRepository(
         ownerUidProvider = { ownerUid },
         documentStore = documentStore,
         dispatcher = Dispatchers.Unconfined
@@ -108,12 +118,6 @@ class FirebaseFeedbackSubmissionOperationsTest {
         appVersion = "1.0",
         localeTag = "tr-TR"
     )
-
-    private fun isRetiredMediaField(field: String): Boolean {
-        return field.contains("screenshot", ignoreCase = true) ||
-            field.contains("mediaTransaction", ignoreCase = true) ||
-            field.contains("storage", ignoreCase = true)
-    }
 
     private class FakeDocumentStore : FeedbackDocumentStore {
         var savedDocumentId: String? = null

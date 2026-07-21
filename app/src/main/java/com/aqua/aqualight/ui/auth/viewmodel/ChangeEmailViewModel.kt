@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.auth.viewmodel
 
-import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
@@ -8,6 +7,7 @@ import com.aqua.aqualight.application.auth.AuthOperations
 import com.aqua.aqualight.data.auth.AuthErrorMapper
 import com.aqua.aqualight.data.auth.AuthUiText
 import com.aqua.aqualight.ui.auth.state.AuthActionState
+import com.aqua.aqualight.ui.common.validation.EmailAddressPolicy
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -52,7 +52,7 @@ class ChangeEmailViewModel(
                 R.string.change_email_update_failed_title to R.string.change_email_error_password_required
             }
 
-            !Patterns.EMAIL_ADDRESS.matcher(new).matches() -> {
+            !EmailAddressPolicy.isValid(new) -> {
                 R.string.change_email_update_failed_title to R.string.change_email_error_invalid_format
             }
 

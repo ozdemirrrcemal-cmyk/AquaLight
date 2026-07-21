@@ -13,6 +13,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.feedback.FeedbackSubmissionFailureKind
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentFeedbackBinding
@@ -28,7 +29,7 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
     private val viewModel: FeedbackViewModel by viewModels {
         val container = requireContext().requireAppContainer()
         FeedbackViewModel.factory(
-            submissionUseCase = container.feedbackSubmissionOperations
+            submissionUseCase = container.feedbackSubmissionUseCase
         )
     }
 
@@ -146,7 +147,7 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
             null
         }
         inputLayoutMessage.error = if (state.messageError) {
-            getString(R.string.feedback_error_message_too_short)
+            getString(R.string.feedback_error_message_length)
         } else {
             null
         }
@@ -178,7 +179,13 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
 
             is FeedbackUiEvent.SubmissionFailed -> {
                 showSnackBar(
-                    getString(R.string.feedback_error_generic),
+                    getString(
+                        if (event.kind == FeedbackSubmissionFailureKind.AUTHENTICATION) {
+                            R.string.feedback_error_authentication
+                        } else {
+                            R.string.feedback_error_generic
+                        }
+                    ),
                     BaseActivity.SnackType.ERROR
                 )
             }

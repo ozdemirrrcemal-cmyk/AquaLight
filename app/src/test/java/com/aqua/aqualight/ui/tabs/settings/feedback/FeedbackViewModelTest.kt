@@ -91,6 +91,49 @@ class FeedbackViewModelTest {
     }
 
     @Test
+    fun blankOptionalEmailCanBeSubmitted() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository()
+        val viewModel = viewModel(
+            SavedStateHandle(
+                mapOf(
+                    "feedback.category" to "Suggestion",
+                    "feedback.email" to "",
+                    "feedback.message" to "A useful product suggestion"
+                )
+            ),
+            repository
+        )
+
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals(1, repository.submitCount)
+        assertEquals("", repository.request?.email)
+        assertFalse(viewModel.uiState.value.emailError)
+    }
+
+    @Test
+    fun messageBeyondCommercialLimitIsRejected() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository()
+        val viewModel = viewModel(
+            SavedStateHandle(
+                mapOf(
+                    "feedback.category" to "Bug",
+                    "feedback.email" to "user@example.com",
+                    "feedback.message" to "x".repeat(501)
+                )
+            ),
+            repository
+        )
+
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.messageError)
+        assertEquals(0, repository.submitCount)
+    }
+
+    @Test
     fun synchronousBusyLockPreventsDoubleSubmit() = runTest(dispatcher) {
         val gate = CompletableDeferred<Unit>()
         val repository = FakeFeedbackRepository().apply { submitGate = gate }

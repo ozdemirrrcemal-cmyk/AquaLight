@@ -23,7 +23,7 @@ import javax.crypto.spec.SecretKeySpec
 import org.json.JSONObject
 
 /**
- * AquaLight BLE provisioning v2 app-layer security.
+ * AquaLight BLE provisioning app-layer security.
  *
  * QR path: claim code proves factory ownership and derives the session key.
  * Physical reset path: the setup button opens a QR-free recovery window and

@@ -65,7 +65,7 @@ jobs:
             python3 tools/permission_architecture_guard.py
             python3 tools/notification_reminder_architecture_guard.py
             python3 tools/process_safe_feedback_guard.py
-            python3 tools/stage9_feedback_media_guard.py
+            python3 tools/feedback_and_local_media_guard.py
             python3 tools/design_system_resource_guard.py
             python3 tools/localization_accessibility_guard.py
           } 2>&1 | tee architecture-guards.log

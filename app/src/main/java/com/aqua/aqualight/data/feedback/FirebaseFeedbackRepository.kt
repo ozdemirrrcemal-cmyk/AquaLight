@@ -17,8 +17,8 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** Firebase-backed, text-only feedback repository. */
-class FirebaseFeedbackSubmissionOperations internal constructor(
+/** Firebase-backed repository for authenticated feedback submissions. */
+class FirebaseFeedbackRepository internal constructor(
     private val ownerUidProvider: () -> String?,
     private val documentStore: FeedbackDocumentStore,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
@@ -27,8 +27,15 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
     override suspend fun submit(
         request: FeedbackSubmissionRequest
     ): FeedbackSubmissionResult = withContext(dispatcher) {
+        val ownerUid = ownerUidProvider()?.takeIf(String::isNotBlank)
+            ?: return@withContext FeedbackSubmissionResult.Failure(
+                FeedbackSubmissionFailure(
+                    kind = FeedbackSubmissionFailureKind.AUTHENTICATION,
+                    cause = null
+                )
+            )
+
         try {
-            val ownerUid = ownerUidProvider()?.takeIf(String::isNotBlank) ?: ANONYMOUS_OWNER_UID
             val documentId = documentStore.newDocumentId()
             documentStore.save(
                 documentId = documentId,
@@ -62,7 +69,6 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
     )
 
     companion object {
-        private const val ANONYMOUS_OWNER_UID = "anonymous"
         private const val PLATFORM_ANDROID = "android"
         private const val STATUS_NEW = "new"
         internal const val FIELD_CATEGORY = "category"
@@ -75,8 +81,8 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
         internal const val FIELD_USER_ID = "userId"
         internal const val FIELD_CREATED_AT = "createdAt"
 
-        fun create(): FirebaseFeedbackSubmissionOperations {
-            return FirebaseFeedbackSubmissionOperations(
+        fun create(): FirebaseFeedbackRepository {
+            return FirebaseFeedbackRepository(
                 ownerUidProvider = { FirebaseAuth.getInstance().currentUser?.uid },
                 documentStore = FirebaseFeedbackDocumentStore(FirebaseFirestore.getInstance())
             )
@@ -97,7 +103,7 @@ private class FirebaseFeedbackDocumentStore(
 
     override suspend fun save(documentId: String, data: Map<String, Any?>) {
         val stored = HashMap(data).apply {
-            put(FirebaseFeedbackSubmissionOperations.FIELD_CREATED_AT, FieldValue.serverTimestamp())
+            put(FirebaseFeedbackRepository.FIELD_CREATED_AT, FieldValue.serverTimestamp())
         }
         firestore.collection(COLLECTION).document(documentId).set(stored).awaitResult()
     }

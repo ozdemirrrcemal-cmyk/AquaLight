@@ -1,6 +1,6 @@
 package com.aqua.aqualight.application.feedback
 
-/** Commercial feedback boundary. Firebase and Android callbacks never escape data code. */
+/** Persistence boundary for authenticated feedback submissions. */
 interface FeedbackRepository {
     suspend fun submit(request: FeedbackSubmissionRequest): FeedbackSubmissionResult
 }
@@ -32,6 +32,7 @@ data class FeedbackSubmissionFailure(
 )
 
 enum class FeedbackSubmissionFailureKind {
+    AUTHENTICATION,
     PERSISTENCE,
     GENERIC
 }

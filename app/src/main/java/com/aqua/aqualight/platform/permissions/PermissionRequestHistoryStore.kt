@@ -37,6 +37,6 @@ class PermissionRequestHistoryStore(context: Context) {
     private fun key(permission: String): String = "requested:$permission"
 
     private companion object {
-        const val PREFERENCES_NAME = "central_permission_request_history_v1"
+        const val PREFERENCES_NAME = "permission_request_history"
     }
 }

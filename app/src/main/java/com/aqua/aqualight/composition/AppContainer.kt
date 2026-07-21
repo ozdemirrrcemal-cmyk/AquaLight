@@ -18,7 +18,7 @@ import com.aqua.aqualight.data.auth.DefaultSessionExitOperations
 import com.aqua.aqualight.data.auth.FirebaseAccountSecurityOperations
 import com.aqua.aqualight.data.auth.FirebaseAuthOperations
 import com.aqua.aqualight.data.auth.LogoutManager
-import com.aqua.aqualight.data.feedback.FirebaseFeedbackSubmissionOperations
+import com.aqua.aqualight.data.feedback.FirebaseFeedbackRepository
 import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.user.DefaultUserProfileOperations
 import com.aqua.aqualight.data.user.DefaultUserSettingsOperations
@@ -47,7 +47,7 @@ interface AppContainer {
     val notificationDispatchUseCase: NotificationDispatchUseCase
     val authenticatedOwnerIdentity: AuthenticatedOwnerIdentity
     val userProfileOperations: UserProfileOperations
-    val feedbackSubmissionOperations: FeedbackSubmissionUseCase
+    val feedbackSubmissionUseCase: FeedbackSubmissionUseCase
     val boundedImageProcessor: BoundedImageProcessor
     val provisioningDraftOperations: ProvisioningDraftOperations
     val provisioningQrFrameDecoderFactory: ProvisioningQrFrameDecoderFactory
@@ -103,11 +103,11 @@ internal class DefaultAppContainer(
         DefaultUserProfileOperations(appContext, userPreferencesManager)
     }
 
-    override val feedbackSubmissionOperations: FeedbackSubmissionUseCase by lazy(
+    override val feedbackSubmissionUseCase: FeedbackSubmissionUseCase by lazy(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
         FeedbackSubmissionUseCase(
-            FirebaseFeedbackSubmissionOperations.create()
+            FirebaseFeedbackRepository.create()
         )
     }
 

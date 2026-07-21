@@ -83,8 +83,8 @@ internal class ReleaseSmokeAppContainer(context: Context) : AppContainer {
         get() = unused("notificationDispatchUseCase")
     override val authenticatedOwnerIdentity: AuthenticatedOwnerIdentity =
         AuthenticatedOwnerIdentity { SMOKE_OWNER_UID }
-    override val feedbackSubmissionOperations: FeedbackSubmissionUseCase
-        get() = unused("feedbackSubmissionOperations")
+    override val feedbackSubmissionUseCase: FeedbackSubmissionUseCase
+        get() = unused("feedbackSubmissionUseCase")
     override val boundedImageProcessor: BoundedImageProcessor
         get() = unused("boundedImageProcessor")
     override val provisioningDraftOperations: ProvisioningDraftOperations

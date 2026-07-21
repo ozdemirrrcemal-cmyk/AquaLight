@@ -267,8 +267,6 @@ Every reported resource is classified individually. Resources marked **removed**
 | `R.string.feedback_email_desc` | `feedback_email_desc` | removed — unreachable | Android lint reachability result; no runtime name lookup; definition was `app/src/main/res/values/strings.xml`. |
 | `R.string.feedback_form_desc` | `feedback_form_desc` | removed — unreachable | Android lint reachability result; no runtime name lookup; definition was `app/src/main/res/values/strings.xml`. |
 | `R.string.feedback_message_area_desc` | `feedback_message_area_desc` | removed — unreachable | Android lint reachability result; no runtime name lookup; definition was `app/src/main/res/values/strings.xml`. |
-| `R.string.feedback_screenshot_clear_desc` | `feedback_screenshot_clear_desc` | removed — unreachable | Android lint reachability result; no runtime name lookup; definition was `app/src/main/res/values/strings.xml`. |
-| `R.string.feedback_screenshot_label` | `feedback_screenshot_label` | removed — unreachable | Android lint reachability result; no runtime name lookup; definition was `app/src/main/res/values/strings.xml`. |
 | `R.string.feedback_success` | `feedback_success` | removed — unreachable | Android lint reachability result; no runtime name lookup; definition was `app/src/main/res/values/strings.xml`. |
 | `R.string.feedback_success_desc` | `feedback_success_desc` | removed — unreachable | Android lint reachability result; no runtime name lookup; definition was `app/src/main/res/values/strings.xml`. |
 | `R.string.feedback_title` | `feedback_title` | removed — unreachable | Android lint reachability result; no runtime name lookup; definition was `app/src/main/res/values/strings.xml`. |

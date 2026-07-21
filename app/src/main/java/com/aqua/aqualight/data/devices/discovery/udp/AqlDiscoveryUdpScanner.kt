@@ -15,10 +15,10 @@ import java.net.SocketTimeoutException
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * UDP v2 discovery scanner.
+ * UDP discovery scanner.
  *
- * It listens only for firmware `aql.discovery.v2` `device_announce` packets. Invalid or legacy
- * packets are ignored at this layer by the strict [AqlDiscoveryParser].
+ * It accepts only firmware announcements matching [AqlDiscoveryContract]. Invalid packets are
+ * ignored at this layer by the strict [AqlDiscoveryParser].
  */
 class AqlDiscoveryUdpScanner(
     private val listenPort: Int = AqlDiscoveryContract.PORT,

@@ -226,9 +226,10 @@
     <string name="feedback_footer_desc">Geri bildirim mesajlarının nasıl ele alındığını açıklayan ek not.</string>
     <string name="feedback_error_category_required">Lütfen bir kategori seçin.</string>
     <string name="feedback_error_email_invalid">Lütfen geçerli bir e-posta adresi girin.</string>
-    <string name="feedback_error_message_too_short">Lütfen en az 10 karakter girin.</string>
+    <string name="feedback_error_message_length">Lütfen 10 ile 500 karakter arasında bir metin girin.</string>
     <string name="feedback_sending">Gönderiliyor...</string>
     <string name="feedback_error_generic">Bir sorun oluştu. Lütfen yeniden deneyin.</string>
+    <string name="feedback_error_authentication">Oturumunuz sona erdi. Geri bildirim göndermeden önce yeniden giriş yapın.</string>
     <string name="feedback_success_text">Teşekkürler! Geri bildiriminiz gönderildi.</string>
 
     <!-- Password and email -->

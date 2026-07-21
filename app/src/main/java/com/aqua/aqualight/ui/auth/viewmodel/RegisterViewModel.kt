@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.auth.viewmodel
 
-import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
@@ -8,6 +7,7 @@ import com.aqua.aqualight.application.auth.AuthOperations
 import com.aqua.aqualight.data.auth.AuthErrorMapper
 import com.aqua.aqualight.data.auth.AuthUiText
 import com.aqua.aqualight.ui.auth.state.AuthActionState
+import com.aqua.aqualight.ui.common.validation.EmailAddressPolicy
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,7 +38,7 @@ class RegisterViewModel(
                 R.string.register_empty_fields_title to R.string.register_empty_fields_message
             }
 
-            !Patterns.EMAIL_ADDRESS.matcher(normalizedEmail).matches() -> {
+            !EmailAddressPolicy.isValid(normalizedEmail) -> {
                 R.string.invalid_email_title to R.string.invalid_email
             }
 

@@ -5,7 +5,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class Stage9CommercialMediaArchitectureTest {
+class LocalMediaArchitectureTest {
 
     private val repositoryRoot = locateRepositoryRoot()
 
@@ -19,7 +19,7 @@ class Stage9CommercialMediaArchitectureTest {
         )
 
         listOf(
-            "app_media_deletion_v1",
+            "app_media_deletion_journal",
             "deleteAfterCommit",
             "reconcilePendingDeletions",
             "reconcileUnreferencedCommittedMedia",

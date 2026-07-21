@@ -209,8 +209,8 @@ class MediaFlowCoordinatorInstrumentedTest {
     }
 
     private companion object {
-        const val OWNER_TOKEN = "stage9-test-owner"
-        const val OWNER_UID = "stage9-owner-uid"
+        const val OWNER_TOKEN = "local-media-test-owner"
+        const val OWNER_UID = "local-media-owner-uid"
         const val TWO_DAYS_MILLIS = 2L * 24L * 60L * 60L * 1000L
     }
 }

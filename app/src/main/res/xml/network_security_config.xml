@@ -5,7 +5,7 @@
     <!--
       The runtime client resolves only app-generated *.device.aql.local names to
       a previously validated RFC1918/link-local IPv4 literal. No system DNS result
-      is accepted for this namespace. HMAC v2 authenticates the device and every
+      is accepted for this namespace. HMAC-SHA-256 authenticates the device and every
       post-handshake frame while commercial device certificates are not deployed.
     -->
     <domain-config cleartextTrafficPermitted="true">

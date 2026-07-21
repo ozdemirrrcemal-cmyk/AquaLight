@@ -225,9 +225,10 @@
     <string name="feedback_footer_desc">Additional note explaining how feedback messages are handled.</string>
     <string name="feedback_error_category_required">Please select a category.</string>
     <string name="feedback_error_email_invalid">Please enter a valid email address.</string>
-    <string name="feedback_error_message_too_short">Please enter at least 10 characters.</string>
+    <string name="feedback_error_message_length">Please enter between 10 and 500 characters.</string>
     <string name="feedback_sending">Sending...</string>
     <string name="feedback_error_generic">Something went wrong. Please try again.</string>
+    <string name="feedback_error_authentication">Your session has ended. Sign in again before sending feedback.</string>
     <string name="feedback_success_text">Thank you! Your feedback has been sent.</string>
     <string name="change_password_subinfo">For your account security, please enter your current password and choose a strong new one.</string>
     <string name="change_password_subinfo_desc">Short description explaining why the user should update their password.</string>

@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.tabs.settings.feedback
 
-import android.util.Patterns
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -13,6 +12,7 @@ import com.aqua.aqualight.application.feedback.FeedbackSubmissionFailureKind
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionRequest
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionResult
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionUseCase
+import com.aqua.aqualight.ui.common.validation.EmailAddressPolicy
 import java.util.Locale
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
@@ -62,9 +62,10 @@ class FeedbackViewModel(
 
         val current = _uiState.value
         val categoryError = current.category.isBlank()
-        val messageError = current.message.trim().length < MIN_MESSAGE_LENGTH
+        val messageLength = current.message.trim().length
+        val messageError = messageLength !in MIN_MESSAGE_LENGTH..MAX_MESSAGE_LENGTH
         val emailError = current.email.isNotBlank() &&
-            !Patterns.EMAIL_ADDRESS.matcher(current.email.trim()).matches()
+            !EmailAddressPolicy.isValid(current.email)
 
         if (categoryError || messageError || emailError) {
             _uiState.update {
@@ -127,6 +128,7 @@ class FeedbackViewModel(
 
     companion object {
         private const val MIN_MESSAGE_LENGTH = 10
+        private const val MAX_MESSAGE_LENGTH = 500
         private const val KEY_CATEGORY = "feedback.category"
         private const val KEY_EMAIL = "feedback.email"
         private const val KEY_MESSAGE = "feedback.message"

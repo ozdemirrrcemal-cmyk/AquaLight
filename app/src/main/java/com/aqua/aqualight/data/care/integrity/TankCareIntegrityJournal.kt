@@ -329,7 +329,7 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
             encodeBytes(task.toStoredTask().toByteArray())
         }
         return listOf(
-            FORMAT_VERSION,
+            RECORD_TYPE,
             stateToken,
             ownerToken,
             entry.tankId.toString(),
@@ -339,7 +339,7 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
 
     private fun decodeEntry(encoded: String): PendingDeletion {
         val parts = encoded.split('|', limit = 5)
-        if (parts.size != 5 || parts[0] != FORMAT_VERSION) {
+        if (parts.size != 5 || parts[0] != RECORD_TYPE) {
             violation("Tank-care integrity journal contains an unsupported entry.")
         }
 
@@ -498,7 +498,7 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
 
     private const val PREFERENCES_NAME = "tank_care_integrity_journal"
     private const val KEY_PENDING_DELETIONS = "pending_deletions"
-    private const val FORMAT_VERSION = "v1"
+    private const val RECORD_TYPE = "tank-care-deletion"
 
     private val base64Encoder = Base64.getUrlEncoder().withoutPadding()
     private val base64Decoder = Base64.getUrlDecoder()

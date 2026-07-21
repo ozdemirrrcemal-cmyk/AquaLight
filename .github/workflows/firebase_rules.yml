@@ -8,7 +8,6 @@ on:
       - firebase.json
       - firestore.rules
       - firestore.indexes.json
-      - storage.rules
       - firebase/**
       - .github/workflows/firebase_rules.yml
   pull_request:
@@ -16,7 +15,6 @@ on:
       - firebase.json
       - firestore.rules
       - firestore.indexes.json
-      - storage.rules
       - firebase/**
       - .github/workflows/firebase_rules.yml
 
@@ -49,14 +47,14 @@ jobs:
 
       - name: Install pinned Firebase test dependencies
         working-directory: firebase
-        run: npm install --ignore-scripts --no-audit --no-fund
+        run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Validate index JSON
         run: node -e "JSON.parse(require('fs').readFileSync('firestore.indexes.json', 'utf8'))"
 
-      - name: Validate text-only feedback and Storage decommission rules
+      - name: Validate feedback Firestore rules
         run: >-
           npx --yes firebase-tools@15.24.0 emulators:exec
-          --only firestore,storage
-          --project demo-aqualight-feedback-text
+          --only firestore
+          --project demo-aqualight-feedback
           "node firebase/rules.test.mjs"

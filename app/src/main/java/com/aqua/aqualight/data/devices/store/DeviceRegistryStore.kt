@@ -11,13 +11,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
-/**
- * In-memory registry for Devices V2.
- *
- * This is intentionally not a persistence layer yet. The first commercial-grade runtime step is a
- * single canonical in-process registry that UI, discovery and future WebSocket/BLE layers can share.
- * Durable DataStore/Keystore-backed stores will be added after runtime token handling lands.
- */
+/** Canonical in-memory runtime registry shared by UI, discovery and device transports. */
 class DeviceRegistryStore {
 
     private val _snapshots = MutableStateFlow<Map<DeviceUid, DeviceSnapshot>>(emptyMap())

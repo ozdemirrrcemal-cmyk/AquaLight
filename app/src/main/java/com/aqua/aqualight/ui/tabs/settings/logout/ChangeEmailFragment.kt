@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.tabs.settings.logout
 
 import android.os.Bundle
-import android.util.Patterns
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -18,6 +17,7 @@ import com.aqua.aqualight.ui.auth.viewmodel.ChangeEmailViewModel
 import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
+import com.aqua.aqualight.ui.common.validation.EmailAddressPolicy
 import com.aqua.aqualight.ui.navigation.RootNavigator
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
@@ -184,11 +184,7 @@ class ChangeEmailFragment :
             return
         }
 
-        if (
-            !Patterns.EMAIL_ADDRESS
-                .matcher(newEmail)
-                .matches()
-        ) {
+        if (!EmailAddressPolicy.isValid(newEmail)) {
             binding.inputLayoutNewEmail.error =
                 getString(
                     R.string.change_email_error_invalid_format

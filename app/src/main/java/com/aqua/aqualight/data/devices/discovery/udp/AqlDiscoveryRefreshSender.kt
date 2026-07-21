@@ -9,10 +9,10 @@ import java.net.DatagramSocket
 import java.net.InetAddress
 
 /**
- * Sends UDP v2 discovery refresh requests.
+ * Sends UDP discovery refresh requests.
  *
  * This sender never carries runtime commands. It only asks firmware devices to announce their
- * current UDP v2 discovery payload. Runtime control belongs to WebSocket.
+ * the current discovery announcement. Runtime control belongs to WebSocket.
  */
 class AqlDiscoveryRefreshSender(
     private val port: Int = AqlDiscoveryContract.PORT,

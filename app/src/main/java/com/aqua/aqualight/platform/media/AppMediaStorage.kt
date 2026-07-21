@@ -3,7 +3,6 @@ package com.aqua.aqualight.platform.media
 import android.content.Context
 import android.net.Uri
 import androidx.core.content.FileProvider
-import com.aqua.aqualight.data.user.UserDataScope
 import java.io.File
 import java.util.UUID
 import org.json.JSONObject
@@ -13,9 +12,9 @@ object AppMediaStorage {
 
     private const val FILE_PROVIDER_SUFFIX = ".fileprovider"
     private const val MAX_PENDING_AGE_MILLIS = 24L * 60L * 60L * 1000L
-    private const val PENDING_PREFERENCES = "app_media_pending_v1"
+    private const val PENDING_PREFERENCES = "app_media_pending_journal"
     private const val PENDING_PREFIX = "pending."
-    private const val DELETION_PREFERENCES = "app_media_deletion_v1"
+    private const val DELETION_PREFERENCES = "app_media_deletion_journal"
     private const val DELETION_PREFIX = "deletion."
     private const val JSON_URI = "uri"
     private const val JSON_OWNER_UID = "ownerUid"
@@ -100,20 +99,6 @@ object AppMediaStorage {
         if (!candidate.isFile || candidate.length() <= 0L) return null
         return runCatching { toContentUri(appContext, candidate) }.getOrNull()
     }
-
-    /** Compatibility entry for the owner-scoped tank store; identity is captured at call time. */
-    fun copyInternalMedia(
-        context: Context,
-        sourceUriString: String?,
-        targetScope: AppMediaScope,
-        ownerToken: String
-    ): String? = copyInternalMedia(
-        context = context,
-        sourceUriString = sourceUriString,
-        targetScope = targetScope,
-        ownerToken = ownerToken,
-        ownerUid = UserDataScope.requireCurrentUid()
-    )
 
     /**
      * Copies app-owned media into an independently owned target. A copy failure never falls back to
