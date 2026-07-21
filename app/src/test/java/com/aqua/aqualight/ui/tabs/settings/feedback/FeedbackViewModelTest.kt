@@ -56,6 +56,7 @@ class FeedbackViewModelTest {
 
         assertEquals(FeedbackUiEvent.SubmissionSucceeded, event.await())
         assertEquals(1, repository.submitCount)
+        assertEquals(SUBMISSION_ID_1, repository.request?.submissionId)
         assertEquals("Bug", repository.request?.category)
         assertEquals("user@example.com", repository.request?.email)
         assertEquals("A reproducible problem", repository.request?.message)
@@ -178,6 +179,61 @@ class FeedbackViewModelTest {
     }
 
     @Test
+    fun networkFailureStopsLoadingKeepsFormAndReusesSubmissionIdentity() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository().apply {
+            results += failure(FeedbackSubmissionFailureKind.NETWORK)
+            results += FeedbackSubmissionResult.Success("document-1")
+        }
+        val ids = ArrayDeque(listOf(SUBMISSION_ID_1, SUBMISSION_ID_2))
+        val viewModel = viewModel(savedState(), repository) { ids.removeFirst() }
+
+        val failureEvent = async { viewModel.events.first() }
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals(
+            FeedbackUiEvent.SubmissionFailed(FeedbackSubmissionFailureKind.NETWORK),
+            failureEvent.await()
+        )
+        assertFalse(viewModel.uiState.value.isSubmitting)
+        assertEquals("Bug", viewModel.uiState.value.category)
+        assertEquals("user@example.com", viewModel.uiState.value.email)
+        assertEquals("A reproducible problem", viewModel.uiState.value.message)
+        assertEquals(SUBMISSION_ID_1, repository.requests.single().submissionId)
+        assertEquals(1, ids.size)
+
+        val successEvent = async { viewModel.events.first() }
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals(FeedbackUiEvent.SubmissionSucceeded, successEvent.await())
+        assertEquals(2, repository.requests.size)
+        assertEquals(SUBMISSION_ID_1, repository.requests[1].submissionId)
+        assertEquals(1, ids.size)
+        assertFalse(viewModel.uiState.value.isSubmitting)
+        assertEquals(FeedbackUiState(), viewModel.uiState.value)
+    }
+
+    @Test
+    fun editingAfterFailureCreatesANewSubmissionIdentity() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository().apply {
+            results += failure(FeedbackSubmissionFailureKind.NETWORK)
+            results += FeedbackSubmissionResult.Success("document-2")
+        }
+        val ids = ArrayDeque(listOf(SUBMISSION_ID_1, SUBMISSION_ID_2))
+        val viewModel = viewModel(savedState(), repository) { ids.removeFirst() }
+
+        viewModel.submit()
+        advanceUntilIdle()
+        viewModel.updateMessage("A different reproducible problem")
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals(SUBMISSION_ID_1, repository.requests[0].submissionId)
+        assertEquals(SUBMISSION_ID_2, repository.requests[1].submissionId)
+    }
+
+    @Test
     fun editsAfterSubmitDoNotChangeValidatedRequestSnapshot() = runTest(dispatcher) {
         val repository = FakeFeedbackRepository()
         val viewModel = viewModel(savedState(), repository)
@@ -211,12 +267,7 @@ class FeedbackViewModelTest {
     @Test
     fun submissionFailureKeepsFormForRetry() = runTest(dispatcher) {
         val repository = FakeFeedbackRepository().apply {
-            result = FeedbackSubmissionResult.Failure(
-                FeedbackSubmissionFailure(
-                    kind = FeedbackSubmissionFailureKind.PERSISTENCE,
-                    cause = IllegalStateException("write failed")
-                )
-            )
+            result = failure(FeedbackSubmissionFailureKind.PERSISTENCE)
         }
         val viewModel = viewModel(savedState(), repository)
         val event = async { viewModel.events.first() }
@@ -253,12 +304,14 @@ class FeedbackViewModelTest {
 
     private fun viewModel(
         savedStateHandle: SavedStateHandle,
-        repository: FakeFeedbackRepository
+        repository: FakeFeedbackRepository,
+        submissionIdProvider: () -> String = { SUBMISSION_ID_1 }
     ) = FeedbackViewModel(
         savedStateHandle = savedStateHandle,
         submissionUseCase = FeedbackSubmissionUseCase(repository),
         appVersionProvider = { "9.0" },
-        localeTagProvider = { "tr-TR" }
+        localeTagProvider = { "tr-TR" },
+        submissionIdProvider = submissionIdProvider
     )
 
     private fun savedState() = SavedStateHandle(
@@ -269,8 +322,18 @@ class FeedbackViewModelTest {
         )
     )
 
+    private fun failure(kind: FeedbackSubmissionFailureKind) =
+        FeedbackSubmissionResult.Failure(
+            FeedbackSubmissionFailure(
+                kind = kind,
+                cause = IllegalStateException(kind.name)
+            )
+        )
+
     private class FakeFeedbackRepository : FeedbackRepository {
         var request: FeedbackSubmissionRequest? = null
+        val requests = mutableListOf<FeedbackSubmissionRequest>()
+        val results = ArrayDeque<FeedbackSubmissionResult>()
         var submitCount: Int = 0
         var submitGate: CompletableDeferred<Unit>? = null
         var result: FeedbackSubmissionResult = FeedbackSubmissionResult.Success("document-1")
@@ -280,8 +343,14 @@ class FeedbackViewModelTest {
         ): FeedbackSubmissionResult {
             submitCount += 1
             this.request = request
+            requests += request
             submitGate?.await()
-            return result
+            return if (results.isEmpty()) result else results.removeFirst()
         }
+    }
+
+    private companion object {
+        const val SUBMISSION_ID_1 = "123e4567-e89b-42d3-a456-426614174000"
+        const val SUBMISSION_ID_2 = "123e4567-e89b-42d3-a456-426614174001"
     }
 }
