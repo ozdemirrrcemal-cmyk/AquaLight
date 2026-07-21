@@ -190,6 +190,7 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
 
     private fun showSuccessUI() = with(binding) {
         inputLayoutMessage.error = null
+        lottieSuccess.contentDescription = getString(R.string.feedback_success_text)
         lottieSuccess.isVisible = true
         lottieSuccess.progress = 0f
         lottieSuccess.playAnimation()
