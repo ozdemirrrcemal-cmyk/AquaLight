@@ -4,7 +4,6 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.os.Bundle
 import android.view.View
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
@@ -14,11 +13,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.feedback.FeedbackSubmissionFailureKind
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentFeedbackBinding
-import com.aqua.aqualight.platform.media.FeedbackMediaFailureKind
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import kotlinx.coroutines.launch
@@ -31,19 +28,12 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
     private val viewModel: FeedbackViewModel by viewModels {
         val container = requireContext().requireAppContainer()
         FeedbackViewModel.factory(
-            submissionUseCase = container.feedbackSubmissionOperations,
-            mediaProcessor = container.feedbackMediaProcessor
+            submissionUseCase = container.feedbackSubmissionOperations
         )
     }
 
     private lateinit var originalButtonText: CharSequence
     private var suppressInputCallbacks = false
-
-    private val pickScreenshot = registerForActivityResult(
-        ActivityResultContracts.GetContent()
-    ) { uri ->
-        if (uri != null) viewModel.selectScreenshot(uri)
-    }
 
     override fun onViewCreated(
         view: View,
@@ -59,7 +49,6 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         setupValidationWatchers()
         setupSendButton()
         setupLottie()
-        setupScreenshot()
         observeViewModel()
     }
 
@@ -114,13 +103,6 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         binding.btnSend.setOnClickListener { viewModel.submit() }
     }
 
-    private fun setupScreenshot() = with(binding) {
-        tvScreenshotLabel.isVisible = true
-        cardScreenshot.isVisible = true
-        rowAddScreenshot.setOnClickListener { pickScreenshot.launch("image/*") }
-        ivScreenshotClear.setOnClickListener { viewModel.clearScreenshot() }
-    }
-
     private fun setupLottie() {
         binding.lottieSuccess.addAnimatorListener(
             object : AnimatorListenerAdapter() {
@@ -169,12 +151,6 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
             null
         }
 
-        val screenshot = state.screenshot
-        tvScreenshotInfo.text = screenshot?.displayName
-            ?: getString(R.string.feedback_screenshot_add)
-        ivScreenshotClear.isVisible = screenshot != null
-        if (screenshot != null) applySelectedScreenshotStyle() else resetScreenshotStyle()
-
         btnSend.isEnabled = !state.isBusy
         btnSend.text = if (state.isSubmitting) {
             getString(R.string.feedback_sending)
@@ -187,13 +163,6 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
 
     private fun handleEvent(event: FeedbackUiEvent) {
         when (event) {
-            FeedbackUiEvent.ScreenshotSelected -> {
-                showSnackBar(
-                    getString(R.string.feedback_screenshot_selected),
-                    BaseActivity.SnackType.SUCCESS
-                )
-            }
-
             FeedbackUiEvent.SubmissionSucceeded -> {
                 withInputCallbacksSuppressed {
                     binding.autoCategory.setText("", false)
@@ -207,63 +176,13 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
                 )
             }
 
-            is FeedbackUiEvent.MediaProcessingFailed -> {
-                val messageRes = when (event.kind) {
-                    FeedbackMediaFailureKind.SOURCE_TOO_LARGE,
-                    FeedbackMediaFailureKind.OUTPUT_TOO_LARGE,
-                    FeedbackMediaFailureKind.TOO_MANY_PIXELS,
-                    FeedbackMediaFailureKind.OUT_OF_MEMORY ->
-                        R.string.feedback_error_file_too_large
-
-                    FeedbackMediaFailureKind.UNSUPPORTED_TYPE,
-                    FeedbackMediaFailureKind.INVALID_IMAGE,
-                    FeedbackMediaFailureKind.IO ->
-                        R.string.feedback_error_generic
-                }
-                showSnackBar(getString(messageRes), BaseActivity.SnackType.ERROR)
-            }
-
             is FeedbackUiEvent.SubmissionFailed -> {
-                val messageRes = when (event.kind) {
-                    FeedbackSubmissionFailureKind.UPLOAD ->
-                        R.string.feedback_error_upload
-
-                    FeedbackSubmissionFailureKind.PERSISTENCE,
-                    FeedbackSubmissionFailureKind.ROLLBACK,
-                    FeedbackSubmissionFailureKind.GENERIC ->
-                        R.string.feedback_error_generic
-                }
-                showSnackBar(getString(messageRes), BaseActivity.SnackType.ERROR)
+                showSnackBar(
+                    getString(R.string.feedback_error_generic),
+                    BaseActivity.SnackType.ERROR
+                )
             }
         }
-    }
-
-    private fun applySelectedScreenshotStyle() = with(binding) {
-        tvScreenshotInfo.setTextColor(
-            ContextCompat.getColor(requireContext(), android.R.color.white)
-        )
-        ivScreenshotIcon.setColorFilter(
-            ContextCompat.getColor(requireContext(), R.color.aqua_accent)
-        )
-        ivScreenshotClear.setColorFilter(
-            ContextCompat.getColor(requireContext(), android.R.color.white)
-        )
-        cardScreenshot.strokeColor =
-            ContextCompat.getColor(requireContext(), R.color.aqua_accent)
-    }
-
-    private fun resetScreenshotStyle() = with(binding) {
-        val secondaryColor = ContextCompat.getColor(
-            requireContext(),
-            R.color.aqua_card_text_secondary
-        )
-        tvScreenshotInfo.setTextColor(secondaryColor)
-        ivScreenshotIcon.setColorFilter(secondaryColor)
-        ivScreenshotClear.setColorFilter(secondaryColor)
-        cardScreenshot.strokeColor = ContextCompat.getColor(
-            requireContext(),
-            R.color.aqua_card_outline_subtle
-        )
     }
 
     private fun showSuccessUI() = with(binding) {

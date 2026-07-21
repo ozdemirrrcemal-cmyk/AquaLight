@@ -7,9 +7,9 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.aqua.aqualight.platform.media.AppMediaScope
 import com.aqua.aqualight.platform.media.AppMediaStorage
-import com.aqua.aqualight.platform.media.FeedbackMediaProcessingResult
-import com.aqua.aqualight.platform.media.FeedbackMediaProcessor
-import com.aqua.aqualight.platform.media.ProcessedFeedbackMedia
+import com.aqua.aqualight.platform.media.BoundedImageProcessor
+import com.aqua.aqualight.platform.media.ImageProcessingResult
+import com.aqua.aqualight.platform.media.ProcessedImage
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -157,14 +157,13 @@ class MediaFlowCoordinatorInstrumentedTest {
         File(requireNotNull(output.path)).writeBytes(byteArrayOf(1, 2, 3, 4))
     }
 
-    private fun preparedSource(): ProcessedFeedbackMedia {
-        val directory = File(context.cacheDir, "feedback_media").apply { mkdirs() }
-        val file = File.createTempFile("feedback_output_test_", ".jpg", directory).apply {
+    private fun preparedSource(): ProcessedImage {
+        val directory = File(context.cacheDir, "bounded_images").apply { mkdirs() }
+        val file = File.createTempFile("image_output_test_", ".jpg", directory).apply {
             writeBytes(byteArrayOf(1, 2, 3, 4))
         }
-        return ProcessedFeedbackMedia(
+        return ProcessedImage(
             path = file.canonicalPath,
-            displayName = file.name,
             width = 100,
             height = 100,
             byteCount = file.length()
@@ -180,7 +179,7 @@ class MediaFlowCoordinatorInstrumentedTest {
 
     private fun coordinator(
         savedStateHandle: SavedStateHandle,
-        processor: FeedbackMediaProcessor = FakeProcessor(preparedSource())
+        processor: BoundedImageProcessor = FakeProcessor(preparedSource())
     ) = MediaFlowCoordinatorViewModel(
         savedStateHandle = savedStateHandle,
         context = context,
@@ -193,20 +192,12 @@ class MediaFlowCoordinatorInstrumentedTest {
     )
 
     private class FakeProcessor(
-        private val media: ProcessedFeedbackMedia
-    ) : FeedbackMediaProcessor {
+        private val media: ProcessedImage
+    ) : BoundedImageProcessor {
         val deletedPaths = mutableListOf<String>()
 
-        override suspend fun process(uri: Uri): FeedbackMediaProcessingResult =
-            FeedbackMediaProcessingResult.Success(media)
-
-        override fun restore(
-            path: String?,
-            displayName: String?,
-            width: Int?,
-            height: Int?,
-            byteCount: Long?
-        ): ProcessedFeedbackMedia? = null
+        override suspend fun process(uri: Uri): ImageProcessingResult =
+            ImageProcessingResult.Success(media)
 
         override suspend fun delete(path: String?) {
             if (path == null) return

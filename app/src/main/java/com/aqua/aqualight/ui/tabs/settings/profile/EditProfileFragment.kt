@@ -51,7 +51,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
             ownerToken = "profile",
             ownerUid = container.authenticatedOwnerIdentity.requireOwnerUid(),
             cropSpec = MediaCropSpec.PROFILE,
-            mediaProcessor = container.feedbackMediaProcessor
+            mediaProcessor = container.boundedImageProcessor
         )
     }
 

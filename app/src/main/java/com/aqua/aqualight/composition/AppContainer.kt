@@ -26,8 +26,8 @@ import com.aqua.aqualight.data.user.StartupAppearanceCache
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.platform.auth.DefaultGoogleIdentityClient
 import com.aqua.aqualight.platform.auth.GoogleIdentityClient
-import com.aqua.aqualight.platform.media.AndroidFeedbackMediaProcessor
-import com.aqua.aqualight.platform.media.FeedbackMediaProcessor
+import com.aqua.aqualight.platform.media.AndroidBoundedImageProcessor
+import com.aqua.aqualight.platform.media.BoundedImageProcessor
 import com.aqua.aqualight.platform.vision.MlKitProvisioningQrFrameDecoderFactory
 import com.aqua.aqualight.platform.vision.ProvisioningQrFrameDecoderFactory
 import com.aqua.aqualight.ui.auth.viewmodel.AuthViewModelFactory
@@ -48,7 +48,7 @@ interface AppContainer {
     val authenticatedOwnerIdentity: AuthenticatedOwnerIdentity
     val userProfileOperations: UserProfileOperations
     val feedbackSubmissionOperations: FeedbackSubmissionUseCase
-    val feedbackMediaProcessor: FeedbackMediaProcessor
+    val boundedImageProcessor: BoundedImageProcessor
     val provisioningDraftOperations: ProvisioningDraftOperations
     val provisioningQrFrameDecoderFactory: ProvisioningQrFrameDecoderFactory
     val authViewModelFactory: ViewModelProvider.Factory
@@ -107,14 +107,14 @@ internal class DefaultAppContainer(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
         FeedbackSubmissionUseCase(
-            FirebaseFeedbackSubmissionOperations.create(appContext)
+            FirebaseFeedbackSubmissionOperations.create()
         )
     }
 
-    override val feedbackMediaProcessor: FeedbackMediaProcessor by lazy(
+    override val boundedImageProcessor: BoundedImageProcessor by lazy(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
-        AndroidFeedbackMediaProcessor(appContext)
+        AndroidBoundedImageProcessor(appContext)
     }
 
     private val ownerGraphResolver: OwnerDependencyGraphResolver by lazy(

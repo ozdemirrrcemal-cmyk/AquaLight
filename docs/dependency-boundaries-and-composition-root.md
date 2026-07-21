@@ -56,8 +56,9 @@ Rules:
 
 ### Feedback
 
-- Feedback UI previously coordinated Firebase Auth, Firestore and Storage directly.
-- The completed boundary migration removes vendor SDK access from UI. Future feedback-media hardening owns decoding, compression, rollback and orphan cleanup improvements.
+- Feedback UI previously coordinated Firebase Auth, Firestore and screenshot Storage directly.
+- The completed boundary migration removes vendor SDK access from UI. Feedback is text-only; shared
+  bitmap processing belongs exclusively to profile and aquarium photo flows.
 
 ## Completed architecture workstreams
 
@@ -90,9 +91,11 @@ Rules:
 
 ### Feedback vendor isolation
 
-- Moved Firebase Auth, Firestore and Storage calls behind a feedback application contract.
-- Kept current image-processing behavior unchanged.
-- Added fake submission tests and fail-closed result handling.
+- Moved Firebase Auth and Firestore calls behind a text-only feedback application contract.
+- Removed screenshot selection, upload, local transaction journal, rollback and orphan cleanup from
+  the feedback boundary.
+- Kept the bounded image processor available to profile and aquarium photo consumers only.
+- Added fake text-submission tests and fail-closed result handling.
 
 ### Final architecture enforcement
 

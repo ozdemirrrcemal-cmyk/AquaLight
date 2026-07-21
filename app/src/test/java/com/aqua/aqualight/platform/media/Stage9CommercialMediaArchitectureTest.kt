@@ -85,33 +85,6 @@ class Stage9CommercialMediaArchitectureTest {
         )
     }
 
-    @Test
-    fun feedbackViewModelTeardownNeverDeletesFilesDirectly() {
-        val viewModel = source(
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/feedback/FeedbackViewModel.kt"
-        )
-        val onCleared = viewModel.substringBetween(
-            "override fun onCleared()",
-            "companion object"
-        )
-
-        assertTrue(onCleared.contains("terminalCleanupScope.launch"))
-        assertTrue(onCleared.contains("mediaProcessor.delete"))
-        assertFalse(onCleared.contains(".file?.takeIf"))
-        assertFalse(onCleared.contains("File("))
-    }
-
-    @Test
-    fun feedbackRemoteCommitCannotBeDowngradedByLocalJournalCleanup() {
-        val repository = source(
-            "app/src/main/java/com/aqua/aqualight/data/feedback/" +
-                "FirebaseFeedbackSubmissionOperations.kt"
-        )
-        assertTrue(repository.contains("runCatching { journalStore.remove(documentId) }"))
-        assertTrue(repository.contains("ReconcileOutcome.Committed"))
-        assertTrue(repository.contains("runCatching { journalStore.remove(entry.documentId) }"))
-    }
-
     private fun source(relativePath: String): String =
         File(repositoryRoot, relativePath).readText()
 

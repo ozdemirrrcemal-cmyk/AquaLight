@@ -2,15 +2,12 @@ package com.aqua.aqualight.data.user
 
 import com.google.android.gms.tasks.Task
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
-import com.google.firebase.storage.StorageException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.suspendCancellableCoroutine
 
 class CloudUserDataCleaner private constructor(
-    private val firestore: FirebaseFirestore,
-    private val storage: FirebaseStorage
+    private val firestore: FirebaseFirestore
 ) {
 
     data class CleanupResult(
@@ -27,8 +24,7 @@ class CloudUserDataCleaner private constructor(
     companion object {
         fun create(): CloudUserDataCleaner {
             return CloudUserDataCleaner(
-                firestore = FirebaseFirestore.getInstance(),
-                storage = FirebaseStorage.getInstance()
+                firestore = FirebaseFirestore.getInstance()
             )
         }
     }
@@ -53,22 +49,6 @@ class CloudUserDataCleaner private constructor(
                     .get()
                     .awaitResult()
 
-            feedbackSnapshot.documents.forEach { document ->
-                val screenshotRef =
-                    storage.reference.child(
-                        "feedback_screenshots/$uid/${document.id}.jpg"
-                    )
-
-                runCatching {
-                    screenshotRef.delete()
-                        .awaitCompletion()
-                }.onFailure { error ->
-                    if (!error.isStorageObjectNotFound()) {
-                        throw error
-                    }
-                }
-            }
-
             feedbackSnapshot.documents
                 .chunked(400)
                 .forEach { documents ->
@@ -91,11 +71,6 @@ class CloudUserDataCleaner private constructor(
                 error = error
             )
         }
-    }
-
-    private fun Throwable.isStorageObjectNotFound(): Boolean {
-        return this is StorageException &&
-            errorCode == StorageException.ERROR_OBJECT_NOT_FOUND
     }
 
     private suspend fun Task<Void>.awaitCompletion() {

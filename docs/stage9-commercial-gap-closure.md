@@ -1,9 +1,11 @@
 # Stage 9 commercial gap closure
 
-This branch closes the remaining feedback and shared-media commercial risks identified after the initial Stage 9 migration.
+This branch closes the remaining shared-media commercial risks identified after the initial Stage 9 migration. Feedback submission is now an independent text-only flow.
 
 ## Enforced guarantees
 
+- Feedback contains no attachment selector, media state, upload, journal or Storage dependency.
+- Firestore accepts only the strict text-feedback schema and Firebase Storage is globally denied.
 - Profile, tank creation and tank settings sources pass through the same bounded IO media processor before crop.
 - Source bytes, decoded pixels, output dimensions and output bytes are bounded before user media is persisted.
 - App-owned crop results are synchronously journaled with the immutable owner UID before a domain store may reference them.
@@ -16,4 +18,4 @@ This branch closes the remaining feedback and shared-media commercial risks iden
 
 ## Release validation
 
-Commercial completion still requires the branch CI matrix, API 27/current API instrumentation, minified release build and focused physical-device camera/gallery/process-death tests to pass.
+Commercial completion still requires the branch CI matrix, Firebase emulator rules, API 27/current API instrumentation, minified release build, a physical text-feedback submission and focused physical-device camera/gallery/process-death tests to pass.
