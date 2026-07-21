@@ -61,10 +61,14 @@ class FeedbackViewModel(
         if (_uiState.value.isSubmitting) return
 
         val current = _uiState.value
+        val normalizedEmail = current.email.trim()
         val categoryError = current.category.isBlank()
         val messageError = current.message.trim().length < MIN_MESSAGE_LENGTH
-        val emailError = current.email.isNotBlank() &&
-            !PatternsCompat.EMAIL_ADDRESS.matcher(current.email.trim()).matches()
+        val emailError = normalizedEmail.isNotEmpty() &&
+            (
+                normalizedEmail.length > MAX_EMAIL_LENGTH ||
+                    !PatternsCompat.EMAIL_ADDRESS.matcher(normalizedEmail).matches()
+                )
 
         if (categoryError || messageError || emailError) {
             _uiState.update {
@@ -127,6 +131,7 @@ class FeedbackViewModel(
 
     companion object {
         private const val MIN_MESSAGE_LENGTH = 10
+        private const val MAX_EMAIL_LENGTH = 320
         private const val KEY_CATEGORY = "feedback.category"
         private const val KEY_EMAIL = "feedback.email"
         private const val KEY_MESSAGE = "feedback.message"
