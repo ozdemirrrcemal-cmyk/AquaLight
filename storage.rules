@@ -25,9 +25,9 @@ service firebase.storage {
         return request.auth != null && request.auth.uid == ownerUid;
       }
 
-      // Rules v2 read includes get and list. This recursive owner-only rule permits
-      // complete account-deletion enumeration, including orphaned future nested objects.
-      // Uploads remain restricted by the direct-file JPEG rule above.
+      // Owner-only recursive access permits complete account-deletion enumeration,
+      // including orphaned future nested objects. Uploads remain restricted by
+      // the direct-file JPEG rule above.
       allow read, delete: if isOwner();
       allow create, update: if false;
     }
