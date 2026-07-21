@@ -86,7 +86,7 @@ class Stage9CommercialMediaArchitectureTest {
     }
 
     @Test
-    fun feedbackSubmissionUsesOneAuthenticatedTextPersistenceBoundary() {
+    fun feedbackSubmissionUsesSparkPlanTransactionBoundary() {
         val application = source(
             "app/src/main/java/com/aqua/aqualight/application/feedback/" +
                 "FeedbackSubmissionOperations.kt"
@@ -98,15 +98,40 @@ class Stage9CommercialMediaArchitectureTest {
         val viewModel = source(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/feedback/FeedbackViewModel.kt"
         )
+        val cleaner = source(
+            "app/src/main/java/com/aqua/aqualight/data/user/CloudUserDataCleaner.kt"
+        )
+        val rules = source("firestore.rules")
 
-        assertTrue(application.contains("FeedbackSubmissionPolicy"))
-        assertTrue(repository.contains("FeedbackSubmissionFailureKind.AUTHENTICATION"))
-        assertTrue(repository.contains("documentStore.save(documentId, data)"))
-        assertTrue(viewModel.contains("FeedbackSubmissionPolicy"))
-        listOf("FirebaseStorage", "journalStore", "mediaProcessor", "cleanupOrphans", "anonymous").forEach { token ->
-            assertFalse("Text feedback contains obsolete dependency: $token", application.contains(token))
-            assertFalse("Text feedback contains obsolete dependency: $token", repository.contains(token))
-            assertFalse("Text feedback contains obsolete dependency: $token", viewModel.contains(token))
+        assertTrue(application.contains("val submissionId: String"))
+        assertTrue(application.contains("FeedbackSubmissionFailureKind.NETWORK"))
+        assertTrue(repository.contains("firestore.runTransaction"))
+        assertTrue(repository.contains("withTimeout(timeoutMillis)"))
+        assertTrue(repository.contains("CompletableDeferred"))
+        assertTrue(repository.contains("collection(SUBMISSIONS_COLLECTION)"))
+        assertTrue(viewModel.contains("KEY_SUBMISSION_ID"))
+        assertTrue(viewModel.contains("isSubmitting = false"))
+        assertTrue(cleaner.contains("get(Source.SERVER)"))
+        assertTrue(cleaner.contains("runTransaction"))
+        assertTrue(rules.contains("match /submissions/{submissionId}"))
+
+        listOf(
+            "FirebaseFunctions",
+            "HttpsCallableOptions",
+            "FirebaseAppCheck",
+            "PlayIntegrityAppCheckProviderFactory",
+            "FirebaseStorage",
+            "documentStore.save(documentId, data)",
+            ".document(documentId).set",
+            "journalStore",
+            "cleanupOrphans",
+            "anonymous"
+        ).forEach { token ->
+            assertFalse(
+                "Spark feedback contains forbidden dependency: $token",
+                application.contains(token) || repository.contains(token) ||
+                    viewModel.contains(token) || cleaner.contains(token)
+            )
         }
     }
 
