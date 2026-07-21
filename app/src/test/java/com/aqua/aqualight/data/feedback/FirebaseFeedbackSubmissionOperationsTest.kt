@@ -35,12 +35,22 @@ class FirebaseFeedbackSubmissionOperationsTest {
     }
 
     @Test
+    fun emailIsNormalizedAtPersistenceBoundary() = runTest {
+        val documentStore = FakeDocumentStore()
+        val repository = repository(ownerUid = "owner", documentStore = documentStore)
+
+        repository.submit(request(email = "  user+tag@example.com  "))
+
+        assertEquals("user+tag@example.com", documentStore.savedData["email"])
+    }
+
+    @Test
     fun missingOrBlankOwnerUsesAnonymousIdentity() = runTest {
         listOf<String?>(null, "").forEach { ownerUid ->
             val documentStore = FakeDocumentStore()
             val repository = repository(ownerUid = ownerUid, documentStore = documentStore)
 
-            val result = repository.submit(request(email = ""))
+            val result = repository.submit(request(email = "   "))
 
             assertTrue(result is FeedbackSubmissionResult.Success)
             assertEquals("anonymous", documentStore.savedData["userId"])
