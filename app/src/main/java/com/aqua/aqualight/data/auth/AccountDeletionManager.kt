@@ -6,12 +6,16 @@ import com.aqua.aqualight.data.user.UserDataCleaner
 import com.google.android.gms.tasks.Task
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.auth
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 
 /**
  * Single account deletion path for the app.
@@ -51,6 +55,9 @@ class AccountDeletionManager private constructor(
     }
 
     companion object {
+        private const val FIREBASE_ACCOUNT_DELETE_TIMEOUT_MILLIS = 15_000L
+        private const val GOOGLE_REVOKE_TIMEOUT_MILLIS = 5_000L
+
         fun create(
             context: Context
         ): AccountDeletionManager {
@@ -76,8 +83,10 @@ class AccountDeletionManager private constructor(
                 )
             )
 
-        val ownerUid =
-            user.uid
+        val ownerUid = user.uid
+        val revokeGoogleAccess = shouldRevokeGoogleAccess(
+            user.providerData.map { provider -> provider.providerId }
+        )
 
         val cloudCleanupResult =
             cloudUserDataCleaner.clearCloudUserData(
@@ -94,11 +103,11 @@ class AccountDeletionManager private constructor(
             )
         }
 
-        val accountDeleteError =
-            runCatching {
-                user.delete()
-                    .awaitCompletion()
-            }.exceptionOrNull()
+        val accountDeleteError = runBoundedOperation(
+            timeoutMillis = FIREBASE_ACCOUNT_DELETE_TIMEOUT_MILLIS
+        ) {
+            user.delete().awaitCompletion()
+        }
 
         if (accountDeleteError != null) {
             return DeleteResult(
@@ -123,12 +132,18 @@ class AccountDeletionManager private constructor(
                 firstLocalCleanupResult
             }
 
-            val googleRevokeError = runCatching {
-                GoogleSignInClientFactory.create(
-                    appContext
-                ).revokeAccess()
-                    .awaitCompletion()
-            }.exceptionOrNull()
+            val googleRevokeError = if (revokeGoogleAccess) {
+                runBoundedOperation(
+                    timeoutMillis = GOOGLE_REVOKE_TIMEOUT_MILLIS
+                ) {
+                    GoogleSignInClientFactory.create(
+                        appContext
+                    ).revokeAccess()
+                        .awaitCompletion()
+                }
+            } else {
+                null
+            }
 
             val firebaseSignOutError = runCatching {
                 firebaseAuth.signOut()
@@ -164,5 +179,27 @@ class AccountDeletionManager private constructor(
                 }
             }
         }
+    }
+}
+
+internal fun shouldRevokeGoogleAccess(providerIds: Collection<String>): Boolean {
+    return GoogleAuthProvider.PROVIDER_ID in providerIds
+}
+
+private suspend fun runBoundedOperation(
+    timeoutMillis: Long,
+    operation: suspend () -> Unit
+): Throwable? {
+    return try {
+        withTimeout(timeoutMillis) {
+            operation()
+        }
+        null
+    } catch (timeout: TimeoutCancellationException) {
+        timeout
+    } catch (cancellation: CancellationException) {
+        throw cancellation
+    } catch (error: Throwable) {
+        error
     }
 }

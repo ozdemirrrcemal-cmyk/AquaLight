@@ -11,17 +11,20 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 
 /** Firestore-backed, text-only feedback repository. */
 class FirebaseFeedbackSubmissionOperations internal constructor(
     private val ownerUidProvider: () -> String?,
     private val documentStore: FeedbackDocumentStore,
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val writeTimeoutMillis: Long = DEFAULT_WRITE_TIMEOUT_MILLIS
 ) : FeedbackRepository {
 
     override suspend fun submit(
@@ -31,7 +34,7 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
         val ownerUid = ownerUidProvider()?.takeIf(String::isNotBlank) ?: ANONYMOUS_OWNER_UID
         val data = linkedMapOf<String, Any?>(
             FIELD_CATEGORY to request.category,
-            FIELD_EMAIL to request.email.ifBlank { null },
+            FIELD_EMAIL to request.email.trim(),
             FIELD_MESSAGE to request.message,
             FIELD_PLATFORM to PLATFORM_ANDROID,
             FIELD_APP_VERSION to request.appVersion,
@@ -41,8 +44,17 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
         )
 
         try {
-            documentStore.save(documentId, data)
+            withTimeout(writeTimeoutMillis) {
+                documentStore.save(documentId, data)
+            }
             FeedbackSubmissionResult.Success(documentId)
+        } catch (timeout: TimeoutCancellationException) {
+            FeedbackSubmissionResult.Failure(
+                FeedbackSubmissionFailure(
+                    kind = FeedbackSubmissionFailureKind.PERSISTENCE,
+                    cause = timeout
+                )
+            )
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (error: Throwable) {
@@ -59,6 +71,7 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
         private const val ANONYMOUS_OWNER_UID = "anonymous"
         private const val PLATFORM_ANDROID = "android"
         private const val STATUS_NEW = "new"
+        private const val DEFAULT_WRITE_TIMEOUT_MILLIS = 15_000L
         internal const val FIELD_CATEGORY = "category"
         internal const val FIELD_EMAIL = "email"
         internal const val FIELD_MESSAGE = "message"
@@ -100,12 +113,20 @@ private class FirebaseFeedbackDocumentStore(
     }
 }
 
-/** Firebase Tasks are not cancellable; wait for their authoritative terminal result. */
-private suspend fun <T> Task<T>.awaitResult(): T = suspendCoroutine { continuation ->
-    addOnCompleteListener { task ->
-        if (task.isSuccessful) continuation.resume(task.result)
-        else continuation.resumeWithException(
-            task.exception ?: IllegalStateException("Firebase task failed without an exception.")
-        )
+/** Waits for a Firebase Task while still honoring coroutine cancellation and timeouts. */
+private suspend fun <T> Task<T>.awaitResult(): T =
+    suspendCancellableCoroutine { continuation ->
+        addOnCompleteListener { task ->
+            if (!continuation.isActive) return@addOnCompleteListener
+
+            if (task.isSuccessful) {
+                continuation.resume(task.result)
+            } else {
+                continuation.resumeWithException(
+                    task.exception ?: IllegalStateException(
+                        "Firebase task failed without an exception."
+                    )
+                )
+            }
+        }
     }
-}

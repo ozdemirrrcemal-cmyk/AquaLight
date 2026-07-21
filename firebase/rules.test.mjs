@@ -31,7 +31,7 @@ const testEnvironment = await initializeTestEnvironment({
 function textFeedback(ownerUid, overrides = {}) {
   return {
     category: 'Bug',
-    email: null,
+    email: '',
     message: 'A reproducible commercial feedback issue.',
     platform: 'android',
     appVersion: '1.0.0',
