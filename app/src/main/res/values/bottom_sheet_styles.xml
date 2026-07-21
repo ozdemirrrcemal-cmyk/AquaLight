@@ -15,8 +15,10 @@
 
     <style name="Widget.Aqua.BottomSheet.Modal" parent="Widget.Material3.BottomSheet.Modal">
         <item name="android:background">@drawable/bg_bottomsheet_rounded</item>
-        <item name="backgroundTint">@color/aqua_color_transparent</item>
-        <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.Aqua.BottomSheet</item>
+        <item name="backgroundTint">@null</item>
+        <item name="shapeAppearance">@null</item>
+        <item name="shapeAppearanceOverlay">@null</item>
+        <item name="paddingBottomSystemWindowInsets">true</item>
     </style>
 
     <style name="ShapeAppearanceOverlay.Aqua.BottomSheet" parent="">
