@@ -1,6 +1,6 @@
 # Stage 9 commercial gap closure
 
-This branch closes the remaining feedback and shared-media commercial risks identified after the initial Stage 9 migration.
+This stage keeps feedback text-only while closing the remaining shared-media commercial risks.
 
 ## Enforced guarantees
 

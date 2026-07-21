@@ -158,8 +158,8 @@ class MediaFlowCoordinatorInstrumentedTest {
     }
 
     private fun preparedSource(): ProcessedFeedbackMedia {
-        val directory = File(context.cacheDir, "feedback_media").apply { mkdirs() }
-        val file = File.createTempFile("feedback_output_test_", ".jpg", directory).apply {
+        val directory = File(context.cacheDir, "image_processing").apply { mkdirs() }
+        val file = File.createTempFile("image_output_test_", ".jpg", directory).apply {
             writeBytes(byteArrayOf(1, 2, 3, 4))
         }
         return ProcessedFeedbackMedia(

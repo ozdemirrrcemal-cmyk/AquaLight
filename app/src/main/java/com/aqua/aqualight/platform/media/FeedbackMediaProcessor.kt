@@ -116,7 +116,7 @@ private class ContentResolverFeedbackMediaSourceAccess(
     }
 
     private companion object {
-        const val DEFAULT_DISPLAY_NAME = "screenshot.jpg"
+        const val DEFAULT_DISPLAY_NAME = "image.jpg"
     }
 }
 
@@ -408,7 +408,7 @@ class AndroidFeedbackMediaProcessor internal constructor(
         for (quality in COMPRESSION_QUALITIES) {
             FileOutputStream(outputFile, false).buffered().use { output ->
                 if (!bitmap.compress(Bitmap.CompressFormat.JPEG, quality, output)) {
-                    throw IllegalStateException("Feedback screenshot compression failed.")
+                    throw IllegalStateException("Image compression failed.")
                 }
                 output.flush()
             }
@@ -479,15 +479,15 @@ class AndroidFeedbackMediaProcessor internal constructor(
         data object Unavailable : SourceStageResult
     }
 
-    private class SourceTooLargeException : IllegalArgumentException("Feedback source exceeds limit")
-    private class InvalidImageException : IllegalArgumentException("Invalid feedback image")
+    private class SourceTooLargeException : IllegalArgumentException("Image source exceeds limit")
+    private class InvalidImageException : IllegalArgumentException("Invalid image")
 
     private companion object {
-        const val DIRECTORY_NAME = "feedback_media"
-        const val DEFAULT_DISPLAY_NAME = "screenshot.jpg"
-        const val SOURCE_PREFIX = "feedback_source_"
+        const val DIRECTORY_NAME = "image_processing"
+        const val DEFAULT_DISPLAY_NAME = "image.jpg"
+        const val SOURCE_PREFIX = "image_source_"
         const val SOURCE_SUFFIX = ".source"
-        const val OUTPUT_PREFIX = "feedback_output_"
+        const val OUTPUT_PREFIX = "image_output_"
         const val OUTPUT_SUFFIX = ".jpg"
         const val COPY_BUFFER_BYTES = 64 * 1024
         const val MAX_TEMP_AGE_MILLIS = 24L * 60L * 60L * 1000L

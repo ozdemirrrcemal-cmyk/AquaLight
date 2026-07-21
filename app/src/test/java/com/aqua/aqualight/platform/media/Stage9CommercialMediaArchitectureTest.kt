@@ -86,30 +86,27 @@ class Stage9CommercialMediaArchitectureTest {
     }
 
     @Test
-    fun feedbackViewModelTeardownNeverDeletesFilesDirectly() {
-        val viewModel = source(
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/feedback/FeedbackViewModel.kt"
+    fun feedbackSubmissionUsesOneTextPersistenceBoundary() {
+        val application = source(
+            "app/src/main/java/com/aqua/aqualight/application/feedback/" +
+                "FeedbackSubmissionOperations.kt"
         )
-        val onCleared = viewModel.substringBetween(
-            "override fun onCleared()",
-            "companion object"
-        )
-
-        assertTrue(onCleared.contains("terminalCleanupScope.launch"))
-        assertTrue(onCleared.contains("mediaProcessor.delete"))
-        assertFalse(onCleared.contains(".file?.takeIf"))
-        assertFalse(onCleared.contains("File("))
-    }
-
-    @Test
-    fun feedbackRemoteCommitCannotBeDowngradedByLocalJournalCleanup() {
         val repository = source(
             "app/src/main/java/com/aqua/aqualight/data/feedback/" +
                 "FirebaseFeedbackSubmissionOperations.kt"
         )
-        assertTrue(repository.contains("runCatching { journalStore.remove(documentId) }"))
-        assertTrue(repository.contains("ReconcileOutcome.Committed"))
-        assertTrue(repository.contains("runCatching { journalStore.remove(entry.documentId) }"))
+        val viewModel = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/feedback/FeedbackViewModel.kt"
+        )
+
+        assertTrue(application.contains("suspend fun submit(request: FeedbackSubmissionRequest)"))
+        assertTrue(repository.contains("documentStore.save(documentId, data)"))
+        assertTrue(viewModel.contains("FeedbackSubmissionUseCase"))
+        listOf("FirebaseStorage", "journalStore", "mediaProcessor", "cleanupOrphans").forEach { token ->
+            assertFalse("Text feedback contains obsolete dependency: $token", application.contains(token))
+            assertFalse("Text feedback contains obsolete dependency: $token", repository.contains(token))
+            assertFalse("Text feedback contains obsolete dependency: $token", viewModel.contains(token))
+        }
     }
 
     private fun source(relativePath: String): String =

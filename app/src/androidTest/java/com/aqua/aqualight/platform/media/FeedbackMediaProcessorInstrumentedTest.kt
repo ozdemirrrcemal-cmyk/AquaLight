@@ -191,9 +191,9 @@ class FeedbackMediaProcessorInstrumentedTest {
     }
 
     private fun assertNoStagedSourceFiles() {
-        val directory = File(context.cacheDir, "feedback_media")
+        val directory = File(context.cacheDir, "image_processing")
         assertFalse(
-            directory.listFiles().orEmpty().any { it.name.startsWith("feedback_source_") }
+            directory.listFiles().orEmpty().any { it.name.startsWith("image_source_") }
         )
     }
 
