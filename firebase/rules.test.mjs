@@ -89,6 +89,12 @@ try {
   );
   await assertFails(
     setDoc(
+      doc(ownerDb, 'feedback_items', 'oversized-email-local-part'),
+      textFeedback(OWNER, { email: `${'a'.repeat(65)}@example.com` }),
+    ),
+  );
+  await assertFails(
+    setDoc(
       doc(ownerDb, 'feedback_items', 'oversized-message'),
       textFeedback(OWNER, { message: 'x'.repeat(501) }),
     ),
