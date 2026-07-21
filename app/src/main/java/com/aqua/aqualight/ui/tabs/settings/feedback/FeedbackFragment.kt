@@ -147,7 +147,7 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
             null
         }
         inputLayoutMessage.error = if (state.messageError) {
-            getString(R.string.feedback_error_message_too_short)
+            getString(R.string.feedback_error_message_length)
         } else {
             null
         }
@@ -179,6 +179,10 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
 
             is FeedbackUiEvent.SubmissionFailed -> {
                 val messageRes = when (event.kind) {
+                    FeedbackSubmissionFailureKind.AUTHENTICATION ->
+                        R.string.feedback_error_auth_required
+                    FeedbackSubmissionFailureKind.VALIDATION ->
+                        R.string.feedback_error_validation
                     FeedbackSubmissionFailureKind.PERSISTENCE,
                     FeedbackSubmissionFailureKind.GENERIC ->
                         R.string.feedback_error_generic
