@@ -16,11 +16,6 @@
         name="image_processing"
         path="image_processing/" />
 
-    <!-- One-release compatibility for in-flight crop state created before the rename. -->
-    <cache-path
-        name="feedback_media"
-        path="feedback_media/" />
-
     <cache-path
         name="tank_exports"
         path="tank_exports/" />
