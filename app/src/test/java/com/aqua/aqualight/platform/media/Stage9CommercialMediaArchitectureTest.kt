@@ -86,7 +86,7 @@ class Stage9CommercialMediaArchitectureTest {
     }
 
     @Test
-    fun feedbackViewModelTeardownNeverDeletesFilesDirectly() {
+    fun feedbackViewModelOwnsNoMediaLifecycle() {
         val viewModel = source(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/feedback/FeedbackViewModel.kt"
         )
@@ -95,21 +95,27 @@ class Stage9CommercialMediaArchitectureTest {
             "companion object"
         )
 
-        assertTrue(onCleared.contains("terminalCleanupScope.launch"))
-        assertTrue(onCleared.contains("mediaProcessor.delete"))
-        assertFalse(onCleared.contains(".file?.takeIf"))
+        assertTrue(onCleared.contains("submitJob?.cancel()"))
+        assertFalse(viewModel.contains("mediaProcessor"))
+        assertFalse(viewModel.contains("ProcessedFeedbackMedia"))
+        assertFalse(viewModel.contains("terminalCleanupScope"))
         assertFalse(onCleared.contains("File("))
     }
 
     @Test
-    fun feedbackRemoteCommitCannotBeDowngradedByLocalJournalCleanup() {
+    fun feedbackSubmissionRemainsFirestoreOnly() {
         val repository = source(
             "app/src/main/java/com/aqua/aqualight/data/feedback/" +
                 "FirebaseFeedbackSubmissionOperations.kt"
         )
-        assertTrue(repository.contains("runCatching { journalStore.remove(documentId) }"))
-        assertTrue(repository.contains("ReconcileOutcome.Committed"))
-        assertTrue(repository.contains("runCatching { journalStore.remove(entry.documentId) }"))
+
+        assertTrue(repository.contains("documentStore.save(documentId, data)"))
+        assertTrue(repository.contains("Firestore-backed, text-only feedback repository"))
+        assertFalse(repository.contains("screenshotStore"))
+        assertFalse(repository.contains("journalStore"))
+        assertFalse(repository.contains("feedback_screenshots"))
+        assertFalse(repository.contains("reservePending"))
+        assertFalse(repository.contains("cleanupOrphans"))
     }
 
     private fun source(relativePath: String): String =

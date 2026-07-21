@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.tabs.settings.feedback
 
-import android.util.Patterns
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -64,10 +63,10 @@ class FeedbackViewModel(
         if (_uiState.value.isSubmitting) return
 
         val current = _uiState.value
+        val normalizedEmail = current.email.trim()
         val categoryError = current.category.isBlank()
         val messageError = current.message.trim().length < MIN_MESSAGE_LENGTH
-        val emailError = current.email.isNotBlank() &&
-            !Patterns.EMAIL_ADDRESS.matcher(current.email.trim()).matches()
+        val emailError = normalizedEmail.isNotEmpty() && !isValidEmail(normalizedEmail)
 
         if (categoryError || messageError || emailError) {
             _uiState.update {
@@ -122,6 +121,11 @@ class FeedbackViewModel(
         }
     }
 
+    private fun isValidEmail(value: String): Boolean {
+        if (value.length > MAX_EMAIL_LENGTH) return false
+        return EMAIL_PATTERN.matches(value)
+    }
+
     private fun resetFormState() {
         savedStateHandle[KEY_CATEGORY] = ""
         savedStateHandle[KEY_EMAIL] = ""
@@ -136,6 +140,8 @@ class FeedbackViewModel(
 
     companion object {
         private const val MIN_MESSAGE_LENGTH = 10
+        private const val MAX_EMAIL_LENGTH = 320
+        private val EMAIL_PATTERN = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
         private const val KEY_CATEGORY = "feedback.category"
         private const val KEY_EMAIL = "feedback.email"
         private const val KEY_MESSAGE = "feedback.message"
