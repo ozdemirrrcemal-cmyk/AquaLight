@@ -46,6 +46,9 @@ class FeedbackSubmissionUseCaseTest {
         assertTrue(FeedbackSubmissionPolicy.isEmailValid("user+tag@sub.example.co.uk"))
         assertTrue(FeedbackSubmissionPolicy.isEmailValid(""))
         assertEquals(false, FeedbackSubmissionPolicy.isEmailValid("user@localhost"))
+        assertEquals(false, FeedbackSubmissionPolicy.isEmailValid(".user@example.com"))
+        assertEquals(false, FeedbackSubmissionPolicy.isEmailValid("user.@example.com"))
+        assertEquals(false, FeedbackSubmissionPolicy.isEmailValid("user..name@example.com"))
         assertEquals(
             false,
             FeedbackSubmissionPolicy.isEmailValid("a".repeat(65) + "@example.com")
