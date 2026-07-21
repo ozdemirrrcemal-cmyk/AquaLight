@@ -104,7 +104,6 @@ class CareProfileBottomSheet : BottomSheetDialogFragment(
             com.google.android.material.R.id.design_bottom_sheet
         ) ?: return
         val maxHeight = (resources.displayMetrics.heightPixels * MAX_HEIGHT_RATIO).roundToInt()
-        sheet.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.aqua_color_transparent))
         sheet.layoutParams = sheet.layoutParams.apply { height = maxHeight }
         sheetDialog.behavior.apply {
             peekHeight = maxHeight
