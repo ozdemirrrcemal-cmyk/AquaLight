@@ -92,10 +92,10 @@ class FeedbackViewModelTest {
     }
 
     @Test
-    fun emailBeyondBackendLimitIsRejectedBeforeRepositoryCall() = runTest(dispatcher) {
+    fun emailBeyondCommercialLimitIsRejectedBeforeRepositoryCall() = runTest(dispatcher) {
         val repository = FakeFeedbackRepository()
         val viewModel = viewModel(savedState(), repository)
-        viewModel.updateEmail("a".repeat(310) + "@example.com")
+        viewModel.updateEmail("a".repeat(243) + "@example.com")
 
         viewModel.submit()
         advanceUntilIdle()
@@ -103,6 +103,58 @@ class FeedbackViewModelTest {
         assertEquals(0, repository.submitCount)
         assertTrue(viewModel.uiState.value.emailError)
         assertFalse(viewModel.uiState.value.isSubmitting)
+    }
+
+    @Test
+    fun emailLocalPartBeyond64CharactersIsRejected() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository()
+        val viewModel = viewModel(savedState(), repository)
+        viewModel.updateEmail("a".repeat(65) + "@example.com")
+
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals(0, repository.submitCount)
+        assertTrue(viewModel.uiState.value.emailError)
+    }
+
+    @Test
+    fun emailDomainWithoutPublicSuffixIsRejected() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository()
+        val viewModel = viewModel(savedState(), repository)
+        viewModel.updateEmail("user@localhost")
+
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals(0, repository.submitCount)
+        assertTrue(viewModel.uiState.value.emailError)
+    }
+
+    @Test
+    fun messageAtCommercialLimitIsAccepted() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository()
+        val viewModel = viewModel(savedState(), repository)
+        viewModel.updateMessage("x".repeat(500))
+
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals(1, repository.submitCount)
+        assertEquals(500, repository.request?.message?.length)
+    }
+
+    @Test
+    fun messageAboveCommercialLimitIsRejected() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository()
+        val viewModel = viewModel(savedState(), repository)
+        viewModel.updateMessage("x".repeat(501))
+
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals(0, repository.submitCount)
+        assertTrue(viewModel.uiState.value.messageError)
     }
 
     @Test
