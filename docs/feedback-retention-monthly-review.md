@@ -1,6 +1,6 @@
 # Monthly feedback retention review
 
-Status: **pending operator approval**
+Status: **approved by the AquaLight operator**
 
 This procedure applies only to the Cloud Firestore collection `feedback_items`. AquaLight feedback is text-only and does not use Cloud Storage attachments.
 
@@ -53,7 +53,8 @@ By approving this procedure, the operator confirms that:
 - legal holds will be exceptional and documented;
 - failures and missed reviews will be corrected and evidenced.
 
-- Approval status: `PENDING`
-- Approved by:
-- Approval date:
-- Approved commit:
+- Approval status: `APPROVED`
+- Approved by: Cemal Özdemir — AquaLight project owner/operator
+- Approval date: 2026-07-21
+- Approval statement: “Cemal Özdemir olarak aylık feedback saklama ve temizleme prosedürünü onaylıyorum.”
+- Approved commit: recorded in the repository history of this approval update
