@@ -35,27 +35,47 @@ class FirebaseFeedbackSubmissionOperationsTest {
     }
 
     @Test
-    fun emailIsNormalizedAtPersistenceBoundary() = runTest {
+    fun fieldsAreNormalizedAtPersistenceBoundary() = runTest {
         val documentStore = FakeDocumentStore()
-        val repository = repository(ownerUid = "owner", documentStore = documentStore)
+        val repository = repository(ownerUid = " owner ", documentStore = documentStore)
 
-        repository.submit(request(email = "  user+tag@example.com  "))
+        repository.submit(
+            request(
+                email = "  user+tag@example.com  ",
+                category = "  Bug  ",
+                message = "  A reproducible issue  "
+            )
+        )
 
+        assertEquals("owner", documentStore.savedData["userId"])
         assertEquals("user+tag@example.com", documentStore.savedData["email"])
+        assertEquals("Bug", documentStore.savedData["category"])
+        assertEquals("A reproducible issue", documentStore.savedData["message"])
     }
 
     @Test
-    fun missingOrBlankOwnerUsesAnonymousIdentity() = runTest {
-        listOf<String?>(null, "").forEach { ownerUid ->
+    fun blankOptionalEmailIsPersistedAsNull() = runTest {
+        val documentStore = FakeDocumentStore()
+        val repository = repository(ownerUid = "owner", documentStore = documentStore)
+
+        repository.submit(request(email = "   "))
+
+        assertTrue(documentStore.savedData.containsKey("email"))
+        assertEquals(null, documentStore.savedData["email"])
+    }
+
+    @Test
+    fun missingOrBlankOwnerReturnsAuthenticationFailureWithoutWriting() = runTest {
+        listOf<String?>(null, "", "   ").forEach { ownerUid ->
             val documentStore = FakeDocumentStore()
             val repository = repository(ownerUid = ownerUid, documentStore = documentStore)
 
-            val result = repository.submit(request(email = "   "))
+            val result = repository.submit(request())
 
-            assertTrue(result is FeedbackSubmissionResult.Success)
-            assertEquals("anonymous", documentStore.savedData["userId"])
-            assertTrue(documentStore.savedData.containsKey("email"))
-            assertEquals(null, documentStore.savedData["email"])
+            val failure = (result as FeedbackSubmissionResult.Failure).failure
+            assertEquals(FeedbackSubmissionFailureKind.AUTHENTICATION, failure.kind)
+            assertEquals(null, documentStore.savedDocumentId)
+            assertTrue(documentStore.savedData.isEmpty())
         }
     }
 
@@ -92,10 +112,14 @@ class FirebaseFeedbackSubmissionOperationsTest {
         )
     }
 
-    private fun request(email: String = "user@example.com") = FeedbackSubmissionRequest(
-        category = "Bug",
+    private fun request(
+        email: String = "user@example.com",
+        category: String = "Bug",
+        message: String = "A reproducible issue"
+    ) = FeedbackSubmissionRequest(
+        category = category,
         email = email,
-        message = "A reproducible issue",
+        message = message,
         appVersion = "1.0",
         localeTag = "tr-TR"
     )
