@@ -13,9 +13,9 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.aqua.aqualight.R
 import com.aqua.aqualight.platform.media.AppMediaScope
 import com.aqua.aqualight.platform.media.AppMediaStorage
-import com.aqua.aqualight.platform.media.FeedbackMediaFailureKind
-import com.aqua.aqualight.platform.media.FeedbackMediaProcessingResult
-import com.aqua.aqualight.platform.media.FeedbackMediaProcessor
+import com.aqua.aqualight.platform.media.ImageMediaFailureKind
+import com.aqua.aqualight.platform.media.ImageMediaProcessingResult
+import com.aqua.aqualight.platform.media.ImageMediaProcessor
 import com.yalantis.ucrop.UCrop
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -38,7 +38,7 @@ class MediaFlowCoordinatorViewModel(
     private val ownerToken: String,
     private val ownerUid: String,
     private val cropSpec: MediaCropSpec,
-    private val mediaProcessor: FeedbackMediaProcessor,
+    private val mediaProcessor: ImageMediaProcessor,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
 
@@ -112,11 +112,11 @@ class MediaFlowCoordinatorViewModel(
         }
 
         when (val processed = mediaProcessor.process(sourceUri)) {
-            is FeedbackMediaProcessingResult.Failure -> {
+            is ImageMediaProcessingResult.Failure -> {
                 MediaCropPreparationResult.Failure(processed.kind)
             }
 
-            is FeedbackMediaProcessingResult.Success -> {
+            is ImageMediaProcessingResult.Success -> {
                 val safeSourceUri = withContext(dispatcher) {
                     AppMediaStorage.toContentUriForOwnedPath(
                         context = appContext,
@@ -379,7 +379,7 @@ class MediaFlowCoordinatorViewModel(
             ownerToken: String,
             ownerUid: String,
             cropSpec: MediaCropSpec,
-            mediaProcessor: FeedbackMediaProcessor
+            mediaProcessor: ImageMediaProcessor
         ): ViewModelProvider.Factory {
             return object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(
@@ -418,7 +418,7 @@ data class MediaSelectionState(
 
 sealed interface MediaCropPreparationResult {
     data class Ready(val intent: Intent) : MediaCropPreparationResult
-    data class Failure(val kind: FeedbackMediaFailureKind) : MediaCropPreparationResult
+    data class Failure(val kind: ImageMediaFailureKind) : MediaCropPreparationResult
     data object StorageFailure : MediaCropPreparationResult
 }
 
