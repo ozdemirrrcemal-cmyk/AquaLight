@@ -4,137 +4,149 @@ import com.aqua.aqualight.application.feedback.FeedbackSubmissionFailureKind
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionRequest
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionResult
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class FirebaseFeedbackSubmissionOperationsTest {
 
     @Test
-    fun successfulSubmissionPersistsTextFeedbackWithOwnerMetadata() = runTest {
-        val documentStore = FakeDocumentStore()
-        val repository = repository(ownerUid = "owner", documentStore = documentStore)
+    fun successfulSubmissionUsesOwnerScopedTransactionStore() = runTest {
+        val store = FakeDocumentStore()
+        val repository = repository(ownerUid = " owner ", documentStore = store)
 
         val result = repository.submit(request())
 
-        assertEquals(FeedbackSubmissionResult.Success("document-1"), result)
-        assertEquals("document-1", documentStore.savedDocumentId)
-        assertEquals("owner", documentStore.savedData["userId"])
-        assertEquals("Bug", documentStore.savedData["category"])
-        assertEquals("user@example.com", documentStore.savedData["email"])
-        assertEquals("A reproducible issue", documentStore.savedData["message"])
-        assertEquals("android", documentStore.savedData["platform"])
-        assertEquals("1.0", documentStore.savedData["appVersion"])
-        assertEquals("tr-TR", documentStore.savedData["locale"])
-        assertEquals("new", documentStore.savedData["status"])
-        assertFalse(documentStore.savedData.keys.any { it.contains("media", ignoreCase = true) })
+        assertEquals(FeedbackSubmissionResult.Success(SUBMISSION_ID), result)
+        assertEquals(1, store.saveCount)
+        assertEquals("owner", store.ownerUid)
+        assertEquals(SUBMISSION_ID, store.request?.submissionId)
     }
 
     @Test
-    fun fieldsAreNormalizedAtPersistenceBoundary() = runTest {
-        val documentStore = FakeDocumentStore()
-        val repository = repository(ownerUid = " owner ", documentStore = documentStore)
+    fun missingOwnerReturnsAuthenticationFailureWithoutWriting() = runTest {
+        val store = FakeDocumentStore()
+        val result = repository(ownerUid = null, documentStore = store).submit(request())
 
-        repository.submit(
-            request(
-                email = "  user+tag@example.com  ",
-                category = "  Bug  ",
-                message = "  A reproducible issue  "
+        val failure = (result as FeedbackSubmissionResult.Failure).failure
+        assertEquals(FeedbackSubmissionFailureKind.AUTHENTICATION, failure.kind)
+        assertEquals(0, store.saveCount)
+    }
+
+    @Test
+    fun transactionNetworkFailureReturnsTypedNetworkFailure() = runTest {
+        val store = FakeDocumentStore().apply {
+            saveError = FeedbackDocumentStoreException(
+                kind = FeedbackDocumentStoreFailureKind.NETWORK,
+                cause = IllegalStateException("offline")
             )
-        )
-
-        assertEquals("owner", documentStore.savedData["userId"])
-        assertEquals("user+tag@example.com", documentStore.savedData["email"])
-        assertEquals("Bug", documentStore.savedData["category"])
-        assertEquals("A reproducible issue", documentStore.savedData["message"])
-    }
-
-    @Test
-    fun blankOptionalEmailIsPersistedAsNull() = runTest {
-        val documentStore = FakeDocumentStore()
-        val repository = repository(ownerUid = "owner", documentStore = documentStore)
-
-        repository.submit(request(email = "   "))
-
-        assertTrue(documentStore.savedData.containsKey("email"))
-        assertEquals(null, documentStore.savedData["email"])
-    }
-
-    @Test
-    fun missingOrBlankOwnerReturnsAuthenticationFailureWithoutWriting() = runTest {
-        listOf<String?>(null, "", "   ").forEach { ownerUid ->
-            val documentStore = FakeDocumentStore()
-            val repository = repository(ownerUid = ownerUid, documentStore = documentStore)
-
-            val result = repository.submit(request())
-
-            val failure = (result as FeedbackSubmissionResult.Failure).failure
-            assertEquals(FeedbackSubmissionFailureKind.AUTHENTICATION, failure.kind)
-            assertEquals(null, documentStore.savedDocumentId)
-            assertTrue(documentStore.savedData.isEmpty())
         }
+
+        val result = repository(ownerUid = "owner", documentStore = store).submit(request())
+
+        val failure = (result as FeedbackSubmissionResult.Failure).failure
+        assertEquals(FeedbackSubmissionFailureKind.NETWORK, failure.kind)
+        assertTrue(failure.cause is FeedbackDocumentStoreException)
     }
 
     @Test
-    fun persistenceFailureReturnsTypedFailure() = runTest {
-        val expected = IllegalStateException("firestore unavailable")
-        val documentStore = FakeDocumentStore().apply { saveError = expected }
-        val repository = repository(ownerUid = "owner", documentStore = documentStore)
+    fun transactionPersistenceFailureReturnsTypedPersistenceFailure() = runTest {
+        val store = FakeDocumentStore().apply {
+            saveError = FeedbackDocumentStoreException(
+                kind = FeedbackDocumentStoreFailureKind.PERSISTENCE,
+                cause = IllegalStateException("write rejected")
+            )
+        }
 
-        val result = repository.submit(request())
+        val result = repository(ownerUid = "owner", documentStore = store).submit(request())
 
         val failure = (result as FeedbackSubmissionResult.Failure).failure
         assertEquals(FeedbackSubmissionFailureKind.PERSISTENCE, failure.kind)
-        assertSame(expected, failure.cause)
+    }
+
+    @Test
+    fun nonTerminatingTransactionTimesOutAsNetworkFailure() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val store = FakeDocumentStore().apply {
+            pendingResult = CompletableDeferred()
+        }
+        val repository = repository(
+            ownerUid = "owner",
+            documentStore = store,
+            dispatcher = dispatcher,
+            timeoutMillis = 1_000L
+        )
+
+        val deferred = async(dispatcher) { repository.submit(request()) }
+        advanceTimeBy(1_001L)
+        advanceUntilIdle()
+
+        val failure = (deferred.await() as FeedbackSubmissionResult.Failure).failure
+        assertEquals(FeedbackSubmissionFailureKind.NETWORK, failure.kind)
+        assertEquals(1, store.saveCount)
     }
 
     @Test(expected = CancellationException::class)
-    fun cancellationIsPropagated() = runTest {
-        val documentStore = FakeDocumentStore().apply {
+    fun lifecycleCancellationIsPropagated() = runTest {
+        val store = FakeDocumentStore().apply {
             saveError = CancellationException("screen left")
         }
 
-        repository(ownerUid = "owner", documentStore = documentStore).submit(request())
+        repository(ownerUid = "owner", documentStore = store).submit(request())
     }
 
     private fun repository(
         ownerUid: String?,
-        documentStore: FakeDocumentStore
+        documentStore: FakeDocumentStore,
+        dispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.Unconfined,
+        timeoutMillis: Long = 15_000L
     ): FirebaseFeedbackSubmissionOperations {
         return FirebaseFeedbackSubmissionOperations(
             ownerUidProvider = { ownerUid },
             documentStore = documentStore,
-            dispatcher = Dispatchers.Unconfined
+            dispatcher = dispatcher,
+            timeoutMillis = timeoutMillis
         )
     }
 
-    private fun request(
-        email: String = "user@example.com",
-        category: String = "Bug",
-        message: String = "A reproducible issue"
-    ) = FeedbackSubmissionRequest(
-        category = category,
-        email = email,
-        message = message,
+    private fun request() = FeedbackSubmissionRequest(
+        submissionId = SUBMISSION_ID,
+        category = "Bug",
+        email = "user@example.com",
+        message = "A reproducible issue",
         appVersion = "1.0",
         localeTag = "tr-TR"
     )
 
     private class FakeDocumentStore : FeedbackDocumentStore {
         var saveError: Throwable? = null
-        var savedDocumentId: String? = null
-        var savedData: Map<String, Any?> = emptyMap()
+        var pendingResult: CompletableDeferred<String>? = null
+        var saveCount: Int = 0
+        var ownerUid: String? = null
+        var request: FeedbackSubmissionRequest? = null
 
-        override fun newDocumentId(): String = "document-1"
-
-        override suspend fun save(documentId: String, data: Map<String, Any?>) {
+        override suspend fun save(
+            ownerUid: String,
+            request: FeedbackSubmissionRequest
+        ): String {
+            saveCount += 1
+            this.ownerUid = ownerUid
+            this.request = request
             saveError?.let { throw it }
-            savedDocumentId = documentId
-            savedData = data.toMap()
+            return pendingResult?.await() ?: request.submissionId
         }
+    }
+
+    private companion object {
+        const val SUBMISSION_ID = "123e4567-e89b-42d3-a456-426614174000"
     }
 }
