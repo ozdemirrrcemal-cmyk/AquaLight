@@ -10,15 +10,16 @@ import {
   doc,
   getDoc,
   getDocs,
-  query,
   serverTimestamp,
   setDoc,
-  where,
 } from 'firebase/firestore';
 
 const PROJECT_ID = 'demo-aqualight-feedback';
 const OWNER = 'owner-a';
 const OTHER_OWNER = 'owner-b';
+const OWNER_SUBMISSION = '123e4567-e89b-42d3-a456-426614174000';
+const OWNER_EMAIL_SUBMISSION = '123e4567-e89b-42d3-a456-426614174001';
+const OTHER_SUBMISSION = '123e4567-e89b-42d3-a456-426614174002';
 
 const testEnvironment = await initializeTestEnvironment({
   projectId: PROJECT_ID,
@@ -27,8 +28,9 @@ const testEnvironment = await initializeTestEnvironment({
   },
 });
 
-function textFeedback(ownerUid, overrides = {}) {
+function textFeedback(ownerUid, submissionId, overrides = {}) {
   return {
+    submissionId,
     category: 'Bug',
     email: null,
     message: 'A reproducible commercial feedback issue.',
@@ -42,87 +44,149 @@ function textFeedback(ownerUid, overrides = {}) {
   };
 }
 
+function submissionRef(db, ownerUid, submissionId) {
+  return doc(db, 'feedback_items', ownerUid, 'submissions', submissionId);
+}
+
 try {
   await testEnvironment.clearFirestore();
 
   const ownerDb = testEnvironment.authenticatedContext(OWNER).firestore();
   const otherDb = testEnvironment.authenticatedContext(OTHER_OWNER).firestore();
   const anonymousDb = testEnvironment.unauthenticatedContext().firestore();
-  const ownerRef = doc(ownerDb, 'feedback_items', 'owner-feedback');
-  const otherRef = doc(otherDb, 'feedback_items', 'other-feedback');
+  const ownerRef = submissionRef(ownerDb, OWNER, OWNER_SUBMISSION);
+  const otherRef = submissionRef(otherDb, OTHER_OWNER, OTHER_SUBMISSION);
 
-  await assertSucceeds(setDoc(ownerRef, textFeedback(OWNER)));
+  await assertSucceeds(
+    setDoc(ownerRef, textFeedback(OWNER, OWNER_SUBMISSION)),
+  );
   await assertSucceeds(
     setDoc(
-      doc(ownerDb, 'feedback_items', 'owner-feedback-with-email'),
-      textFeedback(OWNER, { email: 'user+tag@example.com' }),
+      submissionRef(ownerDb, OWNER, OWNER_EMAIL_SUBMISSION),
+      textFeedback(OWNER, OWNER_EMAIL_SUBMISSION, {
+        email: 'user+tag@example.com',
+      }),
     ),
   );
-  await assertSucceeds(setDoc(otherRef, textFeedback(OTHER_OWNER)));
+  await assertSucceeds(
+    setDoc(otherRef, textFeedback(OTHER_OWNER, OTHER_SUBMISSION)),
+  );
 
   await assertSucceeds(getDoc(ownerRef));
-  await assertFails(getDoc(doc(otherDb, 'feedback_items', 'owner-feedback')));
+  await assertFails(
+    getDoc(submissionRef(otherDb, OWNER, OWNER_SUBMISSION)),
+  );
 
   await assertFails(
     setDoc(
-      doc(otherDb, 'feedback_items', 'spoofed-owner'),
-      textFeedback(OWNER),
+      submissionRef(ownerDb, OWNER, '123e4567-e89b-42d3-a456-426614174003'),
+      textFeedback(
+        OTHER_OWNER,
+        '123e4567-e89b-42d3-a456-426614174003',
+      ),
     ),
   );
   await assertFails(
     setDoc(
-      doc(anonymousDb, 'feedback_items', 'anonymous-feedback'),
-      textFeedback('anonymous'),
+      submissionRef(
+        anonymousDb,
+        OWNER,
+        '123e4567-e89b-42d3-a456-426614174004',
+      ),
+      textFeedback(
+        OWNER,
+        '123e4567-e89b-42d3-a456-426614174004',
+      ),
     ),
   );
   await assertFails(
     setDoc(
-      doc(ownerDb, 'feedback_items', 'invalid-email'),
-      textFeedback(OWNER, { email: 'invalid-email' }),
+      submissionRef(ownerDb, OWNER, 'not-a-uuid'),
+      textFeedback(OWNER, 'not-a-uuid'),
     ),
   );
   await assertFails(
     setDoc(
-      doc(ownerDb, 'feedback_items', 'invalid-dotted-email'),
-      textFeedback(OWNER, { email: 'user..name@example.com' }),
+      submissionRef(ownerDb, OWNER, '123e4567-e89b-42d3-a456-426614174005'),
+      textFeedback(
+        OWNER,
+        '123e4567-e89b-42d3-a456-426614174099',
+      ),
     ),
   );
   await assertFails(
     setDoc(
-      doc(ownerDb, 'feedback_items', 'oversized-email-local-part'),
-      textFeedback(OWNER, { email: `${'a'.repeat(65)}@example.com` }),
+      submissionRef(ownerDb, OWNER, '123e4567-e89b-42d3-a456-426614174006'),
+      textFeedback(OWNER, '123e4567-e89b-42d3-a456-426614174006', {
+        email: 'invalid-email',
+      }),
     ),
   );
   await assertFails(
     setDoc(
-      doc(ownerDb, 'feedback_items', 'oversized-message'),
-      textFeedback(OWNER, { message: 'x'.repeat(501) }),
+      submissionRef(ownerDb, OWNER, '123e4567-e89b-42d3-a456-426614174007'),
+      textFeedback(OWNER, '123e4567-e89b-42d3-a456-426614174007', {
+        email: 'user..name@example.com',
+      }),
     ),
   );
   await assertFails(
     setDoc(
-      doc(ownerDb, 'feedback_items', 'unexpected-field'),
-      { ...textFeedback(OWNER), unexpected: true },
+      submissionRef(ownerDb, OWNER, '123e4567-e89b-42d3-a456-426614174008'),
+      textFeedback(OWNER, '123e4567-e89b-42d3-a456-426614174008', {
+        email: `${'a'.repeat(65)}@example.com`,
+      }),
+    ),
+  );
+  await assertFails(
+    setDoc(
+      submissionRef(ownerDb, OWNER, '123e4567-e89b-42d3-a456-426614174009'),
+      textFeedback(OWNER, '123e4567-e89b-42d3-a456-426614174009', {
+        message: 'x'.repeat(501),
+      }),
+    ),
+  );
+  await assertFails(
+    setDoc(
+      submissionRef(ownerDb, OWNER, '123e4567-e89b-42d3-a456-426614174010'),
+      {
+        ...textFeedback(
+          OWNER,
+          '123e4567-e89b-42d3-a456-426614174010',
+        ),
+        unexpected: true,
+      },
     ),
   );
 
-  const ownerQuery = query(
-    collection(ownerDb, 'feedback_items'),
-    where('userId', '==', OWNER),
+  // Existing documents are immutable. Idempotent retries read and return them without writing.
+  await assertFails(
+    setDoc(ownerRef, textFeedback(OWNER, OWNER_SUBMISSION)),
   );
-  await assertSucceeds(getDocs(ownerQuery));
 
-  const crossOwnerQuery = query(
-    collection(otherDb, 'feedback_items'),
-    where('userId', '==', OWNER),
+  const ownerSubmissions = collection(
+    ownerDb,
+    'feedback_items',
+    OWNER,
+    'submissions',
   );
-  await assertFails(getDocs(crossOwnerQuery));
+  await assertSucceeds(getDocs(ownerSubmissions));
+
+  const crossOwnerSubmissions = collection(
+    otherDb,
+    'feedback_items',
+    OWNER,
+    'submissions',
+  );
+  await assertFails(getDocs(crossOwnerSubmissions));
   await assertFails(getDocs(collection(ownerDb, 'feedback_items')));
 
-  await assertFails(deleteDoc(doc(otherDb, 'feedback_items', 'owner-feedback')));
+  await assertFails(
+    deleteDoc(submissionRef(otherDb, OWNER, OWNER_SUBMISSION)),
+  );
   await assertSucceeds(deleteDoc(ownerRef));
 
-  console.log('Feedback Firestore rules tests passed.');
+  console.log('Spark-compatible feedback Firestore rules tests passed.');
 } finally {
   await testEnvironment.cleanup();
 }
