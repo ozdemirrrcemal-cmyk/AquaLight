@@ -146,10 +146,10 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         } else {
             null
         }
-        inputLayoutMessage.error = if (state.messageError) {
-            getString(R.string.feedback_error_message_length)
-        } else {
-            null
+        inputLayoutMessage.error = when {
+            state.messageTooLongError -> getString(R.string.feedback_error_message_length)
+            state.messageError -> getString(R.string.feedback_error_message_too_short)
+            else -> null
         }
 
         btnSend.isEnabled = !state.isSubmitting
