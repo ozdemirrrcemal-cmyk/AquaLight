@@ -61,14 +61,15 @@ class FeedbackViewModel(
         if (_uiState.value.isSubmitting) return
 
         val current = _uiState.value
+        val normalizedCategory = current.category.trim()
         val normalizedEmail = current.email.trim()
-        val categoryError = current.category.isBlank()
-        val messageError = current.message.trim().length < MIN_MESSAGE_LENGTH
-        val emailError = normalizedEmail.isNotEmpty() &&
-            (
-                normalizedEmail.length > MAX_EMAIL_LENGTH ||
-                    !PatternsCompat.EMAIL_ADDRESS.matcher(normalizedEmail).matches()
-                )
+        val normalizedMessage = current.message.trim()
+        val categoryError = normalizedCategory.isEmpty()
+        val messageError = normalizedMessage.length < MIN_MESSAGE_LENGTH
+        val emailError = normalizedEmail.isNotEmpty() && (
+            normalizedEmail.length > MAX_EMAIL_LENGTH ||
+                !PatternsCompat.EMAIL_ADDRESS.matcher(normalizedEmail).matches()
+            )
 
         if (categoryError || messageError || emailError) {
             _uiState.update {
@@ -81,21 +82,20 @@ class FeedbackViewModel(
             return
         }
 
+        val request = FeedbackSubmissionRequest(
+            category = normalizedCategory,
+            email = normalizedEmail,
+            message = normalizedMessage,
+            appVersion = appVersionProvider(),
+            localeTag = localeTagProvider()
+        )
+
         // Lock synchronously so rapid taps cannot enqueue duplicate submissions.
         _uiState.update { it.copy(isSubmitting = true) }
         viewModelScope.launch {
             try {
-                val state = _uiState.value
                 val result = try {
-                    submissionUseCase.submit(
-                        FeedbackSubmissionRequest(
-                            category = state.category.trim(),
-                            email = state.email.trim(),
-                            message = state.message.trim(),
-                            appVersion = appVersionProvider(),
-                            localeTag = localeTagProvider()
-                        )
-                    )
+                    submissionUseCase.submit(request)
                 } catch (cancellation: CancellationException) {
                     throw cancellation
                 } catch (error: Throwable) {
