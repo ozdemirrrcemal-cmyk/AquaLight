@@ -4,6 +4,10 @@
     <style name="AquaBottomSheetDialogTheme" parent="ThemeOverlay.Material3.BottomSheetDialog">
         <item name="android:windowBackground">@color/aqua_color_transparent</item>
         <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:navigationBarColor">@color/aqua_color_transparent</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowSoftInputMode">adjustResize</item>
+        <item name="enableEdgeToEdge">true</item>
         <item name="bottomSheetStyle">@style/Widget.Aqua.BottomSheet.Modal</item>
     </style>
 
