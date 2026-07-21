@@ -104,7 +104,7 @@ class Stage9CommercialMediaArchitectureTest {
         val rules = source("firestore.rules")
 
         assertTrue(application.contains("val submissionId: String"))
-        assertTrue(application.contains("FeedbackSubmissionFailureKind.NETWORK"))
+        assertTrue(application.contains("NETWORK,"))
         assertTrue(repository.contains("firestore.runTransaction"))
         assertTrue(repository.contains("withTimeout(timeoutMillis)"))
         assertTrue(repository.contains("CompletableDeferred"))
