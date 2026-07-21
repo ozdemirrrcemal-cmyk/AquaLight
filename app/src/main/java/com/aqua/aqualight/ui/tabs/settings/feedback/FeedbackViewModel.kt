@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.tabs.settings.feedback
 
-import androidx.core.util.PatternsCompat
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -10,6 +9,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionFailure
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionFailureKind
+import com.aqua.aqualight.application.feedback.FeedbackSubmissionPolicy
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionRequest
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionResult
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionUseCase
@@ -64,12 +64,11 @@ class FeedbackViewModel(
         val normalizedCategory = current.category.trim()
         val normalizedEmail = current.email.trim()
         val normalizedMessage = current.message.trim()
-        val categoryError = normalizedCategory.isEmpty()
-        val messageError = normalizedMessage.length < MIN_MESSAGE_LENGTH
-        val emailError = normalizedEmail.isNotEmpty() && (
-            normalizedEmail.length > MAX_EMAIL_LENGTH ||
-                !PatternsCompat.EMAIL_ADDRESS.matcher(normalizedEmail).matches()
-            )
+        val categoryError = normalizedCategory.isEmpty() ||
+            normalizedCategory.length > FeedbackSubmissionPolicy.CATEGORY_MAX_LENGTH
+        val messageError = normalizedMessage.length !in
+            FeedbackSubmissionPolicy.MESSAGE_MIN_LENGTH..FeedbackSubmissionPolicy.MESSAGE_MAX_LENGTH
+        val emailError = !FeedbackSubmissionPolicy.isEmailValid(normalizedEmail)
 
         if (categoryError || messageError || emailError) {
             _uiState.update {
@@ -130,8 +129,6 @@ class FeedbackViewModel(
     }
 
     companion object {
-        private const val MIN_MESSAGE_LENGTH = 10
-        private const val MAX_EMAIL_LENGTH = 320
         private const val KEY_CATEGORY = "feedback.category"
         private const val KEY_EMAIL = "feedback.email"
         private const val KEY_MESSAGE = "feedback.message"
