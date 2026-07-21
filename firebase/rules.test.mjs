@@ -83,6 +83,12 @@ try {
   );
   await assertFails(
     setDoc(
+      doc(ownerDb, 'feedback_items', 'invalid-dotted-email'),
+      textFeedback(OWNER, { email: 'user..name@example.com' }),
+    ),
+  );
+  await assertFails(
+    setDoc(
       doc(ownerDb, 'feedback_items', 'oversized-message'),
       textFeedback(OWNER, { message: 'x'.repeat(501) }),
     ),
