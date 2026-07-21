@@ -45,6 +45,8 @@ service cloud.firestore {
             data.email is string
             && data.email.size() > 0
             && data.email.size() <= 254
+            && data.email.split('@').size() == 2
+            && data.email.split('@')[0].size() <= 64
             && data.email.matches("^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(\\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*@[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)+$")
           )
         )
