@@ -17,7 +17,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** Firebase-backed repository for text-only feedback submissions. */
+/** Firebase-backed repository for authenticated, text-only feedback submissions. */
 class FirebaseFeedbackSubmissionOperations internal constructor(
     private val ownerUidProvider: () -> String?,
     private val documentStore: FeedbackDocumentStore,
@@ -27,11 +27,17 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
     override suspend fun submit(
         request: FeedbackSubmissionRequest
     ): FeedbackSubmissionResult = withContext(dispatcher) {
-        val ownerUid = ownerUidProvider()?.takeIf(String::isNotBlank) ?: ANONYMOUS_OWNER_UID
+        val ownerUid = ownerUidProvider()?.trim()?.takeIf(String::isNotBlank)
+            ?: return@withContext FeedbackSubmissionResult.Failure(
+                FeedbackSubmissionFailure(
+                    kind = FeedbackSubmissionFailureKind.AUTHENTICATION,
+                    cause = IllegalStateException("Authenticated feedback owner is unavailable.")
+                )
+            )
         val documentId = documentStore.newDocumentId()
         val data = linkedMapOf<String, Any?>(
             FIELD_CATEGORY to request.category,
-            FIELD_EMAIL to request.email.trim().ifBlank { null },
+            FIELD_EMAIL to request.email.ifBlank { null },
             FIELD_MESSAGE to request.message,
             FIELD_PLATFORM to PLATFORM_ANDROID,
             FIELD_APP_VERSION to request.appVersion,
@@ -55,7 +61,6 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
     }
 
     companion object {
-        private const val ANONYMOUS_OWNER_UID = "anonymous"
         private const val PLATFORM_ANDROID = "android"
         private const val STATUS_NEW = "new"
         internal const val FIELD_CATEGORY = "category"
