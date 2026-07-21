@@ -108,15 +108,8 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         binding.lottieSuccess.addAnimatorListener(
             object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: Animator) {
-                    if (_binding == null) return
-                    withInputCallbacksSuppressed {
-                        binding.etMessage.isEnabled = true
-                        binding.etMessage.setText(viewModel.uiState.value.message)
-                        binding.etMessage.clearFocus()
-                        binding.inputLayoutMessage.hint = getString(R.string.feedback_hint_message)
-                        binding.inputLayoutMessage.error = null
-                        binding.lottieSuccess.isVisible = false
-                    }
+                    val currentBinding = _binding ?: return
+                    currentBinding.lottieSuccess.isVisible = false
                 }
             }
         )
@@ -165,6 +158,7 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
     private fun handleEvent(event: FeedbackUiEvent) {
         when (event) {
             FeedbackUiEvent.SubmissionSucceeded -> {
+                binding.etMessage.clearFocus()
                 withInputCallbacksSuppressed {
                     binding.autoCategory.setText("", false)
                     binding.etEmail.setText("")
@@ -195,11 +189,7 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
     }
 
     private fun showSuccessUI() = with(binding) {
-        withInputCallbacksSuppressed {
-            inputLayoutMessage.hint = ""
-            etMessage.isEnabled = false
-            etMessage.setText(getString(R.string.feedback_success_text))
-        }
+        inputLayoutMessage.error = null
         lottieSuccess.isVisible = true
         lottieSuccess.progress = 0f
         lottieSuccess.playAnimation()
