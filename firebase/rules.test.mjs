@@ -16,6 +16,7 @@ import {
 import {
   deleteObject,
   getBytes,
+  listAll,
   ref,
   uploadBytes,
 } from 'firebase/storage';
@@ -152,7 +153,9 @@ try {
   const ownerStorage = testEnvironment.authenticatedContext(OWNER).storage();
   const otherStorage = testEnvironment.authenticatedContext(OTHER_OWNER).storage();
   const anonymousStorage = testEnvironment.unauthenticatedContext().storage();
-  const validPath = `feedback_screenshots/${OWNER}/valid.jpg`;
+  const ownerRootPath = `feedback_screenshots/${OWNER}`;
+  const ownerRootRef = ref(ownerStorage, ownerRootPath);
+  const validPath = `${ownerRootPath}/valid.jpg`;
   const validRef = ref(ownerStorage, validPath);
 
   await assertSucceeds(
@@ -163,17 +166,34 @@ try {
   await assertSucceeds(getBytes(validRef));
   await assertFails(getBytes(ref(otherStorage, validPath)));
   await assertFails(deleteObject(ref(otherStorage, validPath)));
+  await assertSucceeds(listAll(ownerRootRef));
+  await assertFails(listAll(ref(otherStorage, ownerRootPath)));
+
+  const orphanPath = `${ownerRootPath}/legacy/orphan.jpg`;
+  await testEnvironment.withSecurityRulesDisabled(async context => {
+    await uploadBytes(
+      ref(context.storage(), orphanPath),
+      new Uint8Array([0xff, 0xd8, 0xff, 0xd9]),
+      { contentType: 'image/jpeg' },
+    );
+  });
+  const ownerListing = await assertSucceeds(listAll(ownerRootRef));
+  assert.equal(
+    ownerListing.prefixes.some(prefix => prefix.fullPath === `${ownerRootPath}/legacy`),
+    true,
+  );
+  await assertSucceeds(deleteObject(ref(ownerStorage, orphanPath)));
 
   await assertFails(
     uploadBytes(
-      ref(ownerStorage, `feedback_screenshots/${OWNER}/wrong-type.jpg`),
+      ref(ownerStorage, `${ownerRootPath}/wrong-type.jpg`),
       new Uint8Array([1, 2, 3]),
       { contentType: 'text/plain' },
     ),
   );
   await assertFails(
     uploadBytes(
-      ref(ownerStorage, `feedback_screenshots/${OWNER}/too-large.jpg`),
+      ref(ownerStorage, `${ownerRootPath}/too-large.jpg`),
       new Uint8Array(MAX_BYTES + 1),
       { contentType: 'image/jpeg' },
     ),
@@ -187,7 +207,7 @@ try {
   );
 
   await assertSucceeds(deleteObject(validRef));
-  console.log('Stage 9 Firebase rules tests passed.');
+  console.log('Stage 12 Firebase rules tests passed.');
 } finally {
   await testEnvironment.cleanup();
 }
