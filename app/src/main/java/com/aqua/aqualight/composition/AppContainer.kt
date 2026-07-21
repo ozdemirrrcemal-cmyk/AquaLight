@@ -120,7 +120,7 @@ internal class DefaultAppContainer(
         )
     }
 
-    override val feedbackMediaProcessor: FeedbackMediaProcessor by lazy(
+    private val boundedImageMediaProcessor: FeedbackMediaProcessor by lazy(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
         AndroidFeedbackMediaProcessor(appContext)
@@ -131,9 +131,12 @@ internal class DefaultAppContainer(
     ) {
         AndroidImageMediaProcessor(
             context = appContext,
-            delegate = feedbackMediaProcessor
+            delegate = boundedImageMediaProcessor
         )
     }
+
+    override val feedbackMediaProcessor: FeedbackMediaProcessor
+        get() = imageMediaProcessor
 
     private val ownerGraphResolver: OwnerDependencyGraphResolver by lazy(
         LazyThreadSafetyMode.SYNCHRONIZED
