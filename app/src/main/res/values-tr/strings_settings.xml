@@ -50,7 +50,6 @@
     <string name="re_auth_wrong_password">Yanlış şifre</string>
     <string name="re_auth_unknown_error">Bilinmeyen hata.</string>
     <string name="re_auth_delete_success_message">Hesabınız başarıyla silindi.</string>
-    <string name="re_auth_delete_cleanup_warning_title">Hesap Silindi</string>
     <string name="re_auth_delete_cleanup_warning_message">Hesabınız silindi, ancak bazı yerel giriş verileri kaldırılamadı. Başka biri giriş yapmadan önce AquaLight uygulamasını yeniden başlatın. Paylaşılan bir cihazda bu uyarı yeniden görünürse uygulama depolamasını temizleyin.</string>
     <string name="re_auth_delete_failed_title">Silme Başarısız</string>
     <string name="user_info_photo_desc">Profil fotoğrafınız.</string>
