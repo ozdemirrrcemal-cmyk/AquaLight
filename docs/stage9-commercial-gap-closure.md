@@ -1,7 +1,8 @@
 # Stage 9 commercial gap closure
 
-AquaLight is preparing its first commercial release. Feedback is authenticated and text-only, and
-profile/tank images use one domain-neutral media architecture without backward-compatibility shims.
+AquaLight is preparing its first commercial release. Feedback is authenticated, text-only and
+compatible with the Firebase Spark plan. Profile/tank images use one domain-neutral media
+architecture without backward-compatibility shims.
 
 ## Enforced guarantees
 
@@ -21,12 +22,19 @@ profile/tank images use one domain-neutral media architecture without backward-c
 - Tank duplication never reuses a source file as the duplicate's owned photo.
 - Feedback requires an authenticated UID and applies the same field limits in UI, use case,
   persistence tests and Firestore rules.
-- Account deletion may query and delete only the authenticated owner's feedback documents.
-- Screenshot upload, Firebase Storage, anonymous feedback and all `FeedbackMedia*` compatibility
-  names remain absent.
+- Feedback uses an owner-scoped Firestore transaction. Offline attempts fail instead of entering the
+  normal Firestore offline-write queue.
+- A stable UUID is reused while the form remains unchanged, so timeout/retry cannot create a second
+  feedback document.
+- Network failure and timeout close loading, re-enable the send button and preserve the form.
+- Account deletion performs a server-only owner-subcollection read and transaction-based deletes.
+- Cloud Functions, App Check, Play Integrity, Firebase Storage and Blaze-plan dependencies remain
+  absent from the feedback feature.
+- Screenshot upload, anonymous feedback and all `FeedbackMedia*` compatibility names remain absent.
 
 ## Release validation
 
 Commercial completion requires architecture guards, Firestore emulator tests, Debug/Release unit
 and lint checks, API 27/current API instrumentation, minified release build, CodeQL and focused
-physical-device feedback/camera/gallery/process-death tests to pass.
+physical-device offline/online feedback, retry, account deletion, camera/gallery and process-death
+tests to pass.
