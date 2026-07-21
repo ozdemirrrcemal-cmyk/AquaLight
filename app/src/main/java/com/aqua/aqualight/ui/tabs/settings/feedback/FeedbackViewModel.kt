@@ -54,7 +54,13 @@ class FeedbackViewModel(
 
     fun updateMessage(value: String) {
         savedStateHandle[KEY_MESSAGE] = value
-        _uiState.update { it.copy(message = value, messageError = false) }
+        _uiState.update {
+            it.copy(
+                message = value,
+                messageError = false,
+                messageTooLongError = false
+            )
+        }
     }
 
     fun submit() {
@@ -66,8 +72,11 @@ class FeedbackViewModel(
         val normalizedMessage = current.message.trim()
         val categoryError = normalizedCategory.isEmpty() ||
             normalizedCategory.length > FeedbackSubmissionPolicy.CATEGORY_MAX_LENGTH
-        val messageError = normalizedMessage.length !in
-            FeedbackSubmissionPolicy.MESSAGE_MIN_LENGTH..FeedbackSubmissionPolicy.MESSAGE_MAX_LENGTH
+        val messageTooShort =
+            normalizedMessage.length < FeedbackSubmissionPolicy.MESSAGE_MIN_LENGTH
+        val messageTooLong =
+            normalizedMessage.length > FeedbackSubmissionPolicy.MESSAGE_MAX_LENGTH
+        val messageError = messageTooShort || messageTooLong
         val emailError = !FeedbackSubmissionPolicy.isEmailValid(normalizedEmail)
 
         if (categoryError || messageError || emailError) {
@@ -75,6 +84,7 @@ class FeedbackViewModel(
                 it.copy(
                     categoryError = categoryError,
                     messageError = messageError,
+                    messageTooLongError = messageTooLong,
                     emailError = emailError
                 )
             }
@@ -167,7 +177,8 @@ data class FeedbackUiState(
     val isSubmitting: Boolean = false,
     val categoryError: Boolean = false,
     val emailError: Boolean = false,
-    val messageError: Boolean = false
+    val messageError: Boolean = false,
+    val messageTooLongError: Boolean = false
 )
 
 sealed interface FeedbackUiEvent {
