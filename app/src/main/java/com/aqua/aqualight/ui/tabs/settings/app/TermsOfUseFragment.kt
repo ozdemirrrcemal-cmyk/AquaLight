@@ -6,6 +6,7 @@ import androidx.fragment.app.Fragment
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTermsOfUseBinding
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.web.LegalDocumentAsset
 import com.aqua.aqualight.ui.common.web.LegalDocumentWebView
 
 class TermsOfUseFragment : Fragment(R.layout.fragment_terms_of_use) {
@@ -24,7 +25,7 @@ class TermsOfUseFragment : Fragment(R.layout.fragment_terms_of_use) {
         binding.appHeader.setupAquaHeader(fragment = this)
         LegalDocumentWebView.load(
             webView = binding.webViewTerms,
-            assetFileName = "terms_of_use_en.html"
+            document = LegalDocumentAsset.TERMS_OF_USE
         )
     }
 

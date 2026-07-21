@@ -9,8 +9,21 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewClientCompat
+import com.aqua.aqualight.i18n.SupportedLocaleRegistry
 import java.io.ByteArrayInputStream
 import java.net.URI
+
+internal enum class LegalDocumentAsset(
+    private val fileStem: String
+) {
+    PRIVACY_POLICY("privacy_policy"),
+    TERMS_OF_USE("terms_of_use");
+
+    fun fileName(runtimeLanguageTag: String?): String {
+        val language = SupportedLocaleRegistry.resolve(runtimeLanguageTag)
+        return "${fileStem}_${language}.html"
+    }
+}
 
 internal object LegalDocumentUriPolicy {
     private const val ASSET_HOST = "appassets.androidplatform.net"
@@ -40,8 +53,16 @@ internal object LegalDocumentUriPolicy {
 
 internal object LegalDocumentWebView {
 
-    fun load(webView: WebView, assetFileName: String) {
+    fun load(
+        webView: WebView,
+        document: LegalDocumentAsset
+    ) {
         val context = webView.context
+        val runtimeLanguageTag = context.resources.configuration.locales
+            .takeIf { !it.isEmpty }
+            ?.get(0)
+            ?.toLanguageTag()
+        val assetFileName = document.fileName(runtimeLanguageTag)
         val assetLoader = WebViewAssetLoader.Builder()
             .addPathHandler(
                 "/assets/",

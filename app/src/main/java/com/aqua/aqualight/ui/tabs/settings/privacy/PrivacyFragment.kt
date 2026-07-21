@@ -6,6 +6,7 @@ import androidx.fragment.app.Fragment
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentPrivacyBinding
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.web.LegalDocumentAsset
 import com.aqua.aqualight.ui.common.web.LegalDocumentWebView
 
 class PrivacyFragment : Fragment(R.layout.fragment_privacy) {
@@ -24,7 +25,7 @@ class PrivacyFragment : Fragment(R.layout.fragment_privacy) {
         binding.appHeader.setupAquaHeader(fragment = this)
         LegalDocumentWebView.load(
             webView = binding.webViewPrivacy,
-            assetFileName = "privacy_policy_en.html"
+            document = LegalDocumentAsset.PRIVACY_POLICY
         )
     }
 
