@@ -13,11 +13,11 @@
     "evidence_reference": "Firebase Console database information screenshot"
   },
   "retention": {
-    "feedback_retention_process_verified": false,
+    "feedback_retention_process_verified": true,
     "account_deletion_test_verified": false,
-    "verification_date": "",
-    "verified_by": "",
-    "evidence_reference": ""
+    "verification_date": "2026-07-21",
+    "verified_by": "Cemal Özdemir — AquaLight project owner/operator",
+    "evidence_reference": "docs/feedback-retention-monthly-review.md; operator approval commit 85e08d351508bbe382189ef8f1c7657cd4a8be26"
   },
   "google_play": {
     "privacy_policy_url": "",
