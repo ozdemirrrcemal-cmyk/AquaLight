@@ -65,6 +65,47 @@ class FeedbackViewModelTest {
     }
 
     @Test
+    fun paddedPlusAddressIsAcceptedAndNormalizedBeforeSubmission() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository()
+        val viewModel = viewModel(savedState(), repository)
+        viewModel.updateEmail("  user+tag@sub.example.co.uk  ")
+
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals(1, repository.submitCount)
+        assertEquals("user+tag@sub.example.co.uk", repository.request?.email)
+        assertFalse(viewModel.uiState.value.emailError)
+    }
+
+    @Test
+    fun optionalWhitespaceOnlyEmailIsAcceptedAsEmpty() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository()
+        val viewModel = viewModel(savedState(), repository)
+        viewModel.updateEmail("   ")
+
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals(1, repository.submitCount)
+        assertEquals("", repository.request?.email)
+    }
+
+    @Test
+    fun emailBeyondBackendLimitIsRejectedBeforeRepositoryCall() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository()
+        val viewModel = viewModel(savedState(), repository)
+        viewModel.updateEmail("a".repeat(310) + "@example.com")
+
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals(0, repository.submitCount)
+        assertTrue(viewModel.uiState.value.emailError)
+        assertFalse(viewModel.uiState.value.isSubmitting)
+    }
+
+    @Test
     fun synchronousSubmissionLockPreventsDuplicateRequests() = runTest(dispatcher) {
         val gate = CompletableDeferred<Unit>()
         val repository = FakeFeedbackRepository().apply { submitGate = gate }
