@@ -118,7 +118,8 @@ require_tokens(
         "FirebaseFirestore",
         "FieldValue.serverTimestamp()",
         "withContext(dispatcher)",
-        "suspendCoroutine",
+        "suspendCancellableCoroutine",
+        "withTimeout(writeTimeoutMillis)",
         "FeedbackSubmissionFailureKind.PERSISTENCE",
     ),
     "text-only Firestore repository",
@@ -243,6 +244,7 @@ TEST_EXPECTATIONS = {
         "authenticated text feedback is stored without media fields",
         "missing session uses anonymous marker",
         "firestore failure is reported as persistence failure",
+        "stalled firestore write reaches a terminal timeout failure",
         "cancellation is never converted to feedback failure",
     ),
     ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/settings/feedback/FeedbackViewModelTest.kt": (
