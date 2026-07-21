@@ -7,9 +7,9 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.aqua.aqualight.platform.media.AppMediaScope
 import com.aqua.aqualight.platform.media.AppMediaStorage
-import com.aqua.aqualight.platform.media.FeedbackMediaProcessingResult
-import com.aqua.aqualight.platform.media.FeedbackMediaProcessor
-import com.aqua.aqualight.platform.media.ProcessedFeedbackMedia
+import com.aqua.aqualight.platform.media.ImageMediaProcessingResult
+import com.aqua.aqualight.platform.media.ImageMediaProcessor
+import com.aqua.aqualight.platform.media.ProcessedImageMedia
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -157,12 +157,12 @@ class MediaFlowCoordinatorInstrumentedTest {
         File(requireNotNull(output.path)).writeBytes(byteArrayOf(1, 2, 3, 4))
     }
 
-    private fun preparedSource(): ProcessedFeedbackMedia {
+    private fun preparedSource(): ProcessedImageMedia {
         val directory = File(context.cacheDir, "image_processing").apply { mkdirs() }
         val file = File.createTempFile("image_output_test_", ".jpg", directory).apply {
             writeBytes(byteArrayOf(1, 2, 3, 4))
         }
-        return ProcessedFeedbackMedia(
+        return ProcessedImageMedia(
             path = file.canonicalPath,
             displayName = file.name,
             width = 100,
@@ -180,7 +180,7 @@ class MediaFlowCoordinatorInstrumentedTest {
 
     private fun coordinator(
         savedStateHandle: SavedStateHandle,
-        processor: FeedbackMediaProcessor = FakeProcessor(preparedSource())
+        processor: ImageMediaProcessor = FakeProcessor(preparedSource())
     ) = MediaFlowCoordinatorViewModel(
         savedStateHandle = savedStateHandle,
         context = context,
@@ -193,12 +193,12 @@ class MediaFlowCoordinatorInstrumentedTest {
     )
 
     private class FakeProcessor(
-        private val media: ProcessedFeedbackMedia
-    ) : FeedbackMediaProcessor {
+        private val media: ProcessedImageMedia
+    ) : ImageMediaProcessor {
         val deletedPaths = mutableListOf<String>()
 
-        override suspend fun process(uri: Uri): FeedbackMediaProcessingResult =
-            FeedbackMediaProcessingResult.Success(media)
+        override suspend fun process(uri: Uri): ImageMediaProcessingResult =
+            ImageMediaProcessingResult.Success(media)
 
         override fun restore(
             path: String?,
@@ -206,7 +206,7 @@ class MediaFlowCoordinatorInstrumentedTest {
             width: Int?,
             height: Int?,
             byteCount: Long?
-        ): ProcessedFeedbackMedia? = null
+        ): ProcessedImageMedia? = null
 
         override suspend fun delete(path: String?) {
             if (path == null) return
@@ -218,8 +218,8 @@ class MediaFlowCoordinatorInstrumentedTest {
     }
 
     private companion object {
-        const val OWNER_TOKEN = "stage9-test-owner"
-        const val OWNER_UID = "stage9-owner-uid"
+        const val OWNER_TOKEN = "image-test-owner"
+        const val OWNER_UID = "image-owner-uid"
         const val TWO_DAYS_MILLIS = 2L * 24L * 60L * 60L * 1000L
     }
 }
