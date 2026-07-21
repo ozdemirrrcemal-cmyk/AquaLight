@@ -126,6 +126,21 @@ class FeedbackViewModelTest {
     }
 
     @Test
+    fun editsAfterSubmitDoNotChangeValidatedRequestSnapshot() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository()
+        val viewModel = viewModel(savedState(), repository)
+
+        viewModel.submit()
+        viewModel.updateEmail("invalid-email")
+        viewModel.updateMessage("short")
+        advanceUntilIdle()
+
+        assertEquals(1, repository.submitCount)
+        assertEquals("user@example.com", repository.request?.email)
+        assertEquals("A reproducible problem", repository.request?.message)
+    }
+
+    @Test
     fun recreationRestoresFormWithoutReplayingSubmission() = runTest(dispatcher) {
         val repository = FakeFeedbackRepository()
         val savedState = savedState()
