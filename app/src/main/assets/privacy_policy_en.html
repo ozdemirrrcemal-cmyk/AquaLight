@@ -2,73 +2,27 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Privacy Policy - AquaLight</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+  <title>Privacy Policy - AquaLight</title>
   <style>
     :root {
       --bg: #0A192F;
       --surface: #152B45;
-      --surface-2: #1C3252;
       --text: #EAF2FF;
       --text-secondary: #A9B7C9;
-      --accent: #2196F3;
+      --accent: #64B5F6;
       --border: rgba(255, 255, 255, 0.05);
     }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
+    * { box-sizing: border-box; }
     body {
       margin: 0;
-      padding: 0;
       background: var(--bg);
       color: var(--text);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       line-height: 1.7;
     }
-
-    main {
-      max-width: 920px;
-      margin: 0 auto;
-      padding: 24px 16px 48px;
-    }
-
-    .hero {
-      background: linear-gradient(180deg, #1C3252 0%, #152B45 100%);
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      padding: 28px 24px;
-      margin-bottom: 20px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 28px;
-      font-weight: 700;
-      letter-spacing: 0.2px;
-      color: #FFFFFF;
-    }
-
-    .last-updated {
-      margin-top: 8px;
-      color: var(--text-secondary);
-      font-size: 13px;
-    }
-
-    .intro {
-      margin-top: 18px;
-      font-size: 15px;
-      color: var(--text);
-    }
-
-    .section {
+    main { max-width: 920px; margin: 0 auto; padding: 24px 16px 48px; }
+    .hero, .section, .contact {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 20px;
@@ -76,353 +30,195 @@
       margin-bottom: 16px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
     }
-
-    .section h2 {
-      margin-top: 0;
-      margin-bottom: 14px;
-      font-size: 18px;
-      color: #FFFFFF;
-    }
-
-    .section h3 {
-      margin-top: 18px;
-      margin-bottom: 8px;
-      font-size: 16px;
-      color: #FFFFFF;
-    }
-
-    .section h4 {
-      margin-top: 16px;
-      margin-bottom: 8px;
-      font-size: 14px;
-      color: #64B5F6;
-    }
-
-    .section p {
-      margin: 0 0 12px;
-      font-size: 14px;
-      color: var(--text-secondary);
-      text-align: left;
-    }
-
-    .section ul {
-      margin: 0 0 12px;
-      padding-left: 20px;
-    }
-
-    .section li {
-      margin-bottom: 12px;
-      font-size: 14px;
-      color: var(--text-secondary);
-    }
-
-    strong {
-      color: #FFFFFF;
-    }
-
-    .contact {
-      margin-top: 24px;
-      padding: 20px;
-      border-radius: 20px;
-      background: linear-gradient(180deg, #152B45 0%, #10243D 100%);
-      border: 1px solid var(--border);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
-    }
-
-    .contact h2 {
-      margin-top: 0;
-      margin-bottom: 12px;
-      font-size: 18px;
-      color: #FFFFFF;
-    }
-
-    .contact p {
-      margin: 0 0 10px;
-      font-size: 14px;
-      color: var(--text-secondary);
-    }
-
-    .contact-label {
-      font-weight: 700;
-      color: #FFFFFF;
-    }
-
-    a {
-      color: #64B5F6;
-      text-decoration: none;
-      word-break: break-word;
-    }
-
-    a:hover {
-      text-decoration: underline;
-    }
-
-    .footer {
-      margin-top: 28px;
-      text-align: center;
-      font-size: 12px;
-      color: #7E8EA3;
-    }
-
-    @media (max-width: 480px) {
-      main {
-        padding: 20px 14px 42px;
-      }
-
-      .hero {
-        padding: 26px 22px;
-        border-radius: 24px;
-      }
-
-      .section,
-      .contact {
-        padding: 18px;
-        border-radius: 20px;
-      }
-
-      h1 {
-        font-size: 28px;
-      }
-
-      .intro {
-        font-size: 15px;
-      }
-
-      .section h2,
-      .contact h2 {
-        font-size: 18px;
-      }
-
-      .section p,
-      .section li,
-      .contact p {
-        font-size: 14px;
-      }
-    }
+    .hero { padding: 28px 24px; }
+    h1 { margin: 0; font-size: 28px; color: #FFFFFF; }
+    h2 { margin: 0 0 12px; font-size: 18px; color: #FFFFFF; }
+    h3 { margin: 16px 0 8px; font-size: 15px; color: #FFFFFF; }
+    p, li { color: var(--text-secondary); font-size: 14px; }
+    p { margin: 0 0 12px; }
+    ul { margin: 0 0 12px; padding-left: 20px; }
+    li { margin-bottom: 10px; }
+    strong { color: #FFFFFF; }
+    a { color: var(--accent); text-decoration: none; word-break: break-word; }
+    .last-updated { margin-top: 8px; color: var(--text-secondary); font-size: 13px; }
+    .intro { margin-top: 16px; color: var(--text); font-size: 15px; }
+    .footer { margin-top: 24px; text-align: center; color: #7E8EA3; font-size: 12px; }
   </style>
 </head>
-
 <body>
 <main>
-
   <div class="hero">
     <h1>Privacy Policy</h1>
-
-    <div class="last-updated">
-      Last updated: October 21, 2025
-    </div>
-
-    <div class="intro">
-      This Privacy Policy describes Our policies and procedures on the collection, use and disclosure of Your information when You use the Service and tells You about Your privacy rights and how the law protects You.
-    </div>
-
-    <div class="intro">
-      We use Your Personal Data to provide and improve the Service. By using the Service, You agree to the collection and use of information in accordance with this Privacy Policy.
-    </div>
+    <div class="last-updated">Last updated: July 21, 2026</div>
+    <p class="intro">
+      This policy explains which data AquaLight processes, where it is stored, why it is used,
+      and the choices and rights available to you. It reflects the current Android application
+      and does not describe features that are not present in the product.
+    </p>
   </div>
 
   <div class="section">
-    <h2>Interpretation and Definitions</h2>
-
-    <h3>Interpretation</h3>
+    <h2>1. Controller and contact</h2>
     <p>
-      The words whose initial letters are capitalized have meanings defined under the following conditions. The following definitions shall have the same meaning regardless of whether they appear in singular or in plural.
+      AquaLight is operated by <strong>My AquaLight</strong> in Türkiye. For privacy questions,
+      requests, or complaints, contact <a href="mailto:support@myaqualight.com">support@myaqualight.com</a>.
+    </p>
+  </div>
+
+  <div class="section">
+    <h2>2. Data processed by AquaLight</h2>
+
+    <h3>Account and authentication data</h3>
+    <ul>
+      <li>Email address, Firebase user identifier, authentication provider, and account status.</li>
+      <li>When Google sign-in is used, Google may provide the account name, email, and profile image made available through that sign-in flow.</li>
+      <li>Firebase Authentication may process technical security information such as IP address and user-agent data to authenticate users and prevent abuse.</li>
+    </ul>
+
+    <h3>Data stored locally on your Android device</h3>
+    <ul>
+      <li>Profile details you enter, including name, username, address, phone number, country, and profile image.</li>
+      <li>Aquarium and tank details, notes, measurements, schedules, livestock, plants, materials, and tank images.</li>
+      <li>Registered-device records, tank assignments, provisioning state, device credentials, reminder settings, and local notification data.</li>
+      <li>Local usage counters shown on the Usage Statistics screen, such as automation, alert, and manual-action counts.</li>
+    </ul>
+    <p>
+      These product records are stored in app-controlled local storage. The current release does not
+      upload aquarium, tank, device, or local usage-statistics records to Firebase Analytics or another analytics service.
     </p>
 
-    <h3>Definitions</h3>
-    <p>For the purposes of this Privacy Policy:</p>
-
+    <h3>Feedback and support data</h3>
+    <p>When you send feedback through the app, AquaLight processes:</p>
     <ul>
-      <li><strong>Account</strong> means a unique account created for You to access our Service or parts of our Service.</li>
-      <li><strong>Application</strong> refers to AquaLight, the software program provided by the Company.</li>
-      <li><strong>Company</strong> refers to My AquaLight, also referred to as “We”, “Us” or “Our”.</li>
-      <li><strong>Country</strong> refers to Turkey.</li>
-      <li><strong>Device</strong> means any device that can access the Service, such as a computer, mobile phone or tablet.</li>
-      <li><strong>Personal Data</strong> means any information that relates to an identified or identifiable individual.</li>
-      <li><strong>Service</strong> refers to the Application.</li>
-      <li><strong>Usage Data</strong> refers to data collected automatically when using the Service.</li>
-      <li><strong>You</strong> means the individual accessing or using the Service.</li>
+      <li>Feedback category and message.</li>
+      <li>An optional reply email address.</li>
+      <li>App version and selected application language.</li>
+      <li>Your Firebase user identifier when signed in, or an anonymous marker for eligible text-only feedback.</li>
+      <li>An optional screenshot selected by you.</li>
+    </ul>
+
+    <h3>Permissions and device access</h3>
+    <ul>
+      <li>Camera access is used for QR scanning and only while the related feature is active.</li>
+      <li>Photo access is used only when you choose an image or screenshot.</li>
+      <li>Bluetooth, nearby-device, Wi-Fi, and location-related permissions are used where Android requires them for device discovery, provisioning, or connected-network information.</li>
+      <li>AquaLight does not use these permissions for continuous location tracking.</li>
     </ul>
   </div>
 
   <div class="section">
-    <h2>Collecting and Using Your Personal Data</h2>
-
-    <h3>Types of Data Collected</h3>
-
-    <h4>Personal Data</h4>
+    <h2>3. Telemetry not collected</h2>
     <p>
-      While using Our Service, We may ask You to provide certain personally identifiable information. This may include:
-    </p>
-
-    <ul>
-      <li>Email address</li>
-      <li>First name and last name</li>
-      <li>Phone number</li>
-      <li>Address information</li>
-      <li>Usage Data</li>
-    </ul>
-
-    <h4>Usage Data</h4>
-    <p>
-      Usage Data is collected automatically when using the Service.
-    </p>
-
-    <p>
-      Usage Data may include information such as Your Device’s IP address, device type, operating system, application version, time and date of use, and diagnostic data.
-    </p>
-
-    <h4>Information Collected while Using the Application</h4>
-    <p>
-      While using Our Application, We may collect certain information with Your prior permission, such as:
-    </p>
-
-    <ul>
-      <li>Information regarding Your location</li>
-      <li>Pictures and other information from Your Device’s camera and photo library</li>
-    </ul>
-
-    <p>
-      This information is used to provide features of the Service, improve the Application, and customize Your experience. You can enable or disable access to this information through Your Device settings.
+      The current commercial configuration does not include Firebase Analytics, Firebase Crashlytics,
+      or Firebase Performance Monitoring. AquaLight therefore does not use those SDKs to collect app-usage,
+      crash-reporting, or performance-monitoring telemetry.
     </p>
   </div>
 
   <div class="section">
-    <h2>Use of Your Personal Data</h2>
-
-    <p>The Company may use Personal Data for the following purposes:</p>
-
+    <h2>4. Purposes and legal grounds</h2>
     <ul>
-      <li><strong>To provide and maintain our Service</strong>, including monitoring the usage of the Service.</li>
-      <li><strong>To manage Your Account</strong> and provide access to application features.</li>
-      <li><strong>To contact You</strong> regarding updates, security notices or important information.</li>
-      <li><strong>To manage Your requests</strong> and provide support.</li>
-      <li><strong>To improve the Service</strong> through analysis, diagnostics and feature improvements.</li>
+      <li>Creating and securing your account and maintaining authenticated sessions.</li>
+      <li>Providing aquarium management, connected-device setup, reminders, and local app features.</li>
+      <li>Receiving, investigating, and replying to feedback and support requests.</li>
+      <li>Preventing fraud, abuse, unauthorized access, and security incidents.</li>
+      <li>Complying with applicable legal obligations and establishing or defending legal claims.</li>
+    </ul>
+    <p>
+      Depending on the processing activity and applicable law, processing may rely on performance of
+      the service relationship, compliance with legal obligations, legitimate interests that do not
+      override your rights, or consent where consent is legally required.
+    </p>
+  </div>
+
+  <div class="section">
+    <h2>5. Service providers and international processing</h2>
+    <p>AquaLight currently uses the following Google Firebase services:</p>
+    <ul>
+      <li><strong>Firebase Authentication</strong> for account creation, sign-in, and account security.</li>
+      <li><strong>Cloud Firestore</strong> for feedback messages and their transaction state.</li>
+      <li><strong>Cloud Storage for Firebase</strong> for optional feedback screenshots.</li>
+    </ul>
+    <p>
+      Google generally processes customer data as a service provider or processor under its applicable
+      Firebase and Google Cloud terms. Firebase Authentication is operated from United States data centers.
+      Cloud Firestore and Cloud Storage use the locations configured for those individual project resources
+      and may involve processing outside Türkiye or your country of residence.
+    </p>
+  </div>
+
+  <div class="section">
+    <h2>6. Sharing</h2>
+    <p>Personal data is not sold. It may be shared only:</p>
+    <ul>
+      <li>With service providers needed to operate the functions described in this policy.</li>
+      <li>When required by law, a binding legal process, or a competent authority.</li>
+      <li>To protect users, the service, or legal rights against fraud, abuse, or security threats.</li>
+      <li>As part of a lawful business transfer, subject to appropriate notice and safeguards.</li>
     </ul>
   </div>
 
   <div class="section">
-    <h2>Sharing Your Personal Data</h2>
-
-    <p>We may share Your personal information in the following situations:</p>
-
-    <ul>
-      <li><strong>With Service Providers:</strong> To help operate, maintain or improve the Service.</li>
-      <li><strong>For business transfers:</strong> In connection with a merger, sale or transfer of assets.</li>
-      <li><strong>With Your consent:</strong> For any other purpose with Your explicit consent.</li>
-      <li><strong>For legal reasons:</strong> When required by law or valid legal request.</li>
-    </ul>
-  </div>
-
-  <div class="section">
-    <h2>Retention, Transfer and Deletion</h2>
-
-    <h3>Retention of Your Personal Data</h3>
+    <h2>7. Retention and deletion</h2>
     <p>
-      The Company will retain Your Personal Data only for as long as necessary for the purposes set out in this Privacy Policy. We may also retain information when required to comply with legal obligations, resolve disputes or enforce agreements.
+      Account data is retained while the account remains active and as required for security or legal obligations.
+      Local aquarium and device data remains on the Android device until you delete it, delete the account through
+      the app, clear app storage, or uninstall the app, subject to Android storage behavior.
     </p>
-
-    <h3>Transfer of Your Personal Data</h3>
     <p>
-      Your information may be processed in locations outside Your country or jurisdiction. We will take reasonable steps to ensure that Your data is treated securely and in accordance with this Privacy Policy.
+      Feedback records and optional screenshots are retained only for support, security, and legal needs and are
+      deleted when no longer necessary under the applicable retention schedule. Failed or abandoned screenshot
+      transactions use a short-lived cleanup process.
     </p>
-
-    <h3>Delete Your Personal Data</h3>
     <p>
-      You have the right to delete or request assistance in deleting the Personal Data that We have collected about You.
-    </p>
-
-    <p>
-      You may update, amend or delete Your information through the Application where available, or contact Us directly for assistance.
+      The in-app account-deletion flow is designed to remove the Firebase account, the user's cloud feedback records
+      and screenshots, and account-scoped local data. Contact support if the flow cannot be completed or you need assistance.
     </p>
   </div>
 
   <div class="section">
-    <h2>Disclosure of Your Personal Data</h2>
-
-    <h4>Business Transactions</h4>
+    <h2>8. Security</h2>
     <p>
-      If the Company is involved in a merger, acquisition or asset sale, Your Personal Data may be transferred. We will provide notice before Your Personal Data becomes subject to a different Privacy Policy.
-    </p>
-
-    <h4>Law Enforcement</h4>
-    <p>
-      Under certain circumstances, the Company may be required to disclose Your Personal Data if required by law or in response to valid requests by public authorities.
-    </p>
-
-    <h4>Other Legal Requirements</h4>
-    <p>The Company may disclose Your Personal Data when necessary to:</p>
-
-    <ul>
-      <li>Comply with a legal obligation</li>
-      <li>Protect and defend the rights or property of the Company</li>
-      <li>Prevent or investigate possible wrongdoing</li>
-      <li>Protect the personal safety of users or the public</li>
-      <li>Protect against legal liability</li>
-    </ul>
-  </div>
-
-  <div class="section">
-    <h2>Security of Your Personal Data</h2>
-
-    <p>
-      The security of Your Personal Data is important to Us. However, no method of transmission over the Internet or electronic storage is 100% secure. While We use commercially reasonable means to protect Your Personal Data, We cannot guarantee absolute security.
+      AquaLight uses account-scoped access controls, Firebase security rules, encrypted or app-private local storage
+      where appropriate, HTTPS transport, and restricted media paths. No technical system can guarantee absolute security.
     </p>
   </div>
 
   <div class="section">
-    <h2>Children’s Privacy</h2>
-
+    <h2>9. Your rights</h2>
     <p>
-      Our Service does not address anyone under the age of 13. We do not knowingly collect personally identifiable information from anyone under 13.
+      Subject to applicable law, you may request information about processing, access, correction, deletion,
+      restriction, objection, or data portability, and may submit a complaint to the competent data-protection authority.
+      You may also withdraw consent for processing that relies on consent, without affecting earlier lawful processing.
     </p>
-
     <p>
-      If You are a parent or guardian and You believe that Your child has provided Us with Personal Data, please contact Us. If We become aware that We have collected Personal Data from a child without parental consent, We will take steps to remove that information.
-    </p>
-  </div>
-
-  <div class="section">
-    <h2>Links to Other Websites</h2>
-
-    <p>
-      Our Service may contain links to other websites that are not operated by Us. We strongly advise You to review the Privacy Policy of every site You visit.
-    </p>
-
-    <p>
-      We have no control over and assume no responsibility for the content, privacy policies or practices of third-party sites or services.
+      Requests should be sent to <a href="mailto:support@myaqualight.com">support@myaqualight.com</a>.
+      We may need to verify your identity before acting on a request.
     </p>
   </div>
 
   <div class="section">
-    <h2>Changes to this Privacy Policy</h2>
-
+    <h2>10. Children's privacy</h2>
     <p>
-      We may update Our Privacy Policy from time to time. We will notify You of any changes by posting the new Privacy Policy on this page and updating the “Last updated” date.
+      AquaLight is not directed to children under 13 and does not knowingly collect personal data from them.
+      A parent or guardian who believes a child has provided personal data should contact us so the matter can be investigated.
     </p>
+  </div>
 
+  <div class="section">
+    <h2>11. Changes</h2>
     <p>
-      You are advised to review this Privacy Policy periodically for any changes.
+      This policy may be updated when the product, service providers, legal requirements, or data practices change.
+      The revision date will be updated and material changes will be communicated where required.
     </p>
   </div>
 
   <div class="contact">
-    <h2>Contact Us</h2>
-
-    <p>
-      If You have any questions about this Privacy Policy, You can contact Us:
-    </p>
-
-    <p>
-      <span class="contact-label">By email:</span><br />
-      <a href="mailto:support@myaqualight.com">support@myaqualight.com</a>
-    </p>
+    <h2>Contact</h2>
+    <p><a href="mailto:support@myaqualight.com">support@myaqualight.com</a></p>
   </div>
 
-  <div class="footer">
-    © AquaLight
-  </div>
-
+  <div class="footer">© AquaLight</div>
 </main>
 </body>
 </html>
