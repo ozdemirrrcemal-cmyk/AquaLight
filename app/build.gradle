@@ -86,7 +86,7 @@ android {
             ]
         }
     }
-    	
+
    	lint {
         checkOnly.add("UnusedResources")
         htmlReport true
@@ -112,10 +112,7 @@ dependencies {
     implementation "com.google.firebase:firebase-analytics"
     implementation "com.google.firebase:firebase-auth"
     implementation "com.google.firebase:firebase-firestore"
-    implementation "com.google.firebase:firebase-database"
     implementation "com.google.firebase:firebase-storage"
-    implementation "com.google.firebase:firebase-messaging"
-    implementation "com.google.firebase:firebase-config"
     implementation "com.google.firebase:firebase-perf"
     implementation "com.google.firebase:firebase-crashlytics"
 
@@ -135,10 +132,10 @@ dependencies {
     // Media3 (ExoPlayer’ın yeni paketi)
     implementation "androidx.media3:media3-exoplayer:1.8.0"
     implementation "androidx.media3:media3-ui:1.8.0"
-   	
+
    	// İmageCrop
    	implementation 'com.github.yalantis:ucrop:2.2.11'
-   	
+
    	implementation "com.google.code.gson:gson:2.13.2"
 
     // WebSocket runtime
@@ -150,24 +147,24 @@ dependencies {
     implementation "androidx.camera:camera-lifecycle:1.4.2"
     implementation "androidx.camera:camera-view:1.4.2"
     implementation "com.google.mlkit:barcode-scanning:17.3.0"
-   	
+
    	// Lottie animasyon için
     implementation "com.airbnb.android:lottie:6.7.1"
-   	
+
    	// Charts - MPAndroidChart
     implementation "com.github.PhilJay:MPAndroidChart:v3.1.0"
 
     // BlurView
     implementation "com.github.Dimezis:BlurView:version-2.0.6"
-   	
+
    	// libphonenumber
    	implementation "com.googlecode.libphonenumber:libphonenumber:9.0.18"
-   	
+
    	// Lifecycle
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.10.0"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.10.0"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0"
-   	
+
    	// WorkManager
     implementation "androidx.work:work-runtime-ktx:2.11.2"
 
