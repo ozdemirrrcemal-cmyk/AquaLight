@@ -36,12 +36,12 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
             )
         val documentId = documentStore.newDocumentId()
         val data = linkedMapOf<String, Any?>(
-            FIELD_CATEGORY to request.category,
-            FIELD_EMAIL to request.email.ifBlank { null },
-            FIELD_MESSAGE to request.message,
+            FIELD_CATEGORY to request.category.trim(),
+            FIELD_EMAIL to request.email.trim().ifBlank { null },
+            FIELD_MESSAGE to request.message.trim(),
             FIELD_PLATFORM to PLATFORM_ANDROID,
-            FIELD_APP_VERSION to request.appVersion,
-            FIELD_LOCALE to request.localeTag,
+            FIELD_APP_VERSION to request.appVersion.trim(),
+            FIELD_LOCALE to request.localeTag.trim(),
             FIELD_STATUS to STATUS_NEW,
             FIELD_USER_ID to ownerUid
         )
