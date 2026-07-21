@@ -183,6 +183,8 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
                         R.string.feedback_error_auth_required
                     FeedbackSubmissionFailureKind.VALIDATION ->
                         R.string.feedback_error_validation
+                    FeedbackSubmissionFailureKind.NETWORK ->
+                        R.string.feedback_error_network
                     FeedbackSubmissionFailureKind.PERSISTENCE,
                     FeedbackSubmissionFailureKind.GENERIC ->
                         R.string.feedback_error_generic
