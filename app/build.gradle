@@ -2,7 +2,6 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'com.google.gms.google-services'
-    id 'com.google.firebase.crashlytics'
     id 'com.google.protobuf'
     id 'androidx.navigation.safeargs.kotlin'
 }
@@ -108,12 +107,10 @@ dependencies {
     // Firebase BoM
     implementation platform("com.google.firebase:firebase-bom:34.5.0")
 
-    // Firebase services required for core product operation. Usage analytics is not collected.
+    // Firebase services required for core product operation only; telemetry SDKs are not included.
     implementation "com.google.firebase:firebase-auth"
     implementation "com.google.firebase:firebase-firestore"
     implementation "com.google.firebase:firebase-storage"
-    implementation "com.google.firebase:firebase-perf"
-    implementation "com.google.firebase:firebase-crashlytics"
 
     // AndroidX
     implementation "androidx.core:core-ktx:1.17.0"
