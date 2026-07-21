@@ -14,6 +14,7 @@ import com.aqua.aqualight.application.feedback.FeedbackSubmissionRequest
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionResult
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionUseCase
 import java.util.Locale
+import java.util.UUID
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,7 +28,8 @@ class FeedbackViewModel(
     private val savedStateHandle: SavedStateHandle,
     private val submissionUseCase: FeedbackSubmissionUseCase,
     private val appVersionProvider: () -> String = { BuildConfig.VERSION_NAME },
-    private val localeTagProvider: () -> String = { Locale.getDefault().toLanguageTag() }
+    private val localeTagProvider: () -> String = { Locale.getDefault().toLanguageTag() },
+    private val submissionIdProvider: () -> String = { UUID.randomUUID().toString() }
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -43,16 +45,19 @@ class FeedbackViewModel(
     val events = eventChannel.receiveAsFlow()
 
     fun updateCategory(value: String) {
+        if (value != _uiState.value.category) invalidateSubmissionIdentity()
         savedStateHandle[KEY_CATEGORY] = value
         _uiState.update { it.copy(category = value, categoryError = false) }
     }
 
     fun updateEmail(value: String) {
+        if (value != _uiState.value.email) invalidateSubmissionIdentity()
         savedStateHandle[KEY_EMAIL] = value
         _uiState.update { it.copy(email = value, emailError = false) }
     }
 
     fun updateMessage(value: String) {
+        if (value != _uiState.value.message) invalidateSubmissionIdentity()
         savedStateHandle[KEY_MESSAGE] = value
         _uiState.update {
             it.copy(
@@ -92,6 +97,7 @@ class FeedbackViewModel(
         }
 
         val request = FeedbackSubmissionRequest(
+            submissionId = submissionIdentity(),
             category = normalizedCategory,
             email = normalizedEmail,
             message = normalizedMessage,
@@ -102,7 +108,7 @@ class FeedbackViewModel(
         // Lock synchronously so rapid taps cannot enqueue duplicate submissions.
         _uiState.update { it.copy(isSubmitting = true) }
         viewModelScope.launch {
-            try {
+            val event = try {
                 val result = try {
                     submissionUseCase.submit(request)
                 } catch (cancellation: CancellationException) {
@@ -119,22 +125,41 @@ class FeedbackViewModel(
                 when (result) {
                     is FeedbackSubmissionResult.Success -> {
                         resetFormState()
-                        eventChannel.send(FeedbackUiEvent.SubmissionSucceeded)
+                        FeedbackUiEvent.SubmissionSucceeded
                     }
                     is FeedbackSubmissionResult.Failure -> {
-                        eventChannel.send(FeedbackUiEvent.SubmissionFailed(result.failure.kind))
+                        FeedbackUiEvent.SubmissionFailed(result.failure.kind)
                     }
                 }
             } finally {
+                // Clear loading before the event so the snackbar cannot render under the overlay.
                 _uiState.update { it.copy(isSubmitting = false) }
             }
+            eventChannel.send(event)
         }
+    }
+
+    private fun submissionIdentity(): String {
+        val restored = savedStateHandle.get<String>(KEY_SUBMISSION_ID)
+            ?.takeIf(FeedbackSubmissionPolicy::isSubmissionIdValid)
+        if (restored != null) return restored
+        return submissionIdProvider().also { generated ->
+            check(FeedbackSubmissionPolicy.isSubmissionIdValid(generated)) {
+                "Feedback submission id provider returned an invalid UUID."
+            }
+            savedStateHandle[KEY_SUBMISSION_ID] = generated
+        }
+    }
+
+    private fun invalidateSubmissionIdentity() {
+        savedStateHandle.remove<String>(KEY_SUBMISSION_ID)
     }
 
     private fun resetFormState() {
         savedStateHandle[KEY_CATEGORY] = ""
         savedStateHandle[KEY_EMAIL] = ""
         savedStateHandle[KEY_MESSAGE] = ""
+        invalidateSubmissionIdentity()
         _uiState.value = FeedbackUiState()
     }
 
@@ -142,11 +167,13 @@ class FeedbackViewModel(
         private const val KEY_CATEGORY = "feedback.category"
         private const val KEY_EMAIL = "feedback.email"
         private const val KEY_MESSAGE = "feedback.message"
+        private const val KEY_SUBMISSION_ID = "feedback.submissionId"
 
         fun factory(
             submissionUseCase: FeedbackSubmissionUseCase,
             appVersionProvider: () -> String = { BuildConfig.VERSION_NAME },
-            localeTagProvider: () -> String = { Locale.getDefault().toLanguageTag() }
+            localeTagProvider: () -> String = { Locale.getDefault().toLanguageTag() },
+            submissionIdProvider: () -> String = { UUID.randomUUID().toString() }
         ): ViewModelProvider.Factory {
             return object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(
@@ -160,7 +187,8 @@ class FeedbackViewModel(
                         savedStateHandle = extras.createSavedStateHandle(),
                         submissionUseCase = submissionUseCase,
                         appVersionProvider = appVersionProvider,
-                        localeTagProvider = localeTagProvider
+                        localeTagProvider = localeTagProvider,
+                        submissionIdProvider = submissionIdProvider
                     )
                     @Suppress("UNCHECKED_CAST")
                     return viewModel as T
