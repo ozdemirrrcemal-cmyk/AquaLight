@@ -18,6 +18,7 @@ import com.aqua.aqualight.platform.auth.GoogleIdentityTokenResult
 import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
+import com.aqua.aqualight.ui.navigation.RootNavigator
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
@@ -34,6 +35,7 @@ class ReAuthenticateFragment :
         const val ACTION_CHANGE_EMAIL = "change_email"
         private const val REAUTH_FEEDBACK_REQUEST_KEY = "reauth_feedback_result"
         private const val ACTION_CLOSE_REAUTH = "close_reauth"
+        private const val ACTION_NAVIGATE_LOGIN = "navigate_login"
     }
 
     private var _binding: FragmentReAuthenticateBinding? = null
@@ -59,10 +61,6 @@ class ReAuthenticateFragment :
         registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) { result ->
-            if (_binding == null) {
-                return@registerForActivityResult
-            }
-
             if (result.resultCode != Activity.RESULT_OK) {
                 setFragmentGlobalLoading(false)
                 setLoadingState(false)
@@ -88,10 +86,8 @@ class ReAuthenticateFragment :
                     setFragmentGlobalLoading(false)
                     setLoadingState(false)
 
-                    val currentContext = context
-                        ?: return@registerForActivityResult
                     DialogManager.showInfoDialog(
-                        currentContext,
+                        requireContext(),
                         DialogType.ERROR,
                         title = getString(R.string.auth_google_error_title),
                         message = tokenResult.error.localizedMessage
@@ -123,16 +119,15 @@ class ReAuthenticateFragment :
         setupUi()
     }
 
+
     private fun setupFeedbackResultListener() {
         childFragmentManager.setFragmentResultListener(
             REAUTH_FEEDBACK_REQUEST_KEY,
             viewLifecycleOwner
         ) { _, result ->
-            if (
-                result.getString(FeedbackBottomSheet.RESULT_ACTION_ID) ==
-                ACTION_CLOSE_REAUTH
-            ) {
-                findNavController().popBackStack()
+            when (result.getString(FeedbackBottomSheet.RESULT_ACTION_ID)) {
+                ACTION_CLOSE_REAUTH -> findNavController().popBackStack()
+                ACTION_NAVIGATE_LOGIN -> navigateToLogin()
             }
         }
     }
@@ -216,10 +211,6 @@ class ReAuthenticateFragment :
                 googleIdentityClient.clearPreviousSession()
             }
 
-            if (_binding == null) {
-                return@launch
-            }
-
             googleLauncher.launch(
                 googleIdentityClient.signInIntent()
             )
@@ -235,27 +226,18 @@ class ReAuthenticateFragment :
                     idToken
                 )
             }.onSuccess {
-                if (_binding != null) {
-                    handleAuthenticatedAction()
-                }
+                handleAuthenticatedAction()
             }.onFailure {
-                val currentBinding = _binding
-                    ?: return@onFailure
                 setFragmentGlobalLoading(false)
                 setLoadingState(false)
-                currentBinding.root.post {
-                    showGoogleVerificationFailure()
-                }
+                showGoogleVerificationFailure()
             }
         }
     }
 
     private fun showGoogleVerificationFailure() {
-        val currentContext = context ?: return
-        if (_binding == null) return
-
         DialogManager.showInfoDialog(
-            currentContext,
+            requireContext(),
             DialogType.ERROR,
             title = getString(
                 R.string.re_auth_verification_failed_title
@@ -295,26 +277,20 @@ class ReAuthenticateFragment :
                     password
                 )
             }.onSuccess {
-                if (_binding != null) {
-                    handleAuthenticatedAction()
-                }
+                handleAuthenticatedAction()
             }.onFailure {
-                val currentBinding = _binding
-                    ?: return@onFailure
                 setFragmentGlobalLoading(false)
                 setLoadingState(false)
-                currentBinding.passwordLayout.error =
+                binding.passwordLayout.error =
                     getString(
                         R.string.re_auth_wrong_password
                     )
-                shakeView(currentBinding.passwordLayout)
+                shakeView(binding.passwordLayout)
             }
         }
     }
 
     private fun handleAuthenticatedAction() {
-        if (_binding == null) return
-
         when (currentAction) {
             ACTION_DELETE_ACCOUNT -> {
                 deleteAccount()
@@ -343,13 +319,6 @@ class ReAuthenticateFragment :
             val result =
                 accountSecurityOperations.deleteCurrentAccount()
 
-            // Firebase account deletion changes the authenticated owner. MainActivity and
-            // AppSessionCoordinator are the single authority that replace the root graph.
-            // That transition may destroy this view before the deletion coroutine resumes.
-            if (_binding == null) {
-                return@launch
-            }
-
             setFragmentGlobalLoading(false)
             setLoadingState(false)
 
@@ -357,9 +326,8 @@ class ReAuthenticateFragment :
                 result.accountDeleteError
 
             if (accountDeleteError != null) {
-                val currentContext = context ?: return@launch
                 DialogManager.showInfoDialog(
-                    currentContext,
+                    requireContext(),
                     DialogType.ERROR,
                     title = getString(
                         R.string.re_auth_delete_failed_title
@@ -376,10 +344,15 @@ class ReAuthenticateFragment :
                     error.printStackTrace()
                 }
 
-                baseActivity?.showSnackBar(
-                    getString(
-                        R.string.re_auth_delete_cleanup_warning_message
-                    )
+                FeedbackBottomSheet.show(
+                    fragmentManager = childFragmentManager,
+                    title = getString(R.string.re_auth_delete_cleanup_warning_title),
+                    message = getString(R.string.re_auth_delete_cleanup_warning_message),
+                    primaryText = getString(R.string.ok),
+                    cancelText = null,
+                    tone = FeedbackBottomSheet.FeedbackTone.WARNING,
+                    requestKey = REAUTH_FEEDBACK_REQUEST_KEY,
+                    actionId = ACTION_NAVIGATE_LOGIN
                 )
                 return@launch
             }
@@ -389,8 +362,13 @@ class ReAuthenticateFragment :
                     R.string.re_auth_delete_success_message
                 )
             )
-            // Do not navigate manually. AppSessionCoordinator observes the Firebase owner
-            // transition and installs the unauthenticated root graph centrally.
+
+            binding.root.postDelayed(
+                {
+                    navigateToLogin()
+                },
+                500
+            )
         }
     }
 
@@ -420,15 +398,13 @@ class ReAuthenticateFragment :
         loading: Boolean
     ) {
         isLoading = loading
-        val currentBinding = _binding ?: return
-
-        currentBinding.btnContinue.isEnabled = !loading
-        currentBinding.btnContinue.alpha =
+        binding.btnContinue.isEnabled = !loading
+        binding.btnContinue.alpha =
             if (loading) 0.6f else 1f
-        currentBinding.btnContinue.text =
+        binding.btnContinue.text =
             if (loading) {
                 getString(R.string.loading)
-            } else if (currentBinding.ivGoogle.visibility == View.VISIBLE) {
+            } else if (binding.ivGoogle.visibility == View.VISIBLE) {
                 getString(
                     R.string.re_auth_continue_google
                 )
@@ -462,8 +438,11 @@ class ReAuthenticateFragment :
             }
     }
 
+    private fun navigateToLogin() {
+        RootNavigator.openAuthGraph(this)
+    }
+
     override fun onDestroyView() {
-        isLoading = false
         _binding = null
         super.onDestroyView()
     }
