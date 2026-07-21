@@ -7,15 +7,13 @@
     "notes": "Must be completed by a qualified privacy/legal professional before commercial release."
   },
   "firebase": {
-    "firestore_location": "UNVERIFIED",
-    "storage_location": "UNVERIFIED",
-    "verification_date": "",
-    "verified_by": "",
-    "evidence_reference": ""
+    "firestore_location": "europe-west1",
+    "verification_date": "2026-07-21",
+    "verified_by": "Project owner via Firebase Console",
+    "evidence_reference": "Firebase Console database information screenshot"
   },
   "retention": {
-    "firestore_ttl_verified": false,
-    "storage_lifecycle_verified": false,
+    "feedback_retention_process_verified": false,
     "account_deletion_test_verified": false,
     "verification_date": "",
     "verified_by": "",

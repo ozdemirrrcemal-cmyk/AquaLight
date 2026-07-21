@@ -1,13 +1,14 @@
-# Stage 12 — Data retention and deletion policy
+# Data retention and deletion policy
 
-Status: **commercial release blocker until every enforcement check below is verified in production**
+Status: **commercial release blocker until the operational retention process and production account deletion are verified**
 
 ## Principles
 
 - Keep personal data only for a defined product, support, security, or legal purpose.
 - Prefer local storage for aquarium, device, schedule, reminder, and usage-counter data.
-- Do not retain optional feedback content indefinitely.
-- Delete all owner-scoped data when the authenticated user completes account deletion, except where a documented legal obligation requires limited retention.
+- The feedback form is text-only and does not accept attachments.
+- Do not retain feedback indefinitely.
+- Delete owner-scoped feedback when the authenticated user completes account deletion, except where a documented legal obligation requires limited retention.
 - A legal hold must be exceptional, documented, access-restricted, and reviewed periodically.
 
 ## Retention schedule
@@ -15,24 +16,31 @@ Status: **commercial release blocker until every enforcement check below is veri
 | Data category | Storage | Maximum retention | Deletion trigger |
 | --- | --- | --- | --- |
 | Firebase Authentication account | Firebase Authentication | While the account is active | In-app account deletion or verified data-subject request |
-| Local profile and address data | Encrypted/app-private Android storage | Until user deletion, account deletion, app-data clear, or uninstall | User action or account-deletion cleanup |
+| Local profile and address data | Encrypted or app-private Android storage | Until user deletion, account deletion, app-data clear, or uninstall | User action or account-deletion cleanup |
 | Aquarium, tank, schedule, reminder, device, assignment, provisioning, and credential records | App-private Android storage | Until user deletion, account deletion, app-data clear, or uninstall | User action or account-deletion cleanup |
 | Local usage counters | Encrypted app-private Android storage | Until account deletion, app-data clear, or uninstall | Account-deletion cleanup or user action |
-| Committed feedback message and metadata | Cloud Firestore | **12 months from submission** | Automatic retention job, account deletion, or verified deletion request |
-| Committed feedback screenshot | Cloud Storage for Firebase | **12 months from upload** | Bucket lifecycle rule, account deletion, or verified deletion request |
-| Pending or aborted feedback transaction marker | Cloud Firestore | **7 days** | Firestore TTL on `mediaTransactionExpiresAt` |
-| Local feedback screenshot candidate and recovery journal | App-private cache/preferences | Until submission completes, rollback completes, or startup recovery removes it | Immediate transaction cleanup or startup reconciliation |
+| Text feedback message and metadata | Cloud Firestore | **12 months from submission**, unless a shorter support need applies or a documented legal hold is active | Scheduled operational review, account deletion, or verified deletion request |
 | Security or legal record retained by exception | Restricted service storage | Minimum period required by applicable law or active dispute | Expiry of the documented legal requirement or hold |
 
-## Required enforcement before commercial release
+## Text-feedback deletion process
 
-1. Firestore pending/aborted TTL must be enabled for `feedback_items.mediaTransactionExpiresAt`.
-2. Committed feedback documents must receive an immutable retention-expiry value and be deleted no later than 12 months after submission.
-3. The Storage bucket must have a lifecycle rule that deletes `feedback_screenshots/` objects no later than 12 months after creation.
-4. Deleting an account must delete both indexed feedback records and orphaned objects under `feedback_screenshots/{uid}/`.
-5. Local cleanup must cover aquarium data, care tasks, device assignments, provisioning state, known devices, credentials, profile/tank media, feedback cache, feedback recovery journal, and owner preferences.
-6. Deletion operations must be idempotent and safe to retry.
-7. Production verification evidence must record the Firestore location, Storage location, TTL state, bucket lifecycle state, test user UID, deletion timestamps, and result.
+Cloud Firestore automatic TTL is not required by the current product and is not used as a release dependency. Until a separately approved automated deletion service exists, the operator must run and evidence a recurring retention review at least monthly:
+
+1. Identify `feedback_items` documents whose `createdAt` value is older than 12 months.
+2. Confirm that no documented legal hold applies.
+3. Delete the expired documents using an owner-authorized administrative process.
+4. Record the review date, operator, query criteria, number of records considered, number deleted, exceptions, and evidence reference.
+5. Do not copy feedback message content into the operational log.
+
+The first production review procedure and evidence template must be approved before commercial release. A missed review is a release and operations incident that must be corrected promptly.
+
+## Account deletion
+
+1. The application queries `feedback_items` by the authenticated Firebase UID.
+2. Matching documents are deleted in bounded batches.
+3. Local cleanup covers aquarium data, care tasks, device assignments, provisioning state, known devices, credentials, profile and tank media, feedback form state, and owner preferences.
+4. Deletion operations must be idempotent and safe to retry.
+5. Production verification evidence must record the test UID, document counts before and after deletion, local-state result, timestamps, app build, and verifier.
 
 ## User requests
 
@@ -40,10 +48,6 @@ Status: **commercial release blocker until every enforcement check below is veri
 - Identity must be verified proportionately before disclosing or deleting account data.
 - Requests and outcomes must be logged without copying unnecessary aquarium, feedback, or credential content into the request log.
 
-## Documentation rule
-
-The public Privacy Policy may state the 12-month feedback retention limit only after the Firestore and Storage enforcement controls above are deployed and verified. Until then, the release remains blocked.
-
 ## Legal review
 
-The durations and legal-hold wording require review by a qualified privacy professional before production publication. Technical implementation does not replace legal advice.
+The durations, legal-hold wording, and operational review cadence require review by a qualified privacy professional before publication. Technical implementation does not replace legal advice.

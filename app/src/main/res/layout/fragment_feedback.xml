@@ -8,17 +8,15 @@
     android:background="@color/background_color"
     tools:context=".ui.tabs.settings.feedback.FeedbackFragment">
 
-    <!-- 🔹 Üst Bar -->
-  <include
-    android:id="@+id/appHeader"
-    layout="@layout/layout_aqua_header"
-    android:layout_width="@dimen/aqua_size_0"
-    android:layout_height="wrap_content"
-    app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintEnd_toEndOf="parent" />
+    <include
+        android:id="@+id/appHeader"
+        layout="@layout/layout_aqua_header"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- 🔹 İçerik -->
     <ScrollView
         android:id="@+id/scrollContent"
         android:layout_width="@dimen/aqua_size_0"
@@ -41,7 +39,6 @@
             android:paddingTop="@dimen/aqua_size_16"
             android:paddingBottom="@dimen/aqua_size_16">
 
-            <!-- Üst açıklama -->
             <TextView
                 android:id="@+id/tvSubInfo"
                 style="@style/TextAppearance.Aqua.Feedback.SubInfo"
@@ -52,7 +49,6 @@
                 android:lineSpacingExtra="@dimen/aqua_size_4"
                 android:contentDescription="@string/feedback_subinfo_desc" />
 
-            <!-- 🟦 FORM CARD -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardFeedbackForm"
                 style="@style/Widget.Aqua.Card"
@@ -66,7 +62,6 @@
                     android:orientation="vertical"
                     android:padding="@dimen/aqua_size_16">
 
-                    <!-- CATEGORY -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/inputLayoutCategory"
                         style="@style/Widget.Aqua.Input.Layout.Feedback.Multiline"
@@ -90,7 +85,6 @@
 
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <!-- EMAIL -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/inputLayoutEmail"
                         style="@style/Widget.Aqua.Input.Layout.Feedback"
@@ -110,7 +104,6 @@
 
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <!-- MESSAGE -->
                     <FrameLayout
                         android:id="@+id/messageContainer"
                         android:layout_width="match_parent"
@@ -140,7 +133,6 @@
 
                         </com.google.android.material.textfield.TextInputLayout>
 
-                        <!-- SUCCESS LOTTIE -->
                         <com.airbnb.lottie.LottieAnimationView
                             android:id="@+id/lottieSuccess"
                             android:layout_width="@dimen/aqua_size_60"
@@ -153,80 +145,10 @@
 
                     </FrameLayout>
 
-                    <!-- ATTACHMENT TITLE -->
-                    <TextView
-                        android:id="@+id/tvScreenshotLabel"
-                        style="@style/TextAppearance.Aqua.Feedback.SubInfo"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/aqua_size_16"
-                        android:text="@string/feedback_attachment_title"
-                        android:gravity="start" />
-
-                    <!-- ATTACHMENT CARD -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/cardScreenshot"
-                        style="@style/Widget.Aqua.Card"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/aqua_size_8"
-                        app:cardElevation="@dimen/aqua_size_0"
-                        app:cardUseCompatPadding="false">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical">
-
-                            <!-- TOP ROW -->
-                            <LinearLayout
-                                android:id="@+id/rowAddScreenshot"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:gravity="center_vertical"
-                                android:paddingHorizontal="@dimen/aqua_size_12"
-                                android:paddingVertical="@dimen/aqua_size_10"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:background="?attr/selectableItemBackgroundBorderless">
-
-                                <ImageView
-                                    android:id="@+id/ivScreenshotIcon"
-                                    android:layout_width="@dimen/aqua_size_24"
-                                    android:layout_height="@dimen/aqua_size_24"
-                                    android:src="@drawable/ic_image"
-                                    app:tint="@color/aqua_card_text_secondary" />
-
-                                <TextView
-                                    android:id="@+id/tvScreenshotInfo"
-                                    android:layout_width="@dimen/aqua_size_0"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="@dimen/aqua_size_12"
-                                    android:layout_weight="1"
-                                    android:text="@string/feedback_screenshot_add"
-                                    android:textSize="@dimen/aqua_text_size_body"
-                                    android:textColor="@color/aqua_card_text_secondary" />
-
-                                <ImageView
-                                    android:id="@+id/ivScreenshotClear"
-                                    android:layout_width="@dimen/aqua_size_24"
-                                    android:layout_height="@dimen/aqua_size_24"
-                                    android:src="@drawable/ic_close"
-                                    android:visibility="gone"
-                                    app:tint="@color/aqua_card_text_secondary" />
-
-                            </LinearLayout>
-
-                        </LinearLayout>
-
-                    </com.google.android.material.card.MaterialCardView>
-
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- DATA DISCLOSURE -->
             <TextView
                 android:id="@+id/tvFeedbackPrivacyNotice"
                 style="@style/TextAppearance.Aqua.Feedback.Footer"
@@ -238,7 +160,6 @@
                 android:text="@string/feedback_privacy_notice"
                 android:contentDescription="@string/feedback_privacy_notice" />
 
-            <!-- SEND BUTTON -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSend"
                 style="@style/Widget.Aqua.Button.Primary"
@@ -253,7 +174,6 @@
                 app:iconGravity="textStart"
                 app:iconPadding="@dimen/aqua_size_8" />
 
-            <!-- PROGRESS -->
             <ProgressBar
                 android:id="@+id/progressBarSending"
                 style="?android:attr/progressBarStyleSmall"
@@ -263,7 +183,6 @@
                 android:layout_marginTop="@dimen/aqua_size_8"
                 android:visibility="gone" />
 
-            <!-- FOOTER -->
             <TextView
                 android:id="@+id/tvFooter"
                 style="@style/TextAppearance.Aqua.Feedback.Footer"

@@ -110,7 +110,6 @@ dependencies {
     // Firebase services required for core product operation only; telemetry SDKs are not included.
     implementation "com.google.firebase:firebase-auth"
     implementation "com.google.firebase:firebase-firestore"
-    implementation "com.google.firebase:firebase-storage"
 
     // AndroidX
     implementation "androidx.core:core-ktx:1.17.0"

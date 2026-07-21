@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="feedback_privacy_notice">Gönderdiğinizde kategori, mesaj, isteğe bağlı e-posta, uygulama sürümü, uygulama dili ve oturum açıksa kullanıcı kimliğiniz Firebase’e iletilir. Eklediğiniz ekran görüntüsü Firebase Storage’a yüklenir. Gereksiz kişisel veya hassas bilgi paylaşmayın. Ayrıntılar için Ayarlar bölümündeki Gizlilik Politikası’nı inceleyin.</string>
+    <string name="feedback_privacy_notice">Gönderdiğinizde kategori, mesaj, isteğe bağlı e-posta, uygulama sürümü, uygulama dili ve oturum açıksa kullanıcı kimliğiniz Firebase’e iletilir. Gereksiz kişisel veya hassas bilgi paylaşmayın. Ayrıntılar için Ayarlar bölümündeki Gizlilik Politikası’nı inceleyin.</string>
 </resources>

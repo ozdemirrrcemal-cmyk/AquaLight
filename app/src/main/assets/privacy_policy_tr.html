@@ -5,44 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gizlilik Politikası - AquaLight</title>
   <style>
-    :root {
-      --bg: #0A192F;
-      --surface: #152B45;
-      --text: #EAF2FF;
-      --text-secondary: #A9B7C9;
-      --accent: #64B5F6;
-      --border: rgba(255, 255, 255, 0.05);
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      line-height: 1.7;
-    }
-    main { max-width: 920px; margin: 0 auto; padding: 24px 16px 48px; }
-    .hero, .section, .contact {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 20px;
-      margin-bottom: 16px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
-    }
-    .hero { padding: 28px 24px; }
-    h1 { margin: 0; font-size: 28px; color: #FFFFFF; }
-    h2 { margin: 0 0 12px; font-size: 18px; color: #FFFFFF; }
-    h3 { margin: 16px 0 8px; font-size: 15px; color: #FFFFFF; }
-    p, li { color: var(--text-secondary); font-size: 14px; }
-    p { margin: 0 0 12px; }
-    ul { margin: 0 0 12px; padding-left: 20px; }
-    li { margin-bottom: 10px; }
-    strong { color: #FFFFFF; }
-    a { color: var(--accent); text-decoration: none; word-break: break-word; }
-    .last-updated { margin-top: 8px; color: var(--text-secondary); font-size: 13px; }
-    .intro { margin-top: 16px; color: var(--text); font-size: 15px; }
-    .footer { margin-top: 24px; text-align: center; color: #7E8EA3; font-size: 12px; }
+    :root { --bg:#0A192F; --surface:#152B45; --text:#EAF2FF; --secondary:#A9B7C9; --accent:#64B5F6; --border:rgba(255,255,255,.05); }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; line-height:1.7; }
+    main { max-width:920px; margin:0 auto; padding:24px 16px 48px; }
+    .hero,.section,.contact { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:20px; margin-bottom:16px; box-shadow:0 4px 16px rgba(0,0,0,.18); }
+    .hero { padding:28px 24px; }
+    h1 { margin:0; font-size:28px; color:#fff; }
+    h2 { margin:0 0 12px; font-size:18px; color:#fff; }
+    h3 { margin:16px 0 8px; font-size:15px; color:#fff; }
+    p,li { color:var(--secondary); font-size:14px; }
+    p { margin:0 0 12px; }
+    ul { margin:0 0 12px; padding-left:20px; }
+    li { margin-bottom:10px; }
+    strong { color:#fff; }
+    a { color:var(--accent); text-decoration:none; word-break:break-word; }
+    .last-updated { margin-top:8px; color:var(--secondary); font-size:13px; }
+    .intro { margin-top:16px; color:var(--text); font-size:15px; }
+    .footer { margin-top:24px; text-align:center; color:#7E8EA3; font-size:12px; }
   </style>
 </head>
 <body>
@@ -50,176 +30,97 @@
   <div class="hero">
     <h1>Gizlilik Politikası</h1>
     <div class="last-updated">Son güncelleme: 21 Temmuz 2026</div>
-    <p class="intro">
-      Bu politika, AquaLight’ın hangi verileri işlediğini, verilerin nerede saklandığını,
-      hangi amaçlarla kullanıldığını ve sahip olduğunuz tercih ve hakları açıklar.
-      Metin, Android uygulamasının mevcut veri akışlarını esas alır ve üründe bulunmayan özellikleri tanımlamaz.
-    </p>
+    <p class="intro">Bu politika, AquaLight’ın hangi verileri işlediğini, verilerin nerede saklandığını, hangi amaçlarla kullanıldığını ve sahip olduğunuz tercih ve hakları açıklar. Metin Android uygulamasının mevcut veri akışlarını esas alır.</p>
   </div>
 
   <div class="section">
     <h2>1. Veri sorumlusu ve iletişim</h2>
-    <p>
-      AquaLight, Türkiye’de <strong>My AquaLight</strong> tarafından işletilmektedir.
-      Gizlilik soruları, talepler veya şikâyetler için
-      <a href="mailto:support@myaqualight.com">support@myaqualight.com</a> adresiyle iletişime geçebilirsiniz.
-    </p>
+    <p>AquaLight, Türkiye’de <strong>My AquaLight</strong> tarafından işletilmektedir. Gizlilik soruları, talepler ve şikâyetler için <a href="mailto:support@myaqualight.com">support@myaqualight.com</a> adresiyle iletişime geçebilirsiniz.</p>
   </div>
 
   <div class="section">
     <h2>2. AquaLight tarafından işlenen veriler</h2>
-
     <h3>Hesap ve kimlik doğrulama verileri</h3>
     <ul>
       <li>E-posta adresi, Firebase kullanıcı kimliği, kimlik doğrulama sağlayıcısı ve hesap durumu.</li>
-      <li>Google ile giriş kullanıldığında, Google tarafından bu giriş akışında sunulan hesap adı, e-posta adresi ve profil görseli.</li>
+      <li>Google ile giriş kullanıldığında, bu giriş akışında sunulan hesap adı, e-posta adresi ve profil görseli.</li>
       <li>Firebase Authentication tarafından kimlik doğrulama ve kötüye kullanımın önlenmesi amacıyla işlenebilen IP adresi ve kullanıcı aracısı gibi teknik güvenlik verileri.</li>
     </ul>
-
     <h3>Android cihazınızda yerel olarak saklanan veriler</h3>
     <ul>
       <li>Ad, kullanıcı adı, adres, telefon numarası, ülke ve profil görseli gibi sizin girdiğiniz profil bilgileri.</li>
       <li>Akvaryum ve tank bilgileri, notlar, ölçümler, programlar, canlılar, bitkiler, malzemeler ve tank görselleri.</li>
       <li>Kayıtlı cihaz bilgileri, tank atamaları, kurulum durumu, cihaz kimlik bilgileri, hatırlatıcı ayarları ve yerel bildirim verileri.</li>
-      <li>Kullanım İstatistikleri ekranında gösterilen otomasyon, uyarı ve manuel işlem sayaçları.</li>
+      <li>Uygulama içinde gösterilen yerel kullanım sayaçları.</li>
     </ul>
-    <p>
-      Bu ürün verileri uygulamanın kontrolündeki yerel depolamada tutulur. Mevcut sürüm;
-      akvaryum, tank, cihaz veya yerel kullanım istatistiği kayıtlarını Firebase Analytics’e
-      ya da başka bir analiz hizmetine yüklemez.
-    </p>
-
+    <p>Bu ürün verileri uygulamanın kontrolündeki yerel depolamada tutulur ve bir analiz hizmetine yüklenmez.</p>
     <h3>Geri bildirim ve destek verileri</h3>
-    <p>Uygulama üzerinden geri bildirim gönderdiğinizde aşağıdaki veriler işlenir:</p>
-    <ul>
-      <li>Geri bildirim kategorisi ve mesajı.</li>
-      <li>İsteğe bağlı yanıt e-posta adresi.</li>
-      <li>Uygulama sürümü ve seçili uygulama dili.</li>
-      <li>Oturum açıksa Firebase kullanıcı kimliğiniz; uygun yalnızca metin geri bildirimlerinde anonim işareti.</li>
-      <li>Sizin seçtiğiniz isteğe bağlı ekran görüntüsü.</li>
-    </ul>
-
+    <p>Uygulama üzerinden geri bildirim gönderdiğinizde kategori, mesaj, isteğe bağlı yanıt e-posta adresi, uygulama sürümü, seçili uygulama dili ve oturum açıksa Firebase kullanıcı kimliği işlenir. Oturum kapalıyken kabul edilen gönderimlerde anonim işareti kullanılır.</p>
     <h3>İzinler ve cihaz erişimi</h3>
     <ul>
-      <li>Kamera erişimi yalnızca QR kod tarama özelliği etkin olduğunda kullanılır.</li>
-      <li>Fotoğraf erişimi yalnızca bir görsel veya ekran görüntüsü seçtiğinizde kullanılır.</li>
-      <li>Bluetooth, yakındaki cihazlar, Wi-Fi ve konumla ilişkili izinler; Android’in cihaz keşfi, kurulum veya bağlı ağ bilgisi için gerekli kıldığı durumlarda kullanılır.</li>
+      <li>Kamera erişimi QR kod tarama ile seçili yerel profil veya akvaryum görseli akışlarında kullanılır.</li>
+      <li>Fotoğraf erişimi yalnızca yerel bir ürün özelliği için görsel seçtiğinizde kullanılır.</li>
+      <li>Bluetooth, yakındaki cihazlar, Wi-Fi ve konumla ilişkili izinler Android’in cihaz keşfi, kurulum veya bağlı ağ bilgisi için gerekli kıldığı durumlarda kullanılır.</li>
       <li>AquaLight bu izinleri sürekli konum takibi amacıyla kullanmaz.</li>
     </ul>
   </div>
 
   <div class="section">
     <h2>3. Toplanmayan telemetri verileri</h2>
-    <p>
-      Mevcut ticari yapılandırmada Firebase Analytics, Firebase Crashlytics ve Firebase Performance Monitoring bulunmaz.
-      Bu nedenle AquaLight, bu SDK’lar aracılığıyla uygulama kullanım analitiği, çökme raporu veya performans telemetrisi toplamaz.
-    </p>
+    <p>Mevcut ticari yapılandırmada Firebase Analytics, Firebase Crashlytics ve Firebase Performance Monitoring bulunmaz. AquaLight bu SDK’lar aracılığıyla kullanım analitiği, çökme raporu veya performans telemetrisi toplamaz.</p>
   </div>
 
   <div class="section">
     <h2>4. İşleme amaçları ve hukuki sebepler</h2>
     <ul>
-      <li>Hesabın oluşturulması ve güvenliğinin sağlanması, kimliği doğrulanmış oturumların sürdürülmesi.</li>
+      <li>Hesapların oluşturulması ve güvenliğinin sağlanması, kimliği doğrulanmış oturumların sürdürülmesi.</li>
       <li>Akvaryum yönetimi, bağlı cihaz kurulumu, hatırlatıcılar ve yerel uygulama özelliklerinin sunulması.</li>
       <li>Geri bildirim ve destek taleplerinin alınması, incelenmesi ve yanıtlanması.</li>
       <li>Dolandırıcılık, kötüye kullanım, yetkisiz erişim ve güvenlik olaylarının önlenmesi.</li>
-      <li>Uygulanabilir hukuki yükümlülüklerin yerine getirilmesi ve hukuki hakların kurulması, kullanılması veya korunması.</li>
+      <li>Hukuki yükümlülüklerin yerine getirilmesi ve hukuki hakların kurulması veya korunması.</li>
     </ul>
-    <p>
-      İşleme faaliyetine ve uygulanabilir mevzuata göre veriler; hizmet ilişkisinin kurulması veya yürütülmesi,
-      hukuki yükümlülüklerin yerine getirilmesi, temel hak ve özgürlüklerinize zarar vermeyen meşru menfaatler
-      veya açık rızanın hukuken gerekli olduğu durumlarda açık rıza kapsamında işlenebilir.
-    </p>
+    <p>İşleme faaliyetine ve uygulanabilir mevzuata göre veriler; hizmet ilişkisinin yürütülmesi, hukuki yükümlülükler, temel hak ve özgürlüklerinize zarar vermeyen meşru menfaatler veya açık rızanın hukuken gerekli olduğu durumlarda açık rıza kapsamında işlenebilir.</p>
   </div>
 
   <div class="section">
     <h2>5. Hizmet sağlayıcılar ve yurt dışı işleme</h2>
-    <p>AquaLight mevcut sürümde aşağıdaki Google Firebase hizmetlerini kullanır:</p>
-    <ul>
-      <li><strong>Firebase Authentication:</strong> hesap oluşturma, giriş ve hesap güvenliği.</li>
-      <li><strong>Cloud Firestore:</strong> geri bildirim mesajları ve işlem durumları.</li>
-      <li><strong>Cloud Storage for Firebase:</strong> isteğe bağlı geri bildirim ekran görüntüleri.</li>
-    </ul>
-    <p>
-      Google, geçerli Firebase ve Google Cloud koşulları kapsamında müşteri verilerini genel olarak hizmet sağlayıcı veya veri işleyen sıfatıyla işler.
-      Firebase Authentication verileri Amerika Birleşik Devletleri’ndeki veri merkezlerinde işlenebilir.
-      Cloud Firestore ve Cloud Storage, ilgili proje kaynakları için yapılandırılan konumları kullanır ve Türkiye dışında işlemeyi içerebilir.
-    </p>
+    <p>AquaLight hesap erişimi için <strong>Firebase Authentication</strong>, metin geri bildirimleri için <strong>Cloud Firestore</strong> kullanır. Üretim Firestore veritabanı <strong>europe-west1</strong> konumundadır. Firebase Authentication, Amerika Birleşik Devletleri’nde işlemeyi içerebilir. Google, müşteri verilerini geçerli Firebase ve Google Cloud koşulları kapsamında işler.</p>
   </div>
 
   <div class="section">
     <h2>6. Verilerin paylaşılması</h2>
-    <p>Kişisel veriler satılmaz. Veriler yalnızca aşağıdaki durumlarda paylaşılabilir:</p>
-    <ul>
-      <li>Bu politikada açıklanan işlevlerin yürütülmesi için gerekli hizmet sağlayıcılarla.</li>
-      <li>Kanun, bağlayıcı bir hukuki süreç veya yetkili makam kararı gerektirdiğinde.</li>
-      <li>Kullanıcıları, hizmeti veya hukuki hakları dolandırıcılık, kötüye kullanım ya da güvenlik tehditlerine karşı korumak için.</li>
-      <li>Uygun bildirim ve güvencelerle gerçekleştirilen hukuka uygun bir işletme devri kapsamında.</li>
-    </ul>
+    <p>Kişisel veriler satılmaz. Veriler yalnızca burada açıklanan işlevler için gerekli hizmet sağlayıcılarla, bağlayıcı mevzuat veya yetkili makam kararı gerektirdiğinde, kullanıcıları ve hizmeti kötüye kullanım veya güvenlik tehditlerine karşı korumak için ya da uygun güvencelere tabi hukuka uygun bir işletme devri kapsamında paylaşılabilir.</p>
   </div>
 
   <div class="section">
     <h2>7. Saklama ve silme</h2>
-    <p>
-      Hesap verileri, hesap aktif olduğu sürece ve güvenlik veya hukuki yükümlülükler için gerekli olduğu ölçüde saklanır.
-      Yerel akvaryum ve cihaz verileri; siz silene, uygulama içinden hesabı silene, uygulama verilerini temizleyene
-      veya Android depolama davranışına bağlı olarak uygulamayı kaldırana kadar cihazda kalır.
-    </p>
-    <p>
-      Geri bildirim kayıtları ve isteğe bağlı ekran görüntüleri yalnızca destek, güvenlik ve hukuki ihtiyaçlar için tutulur
-      ve geçerli saklama planına göre artık gerekli olmadığında silinir. Başarısız veya yarım kalan ekran görüntüsü işlemleri kısa süreli temizlik sürecine tabidir.
-    </p>
-    <p>
-      Uygulama içi hesap silme akışı; Firebase hesabını, kullanıcıya ait bulut geri bildirim kayıtlarını ve ekran görüntülerini
-      ve hesaba bağlı yerel verileri kaldırmak üzere tasarlanmıştır. İşlem tamamlanamazsa destek birimiyle iletişime geçebilirsiniz.
-    </p>
+    <p>Hesap verileri, hesap aktif olduğu sürece ve güvenlik veya hukuki yükümlülükler için gerekli olduğu ölçüde saklanır. Yerel akvaryum ve cihaz verileri siz silene, uygulama içinden hesabı silene, uygulama verilerini temizleyene veya Android depolama davranışına bağlı olarak uygulamayı kaldırana kadar cihazda kalır.</p>
+    <p>Metin geri bildirim kayıtları yalnızca destek, güvenlik ve hukuki ihtiyaçlar için tutulur ve artık gerekli olmadığında AquaLight’ın belgelenmiş saklama ve silme süreci kapsamında kaldırılır.</p>
+    <p>Uygulama içi hesap silme akışı Firebase hesabını, kullanıcıya bağlı geri bildirim kayıtlarını ve hesaba bağlı yerel verileri kaldırmak üzere tasarlanmıştır. İşlem tamamlanamazsa destek birimiyle iletişime geçebilirsiniz.</p>
   </div>
 
   <div class="section">
     <h2>8. Güvenlik</h2>
-    <p>
-      AquaLight; kullanıcıya bağlı erişim kontrolleri, Firebase güvenlik kuralları, uygun olduğu ölçüde şifreli veya uygulamaya özel yerel depolama,
-      HTTPS aktarımı ve sınırlandırılmış medya yolları kullanır. Hiçbir teknik sistem mutlak güvenlik garantisi veremez.
-    </p>
+    <p>AquaLight kullanıcıya bağlı erişim kontrolleri, Firebase güvenlik kuralları, uygun olduğu ölçüde uygulamaya özel veya şifreli yerel depolama, HTTPS aktarımı ve asgari yetki prensibi kullanır. Hiçbir teknik sistem mutlak güvenlik garantisi veremez.</p>
   </div>
 
   <div class="section">
     <h2>9. Haklarınız</h2>
-    <p>
-      Uygulanabilir mevzuata tabi olarak; verilerinizin işlenip işlenmediğini öğrenme, bilgi talep etme, erişim,
-      düzeltme, silme, işlemenin sınırlandırılması, itiraz ve veri taşınabilirliği haklarına sahip olabilirsiniz.
-      Ayrıca yetkili veri koruma makamına şikâyette bulunabilir ve açık rızaya dayalı işlemlerde rızanızı,
-      önceki hukuka uygun işlemleri etkilemeksizin geri çekebilirsiniz.
-    </p>
-    <p>
-      6698 sayılı Kişisel Verilerin Korunması Kanunu’nun 11. maddesi kapsamındaki taleplerinizi
-      <a href="mailto:support@myaqualight.com">support@myaqualight.com</a> adresine iletebilirsiniz.
-      Talebin sonuçlandırılmasından önce kimliğinizi doğrulamamız gerekebilir.
-    </p>
+    <p>Uygulanabilir mevzuata tabi olarak verilerinizin işlenip işlenmediğini öğrenme, bilgi talep etme, erişim, düzeltme, silme, işlemenin sınırlandırılması, itiraz ve veri taşınabilirliği haklarına sahip olabilirsiniz. Ayrıca yetkili veri koruma makamına şikâyette bulunabilir ve açık rızaya dayalı işlemlerde rızanızı geri çekebilirsiniz.</p>
+    <p>Taleplerinizi <a href="mailto:support@myaqualight.com">support@myaqualight.com</a> adresine iletebilirsiniz. Talebin sonuçlandırılmasından önce kimliğinizi doğrulamamız gerekebilir.</p>
   </div>
 
   <div class="section">
     <h2>10. Yaş uygunluğu</h2>
-    <p>
-      AquaLight 18 yaş ve üzerindeki yetişkinler için tasarlanmıştır. Hizmet çocuklara yönelik değildir ve
-      18 yaşından küçük kişiler adına bilerek hesap oluşturulmaz veya kişisel veri toplanmaz.
-      Bir ebeveyn veya vasi, bir küçüğün kişisel veri sağladığını düşünüyorsa inceleme yapılabilmesi için bizimle iletişime geçmelidir.
-    </p>
+    <p>AquaLight 18 yaş ve üzerindeki yetişkinler için tasarlanmıştır. Hizmet çocuklara yönelik değildir ve 18 yaşından küçük kişiler adına bilerek hesap oluşturulmaz veya kişisel veri toplanmaz.</p>
   </div>
 
   <div class="section">
     <h2>11. Değişiklikler</h2>
-    <p>
-      Ürün, hizmet sağlayıcılar, hukuki gereklilikler veya veri işleme uygulamaları değiştiğinde bu politika güncellenebilir.
-      Revizyon tarihi yenilenir ve önemli değişiklikler gerektiği şekilde bildirilir.
-    </p>
+    <p>Ürün, hizmet sağlayıcılar, hukuki gereklilikler veya veri işleme uygulamaları değiştiğinde bu politika güncellenebilir. Revizyon tarihi yenilenir ve önemli değişiklikler gerektiği şekilde bildirilir.</p>
   </div>
 
-  <div class="contact">
-    <h2>İletişim</h2>
-    <p><a href="mailto:support@myaqualight.com">support@myaqualight.com</a></p>
-  </div>
-
+  <div class="contact"><h2>İletişim</h2><p><a href="mailto:support@myaqualight.com">support@myaqualight.com</a></p></div>
   <div class="footer">© AquaLight</div>
 </main>
 </body>

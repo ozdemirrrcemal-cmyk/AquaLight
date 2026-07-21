@@ -1,29 +1,15 @@
 package com.aqua.aqualight.application.feedback
 
-import java.io.File
-
-/** Commercial feedback boundary. Firebase and Android callbacks never escape data code. */
+/** Commercial feedback boundary. Firebase callbacks never escape data code. */
 interface FeedbackRepository {
-    suspend fun submit(
-        request: FeedbackSubmissionRequest,
-        screenshotFile: File?
-    ): FeedbackSubmissionResult
-
-    suspend fun cleanupOrphans(): FeedbackOrphanCleanupResult
+    suspend fun submit(request: FeedbackSubmissionRequest): FeedbackSubmissionResult
 }
 
 class FeedbackSubmissionUseCase(
     private val repository: FeedbackRepository
 ) {
-    suspend fun submit(
-        request: FeedbackSubmissionRequest,
-        screenshotFile: File?
-    ): FeedbackSubmissionResult {
-        return repository.submit(request, screenshotFile)
-    }
-
-    suspend fun cleanupOrphans(): FeedbackOrphanCleanupResult {
-        return repository.cleanupOrphans()
+    suspend fun submit(request: FeedbackSubmissionRequest): FeedbackSubmissionResult {
+        return repository.submit(request)
     }
 }
 
@@ -42,20 +28,10 @@ sealed interface FeedbackSubmissionResult {
 
 data class FeedbackSubmissionFailure(
     val kind: FeedbackSubmissionFailureKind,
-    val cause: Throwable?,
-    val storagePath: String? = null,
-    val rollbackCause: Throwable? = null
+    val cause: Throwable?
 )
 
 enum class FeedbackSubmissionFailureKind {
-    UPLOAD,
     PERSISTENCE,
-    ROLLBACK,
     GENERIC
 }
-
-data class FeedbackOrphanCleanupResult(
-    val attemptedCount: Int,
-    val deletedCount: Int,
-    val remainingCount: Int
-)

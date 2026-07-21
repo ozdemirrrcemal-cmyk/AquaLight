@@ -2,64 +2,12 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8" />
-<title>Kullanım Koşulları - AquaLight</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kullanım Koşulları - AquaLight</title>
 <style>
-:root{
---bg:#0A192F;
---surface:#152B45;
---surface-2:#1C3252;
---text:#EAF2FF;
---text-secondary:#A9B7C9;
---accent:#2196F3;
---border:#2D3F66;
-}
-*{box-sizing:border-box;}
-html{scroll-behavior:smooth;}
-body{
-margin:0;
-padding:0;
-background:var(--bg);
-color:var(--text);
-font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-line-height:1.7;
-}
-main{max-width:920px;margin:0 auto;padding:24px 16px 48px;}
-.hero{
-background:linear-gradient(180deg,#1C3252 0%, #152B45 100%);
-border:1px solid rgba(255,255,255,.05);
-border-radius:24px;
-padding:28px 24px;
-margin-bottom:20px;
-box-shadow:0 10px 30px rgba(0,0,0,.22);
-}
-h1{margin:0;font-size:28px;font-weight:700;letter-spacing:.2px;}
-.last-updated{margin-top:8px;color:var(--text-secondary);font-size:13px;}
-.intro{margin-top:18px;font-size:15px;color:var(--text);}
-.section{
-background:var(--surface);
-border:1px solid rgba(255,255,255,.05);
-border-radius:20px;
-padding:20px;
-margin-bottom:16px;
-box-shadow:0 4px 16px rgba(0,0,0,.18);
-}
-.section h2{margin-top:0;margin-bottom:14px;font-size:18px;color:#FFFFFF;}
-.section p{margin:0 0 12px;font-size:14px;color:var(--text-secondary);text-align:left;}
-.section ul{margin:0;padding-left:20px;}
-.section li{margin-bottom:14px;font-size:14px;color:var(--text-secondary);}
-strong{color:#FFFFFF;}
-.contact{
-margin-top:24px;
-padding:20px;
-border-radius:20px;
-background:linear-gradient(180deg,#152B45 0%, #10243D 100%);
-border:1px solid rgba(255,255,255,.05);
-}
-.contact h2{margin-top:0;}
-a{color:#64B5F6;text-decoration:none;}
-a:hover{text-decoration:underline;}
-.footer{margin-top:28px;text-align:center;font-size:12px;color:#7E8EA3;}
+:root{--bg:#0A192F;--surface:#152B45;--text:#EAF2FF;--secondary:#A9B7C9;--accent:#64B5F6;--border:rgba(255,255,255,.05);}
+*{box-sizing:border-box;} body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.7;}
+main{max-width:920px;margin:0 auto;padding:24px 16px 48px;}.hero,.section,.contact{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:20px;margin-bottom:16px;box-shadow:0 4px 16px rgba(0,0,0,.18);}.hero{padding:28px 24px;}h1{margin:0;font-size:28px;}h2{margin:0 0 14px;font-size:18px;color:#fff;}p,li{font-size:14px;color:var(--secondary);}li{margin-bottom:12px;}a{color:var(--accent);text-decoration:none;}.last-updated{margin-top:8px;color:var(--secondary);font-size:13px;}.intro{margin-top:16px;font-size:15px;}.footer{text-align:center;color:#7E8EA3;font-size:12px;}
 </style>
 </head>
 <body>
@@ -67,9 +15,7 @@ a:hover{text-decoration:underline;}
 <div class="hero">
 <h1>Kullanım Koşulları</h1>
 <div class="last-updated">Son güncelleme: 21 Temmuz 2026</div>
-<div class="intro">
-Bu Kullanım Koşulları, AquaLight mobil uygulamasına ve bağlantılı cihaz, hizmet veya içeriklere erişim ve kullanım şartlarını açıklar.
-</div>
+<p class="intro">Bu Koşullar, AquaLight Android uygulamasına ve bağlantılı AquaLight cihazlarına erişim ve kullanım şartlarını açıklar.</p>
 </div>
 
 <div class="section">
@@ -77,33 +23,30 @@ Bu Kullanım Koşulları, AquaLight mobil uygulamasına ve bağlantılı cihaz, 
 <ul>
 <li>En az 18 yaşında olmalı ve ikamet ettiğiniz ülkede bağlayıcı bir sözleşme yapma ehliyetine sahip olmalısınız.</li>
 <li>Hesap oluşturarak veya AquaLight’ı kullanmaya devam ederek verdiğiniz bilgilerin doğru, güncel ve eksiksiz olduğunu beyan edersiniz.</li>
-<li>Giriş bilgilerinizin gizliliğini korumaktan ve hesabınız altında gerçekleşen işlemlerden siz sorumlusunuz.</li>
-<li>AquaLight kullanımı, Google Play veya cihaz üreticileri gibi üçüncü taraf platformların koşullarına da tabi olabilir.</li>
-<li>AquaLight bu Kullanım Koşullarını zaman zaman güncelleyebilir.</li>
+<li>Giriş bilgilerinizin güvenliğini korumaktan ve hesabınız üzerinden gerçekleştirilen işlemlerden siz sorumlusunuz.</li>
+<li>Kullanımınız Google Play, cihaz üreticileri ve seçtiğiniz diğer platformların koşullarına da tabi olabilir.</li>
 </ul>
 </div>
 
 <div class="section">
 <h2>2. Cihaz kontrolü ve otomasyon</h2>
 <ul>
-<li>AquaLight, akvaryumlara ve ilgili ekipmanlara komut göndermenizi sağlar.</li>
-<li>Güvenli program ve yapılandırmalar seçmek tamamen sizin sorumluluğunuzdadır.</li>
-<li>Ağ kesintileri, donanım arızaları, aygıt yazılımı hataları veya yanlış kurulum cihaz davranışını etkileyebilir.</li>
-<li>Uygulama destekleyici bir araçtır; gözetim veya fiziksel güvenlik önlemlerinin yerine geçmez.</li>
-<li>Geçerli tüm elektrik ve güvenlik kurallarına uymalısınız.</li>
-<li>Bir cihazı satmanız veya devretmeniz hâlinde cihazı sıfırlamak ve hesabınızdan kaldırmak sizin sorumluluğunuzdadır.</li>
+<li>AquaLight, akvaryumları yapılandırmanızı ve uyumlu ekipmanlara komut göndermenizi sağlar.</li>
+<li>Güvenli programları, yapılandırmaları, elektrik bağlantılarını ve çalışma koşullarını seçmek sizin sorumluluğunuzdadır.</li>
+<li>Ağ kesintileri, güç kaybı, donanım arızaları, sensör sınırlamaları, aygıt yazılımı davranışı ve yanlış kurulum çalışmayı etkileyebilir.</li>
+<li>Uygulama destekleyici bir araçtır; gözetim, bakım veya fiziksel güvenlik önlemlerinin yerine geçmez.</li>
+<li>Bir cihazı satmadan veya devretmeden önce cihazı sıfırlamak ve hesabınızdan kaldırmak sizin sorumluluğunuzdadır.</li>
 </ul>
 </div>
 
 <div class="section">
 <h2>3. Veri ve gizlilik</h2>
 <ul>
-<li>AquaLight; hesap oluşturmak, kullanıcı kimliğini doğrulamak, hizmeti çalıştırmak ve destek taleplerini yönetmek için gerekli kişisel verileri işler.</li>
-<li>Mevcut sürümde akvaryum ve tank bilgileri, ölçümler, notlar, programlar, cihaz atamaları ve tank görselleri Android cihazınızdaki uygulama kontrollü yerel depolamada tutulur.</li>
-<li>Bu yerel akvaryum kayıtları normal ürün akışının parçası olarak Firebase’e yüklenmez. Yalnızca sizin seçtiğiniz dışa aktarma, paylaşma veya iletme özelliği kullanıldığında cihazdan çıkabilir.</li>
-<li>Geri bildirim mesajları ve isteğe bağlı geri bildirim ekran görüntüleri Google Firebase hizmetleri kullanılarak uzakta saklanır. Gönderilen veri kapsamı gönderim öncesinde ve Gizlilik Politikası’nda açıklanır.</li>
-<li>AquaLight kişisel verilerinizi satmaz ve mevcut ticari yapılandırmada Firebase Analytics, Crashlytics veya Performance Monitoring içermez.</li>
-<li>İşleme, hizmet sağlayıcılar, saklama, silme ve haklarınız hakkında ayrıntılı bilgi Gizlilik Politikası’nda yer alır.</li>
+<li>AquaLight, kimlik doğrulama için gerekli hesap verilerini ve geri bildirim formuna gönüllü olarak yazdığınız metni işler.</li>
+<li>Mevcut sürümde akvaryum ve tank bilgileri, ölçümler, programlar, cihaz atamaları ve ürün görselleri Android cihazınızdaki uygulama kontrollü yerel depolamada tutulur.</li>
+<li>Metin geri bildirimleri Cloud Firestore’da uzakta saklanır. AquaLight kişisel verileri satmaz.</li>
+<li>Mevcut ticari yapılandırmada Firebase Analytics, Crashlytics, Performance Monitoring veya Cloud Storage bulunmaz.</li>
+<li>İşleme amaçları, hizmet sağlayıcılar, saklama, silme ve haklarınız hakkında ayrıntılı bilgi Gizlilik Politikası’nda yer alır.</li>
 </ul>
 </div>
 
@@ -111,10 +54,8 @@ Bu Kullanım Koşulları, AquaLight mobil uygulamasına ve bağlantılı cihaz, 
 <h2>4. Sorumluluk, riskler ve feragatler</h2>
 <ul>
 <li>AquaLight, uygulanabilir mevzuatın izin verdiği ölçüde “olduğu gibi” sunulur.</li>
-<li>Akvaryumunuzu ve bağlı ekipmanınızı izlemek sizin sorumluluğunuzdadır.</li>
-<li>Ağ erişimi, cihaz gücü, donanım durumu, sensör doğruluğu ve yapılandırma çalışmayı etkileyebilir.</li>
-<li>Mevzuatın izin verdiği ölçüde canlı kaybı, donanım hasarı, su hasarı veya dolaylı zararlardan sorumlu değiliz.</li>
-<li>Her türlü sorumluluk, kanunun izin verdiği azami ölçüde sınırlandırılır.</li>
+<li>Akvaryumu, canlıları, bağlı ekipmanı, güç kaynağını, su koşullarını ve ağ erişimini izleme sorumluluğu sizde kalır.</li>
+<li>Mevzuatın izin verdiği ölçüde dolaylı zarar, canlı kaybı, donanım hasarı veya su hasarından sorumlu değiliz.</li>
 <li>Emredici tüketici hakları saklıdır.</li>
 </ul>
 </div>
@@ -122,19 +63,13 @@ Bu Kullanım Koşulları, AquaLight mobil uygulamasına ve bağlantılı cihaz, 
 <div class="section">
 <h2>5. Değişiklikler, sona erdirme ve iletişim</h2>
 <ul>
-<li>Makul şekilde gerekli olduğunda hizmetin bazı bölümlerini değiştirebilir veya sona erdirebiliriz.</li>
-<li>Bu Kullanım Koşullarını güncelleyebilir ve revizyon tarihini yenileyebiliriz.</li>
+<li>Hizmetin bazı bölümlerini makul şekilde değiştirebilir veya sona erdirebilir ve bu Koşulları güncelleyebiliriz.</li>
 <li>AquaLight kullanımını istediğiniz zaman bırakabilir ve uygulama üzerinden hesabınızın silinmesini talep edebilirsiniz.</li>
-<li>Sorularınızı AquaLight destek birimine iletebilirsiniz.</li>
+<li>Önemli değişiklikler mevzuatın gerektirdiği durumlarda bildirilir.</li>
 </ul>
 </div>
 
-<div class="contact">
-<h2>İletişim</h2>
-<p>Bu Kullanım Koşullarıyla ilgili sorularınız için:</p>
-<p><a href="mailto:support@myaqualight.com">support@myaqualight.com</a></p>
-</div>
-
+<div class="contact"><h2>İletişim</h2><p><a href="mailto:support@myaqualight.com">support@myaqualight.com</a></p></div>
 <div class="footer">© AquaLight</div>
 </main>
 </body>

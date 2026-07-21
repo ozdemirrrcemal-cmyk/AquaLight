@@ -107,7 +107,7 @@ internal class DefaultAppContainer(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
         FeedbackSubmissionUseCase(
-            FirebaseFeedbackSubmissionOperations.create(appContext)
+            FirebaseFeedbackSubmissionOperations.create()
         )
     }
 
