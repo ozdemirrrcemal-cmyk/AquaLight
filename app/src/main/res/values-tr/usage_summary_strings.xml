@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="usage_local_subinfo">Bu cihazda yerel olarak kaydedilen otomasyon, uyarı ve manuel işlem etkinliklerini inceleyin.</string>
+    <string name="usage_local_subinfo_desc">Bu ekranın yalnızca bu cihazda yerel olarak saklanan etkinlikleri gösterdiğini açıklar.</string>
+    <string name="usage_local_week_title">Bu hafta</string>
+    <string name="usage_local_week_card_desc">Bu hafta cihazda yerel olarak kaydedilen otomasyon ve uyarı sayılarını gösteren kart.</string>
+    <string name="usage_local_today_card_desc">Bugün cihazda yerel olarak kaydedilen otomasyon ve manuel işlem sayılarını gösteren kart.</string>
+    <string name="usage_local_last_activity_card_desc">Bu cihazda yerel olarak kaydedilen en son etkinliği gösteren kart.</string>
+    <string name="usage_local_privacy_card_desc">Kullanım özetinin yalnızca bu cihazda saklandığını açıklayan kart.</string>
+    <string name="usage_local_privacy_title">Yalnızca bu cihazda saklanır</string>
+    <string name="usage_local_privacy_body">Bu özet, bu cihazdaki AquaLight uygulamasının özel verilerinde yerel olarak saklanır. Firebase’e gönderilmez, reklam amacıyla kullanılmaz ve analitik verisi olarak paylaşılmaz. Çıkış yaptığınızda, hesabınızı sildiğinizde veya uygulama verilerini temizlediğinizde silinir.</string>
+</resources>

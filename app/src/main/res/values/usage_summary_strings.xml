@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="usage_local_subinfo">Review automation, alert and manual-action activity stored locally on this device.</string>
+    <string name="usage_local_subinfo_desc">Explains that this screen shows activity stored locally on this device.</string>
+    <string name="usage_local_week_title">This week</string>
+    <string name="usage_local_week_card_desc">Card showing automation and alert counts recorded locally during the current week.</string>
+    <string name="usage_local_today_card_desc">Card showing today’s automation and manual-action counts recorded locally.</string>
+    <string name="usage_local_last_activity_card_desc">Card showing the most recent activity recorded locally on this device.</string>
+    <string name="usage_local_privacy_card_desc">Card explaining that the usage summary is stored only on this device.</string>
+    <string name="usage_local_privacy_title">Stored only on this device</string>
+    <string name="usage_local_privacy_body">This summary is stored in AquaLight’s private app data on this device. It is not sent to Firebase, used for advertising or shared as analytics. It is cleared when you sign out, delete your account or clear the app’s data.</string>
+</resources>

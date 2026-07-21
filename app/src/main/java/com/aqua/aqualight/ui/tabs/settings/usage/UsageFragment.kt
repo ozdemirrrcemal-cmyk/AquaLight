@@ -35,8 +35,8 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
             FragmentUsageBinding.bind(view)
 
         setupHeader()
-
-        observeUsageAnalytics()
+        applyLocalUsageSummaryCopy()
+        observeUsageSummary()
     }
 
     private fun setupHeader() {
@@ -45,7 +45,21 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
         )
     }
 
-    private fun observeUsageAnalytics() {
+    private fun applyLocalUsageSummaryCopy() = with(binding) {
+        tvUsageInfo.setText(R.string.usage_local_subinfo)
+        tvUsageInfo.contentDescription = getString(R.string.usage_local_subinfo_desc)
+        tvSummaryTitle.setText(R.string.usage_local_week_title)
+        cardUsageSummary.contentDescription = getString(R.string.usage_local_week_card_desc)
+        cardTodayUsage.contentDescription = getString(R.string.usage_local_today_card_desc)
+        cardLastActivity.contentDescription = getString(
+            R.string.usage_local_last_activity_card_desc
+        )
+        cardUsageInfo.contentDescription = getString(R.string.usage_local_privacy_card_desc)
+        tvUsagePrivacyTitle.setText(R.string.usage_local_privacy_title)
+        tvUsagePrivacyBody.setText(R.string.usage_local_privacy_body)
+    }
+
+    private fun observeUsageSummary() {
         viewLifecycleOwner.lifecycleScope.launch {
             settingsOperations.usageAnalytics.collectLatest { usage ->
                 bindUsageToUi(

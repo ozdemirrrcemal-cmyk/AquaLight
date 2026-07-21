@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.auth
 
 import android.content.Context
 import com.aqua.aqualight.data.user.UserPreferencesManager
+import com.aqua.aqualight.data.user.clearUsageSummary
 import com.google.android.gms.tasks.Task
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
@@ -71,7 +72,7 @@ class LogoutManager private constructor(
         }.exceptionOrNull()
 
         val preferenceCleanupError = runCatching {
-            userPrefs.logout()
+            clearSessionPreferences()
         }.exceptionOrNull()
 
         return LogoutResult(
@@ -102,7 +103,7 @@ class LogoutManager private constructor(
         }.exceptionOrNull()
 
         val preferenceCleanupError = runCatching {
-            userPrefs.logout()
+            clearSessionPreferences()
         }.exceptionOrNull()
 
         return LogoutResult(
@@ -111,6 +112,11 @@ class LogoutManager private constructor(
             firebaseSignOutError = firebaseSignOutError,
             preferenceCleanupError = preferenceCleanupError
         )
+    }
+
+    private suspend fun clearSessionPreferences() {
+        userPrefs.logout()
+        userPrefs.clearUsageSummary()
     }
 
     private suspend fun stopSessionBoundServices(
