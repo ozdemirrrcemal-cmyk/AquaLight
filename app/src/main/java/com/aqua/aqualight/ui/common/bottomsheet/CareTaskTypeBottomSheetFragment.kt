@@ -66,7 +66,6 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
             com.google.android.material.R.id.design_bottom_sheet
         ) ?: return
 
-        bottomSheet.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.aqua_color_transparent))
         val sheetHeight = (resources.displayMetrics.heightPixels * SHEET_HEIGHT_RATIO).toInt()
         bottomSheet.layoutParams = bottomSheet.layoutParams.apply { height = sheetHeight }
         bottomSheet.requestLayout()
