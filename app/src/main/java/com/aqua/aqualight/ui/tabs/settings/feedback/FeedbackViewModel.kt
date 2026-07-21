@@ -1,6 +1,6 @@
 package com.aqua.aqualight.ui.tabs.settings.feedback
 
-import android.util.Patterns
+import androidx.core.util.PatternsCompat
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -64,7 +64,7 @@ class FeedbackViewModel(
         val categoryError = current.category.isBlank()
         val messageError = current.message.trim().length < MIN_MESSAGE_LENGTH
         val emailError = current.email.isNotBlank() &&
-            !Patterns.EMAIL_ADDRESS.matcher(current.email.trim()).matches()
+            !PatternsCompat.EMAIL_ADDRESS.matcher(current.email.trim()).matches()
 
         if (categoryError || messageError || emailError) {
             _uiState.update {
