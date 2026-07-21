@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Commercial architecture guard for authenticated text feedback and shared image media."""
+"""Commercial architecture guard for Spark-plan text feedback and shared image media."""
 
 from pathlib import Path
 import sys
@@ -12,6 +12,7 @@ FEEDBACK_REPOSITORY = APP / "data/feedback/FirebaseFeedbackSubmissionOperations.
 FEEDBACK_VIEW_MODEL = APP / "ui/tabs/settings/feedback/FeedbackViewModel.kt"
 FEEDBACK_FRAGMENT = APP / "ui/tabs/settings/feedback/FeedbackFragment.kt"
 FEEDBACK_LAYOUT = ROOT / "app/src/main/res/layout/fragment_feedback.xml"
+CLOUD_CLEANER = APP / "data/user/CloudUserDataCleaner.kt"
 FIRESTORE_RULES = ROOT / "firestore.rules"
 FIREBASE_RULES_TEST = ROOT / "firebase/rules.test.mjs"
 APP_CONTAINER = APP / "composition/AppContainer.kt"
@@ -57,6 +58,7 @@ REQUIRED = (
     FEEDBACK_VIEW_MODEL,
     FEEDBACK_FRAGMENT,
     FEEDBACK_LAYOUT,
+    CLOUD_CLEANER,
     FIRESTORE_RULES,
     FIREBASE_RULES_TEST,
     APP_CONTAINER,
@@ -92,6 +94,7 @@ OBSOLETE_PATHS = (
     ROOT / "app/src/main/res/drawable/ic_image.xml",
     ROOT / "app/src/main/res/drawable/ic_close.xml",
     ROOT / "storage.rules",
+    ROOT / "functions",
 )
 
 errors: list[str] = []
@@ -99,15 +102,6 @@ errors: list[str] = []
 
 def read(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="ignore") if path.is_file() else ""
-
-
-for path in REQUIRED:
-    if not path.is_file():
-        errors.append(f"{path.relative_to(ROOT)}: required commercial file is missing")
-
-for path in OBSOLETE_PATHS:
-    if path.exists():
-        errors.append(f"{path.relative_to(ROOT)}: obsolete compatibility implementation remains")
 
 
 def require_tokens(path: Path, tokens: tuple[str, ...], contract: str) -> None:
@@ -124,49 +118,64 @@ def forbid_tokens(path: Path, tokens: tuple[str, ...], contract: str) -> None:
             errors.append(f"{path.relative_to(ROOT)}: {contract} remains: {token}")
 
 
+for path in REQUIRED:
+    if not path.is_file():
+        errors.append(f"{path.relative_to(ROOT)}: required commercial file is missing")
+
+for path in OBSOLETE_PATHS:
+    if path.exists():
+        errors.append(f"{path.relative_to(ROOT)}: obsolete or paid-plan implementation remains")
+
 require_tokens(
     FEEDBACK_APPLICATION,
     (
-        "FeedbackSubmissionPolicy",
+        "val submissionId: String",
+        "SUBMISSION_ID_LENGTH = 36",
         "EMAIL_MAX_LENGTH = 254",
         "EMAIL_LOCAL_PART_MAX_LENGTH = 64",
         "MESSAGE_MIN_LENGTH = 10",
         "MESSAGE_MAX_LENGTH = 500",
-        "AUTHENTICATION,",
+        "NETWORK,",
         "FeedbackSubmissionFailureKind.VALIDATION",
     ),
     "feedback policy",
 )
 forbid_tokens(
     FEEDBACK_APPLICATION,
-    ("java.io.File", "screenshot", "cleanupOrphans", "FeedbackOrphanCleanupResult"),
-    "obsolete screenshot boundary",
+    ("RATE_LIMITED", "java.io.File", "screenshot", "cleanupOrphans"),
+    "unsupported or obsolete feedback boundary",
 )
 
 require_tokens(
     FEEDBACK_REPOSITORY,
     (
         "FeedbackSubmissionFailureKind.AUTHENTICATION",
-        "documentStore.save(documentId, data)",
-        "request.email.trim().ifBlank { null }",
-        "withContext(dispatcher)",
-        "suspendCoroutine",
+        "firestore.runTransaction",
+        "withTimeout(timeoutMillis)",
+        "SUBMISSION_TIMEOUT_MILLIS = 15_000L",
+        "CompletableDeferred",
+        "collection(SUBMISSIONS_COLLECTION)",
+        "FeedbackDocumentStoreFailureKind.NETWORK",
         "CancellationException",
     ),
-    "authenticated persistence contract",
+    "Spark transaction persistence contract",
 )
 forbid_tokens(
     FEEDBACK_REPOSITORY,
     (
-        "anonymous",
+        "FirebaseFunctions",
+        "HttpsCallableOptions",
+        "FirebaseAppCheck",
+        "PlayIntegrityAppCheckProviderFactory",
         "FirebaseStorage",
+        "anonymous",
         "screenshot",
         "journalStore",
-        "mediaTransaction",
         "cleanupOrphans",
-        "suspendCancellableCoroutine",
+        ".document(documentId).set",
+        "suspendCoroutine",
     ),
-    "unsafe or obsolete feedback token",
+    "paid, offline-capable or obsolete feedback token",
 )
 
 require_tokens(
@@ -175,11 +184,13 @@ require_tokens(
         "FeedbackSubmissionPolicy.isEmailValid",
         "FeedbackSubmissionPolicy.MESSAGE_MIN_LENGTH",
         "FeedbackSubmissionPolicy.MESSAGE_MAX_LENGTH",
-        "val request = FeedbackSubmissionRequest(",
-        "SavedStateHandle",
-        "isSubmitting",
+        "KEY_SUBMISSION_ID",
+        "submissionIdentity()",
+        "invalidateSubmissionIdentity()",
+        "submissionId = submissionIdentity()",
+        "isSubmitting = false",
     ),
-    "feedback state contract",
+    "feedback state and idempotency contract",
 )
 forbid_tokens(
     FEEDBACK_VIEW_MODEL,
@@ -192,14 +203,23 @@ require_tokens(
     (
         "FeedbackSubmissionFailureKind.AUTHENTICATION",
         "FeedbackSubmissionFailureKind.VALIDATION",
+        "FeedbackSubmissionFailureKind.NETWORK",
+        "feedback_error_network",
         "feedback_error_message_length",
+        "setFragmentGlobalLoading(state.isSubmitting)",
     ),
     "commercial feedback error handling",
 )
 forbid_tokens(
     FEEDBACK_FRAGMENT,
-    ("FirebaseStorage", "feedbackMediaProcessor", "selectScreenshot", "ScreenshotSelected"),
-    "screenshot UI dependency",
+    (
+        "FeedbackSubmissionFailureKind.RATE_LIMITED",
+        "FirebaseStorage",
+        "feedbackMediaProcessor",
+        "selectScreenshot",
+        "ScreenshotSelected",
+    ),
+    "paid or screenshot UI dependency",
 )
 
 require_tokens(
@@ -214,33 +234,60 @@ forbid_tokens(
 )
 
 require_tokens(
+    CLOUD_CLEANER,
+    (
+        'ROOT_COLLECTION = "feedback_items"',
+        'SUBMISSIONS_COLLECTION = "submissions"',
+        "get(Source.SERVER)",
+        "runTransaction",
+        "transaction.delete",
+        "CancellationException",
+    ),
+    "Spark account cleanup contract",
+)
+forbid_tokens(
+    CLOUD_CLEANER,
+    ("FirebaseFunctions", "HttpsCallableOptions", "deleteUserCloudData"),
+    "paid account cleanup dependency",
+)
+
+require_tokens(
     FIRESTORE_RULES,
     (
-        "isAuthenticatedOwner(data.userId)",
+        "match /feedback_items/{ownerUid}",
+        "match /submissions/{submissionId}",
+        "data.submissionId == submissionId",
+        "data.userId == ownerUid",
         "data.message.size() <= 500",
         "data.email.size() <= 254",
         "data.email.split('@')[0].size() <= 64",
-        "allow get, delete:",
-        "allow list:",
+        "allow get, list, delete:",
         "allow update: if false",
     ),
-    "secure feedback rule",
+    "secure Spark feedback rule",
 )
 forbid_tokens(
     FIRESTORE_RULES,
-    ("data.userId == 'anonymous'", "request.auth == null", "screenshot", "mediaTransaction"),
-    "unsafe or obsolete rule",
+    (
+        "feedback_rate_limits",
+        "data.userId == 'anonymous'",
+        "request.auth == null",
+        "screenshot",
+        "mediaTransaction",
+    ),
+    "unsafe, paid or obsolete rule",
 )
 
 require_tokens(
     FIREBASE_RULES_TEST,
     (
-        "anonymous-feedback",
+        "Spark-compatible feedback Firestore rules tests passed.",
+        "anonymousDb",
         "invalid-email",
-        "invalid-dotted-email",
-        "oversized-email-local-part",
-        "oversized-message",
-        "crossOwnerQuery",
+        "user..name@example.com",
+        "repeat(65)",
+        "repeat(501)",
+        "crossOwnerSubmissions",
         "deleteDoc(ownerRef)",
     ),
     "rules regression",
@@ -335,7 +382,7 @@ require_tokens(
 )
 
 # Scan only production source roots. The guard and regression tests intentionally contain forbidden
-# token literals so that their absence can be asserted without creating a self-match.
+# token literals so their absence can be asserted without creating a self-match.
 LEGACY_TOKENS = (
     "FeedbackMediaProcessor",
     "AndroidFeedbackMediaProcessor",
@@ -357,19 +404,18 @@ for source_root in (ROOT / "app/src/main", ROOT / "app/src/releaseSmoke"):
 
 TEST_EXPECTATIONS = {
     FEEDBACK_REPOSITORY_TEST: (
-        "missingOrBlankOwnerReturnsAuthenticationFailureWithoutWriting",
-        "fieldsAreNormalizedAtPersistenceBoundary",
-        "persistenceFailureReturnsTypedFailure",
-        "cancellationIsPropagated",
+        "successfulSubmissionUsesOwnerScopedTransactionStore",
+        "transactionNetworkFailureReturnsTypedNetworkFailure",
+        "nonTerminatingTransactionTimesOutAsNetworkFailure",
+        "lifecycleCancellationIsPropagated",
     ),
     FEEDBACK_USE_CASE_TEST: (
-        "invalidRequestReturnsValidationFailureWithoutRepositoryCall",
+        "invalidSubmissionIdentityIsRejectedBeforeRepositoryCall",
         "commercialEmailPolicyAcceptsPlusAddressAndRejectsUnsafeForms",
     ),
     FEEDBACK_VIEW_MODEL_TEST: (
-        "emailLocalPartBeyond64CharactersIsRejected",
-        "messageAtCommercialLimitIsAccepted",
-        "messageAboveCommercialLimitIsRejected",
+        "networkFailureStopsLoadingKeepsFormAndReusesSubmissionIdentity",
+        "editingAfterFailureCreatesANewSubmissionIdentity",
         "synchronousSubmissionLockPreventsDuplicateRequests",
         "editsAfterSubmitDoNotChangeValidatedRequestSnapshot",
     ),
@@ -388,8 +434,21 @@ TEST_EXPECTATIONS = {
 for path, tokens in TEST_EXPECTATIONS.items():
     require_tokens(path, tokens, "required regression test")
 
-forbid_tokens(ROOT / "app/build.gradle", ("firebase-storage",), "removed Storage dependency")
-forbid_tokens(ROOT / "firebase.json", ('"storage"',), "removed Storage configuration")
+forbid_tokens(
+    ROOT / "app/build.gradle",
+    (
+        "firebase-storage",
+        "firebase-functions",
+        "firebase-appcheck-playintegrity",
+        "firebase-appcheck-debug",
+    ),
+    "paid or removed Firebase dependency",
+)
+forbid_tokens(
+    ROOT / "firebase.json",
+    ('"storage"', '"functions"'),
+    "paid or removed Firebase configuration",
+)
 
 if errors:
     print("Stage 9 commercial feedback/media architecture guard failed:")
@@ -398,6 +457,6 @@ if errors:
     sys.exit(1)
 
 print(
-    "Stage 9 commercial guard passed: feedback is authenticated and text-only; profile/tank "
-    "image processing is generic, bounded, owner-aware and free of compatibility shims."
+    "Stage 9 commercial guard passed: feedback is authenticated, text-only, Spark-plan compatible, "
+    "transactional and idempotent; profile/tank image processing remains generic and bounded."
 )
