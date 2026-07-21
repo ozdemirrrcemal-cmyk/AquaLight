@@ -86,7 +86,7 @@ class Stage9CommercialMediaArchitectureTest {
     }
 
     @Test
-    fun feedbackSubmissionUsesOneTextPersistenceBoundary() {
+    fun feedbackSubmissionUsesOneAuthenticatedTextPersistenceBoundary() {
         val application = source(
             "app/src/main/java/com/aqua/aqualight/application/feedback/" +
                 "FeedbackSubmissionOperations.kt"
@@ -99,13 +99,49 @@ class Stage9CommercialMediaArchitectureTest {
             "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/feedback/FeedbackViewModel.kt"
         )
 
-        assertTrue(application.contains("suspend fun submit(request: FeedbackSubmissionRequest)"))
+        assertTrue(application.contains("FeedbackSubmissionPolicy"))
+        assertTrue(repository.contains("FeedbackSubmissionFailureKind.AUTHENTICATION"))
         assertTrue(repository.contains("documentStore.save(documentId, data)"))
-        assertTrue(viewModel.contains("FeedbackSubmissionUseCase"))
-        listOf("FirebaseStorage", "journalStore", "mediaProcessor", "cleanupOrphans").forEach { token ->
+        assertTrue(viewModel.contains("FeedbackSubmissionPolicy"))
+        listOf("FirebaseStorage", "journalStore", "mediaProcessor", "cleanupOrphans", "anonymous").forEach { token ->
             assertFalse("Text feedback contains obsolete dependency: $token", application.contains(token))
             assertFalse("Text feedback contains obsolete dependency: $token", repository.contains(token))
             assertFalse("Text feedback contains obsolete dependency: $token", viewModel.contains(token))
+        }
+    }
+
+    @Test
+    fun productionMediaApiIsDomainNeutralWithoutCompatibilityShims() {
+        val processor = source(
+            "app/src/main/java/com/aqua/aqualight/platform/media/ImageMediaProcessor.kt"
+        )
+        val container = source(
+            "app/src/main/java/com/aqua/aqualight/composition/AppContainer.kt"
+        )
+        val providerPaths = source("app/src/main/res/xml/file_paths.xml")
+
+        listOf(
+            "interface ImageMediaProcessor",
+            "class AndroidImageMediaProcessor",
+            "data class ProcessedImageMedia",
+            "sealed interface ImageMediaProcessingResult"
+        ).forEach { token ->
+            assertTrue("Generic media contract missing: $token", processor.contains(token))
+        }
+        assertTrue(container.contains("val imageMediaProcessor: ImageMediaProcessor"))
+        assertTrue(providerPaths.contains("image_processing"))
+
+        listOf(
+            "FeedbackMediaProcessor",
+            "AndroidFeedbackMediaProcessor",
+            "feedbackMediaProcessor",
+            "feedback_media",
+            "feedback_output_",
+            "typealias ImageMedia"
+        ).forEach { token ->
+            assertFalse("Legacy media compatibility token remains: $token", processor.contains(token))
+            assertFalse("Legacy media compatibility token remains: $token", container.contains(token))
+            assertFalse("Legacy media compatibility token remains: $token", providerPaths.contains(token))
         }
     }
 
