@@ -2,7 +2,7 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isOwner(ownerUid) {
+    function isAuthenticatedOwner(ownerUid) {
       return request.auth != null && request.auth.uid == ownerUid;
     }
 
@@ -30,10 +30,7 @@ service cloud.firestore {
           'userId',
           'createdAt'
         ])
-        && (
-          isOwner(data.userId)
-          || (request.auth == null && data.userId == 'anonymous')
-        )
+        && isAuthenticatedOwner(data.userId)
         && data.status == 'new'
         && data.platform == 'android'
         && data.category is string
@@ -41,20 +38,32 @@ service cloud.firestore {
         && data.category.size() <= 80
         && data.message is string
         && data.message.size() >= 10
-        && data.message.size() <= 4000
-        && (data.email == null || (data.email is string && data.email.size() <= 320))
+        && data.message.size() <= 500
+        && (
+          data.email == null
+          || (
+            data.email is string
+            && data.email.size() > 0
+            && data.email.size() <= 254
+            && data.email.matches("^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)+$")
+          )
+        )
         && data.appVersion is string
+        && data.appVersion.size() > 0
         && data.appVersion.size() <= 64
         && data.locale is string
+        && data.locale.size() > 0
         && data.locale.size() <= 35
         && data.createdAt == request.time;
     }
 
     match /feedback_items/{feedbackId} {
-      allow get: if request.auth != null
-        && resource.data.userId == request.auth.uid;
-      allow list, update, delete: if false;
       allow create: if textFeedbackIsValid();
+      allow get, delete: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+      allow list: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+      allow update: if false;
     }
   }
 }
