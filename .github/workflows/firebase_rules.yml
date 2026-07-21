@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - agent/stage-9-feedback-media-cleanup
+      - agent/stage-12-firebase-privacy-legal
     paths:
       - firebase.json
       - firestore.rules
@@ -56,8 +56,17 @@ jobs:
         run: node -e "JSON.parse(require('fs').readFileSync('firestore.indexes.json', 'utf8'))"
 
       - name: Run Firestore and Storage rules tests
-        run: >-
-          npx --yes firebase-tools@15.24.0 emulators:exec
-          --only firestore,storage
-          --project demo-aqualight-stage9
-          "node firebase/rules.test.mjs"
+        run: |
+          npx --yes firebase-tools@15.24.0 emulators:exec \
+            --only firestore,storage \
+            --project demo-aqualight-stage12 \
+            "node firebase/rules.test.mjs" 2>&1 | tee firebase-rules.log
+
+      - name: Upload Firebase rules validation log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: firebase-rules-validation-log
+          path: firebase-rules.log
+          if-no-files-found: error
+          retention-days: 7

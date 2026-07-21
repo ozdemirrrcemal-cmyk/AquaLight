@@ -2,8 +2,46 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
     function isOwner(ownerUid) {
-      return request.auth != null && request.auth.uid == ownerUid;
+      return isSignedIn()
+        && ownerUid is string
+        && ownerUid.size() > 0
+        && ownerUid.size() <= 128
+        && request.auth.uid == ownerUid;
+    }
+
+    function isNonEmptyString(value, maxLength) {
+      return value is string
+        && value.size() > 0
+        && value.size() <= maxLength;
+    }
+
+    function optionalEmailIsValid(value) {
+      return value == null
+        || (
+          value is string
+          && value.size() > 0
+          && value.size() <= 320
+        );
+    }
+
+    function commonFeedbackFieldsAreValid(data) {
+      return isOwner(data.userId)
+        && data.mediaTransactionState == 'committed'
+        && data.status == 'new'
+        && data.platform == 'android'
+        && isNonEmptyString(data.category, 80)
+        && data.message is string
+        && data.message.size() >= 10
+        && data.message.size() <= 4000
+        && optionalEmailIsValid(data.email)
+        && isNonEmptyString(data.appVersion, 64)
+        && isNonEmptyString(data.locale, 35)
+        && data.createdAt == request.time;
     }
 
     function markerFieldsAreValid(feedbackId, state, status) {
@@ -27,11 +65,41 @@ service cloud.firestore {
         && isOwner(data.userId)
         && data.mediaTransactionState == state
         && data.status == status
+        && data.screenshotPath is string
         && data.screenshotPath ==
           'feedback_screenshots/' + data.userId + '/' + feedbackId + '.jpg'
         && data.createdAt is timestamp
         && data.mediaTransactionExpiresAt is timestamp
-        && data.mediaTransactionExpiresAt > request.time;
+        && data.mediaTransactionExpiresAt > request.time
+        && data.mediaTransactionExpiresAt <= request.time + duration.value(8, 'd');
+    }
+
+    function existingPendingMarkerIsValid(feedbackId) {
+      let data = resource.data;
+      return data.keys().hasAll([
+          'userId',
+          'mediaTransactionState',
+          'status',
+          'screenshotPath',
+          'createdAt',
+          'mediaTransactionExpiresAt'
+        ])
+        && data.keys().hasOnly([
+          'userId',
+          'mediaTransactionState',
+          'status',
+          'screenshotPath',
+          'createdAt',
+          'mediaTransactionExpiresAt'
+        ])
+        && isOwner(data.userId)
+        && data.mediaTransactionState == 'pending'
+        && data.status == 'media_pending'
+        && data.screenshotPath is string
+        && data.screenshotPath ==
+          'feedback_screenshots/' + data.userId + '/' + feedbackId + '.jpg'
+        && data.createdAt is timestamp
+        && data.mediaTransactionExpiresAt is timestamp;
     }
 
     function textFeedbackIsValid() {
@@ -60,25 +128,7 @@ service cloud.firestore {
           'createdAt',
           'mediaTransactionState'
         ])
-        && (
-          isOwner(data.userId)
-          || (request.auth == null && data.userId == 'anonymous')
-        )
-        && data.mediaTransactionState == 'committed'
-        && data.status == 'new'
-        && data.platform == 'android'
-        && data.category is string
-        && data.category.size() > 0
-        && data.category.size() <= 80
-        && data.message is string
-        && data.message.size() >= 10
-        && data.message.size() <= 4000
-        && (data.email == null || (data.email is string && data.email.size() <= 320))
-        && data.appVersion is string
-        && data.appVersion.size() <= 64
-        && data.locale is string
-        && data.locale.size() <= 35
-        && data.createdAt == request.time;
+        && commonFeedbackFieldsAreValid(data);
     }
 
     function committedMediaFeedbackIsValid(feedbackId) {
@@ -111,36 +161,27 @@ service cloud.firestore {
           'screenshotPath',
           'mediaTransactionState'
         ])
-        && isOwner(data.userId)
-        && data.mediaTransactionState == 'committed'
-        && data.status == 'new'
-        && data.platform == 'android'
+        && commonFeedbackFieldsAreValid(data)
+        && data.screenshotPath is string
         && data.screenshotPath ==
           'feedback_screenshots/' + data.userId + '/' + feedbackId + '.jpg'
         && data.screenshotUrl is string
         && data.screenshotUrl.size() > 0
-        && data.category is string
-        && data.category.size() > 0
-        && data.category.size() <= 80
-        && data.message is string
-        && data.message.size() >= 10
-        && data.message.size() <= 4000
-        && (data.email == null || (data.email is string && data.email.size() <= 320))
-        && data.appVersion is string
-        && data.appVersion.size() <= 64
-        && data.locale is string
-        && data.locale.size() <= 35
-        && data.createdAt == request.time;
+        && data.screenshotUrl.size() <= 2048;
     }
 
     match /feedback_items/{feedbackId} {
-      // A transaction may probe a freshly generated, still-absent document. Existing
-      // documents remain readable only by their immutable owner.
-      allow get: if request.auth != null
+      // A media transaction probes its generated document ID before reserving it.
+      // Existing documents remain readable only by their immutable owner.
+      allow get: if isSignedIn()
         && (
           !exists(/databases/$(database)/documents/feedback_items/$(feedbackId))
           || resource.data.userId == request.auth.uid
         );
+
+      // Feedback is submitted as individual documents. Client-side listing, deletion and
+      // arbitrary management are intentionally denied; trusted retention/account-deletion
+      // operations must run outside the mobile client.
       allow list, delete: if false;
 
       allow create: if textFeedbackIsValid()
@@ -153,11 +194,9 @@ service cloud.firestore {
           && request.resource.data.createdAt == request.time
         );
 
-      allow update: if request.auth != null
-        && resource.data.userId == request.auth.uid
+      allow update: if existingPendingMarkerIsValid(feedbackId)
         && request.resource.data.userId == resource.data.userId
-        && resource.data.mediaTransactionState == 'pending'
-        && resource.data.screenshotPath == request.resource.data.screenshotPath
+        && request.resource.data.screenshotPath == resource.data.screenshotPath
         && (
           committedMediaFeedbackIsValid(feedbackId)
           || (
@@ -165,6 +204,10 @@ service cloud.firestore {
             && request.resource.data.createdAt == resource.data.createdAt
           )
         );
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
