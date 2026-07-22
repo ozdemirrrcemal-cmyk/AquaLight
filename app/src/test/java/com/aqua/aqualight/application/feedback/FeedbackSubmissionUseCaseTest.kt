@@ -1,47 +1,80 @@
 package com.aqua.aqualight.application.feedback
 
-import java.io.File
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertSame
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class FeedbackSubmissionUseCaseTest {
 
     @Test
-    fun submitForwardsRequestAndFileToRepository() = runTest {
+    fun submitNormalizesAndForwardsValidRequestToRepository() = runTest {
         val repository = FakeFeedbackRepository()
         val useCase = FeedbackSubmissionUseCase(repository)
-        val request = request()
-        val screenshotFile = File("feedback.jpg")
         val expected = FeedbackSubmissionResult.Success("document-1")
         repository.submitResult = expected
 
-        val actual = useCase.submit(request, screenshotFile)
+        val actual = useCase.submit(
+            request().copy(
+                category = "  Bug  ",
+                email = "  user+tag@example.com  ",
+                message = "  A reproducible feedback message  "
+            )
+        )
 
-        assertSame(request, repository.request)
-        assertSame(screenshotFile, repository.screenshotFile)
-        assertSame(expected, actual)
+        assertEquals(expected, actual)
+        assertEquals(SUBMISSION_ID, repository.request?.submissionId)
+        assertEquals("Bug", repository.request?.category)
+        assertEquals("user+tag@example.com", repository.request?.email)
+        assertEquals("A reproducible feedback message", repository.request?.message)
     }
 
     @Test
-    fun cleanupForwardsToRepository() = runTest {
+    fun invalidRequestReturnsValidationFailureWithoutRepositoryCall() = runTest {
         val repository = FakeFeedbackRepository()
-        val expected = FeedbackOrphanCleanupResult(
-            attemptedCount = 3,
-            deletedCount = 2,
-            remainingCount = 1
-        )
-        repository.cleanupResult = expected
         val useCase = FeedbackSubmissionUseCase(repository)
 
-        val actual = useCase.cleanupOrphans()
+        val result = useCase.submit(request().copy(message = "short"))
 
-        assertEquals(expected, actual)
+        val failure = (result as FeedbackSubmissionResult.Failure).failure
+        assertEquals(FeedbackSubmissionFailureKind.VALIDATION, failure.kind)
+        assertNull(repository.request)
+    }
+
+    @Test
+    fun invalidSubmissionIdentityIsRejectedBeforeRepositoryCall() = runTest {
+        val repository = FakeFeedbackRepository()
+        val result = FeedbackSubmissionUseCase(repository).submit(
+            request().copy(submissionId = "not-a-uuid")
+        )
+
+        val failure = (result as FeedbackSubmissionResult.Failure).failure
+        assertEquals(FeedbackSubmissionFailureKind.VALIDATION, failure.kind)
+        assertNull(repository.request)
+    }
+
+    @Test
+    fun commercialEmailPolicyAcceptsPlusAddressAndRejectsUnsafeForms() {
+        assertTrue(FeedbackSubmissionPolicy.isEmailValid("user+tag@sub.example.co.uk"))
+        assertTrue(FeedbackSubmissionPolicy.isEmailValid(""))
+        assertEquals(false, FeedbackSubmissionPolicy.isEmailValid("user@localhost"))
+        assertEquals(false, FeedbackSubmissionPolicy.isEmailValid(".user@example.com"))
+        assertEquals(false, FeedbackSubmissionPolicy.isEmailValid("user.@example.com"))
+        assertEquals(false, FeedbackSubmissionPolicy.isEmailValid("user..name@example.com"))
+        assertEquals(
+            false,
+            FeedbackSubmissionPolicy.isEmailValid("a".repeat(65) + "@example.com")
+        )
+        assertEquals(
+            false,
+            FeedbackSubmissionPolicy.isEmailValid("a".repeat(243) + "@example.com")
+        )
     }
 
     private fun request(): FeedbackSubmissionRequest {
         return FeedbackSubmissionRequest(
+            submissionId = SUBMISSION_ID,
             category = "Bug",
             email = "user@example.com",
             message = "A reproducible feedback message",
@@ -52,23 +85,18 @@ class FeedbackSubmissionUseCaseTest {
 
     private class FakeFeedbackRepository : FeedbackRepository {
         var request: FeedbackSubmissionRequest? = null
-        var screenshotFile: File? = null
         var submitResult: FeedbackSubmissionResult =
             FeedbackSubmissionResult.Success("default")
-        var cleanupResult: FeedbackOrphanCleanupResult =
-            FeedbackOrphanCleanupResult(0, 0, 0)
 
         override suspend fun submit(
-            request: FeedbackSubmissionRequest,
-            screenshotFile: File?
+            request: FeedbackSubmissionRequest
         ): FeedbackSubmissionResult {
             this.request = request
-            this.screenshotFile = screenshotFile
             return submitResult
         }
+    }
 
-        override suspend fun cleanupOrphans(): FeedbackOrphanCleanupResult {
-            return cleanupResult
-        }
+    private companion object {
+        const val SUBMISSION_ID = "123e4567-e89b-42d3-a456-426614174000"
     }
 }

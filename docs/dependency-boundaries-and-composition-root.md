@@ -56,8 +56,9 @@ Rules:
 
 ### Feedback
 
-- Feedback UI previously coordinated Firebase Auth, Firestore and Storage directly.
-- The completed boundary migration removes vendor SDK access from UI. Future feedback-media hardening owns decoding, compression, rollback and orphan cleanup improvements.
+- Feedback UI previously coordinated Firebase services directly.
+- The completed boundary keeps text submission behind an application/data contract; shared photo
+  processing belongs only to profile and aquarium flows.
 
 ## Completed architecture workstreams
 

@@ -1,6 +1,6 @@
 package com.aqua.aqualight.platform.media
 
-object FeedbackImagePolicy {
+object ImageMediaPolicy {
     const val MAX_SOURCE_BYTES: Long = 12L * 1024L * 1024L
     const val MAX_SOURCE_PIXELS: Long = 60_000_000L
     const val MAX_OUTPUT_BYTES: Long = 3L * 1024L * 1024L
@@ -11,16 +11,16 @@ object FeedbackImagePolicy {
         width: Int,
         height: Int,
         sourceBytes: Long?
-    ): FeedbackImagePolicyResult {
-        if (width <= 0 || height <= 0) return FeedbackImagePolicyResult.InvalidDimensions
+    ): ImageMediaPolicyResult {
+        if (width <= 0 || height <= 0) return ImageMediaPolicyResult.InvalidDimensions
         if (sourceBytes != null && sourceBytes > MAX_SOURCE_BYTES) {
-            return FeedbackImagePolicyResult.SourceTooLarge
+            return ImageMediaPolicyResult.SourceTooLarge
         }
         val pixels = width.toLong() * height.toLong()
         if (pixels <= 0L || pixels > MAX_SOURCE_PIXELS) {
-            return FeedbackImagePolicyResult.TooManyPixels
+            return ImageMediaPolicyResult.TooManyPixels
         }
-        return FeedbackImagePolicyResult.Accepted
+        return ImageMediaPolicyResult.Accepted
     }
 
     fun calculateInSampleSize(width: Int, height: Int): Int {
@@ -48,9 +48,9 @@ object FeedbackImagePolicy {
     }
 }
 
-sealed interface FeedbackImagePolicyResult {
-    data object Accepted : FeedbackImagePolicyResult
-    data object InvalidDimensions : FeedbackImagePolicyResult
-    data object SourceTooLarge : FeedbackImagePolicyResult
-    data object TooManyPixels : FeedbackImagePolicyResult
+sealed interface ImageMediaPolicyResult {
+    data object Accepted : ImageMediaPolicyResult
+    data object InvalidDimensions : ImageMediaPolicyResult
+    data object SourceTooLarge : ImageMediaPolicyResult
+    data object TooManyPixels : ImageMediaPolicyResult
 }

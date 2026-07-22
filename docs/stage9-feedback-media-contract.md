@@ -1,79 +1,99 @@
-# Stage 9 — Feedback, Media and Heavy-Work Contract
+# Stage 9 — Commercial Text Feedback and Shared Image Media Contract
+
+## Release baseline
+
+AquaLight has not been commercially released. This is the first production release, so the codebase
+contains no backward-compatibility aliases, legacy cache paths, migration wrappers or support for the
+removed feedback screenshot feature.
+
+The feedback implementation must remain compatible with the Firebase Spark plan. Cloud Functions,
+App Check and Play Integrity are not dependencies of this feature.
 
 ## Commercial objective
 
-Feedback submission and every user-photo flow must be lifecycle-safe, memory-bounded, owner-isolated, process-death recoverable, rollback-capable and testable without Android UI ownership of business operations.
+Feedback submission is authenticated and text-only. Profile and aquarium photo flows remain
+lifecycle-safe, memory-bounded, owner-isolated, process-death recoverable and testable without
+Android UI ownership of business or platform operations.
 
-## Mandatory architecture
+## Authenticated text feedback
 
-1. `FeedbackFragment` renders state and forwards user intent only. It receives application/platform interfaces from `AppContainer` and never constructs a concrete media processor or Firebase adapter.
-2. `FeedbackViewModel` owns form state, selected media state, validation, submission state and one-shot UI events.
-3. Submission runs through a suspend `FeedbackSubmissionUseCase` and typed `FeedbackRepository` result contract.
-4. Firebase callbacks terminate inside the data adapter and never reach a Fragment or Activity.
-5. Repository orchestration and durable journal I/O run on an IO dispatcher.
-6. Every selected screenshot is copied once into an app-owned bounded staging file before decode. Declared and unknown-length URI sources use the same byte limit.
-7. Bitmap bounds decode, sampled decode, resize, orientation handling and compression run off the main thread from that staged source.
-8. Streams, cursors, file descriptors and output streams use structured ownership; bitmap instances are recycled exactly once.
-9. Media processing enforces source-byte, source-pixel, decoded-dimension and output-byte limits before upload.
-10. Source staging files are deleted on success, failure, cancellation and OOM. Processed output files are unique per operation and deleted on every terminal ownership path.
-11. A durable owner-aware local transaction journal is synchronously committed before any Firebase operation starts.
-12. Every journal entry contains the immutable document ID, captured owner UID and exact planned Storage path. Recovery never substitutes the currently signed-in owner.
-13. Firestore reserves the generated document ID with a minimal owner-scoped `pending` media marker before Storage upload. The marker contains no feedback message or email.
-14. Final feedback persistence is one Firestore transaction that accepts only the same owner, Storage path and `pending` marker, then changes it to `committed` while writing the complete feedback document.
-15. Recovery is one Firestore transaction that changes a matching owner/path `pending` marker—or a still-absent document—to an `aborted` fence. A delayed writer cannot overwrite that fence.
-16. Storage is deleted only after the server-side owner/path fence is confirmed `aborted`. A matching `committed` fence preserves the object; owner/path conflict or unverifiable state fails safe and remains locally journaled.
-17. Aborted/pending fence documents carry an expiry field for the Firebase TTL policy; they contain only transaction metadata, owner UID and the planned Storage path.
-18. A successful Storage upload followed by a failed Firestore commit attempts the atomic abort-and-delete path before returning failure.
-19. Rollback failure remains journaled for retry.
-20. Firebase Tasks are awaited to their authoritative terminal result because the underlying Task is not cancellable. Coroutine cancellation must never be converted into an ordinary upload/persistence failure.
-21. Orphan reconciliation starts at application process startup and is not dependent on opening the Feedback screen.
-22. Profile photo, tank creation photo and tank settings photo use one saved-state-capable media session/coordinator contract.
-23. Replacing or removing an app-owned profile/tank photo deletes the superseded file only after durable state is committed.
-24. Pending camera/crop state survives configuration change and process recreation.
-25. Production and minified release-smoke composition expose the same feedback media boundary.
-26. No feature Fragment performs bitmap decode, resize, compression, direct file output, Firebase orchestration or concrete platform dependency construction.
-27. No compatibility media implementation or parallel legacy path is retained.
+1. `FeedbackFragment` renders form state and forwards user intent only.
+2. `FeedbackViewModel` owns saved form state, validation, duplicate-submit locking and one-shot UI
+   events.
+3. Submission runs through `FeedbackSubmissionUseCase` and a typed `FeedbackRepository` result.
+4. `FeedbackSubmissionPolicy` is the shared normalization and validation contract used before the
+   persistence boundary.
+5. Category is limited to 80 characters, optional email to 254 characters with a 64-character local
+   part, and message to 10–500 characters.
+6. The repository rejects a missing authenticated owner and never writes anonymous feedback.
+7. Each unchanged form owns one UUID v4 submission identity stored in `SavedStateHandle`.
+8. Firestore data is stored below `feedback_items/{ownerUid}/submissions/{submissionId}`.
+9. Submission uses a Firestore transaction rather than an offline-capable direct `set()`.
+10. Firestore transactions fail offline; a 15-second client timeout also terminates the loading state.
+11. If an earlier transaction completes after a timeout, retrying the unchanged form reads the same
+    document and returns success without creating a duplicate.
+12. Editing category, email or message invalidates the UUID and starts a new logical submission.
+13. Firestore rules require the path owner to match `request.auth.uid`, deny updates and enforce the
+    same field limits.
+14. The loading state is cleared before success/failure events are rendered. Failures preserve the
+    form and re-enable the send button.
+15. No Cloud Function, App Check provider, Play Integrity registration, Firebase Storage dependency,
+    upload journal, migration or orphan-recovery path is part of feedback submission.
+
+## Shared profile and aquarium photos
+
+1. Profile photo, tank creation photo and tank settings photo use one saved-state-capable media
+   coordinator and one domain-neutral `ImageMediaProcessor` API.
+2. The concrete implementation is `AndroidImageMediaProcessor`; no `FeedbackMedia*` alias, wrapper
+   or composition property exists.
+3. Selected sources are copied into the `image_processing` app cache before decode. There is no
+   legacy `feedback_media` FileProvider path or legacy filename support.
+4. Declared and unknown source lengths use the same byte limit.
+5. Bitmap bounds decode, sampled decode, orientation, resize and compression run off the main
+   thread.
+6. Streams, cursors, file descriptors and output streams use structured ownership. Temporary files
+   are removed on success, failure, cancellation and memory exhaustion.
+7. Source bytes, source pixels, decoded dimensions and output bytes are bounded before persistence.
+8. App-owned candidates are journaled with immutable owner identity until a domain store commits or
+   rolls them back.
+9. Replacing or removing an app-owned profile or tank photo deletes the superseded file only after
+   durable state is committed.
+10. Pending camera and crop state survives configuration change and process recreation.
+11. Process and owner-session startup reconcile only the active owner's pending media against
+    durable profile and tank references.
+12. No feature Fragment performs bitmap processing, direct file output or concrete platform
+    dependency construction.
+
+## Account deletion
+
+The Android account-deletion path reads only the authenticated owner's
+`feedback_items/{ownerUid}/submissions` collection from the Firestore server. Documents are deleted
+in bounded Firestore transactions before the Firebase account is deleted. Server-only reads prevent
+stale local cache data from being treated as authoritative; transaction deletes are not queued as
+offline writes.
 
 ## Required tests
 
+- text form restoration without automatic submission replay
+- shared policy normalization, UUID validation, email constraints and 10–500 message enforcement
+- synchronous duplicate-submit protection and immutable validated request snapshots
+- network failure and timeout terminate loading, preserve the form and reuse the same UUID
+- editing after a failed attempt creates a new UUID
+- authenticated Firestore transaction persistence and missing-session rejection
+- typed validation, authentication, network, persistence failure and cancellation propagation
+- Firestore field allowlist, anonymous denial, owner-path isolation, immutable documents and delete
+- server-only account cleanup with transaction deletion
 - bounds-first and sampled decoding for oversized images
-- declared-length and unknown-length source-byte enforcement
-- maximum source-pixel and output-byte enforcement
-- corrupt image, generic binary MIME and explicit non-image rejection
-- source stream closure on success, rejection and cancellation
-- cancellation propagation and staged-file cleanup
-- owner-aware local journal durability across Android store recreation
-- Firestore owner reservation before Storage upload
-- atomic owner/path pending-to-committed transition
-- Storage upload success plus Firestore failure abort and rollback
-- ambiguous commit acknowledgement reconciled from the server fence
-- rollback failure journaling
-- process death before reservation, after reservation, after upload and after Firestore commit
-- owner/path conflict and offline cleanup fail-safe behavior
-- application-startup recovery wiring
-- local temporary file cleanup on every terminal path
-- ViewModel recreation with form and selected media preserved, without automatic submission replay
-- camera/crop pending-state recreation and cancellation cleanup
-- profile/tank replacement commit and rollback cleanup
+- source closure and temporary-file cleanup on every terminal path
+- camera/crop state recreation, commit and rollback cleanup
+- owner-isolated pending-media reconciliation
+- architecture guard proving Cloud Functions/App Check and all media compatibility shims are absent
 - API 27 and current API instrumentation coverage
 - minified release-smoke validation
 
-## Firebase operational requirement
-
-The Firestore field `mediaTransactionExpiresAt` must be configured as a TTL field before commercial release. TTL removes old minimal `pending`/`aborted` transaction fences after the safety window. Normal committed feedback documents do not retain this field.
-
-Firestore and Storage rules must permit only the captured owner—or the explicitly supported anonymous feedback policy—to reserve, finalize, reconcile and delete the matching owner-scoped path. This policy is finalized with the Firebase/privacy release stage.
-
 ## Completion gate
 
-Stage 9 is complete only when:
-
-- all ten checklist items are implemented,
-- no feedback or media heavy work remains in a Fragment,
-- all shared media consumers use the same contract,
-- rollback, owner isolation and process-death orphan reconciliation are verified,
-- architecture guard, lint, Debug/Release unit tests, API 27/current API instrumentation, minified release build and CodeQL are green,
-- focused physical tests pass on feedback screenshot, profile photo, tank creation photo and tank settings photo flows,
-- the Firebase TTL field and matching production security rules above are enabled before release.
-
-No backward-compatibility layer is required; obsolete implementations must be removed after migration.
+Stage 9 is complete only when architecture guards, Firestore rules tests, lint, Debug/Release unit
+tests, API 27/current API instrumentation, minified release build and CodeQL are green. Focused
+physical tests cover offline/online feedback, unchanged-form retry, account deletion and profile/tank
+camera/gallery flows.

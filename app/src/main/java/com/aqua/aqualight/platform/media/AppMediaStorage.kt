@@ -20,7 +20,7 @@ object AppMediaStorage {
     private const val JSON_URI = "uri"
     private const val JSON_OWNER_UID = "ownerUid"
     private const val JSON_CREATED_AT = "createdAt"
-    private const val FEEDBACK_MEDIA_DIRECTORY = "feedback_media"
+    private const val IMAGE_PROCESSING_DIRECTORY = "image_processing"
     private val pendingLock = Any()
     private val deletionLock = Any()
 
@@ -95,7 +95,7 @@ object AppMediaStorage {
         val candidate = runCatching { File(path).canonicalFile }.getOrNull() ?: return null
         val appContext = context.applicationContext
         val allowedRoots = AppMediaScope.entries.map { mediaDirectory(appContext, it).canonicalFile } +
-            File(appContext.cacheDir, FEEDBACK_MEDIA_DIRECTORY).canonicalFile
+            File(appContext.cacheDir, IMAGE_PROCESSING_DIRECTORY).canonicalFile
         if (allowedRoots.none { root -> candidate.isInside(root) }) return null
         if (!candidate.isFile || candidate.length() <= 0L) return null
         return runCatching { toContentUri(appContext, candidate) }.getOrNull()

@@ -1,346 +1,462 @@
 #!/usr/bin/env python3
-"""Fail CI when Stage 9 feedback/media architecture or recovery contracts regress."""
+"""Commercial architecture guard for Spark-plan text feedback and shared image media."""
 
 from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "app/src/main/java/com/aqua/aqualight"
-AQUA_APP = APP / "app/AquaApp.kt"
+
+FEEDBACK_APPLICATION = APP / "application/feedback/FeedbackSubmissionOperations.kt"
+FEEDBACK_REPOSITORY = APP / "data/feedback/FirebaseFeedbackSubmissionOperations.kt"
+FEEDBACK_VIEW_MODEL = APP / "ui/tabs/settings/feedback/FeedbackViewModel.kt"
+FEEDBACK_FRAGMENT = APP / "ui/tabs/settings/feedback/FeedbackFragment.kt"
+FEEDBACK_LAYOUT = ROOT / "app/src/main/res/layout/fragment_feedback.xml"
+CLOUD_CLEANER = APP / "data/user/CloudUserDataCleaner.kt"
+FIRESTORE_RULES = ROOT / "firestore.rules"
+FIREBASE_RULES_TEST = ROOT / "firebase/rules.test.mjs"
 APP_CONTAINER = APP / "composition/AppContainer.kt"
 RELEASE_SMOKE_CONTAINER = (
     ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeAppContainer.kt"
 )
-FEEDBACK_FRAGMENT = APP / "ui/tabs/settings/feedback/FeedbackFragment.kt"
-AQUARIUM_STORE = APP / "data/aquarium/store/AquariumTankDataStoreManager.kt"
-REPOSITORY = APP / "data/feedback/FirebaseFeedbackSubmissionOperations.kt"
-JOURNAL = APP / "data/feedback/FeedbackSubmissionJournalStore.kt"
-PROCESSOR = APP / "platform/media/FeedbackMediaProcessor.kt"
+PROCESSOR = APP / "platform/media/ImageMediaProcessor.kt"
+IMAGE_POLICY = APP / "platform/media/ImageMediaPolicy.kt"
 APP_MEDIA_STORAGE = APP / "platform/media/AppMediaStorage.kt"
 COORDINATOR = APP / "ui/common/media/MediaFlowCoordinatorViewModel.kt"
-MEDIA_RECOVERY = APP / "data/media/AppMediaRecoveryManager.kt"
-OWNER_SESSION = APP / "data/auth/OwnerSessionCoordinator.kt"
-CREATE_TANK_VIEW_MODEL = APP / "ui/tabs/aquarium/create/CreateTankViewModel.kt"
-JOURNAL_INSTRUMENTED_TEST = (
-    ROOT
-    / "app/src/androidTest/java/com/aqua/aqualight/data/feedback/"
-    / "FeedbackSubmissionJournalStoreInstrumentedTest.kt"
-)
-MEDIA_STORAGE_INSTRUMENTED_TEST = (
+FILE_PROVIDER_PATHS = ROOT / "app/src/main/res/xml/file_paths.xml"
+
+IMAGE_POLICY_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/platform/media/ImageMediaPolicyTest.kt"
+IMAGE_PROCESSOR_TEST = (
     ROOT
     / "app/src/androidTest/java/com/aqua/aqualight/platform/media/"
-    / "AppMediaStorageInstrumentedTest.kt"
+    / "ImageMediaProcessorInstrumentedTest.kt"
 )
-CREATE_TANK_VIEW_MODEL_TEST = (
+MEDIA_COORDINATOR_TEST = (
     ROOT
-    / "app/src/test/java/com/aqua/aqualight/ui/tabs/aquarium/create/"
-    / "CreateTankViewModelTest.kt"
+    / "app/src/androidTest/java/com/aqua/aqualight/ui/common/media/"
+    / "MediaFlowCoordinatorInstrumentedTest.kt"
+)
+FEEDBACK_REPOSITORY_TEST = (
+    ROOT
+    / "app/src/test/java/com/aqua/aqualight/data/feedback/"
+    / "FirebaseFeedbackSubmissionOperationsTest.kt"
+)
+FEEDBACK_USE_CASE_TEST = (
+    ROOT
+    / "app/src/test/java/com/aqua/aqualight/application/feedback/"
+    / "FeedbackSubmissionUseCaseTest.kt"
+)
+FEEDBACK_VIEW_MODEL_TEST = (
+    ROOT
+    / "app/src/test/java/com/aqua/aqualight/ui/tabs/settings/feedback/"
+    / "FeedbackViewModelTest.kt"
 )
 
 REQUIRED = (
-    APP / "application/feedback/FeedbackSubmissionOperations.kt",
-    REPOSITORY,
-    JOURNAL,
-    APP / "platform/media/FeedbackImagePolicy.kt",
+    FEEDBACK_APPLICATION,
+    FEEDBACK_REPOSITORY,
+    FEEDBACK_VIEW_MODEL,
+    FEEDBACK_FRAGMENT,
+    FEEDBACK_LAYOUT,
+    CLOUD_CLEANER,
+    FIRESTORE_RULES,
+    FIREBASE_RULES_TEST,
+    APP_CONTAINER,
+    RELEASE_SMOKE_CONTAINER,
     PROCESSOR,
+    IMAGE_POLICY,
     APP_MEDIA_STORAGE,
     COORDINATOR,
-    MEDIA_RECOVERY,
-    APP / "ui/tabs/settings/feedback/FeedbackViewModel.kt",
-    CREATE_TANK_VIEW_MODEL,
+    FILE_PROVIDER_PATHS,
+    IMAGE_POLICY_TEST,
+    IMAGE_PROCESSOR_TEST,
+    MEDIA_COORDINATOR_TEST,
+    FEEDBACK_REPOSITORY_TEST,
+    FEEDBACK_USE_CASE_TEST,
+    FEEDBACK_VIEW_MODEL_TEST,
     ROOT / "docs/stage9-feedback-media-contract.md",
     ROOT / "docs/stage9-commercial-gap-closure.md",
-    ROOT / "app/src/test/java/com/aqua/aqualight/data/feedback/FirebaseFeedbackSubmissionOperationsTest.kt",
-    ROOT / "app/src/test/java/com/aqua/aqualight/platform/media/FeedbackImagePolicyTest.kt",
-    ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/settings/feedback/FeedbackViewModelTest.kt",
-    CREATE_TANK_VIEW_MODEL_TEST,
-    ROOT / "app/src/androidTest/java/com/aqua/aqualight/platform/media/FeedbackMediaProcessorInstrumentedTest.kt",
-    MEDIA_STORAGE_INSTRUMENTED_TEST,
-    JOURNAL_INSTRUMENTED_TEST,
-    ROOT / "app/src/androidTest/java/com/aqua/aqualight/ui/common/media/MediaFlowCoordinatorInstrumentedTest.kt",
+    ROOT / "docs/stage9-firebase-production-activation.md",
 )
 
-OBSOLETE = (
-    APP / "ui/tabs/aquarium/photo/TankPhotoFlowCoordinator.kt",
-    APP / "data/aquarium/photo/TankPhotoStorage.kt",
+OBSOLETE_PATHS = (
     APP / "data/feedback/FeedbackOrphanStore.kt",
+    APP / "data/feedback/FeedbackSubmissionJournalStore.kt",
+    APP / "platform/media/FeedbackMediaProcessor.kt",
+    APP / "platform/media/FeedbackImagePolicy.kt",
+    ROOT / "app/src/test/java/com/aqua/aqualight/platform/media/FeedbackImagePolicyTest.kt",
+    ROOT
+    / "app/src/androidTest/java/com/aqua/aqualight/platform/media/"
+    / "FeedbackMediaProcessorInstrumentedTest.kt",
+    ROOT
+    / "app/src/androidTest/java/com/aqua/aqualight/platform/media/"
+    / "ImageMediaProcessorCompatibilityInstrumentedTest.kt",
+    ROOT / "app/src/main/res/drawable/ic_image.xml",
+    ROOT / "app/src/main/res/drawable/ic_close.xml",
+    ROOT / "storage.rules",
+    ROOT / "functions",
 )
 
 errors: list[str] = []
 
+
+def read(path: Path) -> str:
+    return path.read_text(encoding="utf-8", errors="ignore") if path.is_file() else ""
+
+
+def require_tokens(path: Path, tokens: tuple[str, ...], contract: str) -> None:
+    text = read(path)
+    for token in tokens:
+        if token not in text:
+            errors.append(f"{path.relative_to(ROOT)}: {contract} missing: {token}")
+
+
+def forbid_tokens(path: Path, tokens: tuple[str, ...], contract: str) -> None:
+    text = read(path)
+    for token in tokens:
+        if token in text:
+            errors.append(f"{path.relative_to(ROOT)}: {contract} remains: {token}")
+
+
 for path in REQUIRED:
     if not path.is_file():
-        errors.append(f"{path.relative_to(ROOT)}: required Stage 9 file is missing")
+        errors.append(f"{path.relative_to(ROOT)}: required commercial file is missing")
 
-for path in OBSOLETE:
+for path in OBSOLETE_PATHS:
     if path.exists():
-        errors.append(f"{path.relative_to(ROOT)}: obsolete Stage 9 implementation must stay removed")
+        errors.append(f"{path.relative_to(ROOT)}: obsolete or paid-plan implementation remains")
 
-if FEEDBACK_FRAGMENT.is_file():
-    text = FEEDBACK_FRAGMENT.read_text(encoding="utf-8", errors="ignore")
-    for token in (
-        "BitmapFactory",
-        "Bitmap.createScaledBitmap",
-        "FileOutputStream",
-        "FirebaseFirestore",
-        "FirebaseStorage",
-        "FeedbackSubmissionCallback",
-        "AndroidFeedbackMediaProcessor",
-        "openInputStream(",
-        "openAssetFileDescriptor(",
-    ):
-        if token in text:
-            errors.append(
-                f"{FEEDBACK_FRAGMENT.relative_to(ROOT)}: UI must not own platform/heavy work: {token}"
-            )
-    for token in ("FeedbackViewModel", "container.feedbackMediaProcessor"):
-        if token not in text:
-            errors.append(
-                f"{FEEDBACK_FRAGMENT.relative_to(ROOT)}: feedback UI boundary missing: {token}"
-            )
-
-if APP_CONTAINER.is_file():
-    text = APP_CONTAINER.read_text(encoding="utf-8", errors="ignore")
-    for token in (
-        "val feedbackMediaProcessor: FeedbackMediaProcessor",
-        "AndroidFeedbackMediaProcessor(appContext)",
-    ):
-        if token not in text:
-            errors.append(
-                f"{APP_CONTAINER.relative_to(ROOT)}: feedback media composition binding missing: {token}"
-            )
-
-if RELEASE_SMOKE_CONTAINER.is_file():
-    text = RELEASE_SMOKE_CONTAINER.read_text(encoding="utf-8", errors="ignore")
-    if "override val feedbackMediaProcessor: FeedbackMediaProcessor" not in text:
-        errors.append(
-            f"{RELEASE_SMOKE_CONTAINER.relative_to(ROOT)}: release-smoke composition parity missing"
-        )
-    if "context = appContext" not in text:
-        errors.append(
-            f"{RELEASE_SMOKE_CONTAINER.relative_to(ROOT)}: tank media composition context missing"
-        )
-
-PHOTO_CONSUMERS = (
-    APP / "ui/tabs/settings/profile/EditProfileFragment.kt",
-    APP / "ui/tabs/aquarium/create/steps/TankPhotoFragment.kt",
-    APP / "ui/tabs/aquarium/detail/settings/TankSettingsBasicFragment.kt",
+require_tokens(
+    FEEDBACK_APPLICATION,
+    (
+        "val submissionId: String",
+        "SUBMISSION_ID_LENGTH = 36",
+        "EMAIL_MAX_LENGTH = 254",
+        "EMAIL_LOCAL_PART_MAX_LENGTH = 64",
+        "MESSAGE_MIN_LENGTH = 10",
+        "MESSAGE_MAX_LENGTH = 500",
+        "NETWORK,",
+        "FeedbackSubmissionFailureKind.VALIDATION",
+    ),
+    "feedback policy",
 )
-for path in PHOTO_CONSUMERS:
-    if not path.is_file():
-        continue
-    text = path.read_text(encoding="utf-8", errors="ignore")
-    for token in (
-        "MediaFlowCoordinatorViewModel",
-        "prepareCropIntent",
-        "authenticatedOwnerIdentity.requireOwnerUid()",
+forbid_tokens(
+    FEEDBACK_APPLICATION,
+    ("RATE_LIMITED", "java.io.File", "screenshot", "cleanupOrphans"),
+    "unsupported or obsolete feedback boundary",
+)
+
+require_tokens(
+    FEEDBACK_REPOSITORY,
+    (
+        "FeedbackSubmissionFailureKind.AUTHENTICATION",
+        "firestore.runTransaction",
+        "withTimeout(timeoutMillis)",
+        "SUBMISSION_TIMEOUT_MILLIS = 15_000L",
+        "CompletableDeferred",
+        "collection(SUBMISSIONS_COLLECTION)",
+        "FeedbackDocumentStoreFailureKind.NETWORK",
         "CancellationException",
-        "throw cancellation",
-    ):
-        if token not in text:
-            errors.append(
-                f"{path.relative_to(ROOT)}: shared bounded/cancellation-safe media contract missing: {token}"
-            )
-    for token in ("FileProvider", "File.createTempFile", "UCrop.Options()"):
-        if token in text:
-            errors.append(
-                f"{path.relative_to(ROOT)}: duplicated media ownership is forbidden: {token}"
-            )
-
-if AQUARIUM_STORE.is_file():
-    store = AQUARIUM_STORE.read_text(encoding="utf-8", errors="ignore")
-    if "AppMediaStorage" not in store or "AppMediaScope.TANK" not in store:
-        errors.append(
-            f"{AQUARIUM_STORE.relative_to(ROOT)}: aquarium persistence must use AppMediaStorage"
-        )
-    if "TankPhotoStorage" in store:
-        errors.append(
-            f"{AQUARIUM_STORE.relative_to(ROOT)}: legacy tank photo storage reference is forbidden"
-        )
-
-if AQUA_APP.is_file():
-    text = AQUA_APP.read_text(encoding="utf-8", errors="ignore")
-    for token in (
-        "feedbackSubmissionOperations.cleanupOrphans()",
-        "AppMediaRecoveryManager(this@AquaApp).reconcileActiveOwner()",
-    ):
-        if token not in text:
-            errors.append(
-                f"{AQUA_APP.relative_to(ROOT)}: process-start recovery missing: {token}"
-            )
-
-if OWNER_SESSION.is_file():
-    text = OWNER_SESSION.read_text(encoding="utf-8", errors="ignore")
-    if "AppMediaRecoveryManager(appContext).reconcileOwner(normalizedOwnerUid)" not in text:
-        errors.append(
-            f"{OWNER_SESSION.relative_to(ROOT)}: owner-session media recovery barrier missing"
-        )
-
-if REPOSITORY.is_file():
-    text = REPOSITORY.read_text(encoding="utf-8", errors="ignore")
-    for token in (
-        "withContext(dispatcher)",
-        "transactionMutex.withLock",
-        "journalStore.put",
-        "reservePending",
-        "commitPending",
-        "resolveForCleanup",
-        "ownerUid = entry.ownerUid",
-        "TRANSACTION_PENDING",
-        "TRANSACTION_COMMITTED",
-        "TRANSACTION_ABORTED",
-        "runTransaction",
-        "FIELD_USER_ID",
-        "screenshotStore.delete",
+    ),
+    "Spark transaction persistence contract",
+)
+forbid_tokens(
+    FEEDBACK_REPOSITORY,
+    (
+        "FirebaseFunctions",
+        "HttpsCallableOptions",
+        "FirebaseAppCheck",
+        "PlayIntegrityAppCheckProviderFactory",
+        "FirebaseStorage",
+        "anonymous",
+        "screenshot",
+        "journalStore",
+        "cleanupOrphans",
+        ".document(documentId).set",
         "suspendCoroutine",
-        "throwIfCancellation",
-    ):
-        if token not in text:
-            errors.append(
-                f"{REPOSITORY.relative_to(ROOT)}: commercial transaction contract missing: {token}"
-            )
-    if "suspendCancellableCoroutine" in text:
-        errors.append(
-            f"{REPOSITORY.relative_to(ROOT)}: non-cancellable Firebase Task must not use cancellable await"
-        )
-    if ".get(Source.SERVER)" in text:
-        errors.append(
-            f"{REPOSITORY.relative_to(ROOT)}: get-then-delete cleanup is race-prone; use atomic fence"
-        )
+    ),
+    "paid, offline-capable or obsolete feedback token",
+)
 
-if JOURNAL.is_file():
-    text = JOURNAL.read_text(encoding="utf-8", errors="ignore")
-    for token in (
-        "FeedbackSubmissionJournalStore",
-        "PendingFeedbackUpload",
-        "ownerUid",
-        ".commit()",
-        "feedback_submission_journal_v2",
-    ):
-        if token not in text:
-            errors.append(
-                f"{JOURNAL.relative_to(ROOT)}: durable owner-aware journal contract missing: {token}"
-            )
-    if ".apply()" in text:
-        errors.append(
-            f"{JOURNAL.relative_to(ROOT)}: upload journal must be synchronously durable, not apply()"
-        )
+require_tokens(
+    FEEDBACK_VIEW_MODEL,
+    (
+        "FeedbackSubmissionPolicy.isEmailValid",
+        "FeedbackSubmissionPolicy.MESSAGE_MIN_LENGTH",
+        "FeedbackSubmissionPolicy.MESSAGE_MAX_LENGTH",
+        "KEY_SUBMISSION_ID",
+        "submissionIdentity()",
+        "invalidateSubmissionIdentity()",
+        "submissionId = submissionIdentity()",
+        "isSubmitting = false",
+    ),
+    "feedback state and idempotency contract",
+)
+forbid_tokens(
+    FEEDBACK_VIEW_MODEL,
+    ("PatternsCompat", "FeedbackMediaProcessor", "KEY_SCREENSHOT", "selectScreenshot"),
+    "obsolete feedback state",
+)
 
-if PROCESSOR.is_file():
-    text = PROCESSOR.read_text(encoding="utf-8", errors="ignore")
-    for token in (
-        "Dispatchers.IO",
-        "feedback_source_",
-        "MAX_SOURCE_BYTES",
+require_tokens(
+    FEEDBACK_FRAGMENT,
+    (
+        "FeedbackSubmissionFailureKind.AUTHENTICATION",
+        "FeedbackSubmissionFailureKind.VALIDATION",
+        "FeedbackSubmissionFailureKind.NETWORK",
+        "feedback_error_network",
+        "feedback_error_message_length",
+        "setFragmentGlobalLoading(state.isSubmitting)",
+    ),
+    "commercial feedback error handling",
+)
+forbid_tokens(
+    FEEDBACK_FRAGMENT,
+    (
+        "FeedbackSubmissionFailureKind.RATE_LIMITED",
+        "FirebaseStorage",
+        "feedbackMediaProcessor",
+        "selectScreenshot",
+        "ScreenshotSelected",
+    ),
+    "paid or screenshot UI dependency",
+)
+
+require_tokens(
+    FEEDBACK_LAYOUT,
+    ('android:maxLength="254"', 'app:counterMaxLength="500"', 'android:maxLength="500"'),
+    "feedback input limit",
+)
+forbid_tokens(
+    FEEDBACK_LAYOUT,
+    ("Screenshot", "feedback_attachment", "feedback_screenshot", "@drawable/ic_image"),
+    "screenshot UI",
+)
+
+require_tokens(
+    CLOUD_CLEANER,
+    (
+        'ROOT_COLLECTION = "feedback_items"',
+        'SUBMISSIONS_COLLECTION = "submissions"',
+        "get(Source.SERVER)",
+        "runTransaction",
+        "transaction.delete",
+        "CancellationException",
+    ),
+    "Spark account cleanup contract",
+)
+forbid_tokens(
+    CLOUD_CLEANER,
+    ("FirebaseFunctions", "HttpsCallableOptions", "deleteUserCloudData"),
+    "paid account cleanup dependency",
+)
+
+require_tokens(
+    FIRESTORE_RULES,
+    (
+        "match /feedback_items/{ownerUid}",
+        "match /submissions/{submissionId}",
+        "data.submissionId == submissionId",
+        "data.userId == ownerUid",
+        "data.message.size() <= 500",
+        "data.email.size() <= 254",
+        "data.email.split('@')[0].size() <= 64",
+        "allow get, list, delete:",
+        "allow update: if false",
+    ),
+    "secure Spark feedback rule",
+)
+forbid_tokens(
+    FIRESTORE_RULES,
+    (
+        "feedback_rate_limits",
+        "data.userId == 'anonymous'",
+        "request.auth == null",
+        "screenshot",
+        "mediaTransaction",
+    ),
+    "unsafe, paid or obsolete rule",
+)
+
+require_tokens(
+    FIREBASE_RULES_TEST,
+    (
+        "Spark-compatible feedback Firestore rules tests passed.",
+        "anonymousDb",
+        "invalid-email",
+        "user..name@example.com",
+        "repeat(65)",
+        "repeat(501)",
+        "crossOwnerSubmissions",
+        "deleteDoc(ownerRef)",
+    ),
+    "rules regression",
+)
+
+require_tokens(
+    PROCESSOR,
+    (
+        "interface ImageMediaProcessor",
+        "data class ProcessedImageMedia",
+        "sealed interface ImageMediaProcessingResult",
+        "enum class ImageMediaFailureKind",
+        "class AndroidImageMediaProcessor",
+        "ImageMediaPolicy.MAX_SOURCE_BYTES",
+        "ImageMediaPolicy.MAX_OUTPUT_BYTES",
         "currentCoroutineContext().ensureActive()",
         "inJustDecodeBounds",
-        "FileInputStream",
-        ".use {",
-        "CancellationException",
         "OutOfMemoryError",
+        'DIRECTORY_NAME = "image_processing"',
+        'OUTPUT_PREFIX = "image_output_"',
+    ),
+    "bounded generic image contract",
+)
+require_tokens(
+    IMAGE_POLICY,
+    (
+        "object ImageMediaPolicy",
+        "MAX_SOURCE_BYTES",
+        "MAX_SOURCE_PIXELS",
         "MAX_OUTPUT_BYTES",
-    ):
-        if token not in text:
-            errors.append(
-                f"{PROCESSOR.relative_to(ROOT)}: bounded/cancellable media processing missing: {token}"
-            )
+        "MAX_OUTPUT_EDGE_PX",
+        "MAX_OUTPUT_PIXELS",
+    ),
+    "image policy",
+)
 
-if APP_MEDIA_STORAGE.is_file():
-    text = APP_MEDIA_STORAGE.read_text(encoding="utf-8", errors="ignore")
-    for token in (
-        "app_media_pending_v1",
-        "JSON_OWNER_UID",
-        ".commit()",
-        "commitPendingMedia",
-        "rollbackPendingMedia",
-        "reconcilePendingMedia",
-        "discardPendingMediaForOwner",
-        "sourceFile.copyTo",
-    ):
-        if token not in text:
-            errors.append(
-                f"{APP_MEDIA_STORAGE.relative_to(ROOT)}: owner-aware media ownership contract missing: {token}"
-            )
-    if "return sourceUriString" not in text:
-        errors.append(
-            f"{APP_MEDIA_STORAGE.relative_to(ROOT)}: external non-owned URI preservation missing"
-        )
+for path in (APP_CONTAINER, RELEASE_SMOKE_CONTAINER):
+    require_tokens(path, ("imageMediaProcessor: ImageMediaProcessor",), "generic media composition")
 
-if COORDINATOR.is_file():
-    text = COORDINATOR.read_text(encoding="utf-8", errors="ignore")
-    for token in (
-        "SavedStateHandle",
-        "FeedbackMediaProcessor",
-        "ownerUid",
+require_tokens(
+    COORDINATOR,
+    (
+        "ImageMediaProcessor",
+        "ImageMediaProcessingResult",
+        "ImageMediaFailureKind",
         "prepareCropIntent",
         "preparationMutex.withLock",
         "commitSelection",
         "rollbackSelection",
         "setMaxBitmapSize",
-    ):
-        if token not in text:
-            errors.append(
-                f"{COORDINATOR.relative_to(ROOT)}: shared lifecycle/bounded media contract missing: {token}"
-            )
+    ),
+    "lifecycle-safe image flow",
+)
+require_tokens(FILE_PROVIDER_PATHS, ('name="image_processing"',), "image provider path")
 
-if CREATE_TANK_VIEW_MODEL.is_file():
-    text = CREATE_TANK_VIEW_MODEL.read_text(encoding="utf-8", errors="ignore")
-    for token in ("SavedStateHandle", "KEY_DRAFT_JSON", "restoreDraft", "completeTank"):
-        if token not in text:
-            errors.append(
-                f"{CREATE_TANK_VIEW_MODEL.relative_to(ROOT)}: process-death draft contract missing: {token}"
-            )
+photo_consumers = (
+    APP / "ui/tabs/settings/profile/EditProfileFragment.kt",
+    APP / "ui/tabs/aquarium/create/steps/TankPhotoFragment.kt",
+    APP / "ui/tabs/aquarium/detail/settings/TankSettingsBasicFragment.kt",
+)
+for path in photo_consumers:
+    require_tokens(
+        path,
+        (
+            "MediaFlowCoordinatorViewModel",
+            "container.imageMediaProcessor",
+            "prepareCropIntent",
+            "authenticatedOwnerIdentity.requireOwnerUid()",
+            "CancellationException",
+            "throw cancellation",
+        ),
+        "shared image consumer contract",
+    )
+    forbid_tokens(
+        path,
+        ("FileProvider", "File.createTempFile", "UCrop.Options()", "feedbackMediaProcessor"),
+        "duplicated or legacy media ownership",
+    )
+
+require_tokens(
+    APP_MEDIA_STORAGE,
+    (
+        "app_media_pending_v1",
+        "app_media_deletion_v1",
+        "commitPendingMedia",
+        "rollbackPendingMedia",
+        "reconcilePendingMedia",
+        "reconcilePendingDeletions",
+        "discardPendingMediaForOwner",
+    ),
+    "durable owner media contract",
+)
+
+# Scan only production source roots. The guard and regression tests intentionally contain forbidden
+# token literals so their absence can be asserted without creating a self-match.
+LEGACY_TOKENS = (
+    "FeedbackMediaProcessor",
+    "AndroidFeedbackMediaProcessor",
+    "ProcessedFeedbackMedia",
+    "FeedbackMediaProcessingResult",
+    "FeedbackMediaFailureKind",
+    "FeedbackMediaSourceAccess",
+    "FeedbackImagePolicy",
+    "feedbackMediaProcessor",
+    "feedback_media",
+    "feedback_output_",
+    "typealias ImageMedia",
+)
+for source_root in (ROOT / "app/src/main", ROOT / "app/src/releaseSmoke"):
+    for path in source_root.rglob("*"):
+        if not path.is_file() or path.suffix not in {".kt", ".xml"}:
+            continue
+        forbid_tokens(path, LEGACY_TOKENS, "legacy media compatibility token")
 
 TEST_EXPECTATIONS = {
-    ROOT / "app/src/test/java/com/aqua/aqualight/data/feedback/FirebaseFeedbackSubmissionOperationsTest.kt": (
-        "successfulSubmissionReservesOwnerBeforeUploadAndCommitsAtomically",
-        "firestoreFailureAfterUploadAbortsFenceAndDeletesStorageObject",
-        "ambiguousCommitErrorReturnsSuccessWhenServerFenceIsCommitted",
-        "cancellationDuringCommitKeepsJournalAndDoesNotGuessRemoteOutcome",
-        "cleanupFailsSafeForConflictOrUnverifiedServerState",
+    FEEDBACK_REPOSITORY_TEST: (
+        "successfulSubmissionUsesOwnerScopedTransactionStore",
+        "transactionNetworkFailureReturnsTypedNetworkFailure",
+        "nonTerminatingTransactionTimesOutAsNetworkFailure",
+        "lifecycleCancellationIsPropagated",
     ),
-    ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/settings/feedback/FeedbackViewModelTest.kt": (
-        "restoresFormAndSelectedMediaThenSubmitsThroughUseCase",
-        "mediaProcessingLockPreventsSubmitUntilSelectionCompletes",
-        "recreationNeverReplaysAnInterruptedSubmission",
-        "submissionFailureKeepsFormAndScreenshotForRetry",
+    FEEDBACK_USE_CASE_TEST: (
+        "invalidSubmissionIdentityIsRejectedBeforeRepositoryCall",
+        "commercialEmailPolicyAcceptsPlusAddressAndRejectsUnsafeForms",
     ),
-    CREATE_TANK_VIEW_MODEL_TEST: (
-        "draftSurvivesViewModelRecreationAndCanBeClearedAfterCommit",
+    FEEDBACK_VIEW_MODEL_TEST: (
+        "networkFailureStopsLoadingKeepsFormAndReusesSubmissionIdentity",
+        "editingAfterFailureCreatesANewSubmissionIdentity",
+        "synchronousSubmissionLockPreventsDuplicateRequests",
+        "editsAfterSubmitDoNotChangeValidatedRequestSnapshot",
     ),
-    ROOT / "app/src/androidTest/java/com/aqua/aqualight/platform/media/FeedbackMediaProcessorInstrumentedTest.kt": (
+    IMAGE_PROCESSOR_TEST: (
         "oversizedProviderImageUsesSampledDecodeAndCompressesWithinCommercialLimits",
         "largeUnknownLengthImageIsBoundedAndSourceStreamIsClosed",
         "sourceBeyondByteLimitIsRejectedBeforeDecodeAndStreamIsClosed",
         "cancellationIsNotConvertedToIoFailureAndStagedFileIsDeleted",
     ),
-    MEDIA_STORAGE_INSTRUMENTED_TEST: (
-        "recoveryNeverDeletesAnotherOwnersPendingMedia",
-        "committedCandidateIsNeverRemovedByLaterReconciliation",
-    ),
-    JOURNAL_INSTRUMENTED_TEST: (
-        "journalEntrySurvivesStoreRecreationAndCanBeRemovedDurably",
-        "multipleOwnerAwareEntriesAreUpdatedWithoutMutatingPreferenceSnapshots",
-    ),
-    ROOT / "app/src/androidTest/java/com/aqua/aqualight/ui/common/media/MediaFlowCoordinatorInstrumentedTest.kt": (
+    MEDIA_COORDINATOR_TEST: (
         "boundedPreparedSourceAndPendingCropAreCleanedAfterCancel",
         "previousPersistedMediaIsDeletedOnlyAfterReplacementCommit",
         "ownerReconciliationPreservesReferencedMediaAndExpiresOnlyOrphan",
     ),
 }
-
 for path, tokens in TEST_EXPECTATIONS.items():
-    if not path.is_file():
-        continue
-    text = path.read_text(encoding="utf-8", errors="ignore")
-    for token in tokens:
-        if token not in text:
-            errors.append(f"{path.relative_to(ROOT)}: required regression test missing: {token}")
+    require_tokens(path, tokens, "required regression test")
+
+forbid_tokens(
+    ROOT / "app/build.gradle",
+    (
+        "firebase-storage",
+        "firebase-functions",
+        "firebase-appcheck-playintegrity",
+        "firebase-appcheck-debug",
+    ),
+    "paid or removed Firebase dependency",
+)
+forbid_tokens(
+    ROOT / "firebase.json",
+    ('"storage"', '"functions"'),
+    "paid or removed Firebase configuration",
+)
 
 if errors:
-    print("Stage 9 feedback/media architecture guard failed:")
+    print("Stage 9 commercial feedback/media architecture guard failed:")
     for error in errors:
         print(f" - {error}")
     sys.exit(1)
 
-print("Stage 9 feedback/media guard passed.")
+print(
+    "Stage 9 commercial guard passed: feedback is authenticated, text-only, Spark-plan compatible, "
+    "transactional and idempotent; profile/tank image processing remains generic and bounded."
+)

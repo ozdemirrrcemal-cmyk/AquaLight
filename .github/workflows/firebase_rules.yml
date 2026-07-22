@@ -4,12 +4,10 @@ on:
   push:
     branches:
       - main
-      - agent/stage-9-feedback-media-cleanup
     paths:
       - firebase.json
       - firestore.rules
       - firestore.indexes.json
-      - storage.rules
       - firebase/**
       - .github/workflows/firebase_rules.yml
   pull_request:
@@ -17,7 +15,6 @@ on:
       - firebase.json
       - firestore.rules
       - firestore.indexes.json
-      - storage.rules
       - firebase/**
       - .github/workflows/firebase_rules.yml
 
@@ -55,9 +52,9 @@ jobs:
       - name: Validate index JSON
         run: node -e "JSON.parse(require('fs').readFileSync('firestore.indexes.json', 'utf8'))"
 
-      - name: Run Firestore and Storage rules tests
+      - name: Run Firestore rules tests
         run: >-
           npx --yes firebase-tools@15.24.0 emulators:exec
-          --only firestore,storage
-          --project demo-aqualight-stage9
+          --only firestore
+          --project demo-aqualight-feedback
           "node firebase/rules.test.mjs"

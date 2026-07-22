@@ -220,8 +220,7 @@ class UserDataCleaner private constructor(
             }
 
         AppMediaStorage.discardPendingMediaForOwner(appContext, ownerUid)
-        File(appContext.cacheDir, "feedback_temp.jpg").delete()
-        File(appContext.cacheDir, "feedback_media").deleteRecursively()
+        File(appContext.cacheDir, "image_processing").deleteRecursively()
     }
 
     private fun deleteAppOwnedUri(value: String) {
@@ -249,7 +248,7 @@ class UserDataCleaner private constructor(
             File(appContext.filesDir, "profile_photos"),
             File(appContext.filesDir, "tank_photos"),
             File(appContext.cacheDir, "tank_exports"),
-            File(appContext.cacheDir, "feedback_media")
+            File(appContext.cacheDir, "image_processing")
         )
 
         return allowedRoots.any { root ->

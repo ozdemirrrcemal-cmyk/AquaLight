@@ -86,30 +86,88 @@ class Stage9CommercialMediaArchitectureTest {
     }
 
     @Test
-    fun feedbackViewModelTeardownNeverDeletesFilesDirectly() {
-        val viewModel = source(
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/feedback/FeedbackViewModel.kt"
+    fun feedbackSubmissionUsesSparkPlanTransactionBoundary() {
+        val application = source(
+            "app/src/main/java/com/aqua/aqualight/application/feedback/" +
+                "FeedbackSubmissionOperations.kt"
         )
-        val onCleared = viewModel.substringBetween(
-            "override fun onCleared()",
-            "companion object"
-        )
-
-        assertTrue(onCleared.contains("terminalCleanupScope.launch"))
-        assertTrue(onCleared.contains("mediaProcessor.delete"))
-        assertFalse(onCleared.contains(".file?.takeIf"))
-        assertFalse(onCleared.contains("File("))
-    }
-
-    @Test
-    fun feedbackRemoteCommitCannotBeDowngradedByLocalJournalCleanup() {
         val repository = source(
             "app/src/main/java/com/aqua/aqualight/data/feedback/" +
                 "FirebaseFeedbackSubmissionOperations.kt"
         )
-        assertTrue(repository.contains("runCatching { journalStore.remove(documentId) }"))
-        assertTrue(repository.contains("ReconcileOutcome.Committed"))
-        assertTrue(repository.contains("runCatching { journalStore.remove(entry.documentId) }"))
+        val viewModel = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/feedback/FeedbackViewModel.kt"
+        )
+        val cleaner = source(
+            "app/src/main/java/com/aqua/aqualight/data/user/CloudUserDataCleaner.kt"
+        )
+        val rules = source("firestore.rules")
+
+        assertTrue(application.contains("val submissionId: String"))
+        assertTrue(application.contains("NETWORK,"))
+        assertTrue(repository.contains("firestore.runTransaction"))
+        assertTrue(repository.contains("withTimeout(timeoutMillis)"))
+        assertTrue(repository.contains("CompletableDeferred"))
+        assertTrue(repository.contains("collection(SUBMISSIONS_COLLECTION)"))
+        assertTrue(viewModel.contains("KEY_SUBMISSION_ID"))
+        assertTrue(viewModel.contains("isSubmitting = false"))
+        assertTrue(cleaner.contains("get(Source.SERVER)"))
+        assertTrue(cleaner.contains("runTransaction"))
+        assertTrue(rules.contains("match /submissions/{submissionId}"))
+
+        listOf(
+            "FirebaseFunctions",
+            "HttpsCallableOptions",
+            "FirebaseAppCheck",
+            "PlayIntegrityAppCheckProviderFactory",
+            "FirebaseStorage",
+            "documentStore.save(documentId, data)",
+            ".document(documentId).set",
+            "journalStore",
+            "cleanupOrphans",
+            "anonymous"
+        ).forEach { token ->
+            assertFalse(
+                "Spark feedback contains forbidden dependency: $token",
+                application.contains(token) || repository.contains(token) ||
+                    viewModel.contains(token) || cleaner.contains(token)
+            )
+        }
+    }
+
+    @Test
+    fun productionMediaApiIsDomainNeutralWithoutCompatibilityShims() {
+        val processor = source(
+            "app/src/main/java/com/aqua/aqualight/platform/media/ImageMediaProcessor.kt"
+        )
+        val container = source(
+            "app/src/main/java/com/aqua/aqualight/composition/AppContainer.kt"
+        )
+        val providerPaths = source("app/src/main/res/xml/file_paths.xml")
+
+        listOf(
+            "interface ImageMediaProcessor",
+            "class AndroidImageMediaProcessor",
+            "data class ProcessedImageMedia",
+            "sealed interface ImageMediaProcessingResult"
+        ).forEach { token ->
+            assertTrue("Generic media contract missing: $token", processor.contains(token))
+        }
+        assertTrue(container.contains("val imageMediaProcessor: ImageMediaProcessor"))
+        assertTrue(providerPaths.contains("image_processing"))
+
+        listOf(
+            "FeedbackMediaProcessor",
+            "AndroidFeedbackMediaProcessor",
+            "feedbackMediaProcessor",
+            "feedback_media",
+            "feedback_output_",
+            "typealias ImageMedia"
+        ).forEach { token ->
+            assertFalse("Legacy media compatibility token remains: $token", processor.contains(token))
+            assertFalse("Legacy media compatibility token remains: $token", container.contains(token))
+            assertFalse("Legacy media compatibility token remains: $token", providerPaths.contains(token))
+        }
     }
 
     private fun source(relativePath: String): String =

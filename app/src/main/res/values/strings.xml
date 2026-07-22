@@ -229,9 +229,6 @@
     <string name="feedback_sending">Sending...</string>
     <string name="feedback_error_generic">Something went wrong. Please try again.</string>
     <string name="feedback_success_text">Thank you! Your feedback has been sent.</string>
-    <string name="feedback_attachment_title">Attachment</string>
-    <string name="feedback_screenshot_add">Tap to attach a screenshot</string>
-    <string name="feedback_screenshot_selected">Screenshot selected</string>
     <string name="change_password_subinfo">For your account security, please enter your current password and choose a strong new one.</string>
     <string name="change_password_subinfo_desc">Short description explaining why the user should update their password.</string>
     <string name="change_password_form_desc">Form containing fields for current password, new password and confirmation.</string>
@@ -348,9 +345,7 @@
     <string name="logout_dialog_message">Are you sure you want to log out of your account?</string>
     <string name="security_settings_info_message">Advanced account security features will be enabled only after the backend supports them end to end. They are shown as unavailable so the app does not present placeholder security as real protection.</string>
     <string name="security_feature_in_development_title">Security feature unavailable</string>
-    <string name="feedback_error_upload">Screenshot upload failed</string>
     <string name="feedback_sent_success">Feedback sent successfully</string>
-    <string name="feedback_error_file_too_large">Screenshot must be smaller than 3 MB</string>
     <string name="user_info_username_too_short">Username must be at least 3 characters</string>
     <string name="user_info_username_invalid">Only letters, numbers, underscore and dot are allowed</string>
     <string name="user_info_saved_success">Profile updated successfully</string>

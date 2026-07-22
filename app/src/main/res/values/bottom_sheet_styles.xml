@@ -4,6 +4,10 @@
     <style name="AquaBottomSheetDialogTheme" parent="ThemeOverlay.Material3.BottomSheetDialog">
         <item name="android:windowBackground">@color/aqua_color_transparent</item>
         <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:navigationBarColor">@color/aqua_color_transparent</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowSoftInputMode">adjustResize</item>
+        <item name="enableEdgeToEdge">true</item>
         <item name="bottomSheetStyle">@style/Widget.Aqua.BottomSheet.Modal</item>
     </style>
 
@@ -11,16 +15,10 @@
 
     <style name="Widget.Aqua.BottomSheet.Modal" parent="Widget.Material3.BottomSheet.Modal">
         <item name="android:background">@drawable/bg_bottomsheet_rounded</item>
-        <item name="backgroundTint">@color/aqua_color_transparent</item>
-        <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.Aqua.BottomSheet</item>
-    </style>
-
-    <style name="ShapeAppearanceOverlay.Aqua.BottomSheet" parent="">
-        <item name="cornerFamily">rounded</item>
-        <item name="cornerSizeTopLeft">@dimen/aqua_size_32</item>
-        <item name="cornerSizeTopRight">@dimen/aqua_size_32</item>
-        <item name="cornerSizeBottomLeft">@dimen/aqua_size_0</item>
-        <item name="cornerSizeBottomRight">@dimen/aqua_size_0</item>
+        <item name="backgroundTint">@null</item>
+        <item name="shapeAppearance">@null</item>
+        <item name="shapeAppearanceOverlay">@null</item>
+        <item name="paddingBottomSystemWindowInsets">true</item>
     </style>
 
     <style name="Widget.Aqua.BottomSheet.Root" parent="">

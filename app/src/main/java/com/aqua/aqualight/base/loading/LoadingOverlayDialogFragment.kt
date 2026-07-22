@@ -2,6 +2,7 @@ package com.aqua.aqualight.base.loading
 
 import android.app.Dialog
 import android.graphics.drawable.ColorDrawable
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
@@ -10,6 +11,7 @@ import android.view.WindowManager
 import android.view.animation.AnimationUtils
 import android.widget.ImageView
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import com.aqua.aqualight.R
@@ -31,6 +33,7 @@ class LoadingOverlayDialogFragment : DialogFragment(R.layout.loading_overlay) {
             requestWindowFeature(Window.FEATURE_NO_TITLE)
             setCancelable(false)
             setCanceledOnTouchOutside(false)
+            window?.applyLoadingOverlayWindowContract()
         }
     }
 
@@ -48,23 +51,62 @@ class LoadingOverlayDialogFragment : DialogFragment(R.layout.loading_overlay) {
 
     override fun onStart() {
         super.onStart()
-        dialog?.window?.apply {
-            setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-            setBackgroundDrawable(ColorDrawable(ContextCompat.getColor(requireContext(), R.color.aqua_color_transparent)))
-            clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-            setDimAmount(0f)
-            attributes = attributes.apply {
-                width = ViewGroup.LayoutParams.MATCH_PARENT
-                height = ViewGroup.LayoutParams.MATCH_PARENT
-                windowAnimations = 0
-            }
-        }
+        dialog?.window?.applyLoadingOverlayWindowContract()
     }
 
     override fun onDestroyView() {
         logo?.clearAnimation()
         logo = null
         super.onDestroyView()
+    }
+
+    private fun Window.applyLoadingOverlayWindowContract() {
+        WindowCompat.setDecorFitsSystemWindows(this, false)
+        addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+        setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        setBackgroundDrawable(
+            ColorDrawable(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.aqua_color_transparent
+                )
+            )
+        )
+        clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+        setDimAmount(0f)
+        attributes = attributes.apply {
+            width = ViewGroup.LayoutParams.MATCH_PARENT
+            height = ViewGroup.LayoutParams.MATCH_PARENT
+            windowAnimations = 0
+        }
+        mirrorHostSystemBarAppearance()
+    }
+
+    @Suppress("DEPRECATION")
+    private fun Window.mirrorHostSystemBarAppearance() {
+        val hostWindow = requireActivity().window
+
+        statusBarColor = hostWindow.statusBarColor
+        navigationBarColor = hostWindow.navigationBarColor
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            navigationBarDividerColor = hostWindow.navigationBarDividerColor
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            isStatusBarContrastEnforced = hostWindow.isStatusBarContrastEnforced
+            isNavigationBarContrastEnforced = hostWindow.isNavigationBarContrastEnforced
+        }
+
+        val hostController = WindowCompat.getInsetsController(
+            hostWindow,
+            hostWindow.decorView
+        )
+        val overlayController = WindowCompat.getInsetsController(this, decorView)
+
+        overlayController.isAppearanceLightStatusBars =
+            hostController.isAppearanceLightStatusBars
+        overlayController.isAppearanceLightNavigationBars =
+            hostController.isAppearanceLightNavigationBars
     }
 
     companion object {

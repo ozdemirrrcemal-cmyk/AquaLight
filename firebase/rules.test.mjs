@@ -1,53 +1,36 @@
 import fs from 'node:fs';
-import assert from 'node:assert/strict';
 import {
   assertFails,
   assertSucceeds,
   initializeTestEnvironment,
 } from '@firebase/rules-unit-testing';
 import {
-  Timestamp,
+  collection,
+  deleteDoc,
   doc,
   getDoc,
-  runTransaction,
+  getDocs,
   serverTimestamp,
   setDoc,
 } from 'firebase/firestore';
-import {
-  deleteObject,
-  getBytes,
-  ref,
-  uploadBytes,
-} from 'firebase/storage';
 
-const PROJECT_ID = 'demo-aqualight-stage9';
+const PROJECT_ID = 'demo-aqualight-feedback';
 const OWNER = 'owner-a';
 const OTHER_OWNER = 'owner-b';
-const MAX_BYTES = 3 * 1024 * 1024;
+const OWNER_SUBMISSION = '123e4567-e89b-42d3-a456-426614174000';
+const OWNER_EMAIL_SUBMISSION = '123e4567-e89b-42d3-a456-426614174001';
+const OTHER_SUBMISSION = '123e4567-e89b-42d3-a456-426614174002';
 
 const testEnvironment = await initializeTestEnvironment({
   projectId: PROJECT_ID,
   firestore: {
     rules: fs.readFileSync('firestore.rules', 'utf8'),
   },
-  storage: {
-    rules: fs.readFileSync('storage.rules', 'utf8'),
-  },
 });
 
-function marker(ownerUid, documentId, state, status) {
+function textFeedback(ownerUid, submissionId, overrides = {}) {
   return {
-    userId: ownerUid,
-    mediaTransactionState: state,
-    status,
-    screenshotPath: `feedback_screenshots/${ownerUid}/${documentId}.jpg`,
-    createdAt: serverTimestamp(),
-    mediaTransactionExpiresAt: Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000),
-  };
-}
-
-function committedFeedback(ownerUid, documentId) {
-  return {
+    submissionId,
     category: 'Bug',
     email: null,
     message: 'A reproducible commercial feedback issue.',
@@ -57,25 +40,12 @@ function committedFeedback(ownerUid, documentId) {
     status: 'new',
     userId: ownerUid,
     createdAt: serverTimestamp(),
-    screenshotUrl: 'https://example.invalid/screenshot.jpg',
-    screenshotPath: `feedback_screenshots/${ownerUid}/${documentId}.jpg`,
-    mediaTransactionState: 'committed',
+    ...overrides,
   };
 }
 
-function anonymousTextFeedback(message = 'Anonymous text feedback is accepted.') {
-  return {
-    category: 'Other',
-    email: null,
-    message,
-    platform: 'android',
-    appVersion: '1.0.0',
-    locale: 'tr-TR',
-    status: 'new',
-    userId: 'anonymous',
-    createdAt: serverTimestamp(),
-    mediaTransactionState: 'committed',
-  };
+function submissionRef(db, ownerUid, submissionId) {
+  return doc(db, 'feedback_items', ownerUid, 'submissions', submissionId);
 }
 
 try {
@@ -84,110 +54,139 @@ try {
   const ownerDb = testEnvironment.authenticatedContext(OWNER).firestore();
   const otherDb = testEnvironment.authenticatedContext(OTHER_OWNER).firestore();
   const anonymousDb = testEnvironment.unauthenticatedContext().firestore();
-
-  const committedId = 'feedback-committed';
-  const committedRef = doc(ownerDb, 'feedback_items', committedId);
+  const ownerRef = submissionRef(ownerDb, OWNER, OWNER_SUBMISSION);
+  const otherRef = submissionRef(otherDb, OTHER_OWNER, OTHER_SUBMISSION);
 
   await assertSucceeds(
-    runTransaction(ownerDb, async transaction => {
-      const snapshot = await transaction.get(committedRef);
-      assert.equal(snapshot.exists(), false);
-      transaction.set(
-        committedRef,
-        marker(OWNER, committedId, 'pending', 'media_pending'),
-      );
-    }),
+    setDoc(ownerRef, textFeedback(OWNER, OWNER_SUBMISSION)),
+  );
+  await assertSucceeds(
+    setDoc(
+      submissionRef(ownerDb, OWNER, OWNER_EMAIL_SUBMISSION),
+      textFeedback(OWNER, OWNER_EMAIL_SUBMISSION, {
+        email: 'user+tag@example.com',
+      }),
+    ),
+  );
+  await assertSucceeds(
+    setDoc(otherRef, textFeedback(OTHER_OWNER, OTHER_SUBMISSION)),
   );
 
-  await assertFails(getDoc(doc(otherDb, 'feedback_items', committedId)));
-  await assertSucceeds(getDoc(committedRef));
-
-  await assertSucceeds(
-    runTransaction(ownerDb, async transaction => {
-      const snapshot = await transaction.get(committedRef);
-      assert.equal(snapshot.data().mediaTransactionState, 'pending');
-      transaction.set(committedRef, committedFeedback(OWNER, committedId));
-    }),
-  );
-
-  const abortedId = 'feedback-aborted';
-  const abortedRef = doc(ownerDb, 'feedback_items', abortedId);
-  await assertSucceeds(
-    runTransaction(ownerDb, async transaction => {
-      const snapshot = await transaction.get(abortedRef);
-      assert.equal(snapshot.exists(), false);
-      transaction.set(
-        abortedRef,
-        marker(OWNER, abortedId, 'aborted', 'media_aborted'),
-      );
-    }),
+  await assertSucceeds(getDoc(ownerRef));
+  await assertFails(
+    getDoc(submissionRef(otherDb, OWNER, OWNER_SUBMISSION)),
   );
 
   await assertFails(
     setDoc(
-      doc(otherDb, 'feedback_items', 'spoofed-owner'),
-      marker(OWNER, 'spoofed-owner', 'pending', 'media_pending'),
-    ),
-  );
-
-  await assertSucceeds(
-    setDoc(
-      doc(anonymousDb, 'feedback_items', 'anonymous-text'),
-      anonymousTextFeedback(),
+      submissionRef(ownerDb, OWNER, '123e4567-e89b-42d3-a456-426614174003'),
+      textFeedback(
+        OTHER_OWNER,
+        '123e4567-e89b-42d3-a456-426614174003',
+      ),
     ),
   );
   await assertFails(
     setDoc(
-      doc(anonymousDb, 'feedback_items', 'anonymous-media'),
-      marker('anonymous', 'anonymous-media', 'pending', 'media_pending'),
+      submissionRef(
+        anonymousDb,
+        OWNER,
+        '123e4567-e89b-42d3-a456-426614174004',
+      ),
+      textFeedback(
+        OWNER,
+        '123e4567-e89b-42d3-a456-426614174004',
+      ),
     ),
   );
   await assertFails(
     setDoc(
-      doc(anonymousDb, 'feedback_items', 'oversized-message'),
-      anonymousTextFeedback('x'.repeat(4001)),
-    ),
-  );
-
-  const ownerStorage = testEnvironment.authenticatedContext(OWNER).storage();
-  const otherStorage = testEnvironment.authenticatedContext(OTHER_OWNER).storage();
-  const anonymousStorage = testEnvironment.unauthenticatedContext().storage();
-  const validPath = `feedback_screenshots/${OWNER}/valid.jpg`;
-  const validRef = ref(ownerStorage, validPath);
-
-  await assertSucceeds(
-    uploadBytes(validRef, new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), {
-      contentType: 'image/jpeg',
-    }),
-  );
-  await assertSucceeds(getBytes(validRef));
-  await assertFails(getBytes(ref(otherStorage, validPath)));
-  await assertFails(deleteObject(ref(otherStorage, validPath)));
-
-  await assertFails(
-    uploadBytes(
-      ref(ownerStorage, `feedback_screenshots/${OWNER}/wrong-type.jpg`),
-      new Uint8Array([1, 2, 3]),
-      { contentType: 'text/plain' },
+      submissionRef(ownerDb, OWNER, 'not-a-uuid'),
+      textFeedback(OWNER, 'not-a-uuid'),
     ),
   );
   await assertFails(
-    uploadBytes(
-      ref(ownerStorage, `feedback_screenshots/${OWNER}/too-large.jpg`),
-      new Uint8Array(MAX_BYTES + 1),
-      { contentType: 'image/jpeg' },
+    setDoc(
+      submissionRef(ownerDb, OWNER, '123e4567-e89b-42d3-a456-426614174005'),
+      textFeedback(
+        OWNER,
+        '123e4567-e89b-42d3-a456-426614174099',
+      ),
     ),
   );
   await assertFails(
-    uploadBytes(
-      ref(anonymousStorage, 'feedback_screenshots/anonymous/anonymous.jpg'),
-      new Uint8Array([0xff, 0xd8, 0xff, 0xd9]),
-      { contentType: 'image/jpeg' },
+    setDoc(
+      submissionRef(ownerDb, OWNER, '123e4567-e89b-42d3-a456-426614174006'),
+      textFeedback(OWNER, '123e4567-e89b-42d3-a456-426614174006', {
+        email: 'invalid-email',
+      }),
+    ),
+  );
+  await assertFails(
+    setDoc(
+      submissionRef(ownerDb, OWNER, '123e4567-e89b-42d3-a456-426614174007'),
+      textFeedback(OWNER, '123e4567-e89b-42d3-a456-426614174007', {
+        email: 'user..name@example.com',
+      }),
+    ),
+  );
+  await assertFails(
+    setDoc(
+      submissionRef(ownerDb, OWNER, '123e4567-e89b-42d3-a456-426614174008'),
+      textFeedback(OWNER, '123e4567-e89b-42d3-a456-426614174008', {
+        email: `${'a'.repeat(65)}@example.com`,
+      }),
+    ),
+  );
+  await assertFails(
+    setDoc(
+      submissionRef(ownerDb, OWNER, '123e4567-e89b-42d3-a456-426614174009'),
+      textFeedback(OWNER, '123e4567-e89b-42d3-a456-426614174009', {
+        message: 'x'.repeat(501),
+      }),
+    ),
+  );
+  await assertFails(
+    setDoc(
+      submissionRef(ownerDb, OWNER, '123e4567-e89b-42d3-a456-426614174010'),
+      {
+        ...textFeedback(
+          OWNER,
+          '123e4567-e89b-42d3-a456-426614174010',
+        ),
+        unexpected: true,
+      },
     ),
   );
 
-  await assertSucceeds(deleteObject(validRef));
-  console.log('Stage 9 Firebase rules tests passed.');
+  // Existing documents are immutable. Idempotent retries read and return them without writing.
+  await assertFails(
+    setDoc(ownerRef, textFeedback(OWNER, OWNER_SUBMISSION)),
+  );
+
+  const ownerSubmissions = collection(
+    ownerDb,
+    'feedback_items',
+    OWNER,
+    'submissions',
+  );
+  await assertSucceeds(getDocs(ownerSubmissions));
+
+  const crossOwnerSubmissions = collection(
+    otherDb,
+    'feedback_items',
+    OWNER,
+    'submissions',
+  );
+  await assertFails(getDocs(crossOwnerSubmissions));
+  await assertFails(getDocs(collection(ownerDb, 'feedback_items')));
+
+  await assertFails(
+    deleteDoc(submissionRef(otherDb, OWNER, OWNER_SUBMISSION)),
+  );
+  await assertSucceeds(deleteDoc(ownerRef));
+
+  console.log('Spark-compatible feedback Firestore rules tests passed.');
 } finally {
   await testEnvironment.cleanup();
 }

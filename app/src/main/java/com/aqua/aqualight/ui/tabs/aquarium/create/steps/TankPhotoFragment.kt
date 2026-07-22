@@ -49,7 +49,7 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
             ownerToken = "draft",
             ownerUid = container.authenticatedOwnerIdentity.requireOwnerUid(),
             cropSpec = MediaCropSpec.TANK,
-            mediaProcessor = container.feedbackMediaProcessor
+            mediaProcessor = container.imageMediaProcessor
         )
     }
 

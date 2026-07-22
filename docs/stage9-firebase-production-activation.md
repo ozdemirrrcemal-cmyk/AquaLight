@@ -1,55 +1,62 @@
-# Stage 9 — Firebase production activation
+# Stage 9 — Spark-Plan Firestore Feedback Activation
+
+## Product and billing decision
+
+AquaLight feedback must remain compatible with the Firebase Spark plan. The feature does not use
+Cloud Functions, App Check, Play Integrity, Firebase Storage or any Blaze-only runtime dependency.
 
 ## Security policy
 
-- Authenticated feedback screenshots use the immutable path
-  `feedback_screenshots/{ownerUid}/{documentId}.jpg`.
-- Upload, download and rollback deletion are restricted to the authenticated path owner.
-- Screenshot objects are immutable after creation and limited to non-empty JPEG files of at most
-  3 MiB.
-- Anonymous users may submit text-only feedback. Anonymous screenshot upload is intentionally
-  rejected because an unauthenticated caller cannot be given safe object-level delete ownership.
-- Firestore feedback documents are field-allowlisted. Owner identity and screenshot path cannot be
-  changed after the pending marker is created.
-- The only screenshot transaction transitions are `pending -> committed` and
-  `pending -> aborted`. Existing committed documents cannot be overwritten by delayed writers.
-- `mediaTransactionExpiresAt` is the TTL field for minimal pending/aborted transaction fences.
-  Committed feedback documents remove this field and are not TTL-deleted.
+- Feedback is authenticated and text-only.
+- Documents are stored under `feedback_items/{ownerUid}/submissions/{submissionId}`.
+- The path owner and document `userId` must both equal `request.auth.uid`.
+- Anonymous and cross-owner access are denied.
+- Category is limited to 80 characters, optional email to 254 characters with a 64-character local
+  part, and message to 10–500 characters.
+- Documents cannot be updated. An unchanged retry reads the existing UUID document and returns it.
+- Submission uses a Firestore transaction. Firestore transactions fail while the client is offline,
+  so the feedback is not silently queued for later synchronization.
+- The Android wait is bounded to 15 seconds. Timeout and network errors close loading, re-enable the
+  send button and preserve the form.
+- Account deletion performs a server-only read of the owner's submissions and deletes them in bounded
+  Firestore transactions before deleting the Firebase Authentication account.
+- No Firebase Storage product, upload journal, screenshot migration, rate-limit collection or backend
+  deployment is required.
 
 ## Source-controlled deployment inputs
 
 - `firebase.json`
 - `firestore.rules`
 - `firestore.indexes.json`
-- `storage.rules`
 - `firebase/rules.test.mjs`
 - `.github/workflows/firebase_rules.yml`
 
-The validation workflow starts isolated Firestore and Storage emulators, compiles both rulesets and
-verifies owner access, cross-owner denial, anonymous text-only policy, transaction transitions,
-content type and the 3 MiB object limit.
+The validation workflow starts an isolated Firestore emulator and verifies authenticated owner
+creation, anonymous denial, path spoof prevention, UUID/email/message bounds, immutable records,
+owner-scoped list/get/delete and cross-owner denial.
 
 ## Production deployment
 
-Use a Firebase CLI identity with permission to deploy Firestore rules/indexes and Storage rules:
+Only Firestore rules and indexes need deployment. This does not require switching the Firebase
+project to the Blaze plan.
 
 ```bash
 firebase use <production-project-id>
-firebase deploy --only firestore,storage
+firebase deploy --only firestore
 ```
 
-The deploy applies the TTL field override from `firestore.indexes.json`. After deployment, verify in
-Firestore **Indexes / TTL** that collection group `feedback_items` uses
-`mediaTransactionExpiresAt` and that the policy status is enabled. TTL deletion is asynchronous and
-may occur after the expiration time; the application rollback journal remains the immediate cleanup
-mechanism.
+There are no Functions to deploy and no App Check or Play Integrity configuration for feedback.
 
 ## Release gate
 
 Commercial release is blocked unless:
 
 1. `Firebase Rules Validation` is green.
-2. The exact committed rules/index files have been deployed to the production Firebase project.
-3. The TTL policy reports enabled for `feedback_items.mediaTransactionExpiresAt`.
-4. A production smoke test confirms authenticated screenshot submit, Firestore failure rollback and
-   cross-owner access denial.
+2. The exact committed Firestore rules and index files are deployed to the Firebase project.
+3. A physical-device test confirms:
+   - online authenticated feedback succeeds,
+   - offline feedback returns the localized error and loading closes,
+   - unchanged retry creates no duplicate,
+   - edited form creates a new submission,
+   - account deletion removes the owner's feedback,
+   - anonymous and cross-owner Firestore access remain denied.

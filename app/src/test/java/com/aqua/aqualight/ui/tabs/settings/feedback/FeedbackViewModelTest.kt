@@ -1,18 +1,12 @@
 package com.aqua.aqualight.ui.tabs.settings.feedback
 
-import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
-import com.aqua.aqualight.application.feedback.FeedbackOrphanCleanupResult
 import com.aqua.aqualight.application.feedback.FeedbackRepository
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionFailure
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionFailureKind
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionRequest
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionResult
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionUseCase
-import com.aqua.aqualight.platform.media.FeedbackMediaProcessingResult
-import com.aqua.aqualight.platform.media.FeedbackMediaProcessor
-import com.aqua.aqualight.platform.media.ProcessedFeedbackMedia
-import java.io.File
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -27,8 +21,6 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -49,129 +41,221 @@ class FeedbackViewModelTest {
     }
 
     @Test
-    fun restoresFormAndSelectedMediaThenSubmitsThroughUseCase() = runTest(dispatcher) {
-        val mediaFile = File.createTempFile("feedback-vm-", ".jpg").apply {
-            writeBytes(byteArrayOf(1, 2, 3))
-        }
-        try {
-            val repository = FakeFeedbackRepository()
-            val mediaProcessor = FakeFeedbackMediaProcessor()
-            val viewModel = viewModel(savedState(mediaFile), repository, mediaProcessor)
-
-            assertEquals("Bug", viewModel.uiState.value.category)
-            assertEquals("A reproducible problem", viewModel.uiState.value.message)
-            assertEquals(mediaFile.canonicalPath, viewModel.uiState.value.screenshot?.path)
-            assertFalse(viewModel.uiState.value.isBusy)
-
-            val event = async { viewModel.events.first() }
-            viewModel.submit()
-            advanceUntilIdle()
-
-            assertEquals(FeedbackUiEvent.SubmissionSucceeded, event.await())
-            assertEquals("Bug", repository.request?.category)
-            assertEquals(mediaFile.canonicalPath, repository.screenshotFile?.canonicalPath)
-            assertEquals("9.0", repository.request?.appVersion)
-            assertEquals("tr-TR", repository.request?.localeTag)
-            assertEquals("", viewModel.uiState.value.category)
-            assertNull(viewModel.uiState.value.screenshot)
-            assertFalse(viewModel.uiState.value.isBusy)
-            assertTrue(mediaProcessor.deletedPaths.contains(mediaFile.canonicalPath))
-        } finally {
-            mediaFile.delete()
-        }
-    }
-
-    @Test
-    fun synchronousBusyLockPreventsDoubleSubmitAndScreenshotDeletionDuringUpload() =
-        runTest(dispatcher) {
-            val mediaFile = File.createTempFile("feedback-race-", ".jpg").apply {
-                writeBytes(byteArrayOf(1, 2, 3))
-            }
-            try {
-                val gate = CompletableDeferred<Unit>()
-                val repository = FakeFeedbackRepository().apply { submitGate = gate }
-                val mediaProcessor = FakeFeedbackMediaProcessor()
-                val viewModel = viewModel(savedState(mediaFile), repository, mediaProcessor)
-
-                viewModel.submit()
-                viewModel.submit()
-                viewModel.clearScreenshot()
-
-                assertTrue(viewModel.uiState.value.isSubmitting)
-                assertNotNull(viewModel.uiState.value.screenshot)
-                assertTrue(mediaProcessor.deletedPaths.isEmpty())
-
-                runCurrent()
-                assertEquals(1, repository.submitCount)
-                gate.complete(Unit)
-                advanceUntilIdle()
-
-                assertEquals(1, repository.submitCount)
-                assertFalse(viewModel.uiState.value.isBusy)
-            } finally {
-                mediaFile.delete()
-            }
-        }
-
-    @Test
-    fun mediaProcessingLockPreventsSubmitUntilSelectionCompletes() = runTest(dispatcher) {
-        val processedFile = File.createTempFile("feedback-processed-", ".jpg").apply {
-            writeBytes(byteArrayOf(1, 2, 3))
-        }
-        try {
-            val gate = CompletableDeferred<Unit>()
-            val repository = FakeFeedbackRepository()
-            val mediaProcessor = FakeFeedbackMediaProcessor().apply {
-                processGate = gate
-                processResult = FeedbackMediaProcessingResult.Success(
-                    ProcessedFeedbackMedia(
-                        path = processedFile.canonicalPath,
-                        displayName = "processed.jpg",
-                        width = 640,
-                        height = 480,
-                        byteCount = processedFile.length()
-                    )
-                )
-            }
-            val state = SavedStateHandle(
-                mapOf(
-                    "feedback.category" to "Bug",
-                    "feedback.message" to "A reproducible problem"
-                )
-            )
-            val viewModel = viewModel(state, repository, mediaProcessor)
-
-            viewModel.selectScreenshotForTest { mediaProcessor.processForTest() }
-            viewModel.submit()
-
-            assertTrue(viewModel.uiState.value.isProcessingMedia)
-            runCurrent()
-            assertEquals(0, repository.submitCount)
-
-            gate.complete(Unit)
-            advanceUntilIdle()
-            assertNotNull(viewModel.uiState.value.screenshot)
-            assertFalse(viewModel.uiState.value.isBusy)
-            assertEquals(0, repository.submitCount)
-        } finally {
-            processedFile.delete()
-        }
-    }
-
-    @Test
-    fun recreationNeverReplaysAnInterruptedSubmission() = runTest(dispatcher) {
+    fun restoresFormThenSubmitsTextFeedbackThroughUseCase() = runTest(dispatcher) {
         val repository = FakeFeedbackRepository()
-        val mediaProcessor = FakeFeedbackMediaProcessor()
-        val savedState = SavedStateHandle(
-            mapOf(
-                "feedback.category" to "Bug",
-                "feedback.message" to "A reproducible problem"
-            )
-        )
+        val viewModel = viewModel(savedState(), repository)
 
-        val first = viewModel(savedState, repository, mediaProcessor)
+        assertEquals("Bug", viewModel.uiState.value.category)
+        assertEquals("user@example.com", viewModel.uiState.value.email)
+        assertEquals("A reproducible problem", viewModel.uiState.value.message)
+        assertFalse(viewModel.uiState.value.isSubmitting)
+
+        val event = async { viewModel.events.first() }
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals(FeedbackUiEvent.SubmissionSucceeded, event.await())
+        assertEquals(1, repository.submitCount)
+        assertEquals(SUBMISSION_ID_1, repository.request?.submissionId)
+        assertEquals("Bug", repository.request?.category)
+        assertEquals("user@example.com", repository.request?.email)
+        assertEquals("A reproducible problem", repository.request?.message)
+        assertEquals("9.0", repository.request?.appVersion)
+        assertEquals("tr-TR", repository.request?.localeTag)
+        assertEquals(FeedbackUiState(), viewModel.uiState.value)
+    }
+
+    @Test
+    fun paddedPlusAddressIsAcceptedAndNormalizedBeforeSubmission() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository()
+        val viewModel = viewModel(savedState(), repository)
+        viewModel.updateEmail("  user+tag@sub.example.co.uk  ")
+
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals(1, repository.submitCount)
+        assertEquals("user+tag@sub.example.co.uk", repository.request?.email)
+        assertFalse(viewModel.uiState.value.emailError)
+    }
+
+    @Test
+    fun optionalWhitespaceOnlyEmailIsAcceptedAsEmpty() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository()
+        val viewModel = viewModel(savedState(), repository)
+        viewModel.updateEmail("   ")
+
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals(1, repository.submitCount)
+        assertEquals("", repository.request?.email)
+    }
+
+    @Test
+    fun emailBeyondCommercialLimitIsRejectedBeforeRepositoryCall() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository()
+        val viewModel = viewModel(savedState(), repository)
+        viewModel.updateEmail("a".repeat(243) + "@example.com")
+
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals(0, repository.submitCount)
+        assertTrue(viewModel.uiState.value.emailError)
+        assertFalse(viewModel.uiState.value.isSubmitting)
+    }
+
+    @Test
+    fun emailLocalPartBeyond64CharactersIsRejected() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository()
+        val viewModel = viewModel(savedState(), repository)
+        viewModel.updateEmail("a".repeat(65) + "@example.com")
+
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals(0, repository.submitCount)
+        assertTrue(viewModel.uiState.value.emailError)
+    }
+
+    @Test
+    fun emailDomainWithoutPublicSuffixIsRejected() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository()
+        val viewModel = viewModel(savedState(), repository)
+        viewModel.updateEmail("user@localhost")
+
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals(0, repository.submitCount)
+        assertTrue(viewModel.uiState.value.emailError)
+    }
+
+    @Test
+    fun messageAtCommercialLimitIsAccepted() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository()
+        val viewModel = viewModel(savedState(), repository)
+        viewModel.updateMessage("x".repeat(500))
+
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals(1, repository.submitCount)
+        assertEquals(500, repository.request?.message?.length)
+    }
+
+    @Test
+    fun messageAboveCommercialLimitIsRejected() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository()
+        val viewModel = viewModel(savedState(), repository)
+        viewModel.updateMessage("x".repeat(501))
+
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals(0, repository.submitCount)
+        assertTrue(viewModel.uiState.value.messageError)
+    }
+
+    @Test
+    fun synchronousSubmissionLockPreventsDuplicateRequests() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        val repository = FakeFeedbackRepository().apply { submitGate = gate }
+        val viewModel = viewModel(savedState(), repository)
+
+        viewModel.submit()
+        viewModel.submit()
+
+        assertTrue(viewModel.uiState.value.isSubmitting)
+        runCurrent()
+        assertEquals(1, repository.submitCount)
+
+        gate.complete(Unit)
+        advanceUntilIdle()
+
+        assertEquals(1, repository.submitCount)
+        assertFalse(viewModel.uiState.value.isSubmitting)
+    }
+
+    @Test
+    fun networkFailureStopsLoadingKeepsFormAndReusesSubmissionIdentity() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository().apply {
+            results += failure(FeedbackSubmissionFailureKind.NETWORK)
+            results += FeedbackSubmissionResult.Success("document-1")
+        }
+        val ids = ArrayDeque(listOf(SUBMISSION_ID_1, SUBMISSION_ID_2))
+        val viewModel = viewModel(savedState(), repository) { ids.removeFirst() }
+
+        val failureEvent = async { viewModel.events.first() }
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals(
+            FeedbackUiEvent.SubmissionFailed(FeedbackSubmissionFailureKind.NETWORK),
+            failureEvent.await()
+        )
+        assertFalse(viewModel.uiState.value.isSubmitting)
+        assertEquals("Bug", viewModel.uiState.value.category)
+        assertEquals("user@example.com", viewModel.uiState.value.email)
+        assertEquals("A reproducible problem", viewModel.uiState.value.message)
+        assertEquals(SUBMISSION_ID_1, repository.requests.single().submissionId)
+        assertEquals(1, ids.size)
+
+        val successEvent = async { viewModel.events.first() }
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals(FeedbackUiEvent.SubmissionSucceeded, successEvent.await())
+        assertEquals(2, repository.requests.size)
+        assertEquals(SUBMISSION_ID_1, repository.requests[1].submissionId)
+        assertEquals(1, ids.size)
+        assertFalse(viewModel.uiState.value.isSubmitting)
+        assertEquals(FeedbackUiState(), viewModel.uiState.value)
+    }
+
+    @Test
+    fun editingAfterFailureCreatesANewSubmissionIdentity() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository().apply {
+            results += failure(FeedbackSubmissionFailureKind.NETWORK)
+            results += FeedbackSubmissionResult.Success("document-2")
+        }
+        val ids = ArrayDeque(listOf(SUBMISSION_ID_1, SUBMISSION_ID_2))
+        val viewModel = viewModel(savedState(), repository) { ids.removeFirst() }
+
+        viewModel.submit()
+        advanceUntilIdle()
+        viewModel.updateMessage("A different reproducible problem")
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals(SUBMISSION_ID_1, repository.requests[0].submissionId)
+        assertEquals(SUBMISSION_ID_2, repository.requests[1].submissionId)
+    }
+
+    @Test
+    fun editsAfterSubmitDoNotChangeValidatedRequestSnapshot() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository()
+        val viewModel = viewModel(savedState(), repository)
+
+        viewModel.submit()
+        viewModel.updateEmail("invalid-email")
+        viewModel.updateMessage("short")
+        advanceUntilIdle()
+
+        assertEquals(1, repository.submitCount)
+        assertEquals("user@example.com", repository.request?.email)
+        assertEquals("A reproducible problem", repository.request?.message)
+    }
+
+    @Test
+    fun recreationRestoresFormWithoutReplayingSubmission() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository()
+        val savedState = savedState()
+
+        val first = viewModel(savedState, repository)
         assertFalse(first.uiState.value.isSubmitting)
-        val recreated = viewModel(savedState, repository, mediaProcessor)
+        val recreated = viewModel(savedState, repository)
         advanceUntilIdle()
 
         assertEquals("Bug", recreated.uiState.value.category)
@@ -181,141 +265,92 @@ class FeedbackViewModelTest {
     }
 
     @Test
-    fun submissionFailureKeepsFormAndScreenshotForRetry() = runTest(dispatcher) {
-        val mediaFile = File.createTempFile("feedback-retry-", ".jpg").apply {
-            writeBytes(byteArrayOf(1, 2, 3))
+    fun submissionFailureKeepsFormForRetry() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository().apply {
+            result = failure(FeedbackSubmissionFailureKind.PERSISTENCE)
         }
-        try {
-            val repository = FakeFeedbackRepository().apply {
-                result = FeedbackSubmissionResult.Failure(
-                    FeedbackSubmissionFailure(
-                        kind = FeedbackSubmissionFailureKind.PERSISTENCE,
-                        cause = IllegalStateException("write failed")
-                    )
-                )
-            }
-            val mediaProcessor = FakeFeedbackMediaProcessor()
-            val viewModel = viewModel(savedState(mediaFile), repository, mediaProcessor)
-            val event = async { viewModel.events.first() }
+        val viewModel = viewModel(savedState(), repository)
+        val event = async { viewModel.events.first() }
 
-            viewModel.submit()
-            advanceUntilIdle()
+        viewModel.submit()
+        advanceUntilIdle()
 
-            assertEquals(
-                FeedbackUiEvent.SubmissionFailed(FeedbackSubmissionFailureKind.PERSISTENCE),
-                event.await()
-            )
-            assertEquals("Bug", viewModel.uiState.value.category)
-            assertNotNull(viewModel.uiState.value.screenshot)
-            assertTrue(mediaProcessor.deletedPaths.isEmpty())
-            assertFalse(viewModel.uiState.value.isBusy)
-        } finally {
-            mediaFile.delete()
-        }
+        assertEquals(
+            FeedbackUiEvent.SubmissionFailed(FeedbackSubmissionFailureKind.PERSISTENCE),
+            event.await()
+        )
+        assertEquals("Bug", viewModel.uiState.value.category)
+        assertEquals("user@example.com", viewModel.uiState.value.email)
+        assertEquals("A reproducible problem", viewModel.uiState.value.message)
+        assertFalse(viewModel.uiState.value.isSubmitting)
     }
 
     @Test
-    fun invalidRestoredMediaIsRemovedFromSavedState() = runTest(dispatcher) {
-        val savedState = SavedStateHandle(
-            mapOf(
-                "feedback.screenshot.path" to "/invalid/outside/file.jpg",
-                "feedback.screenshot.name" to "file.jpg",
-                "feedback.screenshot.width" to 100,
-                "feedback.screenshot.height" to 100,
-                "feedback.screenshot.bytes" to 10L
-            )
-        )
-        val processor = FakeFeedbackMediaProcessor().apply { allowRestore = false }
+    fun invalidFormIsRejectedBeforeRepositoryCall() = runTest(dispatcher) {
+        val repository = FakeFeedbackRepository()
+        val viewModel = viewModel(SavedStateHandle(), repository)
 
-        val viewModel = viewModel(savedState, FakeFeedbackRepository(), processor)
+        viewModel.updateEmail("invalid-email")
+        viewModel.updateMessage("short")
+        viewModel.submit()
         advanceUntilIdle()
 
-        assertNull(viewModel.uiState.value.screenshot)
-        assertNull(savedState.get<String>("feedback.screenshot.path"))
+        assertEquals(0, repository.submitCount)
+        assertTrue(viewModel.uiState.value.categoryError)
+        assertTrue(viewModel.uiState.value.emailError)
+        assertTrue(viewModel.uiState.value.messageError)
+        assertFalse(viewModel.uiState.value.isSubmitting)
     }
 
     private fun viewModel(
         savedStateHandle: SavedStateHandle,
         repository: FakeFeedbackRepository,
-        mediaProcessor: FakeFeedbackMediaProcessor
+        submissionIdProvider: () -> String = { SUBMISSION_ID_1 }
     ) = FeedbackViewModel(
         savedStateHandle = savedStateHandle,
         submissionUseCase = FeedbackSubmissionUseCase(repository),
-        mediaProcessor = mediaProcessor,
         appVersionProvider = { "9.0" },
-        localeTagProvider = { "tr-TR" }
+        localeTagProvider = { "tr-TR" },
+        submissionIdProvider = submissionIdProvider
     )
 
-    private fun savedState(mediaFile: File) = SavedStateHandle(
+    private fun savedState() = SavedStateHandle(
         mapOf(
             "feedback.category" to "Bug",
-            "feedback.email" to "",
-            "feedback.message" to "A reproducible problem",
-            "feedback.screenshot.path" to mediaFile.canonicalPath,
-            "feedback.screenshot.name" to "screenshot.jpg",
-            "feedback.screenshot.width" to 640,
-            "feedback.screenshot.height" to 480,
-            "feedback.screenshot.bytes" to mediaFile.length()
+            "feedback.email" to "user@example.com",
+            "feedback.message" to "A reproducible problem"
         )
     )
 
+    private fun failure(kind: FeedbackSubmissionFailureKind) =
+        FeedbackSubmissionResult.Failure(
+            FeedbackSubmissionFailure(
+                kind = kind,
+                cause = IllegalStateException(kind.name)
+            )
+        )
+
     private class FakeFeedbackRepository : FeedbackRepository {
         var request: FeedbackSubmissionRequest? = null
-        var screenshotFile: File? = null
+        val requests = mutableListOf<FeedbackSubmissionRequest>()
+        val results = ArrayDeque<FeedbackSubmissionResult>()
         var submitCount: Int = 0
         var submitGate: CompletableDeferred<Unit>? = null
         var result: FeedbackSubmissionResult = FeedbackSubmissionResult.Success("document-1")
 
         override suspend fun submit(
-            request: FeedbackSubmissionRequest,
-            screenshotFile: File?
+            request: FeedbackSubmissionRequest
         ): FeedbackSubmissionResult {
             submitCount += 1
             this.request = request
-            this.screenshotFile = screenshotFile
+            requests += request
             submitGate?.await()
-            return result
+            return if (results.isEmpty()) result else results.removeFirst()
         }
-
-        override suspend fun cleanupOrphans() = FeedbackOrphanCleanupResult(0, 0, 0)
     }
 
-    private class FakeFeedbackMediaProcessor : FeedbackMediaProcessor {
-        var allowRestore: Boolean = true
-        var processGate: CompletableDeferred<Unit>? = null
-        var processResult: FeedbackMediaProcessingResult? = null
-        val deletedPaths = mutableListOf<String>()
-
-        suspend fun processForTest(): FeedbackMediaProcessingResult {
-            processGate?.await()
-            return processResult ?: error("Unexpected process call")
-        }
-
-        override suspend fun process(uri: Uri): FeedbackMediaProcessingResult = processForTest()
-
-        override fun restore(
-            path: String?,
-            displayName: String?,
-            width: Int?,
-            height: Int?,
-            byteCount: Long?
-        ): ProcessedFeedbackMedia? {
-            if (!allowRestore || path.isNullOrBlank()) return null
-            val file = File(path)
-            if (!file.isFile || file.length() <= 0L) return null
-            return ProcessedFeedbackMedia(
-                path = file.canonicalPath,
-                displayName = displayName.orEmpty(),
-                width = width ?: return null,
-                height = height ?: return null,
-                byteCount = byteCount ?: file.length()
-            )
-        }
-
-        override suspend fun delete(path: String?) {
-            path?.let(deletedPaths::add)
-        }
-
-        override suspend fun cleanupExpired() = Unit
+    private companion object {
+        const val SUBMISSION_ID_1 = "123e4567-e89b-42d3-a456-426614174000"
+        const val SUBMISSION_ID_2 = "123e4567-e89b-42d3-a456-426614174001"
     }
 }

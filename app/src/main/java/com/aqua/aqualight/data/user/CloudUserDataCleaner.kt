@@ -2,15 +2,12 @@ package com.aqua.aqualight.data.user
 
 import com.google.android.gms.tasks.Task
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
-import com.google.firebase.storage.StorageException
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlinx.coroutines.suspendCancellableCoroutine
+import com.google.firebase.firestore.Source
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 
 class CloudUserDataCleaner private constructor(
-    private val firestore: FirebaseFirestore,
-    private val storage: FirebaseStorage
+    private val firestore: FirebaseFirestore
 ) {
 
     data class CleanupResult(
@@ -25,10 +22,13 @@ class CloudUserDataCleaner private constructor(
     }
 
     companion object {
+        private const val ROOT_COLLECTION = "feedback_items"
+        private const val SUBMISSIONS_COLLECTION = "submissions"
+        private const val DELETE_CHUNK_SIZE = 100
+
         fun create(): CloudUserDataCleaner {
             return CloudUserDataCleaner(
-                firestore = FirebaseFirestore.getInstance(),
-                storage = FirebaseStorage.getInstance()
+                firestore = FirebaseFirestore.getInstance()
             )
         }
     }
@@ -40,118 +40,65 @@ class CloudUserDataCleaner private constructor(
 
         if (uid.isBlank()) {
             return CleanupResult(
-                error = IllegalArgumentException(
-                    "Owner uid is blank."
-                )
+                error = IllegalArgumentException("Owner uid is blank.")
             )
         }
 
-        return runCatching {
-            val feedbackSnapshot =
-                firestore.collection("feedback_items")
-                    .whereEqualTo("userId", uid)
-                    .get()
-                    .awaitResult()
-
-            feedbackSnapshot.documents.forEach { document ->
-                val screenshotRef =
-                    storage.reference.child(
-                        "feedback_screenshots/$uid/${document.id}.jpg"
-                    )
-
-                runCatching {
-                    screenshotRef.delete()
-                        .awaitCompletion()
-                }.onFailure { error ->
-                    if (!error.isStorageObjectNotFound()) {
-                        throw error
-                    }
-                }
-            }
+        return try {
+            // Server-only prevents account deletion from trusting stale cached feedback.
+            val feedbackSnapshot = firestore.collection(ROOT_COLLECTION)
+                .document(uid)
+                .collection(SUBMISSIONS_COLLECTION)
+                .get(Source.SERVER)
+                .awaitNonNull()
 
             feedbackSnapshot.documents
-                .chunked(400)
+                .chunked(DELETE_CHUNK_SIZE)
                 .forEach { documents ->
-                    val batch =
-                        firestore.batch()
-
-                    documents.forEach { document ->
-                        batch.delete(
-                            document.reference
-                        )
-                    }
-
-                    batch.commit()
-                        .awaitCompletion()
+                    firestore.runTransaction { transaction ->
+                        // Firestore transactions require every read before the first delete.
+                        val snapshots = documents.map { document ->
+                            transaction.get(document.reference)
+                        }
+                        snapshots.forEach { snapshot ->
+                            if (snapshot.exists()) {
+                                check(snapshot.getString("userId") == uid) {
+                                    "Feedback cleanup encountered an owner mismatch."
+                                }
+                                transaction.delete(snapshot.reference)
+                            }
+                        }
+                        true
+                    }.awaitNonNull()
                 }
 
             CleanupResult.Success
-        }.getOrElse { error ->
-            CleanupResult(
-                error = error
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (error: Throwable) {
+            CleanupResult(error = error)
+        }
+    }
+}
+
+/** Coroutine cancellation stops waiting; Firestore keeps its own authoritative task lifecycle. */
+private suspend fun <T : Any> Task<T>.awaitNonNull(): T {
+    val deferred = CompletableDeferred<T>()
+    addOnCompleteListener { task ->
+        if (task.isSuccessful) {
+            val result = task.result
+            if (result != null) {
+                deferred.complete(result)
+            } else {
+                deferred.completeExceptionally(
+                    IllegalStateException("Firebase task returned a null result.")
+                )
+            }
+        } else {
+            deferred.completeExceptionally(
+                task.exception ?: IllegalStateException("Firebase task failed without an exception.")
             )
         }
     }
-
-    private fun Throwable.isStorageObjectNotFound(): Boolean {
-        return this is StorageException &&
-            errorCode == StorageException.ERROR_OBJECT_NOT_FOUND
-    }
-
-    private suspend fun Task<Void>.awaitCompletion() {
-        suspendCancellableCoroutine<Unit> { continuation ->
-            addOnCompleteListener { task ->
-                if (!continuation.isActive) {
-                    return@addOnCompleteListener
-                }
-
-                val exception =
-                    task.exception
-
-                if (task.isSuccessful && exception == null) {
-                    continuation.resume(Unit)
-                } else {
-                    continuation.resumeWithException(
-                        exception ?: IllegalStateException(
-                            "Firebase task failed."
-                        )
-                    )
-                }
-            }
-        }
-    }
-
-    private suspend fun <T> Task<T>.awaitResult(): T {
-        return suspendCancellableCoroutine { continuation ->
-            addOnCompleteListener { task ->
-                if (!continuation.isActive) {
-                    return@addOnCompleteListener
-                }
-
-                val exception =
-                    task.exception
-
-                if (task.isSuccessful && exception == null) {
-                    val result =
-                        task.result
-
-                    if (result != null) {
-                        continuation.resume(result)
-                    } else {
-                        continuation.resumeWithException(
-                            IllegalStateException(
-                                "Firebase task returned null result."
-                            )
-                        )
-                    }
-                } else {
-                    continuation.resumeWithException(
-                        exception ?: IllegalStateException(
-                            "Firebase task failed."
-                        )
-                    )
-                }
-            }
-        }
-    }
+    return deferred.await()
 }

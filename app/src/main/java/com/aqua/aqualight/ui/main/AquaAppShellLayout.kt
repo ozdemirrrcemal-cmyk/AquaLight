@@ -3,9 +3,11 @@ package com.aqua.aqualight.ui.main
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.os.Build
 import android.util.AttributeSet
 import android.view.View
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -14,11 +16,11 @@ import androidx.core.view.updatePadding
 import com.aqua.aqualight.R
 
 /**
- * Owns the system-bar contract for the authenticated app shell.
+ * Owns the system-bar contract for the root application shell.
  *
- * The shell renders edge-to-edge, keeps fragment content outside status bars
- * and display cutouts, and lets the bottom-navigation background extend behind
- * the gesture/navigation area without duplicating insets in child fragments.
+ * Normal destinations remain inside safe drawing insets. A destination with a visual backdrop can
+ * temporarily request full-bleed content: the NavHost then reaches the physical display edges while
+ * that destination remains responsible for insetting only its interactive foreground content.
  */
 class AquaAppShellLayout @JvmOverloads constructor(
     context: Context,
@@ -35,6 +37,16 @@ class AquaAppShellLayout @JvmOverloads constructor(
         val top: Int,
         val right: Int,
         val bottom: Int
+    )
+
+    private data class SystemBarAppearance(
+        val statusBarColor: Int,
+        val navigationBarColor: Int,
+        val navigationBarDividerColor: Int?,
+        val lightStatusBars: Boolean,
+        val lightNavigationBars: Boolean,
+        val statusBarContrastEnforced: Boolean?,
+        val navigationBarContrastEnforced: Boolean?
     )
 
     private var navHost: View? = null
@@ -62,6 +74,9 @@ class AquaAppShellLayout @JvmOverloads constructor(
     private var lastBottomNavigationVisibility =
         View.GONE
 
+    private var contentDrawsBehindSystemBars = false
+    private var defaultSystemBarAppearance: SystemBarAppearance? = null
+
     private val safeDrawingTypes =
         WindowInsetsCompat.Type.systemBars() or
             WindowInsetsCompat.Type.displayCutout()
@@ -77,13 +92,33 @@ class AquaAppShellLayout @JvmOverloads constructor(
 
             applyInsetsToShellChildren()
 
-            WindowInsetsCompat.Builder(windowInsets)
-                .setInsets(
-                    safeDrawingTypes,
-                    Insets.NONE
-                )
-                .build()
+            if (contentDrawsBehindSystemBars) {
+                // A full-bleed destination must receive the original insets so it can protect only
+                // its foreground controls without shrinking its visual backdrop.
+                windowInsets
+            } else {
+                WindowInsetsCompat.Builder(windowInsets)
+                    .setInsets(
+                        safeDrawingTypes,
+                        Insets.NONE
+                    )
+                    .build()
+            }
         }
+    }
+
+    /**
+     * Enables a destination-owned full-bleed backdrop without changing the inset contract of any
+     * other screen. The default system-bar appearance is restored when this mode is disabled.
+     */
+    fun setContentDrawsBehindSystemBars(enabled: Boolean) {
+        if (contentDrawsBehindSystemBars == enabled) return
+
+        contentDrawsBehindSystemBars = enabled
+        captureDefaultSystemBarAppearanceIfNeeded()
+        applySystemBarAppearance()
+        applyInsetsToShellChildren()
+        ViewCompat.requestApplyInsets(this)
     }
 
     override fun onFinishInflate() {
@@ -128,7 +163,18 @@ class AquaAppShellLayout @JvmOverloads constructor(
         super.onAttachedToWindow()
 
         enableEdgeToEdgeWindow()
+        captureDefaultSystemBarAppearanceIfNeeded()
+        applySystemBarAppearance()
         ViewCompat.requestApplyInsets(this)
+    }
+
+    override fun onDetachedFromWindow() {
+        if (contentDrawsBehindSystemBars) {
+            contentDrawsBehindSystemBars = false
+            applySystemBarAppearance()
+        }
+
+        super.onDetachedFromWindow()
     }
 
     override fun onLayout(
@@ -176,23 +222,34 @@ class AquaAppShellLayout @JvmOverloads constructor(
             bottomNavigationView.visibility ==
                 View.VISIBLE
 
+        val contentInsets = if (contentDrawsBehindSystemBars) {
+            Insets.NONE
+        } else {
+            Insets.of(
+                safeDrawingInsets.left,
+                safeDrawingInsets.top,
+                safeDrawingInsets.right,
+                if (bottomNavigationVisible) {
+                    0
+                } else {
+                    safeDrawingInsets.bottom
+                }
+            )
+        }
+
         navHostView.updatePadding(
             left =
                 navHostBasePadding.left +
-                    safeDrawingInsets.left,
+                    contentInsets.left,
             top =
                 navHostBasePadding.top +
-                    safeDrawingInsets.top,
+                    contentInsets.top,
             right =
                 navHostBasePadding.right +
-                    safeDrawingInsets.right,
+                    contentInsets.right,
             bottom =
                 navHostBasePadding.bottom +
-                    if (bottomNavigationVisible) {
-                        0
-                    } else {
-                        safeDrawingInsets.bottom
-                    }
+                    contentInsets.bottom
         )
 
         applyInsetsToBottomNavigation(
@@ -224,6 +281,85 @@ class AquaAppShellLayout @JvmOverloads constructor(
                 activity.window,
                 false
             )
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun captureDefaultSystemBarAppearanceIfNeeded() {
+        if (defaultSystemBarAppearance != null) return
+
+        val activity = context.findActivity() ?: return
+        val window = activity.window
+        val controller = WindowCompat.getInsetsController(window, this)
+
+        defaultSystemBarAppearance = SystemBarAppearance(
+            statusBarColor = window.statusBarColor,
+            navigationBarColor = window.navigationBarColor,
+            navigationBarDividerColor = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                window.navigationBarDividerColor
+            } else {
+                null
+            },
+            lightStatusBars = controller.isAppearanceLightStatusBars,
+            lightNavigationBars = controller.isAppearanceLightNavigationBars,
+            statusBarContrastEnforced = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                window.isStatusBarContrastEnforced
+            } else {
+                null
+            },
+            navigationBarContrastEnforced = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                window.isNavigationBarContrastEnforced
+            } else {
+                null
+            }
+        )
+    }
+
+    @Suppress("DEPRECATION")
+    private fun applySystemBarAppearance() {
+        val activity = context.findActivity() ?: return
+        val window = activity.window
+        val controller = WindowCompat.getInsetsController(window, this)
+
+        if (contentDrawsBehindSystemBars) {
+            val transparentColor = ContextCompat.getColor(
+                context,
+                R.color.aqua_color_transparent
+            )
+
+            window.statusBarColor = transparentColor
+            window.navigationBarColor = transparentColor
+            controller.isAppearanceLightStatusBars = false
+            controller.isAppearanceLightNavigationBars = false
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                window.navigationBarDividerColor = transparentColor
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                window.isStatusBarContrastEnforced = false
+                window.isNavigationBarContrastEnforced = false
+            }
+            return
+        }
+
+        val appearance = defaultSystemBarAppearance ?: return
+        window.statusBarColor = appearance.statusBarColor
+        window.navigationBarColor = appearance.navigationBarColor
+        controller.isAppearanceLightStatusBars = appearance.lightStatusBars
+        controller.isAppearanceLightNavigationBars = appearance.lightNavigationBars
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            appearance.navigationBarDividerColor?.let { color ->
+                window.navigationBarDividerColor = color
+            }
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            appearance.statusBarContrastEnforced?.let { enforced ->
+                window.isStatusBarContrastEnforced = enforced
+            }
+            appearance.navigationBarContrastEnforced?.let { enforced ->
+                window.isNavigationBarContrastEnforced = enforced
+            }
         }
     }
 

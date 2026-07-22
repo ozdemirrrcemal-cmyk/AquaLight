@@ -2,41 +2,20 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isOwner(ownerUid) {
+    function isAuthenticatedOwner(ownerUid) {
       return request.auth != null && request.auth.uid == ownerUid;
     }
 
-    function markerFieldsAreValid(feedbackId, state, status) {
-      let data = request.resource.data;
-      return data.keys().hasAll([
-          'userId',
-          'mediaTransactionState',
-          'status',
-          'screenshotPath',
-          'createdAt',
-          'mediaTransactionExpiresAt'
-        ])
-        && data.keys().hasOnly([
-          'userId',
-          'mediaTransactionState',
-          'status',
-          'screenshotPath',
-          'createdAt',
-          'mediaTransactionExpiresAt'
-        ])
-        && isOwner(data.userId)
-        && data.mediaTransactionState == state
-        && data.status == status
-        && data.screenshotPath ==
-          'feedback_screenshots/' + data.userId + '/' + feedbackId + '.jpg'
-        && data.createdAt is timestamp
-        && data.mediaTransactionExpiresAt is timestamp
-        && data.mediaTransactionExpiresAt > request.time;
+    function validSubmissionId(submissionId) {
+      return submissionId is string
+        && submissionId.size() == 36
+        && submissionId.matches('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$');
     }
 
-    function textFeedbackIsValid() {
+    function textFeedbackIsValid(ownerUid, submissionId) {
       let data = request.resource.data;
       return data.keys().hasAll([
+          'submissionId',
           'category',
           'email',
           'message',
@@ -45,10 +24,10 @@ service cloud.firestore {
           'locale',
           'status',
           'userId',
-          'createdAt',
-          'mediaTransactionState'
+          'createdAt'
         ])
         && data.keys().hasOnly([
+          'submissionId',
           'category',
           'email',
           'message',
@@ -57,14 +36,12 @@ service cloud.firestore {
           'locale',
           'status',
           'userId',
-          'createdAt',
-          'mediaTransactionState'
+          'createdAt'
         ])
-        && (
-          isOwner(data.userId)
-          || (request.auth == null && data.userId == 'anonymous')
-        )
-        && data.mediaTransactionState == 'committed'
+        && isAuthenticatedOwner(ownerUid)
+        && validSubmissionId(submissionId)
+        && data.submissionId == submissionId
+        && data.userId == ownerUid
         && data.status == 'new'
         && data.platform == 'android'
         && data.category is string
@@ -72,99 +49,35 @@ service cloud.firestore {
         && data.category.size() <= 80
         && data.message is string
         && data.message.size() >= 10
-        && data.message.size() <= 4000
-        && (data.email == null || (data.email is string && data.email.size() <= 320))
-        && data.appVersion is string
-        && data.appVersion.size() <= 64
-        && data.locale is string
-        && data.locale.size() <= 35
-        && data.createdAt == request.time;
-    }
-
-    function committedMediaFeedbackIsValid(feedbackId) {
-      let data = request.resource.data;
-      return data.keys().hasAll([
-          'category',
-          'email',
-          'message',
-          'platform',
-          'appVersion',
-          'locale',
-          'status',
-          'userId',
-          'createdAt',
-          'screenshotUrl',
-          'screenshotPath',
-          'mediaTransactionState'
-        ])
-        && data.keys().hasOnly([
-          'category',
-          'email',
-          'message',
-          'platform',
-          'appVersion',
-          'locale',
-          'status',
-          'userId',
-          'createdAt',
-          'screenshotUrl',
-          'screenshotPath',
-          'mediaTransactionState'
-        ])
-        && isOwner(data.userId)
-        && data.mediaTransactionState == 'committed'
-        && data.status == 'new'
-        && data.platform == 'android'
-        && data.screenshotPath ==
-          'feedback_screenshots/' + data.userId + '/' + feedbackId + '.jpg'
-        && data.screenshotUrl is string
-        && data.screenshotUrl.size() > 0
-        && data.category is string
-        && data.category.size() > 0
-        && data.category.size() <= 80
-        && data.message is string
-        && data.message.size() >= 10
-        && data.message.size() <= 4000
-        && (data.email == null || (data.email is string && data.email.size() <= 320))
-        && data.appVersion is string
-        && data.appVersion.size() <= 64
-        && data.locale is string
-        && data.locale.size() <= 35
-        && data.createdAt == request.time;
-    }
-
-    match /feedback_items/{feedbackId} {
-      // A transaction may probe a freshly generated, still-absent document. Existing
-      // documents remain readable only by their immutable owner.
-      allow get: if request.auth != null
+        && data.message.size() <= 500
         && (
-          !exists(/databases/$(database)/documents/feedback_items/$(feedbackId))
-          || resource.data.userId == request.auth.uid
-        );
-      allow list, delete: if false;
-
-      allow create: if textFeedbackIsValid()
-        || (
-          markerFieldsAreValid(feedbackId, 'pending', 'media_pending')
-          && request.resource.data.createdAt == request.time
-        )
-        || (
-          markerFieldsAreValid(feedbackId, 'aborted', 'media_aborted')
-          && request.resource.data.createdAt == request.time
-        );
-
-      allow update: if request.auth != null
-        && resource.data.userId == request.auth.uid
-        && request.resource.data.userId == resource.data.userId
-        && resource.data.mediaTransactionState == 'pending'
-        && resource.data.screenshotPath == request.resource.data.screenshotPath
-        && (
-          committedMediaFeedbackIsValid(feedbackId)
+          data.email == null
           || (
-            markerFieldsAreValid(feedbackId, 'aborted', 'media_aborted')
-            && request.resource.data.createdAt == resource.data.createdAt
+            data.email is string
+            && data.email.size() > 0
+            && data.email.size() <= 254
+            && data.email.split('@').size() == 2
+            && data.email.split('@')[0].size() <= 64
+            && data.email.matches("^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(\\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*@[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)+$")
           )
-        );
+        )
+        && data.appVersion is string
+        && data.appVersion.size() > 0
+        && data.appVersion.size() <= 64
+        && data.locale is string
+        && data.locale.size() > 0
+        && data.locale.size() <= 35
+        && data.createdAt == request.time;
+    }
+
+    match /feedback_items/{ownerUid} {
+      allow read, write: if false;
+
+      match /submissions/{submissionId} {
+        allow create: if textFeedbackIsValid(ownerUid, submissionId);
+        allow get, list, delete: if isAuthenticatedOwner(ownerUid);
+        allow update: if false;
+      }
     }
   }
 }

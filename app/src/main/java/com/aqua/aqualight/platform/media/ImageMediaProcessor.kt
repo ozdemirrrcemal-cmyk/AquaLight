@@ -21,8 +21,8 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 
-interface FeedbackMediaProcessor {
-    suspend fun process(uri: Uri): FeedbackMediaProcessingResult
+interface ImageMediaProcessor {
+    suspend fun process(uri: Uri): ImageMediaProcessingResult
 
     fun restore(
         path: String?,
@@ -30,14 +30,14 @@ interface FeedbackMediaProcessor {
         width: Int?,
         height: Int?,
         byteCount: Long?
-    ): ProcessedFeedbackMedia?
+    ): ProcessedImageMedia?
 
     suspend fun delete(path: String?)
 
     suspend fun cleanupExpired()
 }
 
-data class ProcessedFeedbackMedia(
+data class ProcessedImageMedia(
     val path: String,
     val displayName: String,
     val width: Int,
@@ -48,18 +48,18 @@ data class ProcessedFeedbackMedia(
         get() = File(path)
 }
 
-sealed interface FeedbackMediaProcessingResult {
+sealed interface ImageMediaProcessingResult {
     data class Success(
-        val media: ProcessedFeedbackMedia
-    ) : FeedbackMediaProcessingResult
+        val media: ProcessedImageMedia
+    ) : ImageMediaProcessingResult
 
     data class Failure(
-        val kind: FeedbackMediaFailureKind,
+        val kind: ImageMediaFailureKind,
         val cause: Throwable? = null
-    ) : FeedbackMediaProcessingResult
+    ) : ImageMediaProcessingResult
 }
 
-enum class FeedbackMediaFailureKind {
+enum class ImageMediaFailureKind {
     UNSUPPORTED_TYPE,
     SOURCE_TOO_LARGE,
     TOO_MANY_PIXELS,
@@ -73,16 +73,16 @@ enum class FeedbackMediaFailureKind {
  * Narrow source boundary so URI ownership and bounded-copy behavior can be tested without
  * coupling the processor to a particular ContentProvider implementation.
  */
-internal interface FeedbackMediaSourceAccess {
+internal interface ImageMediaSourceAccess {
     fun mimeType(uri: Uri): String?
     fun declaredLength(uri: Uri): Long?
     fun open(uri: Uri): InputStream?
     fun displayName(uri: Uri): String
 }
 
-private class ContentResolverFeedbackMediaSourceAccess(
+private class ContentResolverImageMediaSourceAccess(
     private val resolver: ContentResolver
-) : FeedbackMediaSourceAccess {
+) : ImageMediaSourceAccess {
 
     override fun mimeType(uri: Uri): String? = runCatching {
         resolver.getType(uri)?.trim()?.lowercase()
@@ -116,16 +116,16 @@ private class ContentResolverFeedbackMediaSourceAccess(
     }
 
     private companion object {
-        const val DEFAULT_DISPLAY_NAME = "screenshot.jpg"
+        const val DEFAULT_DISPLAY_NAME = "image.jpg"
     }
 }
 
-class AndroidFeedbackMediaProcessor internal constructor(
+class AndroidImageMediaProcessor internal constructor(
     context: Context,
     private val dispatcher: CoroutineDispatcher,
     private val clockMillis: () -> Long,
-    private val sourceAccess: FeedbackMediaSourceAccess
-) : FeedbackMediaProcessor {
+    private val sourceAccess: ImageMediaSourceAccess
+) : ImageMediaProcessor {
 
     constructor(
         context: Context,
@@ -135,7 +135,7 @@ class AndroidFeedbackMediaProcessor internal constructor(
         context = context,
         dispatcher = dispatcher,
         clockMillis = clockMillis,
-        sourceAccess = ContentResolverFeedbackMediaSourceAccess(
+        sourceAccess = ContentResolverImageMediaSourceAccess(
             context.applicationContext.contentResolver
         )
     )
@@ -143,21 +143,21 @@ class AndroidFeedbackMediaProcessor internal constructor(
     private val appContext = context.applicationContext
     private val outputDirectory = File(appContext.cacheDir, DIRECTORY_NAME)
 
-    override suspend fun process(uri: Uri): FeedbackMediaProcessingResult = withContext(dispatcher) {
+    override suspend fun process(uri: Uri): ImageMediaProcessingResult = withContext(dispatcher) {
         cleanupExpiredInternal()
         currentCoroutineContext().ensureActive()
 
         val mimeType = sourceAccess.mimeType(uri)
         if (isExplicitlyUnsupportedMimeType(mimeType)) {
-            return@withContext FeedbackMediaProcessingResult.Failure(
-                FeedbackMediaFailureKind.UNSUPPORTED_TYPE
+            return@withContext ImageMediaProcessingResult.Failure(
+                ImageMediaFailureKind.UNSUPPORTED_TYPE
             )
         }
 
         val declaredBytes = sourceAccess.declaredLength(uri)
-        if (declaredBytes != null && declaredBytes > FeedbackImagePolicy.MAX_SOURCE_BYTES) {
-            return@withContext FeedbackMediaProcessingResult.Failure(
-                FeedbackMediaFailureKind.SOURCE_TOO_LARGE
+        if (declaredBytes != null && declaredBytes > ImageMediaPolicy.MAX_SOURCE_BYTES) {
+            return@withContext ImageMediaProcessingResult.Failure(
+                ImageMediaFailureKind.SOURCE_TOO_LARGE
             )
         }
 
@@ -170,57 +170,57 @@ class AndroidFeedbackMediaProcessor internal constructor(
 
         try {
             stagedSource = createOwnedFile(SOURCE_PREFIX, SOURCE_SUFFIX)
-                ?: return@withContext FeedbackMediaProcessingResult.Failure(
-                    FeedbackMediaFailureKind.IO
+                ?: return@withContext ImageMediaProcessingResult.Failure(
+                    ImageMediaFailureKind.IO
                 )
 
             when (stageSource(uri, stagedSource)) {
                 SourceStageResult.Success -> Unit
                 SourceStageResult.Unavailable -> {
-                    return@withContext FeedbackMediaProcessingResult.Failure(
-                        FeedbackMediaFailureKind.INVALID_IMAGE
+                    return@withContext ImageMediaProcessingResult.Failure(
+                        ImageMediaFailureKind.INVALID_IMAGE
                     )
                 }
             }
 
             currentCoroutineContext().ensureActive()
             val bounds = decodeBounds(stagedSource)
-                ?: return@withContext FeedbackMediaProcessingResult.Failure(
-                    FeedbackMediaFailureKind.INVALID_IMAGE
+                ?: return@withContext ImageMediaProcessingResult.Failure(
+                    ImageMediaFailureKind.INVALID_IMAGE
                 )
 
             when (
-                FeedbackImagePolicy.validateSource(
+                ImageMediaPolicy.validateSource(
                     width = bounds.first,
                     height = bounds.second,
                     sourceBytes = stagedSource.length()
                 )
             ) {
-                FeedbackImagePolicyResult.Accepted -> Unit
-                FeedbackImagePolicyResult.SourceTooLarge -> {
-                    return@withContext FeedbackMediaProcessingResult.Failure(
-                        FeedbackMediaFailureKind.SOURCE_TOO_LARGE
+                ImageMediaPolicyResult.Accepted -> Unit
+                ImageMediaPolicyResult.SourceTooLarge -> {
+                    return@withContext ImageMediaProcessingResult.Failure(
+                        ImageMediaFailureKind.SOURCE_TOO_LARGE
                     )
                 }
-                FeedbackImagePolicyResult.TooManyPixels -> {
-                    return@withContext FeedbackMediaProcessingResult.Failure(
-                        FeedbackMediaFailureKind.TOO_MANY_PIXELS
+                ImageMediaPolicyResult.TooManyPixels -> {
+                    return@withContext ImageMediaProcessingResult.Failure(
+                        ImageMediaFailureKind.TOO_MANY_PIXELS
                     )
                 }
-                FeedbackImagePolicyResult.InvalidDimensions -> {
-                    return@withContext FeedbackMediaProcessingResult.Failure(
-                        FeedbackMediaFailureKind.INVALID_IMAGE
+                ImageMediaPolicyResult.InvalidDimensions -> {
+                    return@withContext ImageMediaProcessingResult.Failure(
+                        ImageMediaFailureKind.INVALID_IMAGE
                     )
                 }
             }
 
             outputFile = createOwnedFile(OUTPUT_PREFIX, OUTPUT_SUFFIX)
-                ?: return@withContext FeedbackMediaProcessingResult.Failure(
-                    FeedbackMediaFailureKind.IO
+                ?: return@withContext ImageMediaProcessingResult.Failure(
+                    ImageMediaFailureKind.IO
                 )
 
             val options = BitmapFactory.Options().apply {
-                inSampleSize = FeedbackImagePolicy.calculateInSampleSize(
+                inSampleSize = ImageMediaPolicy.calculateInSampleSize(
                     width = bounds.first,
                     height = bounds.second
                 )
@@ -233,7 +233,7 @@ class AndroidFeedbackMediaProcessor internal constructor(
 
             currentCoroutineContext().ensureActive()
             oriented = applyExifOrientation(stagedSource, decoded)
-            val target = FeedbackImagePolicy.targetSize(
+            val target = ImageMediaPolicy.targetSize(
                 width = oriented.width,
                 height = oriented.height
             )
@@ -250,14 +250,14 @@ class AndroidFeedbackMediaProcessor internal constructor(
 
             currentCoroutineContext().ensureActive()
             if (!compressWithinLimit(scaled, outputFile)) {
-                return@withContext FeedbackMediaProcessingResult.Failure(
-                    FeedbackMediaFailureKind.OUTPUT_TOO_LARGE
+                return@withContext ImageMediaProcessingResult.Failure(
+                    ImageMediaFailureKind.OUTPUT_TOO_LARGE
                 )
             }
 
             completedSuccessfully = true
-            FeedbackMediaProcessingResult.Success(
-                ProcessedFeedbackMedia(
+            ImageMediaProcessingResult.Success(
+                ProcessedImageMedia(
                     path = outputFile.canonicalPath,
                     displayName = sourceAccess.displayName(uri),
                     width = scaled.width,
@@ -268,23 +268,23 @@ class AndroidFeedbackMediaProcessor internal constructor(
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (error: OutOfMemoryError) {
-            FeedbackMediaProcessingResult.Failure(
-                kind = FeedbackMediaFailureKind.OUT_OF_MEMORY,
+            ImageMediaProcessingResult.Failure(
+                kind = ImageMediaFailureKind.OUT_OF_MEMORY,
                 cause = error
             )
         } catch (error: SourceTooLargeException) {
-            FeedbackMediaProcessingResult.Failure(
-                kind = FeedbackMediaFailureKind.SOURCE_TOO_LARGE,
+            ImageMediaProcessingResult.Failure(
+                kind = ImageMediaFailureKind.SOURCE_TOO_LARGE,
                 cause = error
             )
         } catch (error: InvalidImageException) {
-            FeedbackMediaProcessingResult.Failure(
-                kind = FeedbackMediaFailureKind.INVALID_IMAGE,
+            ImageMediaProcessingResult.Failure(
+                kind = ImageMediaFailureKind.INVALID_IMAGE,
                 cause = error
             )
         } catch (error: Throwable) {
-            FeedbackMediaProcessingResult.Failure(
-                kind = FeedbackMediaFailureKind.IO,
+            ImageMediaProcessingResult.Failure(
+                kind = ImageMediaFailureKind.IO,
                 cause = error
             )
         } finally {
@@ -300,17 +300,17 @@ class AndroidFeedbackMediaProcessor internal constructor(
         width: Int?,
         height: Int?,
         byteCount: Long?
-    ): ProcessedFeedbackMedia? {
+    ): ProcessedImageMedia? {
         val file = resolveOwnedOutputFile(path) ?: return null
         val actualBytes = file.length()
-        if (!file.isFile || actualBytes <= 0L || actualBytes > FeedbackImagePolicy.MAX_OUTPUT_BYTES) {
+        if (!file.isFile || actualBytes <= 0L || actualBytes > ImageMediaPolicy.MAX_OUTPUT_BYTES) {
             return null
         }
         val restoredWidth = width?.takeIf { it > 0 } ?: return null
         val restoredHeight = height?.takeIf { it > 0 } ?: return null
         val restoredBytes = byteCount?.takeIf { it == actualBytes } ?: actualBytes
 
-        return ProcessedFeedbackMedia(
+        return ProcessedImageMedia(
             path = file.canonicalPath,
             displayName = displayName?.takeIf(String::isNotBlank) ?: DEFAULT_DISPLAY_NAME,
             width = restoredWidth,
@@ -342,7 +342,7 @@ class AndroidFeedbackMediaProcessor internal constructor(
                     if (read < 0) break
                     if (read == 0) continue
                     totalBytes += read.toLong()
-                    if (totalBytes > FeedbackImagePolicy.MAX_SOURCE_BYTES) {
+                    if (totalBytes > ImageMediaPolicy.MAX_SOURCE_BYTES) {
                         throw SourceTooLargeException()
                     }
                     output.write(buffer, 0, read)
@@ -408,12 +408,12 @@ class AndroidFeedbackMediaProcessor internal constructor(
         for (quality in COMPRESSION_QUALITIES) {
             FileOutputStream(outputFile, false).buffered().use { output ->
                 if (!bitmap.compress(Bitmap.CompressFormat.JPEG, quality, output)) {
-                    throw IllegalStateException("Feedback screenshot compression failed.")
+                    throw IllegalStateException("Image compression failed.")
                 }
                 output.flush()
             }
 
-            if (outputFile.length() in 1..FeedbackImagePolicy.MAX_OUTPUT_BYTES) {
+            if (outputFile.length() in 1..ImageMediaPolicy.MAX_OUTPUT_BYTES) {
                 return true
             }
         }
@@ -423,13 +423,13 @@ class AndroidFeedbackMediaProcessor internal constructor(
     private fun createOwnedFile(prefix: String, suffix: String): File? {
         return runCatching {
             if (!outputDirectory.exists() && !outputDirectory.mkdirs()) {
-                error("Feedback media directory could not be created.")
+                error("Image media directory could not be created.")
             }
             File(
                 outputDirectory,
                 "${prefix}${clockMillis()}_${UUID.randomUUID()}$suffix"
             ).apply {
-                if (!createNewFile()) error("Feedback media file could not be created.")
+                if (!createNewFile()) error("Image media file could not be created.")
             }
         }.getOrNull()
     }
@@ -479,15 +479,15 @@ class AndroidFeedbackMediaProcessor internal constructor(
         data object Unavailable : SourceStageResult
     }
 
-    private class SourceTooLargeException : IllegalArgumentException("Feedback source exceeds limit")
-    private class InvalidImageException : IllegalArgumentException("Invalid feedback image")
+    private class SourceTooLargeException : IllegalArgumentException("Image source exceeds limit")
+    private class InvalidImageException : IllegalArgumentException("Invalid image")
 
     private companion object {
-        const val DIRECTORY_NAME = "feedback_media"
-        const val DEFAULT_DISPLAY_NAME = "screenshot.jpg"
-        const val SOURCE_PREFIX = "feedback_source_"
+        const val DIRECTORY_NAME = "image_processing"
+        const val DEFAULT_DISPLAY_NAME = "image.jpg"
+        const val SOURCE_PREFIX = "image_source_"
         const val SOURCE_SUFFIX = ".source"
-        const val OUTPUT_PREFIX = "feedback_output_"
+        const val OUTPUT_PREFIX = "image_output_"
         const val OUTPUT_SUFFIX = ".jpg"
         const val COPY_BUFFER_BYTES = 64 * 1024
         const val MAX_TEMP_AGE_MILLIS = 24L * 60L * 60L * 1000L

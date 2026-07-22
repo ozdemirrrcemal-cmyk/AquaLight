@@ -13,8 +13,8 @@
 
     <!-- Bounded, app-owned source prepared before profile/tank cropping. -->
     <cache-path
-        name="feedback_media"
-        path="feedback_media/" />
+        name="image_processing"
+        path="image_processing/" />
 
     <cache-path
         name="tank_exports"

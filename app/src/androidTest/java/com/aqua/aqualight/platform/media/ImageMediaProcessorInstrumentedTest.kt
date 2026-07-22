@@ -23,7 +23,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class FeedbackMediaProcessorInstrumentedTest {
+class ImageMediaProcessorInstrumentedTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
 
@@ -31,10 +31,10 @@ class FeedbackMediaProcessorInstrumentedTest {
     fun oversizedProviderImageUsesSampledDecodeAndCompressesWithinCommercialLimits() = runBlocking {
         val sourceWidth = 3_600
         val sourceHeight = 3_400
-        val expectedSample = FeedbackImagePolicy.calculateInSampleSize(sourceWidth, sourceHeight)
+        val expectedSample = ImageMediaPolicy.calculateInSampleSize(sourceWidth, sourceHeight)
         assertTrue("Fixture must exercise sampled decode", expectedSample > 1)
 
-        val source = providerFile("feedback_sampled_${UUID.randomUUID()}.jpg")
+        val source = providerFile("image_sampled_${UUID.randomUUID()}.jpg")
         val bitmap = Bitmap.createBitmap(sourceWidth, sourceHeight, Bitmap.Config.RGB_565).apply {
             eraseColor(Color.rgb(32, 112, 176))
         }
@@ -53,16 +53,16 @@ class FeedbackMediaProcessorInstrumentedTest {
                 "${context.packageName}.fileprovider",
                 source
             )
-            val processor = AndroidFeedbackMediaProcessor(context)
+            val processor = AndroidImageMediaProcessor(context)
             val result = processor.process(contentUri)
 
             assertTrue(
                 "Unexpected processing result: $result; sourceBytes=${source.length()}",
-                result is FeedbackMediaProcessingResult.Success
+                result is ImageMediaProcessingResult.Success
             )
-            val media = (result as FeedbackMediaProcessingResult.Success).media
-            assertTrue(maxOf(media.width, media.height) <= FeedbackImagePolicy.MAX_OUTPUT_EDGE_PX)
-            assertTrue(media.byteCount in 1..FeedbackImagePolicy.MAX_OUTPUT_BYTES)
+            val media = (result as ImageMediaProcessingResult.Success).media
+            assertTrue(maxOf(media.width, media.height) <= ImageMediaPolicy.MAX_OUTPUT_EDGE_PX)
+            assertTrue(media.byteCount in 1..ImageMediaPolicy.MAX_OUTPUT_BYTES)
             assertTrue(media.file.exists())
             assertNoStagedSourceFiles()
             processor.delete(media.path)
@@ -83,10 +83,10 @@ class FeedbackMediaProcessorInstrumentedTest {
 
         val result = processor.process(TEST_URI)
 
-        assertTrue("Unexpected result: $result", result is FeedbackMediaProcessingResult.Success)
-        val media = (result as FeedbackMediaProcessingResult.Success).media
-        assertTrue(maxOf(media.width, media.height) <= FeedbackImagePolicy.MAX_OUTPUT_EDGE_PX)
-        assertTrue(media.byteCount in 1..FeedbackImagePolicy.MAX_OUTPUT_BYTES)
+        assertTrue("Unexpected result: $result", result is ImageMediaProcessingResult.Success)
+        val media = (result as ImageMediaProcessingResult.Success).media
+        assertTrue(maxOf(media.width, media.height) <= ImageMediaPolicy.MAX_OUTPUT_EDGE_PX)
+        assertTrue(media.byteCount in 1..ImageMediaPolicy.MAX_OUTPUT_BYTES)
         assertTrue(sourceAccess.lastStream?.closed == true)
         assertNoStagedSourceFiles()
         processor.delete(media.path)
@@ -95,7 +95,7 @@ class FeedbackMediaProcessorInstrumentedTest {
     @Test
     fun sourceBeyondByteLimitIsRejectedBeforeDecodeAndStreamIsClosed() = runBlocking {
         val sourceAccess = FakeSourceAccess(
-            bytes = ByteArray((FeedbackImagePolicy.MAX_SOURCE_BYTES + 1L).toInt()),
+            bytes = ByteArray((ImageMediaPolicy.MAX_SOURCE_BYTES + 1L).toInt()),
             declaredLength = null,
             mimeType = null
         )
@@ -103,10 +103,10 @@ class FeedbackMediaProcessorInstrumentedTest {
 
         val result = processor.process(TEST_URI)
 
-        assertTrue(result is FeedbackMediaProcessingResult.Failure)
+        assertTrue(result is ImageMediaProcessingResult.Failure)
         assertEquals(
-            FeedbackMediaFailureKind.SOURCE_TOO_LARGE,
-            (result as FeedbackMediaProcessingResult.Failure).kind
+            ImageMediaFailureKind.SOURCE_TOO_LARGE,
+            (result as ImageMediaProcessingResult.Failure).kind
         )
         assertTrue(sourceAccess.lastStream?.closed == true)
         assertNoStagedSourceFiles()
@@ -114,7 +114,7 @@ class FeedbackMediaProcessorInstrumentedTest {
 
     @Test
     fun corruptProviderImageReturnsTypedInvalidImageFailure() = runBlocking {
-        val source = providerFile("feedback_corrupt_${UUID.randomUUID()}.png").apply {
+        val source = providerFile("image_corrupt_${UUID.randomUUID()}.png").apply {
             writeText("not an image")
         }
         try {
@@ -123,12 +123,12 @@ class FeedbackMediaProcessorInstrumentedTest {
                 "${context.packageName}.fileprovider",
                 source
             )
-            val result = AndroidFeedbackMediaProcessor(context).process(contentUri)
+            val result = AndroidImageMediaProcessor(context).process(contentUri)
 
-            assertTrue(result is FeedbackMediaProcessingResult.Failure)
+            assertTrue(result is ImageMediaProcessingResult.Failure)
             assertEquals(
-                FeedbackMediaFailureKind.INVALID_IMAGE,
-                (result as FeedbackMediaProcessingResult.Failure).kind
+                ImageMediaFailureKind.INVALID_IMAGE,
+                (result as ImageMediaProcessingResult.Failure).kind
             )
             assertNoStagedSourceFiles()
         } finally {
@@ -145,10 +145,10 @@ class FeedbackMediaProcessorInstrumentedTest {
         )
         val result = processor(sourceAccess).process(TEST_URI)
 
-        assertTrue(result is FeedbackMediaProcessingResult.Failure)
+        assertTrue(result is ImageMediaProcessingResult.Failure)
         assertEquals(
-            FeedbackMediaFailureKind.UNSUPPORTED_TYPE,
-            (result as FeedbackMediaProcessingResult.Failure).kind
+            ImageMediaFailureKind.UNSUPPORTED_TYPE,
+            (result as ImageMediaProcessingResult.Failure).kind
         )
         assertEquals(0, sourceAccess.openCount)
     }
@@ -169,8 +169,8 @@ class FeedbackMediaProcessorInstrumentedTest {
         assertNoStagedSourceFiles()
     }
 
-    private fun processor(sourceAccess: FeedbackMediaSourceAccess) =
-        AndroidFeedbackMediaProcessor(
+    private fun processor(sourceAccess: ImageMediaSourceAccess) =
+        AndroidImageMediaProcessor(
             context = context,
             dispatcher = Dispatchers.IO,
             clockMillis = { System.currentTimeMillis() },
@@ -191,9 +191,9 @@ class FeedbackMediaProcessorInstrumentedTest {
     }
 
     private fun assertNoStagedSourceFiles() {
-        val directory = File(context.cacheDir, "feedback_media")
+        val directory = File(context.cacheDir, "image_processing")
         assertFalse(
-            directory.listFiles().orEmpty().any { it.name.startsWith("feedback_source_") }
+            directory.listFiles().orEmpty().any { it.name.startsWith("image_source_") }
         )
     }
 
@@ -209,7 +209,7 @@ class FeedbackMediaProcessorInstrumentedTest {
         private val bytes: ByteArray,
         private val declaredLength: Long?,
         private val mimeType: String?
-    ) : FeedbackMediaSourceAccess {
+    ) : ImageMediaSourceAccess {
         var lastStream: TrackingInputStream? = null
         var openCount: Int = 0
 
@@ -247,7 +247,7 @@ class FeedbackMediaProcessorInstrumentedTest {
         }
     }
 
-    private class CancellingSourceAccess : FeedbackMediaSourceAccess {
+    private class CancellingSourceAccess : ImageMediaSourceAccess {
         val stream = CancellingInputStream()
 
         override fun mimeType(uri: Uri): String? = "image/jpeg"
@@ -257,6 +257,6 @@ class FeedbackMediaProcessorInstrumentedTest {
     }
 
     private companion object {
-        val TEST_URI: Uri = Uri.parse("content://aqualight.test/feedback-source")
+        val TEST_URI: Uri = Uri.parse("content://aqualight.test/image-source")
     }
 }
