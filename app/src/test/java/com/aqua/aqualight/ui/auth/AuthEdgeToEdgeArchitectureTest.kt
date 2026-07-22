@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.auth
 
 import java.io.File
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -49,8 +50,10 @@ class AuthEdgeToEdgeArchitectureTest {
         )
 
         assertTrue(shell.contains("defaultSystemBarAppearance"))
-        assertTrue(shell.contains("window.statusBarColor = Color.TRANSPARENT"))
-        assertTrue(shell.contains("window.navigationBarColor = Color.TRANSPARENT"))
+        assertTrue(shell.contains("R.color.aqua_color_transparent"))
+        assertFalse(shell.contains("Color.TRANSPARENT"))
+        assertTrue(shell.contains("window.statusBarColor = transparentColor"))
+        assertTrue(shell.contains("window.navigationBarColor = transparentColor"))
         assertTrue(shell.contains("window.isStatusBarContrastEnforced = false"))
         assertTrue(shell.contains("window.isNavigationBarContrastEnforced = false"))
         assertTrue(shell.contains("window.statusBarColor = appearance.statusBarColor"))
