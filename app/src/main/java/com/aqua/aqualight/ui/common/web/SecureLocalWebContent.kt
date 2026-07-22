@@ -9,7 +9,9 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.core.content.ContextCompat
 import androidx.webkit.WebViewAssetLoader
+import com.aqua.aqualight.R
 
 private const val LOCAL_ASSET_HOST = "appassets.androidplatform.net"
 private const val LOCAL_ASSET_PREFIX = "/assets/"
@@ -35,6 +37,7 @@ fun WebView.loadSecureLocalAsset(assetName: String) {
 
     isVerticalScrollBarEnabled = false
     isHorizontalScrollBarEnabled = false
+    setBackgroundColor(ContextCompat.getColor(context, R.color.background_color))
 
     settings.apply {
         javaScriptEnabled = false

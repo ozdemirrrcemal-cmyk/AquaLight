@@ -32,6 +32,7 @@ REQUIRED_FILES = (
 
 REQUIRED_WEBVIEW_TOKENS = (
     "WebViewAssetLoader",
+    "setBackgroundColor(ContextCompat.getColor(context, R.color.background_color))",
     "javaScriptEnabled = false",
     "domStorageEnabled = false",
     "allowFileAccess = false",
