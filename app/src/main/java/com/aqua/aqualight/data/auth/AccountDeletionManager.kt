@@ -22,10 +22,7 @@ import kotlinx.coroutines.sync.withLock
  * fragments should not individually clear random stores after account deletion.
  */
 class AccountDeletionManager private constructor(
-    private val appContext: Context,
-    private val firebaseAuth: FirebaseAuth,
-    private val userDataCleaner: UserDataCleaner,
-    private val cloudUserDataCleaner: CloudUserDataCleaner,
+    private val operations: AccountDeletionOperations,
     private val checkpointStore: AccountDeletionCheckpointStore
 ) {
 
@@ -63,13 +60,25 @@ class AccountDeletionManager private constructor(
                 context.applicationContext
 
             return AccountDeletionManager(
-                appContext = appContext,
-                firebaseAuth = Firebase.auth,
-                userDataCleaner = UserDataCleaner.create(
-                    context = appContext
+                operations = FirebaseAccountDeletionOperations(
+                    appContext = appContext,
+                    firebaseAuth = Firebase.auth,
+                    userDataCleaner = UserDataCleaner.create(
+                        context = appContext
+                    ),
+                    cloudUserDataCleaner = CloudUserDataCleaner.create()
                 ),
-                cloudUserDataCleaner = CloudUserDataCleaner.create(),
                 checkpointStore = EncryptedAccountDeletionCheckpointStore(appContext)
+            )
+        }
+
+        internal fun createForRecoveryTest(
+            operations: AccountDeletionOperations,
+            checkpointStore: AccountDeletionCheckpointStore
+        ): AccountDeletionManager {
+            return AccountDeletionManager(
+                operations = operations,
+                checkpointStore = checkpointStore
             )
         }
     }
@@ -98,16 +107,16 @@ class AccountDeletionManager private constructor(
         var checkpoint = checkpointStore.read()
         if (checkpoint == null && requirePending) return null
 
-        val currentUser = firebaseAuth.currentUser
+        val currentOwnerUid = operations.currentOwnerUid()
         val ownerUid = checkpoint?.ownerUid
-            ?: currentUser?.uid
+            ?: currentOwnerUid
             ?: return DeleteResult(
                 accountDeleteError = IllegalStateException(
                     "No authenticated user."
                 )
             )
 
-        if (currentUser != null && currentUser.uid != ownerUid) {
+        if (currentOwnerUid != null && currentOwnerUid != ownerUid) {
             return DeleteResult(
                 accountDeleteError = IllegalStateException(
                     "Pending account deletion belongs to a different authenticated owner."
@@ -124,7 +133,7 @@ class AccountDeletionManager private constructor(
         }
 
         if (checkpoint.stage == AccountDeletionCheckpoint.Stage.STARTED) {
-            val cloudCleanupResult = cloudUserDataCleaner.clearCloudUserData(
+            val cloudCleanupResult = operations.clearCloudUserData(
                 ownerUid = ownerUid
             )
 
@@ -161,9 +170,7 @@ class AccountDeletionManager private constructor(
         }
 
         if (checkpoint.stage == AccountDeletionCheckpoint.Stage.AUTH_DELETE_REQUESTED) {
-            val user = firebaseAuth.currentUser
-
-            if (user == null) {
+            if (operations.currentOwnerUid() == null) {
                 // The process may have died after Firebase confirmed deletion but before the local
                 // checkpoint advanced. No current Firebase user is the safe completion signal here.
                 checkpoint = runCatching {
@@ -175,9 +182,7 @@ class AccountDeletionManager private constructor(
                     return DeleteResult(accountDeleteError = error)
                 }
             } else {
-                val accountDeleteError = runCatching {
-                    user.delete().awaitCompletion()
-                }.exceptionOrNull()
+                val accountDeleteError = operations.deleteCurrentAccount(ownerUid)
 
                 if (accountDeleteError != null) {
                     return DeleteResult(accountDeleteError = accountDeleteError)
@@ -199,31 +204,15 @@ class AccountDeletionManager private constructor(
         }
 
         return withContext(NonCancellable) {
-            val firstLocalCleanupResult = userDataCleaner.clearLocalUserData(
-                ownerUid = ownerUid,
-                clearUserPreferences = true,
-                stopSessionBoundServices = true
-            )
+            val firstLocalCleanupResult = operations.clearLocalUserData(ownerUid)
             val localCleanupResult = if (firstLocalCleanupResult.hasErrors) {
-                userDataCleaner.clearLocalUserData(
-                    ownerUid = ownerUid,
-                    clearUserPreferences = true,
-                    stopSessionBoundServices = true
-                )
+                operations.clearLocalUserData(ownerUid)
             } else {
                 firstLocalCleanupResult
             }
 
-            val googleRevokeError = runCatching {
-                GoogleSignInClientFactory.create(
-                    appContext
-                ).revokeAccess()
-                    .awaitCompletion()
-            }.exceptionOrNull()
-
-            val firebaseSignOutError = runCatching {
-                firebaseAuth.signOut()
-            }.exceptionOrNull()
+            val googleRevokeError = operations.revokeGoogleAccess()
+            val firebaseSignOutError = operations.signOut()
 
             if (!localCleanupResult.hasErrors && firebaseSignOutError == null) {
                 runCatching {
@@ -247,27 +236,91 @@ class AccountDeletionManager private constructor(
         }
     }
 
-    private suspend fun Task<Void>.awaitCompletion() {
-        suspendCancellableCoroutine<Unit> { continuation ->
-            addOnCompleteListener { task ->
-                if (!continuation.isActive) {
-                    return@addOnCompleteListener
-                }
+}
 
-                val exception =
-                    task.exception
+internal interface AccountDeletionOperations {
+    fun currentOwnerUid(): String?
 
-                if (task.isSuccessful && exception == null) {
-                    continuation.resume(Unit)
-                } else {
-                    continuation.resumeWithException(
-                        exception ?: IllegalStateException(
-                            "Firebase task failed."
-                        )
+    suspend fun clearCloudUserData(ownerUid: String): CloudUserDataCleaner.CleanupResult
+
+    suspend fun deleteCurrentAccount(ownerUid: String): Throwable?
+
+    suspend fun clearLocalUserData(ownerUid: String): UserDataCleaner.CleanupResult
+
+    suspend fun revokeGoogleAccess(): Throwable?
+
+    fun signOut(): Throwable?
+}
+
+private class FirebaseAccountDeletionOperations(
+    private val appContext: Context,
+    private val firebaseAuth: FirebaseAuth,
+    private val userDataCleaner: UserDataCleaner,
+    private val cloudUserDataCleaner: CloudUserDataCleaner
+) : AccountDeletionOperations {
+
+    override fun currentOwnerUid(): String? = firebaseAuth.currentUser?.uid
+
+    override suspend fun clearCloudUserData(
+        ownerUid: String
+    ): CloudUserDataCleaner.CleanupResult {
+        return cloudUserDataCleaner.clearCloudUserData(ownerUid)
+    }
+
+    override suspend fun deleteCurrentAccount(ownerUid: String): Throwable? {
+        val user = firebaseAuth.currentUser ?: return null
+        if (user.uid != ownerUid) {
+            return IllegalStateException(
+                "Authenticated owner changed while account deletion was pending."
+            )
+        }
+        return runCatching {
+            user.delete().awaitCompletion()
+        }.exceptionOrNull()
+    }
+
+    override suspend fun clearLocalUserData(
+        ownerUid: String
+    ): UserDataCleaner.CleanupResult {
+        return userDataCleaner.clearLocalUserData(
+            ownerUid = ownerUid,
+            clearUserPreferences = true,
+            stopSessionBoundServices = true
+        )
+    }
+
+    override suspend fun revokeGoogleAccess(): Throwable? {
+        return runCatching {
+            GoogleSignInClientFactory.create(appContext)
+                .revokeAccess()
+                .awaitCompletion()
+        }.exceptionOrNull()
+    }
+
+    override fun signOut(): Throwable? {
+        return runCatching {
+            firebaseAuth.signOut()
+        }.exceptionOrNull()
+    }
+}
+
+private suspend fun Task<Void>.awaitCompletion() {
+    suspendCancellableCoroutine<Unit> { continuation ->
+        addOnCompleteListener { task ->
+            if (!continuation.isActive) {
+                return@addOnCompleteListener
+            }
+
+            val exception = task.exception
+            if (task.isSuccessful && exception == null) {
+                continuation.resume(Unit)
+            } else {
+                continuation.resumeWithException(
+                    exception ?: IllegalStateException(
+                        "Firebase task failed."
                     )
-                }
+                )
             }
         }
     }
-
 }

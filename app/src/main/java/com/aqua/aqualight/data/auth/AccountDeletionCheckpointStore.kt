@@ -42,14 +42,15 @@ internal object AccountDeletionCheckpointPolicy {
 
 internal class EncryptedAccountDeletionCheckpointStore(
     context: Context,
-    private val clock: () -> Long = System::currentTimeMillis
+    private val clock: () -> Long = System::currentTimeMillis,
+    private val fileName: String = FILE_NAME
 ) : AccountDeletionCheckpointStore {
 
     private val preferences: SharedPreferences by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         val appContext = context.applicationContext
         EncryptedSharedPreferences.create(
             appContext,
-            FILE_NAME,
+            fileName,
             MasterKey.Builder(appContext)
                 .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
                 .build(),

@@ -28,9 +28,9 @@ This file is a Google Play production-publication gate, not a claim of legal com
 - [ ] Grant the retention service account only the minimum Firestore delete/query role needed; do not create a JSON service-account key.
 - [ ] Deploy `firestore.indexes.json` to the production project and wait until the `submissions.createdAt` collection-group index is enabled before activating retention deletion.
 - [ ] Run the retention workflow in dry-run, review the count, run an approved execute test against controlled expired fixtures, and retain evidence.
-- [ ] Verify the production Firebase project's Firestore location again in Console before release; it must match `europe-west1`.
+- [x] Verify the production Firebase project's Firestore location again in Console before release; it matches `europe-west1` (evidence: `docs/commercial/firebase-production-evidence.md`, 2026-07-22).
 - [ ] Verify Firebase project access, MFA, least privilege, audit ownership, incident contact and offboarding.
-- [ ] Execute the complete account-deletion test matrix on a physical/emulated release build, including process death after each durable stage.
+- [x] Execute the complete account-deletion test matrix on a physical/emulated release build, including process death after each durable stage (automated evidence: `docs/commercial/account-deletion-process-death-matrix.md`; API 27/35 minified release-smoke CI).
 - [ ] Align Google Play Data Safety, account-deletion URL/form, privacy-policy URL and in-app disclosures with `data-inventory-and-retention.md`.
 
 ## Mandatory legal review blockers

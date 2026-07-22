@@ -18,10 +18,14 @@ REQUIRED_FILES = (
     "app/src/main/java/com/aqua/aqualight/ui/common/web/SecureLocalWebContent.kt",
     "app/src/main/java/com/aqua/aqualight/data/feedback/FeedbackFirestoreProvider.kt",
     "app/src/main/java/com/aqua/aqualight/data/auth/AccountDeletionCheckpointStore.kt",
+    "app/src/test/java/com/aqua/aqualight/data/auth/AccountDeletionProcessDeathMatrixTest.kt",
+    "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/AccountDeletionProcessDeathSmokeActivity.kt",
     "firebase/retention_cleanup.mjs",
     ".github/workflows/feedback_retention.yml",
     ".github/workflows/google_play_publication_readiness.yml",
     "docs/commercial/data-inventory-and-retention.md",
+    "docs/commercial/account-deletion-process-death-matrix.md",
+    "docs/commercial/firebase-production-evidence.md",
     "docs/commercial/privacy-legal-release-checklist.md",
     "tools/google_play_publication_guard.py",
 )
@@ -106,6 +110,23 @@ def main() -> int:
     ):
         if token not in deletion_text:
             failures.append(f"restartable account deletion control is missing: {token}")
+
+    deletion_test_text = text(
+        "app/src/test/java/com/aqua/aqualight/data/auth/AccountDeletionProcessDeathMatrixTest.kt"
+    ) + text(
+        "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/AccountDeletionProcessDeathSmokeActivity.kt"
+    ) + text("tools/run_release_smoke.sh")
+    for token in (
+        "started",
+        "cloud-cleared",
+        "auth-delete-requested",
+        "auth-confirmed-before-checkpoint",
+        "account-deleted",
+        "ACCOUNT_DELETION_PROCESS_DEATH_PASS",
+        "am force-stop",
+    ):
+        if token not in deletion_test_text:
+            failures.append(f"process-death deletion matrix is missing: {token}")
 
     release_checklist = text("docs/commercial/privacy-legal-release-checklist.md")
     for token in (
