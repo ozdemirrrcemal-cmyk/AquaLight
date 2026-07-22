@@ -95,7 +95,16 @@ def main() -> int:
     feedback_text = text("app/src/main/res/values/feedback_hardening_strings.xml") + text(
         "app/src/main/res/values-tr/feedback_hardening_strings.xml"
     )
-    for token in ("account UID", "hesap UID", "No screenshot", "Ekran görüntüsü"):
+    for token in (
+        "provide support",
+        "destek sağlamak",
+        "improve AquaLight",
+        "AquaLight’ı geliştirmek",
+        "Privacy Policy",
+        "Gizlilik ve KVKK Metni",
+        "sensitive personal information",
+        "hassas kişisel bilgi",
+    ):
         if token not in feedback_text:
             failures.append(f"feedback point-of-collection notice is missing: {token}")
 

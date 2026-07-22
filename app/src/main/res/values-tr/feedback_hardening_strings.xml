@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="feedback_data_notice">Gönderim; kategori, mesaj, isteğe bağlı e-posta, hesap UID’niz, uygulama sürümü, dil, platform ve zaman damgasını Belçika’daki Cloud Firestore’a iletir. En fazla 12 ay saklanır. Ekran görüntüsü eklenmez.</string>
+    <string name="feedback_data_notice">Geri bildiriminiz, destek sağlamak ve AquaLight’ı geliştirmek amacıyla işlenir. Ayrıntılar için Gizlilik ve KVKK Metni’ni inceleyin. Lütfen mesajınıza hassas kişisel bilgi yazmayın.</string>
+    <string name="feedback_data_notice_link">Gizlilik ve KVKK Metni</string>
     <string name="feedback_error_message_length">Geri bildiriminiz 10 ile 500 karakter arasında olmalıdır.</string>
     <string name="feedback_error_auth_required">Oturumunuz sona erdi. Geri bildirim göndermeden önce yeniden giriş yapın.</string>
     <string name="feedback_error_validation">Formu kontrol edip işaretlenen alanları düzeltin.</string>

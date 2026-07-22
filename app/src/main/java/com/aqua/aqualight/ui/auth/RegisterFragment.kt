@@ -1,9 +1,14 @@
 package com.aqua.aqualight.ui.auth
 
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.method.LinkMovementMethod
+import android.text.style.ClickableSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -16,8 +21,6 @@ import com.aqua.aqualight.databinding.FragmentRegisterBinding
 import com.aqua.aqualight.ui.auth.state.AuthActionState
 import com.aqua.aqualight.ui.auth.viewmodel.RegisterViewModel
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
-import com.aqua.aqualight.ui.common.web.LegalDocument
-import com.aqua.aqualight.ui.common.web.LegalDocumentDialogFragment
 import com.aqua.aqualight.ui.navigation.RootNavigator
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
@@ -60,6 +63,8 @@ class RegisterFragment : Fragment() {
     private fun setupUI() =
         with(binding) {
 
+            configureTermsAgreementLink()
+
             btnRegister.setOnClickListener {
                 viewModel.register(
                     email = emailEditText.text
@@ -75,24 +80,52 @@ class RegisterFragment : Fragment() {
                 )
             }
 
-            linkPrivacy.setOnClickListener {
-                LegalDocumentDialogFragment.show(
-                    childFragmentManager,
-                    LegalDocument.PRIVACY
-                )
-            }
-
-            linkTerms.setOnClickListener {
-                LegalDocumentDialogFragment.show(
-                    childFragmentManager,
-                    LegalDocument.TERMS
-                )
-            }
-
             btnReturnToSignIn.setOnClickListener {
                 findNavController().popBackStack()
             }
         }
+
+    private fun configureTermsAgreementLink() {
+        val agreementText = getString(R.string.legal_accept_terms)
+        val linkText = getString(R.string.legal_accept_terms_link)
+        val linkStart = agreementText.indexOf(linkText)
+        check(linkStart >= 0) {
+            "The terms agreement link text must be present in the agreement text."
+        }
+
+        val linkedAgreement = SpannableString(agreementText).apply {
+            setSpan(
+                object : ClickableSpan() {
+                    override fun onClick(widget: View) {
+                        findNavController().navigate(
+                            RegisterFragmentDirections
+                                .actionRegisterFragmentToLegalDocumentFragment()
+                        )
+                    }
+
+                    override fun updateDrawState(drawState: android.text.TextPaint) {
+                        drawState.color = ContextCompat.getColor(
+                            requireContext(),
+                            R.color.aqua_accent_aqua
+                        )
+                        drawState.isUnderlineText = true
+                    }
+                },
+                linkStart,
+                linkStart + linkText.length,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
+
+        binding.checkTermsAccepted.apply {
+            text = linkedAgreement
+            movementMethod = LinkMovementMethod.getInstance()
+            highlightColor = ContextCompat.getColor(
+                requireContext(),
+                android.R.color.transparent
+            )
+        }
+    }
 
     private fun observeState() {
         viewLifecycleOwner.lifecycleScope.launch {

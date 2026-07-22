@@ -6,47 +6,6 @@
     android:layout_height="match_parent"
     android:padding="@dimen/aqua_size_24">
 
-  <LinearLayout
-    android:id="@+id/legalDocumentLinks"
-    android:layout_width="@dimen/aqua_size_0"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    app:layout_constraintBottom_toTopOf="@id/btnGoogleLogin"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent">
-
-    <TextView
-      android:id="@+id/linkPrivacy"
-      android:layout_width="@dimen/aqua_size_0"
-      android:layout_height="wrap_content"
-      android:layout_weight="1"
-      android:background="?attr/selectableItemBackground"
-      android:clickable="true"
-      android:contentDescription="@string/legal_open_privacy_desc"
-      android:focusable="true"
-      android:gravity="center"
-      android:minHeight="@dimen/aqua_size_48"
-      android:text="@string/legal_open_privacy"
-      android:textColor="@color/aqua_accent_aqua"
-      android:textSize="@dimen/aqua_text_size_body_small" />
-
-    <TextView
-      android:id="@+id/linkTerms"
-      android:layout_width="@dimen/aqua_size_0"
-      android:layout_height="wrap_content"
-      android:layout_weight="1"
-      android:background="?attr/selectableItemBackground"
-      android:clickable="true"
-      android:contentDescription="@string/legal_open_terms_desc"
-      android:focusable="true"
-      android:gravity="center"
-      android:minHeight="@dimen/aqua_size_48"
-      android:text="@string/legal_open_terms"
-      android:textColor="@color/aqua_accent_aqua"
-      android:textSize="@dimen/aqua_text_size_body_small" />
-
-  </LinearLayout>
-
   <com.google.android.material.button.MaterialButton
     android:id="@+id/btnGoogleLogin"
     android:layout_width="@dimen/aqua_size_0"

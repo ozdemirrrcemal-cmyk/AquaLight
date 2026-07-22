@@ -19,8 +19,6 @@ import com.aqua.aqualight.platform.auth.GoogleIdentityTokenResult
 import com.aqua.aqualight.ui.auth.state.AuthActionState
 import com.aqua.aqualight.ui.auth.viewmodel.LoginViewModel
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
-import com.aqua.aqualight.ui.common.web.LegalDocument
-import com.aqua.aqualight.ui.common.web.LegalDocumentDialogFragment
 import com.aqua.aqualight.ui.navigation.RootNavigator
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
@@ -134,19 +132,6 @@ class LoginFragment : Fragment() {
                 )
             }
 
-            linkPrivacy.setOnClickListener {
-                LegalDocumentDialogFragment.show(
-                    childFragmentManager,
-                    LegalDocument.PRIVACY
-                )
-            }
-
-            linkTerms.setOnClickListener {
-                LegalDocumentDialogFragment.show(
-                    childFragmentManager,
-                    LegalDocument.TERMS
-                )
-            }
         }
 
     private fun observeState() {

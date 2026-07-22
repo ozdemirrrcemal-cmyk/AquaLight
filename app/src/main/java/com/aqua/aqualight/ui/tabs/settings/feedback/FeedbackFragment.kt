@@ -3,6 +3,10 @@ package com.aqua.aqualight.ui.tabs.settings.feedback
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.method.LinkMovementMethod
+import android.text.style.ClickableSpan
 import android.view.View
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
@@ -12,6 +16,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionFailureKind
 import com.aqua.aqualight.base.BaseActivity
@@ -45,6 +50,7 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         originalButtonText = binding.btnSend.text
 
         setupHeader()
+        setupPrivacyNotice()
         setupCategoryDropdown()
         applyInitialFormState(viewModel.uiState.value)
         setupValidationWatchers()
@@ -57,6 +63,48 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         appHeader.setupAquaHeader(fragment = this@FeedbackFragment)
         tvSubInfo.text = getString(R.string.feedback_subinfo)
         tvFooter.text = getString(R.string.feedback_footer)
+    }
+
+    private fun setupPrivacyNotice() {
+        val noticeText = getString(R.string.feedback_data_notice)
+        val linkText = getString(R.string.feedback_data_notice_link)
+        val linkStart = noticeText.indexOf(linkText)
+        check(linkStart >= 0) {
+            "The feedback privacy link text must be present in the notice text."
+        }
+
+        val linkedNotice = SpannableString(noticeText).apply {
+            setSpan(
+                object : ClickableSpan() {
+                    override fun onClick(widget: View) {
+                        findNavController().navigate(
+                            FeedbackFragmentDirections
+                                .actionFeedbackFragmentToPrivacyFragment()
+                        )
+                    }
+
+                    override fun updateDrawState(drawState: android.text.TextPaint) {
+                        drawState.color = ContextCompat.getColor(
+                            requireContext(),
+                            R.color.aqua_accent_aqua
+                        )
+                        drawState.isUnderlineText = true
+                    }
+                },
+                linkStart,
+                linkStart + linkText.length,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
+
+        binding.tvFeedbackDataNotice.apply {
+            text = linkedNotice
+            movementMethod = LinkMovementMethod.getInstance()
+            highlightColor = ContextCompat.getColor(
+                requireContext(),
+                android.R.color.transparent
+            )
+        }
     }
 
     private fun setupCategoryDropdown() = with(binding) {

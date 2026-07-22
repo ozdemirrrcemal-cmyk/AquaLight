@@ -22,8 +22,10 @@
     <action android:id="@+id/action_appSettingsFragment_to_aboutAppFragment" app:destination="@id/aboutAppFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right"/>
   </fragment>
   <fragment android:id="@+id/usageFragment" android:name="com.aqua.aqualight.ui.tabs.settings.usage.UsageFragment" android:label="@string/screen_title_usage" tools:layout="@layout/fragment_usage"/>
-  <fragment android:id="@+id/privacyFragment" android:name="com.aqua.aqualight.ui.tabs.settings.privacy.PrivacyFragment" android:label="@string/screen_title_privacy" tools:layout="@layout/fragment_privacy"/>
-  <fragment android:id="@+id/feedbackFragment" android:name="com.aqua.aqualight.ui.tabs.settings.feedback.FeedbackFragment" android:label="@string/screen_title_feedback" tools:layout="@layout/fragment_feedback"/>
+  <fragment android:id="@+id/privacyFragment" android:name="com.aqua.aqualight.ui.tabs.settings.privacy.PrivacyFragment" android:label="@string/screen_title_privacy" tools:layout="@layout/fragment_legal_document"/>
+  <fragment android:id="@+id/feedbackFragment" android:name="com.aqua.aqualight.ui.tabs.settings.feedback.FeedbackFragment" android:label="@string/screen_title_feedback" tools:layout="@layout/fragment_feedback">
+    <action android:id="@+id/action_feedbackFragment_to_privacyFragment" app:destination="@id/privacyFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right"/>
+  </fragment>
   <!-- 🚪 Logout / Account Security -->
   <fragment android:id="@+id/logoutFragment" android:name="com.aqua.aqualight.ui.tabs.settings.logout.LogoutFragment" android:label="@string/screen_title_logout" tools:layout="@layout/fragment_logout">
     <action android:id="@+id/action_logoutFragment_to_changePasswordFragment" app:destination="@id/changePasswordFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right"/>
@@ -46,6 +48,6 @@
     <action android:id="@+id/action_aboutAppFragment_to_termsOfUseFragment" app:destination="@id/termsOfUseFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right"/>
     <action android:id="@+id/action_aboutAppFragment_to_openSourceLicensesFragment" app:destination="@id/openSourceLicensesFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right"/>
   </fragment>
-  <fragment android:id="@+id/termsOfUseFragment" android:name="com.aqua.aqualight.ui.tabs.settings.app.TermsOfUseFragment" android:label="@string/screen_title_terms_of_use"/>
-  <fragment android:id="@+id/openSourceLicensesFragment" android:name="com.aqua.aqualight.ui.tabs.settings.app.OpenSourceLicensesFragment" android:label="@string/screen_title_open_source_licenses"/>
+  <fragment android:id="@+id/termsOfUseFragment" android:name="com.aqua.aqualight.ui.tabs.settings.app.TermsOfUseFragment" android:label="@string/screen_title_terms_of_use" tools:layout="@layout/fragment_legal_document"/>
+  <fragment android:id="@+id/openSourceLicensesFragment" android:name="com.aqua.aqualight.ui.tabs.settings.app.OpenSourceLicensesFragment" android:label="@string/screen_title_open_source_licenses" tools:layout="@layout/fragment_legal_document"/>
 </navigation>
