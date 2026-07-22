@@ -13,7 +13,7 @@ This file is a Google Play production-publication gate, not a claim of legal com
 - [x] Feedback data fields and absence of screenshots disclosed at the submission point.
 - [x] Privacy and Terms provided in Turkish and English and selected from the active app language.
 - [x] Privacy/Terms/licenses use a shared locked-down `WebViewAssetLoader` origin; JavaScript, DOM storage, file/content access, mixed content and network loads are disabled.
-- [x] Terms acceptance and 18+ declaration are separate and required before registration/Google authentication.
+- [x] Email registration requires Terms acceptance; AquaLight has no numeric age gate, age declaration or age-data collection, and Google Sign-In authenticates an existing provider account without creating a Google account inside AquaLight.
 - [x] Local usage copy states that counters stay on-device and are not analytics.
 - [x] Account deletion covers the defined cloud/local boundary and has restartable recovery state.
 - [x] Twelve-month feedback cleanup is implemented as a dry-run-first, bounded, allow-listed manual admin-panel control with an 11-month operational cutoff.
@@ -41,7 +41,7 @@ This file is a Google Play production-publication gate, not a claim of legal com
 - [ ] EU/EEA counsel confirms GDPR territorial scope, controller identity, lawful bases, Article 13 notice, processor contract/SCC/DPF reliance and transfer-impact assessment.
 - [ ] Assess and, where required, appoint/list an EU representative under GDPR Article 27. The app must not be released in affected EU markets until the assessment and any appointment are complete.
 - [ ] Assess DPO requirements, VERBIS registration/exemption, data-controller application procedure, records of processing, incident/breach process and response deadlines.
-- [ ] Review the 18+ product decision against consumer law and store age-rating declarations in every target country.
+- [ ] Review the no-numeric-age-gate product decision and legal-capacity clause against consumer law, and complete target-audience and store age-rating declarations for every target country.
 - [ ] Consumer-law counsel reviews warranty, liability, governing-law, device-safety and termination clauses for Türkiye and target European markets.
 - [ ] A qualified legal reviewer approves the final Turkish and English Privacy/KVKK and Terms texts in writing. Record reviewer, version/hash, date, approved markets and required changes.
 

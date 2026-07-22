@@ -88,9 +88,16 @@ def main() -> int:
     terms_text = (text("app/src/main/assets/terms_of_use_en.html") + text(
         "app/src/main/assets/terms_of_use_tr.html"
     )).lower()
-    for token in ("at least 18", "en az 18", "stored locally", "yerel olarak saklanır"):
+    for token in ("legal capacity", "hukuki ehliyet", "stored locally", "yerel olarak saklanır"):
         if token not in terms_text:
             failures.append(f"bilingual Terms control is missing: {token}")
+
+    age_decision_text = (policy_text + terms_text + text(
+        "docs/commercial/data-inventory-and-retention.md"
+    ) + text("docs/commercial/privacy-legal-release-checklist.md")).lower()
+    for forbidden_token in ("at least 18", "aged 18", "under 18", "18+", "en az 18", "18 yaş"):
+        if forbidden_token in age_decision_text:
+            failures.append(f"numeric age-gate claim must not be reintroduced: {forbidden_token}")
 
     feedback_text = text("app/src/main/res/values/feedback_hardening_strings.xml") + text(
         "app/src/main/res/values-tr/feedback_hardening_strings.xml"
