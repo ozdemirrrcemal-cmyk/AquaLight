@@ -242,12 +242,19 @@ tasks.register("verifyFirebaseRuntimePolicy") {
 
     doLast { task ->
         def modules = task.inputs.properties["forbiddenFirebaseRuntimeModules"] as List
-        def modulePattern = modules
-                .collect { module -> java.util.regex.Pattern.quote(module.toString()) }
-                .join("|")
-        def forbiddenFilePattern = ~"^(?:${modulePattern})-[0-9].*\\.(?:aar|jar)$"
         def forbidden = task.inputs.files.files
-                .findAll { file -> file.name ==~ forbiddenFilePattern }
+                .findAll { file ->
+                    modules.any { module ->
+                        def versionedPrefix = "${module}-"
+                        def versionAndExtension = file.name.startsWith(versionedPrefix)
+                                ? file.name.substring(versionedPrefix.length())
+                                : ""
+                        !versionAndExtension.isEmpty() &&
+                                Character.isDigit(versionAndExtension.charAt(0)) &&
+                                (versionAndExtension.endsWith(".aar") ||
+                                        versionAndExtension.endsWith(".jar"))
+                    }
+                }
                 .collect { file -> file.name }
                 .unique()
                 .sort()
