@@ -76,7 +76,7 @@
         android:id="@+id/checkTermsAccepted"
         android:layout_width="@dimen/aqua_size_0"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/aqua_size_12"
+        android:layout_marginTop="@dimen/aqua_size_6"
         android:contentDescription="@string/legal_accept_terms_desc"
         android:minHeight="@dimen/aqua_size_48"
         android:text="@string/legal_accept_terms"
