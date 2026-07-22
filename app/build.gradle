@@ -231,27 +231,32 @@ tasks.register("verifyFirebaseRuntimePolicy") {
     group = "verification"
     description = "Fails when an unapproved Firebase runtime resolves transitively."
 
-    doLast {
-        ["debugRuntimeClasspath", "releaseRuntimeClasspath"].each { configurationName ->
-            def forbidden = configurations.getByName(configurationName)
-                    .resolvedConfiguration
-                    .resolvedArtifacts
-                    .findAll { artifact ->
-                        artifact.moduleVersion.id.group == "com.google.firebase" &&
-                                forbiddenFirebaseRuntimeModules.contains(artifact.name)
-                    }
-                    .collect { artifact ->
-                        "${artifact.moduleVersion.id.group}:${artifact.name}:${artifact.moduleVersion.id.version}"
-                    }
-                    .unique()
-                    .sort()
+    inputs.property(
+            "forbiddenFirebaseRuntimeModules",
+            forbiddenFirebaseRuntimeModules.toList().sort()
+    )
+    inputs.files(
+            configurations.named("debugRuntimeClasspath"),
+            configurations.named("releaseRuntimeClasspath")
+    ).withPropertyName("firebaseRuntimeClasspaths").withPathSensitivity(PathSensitivity.NONE)
 
-            if (!forbidden.isEmpty()) {
-                throw new GradleException(
-                        "Forbidden Firebase runtime in ${configurationName}: ${forbidden.join(', ')}"
-                )
-            }
+    doLast { task ->
+        def modules = task.inputs.properties["forbiddenFirebaseRuntimeModules"] as List
+        def modulePattern = modules
+                .collect { module -> java.util.regex.Pattern.quote(module.toString()) }
+                .join("|")
+        def forbiddenFilePattern = ~"^(?:${modulePattern})-[0-9].*\\.(?:aar|jar)$"
+        def forbidden = task.inputs.files.files
+                .findAll { file -> file.name ==~ forbiddenFilePattern }
+                .collect { file -> file.name }
+                .unique()
+                .sort()
+
+        if (!forbidden.isEmpty()) {
+            throw new GradleException(
+                    "Forbidden Firebase runtime artifact(s): ${forbidden.join(', ')}"
+            )
         }
-        logger.lifecycle("Firebase runtime policy passed: Auth and Firestore only.")
+        task.logger.lifecycle("Firebase runtime policy passed: Auth and Firestore only.")
     }
 }
