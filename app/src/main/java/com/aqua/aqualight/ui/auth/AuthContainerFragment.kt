@@ -35,6 +35,8 @@ class AuthContainerFragment : Fragment() {
     private var blurView: BlurView? = null
     private var posterImage: ImageView? = null
     private var safeContent: View? = null
+    private var topSystemBarScrim: View? = null
+    private var bottomSystemBarScrim: View? = null
     private var appShell: AquaAppShellLayout? = null
 
     private var player: ExoPlayer? = null
@@ -54,6 +56,8 @@ class AuthContainerFragment : Fragment() {
         blurView = root.findViewById(R.id.blurView)
         posterImage = root.findViewById(R.id.posterImage)
         safeContent = root.findViewById(R.id.authSafeContent)
+        topSystemBarScrim = root.findViewById(R.id.authTopSystemBarScrim)
+        bottomSystemBarScrim = root.findViewById(R.id.authBottomSystemBarScrim)
 
         appShell = requireActivity().findViewById(R.id.appShell)
         appShell?.setContentDrawsBehindSystemBars(true)
@@ -105,6 +109,8 @@ class AuthContainerFragment : Fragment() {
         blurView = null
         posterImage = null
         safeContent = null
+        topSystemBarScrim = null
+        bottomSystemBarScrim = null
         appShell = null
 
         super.onDestroyView()
@@ -114,6 +120,9 @@ class AuthContainerFragment : Fragment() {
         ViewCompat.setOnApplyWindowInsetsListener(root) { _, windowInsets ->
             val safeDrawingInsets = windowInsets.getInsets(safeDrawingTypes)
             val imeInsets = windowInsets.getInsets(WindowInsetsCompat.Type.ime())
+
+            topSystemBarScrim.setInsetScrimHeight(safeDrawingInsets.top)
+            bottomSystemBarScrim.setInsetScrimHeight(safeDrawingInsets.bottom)
 
             safeContent?.updatePadding(
                 left = safeDrawingInsets.left,
@@ -142,6 +151,18 @@ class AuthContainerFragment : Fragment() {
         root.doOnAttach { attachedRoot ->
             ViewCompat.requestApplyInsets(attachedRoot)
         }
+    }
+
+    private fun View?.setInsetScrimHeight(insetHeight: Int) {
+        val scrim = this ?: return
+        val safeHeight = insetHeight.coerceAtLeast(0)
+        val currentLayoutParams = scrim.layoutParams
+
+        if (currentLayoutParams.height != safeHeight) {
+            currentLayoutParams.height = safeHeight
+            scrim.layoutParams = currentLayoutParams
+        }
+        scrim.visibility = if (safeHeight > 0) View.VISIBLE else View.GONE
     }
 
     private fun initPlayerIfNeeded() {
