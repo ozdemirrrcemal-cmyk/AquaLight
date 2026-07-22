@@ -17,7 +17,7 @@ Status: implementation baseline for the 2026 commercial release. The release che
 | Data or operation | Fields/examples | Purpose | Storage/recipient | Legal-basis candidate | Retention/deletion |
 |---|---|---|---|---|---|
 | Firebase account | Email, UID, password credential, provider, IP/user-agent security data; Google basic profile when selected | Account creation, authentication, recovery, security and deletion | Firebase Authentication; service operates from US data centres. Local encrypted session/profile cache | Contract/service necessity; security legitimate interest; legal obligation | Until account deletion. Firebase publishes a few-week IP-log period and up to 180 days to remove other auth information from live/backups after deletion. |
-| Text feedback | Submission UUID, category, message, optional email, UID, Android platform, app version, locale, status, server timestamp | Support, investigation, deduplication and product/security improvement | Cloud Firestore `europe-west1`, Belgium. Memory-only Android client cache | Request/contract handling and legitimate interest, subject to final balancing review | Maximum 12 months; earlier for account deletion or valid request. Weekly keyless maintenance job plus in-app account deletion. |
+| Text feedback | Submission UUID, category, message, optional email, UID, Android platform, app version, locale, status, server timestamp | Support, investigation, deduplication and product/security improvement | Cloud Firestore `europe-west1`, Belgium. Memory-only Android client cache | Request/contract handling and legitimate interest, subject to final balancing review | Maximum 12 months; earlier for account deletion or valid request. Monthly manual admin-panel review uses an 11-month operational cutoff and one-month safety margin. |
 | Profile/address | Username, name, phone, address, postcode, city, country, profile photo | User-selected profile features | Encrypted/private local app storage only | Requested local service | Until item/account deletion, app-data clearing or uninstall. Logout alone preserves owner-scoped cache. |
 | Aquarium content | Tank identity/type/dimensions, setup dates, notes, photos, plants, livestock, equipment/material and related state | Local aquarium management | Private local app storage only | Requested local service | Until item/account deletion, app-data clearing or uninstall. |
 | Care and reminders | Tasks, schedule, completion state, notification preferences and delivery ledger | Local maintenance and user-requested reminders | Private local stores, Android alarms/work and notifications | Requested local service | Until task/account deletion, app-data clearing or uninstall. Notifications/work are cancelled on deletion. |
@@ -38,6 +38,14 @@ Status: implementation baseline for the 2026 commercial release. The release che
 ## Deletion verification boundary
 
 The in-app account deletion transaction covers, in order: owner feedback in Firestore, Firebase Auth account, owner session/services, care tasks, tanks, assignments, provisioning drafts/secrets/recovery, known devices, device credentials, app-owned photos/temp files, user preferences, notification schedules/work, Google access revocation and Firebase sign-out. The commercial test suite must keep this list aligned with `UserDataCleaner.Step` and the cloud cleaner.
+
+## Manual feedback-retention control
+
+- The Spark-plan control is intentionally manual and does not depend on GitHub Actions, WIF, a service-account key, Cloud Functions or Cloud Scheduler.
+- Firebase Hosting is public, but Firestore access requires Google sign-in plus a Console-provisioned `admin_access/{uid}` allow-list document with `role = feedback-admin`. The admin UID is not committed to source control.
+- Each monthly review starts with a server-side dry-run count using an 11-month cutoff. This leaves one month of operational margin before the disclosed 12-month maximum.
+- Deletion requires a second explicit confirmation, is limited to 100 documents per batch, validates every returned document path and writes a non-PII `retention_audits` record in the same atomic batch.
+- The operator repeats bounded batches until dry-run reports zero, records the date and outcome, and retains destruction evidence for at least three years. Missing a monthly review is an incident requiring prompt cleanup and documentation.
 
 ## Source references
 

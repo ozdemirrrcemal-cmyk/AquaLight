@@ -20,9 +20,9 @@ REQUIRED_FILES = (
     "app/src/main/java/com/aqua/aqualight/data/auth/AccountDeletionCheckpointStore.kt",
     "app/src/test/java/com/aqua/aqualight/data/auth/AccountDeletionProcessDeathMatrixTest.kt",
     "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/AccountDeletionProcessDeathSmokeActivity.kt",
-    "firebase/retention_cleanup.mjs",
-    ".github/workflows/feedback_retention.yml",
     ".github/workflows/google_play_publication_readiness.yml",
+    "firestore.rules",
+    "firestore.indexes.json",
     "docs/commercial/data-inventory-and-retention.md",
     "docs/commercial/account-deletion-process-death-matrix.md",
     "docs/commercial/firebase-production-evidence.md",
@@ -136,6 +136,18 @@ def main() -> int:
     ):
         if token not in release_checklist:
             failures.append(f"release-build/publication-gate separation is missing: {token}")
+
+    firestore_rules = text("firestore.rules")
+    for token in (
+        "admin_access",
+        "retention_audits",
+        "manual-admin-panel",
+        "feedback-admin",
+        "deletedCount <= 100",
+        "allow list, create, update, delete: if false",
+    ):
+        if token not in firestore_rules:
+            failures.append(f"manual retention security control is missing: {token}")
 
     if failures:
         return fail(failures)

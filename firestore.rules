@@ -2,8 +2,18 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
     function isAuthenticatedOwner(ownerUid) {
-      return request.auth != null && request.auth.uid == ownerUid;
+      return isAuthenticated() && request.auth.uid == ownerUid;
+    }
+
+    function isAdmin() {
+      return isAuthenticated()
+        && exists(/databases/$(database)/documents/admin_access/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admin_access/$(request.auth.uid)).data.role == 'feedback-admin';
     }
 
     function validSubmissionId(submissionId) {
@@ -70,6 +80,41 @@ service cloud.firestore {
         && data.createdAt == request.time;
     }
 
+    function retentionAuditIsValid() {
+      let data = request.resource.data;
+      return isAdmin()
+        && data.keys().hasAll([
+          'actorUid',
+          'createdAt',
+          'cutoff',
+          'deletedCount',
+          'mode',
+          'version'
+        ])
+        && data.keys().hasOnly([
+          'actorUid',
+          'createdAt',
+          'cutoff',
+          'deletedCount',
+          'mode',
+          'version'
+        ])
+        && data.actorUid == request.auth.uid
+        && data.createdAt == request.time
+        && data.cutoff is timestamp
+        && data.cutoff < request.time
+        && data.deletedCount is int
+        && data.deletedCount > 0
+        && data.deletedCount <= 100
+        && data.mode == 'manual-admin-panel'
+        && data.version == 1;
+    }
+
+    match /admin_access/{adminUid} {
+      allow get: if isAuthenticatedOwner(adminUid);
+      allow list, create, update, delete: if false;
+    }
+
     match /feedback_items/{ownerUid} {
       allow read, write: if false;
 
@@ -78,6 +123,19 @@ service cloud.firestore {
         allow get, list, delete: if isAuthenticatedOwner(ownerUid);
         allow update: if false;
       }
+    }
+
+    // Firestore collection-group queries require a version-2 recursive match.
+    // The admin UI separately fail-closes unless every returned path is exactly
+    // feedback_items/{uid}/submissions/{submissionId} and its owner fields agree.
+    match /{path=**}/submissions/{submissionId} {
+      allow get, list, delete: if isAdmin();
+    }
+
+    match /retention_audits/{auditId} {
+      allow get, list: if isAdmin();
+      allow create: if retentionAuditIsValid();
+      allow update, delete: if false;
     }
   }
 }

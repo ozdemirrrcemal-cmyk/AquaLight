@@ -16,7 +16,7 @@ This file is a Google Play production-publication gate, not a claim of legal com
 - [x] Terms acceptance and 18+ declaration are separate and required before registration/Google authentication.
 - [x] Local usage copy states that counters stay on-device and are not analytics.
 - [x] Account deletion covers the defined cloud/local boundary and has restartable recovery state.
-- [x] Twelve-month feedback cleanup is implemented as dry-run-first, bounded, keyless scheduled maintenance.
+- [x] Twelve-month feedback cleanup is implemented as a dry-run-first, bounded, allow-listed manual admin-panel control with an 11-month operational cutoff.
 
 ## Required production configuration
 
@@ -24,10 +24,10 @@ This file is a Google Play production-publication gate, not a claim of legal com
 - [ ] Insert the official, publishable postal address into both Turkish and English Privacy/Terms assets and the hosted Privacy Policy.
 - [ ] Insert the monitored privacy/support email into both Turkish and English Privacy/Terms assets, the hosted Privacy Policy, and `PUBLICATION_SUPPORT_EMAIL` in the secure WebView allowlist; document request ownership and response SLA.
 - [ ] Remove every `AQL_GOOGLE_PLAY_PUBLICATION_PENDING` marker and every empty `data-aql-publication-field` after the final identity/contact values are inserted.
-- [ ] Configure GitHub variables `AQL_FIREBASE_PROJECT_ID`, `AQL_RETENTION_WIF_PROVIDER`, and `AQL_RETENTION_SERVICE_ACCOUNT`.
-- [ ] Grant the retention service account only the minimum Firestore delete/query role needed; do not create a JSON service-account key.
+- [ ] Enable Google Authentication for the admin panel and provision the intended Firebase UID only through an immutable `admin_access/{uid}` Firestore document with `role = feedback-admin`; keep the UID out of source control.
+- [ ] Deploy the hardened admin panel and revised Firestore Rules, then verify signed-out and non-admin accounts cannot read, list, delete or grant access.
 - [ ] Deploy `firestore.indexes.json` to the production project and wait until the `submissions.createdAt` collection-group index is enabled before activating retention deletion.
-- [ ] Run the retention workflow in dry-run, review the count, run an approved execute test against controlled expired fixtures, and retain evidence.
+- [ ] Run the admin-panel dry-run, review the count, execute a bounded deletion against controlled expired fixtures, verify the atomic audit record, assign the monthly operator/reminder, and retain destruction evidence for at least three years.
 - [x] Verify the production Firebase project's Firestore location again in Console before release; it matches `europe-west1` (evidence: `docs/commercial/firebase-production-evidence.md`, 2026-07-22).
 - [ ] Verify Firebase project access, MFA, least privilege, audit ownership, incident contact and offboarding.
 - [x] Execute the complete account-deletion test matrix on a physical/emulated release build, including process death after each durable stage (automated evidence: `docs/commercial/account-deletion-process-death-matrix.md`; API 27/35 minified release-smoke CI).
