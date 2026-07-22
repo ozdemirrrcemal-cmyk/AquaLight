@@ -81,9 +81,9 @@ def main() -> int:
         if token not in secure_web:
             failures.append(f"secure legal WebView control is missing: {token}")
 
-    policy_text = text("app/src/main/assets/privacy_policy_en.html") + text(
-        "app/src/main/assets/privacy_policy_tr.html"
-    )
+    policy_en = text("app/src/main/assets/privacy_policy_en.html")
+    policy_tr = text("app/src/main/assets/privacy_policy_tr.html")
+    policy_text = policy_en + policy_tr
     for token in (
         "europe-west1",
         "12 months",
@@ -96,6 +96,32 @@ def main() -> int:
     ):
         if token not in policy_text:
             failures.append(f"bilingual privacy disclosure is missing: {token}")
+
+    for language, policy, tokens in (
+        (
+            "English",
+            policy_en,
+            (
+                "Submission UUID",
+                "product improvement",
+                "pseudonymous Firebase UID",
+                "Three years from creation",
+            ),
+        ),
+        (
+            "Turkish",
+            policy_tr,
+            (
+                "Gönderim UUID'si",
+                "ürün geliştirme",
+                "takma adlı Firebase UID'si",
+                "Oluşturuldukları tarihten itibaren 3 yıl",
+            ),
+        ),
+    ):
+        for token in tokens:
+            if token not in policy:
+                failures.append(f"{language} privacy disclosure is missing: {token}")
 
     terms_text = (text("app/src/main/assets/terms_of_use_en.html") + text(
         "app/src/main/assets/terms_of_use_tr.html"

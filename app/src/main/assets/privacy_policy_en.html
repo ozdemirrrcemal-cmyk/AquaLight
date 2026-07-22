@@ -11,7 +11,7 @@
   <header class="hero">
     <p class="eyebrow">AquaLight legal information</p>
     <h1>Privacy Notice</h1>
-    <p class="updated">Effective and last updated: 22 July 2026</p>
+    <p class="updated">Effective and last updated: 23 July 2026</p>
     <p>This notice explains what AquaLight processes, why it is processed, where it is kept, how long it is retained, and how you can exercise your rights. It is a notice, not a request for blanket consent.</p>
   </header>
 
@@ -47,9 +47,14 @@
             <td>Firebase Authentication cloud service; processed in the United States. A local session and profile cache is kept in encrypted app storage.</td>
           </tr>
           <tr>
-            <td><strong>Feedback and support</strong><br>Category, message, optional contact email, UID, Android platform, app version, app language, status, and server timestamp.</td>
-            <td>Receive, investigate, answer, secure, and de-duplicate support submissions. Processing is necessary to handle your request and for AquaLight's legitimate interest in product security and support.</td>
+            <td><strong>Feedback and support</strong><br>Submission UUID, category, message, optional contact email, UID, Android platform, app version, app language, status, and server timestamp.</td>
+            <td>Receive, investigate, answer, secure, and de-duplicate support submissions and improve AquaLight. Processing is necessary to handle your request and for AquaLight's legitimate interests in product improvement, product security, and support.</td>
             <td>Cloud Firestore regional database <code>europe-west1</code> in Belgium. The Android Firestore client uses memory-only cache.</td>
+          </tr>
+          <tr>
+            <td><strong>Destruction audit records</strong><br>The authorised administrator's pseudonymous Firebase UID, record and deletion-cutoff times, deleted-record count, operation mode, and schema version.</td>
+            <td>Evidence that scheduled personal-data destruction was performed; compliance with legal obligations, security, and accountability.</td>
+            <td>The <code>retention_audits</code> collection in the Cloud Firestore regional database <code>europe-west1</code> in Belgium; readable only by an allow-listed feedback administrator.</td>
           </tr>
           <tr>
             <td><strong>Profile and aquarium content</strong><br>Name, username, phone, address, profile photo, tank details, dimensions, notes, photos, plants, livestock, equipment, maintenance tasks, reminders, and related preferences.</td>
@@ -95,6 +100,7 @@
         <thead><tr><th>Record</th><th>Retention</th></tr></thead>
         <tbody>
           <tr><td>Feedback</td><td>Up to 12 months from submission; deleted sooner when the account is deleted or a valid deletion request applies.</td></tr>
+          <tr><td>Destruction audit records</td><td>Three years from creation. Unless another legal retention obligation applies, deleted or anonymised in the first monthly destruction cycle after the three-year period ends.</td></tr>
           <tr><td>Firebase account</td><td>Until you delete the account or AquaLight must close it lawfully. Google states that authentication information is removed from live and backup systems within up to 180 days after customer-initiated user deletion; logged IP addresses are retained for a few weeks.</td></tr>
           <tr><td>Local profile, tanks, photos, maintenance, device data, reminders, and usage counters</td><td>Until you delete the account in the app, delete the relevant item, clear app storage, or uninstall the app. Logging out alone does not delete local records.</td></tr>
           <tr><td>Provisioning drafts and QR secrets</td><td>15 minutes, unless removed earlier when setup completes, is cancelled, or account data is deleted.</td></tr>

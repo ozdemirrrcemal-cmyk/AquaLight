@@ -11,7 +11,7 @@
   <header class="hero">
     <p class="eyebrow">AquaLight hukuki bilgilendirme</p>
     <h1>Gizlilik ve KVKK Aydınlatma Metni</h1>
-    <p class="updated">Yürürlük ve son güncelleme: 22 Temmuz 2026</p>
+    <p class="updated">Yürürlük ve son güncelleme: 23 Temmuz 2026</p>
     <p>Bu metin AquaLight'ın hangi verileri, hangi amaçla ve hukuki sebeple işlediğini; verilerin nerede ve ne kadar süreyle tutulduğunu ve haklarınızı nasıl kullanabileceğinizi açıklar. Bu metin genel bir açık rıza talebi değildir.</p>
   </header>
 
@@ -47,9 +47,14 @@
             <td>Firebase Authentication bulut hizmeti; ABD'de işlenir. Oturum ve profil önbelleği şifreli yerel uygulama alanında tutulur.</td>
           </tr>
           <tr>
-            <td><strong>Geri bildirim ve destek</strong><br>Kategori, mesaj, isteğe bağlı iletişim e-postası, UID, Android platformu, uygulama sürümü, uygulama dili, durum ve sunucu zaman damgası.</td>
-            <td>Destek talebini almak, incelemek, yanıtlamak, güvenliğini sağlamak ve yinelenen gönderimi önlemek. İşleme; talebinizi yerine getirmek ve ürün güvenliği/desteği konusundaki meşru menfaat kapsamında yapılır.</td>
+            <td><strong>Geri bildirim ve destek</strong><br>Gönderim UUID'si, kategori, mesaj, isteğe bağlı iletişim e-postası, UID, Android platformu, uygulama sürümü, uygulama dili, durum ve sunucu zaman damgası.</td>
+            <td>Destek talebini almak, incelemek, yanıtlamak, güvenliğini sağlamak, yinelenen gönderimi önlemek ve AquaLight'ı geliştirmek. İşleme; talebinizi yerine getirmek ve ürün geliştirme, ürün güvenliği ve destek konularındaki meşru menfaat kapsamında yapılır.</td>
             <td>Belçika'daki <code>europe-west1</code> bölgesel Cloud Firestore veritabanı. Android Firestore istemcisi yalnız bellek önbelleği kullanır.</td>
+          </tr>
+          <tr>
+            <td><strong>İmha işlem kayıtları</strong><br>İmha işlemini yapan yetkili yöneticinin takma adlı Firebase UID'si, kayıt ve kesim zamanları, silinen kayıt sayısı, işlem modu ve şema sürümü.</td>
+            <td>Planlı kişisel veri imhasının gerçekleştirildiğini kanıtlamak; hukuki yükümlülükleri, güvenliği ve hesap verebilirliği sağlamak.</td>
+            <td>Belçika'daki <code>europe-west1</code> bölgesel Cloud Firestore veritabanındaki <code>retention_audits</code> koleksiyonu; yalnız izin verilen geri bildirim yöneticisi okuyabilir.</td>
           </tr>
           <tr>
             <td><strong>Profil ve akvaryum içeriği</strong><br>Ad, kullanıcı adı, telefon, adres, profil fotoğrafı, tank ayrıntıları, ölçüler, notlar, fotoğraflar, bitkiler, canlılar, ekipman, bakım görevleri, hatırlatmalar ve ilgili tercihler.</td>
@@ -95,6 +100,7 @@
         <thead><tr><th>Kayıt</th><th>Saklama süresi</th></tr></thead>
         <tbody>
           <tr><td>Geri bildirim</td><td>Gönderimden itibaren en fazla 12 ay; hesap silindiğinde veya geçerli bir silme talebi uygulandığında daha önce silinir.</td></tr>
+          <tr><td>İmha işlem kayıtları</td><td>Oluşturuldukları tarihten itibaren 3 yıl. Başka bir hukuki saklama zorunluluğu bulunmadıkça, üç yıllık sürenin bitimini izleyen ilk aylık imha işleminde silinir veya anonimleştirilir.</td></tr>
           <tr><td>Firebase hesabı</td><td>Siz hesabı silene veya AquaLight hukuka uygun biçimde kapatmak zorunda kalana kadar. Google, müşteri tarafından kullanıcı silme işlemi başlatıldıktan sonra kimlik doğrulama bilgilerinin canlı ve yedek sistemlerden en geç 180 gün içinde kaldırıldığını; kayıtlı IP adreslerinin birkaç hafta tutulduğunu belirtir.</td></tr>
           <tr><td>Yerel profil, tanklar, fotoğraflar, bakım, cihaz verileri, hatırlatmalar ve kullanım sayaçları</td><td>Uygulamada hesabı veya ilgili kaydı silene, uygulama verisini temizleyene ya da uygulamayı kaldırana kadar. Yalnızca çıkış yapmak yerel kayıtları silmez.</td></tr>
           <tr><td>Kurulum taslakları ve QR sırları</td><td>15 dakika; kurulum tamamlanırsa, iptal edilirse veya hesap verisi silinirse daha önce kaldırılır.</td></tr>

@@ -262,7 +262,7 @@ try {
     {status: 'reviewed'},
   ));
 
-  // The panel's bounded deletion and non-PII audit record succeed atomically.
+  // The panel's bounded deletion and minimal audit record with a pseudonymous admin UID succeed atomically.
   const cutoff = Timestamp.fromDate(new Date('2025-01-01T00:00:00Z'));
   const expired = await assertSucceeds(getDocs(query(
     collectionGroup(adminDb, 'submissions'),
