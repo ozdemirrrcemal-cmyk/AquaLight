@@ -11,11 +11,9 @@
     android:layout_width="@dimen/aqua_size_0"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    app:layout_constraintBottom_toTopOf="@id/checkTermsAccepted"
+    app:layout_constraintBottom_toTopOf="@id/btnGoogleLogin"
     app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintVertical_chainStyle="packed">
+    app:layout_constraintStart_toStartOf="parent">
 
     <TextView
       android:id="@+id/linkPrivacy"
@@ -49,34 +47,6 @@
 
   </LinearLayout>
 
-  <com.google.android.material.checkbox.MaterialCheckBox
-    android:id="@+id/checkTermsAccepted"
-    android:layout_width="@dimen/aqua_size_0"
-    android:layout_height="wrap_content"
-    android:contentDescription="@string/legal_accept_terms_desc"
-    android:minHeight="@dimen/aqua_size_48"
-    android:text="@string/legal_accept_terms"
-    android:textColor="@color/aqua_content_primary"
-    android:textSize="@dimen/aqua_text_size_body_small"
-    app:layout_constraintBottom_toTopOf="@id/checkAdultConfirmed"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toBottomOf="@id/legalDocumentLinks" />
-
-  <com.google.android.material.checkbox.MaterialCheckBox
-    android:id="@+id/checkAdultConfirmed"
-    android:layout_width="@dimen/aqua_size_0"
-    android:layout_height="wrap_content"
-    android:contentDescription="@string/legal_confirm_age_desc"
-    android:minHeight="@dimen/aqua_size_48"
-    android:text="@string/legal_confirm_age"
-    android:textColor="@color/aqua_content_primary"
-    android:textSize="@dimen/aqua_text_size_body_small"
-    app:layout_constraintBottom_toTopOf="@id/btnGoogleLogin"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toBottomOf="@id/checkTermsAccepted" />
-
   <com.google.android.material.button.MaterialButton
     android:id="@+id/btnGoogleLogin"
     android:layout_width="@dimen/aqua_size_0"
@@ -89,8 +59,7 @@
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintBottom_toTopOf="@+id/btnSignIn"
-    app:layout_constraintTop_toBottomOf="@id/checkAdultConfirmed"
-    android:layout_marginBottom="@dimen/aqua_size_4"
+    android:layout_marginBottom="@dimen/aqua_size_6"
     android:paddingStart="@dimen/aqua_size_24"
     android:paddingEnd="@dimen/aqua_size_24"
     android:gravity="center"
@@ -108,8 +77,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/btnRegister"
-        app:layout_constraintTop_toBottomOf="@id/btnGoogleLogin"
-        android:layout_marginBottom="@dimen/aqua_size_4" />
+        android:layout_marginBottom="@dimen/aqua_size_6" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnRegister"
@@ -121,7 +89,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btnSignIn"
         android:layout_marginBottom="@dimen/aqua_size_20" />
 		
 </androidx.constraintlayout.widget.ConstraintLayout>

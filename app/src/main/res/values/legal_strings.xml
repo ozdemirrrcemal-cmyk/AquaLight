@@ -8,10 +8,7 @@
     <string name="legal_open_terms_desc">Open the AquaLight terms of use</string>
     <string name="legal_accept_terms">I have read and agree to the Terms of Use.</string>
     <string name="legal_accept_terms_desc">Required confirmation that the Terms of Use are accepted</string>
-    <string name="legal_confirm_age">I confirm that I am at least 18 years old.</string>
-    <string name="legal_confirm_age_desc">Required confirmation that the user is at least 18 years old</string>
     <string name="legal_gate_error_title">Confirmation Required</string>
     <string name="legal_gate_terms_required">Read and accept the Terms of Use before continuing.</string>
-    <string name="legal_gate_age_required">Confirm that you are at least 18 years old before continuing.</string>
     <string name="legal_close">Close</string>
 </resources>

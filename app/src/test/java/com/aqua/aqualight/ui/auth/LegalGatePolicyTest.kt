@@ -7,34 +7,17 @@ import org.junit.Test
 class LegalGatePolicyTest {
 
     @Test
-    fun termsMustBeAcceptedBeforeAgeConfirmationIsEvaluated() {
+    fun termsMustBeAccepted() {
         assertEquals(
             LegalGatePolicy.Failure.TERMS_NOT_ACCEPTED,
-            LegalGatePolicy.validate(
-                termsAccepted = false,
-                adultConfirmed = true
-            )
+            LegalGatePolicy.validate(termsAccepted = false)
         )
     }
 
     @Test
-    fun adultStatusMustBeConfirmedSeparately() {
-        assertEquals(
-            LegalGatePolicy.Failure.ADULT_NOT_CONFIRMED,
-            LegalGatePolicy.validate(
-                termsAccepted = true,
-                adultConfirmed = false
-            )
-        )
-    }
-
-    @Test
-    fun gatePassesOnlyWhenBothConfirmationsArePresent() {
+    fun gatePassesWhenTermsAreAccepted() {
         assertNull(
-            LegalGatePolicy.validate(
-                termsAccepted = true,
-                adultConfirmed = true
-            )
+            LegalGatePolicy.validate(termsAccepted = true)
         )
     }
 }

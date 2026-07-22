@@ -27,8 +27,7 @@ class RegisterViewModel(
         email: String,
         password: String,
         repeatPassword: String,
-        termsAccepted: Boolean,
-        adultConfirmed: Boolean
+        termsAccepted: Boolean
     ) {
         val normalizedEmail = email.trim()
         val normalizedPassword = password.trim()
@@ -53,13 +52,9 @@ class RegisterViewModel(
                 R.string.passwords_do_not_match_title to R.string.passwords_do_not_match
             }
 
-            else -> when (
-                LegalGatePolicy.validate(termsAccepted, adultConfirmed)
-            ) {
+            else -> when (LegalGatePolicy.validate(termsAccepted)) {
                 LegalGatePolicy.Failure.TERMS_NOT_ACCEPTED ->
                     R.string.legal_gate_error_title to R.string.legal_gate_terms_required
-                LegalGatePolicy.Failure.ADULT_NOT_CONFIRMED ->
-                    R.string.legal_gate_error_title to R.string.legal_gate_age_required
                 null -> null
             }
         }

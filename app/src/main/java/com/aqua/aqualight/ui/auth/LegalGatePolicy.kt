@@ -2,18 +2,10 @@ package com.aqua.aqualight.ui.auth
 
 object LegalGatePolicy {
     enum class Failure {
-        TERMS_NOT_ACCEPTED,
-        ADULT_NOT_CONFIRMED
+        TERMS_NOT_ACCEPTED
     }
 
-    fun validate(
-        termsAccepted: Boolean,
-        adultConfirmed: Boolean
-    ): Failure? {
-        return when {
-            !termsAccepted -> Failure.TERMS_NOT_ACCEPTED
-            !adultConfirmed -> Failure.ADULT_NOT_CONFIRMED
-            else -> null
-        }
+    fun validate(termsAccepted: Boolean): Failure? {
+        return if (termsAccepted) null else Failure.TERMS_NOT_ACCEPTED
     }
 }

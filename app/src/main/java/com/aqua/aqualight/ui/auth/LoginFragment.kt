@@ -50,9 +50,6 @@ class LoginFragment : Fragment() {
                 val tokenResult = googleIdentityClient.parseIdToken(result.data)
             ) {
                 is GoogleIdentityTokenResult.Success -> {
-                    if (!hasValidGoogleLegalGate()) {
-                        return@googleResult
-                    }
                     viewModel.signInWithGoogleToken(
                         idToken = tokenResult.idToken
                     )
@@ -165,8 +162,6 @@ class LoginFragment : Fragment() {
     }
 
     private fun signInWithGoogle() {
-        if (!hasValidGoogleLegalGate()) return
-
         googleSignInLauncher.launch(
             googleIdentityClient.signInIntent()
         )
@@ -178,13 +173,6 @@ class LoginFragment : Fragment() {
             )
     }
 
-    private fun hasValidGoogleLegalGate(): Boolean {
-        return viewModel.validateGoogleLegalGate(
-            termsAccepted = binding.checkTermsAccepted.isChecked,
-            adultConfirmed = binding.checkAdultConfirmed.isChecked
-        )
-    }
-
     private fun renderState(
         state: AuthActionState
     ) {
@@ -194,8 +182,6 @@ class LoginFragment : Fragment() {
         binding.btnGoogleLogin.isEnabled = !isLoading
         binding.btnSignIn.isEnabled = !isLoading
         binding.btnRegister.isEnabled = !isLoading
-        binding.checkTermsAccepted.isEnabled = !isLoading
-        binding.checkAdultConfirmed.isEnabled = !isLoading
 
         when (state) {
             AuthActionState.Authenticated -> {

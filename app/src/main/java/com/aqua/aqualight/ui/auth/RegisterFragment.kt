@@ -71,8 +71,7 @@ class RegisterFragment : Fragment() {
                     repeatPassword = etPasswordRepeat.text
                         ?.toString()
                         .orEmpty(),
-                    termsAccepted = checkTermsAccepted.isChecked,
-                    adultConfirmed = checkAdultConfirmed.isChecked
+                    termsAccepted = checkTermsAccepted.isChecked
                 )
             }
 
@@ -115,7 +114,6 @@ class RegisterFragment : Fragment() {
         setFragmentGlobalLoading(isLoading)
         binding.btnRegister.isEnabled = !isLoading
         binding.checkTermsAccepted.isEnabled = !isLoading
-        binding.checkAdultConfirmed.isEnabled = !isLoading
         binding.btnRegister.text = getString(
             if (isLoading) {
                 R.string.register_loading

@@ -8,10 +8,7 @@
     <string name="legal_open_terms_desc">AquaLight kullanım koşullarını aç</string>
     <string name="legal_accept_terms">Kullanım Koşullarını okudum ve kabul ediyorum.</string>
     <string name="legal_accept_terms_desc">Kullanım Koşullarının kabul edildiğine ilişkin zorunlu onay</string>
-    <string name="legal_confirm_age">En az 18 yaşında olduğumu doğruluyorum.</string>
-    <string name="legal_confirm_age_desc">Kullanıcının en az 18 yaşında olduğuna ilişkin zorunlu doğrulama</string>
     <string name="legal_gate_error_title">Doğrulama Gerekli</string>
     <string name="legal_gate_terms_required">Devam etmeden önce Kullanım Koşullarını okuyup kabul edin.</string>
-    <string name="legal_gate_age_required">Devam etmeden önce en az 18 yaşında olduğunuzu doğrulayın.</string>
     <string name="legal_close">Kapat</string>
 </resources>
