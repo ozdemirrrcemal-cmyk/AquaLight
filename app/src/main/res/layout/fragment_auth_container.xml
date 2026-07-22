@@ -29,6 +29,25 @@
         android:contentDescription="@string/main_login_blur_overlay_description"
         android:visibility="gone" />
 
+    <!-- These scrims are resized to the real system-bar insets at runtime. -->
+    <View
+        android:id="@+id/authTopSystemBarScrim"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/aqua_size_0"
+        android:layout_gravity="top"
+        android:background="@color/aqua_overlay_scrim_strong"
+        android:importantForAccessibility="no"
+        android:visibility="gone" />
+
+    <View
+        android:id="@+id/authBottomSystemBarScrim"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/aqua_size_0"
+        android:layout_gravity="bottom"
+        android:background="@color/aqua_overlay_scrim_strong"
+        android:importantForAccessibility="no"
+        android:visibility="gone" />
+
     <!-- Only interactive/meaningful foreground content receives safe drawing and IME insets. -->
     <FrameLayout
         android:id="@+id/authSafeContent"
