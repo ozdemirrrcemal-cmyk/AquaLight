@@ -1,6 +1,6 @@
 :root {
-  color-scheme: dark;
-  --bg: transparent;
+  color-scheme: light dark;
+  --bg: #152b45;
   --text: #f4f8fc;
   --muted: #b3c2d3;
   --accent: #8fb1e8;
@@ -8,9 +8,16 @@
   --note: #1c3654;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0a192f;
+  }
+}
+
 * { box-sizing: border-box; }
 
 html {
+  background: var(--bg);
   scrollbar-width: none;
 }
 
