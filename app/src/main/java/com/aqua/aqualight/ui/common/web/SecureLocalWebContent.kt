@@ -33,6 +33,9 @@ fun WebView.loadSecureLocalAsset(assetName: String) {
         setAcceptThirdPartyCookies(this@loadSecureLocalAsset, false)
     }
 
+    isVerticalScrollBarEnabled = false
+    isHorizontalScrollBarEnabled = false
+
     settings.apply {
         javaScriptEnabled = false
         javaScriptCanOpenWindowsAutomatically = false

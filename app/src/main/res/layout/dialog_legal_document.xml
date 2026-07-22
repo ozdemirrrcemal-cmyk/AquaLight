@@ -4,4 +4,5 @@
     android:layout_width="match_parent"
     android:layout_height="@dimen/legal_document_dialog_height"
     android:importantForAutofill="noExcludeDescendants"
-    android:overScrollMode="never" />
+    android:overScrollMode="never"
+    android:scrollbars="none" />

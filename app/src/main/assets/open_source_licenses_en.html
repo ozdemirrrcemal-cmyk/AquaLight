@@ -7,14 +7,25 @@
 
   <style>
     :root {
-      --bg: #0A192F;
-      --surface: #152B45;
-      --text: #EAF2FF;
-      --text-secondary: #A9B7C9;
-      --border: rgba(255,255,255,0.05);
+      --bg: #071827;
+      --surface: #101D2C;
+      --text: #F4F8FC;
+      --text-secondary: #9AAEC4;
+      --border: #22354D;
     }
 
     * { box-sizing: border-box; }
+
+    html {
+      scrollbar-width: none;
+    }
+
+    html::-webkit-scrollbar,
+    body::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
 
     body {
       margin: 0;
@@ -32,7 +43,7 @@
     }
 
     .hero {
-      background: linear-gradient(180deg, #1C3252 0%, #152B45 100%);
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 24px;
       padding: 28px 24px;
@@ -88,7 +99,7 @@
       margin-top: 24px;
       padding: 20px;
       border-radius: 20px;
-      background: linear-gradient(180deg, #152B45 0%, #10243D 100%);
+      background: var(--surface);
       border: 1px solid var(--border);
       color: var(--text-secondary);
       font-size: 14px;
