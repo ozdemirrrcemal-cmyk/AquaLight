@@ -23,6 +23,7 @@ import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentSettingsBinding
 import com.aqua.aqualight.ui.tabs.settings.device.DeviceSettingsDeviceOverviewUi
 import com.aqua.aqualight.ui.common.text.resolve
+import java.util.Calendar
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -138,15 +139,21 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             )
         }
 
-        rowPrivacy.setOnClickListener {
-            safeNavigate(
-                SettingsFragmentDirections.actionSettingsFragmentToPrivacyFragment()
-            )
-        }
-
         rowFeedback.setOnClickListener {
             safeNavigate(
                 SettingsFragmentDirections.actionSettingsFragmentToFeedbackFragment()
+            )
+        }
+
+        rowLegal.setOnClickListener {
+            safeNavigate(
+                SettingsFragmentDirections.actionSettingsFragmentToLegalCenterFragment()
+            )
+        }
+
+        rowAbout.setOnClickListener {
+            safeNavigate(
+                SettingsFragmentDirections.actionSettingsFragmentToAboutAppFragment()
             )
         }
 
@@ -235,6 +242,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private fun setupFooterVersion() {
         binding.tvFooterInfo.text = getString(
             R.string.settings_footer_info,
+            Calendar.getInstance().get(Calendar.YEAR),
             BuildConfig.VERSION_NAME
         )
     }

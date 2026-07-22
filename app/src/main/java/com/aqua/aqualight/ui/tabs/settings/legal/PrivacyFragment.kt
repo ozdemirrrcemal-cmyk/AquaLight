@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.settings.privacy
+package com.aqua.aqualight.ui.tabs.settings.legal
 
 import com.aqua.aqualight.ui.common.web.LegalDocument
 import com.aqua.aqualight.ui.common.web.LegalDocumentFragment

@@ -264,41 +264,7 @@
                     android:layout_height="@dimen/aqua_size_1"
                     android:background="@color/aqua_card_divider"/>
 
-                <!-- 6️⃣ Privacy Policy -->
-                <LinearLayout
-                    android:id="@+id/rowPrivacy"
-                    android:layout_width="match_parent"
-					android:layout_height="wrap_content"
-                    android:minHeight="@dimen/aqua_size_56"
-                    android:paddingHorizontal="@dimen/aqua_size_16"
-                    android:gravity="center_vertical"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:background="?android:attr/selectableItemBackground"
-                    android:contentDescription="@string/settings_privacy_desc">
-
-                    <TextView
-                        android:layout_width="@dimen/aqua_size_0"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/settings_privacy"
-                        android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="@dimen/aqua_text_size_body"/>
-
-                    <ImageView
-                        android:layout_width="@dimen/aqua_size_20"
-                        android:layout_height="@dimen/aqua_size_20"
-                        android:src="@drawable/ic_arrow_right"
-                        app:tint="@color/aqua_card_text_secondary"
-                        android:contentDescription="@string/settings_arrow_desc"/>
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/aqua_size_1"
-                    android:background="@color/aqua_card_divider"/>
-
-                <!-- 7️⃣ Feedback / Support -->
+                <!-- 6️⃣ Feedback / Support -->
                 <LinearLayout
                     android:id="@+id/rowFeedback"
                     android:layout_width="match_parent"
@@ -332,7 +298,75 @@
                     android:layout_height="@dimen/aqua_size_1"
                     android:background="@color/aqua_card_divider"/>
 
-                <!-- 8️⃣ Logout / Account Management -->
+                <!-- 7️⃣ Privacy and legal center -->
+                <LinearLayout
+                    android:id="@+id/rowLegal"
+                    android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+                    android:minHeight="@dimen/aqua_size_56"
+                    android:paddingHorizontal="@dimen/aqua_size_16"
+                    android:gravity="center_vertical"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="@string/settings_legal_desc">
+
+                    <TextView
+                        android:layout_width="@dimen/aqua_size_0"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/settings_legal"
+                        android:textColor="@color/aqua_card_text_secondary"
+                        android:textSize="@dimen/aqua_text_size_body"/>
+
+                    <ImageView
+                        android:layout_width="@dimen/aqua_size_20"
+                        android:layout_height="@dimen/aqua_size_20"
+                        android:src="@drawable/ic_arrow_right"
+                        app:tint="@color/aqua_card_text_secondary"
+                        android:contentDescription="@string/settings_arrow_desc"/>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/aqua_size_1"
+                    android:background="@color/aqua_card_divider"/>
+
+                <!-- 8️⃣ About -->
+                <LinearLayout
+                    android:id="@+id/rowAbout"
+                    android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+                    android:minHeight="@dimen/aqua_size_56"
+                    android:paddingHorizontal="@dimen/aqua_size_16"
+                    android:gravity="center_vertical"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="@string/settings_about_desc">
+
+                    <TextView
+                        android:layout_width="@dimen/aqua_size_0"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/settings_about"
+                        android:textColor="@color/aqua_card_text_secondary"
+                        android:textSize="@dimen/aqua_text_size_body"/>
+
+                    <ImageView
+                        android:layout_width="@dimen/aqua_size_20"
+                        android:layout_height="@dimen/aqua_size_20"
+                        android:src="@drawable/ic_arrow_right"
+                        app:tint="@color/aqua_card_text_secondary"
+                        android:contentDescription="@string/settings_arrow_desc"/>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/aqua_size_1"
+                    android:background="@color/aqua_card_divider"/>
+
+                <!-- 9️⃣ Logout / Account Management -->
                 <LinearLayout
                     android:id="@+id/rowLogout"
                     android:layout_width="match_parent"

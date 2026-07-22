@@ -266,9 +266,9 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- ⚖️ Yasal / linkler -->
+            <!-- 📦 Open-source licenses -->
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardLegal"
+                android:id="@+id/cardLicenses"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/aqua_size_16"
@@ -279,69 +279,18 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="@dimen/aqua_size_16"
-                    android:contentDescription="@string/about_app_legal_card_desc">
+                    android:contentDescription="@string/about_app_licenses_card_desc">
 
                     <TextView
-                        android:id="@+id/tvLegalTitle"
+                        android:id="@+id/tvLicensesTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/about_app_legal_title"
+                        android:text="@string/about_app_licenses_title"
                         android:textColor="@color/aqua_card_text_primary"
                         android:textSize="@dimen/aqua_text_size_body"
                         android:textStyle="bold"
                         android:layout_marginBottom="@dimen/aqua_size_8" />
 
-                    <!-- Privacy policy -->
-                    <LinearLayout
-                        android:id="@+id/rowPrivacy"
-                        android:layout_width="match_parent"
-                        android:layout_height="@dimen/aqua_size_48"
-                        android:gravity="center_vertical"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:background="?android:attr/selectableItemBackground">
-
-                        <TextView
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/about_app_privacy_policy"
-                            android:textColor="@color/aqua_card_text_secondary"
-                            android:textSize="@dimen/aqua_text_size_body_small" />
-
-                        <ImageView
-                            android:layout_width="@dimen/aqua_size_20"
-                            android:layout_height="@dimen/aqua_size_20"
-                            android:src="@drawable/ic_arrow_right"
-                            android:contentDescription="@string/about_app_row_arrow_desc" />
-                    </LinearLayout>
-
-                    <!-- Terms of use -->
-                    <LinearLayout
-                        android:id="@+id/rowTerms"
-                        android:layout_width="match_parent"
-                        android:layout_height="@dimen/aqua_size_48"
-                        android:gravity="center_vertical"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:background="?android:attr/selectableItemBackground">
-
-                        <TextView
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/about_app_terms"
-                            android:textColor="@color/aqua_card_text_secondary"
-                            android:textSize="@dimen/aqua_text_size_body_small" />
-
-                        <ImageView
-                            android:layout_width="@dimen/aqua_size_20"
-                            android:layout_height="@dimen/aqua_size_20"
-                            android:src="@drawable/ic_arrow_right"
-                            android:contentDescription="@string/about_app_row_arrow_desc" />
-                    </LinearLayout>
-
-                    <!-- Open source licenses -->
                     <LinearLayout
                         android:id="@+id/rowLicenses"
                         android:layout_width="match_parent"
@@ -363,6 +312,7 @@
                             android:layout_width="@dimen/aqua_size_20"
                             android:layout_height="@dimen/aqua_size_20"
                             android:src="@drawable/ic_arrow_right"
+                            app:tint="@color/aqua_card_text_secondary"
                             android:contentDescription="@string/about_app_row_arrow_desc" />
                     </LinearLayout>
                 </LinearLayout>
@@ -373,11 +323,11 @@
                 android:id="@+id/tvFooter"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/about_app_footer"
                 android:textColor="@color/aqua_card_text_secondary"
                 android:textSize="@dimen/aqua_text_size_caption"
                 android:gravity="center"
-                android:layout_marginTop="@dimen/aqua_size_4" />
+                android:layout_marginTop="@dimen/aqua_size_4"
+                tools:text="© 2026 AquaLight. All rights reserved." />
 
         </LinearLayout>
     </ScrollView>
