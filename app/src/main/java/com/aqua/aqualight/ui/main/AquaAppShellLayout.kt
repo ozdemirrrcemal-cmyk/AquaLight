@@ -3,11 +3,11 @@ package com.aqua.aqualight.ui.main
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
-import android.graphics.Color
 import android.os.Build
 import android.util.AttributeSet
 import android.view.View
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -322,13 +322,18 @@ class AquaAppShellLayout @JvmOverloads constructor(
         val controller = WindowCompat.getInsetsController(window, this)
 
         if (contentDrawsBehindSystemBars) {
-            window.statusBarColor = Color.TRANSPARENT
-            window.navigationBarColor = Color.TRANSPARENT
+            val transparentColor = ContextCompat.getColor(
+                context,
+                R.color.aqua_color_transparent
+            )
+
+            window.statusBarColor = transparentColor
+            window.navigationBarColor = transparentColor
             controller.isAppearanceLightStatusBars = false
             controller.isAppearanceLightNavigationBars = false
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                window.navigationBarDividerColor = Color.TRANSPARENT
+                window.navigationBarDividerColor = transparentColor
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 window.isStatusBarContrastEnforced = false
