@@ -1,14 +1,9 @@
 package com.aqua.aqualight.ui.auth
 
 import android.os.Bundle
-import android.text.Spannable
-import android.text.SpannableString
-import android.text.method.LinkMovementMethod
-import android.text.style.ClickableSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -62,9 +57,6 @@ class RegisterFragment : Fragment() {
 
     private fun setupUI() =
         with(binding) {
-
-            configureTermsAgreementLink()
-
             btnRegister.setOnClickListener {
                 viewModel.register(
                     email = emailEditText.text
@@ -75,8 +67,7 @@ class RegisterFragment : Fragment() {
                         .orEmpty(),
                     repeatPassword = etPasswordRepeat.text
                         ?.toString()
-                        .orEmpty(),
-                    termsAccepted = checkTermsAccepted.isChecked
+                        .orEmpty()
                 )
             }
 
@@ -84,48 +75,6 @@ class RegisterFragment : Fragment() {
                 findNavController().popBackStack()
             }
         }
-
-    private fun configureTermsAgreementLink() {
-        val agreementText = getString(R.string.legal_accept_terms)
-        val linkText = getString(R.string.legal_accept_terms_link)
-        val linkStart = agreementText.indexOf(linkText)
-        check(linkStart >= 0) {
-            "The terms agreement link text must be present in the agreement text."
-        }
-
-        val linkedAgreement = SpannableString(agreementText).apply {
-            setSpan(
-                object : ClickableSpan() {
-                    override fun onClick(widget: View) {
-                        findNavController().navigate(
-                            RegisterFragmentDirections
-                                .actionRegisterFragmentToLegalDocumentFragment()
-                        )
-                    }
-
-                    override fun updateDrawState(drawState: android.text.TextPaint) {
-                        drawState.color = ContextCompat.getColor(
-                            requireContext(),
-                            R.color.aqua_accent_aqua
-                        )
-                        drawState.isUnderlineText = true
-                    }
-                },
-                linkStart,
-                linkStart + linkText.length,
-                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
-        }
-
-        binding.checkTermsAccepted.apply {
-            text = linkedAgreement
-            movementMethod = LinkMovementMethod.getInstance()
-            highlightColor = ContextCompat.getColor(
-                requireContext(),
-                android.R.color.transparent
-            )
-        }
-    }
 
     private fun observeState() {
         viewLifecycleOwner.lifecycleScope.launch {
@@ -146,7 +95,6 @@ class RegisterFragment : Fragment() {
 
         setFragmentGlobalLoading(isLoading)
         binding.btnRegister.isEnabled = !isLoading
-        binding.checkTermsAccepted.isEnabled = !isLoading
         binding.btnRegister.text = getString(
             if (isLoading) {
                 R.string.register_loading

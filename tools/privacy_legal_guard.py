@@ -62,6 +62,17 @@ def main() -> int:
     if "file:///android_asset" in source_text:
         failures.append("file:// Android asset loading is forbidden")
 
+    for forbidden_token in (
+        "checkTermsAccepted",
+        "LegalGatePolicy",
+        "legal_accept_terms",
+        "legal_gate_terms_required",
+    ):
+        if forbidden_token in source_text:
+            failures.append(
+                f"authentication Terms-acceptance gate must not be reintroduced: {forbidden_token}"
+            )
+
     secure_web = text(
         "app/src/main/java/com/aqua/aqualight/ui/common/web/SecureLocalWebContent.kt"
     )
@@ -91,6 +102,14 @@ def main() -> int:
     for token in ("legal capacity", "hukuki ehliyet", "stored locally", "yerel olarak saklanır"):
         if token not in terms_text:
             failures.append(f"bilingual Terms control is missing: {token}")
+    for forbidden_token in (
+        "by creating an account, you agree",
+        "hesap oluşturarak bu koşulları kabul",
+    ):
+        if forbidden_token in terms_text:
+            failures.append(
+                f"implicit account-creation acceptance claim must not be reintroduced: {forbidden_token}"
+            )
 
     age_decision_text = (policy_text + terms_text + text(
         "docs/commercial/data-inventory-and-retention.md"

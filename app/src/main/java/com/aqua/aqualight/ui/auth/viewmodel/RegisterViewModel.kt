@@ -7,7 +7,6 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.auth.AuthOperations
 import com.aqua.aqualight.data.auth.AuthErrorMapper
 import com.aqua.aqualight.data.auth.AuthUiText
-import com.aqua.aqualight.ui.auth.LegalGatePolicy
 import com.aqua.aqualight.ui.auth.state.AuthActionState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,8 +25,7 @@ class RegisterViewModel(
     fun register(
         email: String,
         password: String,
-        repeatPassword: String,
-        termsAccepted: Boolean
+        repeatPassword: String
     ) {
         val normalizedEmail = email.trim()
         val normalizedPassword = password.trim()
@@ -52,11 +50,7 @@ class RegisterViewModel(
                 R.string.passwords_do_not_match_title to R.string.passwords_do_not_match
             }
 
-            else -> when (LegalGatePolicy.validate(termsAccepted)) {
-                LegalGatePolicy.Failure.TERMS_NOT_ACCEPTED ->
-                    R.string.legal_gate_error_title to R.string.legal_gate_terms_required
-                null -> null
-            }
+            else -> null
         }
 
         if (validationMessage != null) {

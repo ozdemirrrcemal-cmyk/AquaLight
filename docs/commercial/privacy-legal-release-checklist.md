@@ -13,7 +13,7 @@ This file is a Google Play production-publication gate, not a claim of legal com
 - [x] Feedback data fields and absence of screenshots disclosed at the submission point.
 - [x] Privacy and Terms provided in Turkish and English and selected from the active app language.
 - [x] Privacy/Terms/licenses use a shared locked-down `WebViewAssetLoader` origin; JavaScript, DOM storage, file/content access, mixed content and network loads are disabled.
-- [x] Email registration requires Terms acceptance; AquaLight has no numeric age gate, age declaration or age-data collection, and Google Sign-In authenticates an existing provider account without creating a Google account inside AquaLight.
+- [x] Email registration and Google Sign-In have no Terms-acceptance gate; Privacy and Terms remain available in the in-app Settings/About area and are not added to the home screen. AquaLight has no numeric age gate, age declaration or age-data collection, and Google Sign-In authenticates an existing provider account without creating a Google account inside AquaLight.
 - [x] Local usage copy states that counters stay on-device and are not analytics.
 - [x] Account deletion covers the defined cloud/local boundary and has restartable recovery state.
 - [x] Twelve-month feedback cleanup is implemented as a dry-run-first, bounded, allow-listed manual admin-panel control with an 11-month operational cutoff.

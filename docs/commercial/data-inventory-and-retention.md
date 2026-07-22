@@ -32,7 +32,7 @@ Status: implementation baseline for the 2026 commercial release. The release che
 
 - Firebase Analytics, Crashlytics, Performance Monitoring, Realtime Database, Remote Config and Cloud Messaging are not packaged.
 - No advertising SDK, behavioural analytics, tracking identifier or optional telemetry is used.
-- A general “KVKK consent” is not requested. The Privacy/KVKK text is a notice, not a consent request. Terms acceptance remains required in the in-app email-registration flow. AquaLight does not impose a numeric age gate, collect an age declaration or perform age verification; Google Sign-In authenticates an existing provider account and does not create a Google account inside AquaLight.
+- A general “KVKK consent” is not requested. The Privacy/KVKK text is a notice, not a consent request. Neither email registration nor Google Sign-In uses a Terms-acceptance gate; Privacy and Terms remain available in the in-app Settings/About area. AquaLight does not impose a numeric age gate, collect an age declaration or perform age verification; Google Sign-In authenticates an existing provider account and does not create a Google account inside AquaLight.
 - If optional telemetry is proposed later, it requires a new architecture decision, data-inventory update, provider/legal review, a default-off consent control before SDK initialisation, withdrawal handling and store-declaration changes.
 
 ## Deletion verification boundary
