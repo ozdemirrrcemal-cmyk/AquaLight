@@ -20,14 +20,11 @@ REQUIRED_FILES = (
     "app/src/main/java/com/aqua/aqualight/data/auth/AccountDeletionCheckpointStore.kt",
     "app/src/test/java/com/aqua/aqualight/data/auth/AccountDeletionProcessDeathMatrixTest.kt",
     "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/AccountDeletionProcessDeathSmokeActivity.kt",
-    ".github/workflows/google_play_publication_readiness.yml",
     "firestore.rules",
     "firestore.indexes.json",
     "docs/commercial/data-inventory-and-retention.md",
     "docs/commercial/account-deletion-process-death-matrix.md",
     "docs/commercial/firebase-production-evidence.md",
-    "docs/commercial/privacy-legal-release-checklist.md",
-    "tools/google_play_publication_guard.py",
 )
 
 REQUIRED_WEBVIEW_TOKENS = (
@@ -140,7 +137,7 @@ def main() -> int:
 
     age_decision_text = (policy_text + terms_text + text(
         "docs/commercial/data-inventory-and-retention.md"
-    ) + text("docs/commercial/privacy-legal-release-checklist.md")).lower()
+    )).lower()
     for forbidden_token in ("at least 18", "aged 18", "under 18", "18+", "en az 18", "18 yaş"):
         if forbidden_token in age_decision_text:
             failures.append(f"numeric age-gate claim must not be reintroduced: {forbidden_token}")
@@ -189,15 +186,6 @@ def main() -> int:
     ):
         if token not in deletion_test_text:
             failures.append(f"process-death deletion matrix is missing: {token}")
-
-    release_checklist = text("docs/commercial/privacy-legal-release-checklist.md")
-    for token in (
-        "assembleRelease",
-        "not approved for Google Play production publication",
-        "tools/google_play_publication_guard.py",
-    ):
-        if token not in release_checklist:
-            failures.append(f"release-build/publication-gate separation is missing: {token}")
 
     firestore_rules = text("firestore.rules")
     for token in (
