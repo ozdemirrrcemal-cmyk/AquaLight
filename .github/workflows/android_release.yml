@@ -97,6 +97,8 @@ jobs:
           python3 tools/notification_reminder_architecture_guard.py
           python3 tools/process_safe_feedback_guard.py
           python3 tools/stage9_feedback_media_guard.py
+          python3 tools/firebase_telemetry_guard.py
+          python3 tools/privacy_legal_guard.py
           python3 tools/design_system_resource_guard.py
           python3 tools/localization_accessibility_guard.py
 
@@ -132,6 +134,11 @@ jobs:
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: ./gradlew assembleRelease --stacktrace --no-daemon
+
+      - name: Verify resolved Firebase runtime and merged manifest policy
+        run: |
+          ./gradlew :app:verifyFirebaseRuntimePolicy --no-daemon --stacktrace
+          python3 tools/firebase_telemetry_guard.py --scan-build-output
 
       - name: 📋 Dump releaseRuntimeClasspath on failure
         if: failure()

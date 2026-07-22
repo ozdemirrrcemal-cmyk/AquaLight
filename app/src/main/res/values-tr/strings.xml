@@ -204,7 +204,7 @@
     <string name="settings_about_arrow_description">Hakkında ekranını aç</string>
 
     <!-- Usage / feedback -->
-    <string name="usage_subinfo">Aqua uygulamasını ne sıklıkta kullandığınızı ve temel kullanım istatistiklerini nasıl işlediğimizi görün.</string>
+    <string name="usage_subinfo">Elle yaptığınız işlemler, otomasyonlar ve uyarılara ilişkin yerel sayaçları görün.</string>
     <string name="usage_subinfo_desc">Bu ekranın uygulama kullanım istatistiklerini gösterdiğini açıklayan kısa açıklama.</string>
     <string name="usage_summary_card_desc">Toplam oturum sayısını ve uygulamada geçirilen toplam süreyi gösteren kart.</string>
     <string name="usage_summary_title">Genel kullanım</string>
@@ -214,7 +214,7 @@
     <string name="usage_last_activity_title">Son etkinlik</string>
     <string name="usage_privacy_card_desc">Kullanım verilerinin nasıl saklandığını ve kullanıldığını açıklayan kart.</string>
     <string name="usage_privacy_title">Bu verileri nasıl kullanıyoruz</string>
-    <string name="usage_privacy_body">Yalnızca oturum sayısı ve uygulamada geçirilen toplam süre gibi temel, anonimleştirilmiş kullanım istatistiklerini toplarız. Bu bilgiler performansı anlamamıza ve Aqua uygulamasını geliştirmemize yardımcı olur. Kişisel içerikleriniz ve özel verileriniz incelenmez veya satılmaz.</string>
+    <string name="usage_privacy_body">Bu sayaçlar yalnız bu ekranı size göstermek için cihazınızda hesaplanır ve saklanır. Firebase Analytics değildir, AquaLight’a yüklenmez ve yerel hesap verilerinizle birlikte silinir.</string>
     <string name="feedback_subinfo">Düşüncelerinizi, fikirlerinizi veya fark ettiğiniz sorunları paylaşarak Aqua uygulamasını geliştirmemize yardımcı olun.</string>
     <string name="feedback_subinfo_desc">Kullanıcının uygulama hakkında geri bildirim gönderebileceğini açıklayan kısa açıklama.</string>
     <string name="feedback_hint_category">Bir kategori seçin</string>

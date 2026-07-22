@@ -6,6 +6,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.auth.AuthOperations
 import com.aqua.aqualight.data.auth.AuthErrorMapper
 import com.aqua.aqualight.data.auth.AuthUiText
+import com.aqua.aqualight.ui.auth.LegalGatePolicy
 import com.aqua.aqualight.ui.auth.state.AuthActionState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,6 +21,27 @@ class LoginViewModel(
         AuthActionState.Idle
     )
     val state: StateFlow<AuthActionState> = _state.asStateFlow()
+
+    fun validateGoogleLegalGate(
+        termsAccepted: Boolean,
+        adultConfirmed: Boolean
+    ): Boolean {
+        val message = when (
+            LegalGatePolicy.validate(termsAccepted, adultConfirmed)
+        ) {
+            LegalGatePolicy.Failure.TERMS_NOT_ACCEPTED ->
+                R.string.legal_gate_terms_required
+            LegalGatePolicy.Failure.ADULT_NOT_CONFIRMED ->
+                R.string.legal_gate_age_required
+            null -> return true
+        }
+        _state.value = AuthActionState.Message(
+            kind = AuthActionState.Kind.WARNING,
+            title = AuthUiText.Resource(R.string.legal_gate_error_title),
+            message = AuthUiText.Resource(message)
+        )
+        return false
+    }
 
     fun signInWithGoogleToken(
         idToken: String

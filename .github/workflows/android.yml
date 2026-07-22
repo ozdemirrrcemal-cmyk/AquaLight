@@ -78,6 +78,8 @@ jobs:
           python3 tools/notification_reminder_architecture_guard.py
           python3 tools/process_safe_feedback_guard.py
           python3 tools/stage9_feedback_media_guard.py
+          python3 tools/firebase_telemetry_guard.py
+          python3 tools/privacy_legal_guard.py
           python3 tools/design_system_resource_guard.py
           python3 tools/localization_accessibility_guard.py
 
@@ -99,6 +101,9 @@ jobs:
 
       - name: Clean project (light)
         run: ./gradlew clean --no-daemon
+
+      - name: Verify resolved Firebase runtime policy
+        run: ./gradlew :app:verifyFirebaseRuntimePolicy --no-daemon --stacktrace
 
       - name: Generate debug keystore (if missing)
         run: |
@@ -137,6 +142,9 @@ jobs:
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace --no-daemon --refresh-dependencies
+
+      - name: Verify merged manifest telemetry policy
+        run: python3 tools/firebase_telemetry_guard.py --scan-build-output
 
       - name: 📋 Dump debugRuntimeClasspath (on failure)
         if: failure()

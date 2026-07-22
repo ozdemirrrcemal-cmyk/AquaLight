@@ -19,6 +19,8 @@ import com.aqua.aqualight.platform.auth.GoogleIdentityTokenResult
 import com.aqua.aqualight.ui.auth.state.AuthActionState
 import com.aqua.aqualight.ui.auth.viewmodel.LoginViewModel
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
+import com.aqua.aqualight.ui.common.web.LegalDocument
+import com.aqua.aqualight.ui.common.web.LegalDocumentDialogFragment
 import com.aqua.aqualight.ui.navigation.RootNavigator
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
@@ -48,6 +50,9 @@ class LoginFragment : Fragment() {
                 val tokenResult = googleIdentityClient.parseIdToken(result.data)
             ) {
                 is GoogleIdentityTokenResult.Success -> {
+                    if (!hasValidGoogleLegalGate()) {
+                        return@googleResult
+                    }
                     viewModel.signInWithGoogleToken(
                         idToken = tokenResult.idToken
                     )
@@ -131,6 +136,20 @@ class LoginFragment : Fragment() {
                     LoginFragmentDirections.actionLoginFragmentToRegisterFragment()
                 )
             }
+
+            linkPrivacy.setOnClickListener {
+                LegalDocumentDialogFragment.show(
+                    childFragmentManager,
+                    LegalDocument.PRIVACY
+                )
+            }
+
+            linkTerms.setOnClickListener {
+                LegalDocumentDialogFragment.show(
+                    childFragmentManager,
+                    LegalDocument.TERMS
+                )
+            }
         }
 
     private fun observeState() {
@@ -146,6 +165,8 @@ class LoginFragment : Fragment() {
     }
 
     private fun signInWithGoogle() {
+        if (!hasValidGoogleLegalGate()) return
+
         googleSignInLauncher.launch(
             googleIdentityClient.signInIntent()
         )
@@ -157,6 +178,13 @@ class LoginFragment : Fragment() {
             )
     }
 
+    private fun hasValidGoogleLegalGate(): Boolean {
+        return viewModel.validateGoogleLegalGate(
+            termsAccepted = binding.checkTermsAccepted.isChecked,
+            adultConfirmed = binding.checkAdultConfirmed.isChecked
+        )
+    }
+
     private fun renderState(
         state: AuthActionState
     ) {
@@ -166,6 +194,8 @@ class LoginFragment : Fragment() {
         binding.btnGoogleLogin.isEnabled = !isLoading
         binding.btnSignIn.isEnabled = !isLoading
         binding.btnRegister.isEnabled = !isLoading
+        binding.checkTermsAccepted.isEnabled = !isLoading
+        binding.checkAdultConfirmed.isEnabled = !isLoading
 
         when (state) {
             AuthActionState.Authenticated -> {

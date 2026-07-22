@@ -2,7 +2,6 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'com.google.gms.google-services'
-    id 'com.google.firebase.crashlytics'
     id 'com.google.protobuf'
     id 'androidx.navigation.safeargs.kotlin'
 }
@@ -108,15 +107,9 @@ dependencies {
     // Firebase BoM
     implementation platform("com.google.firebase:firebase-bom:34.5.0")
 
-    // Firebase (ANA modüller)
-    implementation "com.google.firebase:firebase-analytics"
+    // Firebase runtime is deliberately limited to authentication and text feedback storage.
     implementation "com.google.firebase:firebase-auth"
     implementation "com.google.firebase:firebase-firestore"
-    implementation "com.google.firebase:firebase-database"
-    implementation "com.google.firebase:firebase-messaging"
-    implementation "com.google.firebase:firebase-config"
-    implementation "com.google.firebase:firebase-perf"
-    implementation "com.google.firebase:firebase-crashlytics"
 
     // AndroidX
     implementation "androidx.core:core-ktx:1.17.0"
@@ -126,6 +119,7 @@ dependencies {
     implementation "androidx.recyclerview:recyclerview:1.4.0"
     implementation "androidx.viewpager2:viewpager2:1.1.0"
     implementation "androidx.core:core-splashscreen:1.0.1"
+    implementation "androidx.webkit:webkit:1.14.0"
 
     // Navigation
     implementation "androidx.navigation:navigation-fragment-ktx:2.9.5"
@@ -216,4 +210,48 @@ androidComponents {
       output.outputFileName.set("AquaLight.apk") // ✅ sabit isim
     }
   }
+}
+
+def forbiddenFirebaseRuntimeModules = [
+        "firebase-analytics",
+        "firebase-analytics-ktx",
+        "firebase-database",
+        "firebase-database-ktx",
+        "firebase-messaging",
+        "firebase-messaging-ktx",
+        "firebase-config",
+        "firebase-config-ktx",
+        "firebase-perf",
+        "firebase-perf-ktx",
+        "firebase-crashlytics",
+        "firebase-crashlytics-ktx"
+] as Set
+
+tasks.register("verifyFirebaseRuntimePolicy") {
+    group = "verification"
+    description = "Fails when an unapproved Firebase runtime resolves transitively."
+
+    doLast {
+        ["debugRuntimeClasspath", "releaseRuntimeClasspath"].each { configurationName ->
+            def forbidden = configurations.getByName(configurationName)
+                    .resolvedConfiguration
+                    .resolvedArtifacts
+                    .findAll { artifact ->
+                        artifact.moduleVersion.id.group == "com.google.firebase" &&
+                                forbiddenFirebaseRuntimeModules.contains(artifact.name)
+                    }
+                    .collect { artifact ->
+                        "${artifact.moduleVersion.id.group}:${artifact.name}:${artifact.moduleVersion.id.version}"
+                    }
+                    .unique()
+                    .sort()
+
+            if (!forbidden.isEmpty()) {
+                throw new GradleException(
+                        "Forbidden Firebase runtime in ${configurationName}: ${forbidden.join(', ')}"
+                )
+            }
+        }
+        logger.lifecycle("Firebase runtime policy passed: Auth and Firestore only.")
+    }
 }

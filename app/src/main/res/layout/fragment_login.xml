@@ -6,6 +6,77 @@
     android:layout_height="match_parent"
     android:padding="@dimen/aqua_size_24">
 
+  <LinearLayout
+    android:id="@+id/legalDocumentLinks"
+    android:layout_width="@dimen/aqua_size_0"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    app:layout_constraintBottom_toTopOf="@id/checkTermsAccepted"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintVertical_chainStyle="packed">
+
+    <TextView
+      android:id="@+id/linkPrivacy"
+      android:layout_width="@dimen/aqua_size_0"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:background="?attr/selectableItemBackground"
+      android:clickable="true"
+      android:contentDescription="@string/legal_open_privacy_desc"
+      android:focusable="true"
+      android:gravity="center"
+      android:minHeight="@dimen/aqua_size_48"
+      android:text="@string/legal_open_privacy"
+      android:textColor="@color/aqua_accent_aqua"
+      android:textSize="@dimen/aqua_text_size_body_small" />
+
+    <TextView
+      android:id="@+id/linkTerms"
+      android:layout_width="@dimen/aqua_size_0"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:background="?attr/selectableItemBackground"
+      android:clickable="true"
+      android:contentDescription="@string/legal_open_terms_desc"
+      android:focusable="true"
+      android:gravity="center"
+      android:minHeight="@dimen/aqua_size_48"
+      android:text="@string/legal_open_terms"
+      android:textColor="@color/aqua_accent_aqua"
+      android:textSize="@dimen/aqua_text_size_body_small" />
+
+  </LinearLayout>
+
+  <com.google.android.material.checkbox.MaterialCheckBox
+    android:id="@+id/checkTermsAccepted"
+    android:layout_width="@dimen/aqua_size_0"
+    android:layout_height="wrap_content"
+    android:contentDescription="@string/legal_accept_terms_desc"
+    android:minHeight="@dimen/aqua_size_48"
+    android:text="@string/legal_accept_terms"
+    android:textColor="@color/aqua_content_primary"
+    android:textSize="@dimen/aqua_text_size_body_small"
+    app:layout_constraintBottom_toTopOf="@id/checkAdultConfirmed"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@id/legalDocumentLinks" />
+
+  <com.google.android.material.checkbox.MaterialCheckBox
+    android:id="@+id/checkAdultConfirmed"
+    android:layout_width="@dimen/aqua_size_0"
+    android:layout_height="wrap_content"
+    android:contentDescription="@string/legal_confirm_age_desc"
+    android:minHeight="@dimen/aqua_size_48"
+    android:text="@string/legal_confirm_age"
+    android:textColor="@color/aqua_content_primary"
+    android:textSize="@dimen/aqua_text_size_body_small"
+    app:layout_constraintBottom_toTopOf="@id/btnGoogleLogin"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@id/checkTermsAccepted" />
+
   <com.google.android.material.button.MaterialButton
     android:id="@+id/btnGoogleLogin"
     android:layout_width="@dimen/aqua_size_0"
@@ -18,6 +89,7 @@
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintBottom_toTopOf="@+id/btnSignIn"
+    app:layout_constraintTop_toBottomOf="@id/checkAdultConfirmed"
     android:layout_marginBottom="@dimen/aqua_size_4"
     android:paddingStart="@dimen/aqua_size_24"
     android:paddingEnd="@dimen/aqua_size_24"
@@ -36,6 +108,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/btnRegister"
+        app:layout_constraintTop_toBottomOf="@id/btnGoogleLogin"
         android:layout_marginBottom="@dimen/aqua_size_4" />
 
     <com.google.android.material.button.MaterialButton
@@ -48,6 +121,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnSignIn"
         android:layout_marginBottom="@dimen/aqua_size_20" />
 		
 </androidx.constraintlayout.widget.ConstraintLayout>

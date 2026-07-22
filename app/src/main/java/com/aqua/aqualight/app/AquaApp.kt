@@ -3,10 +3,12 @@ package com.aqua.aqualight.app
 import android.app.Application
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import com.aqua.aqualight.base.accessibility.AccessibilityRuntimeInstaller
 import com.aqua.aqualight.base.theme.AppThemeController
 import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.composition.DefaultAppContainer
+import com.aqua.aqualight.data.auth.AccountDeletionManager
 import com.aqua.aqualight.data.media.AppMediaRecoveryManager
 import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
@@ -107,6 +109,22 @@ class AquaApp : Application() {
             }
         }
 
+        // A confirmed account deletion can outlive the UI process. Resume its durable checkpoint
+        // so cloud/auth/local cleanup remains one idempotent commercial transaction.
+        applicationScope.launch(Dispatchers.IO) {
+            val result = runCatching {
+                AccountDeletionManager.create(this@AquaApp)
+                    .resumePendingDeletion()
+            }.getOrElse { error ->
+                Log.e(TAG, "Pending account deletion recovery failed.", error)
+                null
+            }
+
+            if (result?.accountDeleteError != null || result?.hasPostDeleteCleanupErrors == true) {
+                Log.w(TAG, "Pending account deletion recovery remains incomplete.")
+            }
+        }
+
         // Channel creation is idempotent and preserves every user-controlled setting.
         NotificationPlatform.get(this).permissionPolicy.ensureChannels()
     }
@@ -125,5 +143,9 @@ class AquaApp : Application() {
             context = this,
             mode = mode
         )
+    }
+
+    private companion object {
+        const val TAG = "AquaApp"
     }
 }

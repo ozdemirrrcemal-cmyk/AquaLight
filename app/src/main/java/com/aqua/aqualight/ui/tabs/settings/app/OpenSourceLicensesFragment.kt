@@ -2,11 +2,14 @@ package com.aqua.aqualight.ui.tabs.settings.app
 
 import android.os.Bundle
 import android.view.View
-import android.webkit.WebViewClient
 import androidx.fragment.app.Fragment
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentOpenSourceLicensesBinding
+import com.aqua.aqualight.i18n.AppLanguageController
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.web.LegalDocument
+import com.aqua.aqualight.ui.common.web.destroySecureLocalContent
+import com.aqua.aqualight.ui.common.web.loadSecureLocalAsset
 
 class OpenSourceLicensesFragment : Fragment(R.layout.fragment_open_source_licenses) {
 
@@ -36,46 +39,13 @@ class OpenSourceLicensesFragment : Fragment(R.layout.fragment_open_source_licens
     }
 
     private fun setupLicensesWebView() {
-        binding.webViewLicenses.apply {
-            webViewClient =
-                WebViewClient()
-
-            settings.javaScriptEnabled =
-                false
-
-            settings.domStorageEnabled =
-                false
-
-            settings.allowFileAccess =
-                true
-
-            settings.allowContentAccess =
-                false
-
-            settings.builtInZoomControls =
-                false
-
-            settings.displayZoomControls =
-                false
-
-            loadUrl(
-                "file:///android_asset/open_source_licenses_en.html"
-            )
-        }
+        binding.webViewLicenses.loadSecureLocalAsset(
+            LegalDocument.OPEN_SOURCE_LICENSES.assetFor(AppLanguageController.current())
+        )
     }
 
     override fun onDestroyView() {
-        binding.webViewLicenses.apply {
-            stopLoading()
-
-            loadUrl(
-                "about:blank"
-            )
-
-            clearHistory()
-            removeAllViews()
-            destroy()
-        }
+        binding.webViewLicenses.destroySecureLocalContent()
 
         _binding =
             null

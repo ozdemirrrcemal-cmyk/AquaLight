@@ -47,10 +47,13 @@ jobs:
 
       - name: Install pinned Firebase test dependencies
         working-directory: firebase
-        run: npm install --ignore-scripts --no-audit --no-fund
+        run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Validate index JSON
         run: node -e "JSON.parse(require('fs').readFileSync('firestore.indexes.json', 'utf8'))"
+
+      - name: Test retention safety policy
+        run: node --test firebase/retention_cleanup.test.mjs
 
       - name: Run Firestore rules tests
         run: >-

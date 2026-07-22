@@ -62,5 +62,8 @@ lint-results*
 test-results/
 reports/
 
+# --- Node / Firebase maintenance ---
+**/node_modules/
+
 # --- (Opsiyonel) Firebase dosyası ---
 **/google-services.json

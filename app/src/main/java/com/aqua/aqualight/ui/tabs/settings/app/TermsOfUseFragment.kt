@@ -2,11 +2,14 @@ package com.aqua.aqualight.ui.tabs.settings.app
 
 import android.os.Bundle
 import android.view.View
-import android.webkit.WebViewClient
 import androidx.fragment.app.Fragment
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTermsOfUseBinding
+import com.aqua.aqualight.i18n.AppLanguageController
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.web.LegalDocument
+import com.aqua.aqualight.ui.common.web.destroySecureLocalContent
+import com.aqua.aqualight.ui.common.web.loadSecureLocalAsset
 
 class TermsOfUseFragment : Fragment(R.layout.fragment_terms_of_use) {
 
@@ -36,40 +39,13 @@ class TermsOfUseFragment : Fragment(R.layout.fragment_terms_of_use) {
     }
 
     private fun setupWebView() {
-        binding.webViewTerms.apply {
-            webViewClient =
-                WebViewClient()
-
-            settings.javaScriptEnabled =
-                false
-
-            settings.domStorageEnabled =
-                false
-
-            settings.allowFileAccess =
-                false
-
-            settings.allowContentAccess =
-                false
-
-            loadUrl(
-                "file:///android_asset/terms_of_use_en.html"
-            )
-        }
+        binding.webViewTerms.loadSecureLocalAsset(
+            LegalDocument.TERMS.assetFor(AppLanguageController.current())
+        )
     }
 
     override fun onDestroyView() {
-        binding.webViewTerms.apply {
-            stopLoading()
-
-            loadUrl(
-                "about:blank"
-            )
-
-            clearHistory()
-            removeAllViews()
-            destroy()
-        }
+        binding.webViewTerms.destroySecureLocalContent()
 
         _binding =
             null

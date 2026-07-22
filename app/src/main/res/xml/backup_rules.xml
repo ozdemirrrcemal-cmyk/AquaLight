@@ -10,5 +10,6 @@
     <exclude domain="file" path="profile_photos/" />
     <exclude domain="file" path="tank_photos/" />
     <exclude domain="sharedpref" path="device_credentials.xml" />
+    <exclude domain="sharedpref" path="account_deletion_recovery.xml" />
     <exclude domain="sharedpref" path="__androidx_security_crypto_encrypted_file_pref__.xml" />
 </full-backup-content>

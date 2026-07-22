@@ -1,259 +1,99 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Terms of Use - AquaLight</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-<style>
-
-:root{
---bg:#0A192F;
---surface:#152B45;
---surface-2:#1C3252;
---text:#EAF2FF;
---text-secondary:#A9B7C9;
---accent:#2196F3;
---border:#2D3F66;
-}
-
-*{
-box-sizing:border-box;
-}
-
-html{
-scroll-behavior:smooth;
-}
-
-body{
-margin:0;
-padding:0;
-background:var(--bg);
-color:var(--text);
-font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-line-height:1.7;
-}
-
-main{
-max-width:920px;
-margin:0 auto;
-padding:24px 16px 48px;
-}
-
-.hero{
-background:linear-gradient(180deg,#1C3252 0%, #152B45 100%);
-border:1px solid rgba(255,255,255,.05);
-border-radius:24px;
-padding:28px 24px;
-margin-bottom:20px;
-box-shadow:
-0 10px 30px rgba(0,0,0,.22);
-}
-
-h1{
-margin:0;
-font-size:28px;
-font-weight:700;
-letter-spacing:.2px;
-}
-
-.last-updated{
-margin-top:8px;
-color:var(--text-secondary);
-font-size:13px;
-}
-
-.intro{
-margin-top:18px;
-font-size:15px;
-color:var(--text);
-}
-
-.section{
-background:var(--surface);
-border:1px solid rgba(255,255,255,.05);
-border-radius:20px;
-padding:20px;
-margin-bottom:16px;
-box-shadow:
-0 4px 16px rgba(0,0,0,.18);
-}
-
-.section h2{
-margin-top:0;
-margin-bottom:14px;
-font-size:18px;
-color:#FFFFFF;
-}
-
-.section p{
-margin:0 0 12px;
-font-size:14px;
-color:var(--text-secondary);
-text-align:justify;
-}
-
-.section ul{
-margin:0;
-padding-left:20px;
-}
-
-.section li{
-margin-bottom:14px;
-font-size:14px;
-color:var(--text-secondary);
-}
-
-strong{
-color:#FFFFFF;
-}
-
-.contact{
-margin-top:24px;
-padding:20px;
-border-radius:20px;
-background:linear-gradient(180deg,#152B45 0%, #10243D 100%);
-border:1px solid rgba(255,255,255,.05);
-}
-
-.contact h2{
-margin-top:0;
-}
-
-a{
-color:#64B5F6;
-text-decoration:none;
-}
-
-a:hover{
-text-decoration:underline;
-}
-
-.footer{
-margin-top:28px;
-text-align:center;
-font-size:12px;
-color:#7E8EA3;
-}
-
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AquaLight Terms of Use</title>
+  <link rel="stylesheet" href="legal.css">
 </head>
-
 <body>
-
 <main>
+  <header class="hero">
+    <p class="eyebrow">AquaLight legal information</p>
+    <h1>Terms of Use</h1>
+    <p class="updated">Effective and last updated: 22 July 2026</p>
+    <p>These Terms govern your use of the AquaLight Android application and its local connected-device features.</p>
+  </header>
 
-<div class="hero">
-<h1>Terms of Use</h1>
+  <section>
+    <h2>1. Provider and acceptance</h2>
+    <!-- AQL_GOOGLE_PLAY_PUBLICATION_PENDING: provider identity, postal address, support email -->
+    <p><strong>Provider:</strong> <span data-aql-publication-field="provider"></span></p>
+    <p><strong>Address:</strong> <span data-aql-publication-field="postal-address"></span></p>
+    <p><strong>Contact:</strong> <span data-aql-publication-field="support-email"></span></p>
+    <p>By creating an account, you agree to these Terms. The Privacy Notice is separate information and is not bundled into this contractual acceptance.</p>
+  </section>
 
-<div class="last-updated">
-Last updated: October 21, 2025
-</div>
+  <section>
+    <h2>2. Eligibility</h2>
+    <ul>
+      <li>You must be at least 18 years old and legally able to enter into this agreement.</li>
+      <li>You must provide accurate account information and keep your credentials secure.</li>
+      <li>You are responsible for activity performed through your account and devices, except where applicable law provides otherwise.</li>
+    </ul>
+  </section>
 
-<div class="intro">
-These Terms of Use explain the conditions under which you may access and use the AquaLight mobile application and any connected devices, services, or content.
-</div>
-</div>
+  <section>
+    <h2>3. Service and data architecture</h2>
+    <ul>
+      <li>AquaLight provides local aquarium records, care reminders, device provisioning, and local-network device-control features.</li>
+      <li><strong>Tank details, profile details, measurements, notes, photos, maintenance records, and connected-device records are stored locally in the app; AquaLight does not remotely store this content.</strong></li>
+      <li>Firebase Authentication remotely processes account data. Cloud Firestore remotely stores only feedback submissions: category, message, optional email, UID, app version, language, platform, status, and timestamp.</li>
+      <li>Feedback does not include a screenshot. Do not place passwords, Wi-Fi credentials, financial data, health data, or other unnecessary sensitive information in a feedback message.</li>
+      <li>The current commercial release does not include Firebase Analytics, Crashlytics, Performance Monitoring, advertising, or behavioural tracking.</li>
+    </ul>
+    <p>See the separate <a href="privacy_policy_en.html">Privacy Notice</a> for detailed processing, regions, retention, and rights.</p>
+  </section>
 
-<div class="section">
-<h2>1. Acceptance and eligibility</h2>
+  <section>
+    <h2>4. Safe device use</h2>
+    <ul>
+      <li>AquaLight is a support and control tool, not a safety system or substitute for supervision.</li>
+      <li>You must choose safe schedules, dosing, lighting, cooling, and other settings appropriate for your aquarium, livestock, equipment, electrical installation, and local conditions.</li>
+      <li>Network interruption, Bluetooth or Wi-Fi failure, power loss, incompatible hardware, firmware defects, incorrect setup, or third-party changes may delay or prevent commands.</li>
+      <li>Always maintain independent safeguards and follow the device manufacturer's instructions and applicable electrical, water, animal-welfare, and safety rules.</li>
+      <li>Before selling, lending, or transferring a device, remove it from the app and perform the manufacturer's reset procedure.</li>
+    </ul>
+  </section>
 
-<ul>
-<li>You must be at least 18 years old and have the legal capacity to enter into a binding agreement in your country of residence.</li>
+  <section>
+    <h2>5. Acceptable use</h2>
+    <p>You may not misuse the service; interfere with security; probe or access another person's account, feedback, or device; distribute malicious code; unlawfully reverse engineer protected elements; or use AquaLight in violation of law or third-party rights. Reasonable interoperability and consumer rights granted by mandatory law are unaffected.</p>
+  </section>
 
-<li>By creating an account or continuing to use AquaLight, you confirm that the information you provide is accurate, up to date, and complete.</li>
+  <section>
+    <h2>6. Updates, availability, and third parties</h2>
+    <p>We may release security, compatibility, or feature updates and may change or discontinue a feature with reasonable notice where practicable. Some functions depend on Android, Google Play services, Google/Firebase, your network, and device firmware. Their separate terms and availability may apply. We do not promise uninterrupted or error-free operation.</p>
+  </section>
 
-<li>You are responsible for maintaining the confidentiality of your login credentials and for all activity under your account.</li>
+  <section>
+    <h2>7. Account deletion and termination</h2>
+    <p>You may stop using AquaLight at any time. Use <strong>Settings → Security → Delete account</strong> to request deletion of the Firebase account, cloud feedback, and local account data. Uninstalling alone removes local app data but may not delete the remote Firebase account or previously submitted feedback; use the in-app deletion flow or contact support.</p>
+    <p>We may restrict or terminate access when reasonably necessary for security, unlawful use, material breach, or legal compliance. Where appropriate, we will provide notice and an opportunity to remedy.</p>
+  </section>
 
-<li>Your use of AquaLight may also be subject to the terms of third-party platforms such as Google Play or device manufacturers.</li>
+  <section>
+    <h2>8. Intellectual property and user content</h2>
+    <p>AquaLight and its original software, branding, and content are protected by applicable intellectual-property laws. You retain rights in content you create. You grant only the limited rights necessary to process a feedback message for support and product improvement; local tank and profile content is not licensed or uploaded to AquaLight.</p>
+  </section>
 
-<li>AquaLight may update these Terms of Use from time to time.</li>
-</ul>
-</div>
+  <section>
+    <h2>9. Warranty and liability</h2>
+    <p>To the maximum extent permitted by applicable law, AquaLight is provided “as is” and “as available.” You remain responsible for supervising the aquarium and connected equipment. AquaLight is not liable for loss caused solely by unsafe settings, unsupported hardware, ignored warnings, third-party service failure, or use contrary to instructions.</p>
+    <p>Nothing in these Terms excludes or limits liability that cannot legally be excluded, including mandatory consumer rights, liability for intent or gross negligence where applicable, or rights available under the law of your country of residence.</p>
+  </section>
 
-<div class="section">
-<h2>2. Device control and automation</h2>
+  <section>
+    <h2>10. Governing law and disputes</h2>
+    <p>These Terms are governed by the laws of Türkiye, without depriving consumers in the European Union or another country of mandatory protections and competent forums provided by their local law. Please contact us first so we can try to resolve a concern. You may also use any competent consumer or judicial remedy available to you.</p>
+  </section>
 
-<ul>
-<li>AquaLight allows you to send commands to aquariums and related equipment.</li>
+  <section>
+    <h2>11. Changes</h2>
+    <p>We may update these Terms when the service or law changes. Material changes will be presented before taking effect where required. If a change requires renewed acceptance, the app will ask for it.</p>
+  </section>
 
-<li>You are solely responsible for choosing safe schedules and configurations.</li>
-
-<li>Network interruptions, hardware defects, firmware bugs, or incorrect setup may affect device behaviour.</li>
-
-<li>The app is a supporting tool and is not a substitute for supervision or safety measures.</li>
-
-<li>You must follow all electrical and safety regulations.</li>
-
-<li>If you sell or transfer a device, you are responsible for resetting it.</li>
-</ul>
-</div>
-
-<div class="section">
-<h2>3. Data and privacy</h2>
-
-<ul>
-<li>AquaLight processes personal data necessary for operating the service.</li>
-
-<li>Tank details, measurements, notes, and photos may be stored remotely.</li>
-
-<li>We do not sell your personal data.</li>
-
-<li>We may work with trusted service providers such as hosting or analytics providers.</li>
-
-<li>Additional details are available in our Privacy Policy.</li>
-</ul>
-</div>
-
-<div class="section">
-<h2>4. Liability, risks, and disclaimers</h2>
-
-<ul>
-<li>AquaLight is provided on an "as is" basis.</li>
-
-<li>You are responsible for monitoring your aquarium and connected equipment.</li>
-
-<li>We are not liable for livestock loss, hardware damage, water damage, or indirect losses.</li>
-
-<li>Any liability is limited to the maximum extent permitted by law.</li>
-
-<li>Consumer protection rights remain unaffected where required by law.</li>
-</ul>
-</div>
-
-<div class="section">
-<h2>5. Changes, termination, and contact</h2>
-
-<ul>
-<li>We may modify or discontinue parts of the service at any time.</li>
-
-<li>We may update these Terms of Use.</li>
-
-<li>You may stop using AquaLight at any time.</li>
-
-<li>Questions may be directed to AquaLight support.</li>
-</ul>
-</div>
-
-<div class="contact">
-<h2>Contact</h2>
-
-<p>
-If you have any questions regarding these Terms of Use:
-</p>
-
-<p>
-<a href="mailto:support@myaqualight.com">
-support@myaqualight.com
-</a>
-</p>
-</div>
-
-<div class="footer">
-© AquaLight
-</div>
-
+  <footer>© 2026 AquaLight</footer>
 </main>
-
 </body>
 </html>

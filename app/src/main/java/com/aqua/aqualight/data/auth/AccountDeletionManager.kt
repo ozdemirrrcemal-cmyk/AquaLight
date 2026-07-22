@@ -12,6 +12,8 @@ import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Single account deletion path for the app.
@@ -23,7 +25,8 @@ class AccountDeletionManager private constructor(
     private val appContext: Context,
     private val firebaseAuth: FirebaseAuth,
     private val userDataCleaner: UserDataCleaner,
-    private val cloudUserDataCleaner: CloudUserDataCleaner
+    private val cloudUserDataCleaner: CloudUserDataCleaner,
+    private val checkpointStore: AccountDeletionCheckpointStore
 ) {
 
     data class DeleteResult(
@@ -51,6 +54,8 @@ class AccountDeletionManager private constructor(
     }
 
     companion object {
+        private val DELETION_MUTEX = Mutex()
+
         fun create(
             context: Context
         ): AccountDeletionManager {
@@ -63,48 +68,134 @@ class AccountDeletionManager private constructor(
                 userDataCleaner = UserDataCleaner.create(
                     context = appContext
                 ),
-                cloudUserDataCleaner = CloudUserDataCleaner.create()
+                cloudUserDataCleaner = CloudUserDataCleaner.create(),
+                checkpointStore = EncryptedAccountDeletionCheckpointStore(appContext)
             )
         }
     }
 
     suspend fun deleteCurrentAccount(): DeleteResult {
-        val user = firebaseAuth.currentUser
+        return DELETION_MUTEX.withLock {
+            deleteOrResumeLocked(requirePending = false)
+                ?: DeleteResult(
+                    accountDeleteError = IllegalStateException(
+                        "No authenticated user."
+                    )
+                )
+        }
+    }
+
+    /** Best-effort process-start recovery; null means that no deletion was pending. */
+    suspend fun resumePendingDeletion(): DeleteResult? {
+        return DELETION_MUTEX.withLock {
+            deleteOrResumeLocked(requirePending = true)
+        }
+    }
+
+    private suspend fun deleteOrResumeLocked(
+        requirePending: Boolean
+    ): DeleteResult? {
+        var checkpoint = checkpointStore.read()
+        if (checkpoint == null && requirePending) return null
+
+        val currentUser = firebaseAuth.currentUser
+        val ownerUid = checkpoint?.ownerUid
+            ?: currentUser?.uid
             ?: return DeleteResult(
                 accountDeleteError = IllegalStateException(
                     "No authenticated user."
                 )
             )
 
-        val ownerUid =
-            user.uid
-
-        val cloudCleanupResult =
-            cloudUserDataCleaner.clearCloudUserData(
-                ownerUid = ownerUid
-            )
-
-        if (cloudCleanupResult.hasError) {
+        if (currentUser != null && currentUser.uid != ownerUid) {
             return DeleteResult(
-                accountDeleteError = cloudCleanupResult.error
-                    ?: IllegalStateException(
-                        "Cloud user data cleanup failed."
-                    ),
-                cloudCleanupResult = cloudCleanupResult
+                accountDeleteError = IllegalStateException(
+                    "Pending account deletion belongs to a different authenticated owner."
+                )
             )
         }
 
-        val accountDeleteError =
-            runCatching {
-                user.delete()
-                    .awaitCompletion()
-            }.exceptionOrNull()
+        if (checkpoint == null) {
+            checkpoint = runCatching {
+                checkpointStore.begin(ownerUid)
+            }.getOrElse { error ->
+                return DeleteResult(accountDeleteError = error)
+            }
+        }
 
-        if (accountDeleteError != null) {
-            return DeleteResult(
-                accountDeleteError = accountDeleteError,
-                cloudCleanupResult = cloudCleanupResult
+        if (checkpoint.stage == AccountDeletionCheckpoint.Stage.STARTED) {
+            val cloudCleanupResult = cloudUserDataCleaner.clearCloudUserData(
+                ownerUid = ownerUid
             )
+
+            if (cloudCleanupResult.hasError) {
+                return DeleteResult(
+                    accountDeleteError = cloudCleanupResult.error
+                        ?: IllegalStateException("Cloud user data cleanup failed."),
+                    cloudCleanupResult = cloudCleanupResult
+                )
+            }
+
+            checkpoint = runCatching {
+                checkpointStore.advance(
+                    ownerUid,
+                    AccountDeletionCheckpoint.Stage.CLOUD_CLEARED
+                )
+            }.getOrElse { error ->
+                return DeleteResult(
+                    accountDeleteError = error,
+                    cloudCleanupResult = cloudCleanupResult
+                )
+            }
+        }
+
+        if (checkpoint.stage == AccountDeletionCheckpoint.Stage.CLOUD_CLEARED) {
+            checkpoint = runCatching {
+                checkpointStore.advance(
+                    ownerUid,
+                    AccountDeletionCheckpoint.Stage.AUTH_DELETE_REQUESTED
+                )
+            }.getOrElse { error ->
+                return DeleteResult(accountDeleteError = error)
+            }
+        }
+
+        if (checkpoint.stage == AccountDeletionCheckpoint.Stage.AUTH_DELETE_REQUESTED) {
+            val user = firebaseAuth.currentUser
+
+            if (user == null) {
+                // The process may have died after Firebase confirmed deletion but before the local
+                // checkpoint advanced. No current Firebase user is the safe completion signal here.
+                checkpoint = runCatching {
+                    checkpointStore.advance(
+                        ownerUid,
+                        AccountDeletionCheckpoint.Stage.ACCOUNT_DELETED
+                    )
+                }.getOrElse { error ->
+                    return DeleteResult(accountDeleteError = error)
+                }
+            } else {
+                val accountDeleteError = runCatching {
+                    user.delete().awaitCompletion()
+                }.exceptionOrNull()
+
+                if (accountDeleteError != null) {
+                    return DeleteResult(accountDeleteError = accountDeleteError)
+                }
+
+                checkpoint = runCatching {
+                    checkpointStore.advance(
+                        ownerUid,
+                        AccountDeletionCheckpoint.Stage.ACCOUNT_DELETED
+                    )
+                }.getOrElse { error ->
+                    return DeleteResult(accountDeleteError = error)
+                }
+            }
+        }
+
+        check(checkpoint.stage == AccountDeletionCheckpoint.Stage.ACCOUNT_DELETED) {
+            "Account deletion reached an unsupported recovery stage."
         }
 
         return withContext(NonCancellable) {
@@ -134,8 +225,21 @@ class AccountDeletionManager private constructor(
                 firebaseAuth.signOut()
             }.exceptionOrNull()
 
+            if (!localCleanupResult.hasErrors && firebaseSignOutError == null) {
+                runCatching {
+                    checkpointStore.clear(ownerUid)
+                }.onFailure { checkpointError ->
+                    return@withContext DeleteResult(
+                        cloudCleanupResult = CloudUserDataCleaner.CleanupResult.Success,
+                        localCleanupResult = localCleanupResult,
+                        googleRevokeError = googleRevokeError,
+                        firebaseSignOutError = checkpointError
+                    )
+                }
+            }
+
             DeleteResult(
-                cloudCleanupResult = cloudCleanupResult,
+                cloudCleanupResult = CloudUserDataCleaner.CleanupResult.Success,
                 localCleanupResult = localCleanupResult,
                 googleRevokeError = googleRevokeError,
                 firebaseSignOutError = firebaseSignOutError
@@ -165,4 +269,5 @@ class AccountDeletionManager private constructor(
             }
         }
     }
+
 }
