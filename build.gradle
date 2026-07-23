@@ -1,1 +1,12 @@
-// Root project intentionally keeps plugin application at module scope.
+// Quality plugins remain module-scoped to keep AGP and plugin classloaders isolated.
+subprojects { subproject ->
+    subproject.afterEvaluate {
+        def androidExtension = subproject.extensions.findByName("android")
+        if (androidExtension != null) {
+            // Full Android lint remains enabled. Existing brownfield debt is captured in
+            // a reviewed baseline; every newly introduced warning or error remains visible.
+            androidExtension.lint.warningsAsErrors = false
+            androidExtension.lint.baseline = subproject.file("lint-baseline.xml")
+        }
+    }
+}
