@@ -1,5 +1,7 @@
 plugins {
     id 'org.cyclonedx.bom' apply false
+    id 'org.jlleitschuh.gradle.ktlint' apply false
+    id 'org.jetbrains.kotlinx.kover' apply false
 }
 
 def aqlReleaseVersion = providers
@@ -9,6 +11,43 @@ def aqlReleaseVersion = providers
 
 subprojects {
     pluginManager.apply("org.cyclonedx.bom")
+    pluginManager.apply("org.jlleitschuh.gradle.ktlint")
+    pluginManager.apply("org.jetbrains.kotlinx.kover")
+
+    ktlint {
+        version = "1.8.0"
+        android = true
+        outputToConsole = true
+        ignoreFailures = false
+        baseline = file("ktlint-baseline.xml")
+        reporters {
+            reporter "plain"
+            reporter "checkstyle"
+            reporter "sarif"
+        }
+        filter {
+            exclude("**/build/**")
+            exclude("**/generated/**")
+        }
+    }
+
+    kover {
+        useJacoco("0.8.15")
+        reports {
+            filters {
+                excludes {
+                    classes(
+                            "*.R",
+                            "*.R$*",
+                            "*.BuildConfig",
+                            "*.*Binding",
+                            "*.databinding.*",
+                            "*.proto.*"
+                    )
+                }
+            }
+        }
+    }
 
     tasks.named("cyclonedxDirectBom") {
         includeConfigs = ["releaseRuntimeClasspath"]
