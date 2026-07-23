@@ -383,13 +383,14 @@ jobs:
             -alias "$RELEASE_KEY_ALIAS" \
             >/dev/null
 
-      - name: Build signed Play AAB and release APK
+      - name: Build signed Play AAB, release APK and CycloneDX SBOM
         run: >-
           ./gradlew
           :app:verifyReleaseSigningConfiguration
           :app:verifyFirebaseRuntimePolicy
           bundleRelease
           assembleRelease
+          :app:cyclonedxDirectBom
           --no-daemon
           --stacktrace
           -PAQL_VERSION_NAME="$AQL_VERSION_NAME"
@@ -406,10 +407,12 @@ jobs:
           AAB_PATH="app/build/outputs/bundle/release/app-release.aab"
           APK_PATH="app/build/outputs/apk/release/AquaLight-${AQL_VERSION_NAME}.apk"
           MAPPING_PATH="app/build/outputs/mapping/release/mapping.txt"
+          SBOM_PATH="app/build/reports/cyclonedx-release/AquaLight-${AQL_VERSION_NAME}-sbom.cdx.json"
 
           test -s "$AAB_PATH"
           test -s "$APK_PATH"
           test -s "$MAPPING_PATH"
+          test -s "$SBOM_PATH"
 
           mkdir -p dist internal-release-evidence
           jarsigner -verify "$AAB_PATH" \
@@ -439,6 +442,7 @@ jobs:
 
           cp "$AAB_PATH" "dist/${AQL_ARTIFACT_BASE}.aab"
           cp "$APK_PATH" "dist/${AQL_ARTIFACT_BASE}.apk"
+          cp "$SBOM_PATH" "dist/${AQL_ARTIFACT_BASE}-sbom.cdx.json"
           cp "$MAPPING_PATH" "internal-release-evidence/${AQL_ARTIFACT_BASE}-mapping.txt"
 
           python3 - <<'PY'
@@ -464,6 +468,7 @@ jobs:
             sha256sum \
               "${AQL_ARTIFACT_BASE}.aab" \
               "${AQL_ARTIFACT_BASE}.apk" \
+              "${AQL_ARTIFACT_BASE}-sbom.cdx.json" \
               release-metadata.json \
               > SHA256SUMS
             sha256sum --check SHA256SUMS
@@ -483,6 +488,11 @@ jobs:
         uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
         with:
           subject-path: dist/${{ needs.metadata.outputs.artifact_base }}.apk
+
+      - name: Attest CycloneDX SBOM provenance
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
+        with:
+          subject-path: dist/${{ needs.metadata.outputs.artifact_base }}-sbom.cdx.json
 
       - name: Upload signed release artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
