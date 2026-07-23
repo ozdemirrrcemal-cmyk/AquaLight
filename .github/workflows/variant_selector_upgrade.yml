@@ -52,7 +52,7 @@ jobs:
         run: |
           set -euo pipefail
           chmod +x gradlew
-          ./gradlew :app:tasks --all --no-daemon > app-tasks.log
+          ./gradlew :app:tasks --all --no-daemon > app-tasks.log 2>&1
           grep -Fq "lintDevelopmentDebug" app-tasks.log
           grep -Fq "testDevelopmentDebugUnitTest" app-tasks.log
           grep -Fq "assembleStagingReleaseSmoke" app-tasks.log
@@ -62,6 +62,15 @@ jobs:
             echo "Production debug variant must not exist." >&2
             exit 1
           fi
+
+      - name: Upload generated task graph
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: variant-task-graph-${{ github.run_id }}
+          path: app-tasks.log
+          if-no-files-found: warn
+          retention-days: 1
 
       - name: Commit permanent selector and remove upgrader
         shell: bash
