@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
 
-readonly APPLICATION_ID="com.aqua.aqualight"
 readonly APK_PATH="${1:-app/build/outputs/apk/debug/app-debug.apk}"
+readonly APPLICATION_ID="${2:-com.aqua.aqualight.debug}"
 readonly TEST_PATHS=(
   "files/uninstall-marker"
   "files/datastore/known_devices.pb"
@@ -12,6 +12,11 @@ readonly TEST_PATHS=(
 
 if [[ ! -s "${APK_PATH}" ]]; then
   echo "Debug APK is missing: ${APK_PATH}" >&2
+  exit 1
+fi
+
+if [[ ! "${APPLICATION_ID}" =~ ^[A-Za-z][A-Za-z0-9_.]+$ ]]; then
+  echo "Invalid Android application id: ${APPLICATION_ID}" >&2
   exit 1
 fi
 
@@ -34,4 +39,4 @@ for path in "${TEST_PATHS[@]}"; do
   fi
 done
 
-echo "Uninstall/reinstall verification passed: private device data was not restored."
+echo "Uninstall/reinstall verification passed for ${APPLICATION_ID}: private device data was not restored."

@@ -3,12 +3,7 @@
 /.gradle/
 **/build/
 
-# Gradle Wrapper (repoda tutulur – ignore ETME)
-# (Negasyon gerek yok; sadece ignore listesine eklemiyoruz)
-# gradlew
-# gradlew.bat
-# gradle/wrapper/gradle-wrapper.properties
-# gradle/wrapper/gradle-wrapper.jar
+# Gradle Wrapper is committed.
 
 # --- IDE ---
 /.idea/
@@ -17,7 +12,7 @@
 *.iws
 /.idea/caches/
 /.idea/libraries/
-/.ideal/modules.xml
+/.idea/modules.xml
 /.idea/workspace.xml
 
 # --- NDK / External Build ---
@@ -27,36 +22,39 @@
 # --- Captures ---
 captures/
 
-# --- OS çöplükleri ---
+# --- OS ---
 .DS_Store
 Thumbs.db
 
-# --- Log / Geçici ---
+# --- Logs / temporary files ---
 *.log
 *.bak
 *.tmp
 *.swp
-*.lock
+*.lck
 *~
 *.save
 *.old
 
-# --- AIDE özel ---
+# --- AIDE ---
 /.aide/
 bin/
 gen/
 
-# --- Çıktılar / Artifaktlar ---
+# --- Build outputs / artifacts ---
 **/outputs/
 *.apk
 *.aab
 *.ap_
 
-# --- Keystore ---
+# --- Signing and local secrets ---
 *.keystore
 *.jks
+.env
+.env.*
+*.base64
 
-# --- Lint & Test ---
+# --- Lint & test outputs ---
 lint/
 lint-results*
 test-results/
@@ -65,5 +63,6 @@ reports/
 # --- Node / Firebase maintenance ---
 **/node_modules/
 
-# --- (Opsiyonel) Firebase dosyası ---
-**/google-services.json
+# Production Firebase configuration is injected only inside the protected release job.
+/app/google-services.json
+/app/src/release/google-services.json

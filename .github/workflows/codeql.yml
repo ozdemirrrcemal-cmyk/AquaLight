@@ -2,180 +2,79 @@ name: CodeQL Security Scan
 
 on:
   push:
-    branches: [ "main", "release" ]
+    branches: [main, release]
   pull_request:
   schedule:
-    - cron: '0 3 * * 1'
+    - cron: "0 3 * * 1"
 
 permissions:
   actions: read
   contents: read
   security-events: write
 
+concurrency:
+  group: codeql-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   analyze:
-    name: Analyze Kotlin/Java
+    name: Analyze Kotlin and Java
     runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        language: [ 'java-kotlin' ]
+    timeout-minutes: 60
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          distribution: temurin
-          java-version: 17
-          cache: gradle
+          fetch-depth: 1
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Set up Android toolchain
+        uses: ./.github/actions/android-setup
 
-      - name: Install SDK packages
-        run: |
-          yes | sdkmanager --licenses >/dev/null
-          sdkmanager "platform-tools" "platforms;android-36"
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      - name: Run architecture and navigation guards
+      - name: Validate immutable Action refs and architecture guards
         shell: bash
         run: |
-          set -o pipefail
-          {
-            python3 tools/architecture_guard.py
-            python3 tools/session_startup_guard.py
-            python3 tools/composition_root_guard.py
-            python3 tools/ui_dependency_construction_guard.py
-            python3 tools/device_application_boundary_guard.py
-            python3 tools/device_root_application_boundary_guard.py
-            python3 tools/tank_device_assignment_boundary_guard.py
-            python3 tools/aquarium_application_boundary_guard.py
-            python3 tools/care_application_boundary_guard.py
-            python3 tools/provisioning_discovery_boundary_guard.py
-            python3 tools/provisioning_progress_boundary_guard.py
-            python3 tools/provisioning_commit_recovery_guard.py
-            python3 tools/navigation_guard.py
-            python3 tools/permission_architecture_guard.py
-            python3 tools/notification_reminder_architecture_guard.py
-            python3 tools/process_safe_feedback_guard.py
-            python3 tools/stage9_feedback_media_guard.py
-            python3 tools/design_system_resource_guard.py
-            python3 tools/localization_accessibility_guard.py
-          } 2>&1 | tee architecture-guards.log
+          set -Eeuo pipefail
+          python3 tools/verify_action_pins.py
+          bash tools/run_architecture_guards.sh
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
         with:
           languages: java-kotlin
           build-mode: manual
 
-      - name: Build uncached Debug APK for CodeQL extraction
+      - name: Build and test extractable variants
         shell: bash
         run: |
+          set -Eeuo pipefail
           set -o pipefail
-          ./gradlew clean assembleDebug \
+          ./gradlew \
+            :app:assembleDebug \
+            :app:testDebugUnitTest \
+            :app:lintDebug \
+            :app:detekt \
+            :app:assembleReleaseSmoke \
             --no-daemon \
             --no-build-cache \
             --rerun-tasks \
-            --stacktrace \
-            2>&1 | tee codeql-extraction-build.log
+            --stacktrace 2>&1 | tee codeql-extraction-build.log
 
-      - name: Run Debug unit tests
-        shell: bash
-        run: |
-          set -o pipefail
-          ./gradlew testDebugUnitTest --no-daemon --stacktrace 2>&1 | tee unit-test.log
-
-      - name: Run Debug lint
-        shell: bash
-        run: |
-          set -o pipefail
-          ./gradlew lintDebug --no-daemon --stacktrace 2>&1 | tee lint-debug.log
-
-      - name: Build Debug APK
-        shell: bash
-        run: |
-          set -o pipefail
-          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee assemble-debug.log
-
-      - name: Generate CI-only release keystore
-        run: |
-          keytool -genkeypair -noprompt \
-            -keystore release-key.jks \
-            -storepass aqualight-ci \
-            -alias aqualight-ci \
-            -keypass aqualight-ci \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 1 \
-            -dname "CN=AquaLight CI,O=AquaLight,C=TR"
-
-      - name: Run Release unit tests
-        shell: bash
-        env:
-          RELEASE_KEYSTORE_PASSWORD: aqualight-ci
-          RELEASE_KEY_ALIAS: aqualight-ci
-          RELEASE_KEY_PASSWORD: aqualight-ci
-        run: |
-          set -o pipefail
-          ./gradlew testReleaseUnitTest --no-daemon --stacktrace 2>&1 | tee unit-test-release.log
-
-      - name: Run Release lint
-        shell: bash
-        env:
-          RELEASE_KEYSTORE_PASSWORD: aqualight-ci
-          RELEASE_KEY_ALIAS: aqualight-ci
-          RELEASE_KEY_PASSWORD: aqualight-ci
-        run: |
-          set -o pipefail
-          ./gradlew lintRelease --no-daemon --stacktrace 2>&1 | tee lint-release.log
-
-      - name: Build minified Release APK with CI-only signing
-        shell: bash
-        env:
-          RELEASE_KEYSTORE_PASSWORD: aqualight-ci
-          RELEASE_KEY_ALIAS: aqualight-ci
-          RELEASE_KEY_PASSWORD: aqualight-ci
-        run: |
-          set -o pipefail
-          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee assemble-release.log
-          test -s app/build/outputs/apk/release/AquaLight.apk
-          test -s app/build/outputs/mapping/release/mapping.txt
-
-      - name: Upload validation logs
+      - name: Upload CodeQL validation logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: codeql-validation-logs-${{ github.run_number }}
+          name: codeql-validation-${{ github.run_number }}
           path: |
-            architecture-guards.log
             codeql-extraction-build.log
-            unit-test.log
-            unit-test-release.log
-            lint-debug.log
-            lint-release.log
-            assemble-debug.log
-            assemble-release.log
-            app/build/outputs/mapping/release/mapping.txt
             app/build/reports/tests/testDebugUnitTest/**
-            app/build/reports/tests/testReleaseUnitTest/**
             app/build/reports/lint-results-debug.*
-            app/build/reports/lint-results-release.*
+            app/build/reports/detekt/**
           if-no-files-found: ignore
+          retention-days: 14
 
-      - name: Remove CI-only release keystore
-        if: always()
-        run: rm -f release-key.jks
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
         with:
           output: codeql-results
           upload-database: false

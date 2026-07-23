@@ -1,168 +1,194 @@
-name: Android CI
+name: Android Commercial CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
     paths:
       - "app/**"
       - "protocol/**"
       - "tools/**"
+      - "config/**"
+      - "gradle/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle.properties"
+      - "gradlew"
+      - ".github/actions/**"
       - ".github/workflows/android.yml"
-
-concurrency:
-  group: android-ci-${{ github.ref }}
-  cancel-in-progress: true
+      - ".github/workflows/android_instrumentation.yml"
+      - ".github/dependabot.yml"
 
 permissions:
   contents: read
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+concurrency:
+  group: android-commercial-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
-    env:
-      GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8" -Dorg.gradle.daemon=false
-      AQL_OTA_MANIFEST_PUBLIC_KEY_PEM: ${{ secrets.AQL_OTA_MANIFEST_PUBLIC_KEY_PEM }}
-      AQL_OTA_MANIFEST_KEY_ID: ${{ secrets.AQL_OTA_MANIFEST_KEY_ID }}
+env:
+  GRADLE_OPTS: >-
+    -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8"
+    -Dorg.gradle.daemon=false
+
+jobs:
+  guard:
+    name: 1 · Guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+
+      - name: Set up Android toolchain
+        uses: ./.github/actions/android-setup
 
       - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v2
+        uses: gradle/actions/wrapper-validation@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
 
-      - name: Install JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: gradle
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        env:
-          SKIP_JDK_VERSION_CHECK: true
-
-      - name: Install required SDK packages
+      - name: Validate release tooling and immutable Action refs
+        shell: bash
         run: |
-          yes | sdkmanager --licenses >/dev/null
-          sdkmanager --update
-          sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
-          sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1" || true
-          echo "Installed packages (first 120 lines):"
-          sdkmanager --list | sed -n '1,120p' || true
+          set -Eeuo pipefail
+          python3 tools/tests/test_release_version.py
+          python3 tools/tests/test_configure_firebase.py
+          python3 tools/verify_action_pins.py
 
-      # Cache restore, sadece TEMİZ İSTENMİYORSA yapılır
-      - name: Cache Gradle build-cache
-        if: ${{ !contains(github.event.head_commit.message, 'clean') && !contains(github.event.head_commit.message, 'clean-cache') }}
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches/build-cache-1
-          key: ${{ runner.os }}-gradle-buildcache-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-buildcache-
-
-      - name: Grant execute permission to gradlew
-        run: chmod +x ./gradlew
-
-      - name: Run Architecture Guard
+      - name: Validate source-controlled Firebase environment fixtures
+        shell: bash
         run: |
-          python3 tools/architecture_guard.py
-          python3 tools/navigation_guard.py
-          python3 tools/ws_protocol_guard.py
-          python3 tools/permission_architecture_guard.py
-          python3 tools/notification_reminder_architecture_guard.py
-          python3 tools/process_safe_feedback_guard.py
-          python3 tools/stage9_feedback_media_guard.py
-          python3 tools/firebase_telemetry_guard.py
-          python3 tools/privacy_legal_guard.py
-          python3 tools/design_system_resource_guard.py
-          python3 tools/localization_accessibility_guard.py
+          set -Eeuo pipefail
+          python3 tools/configure_firebase.py validate \
+            --environment debug \
+            --package com.aqua.aqualight.debug \
+            --input app/src/debug/google-services.json
+          python3 tools/configure_firebase.py validate \
+            --environment staging \
+            --package com.aqua.aqualight.staging \
+            --input app/src/staging/google-services.json
+          python3 tools/configure_firebase.py validate \
+            --environment releaseSmoke \
+            --package com.aqua.aqualight \
+            --input app/src/releaseSmoke/google-services.json
 
-      # İsteğe bağlı: bağımlılık modül cache'lerini temizle (refresh-deps)
-      - name: 🔄 Force refresh dependencies (optional)
-        if: contains(github.event.head_commit.message, 'refresh-deps')
-        run: |
-          rm -rf ~/.gradle/caches/modules-2 ~/.gradle/caches/transforms-* ~/.gradle/caches/jars-* || true
-          echo "Gradle module caches cleared."
-
-      # İsteğe bağlı: TAM TEMİZLEME – commit mesajında 'clean' veya 'clean-cache' varsa
-      # (setup-java ve cache restore'dan SONRA konumlandırıldı ki gerçekten silsin)
-      - name: 🧹 Hard clean caches & outputs (on demand)
-        if: ${{ contains(github.event.head_commit.message, 'clean') || contains(github.event.head_commit.message, 'clean-cache') }}
-        run: |
-          echo "💥 Hard clean requested. Purging Gradle caches and build outputs..."
-          rm -rf ~/.gradle/caches ~/.gradle/daemon ~/.gradle/native ~/.gradle/wrapper || true
-          rm -rf **/build build app/build || true
-
-      - name: Clean project (light)
-        run: ./gradlew clean --no-daemon
+      - name: Run architecture and policy guards
+        run: bash tools/run_architecture_guards.sh
 
       - name: Verify resolved Firebase runtime policy
         run: ./gradlew :app:verifyFirebaseRuntimePolicy --no-daemon --stacktrace
 
-      - name: Generate debug keystore (if missing)
-        run: |
-          mkdir -p ~/.android
-          if [ ! -s ~/.android/debug.keystore ]; then
-            keytool -genkeypair -v \
-              -keystore ~/.android/debug.keystore \
-              -storepass android \
-              -alias AndroidDebugKey \
-              -keypass android \
-              -keyalg RSA \
-              -keysize 2048 \
-              -validity 10000 \
-              -storetype JKS \
-              -dname "CN=Android,O=AquaLight,C=TR"
-          fi
+  lint:
+    name: 2 · Lint and static analysis
+    needs: guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
 
-      - name: Run Android Lint
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Android toolchain
+        uses: ./.github/actions/android-setup
+
+      - name: Run full Android lint and Detekt
+        shell: bash
         run: |
+          set -Eeuo pipefail
           set -o pipefail
-          ./gradlew lintDebug --no-daemon --stacktrace 2>&1 | tee lint-debug.log
+          ./gradlew :app:lintDebug :app:lintStaging :app:detekt \
+            --no-daemon --stacktrace 2>&1 | tee static-analysis.log
 
-      - name: Upload Lint Reports
+      - name: Upload static-analysis reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: lint-reports-${{ github.run_number }}
+          name: static-analysis-${{ github.run_number }}
           path: |
-            lint-debug.log
-            **/build/reports/lint-results-*.html
-            **/build/reports/lint-results-*.xml
+            static-analysis.log
+            app/build/reports/lint-results-*
+            app/build/reports/detekt/**
           if-no-files-found: ignore
+          retention-days: 14
 
-      - name: Run Unit Tests
-        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
+  unit_test:
+    name: 3 · Unit tests and coverage
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
 
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace --no-daemon --refresh-dependencies
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Verify merged manifest telemetry policy
+      - name: Set up Android toolchain
+        uses: ./.github/actions/android-setup
+
+      - name: Run unit tests, coverage report, and critical-package gates
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          set -o pipefail
+          ./gradlew \
+            :app:testDebugUnitTest \
+            :app:jacocoDebugUnitTestReport \
+            :app:jacocoCriticalCoverageVerification \
+            --no-daemon --stacktrace 2>&1 | tee unit-test-coverage.log
+
+      - name: Upload unit-test and coverage reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: unit-test-coverage-${{ github.run_number }}
+          path: |
+            unit-test-coverage.log
+            app/build/reports/tests/testDebugUnitTest/**
+            app/build/reports/jacoco/jacocoDebugUnitTestReport/**
+          if-no-files-found: ignore
+          retention-days: 14
+
+  instrumentation:
+    name: 4 · Instrumentation
+    needs: unit_test
+    uses: ./.github/workflows/android_instrumentation.yml
+    with:
+      ref: ${{ github.sha }}
+
+  build:
+    name: 5 · Non-production build
+    needs: instrumentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Android toolchain
+        uses: ./.github/actions/android-setup
+
+      - name: Build isolated debug and staging APKs
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          set -o pipefail
+          ./gradlew :app:assembleDebug :app:assembleStaging \
+            --no-daemon --stacktrace 2>&1 | tee non-production-build.log
+          test -s app/build/outputs/apk/debug/app-debug.apk
+          find app/build/outputs/apk/staging -type f -name '*.apk' -size +0 -print -quit | grep -q .
+
+      - name: Verify merged-manifest telemetry policy
         run: python3 tools/firebase_telemetry_guard.py --scan-build-output
 
-      - name: 📋 Dump debugRuntimeClasspath (on failure)
-        if: failure()
-        run: ./gradlew :app:dependencies --configuration debugRuntimeClasspath --no-daemon
-
-      - name: Verify Debug APK
-        run: |
-          set -e
-          ls -la app/build/outputs/apk/debug || true
-          if [ -f app/build/outputs/apk/debug/app-debug.apk ]; then
-            echo "✅ APK bulundu"
-          else
-            echo "❌ APK yok"
-            exit 1
-          fi
-
-      - name: Upload Debug APK
-        uses: actions/upload-artifact@v4
+      - name: Upload non-production APKs
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: app-debug-${{ github.run_number }}
-          path: app/build/outputs/apk/debug/*.apk
+          name: non-production-apks-${{ github.run_number }}
+          path: |
+            non-production-build.log
+            app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/staging/*.apk
+          if-no-files-found: error
+          retention-days: 7

@@ -1,9 +1,14 @@
+import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification
+import org.gradle.testing.jacoco.tasks.JacocoReport
+
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'com.google.gms.google-services'
     id 'com.google.protobuf'
     id 'androidx.navigation.safeargs.kotlin'
+    id 'io.gitlab.arturbosch.detekt'
+    id 'jacoco'
 }
 
 def aqlBuildConfigString = { value ->
@@ -15,15 +20,61 @@ def aqlBuildConfigString = { value ->
     return "\"${normalized}\""
 }
 
-def otaManifestPublicKeyPem = providers
-        .gradleProperty("AQL_OTA_MANIFEST_PUBLIC_KEY_PEM")
-        .orElse(providers.environmentVariable("AQL_OTA_MANIFEST_PUBLIC_KEY_PEM"))
-        .getOrElse("")
+def aqlProvider = { propertyName, environmentName, defaultValue ->
+    providers.gradleProperty(propertyName)
+            .orElse(providers.environmentVariable(environmentName))
+            .orElse(defaultValue)
+}
 
-def otaManifestKeyId = providers
-        .gradleProperty("AQL_OTA_MANIFEST_KEY_ID")
-        .orElse(providers.environmentVariable("AQL_OTA_MANIFEST_KEY_ID"))
-        .getOrElse("aql-ota-manifest-2026-01")
+def releaseVersionName = aqlProvider("AQL_VERSION_NAME", "AQL_VERSION_NAME", "1.0.0-dev").get()
+def releaseVersionCodeText = aqlProvider("AQL_VERSION_CODE", "AQL_VERSION_CODE", "1").get()
+def releaseVersionCode
+try {
+    releaseVersionCode = Integer.parseInt(releaseVersionCodeText)
+} catch (NumberFormatException exception) {
+    throw new GradleException("AQL_VERSION_CODE must be a positive Android integer", exception)
+}
+if (releaseVersionCode <= 0 || releaseVersionCode > 2_100_000_000) {
+    throw new GradleException("AQL_VERSION_CODE must be between 1 and 2100000000")
+}
+
+def otaManifestPublicKeyPem = aqlProvider(
+        "AQL_OTA_MANIFEST_PUBLIC_KEY_PEM",
+        "AQL_OTA_MANIFEST_PUBLIC_KEY_PEM",
+        ""
+).get()
+def otaManifestKeyId = aqlProvider(
+        "AQL_OTA_MANIFEST_KEY_ID",
+        "AQL_OTA_MANIFEST_KEY_ID",
+        "aql-ota-manifest-2026-01"
+).get()
+
+def releaseKeystorePath = aqlProvider(
+        "RELEASE_KEYSTORE_PATH",
+        "RELEASE_KEYSTORE_PATH",
+        ""
+).get()
+def releaseKeystorePassword = aqlProvider(
+        "RELEASE_KEYSTORE_PASSWORD",
+        "RELEASE_KEYSTORE_PASSWORD",
+        ""
+).get()
+def releaseKeyAlias = aqlProvider(
+        "RELEASE_KEY_ALIAS",
+        "RELEASE_KEY_ALIAS",
+        ""
+).get()
+def releaseKeyPassword = aqlProvider(
+        "RELEASE_KEY_PASSWORD",
+        "RELEASE_KEY_PASSWORD",
+        ""
+).get()
+def releaseSigningAvailable = [
+        releaseKeystorePath,
+        releaseKeystorePassword,
+        releaseKeyAlias,
+        releaseKeyPassword
+].every { value -> value != null && !value.trim().isEmpty() }
 
 android {
     namespace "com.aqua.aqualight"
@@ -33,38 +84,61 @@ android {
         applicationId "com.aqua.aqualight"
         minSdk 27
         targetSdk 36
-        versionCode 1
-        versionName "1.0.0"
+        versionCode releaseVersionCode
+        versionName releaseVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "AQL_OTA_MANIFEST_PUBLIC_KEY_PEM", aqlBuildConfigString(otaManifestPublicKeyPem)
         buildConfigField "String", "AQL_OTA_MANIFEST_KEY_ID", aqlBuildConfigString(otaManifestKeyId)
+        buildConfigField "String", "AQL_ENVIRONMENT", aqlBuildConfigString("production")
     }
 
     signingConfigs {
         release {
-            storeFile file("../release-key.jks")
-            storePassword System.getenv("RELEASE_KEYSTORE_PASSWORD")
-            keyAlias System.getenv("RELEASE_KEY_ALIAS")
-            keyPassword System.getenv("RELEASE_KEY_PASSWORD")
+            if (releaseSigningAvailable) {
+                storeFile file(releaseKeystorePath)
+                storePassword releaseKeystorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
         }
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+            buildConfigField "String", "AQL_ENVIRONMENT", aqlBuildConfigString("debug")
+            testCoverageEnabled true
+        }
+
         release {
-            signingConfig signingConfigs.release
+            if (releaseSigningAvailable) {
+                signingConfig signingConfigs.release
+            }
+            buildConfigField "String", "AQL_ENVIRONMENT", aqlBuildConfigString("production")
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
 
+        staging {
+            initWith release
+            applicationIdSuffix ".staging"
+            versionNameSuffix "-staging"
+            signingConfig signingConfigs.debug
+            buildConfigField "String", "AQL_ENVIRONMENT", aqlBuildConfigString("staging")
+            matchingFallbacks = ['release', 'debug']
+        }
+
         releaseSmoke {
             initWith release
-            signingConfig signingConfigs.release
+            signingConfig signingConfigs.debug
             matchingFallbacks = ['release']
             debuggable true
             minifyEnabled true
             shrinkResources true
             versionNameSuffix "-smoke"
+            buildConfigField "String", "AQL_ENVIRONMENT", aqlBuildConfigString("release-smoke")
         }
     }
 
@@ -78,20 +152,31 @@ android {
     packaging {
         resources {
             excludes += [
-                'META-INF/DEPENDENCIES',
-                'META-INF/LICENSE', 'META-INF/LICENSE.txt', 'META-INF/license.txt',
-                'META-INF/NOTICE',  'META-INF/NOTICE.txt',  'META-INF/notice.txt',
-                'META-INF/AL2.0', 'META-INF/LGPL2.1'
+                    'META-INF/DEPENDENCIES',
+                    'META-INF/LICENSE', 'META-INF/LICENSE.txt', 'META-INF/license.txt',
+                    'META-INF/NOTICE', 'META-INF/NOTICE.txt', 'META-INF/notice.txt',
+                    'META-INF/AL2.0', 'META-INF/LGPL2.1'
             ]
         }
     }
-    	
-   	lint {
-        checkOnly.add("UnusedResources")
+
+    lint {
+        baseline = file("lint-baseline.xml")
         htmlReport true
         xmlReport true
+        sarifReport true
         abortOnError true
         warningsAsErrors true
+        checkDependencies true
+    }
+
+    testOptions {
+        unitTests.all {
+            jacoco {
+                includeNoLocationClasses = true
+                excludes = ['jdk.internal.*']
+            }
+        }
     }
 
     buildFeatures { buildConfig true; viewBinding true }
@@ -100,6 +185,30 @@ android {
         test {
             resources.srcDir rootProject.file("protocol/fixtures")
         }
+    }
+}
+
+jacoco {
+    toolVersion = "0.8.15"
+}
+
+detekt {
+    buildUponDefaultConfig = true
+    allRules = false
+    parallel = true
+    config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
+    baseline = file("$rootDir/config/detekt/baseline.xml")
+    basePath = rootDir.absolutePath
+}
+
+tasks.withType(io.gitlab.arturbosch.detekt.Detekt).configureEach {
+    jvmTarget = "17"
+    reports {
+        html.required.set(true)
+        xml.required.set(true)
+        sarif.required.set(true)
+        md.required.set(false)
+        txt.required.set(false)
     }
 }
 
@@ -125,14 +234,14 @@ dependencies {
     implementation "androidx.navigation:navigation-fragment-ktx:2.9.5"
     implementation "androidx.navigation:navigation-ui-ktx:2.9.5"
 
-    // Media3 (ExoPlayer’ın yeni paketi)
+    // Media3
     implementation "androidx.media3:media3-exoplayer:1.8.0"
     implementation "androidx.media3:media3-ui:1.8.0"
-   	
-   	// İmageCrop
-   	implementation 'com.github.yalantis:ucrop:2.2.11'
-   	
-   	implementation "com.google.code.gson:gson:2.13.2"
+
+    // Image crop
+    implementation 'com.github.yalantis:ucrop:2.2.11'
+
+    implementation "com.google.code.gson:gson:2.13.2"
 
     // WebSocket runtime
     implementation "com.squareup.okhttp3:okhttp:4.12.0"
@@ -143,29 +252,29 @@ dependencies {
     implementation "androidx.camera:camera-lifecycle:1.4.2"
     implementation "androidx.camera:camera-view:1.4.2"
     implementation "com.google.mlkit:barcode-scanning:17.3.0"
-   	
-   	// Lottie animasyon için
+
+    // Lottie
     implementation "com.airbnb.android:lottie:6.7.1"
-   	
-   	// Charts - MPAndroidChart
+
+    // Charts
     implementation "com.github.PhilJay:MPAndroidChart:v3.1.0"
 
     // BlurView
     implementation "com.github.Dimezis:BlurView:version-2.0.6"
-   	
-   	// libphonenumber
-   	implementation "com.googlecode.libphonenumber:libphonenumber:9.0.18"
-   	
-   	// Lifecycle
+
+    // libphonenumber
+    implementation "com.googlecode.libphonenumber:libphonenumber:9.0.18"
+
+    // Lifecycle
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.10.0"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.10.0"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0"
-   	
-   	// WorkManager
+
+    // WorkManager
     implementation "androidx.work:work-runtime-ktx:2.11.2"
 
-   	// Country Code
-   	implementation "com.hbb20:ccp:2.7.3"
+    // Country Code
+    implementation "com.hbb20:ccp:2.7.3"
 
     // Image loading - Coil 3
     implementation "io.coil-kt.coil3:coil-android:3.3.0"
@@ -180,7 +289,7 @@ dependencies {
     // DataStore Proto
     implementation "androidx.datastore:datastore:1.1.3"
     implementation "com.google.protobuf:protobuf-javalite:3.25.3"
-   	implementation "androidx.datastore:datastore-preferences:1.1.1"
+    implementation "androidx.datastore:datastore-preferences:1.1.1"
 
     // Security
     implementation "androidx.security:security-crypto:1.1.0"
@@ -203,13 +312,131 @@ protobuf {
         }
     }
 }
-// app/build.gradle (en alt)
-androidComponents {
-  onVariants(selector().withBuildType("release")) { variant ->
-    variant.outputs.each { output ->
-      output.outputFileName.set("AquaLight.apk") // ✅ sabit isim
+
+def coverageExclusions = [
+        '**/R.class',
+        '**/R$*.class',
+        '**/BuildConfig.*',
+        '**/Manifest*.*',
+        '**/*Test*.*',
+        '**/*Binding*.*',
+        '**/*Directions*.*',
+        '**/*Args*.*',
+        '**/databinding/**',
+        '**/proto/**'
+]
+
+def debugCoverageClasses = {
+    files(
+            fileTree("$buildDir/tmp/kotlin-classes/debug") {
+                exclude coverageExclusions
+            },
+            fileTree("$buildDir/intermediates/javac/debug/compileDebugJavaWithJavac/classes") {
+                exclude coverageExclusions
+            }
+    )
+}
+
+def criticalCoverageClasses = { String packagePath ->
+    files(
+            fileTree("$buildDir/tmp/kotlin-classes/debug") {
+                include "${packagePath}/**/*.class"
+                exclude coverageExclusions
+            },
+            fileTree("$buildDir/intermediates/javac/debug/compileDebugJavaWithJavac/classes") {
+                include "${packagePath}/**/*.class"
+                exclude coverageExclusions
+            }
+    )
+}
+
+def debugCoverageExecutionData = {
+    fileTree(buildDir) {
+        include 'jacoco/testDebugUnitTest.exec'
+        include 'outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec'
     }
-  }
+}
+
+tasks.register("jacocoDebugUnitTestReport", JacocoReport) {
+    dependsOn tasks.named("testDebugUnitTest")
+    classDirectories.setFrom(debugCoverageClasses())
+    sourceDirectories.setFrom(files("src/main/java", "src/main/kotlin"))
+    executionData.setFrom(debugCoverageExecutionData())
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        csv.required.set(false)
+    }
+}
+
+def registerCriticalCoverageGate = { String taskName, String packagePath, String minimumRatio ->
+    tasks.register(taskName, JacocoCoverageVerification) {
+        dependsOn tasks.named("testDebugUnitTest")
+        classDirectories.setFrom(criticalCoverageClasses(packagePath))
+        sourceDirectories.setFrom(files("src/main/java", "src/main/kotlin"))
+        executionData.setFrom(debugCoverageExecutionData())
+        violationRules {
+            rule {
+                limit {
+                    counter = 'LINE'
+                    value = 'COVEREDRATIO'
+                    minimum = new BigDecimal(minimumRatio)
+                }
+            }
+        }
+    }
+}
+
+def authCoverageGate = registerCriticalCoverageGate(
+        "jacocoAuthCoverageVerification",
+        "com/aqua/aqualight/data/auth",
+        "0.10"
+)
+def i18nCoverageGate = registerCriticalCoverageGate(
+        "jacocoI18nCoverageVerification",
+        "com/aqua/aqualight/i18n",
+        "0.40"
+)
+
+tasks.register("jacocoCriticalCoverageVerification") {
+    dependsOn authCoverageGate, i18nCoverageGate
+}
+
+tasks.named("check").configure {
+    dependsOn tasks.named("jacocoDebugUnitTestReport")
+    dependsOn tasks.named("jacocoCriticalCoverageVerification")
+}
+
+tasks.register("validateReleaseSigning") {
+    group = "verification"
+    description = "Fails before a production artifact is built with incomplete signing material."
+    doLast {
+        def missing = [
+                "RELEASE_KEYSTORE_PATH"    : releaseKeystorePath,
+                "RELEASE_KEYSTORE_PASSWORD": releaseKeystorePassword,
+                "RELEASE_KEY_ALIAS"        : releaseKeyAlias,
+                "RELEASE_KEY_PASSWORD"     : releaseKeyPassword
+        ].findAll { ignored, value -> value == null || value.trim().isEmpty() }.keySet()
+        if (!missing.isEmpty()) {
+            throw new GradleException("Missing release signing value(s): ${missing.sort().join(', ')}")
+        }
+        def keystore = file(releaseKeystorePath)
+        if (!keystore.isFile() || keystore.length() == 0L) {
+            throw new GradleException("Release keystore is missing or empty: ${keystore}")
+        }
+    }
+}
+
+tasks.matching { task -> task.name in ["assembleRelease", "bundleRelease"] }.configureEach {
+    dependsOn tasks.named("validateReleaseSigning")
+}
+
+androidComponents {
+    onVariants(selector().withBuildType("release")) { variant ->
+        variant.outputs.each { output ->
+            output.outputFileName.set("AquaLight-${releaseVersionName}.apk")
+        }
+    }
 }
 
 def forbiddenFirebaseRuntimeModules = [
@@ -227,6 +454,13 @@ def forbiddenFirebaseRuntimeModules = [
         "firebase-crashlytics-ktx"
 ] as Set
 
+def firebaseRuntimeConfigurationNames = [
+        "debugRuntimeClasspath",
+        "stagingRuntimeClasspath",
+        "releaseSmokeRuntimeClasspath",
+        "releaseRuntimeClasspath"
+]
+
 tasks.register("verifyFirebaseRuntimePolicy") {
     group = "verification"
     description = "Fails when an unapproved Firebase runtime resolves transitively."
@@ -235,19 +469,18 @@ tasks.register("verifyFirebaseRuntimePolicy") {
             "forbiddenFirebaseRuntimeModules",
             forbiddenFirebaseRuntimeModules.toList().sort()
     )
-    inputs.files(
-            configurations.named("debugRuntimeClasspath"),
-            configurations.named("releaseRuntimeClasspath")
-    ).withPropertyName("firebaseRuntimeClasspaths").withPathSensitivity(PathSensitivity.NONE)
+    inputs.files(firebaseRuntimeConfigurationNames.collect { configurationName ->
+        configurations.named(configurationName)
+    }).withPropertyName("firebaseRuntimeClasspaths").withPathSensitivity(PathSensitivity.NONE)
 
     doLast { task ->
         def modules = task.inputs.properties["forbiddenFirebaseRuntimeModules"] as List
         def forbidden = task.inputs.files.files
-                .findAll { file ->
+                .findAll { artifact ->
                     modules.any { module ->
                         def versionedPrefix = "${module}-"
-                        def versionAndExtension = file.name.startsWith(versionedPrefix)
-                                ? file.name.substring(versionedPrefix.length())
+                        def versionAndExtension = artifact.name.startsWith(versionedPrefix)
+                                ? artifact.name.substring(versionedPrefix.length())
                                 : ""
                         !versionAndExtension.isEmpty() &&
                                 Character.isDigit(versionAndExtension.charAt(0)) &&
@@ -255,7 +488,7 @@ tasks.register("verifyFirebaseRuntimePolicy") {
                                         versionAndExtension.endsWith(".jar"))
                     }
                 }
-                .collect { file -> file.name }
+                .collect { artifact -> artifact.name }
                 .unique()
                 .sort()
 

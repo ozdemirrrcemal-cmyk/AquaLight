@@ -1,0 +1,18 @@
+plugins {
+    id 'org.cyclonedx.bom'
+}
+
+allprojects {
+    dependencyLocking {
+        lockAllConfigurations()
+        lockMode = LockMode.STRICT
+    }
+}
+
+cyclonedxBom {
+    destination = file("build/reports/cyclonedx")
+    outputName = "bom"
+    outputFormat = "json"
+    includeBomSerialNumber = true
+    includeLicenseText = false
+}
