@@ -16,7 +16,7 @@ jobs:
   analyze:
     name: Analyze Kotlin/Java
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 75
 
     strategy:
       fail-fast: false
@@ -44,8 +44,11 @@ jobs:
         run: |
           set -euo pipefail
           yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platform-tools" "platforms;android-36"
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
           chmod +x gradlew
+
+      - name: Verify supply-chain workflow references
+        run: python3 tools/ci/verify_supply_chain_state.py
 
       - name: Run architecture and navigation guards
         shell: bash
@@ -102,13 +105,57 @@ jobs:
           ./gradlew testDebugUnitTest jacocoDebugUnitTestReport \
             --no-daemon --stacktrace 2>&1 | tee unit-test.log
 
-      - name: Run Debug lint and Detekt
+      - name: Generate CI-only release keystore
         shell: bash
         run: |
           set -euo pipefail
+          keytool -genkeypair -noprompt \
+            -keystore release-key.jks \
+            -storepass aqualight-ci \
+            -alias aqualight-ci \
+            -keypass aqualight-ci \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 1 \
+            -dname "CN=AquaLight CI,O=AquaLight,C=TR"
+
+      - name: Run Release unit tests
+        shell: bash
+        env:
+          RELEASE_KEYSTORE_PASSWORD: aqualight-ci
+          RELEASE_KEY_ALIAS: aqualight-ci
+          RELEASE_KEY_PASSWORD: aqualight-ci
+        run: |
+          set -euo pipefail
           set -o pipefail
-          ./gradlew lintDebug detekt --no-daemon --stacktrace \
+          ./gradlew testReleaseUnitTest --no-daemon --stacktrace \
+            2>&1 | tee unit-test-release.log
+
+      - name: Run standard Release lint and Detekt
+        shell: bash
+        env:
+          RELEASE_KEYSTORE_PASSWORD: aqualight-ci
+          RELEASE_KEY_ALIAS: aqualight-ci
+          RELEASE_KEY_PASSWORD: aqualight-ci
+        run: |
+          set -euo pipefail
+          set -o pipefail
+          ./gradlew lintRelease detekt --no-daemon --stacktrace \
             2>&1 | tee static-analysis.log
+
+      - name: Build minified Release APK with CI-only signing
+        shell: bash
+        env:
+          RELEASE_KEYSTORE_PASSWORD: aqualight-ci
+          RELEASE_KEY_ALIAS: aqualight-ci
+          RELEASE_KEY_PASSWORD: aqualight-ci
+        run: |
+          set -euo pipefail
+          set -o pipefail
+          ./gradlew assembleRelease --no-daemon --stacktrace \
+            2>&1 | tee assemble-release.log
+          test -s app/build/outputs/apk/release/AquaLight.apk
+          test -s app/build/outputs/mapping/release/mapping.txt
 
       - name: Upload validation logs
         if: always()
@@ -119,13 +166,21 @@ jobs:
             architecture-guards.log
             codeql-extraction-build.log
             unit-test.log
+            unit-test-release.log
             static-analysis.log
+            assemble-release.log
+            app/build/outputs/mapping/release/mapping.txt
             app/build/reports/tests/testDebugUnitTest/**
+            app/build/reports/tests/testReleaseUnitTest/**
             app/build/reports/jacoco/**
-            app/build/reports/lint-results-debug.*
+            app/build/reports/lint-results-release.*
             app/build/reports/detekt/**
           if-no-files-found: ignore
           retention-days: 30
+
+      - name: Remove CI-only release keystore
+        if: always()
+        run: rm -f release-key.jks
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@0daab03d71ff584ef619d027a3fd9146679c5d84 # v3.35.3
