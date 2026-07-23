@@ -1,0 +1,73 @@
+name: Supply Chain Bootstrap
+
+on:
+  push:
+    branches:
+      - agent/commercial-13-release-supply-chain
+    paths:
+      - build.gradle
+      - settings.gradle
+      - app/build.gradle
+      - config/detekt/detekt.yml
+      - .github/workflows/supply_chain_bootstrap.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: supply-chain-bootstrap-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  generate-and-seal:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Install JDK 17
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+
+      - name: Set up and validate Gradle
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
+        with:
+          cache-provider: basic
+
+      - name: Install Android SDK packages
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Generate strict lock state and verification metadata
+        run: |
+          chmod +x gradlew
+          ./gradlew resolveAndLockAll \
+            --write-locks \
+            --write-verification-metadata sha256 \
+            --no-daemon \
+            --stacktrace
+          test -s gradle/verification-metadata.xml
+          test -s app/gradle.lockfile
+
+      - name: Seal generated state and remove bootstrap
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gradle/verification-metadata.xml app/gradle.lockfile
+          git rm .github/workflows/supply_chain_bootstrap.yml
+          git diff --cached --check
+          git commit -m "chore(supply-chain): seal dependency state"
+          git push origin HEAD:${GITHUB_REF_NAME}
