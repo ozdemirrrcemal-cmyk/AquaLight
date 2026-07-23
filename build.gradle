@@ -9,7 +9,7 @@ allprojects {
 }
 
 tasks.named('cyclonedxBom') {
-    projectType = 'application'
+    projectType = org.cyclonedx.model.Component.Type.APPLICATION
     componentGroup = 'com.aqua'
     componentName = 'AquaLight'
     componentVersion = providers
