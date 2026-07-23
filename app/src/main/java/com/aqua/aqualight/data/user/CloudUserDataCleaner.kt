@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.user
 
+import com.aqua.aqualight.data.feedback.FeedbackFirestoreProvider
 import com.google.android.gms.tasks.Task
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Source
@@ -28,7 +29,7 @@ class CloudUserDataCleaner private constructor(
 
         fun create(): CloudUserDataCleaner {
             return CloudUserDataCleaner(
-                firestore = FirebaseFirestore.getInstance()
+                firestore = FeedbackFirestoreProvider.get()
             )
         }
     }

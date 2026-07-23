@@ -5,8 +5,13 @@ API_LEVEL="${1:-unknown}"
 PACKAGE_NAME="com.aqua.aqualight"
 SMOKE_ACTIVITY="com.aqua.aqualight.smoke.ReleaseSmokeActivity"
 SMOKE_COMPONENT="${PACKAGE_NAME}/${SMOKE_ACTIVITY}"
+ACCOUNT_DELETION_SMOKE_ACTIVITY="com.aqua.aqualight.smoke.AccountDeletionProcessDeathSmokeActivity"
+ACCOUNT_DELETION_SMOKE_COMPONENT="${PACKAGE_NAME}/${ACCOUNT_DELETION_SMOKE_ACTIVITY}"
 SMOKE_PREFIX="release-smoke"
 PASS_MARKER="RELEASE_SMOKE_PASS"
+ACCOUNT_DELETION_PREPARED_MARKER="ACCOUNT_DELETION_PROCESS_DEATH_PREPARED"
+ACCOUNT_DELETION_PASS_MARKER="ACCOUNT_DELETION_PROCESS_DEATH_PASS"
+ACCOUNT_DELETION_FAIL_MARKER="ACCOUNT_DELETION_PROCESS_DEATH_FAIL"
 RUN_LOG="${SMOKE_PREFIX}-run.txt"
 WINDOW_DUMP="${SMOKE_PREFIX}-window.xml"
 REMOTE_WINDOW_DUMP="/sdcard/${WINDOW_DUMP}"
@@ -44,6 +49,66 @@ restore_device_configuration() {
   adb shell setprop debug.force_rtl "$ORIGINAL_FORCE_RTL_PROP" >/dev/null 2>&1 || true
 }
 
+wait_for_ui_marker() {
+  expected_marker="$1"
+  local_dump="$2"
+  remote_dump="/sdcard/${local_dump}"
+
+  rm -f "$local_dump"
+  for attempt in $(seq 1 40); do
+    adb shell uiautomator dump "$remote_dump" >/dev/null 2>&1 || true
+    adb pull "$remote_dump" "$local_dump" >/dev/null 2>&1 || true
+
+    if grep -Fq "$expected_marker" "$local_dump" 2>/dev/null; then
+      return 0
+    fi
+    if grep -Fq "$ACCOUNT_DELETION_FAIL_MARKER" "$local_dump" 2>/dev/null; then
+      cat "$local_dump" || true
+      return 1
+    fi
+    sleep 1
+  done
+
+  echo "Timed out waiting for UI marker: ${expected_marker}"
+  cat "$local_dump" 2>/dev/null || true
+  return 1
+}
+
+run_account_deletion_process_death_scenario() {
+  scenario="$1"
+  scenario_prefix="${SMOKE_PREFIX}-account-deletion-${scenario}"
+  prepare_dump="${scenario_prefix}-prepare-window.xml"
+  resume_dump="${scenario_prefix}-resume-window.xml"
+
+  adb shell am start -W -S -n "$ACCOUNT_DELETION_SMOKE_COMPONENT" \
+    --es aqua_account_deletion_action prepare \
+    --es aqua_account_deletion_scenario "$scenario" \
+    2>&1 | tee "${scenario_prefix}-prepare-start.txt"
+  wait_for_ui_marker \
+    "${ACCOUNT_DELETION_PREPARED_MARKER}:${scenario}" \
+    "$prepare_dump"
+
+  adb shell am force-stop "$PACKAGE_NAME"
+  for attempt in $(seq 1 20); do
+    if [ -z "$(adb shell pidof "$PACKAGE_NAME" 2>/dev/null | tr -d '\r')" ]; then
+      break
+    fi
+    sleep 1
+  done
+  test -z "$(adb shell pidof "$PACKAGE_NAME" 2>/dev/null | tr -d '\r')"
+
+  adb shell am start -W -n "$ACCOUNT_DELETION_SMOKE_COMPONENT" \
+    --es aqua_account_deletion_action resume \
+    --es aqua_account_deletion_scenario "$scenario" \
+    2>&1 | tee "${scenario_prefix}-resume-start.txt"
+  wait_for_ui_marker \
+    "${ACCOUNT_DELETION_PASS_MARKER}:${scenario}" \
+    "$resume_dump"
+
+  echo "Account-deletion process-death scenario passed: ${scenario} (API ${API_LEVEL})."
+  adb shell am force-stop "$PACKAGE_NAME"
+}
+
 finish() {
   status=$?
   trap - EXIT
@@ -63,6 +128,16 @@ adb shell pm path "$PACKAGE_NAME" 2>&1 | tee "${SMOKE_PREFIX}-package-path.txt"
 adb logcat -c
 rm -rf release-smoke-screens
 mkdir -p release-smoke-screens
+
+for deletion_scenario in \
+  started \
+  cloud-cleared \
+  auth-delete-requested \
+  auth-confirmed-before-checkpoint \
+  account-deleted; do
+  run_account_deletion_process_death_scenario "$deletion_scenario"
+done
+echo "Account-deletion process-death release matrix passed on API ${API_LEVEL}."
 
 run_visual_profile() {
   profile="$1"

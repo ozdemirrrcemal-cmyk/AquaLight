@@ -1,0 +1,272 @@
+#!/usr/bin/env python3
+"""Protect the commercial privacy/legal implementation from silent drift."""
+
+from __future__ import annotations
+
+from pathlib import Path
+import sys
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+REQUIRED_FILES = (
+    "app/src/main/assets/privacy_policy_en.html",
+    "app/src/main/assets/privacy_policy_tr.html",
+    "app/src/main/assets/terms_of_use_en.html",
+    "app/src/main/assets/terms_of_use_tr.html",
+    "app/src/main/assets/legal.css",
+    "app/src/main/java/com/aqua/aqualight/ui/common/web/SecureLocalWebContent.kt",
+    "app/src/main/java/com/aqua/aqualight/ui/auth/LoginFragment.kt",
+    "app/src/main/java/com/aqua/aqualight/ui/auth/RegisterFragment.kt",
+    "app/src/main/java/com/aqua/aqualight/data/feedback/FeedbackFirestoreProvider.kt",
+    "app/src/main/java/com/aqua/aqualight/data/auth/AccountDeletionCheckpointStore.kt",
+    "app/src/main/res/layout/fragment_login.xml",
+    "app/src/main/res/layout/fragment_register.xml",
+    "app/src/main/res/navigation/nav_graph_auth.xml",
+    "app/src/test/java/com/aqua/aqualight/data/auth/AccountDeletionProcessDeathMatrixTest.kt",
+    "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/AccountDeletionProcessDeathSmokeActivity.kt",
+    "firestore.rules",
+    "firestore.indexes.json",
+    "docs/commercial/data-inventory-and-retention.md",
+    "docs/commercial/account-deletion-process-death-matrix.md",
+    "docs/commercial/firebase-production-evidence.md",
+)
+
+REQUIRED_WEBVIEW_TOKENS = (
+    "WebViewAssetLoader",
+    "setBackgroundColor(ContextCompat.getColor(context, R.color.background_color))",
+    "javaScriptEnabled = false",
+    "domStorageEnabled = false",
+    "allowFileAccess = false",
+    "allowContentAccess = false",
+    "blockNetworkLoads = true",
+    "MIXED_CONTENT_NEVER_ALLOW",
+)
+
+
+def text(relative_path: str) -> str:
+    return (ROOT / relative_path).read_text(encoding="utf-8")
+
+
+def main() -> int:
+    failures: list[str] = []
+    for relative_path in REQUIRED_FILES:
+        if not (ROOT / relative_path).is_file():
+            failures.append(f"required commercial privacy file is missing: {relative_path}")
+
+    if failures:
+        return fail(failures)
+
+    source_text = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in (ROOT / "app" / "src" / "main").rglob("*")
+        if path.is_file() and path.suffix in {".kt", ".java", ".xml"}
+    )
+    if "file:///android_asset" in source_text:
+        failures.append("file:// Android asset loading is forbidden")
+
+    for forbidden_token in (
+        "checkTermsAccepted",
+        "LegalGatePolicy",
+        "legal_accept_terms",
+        "legal_gate_terms_required",
+    ):
+        if forbidden_token in source_text:
+            failures.append(
+                f"authentication Terms-acceptance gate must not be reintroduced: {forbidden_token}"
+            )
+
+    secure_web = text(
+        "app/src/main/java/com/aqua/aqualight/ui/common/web/SecureLocalWebContent.kt"
+    )
+    for token in REQUIRED_WEBVIEW_TOKENS:
+        if token not in secure_web:
+            failures.append(f"secure legal WebView control is missing: {token}")
+
+    policy_en = text("app/src/main/assets/privacy_policy_en.html")
+    policy_tr = text("app/src/main/assets/privacy_policy_tr.html")
+    policy_text = policy_en + policy_tr
+    for token in (
+        "europe-west1",
+        "12 months",
+        "12 ay",
+        "180 days",
+        "180 gün",
+        "screenshot",
+        "ekran görüntüsü",
+        "Firebase Authentication",
+    ):
+        if token not in policy_text:
+            failures.append(f"bilingual privacy disclosure is missing: {token}")
+
+    for language, policy, tokens in (
+        (
+            "English",
+            policy_en,
+            (
+                "Submission UUID",
+                "product improvement",
+                "pseudonymous Firebase UID",
+                "Three years from creation",
+            ),
+        ),
+        (
+            "Turkish",
+            policy_tr,
+            (
+                "Gönderim UUID'si",
+                "ürün geliştirme",
+                "takma adlı Firebase UID'si",
+                "Oluşturuldukları tarihten itibaren 3 yıl",
+            ),
+        ),
+    ):
+        for token in tokens:
+            if token not in policy:
+                failures.append(f"{language} privacy disclosure is missing: {token}")
+
+    terms_text = (text("app/src/main/assets/terms_of_use_en.html") + text(
+        "app/src/main/assets/terms_of_use_tr.html"
+    )).lower()
+    for token in ("legal capacity", "hukuki ehliyet", "stored locally", "yerel olarak saklanır"):
+        if token not in terms_text:
+            failures.append(f"bilingual Terms control is missing: {token}")
+    for forbidden_token in (
+        "by creating an account, you agree",
+        "hesap oluşturarak bu koşulları kabul",
+    ):
+        if forbidden_token in terms_text:
+            failures.append(
+                f"implicit account-creation acceptance claim must not be reintroduced: {forbidden_token}"
+            )
+
+    age_decision_text = (policy_text + terms_text + text(
+        "docs/commercial/data-inventory-and-retention.md"
+    )).lower()
+    for forbidden_token in ("at least 18", "aged 18", "under 18", "18+", "en az 18", "18 yaş"):
+        if forbidden_token in age_decision_text:
+            failures.append(f"numeric age-gate claim must not be reintroduced: {forbidden_token}")
+
+    feedback_text = text("app/src/main/res/values/feedback_hardening_strings.xml") + text(
+        "app/src/main/res/values-tr/feedback_hardening_strings.xml"
+    )
+    for token in (
+        "provide support",
+        "destek sağlamak",
+        "improve AquaLight",
+        "AquaLight’ı geliştirmek",
+        "Privacy Policy",
+        "Gizlilik ve KVKK Metni",
+        "sensitive personal information",
+        "hassas kişisel bilgi",
+    ):
+        if token not in feedback_text:
+            failures.append(f"feedback point-of-collection notice is missing: {token}")
+
+    auth_privacy_text = (
+        text("app/src/main/res/values/strings.xml")
+        + text("app/src/main/res/values-tr/strings.xml")
+    )
+    for token in (
+        "Privacy Policy · Privacy Notice",
+        "Gizlilik Politikası · KVKK Aydınlatma Metni",
+    ):
+        if token not in auth_privacy_text:
+            failures.append(f"pre-auth privacy notice copy is missing: {token}")
+
+    login_layout = text("app/src/main/res/layout/fragment_login.xml")
+    register_layout = text("app/src/main/res/layout/fragment_register.xml")
+    auth_navigation = text("app/src/main/res/navigation/nav_graph_auth.xml")
+    login_source = text(
+        "app/src/main/java/com/aqua/aqualight/ui/auth/LoginFragment.kt"
+    )
+    register_source = text(
+        "app/src/main/java/com/aqua/aqualight/ui/auth/RegisterFragment.kt"
+    )
+    pre_auth_controls = (
+        (
+            "login",
+            login_layout + auth_navigation + login_source,
+            (
+                'android:id="@+id/tvPrivacyNotice"',
+                'app:layout_constraintBottom_toTopOf="@id/btnGoogleLogin"',
+                "action_loginFragment_to_privacyFragment",
+                "actionLoginFragmentToPrivacyFragment()",
+            ),
+        ),
+        (
+            "registration",
+            register_layout + auth_navigation + register_source,
+            (
+                'android:id="@+id/tvPrivacyNotice"',
+                'app:layout_constraintTop_toBottomOf="@id/passwordRepeatContainer"',
+                'app:layout_constraintBottom_toTopOf="@id/btnRegister"',
+                "action_registerFragment_to_privacyFragment",
+                "actionRegisterFragmentToPrivacyFragment()",
+            ),
+        ),
+    )
+    for screen, control_text, tokens in pre_auth_controls:
+        for token in tokens:
+            if token not in control_text:
+                failures.append(
+                    f"{screen} pre-auth privacy control is missing: {token}"
+                )
+
+    deletion_text = text(
+        "app/src/main/java/com/aqua/aqualight/data/auth/AccountDeletionManager.kt"
+    ) + text("app/src/main/java/com/aqua/aqualight/app/AquaApp.kt")
+    for token in (
+        "CLOUD_CLEARED",
+        "AUTH_DELETE_REQUESTED",
+        "ACCOUNT_DELETED",
+        "resumePendingDeletion",
+    ):
+        if token not in deletion_text:
+            failures.append(f"restartable account deletion control is missing: {token}")
+
+    deletion_test_text = text(
+        "app/src/test/java/com/aqua/aqualight/data/auth/AccountDeletionProcessDeathMatrixTest.kt"
+    ) + text(
+        "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/AccountDeletionProcessDeathSmokeActivity.kt"
+    ) + text("tools/run_release_smoke.sh")
+    for token in (
+        "started",
+        "cloud-cleared",
+        "auth-delete-requested",
+        "auth-confirmed-before-checkpoint",
+        "account-deleted",
+        "ACCOUNT_DELETION_PROCESS_DEATH_PASS",
+        "am force-stop",
+    ):
+        if token not in deletion_test_text:
+            failures.append(f"process-death deletion matrix is missing: {token}")
+
+    firestore_rules = text("firestore.rules")
+    for token in (
+        "admin_access",
+        "retention_audits",
+        "manual-admin-panel",
+        "feedback-admin",
+        "deletedCount <= 100",
+        "allow list, create, update, delete: if false",
+    ):
+        if token not in firestore_rules:
+            failures.append(f"manual retention security control is missing: {token}")
+
+    if failures:
+        return fail(failures)
+
+    print("Privacy/legal commercial guard passed.")
+    return 0
+
+
+def fail(failures: list[str]) -> int:
+    print("Privacy/legal commercial guard failed:", file=sys.stderr)
+    for failure in failures:
+        print(f"- {failure}", file=sys.stderr)
+    return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

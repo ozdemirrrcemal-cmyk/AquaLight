@@ -6,6 +6,17 @@
     android:layout_height="match_parent"
     android:padding="@dimen/aqua_size_24">
 
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tvPrivacyNotice"
+        style="@style/Widget.Aqua.Auth.LegalLink"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/auth_privacy_notice_link_desc"
+        android:text="@string/auth_privacy_notice_link"
+        app:layout_constraintBottom_toTopOf="@id/btnGoogleLogin"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
   <com.google.android.material.button.MaterialButton
     android:id="@+id/btnGoogleLogin"
     android:layout_width="@dimen/aqua_size_0"
@@ -18,7 +29,7 @@
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintBottom_toTopOf="@+id/btnSignIn"
-    android:layout_marginBottom="@dimen/aqua_size_4"
+    android:layout_marginBottom="@dimen/aqua_size_6"
     android:paddingStart="@dimen/aqua_size_24"
     android:paddingEnd="@dimen/aqua_size_24"
     android:gravity="center"
@@ -36,7 +47,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/btnRegister"
-        android:layout_marginBottom="@dimen/aqua_size_4" />
+        android:layout_marginBottom="@dimen/aqua_size_6" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnRegister"

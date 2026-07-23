@@ -5,5 +5,9 @@
             android:name="com.aqua.aqualight.smoke.ReleaseSmokeActivity"
             android:exported="true"
             android:theme="@style/AppTheme" />
+        <activity
+            android:name="com.aqua.aqualight.smoke.AccountDeletionProcessDeathSmokeActivity"
+            android:exported="true"
+            android:theme="@style/AppTheme" />
     </application>
 </manifest>

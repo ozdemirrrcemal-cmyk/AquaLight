@@ -4,10 +4,12 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
+import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentAboutAppBinding
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import java.util.Calendar
 
 class AboutAppFragment : Fragment(R.layout.fragment_about_app) {
 
@@ -28,7 +30,7 @@ class AboutAppFragment : Fragment(R.layout.fragment_about_app) {
 
         setupHeader()
         bindStaticInfo()
-        setupLegalClicks()
+        setupLicensesClick()
     }
 
     private fun setupHeader() {
@@ -90,29 +92,36 @@ class AboutAppFragment : Fragment(R.layout.fragment_about_app) {
 
         binding.tvAndroidValue.text =
             androidVersion
+
+        binding.tvFooter.text =
+            getString(
+                R.string.about_app_footer_format,
+                Calendar.getInstance().get(Calendar.YEAR)
+            )
     }
 
-    private fun setupLegalClicks() =
+    private fun setupLicensesClick() =
         with(binding) {
-
-            rowPrivacy.setOnClickListener {
-                findNavController().navigate(
-                    AboutAppFragmentDirections.actionAboutAppFragmentToPrivacyFragment()
-                )
-            }
-
-            rowTerms.setOnClickListener {
-                findNavController().navigate(
-                    AboutAppFragmentDirections.actionAboutAppFragmentToTermsOfUseFragment()
-                )
-            }
-
             rowLicenses.setOnClickListener {
-                findNavController().navigate(
+                safeNavigate(
                     AboutAppFragmentDirections.actionAboutAppFragmentToOpenSourceLicensesFragment()
                 )
             }
         }
+
+    private fun safeNavigate(directions: NavDirections) {
+        val navController = runCatching {
+            findNavController()
+        }.getOrNull() ?: return
+
+        if (navController.currentDestination?.id != R.id.aboutAppFragment) {
+            return
+        }
+
+        runCatching {
+            navController.navigate(directions)
+        }
+    }
 
     override fun onDestroyView() {
         _binding =

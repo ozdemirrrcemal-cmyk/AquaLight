@@ -126,11 +126,6 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
                 AppSettingsFragmentDirections.actionAppSettingsFragmentToLanguageSettingsFragment()
             )
         }
-        cardAbout.setOnClickListener {
-            safeNavigate(
-                AppSettingsFragmentDirections.actionAppSettingsFragmentToAboutAppFragment()
-            )
-        }
     }
 
     private fun refreshNotificationState() {

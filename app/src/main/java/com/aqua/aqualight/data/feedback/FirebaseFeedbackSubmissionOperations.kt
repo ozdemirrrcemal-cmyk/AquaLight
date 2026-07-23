@@ -110,7 +110,7 @@ class FirebaseFeedbackSubmissionOperations internal constructor(
         fun create(): FirebaseFeedbackSubmissionOperations {
             return FirebaseFeedbackSubmissionOperations(
                 ownerUidProvider = { FirebaseAuth.getInstance().currentUser?.uid },
-                documentStore = FirebaseFeedbackDocumentStore(FirebaseFirestore.getInstance())
+                documentStore = FirebaseFeedbackDocumentStore(FeedbackFirestoreProvider.get())
             )
         }
 

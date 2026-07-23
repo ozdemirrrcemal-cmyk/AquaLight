@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AquaLight Gizlilik Aydınlatma Metni</title>
+  <link rel="stylesheet" href="legal.css">
+</head>
+<body>
+<main>
+  <header class="hero">
+    <p class="eyebrow">AquaLight hukuki bilgilendirme</p>
+    <h1>Gizlilik ve KVKK Aydınlatma Metni</h1>
+    <p class="updated">Yürürlük ve son güncelleme: 23 Temmuz 2026</p>
+    <p>Bu metin AquaLight'ın hangi verileri, hangi amaçla ve hukuki sebeple işlediğini; verilerin nerede ve ne kadar süreyle tutulduğunu ve haklarınızı nasıl kullanabileceğinizi açıklar. Bu metin genel bir açık rıza talebi değildir.</p>
+  </header>
+
+  <section>
+    <h2>1. Veri sorumlusu ve iletişim</h2>
+    <!-- AQL_GOOGLE_PLAY_PUBLICATION_PENDING: controller identity, postal address, privacy/support email -->
+    <p><strong>Veri sorumlusu:</strong> <span data-aql-publication-field="controller"></span></p>
+    <p><strong>Adres:</strong> <span data-aql-publication-field="postal-address"></span></p>
+    <p><strong>Gizlilik ve destek e-postası:</strong> <span data-aql-publication-field="privacy-email"></span></p>
+    <p>Kişisel veri başvuruları yukarıdaki gizlilik iletişim kanalı üzerinden alınacaktır. Veri açıklanmadan, düzeltilmeden, dışa aktarılmadan veya silinmeden önce taleple orantılı kimlik doğrulaması istenebilir.</p>
+  </section>
+
+  <section>
+    <h2>2. Kısa gizlilik özeti</h2>
+    <ul>
+      <li>AquaLight, Firebase'i yalnızca <strong>kimlik doğrulama</strong> ve <strong>Cloud Firestore'da tutulan metin geri bildirimleri</strong> için kullanır.</li>
+      <li>Uygulamada Firebase Analytics, Crashlytics, Performance Monitoring, Realtime Database, Remote Config, Cloud Messaging, reklam SDK'sı veya davranışsal takip bulunmaz.</li>
+      <li>Tank kayıtları, profil bilgileri, fotoğraflar, bakım kayıtları, hatırlatmalar, bağlı cihaz kayıtları ve cihaz içi kullanım sayaçları uygulamanın özel yerel alanında kalır; AquaLight tarafından buluta yüklenmez.</li>
+      <li>Konum koordinatı toplanmaz. Eski Android sürümlerinde mevcut Wi-Fi ağını okuyabilmek veya Bluetooth cihazı tarayabilmek için Android tarafından konum izni istenebilir.</li>
+      <li>Geri bildirim formu ekran görüntüsü almaz veya göndermez.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. İşlenen veriler, amaç ve hukuki sebepler</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Veri</th><th>Amaç ve hukuki sebep</th><th>Konum</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Hesap ve kimlik doğrulama</strong><br>E-posta adresi, Firebase kullanıcı kimliği (UID), kimlik doğrulama bilgisi, hesap sağlayıcısı ve Google ile giriş seçilirse giriş için dönen temel Google hesap bilgileri. Firebase güvenlik ve kötüye kullanım önleme amacıyla IP adresi ve kullanıcı aracısı verilerini de işler.</td>
+            <td>Hesabı oluşturmak ve güvenliğini sağlamak, kimliğinizi doğrulamak, erişimi kurtarmak ve hesap silme işlemini yürütmek. İşleme; hizmet sözleşmesinin kurulması/ifası, güvenlik için meşru menfaat ve hukuki yükümlülükler kapsamında gerçekleştirilir.</td>
+            <td>Firebase Authentication bulut hizmeti; ABD'de işlenir. Oturum ve profil önbelleği şifreli yerel uygulama alanında tutulur.</td>
+          </tr>
+          <tr>
+            <td><strong>Geri bildirim ve destek</strong><br>Gönderim UUID'si, kategori, mesaj, isteğe bağlı iletişim e-postası, UID, Android platformu, uygulama sürümü, uygulama dili, durum ve sunucu zaman damgası.</td>
+            <td>Destek talebini almak, incelemek, yanıtlamak, güvenliğini sağlamak, yinelenen gönderimi önlemek ve AquaLight'ı geliştirmek. İşleme; talebinizi yerine getirmek ve ürün geliştirme, ürün güvenliği ve destek konularındaki meşru menfaat kapsamında yapılır.</td>
+            <td>Belçika'daki <code>europe-west1</code> bölgesel Cloud Firestore veritabanı. Android Firestore istemcisi yalnız bellek önbelleği kullanır.</td>
+          </tr>
+          <tr>
+            <td><strong>İmha işlem kayıtları</strong><br>İmha işlemini yapan yetkili yöneticinin takma adlı Firebase UID'si, kayıt ve kesim zamanları, silinen kayıt sayısı, işlem modu ve şema sürümü.</td>
+            <td>Planlı kişisel veri imhasının gerçekleştirildiğini kanıtlamak; hukuki yükümlülükleri, güvenliği ve hesap verebilirliği sağlamak.</td>
+            <td>Belçika'daki <code>europe-west1</code> bölgesel Cloud Firestore veritabanındaki <code>retention_audits</code> koleksiyonu; yalnız izin verilen geri bildirim yöneticisi okuyabilir.</td>
+          </tr>
+          <tr>
+            <td><strong>Profil ve akvaryum içeriği</strong><br>Ad, kullanıcı adı, telefon, adres, profil fotoğrafı, tank ayrıntıları, ölçüler, notlar, fotoğraflar, bitkiler, canlılar, ekipman, bakım görevleri, hatırlatmalar ve ilgili tercihler.</td>
+            <td>Seçtiğiniz özellikleri sağlamak ve akvaryum kayıtlarınızı göstermek. İşleme, talep ettiğiniz yerel uygulama işlevlerinin sunulması için gereklidir.</td>
+            <td>Yalnız uygulamanın özel yerel alanı; AquaLight bu içeriği yüklemez.</td>
+          </tr>
+          <tr>
+            <td><strong>Bağlı cihaz ve kurulum verileri</strong><br>Cihaz kimlikleri, yetenekler, yerel ağ uç noktası, şifreli cihaz kimlik bilgisi, kurulum sırasında girilen Wi-Fi ağ adı ve parolası ile kısa ömürlü QR/kurulum sırları.</td>
+            <td>AquaLight cihazını yerel ağda keşfetmek, kurmak, doğrulamak ve kontrol etmek.</td>
+            <td>Özel yerel uygulama alanı ve seçilen cihazla doğrudan yerel/Bluetooth iletişimi. Wi-Fi bilgileri ve kurulum sırları cihazda şifreli tutulur; kurulum taslakları 15 dakika sonra sona erer.</td>
+          </tr>
+          <tr>
+            <td><strong>Cihaz içi kullanım sayaçları</strong><br>Elle yapılan işlemler, otomasyonlar, uyarılar ile son yerel olayın açıklama ve zamanı.</td>
+            <td>Kullanım ekranını size göstermek.</td>
+            <td>Yalnız özel yerel uygulama alanı. Bu sayaçlar Firebase Analytics değildir ve yüklenmez.</td>
+          </tr>
+          <tr>
+            <td><strong>İzinler ve medya</strong><br>İlgili özelliği kullandığınızda kamera/fotoğraf seçimi, Bluetooth, yakındaki Wi-Fi bilgisi, bildirim ve hatırlatma zamanlama erişimi.</td>
+            <td>Yerel fotoğraf çekmek/seçmek, yakındaki cihazı kurmak ve istediğiniz hatırlatmaları iletmek.</td>
+            <td>Cihazınızda işlenir. Fotoğraflar yerel kalır; AquaLight konum koordinatı saklamaz.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note"><strong>Otomatik karar yoktur:</strong> AquaLight kişisel verileri reklam, profilleme, kredi değerlendirmesi veya hukuki ya da benzer önemli sonuç doğuran otomatik kararlar için kullanmaz.</p>
+  </section>
+
+  <section>
+    <h2>4. Hizmet sağlayıcılar, bölgeler ve yurt dışı aktarım</h2>
+    <p><strong>Google LLC</strong>; Firebase Authentication, Cloud Firestore ve isteğe bağlı Google ile Giriş hizmetlerini sağlar. Google, geçerli Firebase/Google koşulları ve veri işleme hükümleri kapsamında hizmet verir. Google'ın yayımladığı Firebase alt veri işleyen bilgileri bu sağlayıcı yapısının parçasıdır.</p>
+    <ul>
+      <li><strong>Cloud Firestore:</strong> geri bildirimler <code>europe-west1</code> (Belçika) bölgesinde tutulur.</li>
+      <li><strong>Firebase Authentication:</strong> Google bu hizmetin ABD veri merkezlerinden işletildiğini belirtir.</li>
+      <li><strong>Destek ve güvenlik işlemleri:</strong> yetkili sağlayıcı personeli veya alt veri işleyenler, geçerli sözleşme ve güvencelere tabi olarak Google'ın tesislerinin bulunduğu yerlerde veriye erişebilir.</li>
+    </ul>
+    <p>Kişisel veriler Türkiye, AEA veya bulunduğunuz ülke dışına aktarıldığında AquaLight; gerektiğinde 6698 sayılı Kanun'un 9. maddesindeki uygun güvenceyi ve/veya AB Standart Sözleşme Maddelerini içeren, uygulanabilir hukukun öngördüğü aktarım mekanizmasını kullanır. Kişisel veriler satılmaz; reklamverenler veya veri komisyoncularıyla paylaşılmaz.</p>
+  </section>
+
+  <section>
+    <h2>5. Saklama ve silme</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Kayıt</th><th>Saklama süresi</th></tr></thead>
+        <tbody>
+          <tr><td>Geri bildirim</td><td>Gönderimden itibaren en fazla 12 ay; hesap silindiğinde veya geçerli bir silme talebi uygulandığında daha önce silinir.</td></tr>
+          <tr><td>İmha işlem kayıtları</td><td>Oluşturuldukları tarihten itibaren 3 yıl. Başka bir hukuki saklama zorunluluğu bulunmadıkça, üç yıllık sürenin bitimini izleyen ilk aylık imha işleminde silinir veya anonimleştirilir.</td></tr>
+          <tr><td>Firebase hesabı</td><td>Siz hesabı silene veya AquaLight hukuka uygun biçimde kapatmak zorunda kalana kadar. Google, müşteri tarafından kullanıcı silme işlemi başlatıldıktan sonra kimlik doğrulama bilgilerinin canlı ve yedek sistemlerden en geç 180 gün içinde kaldırıldığını; kayıtlı IP adreslerinin birkaç hafta tutulduğunu belirtir.</td></tr>
+          <tr><td>Yerel profil, tanklar, fotoğraflar, bakım, cihaz verileri, hatırlatmalar ve kullanım sayaçları</td><td>Uygulamada hesabı veya ilgili kaydı silene, uygulama verisini temizleyene ya da uygulamayı kaldırana kadar. Yalnızca çıkış yapmak yerel kayıtları silmez.</td></tr>
+          <tr><td>Kurulum taslakları ve QR sırları</td><td>15 dakika; kurulum tamamlanırsa, iptal edilirse veya hesap verisi silinirse daha önce kaldırılır.</td></tr>
+          <tr><td>Firestore istemci önbelleği</td><td>Yalnız bellek; uygulama işlemi sona erdiğinde atılır.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Firebase hesabınızı, bulut geri bildirimlerinizi, yerel uygulama verilerini, medyayı, cihaz kimlik bilgilerini, zamanlanmış işleri ve bildirimleri silme sürecini başlatmak için <strong>Ayarlar → Çıkış yap → Hesabı sil</strong> yolunu kullanın. İşlem hata bildirirse ekrandaki yeniden deneme yönlendirmesini izleyin veya bize ulaşın. Sağlayıcının felaket kurtarma yedekleri, sağlayıcı koşullarına göre sınırlı süre kalabilir ve olağan işlemede kullanılmaz.</p>
+  </section>
+
+  <section>
+    <h2>6. Güvenlik</h2>
+    <p>AquaLight; aktarım şifreleme, kimliği doğrulanan UID'ye bağlı Firebase güvenlik kuralları, hassas cihaz/kurulum verileri için şifreli yerel kayıtlar, özel uygulama alanı, kapalı Android bulut yedeklemesi, yalnız bellek Firestore önbelleği, sınırlı giriş alanları ve hesap silmeden önce yeniden kimlik doğrulama önlemlerini kullanır. Hiçbir sistem mutlak güvenli garanti edilemez; cihazınızı ve hesap bilgilerinizi koruyun, şüpheli olayları gecikmeden bildirin.</p>
+  </section>
+
+  <section>
+    <h2>7. Haklarınız</h2>
+    <p>Uygulanabilir hukuka, özellikle 6698 sayılı KVKK ve GDPR'a göre; bilgi ve erişim, düzeltme, silme, işlemenin kısıtlanması, itiraz, veri taşınabilirliği ile alıcılar ve aktarımlar hakkında bilgi isteme haklarına sahip olabilirsiniz. Yetkili veri koruma otoritesine şikâyette bulunabilirsiniz. İşleme rızaya dayanıyorsa önceki hukuka uygun işlemleri etkilemeden rızanızı geri çekebilirsiniz. AquaLight'ta hâlen isteğe bağlı analitik veya reklam rızası bulunmaz.</p>
+    <p>Başvurularınızı 1. bölümdeki gizlilik iletişim kanalına gönderin. Talebinize uygulanabilir hukukun öngördüğü süre içinde yanıt verilir.</p>
+  </section>
+
+  <section>
+    <h2>8. Değişiklikler</h2>
+    <p>Ürün, sağlayıcılar veya hukuki gereklilikler değiştiğinde bu metin güncellenebilir. Önemli değişiklikler, gerektiğinde yürürlüğe girmeden önce uygulama veya uygun başka bir kanal üzerinden sunulur.</p>
+    <p>Ayrıca <a href="terms_of_use_tr.html">Kullanım Koşullarını</a> inceleyin.</p>
+  </section>
+
+  <footer>© 2026 AquaLight</footer>
+</main>
+</body>
+</html>

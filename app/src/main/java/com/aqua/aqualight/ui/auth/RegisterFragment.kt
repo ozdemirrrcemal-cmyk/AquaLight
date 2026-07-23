@@ -57,7 +57,6 @@ class RegisterFragment : Fragment() {
 
     private fun setupUI() =
         with(binding) {
-
             btnRegister.setOnClickListener {
                 viewModel.register(
                     email = emailEditText.text
@@ -69,6 +68,12 @@ class RegisterFragment : Fragment() {
                     repeatPassword = etPasswordRepeat.text
                         ?.toString()
                         .orEmpty()
+                )
+            }
+
+            tvPrivacyNotice.setOnClickListener {
+                findNavController().navigate(
+                    RegisterFragmentDirections.actionRegisterFragmentToPrivacyFragment()
                 )
             }
 

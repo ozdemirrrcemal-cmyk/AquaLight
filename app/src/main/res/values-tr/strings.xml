@@ -93,6 +93,8 @@
     <string name="login_sign_in_desc">E-posta ile giriş ekranına git</string>
     <string name="login_register">Hesap Oluştur</string>
     <string name="login_register_desc">Kayıt ekranına git</string>
+    <string name="auth_privacy_notice_link"><u>Gizlilik Politikası · KVKK Aydınlatma Metni</u></string>
+    <string name="auth_privacy_notice_link_desc">Gizlilik Politikası ve KVKK Aydınlatma Metni’ni aç</string>
     <string name="default_web_client_id">660201044993-1k6q4dfl4q128h7463et4v05s7edksus.apps.googleusercontent.com</string>
     <string name="login_google_failed">Google ile giriş başarısız</string>
     <string name="login_firebase_failed">Firebase kimlik doğrulaması başarısız</string>
@@ -119,10 +121,12 @@
     <string name="settings_app_desc">Tema, dil ve genel ayarları yönetin</string>
     <string name="settings_usage">Kullanım istatistikleri</string>
     <string name="settings_usage_desc">Uygulama kullanım istatistiklerini görüntüleyin</string>
-    <string name="settings_privacy">Gizlilik ve koşullar</string>
-    <string name="settings_privacy_desc">Gizlilik politikasını ve kullanım koşullarını görüntüleyin</string>
     <string name="settings_feedback">Geri bildirim ve destek</string>
     <string name="settings_feedback_desc">Geri bildirim gönderin veya destek alın</string>
+    <string name="settings_legal">Gizlilik ve yasal</string>
+    <string name="settings_legal_desc">Gizlilik ve yasal belgeleri açın</string>
+    <string name="settings_about">Hakkında</string>
+    <string name="settings_about_desc">Uygulama bilgilerini ve açık kaynak lisanslarını görüntüleyin</string>
     <string name="settings_logout">Çıkış yap</string>
     <string name="settings_logout_desc">Hesabınızdan çıkış yapın</string>
     <string name="edit_profile_camera_icon_desc">Profil fotoğrafını değiştir</string>
@@ -198,13 +202,9 @@
     <string name="settings_language_title">Dil</string>
     <string name="settings_language_subtitle">Uygulama dilini değiştirin.</string>
     <string name="settings_language_arrow_description">Dil seçim ekranını aç</string>
-    <string name="settings_about_section_description">Hakkında bölümü kartı: uygulama sürümünü ve yasal bilgileri görüntüleyin.</string>
-    <string name="settings_about_title">Hakkında</string>
-    <string name="settings_about_subtitle">Sürüm, geliştirici ve yasal bilgiler.</string>
-    <string name="settings_about_arrow_description">Hakkında ekranını aç</string>
 
     <!-- Usage / feedback -->
-    <string name="usage_subinfo">Aqua uygulamasını ne sıklıkta kullandığınızı ve temel kullanım istatistiklerini nasıl işlediğimizi görün.</string>
+    <string name="usage_subinfo">Elle yaptığınız işlemler, otomasyonlar ve uyarılara ilişkin yerel sayaçları görün.</string>
     <string name="usage_subinfo_desc">Bu ekranın uygulama kullanım istatistiklerini gösterdiğini açıklayan kısa açıklama.</string>
     <string name="usage_summary_card_desc">Toplam oturum sayısını ve uygulamada geçirilen toplam süreyi gösteren kart.</string>
     <string name="usage_summary_title">Genel kullanım</string>
@@ -214,7 +214,7 @@
     <string name="usage_last_activity_title">Son etkinlik</string>
     <string name="usage_privacy_card_desc">Kullanım verilerinin nasıl saklandığını ve kullanıldığını açıklayan kart.</string>
     <string name="usage_privacy_title">Bu verileri nasıl kullanıyoruz</string>
-    <string name="usage_privacy_body">Yalnızca oturum sayısı ve uygulamada geçirilen toplam süre gibi temel, anonimleştirilmiş kullanım istatistiklerini toplarız. Bu bilgiler performansı anlamamıza ve Aqua uygulamasını geliştirmemize yardımcı olur. Kişisel içerikleriniz ve özel verileriniz incelenmez veya satılmaz.</string>
+    <string name="usage_privacy_body">Bu sayaçlar yalnız bu ekranı size göstermek için cihazınızda hesaplanır ve saklanır. Firebase Analytics değildir, AquaLight’a yüklenmez ve yerel hesap verilerinizle birlikte silinir.</string>
     <string name="feedback_subinfo">Düşüncelerinizi, fikirlerinizi veya fark ettiğiniz sorunları paylaşarak Aqua uygulamasını geliştirmemize yardımcı olun.</string>
     <string name="feedback_subinfo_desc">Kullanıcının uygulama hakkında geri bildirim gönderebileceğini açıklayan kısa açıklama.</string>
     <string name="feedback_hint_category">Bir kategori seçin</string>
@@ -306,7 +306,7 @@
     <string name="settings_social_facebook">Facebook</string>
     <string name="settings_social_instagram">Instagram</string>
     <string name="settings_social_youtube">YouTube</string>
-    <string name="settings_footer_info">© 2025 AquaLight. Tüm hakları saklıdır.\nSürüm %1$s</string>
+    <string name="settings_footer_info">© %1$d AquaLight. Tüm hakları saklıdır.\nSürüm %2$s</string>
     <string name="change_password_error_current_empty">Mevcut şifre zorunludur.</string>
     <string name="change_password_error_new_short">Yeni şifre en az 6 karakter olmalıdır.</string>
     <string name="change_password_error_not_match">Şifreler eşleşmiyor.</string>
@@ -337,13 +337,11 @@
     <string name="about_app_build_label">Derleme numarası</string>
     <string name="about_app_device_label">Cihaz</string>
     <string name="about_app_android_label">Android sürümü</string>
-    <string name="about_app_legal_card_desc">Yasal belgeler ve politikalar.</string>
-    <string name="about_app_legal_title">Yasal</string>
-    <string name="about_app_privacy_policy">Gizlilik politikası</string>
-    <string name="about_app_terms">Kullanım koşulları</string>
+    <string name="about_app_licenses_card_desc">Açık kaynak lisans bilgileri.</string>
+    <string name="about_app_licenses_title">Açık kaynak</string>
     <string name="about_app_licenses">Açık kaynak lisansları</string>
     <string name="about_app_row_arrow_desc">Ayrıntıları aç</string>
-    <string name="about_app_footer">© 2025 AquaLight. Tüm hakları saklıdır.</string>
+    <string name="about_app_footer_format">© %1$d AquaLight. Tüm hakları saklıdır.</string>
     <string name="re_auth_session_expired">Oturumunuzun süresi doldu. Lütfen hesabınızı yeniden doğrulayın.</string>
     <string name="re_auth_delete_failed_message">Hesap silinemedi. Lütfen yeniden deneyin.</string>
     <string name="re_auth_verification_failed_title">Doğrulama Başarısız</string>
