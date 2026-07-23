@@ -3,6 +3,7 @@ set -Eeuo pipefail
 
 API_LEVEL="${1:-unknown}"
 PACKAGE_NAME="${AQL_SMOKE_PACKAGE_NAME:-com.aqua.aqualight.staging}"
+DEBUG_PACKAGE_NAME="${AQL_DEBUG_PACKAGE_NAME:-com.aqua.aqualight.staging.local}"
 CONNECTED_ANDROID_TEST_TASK="${AQL_CONNECTED_ANDROID_TEST_TASK:-connectedStagingDebugAndroidTest}"
 DEBUG_APK_PATH="${AQL_DEBUG_APK_PATH:-app/build/outputs/apk/staging/debug/app-staging-debug.apk}"
 SMOKE_ACTIVITY="com.aqua.aqualight.smoke.ReleaseSmokeActivity"
@@ -121,7 +122,7 @@ finish() {
 trap finish EXIT
 
 ./gradlew "$CONNECTED_ANDROID_TEST_TASK" --no-daemon --stacktrace
-bash tools/verify_uninstall_clears_data.sh "$DEBUG_APK_PATH" "$PACKAGE_NAME"
+bash tools/verify_uninstall_clears_data.sh "$DEBUG_APK_PATH" "$DEBUG_PACKAGE_NAME"
 
 adb uninstall "$PACKAGE_NAME" >/dev/null 2>&1 || true
 SMOKE_APK="$(cat release-smoke-apk-path.txt)"
