@@ -1,6 +1,6 @@
 # AquaLight commercial data inventory and retention record
 
-Status: implementation baseline for the 2026 commercial release. The release checklist remains authoritative for unresolved legal and operational approvals.
+Status: implementation baseline for the 2026 commercial release. Unresolved legal and operational approvals are tracked outside the application repository.
 
 ## Controller publication inputs
 
