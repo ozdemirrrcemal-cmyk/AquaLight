@@ -44,21 +44,35 @@ jobs:
           sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
       - name: Validate Gradle Wrapper and generate dependency state
+        shell: bash
         run: |
+          set -o pipefail
           chmod +x gradlew
-          ./gradlew --version --no-daemon
-          ./gradlew resolveAndLockAll \
-            --write-locks \
-            --write-verification-metadata sha256 \
-            --no-daemon \
-            --stacktrace
+          {
+            ./gradlew --version --no-daemon
+            ./gradlew resolveAndLockAll \
+              --write-locks \
+              --write-verification-metadata sha256 \
+              --no-daemon \
+              --stacktrace
+          } 2>&1 | tee supply-chain-bootstrap.log
           test -s gradle/verification-metadata.xml
           test -s app/gradle.lockfile
           mkdir -p sealed-dependency-state/gradle sealed-dependency-state/app
           cp gradle/verification-metadata.xml sealed-dependency-state/gradle/
           cp app/gradle.lockfile sealed-dependency-state/app/
 
+      - name: Upload bootstrap diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: supply-chain-bootstrap-log-${{ github.event.pull_request.head.sha }}
+          path: supply-chain-bootstrap.log
+          if-no-files-found: warn
+          retention-days: 1
+
       - name: Upload reviewable dependency state
+        if: success()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: sealed-dependency-state-${{ github.event.pull_request.head.sha }}
