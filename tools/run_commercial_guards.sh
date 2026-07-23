@@ -28,11 +28,21 @@ guards=(
 
 for guard in "${guards[@]}"; do
   test -f "tools/${guard}"
+  echo "::group::${guard}"
   python3 "tools/${guard}"
+  echo "::endgroup::"
 done
 
+echo "::group::Commercial Python tests"
 python3 -m unittest discover -s tools/tests -p 'test_*.py'
+echo "::endgroup::"
+
+echo "::group::GitHub Action pin policy"
 python3 tools/ci/verify_action_pins.py
+echo "::endgroup::"
+
+echo "::group::Dependency lock and verification state"
 python3 tools/ci/check_dependency_state.py
+echo "::endgroup::"
 
 echo "Commercial architecture and supply-chain guards passed."
