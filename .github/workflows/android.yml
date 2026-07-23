@@ -105,7 +105,10 @@ jobs:
           rm -rf **/build build app/build || true
 
       - name: Clean project
-        run: ./gradlew clean --no-daemon
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew clean --no-daemon --stacktrace 2>&1 | tee gradle-clean.log
 
       - name: Verify resolved Firebase runtime policy
         run: ./gradlew :app:verifyFirebaseRuntimePolicy --no-daemon --stacktrace
@@ -131,16 +134,18 @@ jobs:
           set -o pipefail
           ./gradlew lintDebug --no-daemon --stacktrace 2>&1 | tee lint-debug.log
 
-      - name: Upload lint reports
+      - name: Upload build diagnostics and lint reports
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: lint-reports-${{ github.run_number }}
           path: |
+            gradle-clean.log
             lint-debug.log
+            **/build/reports/problems/**
             **/build/reports/lint-results-*.html
             **/build/reports/lint-results-*.xml
-          if-no-files-found: ignore
+          if-no-files-found: warn
 
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
@@ -200,16 +205,23 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Generate brownfield ktlint baseline
-        run: ./gradlew :app:ktlintGenerateBaseline --no-daemon --stacktrace
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew :app:ktlintGenerateBaseline --no-daemon --stacktrace \
+            2>&1 | tee ktlint-baseline.log
 
       - name: Run unit tests and generate coverage reports
-        run: >-
-          ./gradlew
-          :app:koverXmlReportDebug
-          :app:koverHtmlReportDebug
-          :app:koverLogDebug
-          --no-daemon
-          --stacktrace
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew \
+            :app:koverXmlReportDebug \
+            :app:koverHtmlReportDebug \
+            :app:koverLogDebug \
+            --no-daemon \
+            --stacktrace \
+            2>&1 | tee coverage.log
 
       - name: Upload quality measurement evidence
         if: always()
@@ -217,8 +229,11 @@ jobs:
         with:
           name: quality-measurement-${{ github.run_number }}
           path: |
+            ktlint-baseline.log
+            coverage.log
             app/ktlint-baseline.xml
             app/build/reports/ktlint/**
             app/build/reports/kover/**
+            app/build/reports/problems/**
             app/build/test-results/testDebugUnitTest/**
           if-no-files-found: warn
