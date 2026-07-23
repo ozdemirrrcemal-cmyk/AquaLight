@@ -45,7 +45,7 @@ class ReleaseVersion:
 
 
 def parse_release_tag(tag: str) -> ReleaseVersion:
-    match = TAG_PATTERN.fullmatch(tag.strip())
+    match = TAG_PATTERN.fullmatch(tag)
     if match is None:
         raise ReleaseMetadataError(
             "Production tags must use the exact format vMAJOR.MINOR.PATCH "
