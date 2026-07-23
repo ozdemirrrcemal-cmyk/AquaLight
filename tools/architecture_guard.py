@@ -384,7 +384,9 @@ require(
 emulator_workflow_path = ".github/workflows/android_instrumentation.yml"
 emulator_workflow = read(emulator_workflow_path)
 for token, reason in (
-    ("connectedDebugAndroidTest", "instrumentation tests must run in CI"),
+    ("connectedStagingDebugAndroidTest", "staging instrumentation tests must run in CI"),
+    ("com.aqua.aqualight.staging.local", "instrumentation must use the isolated staging debug identity"),
+    ("com.aqua.aqualight.staging", "minified smoke tests must use the isolated staging release identity"),
     (
         "bash tools/verify_uninstall_clears_data.sh",
         "emulator CI must verify uninstall/reinstall data removal",
@@ -422,13 +424,15 @@ for backup_rules_path in (
             "device registry and credential data must remain excluded from backup/transfer",
         )
 
-pr_workflow_path = ".github/workflows/codeql.yml"
+pr_workflow_path = ".github/workflows/android.yml"
 pr_workflow = read(pr_workflow_path)
 for token, reason in (
-    ("python3 tools/navigation_guard.py", "PR validation must enforce navigation contracts"),
-    ("testReleaseUnitTest", "PR validation must compile and run Release unit tests"),
-    ("lintRelease", "PR validation must run Release lint"),
-    ("assembleRelease", "PR validation must exercise minification and release packaging"),
+    ("bash tools/run_commercial_guards.sh", "PR validation must enforce architecture and supply-chain contracts"),
+    ("lintDevelopmentDebug detektDevelopmentDebug", "PR validation must run standard Android lint and Detekt"),
+    ("testDevelopmentDebugUnitTest", "PR validation must compile and run development unit tests"),
+    ("jacocoCriticalCoverageVerification", "PR validation must enforce critical-package coverage"),
+    ("uses: ./.github/workflows/android_instrumentation.yml", "PR validation must run the reusable instrumentation matrix"),
+    ("assembleStagingRelease", "PR validation must exercise minification and staging release packaging"),
 ):
     require(pr_workflow_path, pr_workflow, token, reason)
 
