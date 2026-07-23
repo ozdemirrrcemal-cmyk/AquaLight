@@ -83,7 +83,7 @@ jobs:
             build_apk="${MANUAL_BUILD_APK:-false}"
           fi
 
-          .github/scripts/derive_android_version.sh "${raw_version}"
+          bash .github/scripts/derive_android_version.sh "${raw_version}"
           echo "build_apk=${build_apk}" >> "${GITHUB_OUTPUT}"
 
       - name: Install required Android SDK packages
@@ -92,13 +92,13 @@ jobs:
           sdkmanager "platform-tools" "platforms;android-36"
           sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1"
 
-      - name: Grant execute permissions
-        run: chmod +x ./gradlew .github/scripts/derive_android_version.sh
+      - name: Grant Gradle execute permission
+        run: chmod +x ./gradlew
 
       - name: Validate release metadata contract
         run: |
-          test "$(.github/scripts/derive_android_version.sh v1.2.3 | sed -n 's/version_code=//p')" = "1002003"
-          if .github/scripts/derive_android_version.sh v1.2 >/dev/null 2>&1; then
+          test "$(GITHUB_OUTPUT="" bash .github/scripts/derive_android_version.sh v1.2.3 | sed -n 's/version_code=//p')" = "1002003"
+          if GITHUB_OUTPUT="" bash .github/scripts/derive_android_version.sh v1.2 >/dev/null 2>&1; then
             echo "Invalid SemVer was accepted." >&2
             exit 1
           fi
