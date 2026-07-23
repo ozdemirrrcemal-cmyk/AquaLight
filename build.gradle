@@ -1,0 +1,9 @@
+plugins {
+    id 'org.cyclonedx.bom' version '3.3.0'
+}
+
+allprojects {
+    dependencyLocking {
+        lockAllConfigurations()
+    }
+}
