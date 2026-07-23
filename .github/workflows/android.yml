@@ -8,6 +8,7 @@ on:
     paths:
       - ".editorconfig"
       - "app/**"
+      - "config/**"
       - "protocol/**"
       - "tools/**"
       - "gradle/**"
@@ -75,6 +76,8 @@ jobs:
           python3 -m unittest
           tools.release_metadata_test
           tools.github_actions_pin_guard_test
+          tools.coverage_gate_test
+          tools.ktlint_ratchet_test
 
       - name: Run architecture and supply-chain guards
         run: |
@@ -171,8 +174,8 @@ jobs:
           name: app-debug-${{ github.run_number }}
           path: app/build/outputs/apk/debug/*.apk
 
-  quality-measurement:
-    name: Ktlint and coverage baseline
+  quality-gates:
+    name: Ktlint, coverage and lint baseline gates
     runs-on: ubuntu-latest
     env:
       GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8" -Dorg.gradle.daemon=false
@@ -204,12 +207,29 @@ jobs:
       - name: Grant execute permission to gradlew
         run: chmod +x ./gradlew
 
-      - name: Generate brownfield ktlint baseline
+      - name: Run quality-gate unit tests
+        run: >-
+          python3 -m unittest
+          tools.coverage_gate_test
+          tools.ktlint_ratchet_test
+
+      - name: Generate current ktlint debt snapshot
         shell: bash
         run: |
           set -o pipefail
           ./gradlew :app:ktlintGenerateBaseline --no-daemon --stacktrace \
             2>&1 | tee ktlint-baseline.log
+
+      - name: Enforce ktlint debt ratchet
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/ktlint_ratchet.py \
+            --baseline app/ktlint-baseline.xml \
+            --policy config/ktlint-ratchet.json \
+            --summary-file ktlint-ratchet-summary.md
+          cat ktlint-ratchet-summary.md >> "$GITHUB_STEP_SUMMARY"
+          ./gradlew :app:ktlintCheck --no-daemon --stacktrace
 
       - name: Run unit tests and generate coverage reports
         shell: bash
@@ -223,17 +243,42 @@ jobs:
             --stacktrace \
             2>&1 | tee coverage.log
 
-      - name: Upload quality measurement evidence
+      - name: Enforce measured critical-package coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/coverage_gate.py \
+            --report app/build/reports/kover/reportDebug.xml \
+            --policy config/coverage-thresholds.json \
+            --summary-file coverage-gate-summary.md
+          cat coverage-gate-summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Generate reviewed Android lint baseline candidate
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew :app:updateLintBaseline --no-daemon --stacktrace \
+            2>&1 | tee lint-baseline.log
+          test -s app/lint-baseline.xml
+          ./gradlew :app:lintDebug --no-daemon --stacktrace
+
+      - name: Upload quality gate evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: quality-measurement-${{ github.run_number }}
+          name: quality-gates-${{ github.run_number }}
           path: |
             ktlint-baseline.log
+            ktlint-ratchet-summary.md
             coverage.log
+            coverage-gate-summary.md
+            lint-baseline.log
             app/ktlint-baseline.xml
+            app/lint-baseline.xml
             app/build/reports/ktlint/**
             app/build/reports/kover/**
             app/build/reports/problems/**
+            app/build/reports/lint-results-*.html
+            app/build/reports/lint-results-*.xml
             app/build/test-results/testDebugUnitTest/**
           if-no-files-found: warn
