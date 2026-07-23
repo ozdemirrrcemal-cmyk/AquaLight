@@ -15,30 +15,6 @@ allprojects {
     }
 }
 
-tasks.register("resolveAndLockAll") {
-    group = "build setup"
-    description = "Resolves every resolvable configuration and writes complete Gradle lock state."
-    notCompatibleWithConfigurationCache("The task intentionally discovers resolvable configurations at execution time.")
-
-    doFirst {
-        if (!gradle.startParameter.writeDependencyLocks) {
-            throw new GradleException("resolveAndLockAll must be run with --write-locks")
-        }
-    }
-
-    doLast {
-        allprojects.each { targetProject ->
-            targetProject.configurations
-                    .findAll { configuration -> configuration.canBeResolved }
-                    .sort { left, right -> left.name <=> right.name }
-                    .each { configuration ->
-                        logger.lifecycle("Locking ${targetProject.path}:${configuration.name}")
-                        configuration.resolve()
-                    }
-        }
-    }
-}
-
 tasks.named("cyclonedxBom") {
     projectType = "application"
     componentName = "AquaLight"
