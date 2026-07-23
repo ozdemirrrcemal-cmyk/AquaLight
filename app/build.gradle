@@ -248,8 +248,8 @@ def criticalCoverageIncludes = [
         "com/aqua/aqualight/data/feedback/FirebaseFeedbackSubmissionOperations*"
 ]
 def generatedCoverageExcludes = [
-        "**/R.class", "**/R$*.class", "**/BuildConfig.*", "**/Manifest*.*",
-        "**/*Test*.*", "**/*_Factory.*", "**/*Directions*.*", "**/*Args*.*"
+        '**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*',
+        '**/*Test*.*', '**/*_Factory.*', '**/*Directions*.*', '**/*Args*.*'
 ]
 def criticalCoverageClassDirectories = files(
         fileTree(dir: "$buildDir/tmp/kotlin-classes/developmentDebug") {
