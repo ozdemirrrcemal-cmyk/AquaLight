@@ -1,0 +1,40 @@
+project(":app") {
+    plugins.withId("com.android.application") {
+        android {
+            buildTypes {
+                debug {
+                    versionNameSuffix "-debug"
+                    buildConfigField "String", "AQL_ENVIRONMENT", '"debug"'
+                    buildConfigField "boolean", "AQL_IS_PRODUCTION", "false"
+                }
+
+                release {
+                    buildConfigField "String", "AQL_ENVIRONMENT", '"production"'
+                    buildConfigField "boolean", "AQL_IS_PRODUCTION", "true"
+                }
+
+                staging {
+                    initWith release
+                    versionNameSuffix "-staging"
+                    signingConfig signingConfigs.debug
+                    matchingFallbacks = ['release']
+                    buildConfigField "String", "AQL_ENVIRONMENT", '"staging"'
+                    buildConfigField "boolean", "AQL_IS_PRODUCTION", "false"
+                }
+
+                releaseSmoke {
+                    buildConfigField "String", "AQL_ENVIRONMENT", '"releaseSmoke"'
+                    buildConfigField "boolean", "AQL_IS_PRODUCTION", "false"
+                }
+            }
+        }
+
+        tasks.configureEach { task ->
+            if (task.name == "verifyFirebaseRuntimePolicy") {
+                task.inputs.files(configurations.named("stagingRuntimeClasspath"))
+                        .withPropertyName("stagingFirebaseRuntimeClasspath")
+                        .withPathSensitivity(PathSensitivity.NONE)
+            }
+        }
+    }
+}
