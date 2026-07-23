@@ -83,7 +83,7 @@ jobs:
         run: |
           yes | sdkmanager --licenses >/dev/null
           sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
-      - name: Apply canonical variant selector and Detekt baseline contract
+      - name: Apply canonical variant, Detekt baseline, and formatting contracts
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -117,7 +117,21 @@ jobs:
                   raise SystemExit('Detekt baseline anchor was not found')
               text = text.replace(baseline_anchor, baseline_anchor + baseline_line)
 
+          formatting_anchor = '    androidTestImplementation "androidx.test.espresso:espresso-core:3.6.1"\n'
+          formatting_dependency = '    detektPlugins "io.gitlab.arturbosch.detekt:detekt-formatting:1.23.8"\n'
+          if formatting_dependency not in text:
+              if formatting_anchor not in text:
+                  raise SystemExit('Detekt formatting dependency anchor was not found')
+              text = text.replace(formatting_anchor, formatting_anchor + formatting_dependency)
+
           path.write_text(text, encoding='utf-8')
+
+          config_path = Path('config/detekt/detekt.yml')
+          config = config_path.read_text(encoding='utf-8')
+          formatting_contract = '\nformatting:\n  active: true\n'
+          if '\nformatting:\n' not in config:
+              config = config.rstrip() + formatting_contract
+          config_path.write_text(config, encoding='utf-8')
           PY
       - name: Prepare non-production Firebase and signing inputs
         shell: bash
@@ -146,6 +160,9 @@ jobs:
           ./gradlew dependencies --configuration cyclonedxBom \
             --write-locks --write-verification-metadata sha256 \
             --no-daemon --stacktrace 2>&1 | tee dependency-state.log
+          ./gradlew :app:dependencies --configuration detektPlugins \
+            --write-locks --write-verification-metadata sha256 \
+            --no-daemon --stacktrace 2>&1 | tee -a dependency-state.log
           ./gradlew \
             assembleDevelopmentDebug \
             compileDevelopmentDebugUnitTestKotlin \
@@ -190,12 +207,12 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app/build.gradle gradle.lockfile app/gradle.lockfile gradle/verification-metadata.xml config/detekt/baseline.xml
+          git add app/build.gradle gradle.lockfile app/gradle.lockfile gradle/verification-metadata.xml config/detekt/detekt.yml config/detekt/baseline.xml
           if [[ -f .github/workflows/variant_selector_upgrade.yml ]]; then
             git rm .github/workflows/variant_selector_upgrade.yml
           fi
           git diff --cached --check
-          git commit -m "build(android): seal explicit commercial variants"
+          git commit -m "build(android): seal commercial variants and formatting"
           git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
       - name: Upload sealing diagnostics
         if: always()
