@@ -22,6 +22,7 @@ abstract class LegalDocumentFragment : Fragment(R.layout.fragment_legal_document
         super.onViewCreated(view, savedInstanceState)
 
         _binding = FragmentLegalDocumentBinding.bind(view)
+        val languageTag = AppLanguageController.current()
 
         binding.appHeader.setupAquaHeader(
             fragment = this,
@@ -30,7 +31,14 @@ abstract class LegalDocumentFragment : Fragment(R.layout.fragment_legal_document
             )
         )
         binding.legalWebView.loadSecureLocalAsset(
-            document.assetFor(AppLanguageController.current())
+            assetName = document.assetFor(languageTag),
+            onLocalAssetNavigation = { linkedAsset ->
+                val linkedDocument = LegalDocument.entries.firstOrNull { candidate ->
+                    candidate.assetFor(languageTag) == linkedAsset
+                } ?: return@loadSecureLocalAsset
+
+                _binding?.appHeader?.tvTitle?.text = getString(linkedDocument.titleRes)
+            }
         )
     }
 
