@@ -14,22 +14,21 @@ from pathlib import Path
 from typing import Any
 
 PACKAGES = {
-    "development": "com.aqua.aqualight.debug.local",
-    "staging": "com.aqua.aqualight.staging",
-    "production": "com.aqua.aqualight",
+    "development": ("com.aqua.aqualight.debug.local",),
+    "staging": (
+        "com.aqua.aqualight.staging.local",
+        "com.aqua.aqualight.staging",
+    ),
+    "production": ("com.aqua.aqualight",),
 }
 
 
-def fixture(environment: str, package_name: str) -> dict[str, Any]:
+def fixture(environment: str, package_names: tuple[str, ...]) -> dict[str, Any]:
     project_number = {"development": "100000000001", "staging": "100000000002"}[environment]
-    app_hash = "d" * 32 if environment == "development" else "5" * 32
-    return {
-        "project_info": {
-            "project_number": project_number,
-            "project_id": f"aqualight-ci-{environment}",
-            "storage_bucket": f"aqualight-ci-{environment}.firebasestorage.app",
-        },
-        "client": [
+    clients = []
+    for index, package_name in enumerate(package_names, 1):
+        app_hash = ("d" if environment == "development" else "5") * 31 + str(index)
+        clients.append(
             {
                 "client_info": {
                     "mobilesdk_app_id": f"1:{project_number}:android:{app_hash}",
@@ -37,7 +36,14 @@ def fixture(environment: str, package_name: str) -> dict[str, Any]:
                 },
                 "api_key": [{"current_key": "AIzaSyCIOnlyConfigurationNotForRuntimeUse000"}],
             }
-        ],
+        )
+    return {
+        "project_info": {
+            "project_number": project_number,
+            "project_id": f"aqualight-ci-{environment}",
+            "storage_bucket": f"aqualight-ci-{environment}.firebasestorage.app",
+        },
+        "client": clients,
         "configuration_version": "1",
     }
 
@@ -66,12 +72,15 @@ def configured_packages(config: dict[str, Any]) -> set[str]:
     return packages
 
 
-def validate(config: dict[str, Any], expected_package: str) -> None:
+def validate(config: dict[str, Any], expected_packages: tuple[str, ...]) -> None:
     project_info = config.get("project_info")
     if not isinstance(project_info, dict) or not project_info.get("project_id"):
         raise ValueError("Firebase configuration has no project_info.project_id")
-    if expected_package not in configured_packages(config):
-        raise ValueError(f"Firebase configuration has no client for {expected_package}")
+    missing_packages = sorted(set(expected_packages) - configured_packages(config))
+    if missing_packages:
+        raise ValueError(
+            "Firebase configuration has no client for: " + ", ".join(missing_packages)
+        )
 
 
 def parse_args() -> argparse.Namespace:
@@ -88,7 +97,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     environment = args.environment
-    expected_package = PACKAGES[environment]
+    expected_packages = PACKAGES[environment]
     variable = f"FIREBASE_{environment.upper()}_GOOGLE_SERVICES_JSON_BASE64"
     encoded = os.environ.get(variable, "").strip()
 
@@ -101,11 +110,11 @@ def main() -> int:
             and environment != "production"
             and os.environ.get("CI", "").lower() == "true"
         ):
-            config = fixture(environment, expected_package)
+            config = fixture(environment, expected_packages)
             source = "CI compile-only fixture"
         else:
             raise ValueError(f"required environment variable {variable} is missing")
-        validate(config, expected_package)
+        validate(config, expected_packages)
     except ValueError as error:
         print(f"Firebase configuration rejected: {error}", file=sys.stderr)
         return 2
