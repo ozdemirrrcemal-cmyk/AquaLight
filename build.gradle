@@ -1,0 +1,51 @@
+import org.gradle.api.artifacts.dsl.LockMode
+
+plugins {
+    id 'org.cyclonedx.bom'
+}
+
+version = providers.gradleProperty("AQL_VERSION_NAME")
+        .orElse(providers.environmentVariable("AQL_VERSION_NAME"))
+        .getOrElse("0.0.0-local")
+
+allprojects {
+    dependencyLocking {
+        lockAllConfigurations()
+        lockMode = LockMode.STRICT
+    }
+}
+
+tasks.register("resolveAndLockAll") {
+    group = "build setup"
+    description = "Resolves every resolvable configuration and writes complete Gradle lock state."
+    notCompatibleWithConfigurationCache("The task intentionally discovers resolvable configurations at execution time.")
+
+    doFirst {
+        if (!gradle.startParameter.writeDependencyLocks) {
+            throw new GradleException("resolveAndLockAll must be run with --write-locks")
+        }
+    }
+
+    doLast {
+        allprojects.each { targetProject ->
+            targetProject.configurations
+                    .findAll { configuration -> configuration.canBeResolved }
+                    .sort { left, right -> left.name <=> right.name }
+                    .each { configuration ->
+                        logger.lifecycle("Locking ${targetProject.path}:${configuration.name}")
+                        configuration.resolve()
+                    }
+        }
+    }
+}
+
+tasks.named("cyclonedxBom") {
+    projectType = "application"
+    componentName = "AquaLight"
+    componentVersion = project.version.toString()
+    includeBomSerialNumber = true
+    includeLicenseText = false
+    includeBuildSystem = true
+    jsonOutput = file("${layout.buildDirectory.get().asFile}/reports/cyclonedx/AquaLight-sbom.json")
+    xmlOutput.unsetConvention()
+}
