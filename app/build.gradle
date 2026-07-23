@@ -15,15 +15,60 @@ def aqlBuildConfigString = { value ->
     return "\"${normalized}\""
 }
 
-def otaManifestPublicKeyPem = providers
-        .gradleProperty("AQL_OTA_MANIFEST_PUBLIC_KEY_PEM")
-        .orElse(providers.environmentVariable("AQL_OTA_MANIFEST_PUBLIC_KEY_PEM"))
-        .getOrElse("")
+def aqlPropertyOrEnvironment = { String name, String defaultValue ->
+    providers.gradleProperty(name)
+            .orElse(providers.environmentVariable(name))
+            .getOrElse(defaultValue)
+}
 
-def otaManifestKeyId = providers
-        .gradleProperty("AQL_OTA_MANIFEST_KEY_ID")
-        .orElse(providers.environmentVariable("AQL_OTA_MANIFEST_KEY_ID"))
-        .getOrElse("aql-ota-manifest-2026-01")
+def otaManifestPublicKeyPem = aqlPropertyOrEnvironment(
+        "AQL_OTA_MANIFEST_PUBLIC_KEY_PEM",
+        ""
+)
+
+def otaManifestKeyId = aqlPropertyOrEnvironment(
+        "AQL_OTA_MANIFEST_KEY_ID",
+        "aql-ota-manifest-2026-01"
+)
+
+def releaseVersionName = aqlPropertyOrEnvironment("AQL_VERSION_NAME", "1.0.0")
+def releaseVersionCodeText = aqlPropertyOrEnvironment("AQL_VERSION_CODE", "1")
+def releaseVersionCode
+
+try {
+    releaseVersionCode = Integer.parseInt(releaseVersionCodeText)
+} catch (NumberFormatException exception) {
+    throw new GradleException(
+            "AQL_VERSION_CODE must be a positive Android versionCode integer.",
+            exception
+    )
+}
+
+if (releaseVersionCode <= 0 || releaseVersionCode > 2_100_000_000) {
+    throw new GradleException(
+            "AQL_VERSION_CODE must be in the Android range 1..2100000000."
+    )
+}
+
+if (!(releaseVersionName ==~ /[0-9]+\.[0-9]+\.[0-9]+/)) {
+    throw new GradleException(
+            "AQL_VERSION_NAME must use the stable MAJOR.MINOR.PATCH format."
+    )
+}
+
+def releaseKeystoreFile = file(aqlPropertyOrEnvironment(
+        "AQL_RELEASE_KEYSTORE_PATH",
+        rootProject.file("release-key.jks").absolutePath
+))
+def releaseKeystorePassword = providers
+        .environmentVariable("RELEASE_KEYSTORE_PASSWORD")
+        .getOrElse("")
+def releaseKeyAlias = providers
+        .environmentVariable("RELEASE_KEY_ALIAS")
+        .getOrElse("")
+def releaseKeyPassword = providers
+        .environmentVariable("RELEASE_KEY_PASSWORD")
+        .getOrElse("")
 
 android {
     namespace "com.aqua.aqualight"
@@ -33,8 +78,8 @@ android {
         applicationId "com.aqua.aqualight"
         minSdk 27
         targetSdk 36
-        versionCode 1
-        versionName "1.0.0"
+        versionCode releaseVersionCode
+        versionName releaseVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "AQL_OTA_MANIFEST_PUBLIC_KEY_PEM", aqlBuildConfigString(otaManifestPublicKeyPem)
         buildConfigField "String", "AQL_OTA_MANIFEST_KEY_ID", aqlBuildConfigString(otaManifestKeyId)
@@ -42,10 +87,10 @@ android {
 
     signingConfigs {
         release {
-            storeFile file("../release-key.jks")
-            storePassword System.getenv("RELEASE_KEYSTORE_PASSWORD")
-            keyAlias System.getenv("RELEASE_KEY_ALIAS")
-            keyPassword System.getenv("RELEASE_KEY_PASSWORD")
+            storeFile releaseKeystoreFile
+            storePassword releaseKeystorePassword
+            keyAlias releaseKeyAlias
+            keyPassword releaseKeyPassword
         }
     }
 
@@ -78,20 +123,20 @@ android {
     packaging {
         resources {
             excludes += [
-                'META-INF/DEPENDENCIES',
-                'META-INF/LICENSE', 'META-INF/LICENSE.txt', 'META-INF/license.txt',
-                'META-INF/NOTICE',  'META-INF/NOTICE.txt',  'META-INF/notice.txt',
-                'META-INF/AL2.0', 'META-INF/LGPL2.1'
+                    'META-INF/DEPENDENCIES',
+                    'META-INF/LICENSE', 'META-INF/LICENSE.txt', 'META-INF/license.txt',
+                    'META-INF/NOTICE', 'META-INF/NOTICE.txt', 'META-INF/notice.txt',
+                    'META-INF/AL2.0', 'META-INF/LGPL2.1'
             ]
         }
     }
-    	
-   	lint {
-        checkOnly.add("UnusedResources")
+
+    lint {
         htmlReport true
         xmlReport true
         abortOnError true
         warningsAsErrors true
+        checkReleaseBuilds true
     }
 
     buildFeatures { buildConfig true; viewBinding true }
@@ -101,6 +146,41 @@ android {
             resources.srcDir rootProject.file("protocol/fixtures")
         }
     }
+}
+
+def verifyReleaseSigningConfiguration = tasks.register("verifyReleaseSigningConfiguration") {
+    group = "verification"
+    description = "Fails closed when release signing material is missing or invalid."
+
+    doLast {
+        def requiredValues = [
+                RELEASE_KEYSTORE_PASSWORD: releaseKeystorePassword,
+                RELEASE_KEY_ALIAS         : releaseKeyAlias,
+                RELEASE_KEY_PASSWORD      : releaseKeyPassword
+        ]
+        def missing = requiredValues
+                .findAll { _, value -> value == null || value.trim().isEmpty() }
+                .keySet()
+                .sort()
+
+        if (!missing.isEmpty()) {
+            throw new GradleException(
+                    "Missing release signing environment variable(s): ${missing.join(', ')}"
+            )
+        }
+        if (!releaseKeystoreFile.isFile() || releaseKeystoreFile.length() == 0L) {
+            throw new GradleException(
+                    "Release keystore is missing or empty at ${releaseKeystoreFile.absolutePath}."
+            )
+        }
+        logger.lifecycle("Release signing material is present; cryptographic validation remains a CI gate.")
+    }
+}
+
+tasks.matching {
+    it.name == "preReleaseBuild" || it.name == "preReleaseSmokeBuild"
+}.configureEach {
+    dependsOn(verifyReleaseSigningConfiguration)
 }
 
 dependencies {
@@ -125,14 +205,14 @@ dependencies {
     implementation "androidx.navigation:navigation-fragment-ktx:2.9.5"
     implementation "androidx.navigation:navigation-ui-ktx:2.9.5"
 
-    // Media3 (ExoPlayer’ın yeni paketi)
+    // Media3
     implementation "androidx.media3:media3-exoplayer:1.8.0"
     implementation "androidx.media3:media3-ui:1.8.0"
-   	
-   	// İmageCrop
-   	implementation 'com.github.yalantis:ucrop:2.2.11'
-   	
-   	implementation "com.google.code.gson:gson:2.13.2"
+
+    // Image crop
+    implementation 'com.github.yalantis:ucrop:2.2.11'
+
+    implementation "com.google.code.gson:gson:2.13.2"
 
     // WebSocket runtime
     implementation "com.squareup.okhttp3:okhttp:4.12.0"
@@ -143,29 +223,29 @@ dependencies {
     implementation "androidx.camera:camera-lifecycle:1.4.2"
     implementation "androidx.camera:camera-view:1.4.2"
     implementation "com.google.mlkit:barcode-scanning:17.3.0"
-   	
-   	// Lottie animasyon için
+
+    // Lottie animation
     implementation "com.airbnb.android:lottie:6.7.1"
-   	
-   	// Charts - MPAndroidChart
+
+    // Charts
     implementation "com.github.PhilJay:MPAndroidChart:v3.1.0"
 
     // BlurView
     implementation "com.github.Dimezis:BlurView:version-2.0.6"
-   	
-   	// libphonenumber
-   	implementation "com.googlecode.libphonenumber:libphonenumber:9.0.18"
-   	
-   	// Lifecycle
+
+    // libphonenumber
+    implementation "com.googlecode.libphonenumber:libphonenumber:9.0.18"
+
+    // Lifecycle
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.10.0"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.10.0"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0"
-   	
-   	// WorkManager
+
+    // WorkManager
     implementation "androidx.work:work-runtime-ktx:2.11.2"
 
-   	// Country Code
-   	implementation "com.hbb20:ccp:2.7.3"
+    // Country code
+    implementation "com.hbb20:ccp:2.7.3"
 
     // Image loading - Coil 3
     implementation "io.coil-kt.coil3:coil-android:3.3.0"
@@ -180,7 +260,7 @@ dependencies {
     // DataStore Proto
     implementation "androidx.datastore:datastore:1.1.3"
     implementation "com.google.protobuf:protobuf-javalite:3.25.3"
-   	implementation "androidx.datastore:datastore-preferences:1.1.1"
+    implementation "androidx.datastore:datastore-preferences:1.1.1"
 
     // Security
     implementation "androidx.security:security-crypto:1.1.0"
@@ -203,13 +283,13 @@ protobuf {
         }
     }
 }
-// app/build.gradle (en alt)
+
 androidComponents {
-  onVariants(selector().withBuildType("release")) { variant ->
-    variant.outputs.each { output ->
-      output.outputFileName.set("AquaLight.apk") // ✅ sabit isim
+    onVariants(selector().withBuildType("release")) { variant ->
+        variant.outputs.each { output ->
+            output.outputFileName.set("AquaLight-${releaseVersionName}.apk")
+        }
     }
-  }
 }
 
 def forbiddenFirebaseRuntimeModules = [
