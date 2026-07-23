@@ -1,0 +1,832 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient.&lt;no name provided>$deviceInfoCharacteristic == null || startSessionCharacteristic == null || wifiCredentialsCharacteristic == null || provisioningStatusCharacteristic == null || runtimeEndpointCharacteristic == null || finalizeSetupCharacteristic == null</ID>
+    <ID>ComplexCondition:AqlWsClient.kt$AqlWsClient$!isCurrentConnectionLocked(webSocket, generation, deviceUid) || helloReceived || pendingAuthentication != null || activeSecureSession != null</ID>
+    <ID>ComplexCondition:AqlWsCrypto.kt$AqlWsSecureSession$closed || security.sessionId != sessionId || security.sequence != nextDeviceSequence || security.sequence !in 1..AqlWsContract.Limit.MAX_SEQUENCE</ID>
+    <ID>ComplexCondition:AqlWsWireCodec.kt$AqlWsWireCodec$value.isBlank() || value != value.trim() || value.length > maxChars || value.hasControlCharacter()</ID>
+    <ID>ComplexCondition:DeviceFirmwareUpdatePlanner.kt$DeviceFirmwareUpdatePlanner$productKey.isBlank() || productId.isBlank() || model.isBlank() || hardwareRevision.isBlank()</ID>
+    <ID>ComplexCondition:OwnerDependencyGraph.kt$ActiveOwnerDependencyGraphResolver$synchronizedGraph?.ownerUid == ownerUid &amp;&amp; synchronizedGraph.sessionGeneration == synchronizedGeneration &amp;&amp; synchronizedGraph.devicesRepository === devicesRepository &amp;&amp; synchronizedGraph.assignmentRepository === assignmentRepository</ID>
+    <ID>ComplexCondition:SettingsFragment.kt$SettingsFragment$URL_WEBSITE.isBlank() &amp;&amp; URL_FACEBOOK.isBlank() &amp;&amp; URL_INSTAGRAM.isBlank() &amp;&amp; URL_YOUTUBE.isBlank()</ID>
+    <ID>CyclomaticComplexMethod:AccountDeletionManager.kt$AccountDeletionManager$private suspend fun deleteOrResumeLocked( requirePending: Boolean ): DeleteResult?</ID>
+    <ID>CyclomaticComplexMethod:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$private fun validateQrCandidateDeviceInfo( bleAddress: String, info: DeviceInfo, draft: AqlProvisioningDraft ): QrCandidatePreflightResult</ID>
+    <ID>CyclomaticComplexMethod:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$private fun validateDeviceInfo(info: AqlBleDeviceInfo): String?</ID>
+    <ID>CyclomaticComplexMethod:AqlDiscoveryParser.kt$AqlDiscoveryParser$fun parseDeviceAnnounce( rawPayload: String, sourceIp: String = "", receivedAtMillis: Long = System.currentTimeMillis() ): ParseResult</ID>
+    <ID>CyclomaticComplexMethod:AqlProvisioningRuntimeMetadataResolver.kt$AqlProvisioningRuntimeMetadataResolver$suspend fun resolveAndConnect( repository: DevicesRepository, provisionalSnapshot: DeviceSnapshot, timeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS ): Result&lt;DeviceSnapshot></ID>
+    <ID>CyclomaticComplexMethod:AquaHeaderBindingExt.kt$fun LayoutAquaHeaderBinding.setupAquaHeader( fragment: Fragment, config: AquaHeaderConfig = AquaHeaderConfig() )</ID>
+    <ID>CyclomaticComplexMethod:AuthErrorMapper.kt$AuthErrorMapper$fun messageFor( error: Throwable?, operation: Operation ): AuthUiText</ID>
+    <ID>CyclomaticComplexMethod:CareTaskStoreRules.kt$CareTaskStoreRules$private fun validateStateRelationships( type: CareTaskType, source: CareTaskSource, status: CareTaskStatus, completedAtMillis: Long, updatedAtMillis: Long, repeatEnabled: Boolean, repeatIntervalDays: Int, reminderEnabled: Boolean, missedReminderEnabled: Boolean, missedReminderDays: Int, waterChangePercent: Int, generatedRuleKey: String )</ID>
+    <ID>CyclomaticComplexMethod:DeviceApplicationMapping.kt$private fun DeviceSnapshot.rootMenuFeatures(): Set&lt;DeviceRootMenuFeature></ID>
+    <ID>CyclomaticComplexMethod:DeviceSystemTimePayloadFactory.kt$DevicePosixTimeZoneMapper$fun posixFor( timezoneId: String, utcOffsetMinutes: Int ): String</ID>
+    <ID>CyclomaticComplexMethod:ImageMediaProcessor.kt$AndroidImageMediaProcessor$override suspend fun process(uri: Uri): ImageMediaProcessingResult</ID>
+    <ID>CyclomaticComplexMethod:OwnerSessionCoordinator.kt$OwnerSessionCoordinator$suspend fun open(ownerUid: String): OpenResult</ID>
+    <ID>CyclomaticComplexMethod:OwnerTankDataCleaner.kt$OwnerTankDataCleaner$suspend fun deleteTanks(tankIds: Iterable&lt;Long>): Result</ID>
+    <ID>CyclomaticComplexMethod:OwnerViewModelFactory.kt$OwnerViewModelFactory$override fun &lt;T : ViewModel> create(modelClass: Class&lt;T>): T</ID>
+    <ID>CyclomaticComplexMethod:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$private fun buildShortMessage( context: Context, tank: SavedAquariumTank, rule: SmartCareRule, profile: SmartCareTankProfile ): String</ID>
+    <ID>CyclomaticComplexMethod:TankSettingsBasicFragment.kt$TankSettingsBasicFragment$private fun setupTankEditorResultListener()</ID>
+    <ID>CyclomaticComplexMethod:TankSettingsEditorBottomSheet.kt$TankSettingsEditorBottomSheet$private fun bindSizeEditor()</ID>
+    <ID>CyclomaticComplexMethod:UserAddressFragment.kt$UserAddressFragment$private fun saveAddress()</ID>
+    <ID>CyclomaticComplexMethod:UserVisibleTextResourceGuardTest.kt$UserVisibleTextResourceGuardTest$private fun codeWithoutComments( rawLine: String, startedInsideBlock: Boolean ): Pair&lt;String, Boolean></ID>
+    <ID>InstanceOfCheckForException:AppSessionCoordinator.kt$AppSessionCoordinator$error is CancellationException</ID>
+    <ID>InstanceOfCheckForException:DevicesViewModel.kt$DevicesViewModel$error is CancellationException</ID>
+    <ID>InstanceOfCheckForException:OwnerSessionCoordinator.kt$OwnerSessionCoordinator$error !is TimeoutCancellationException</ID>
+    <ID>InstanceOfCheckForException:OwnerSessionCoordinator.kt$OwnerSessionCoordinator$error is CancellationException</ID>
+    <ID>InstanceOfCheckForException:TankDetailDevicesViewModel.kt$TankDetailDevicesViewModel$error is CancellationException</ID>
+    <ID>LargeClass:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient</ID>
+    <ID>LargeClass:AqlWsWireCodec.kt$AqlWsWireCodec</ID>
+    <ID>LargeClass:AquariumMaintenanceFragment.kt$AquariumMaintenanceFragment : Fragment</ID>
+    <ID>LargeClass:AquariumTankDataStoreManager.kt$AquariumTankDataStoreManager</ID>
+    <ID>LargeClass:CareTaskDataStoreManager.kt$CareTaskDataStoreManager</ID>
+    <ID>LargeClass:SmartCareTaskGenerator.kt$SmartCareTaskGenerator</ID>
+    <ID>LargeClass:TankDetailActivityFragment.kt$TankDetailActivityFragment : Fragment</ID>
+    <ID>LargeClass:TankPdfExporter.kt$TankPdfExporter$PdfWriter</ID>
+    <ID>LongMethod:AccountDeletionManager.kt$AccountDeletionManager$private suspend fun deleteOrResumeLocked( requirePending: Boolean ): DeleteResult?</ID>
+    <ID>LongMethod:AddCareTaskFragment.kt$AddCareTaskFragment$private fun saveTaskInternal()</ID>
+    <ID>LongMethod:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$private fun validateQrCandidateDeviceInfo( bleAddress: String, info: DeviceInfo, draft: AqlProvisioningDraft ): QrCandidatePreflightResult</ID>
+    <ID>LongMethod:AqlBleProvisioningAdvertisementParser.kt$AqlBleProvisioningAdvertisementParser$fun parse( scanRecord: ScanRecord?, fallbackBleName: String ): AqlBleProvisioningAdvertisement</ID>
+    <ID>LongMethod:AqlDiscoveryParser.kt$AqlDiscoveryParser$fun parseDeviceAnnounce( rawPayload: String, sourceIp: String = "", receivedAtMillis: Long = System.currentTimeMillis() ): ParseResult</ID>
+    <ID>LongMethod:AqlProvisioningHandoffSaver.kt$AqlProvisioningHandoffSaver$private suspend fun prepareAndConnectOrThrow( draft: AqlProvisioningDraft, handoff: AqlProvisioningRuntimeHandoff ): DeviceSnapshot</ID>
+    <ID>LongMethod:AqlWsClient.kt$AqlWsClient$private suspend fun authenticateCurrentConnection( webSocket: WebSocket, generation: Long, deviceUid: DeviceUid, hello: AqlWsHelloChallenge )</ID>
+    <ID>LongMethod:AqlWsWireCodec.kt$AqlWsWireCodec$private fun decodeHello( root: JSONObject, expectedDeviceUid: String ): AqlWsDecodedFrame.Hello</ID>
+    <ID>LongMethod:AqlWsWireCodecGoldenTest.kt$AqlWsWireCodecGoldenTest$@Test fun `shared golden handshake and signed runtime frames are interoperable`()</ID>
+    <ID>LongMethod:AquaHeaderBindingExt.kt$fun LayoutAquaHeaderBinding.setupAquaHeader( fragment: Fragment, config: AquaHeaderConfig = AquaHeaderConfig() )</ID>
+    <ID>LongMethod:AquaMaterialCategoryRowFactory.kt$AquaMaterialCategoryRowFactory$fun create( context: Context, title: String, summary: String, iconText: String = title.take(2).uppercase(Locale.getDefault()), onClick: () -> Unit ): View</ID>
+    <ID>LongMethod:AquariumMaintenanceFragment.kt$AquariumMaintenanceFragment$private fun createHistoryTaskCard( task: CareTaskUi ): View</ID>
+    <ID>LongMethod:AquariumTankDataStoreManager.kt$AquariumTankDataStoreManager$suspend fun duplicateTank( tankId: Long ): Long</ID>
+    <ID>LongMethod:AuthErrorMapper.kt$AuthErrorMapper$fun messageFor( error: Throwable?, operation: Operation ): AuthUiText</ID>
+    <ID>LongMethod:CapabilityPermissionUiSpecResolver.kt$CapabilityPermissionUiSpecResolver$fun resolve( capability: AppCapability, mode: CapabilityPermissionBottomSheet.Mode ): CapabilityPermissionUiSpec</ID>
+    <ID>LongMethod:CareProfileBottomSheet.kt$CareProfileBottomSheet$override fun onViewCreated(view: View, savedInstanceState: Bundle?)</ID>
+    <ID>LongMethod:CareProfileCalculator.kt$CareProfileCalculator$fun calculate( context: Context, tank: AquariumTankSnapshot ): Result</ID>
+    <ID>LongMethod:CareTaskDataStoreManager.kt$CareTaskDataStoreManager$suspend fun addOrUpdateAutomaticTask(task: CareTask)</ID>
+    <ID>LongMethod:CareTaskDataStoreManager.kt$CareTaskDataStoreManager$suspend fun syncAutomaticTasks(generatedTasks: List&lt;SmartCareGeneratedTask>)</ID>
+    <ID>LongMethod:CareTaskStoreRules.kt$CareTaskStoreRules$private fun validateStateRelationships( type: CareTaskType, source: CareTaskSource, status: CareTaskStatus, completedAtMillis: Long, updatedAtMillis: Long, repeatEnabled: Boolean, repeatIntervalDays: Int, reminderEnabled: Boolean, missedReminderEnabled: Boolean, missedReminderDays: Int, waterChangePercent: Int, generatedRuleKey: String )</ID>
+    <ID>LongMethod:CareTaskTypeBottomSheetFragment.kt$CareTaskTypeBottomSheetFragment$private fun createTaskTypeCard( item: CareTaskTypeDefinition, itemIndex: Int ): View</ID>
+    <ID>LongMethod:ChangeEmailFragment.kt$ChangeEmailFragment$private fun attemptEmailChange()</ID>
+    <ID>LongMethod:DefaultAquariumTankOperationsMapperTest.kt$DefaultAquariumTankOperationsMapperTest$@Test fun `saved tank maps every UI-facing field without owner leakage`()</ID>
+    <ID>LongMethod:DeviceProvisioningProgressViewModel.kt$DeviceProvisioningProgressViewModel$private fun handleCompletedEvent()</ID>
+    <ID>LongMethod:DeviceProvisioningProgressViewModel.kt$DeviceProvisioningProgressViewModel$private fun reduceTransportEvent( event: ProvisioningTransportEvent ): DeviceProvisioningProgressUiState</ID>
+    <ID>LongMethod:DeviceProvisioningProgressViewModel.kt$DeviceProvisioningProgressViewModel$private fun saveRuntimeHandoff(handoff: ProvisioningRuntimeHandoff)</ID>
+    <ID>LongMethod:DeviceQrScanViewModel.kt$DeviceQrScanViewModel$private fun startQrBleScan(payload: ProvisioningQrPayload)</ID>
+    <ID>LongMethod:DeviceRuntimeMetadataReducer.kt$DeviceRuntimeMetadataReducer$fun applyDeviceIdentity( snapshot: DeviceSnapshot, identityData: JSONObject ): DeviceSnapshot</ID>
+    <ID>LongMethod:DevicesRepository.kt$DevicesRepository$fun start(scope: CoroutineScope): Job</ID>
+    <ID>LongMethod:FeedbackViewModel.kt$FeedbackViewModel$fun submit()</ID>
+    <ID>LongMethod:ImageMediaProcessor.kt$AndroidImageMediaProcessor$override suspend fun process(uri: Uri): ImageMediaProcessingResult</ID>
+    <ID>LongMethod:KnownDeviceProtoMapper.kt$KnownDeviceProtoMapper$fun toSnapshot( stored: StoredKnownDevice ): DeviceSnapshot</ID>
+    <ID>LongMethod:KnownDevicesStoreReducerTest.kt$KnownDevicesStoreReducerTest$private fun snapshot( uid: String, customName: String ): DeviceSnapshot</ID>
+    <ID>LongMethod:LoadingOverlayRaceInstrumentedTest.kt$LoadingOverlayRaceInstrumentedTest$@Test @Suppress("DEPRECATION") fun visibleOverlayMirrorsTheHostSystemBarAppearance()</ID>
+    <ID>LongMethod:MaterialPickerFragment.kt$MaterialPickerFragment$private fun createKeywordChip( keyword: String ): View</ID>
+    <ID>LongMethod:MaterialPickerFragment.kt$MaterialPickerFragment$private fun createMaterialCard( product: AquariumMaterial ): View</ID>
+    <ID>LongMethod:MinimumTouchTargetInstrumentedTest.kt$MinimumTouchTargetInstrumentedTest$@Test fun foreignDelegateKeepsPriorityAndIsRestoredAfterAquaTargetsDisappear()</ID>
+    <ID>LongMethod:MinimumTouchTargetInstrumentedTest.kt$MinimumTouchTargetInstrumentedTest$@Test fun nearestExpandedTargetWinsOverlapGapAndRemovedTargetsAreReleasedDynamically()</ID>
+    <ID>LongMethod:MinimumTouchTargetInstrumentedTest.kt$MinimumTouchTargetInstrumentedTest$@Test fun viewsAddedRemovedAndReplacedAfterInstallAreRebuiltWithoutManualReinstall()</ID>
+    <ID>LongMethod:OwnerDependencyGraph.kt$ActiveOwnerDependencyGraphResolver$override fun requireActive(): OwnerDependencyGraph</ID>
+    <ID>LongMethod:OwnerDeviceDataCleaner.kt$OwnerDeviceDataCleaner$suspend fun deleteDevices( deviceUids: Iterable&lt;DeviceUid> ): Result</ID>
+    <ID>LongMethod:OwnerNotificationCancellationInstrumentedTest.kt$OwnerNotificationCancellationInstrumentedTest$@Test fun cancellingOneOwnerLeavesOtherOwnersVisibleNotificationUntouched()</ID>
+    <ID>LongMethod:OwnerSessionCoordinator.kt$OwnerSessionCoordinator$suspend fun open(ownerUid: String): OpenResult</ID>
+    <ID>LongMethod:OwnerTankDataCleaner.kt$OwnerTankDataCleaner$suspend fun deleteTanks(tankIds: Iterable&lt;Long>): Result</ID>
+    <ID>LongMethod:OwnerViewModelFactory.kt$OwnerViewModelFactory$override fun &lt;T : ViewModel> create(modelClass: Class&lt;T>): T</ID>
+    <ID>LongMethod:PlantPickerFragment.kt$PlantPickerFragment$private fun createPlantCard( plant: AquariumPlant ): View</ID>
+    <ID>LongMethod:PlantTagUiRenderer.kt$PlantTagUiRenderer$private fun createPlantCard( context: Context, index: Int, plant: AquariumPlantTag, onRemoveAt: (Int) -> Unit ): MaterialCardView</ID>
+    <ID>LongMethod:PopulatedTankLocalizationContractTest.kt$PopulatedTankLocalizationContractTest$@Test fun populatedTankKeepsCalendarDaysAndLocalizedMeasurementsAcrossLanguagesAndZones()</ID>
+    <ID>LongMethod:ProtoCorruptionRecoveryInstrumentedTest.kt$ProtoCorruptionRecoveryInstrumentedTest$@Test fun allAuthoritativeProtoStoresRecoverFailClosedAndReportRecovery()</ID>
+    <ID>LongMethod:SmartCareProfileBuilder.kt$SmartCareProfileBuilder$fun build( tank: SavedAquariumTank, nowMillis: Long = System.currentTimeMillis() ): SmartCareTankProfile</ID>
+    <ID>LongMethod:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$private fun buildShortMessage( context: Context, tank: SavedAquariumTank, rule: SmartCareRule, profile: SmartCareTankProfile ): String</ID>
+    <ID>LongMethod:TankDetailActivityFragment.kt$TankDetailActivityFragment$private fun createActivityTaskCard( task: CareTaskUi ): View</ID>
+    <ID>LongMethod:TankDetailLifeFragment.kt$TankDetailLifeFragment$private fun createLivestockCard( livestock: AquariumLivestock ): View</ID>
+    <ID>LongMethod:TankDetailPlantsFragment.kt$TankDetailPlantsFragment$private fun createPlantCard(index: Int, plant: AquariumPlantTag): View</ID>
+    <ID>LongMethod:TankDetailTankFragment.kt$TankDetailTankFragment$private fun createTankComponentCard( shortCode: String, title: String, materials: List&lt;AquariumMaterialSelection> ): View</ID>
+    <ID>LongMethod:TankInfoFragment.kt$TankInfoFragment$private fun setupEditorResultListener()</ID>
+    <ID>LongMethod:TankPdfExporter.kt$TankPdfExporter$fun createTankReportPdf( context: Context, tank: AquariumTankSnapshot ): Uri</ID>
+    <ID>LongMethod:TankSettingsBasicFragment.kt$TankSettingsBasicFragment$private fun setupTankEditorResultListener()</ID>
+    <ID>LongMethod:TankSettingsOthersFragment.kt$TankSettingsOthersFragment$private fun deleteCurrentTank()</ID>
+    <ID>LongMethod:TaskDetailFragment.kt$TaskDetailFragment$private fun renderTask( task: CareTaskUi )</ID>
+    <ID>LongMethod:UserAddressFragment.kt$UserAddressFragment$private fun saveAddress()</ID>
+    <ID>LongMethod:UserDataCleaner.kt$UserDataCleaner$suspend fun clearLocalUserData( ownerUid: String? = null, clearUserPreferences: Boolean = true, stopSessionBoundServices: Boolean = true ): CleanupResult</ID>
+    <ID>LongParameterList:AccountDeletionProcessDeathMatrixTest.kt$AccountDeletionProcessDeathMatrixTest.FakeDurableBackend$( var currentUid: String?, var cloudFailuresRemaining: Int = 0, var authFailuresRemaining: Int = 0, var localFailuresRemaining: Int = 0, var cloudCalls: Int = 0, var authDeleteCalls: Int = 0, var localCalls: Int = 0, var revokeCalls: Int = 0, var signOutCalls: Int = 0 )</ID>
+    <ID>LongParameterList:AppDatePickerDialogFragment.kt$AppDatePickerDialogFragment.Companion$( fragmentManager: FragmentManager, requestKey: String, initialMillis: Long, payloadId: String = "", minMillis: Long? = null, maxMillis: Long? = null )</ID>
+    <ID>LongParameterList:AqlBleProvisioningCrypto.kt$AqlBleProvisioningCrypto$( sessionMode: String, purpose: String, deviceUid: String, provisioningId: String, deviceNonce: String, appNonce: String )</ID>
+    <ID>LongParameterList:AquariumDimensionFormatter.kt$AquariumDimensionFormatter$( context: Context, widthCm: Int, lengthCm: Int, heightCm: Int, sizeUnit: String, @StringRes formatRes: Int )</ID>
+    <ID>LongParameterList:AquariumDimensionFormatter.kt$AquariumDimensionFormatter$( context: Context, widthCm: Int, lengthCm: Int, heightCm: Int, sizeUnit: String, @StringRes separatorRes: Int = R.string.aquarium_dimension_separator_spaced_multiply )</ID>
+    <ID>LongParameterList:AquariumDimensionFormatter.kt$AquariumDimensionFormatter$( context: Context, widthCm: Int, lengthCm: Int, heightCm: Int, volumeUnit: String, rounded: Boolean = false )</ID>
+    <ID>LongParameterList:CareProfileBottomSheet.kt$CareProfileBottomSheet.Companion$( fragmentManager: FragmentManager, percent: Int, percentText: String, summaryText: String, profileColor: Int, titles: List&lt;String>, subtitles: List&lt;String>, completed: BooleanArray, tokens: List&lt;String>, requestKey: String )</ID>
+    <ID>LongParameterList:CareReminderLocaleInstrumentedTest.kt$CareReminderLocaleInstrumentedTest$( type: CareTaskType, source: CareTaskSource, title: String, description: String, note: String = "", waterChangePercent: Int? = null, generatedRuleKey: String = "" )</ID>
+    <ID>LongParameterList:CareTaskDataStoreManager.kt$CareTaskDataStoreManager$( tankId: Long, title: String, description: String, type: CareTaskType, completedAtMillis: Long, waterChangePercent: Int?, note: String )</ID>
+    <ID>LongParameterList:CareTaskDataStoreManager.kt$CareTaskDataStoreManager$( tankId: Long, title: String, description: String, type: CareTaskType, dueAtMillis: Long, repeatEnabled: Boolean, repeatIntervalDays: Int, reminderEnabled: Boolean, missedReminderEnabled: Boolean, missedReminderDays: Int, waterChangePercent: Int?, note: String )</ID>
+    <ID>LongParameterList:CareTaskDataStoreManager.kt$CareTaskDataStoreManager$( taskId: Long, tankId: Long, title: String, description: String, type: CareTaskType, dueAtMillis: Long, repeatEnabled: Boolean, repeatIntervalDays: Int, reminderEnabled: Boolean, missedReminderEnabled: Boolean, missedReminderDays: Int, waterChangePercent: Int?, note: String )</ID>
+    <ID>LongParameterList:CareTaskStoreRules.kt$CareTaskStoreRules$( type: CareTaskType, source: CareTaskSource, status: CareTaskStatus, completedAtMillis: Long, updatedAtMillis: Long, repeatEnabled: Boolean, repeatIntervalDays: Int, reminderEnabled: Boolean, missedReminderEnabled: Boolean, missedReminderDays: Int, waterChangePercent: Int, generatedRuleKey: String )</ID>
+    <ID>LongParameterList:DevicesRepository.kt$DevicesRepository$( private val discoveryRepository: DeviceDiscoveryRepository = DeviceDiscoveryRepository(), private val registryStore: DeviceRegistryStore = DeviceRegistryStore(), private val knownStore: DeviceKnownStore? = null, private val runtimeRepository: DeviceRuntimeRepository? = null, private val runtimeMetadataReducer: DeviceRuntimeMetadataReducer = DeviceRuntimeMetadataReducer(), private val statusAggregator: DeviceStatusAggregator = DeviceStatusAggregator(), connectivityObserver: DeviceConnectivityObserver? = null )</ID>
+    <ID>LongParameterList:DialogManager.kt$DialogManager$( context: Context, type: DialogType, title: String, message: String, @StringRes buttonTextResId: Int = R.string.ok, autoDismissMillis: Long = 0L )</ID>
+    <ID>LongParameterList:FeedbackBottomSheet.kt$FeedbackBottomSheet.Companion$( fragmentManager: FragmentManager, title: String, message: String, primaryText: String, cancelText: String?, tone: FeedbackTone, requestKey: String, actionId: String, autoDismissMillis: Long = 0L )</ID>
+    <ID>LongParameterList:FeedbackBottomSheet.kt$FeedbackBottomSheet.Companion$( title: String, message: String, primaryText: String, cancelText: String?, tone: FeedbackTone, requestKey: String, actionId: String, autoDismissMillis: Long = 0L )</ID>
+    <ID>LongParameterList:GlobalActionBottomSheet.kt$GlobalActionBottomSheet.Companion$( fragmentManager: FragmentManager, title: String, message: String? = null, details: List&lt;BottomSheetDetailRow> = emptyList(), actions: List&lt;BottomSheetAction> = emptyList(), requestKey: String, payloadId: String = "" )</ID>
+    <ID>LongParameterList:GlobalActionBottomSheet.kt$GlobalActionBottomSheet.Companion$( title: String, message: String?, details: List&lt;BottomSheetDetailRow>, actions: List&lt;BottomSheetAction>, requestKey: String, payloadId: String )</ID>
+    <ID>LongParameterList:MaintenanceLiveLocaleTest.kt$MaintenanceLiveLocaleTest$( id: Long, type: CareTaskType, source: CareTaskSource = CareTaskSource.MANUAL, title: String, description: String, note: String = "", generatedRuleKey: String = "" )</ID>
+    <ID>LongParameterList:MaintenanceViewModel.kt$MaintenanceViewModel$( tankId: Long, title: String, description: String, type: CareTaskType, dueAtMillis: Long, repeatEnabled: Boolean, repeatIntervalDays: Int, reminderEnabled: Boolean, missedReminderEnabled: Boolean, missedReminderDays: Int, waterChangePercent: Int?, note: String )</ID>
+    <ID>LongParameterList:MaintenanceViewModel.kt$MaintenanceViewModel$( taskId: Long, tankId: Long, title: String, description: String, type: CareTaskType, dueAtMillis: Long, repeatEnabled: Boolean, repeatIntervalDays: Int, reminderEnabled: Boolean, missedReminderEnabled: Boolean, missedReminderDays: Int, waterChangePercent: Int?, note: String )</ID>
+    <ID>LongParameterList:MediaFlowCoordinatorViewModel.kt$MediaFlowCoordinatorViewModel$( private val savedStateHandle: SavedStateHandle, context: Context, private val scope: AppMediaScope, private val ownerToken: String, private val ownerUid: String, private val cropSpec: MediaCropSpec, private val mediaProcessor: ImageMediaProcessor, private val dispatcher: CoroutineDispatcher = Dispatchers.IO )</ID>
+    <ID>LongParameterList:MediaFlowCoordinatorViewModel.kt$MediaFlowCoordinatorViewModel.Companion$( context: Context, scope: AppMediaScope, ownerToken: String, ownerUid: String, cropSpec: MediaCropSpec, mediaProcessor: ImageMediaProcessor )</ID>
+    <ID>LongParameterList:OwnerTankDataCleaner.kt$OwnerTankDataCleaner$( private val deleteTankRecords: suspend (List&lt;Long>) -> Unit, private val snapshotCareTasksForTank: suspend (Long) -> List&lt;CareTask>, private val deleteCareTasksForTank: suspend (Long) -> Unit, private val restoreCareTasksForTank: suspend (Long, List&lt;CareTask>) -> Unit, private val removeDeviceAssignmentsForTank: suspend (Long) -> TankAssignmentCleanupResult, private val cancelCareTaskReminder: suspend (String, Long) -> Unit, private val reconcileCareReminders: suspend (String) -> Unit, private val integrityTransactions: TankCareIntegrityTransactions = TankCareIntegrityJournal, private val ownerUidProvider: () -> String = UserDataScope::requireCurrentUid )</ID>
+    <ID>LongParameterList:OwnerTankDataCleanerTest.kt$OwnerTankDataCleanerTest$( integrity: RecordingIntegrityTransactions = RecordingIntegrityTransactions(), deleteTankRecords: suspend (List&lt;Long>) -> Unit = {}, snapshotCareTasksForTank: suspend (Long) -> List&lt;CareTask> = { emptyList() }, deleteCareTasksForTank: suspend (Long) -> Unit = {}, restoreCareTasksForTank: suspend (Long, List&lt;CareTask>) -> Unit = { _, _ -> }, removeAssignmentsForTank: suspend (Long) -> TankAssignmentCleanupResult = { TankAssignmentCleanupResult.Completed(0) }, cancelCareTaskReminder: suspend (String, Long) -> Unit = { _, _ -> }, reconcileCareReminders: suspend (String) -> Unit = {} )</ID>
+    <ID>LongParameterList:ProvisioningDraftStorage.kt$ProvisioningDraftStorage$( candidateId: String, bleAddress: String, bleName: String = "", claimCode: String = "", rawQrPayload: String = "", deviceTitle: String, deviceSerial: String, deviceModel: String, wifiCredentials: AqlWifiCredentials, createdAtMillis: Long = System.currentTimeMillis() )</ID>
+    <ID>LongParameterList:SingleChoiceBottomSheet.kt$SingleChoiceBottomSheet.Companion$( fragmentManager: FragmentManager, title: String, options: List&lt;Pair&lt;String, String>>, selectedId: String?, columns: Int, requestKey: String, payloadId: String = "" )</ID>
+    <ID>LongParameterList:SmartCareProfileBuilder.kt$SmartCareProfileBuilder$( hasPlants: Boolean, hasCo2: Boolean, hasActiveSoil: Boolean, hasFertilizer: Boolean, hasLivestock: Boolean, hasShrimp: Boolean, hasFish: Boolean, hasLight: Boolean, hasFilter: Boolean, isStartupPeriod: Boolean, isMatureTank: Boolean, isHighTech: Boolean, isLowTech: Boolean )</ID>
+    <ID>LongParameterList:TankSettingsEditorBottomSheet.kt$TankSettingsEditorBottomSheet$( status: String, textValue: String? = null, millisValue: Long? = null, widthCm: Int? = null, lengthCm: Int? = null, heightCm: Int? = null, unit: String? = null )</ID>
+    <ID>LongParameterList:TankSettingsEditorBottomSheet.kt$TankSettingsEditorBottomSheet.Companion$( fragmentManager: FragmentManager, mode: Mode, title: String, currentText: String = "", validationMessage: String = "", currentMillis: Long? = null, minYear: Int = 0, maxYear: Int = 0, locale: Locale = Locale.getDefault(), widthCm: Int = 0, lengthCm: Int = 0, heightCm: Int = 0, currentUnit: String = UNIT_CM )</ID>
+    <ID>LongParameterList:TextInputBottomSheet.kt$TextInputBottomSheet.Companion$( fragmentManager: FragmentManager, title: String, label: String, hint: String, initialValue: String, secondaryLabel: String = "", secondaryValue: String = "", saveText: String, cancelText: String, required: Boolean, requiredMessage: String, requestKey: String, payloadId: String = "" )</ID>
+    <ID>LongParameterList:UserPreferencesManager.kt$UserPreferencesManager$( firstName: String, lastName: String, city: String, addressLine: String, postCode: String, phoneNumber: String, country: String )</ID>
+    <ID>LoopWithTooManyJumpStatements:AppSessionCoordinator.kt$AppSessionCoordinator$while</ID>
+    <ID>LoopWithTooManyJumpStatements:AqlDiscoveryUdpScanner.kt$AqlDiscoveryUdpScanner$while</ID>
+    <ID>LoopWithTooManyJumpStatements:ImageMediaProcessor.kt$AndroidImageMediaProcessor$while</ID>
+    <ID>LoopWithTooManyJumpStatements:UserVisibleTextResourceGuardTest.kt$UserVisibleTextResourceGuardTest$while</ID>
+    <ID>MagicNumber:AddCareTaskFragment.kt$AddCareTaskFragment$0.22f</ID>
+    <ID>MagicNumber:AddCareTaskFragment.kt$AddCareTaskFragment$0.34f</ID>
+    <ID>MagicNumber:AddCareTaskFragment.kt$AddCareTaskFragment$0.55f</ID>
+    <ID>MagicNumber:AddCareTaskFragment.kt$AddCareTaskFragment$0.9f</ID>
+    <ID>MagicNumber:AddCareTaskFragment.kt$AddCareTaskFragment$10</ID>
+    <ID>MagicNumber:AddCareTaskFragment.kt$AddCareTaskFragment$100</ID>
+    <ID>MagicNumber:AddCareTaskFragment.kt$AddCareTaskFragment$20</ID>
+    <ID>MagicNumber:AddCareTaskFragment.kt$AddCareTaskFragment$255</ID>
+    <ID>MagicNumber:AddCareTaskFragment.kt$AddCareTaskFragment$30</ID>
+    <ID>MagicNumber:AddCareTaskFragment.kt$AddCareTaskFragment$40</ID>
+    <ID>MagicNumber:AddCareTaskFragment.kt$AddCareTaskFragment$50</ID>
+    <ID>MagicNumber:AddCareTaskFragment.kt$AddCareTaskFragment$60</ID>
+    <ID>MagicNumber:AddCareTaskFragment.kt$AddCareTaskFragment$70</ID>
+    <ID>MagicNumber:AddCareTaskFragment.kt$AddCareTaskFragment$80</ID>
+    <ID>MagicNumber:AddCareTaskFragment.kt$AddCareTaskFragment$90</ID>
+    <ID>MagicNumber:AndroidNotificationRenderer.kt$AndroidNotificationRenderer$100</ID>
+    <ID>MagicNumber:AndroidSmartCareTextResolver.kt$AndroidSmartCareTextResolver$12</ID>
+    <ID>MagicNumber:AqlBleProvisioningCrypto.kt$AqlBleProvisioningCrypto$0x04</ID>
+    <ID>MagicNumber:AqlPrivateLanEndpoint.kt$AqlPrivateLanEndpoint$0xff</ID>
+    <ID>MagicNumber:AqlWifiCredentials.kt$AqlWifiCredentials$840</ID>
+    <ID>MagicNumber:AqlWsClient.kt$AqlWsClient$0x20</ID>
+    <ID>MagicNumber:AqlWsClient.kt$AqlWsClient$0x7f</ID>
+    <ID>MagicNumber:AqlWsClient.kt$AqlWsClient.Companion$20</ID>
+    <ID>MagicNumber:AqlWsClient.kt$AqlWsClient.Companion$8</ID>
+    <ID>MagicNumber:AqlWsCrypto.kt$AqlWsCrypto$0xff</ID>
+    <ID>MagicNumber:AqlWsCrypto.kt$AqlWsCrypto$128</ID>
+    <ID>MagicNumber:AqlWsCrypto.kt$AqlWsCrypto$16</ID>
+    <ID>MagicNumber:AqlWsWireCodec.kt$AqlWsWireCodec$0x20</ID>
+    <ID>MagicNumber:AqlWsWireCodec.kt$AqlWsWireCodec$0x7f</ID>
+    <ID>MagicNumber:AqlWsWireCodec.kt$AqlWsWireCodec$100</ID>
+    <ID>MagicNumber:AqlWsWireCodec.kt$AqlWsWireCodec$200</ID>
+    <ID>MagicNumber:AqlWsWireCodec.kt$AqlWsWireCodec$32</ID>
+    <ID>MagicNumber:AqlWsWireCodec.kt$AqlWsWireCodec$599</ID>
+    <ID>MagicNumber:AquaHeaderBindingExt.kt$0.45f</ID>
+    <ID>MagicNumber:AquaMaterialCategoryRowFactory.kt$AquaMaterialCategoryRowFactory$10</ID>
+    <ID>MagicNumber:AquaMaterialCategoryRowFactory.kt$AquaMaterialCategoryRowFactory$12</ID>
+    <ID>MagicNumber:AquaMaterialCategoryRowFactory.kt$AquaMaterialCategoryRowFactory$14</ID>
+    <ID>MagicNumber:AquaMaterialCategoryRowFactory.kt$AquaMaterialCategoryRowFactory$22</ID>
+    <ID>MagicNumber:AquaMaterialCategoryRowFactory.kt$AquaMaterialCategoryRowFactory$42</ID>
+    <ID>MagicNumber:AquaMaterialCategoryRowFactory.kt$AquaMaterialCategoryRowFactory$6</ID>
+    <ID>MagicNumber:AquariumMaintenanceFragment.kt$AquariumMaintenanceFragment$100</ID>
+    <ID>MagicNumber:AquariumMaintenanceFragment.kt$AquariumMaintenanceFragment$255</ID>
+    <ID>MagicNumber:AquariumTankAdapter.kt$AquariumTankAdapter.TankViewHolder$0.72f</ID>
+    <ID>MagicNumber:AquariumVolumeCalculator.kt$AquariumVolumeCalculator$1000.0</ID>
+    <ID>MagicNumber:AuthContainerFragment.kt$AuthContainerFragment$0.9f</ID>
+    <ID>MagicNumber:AuthContainerFragment.kt$AuthContainerFragment$22f</ID>
+    <ID>MagicNumber:AuthContainerFragment.kt$AuthContainerFragment$24</ID>
+    <ID>MagicNumber:CareProfileBottomSheet.kt$CareProfileBottomSheet$100</ID>
+    <ID>MagicNumber:CareProfileBottomSheet.kt$CareProfileBottomSheet$100f</ID>
+    <ID>MagicNumber:CareProfileCalculator.kt$CareProfileCalculator$100f</ID>
+    <ID>MagicNumber:CareTaskAdapter.kt$CareTaskAdapter.CareTaskViewHolder$255</ID>
+    <ID>MagicNumber:CareTaskStoreRules.kt$CareTaskStoreRules$128</ID>
+    <ID>MagicNumber:CareTaskTypeBottomSheetFragment.kt$CareTaskTypeBottomSheetFragment$255</ID>
+    <ID>MagicNumber:ChangePasswordFragment.kt$ChangePasswordFragment$0.6f</ID>
+    <ID>MagicNumber:ChangePasswordFragment.kt$ChangePasswordFragment$6</ID>
+    <ID>MagicNumber:ChangePasswordViewModel.kt$ChangePasswordViewModel$6</ID>
+    <ID>MagicNumber:CountryPickerBottomSheet.kt$CountryPickerBottomSheet$0.5f</ID>
+    <ID>MagicNumber:CountryPickerBottomSheet.kt$CountryPickerBottomSheet$0x1F1E6</ID>
+    <ID>MagicNumber:CountryPickerBottomSheet.kt$CountryPickerBottomSheet$0x41</ID>
+    <ID>MagicNumber:CreateTankFragment.kt$CreateTankFragment$100</ID>
+    <ID>MagicNumber:CreateTankFragment.kt$CreateTankFragment$3</ID>
+    <ID>MagicNumber:CreateTankFragment.kt$CreateTankFragment$4</ID>
+    <ID>MagicNumber:DeviceAddFragment.kt$DeviceAddFragment$0.72f</ID>
+    <ID>MagicNumber:DeviceCoolingStatusParser.kt$DeviceCoolingStatusParser$100.0</ID>
+    <ID>MagicNumber:DeviceDosingModels.kt$DeviceDosingScheduleConfig$7</ID>
+    <ID>MagicNumber:DeviceDosingModels.kt$DeviceDosingScheduleConfig$86_399_999L</ID>
+    <ID>MagicNumber:DeviceDosingStatusParser.kt$DeviceDosingStatusParser$7</ID>
+    <ID>MagicNumber:DeviceFirmwareManifestSignatureVerifier.kt$DeviceFirmwareManifestSignatureVerifier.Companion$0xff</ID>
+    <ID>MagicNumber:DeviceFirmwareStatusParser.kt$DeviceFirmwareStatusParser$10.0</ID>
+    <ID>MagicNumber:DeviceLightModels.kt$DeviceLightManualChannelPayload$100.0</ID>
+    <ID>MagicNumber:DeviceLightModels.kt$DeviceLightProgramPointPayload$100.0</ID>
+    <ID>MagicNumber:DeviceLightRootViewModel.kt$DeviceLightRootViewModel$16</ID>
+    <ID>MagicNumber:DeviceLightStatusParser.kt$DeviceLightStatusParser$100.0</ID>
+    <ID>MagicNumber:DeviceProvisioningProgressFragment.kt$DeviceProvisioningProgressFragment$0.45f</ID>
+    <ID>MagicNumber:DeviceRuntimeEndpoint.kt$DeviceRuntimeEndpoint$10</ID>
+    <ID>MagicNumber:DeviceRuntimeEndpoint.kt$DeviceRuntimeEndpoint$16</ID>
+    <ID>MagicNumber:DeviceRuntimeEndpoint.kt$DeviceRuntimeEndpoint$168</ID>
+    <ID>MagicNumber:DeviceRuntimeEndpoint.kt$DeviceRuntimeEndpoint$169</ID>
+    <ID>MagicNumber:DeviceRuntimeEndpoint.kt$DeviceRuntimeEndpoint$172</ID>
+    <ID>MagicNumber:DeviceRuntimeEndpoint.kt$DeviceRuntimeEndpoint$192</ID>
+    <ID>MagicNumber:DeviceRuntimeEndpoint.kt$DeviceRuntimeEndpoint$254</ID>
+    <ID>MagicNumber:DeviceRuntimeEndpoint.kt$DeviceRuntimeEndpoint$31</ID>
+    <ID>MagicNumber:DeviceScanPulseView.kt$DeviceScanPulseView$0.08f</ID>
+    <ID>MagicNumber:DeviceScanPulseView.kt$DeviceScanPulseView$0.18f</ID>
+    <ID>MagicNumber:DeviceScanPulseView.kt$DeviceScanPulseView$0.22f</ID>
+    <ID>MagicNumber:DeviceScanPulseView.kt$DeviceScanPulseView$0.34f</ID>
+    <ID>MagicNumber:DeviceScanPulseView.kt$DeviceScanPulseView$0.42f</ID>
+    <ID>MagicNumber:DeviceScanPulseView.kt$DeviceScanPulseView$0.78f</ID>
+    <ID>MagicNumber:DeviceScanPulseView.kt$DeviceScanPulseView$170</ID>
+    <ID>MagicNumber:DeviceScanPulseView.kt$DeviceScanPulseView$1_800L</ID>
+    <ID>MagicNumber:DeviceScanPulseView.kt$DeviceScanPulseView$210</ID>
+    <ID>MagicNumber:DeviceStatusSnapshotMapper.kt$DeviceStatusSnapshotMapper$15L</ID>
+    <ID>MagicNumber:DeviceStatusSnapshotMapper.kt$DeviceStatusSnapshotMapper$1_000L</ID>
+    <ID>MagicNumber:DeviceStatusSnapshotMapper.kt$DeviceStatusSnapshotMapper$24L</ID>
+    <ID>MagicNumber:DeviceStatusSnapshotMapper.kt$DeviceStatusSnapshotMapper$60L</ID>
+    <ID>MagicNumber:DeviceSystemTimePayloadFactory.kt$DevicePosixTimeZoneMapper$14</ID>
+    <ID>MagicNumber:DeviceSystemTimePayloadFactory.kt$DevicePosixTimeZoneMapper$60</ID>
+    <ID>MagicNumber:DeviceSystemTimePayloadFactory.kt$DeviceSystemTimePayloadFactory$60_000</ID>
+    <ID>MagicNumber:DeviceTimeStatusParser.kt$DeviceTimeStatusParser$60</ID>
+    <ID>MagicNumber:DeviceTimerModels.kt$DeviceTimerScheduleConfig$7</ID>
+    <ID>MagicNumber:DeviceTimerModels.kt$DeviceTimerScheduleConfig$86_399_999L</ID>
+    <ID>MagicNumber:DeviceTimerStatusParser.kt$DeviceTimerStatusParser$7</ID>
+    <ID>MagicNumber:ImageMediaPolicy.kt$ImageMediaPolicy$128</ID>
+    <ID>MagicNumber:ImageMediaPolicy.kt$ImageMediaPolicy$4</ID>
+    <ID>MagicNumber:ImageMediaProcessor.kt$AndroidImageMediaProcessor$180f</ID>
+    <ID>MagicNumber:ImageMediaProcessor.kt$AndroidImageMediaProcessor$270f</ID>
+    <ID>MagicNumber:ImageMediaProcessor.kt$AndroidImageMediaProcessor$90f</ID>
+    <ID>MagicNumber:LocaleFormatter.kt$LocaleFormatter$3</ID>
+    <ID>MagicNumber:MaintenanceViewModel.kt$MaintenanceViewModel$5_000</ID>
+    <ID>MagicNumber:MaterialCatalog.kt$MaterialCatalog$4</ID>
+    <ID>MagicNumber:PlantTagFragment.kt$PlantTagFragment$0.5f</ID>
+    <ID>MagicNumber:PlantTagUiRenderer.kt$PlantTagUiRenderer$12</ID>
+    <ID>MagicNumber:PlantTagUiRenderer.kt$PlantTagUiRenderer$14</ID>
+    <ID>MagicNumber:PlantTagUiRenderer.kt$PlantTagUiRenderer$18</ID>
+    <ID>MagicNumber:PlantTagUiRenderer.kt$PlantTagUiRenderer$30</ID>
+    <ID>MagicNumber:PlantTagUiRenderer.kt$PlantTagUiRenderer$36</ID>
+    <ID>MagicNumber:PlantTagUiRenderer.kt$PlantTagUiRenderer$38</ID>
+    <ID>MagicNumber:PlantTagUiRenderer.kt$PlantTagUiRenderer$6</ID>
+    <ID>MagicNumber:ReAuthenticateFragment.kt$ReAuthenticateFragment$0.6f</ID>
+    <ID>MagicNumber:ReAuthenticateFragment.kt$ReAuthenticateFragment$10f</ID>
+    <ID>MagicNumber:ReAuthenticateFragment.kt$ReAuthenticateFragment$20f</ID>
+    <ID>MagicNumber:ReAuthenticateFragment.kt$ReAuthenticateFragment$50</ID>
+    <ID>MagicNumber:RegisterViewModel.kt$RegisterViewModel$6</ID>
+    <ID>MagicNumber:SmartCareDailyWorker.kt$SmartCareDailyWorker.Companion$6</ID>
+    <ID>MagicNumber:SmartCareProfileBuilder.kt$SmartCareProfileBuilder$10.0</ID>
+    <ID>MagicNumber:SmartCareProfileBuilder.kt$SmartCareProfileBuilder$7</ID>
+    <ID>MagicNumber:SmartCareProfileBuilder.kt$SmartCareProfileBuilder$90</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$10</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$11</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$12</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$13</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$14</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$15</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$18</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$19</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$20</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$21</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$25</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$28</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$29</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$3</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$30</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$31</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$4</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$40</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$5</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$50</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$6</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$7</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$8</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$9</ID>
+    <ID>MagicNumber:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$90</ID>
+    <ID>MagicNumber:SmartFertilizerDoseCalculator.kt$SmartFertilizerDoseCalculator$0.5</ID>
+    <ID>MagicNumber:SmartFertilizerDoseCalculator.kt$SmartFertilizerDoseCalculator$0.75</ID>
+    <ID>MagicNumber:SmartFertilizerDoseCalculator.kt$SmartFertilizerDoseCalculator$0.85</ID>
+    <ID>MagicNumber:SmartFertilizerDoseCalculator.kt$SmartFertilizerDoseCalculator$10.0</ID>
+    <ID>MagicNumber:SmartFertilizerDoseCalculator.kt$SmartFertilizerDoseCalculator$21</ID>
+    <ID>MagicNumber:SmartFertilizerDoseCalculator.kt$SmartFertilizerDoseCalculator$22</ID>
+    <ID>MagicNumber:SmartFertilizerDoseCalculator.kt$SmartFertilizerDoseCalculator$30</ID>
+    <ID>MagicNumber:SmartFertilizerDoseCalculator.kt$SmartFertilizerDoseCalculator$7</ID>
+    <ID>MagicNumber:SmartFertilizerDoseCalculator.kt$SmartFertilizerDoseCalculator$8</ID>
+    <ID>MagicNumber:TankCareIntegrityJournal.kt$TankCareIntegrityJournal$128</ID>
+    <ID>MagicNumber:TankCareIntegrityJournal.kt$TankCareIntegrityJournal$3</ID>
+    <ID>MagicNumber:TankCareIntegrityJournal.kt$TankCareIntegrityJournal$4</ID>
+    <ID>MagicNumber:TankCareIntegrityJournal.kt$TankCareIntegrityJournal$5</ID>
+    <ID>MagicNumber:TankDescriptionFragment.kt$TankDescriptionFragment$10</ID>
+    <ID>MagicNumber:TankDetailActivityFragment.kt$TankDetailActivityFragment$255</ID>
+    <ID>MagicNumber:TankDetailFragment.kt$TankDetailFragment.TankDetailTab.PLANTS$4L</ID>
+    <ID>MagicNumber:TankDetailFragment.kt$TankDetailFragment.TankDetailTab.TANK$3L</ID>
+    <ID>MagicNumber:TankDetailFragment.kt$TankDetailFragment.TankDetailTab.TANK_LIFE$5L</ID>
+    <ID>MagicNumber:TankDetailLivestockFormFragment.kt$TankDetailLivestockFormFragment$20</ID>
+    <ID>MagicNumber:TankDetailLivestockFormFragment.kt$TankDetailLivestockFormFragment$23</ID>
+    <ID>MagicNumber:TankDetailLivestockFormFragment.kt$TankDetailLivestockFormFragment$31</ID>
+    <ID>MagicNumber:TankDetailLivestockFormFragment.kt$TankDetailLivestockFormFragment$5</ID>
+    <ID>MagicNumber:TankDetailLivestockFormFragment.kt$TankDetailLivestockFormFragment$59</ID>
+    <ID>MagicNumber:TankDetailLivestockFormFragment.kt$TankDetailLivestockFormFragment$999</ID>
+    <ID>MagicNumber:TankDetailPlantTagFragment.kt$TankDetailPlantTagFragment$0.5f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter$45</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$10.5f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$11.5f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$125f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$12f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$13f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$14f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$15f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$16f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$17f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$18f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$19f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$20f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$21f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$22f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$23f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$26f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$34f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$3f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$4f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$5f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$66f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$6f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$70f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$7f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$80f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$8f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$92f</ID>
+    <ID>MagicNumber:TankPdfExporter.kt$TankPdfExporter.PdfWriter$9f</ID>
+    <ID>MagicNumber:TankSettingsEditorBottomSheet.kt$TankSettingsEditorBottomSheet$31</ID>
+    <ID>MagicNumber:TankSettingsFragment.kt$TankSettingsFragment$40</ID>
+    <ID>MagicNumber:TankSettingsFragment.kt$TankSettingsFragment$75</ID>
+    <ID>MagicNumber:TankSettingsFragment.kt$TankSettingsFragment.SettingsTab.OTHERS$3L</ID>
+    <ID>MagicNumber:TankStoreRules.kt$TankStoreRules$100_000</ID>
+    <ID>MagicNumber:TankStoreRules.kt$TankStoreRules$12</ID>
+    <ID>MagicNumber:TankStoreRules.kt$TankStoreRules$128</ID>
+    <ID>MagicNumber:TankStoreRules.kt$TankStoreRules$2000</ID>
+    <ID>MagicNumber:TankStoreRules.kt$TankStoreRules$2100</ID>
+    <ID>MagicNumber:TankStoreRules.kt$TankStoreRules$31</ID>
+    <ID>MagicNumber:TaskDetailFragment.kt$TaskDetailFragment$255</ID>
+    <ID>MagicNumber:UserAddressFragment.kt$UserAddressFragment$250</ID>
+    <ID>MagicNumber:UserAddressFragment.kt$UserAddressFragment$400</ID>
+    <ID>MagicNumber:UserAddressFragment.kt$UserAddressFragment.&lt;no name provided>$15</ID>
+    <ID>MagicNumber:UserDataScope.kt$UserDataScope$31L</ID>
+    <ID>MagicNumber:UserPreferencesStoreRules.kt$UserPreferencesStoreRules$32</ID>
+    <ID>MatchingDeclarationName:DevicesEvents.kt$DevicesEvent</ID>
+    <ID>MaxLineLength:AddCareTaskFragment.kt$AddCareTaskFragment$binding.tvAquariumSubtitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_add_care_task_fragment_tv_aquarium_subtitle_content))</ID>
+    <ID>MaxLineLength:AddCareTaskFragment.kt$AddCareTaskFragment$binding.tvAquariumTitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_secondary))</ID>
+    <ID>MaxLineLength:AddCareTaskFragment.kt$AddCareTaskFragment$binding.tvTaskTypeSubtitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_add_care_task_fragment_tv_task_type_subtitle_content))</ID>
+    <ID>MaxLineLength:AddCareTaskFragment.kt$AddCareTaskFragment$binding.tvTaskTypeSubtitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_secondary))</ID>
+    <ID>MaxLineLength:AddCareTaskFragment.kt$AddCareTaskFragment$binding.tvTaskTypeTitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_secondary))</ID>
+    <ID>MaxLineLength:AddCareTaskFragment.kt$AddCareTaskFragment$setStroke(resources.getDimensionPixelOffset(R.dimen.aqua_size_1), applyAlpha(color, if (selected) 0.9f else 0.55f))</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$)</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$if</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$if (!hasRequiredPermissions()) return ManualSetupPreflightResult.Blocked("Bluetooth scan/connect permission is required.")</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$if (gattRef == null &amp;&amp; !completed) finish(Result.failure(IllegalStateException("BLE GATT connection could not be opened.")))</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$onFailure = { error -> ManualSetupPreflightResult.Blocked(error.message ?: "DeviceInfo verification failed. Scan again.") }</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$return ManualSetupPreflightResult.Blocked("DeviceInfo physicalReset flag is not active. Hold SETUP/RESET for 5 seconds, then scan again.")</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$return ManualSetupPreflightResult.Blocked("Manual BLE setup is available only after holding SETUP/RESET for 5 seconds.")</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$return ManualSetupPreflightResult.Blocked("Secure physical reset recovery is not ready. Hold SETUP/RESET for 5 seconds, then scan again.")</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$return ManualSetupPreflightResult.Blocked("Unsupported DeviceInfo contractVersion: ${info.contractVersion}.")</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$return ManualSetupPreflightResult.Blocked("Unsupported DeviceInfo securityVersion: ${info.securityVersion}.")</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$return ManualSetupPreflightResult.QrRequired("First setup requires the secure QR code. Scan the QR label to continue.")</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$return ManualSetupPreflightResult.QrRequired("This device requires QR claim verification. Scan the QR label to continue.")</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$return QrCandidatePreflightResult.Rejected("BLE candidate is not in provisioning mode: ${info.mode.ifBlank { "unknown" }}.")</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$return QrCandidatePreflightResult.Rejected("DeviceInfo physicalReset flag does not match physical reset mode.")</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$return QrCandidatePreflightResult.Rejected("Manual BLE setup without QR is accepted only in physical reset mode.")</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$return QrCandidatePreflightResult.Rejected("Physical reset recovery must not require QR claim validation.")</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$return QrCandidatePreflightResult.Rejected("Unsupported DeviceInfo contractVersion: ${info.contractVersion}.")</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$return QrCandidatePreflightResult.Rejected("Unsupported DeviceInfo securityVersion: ${info.securityVersion}.")</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) hasPermission(Manifest.permission.BLUETOOTH_CONNECT) else true</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$val adapter = bluetoothManager?.adapter ?: return ManualSetupPreflightResult.Blocked("Bluetooth adapter is unavailable.")</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient.&lt;no name provided>$BluetoothProfile.STATE_DISCONNECTED -> finish(Result.failure(IllegalStateException("BLE device disconnected before DeviceInfo was read.")))</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient.&lt;no name provided>$finish(Result.failure(IllegalStateException("BLE service discovery failed with status $status.")))</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient.&lt;no name provided>$if (!gatt.discoverServices()) finish(Result.failure(IllegalStateException("BLE service discovery could not start.")))</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient.&lt;no name provided>$if (!gatt.readCharacteristic(characteristic)) finish(Result.failure(IllegalStateException("DeviceInfo read could not start.")))</ID>
+    <ID>MaxLineLength:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient.&lt;no name provided>$override</ID>
+    <ID>MaxLineLength:AqlBleProvisioningCrypto.kt$AqlBleProvisioningCrypto$AqlBleProvisioningContract.SessionMode.PHYSICAL_RESET_SECURE -> physicalResetStartSessionJson(draft, deviceInfo)</ID>
+    <ID>MaxLineLength:AqlBleProvisioningCrypto.kt$AqlBleProvisioningCrypto$require</ID>
+    <ID>MaxLineLength:AqlBleProvisioningCrypto.kt$AqlBleProvisioningCrypto$val devicePublicKey = decodeEcPublicKey(deviceInfo.devicePublicKey.fromBase64(), keyPair.public as ECPublicKey)</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$BluetoothStatusCodes.ERROR_GATT_WRITE_REQUEST_BUSY -> gattNotStarted("$label could not be started: ${bluetoothStatusName(status)}.", retryable = true)</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$BluetoothStatusCodes.ERROR_MISSING_BLUETOOTH_CONNECT_PERMISSION -> "ERROR_MISSING_BLUETOOTH_CONNECT_PERMISSION"</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$BluetoothStatusCodes.ERROR_UNKNOWN</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$ContextCompat.checkSelfPermission(appContext, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$contractVersion = requiredJsonInt(json, AqlBleProvisioningContract.Json.KEY_CONTRACT_VERSION, DEVICE_INFO_LABEL)</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$deviceNonce = requiredJsonString(json, AqlBleProvisioningContract.Json.KEY_DEVICE_NONCE, DEVICE_INFO_LABEL)</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$emit(AqlBleProvisioningGattEvent.Failed("BLE setup confirmation cannot be sent because the runtime handoff is not active."))</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$failAndClose("BLE JSON payload is ${bytes.size} bytes, limit is ${AqlBleProvisioningContract.BLE_JSON_MAX_BYTES} bytes.")</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$failAndClose("BLE payload is ${bytes.size} bytes, negotiated MTU $negotiatedMtu allows $maxPayloadBytes bytes.")</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$if (!gatt.readCharacteristic(characteristic)) retryDeviceInfoReadOrFail(gatt, "DeviceInfo read could not be started.")</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$if (!isAllowedProvisioningMode(info.mode)) return "Connected BLE device is not in provisioning mode: ${info.mode.ifBlank { "unknown" }}."</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$if (expectedBleName.isNotBlank() &amp;&amp; info.bleName != expectedBleName) return "QR BLE name does not match the connected BLE device."</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$if (expectedBrand.isNotBlank() &amp;&amp; info.brand.isNotBlank() &amp;&amp; !info.brand.equals(expectedBrand, ignoreCase = true)) return "QR brand does not match the connected BLE device."</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$if (expectedDisplayName.isNotBlank() &amp;&amp; !info.displayName.equals(expectedDisplayName, ignoreCase = true)) return "QR display name does not match the connected BLE device."</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$if (expectedHardwareRevision.isNotBlank() &amp;&amp; info.hardwareRevision.isNotBlank() &amp;&amp; !info.hardwareRevision.equals(expectedHardwareRevision, ignoreCase = true)) return "QR hardware revision does not match the connected BLE device."</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$if (expectedProductId.isNotBlank() &amp;&amp; info.productId.isNotBlank() &amp;&amp; !info.productId.equals(expectedProductId, ignoreCase = true)) return "QR product id does not match the connected BLE device."</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$if (expectedProductModel.isNotBlank() &amp;&amp; !info.productModel.equals(expectedProductModel, ignoreCase = true)) return "QR product model does not match the connected BLE device."</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$if (expectedSerialNumber.isNotBlank() &amp;&amp; info.serialNumber.isNotBlank() &amp;&amp; !info.serialNumber.equals(expectedSerialNumber, ignoreCase = true)) return "QR serial number does not match the connected BLE device."</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$if (expectedUid.isNotBlank() &amp;&amp; !info.deviceUid.equals(expectedUid, ignoreCase = true)) return "QR device uid does not match the connected BLE device."</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$if (info.brand.isNotBlank() &amp;&amp; !info.brand.equals(AqlBleProvisioningContract.BRAND, ignoreCase = true)) return "DeviceInfo brand is not supported: ${info.brand}."</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$if (info.contractVersion != AqlBleProvisioningContract.CONTRACT_VERSION) return "Unsupported DeviceInfo contractVersion: ${info.contractVersion}."</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$if (info.securityVersion != AqlBleProvisioningContract.PROVISIONING_SECURITY_VERSION) return "Unsupported DeviceInfo securityVersion: ${info.securityVersion}."</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$if (info.sessionMode != AqlBleProvisioningContract.SessionMode.PHYSICAL_RESET_SECURE) return "Physical reset recovery requires secure recovery session."</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$if (info.sessionMode != AqlBleProvisioningContract.SessionMode.QR_CLAIM_SECURE) return "Factory QR mode requires secure QR claim session."</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$private</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$private fun String.isUuidV4(): Boolean</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$private fun decode(value: String): String</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$private fun qrField(fields: Map&lt;String, String>, key: String): String</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$query.split("&amp;").asSequence().filter { part -> part.isNotBlank() &amp;&amp; part.contains("=") }</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$return json.optString(key).trim().takeIf { value -> value.isNotBlank() } ?: error("$label field '$key' is missing.")</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$return status == GATT_STATUS_ERROR || status == GATT_STATUS_CONN_TIMEOUT || status == GATT_STATUS_CONN_TERMINATE_PEER_USER</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$securityVersion = requiredJsonInt(json, AqlBleProvisioningContract.Json.KEY_SECURITY_VERSION, DEVICE_INFO_LABEL)</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$sessionMode = requiredJsonString(json, AqlBleProvisioningContract.Json.KEY_SESSION_MODE, DEVICE_INFO_LABEL)</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$val characteristic = finalizeSetupCharacteristic ?: return gattNotStarted("FinalizeSetup characteristic is missing.")</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$val characteristic = provisioningStatusCharacteristic ?: return gattNotStarted("ProvisioningStatus characteristic is missing.")</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$val characteristic = runtimeEndpointCharacteristic ?: return gattNotStarted("RuntimeEndpoint characteristic is missing.")</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$val characteristic = startSessionCharacteristic ?: return gattNotStarted("Start session characteristic is missing.")</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$val characteristic = wifiCredentialsCharacteristic ?: return gattNotStarted("Wi-Fi credentials characteristic is missing.")</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$val handoff = pendingFinalizeHandoff ?: return gattNotStarted("RuntimeEndpoint handoff is missing for setup confirmation.", retryable = true)</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient.&lt;no name provided>$if</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient.&lt;no name provided>$override</ID>
+    <ID>MaxLineLength:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient.&lt;no name provided>$provisioningStatusCharacteristic == null</ID>
+    <ID>MaxLineLength:AqlBleProvisioningMessageCodec.kt$AqlBleProvisioningMessageCodec$if (wifiCredentials.bssid.isNotBlank()) put(AqlBleProvisioningContract.Json.KEY_WIFI_BSSID, wifiCredentials.bssid)</ID>
+    <ID>MaxLineLength:AqlBleProvisioningMessageCodec.kt$AqlBleProvisioningMessageCodec$if (wifiCredentials.channel > 0) put(AqlBleProvisioningContract.Json.KEY_WIFI_CHANNEL, wifiCredentials.channel)</ID>
+    <ID>MaxLineLength:AqlBleProvisioningMessageCodec.kt$AqlBleProvisioningMessageCodec$if (wifiCredentials.timezone.isNotBlank()) put(AqlBleProvisioningContract.Json.KEY_WIFI_TIMEZONE, wifiCredentials.timezone)</ID>
+    <ID>MaxLineLength:AqlBleProvisioningMessageCodec.kt$AqlBleProvisioningMessageCodec$val deviceUidText = requiredJsonString(json, AqlBleProvisioningContract.Json.KEY_DEVICE_UID, "RuntimeEndpoint")</ID>
+    <ID>MaxLineLength:AqlBleProvisioningMessageCodec.kt$AqlBleProvisioningMessageCodec$val expectedDeviceUid = fallbackDeviceUid.trim().takeUnless { value -> value.isLikelyBleAddress() }.orEmpty()</ID>
+    <ID>MaxLineLength:AqlProvisioningQrParser.kt$AqlProvisioningQrParser$require</ID>
+    <ID>MaxLineLength:AqlWsWireCodec.kt$AqlWsWireCodec$requireEquals(checkedId(requiredText(root, AqlWsContract.Field.ID, AqlWsContract.Limit.ID_CHARS)), expected.requestId)</ID>
+    <ID>MaxLineLength:AqlWsWireCodec.kt$AqlWsWireCodec$requireEquals(requiredText(data, AqlWsContract.Field.CLIENT_NONCE, AqlWsContract.Limit.NONCE_HEX_CHARS), expected.clientNonce)</ID>
+    <ID>MaxLineLength:AqlWsWireCodec.kt$AqlWsWireCodec$requireEquals(requiredText(data, AqlWsContract.Field.DEVICE_UID, AqlWsContract.Limit.DEVICE_UID_CHARS), expected.hello.deviceUid)</ID>
+    <ID>MaxLineLength:AqlWsWireCodec.kt$AqlWsWireCodec$requireEquals(requiredText(data, AqlWsContract.Field.SERVER_NONCE, AqlWsContract.Limit.NONCE_HEX_CHARS), expected.hello.serverNonce)</ID>
+    <ID>MaxLineLength:AqlWsWireCodec.kt$AqlWsWireCodec$requireEquals(requiredText(data, AqlWsContract.Field.SESSION_ID, AqlWsContract.Limit.SESSION_ID_CHARS), expected.hello.sessionId)</ID>
+    <ID>MaxLineLength:AquariumFragment.kt$AquariumFragment$button.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.aqua_aquarium_fragment_button_icon))</ID>
+    <ID>MaxLineLength:AquariumFragment.kt$AquariumFragment$button.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.aqua_surface_action))</ID>
+    <ID>MaxLineLength:AquariumFragment.kt$AquariumFragment$button.strokeColor = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.aqua_aquarium_fragment_button_outline))</ID>
+    <ID>MaxLineLength:AquariumFragment.kt$AquariumFragment$button.strokeColor = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.aqua_color_transparent))</ID>
+    <ID>MaxLineLength:AquariumMeasurementArchitectureTest.kt$AquariumMeasurementArchitectureTest$"""(?:[A-Za-z0-9_]+\.)?widthCm(?:\.to(?:Double|Long)\(\))?\s*\*\s*(?:[A-Za-z0-9_]+\.)?lengthCm(?:\.to(?:Double|Long)\(\))?\s*\*\s*(?:[A-Za-z0-9_]+\.)?heightCm"""</ID>
+    <ID>MaxLineLength:DefaultDeviceFirmwareUpdateOperations.kt$private</ID>
+    <ID>MaxLineLength:DeviceCoolingModels.kt$DeviceCoolingConfigApplyPayload$"maxTemperatureC must be between ${DeviceCoolingRuntimeContract.Limit.LOWEST_MAX_C} and ${DeviceCoolingRuntimeContract.Limit.HIGHEST_MAX_C}."</ID>
+    <ID>MaxLineLength:DeviceCoolingModels.kt$DeviceCoolingConfigApplyPayload$"minTemperatureC must be between ${DeviceCoolingRuntimeContract.Limit.LOWEST_MIN_C} and ${DeviceCoolingRuntimeContract.Limit.HIGHEST_MIN_C}."</ID>
+    <ID>MaxLineLength:DeviceCoolingModels.kt$DeviceCoolingConfigApplyPayload$require</ID>
+    <ID>MaxLineLength:DeviceCredentialStore.kt$DeviceCredentialStore$"Runtime token must be a ${AqlBleProvisioningContract.RUNTIME_TOKEN_HEX_LENGTH}-character hexadecimal value."</ID>
+    <ID>MaxLineLength:DeviceDosingModels.kt$DeviceDosingCalibrationFinishPayload$require</ID>
+    <ID>MaxLineLength:DeviceDosingModels.kt$DeviceDosingCalibrationStartPayload$require</ID>
+    <ID>MaxLineLength:DeviceLightModels.kt$DeviceLightManualSetPayload$"durationMs must be between ${DeviceLightRuntimeContract.Limit.MIN_MANUAL_DURATION_MS} and ${DeviceLightRuntimeContract.Limit.MAX_MANUAL_DURATION_MS}."</ID>
+    <ID>MaxLineLength:DeviceLightModels.kt$DeviceLightManualSetPayload$require</ID>
+    <ID>MaxLineLength:DevicePresenceRuntimeMonitor.kt$DevicePresenceRuntimeMonitor$.</ID>
+    <ID>MaxLineLength:DeviceRootViewModelBoundaryTest.kt$DeviceRootViewModelBoundaryTest.FakeFirmwareUpdateOperations$downloadUrl = "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/releases/download/v1.0.1/firmware.bin"</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_alternanthera_reineckii_mini_name, R.string.catalog_plant_category_foreground_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_alternanthera_reineckii_red_ruby_name, R.string.catalog_plant_category_background_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_alternanthera_reineckii_rosanervig_name, R.string.catalog_plant_category_background_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_ammannia_pedicellata_golden_name, R.string.catalog_plant_category_rare_plants_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_anubias_barteri_var_caladiifolia_name, R.string.catalog_plant_category_epiphytes_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_anubias_barteri_var_coffeefolia_name, R.string.catalog_plant_category_epiphytes_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_anubias_barteri_var_nana_mini_name, R.string.catalog_plant_category_epiphytes_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_anubias_barteri_var_nana_pangolino_name, R.string.catalog_plant_category_epiphytes_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_anubias_barteri_var_nana_petite_name, R.string.catalog_plant_category_epiphytes_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_aponogeton_madagascariensis_name, R.string.catalog_plant_category_rare_plants_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_bolbitis_heteroclita_difformis_name, R.string.catalog_plant_category_epiphytes_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_bucephalandra_sp_black_pearl_name, R.string.catalog_plant_category_rare_plants_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_bucephalandra_sp_brownie_blue_name, R.string.catalog_plant_category_epiphytes_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_bucephalandra_sp_brownie_ghost_name, R.string.catalog_plant_category_epiphytes_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_bucephalandra_sp_dark_skeleton_king_name, R.string.catalog_plant_category_rare_plants_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_bucephalandra_sp_needle_leaf_name, R.string.catalog_plant_category_epiphytes_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_bucephalandra_sp_silver_powder_name, R.string.catalog_plant_category_rare_plants_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_bucephalandra_sp_theia_green_name, R.string.catalog_plant_category_epiphytes_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_ceratopteris_thalictroides_name, R.string.catalog_plant_category_floating_plants_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_cryptocoryne_cordata_rosanervig_name, R.string.catalog_plant_category_rare_plants_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_cryptocoryne_pontederiifolia_name, R.string.catalog_plant_category_middle_ground_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_cryptocoryne_wendtii_brown_name, R.string.catalog_plant_category_middle_ground_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_cryptocoryne_wendtii_green_name, R.string.catalog_plant_category_middle_ground_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_cryptocoryne_wendtii_mi_oya_name, R.string.catalog_plant_category_middle_ground_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_cryptocoryne_wendtii_tropica_name, R.string.catalog_plant_category_middle_ground_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_eleocharis_acicularis_mini_name, R.string.catalog_plant_category_ground_cover_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_eriocaulon_sp_japan_needle_leaf_name, R.string.catalog_plant_category_rare_plants_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_hemianthus_callitrichoides_cuba_name, R.string.catalog_plant_category_ground_cover_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_hydrocharis_morsus_ranae_name, R.string.catalog_plant_category_floating_plants_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_hydrocotyle_leucocephala_name, R.string.catalog_plant_category_middle_ground_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_hydrocotyle_tripartita_japan_name, R.string.catalog_plant_category_ground_cover_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_hydrocotyle_verticillata_name, R.string.catalog_plant_category_middle_ground_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_hygrophila_corymbosa_compact_name, R.string.catalog_plant_category_middle_ground_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_hygrophila_polysperma_rosanervig_name, R.string.catalog_plant_category_middle_ground_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_lagenandra_meeboldii_green_name, R.string.catalog_plant_category_middle_ground_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_lagenandra_meeboldii_red_name, R.string.catalog_plant_category_middle_ground_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_ludwigia_inclinata_var_verticillata_cuba_name, R.string.catalog_plant_category_background_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_ludwigia_inclinata_var_verticillata_pantanal_name, R.string.catalog_plant_category_background_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_ludwigia_inclinata_var_verticillata_white_name, R.string.catalog_plant_category_rare_plants_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_ludwigia_palustris_super_red_name, R.string.catalog_plant_category_middle_ground_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_micranthemum_tweediei_monte_carlo_name, R.string.catalog_plant_category_ground_cover_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_microsorum_pteropus_needle_leaf_name, R.string.catalog_plant_category_epiphytes_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_microsorum_pteropus_windelov_name, R.string.catalog_plant_category_epiphytes_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_myriophyllum_mattogrossense_name, R.string.catalog_plant_category_background_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_nymphoides_hydrophylla_taiwan_name, R.string.catalog_plant_category_middle_ground_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_pogostemon_stellatus_octopus_name, R.string.catalog_plant_category_background_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_rotala_macrandra_mini_butterfly_name, R.string.catalog_plant_category_background_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_rotala_rotundifolia_green_name, R.string.catalog_plant_category_middle_ground_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_rotala_rotundifolia_orange_juice_name, R.string.catalog_plant_category_background_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_vesicularia_ferriei_weeping_moss_name, R.string.catalog_plant_category_mosses_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_vesicularia_montagnei_christmas_moss_name, R.string.catalog_plant_category_mosses_title)</ID>
+    <ID>MaxLineLength:PlantCatalog.kt$PlantCatalog$plant(R.string.catalog_plant_vesicularia_sp_mini_christmas_moss_name, R.string.catalog_plant_category_mosses_title)</ID>
+    <ID>MaxLineLength:TankDetailPlantsFragment.kt$TankDetailPlantsFragment$layoutParams = LinearLayout.LayoutParams(resources.getDimensionPixelOffset(R.dimen.aqua_size_38), resources.getDimensionPixelOffset(R.dimen.aqua_size_38))</ID>
+    <ID>MaxLineLength:TankDetailPlantsFragment.kt$TankDetailPlantsFragment$setPadding(resources.getDimensionPixelOffset(R.dimen.aqua_size_14), resources.getDimensionPixelOffset(R.dimen.aqua_size_12), resources.getDimensionPixelOffset(R.dimen.aqua_size_14), resources.getDimensionPixelOffset(R.dimen.aqua_size_12))</ID>
+    <ID>MaxLineLength:TankDetailTankFragment.kt$TankDetailTankFragment$layoutParams = LinearLayout.LayoutParams(resources.getDimensionPixelOffset(R.dimen.aqua_size_42), resources.getDimensionPixelOffset(R.dimen.aqua_size_42))</ID>
+    <ID>MaxLineLength:TankDetailTankFragment.kt$TankDetailTankFragment$setPadding(resources.getDimensionPixelOffset(R.dimen.aqua_size_14), resources.getDimensionPixelOffset(R.dimen.aqua_size_12), resources.getDimensionPixelOffset(R.dimen.aqua_size_14), resources.getDimensionPixelOffset(R.dimen.aqua_size_12))</ID>
+    <ID>NestedBlockDepth:ImageMediaProcessor.kt$AndroidImageMediaProcessor$private suspend fun stageSource(uri: Uri, destination: File): SourceStageResult</ID>
+    <ID>NestedBlockDepth:TankPdfExporter.kt$TankPdfExporter$private fun getTankPhotoBitmap( context: Context, photoUri: String? ): Bitmap?</ID>
+    <ID>NestedBlockDepth:TankPdfExporter.kt$TankPdfExporter.PdfWriter$private fun wrapText( text: String, paint: Paint, maxWidth: Float ): List&lt;String></ID>
+    <ID>NewLineAtEndOfFile:AqlBleGattOperationQueue.kt$com.aqua.aqualight.data.devices.provisioning.ble.AqlBleGattOperationQueue.kt</ID>
+    <ID>NewLineAtEndOfFile:AqlBleProvisioningMessageCodec.kt$com.aqua.aqualight.data.devices.provisioning.ble.AqlBleProvisioningMessageCodec.kt</ID>
+    <ID>NewLineAtEndOfFile:AquaHeaderAction.kt$com.aqua.aqualight.ui.common.header.AquaHeaderAction.kt</ID>
+    <ID>NewLineAtEndOfFile:AquaHeaderConfig.kt$com.aqua.aqualight.ui.common.header.AquaHeaderConfig.kt</ID>
+    <ID>NewLineAtEndOfFile:CareTask.kt$com.aqua.aqualight.data.care.model.CareTask.kt</ID>
+    <ID>NewLineAtEndOfFile:CareTaskSnapshotIntegrity.kt$com.aqua.aqualight.data.care.integrity.CareTaskSnapshotIntegrity.kt</ID>
+    <ID>NewLineAtEndOfFile:CareTaskStoreRules.kt$com.aqua.aqualight.data.care.CareTaskStoreRules.kt</ID>
+    <ID>NewLineAtEndOfFile:CareTaskStoreRulesTest.kt$com.aqua.aqualight.data.care.CareTaskStoreRulesTest.kt</ID>
+    <ID>NewLineAtEndOfFile:CountryPickerBottomSheet.kt$com.aqua.aqualight.ui.common.bottomsheet.CountryPickerBottomSheet.kt</ID>
+    <ID>NewLineAtEndOfFile:ExampleUnitTest.kt$com.aqua.aqualight.ExampleUnitTest.kt</ID>
+    <ID>NewLineAtEndOfFile:FertilizerDoseCatalog.kt$com.aqua.aqualight.data.care.smartcare.FertilizerDoseCatalog.kt</ID>
+    <ID>NewLineAtEndOfFile:KeyStoreUtils.kt$com.aqua.aqualight.data.security.KeyStoreUtils.kt</ID>
+    <ID>NewLineAtEndOfFile:LivestockCategories.kt$com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCategories.kt</ID>
+    <ID>NewLineAtEndOfFile:MaintenanceTab.kt$com.aqua.aqualight.ui.tabs.maintenance.model.MaintenanceTab.kt</ID>
+    <ID>NewLineAtEndOfFile:PhotoSourceBottomSheet.kt$com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet.kt</ID>
+    <ID>NewLineAtEndOfFile:SmartCareGeneratedTask.kt$com.aqua.aqualight.data.care.smartcare.SmartCareGeneratedTask.kt</ID>
+    <ID>NewLineAtEndOfFile:SmartCareRuleCatalog.kt$com.aqua.aqualight.data.care.smartcare.SmartCareRuleCatalog.kt</ID>
+    <ID>NewLineAtEndOfFile:SmartCareTaskGenerator.kt$com.aqua.aqualight.data.care.smartcare.SmartCareTaskGenerator.kt</ID>
+    <ID>NewLineAtEndOfFile:SmartFertilizerDoseCalculator.kt$com.aqua.aqualight.data.care.smartcare.SmartFertilizerDoseCalculator.kt</ID>
+    <ID>NewLineAtEndOfFile:SmartFertilizerDoseModels.kt$com.aqua.aqualight.data.care.smartcare.SmartFertilizerDoseModels.kt</ID>
+    <ID>NewLineAtEndOfFile:TankCareIntegrityJournal.kt$com.aqua.aqualight.data.care.integrity.TankCareIntegrityJournal.kt</ID>
+    <ID>NewLineAtEndOfFile:TankCareIntegrityRecovery.kt$com.aqua.aqualight.data.care.integrity.TankCareIntegrityRecovery.kt</ID>
+    <ID>NewLineAtEndOfFile:TankDescriptionFragment.kt$com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankDescriptionFragment.kt</ID>
+    <ID>NewLineAtEndOfFile:TankNameFragment.kt$com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankNameFragment.kt</ID>
+    <ID>NewLineAtEndOfFile:TankStepFragment.kt$com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankStepFragment.kt</ID>
+    <ID>NewLineAtEndOfFile:TimelineDayStatus.kt$com.aqua.aqualight.ui.common.timeline.TimelineDayStatus.kt</ID>
+    <ID>PrintStackTrace:CareReminderDeliveryWorker.kt$CareReminderDeliveryWorker$exception</ID>
+    <ID>PrintStackTrace:CareReminderReconcileWorker.kt$CareReminderReconcileWorker$exception</ID>
+    <ID>PrintStackTrace:DefaultProvisioningProgressOperations.kt$DefaultProvisioningProgressOperations$error</ID>
+    <ID>PrintStackTrace:SmartCareDailyWorker.kt$SmartCareDailyWorker$exception</ID>
+    <ID>PrintStackTrace:TankPdfExporter.kt$TankPdfExporter$exception</ID>
+    <ID>PrintStackTrace:TankSettingsBasicFragment.kt$TankSettingsBasicFragment$exception</ID>
+    <ID>RethrowCaughtException:EditProfileFragment.kt$EditProfileFragment$throw cancellation</ID>
+    <ID>RethrowCaughtException:TankPhotoFragment.kt$TankPhotoFragment$throw cancellation</ID>
+    <ID>RethrowCaughtException:TankSettingsBasicFragment.kt$TankSettingsBasicFragment$throw cancellation</ID>
+    <ID>ReturnCount:AccountDeletionManager.kt$AccountDeletionManager$private suspend fun deleteOrResumeLocked( requirePending: Boolean ): DeleteResult?</ID>
+    <ID>ReturnCount:AccountDeletionManager.kt$FirebaseAccountDeletionOperations$override suspend fun deleteCurrentAccount(ownerUid: String): Throwable?</ID>
+    <ID>ReturnCount:AddCareTaskFragment.kt$AddCareTaskFragment$private fun readScheduleValues(): CareTaskScheduleValues?</ID>
+    <ID>ReturnCount:AddCareTaskFragment.kt$AddCareTaskFragment$private fun saveTaskInternal()</ID>
+    <ID>ReturnCount:AndroidNotificationRenderer.kt$AndroidNotificationRenderer$private fun createLargeIconBitmap( @DrawableRes iconRes: Int, @ColorRes colorRes: Int ): Bitmap?</ID>
+    <ID>ReturnCount:AndroidSmartCareTextResolver.kt$AndroidSmartCareTextResolver$fun resolve( task: CareTaskSnapshot, tank: AquariumTankSnapshot? ): CareTaskTextPresentation?</ID>
+    <ID>ReturnCount:AndroidSmartCareTextResolver.kt$AndroidSmartCareTextResolver$private fun generationMillis( tank: AquariumTankSnapshot, setupDay: Int? ): Long</ID>
+    <ID>ReturnCount:AppDestinationContract.kt$AppDestinationContract$fun shouldShowBottomBar( destination: NavDestination? ): Boolean</ID>
+    <ID>ReturnCount:AppMediaStorage.kt$AppMediaStorage$fun copyInternalMedia( context: Context, sourceUriString: String?, targetScope: AppMediaScope, ownerToken: String, ownerUid: String ): String?</ID>
+    <ID>ReturnCount:AppMediaStorage.kt$AppMediaStorage$fun promoteCropOutput( context: Context, scope: AppMediaScope, ownerToken: String, ownerUid: String, outputUri: Uri ): Uri?</ID>
+    <ID>ReturnCount:AppMediaStorage.kt$AppMediaStorage$fun toContentUriForOwnedPath(context: Context, path: String?): Uri?</ID>
+    <ID>ReturnCount:AppMediaStorage.kt$AppMediaStorage$internal fun deleteAfterCommit( context: Context, ownerUid: String, uriString: String?, deleteFile: (File) -> Boolean ): Boolean</ID>
+    <ID>ReturnCount:AppMediaStorage.kt$AppMediaStorage$internal fun resolveInternalMediaFile( context: Context, uriString: String?, expectedScope: AppMediaScope? = null ): File?</ID>
+    <ID>ReturnCount:AppMediaStorage.kt$AppMediaStorage$internal fun rollbackPendingMedia( context: Context, uriString: String?, deleteFile: (File) -> Boolean ): Boolean</ID>
+    <ID>ReturnCount:AppMediaStorage.kt$AppMediaStorage$private fun File.isInside(root: File): Boolean</ID>
+    <ID>ReturnCount:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$private fun validateManualDeviceInfo(info: DeviceInfo): ManualSetupPreflightResult</ID>
+    <ID>ReturnCount:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$private fun validateQrCandidateDeviceInfo( bleAddress: String, info: DeviceInfo, draft: AqlProvisioningDraft ): QrCandidatePreflightResult</ID>
+    <ID>ReturnCount:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$suspend fun verifyManualSetup(bleAddress: String): ManualSetupPreflightResult</ID>
+    <ID>ReturnCount:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient$suspend fun verifyQrCandidate( bleAddress: String, draft: AqlProvisioningDraft ): QrCandidatePreflightResult</ID>
+    <ID>ReturnCount:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient.&lt;no name provided>$override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int)</ID>
+    <ID>ReturnCount:AqlBleProvisioningAddressResolver.kt$AqlBleProvisioningAddressResolver$private fun scannerOrFailure(): Result&lt;BluetoothLeScanner></ID>
+    <ID>ReturnCount:AqlBleProvisioningAddressResolver.kt$AqlBleProvisioningAddressResolver$private suspend fun verifyQrCandidates( draft: AqlProvisioningDraft, targetName: String, candidates: List&lt;ScanCandidate> ): Result&lt;String></ID>
+    <ID>ReturnCount:AqlBleProvisioningAddressResolver.kt$AqlBleProvisioningAddressResolver$suspend fun resolveAddress( bleNameOrAddress: String ): Result&lt;String></ID>
+    <ID>ReturnCount:AqlBleProvisioningAddressResolver.kt$AqlBleProvisioningAddressResolver$suspend fun resolveQrAddress( draft: AqlProvisioningDraft ): Result&lt;String></ID>
+    <ID>ReturnCount:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$@SuppressLint("MissingPermission") fun start(draft: AqlProvisioningDraft)</ID>
+    <ID>ReturnCount:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$@SuppressLint("MissingPermission") private fun enableNotifications(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, label: String): AqlBleGattOperationStartResult</ID>
+    <ID>ReturnCount:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$@SuppressLint("MissingPermission") private fun readDeviceInfo(gatt: BluetoothGatt): AqlBleGattOperationStartResult</ID>
+    <ID>ReturnCount:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$@SuppressLint("MissingPermission") private fun readProvisioningStatus(gatt: BluetoothGatt): AqlBleGattOperationStartResult</ID>
+    <ID>ReturnCount:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$@SuppressLint("MissingPermission") private fun readRuntimeEndpoint(gatt: BluetoothGatt): AqlBleGattOperationStartResult</ID>
+    <ID>ReturnCount:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$@SuppressLint("MissingPermission") private fun writeString( gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, value: String, label: String ): AqlBleGattOperationStartResult</ID>
+    <ID>ReturnCount:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$private fun handleCharacteristicReadValue(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, value: ByteArray, status: Int)</ID>
+    <ID>ReturnCount:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$private fun handleDeviceInfoRead(gatt: BluetoothGatt, value: ByteArray)</ID>
+    <ID>ReturnCount:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$private fun handleRuntimeEndpointValue(value: ByteArray, completeReadOperation: Boolean)</ID>
+    <ID>ReturnCount:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$private fun validateDeviceInfo(info: AqlBleDeviceInfo): String?</ID>
+    <ID>ReturnCount:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$private fun writeFinalizeSetup(gatt: BluetoothGatt): AqlBleGattOperationStartResult</ID>
+    <ID>ReturnCount:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$private fun writeStartSession(gatt: BluetoothGatt): AqlBleGattOperationStartResult</ID>
+    <ID>ReturnCount:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$private fun writeWifiCredentials(gatt: BluetoothGatt): AqlBleGattOperationStartResult</ID>
+    <ID>ReturnCount:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$private fun writeWifiCredentialsIfReady(): Boolean</ID>
+    <ID>ReturnCount:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient.&lt;no name provided>$override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int)</ID>
+    <ID>ReturnCount:AqlBleProvisioningMessageCodec.kt$AqlBleProvisioningMessageCodec$fun parseStatus(raw: String): AqlBleProvisioningStatusMessage</ID>
+    <ID>ReturnCount:AqlBleProvisioningScanner.kt$AqlBleProvisioningScanner$fun startScan(): StartResult</ID>
+    <ID>ReturnCount:AqlDiscoveryParser.kt$AqlDiscoveryParser$fun parseDeviceAnnounce( rawPayload: String, sourceIp: String = "", receivedAtMillis: Long = System.currentTimeMillis() ): ParseResult</ID>
+    <ID>ReturnCount:AqlPrivateLanEndpoint.kt$AqlPrivateLanEndpoint$fun route( deviceUid: DeviceUid, endpoint: DeviceRuntimeEndpoint ): AqlPrivateLanRoute?</ID>
+    <ID>ReturnCount:AqlWsClient.kt$AqlWsClient$private fun handleTextFrame( webSocket: WebSocket, generation: Long, deviceUid: DeviceUid, text: String )</ID>
+    <ID>ReturnCount:AqlWsClient.kt$AqlWsClient$private suspend fun authenticateCurrentConnection( webSocket: WebSocket, generation: Long, deviceUid: DeviceUid, hello: AqlWsHelloChallenge )</ID>
+    <ID>ReturnCount:AqlWsCrypto.kt$AqlWsCrypto$fun constantTimeHexEquals(expectedHex: String, receivedHex: String): Boolean</ID>
+    <ID>ReturnCount:AqlWsCrypto.kt$AqlWsCrypto$fun serverProofMatches( pending: AqlWsPendingAuthentication, receivedProof: String ): Boolean</ID>
+    <ID>ReturnCount:AqlWsCrypto.kt$AqlWsSecureSession$@Synchronized fun verifyDevice( security: AqlWsSecurityEnvelope, frame: AqlWsMacFrame ): Boolean</ID>
+    <ID>ReturnCount:AquaAppShellLayout.kt$AquaAppShellLayout$@Suppress("DEPRECATION") private fun applySystemBarAppearance()</ID>
+    <ID>ReturnCount:AquaAppShellLayout.kt$AquaAppShellLayout$private fun Context.findActivity(): Activity?</ID>
+    <ID>ReturnCount:AquariumDimensionInputPolicy.kt$AquariumDimensionInputPolicy$internal fun convert( value: String, fromUnit: String, toUnit: String, locale: Locale ): String?</ID>
+    <ID>ReturnCount:AquariumDimensionInputPolicy.kt$AquariumDimensionInputPolicy$private fun canonicalCentimeters(value: Double, unit: String): Int?</ID>
+    <ID>ReturnCount:AquariumMaintenanceFragment.kt$AquariumMaintenanceFragment$private fun renderCareProfileWarning()</ID>
+    <ID>ReturnCount:AuthenticatedOwnerProvider.kt$FirebaseAuthenticatedOwnerProvider$override suspend fun validateCurrentOwner(): OwnerTokenValidationResult</ID>
+    <ID>ReturnCount:CareReminderDeliveryWorker.kt$CareReminderDeliveryWorker$private suspend fun deliver( taskId: Long, ownerUid: String, occurrence: CareReminderOccurrence )</ID>
+    <ID>ReturnCount:CareReminderReconcileRuntime.kt$CareReminderReconcileRuntime$suspend fun run(ownerUid: String): Result</ID>
+    <ID>ReturnCount:CareReminderSchedulePolicy.kt$CareReminderSchedulePolicy$fun plan( task: CareTask, nowMillis: Long ): CareReminderSchedulePlan?</ID>
+    <ID>ReturnCount:CareTaskBootReceiver.kt$CareTaskBootReceiver$override fun onReceive( context: Context, intent: Intent )</ID>
+    <ID>ReturnCount:ChangeEmailFragment.kt$ChangeEmailFragment$private fun attemptEmailChange()</ID>
+    <ID>ReturnCount:CreateTankFragment.kt$CreateTankFragment$private fun handleBackNavigation()</ID>
+    <ID>ReturnCount:DefaultDeviceMenuAccessOperations.kt$DefaultDeviceMenuAccessOperations$override suspend fun resolve(deviceUid: String): DeviceMenuAccessResult</ID>
+    <ID>ReturnCount:DefaultDeviceMenuAccessOperations.kt$DefaultDeviceMenuAccessOperations$private suspend fun verifyLiveSnapshot( deviceUid: DeviceUid, fallbackSnapshot: DeviceSnapshot, gateStartedAtMillis: Long ): DeviceSnapshot?</ID>
+    <ID>ReturnCount:DefaultDeviceMenuAccessOperations.kt$DeviceMenuRuntimeProofPolicy$fun accepts( event: AqlWsEvent, requestedDeviceUid: DeviceUid, expectedRequestId: String ): Boolean</ID>
+    <ID>ReturnCount:DefaultNotificationScheduler.kt$DefaultNotificationScheduler$private suspend fun isEligible(ownerUid: String, task: CareTask): Boolean</ID>
+    <ID>ReturnCount:DefaultProvisioningProgressOperations.kt$DefaultProvisioningProgressOperations$override suspend fun commitPreparedRegistration( registration: PreparedProvisioningRegistration ): Result&lt;Unit></ID>
+    <ID>ReturnCount:DefaultProvisioningProgressOperations.kt$DefaultProvisioningProgressOperations$override suspend fun prepareRegistration( sessionId: String, verifiedDeviceInfo: ProvisioningVerifiedDeviceInfo?, handoff: ProvisioningRuntimeHandoff ): Result&lt;PreparedProvisioningRegistration></ID>
+    <ID>ReturnCount:DeviceFirmwareOtaEventMapper.kt$DeviceFirmwareOtaEventMapper$fun parse(message: AqlWsIncomingMessage?): DeviceFirmwareOtaSnapshot?</ID>
+    <ID>ReturnCount:DeviceFirmwareUpdatePlanner.kt$DeviceFirmwareVersionComparator$private fun String.versionPartsOrNull(): List&lt;Int>?</ID>
+    <ID>ReturnCount:DevicePresenceRuntimeMonitor.kt$DevicePresenceRuntimeMonitor$private suspend fun recoverAfterLocalNetworkRestored()</ID>
+    <ID>ReturnCount:DeviceProvisioningProgressViewModel.kt$DeviceProvisioningProgressViewModel$fun startProvisioning()</ID>
+    <ID>ReturnCount:DeviceProvisioningProgressViewModel.kt$DeviceProvisioningProgressViewModel$private suspend fun resolveBleAddressIfNeeded( session: ProvisioningSessionSnapshot ): String?</ID>
+    <ID>ReturnCount:DeviceQrScanViewModel.kt$DeviceQrScanViewModel$fun onQrDetected(rawValue: String, hasBlePermissions: Boolean)</ID>
+    <ID>ReturnCount:DeviceRuntimeEndpoint.kt$DeviceRuntimeEndpoint$private fun String.isPrivateLanIpv4Literal(): Boolean</ID>
+    <ID>ReturnCount:DeviceStatusAggregator.kt$DeviceStatusAggregator$fun resolve( state: DeviceConnectionState, nowMillis: Long = System.currentTimeMillis(), localNetworkAvailable: Boolean = true ): DeviceOnlineState</ID>
+    <ID>ReturnCount:DeviceSystemTimePayloadFactory.kt$DevicePosixTimeZoneMapper$fun posixFor( timezoneId: String, utcOffsetMinutes: Int ): String</ID>
+    <ID>ReturnCount:DeviceWifiProvisioningFragment.kt$DeviceWifiProvisioningFragment$@Suppress("DEPRECATION") private fun currentWifiSsid(): String?</ID>
+    <ID>ReturnCount:DevicesRepository.kt$DevicesRepository$fun connectRuntime(deviceUid: DeviceUid): Result&lt;Unit></ID>
+    <ID>ReturnCount:DevicesRepository.kt$DevicesRepository$private suspend fun applyRuntimeMetadataMessage(event: AqlWsEvent.Message)</ID>
+    <ID>ReturnCount:DevicesViewModel.kt$DevicesViewModel$fun onDeviceClicked(deviceUid: String)</ID>
+    <ID>ReturnCount:FeedbackSubmissionOperations.kt$FeedbackSubmissionPolicy$fun isEmailValid(value: String): Boolean</ID>
+    <ID>ReturnCount:FeedbackSubmissionOperations.kt$FeedbackSubmissionPolicy$fun validate(request: FeedbackSubmissionRequest): FeedbackSubmissionValidationError?</ID>
+    <ID>ReturnCount:ImageMediaPolicy.kt$ImageMediaPolicy$fun validateSource( width: Int, height: Int, sourceBytes: Long? ): ImageMediaPolicyResult</ID>
+    <ID>ReturnCount:ImageMediaProcessor.kt$AndroidImageMediaProcessor$override fun restore( path: String?, displayName: String?, width: Int?, height: Int?, byteCount: Long? ): ProcessedImageMedia?</ID>
+    <ID>ReturnCount:ImageMediaProcessor.kt$AndroidImageMediaProcessor$private fun resolveOwnedFile(path: String?): File?</ID>
+    <ID>ReturnCount:LoadingOverlayDialogFragment.kt$LoadingOverlayDialogFragment.Companion$fun show(fragmentManager: FragmentManager)</ID>
+    <ID>ReturnCount:LocaleFormatter.kt$LocaleFormatter$internal fun parseDecimal(value: String, locale: Locale): Double?</ID>
+    <ID>ReturnCount:MainActivity.kt$MainActivity$private fun consumePendingCareTaskIfPossible()</ID>
+    <ID>ReturnCount:MaintenanceViewModel.kt$MaintenanceViewModel$private fun getTaskTitle( task: CareTaskSnapshot, typeTitle: String, automaticTitle: String? ): String</ID>
+    <ID>ReturnCount:MaterialPickerFragment.kt$MaterialPickerFragment$private fun getCurrentMaterialSelections(): List&lt;AquariumMaterialSelection></ID>
+    <ID>ReturnCount:MinimumTouchTargetInstaller.kt$MinimumTouchTargetInstaller$private fun createTouchEntry( host: ViewGroup, child: View, minimumPixels: Int ): TouchEntry?</ID>
+    <ID>ReturnCount:MinimumTouchTargetInstaller.kt$MinimumTouchTargetInstaller.CompositeTouchDelegate$private fun beginGesture(event: MotionEvent): Boolean</ID>
+    <ID>ReturnCount:MinimumTouchTargetInstaller.kt$MinimumTouchTargetInstaller.Installation$private fun rebuild()</ID>
+    <ID>ReturnCount:NotificationContracts.kt$NotificationDispatchUseCase$private suspend fun dispatch( ownerUid: String, category: NotificationCategory, render: () -> Unit ): NotificationDispatchResult</ID>
+    <ID>ReturnCount:OwnerTankDataCleaner.kt$OwnerTankDataCleaner$suspend fun deleteTanks(tankIds: Iterable&lt;Long>): Result</ID>
+    <ID>ReturnCount:PermissionPolicy.kt$PermissionPolicy$fun evaluate( capability: AppCapability, shouldShowRationale: (permission: String) -> Boolean ): PermissionDecision</ID>
+    <ID>ReturnCount:ProvisioningQrFrameDecoder.kt$MlKitProvisioningQrFrameDecoder$@OptIn(ExperimentalGetImage::class) override fun decode( imageProxy: ImageProxy, onResult: (Result&lt;String?>) -> Unit )</ID>
+    <ID>ReturnCount:SecureLocalWebContent.kt$private fun Uri.approvedLocalAssetNameOrNull(): String?</ID>
+    <ID>ReturnCount:SmartCareDailyWorker.kt$SmartCareDailyWorker$override suspend fun doWork(): Result</ID>
+    <ID>ReturnCount:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$private fun buildFertilizerMessage( context: Context, tank: SavedAquariumTank, profile: SmartCareTankProfile ): String</ID>
+    <ID>ReturnCount:SmartCareTaskGenerator.kt$SmartCareTaskGenerator$private fun getWaterChangePercent( rule: SmartCareRule, profile: SmartCareTankProfile ): Int?</ID>
+    <ID>ReturnCount:SupportedLocaleRegistry.kt$SupportedLocaleRegistry$private fun canonicalize(languageTag: String): String?</ID>
+    <ID>ReturnCount:TankDescriptionFragment.kt$TankDescriptionFragment$override fun validateAndSave(): Boolean</ID>
+    <ID>ReturnCount:TankDetailFragment.kt$TankDetailFragment$private fun restoreSelectedTab( savedInstanceState: Bundle? ): TankDetailTab</ID>
+    <ID>ReturnCount:TankInfoFragment.kt$TankInfoFragment$override fun validateAndSave(): Boolean</ID>
+    <ID>ReturnCount:TankNameFragment.kt$TankNameFragment$override fun validateAndSave(): Boolean</ID>
+    <ID>ReturnCount:UserAddressFragment.kt$UserAddressFragment$private fun saveAddress()</ID>
+    <ID>ReturnCount:UserAddressFragment.kt$UserAddressFragment.&lt;no name provided>$override fun afterTextChanged(text: Editable?)</ID>
+    <ID>ReturnCount:UserDataCleaner.kt$UserDataCleaner$private fun deleteAppOwnedUri(value: String)</ID>
+    <ID>ReturnCount:UserInfoFragment.kt$UserInfoFragment$private fun saveUserInfo()</ID>
+    <ID>SpreadOperator:AquaUiText.kt$( uiText.resId, *uiText.args.map(::resolveArgument).toTypedArray() )</ID>
+    <ID>SpreadOperator:AquaUiText.kt$( uiText.resId, uiText.quantity, *uiText.args.map(::resolveArgument).toTypedArray() )</ID>
+    <ID>SpreadOperator:AuthUiText.kt$AuthUiText$(resId, *args.toTypedArray())</ID>
+    <ID>SwallowedException:AqlBleProvisioningScanner.kt$AqlBleProvisioningScanner$securityException: SecurityException</ID>
+    <ID>ThrowsCount:AquariumTankDataStoreManager.kt$AquariumTankDataStoreManager$suspend fun duplicateTank( tankId: Long ): Long</ID>
+    <ID>ThrowsCount:AuthRepository.kt$AuthRepository$suspend fun requestEmailChangeVerification( currentEmail: String, password: String, newEmail: String )</ID>
+    <ID>ThrowsCount:NotificationPreferenceStoreRules.kt$NotificationPreferenceStoreRules$fun validatePreference( preference: OwnerNotificationPreference ): OwnerNotificationPreference</ID>
+    <ID>ThrowsCount:TankSettingsOthersFragment.kt$TankSettingsOthersFragment$private fun deleteCurrentTank()</ID>
+    <ID>TooGenericExceptionCaught:AppSessionCoordinator.kt$AppSessionCoordinator$error: Throwable</ID>
+    <ID>TooGenericExceptionCaught:AqlBleProvisioningScanner.kt$AqlBleProvisioningScanner$error: Throwable</ID>
+    <ID>TooGenericExceptionCaught:AqlProvisioningHandoffSaver.kt$AqlProvisioningHandoffSaver$error: Throwable</ID>
+    <ID>TooGenericExceptionCaught:AqlWsClient.kt$AqlWsClient$error: Throwable</ID>
+    <ID>TooGenericExceptionCaught:AquariumFragment.kt$AquariumFragment$exception: Exception</ID>
+    <ID>TooGenericExceptionCaught:AquariumTankDataStoreManager.kt$AquariumTankDataStoreManager$error: Throwable</ID>
+    <ID>TooGenericExceptionCaught:AuthenticatedOwnerProvider.kt$FirebaseAuthenticatedOwnerProvider$error: Throwable</ID>
+    <ID>TooGenericExceptionCaught:CareReminderDeliveryWorker.kt$CareReminderDeliveryWorker$exception: Exception</ID>
+    <ID>TooGenericExceptionCaught:CareReminderReconcileWorker.kt$CareReminderReconcileWorker$exception: Exception</ID>
+    <ID>TooGenericExceptionCaught:CloudUserDataCleaner.kt$CloudUserDataCleaner$error: Throwable</ID>
+    <ID>TooGenericExceptionCaught:CreateTankFragment.kt$CreateTankFragment$exception: Exception</ID>
+    <ID>TooGenericExceptionCaught:DefaultAquariumTankOperations.kt$DefaultAquariumTankOperations$error: Throwable</ID>
+    <ID>TooGenericExceptionCaught:DefaultProvisioningProgressOperations.kt$DefaultProvisioningProgressOperations$error: Throwable</ID>
+    <ID>TooGenericExceptionCaught:DefaultUserProfileOperations.kt$DefaultUserProfileOperations$error: Throwable</ID>
+    <ID>TooGenericExceptionCaught:DevicesRepository.kt$DevicesRepository$error: Throwable</ID>
+    <ID>TooGenericExceptionCaught:DevicesViewModel.kt$DevicesViewModel$error: Throwable</ID>
+    <ID>TooGenericExceptionCaught:EditProfileFragment.kt$EditProfileFragment$error: Exception</ID>
+    <ID>TooGenericExceptionCaught:EncryptedUserPreferencesSerializer.kt$EncryptedUserPreferencesSerializer$exception: Exception</ID>
+    <ID>TooGenericExceptionCaught:FeedbackViewModel.kt$FeedbackViewModel$error: Throwable</ID>
+    <ID>TooGenericExceptionCaught:FirebaseFeedbackSubmissionOperations.kt$FirebaseFeedbackDocumentStore$error: Throwable</ID>
+    <ID>TooGenericExceptionCaught:FirebaseFeedbackSubmissionOperations.kt$FirebaseFeedbackSubmissionOperations$error: Throwable</ID>
+    <ID>TooGenericExceptionCaught:GoogleIdentityClient.kt$DefaultGoogleIdentityClient$error: Throwable</ID>
+    <ID>TooGenericExceptionCaught:ImageMediaProcessor.kt$AndroidImageMediaProcessor$error: Throwable</ID>
+    <ID>TooGenericExceptionCaught:LoadingOverlayDialogFragment.kt$LoadingOverlayDialogFragment.Companion$error: RuntimeException</ID>
+    <ID>TooGenericExceptionCaught:MaterialPickerFragment.kt$MaterialPickerFragment$exception: Exception</ID>
+    <ID>TooGenericExceptionCaught:OwnerDeviceDataCleaner.kt$OwnerDeviceDataCleaner$error: Throwable</ID>
+    <ID>TooGenericExceptionCaught:OwnerSessionCoordinator.kt$OwnerSessionCoordinator$error: Throwable</ID>
+    <ID>TooGenericExceptionCaught:OwnerTankDataCleaner.kt$OwnerTankDataCleaner$error: Throwable</ID>
+    <ID>TooGenericExceptionCaught:SmartCareDailyWorker.kt$SmartCareDailyWorker$exception: Exception</ID>
+    <ID>TooGenericExceptionCaught:TankDetailActivityFragment.kt$TankDetailActivityFragment$exception: Exception</ID>
+    <ID>TooGenericExceptionCaught:TankDetailDevicesViewModel.kt$TankDetailDevicesViewModel$error: Throwable</ID>
+    <ID>TooGenericExceptionCaught:TankDetailLivestockFormFragment.kt$TankDetailLivestockFormFragment$exception: Exception</ID>
+    <ID>TooGenericExceptionCaught:TankDetailPlantTagFragment.kt$TankDetailPlantTagFragment$exception: Exception</ID>
+    <ID>TooGenericExceptionCaught:TankDetailTankFragment.kt$TankDetailTankFragment$exception: Exception</ID>
+    <ID>TooGenericExceptionCaught:TankDeviceAssignmentRepository.kt$TankDeviceAssignmentRepository$error: Throwable</ID>
+    <ID>TooGenericExceptionCaught:TankPdfExporter.kt$TankPdfExporter$exception: Exception</ID>
+    <ID>TooGenericExceptionCaught:TankSettingsBasicFragment.kt$TankSettingsBasicFragment$exception: Exception</ID>
+    <ID>TooGenericExceptionCaught:TankSettingsOthersFragment.kt$TankSettingsOthersFragment$exception: Exception</ID>
+    <ID>TooGenericExceptionCaught:UserInfoFragment.kt$UserInfoFragment$error: Exception</ID>
+    <ID>TooManyFunctions:AddCareTaskFragment.kt$AddCareTaskFragment : Fragment</ID>
+    <ID>TooManyFunctions:AndroidMaintenanceTextResolver.kt$AndroidMaintenanceTextResolver : MaintenanceTextResolver</ID>
+    <ID>TooManyFunctions:AndroidNotificationRenderer.kt$AndroidNotificationRenderer : NotificationRenderer</ID>
+    <ID>TooManyFunctions:AppMediaStorage.kt$AppMediaStorage</ID>
+    <ID>TooManyFunctions:AppSettingsFragment.kt$AppSettingsFragment : Fragment</ID>
+    <ID>TooManyFunctions:AqlBleDeviceInfoPreflightClient.kt$AqlBleDeviceInfoPreflightClient</ID>
+    <ID>TooManyFunctions:AqlBleProvisioningAddressResolver.kt$AqlBleProvisioningAddressResolver</ID>
+    <ID>TooManyFunctions:AqlBleProvisioningCrypto.kt$AqlBleProvisioningCrypto</ID>
+    <ID>TooManyFunctions:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient</ID>
+    <ID>TooManyFunctions:AqlBleProvisioningMessageCodec.kt$AqlBleProvisioningMessageCodec</ID>
+    <ID>TooManyFunctions:AqlProvisioningDraftStore.kt$AqlProvisioningDraftStore : ProvisioningDraftStorage</ID>
+    <ID>TooManyFunctions:AqlProvisioningHandoffSaver.kt$AqlProvisioningHandoffSaver</ID>
+    <ID>TooManyFunctions:AqlWsClient.kt$AqlWsClient : AqlWsTransport</ID>
+    <ID>TooManyFunctions:AqlWsCommandClient.kt$AqlWsCommandClient</ID>
+    <ID>TooManyFunctions:AqlWsCommandFactory.kt$AqlWsCommandFactory</ID>
+    <ID>TooManyFunctions:AqlWsCrypto.kt$AqlWsCrypto</ID>
+    <ID>TooManyFunctions:AqlWsWireCodec.kt$AqlWsWireCodec</ID>
+    <ID>TooManyFunctions:AquaAppShellLayout.kt$AquaAppShellLayout : ConstraintLayout</ID>
+    <ID>TooManyFunctions:AquariumFragment.kt$AquariumFragment : Fragment</ID>
+    <ID>TooManyFunctions:AquariumMaintenanceFragment.kt$AquariumMaintenanceFragment : Fragment</ID>
+    <ID>TooManyFunctions:AquariumTankDataStoreManager.kt$AquariumTankDataStoreManager</ID>
+    <ID>TooManyFunctions:AquariumTankOperations.kt$AquariumTankOperations</ID>
+    <ID>TooManyFunctions:AquariumTankViewModel.kt$AquariumTankViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:AuthContainerFragment.kt$AuthContainerFragment : Fragment</ID>
+    <ID>TooManyFunctions:BaseActivity.kt$BaseActivity : AppCompatActivity</ID>
+    <ID>TooManyFunctions:CapabilityPermissionCoordinator.kt$CapabilityPermissionCoordinator : DefaultLifecycleObserver</ID>
+    <ID>TooManyFunctions:CareTaskAdapter.kt$CareTaskAdapter : ListAdapter</ID>
+    <ID>TooManyFunctions:CareTaskDataStoreManager.kt$CareTaskDataStoreManager</ID>
+    <ID>TooManyFunctions:CareTaskStoreRules.kt$CareTaskStoreRules</ID>
+    <ID>TooManyFunctions:ChangeEmailFragment.kt$ChangeEmailFragment : Fragment</ID>
+    <ID>TooManyFunctions:ChangePasswordFragment.kt$ChangePasswordFragment : Fragment</ID>
+    <ID>TooManyFunctions:CreateTankFragment.kt$CreateTankFragment : Fragment</ID>
+    <ID>TooManyFunctions:CreateTankViewModel.kt$CreateTankViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:DefaultAquariumTankOperations.kt$DefaultAquariumTankOperations : AquariumTankOperations</ID>
+    <ID>TooManyFunctions:DefaultProvisioningProgressOperations.kt$DefaultProvisioningProgressOperations : ProvisioningProgressOperations</ID>
+    <ID>TooManyFunctions:DeviceAddFragment.kt$DeviceAddFragment : Fragment</ID>
+    <ID>TooManyFunctions:DeviceAddViewModel.kt$DeviceAddViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:DeviceCredentialStore.kt$DeviceCredentialStore : AqlWsTokenProvider</ID>
+    <ID>TooManyFunctions:DeviceDosingRuntimeRepository.kt$DeviceDosingRuntimeRepository</ID>
+    <ID>TooManyFunctions:DeviceFirmwareManifestParser.kt$DeviceFirmwareManifestParser</ID>
+    <ID>TooManyFunctions:DeviceKnownStore.kt$DeviceKnownStore</ID>
+    <ID>TooManyFunctions:DeviceLightRootViewModel.kt$DeviceLightRootViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:DevicePresenceRuntimeMonitor.kt$DevicePresenceRuntimeMonitor</ID>
+    <ID>TooManyFunctions:DeviceProvisioningProgressFragment.kt$DeviceProvisioningProgressFragment : Fragment</ID>
+    <ID>TooManyFunctions:DeviceProvisioningProgressViewModel.kt$DeviceProvisioningProgressViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:DeviceQrScanFragment.kt$DeviceQrScanFragment : Fragment</ID>
+    <ID>TooManyFunctions:DeviceRuntimeMetadataReducer.kt$DeviceRuntimeMetadataReducer</ID>
+    <ID>TooManyFunctions:DeviceRuntimeRepository.kt$DeviceRuntimeRepository : AutoCloseable</ID>
+    <ID>TooManyFunctions:DeviceWifiProvisioningFragment.kt$DeviceWifiProvisioningFragment : Fragment</ID>
+    <ID>TooManyFunctions:DevicesFragment.kt$DevicesFragment : Fragment</ID>
+    <ID>TooManyFunctions:DevicesRepository.kt$DevicesRepository</ID>
+    <ID>TooManyFunctions:EditProfileFragment.kt$EditProfileFragment : Fragment</ID>
+    <ID>TooManyFunctions:FeedbackFragment.kt$FeedbackFragment : Fragment</ID>
+    <ID>TooManyFunctions:ImageMediaProcessor.kt$AndroidImageMediaProcessor : ImageMediaProcessor</ID>
+    <ID>TooManyFunctions:KnownDevicesStoreReducer.kt$KnownDevicesStoreReducer</ID>
+    <ID>TooManyFunctions:LocaleFormatter.kt$LocaleFormatter</ID>
+    <ID>TooManyFunctions:LogoutFragment.kt$LogoutFragment : Fragment</ID>
+    <ID>TooManyFunctions:MainActivity.kt$MainActivity : BaseActivity</ID>
+    <ID>TooManyFunctions:MaintenanceTextResolver.kt$MaintenanceTextResolver</ID>
+    <ID>TooManyFunctions:MaintenanceViewModel.kt$MaintenanceViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:MaterialPickerFragment.kt$MaterialPickerFragment : Fragment</ID>
+    <ID>TooManyFunctions:MediaFlowCoordinatorViewModel.kt$MediaFlowCoordinatorViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:PlantTagFragment.kt$PlantTagFragment : Fragment</ID>
+    <ID>TooManyFunctions:ProvisioningCommitRecoveryStore.kt$ProvisioningCommitRecoveryStore</ID>
+    <ID>TooManyFunctions:ReAuthenticateFragment.kt$ReAuthenticateFragment : Fragment</ID>
+    <ID>TooManyFunctions:SettingsFragment.kt$SettingsFragment : Fragment</ID>
+    <ID>TooManyFunctions:SmartCareTaskGenerator.kt$SmartCareTaskGenerator</ID>
+    <ID>TooManyFunctions:TankCareIntegrityJournal.kt$TankCareIntegrityJournal : TankCareIntegrityTransactions</ID>
+    <ID>TooManyFunctions:TankDetailActivityFragment.kt$TankDetailActivityFragment : Fragment</ID>
+    <ID>TooManyFunctions:TankDetailDevicesFragment.kt$TankDetailDevicesFragment : Fragment</ID>
+    <ID>TooManyFunctions:TankDetailFragment.kt$TankDetailFragment : FragmentHost</ID>
+    <ID>TooManyFunctions:TankDetailLifeFragment.kt$TankDetailLifeFragment : Fragment</ID>
+    <ID>TooManyFunctions:TankDetailLivestockFormFragment.kt$TankDetailLivestockFormFragment : Fragment</ID>
+    <ID>TooManyFunctions:TankDetailPlantTagFragment.kt$TankDetailPlantTagFragment : Fragment</ID>
+    <ID>TooManyFunctions:TankDetailTankFragment.kt$TankDetailTankFragment : Fragment</ID>
+    <ID>TooManyFunctions:TankDeviceAssignmentRepository.kt$TankDeviceAssignmentRepository</ID>
+    <ID>TooManyFunctions:TankDeviceAssignmentRules.kt$TankDeviceAssignmentRules</ID>
+    <ID>TooManyFunctions:TankInfoFragment.kt$TankInfoFragment : FragmentTankStepFragment</ID>
+    <ID>TooManyFunctions:TankPdfExporter.kt$TankPdfExporter$PdfWriter</ID>
+    <ID>TooManyFunctions:TankPhotoFragment.kt$TankPhotoFragment : FragmentTankStepFragment</ID>
+    <ID>TooManyFunctions:TankSettingsBasicFragment.kt$TankSettingsBasicFragment : Fragment</ID>
+    <ID>TooManyFunctions:TankSettingsEditorBottomSheet.kt$TankSettingsEditorBottomSheet : BottomSheetDialogFragment</ID>
+    <ID>TooManyFunctions:TankSettingsFragment.kt$TankSettingsFragment : Fragment</ID>
+    <ID>TooManyFunctions:TankSettingsOthersFragment.kt$TankSettingsOthersFragment : Fragment</ID>
+    <ID>TooManyFunctions:TankStoreRules.kt$TankStoreRules</ID>
+    <ID>TooManyFunctions:TaskDetailFragment.kt$TaskDetailFragment : Fragment</ID>
+    <ID>TooManyFunctions:UserAddressFragment.kt$UserAddressFragment : Fragment</ID>
+    <ID>TooManyFunctions:UserInfoFragment.kt$UserInfoFragment : Fragment</ID>
+    <ID>TooManyFunctions:UserPreferencesManager.kt$UserPreferencesManager</ID>
+    <ID>UnusedParameter:AqlBleProvisioningGattClient.kt$AqlBleProvisioningGattClient$gatt: BluetoothGatt</ID>
+    <ID>UnusedParameter:DefaultDeviceMenuAccessOperations.kt$DefaultDeviceMenuAccessOperations$fallbackSnapshot: DeviceSnapshot</ID>
+    <ID>UnusedPrivateProperty:ChangeEmailFragment.kt$ChangeEmailFragment$private val baseActivity get() = activity as? BaseActivity</ID>
+    <ID>UnusedPrivateProperty:DeviceRuntimeRepository.kt$DeviceRuntimeRepository$private val repositoryScope = CoroutineScope(repositoryJob + dispatcher)</ID>
+    <ID>UnusedPrivateProperty:PlantPickerFragment.kt$PlantPickerFragment$private val args: PlantPickerFragmentArgs by navArgs()</ID>
+    <ID>UnusedPrivateProperty:TankDetailLivestockFormFragment.kt$TankDetailLivestockFormFragment.Companion$private const val ARG_LIVESTOCK_ID = "livestockId"</ID>
+    <ID>UnusedPrivateProperty:TankDetailLivestockFormFragment.kt$TankDetailLivestockFormFragment.Companion$private const val ARG_TANK_ID = "tankId"</ID>
+    <ID>UnusedPrivateProperty:UserInfoFragment.kt$UserInfoFragment.Companion$private const val USERNAME_MAX_LENGTH = 20</ID>
+    <ID>UseCheckOrError:AqlWsClientLifecycleTest.kt$AqlWsClientLifecycleTest.ThrowOnceWebSocketFactory$throw IllegalStateException("factory failure")</ID>
+    <ID>UseCheckOrError:AquariumTankDataStoreManager.kt$AquariumTankDataStoreManager$throw IllegalStateException("Tank photo could not be copied with independent ownership.")</ID>
+    <ID>UseCheckOrError:AuthSessionManager.kt$AuthSessionManager$throw IllegalStateException( "Owner session transition was superseded for ${result.ownerUid}." )</ID>
+    <ID>UseCheckOrError:DefaultAquariumTankOperations.kt$DefaultAquariumTankOperations$throw IllegalStateException( "Tank photo could not be copied with independent ownership." )</ID>
+    <ID>UseCheckOrError:DefaultAquariumTankOperations.kt$DefaultAquariumTankOperations$throw IllegalStateException("Duplicated tank record is missing.")</ID>
+    <ID>UseCheckOrError:FirebaseAccountSecurityOperations.kt$FirebaseAccountSecurityOperations$throw IllegalStateException("Authenticated user has no email address.")</ID>
+    <ID>UseCheckOrError:FirebaseAccountSecurityOperations.kt$FirebaseAccountSecurityOperations$throw IllegalStateException("No authenticated user.")</ID>
+    <ID>UseCheckOrError:ImageMediaProcessor.kt$AndroidImageMediaProcessor$throw IllegalStateException("Image compression failed.")</ID>
+    <ID>UseCheckOrError:OwnerDeviceDataCleanerTest.kt$OwnerDeviceDataCleanerTest$throw IllegalStateException("B failed")</ID>
+    <ID>UseCheckOrError:TankCareIntegrityJournal.kt$TankCareIntegrityJournal$throw IllegalStateException( "Tank-care integrity journal could not be committed." )</ID>
+    <ID>UseCheckOrError:TankCareIntegrityJournal.kt$TankCareIntegrityJournal$throw IllegalStateException( "TankCareIntegrityJournal must be initialized before owner data is used." )</ID>
+    <ID>UseCheckOrError:TankSettingsOthersFragment.kt$TankSettingsOthersFragment$throw IllegalStateException("Tank deletion failed.")</ID>
+    <ID>UseRequire:AquariumTankDataStoreManager.kt$AquariumTankDataStoreManager$throw IllegalArgumentException( "Livestock record not found in the selected tank." )</ID>
+    <ID>UseRequire:AquariumTankDataStoreManager.kt$AquariumTankDataStoreManager$throw IllegalArgumentException( "Tank not found for the active owner." )</ID>
+    <ID>UseRequire:CareTaskDataStoreManager.kt$CareTaskDataStoreManager$throw IllegalArgumentException( "Care task not found for the active owner." )</ID>
+    <ID>WildcardImport:ExampleUnitTest.kt$import org.junit.Assert.*</ID>
+  </CurrentIssues>
+</SmellBaseline>
