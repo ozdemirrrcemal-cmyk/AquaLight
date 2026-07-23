@@ -4,6 +4,9 @@ plugins {
     id 'com.google.gms.google-services'
     id 'com.google.protobuf'
     id 'androidx.navigation.safeargs.kotlin'
+    id 'org.cyclonedx.bom'
+    id 'org.jlleitschuh.gradle.ktlint'
+    id 'org.jetbrains.kotlinx.kover'
 }
 
 def aqlBuildConfigString = { value ->
@@ -146,6 +149,59 @@ android {
             resources.srcDir rootProject.file("protocol/fixtures")
         }
     }
+}
+
+ktlint {
+    version = "1.8.0"
+    android = true
+    outputToConsole = true
+    ignoreFailures = false
+    baseline = file("ktlint-baseline.xml")
+    reporters {
+        reporter "plain"
+        reporter "checkstyle"
+        reporter "sarif"
+    }
+    filter {
+        exclude("**/build/**")
+        exclude("**/generated/**")
+    }
+}
+
+kover {
+    useJacoco("0.8.15")
+    reports {
+        filters {
+            excludes {
+                classes(
+                        "*.R",
+                        '*.R$*',
+                        "*.BuildConfig",
+                        "*.*Binding",
+                        "*.databinding.*",
+                        "*.proto.*"
+                )
+            }
+        }
+    }
+}
+
+tasks.named("cyclonedxDirectBom") {
+    includeConfigs = ["releaseRuntimeClasspath"]
+    skipConfigs = [".*[Tt]est.*", ".*[Dd]ebug.*", ".*[Rr]eleaseSmoke.*"]
+    projectType = "application"
+    componentGroup = "com.aqua"
+    componentName = "AquaLight"
+    componentVersion = releaseVersionName
+    includeBomSerialNumber = true
+    includeLicenseText = false
+    includeMetadataResolution = true
+    includeBuildEnvironment = false
+    includeBuildSystem = true
+    jsonOutput = layout.buildDirectory.file(
+            "reports/cyclonedx-release/AquaLight-${releaseVersionName}-sbom.cdx.json"
+    ).get().asFile
+    xmlOutput.unsetConvention()
 }
 
 def verifyReleaseSigningConfiguration = tasks.register("verifyReleaseSigningConfiguration") {
