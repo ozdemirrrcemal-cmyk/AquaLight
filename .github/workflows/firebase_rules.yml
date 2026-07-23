@@ -178,8 +178,10 @@ jobs:
             echo "Production debug variant must not exist." >&2
             exit 1
           fi
-          ./gradlew detektBaselineDevelopmentDebug --no-daemon --stacktrace \
-            2>&1 | tee detekt-baseline.log
+          mkdir -p config/detekt
+          ./gradlew detektBaselineDevelopmentDebug \
+            --baseline "$GITHUB_WORKSPACE/config/detekt/baseline.xml" \
+            --no-daemon --stacktrace 2>&1 | tee detekt-baseline.log
           test -s config/detekt/baseline.xml
           ./gradlew detektDevelopmentDebug --no-daemon --stacktrace \
             2>&1 | tee detekt-verification.log
