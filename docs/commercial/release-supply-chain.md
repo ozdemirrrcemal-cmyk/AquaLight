@@ -1,0 +1,127 @@
+# AquaLight commercial release and supply-chain runbook
+
+## Commercial boundary
+
+A production binary is created only from an immutable semantic version tag whose commit is already contained in `main`. A push to `main` performs validation only; it cannot publish a release. Pull-request and staging jobs never receive the production Firebase configuration or the production signing key.
+
+The required gate order is:
+
+1. architecture and supply-chain guards
+2. standard Android lint and Detekt
+3. unit tests and critical-package coverage
+4. API 27 and API 35 instrumentation plus minified staging smoke tests
+5. signed production AAB/APK, checksum, SBOM, provenance, and GitHub Release publication
+
+## Version identity
+
+Release tags must match `vMAJOR.MINOR.PATCH` with no suffixes or leading zeroes.
+
+`versionName` is the tag without `v`.
+
+`versionCode` is derived deterministically:
+
+```text
+MAJOR * 1,000,000 + MINOR * 1,000 + PATCH
+```
+
+`MINOR` and `PATCH` are limited to `0..999`. The release workflow rejects `v0.0.0`, a value above the Android/Play ceiling, and any tag whose derived code is not greater than every existing semantic release tag.
+
+Examples:
+
+| Tag | versionName | versionCode |
+|---|---:|---:|
+| `v1.0.0` | `1.0.0` | `1000000` |
+| `v1.2.7` | `1.2.7` | `1002007` |
+| `v2.0.0` | `2.0.0` | `2000000` |
+
+A published tag is immutable. A broken release is superseded by a higher patch version; the tag and artifacts are not replaced with different source.
+
+## Android environments
+
+| Environment | Build identity | Firebase source | Purpose |
+|---|---|---|---|
+| development | `com.aqua.aqualight.debug.local` | development secret or compile-only CI fixture | local and pull-request verification |
+| staging debug | `com.aqua.aqualight.staging.local` | staging secret or compile-only CI fixture | instrumentation |
+| staging release/smoke | `com.aqua.aqualight.staging` | staging secret or compile-only CI fixture | minified pre-production validation |
+| production | `com.aqua.aqualight` | production environment secret only | Play/GitHub commercial release |
+
+The Firebase materializer validates that each JSON document contains clients for every package identity required by that environment. Production has no fixture and fails closed when its secret is absent or malformed. Generated JSON files are deleted at job completion and remain ignored by Git.
+
+## GitHub configuration
+
+Create a protected GitHub environment named `production`.
+
+Required controls:
+
+- required reviewer approval before the production job starts
+- prevent the initiator from self-approving when the repository plan supports that control
+- restrict deployment branches/tags to protected release tags or the default branch policy
+- keep production secrets in the environment, not repository or organization-wide scope unless an independently reviewed sharing requirement exists
+
+Required secrets:
+
+| Secret | Scope | Requirement |
+|---|---|---|
+| `FIREBASE_DEVELOPMENT_GOOGLE_SERVICES_JSON_BASE64` | repository or development environment | base64-encoded development JSON; optional in CI because a non-production compile-only fixture exists |
+| `FIREBASE_STAGING_GOOGLE_SERVICES_JSON_BASE64` | staging/repository | base64-encoded staging JSON; optional in CI because a non-production compile-only fixture exists |
+| `FIREBASE_PRODUCTION_GOOGLE_SERVICES_JSON_BASE64` | production environment | base64-encoded production JSON; mandatory |
+| `RELEASE_KEYSTORE_BASE64` | production environment | base64-encoded upload/release keystore |
+| `RELEASE_KEYSTORE_SHA256` | production environment | SHA-256 of the exact decoded keystore file |
+| `RELEASE_CERT_SHA256` | production environment | SHA-256 fingerprint of the selected signing certificate |
+| `RELEASE_KEYSTORE_PASSWORD` | production environment | keystore password |
+| `RELEASE_KEY_ALIAS` | production environment | exact key alias |
+| `RELEASE_KEY_PASSWORD` | production environment | key password |
+| `AQL_OTA_MANIFEST_PUBLIC_KEY_PEM` | production environment | trusted OTA manifest public key in PEM form |
+| `AQL_OTA_MANIFEST_KEY_ID` | production environment | approved OTA key identifier |
+
+Signing validation occurs before Gradle starts. It verifies secret presence, decoded-keystore checksum, alias/password access, certificate fingerprint, file permissions, and Gradle production inputs.
+
+## Dependency and workflow integrity
+
+- Every resolvable Gradle configuration is locked in strict mode.
+- `app/gradle.lockfile` is committed and reviewed.
+- `gradle/verification-metadata.xml` contains SHA-256 checksums generated from an actual Gradle resolution.
+- The Gradle distribution itself is protected by `distributionSha256Sum`.
+- All external GitHub Actions are pinned to full commit SHAs; `tools/ci/verify_action_pins.py` rejects movable tags.
+- Dependabot opens grouped weekly updates for Gradle, GitHub Actions, and Firebase test tooling. Updates must regenerate lock/verification state and pass the full gate sequence.
+
+The temporary `Supply Chain Bootstrap` workflow exists only to generate the first reviewable lock and verification files. Delete it after those files are committed and the normal guard passes.
+
+## Coverage policy
+
+JaCoCo enforces at least 60% line coverage across the initial commercially critical package set:
+
+- feedback submission application logic
+- account-deletion checkpoint policy
+- application and owner session state machines
+- Firebase feedback submission operations
+
+The threshold is a merge/release failure, not an informational report. Raising the package set or threshold is permitted; lowering either requires a documented risk decision in the pull request.
+
+## Release procedure
+
+1. Merge a green pull request to `main` under branch protection.
+2. Confirm the intended source commit is contained in `main` and no higher release tag already exists.
+3. Create and push the next `vMAJOR.MINOR.PATCH` tag on that commit.
+4. Review and approve the `production` environment deployment.
+5. Require all five jobs to complete successfully.
+6. Verify the GitHub Release contains:
+   - signed AAB
+   - signed APK
+   - R8 mapping file
+   - CycloneDX JSON SBOM
+   - `SHA256SUMS`
+   - GitHub build provenance attestation
+7. Upload the AAB to the intended Play track under the existing Play App Signing configuration. The APK is a separately signed distribution/debugging deliverable and is not a substitute for the Play AAB.
+
+## Failure and revocation rules
+
+- No job may continue past a failed prerequisite gate.
+- A signing mismatch, missing production Firebase client, non-monotonic version, unpinned action, dependency verification mismatch, coverage failure, or instrumentation failure blocks publication.
+- Never rotate a secret by committing replacement material.
+- On signing-material exposure, revoke access, rotate the upload key through the platform process when applicable, update both expected SHA-256 values, and issue a new release tag only after the complete gate sequence passes.
+- On a faulty published build, stop rollout in Play, correct the source on a new pull request, and release a higher patch tag. Do not rewrite the existing tag or replace its provenance.
+
+## Required repository protection after merge
+
+Protect `main` with pull requests and require the commercial CI gate jobs, CodeQL, and Firebase Rules Validation as status checks. Disallow force pushes and branch deletion. The exact check names should be selected after the first successful run on `main`, because GitHub records required checks by emitted context name.
