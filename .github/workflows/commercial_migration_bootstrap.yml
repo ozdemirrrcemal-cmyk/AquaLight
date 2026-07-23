@@ -55,37 +55,65 @@ jobs:
 
       - name: Generate full Android lint baseline
         run: |
+          set +e
           rm -f app/lint-baseline.xml
           ./gradlew :app:lintDebug \
             -Dlint.baselines.continue=true \
-            --no-daemon --stacktrace
+            --no-daemon --stacktrace \
+            > bootstrap-lint.log 2>&1
+          status=$?
+          tail -n 240 bootstrap-lint.log || true
+          if [[ $status -ne 0 ]]; then
+            exit "$status"
+          fi
           test -s app/lint-baseline.xml
 
       - name: Generate Detekt baseline
         run: |
+          set +e
           rm -f config/detekt/baseline.xml
-          ./gradlew :app:detektBaseline --no-daemon --stacktrace
+          ./gradlew :app:detektBaseline --no-daemon --stacktrace \
+            > bootstrap-detekt.log 2>&1
+          status=$?
+          tail -n 240 bootstrap-detekt.log || true
+          if [[ $status -ne 0 ]]; then
+            exit "$status"
+          fi
           test -s config/detekt/baseline.xml
 
       - name: Generate dependency locks, verification metadata and SBOM
         run: |
+          set +e
           ./gradlew \
             :app:dependencies \
             :app:assembleReleaseSmoke \
             cyclonedxBom \
             --write-locks \
             --write-verification-metadata sha256 \
-            --no-daemon --stacktrace
+            --no-daemon --stacktrace \
+            > bootstrap-supply-chain.log 2>&1
+          status=$?
+          tail -n 240 bootstrap-supply-chain.log || true
+          if [[ $status -ne 0 ]]; then
+            exit "$status"
+          fi
           test -s gradle/verification-metadata.xml
           test -s app/gradle.lockfile
           test -s build/reports/cyclonedx/bom.json
 
       - name: Generate measured coverage report
         run: |
+          set +e
           ./gradlew \
             :app:koverXmlReportDebug \
             :app:koverHtmlReportDebug \
-            --no-daemon --stacktrace
+            --no-daemon --stacktrace \
+            > bootstrap-coverage.log 2>&1
+          status=$?
+          tail -n 240 bootstrap-coverage.log || true
+          if [[ $status -ne 0 ]]; then
+            exit "$status"
+          fi
           KOVER_XML="$(find app/build/reports/kover -type f -name '*.xml' | head -n 1)"
           test -n "$KOVER_XML"
           python3 tools/coverage_summary.py \
@@ -96,6 +124,7 @@ jobs:
         if: always()
         run: |
           mkdir -p bootstrap-output/app bootstrap-output/config/detekt bootstrap-output/gradle
+          find . -maxdepth 1 -type f -name 'bootstrap-*.log' -exec cp {} bootstrap-output/ \;
           test ! -f app/lint-baseline.xml || cp app/lint-baseline.xml bootstrap-output/app/
           test ! -f config/detekt/baseline.xml || cp config/detekt/baseline.xml bootstrap-output/config/detekt/
           test ! -f gradle/verification-metadata.xml || cp gradle/verification-metadata.xml bootstrap-output/gradle/
