@@ -120,6 +120,12 @@ class LoginFragment : Fragment() {
                 signInWithGoogle()
             }
 
+            tvPrivacyNotice.setOnClickListener {
+                findNavController().navigate(
+                    LoginFragmentDirections.actionLoginFragmentToPrivacyFragment()
+                )
+            }
+
             btnSignIn.setOnClickListener {
                 findNavController().navigate(
                     LoginFragmentDirections.actionLoginFragmentToSignInFragment()

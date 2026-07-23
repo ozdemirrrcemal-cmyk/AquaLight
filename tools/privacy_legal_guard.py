@@ -16,8 +16,13 @@ REQUIRED_FILES = (
     "app/src/main/assets/terms_of_use_tr.html",
     "app/src/main/assets/legal.css",
     "app/src/main/java/com/aqua/aqualight/ui/common/web/SecureLocalWebContent.kt",
+    "app/src/main/java/com/aqua/aqualight/ui/auth/LoginFragment.kt",
+    "app/src/main/java/com/aqua/aqualight/ui/auth/RegisterFragment.kt",
     "app/src/main/java/com/aqua/aqualight/data/feedback/FeedbackFirestoreProvider.kt",
     "app/src/main/java/com/aqua/aqualight/data/auth/AccountDeletionCheckpointStore.kt",
+    "app/src/main/res/layout/fragment_login.xml",
+    "app/src/main/res/layout/fragment_register.xml",
+    "app/src/main/res/navigation/nav_graph_auth.xml",
     "app/src/test/java/com/aqua/aqualight/data/auth/AccountDeletionProcessDeathMatrixTest.kt",
     "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/AccountDeletionProcessDeathSmokeActivity.kt",
     "firestore.rules",
@@ -157,6 +162,56 @@ def main() -> int:
     ):
         if token not in feedback_text:
             failures.append(f"feedback point-of-collection notice is missing: {token}")
+
+    auth_privacy_text = (
+        text("app/src/main/res/values/strings.xml")
+        + text("app/src/main/res/values-tr/strings.xml")
+    )
+    for token in (
+        "Privacy Policy · Privacy Notice",
+        "Gizlilik Politikası · KVKK Aydınlatma Metni",
+    ):
+        if token not in auth_privacy_text:
+            failures.append(f"pre-auth privacy notice copy is missing: {token}")
+
+    login_layout = text("app/src/main/res/layout/fragment_login.xml")
+    register_layout = text("app/src/main/res/layout/fragment_register.xml")
+    auth_navigation = text("app/src/main/res/navigation/nav_graph_auth.xml")
+    login_source = text(
+        "app/src/main/java/com/aqua/aqualight/ui/auth/LoginFragment.kt"
+    )
+    register_source = text(
+        "app/src/main/java/com/aqua/aqualight/ui/auth/RegisterFragment.kt"
+    )
+    pre_auth_controls = (
+        (
+            "login",
+            login_layout + auth_navigation + login_source,
+            (
+                'android:id="@+id/tvPrivacyNotice"',
+                'app:layout_constraintBottom_toTopOf="@id/btnGoogleLogin"',
+                "action_loginFragment_to_privacyFragment",
+                "actionLoginFragmentToPrivacyFragment()",
+            ),
+        ),
+        (
+            "registration",
+            register_layout + auth_navigation + register_source,
+            (
+                'android:id="@+id/tvPrivacyNotice"',
+                'app:layout_constraintTop_toBottomOf="@id/passwordRepeatContainer"',
+                'app:layout_constraintBottom_toTopOf="@id/btnRegister"',
+                "action_registerFragment_to_privacyFragment",
+                "actionRegisterFragmentToPrivacyFragment()",
+            ),
+        ),
+    )
+    for screen, control_text, tokens in pre_auth_controls:
+        for token in tokens:
+            if token not in control_text:
+                failures.append(
+                    f"{screen} pre-auth privacy control is missing: {token}"
+                )
 
     deletion_text = text(
         "app/src/main/java/com/aqua/aqualight/data/auth/AccountDeletionManager.kt"

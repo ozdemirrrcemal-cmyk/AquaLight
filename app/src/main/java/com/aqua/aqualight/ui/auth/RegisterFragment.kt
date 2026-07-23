@@ -71,6 +71,12 @@ class RegisterFragment : Fragment() {
                 )
             }
 
+            tvPrivacyNotice.setOnClickListener {
+                findNavController().navigate(
+                    RegisterFragmentDirections.actionRegisterFragmentToPrivacyFragment()
+                )
+            }
+
             btnReturnToSignIn.setOnClickListener {
                 findNavController().popBackStack()
             }

@@ -4,13 +4,18 @@
   <fragment android:id="@+id/loginFragment" android:name="com.aqua.aqualight.ui.auth.LoginFragment" android:label="@string/auth_login_title">
     <action android:id="@+id/action_loginFragment_to_registerFragment" app:destination="@id/registerFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right"/>
     <action android:id="@+id/action_loginFragment_to_signInFragment" app:destination="@id/signInFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right"/>
+    <action android:id="@+id/action_loginFragment_to_privacyFragment" app:destination="@id/privacyFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right"/>
   </fragment>
   <!-- Register -->
-  <fragment android:id="@+id/registerFragment" android:name="com.aqua.aqualight.ui.auth.RegisterFragment" android:label="@string/auth_register_title"/>
+  <fragment android:id="@+id/registerFragment" android:name="com.aqua.aqualight.ui.auth.RegisterFragment" android:label="@string/auth_register_title">
+    <action android:id="@+id/action_registerFragment_to_privacyFragment" app:destination="@id/privacyFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right"/>
+  </fragment>
   <!-- E-posta ile Giriş -->
   <fragment android:id="@+id/signInFragment" android:name="com.aqua.aqualight.ui.auth.SignInFragment" android:label="@string/auth_signin_title">
     <action android:id="@+id/action_signInFragment_to_resetPasswordFragment" app:destination="@id/resetPasswordFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right"/>
   </fragment>
   <!-- Şifre Sıfırla -->
   <fragment android:id="@+id/resetPasswordFragment" android:name="com.aqua.aqualight.ui.auth.ResetPasswordFragment" android:label="@string/auth_reset_password_title"/>
+  <!-- Pre-auth privacy/KVKK notice -->
+  <fragment android:id="@+id/privacyFragment" android:name="com.aqua.aqualight.ui.tabs.settings.legal.PrivacyFragment" android:label="@string/legal_privacy_title"/>
 </navigation>
