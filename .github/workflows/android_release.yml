@@ -205,8 +205,7 @@ jobs:
           cp "$APK" "release-dist/AquaLight-${AQL_VERSION_NAME}.apk"
           cp "$MAPPING" "release-dist/AquaLight-${AQL_VERSION_NAME}-mapping.txt"
           cp "$SBOM" "release-dist/AquaLight-${AQL_VERSION_NAME}-sbom.cdx.json"
-          (cd release-dist && sha256sum * > SHA256SUMS)
-          sha256sum --check release-dist/SHA256SUMS
+          (cd release-dist && sha256sum * > SHA256SUMS && sha256sum --check SHA256SUMS)
       - name: Generate build provenance attestation
         uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
         with:
