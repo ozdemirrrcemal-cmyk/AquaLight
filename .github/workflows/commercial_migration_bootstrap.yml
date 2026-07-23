@@ -52,6 +52,17 @@ jobs:
           python3 -m unittest discover -s tools/tests -v
           python3 tools/prepare_firebase_config.py --all --allow-placeholder
           bash tools/ci/create_ci_keystore.sh
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('app/build.gradle')
+          content = path.read_text(encoding='utf-8')
+          old = '    basePath.set(rootProject.projectDir)'
+          new = '    basePath = rootProject.projectDir'
+          if content.count(old) != 1:
+              raise SystemExit('Expected exactly one Detekt Groovy basePath expression to migrate.')
+          path.write_text(content.replace(old, new), encoding='utf-8')
+          PY
 
       - name: Generate full Android lint baseline
         run: |
@@ -123,8 +134,9 @@ jobs:
       - name: Collect bootstrap evidence
         if: always()
         run: |
-          mkdir -p bootstrap-output/app bootstrap-output/config/detekt bootstrap-output/gradle
+          mkdir -p bootstrap-output/app bootstrap-output/config/detekt bootstrap-output/gradle bootstrap-output/source
           find . -maxdepth 1 -type f -name 'bootstrap-*.log' -exec cp {} bootstrap-output/ \;
+          cp app/build.gradle bootstrap-output/source/app-build.gradle
           test ! -f app/lint-baseline.xml || cp app/lint-baseline.xml bootstrap-output/app/
           test ! -f config/detekt/baseline.xml || cp config/detekt/baseline.xml bootstrap-output/config/detekt/
           test ! -f gradle/verification-metadata.xml || cp gradle/verification-metadata.xml bootstrap-output/gradle/
