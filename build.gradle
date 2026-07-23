@@ -38,7 +38,7 @@ subprojects {
                 excludes {
                     classes(
                             "*.R",
-                            "*.R$*",
+                            '*.R$*',
                             "*.BuildConfig",
                             "*.*Binding",
                             "*.databinding.*",
