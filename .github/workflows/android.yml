@@ -1,168 +1,209 @@
-name: Android CI
+name: Android Commercial CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
     paths:
-      - "app/**"
-      - "protocol/**"
-      - "tools/**"
-      - ".github/workflows/android.yml"
+      - app/**
+      - protocol/**
+      - tools/**
+      - config/**
+      - gradle/**
+      - gradlew
+      - gradle.properties
+      - settings.gradle
+      - build.gradle
+      - .github/workflows/**
+      - .github/dependabot.yml
 
 concurrency:
-  group: android-ci-${{ github.ref }}
+  group: android-commercial-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
-  build:
+  guard:
+    name: 1 · Architecture and supply-chain guard
     runs-on: ubuntu-latest
-
-    env:
-      GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8" -Dorg.gradle.daemon=false
-      AQL_OTA_MANIFEST_PUBLIC_KEY_PEM: ${{ secrets.AQL_OTA_MANIFEST_PUBLIC_KEY_PEM }}
-      AQL_OTA_MANIFEST_KEY_ID: ${{ secrets.AQL_OTA_MANIFEST_KEY_ID }}
-
+    timeout-minutes: 10
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Run commercial guards
+        run: bash tools/run_commercial_guards.sh
 
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v2
-
+  lint:
+    name: 2 · Android lint and Detekt
+    needs: guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CI: 'true'
+      FIREBASE_DEVELOPMENT_GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.FIREBASE_DEVELOPMENT_GOOGLE_SERVICES_JSON_BASE64 }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Install JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@7a445ee88d4e23b52c33b6bd5c9534e3e3fa7393 # v4.7.1
         with:
+          distribution: temurin
           java-version: '17'
-          distribution: 'temurin'
           cache: gradle
-
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        env:
-          SKIP_JDK_VERSION_CHECK: true
-
-      - name: Install required SDK packages
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+      - name: Install Android SDK packages
         run: |
           yes | sdkmanager --licenses >/dev/null
-          sdkmanager --update
-          sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
-          sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1" || true
-          echo "Installed packages (first 120 lines):"
-          sdkmanager --list | sed -n '1,120p' || true
-
-      # Cache restore, sadece TEMİZ İSTENMİYORSA yapılır
-      - name: Cache Gradle build-cache
-        if: ${{ !contains(github.event.head_commit.message, 'clean') && !contains(github.event.head_commit.message, 'clean-cache') }}
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches/build-cache-1
-          key: ${{ runner.os }}-gradle-buildcache-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-buildcache-
-
-      - name: Grant execute permission to gradlew
-        run: chmod +x ./gradlew
-
-      - name: Run Architecture Guard
-        run: |
-          python3 tools/architecture_guard.py
-          python3 tools/navigation_guard.py
-          python3 tools/ws_protocol_guard.py
-          python3 tools/permission_architecture_guard.py
-          python3 tools/notification_reminder_architecture_guard.py
-          python3 tools/process_safe_feedback_guard.py
-          python3 tools/stage9_feedback_media_guard.py
-          python3 tools/firebase_telemetry_guard.py
-          python3 tools/privacy_legal_guard.py
-          python3 tools/design_system_resource_guard.py
-          python3 tools/localization_accessibility_guard.py
-
-      # İsteğe bağlı: bağımlılık modül cache'lerini temizle (refresh-deps)
-      - name: 🔄 Force refresh dependencies (optional)
-        if: contains(github.event.head_commit.message, 'refresh-deps')
-        run: |
-          rm -rf ~/.gradle/caches/modules-2 ~/.gradle/caches/transforms-* ~/.gradle/caches/jars-* || true
-          echo "Gradle module caches cleared."
-
-      # İsteğe bağlı: TAM TEMİZLEME – commit mesajında 'clean' veya 'clean-cache' varsa
-      # (setup-java ve cache restore'dan SONRA konumlandırıldı ki gerçekten silsin)
-      - name: 🧹 Hard clean caches & outputs (on demand)
-        if: ${{ contains(github.event.head_commit.message, 'clean') || contains(github.event.head_commit.message, 'clean-cache') }}
-        run: |
-          echo "💥 Hard clean requested. Purging Gradle caches and build outputs..."
-          rm -rf ~/.gradle/caches ~/.gradle/daemon ~/.gradle/native ~/.gradle/wrapper || true
-          rm -rf **/build build app/build || true
-
-      - name: Clean project (light)
-        run: ./gradlew clean --no-daemon
-
-      - name: Verify resolved Firebase runtime policy
-        run: ./gradlew :app:verifyFirebaseRuntimePolicy --no-daemon --stacktrace
-
-      - name: Generate debug keystore (if missing)
-        run: |
-          mkdir -p ~/.android
-          if [ ! -s ~/.android/debug.keystore ]; then
-            keytool -genkeypair -v \
-              -keystore ~/.android/debug.keystore \
-              -storepass android \
-              -alias AndroidDebugKey \
-              -keypass android \
-              -keyalg RSA \
-              -keysize 2048 \
-              -validity 10000 \
-              -storetype JKS \
-              -dname "CN=Android,O=AquaLight,C=TR"
-          fi
-
-      - name: Run Android Lint
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+      - name: Prepare development Firebase configuration
+        run: python3 tools/ci/materialize_firebase_config.py --environment development --allow-ci-fixture
+      - name: Run standard Android lint and Detekt
+        shell: bash
         run: |
           set -o pipefail
-          ./gradlew lintDebug --no-daemon --stacktrace 2>&1 | tee lint-debug.log
-
-      - name: Upload Lint Reports
+          chmod +x gradlew
+          ./gradlew lintDevelopmentDebug detektDevelopmentDebug --no-daemon --stacktrace \
+            2>&1 | tee lint-and-detekt.log
+      - name: Upload lint evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: lint-reports-${{ github.run_number }}
+          name: lint-detekt-${{ github.run_id }}
           path: |
-            lint-debug.log
-            **/build/reports/lint-results-*.html
-            **/build/reports/lint-results-*.xml
+            lint-and-detekt.log
+            **/build/reports/lint-results-*
+            **/build/reports/detekt/**
           if-no-files-found: ignore
+          retention-days: 14
+      - name: Remove generated Firebase configuration
+        if: always()
+        run: rm -f app/src/development/google-services.json
 
-      - name: Run Unit Tests
-        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
-
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace --no-daemon --refresh-dependencies
-
-      - name: Verify merged manifest telemetry policy
-        run: python3 tools/firebase_telemetry_guard.py --scan-build-output
-
-      - name: 📋 Dump debugRuntimeClasspath (on failure)
-        if: failure()
-        run: ./gradlew :app:dependencies --configuration debugRuntimeClasspath --no-daemon
-
-      - name: Verify Debug APK
-        run: |
-          set -e
-          ls -la app/build/outputs/apk/debug || true
-          if [ -f app/build/outputs/apk/debug/app-debug.apk ]; then
-            echo "✅ APK bulundu"
-          else
-            echo "❌ APK yok"
-            exit 1
-          fi
-
-      - name: Upload Debug APK
-        uses: actions/upload-artifact@v4
+  unit-test:
+    name: 3 · Unit tests and critical coverage
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      CI: 'true'
+      FIREBASE_DEVELOPMENT_GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.FIREBASE_DEVELOPMENT_GOOGLE_SERVICES_JSON_BASE64 }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Install JDK 17
+        uses: actions/setup-java@7a445ee88d4e23b52c33b6bd5c9534e3e3fa7393 # v4.7.1
         with:
-          name: app-debug-${{ github.run_number }}
-          path: app/build/outputs/apk/debug/*.apk
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+      - name: Install Android SDK packages
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+      - name: Prepare development Firebase configuration
+        run: python3 tools/ci/materialize_firebase_config.py --environment development --allow-ci-fixture
+      - name: Run unit tests, Firebase dependency policy, and coverage gate
+        shell: bash
+        run: |
+          set -o pipefail
+          chmod +x gradlew
+          ./gradlew \
+            :app:verifyFirebaseRuntimePolicy \
+            testDevelopmentDebugUnitTest \
+            jacocoCriticalCoverageReport \
+            jacocoCriticalCoverageVerification \
+            --no-daemon --stacktrace 2>&1 | tee unit-and-coverage.log
+      - name: Upload test and coverage evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: unit-coverage-${{ github.run_id }}
+          path: |
+            unit-and-coverage.log
+            app/build/reports/tests/testDevelopmentDebugUnitTest/**
+            app/build/reports/jacoco/**
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Remove generated Firebase configuration
+        if: always()
+        run: rm -f app/src/development/google-services.json
+
+  instrumentation:
+    name: 4 · Instrumentation matrix
+    needs: unit-test
+    uses: ./.github/workflows/android_instrumentation.yml
+    secrets: inherit
+
+  release-validation:
+    name: 5 · Minified staging release build
+    needs: instrumentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      CI: 'true'
+      FIREBASE_STAGING_GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.FIREBASE_STAGING_GOOGLE_SERVICES_JSON_BASE64 }}
+      RELEASE_KEYSTORE_PASSWORD: aqualight-ci
+      RELEASE_KEY_ALIAS: aqualight-ci
+      RELEASE_KEY_PASSWORD: aqualight-ci
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Install JDK 17
+        uses: actions/setup-java@7a445ee88d4e23b52c33b6bd5c9534e3e3fa7393 # v4.7.1
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+      - name: Install Android SDK packages
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+      - name: Prepare staging Firebase configuration
+        run: python3 tools/ci/materialize_firebase_config.py --environment staging --allow-ci-fixture
+      - name: Generate ephemeral staging signing key
+        shell: bash
+        run: |
+          set -euo pipefail
+          KEYSTORE="$RUNNER_TEMP/aqualight-ci.jks"
+          keytool -genkeypair -noprompt \
+            -keystore "$KEYSTORE" \
+            -storepass "$RELEASE_KEYSTORE_PASSWORD" \
+            -alias "$RELEASE_KEY_ALIAS" \
+            -keypass "$RELEASE_KEY_PASSWORD" \
+            -keyalg RSA -keysize 2048 -validity 1 \
+            -dname "CN=AquaLight CI,O=AquaLight,C=TR"
+          chmod 600 "$KEYSTORE"
+          printf 'AQL_RELEASE_KEYSTORE_PATH=%s\n' "$KEYSTORE" >> "$GITHUB_ENV"
+      - name: Build and inspect minified staging release
+        shell: bash
+        run: |
+          set -o pipefail
+          chmod +x gradlew
+          ./gradlew assembleStagingRelease --no-daemon --stacktrace \
+            2>&1 | tee staging-release.log
+          test -n "$(find app/build/outputs/apk/staging/release -type f -name '*.apk' -size +0c -print -quit)"
+          test -s app/build/outputs/mapping/stagingRelease/mapping.txt
+          python3 tools/firebase_telemetry_guard.py --scan-build-output
+      - name: Upload staging release evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: staging-release-${{ github.run_id }}
+          path: |
+            staging-release.log
+            app/build/outputs/apk/staging/release/*.apk
+            app/build/outputs/mapping/stagingRelease/mapping.txt
+          if-no-files-found: error
+          retention-days: 7
+      - name: Remove ephemeral files
+        if: always()
+        run: |
+          rm -f "$RUNNER_TEMP/aqualight-ci.jks"
+          rm -f app/src/staging/google-services.json
