@@ -16,6 +16,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionFailureKind
@@ -77,7 +78,7 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
             setSpan(
                 object : ClickableSpan() {
                     override fun onClick(widget: View) {
-                        findNavController().navigate(
+                        safeNavigate(
                             FeedbackFragmentDirections
                                 .actionFeedbackFragmentToPrivacyFragment()
                         )
@@ -104,6 +105,20 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
                 requireContext(),
                 android.R.color.transparent
             )
+        }
+    }
+
+    private fun safeNavigate(directions: NavDirections) {
+        val navController = runCatching {
+            findNavController()
+        }.getOrNull() ?: return
+
+        if (navController.currentDestination?.id != R.id.feedbackFragment) {
+            return
+        }
+
+        runCatching {
+            navController.navigate(directions)
         }
     }
 
