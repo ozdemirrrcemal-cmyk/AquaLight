@@ -1,5 +1,1 @@
-plugins {
-    id 'org.cyclonedx.bom' apply false
-    id 'org.jlleitschuh.gradle.ktlint' apply false
-    id 'org.jetbrains.kotlinx.kover' apply false
-}
+// Root project intentionally keeps plugin application at module scope.
