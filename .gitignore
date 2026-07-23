@@ -69,3 +69,6 @@ __pycache__/
 
 # --- (Opsiyonel) Firebase dosyası ---
 **/google-services.json
+!app/src/development/google-services.json
+!app/src/staging/google-services.json
+!app/src/production/google-services.json

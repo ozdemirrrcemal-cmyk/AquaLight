@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "100000000002",
+    "project_id": "demo-aqualight-staging",
+    "storage_bucket": "demo-aqualight-staging.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:100000000002:android:2222222222222222222222",
+        "android_client_info": {
+          "package_name": "com.aqua.aqualight.staging"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "100000000002-staging.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAquaLightStagingPlaceholderOnly00000"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "100000000002-staging.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

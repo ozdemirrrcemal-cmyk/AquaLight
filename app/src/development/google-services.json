@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "100000000001",
+    "project_id": "demo-aqualight-development",
+    "storage_bucket": "demo-aqualight-development.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:100000000001:android:1111111111111111111111",
+        "android_client_info": {
+          "package_name": "com.aqua.aqualight.dev"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "100000000001-development.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAquaLightDevelopmentEmulatorOnly000"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "100000000001-development.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

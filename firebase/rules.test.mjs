@@ -22,7 +22,7 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 
-const PROJECT_ID = 'demo-aqualight-feedback';
+const PROJECT_ID = 'demo-aqualight-development';
 const OWNER = 'owner-a';
 const OTHER_OWNER = 'owner-b';
 const ADMIN = 'admin-a';

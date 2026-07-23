@@ -11,6 +11,8 @@ on:
       - "gradle.properties"
       - "settings.gradle"
       - "tools/run_release_smoke.sh"
+      - "tools/verify_uninstall_clears_data.sh"
+      - "tools/firebase_environment_guard.py"
 
 concurrency:
   group: android-emulator-${{ github.event.pull_request.number || github.ref }}
@@ -54,8 +56,10 @@ jobs:
 
       - name: Verify release-smoke runner contract
         run: |
-          grep -Fq "connectedDebugAndroidTest" tools/run_release_smoke.sh
+          python3 tools/firebase_environment_guard.py
+          grep -Fq "connectedDevelopmentDebugAndroidTest" tools/run_release_smoke.sh
           grep -Fq "bash tools/verify_uninstall_clears_data.sh" tools/run_release_smoke.sh
+          grep -Fq "com.aqua.aqualight.staging" tools/run_release_smoke.sh
           grep -Fq "RELEASE_SMOKE_PASS" tools/run_release_smoke.sh
           grep -Fq "ReleaseSmokeActivity" tools/run_release_smoke.sh
           grep -Fq "AccountDeletionProcessDeathSmokeActivity" tools/run_release_smoke.sh
@@ -84,9 +88,9 @@ jobs:
           RELEASE_KEY_PASSWORD: aqualight-ci
         run: |
           set -o pipefail
-          ./gradlew assembleReleaseSmoke --no-daemon --stacktrace \
+          ./gradlew assembleStagingReleaseSmoke --no-daemon --stacktrace \
             2>&1 | tee assemble-release-smoke.log
-          SMOKE_APK="$(find app/build/outputs/apk/releaseSmoke -type f -name '*.apk' | head -n 1)"
+          SMOKE_APK="$(find app/build/outputs/apk/staging/releaseSmoke -type f -name '*.apk' | head -n 1)"
           test -n "$SMOKE_APK"
           test -s "$SMOKE_APK"
           printf '%s\n' "$SMOKE_APK" > release-smoke-apk-path.txt

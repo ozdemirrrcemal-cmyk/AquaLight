@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "development": "demo-aqualight-development",
+    "staging": "demo-aqualight-staging",
+    "production": "aqualight-58aa2"
+  }
+}

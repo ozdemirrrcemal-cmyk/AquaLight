@@ -9,12 +9,16 @@ on:
   pull_request:
     paths:
       - ".github/workflows/android_release.yml"
+      - ".firebaserc"
       - "app/**"
+      - "firebase.json"
       - "gradle/**"
       - "gradlew"
       - "gradle.properties"
       - "settings.gradle"
       - "tools/release_version.py"
+      - "tools/firebase_environment_guard.py"
+      - "tools/tests/test_firebase_environment.py"
       - "tools/tests/test_release_version.py"
 
 concurrency:
@@ -42,7 +46,11 @@ jobs:
           fetch-depth: 0
 
       - name: Test release policy
-        run: python3 -m unittest tools.tests.test_release_version -v
+        run: >-
+          python3 -m unittest
+          tools.tests.test_release_version
+          tools.tests.test_firebase_environment
+          -v
 
       - name: Validate production tag and main lineage
         id: release
@@ -232,6 +240,7 @@ jobs:
           python3 tools/notification_reminder_architecture_guard.py
           python3 tools/process_safe_feedback_guard.py
           python3 tools/stage9_feedback_media_guard.py
+          python3 tools/firebase_environment_guard.py
           python3 tools/firebase_telemetry_guard.py
           python3 tools/privacy_legal_guard.py
           python3 tools/design_system_resource_guard.py
@@ -257,10 +266,11 @@ jobs:
       - name: Build and test minified release candidate
         run: |
           ./gradlew \
+            :app:verifyFirebaseEnvironmentSeparation \
             :app:verifyFirebaseRuntimePolicy \
-            lintRelease \
-            testReleaseUnitTest \
-            assembleReleaseSmoke \
+            lintStagingReleaseSmoke \
+            testStagingReleaseSmokeUnitTest \
+            assembleStagingReleaseSmoke \
             --no-daemon \
             --stacktrace
           python3 tools/firebase_telemetry_guard.py --scan-build-output
@@ -270,7 +280,7 @@ jobs:
         run: |
           set -euo pipefail
           candidate_apk="$(
-            find app/build/outputs/apk/releaseSmoke \
+            find app/build/outputs/apk/staging/releaseSmoke \
               -type f -name "*.apk" -print -quit
           )"
           test -n "$candidate_apk"
@@ -285,7 +295,7 @@ jobs:
           path: |
             **/build/reports/lint-results-*.html
             **/build/reports/lint-results-*.xml
-            **/build/reports/tests/testReleaseUnitTest/**
+            **/build/reports/tests/testStagingReleaseSmokeUnitTest/**
           if-no-files-found: ignore
           retention-days: 14
 
@@ -293,7 +303,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: AquaLight-release-candidate-${{ github.run_number }}
-          path: app/build/outputs/apk/releaseSmoke/*.apk
+          path: app/build/outputs/apk/staging/releaseSmoke/*.apk
           if-no-files-found: error
           retention-days: 14
 
@@ -399,10 +409,11 @@ jobs:
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: |
           ./gradlew \
+            :app:verifyFirebaseEnvironmentSeparation \
             :app:verifyFirebaseRuntimePolicy \
-            lintRelease \
-            testReleaseUnitTest \
-            assembleRelease \
+            lintProductionRelease \
+            testProductionReleaseUnitTest \
+            assembleProductionRelease \
             -PAQL_VERSION_NAME="$AQL_VERSION_NAME" \
             -PAQL_VERSION_CODE="$AQL_VERSION_CODE" \
             --no-daemon \
@@ -413,7 +424,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -s app/build/outputs/apk/release/AquaLight.apk
+          test -s app/build/outputs/apk/production/release/AquaLight.apk
 
       - name: Upload production reports
         if: always()
@@ -423,14 +434,14 @@ jobs:
           path: |
             **/build/reports/lint-results-*.html
             **/build/reports/lint-results-*.xml
-            **/build/reports/tests/testReleaseUnitTest/**
+            **/build/reports/tests/testProductionReleaseUnitTest/**
           if-no-files-found: ignore
 
       - name: Upload production APK
         uses: actions/upload-artifact@v4
         with:
           name: AquaLight-${{ needs.preflight.outputs.release_tag }}-APK
-          path: app/build/outputs/apk/release/AquaLight.apk
+          path: app/build/outputs/apk/production/release/AquaLight.apk
           if-no-files-found: error
 
       - name: Remove production release keystore

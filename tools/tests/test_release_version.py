@@ -157,7 +157,8 @@ class ReleaseWorkflowContractTest(unittest.TestCase):
         self.assertIn('branches: ["main"]', self.workflow)
         self.assertIn('- "v*.*.*"', self.workflow)
         self.assertIn("github.ref == 'refs/heads/main'", self.candidate_job)
-        self.assertIn("assembleReleaseSmoke", self.candidate_job)
+        self.assertIn("assembleStagingReleaseSmoke", self.candidate_job)
+        self.assertNotIn("assembleProductionRelease", self.candidate_job)
         self.assertNotIn("secrets.", self.candidate_job)
         self.assertNotIn("RELEASE_KEYSTORE_BASE64", self.candidate_job)
 
@@ -172,6 +173,7 @@ class ReleaseWorkflowContractTest(unittest.TestCase):
         )
         self.assertIn("environment: production-release", self.production_job)
         self.assertIn("RELEASE_KEYSTORE_BASE64", self.production_job)
+        self.assertIn("assembleProductionRelease", self.production_job)
 
 
 if __name__ == "__main__":

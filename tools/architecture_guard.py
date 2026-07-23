@@ -384,7 +384,10 @@ require(
 emulator_workflow_path = ".github/workflows/android_instrumentation.yml"
 emulator_workflow = read(emulator_workflow_path)
 for token, reason in (
-    ("connectedDebugAndroidTest", "instrumentation tests must run in CI"),
+    (
+        "connectedDevelopmentDebugAndroidTest",
+        "development instrumentation tests must run in CI",
+    ),
     (
         "bash tools/verify_uninstall_clears_data.sh",
         "emulator CI must verify uninstall/reinstall data removal",
@@ -426,9 +429,15 @@ pr_workflow_path = ".github/workflows/codeql.yml"
 pr_workflow = read(pr_workflow_path)
 for token, reason in (
     ("python3 tools/navigation_guard.py", "PR validation must enforce navigation contracts"),
-    ("testReleaseUnitTest", "PR validation must compile and run Release unit tests"),
-    ("lintRelease", "PR validation must run Release lint"),
-    ("assembleRelease", "PR validation must exercise minification and release packaging"),
+    (
+        "testStagingReleaseSmokeUnitTest",
+        "PR validation must compile and run staging release-smoke unit tests",
+    ),
+    ("lintStagingReleaseSmoke", "PR validation must run staging release-smoke lint"),
+    (
+        "assembleStagingReleaseSmoke",
+        "PR validation must exercise staging minification and release packaging",
+    ),
 ):
     require(pr_workflow_path, pr_workflow, token, reason)
 

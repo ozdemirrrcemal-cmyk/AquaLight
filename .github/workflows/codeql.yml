@@ -66,6 +66,8 @@ jobs:
             python3 tools/notification_reminder_architecture_guard.py
             python3 tools/process_safe_feedback_guard.py
             python3 tools/stage9_feedback_media_guard.py
+            python3 tools/firebase_environment_guard.py
+            python3 tools/firebase_telemetry_guard.py
             python3 tools/design_system_resource_guard.py
             python3 tools/localization_accessibility_guard.py
           } 2>&1 | tee architecture-guards.log
@@ -80,7 +82,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          ./gradlew clean assembleDebug \
+          ./gradlew clean assembleDevelopmentDebug \
             --no-daemon \
             --no-build-cache \
             --rerun-tasks \
@@ -91,19 +93,22 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          ./gradlew testDebugUnitTest --no-daemon --stacktrace 2>&1 | tee unit-test.log
+          ./gradlew testDevelopmentDebugUnitTest --no-daemon --stacktrace \
+            2>&1 | tee unit-test-development.log
 
       - name: Run Debug lint
         shell: bash
         run: |
           set -o pipefail
-          ./gradlew lintDebug --no-daemon --stacktrace 2>&1 | tee lint-debug.log
+          ./gradlew lintDevelopmentDebug --no-daemon --stacktrace \
+            2>&1 | tee lint-development.log
 
       - name: Build Debug APK
         shell: bash
         run: |
           set -o pipefail
-          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee assemble-debug.log
+          ./gradlew assembleDevelopmentDebug --no-daemon --stacktrace \
+            2>&1 | tee assemble-development.log
 
       - name: Generate CI-only release keystore
         run: |
@@ -117,7 +122,7 @@ jobs:
             -validity 1 \
             -dname "CN=AquaLight CI,O=AquaLight,C=TR"
 
-      - name: Run Release unit tests
+      - name: Run Staging release-smoke unit tests
         shell: bash
         env:
           RELEASE_KEYSTORE_PASSWORD: aqualight-ci
@@ -125,9 +130,10 @@ jobs:
           RELEASE_KEY_PASSWORD: aqualight-ci
         run: |
           set -o pipefail
-          ./gradlew testReleaseUnitTest --no-daemon --stacktrace 2>&1 | tee unit-test-release.log
+          ./gradlew testStagingReleaseSmokeUnitTest --no-daemon --stacktrace \
+            2>&1 | tee unit-test-staging.log
 
-      - name: Run Release lint
+      - name: Run Staging release-smoke lint
         shell: bash
         env:
           RELEASE_KEYSTORE_PASSWORD: aqualight-ci
@@ -135,9 +141,10 @@ jobs:
           RELEASE_KEY_PASSWORD: aqualight-ci
         run: |
           set -o pipefail
-          ./gradlew lintRelease --no-daemon --stacktrace 2>&1 | tee lint-release.log
+          ./gradlew lintStagingReleaseSmoke --no-daemon --stacktrace \
+            2>&1 | tee lint-staging.log
 
-      - name: Build minified Release APK with CI-only signing
+      - name: Build minified Staging APK with CI-only signing
         shell: bash
         env:
           RELEASE_KEYSTORE_PASSWORD: aqualight-ci
@@ -145,9 +152,10 @@ jobs:
           RELEASE_KEY_PASSWORD: aqualight-ci
         run: |
           set -o pipefail
-          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee assemble-release.log
-          test -s app/build/outputs/apk/release/AquaLight.apk
-          test -s app/build/outputs/mapping/release/mapping.txt
+          ./gradlew assembleStagingReleaseSmoke --no-daemon --stacktrace \
+            2>&1 | tee assemble-staging.log
+          test -n "$(find app/build/outputs/apk/staging/releaseSmoke -type f -name '*.apk' -print -quit)"
+          test -s app/build/outputs/mapping/stagingReleaseSmoke/mapping.txt
 
       - name: Upload validation logs
         if: always()
@@ -157,17 +165,17 @@ jobs:
           path: |
             architecture-guards.log
             codeql-extraction-build.log
-            unit-test.log
-            unit-test-release.log
-            lint-debug.log
-            lint-release.log
-            assemble-debug.log
-            assemble-release.log
-            app/build/outputs/mapping/release/mapping.txt
-            app/build/reports/tests/testDebugUnitTest/**
-            app/build/reports/tests/testReleaseUnitTest/**
-            app/build/reports/lint-results-debug.*
-            app/build/reports/lint-results-release.*
+            unit-test-development.log
+            unit-test-staging.log
+            lint-development.log
+            lint-staging.log
+            assemble-development.log
+            assemble-staging.log
+            app/build/outputs/mapping/stagingReleaseSmoke/mapping.txt
+            app/build/reports/tests/testDevelopmentDebugUnitTest/**
+            app/build/reports/tests/testStagingReleaseSmokeUnitTest/**
+            app/build/reports/lint-results-developmentDebug.*
+            app/build/reports/lint-results-stagingReleaseSmoke.*
           if-no-files-found: ignore
 
       - name: Remove CI-only release keystore

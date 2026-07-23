@@ -95,7 +95,6 @@
     <string name="login_register_desc">Kayıt ekranına git</string>
     <string name="auth_privacy_notice_link"><u>Gizlilik Politikası · KVKK Aydınlatma Metni</u></string>
     <string name="auth_privacy_notice_link_desc">Gizlilik Politikası ve KVKK Aydınlatma Metni’ni aç</string>
-    <string name="default_web_client_id">660201044993-1k6q4dfl4q128h7463et4v05s7edksus.apps.googleusercontent.com</string>
     <string name="login_google_failed">Google ile giriş başarısız</string>
     <string name="login_firebase_failed">Firebase kimlik doğrulaması başarısız</string>
     <string name="login_google_account_not_selected">Google hesabı seçilemedi. Lütfen yeniden deneyin.</string>

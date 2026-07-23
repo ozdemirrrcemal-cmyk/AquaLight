@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths:
+      - .firebaserc
       - firebase.json
       - firestore.rules
       - firestore.indexes.json
@@ -12,6 +13,7 @@ on:
       - .github/workflows/firebase_rules.yml
   pull_request:
     paths:
+      - .firebaserc
       - firebase.json
       - firestore.rules
       - firestore.indexes.json
@@ -56,5 +58,5 @@ jobs:
         run: >-
           npx --yes firebase-tools@15.24.0 emulators:exec
           --only firestore
-          --project demo-aqualight-feedback
+          --project development
           "node firebase/rules.test.mjs"

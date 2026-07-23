@@ -2,7 +2,8 @@
 set -Eeuo pipefail
 
 API_LEVEL="${1:-unknown}"
-PACKAGE_NAME="com.aqua.aqualight"
+DEVELOPMENT_PACKAGE_NAME="com.aqua.aqualight.dev"
+PACKAGE_NAME="com.aqua.aqualight.staging"
 SMOKE_ACTIVITY="com.aqua.aqualight.smoke.ReleaseSmokeActivity"
 SMOKE_COMPONENT="${PACKAGE_NAME}/${SMOKE_ACTIVITY}"
 ACCOUNT_DELETION_SMOKE_ACTIVITY="com.aqua.aqualight.smoke.AccountDeletionProcessDeathSmokeActivity"
@@ -118,8 +119,10 @@ finish() {
 }
 trap finish EXIT
 
-./gradlew connectedDebugAndroidTest --no-daemon --stacktrace
-bash tools/verify_uninstall_clears_data.sh
+./gradlew connectedDevelopmentDebugAndroidTest --no-daemon --stacktrace
+bash tools/verify_uninstall_clears_data.sh \
+  app/build/outputs/apk/development/debug/app-development-debug.apk \
+  "$DEVELOPMENT_PACKAGE_NAME"
 
 adb uninstall "$PACKAGE_NAME" >/dev/null 2>&1 || true
 SMOKE_APK="$(cat release-smoke-apk-path.txt)"

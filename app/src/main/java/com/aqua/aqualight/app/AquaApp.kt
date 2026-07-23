@@ -52,6 +52,8 @@ class AquaApp : Application() {
     override fun onCreate() {
         super.onCreate()
 
+        FirebaseEnvironmentInstaller.install(this)
+
         registerActivityLifecycleCallbacks(
             AccessibilityRuntimeInstaller()
         )

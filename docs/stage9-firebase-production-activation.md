@@ -26,6 +26,7 @@ Cloud Functions, App Check, Play Integrity, Firebase Storage or any Blaze-only r
 ## Source-controlled deployment inputs
 
 - `firebase.json`
+- `.firebaserc`
 - `firestore.rules`
 - `firestore.indexes.json`
 - `firebase/rules.test.mjs`
@@ -41,8 +42,7 @@ Only Firestore rules and indexes need deployment. This does not require switchin
 project to the Blaze plan.
 
 ```bash
-firebase use <production-project-id>
-firebase deploy --only firestore
+firebase deploy --project production --only firestore
 ```
 
 There are no Functions to deploy and no App Check or Play Integrity configuration for feedback.

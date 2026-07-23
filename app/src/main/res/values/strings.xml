@@ -96,7 +96,6 @@
     <string name="login_register_desc">Go to registration screen</string>
     <string name="auth_privacy_notice_link"><u>Privacy Policy · Privacy Notice</u></string>
     <string name="auth_privacy_notice_link_desc">Open the Privacy Policy and Privacy Notice</string>
-    <string name="default_web_client_id">660201044993-1k6q4dfl4q128h7463et4v05s7edksus.apps.googleusercontent.com</string>
     <string name="login_google_failed">Google sign-in failed</string>
     <string name="login_firebase_failed">Firebase authentication failed</string>
     <string name="login_google_account_not_selected">Google account could not be selected. Please try again.</string>

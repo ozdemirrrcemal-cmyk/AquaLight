@@ -30,6 +30,24 @@ def aqlVersionCodeProvider = providers.gradleProperty("AQL_VERSION_CODE")
 def hasVersionNameOverride = aqlVersionNameProvider.isPresent()
 def hasVersionCodeOverride = aqlVersionCodeProvider.isPresent()
 
+def firebaseEnvironmentContracts = [
+        development: [
+                projectId  : "demo-aqualight-development",
+                packageName: "com.aqua.aqualight.dev",
+                demoProject: true
+        ],
+        staging    : [
+                projectId  : "demo-aqualight-staging",
+                packageName: "com.aqua.aqualight.staging",
+                demoProject: true
+        ],
+        production : [
+                projectId  : "aqualight-58aa2",
+                packageName: "com.aqua.aqualight",
+                demoProject: false
+        ]
+]
+
 if (hasVersionNameOverride != hasVersionCodeOverride) {
     throw new GradleException(
             "AQL_VERSION_NAME and AQL_VERSION_CODE must be provided together."
@@ -81,6 +99,34 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "AQL_OTA_MANIFEST_PUBLIC_KEY_PEM", aqlBuildConfigString(otaManifestPublicKeyPem)
         buildConfigField "String", "AQL_OTA_MANIFEST_KEY_ID", aqlBuildConfigString(otaManifestKeyId)
+    }
+
+    flavorDimensions "firebaseEnvironment"
+    productFlavors {
+        development {
+            dimension "firebaseEnvironment"
+            applicationIdSuffix ".dev"
+            versionNameSuffix "-dev"
+            buildConfigField "String", "AQL_FIREBASE_ENVIRONMENT", "\"development\""
+            buildConfigField "String", "AQL_FIREBASE_PROJECT_ID", "\"demo-aqualight-development\""
+            buildConfigField "boolean", "AQL_FIREBASE_USE_EMULATORS", "true"
+        }
+
+        staging {
+            dimension "firebaseEnvironment"
+            applicationIdSuffix ".staging"
+            versionNameSuffix "-staging"
+            buildConfigField "String", "AQL_FIREBASE_ENVIRONMENT", "\"staging\""
+            buildConfigField "String", "AQL_FIREBASE_PROJECT_ID", "\"demo-aqualight-staging\""
+            buildConfigField "boolean", "AQL_FIREBASE_USE_EMULATORS", "false"
+        }
+
+        production {
+            dimension "firebaseEnvironment"
+            buildConfigField "String", "AQL_FIREBASE_ENVIRONMENT", "\"production\""
+            buildConfigField "String", "AQL_FIREBASE_PROJECT_ID", "\"aqualight-58aa2\""
+            buildConfigField "boolean", "AQL_FIREBASE_USE_EMULATORS", "false"
+        }
     }
 
     signingConfigs {
@@ -246,13 +292,114 @@ protobuf {
         }
     }
 }
-// app/build.gradle (en alt)
+def allowedEnvironmentBuildTypes = [
+        development: ["debug"] as Set,
+        staging    : ["releaseSmoke"] as Set,
+        production : ["release"] as Set
+]
+
 androidComponents {
-  onVariants(selector().withBuildType("release")) { variant ->
-    variant.outputs.each { output ->
-      output.outputFileName.set("AquaLight.apk") // ✅ sabit isim
+    beforeVariants(selector().all()) { variantBuilder ->
+        def environment = variantBuilder.productFlavors.find { flavor ->
+            flavor.first == "firebaseEnvironment"
+        }?.second
+        variantBuilder.enable =
+                environment != null &&
+                allowedEnvironmentBuildTypes[environment]?.contains(variantBuilder.buildType)
     }
-  }
+
+    onVariants(selector().withBuildType("release")) { variant ->
+        variant.outputs.each { output ->
+            output.outputFileName.set("AquaLight.apk")
+        }
+    }
+}
+
+tasks.register("verifyFirebaseEnvironmentSeparation") {
+    group = "verification"
+    description = "Fails when a Firebase build environment can resolve another environment."
+
+    def configFiles = firebaseEnvironmentContracts.collectEntries { environment, contract ->
+        [(environment): file("src/${environment}/google-services.json")]
+    }
+    def contractInputs = firebaseEnvironmentContracts.collectEntries { environment, contract ->
+        [
+                ("${environment}.projectId".toString())  : contract.projectId,
+                ("${environment}.packageName".toString()): contract.packageName,
+                ("${environment}.demoProject".toString()): contract.demoProject
+        ]
+    }
+    inputs.files(configFiles.values())
+    inputs.properties(contractInputs)
+
+    doLast {
+        if (file("google-services.json").exists()) {
+            throw new GradleException(
+                    "app/google-services.json is forbidden because it silently applies to every variant."
+            )
+        }
+
+        def projectIds = [] as Set
+        firebaseEnvironmentContracts.each { environment, contract ->
+            def configFile = configFiles[environment]
+            if (!configFile.isFile()) {
+                throw new GradleException(
+                        "Missing Firebase configuration for ${environment}: ${configFile}"
+                )
+            }
+
+            def config = new groovy.json.JsonSlurper().parse(configFile)
+            def projectId = config.project_info?.project_id
+            if (projectId != contract.projectId) {
+                throw new GradleException(
+                        "${environment} Firebase project mismatch: expected ${contract.projectId}, " +
+                                "found ${projectId}."
+                )
+            }
+            if (!projectIds.add(projectId)) {
+                throw new GradleException(
+                        "Firebase project ${projectId} is shared by more than one environment."
+                )
+            }
+
+            def matchingClients = config.client?.findAll { client ->
+                client.client_info?.android_client_info?.package_name == contract.packageName
+            } ?: []
+            if (matchingClients.size() != 1) {
+                throw new GradleException(
+                        "${environment} must contain exactly one Firebase Android client for " +
+                                "${contract.packageName}."
+                )
+            }
+
+            def client = matchingClients.first()
+            def webClients = client.oauth_client?.findAll { oauth ->
+                oauth.client_type == 3 && oauth.client_id
+            } ?: []
+            if (webClients.isEmpty()) {
+                throw new GradleException(
+                        "${environment} Firebase configuration is missing its web OAuth client."
+                )
+            }
+            if (!(client.api_key?.any { apiKey -> apiKey.current_key })) {
+                throw new GradleException(
+                        "${environment} Firebase configuration is missing its Android API key."
+                )
+            }
+
+            def isDemoProject =
+                    projectId instanceof String && projectId.startsWith("demo-")
+            if (contract.demoProject != isDemoProject) {
+                throw new GradleException(
+                        "${environment} Firebase demo/live project policy does not match ${projectId}."
+                )
+            }
+        }
+    }
+}
+
+tasks.named("preBuild").configure {
+    dependsOn(tasks.named("verifyFirebaseEnvironmentSeparation"))
 }
 
 def forbiddenFirebaseRuntimeModules = [
@@ -279,8 +426,9 @@ tasks.register("verifyFirebaseRuntimePolicy") {
             forbiddenFirebaseRuntimeModules.toList().sort()
     )
     inputs.files(
-            configurations.named("debugRuntimeClasspath"),
-            configurations.named("releaseRuntimeClasspath")
+            configurations.named("developmentDebugRuntimeClasspath"),
+            configurations.named("stagingReleaseSmokeRuntimeClasspath"),
+            configurations.named("productionReleaseRuntimeClasspath")
     ).withPropertyName("firebaseRuntimeClasspaths").withPathSensitivity(PathSensitivity.NONE)
 
     doLast { task ->
