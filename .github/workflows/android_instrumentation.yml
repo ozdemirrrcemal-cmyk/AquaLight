@@ -20,8 +20,6 @@ jobs:
 
     env:
       CI: 'true'
-      AQL_OTA_MANIFEST_PUBLIC_KEY_PEM: ${{ secrets.AQL_OTA_MANIFEST_PUBLIC_KEY_PEM }}
-      AQL_OTA_MANIFEST_KEY_ID: ${{ secrets.AQL_OTA_MANIFEST_KEY_ID }}
       RELEASE_KEYSTORE_PASSWORD: aqualight-ci
       RELEASE_KEY_ALIAS: aqualight-ci
       RELEASE_KEY_PASSWORD: aqualight-ci
@@ -31,7 +29,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Install JDK 17
-        uses: actions/setup-java@7a445ee88d4e23b52c33b6bd5c9534e3e3fa7393 # v4.7.1
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           distribution: temurin
           java-version: '17'
