@@ -57,11 +57,15 @@ jobs:
   seal-commercial-state:
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'agent/commercial-13-release-supply-chain'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     permissions:
       contents: write
     env:
+      CI: 'true'
       GRADLE_USER_HOME: /tmp/aqualight-cold-gradle-home-${{ github.run_id }}
+      RELEASE_KEYSTORE_PASSWORD: aqualight-ci
+      RELEASE_KEY_ALIAS: aqualight-ci
+      RELEASE_KEY_PASSWORD: aqualight-ci
     steps:
       - name: Checkout pull request branch
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -104,18 +108,48 @@ jobs:
               raise SystemExit('legacy variant selector block was not found exactly')
           path.write_text(text.replace(old, new), encoding='utf-8')
           PY
-      - name: Regenerate complete cold-cache dependency state
+      - name: Prepare non-production Firebase and signing inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/ci/materialize_firebase_config.py --environment development --allow-ci-fixture
+          python3 tools/ci/materialize_firebase_config.py --environment staging --allow-ci-fixture
+          KEYSTORE="$RUNNER_TEMP/aqualight-ci.jks"
+          keytool -genkeypair -noprompt \
+            -keystore "$KEYSTORE" \
+            -storepass "$RELEASE_KEYSTORE_PASSWORD" \
+            -alias "$RELEASE_KEY_ALIAS" \
+            -keypass "$RELEASE_KEY_PASSWORD" \
+            -keyalg RSA -keysize 2048 -validity 1 \
+            -dname "CN=AquaLight CI,O=AquaLight,C=TR"
+          chmod 600 "$KEYSTORE"
+          printf 'AQL_RELEASE_KEYSTORE_PATH=%s\n' "$KEYSTORE" >> "$GITHUB_ENV"
+      - name: Regenerate dependency state from commercial tasks
         shell: bash
         run: |
           set -euo pipefail
           chmod +x gradlew
           rm -rf "$GRADLE_USER_HOME"
           mkdir -p "$GRADLE_USER_HOME"
-          ./gradlew resolveAndLockAll \
-            --write-locks \
-            --write-verification-metadata sha256 \
-            --no-daemon \
-            --stacktrace 2>&1 | tee dependency-state.log
+          rm -f gradle.lockfile app/gradle.lockfile gradle/verification-metadata.xml
+          ./gradlew dependencies --configuration cyclonedxBom \
+            --write-locks --write-verification-metadata sha256 \
+            --no-daemon --stacktrace 2>&1 | tee dependency-state.log
+          ./gradlew \
+            assembleDevelopmentDebug \
+            compileDevelopmentDebugUnitTestKotlin \
+            assembleStagingDebugAndroidTest \
+            assembleStagingReleaseSmoke \
+            assembleStagingRelease \
+            detektDevelopmentDebug \
+            --write-locks --write-verification-metadata sha256 \
+            --no-daemon --stacktrace 2>&1 | tee -a dependency-state.log
+          ./gradlew :app:dependencies --configuration productionReleaseCompileClasspath \
+            --write-locks --write-verification-metadata sha256 \
+            --no-daemon --stacktrace 2>&1 | tee -a dependency-state.log
+          ./gradlew :app:dependencies --configuration productionReleaseRuntimeClasspath \
+            --write-locks --write-verification-metadata sha256 \
+            --no-daemon --stacktrace 2>&1 | tee -a dependency-state.log
           test -s gradle.lockfile
           test -s app/gradle.lockfile
           test -s gradle/verification-metadata.xml
@@ -156,3 +190,9 @@ jobs:
             app-tasks.log
           if-no-files-found: warn
           retention-days: 1
+      - name: Remove ephemeral files
+        if: always()
+        run: |
+          rm -f "$RUNNER_TEMP/aqualight-ci.jks"
+          rm -f app/src/development/google-services.json
+          rm -f app/src/staging/google-services.json
