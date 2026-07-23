@@ -20,6 +20,8 @@ jobs:
 
     env:
       CI: 'true'
+      AQL_SMOKE_PACKAGE_NAME: com.aqua.aqualight.staging
+      AQL_DEBUG_PACKAGE_NAME: com.aqua.aqualight.staging.local
       RELEASE_KEYSTORE_PASSWORD: aqualight-ci
       RELEASE_KEY_ALIAS: aqualight-ci
       RELEASE_KEY_PASSWORD: aqualight-ci
@@ -49,6 +51,7 @@ jobs:
       - name: Verify release-smoke runner contract
         run: |
           grep -Fq "connectedStagingDebugAndroidTest" tools/run_release_smoke.sh
+          grep -Fq "com.aqua.aqualight.staging.local" tools/run_release_smoke.sh
           grep -Fq "com.aqua.aqualight.staging" tools/run_release_smoke.sh
           grep -Fq "bash tools/verify_uninstall_clears_data.sh" tools/run_release_smoke.sh
           grep -Fq "RELEASE_SMOKE_PASS" tools/run_release_smoke.sh
