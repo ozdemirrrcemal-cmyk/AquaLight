@@ -6,10 +6,12 @@ from __future__ import annotations
 import argparse
 import json
 import re
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Sequence
 
+FIRST_RELEASE_TAG = "v1.0.0"
 MAX_COMPONENT = 999
 MAX_PLAY_VERSION_CODE = 2_100_000_000
 TAG_PATTERN = re.compile(
@@ -74,6 +76,24 @@ def require_newer_version(
         )
 
 
+def require_release_sequence(
+    release: ReleaseVersion,
+    previous_releases: Iterable[ReleaseVersion],
+) -> None:
+    """Require v1.0.0 first, then a version newer than every prior release."""
+    previous = tuple(previous_releases)
+    if not previous:
+        if release.tag != FIRST_RELEASE_TAG:
+            raise ReleaseVersionError(
+                f"First production release must be {FIRST_RELEASE_TAG}; "
+                f"received {release.tag}."
+            )
+        return
+
+    latest = max(previous, key=lambda item: item.version_code)
+    require_newer_version(release, latest)
+
+
 def write_github_output(path: Path, release: ReleaseVersion) -> None:
     """Append safe scalar values for later GitHub Actions steps."""
     with path.open("a", encoding="utf-8", newline="\n") as output:
@@ -92,7 +112,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("tag", help="Release tag in exact vMAJOR.MINOR.PATCH form.")
     parser.add_argument(
         "--previous-tag",
-        help="Optional prior release tag that the new version must exceed.",
+        action="append",
+        default=[],
+        help=(
+            "Prior production tag on main. Repeat for every prior release. "
+            f"When omitted, the requested tag must be {FIRST_RELEASE_TAG}."
+        ),
     )
     parser.add_argument(
         "--github-output",
@@ -106,11 +131,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         release = parse_release_tag(args.tag)
-        if args.previous_tag is not None:
-            require_newer_version(
-                release,
-                parse_release_tag(args.previous_tag),
-            )
+        require_release_sequence(
+            release,
+            (parse_release_tag(tag) for tag in args.previous_tag),
+        )
         if args.github_output is not None:
             write_github_output(args.github_output, release)
     except (OSError, ReleaseVersionError) as error:
