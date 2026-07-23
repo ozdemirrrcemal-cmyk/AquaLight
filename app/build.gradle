@@ -15,6 +15,32 @@ def aqlBuildConfigString = { value ->
     return "\"${normalized}\""
 }
 
+def googlePlayMaxVersionCode = 2100000000
+
+def aqlVersionCode = providers
+        .gradleProperty("AQL_VERSION_CODE")
+        .orElse(providers.environmentVariable("AQL_VERSION_CODE"))
+        .orElse(providers.environmentVariable("GITHUB_RUN_NUMBER"))
+        .orElse("1")
+        .map { rawValue ->
+            def normalized = rawValue.trim()
+            int parsed
+            try {
+                parsed = Integer.parseInt(normalized)
+            } catch (NumberFormatException ignored) {
+                throw new GradleException(
+                        "AQL_VERSION_CODE/GITHUB_RUN_NUMBER must be a positive integer, got '${normalized}'."
+                )
+            }
+            if (parsed < 1 || parsed > googlePlayMaxVersionCode) {
+                throw new GradleException(
+                        "versionCode must be between 1 and ${googlePlayMaxVersionCode}, got ${parsed}."
+                )
+            }
+            return parsed
+        }
+        .get()
+
 def otaManifestPublicKeyPem = providers
         .gradleProperty("AQL_OTA_MANIFEST_PUBLIC_KEY_PEM")
         .orElse(providers.environmentVariable("AQL_OTA_MANIFEST_PUBLIC_KEY_PEM"))
@@ -33,7 +59,7 @@ android {
         applicationId "com.aqua.aqualight"
         minSdk 27
         targetSdk 36
-        versionCode 1
+        versionCode aqlVersionCode
         versionName "1.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "AQL_OTA_MANIFEST_PUBLIC_KEY_PEM", aqlBuildConfigString(otaManifestPublicKeyPem)
