@@ -12,6 +12,8 @@ jobs:
   upgrade:
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
+    env:
+      GRADLE_USER_HOME: ${{ runner.temp }}/aqualight-gradle-home
     steps:
       - name: Checkout pull request branch
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -47,11 +49,26 @@ jobs:
           path.write_text(text.replace(old, new), encoding="utf-8")
           PY
 
-      - name: Verify intended variant tasks exist
+      - name: Regenerate complete cold-cache lock and verification state
         shell: bash
         run: |
           set -euo pipefail
           chmod +x gradlew
+          rm -rf "$GRADLE_USER_HOME"
+          mkdir -p "$GRADLE_USER_HOME"
+          ./gradlew resolveAndLockAll \
+            --write-locks \
+            --write-verification-metadata sha256 \
+            --no-daemon \
+            --stacktrace 2>&1 | tee dependency-state.log
+          test -s gradle.lockfile
+          test -s app/gradle.lockfile
+          test -s gradle/verification-metadata.xml
+
+      - name: Verify intended variant tasks exist from sealed state
+        shell: bash
+        run: |
+          set -euo pipefail
           ./gradlew :app:tasks --all --no-daemon > app-tasks.log 2>&1
           grep -Fq "lintDevelopmentDebug" app-tasks.log
           grep -Fq "testDevelopmentDebugUnitTest" app-tasks.log
@@ -63,23 +80,25 @@ jobs:
             exit 1
           fi
 
-      - name: Upload generated task graph
+      - name: Upload generated task and dependency diagnostics
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: variant-task-graph-${{ github.run_id }}
-          path: app-tasks.log
+          path: |
+            app-tasks.log
+            dependency-state.log
           if-no-files-found: warn
           retention-days: 1
 
-      - name: Commit permanent selector and remove upgrader
+      - name: Commit permanent selector and sealed dependency state
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app/build.gradle
+          git add app/build.gradle gradle.lockfile app/gradle.lockfile gradle/verification-metadata.xml
           git rm .github/workflows/variant_selector_upgrade.yml
           git diff --cached --check
-          git commit -m "build(android): select explicit commercial variants"
+          git commit -m "build(android): seal explicit commercial variants"
           git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
