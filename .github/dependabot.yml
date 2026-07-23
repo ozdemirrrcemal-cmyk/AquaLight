@@ -1,0 +1,52 @@
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Istanbul
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+      - android
+    groups:
+      android-and-kotlin:
+        patterns:
+          - "androidx.*"
+          - "com.android.*"
+          - "org.jetbrains.kotlin*"
+      firebase:
+        patterns:
+          - "com.google.firebase*"
+          - "com.google.gms*"
+      test-tooling:
+        dependency-type: development
+        patterns:
+          - "junit*"
+          - "org.jetbrains.kotlinx:kotlinx-coroutines-test"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:30"
+      timezone: Europe/Istanbul
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+      - ci
+
+  - package-ecosystem: npm
+    directory: "/firebase"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: Europe/Istanbul
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - firebase
