@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-readonly APPLICATION_ID="com.aqua.aqualight"
-readonly APK_PATH="${1:-app/build/outputs/apk/debug/app-debug.apk}"
+readonly APK_PATH="${1:-app/build/outputs/apk/staging/debug/app-staging-debug.apk}"
+readonly APPLICATION_ID="${2:-${AQL_APPLICATION_ID:-com.aqua.aqualight.staging}}"
 readonly TEST_PATHS=(
   "files/uninstall-marker"
   "files/datastore/known_devices.pb"
