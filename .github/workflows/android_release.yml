@@ -98,8 +98,11 @@ jobs:
             echo "Release tag must be annotated: $RELEASE_TAG" >&2
             exit 1
           fi
+          git show-ref --verify --quiet refs/remotes/origin/main || {
+            echo "origin/main was not fetched; release ancestry cannot be verified." >&2
+            exit 1
+          }
 
-          git fetch --no-tags origin main:refs/remotes/origin/main
           TAG_COMMIT="$(git rev-list -n 1 "$RELEASE_TAG")"
           git merge-base --is-ancestor "$TAG_COMMIT" origin/main || {
             echo "Release tag must point to a commit reachable from main." >&2
@@ -186,7 +189,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          yes | sdkmanager --licenses >/dev/null
+          yes | sdkmanager --licenses >/dev/null || true
           sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
           chmod +x ./gradlew
 
@@ -233,7 +236,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          yes | sdkmanager --licenses >/dev/null
+          yes | sdkmanager --licenses >/dev/null || true
           sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
           chmod +x ./gradlew
 
@@ -288,7 +291,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          yes | sdkmanager --licenses >/dev/null
+          yes | sdkmanager --licenses >/dev/null || true
           sdkmanager "platform-tools" "platforms;android-36"
           chmod +x ./gradlew
 
@@ -415,7 +418,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          yes | sdkmanager --licenses >/dev/null
+          yes | sdkmanager --licenses >/dev/null || true
           sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
           chmod +x ./gradlew
 
