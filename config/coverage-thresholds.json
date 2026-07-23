@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "commit": "dabf8f202d3f9d89354c4667d825b4d54c362b3d",
+    "report": "Kover Debug unit-test coverage",
+    "measuredAt": "2026-07-23"
+  },
+  "rules": [
+    {
+      "name": "Application layer",
+      "packagePrefix": "com.aqua.aqualight.application",
+      "minimumPercent": 90.1
+    },
+    {
+      "name": "Provisioning application policy",
+      "packagePrefix": "com.aqua.aqualight.application.devices.provisioning",
+      "minimumPercent": 97.5
+    },
+    {
+      "name": "Authentication and session data",
+      "packagePrefix": "com.aqua.aqualight.data.auth",
+      "minimumPercent": 21.0
+    },
+    {
+      "name": "Owner-scoped user data",
+      "packagePrefix": "com.aqua.aqualight.data.user",
+      "minimumPercent": 32.4
+    },
+    {
+      "name": "Device provisioning data",
+      "packagePrefix": "com.aqua.aqualight.data.devices.provisioning",
+      "minimumPercent": 8.9
+    },
+    {
+      "name": "Private-LAN WebSocket runtime",
+      "packagePrefix": "com.aqua.aqualight.data.devices.runtime.ws",
+      "minimumPercent": 72.2
+    },
+    {
+      "name": "Owner tank cleanup",
+      "packagePrefix": "com.aqua.aqualight.data.aquarium.delete",
+      "minimumPercent": 62.9
+    },
+    {
+      "name": "Owner device cleanup",
+      "packagePrefix": "com.aqua.aqualight.data.devices.remove",
+      "minimumPercent": 65.1
+    },
+    {
+      "name": "Whole application",
+      "minimumPercent": 17.9
+    }
+  ]
+}
