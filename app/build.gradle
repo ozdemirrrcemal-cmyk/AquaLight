@@ -4,7 +4,6 @@ plugins {
     id 'com.google.gms.google-services'
     id 'com.google.protobuf'
     id 'androidx.navigation.safeargs.kotlin'
-    id 'io.gitlab.arturbosch.detekt'
     id 'jacoco'
 }
 
@@ -146,25 +145,73 @@ jacoco {
     toolVersion = "0.8.14"
 }
 
-detekt {
-    buildUponDefaultConfig = true
-    allRules = false
-    parallel = true
-    ignoreFailures = true
-    autoCorrect = false
+configurations {
+    aqlDetekt
 }
 
-tasks.withType(io.gitlab.arturbosch.detekt.Detekt).configureEach {
-    jvmTarget = "17"
-    reports {
-        html.required.set(true)
-        xml.required.set(true)
-        sarif.required.set(true)
-        md.required.set(false)
+def aqlDetektSourcePaths = [
+        file("src/main/java"),
+        file("src/main/kotlin")
+].findAll { it.isDirectory() }
+
+def aqlDetektReportDirectory = file("$buildDir/reports/detekt")
+def aqlDetektReportFiles = [
+        html: new File(aqlDetektReportDirectory, "detekt.html"),
+        xml: new File(aqlDetektReportDirectory, "detekt.xml"),
+        sarif: new File(aqlDetektReportDirectory, "detekt.sarif")
+]
+
+def aqlDetektTask = tasks.register("aqlDetekt", JavaExec) {
+    group = "verification"
+    description = "Runs Detekt in transitional reporting mode without the conflicting Gradle lifecycle plugin."
+    classpath = configurations.aqlDetekt
+    mainClass.set("io.gitlab.arturbosch.detekt.cli.Main")
+    ignoreExitValue = true
+
+    inputs.files(aqlDetektSourcePaths)
+            .withPropertyName("detektSources")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.files(aqlDetektReportFiles.values())
+            .withPropertyName("detektReports")
+
+    args(
+            "--input", aqlDetektSourcePaths.collect { it.absolutePath }.join(","),
+            "--build-upon-default-config",
+            "--parallel",
+            "--report", "html:${aqlDetektReportFiles.html.absolutePath}",
+            "--report", "xml:${aqlDetektReportFiles.xml.absolutePath}",
+            "--report", "sarif:${aqlDetektReportFiles.sarif.absolutePath}"
+    )
+
+    doFirst {
+        aqlDetektReportDirectory.mkdirs()
+    }
+    doLast {
+        def missingReports = aqlDetektReportFiles.values().findAll { !it.isFile() }
+        if (!missingReports.isEmpty()) {
+            throw new GradleException(
+                    "Detekt did not produce the required report(s): " +
+                            missingReports.collect { it.absolutePath }.join(", ")
+            )
+        }
     }
 }
 
+// Preserve the existing CI command contract while avoiding duplicate task registration.
+def existingDetektTask = tasks.findByName("detekt")
+if (existingDetektTask == null) {
+    tasks.register("detekt") {
+        group = "verification"
+        description = "Compatibility lifecycle task for AquaLight Detekt analysis."
+        dependsOn aqlDetektTask
+    }
+} else {
+    existingDetektTask.dependsOn aqlDetektTask
+}
+
 dependencies {
+    aqlDetekt "io.gitlab.arturbosch.detekt:detekt-cli:1.23.8"
+
     // Firebase BoM
     implementation platform("com.google.firebase:firebase-bom:34.5.0")
 
