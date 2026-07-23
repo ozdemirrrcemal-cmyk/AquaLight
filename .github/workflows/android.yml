@@ -9,7 +9,12 @@ on:
       - "app/**"
       - "protocol/**"
       - "tools/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle/**"
+      - ".github/dependabot.yml"
       - ".github/workflows/android.yml"
+      - ".github/workflows/android_release.yml"
 
 concurrency:
   group: android-ci-${{ github.ref }}
@@ -20,8 +25,9 @@ permissions:
 
 jobs:
   build:
+    name: Guard, lint, unit tests and coverage
     runs-on: ubuntu-latest
-
+    timeout-minutes: 45
     env:
       GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8" -Dorg.gradle.daemon=false
       AQL_OTA_MANIFEST_PUBLIC_KEY_PEM: ${{ secrets.AQL_OTA_MANIFEST_PUBLIC_KEY_PEM }}
@@ -29,49 +35,52 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
 
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v2
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
 
       - name: Install JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          java-version: "17"
+          distribution: temurin
           cache: gradle
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
         env:
           SKIP_JDK_VERSION_CHECK: true
 
       - name: Install required SDK packages
+        shell: bash
         run: |
+          set -euo pipefail
           yes | sdkmanager --licenses >/dev/null
-          sdkmanager --update
-          sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
-          sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1" || true
-          echo "Installed packages (first 120 lines):"
-          sdkmanager --list | sed -n '1,120p' || true
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          chmod +x ./gradlew
 
-      # Cache restore, sadece TEMİZ İSTENMİYORSA yapılır
-      - name: Cache Gradle build-cache
-        if: ${{ !contains(github.event.head_commit.message, 'clean') && !contains(github.event.head_commit.message, 'clean-cache') }}
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches/build-cache-1
-          key: ${{ runner.os }}-gradle-buildcache-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-buildcache-
+      - name: Verify supply-chain workflow references
+        run: python3 tools/ci/verify_supply_chain_state.py
 
-      - name: Grant execute permission to gradlew
-        run: chmod +x ./gradlew
-
-      - name: Run Architecture Guard
+      - name: Run architecture guards
+        shell: bash
         run: |
+          set -euo pipefail
           python3 tools/architecture_guard.py
+          python3 tools/session_startup_guard.py
+          python3 tools/composition_root_guard.py
+          python3 tools/ui_dependency_construction_guard.py
+          python3 tools/device_application_boundary_guard.py
+          python3 tools/device_root_application_boundary_guard.py
+          python3 tools/tank_device_assignment_boundary_guard.py
+          python3 tools/aquarium_application_boundary_guard.py
+          python3 tools/care_application_boundary_guard.py
+          python3 tools/provisioning_discovery_boundary_guard.py
+          python3 tools/provisioning_progress_boundary_guard.py
+          python3 tools/provisioning_commit_recovery_guard.py
           python3 tools/navigation_guard.py
           python3 tools/ws_protocol_guard.py
           python3 tools/permission_architecture_guard.py
@@ -83,86 +92,45 @@ jobs:
           python3 tools/design_system_resource_guard.py
           python3 tools/localization_accessibility_guard.py
 
-      # İsteğe bağlı: bağımlılık modül cache'lerini temizle (refresh-deps)
-      - name: 🔄 Force refresh dependencies (optional)
-        if: contains(github.event.head_commit.message, 'refresh-deps')
-        run: |
-          rm -rf ~/.gradle/caches/modules-2 ~/.gradle/caches/transforms-* ~/.gradle/caches/jars-* || true
-          echo "Gradle module caches cleared."
-
-      # İsteğe bağlı: TAM TEMİZLEME – commit mesajında 'clean' veya 'clean-cache' varsa
-      # (setup-java ve cache restore'dan SONRA konumlandırıldı ki gerçekten silsin)
-      - name: 🧹 Hard clean caches & outputs (on demand)
-        if: ${{ contains(github.event.head_commit.message, 'clean') || contains(github.event.head_commit.message, 'clean-cache') }}
-        run: |
-          echo "💥 Hard clean requested. Purging Gradle caches and build outputs..."
-          rm -rf ~/.gradle/caches ~/.gradle/daemon ~/.gradle/native ~/.gradle/wrapper || true
-          rm -rf **/build build app/build || true
-
-      - name: Clean project (light)
-        run: ./gradlew clean --no-daemon
-
       - name: Verify resolved Firebase runtime policy
         run: ./gradlew :app:verifyFirebaseRuntimePolicy --no-daemon --stacktrace
 
-      - name: Generate debug keystore (if missing)
-        run: |
-          mkdir -p ~/.android
-          if [ ! -s ~/.android/debug.keystore ]; then
-            keytool -genkeypair -v \
-              -keystore ~/.android/debug.keystore \
-              -storepass android \
-              -alias AndroidDebugKey \
-              -keypass android \
-              -keyalg RSA \
-              -keysize 2048 \
-              -validity 10000 \
-              -storetype JKS \
-              -dname "CN=Android,O=AquaLight,C=TR"
-          fi
-
-      - name: Run Android Lint
+      - name: Run standard Android lint and Detekt
+        shell: bash
         run: |
           set -o pipefail
-          ./gradlew lintDebug --no-daemon --stacktrace 2>&1 | tee lint-debug.log
+          ./gradlew lintDebug detekt --no-daemon --stacktrace 2>&1 | tee static-analysis.log
 
-      - name: Upload Lint Reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: lint-reports-${{ github.run_number }}
-          path: |
-            lint-debug.log
-            **/build/reports/lint-results-*.html
-            **/build/reports/lint-results-*.xml
-          if-no-files-found: ignore
-
-      - name: Run Unit Tests
-        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
+      - name: Run unit tests and enforce critical coverage
+        run: >-
+          ./gradlew testDebugUnitTest
+          jacocoDebugUnitTestReport
+          jacocoDebugCoverageVerification
+          --no-daemon --stacktrace
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace --no-daemon --refresh-dependencies
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Verify merged manifest telemetry policy
         run: python3 tools/firebase_telemetry_guard.py --scan-build-output
 
-      - name: 📋 Dump debugRuntimeClasspath (on failure)
-        if: failure()
-        run: ./gradlew :app:dependencies --configuration debugRuntimeClasspath --no-daemon
-
       - name: Verify Debug APK
+        shell: bash
         run: |
-          set -e
-          ls -la app/build/outputs/apk/debug || true
-          if [ -f app/build/outputs/apk/debug/app-debug.apk ]; then
-            echo "✅ APK bulundu"
-          else
-            echo "❌ APK yok"
-            exit 1
-          fi
+          set -euo pipefail
+          test -s app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Upload Debug APK
-        uses: actions/upload-artifact@v4
+      - name: Upload CI evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: app-debug-${{ github.run_number }}
-          path: app/build/outputs/apk/debug/*.apk
+          name: android-ci-evidence-${{ github.run_number }}
+          path: |
+            static-analysis.log
+            **/build/reports/lint-results-*
+            **/build/reports/detekt/**
+            **/build/reports/tests/testDebugUnitTest/**
+            **/build/reports/jacoco/**
+            app/build/outputs/apk/debug/*.apk
+          if-no-files-found: ignore
+          retention-days: 30
