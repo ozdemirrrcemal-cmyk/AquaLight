@@ -61,6 +61,8 @@ lint/
 lint-results*
 test-results/
 reports/
+__pycache__/
+*.py[cod]
 
 # --- Node / Firebase maintenance ---
 **/node_modules/
