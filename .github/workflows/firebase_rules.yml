@@ -179,9 +179,8 @@ jobs:
             exit 1
           fi
           mkdir -p config/detekt
-          ./gradlew detektBaselineDevelopmentDebug \
-            --baseline "$GITHUB_WORKSPACE/config/detekt/baseline.xml" \
-            --no-daemon --stacktrace 2>&1 | tee detekt-baseline.log
+          ./gradlew detektBaselineDevelopmentDebug --no-daemon --stacktrace \
+            2>&1 | tee detekt-baseline.log
           test -s config/detekt/baseline.xml
           ./gradlew detektDevelopmentDebug --no-daemon --stacktrace \
             2>&1 | tee detekt-verification.log
