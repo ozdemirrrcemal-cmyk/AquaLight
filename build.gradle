@@ -1,0 +1,30 @@
+plugins {
+    id 'org.cyclonedx.bom' apply false
+}
+
+def aqlReleaseVersion = providers
+        .gradleProperty("AQL_VERSION_NAME")
+        .orElse(providers.environmentVariable("AQL_VERSION_NAME"))
+        .getOrElse("1.0.0")
+
+subprojects {
+    pluginManager.apply("org.cyclonedx.bom")
+
+    tasks.named("cyclonedxDirectBom") {
+        includeConfigs = ["releaseRuntimeClasspath"]
+        skipConfigs = [".*[Tt]est.*", ".*[Dd]ebug.*", ".*[Rr]eleaseSmoke.*"]
+        projectType = "application"
+        componentGroup = "com.aqua"
+        componentName = "AquaLight"
+        componentVersion = aqlReleaseVersion
+        includeBomSerialNumber = true
+        includeLicenseText = false
+        includeMetadataResolution = true
+        includeBuildEnvironment = false
+        includeBuildSystem = true
+        jsonOutput = layout.buildDirectory.file(
+                "reports/cyclonedx-release/AquaLight-${aqlReleaseVersion}-sbom.cdx.json"
+        ).get().asFile
+        xmlOutput.unsetConvention()
+    }
+}
