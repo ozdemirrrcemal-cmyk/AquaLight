@@ -1,37 +1,27 @@
-# --- Gradle / Android ---
+# Gradle / Android
 /local.properties
 /.gradle/
 **/build/
 
-# Gradle Wrapper (repoda tutulur – ignore ETME)
-# (Negasyon gerek yok; sadece ignore listesine eklemiyoruz)
-# gradlew
-# gradlew.bat
-# gradle/wrapper/gradle-wrapper.properties
-# gradle/wrapper/gradle-wrapper.jar
+# Gradle wrapper is intentionally committed.
+# Supply-chain evidence is intentionally committed.
+!**/gradle.lockfile
+!gradle/verification-metadata.xml
 
-# --- IDE ---
+# IDE
 /.idea/
 *.iml
 *.ipr
 *.iws
-/.idea/caches/
-/.idea/libraries/
-/.ideal/modules.xml
-/.idea/workspace.xml
 
-# --- NDK / External Build ---
+# Native/external builds
 /externalNativeBuild/
 /.cxx/
 
-# --- Captures ---
-captures/
-
-# --- OS çöplükleri ---
+# OS and temporary files
 .DS_Store
 Thumbs.db
-
-# --- Log / Geçici ---
+captures/
 *.log
 *.bak
 *.tmp
@@ -41,29 +31,31 @@ Thumbs.db
 *.save
 *.old
 
-# --- AIDE özel ---
+# AIDE/local outputs
 /.aide/
 bin/
 gen/
 
-# --- Çıktılar / Artifaktlar ---
+# Build artifacts
 **/outputs/
 *.apk
 *.aab
 *.ap_
+dist/
 
-# --- Keystore ---
+# Signing material and CI-local secrets
 *.keystore
 *.jks
+.ci-secrets/
 
-# --- Lint & Test ---
+# Lint/test output (baselines are explicitly committed outside these directories)
 lint/
 lint-results*
 test-results/
 reports/
 
-# --- Node / Firebase maintenance ---
+# Node/Firebase maintenance
 **/node_modules/
 
-# --- (Opsiyonel) Firebase dosyası ---
+# Firebase configuration is provisioned per environment by tools/prepare_firebase_config.py.
 **/google-services.json

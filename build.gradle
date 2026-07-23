@@ -1,0 +1,24 @@
+plugins {
+    id 'org.cyclonedx.bom'
+}
+
+allprojects {
+    dependencyLocking {
+        lockAllConfigurations()
+    }
+}
+
+tasks.named('cyclonedxBom') {
+    projectType = 'application'
+    componentGroup = 'com.aqua'
+    componentName = 'AquaLight'
+    componentVersion = providers
+            .gradleProperty('AQL_VERSION_NAME')
+            .orElse(providers.environmentVariable('AQL_VERSION_NAME'))
+            .getOrElse('0.0.0-dev')
+    includeBomSerialNumber = true
+    includeLicenseText = false
+    includeMetadataResolution = true
+    includeBuildEnvironment = false
+    includeBuildSystem = true
+}

@@ -1,0 +1,115 @@
+name: Commercial Migration Bootstrap
+
+on:
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'config/**'
+      - 'gradle/**'
+      - 'tools/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - '.github/workflows/commercial_migration_bootstrap.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: commercial-bootstrap-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GRADLE_OPTS: >-
+        -Dorg.gradle.jvmargs=-Xmx4g
+        -Dfile.encoding=UTF-8
+        -Dorg.gradle.daemon=false
+      AQL_VERSION_NAME: 0.0.0-bootstrap
+      AQL_VERSION_CODE: '1000001'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install JDK 17
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle and validate wrapper
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
+
+      - name: Install Android SDK packages
+        run: bash tools/ci/install_android_sdk.sh
+
+      - name: Prepare executable tools and CI inputs
+        run: |
+          chmod +x gradlew tools/*.py tools/ci/*.sh
+          python3 -m unittest discover -s tools/tests -v
+          python3 tools/prepare_firebase_config.py --all --allow-placeholder
+          bash tools/ci/create_ci_keystore.sh
+
+      - name: Generate full Android lint baseline
+        run: |
+          rm -f app/lint-baseline.xml
+          ./gradlew :app:lintDebug \
+            -Dlint.baselines.continue=true \
+            --no-daemon --stacktrace
+          test -s app/lint-baseline.xml
+
+      - name: Generate Detekt baseline
+        run: |
+          rm -f config/detekt/baseline.xml
+          ./gradlew :app:detektBaseline --no-daemon --stacktrace
+          test -s config/detekt/baseline.xml
+
+      - name: Generate dependency locks, verification metadata and SBOM
+        run: |
+          ./gradlew \
+            :app:dependencies \
+            :app:assembleReleaseSmoke \
+            cyclonedxBom \
+            --write-locks \
+            --write-verification-metadata sha256 \
+            --no-daemon --stacktrace
+          test -s gradle/verification-metadata.xml
+          test -s app/gradle.lockfile
+          test -s build/reports/cyclonedx/bom.json
+
+      - name: Generate measured coverage report
+        run: |
+          ./gradlew \
+            :app:koverXmlReportDebug \
+            :app:koverHtmlReportDebug \
+            --no-daemon --stacktrace
+          KOVER_XML="$(find app/build/reports/kover -type f -name '*.xml' | head -n 1)"
+          test -n "$KOVER_XML"
+          python3 tools/coverage_summary.py \
+            --xml "$KOVER_XML" \
+            --output coverage-summary.json
+
+      - name: Collect bootstrap evidence
+        if: always()
+        run: |
+          mkdir -p bootstrap-output/app bootstrap-output/config/detekt bootstrap-output/gradle
+          test ! -f app/lint-baseline.xml || cp app/lint-baseline.xml bootstrap-output/app/
+          test ! -f config/detekt/baseline.xml || cp config/detekt/baseline.xml bootstrap-output/config/detekt/
+          test ! -f gradle/verification-metadata.xml || cp gradle/verification-metadata.xml bootstrap-output/gradle/
+          find . -name gradle.lockfile -type f -exec cp --parents {} bootstrap-output/ \;
+          test ! -f coverage-summary.json || cp coverage-summary.json bootstrap-output/
+          test ! -d app/build/reports/kover || cp -R app/build/reports/kover bootstrap-output/
+          test ! -d build/reports/cyclonedx || cp -R build/reports/cyclonedx bootstrap-output/
+          test ! -d app/build/reports || cp -R app/build/reports bootstrap-output/app/build-reports
+
+      - name: Upload generated migration evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: commercial-migration-bootstrap-${{ github.run_id }}
+          path: bootstrap-output/
+          if-no-files-found: error
+          retention-days: 7
