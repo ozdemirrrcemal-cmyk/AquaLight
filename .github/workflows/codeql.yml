@@ -16,6 +16,10 @@ jobs:
   analyze:
     name: Analyze Kotlin/Java
     runs-on: ubuntu-latest
+    env:
+      RELEASE_KEYSTORE_PASSWORD: aqualight-ci
+      RELEASE_KEY_ALIAS: aqualight-ci
+      RELEASE_KEY_PASSWORD: aqualight-ci
 
     strategy:
       fail-fast: false
@@ -24,31 +28,38 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Install JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
           distribution: temurin
           java-version: 17
           cache: gradle
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
 
       - name: Install SDK packages
         run: |
           yes | sdkmanager --licenses >/dev/null
-          sdkmanager "platform-tools" "platforms;android-36"
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0" "cmdline-tools;latest"
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+
+      - name: Run release-governance unit tests
+        run: >-
+          python3 -m unittest
+          tools.release_metadata_test
+          tools.github_actions_pin_guard_test
 
       - name: Run architecture and navigation guards
         shell: bash
         run: |
           set -o pipefail
           {
+            python3 tools/github_actions_pin_guard.py
             python3 tools/architecture_guard.py
             python3 tools/session_startup_guard.py
             python3 tools/composition_root_guard.py
@@ -71,7 +82,7 @@ jobs:
           } 2>&1 | tee architecture-guards.log
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@4187e74d05793876e9989daffde9c3e66b4acd07 # v3.37.3
         with:
           languages: java-kotlin
           build-mode: manual
@@ -93,7 +104,7 @@ jobs:
           set -o pipefail
           ./gradlew testDebugUnitTest --no-daemon --stacktrace 2>&1 | tee unit-test.log
 
-      - name: Run Debug lint
+      - name: Run full Debug lint
         shell: bash
         run: |
           set -o pipefail
@@ -106,52 +117,47 @@ jobs:
           ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee assemble-debug.log
 
       - name: Generate CI-only release keystore
+        shell: bash
         run: |
+          set -euo pipefail
+          AQL_RELEASE_KEYSTORE_PATH="$RUNNER_TEMP/aqualight-codeql-release.jks"
+          echo "AQL_RELEASE_KEYSTORE_PATH=$AQL_RELEASE_KEYSTORE_PATH" >> "$GITHUB_ENV"
           keytool -genkeypair -noprompt \
-            -keystore release-key.jks \
-            -storepass aqualight-ci \
-            -alias aqualight-ci \
-            -keypass aqualight-ci \
+            -keystore "$AQL_RELEASE_KEYSTORE_PATH" \
+            -storepass "$RELEASE_KEYSTORE_PASSWORD" \
+            -alias "$RELEASE_KEY_ALIAS" \
+            -keypass "$RELEASE_KEY_PASSWORD" \
             -keyalg RSA \
             -keysize 2048 \
             -validity 1 \
             -dname "CN=AquaLight CI,O=AquaLight,C=TR"
+          chmod 600 "$AQL_RELEASE_KEYSTORE_PATH"
 
       - name: Run Release unit tests
         shell: bash
-        env:
-          RELEASE_KEYSTORE_PASSWORD: aqualight-ci
-          RELEASE_KEY_ALIAS: aqualight-ci
-          RELEASE_KEY_PASSWORD: aqualight-ci
         run: |
           set -o pipefail
           ./gradlew testReleaseUnitTest --no-daemon --stacktrace 2>&1 | tee unit-test-release.log
 
-      - name: Run Release lint
+      - name: Run full Release lint
         shell: bash
-        env:
-          RELEASE_KEYSTORE_PASSWORD: aqualight-ci
-          RELEASE_KEY_ALIAS: aqualight-ci
-          RELEASE_KEY_PASSWORD: aqualight-ci
         run: |
           set -o pipefail
           ./gradlew lintRelease --no-daemon --stacktrace 2>&1 | tee lint-release.log
 
       - name: Build minified Release APK with CI-only signing
         shell: bash
-        env:
-          RELEASE_KEYSTORE_PASSWORD: aqualight-ci
-          RELEASE_KEY_ALIAS: aqualight-ci
-          RELEASE_KEY_PASSWORD: aqualight-ci
         run: |
           set -o pipefail
           ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee assemble-release.log
-          test -s app/build/outputs/apk/release/AquaLight.apk
+          RELEASE_APK="$(find app/build/outputs/apk/release -type f -name '*.apk' | head -n 1)"
+          test -n "$RELEASE_APK"
+          test -s "$RELEASE_APK"
           test -s app/build/outputs/mapping/release/mapping.txt
 
       - name: Upload validation logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: codeql-validation-logs-${{ github.run_number }}
           path: |
@@ -172,10 +178,14 @@ jobs:
 
       - name: Remove CI-only release keystore
         if: always()
-        run: rm -f release-key.jks
+        shell: bash
+        run: |
+          if [[ -n "${AQL_RELEASE_KEYSTORE_PATH:-}" ]]; then
+            rm -f "$AQL_RELEASE_KEYSTORE_PATH"
+          fi
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@4187e74d05793876e9989daffde9c3e66b4acd07 # v3.37.3
         with:
           output: codeql-results
           upload-database: false
