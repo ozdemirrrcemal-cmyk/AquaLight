@@ -9,10 +9,10 @@ allprojects {
     }
 }
 
-cyclonedxBom {
-    destination = file("build/reports/cyclonedx")
-    outputName = "bom"
-    outputFormat = "json"
+tasks.named("cyclonedxBom") {
+    projectType = "application"
     includeBomSerialNumber = true
     includeLicenseText = false
+    jsonOutput.set(file("build/reports/cyclonedx/bom.json"))
+    xmlOutput.unsetConvention()
 }

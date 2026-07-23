@@ -26,13 +26,18 @@ readonly GUARDS=(
   localization_accessibility_guard.py
 )
 
+status=0
 for guard in "${GUARDS[@]}"; do
   path="tools/${guard}"
+  echo "::group::${guard}"
   if [[ ! -f "${path}" ]]; then
     echo "Required architecture guard is missing: ${path}" >&2
-    exit 1
+    status=1
+  elif ! python3 "${path}"; then
+    echo "Architecture guard failed: ${path}" >&2
+    status=1
   fi
-  echo "::group::${guard}"
-  python3 "${path}"
   echo "::endgroup::"
 done
+
+exit "${status}"

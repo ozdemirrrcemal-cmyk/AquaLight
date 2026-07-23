@@ -75,7 +75,20 @@ jobs:
             --input app/src/releaseSmoke/google-services.json
 
       - name: Run architecture and policy guards
-        run: bash tools/run_architecture_guards.sh
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          set -o pipefail
+          bash tools/run_architecture_guards.sh 2>&1 | tee architecture-guards.log
+
+      - name: Upload guard diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: architecture-guards-${{ github.run_number }}
+          path: architecture-guards.log
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Verify resolved Firebase runtime policy
         run: ./gradlew :app:verifyFirebaseRuntimePolicy --no-daemon --stacktrace
