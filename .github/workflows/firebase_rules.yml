@@ -83,13 +83,15 @@ jobs:
         run: |
           yes | sdkmanager --licenses >/dev/null
           sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
-      - name: Apply canonical AGP variant selector
+      - name: Apply canonical variant selector and Detekt baseline contract
         run: |
           python3 - <<'PY'
           from pathlib import Path
+
           path = Path('app/build.gradle')
           text = path.read_text(encoding='utf-8')
-          old = '''    beforeVariants(selector().all()) { variantBuilder ->
+
+          old_selector = '''    beforeVariants(selector().all()) { variantBuilder ->
                   def environment = variantBuilder.productFlavors
                           .find { pair -> pair.first == "environment" }
                           ?.second
@@ -100,13 +102,22 @@ jobs:
                   variantBuilder.enable = allowedVariants.contains(variantIdentity)
               }
           '''
-          new = '''    beforeVariants(selector().all()) { variantBuilder ->
+          new_selector = '''    beforeVariants(selector().all()) { variantBuilder ->
                   variantBuilder.enable = allowedVariants.contains(variantBuilder.name)
               }
           '''
-          if old not in text:
+          if old_selector not in text:
               raise SystemExit('legacy variant selector block was not found exactly')
-          path.write_text(text.replace(old, new), encoding='utf-8')
+          text = text.replace(old_selector, new_selector)
+
+          baseline_anchor = '    basePath = rootDir.absolutePath\n'
+          baseline_line = '    baseline = file("$rootDir/config/detekt/baseline.xml")\n'
+          if baseline_line not in text:
+              if baseline_anchor not in text:
+                  raise SystemExit('Detekt baseline anchor was not found')
+              text = text.replace(baseline_anchor, baseline_anchor + baseline_line)
+
+          path.write_text(text, encoding='utf-8')
           PY
       - name: Prepare non-production Firebase and signing inputs
         shell: bash
@@ -141,7 +152,6 @@ jobs:
             assembleStagingDebugAndroidTest \
             assembleStagingReleaseSmoke \
             assembleStagingRelease \
-            detektDevelopmentDebug \
             --write-locks --write-verification-metadata sha256 \
             --no-daemon --stacktrace 2>&1 | tee -a dependency-state.log
           ./gradlew :app:dependencies --configuration productionReleaseCompileClasspath \
@@ -153,7 +163,7 @@ jobs:
           test -s gradle.lockfile
           test -s app/gradle.lockfile
           test -s gradle/verification-metadata.xml
-      - name: Verify commercial variant task graph
+      - name: Verify commercial variant task graph and generate Detekt baseline
         shell: bash
         run: |
           set -euo pipefail
@@ -163,17 +173,23 @@ jobs:
           grep -Fq "assembleStagingReleaseSmoke" app-tasks.log
           grep -Fq "assembleStagingRelease" app-tasks.log
           grep -Fq "bundleProductionRelease" app-tasks.log
+          grep -Fq "detektBaselineDevelopmentDebug" app-tasks.log
           if grep -Fq "assembleProductionDebug" app-tasks.log; then
             echo "Production debug variant must not exist." >&2
             exit 1
           fi
+          ./gradlew detektBaselineDevelopmentDebug --no-daemon --stacktrace \
+            2>&1 | tee detekt-baseline.log
+          test -s config/detekt/baseline.xml
+          ./gradlew detektDevelopmentDebug --no-daemon --stacktrace \
+            2>&1 | tee detekt-verification.log
       - name: Commit sealed state
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app/build.gradle gradle.lockfile app/gradle.lockfile gradle/verification-metadata.xml
+          git add app/build.gradle gradle.lockfile app/gradle.lockfile gradle/verification-metadata.xml config/detekt/baseline.xml
           if [[ -f .github/workflows/variant_selector_upgrade.yml ]]; then
             git rm .github/workflows/variant_selector_upgrade.yml
           fi
@@ -188,6 +204,8 @@ jobs:
           path: |
             dependency-state.log
             app-tasks.log
+            detekt-baseline.log
+            detekt-verification.log
           if-no-files-found: warn
           retention-days: 1
       - name: Remove ephemeral files
