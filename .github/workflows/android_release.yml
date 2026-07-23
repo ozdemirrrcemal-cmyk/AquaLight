@@ -2,12 +2,18 @@ name: Android Release CI/CD
 
 on:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing vMAJOR.MINOR.PATCH tag to release
+        required: true
+        type: string
   push:
-    branches: ["main"]
+    tags:
+      - "v*.*.*"
 
 concurrency:
-  group: release-ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: release-ci-${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -20,12 +26,46 @@ jobs:
       GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8" -Dorg.gradle.daemon=false
       AQL_OTA_MANIFEST_PUBLIC_KEY_PEM: ${{ secrets.AQL_OTA_MANIFEST_PUBLIC_KEY_PEM }}
       AQL_OTA_MANIFEST_KEY_ID: ${{ secrets.AQL_OTA_MANIFEST_KEY_ID }}
+      AQL_RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
 
     steps:
       - name: 🧩 Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref }}
+
+      - name: 🔒 Verify controlled release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ ! "$AQL_RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "❌ Release tag must use canonical vMAJOR.MINOR.PATCH format: $AQL_RELEASE_TAG" >&2
+            exit 1
+          fi
+
+          git fetch --force --tags origin
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+
+          TAG_COMMIT="$(git rev-list -n 1 "$AQL_RELEASE_TAG")"
+          if [[ -z "$TAG_COMMIT" ]]; then
+            echo "❌ Release tag does not resolve to a commit: $AQL_RELEASE_TAG" >&2
+            exit 1
+          fi
+
+          if ! git merge-base --is-ancestor "$TAG_COMMIT" origin/main; then
+            echo "❌ Release tag must point to a commit contained in main: $AQL_RELEASE_TAG" >&2
+            exit 1
+          fi
+
+          CHECKED_OUT_COMMIT="$(git rev-parse HEAD)"
+          if [[ "$CHECKED_OUT_COMMIT" != "$TAG_COMMIT" ]]; then
+            echo "❌ Checked-out commit does not match release tag." >&2
+            exit 1
+          fi
+
+          echo "✅ Controlled release tag verified: $AQL_RELEASE_TAG ($TAG_COMMIT)"
 
       - name: ☕ Install JDK 17
         uses: actions/setup-java@v4
