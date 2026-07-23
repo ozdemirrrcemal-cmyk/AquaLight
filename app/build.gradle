@@ -41,6 +41,33 @@ def aqlVersionCode = providers
         }
         .get()
 
+def configuredReleaseIdentity = providers
+        .gradleProperty("AQL_RELEASE_VERSION")
+        .orElse(providers.environmentVariable("AQL_RELEASE_VERSION"))
+        .orElse(providers.gradleProperty("AQL_RELEASE_TAG"))
+        .orElse(providers.environmentVariable("AQL_RELEASE_TAG"))
+        .getOrElse("")
+        .trim()
+
+def githubReleaseTag = providers.environmentVariable("GITHUB_REF_TYPE")
+        .getOrElse("")
+        .trim() == "tag"
+        ? providers.environmentVariable("GITHUB_REF_NAME").getOrElse("").trim()
+        : ""
+
+def aqlReleaseIdentity = configuredReleaseIdentity ?: githubReleaseTag
+def aqlVersionName = "1.0.0"
+
+if (!aqlReleaseIdentity.isEmpty()) {
+    def releaseIdentityMatcher = aqlReleaseIdentity =~ /^(?:v)?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/
+    if (!releaseIdentityMatcher.matches()) {
+        throw new GradleException(
+                "Release identity must be vMAJOR.MINOR.PATCH or MAJOR.MINOR.PATCH, got '${aqlReleaseIdentity}'."
+        )
+    }
+    aqlVersionName = "${releaseIdentityMatcher.group(1)}.${releaseIdentityMatcher.group(2)}.${releaseIdentityMatcher.group(3)}"
+}
+
 def otaManifestPublicKeyPem = providers
         .gradleProperty("AQL_OTA_MANIFEST_PUBLIC_KEY_PEM")
         .orElse(providers.environmentVariable("AQL_OTA_MANIFEST_PUBLIC_KEY_PEM"))
@@ -60,7 +87,7 @@ android {
         minSdk 27
         targetSdk 36
         versionCode aqlVersionCode
-        versionName "1.0.0"
+        versionName aqlVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "AQL_OTA_MANIFEST_PUBLIC_KEY_PEM", aqlBuildConfigString(otaManifestPublicKeyPem)
         buildConfigField "String", "AQL_OTA_MANIFEST_KEY_ID", aqlBuildConfigString(otaManifestKeyId)
