@@ -7,7 +7,7 @@ import sys
 import unittest
 from pathlib import Path
 
-from release_metadata import (
+from tools.release_metadata import (
     ANDROID_MAX_VERSION_CODE,
     ReleaseMetadataError,
     ReleaseVersion,
