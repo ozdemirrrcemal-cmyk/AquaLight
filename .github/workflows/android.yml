@@ -25,109 +25,6 @@ permissions:
   contents: read
 
 jobs:
-  seal-commercial-state:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'agent/commercial-13-release-supply-chain'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: write
-    env:
-      GRADLE_USER_HOME: ${{ runner.temp }}/aqualight-cold-gradle-home
-    steps:
-      - name: Checkout pull request branch
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
-      - name: Install JDK 17
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
-        with:
-          distribution: temurin
-          java-version: '17'
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
-      - name: Install Android SDK packages
-        run: |
-          yes | sdkmanager --licenses >/dev/null
-          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
-      - name: Apply canonical AGP variant selector
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          path = Path('app/build.gradle')
-          text = path.read_text(encoding='utf-8')
-          old = '''    beforeVariants(selector().all()) { variantBuilder ->
-                  def environment = variantBuilder.productFlavors
-                          .find { pair -> pair.first == "environment" }
-                          ?.second
-                  def buildType = variantBuilder.buildType
-                  def variantIdentity = environment && buildType
-                          ? "${environment}${buildType.capitalize()}"
-                          : ""
-                  variantBuilder.enable = allowedVariants.contains(variantIdentity)
-              }
-          '''
-          new = '''    beforeVariants(selector().all()) { variantBuilder ->
-                  variantBuilder.enable = allowedVariants.contains(variantBuilder.name)
-              }
-          '''
-          if old not in text:
-              raise SystemExit('legacy variant selector block was not found exactly')
-          path.write_text(text.replace(old, new), encoding='utf-8')
-          PY
-      - name: Regenerate complete cold-cache dependency state
-        shell: bash
-        run: |
-          set -euo pipefail
-          chmod +x gradlew
-          rm -rf "$GRADLE_USER_HOME"
-          mkdir -p "$GRADLE_USER_HOME"
-          ./gradlew resolveAndLockAll \
-            --write-locks \
-            --write-verification-metadata sha256 \
-            --no-daemon \
-            --stacktrace 2>&1 | tee dependency-state.log
-          test -s gradle.lockfile
-          test -s app/gradle.lockfile
-          test -s gradle/verification-metadata.xml
-      - name: Verify commercial variant task graph
-        shell: bash
-        run: |
-          set -euo pipefail
-          ./gradlew :app:tasks --all --no-daemon 2>&1 | tee app-tasks.log
-          grep -Fq "lintDevelopmentDebug" app-tasks.log
-          grep -Fq "testDevelopmentDebugUnitTest" app-tasks.log
-          grep -Fq "assembleStagingReleaseSmoke" app-tasks.log
-          grep -Fq "assembleStagingRelease" app-tasks.log
-          grep -Fq "bundleProductionRelease" app-tasks.log
-          if grep -Fq "assembleProductionDebug" app-tasks.log; then
-            echo "Production debug variant must not exist." >&2
-            exit 1
-          fi
-      - name: Commit sealed state
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app/build.gradle gradle.lockfile app/gradle.lockfile gradle/verification-metadata.xml
-          if [[ -f .github/workflows/variant_selector_upgrade.yml ]]; then
-            git rm .github/workflows/variant_selector_upgrade.yml
-          fi
-          git diff --cached --check
-          git commit -m "build(android): seal explicit commercial variants"
-          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
-      - name: Upload sealing diagnostics
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: cold-cache-commercial-state-${{ github.run_id }}
-          path: |
-            dependency-state.log
-            app-tasks.log
-          if-no-files-found: warn
-          retention-days: 1
-
   guard:
     name: 1 · Architecture and supply-chain guard
     runs-on: ubuntu-latest
@@ -179,7 +76,6 @@ jobs:
         run: |
           set -o pipefail
           chmod +x gradlew
-          ./gradlew :app:tasks --all --no-daemon 2>&1 | tee app-tasks.log
           ./gradlew lintDevelopmentDebug detektDevelopmentDebug --no-daemon --stacktrace \
             2>&1 | tee lint-and-detekt.log
       - name: Upload lint evidence
@@ -188,7 +84,6 @@ jobs:
         with:
           name: lint-detekt-${{ github.run_id }}
           path: |
-            app-tasks.log
             lint-and-detekt.log
             **/build/reports/lint-results-*
             **/build/reports/detekt/**
