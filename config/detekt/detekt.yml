@@ -1,0 +1,35 @@
+build:
+  maxIssues: 0
+  excludeCorrectable: false
+
+config:
+  validation: true
+  warningsAsErrors: true
+  checkExhaustiveness: false
+
+comments:
+  active: false
+
+complexity:
+  active: false
+
+coroutines:
+  active: true
+
+empty-blocks:
+  active: true
+
+exceptions:
+  active: true
+
+naming:
+  active: false
+
+performance:
+  active: true
+
+potential-bugs:
+  active: true
+
+style:
+  active: false
