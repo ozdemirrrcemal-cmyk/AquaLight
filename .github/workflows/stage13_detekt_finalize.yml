@@ -1,0 +1,60 @@
+name: Stage 13 Detekt CLI Migration Finalizer
+
+on:
+  push:
+    branches:
+      - agent/release-ci-supply-chain-gates
+    paths:
+      - tools/ci/finalize_detekt_cli_migration.py
+      - .github/workflows/stage13_detekt_finalize.yml
+
+concurrency:
+  group: stage13-detekt-migration
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    name: Finalize verified Gradle migration
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout latest migration branch
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          ref: agent/release-ci-supply-chain-gates
+          fetch-depth: 0
+
+      - name: Synchronize branch head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin agent/release-ci-supply-chain-gates
+          git reset --hard origin/agent/release-ci-supply-chain-gates
+
+      - name: Apply or validate Detekt CLI migration
+        run: python3 tools/ci/finalize_detekt_cli_migration.py
+
+      - name: Validate and commit clean final state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          grep -Fq 'tasks.register("aqlDetekt", JavaExec)' app/build.gradle
+          grep -Fq 'aqlDetekt "io.gitlab.arturbosch.detekt:detekt-cli:1.23.8"' app/build.gradle
+          ! grep -Fq "id 'io.gitlab.arturbosch.detekt'" app/build.gradle
+          ! grep -Fq "id 'io.gitlab.arturbosch.detekt'" settings.gradle
+
+          git rm -f \
+            tools/ci/apply_detekt_cli_migration.py \
+            tools/ci/finalize_detekt_cli_migration.py \
+            .github/workflows/stage13_detekt_migration.yml \
+            .github/workflows/stage13_detekt_finalize.yml
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/build.gradle settings.gradle
+          git commit -m "build: replace conflicting Detekt plugin with CLI task"
+          git push origin HEAD:agent/release-ci-supply-chain-gates
