@@ -16,10 +16,14 @@ import com.aqua.aqualight.R
 private const val LOCAL_ASSET_HOST = "appassets.androidplatform.net"
 private const val LOCAL_ASSET_PREFIX = "/assets/"
 private const val PUBLICATION_SUPPORT_EMAIL = ""
+private val LOCAL_ASSET_NAME_PATTERN = Regex("^[a-z0-9_\\-.]+$")
 
 /** Loads packaged legal content without granting WebView file, content, script or network access. */
-fun WebView.loadSecureLocalAsset(assetName: String) {
-    require(assetName.matches(Regex("^[a-z0-9_\\-.]+$"))) {
+fun WebView.loadSecureLocalAsset(
+    assetName: String,
+    onLocalAssetNavigation: (String) -> Unit = {}
+) {
+    require(assetName.matches(LOCAL_ASSET_NAME_PATTERN)) {
         "Local WebView asset name is invalid."
     }
 
@@ -68,7 +72,9 @@ fun WebView.loadSecureLocalAsset(assetName: String) {
             request: WebResourceRequest
         ): Boolean {
             val uri = request.url
-            if (uri.isApprovedLocalAsset()) {
+            val localAssetName = uri.approvedLocalAssetNameOrNull()
+            if (localAssetName != null) {
+                onLocalAssetNavigation(localAssetName)
                 return false
             }
             if (uri.isApprovedSupportEmail()) {
@@ -96,10 +102,15 @@ fun WebView.destroySecureLocalContent() {
     destroy()
 }
 
-private fun Uri.isApprovedLocalAsset(): Boolean {
-    return scheme == "https" &&
-        host == LOCAL_ASSET_HOST &&
-        path.orEmpty().startsWith(LOCAL_ASSET_PREFIX)
+private fun Uri.approvedLocalAssetNameOrNull(): String? {
+    if (scheme != "https" || host != LOCAL_ASSET_HOST) return null
+
+    val assetName = path.orEmpty()
+        .takeIf { it.startsWith(LOCAL_ASSET_PREFIX) }
+        ?.removePrefix(LOCAL_ASSET_PREFIX)
+        ?: return null
+
+    return assetName.takeIf { it.matches(LOCAL_ASSET_NAME_PATTERN) }
 }
 
 private fun Uri.isApprovedSupportEmail(): Boolean {
