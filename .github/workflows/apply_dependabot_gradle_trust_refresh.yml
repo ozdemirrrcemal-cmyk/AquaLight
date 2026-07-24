@@ -8,7 +8,7 @@ on:
       - completed
 
 permissions:
-  actions: read
+  actions: write
   contents: write
   pull-requests: read
 
@@ -60,6 +60,7 @@ jobs:
           token = os.environ["GH_TOKEN"]
           api_root = "https://api.github.com"
           artifact_root = Path("incoming")
+          output_path = Path(os.environ["GITHUB_OUTPUT"])
 
           expected_artifact_files = {
               "app/gradle.lockfile",
@@ -107,8 +108,9 @@ jobs:
                   ) from error
               return json.loads(body) if body else None
 
-          metadata_path = artifact_root / "metadata.json"
-          metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+          metadata = json.loads(
+              (artifact_root / "metadata.json").read_text(encoding="utf-8")
+          )
           if set(metadata) != {
               "pull_request",
               "head_ref",
@@ -118,6 +120,7 @@ jobs:
               raise SystemExit("Trust artifact metadata fields are invalid.")
           if int(metadata["source_run_id"]) != source_run_id:
               raise SystemExit("Trust artifact source run does not match workflow_run.")
+
           pr_number = int(metadata["pull_request"])
           head_ref = str(metadata["head_ref"])
           expected_head_sha = str(metadata["head_sha"])
@@ -204,8 +207,7 @@ jobs:
                   )
 
           verification_tree = ET.parse(verification_path)
-          root_tag = verification_tree.getroot().tag
-          if not root_tag.endswith("verification-metadata"):
+          if not verification_tree.getroot().tag.endswith("verification-metadata"):
               raise SystemExit("Generated verification metadata root is invalid.")
 
           current_commit = api(
@@ -239,36 +241,60 @@ jobs:
           new_tree = api(
               "POST",
               f"/repos/{repository}/git/trees",
-              {
-                  "base_tree": current_tree_sha,
-                  "tree": tree_entries,
-              },
+              {"base_tree": current_tree_sha, "tree": tree_entries},
           )
-          if new_tree["sha"] == current_tree_sha:
+
+          final_head_sha = expected_head_sha
+          changed = new_tree["sha"] != current_tree_sha
+          if changed:
+              commit = api(
+                  "POST",
+                  f"/repos/{repository}/git/commits",
+                  {
+                      "message": "build(deps): refresh Gradle trust state [skip ci]",
+                      "tree": new_tree["sha"],
+                      "parents": [expected_head_sha],
+                  },
+              )
+              final_head_sha = commit["sha"]
+              encoded_ref = urllib.parse.quote(head_ref, safe="/")
+              api(
+                  "PATCH",
+                  f"/repos/{repository}/git/refs/heads/{encoded_ref}",
+                  {"sha": final_head_sha, "force": False},
+              )
+              print(
+                  "Committed regenerated Gradle locks and verification metadata "
+                  f"to {head_ref} at {final_head_sha}."
+              )
+          else:
               print("Dependabot Gradle trust state is already current.")
-              raise SystemExit(0)
 
-          commit = api(
-              "POST",
-              f"/repos/{repository}/git/commits",
-              {
-                  "message": "build(deps): refresh Gradle trust state",
-                  "tree": new_tree["sha"],
-                  "parents": [expected_head_sha],
-              },
-          )
-          encoded_ref = urllib.parse.quote(head_ref, safe="/")
-          api(
-              "PATCH",
-              f"/repos/{repository}/git/refs/heads/{encoded_ref}",
-              {
-                  "sha": commit["sha"],
-                  "force": False,
-              },
-          )
-
-          print(
-              "Committed regenerated Gradle locks and verification metadata "
-              f"to {head_ref} at {commit['sha']}."
-          )
+          with output_path.open("a", encoding="utf-8") as handle:
+              handle.write(f"changed={'true' if changed else 'false'}\n")
+              handle.write(f"head-ref={head_ref}\n")
+              handle.write(f"head-sha={final_head_sha}\n")
+              handle.write(f"pr-number={pr_number}\n")
           PY
+
+      - name: Dispatch trusted validation workflows
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_REF: ${{ steps.apply.outputs.head-ref }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          workflows=(
+            android.yml
+            codeql.yml
+            dependency_integrity.yml
+            android_emulator_tests.yml
+          )
+          for workflow in "${workflows[@]}"; do
+            jq -n --arg ref "$HEAD_REF" '{ref: $ref}' \
+              | gh api \
+                  --method POST \
+                  "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow}/dispatches" \
+                  --input -
+            echo "Dispatched ${workflow} on ${HEAD_REF}."
+          done
