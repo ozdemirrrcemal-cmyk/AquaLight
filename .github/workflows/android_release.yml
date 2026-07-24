@@ -159,14 +159,118 @@ jobs:
         if: contains(github.event.head_commit.message, 'quick-clean')
         run: ./gradlew clean --no-daemon
 
-      - name: 🔑 Set up release keystore
-        if: ${{ !cancelled() }}
+      - name: 🔐 Validate and materialize release signing key
         env:
           RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+          RELEASE_SIGNING_CERT_SHA256: ${{ secrets.RELEASE_SIGNING_CERT_SHA256 }}
+        shell: bash
         run: |
-          echo "$RELEASE_KEYSTORE_BASE64" | base64 --decode > release-key.jks
-          echo "✅ release-key.jks oluşturuldu repo kökü"
-          ls -la
+          set -Eeuo pipefail
+
+          required_secrets=(
+            RELEASE_KEYSTORE_BASE64
+            RELEASE_KEYSTORE_PASSWORD
+            RELEASE_KEY_ALIAS
+            RELEASE_KEY_PASSWORD
+            RELEASE_SIGNING_CERT_SHA256
+          )
+          for secret_name in "${required_secrets[@]}"; do
+            secret_value="${!secret_name:-}"
+            if [[ -z "${secret_value//[[:space:]]/}" ]]; then
+              echo "❌ Required release signing secret is missing or empty: ${secret_name}" >&2
+              exit 1
+            fi
+          done
+
+          normalize_fingerprint() {
+            local value="$1"
+            value="${value#SHA256:}"
+            value="${value#sha256:}"
+            printf '%s' "$value" | tr -d '[:space:]:' | tr '[:lower:]' '[:upper:]'
+          }
+
+          umask 077
+          SIGNING_DIR="${RUNNER_TEMP}/aqualight-signing"
+          KEYSTORE_PATH="${SIGNING_DIR}/release-key.jks"
+          TEMP_KEYSTORE_PATH="${KEYSTORE_PATH}.tmp"
+          PROBE_DIR="${SIGNING_DIR}/probe"
+          PROBE_JAR="${SIGNING_DIR}/signing-probe.jar"
+          SIGNED_PROBE_JAR="${SIGNING_DIR}/signing-probe-signed.jar"
+
+          rm -rf "$SIGNING_DIR"
+          mkdir -p "$PROBE_DIR"
+
+          if ! printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 --decode > "$TEMP_KEYSTORE_PATH"; then
+            echo "❌ RELEASE_KEYSTORE_BASE64 is not valid base64." >&2
+            rm -f "$TEMP_KEYSTORE_PATH"
+            exit 1
+          fi
+          if [[ ! -s "$TEMP_KEYSTORE_PATH" ]]; then
+            echo "❌ Decoded release keystore is empty." >&2
+            rm -f "$TEMP_KEYSTORE_PATH"
+            exit 1
+          fi
+          mv "$TEMP_KEYSTORE_PATH" "$KEYSTORE_PATH"
+          chmod 600 "$KEYSTORE_PATH"
+
+          if ! KEYTOOL_OUTPUT="$(keytool -list -v \
+              -keystore "$KEYSTORE_PATH" \
+              -storepass "$RELEASE_KEYSTORE_PASSWORD" \
+              -alias "$RELEASE_KEY_ALIAS" 2>&1)"; then
+            echo "❌ Keystore password or alias validation failed." >&2
+            exit 1
+          fi
+
+          if ! grep -Fq "Entry type: PrivateKeyEntry" <<< "$KEYTOOL_OUTPUT"; then
+            echo "❌ RELEASE_KEY_ALIAS must identify a PrivateKeyEntry." >&2
+            exit 1
+          fi
+
+          ACTUAL_CERT_SHA256="$(
+            sed -n 's/^[[:space:]]*SHA256:[[:space:]]*//p' <<< "$KEYTOOL_OUTPUT" | head -n 1
+          )"
+          ACTUAL_CERT_SHA256_NORMALIZED="$(normalize_fingerprint "$ACTUAL_CERT_SHA256")"
+          EXPECTED_CERT_SHA256_NORMALIZED="$(normalize_fingerprint "$RELEASE_SIGNING_CERT_SHA256")"
+
+          if [[ ! "$EXPECTED_CERT_SHA256_NORMALIZED" =~ ^[0-9A-F]{64}$ ]]; then
+            echo "❌ RELEASE_SIGNING_CERT_SHA256 must contain exactly 64 hexadecimal characters." >&2
+            exit 1
+          fi
+          if [[ "$ACTUAL_CERT_SHA256_NORMALIZED" != "$EXPECTED_CERT_SHA256_NORMALIZED" ]]; then
+            echo "❌ Release signing certificate SHA-256 does not match the trusted fingerprint." >&2
+            exit 1
+          fi
+
+          printf 'AquaLight release signing probe\n' > "${PROBE_DIR}/payload.txt"
+          jar --create --file "$PROBE_JAR" -C "$PROBE_DIR" payload.txt
+          if ! jarsigner \
+              -keystore "$KEYSTORE_PATH" \
+              -storepass "$RELEASE_KEYSTORE_PASSWORD" \
+              -keypass "$RELEASE_KEY_PASSWORD" \
+              -signedjar "$SIGNED_PROBE_JAR" \
+              "$PROBE_JAR" \
+              "$RELEASE_KEY_ALIAS" >/dev/null; then
+            echo "❌ Release key password or private-key access validation failed." >&2
+            exit 1
+          fi
+          if ! jarsigner -verify "$SIGNED_PROBE_JAR" >/dev/null; then
+            echo "❌ Release signing probe verification failed." >&2
+            exit 1
+          fi
+
+          rm -f release-key.jks
+          ln -s "$KEYSTORE_PATH" release-key.jks
+          test -L release-key.jks
+
+          {
+            echo "AQL_RELEASE_KEYSTORE_PATH=$KEYSTORE_PATH"
+            echo "AQL_RELEASE_CERT_SHA256=$ACTUAL_CERT_SHA256_NORMALIZED"
+          } >> "$GITHUB_ENV"
+
+          echo "✅ Release signing secrets, keystore, alias, private key and certificate identity verified."
 
       - name: 🚀 Build Signed Release APK
         env:
@@ -196,15 +300,15 @@ jobs:
             exit 1
           fi
 
-      - name: 🔍 Print Release Keystore SHA-1
-        env:
-          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
-          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+      - name: 🔍 Report verified release signing identity
+        shell: bash
         run: |
-          keytool -list -v \
-            -keystore release-key.jks \
-            -storepass "$RELEASE_KEYSTORE_PASSWORD" \
-            -alias "$RELEASE_KEY_ALIAS" | grep -E "SHA( |-)?1" || true
+          set -euo pipefail
+          if [[ ! "${AQL_RELEASE_CERT_SHA256:-}" =~ ^[0-9A-F]{64}$ ]]; then
+            echo "❌ Verified release signing certificate identity is unavailable." >&2
+            exit 1
+          fi
+          echo "Release signing certificate SHA-256: ${AQL_RELEASE_CERT_SHA256}"
 
       - name: 🧪 Run Lint & Unit Tests
         run: ./gradlew lintRelease testReleaseUnitTest --no-daemon --stacktrace
@@ -261,6 +365,9 @@ jobs:
           name: AquaLight-Release-${{ github.run_number }}
           path: app/build/outputs/apk/release/AquaLight.apk
 
-      - name: 🧹 Cleanup keystore
+      - name: 🧹 Cleanup release signing material
         if: always()
-        run: rm -f release-key.jks
+        shell: bash
+        run: |
+          rm -f release-key.jks
+          rm -rf "${RUNNER_TEMP}/aqualight-signing"
