@@ -1,4 +1,3 @@
-# Re-run after production-release provisioning
 name: Production Release Environment Audit
 
 on:
@@ -7,7 +6,6 @@ on:
       - ".github/workflows/production_release_environment_audit.yml"
 
 permissions:
-  actions: read
   contents: read
 
 jobs:
@@ -15,71 +13,34 @@ jobs:
     name: Verify production-release contract
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    environment: production-release
+    env:
+      AQL_PRODUCTION_RELEASE_ENABLED: ${{ vars.AQL_PRODUCTION_RELEASE_ENABLED }}
+      RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+      RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+      RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+      RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+      RELEASE_SIGNING_CERT_SHA256: ${{ secrets.RELEASE_SIGNING_CERT_SHA256 }}
 
     steps:
-      - name: Query and validate environment metadata
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Validate environment values without printing them
         shell: bash
         run: |
           set -Eeuo pipefail
-          repository_api="repos/${GITHUB_REPOSITORY}"
-          environment_name="production-release"
-
-          gh api "${repository_api}/environments?per_page=100" > environments.json
-
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-
-          environments = json.loads(Path("environments.json").read_text(encoding="utf-8"))
-          names = sorted(item.get("name", "") for item in environments.get("environments", []))
-          print("repository environments: " + (", ".join(names) if names else "<none>"))
-          if "production-release" not in names:
-              raise SystemExit("production-release environment is missing")
-          PY
-
-          gh api "${repository_api}/environments/${environment_name}" > environment.json
-          gh api "${repository_api}/environments/${environment_name}/variables" > variables.json
-          gh api "${repository_api}/environments/${environment_name}/secrets" > secrets.json
-
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-
-          environment = json.loads(Path("environment.json").read_text(encoding="utf-8"))
-          variables = json.loads(Path("variables.json").read_text(encoding="utf-8"))
-          secrets = json.loads(Path("secrets.json").read_text(encoding="utf-8"))
-
-          required_secret_names = {
-              "RELEASE_KEYSTORE_BASE64",
-              "RELEASE_KEYSTORE_PASSWORD",
-              "RELEASE_KEY_ALIAS",
-              "RELEASE_KEY_PASSWORD",
-              "RELEASE_SIGNING_CERT_SHA256",
+          [[ "${AQL_PRODUCTION_RELEASE_ENABLED}" == "true" ]] || {
+            echo "AQL_PRODUCTION_RELEASE_ENABLED must equal true" >&2
+            exit 1
           }
-          available_secret_names = {
-              item.get("name") for item in secrets.get("secrets", [])
-          }
-          missing_secrets = sorted(required_secret_names - available_secret_names)
-          if missing_secrets:
-              raise SystemExit("missing production-release secrets: " + ", ".join(missing_secrets))
-
-          environment_variables = {
-              item.get("name"): item.get("value")
-              for item in variables.get("variables", [])
-          }
-          if environment_variables.get("AQL_PRODUCTION_RELEASE_ENABLED") != "true":
-              raise SystemExit("AQL_PRODUCTION_RELEASE_ENABLED must equal true")
-
-          protection_types = sorted(
-              rule.get("type", "unknown")
-              for rule in environment.get("protection_rules", [])
-          )
-          deployment_policy = environment.get("deployment_branch_policy") or {}
-          print("production-release environment contract passed")
-          print("required signing secret names are present")
-          print("AQL_PRODUCTION_RELEASE_ENABLED=true")
-          print("protection rules: " + ", ".join(protection_types))
-          print("deployment branch policy: " + json.dumps(deployment_policy, sort_keys=True))
-          PY
+          for name in \
+            RELEASE_KEYSTORE_BASE64 \
+            RELEASE_KEYSTORE_PASSWORD \
+            RELEASE_KEY_ALIAS \
+            RELEASE_KEY_PASSWORD \
+            RELEASE_SIGNING_CERT_SHA256
+          do
+            [[ -n "${!name:-}" ]] || {
+              echo "Missing or empty environment secret: ${name}" >&2
+              exit 1
+            }
+          done
+          echo "production-release environment contract passed"
