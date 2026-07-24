@@ -124,7 +124,7 @@ jobs:
 
       - name: Upload pre-signing quality evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: AquaLight-Pre-Signing-Quality-${{ steps.quality.outputs.release-tag }}
           path: |
@@ -265,7 +265,7 @@ jobs:
         run: bash tools/release_pipeline/verify_publication.sh
 
       - name: 09 Publish - upload final commercial release
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: AquaLight-Release-${{ needs.quality.outputs.release-tag }}
           path: final-release/
