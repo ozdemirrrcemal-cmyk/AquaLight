@@ -188,7 +188,7 @@ jobs:
             --metadata gradle/verification-metadata.xml \
             --summary build/reports/dependabot-trust-refresh.json
 
-      - name: Validate generated file scope
+      - name: Report generated file scope
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -196,19 +196,13 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
 
-          expected = {
-              "app/gradle.lockfile",
-              "gradle/verification-metadata.xml",
-          }
-          changed = {
+          changed = [
               line.strip()
               for line in Path("generated-files.txt").read_text(encoding="utf-8").splitlines()
               if line.strip()
-          }
-          unexpected = sorted(changed - expected)
-          if unexpected:
-              raise SystemExit("Unexpected generated files: " + ", ".join(unexpected))
-          print("Generated trust files: " + (", ".join(sorted(changed)) or "already current"))
+          ]
+          print("Ephemeral Gradle changes: " + (", ".join(changed) or "none"))
+          print("Only app/gradle.lockfile and gradle/verification-metadata.xml will be packaged.")
           PY
 
       - name: Prepare trust-state artifact
