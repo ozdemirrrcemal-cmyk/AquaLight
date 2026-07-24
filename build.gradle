@@ -1,8 +1,126 @@
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+
+class FirebaseConfigSupport {
+    static Map validate(String rawJson, String expectedPackage, String environment) {
+        def parsed
+        try {
+            parsed = new JsonSlurper().parseText(rawJson)
+        } catch (Exception error) {
+            throw new GradleException("Invalid Firebase JSON for ${environment}.", error)
+        }
+
+        def projectId = parsed?.project_info?.project_id?.toString()?.trim()
+        if (!projectId) {
+            throw new GradleException("Firebase project_id is missing for ${environment}.")
+        }
+
+        def clients = parsed?.client instanceof Collection ? parsed.client : []
+        def matchingClient = clients.find { client ->
+            client?.client_info?.android_client_info?.package_name == expectedPackage
+        }
+        if (matchingClient == null) {
+            throw new GradleException(
+                    "Firebase config for ${environment} must contain Android package ${expectedPackage}."
+            )
+        }
+
+        return [
+                json     : JsonOutput.prettyPrint(JsonOutput.toJson(parsed)) + System.lineSeparator(),
+                projectId: projectId
+        ]
+    }
+
+    static String createCiPlaceholder(String environment, String packageName) {
+        def suffix = environment == "debug" ? "01" : "02"
+        def projectId = "aqualight-ci-${environment}"
+        def webClientId = "000000000000-${environment}.apps.googleusercontent.com"
+        def config = [
+                project_info          : [
+                        project_number: "000000000000",
+                        project_id    : projectId,
+                        storage_bucket: "${projectId}.appspot.com"
+                ],
+                client                : [[
+                        client_info: [
+                                mobilesdk_app_id   : "1:000000000000:android:000000000000000000000000000000${suffix}",
+                                android_client_info: [package_name: packageName]
+                        ],
+                        oauth_client: [[client_id: webClientId, client_type: 3]],
+                        api_key     : [[current_key: "AIzaSyAQLCI000000000000000000000000000${suffix}"]],
+                        services    : [
+                                appinvite_service: [
+                                        other_platform_oauth_client: [[client_id: webClientId, client_type: 3]]
+                                ]
+                        ]
+                ]],
+                configuration_version: "1"
+        ]
+        return JsonOutput.prettyPrint(JsonOutput.toJson(config)) + System.lineSeparator()
+    }
+
+    static Map prepare(String appDirectoryPath,
+                       String environment,
+                       String expectedPackage,
+                       String secretName,
+                       List<String> targetBuildTypes,
+                       boolean allowCiPlaceholder) {
+        def encodedConfig = System.getenv(secretName)?.trim()
+        String rawConfig
+
+        if (encodedConfig) {
+            try {
+                rawConfig = new String(Base64.getDecoder().decode(encodedConfig), StandardCharsets.UTF_8)
+            } catch (IllegalArgumentException error) {
+                throw new GradleException("${secretName} is not valid base64.", error)
+            }
+        } else if (environment == "production") {
+            def legacyProductionConfig = new File(appDirectoryPath, "google-services.json")
+            if (!legacyProductionConfig.isFile()) {
+                throw new GradleException("Production Firebase config is missing. Set ${secretName}.")
+            }
+            rawConfig = legacyProductionConfig.getText("UTF-8")
+        } else if (allowCiPlaceholder && "true".equalsIgnoreCase(System.getenv("CI"))) {
+            rawConfig = createCiPlaceholder(environment, expectedPackage)
+        } else {
+            throw new GradleException("Firebase config for ${environment} is missing. Set ${secretName}.")
+        }
+
+        def validated = validate(rawConfig, expectedPackage, environment)
+        targetBuildTypes.each { buildType ->
+            def target = new File(appDirectoryPath, "src/${buildType}/google-services.json")
+            target.parentFile.mkdirs()
+            target.setText(validated.json as String, "UTF-8")
+        }
+        return validated
+    }
+
+    static Map readProjectIds(String appDirectoryPath) {
+        return [
+                debug     : new JsonSlurper().parse(
+                        new File(appDirectoryPath, "src/debug/google-services.json")
+                ).project_info.project_id,
+                staging   : new JsonSlurper().parse(
+                        new File(appDirectoryPath, "src/staging/google-services.json")
+                ).project_info.project_id,
+                production: new JsonSlurper().parse(
+                        new File(appDirectoryPath, "src/release/google-services.json")
+                ).project_info.project_id
+        ]
+    }
+}
+
 project(":app") {
     plugins.withId("com.android.application") {
+        def baseApplicationId = "com.aqua.aqualight"
+        def appDirectoryPath = projectDir.absolutePath
+
         android {
             buildTypes {
                 debug {
+                    applicationIdSuffix ".debug"
                     versionNameSuffix "-debug"
                     buildConfigField "String", "AQL_ENVIRONMENT", '"debug"'
                     buildConfigField "boolean", "AQL_IS_PRODUCTION", "false"
@@ -15,6 +133,7 @@ project(":app") {
 
                 staging {
                     initWith release
+                    applicationIdSuffix ".staging"
                     versionNameSuffix "-staging"
                     signingConfig signingConfigs.debug
                     matchingFallbacks = ['release']
@@ -29,11 +148,100 @@ project(":app") {
             }
         }
 
+        def registerFirebaseConfigTask = { String environment,
+                                           String expectedPackage,
+                                           String secretName,
+                                           List<String> targetBuildTypes,
+                                           boolean allowCiPlaceholder ->
+            def capitalizedEnvironment = environment.capitalize()
+            def outputFiles = targetBuildTypes.collect { buildType ->
+                new File(appDirectoryPath, "src/${buildType}/google-services.json")
+            }
+
+            tasks.register("prepare${capitalizedEnvironment}FirebaseConfig") {
+                group = "firebase"
+                description = "Materializes and validates ${environment} Firebase configuration."
+                doNotTrackState("Firebase configuration is provided through environment variables at execution time.")
+                outputs.files(outputFiles)
+
+                doLast { task ->
+                    def validated = FirebaseConfigSupport.prepare(
+                            appDirectoryPath,
+                            environment,
+                            expectedPackage,
+                            secretName,
+                            targetBuildTypes,
+                            allowCiPlaceholder
+                    )
+                    task.logger.lifecycle(
+                            "Firebase ${environment} config prepared for ${expectedPackage} " +
+                                    "(project ${validated.projectId})."
+                    )
+                }
+            }
+        }
+
+        def prepareDebugFirebaseConfig = registerFirebaseConfigTask(
+                "debug",
+                "${baseApplicationId}.debug",
+                "AQL_FIREBASE_DEBUG_CONFIG_BASE64",
+                ["debug"],
+                true
+        )
+        def prepareStagingFirebaseConfig = registerFirebaseConfigTask(
+                "staging",
+                "${baseApplicationId}.staging",
+                "AQL_FIREBASE_STAGING_CONFIG_BASE64",
+                ["staging"],
+                true
+        )
+        def prepareProductionFirebaseConfig = registerFirebaseConfigTask(
+                "production",
+                baseApplicationId,
+                "AQL_FIREBASE_PRODUCTION_CONFIG_BASE64",
+                ["release", "releaseSmoke"],
+                false
+        )
+
+        def verifyFirebaseEnvironmentIsolation = tasks.register("verifyFirebaseEnvironmentIsolation") {
+            group = "verification"
+            description = "Verifies that debug, staging and production use distinct Firebase projects."
+            dependsOn(
+                    prepareDebugFirebaseConfig,
+                    prepareStagingFirebaseConfig,
+                    prepareProductionFirebaseConfig
+            )
+            doNotTrackState("Firebase project identities are generated from execution-time environment inputs.")
+
+            doLast { task ->
+                def projectIds = FirebaseConfigSupport.readProjectIds(appDirectoryPath)
+                if (projectIds.values().toSet().size() != projectIds.size()) {
+                    throw new GradleException(
+                            "Firebase projects must be distinct by environment: ${projectIds}."
+                    )
+                }
+                task.logger.lifecycle("Firebase environment isolation verified: ${projectIds}.")
+            }
+        }
+
         tasks.configureEach { task ->
-            if (task.name == "verifyFirebaseRuntimePolicy") {
-                task.inputs.files(configurations.named("stagingRuntimeClasspath"))
-                        .withPropertyName("stagingFirebaseRuntimeClasspath")
-                        .withPathSensitivity(PathSensitivity.NONE)
+            switch (task.name) {
+                case "processDebugGoogleServices":
+                    task.dependsOn(prepareDebugFirebaseConfig)
+                    break
+                case "processStagingGoogleServices":
+                    task.dependsOn(prepareStagingFirebaseConfig)
+                    break
+                case "processReleaseGoogleServices":
+                case "processReleaseSmokeGoogleServices":
+                    task.dependsOn(prepareProductionFirebaseConfig)
+                    break
+                case "verifyFirebaseRuntimePolicy":
+                    task.inputs.files(configurations.named("stagingRuntimeClasspath"))
+                            .withPropertyName("stagingFirebaseRuntimeClasspath")
+                            .withPathSensitivity(PathSensitivity.NONE)
+                    task.dependsOn(verifyFirebaseEnvironmentIsolation)
+                    break
             }
         }
     }

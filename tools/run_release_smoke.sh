@@ -119,7 +119,14 @@ finish() {
 trap finish EXIT
 
 ./gradlew connectedDebugAndroidTest --no-daemon --stacktrace
-bash tools/verify_uninstall_clears_data.sh
+DEBUG_APK="$(
+  find app/build/outputs/apk/debug -type f -name '*.apk' ! -name '*androidTest*' \
+    | sort \
+    | head -n 1
+)"
+test -n "$DEBUG_APK"
+test -s "$DEBUG_APK"
+bash tools/verify_uninstall_clears_data.sh "$DEBUG_APK"
 
 adb uninstall "$PACKAGE_NAME" >/dev/null 2>&1 || true
 SMOKE_APK="$(cat release-smoke-apk-path.txt)"
