@@ -1,6 +1,7 @@
 name: CodeQL Security Scan
 
 on:
+  workflow_dispatch:
   push:
     branches: [ "main", "release" ]
   pull_request:
