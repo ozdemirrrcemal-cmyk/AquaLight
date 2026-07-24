@@ -272,12 +272,12 @@ jobs:
 
           echo "✅ Release signing secrets, keystore, alias, private key and certificate identity verified."
 
-      - name: 🚀 Build Signed Release APK
+      - name: 🚀 Build Signed Release AAB
         env:
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-        run: ./gradlew assembleRelease --stacktrace --no-daemon
+        run: ./gradlew bundleRelease --stacktrace --no-daemon
 
       - name: Verify resolved Firebase runtime and merged manifest policy
         run: |
@@ -288,17 +288,60 @@ jobs:
         if: failure()
         run: ./gradlew :app:dependencies --configuration releaseRuntimeClasspath --no-daemon
 
-      - name: ✅ Verify release output
+      - name: ✅ Verify signed release AAB
         shell: bash
         run: |
-          set -e
-          ls -la "app/build/outputs/apk/release" || true
-          if [ -f "app/build/outputs/apk/release/AquaLight.apk" ]; then
-            echo "✅ Release APK hazır"
-          else
-            echo "❌ APK bulunamadı!"
+          set -Eeuo pipefail
+
+          normalize_fingerprint() {
+            local value="$1"
+            value="${value#SHA256:}"
+            value="${value#sha256:}"
+            printf '%s' "$value" | tr -d '[:space:]:' | tr '[:lower:]' '[:upper:]'
+          }
+
+          BUNDLE_DIR="app/build/outputs/bundle/release"
+          ORIGINAL_AAB="$(find "$BUNDLE_DIR" -maxdepth 1 -type f -name '*.aab' -print -quit)"
+          if [[ -z "$ORIGINAL_AAB" || ! -s "$ORIGINAL_AAB" ]]; then
+            echo "❌ Signed release AAB was not produced." >&2
+            find app/build/outputs -maxdepth 4 -type f -print 2>/dev/null || true
             exit 1
           fi
+
+          RELEASE_VERSION="${AQL_RELEASE_TAG#v}"
+          CANONICAL_AAB="${BUNDLE_DIR}/AquaLight-${RELEASE_VERSION}.aab"
+          if [[ "$ORIGINAL_AAB" != "$CANONICAL_AAB" ]]; then
+            mv "$ORIGINAL_AAB" "$CANONICAL_AAB"
+          fi
+
+          if ! jarsigner -verify -verbose -certs "$CANONICAL_AAB" \
+              > signed-aab-verification.txt 2>&1; then
+            cat signed-aab-verification.txt >&2
+            echo "❌ Release AAB signature verification failed." >&2
+            exit 1
+          fi
+
+          AAB_CERT_OUTPUT="$(keytool -printcert -jarfile "$CANONICAL_AAB")"
+          AAB_CERT_SHA256="$(
+            sed -n 's/^[[:space:]]*SHA256:[[:space:]]*//p' <<< "$AAB_CERT_OUTPUT" | head -n 1
+          )"
+          AAB_CERT_SHA256_NORMALIZED="$(normalize_fingerprint "$AAB_CERT_SHA256")"
+
+          if [[ ! "${AQL_RELEASE_CERT_SHA256:-}" =~ ^[0-9A-F]{64}$ ]]; then
+            echo "❌ Trusted release signing certificate identity is unavailable." >&2
+            exit 1
+          fi
+          if [[ "$AAB_CERT_SHA256_NORMALIZED" != "$AQL_RELEASE_CERT_SHA256" ]]; then
+            echo "❌ Release AAB signer does not match the trusted signing certificate." >&2
+            exit 1
+          fi
+
+          {
+            echo "AQL_RELEASE_AAB_PATH=$CANONICAL_AAB"
+            echo "AQL_RELEASE_AAB_CERT_SHA256=$AAB_CERT_SHA256_NORMALIZED"
+          } >> "$GITHUB_ENV"
+
+          echo "✅ Signed release AAB verified: $CANONICAL_AAB"
 
       - name: 🔍 Report verified release signing identity
         shell: bash
@@ -306,6 +349,10 @@ jobs:
           set -euo pipefail
           if [[ ! "${AQL_RELEASE_CERT_SHA256:-}" =~ ^[0-9A-F]{64}$ ]]; then
             echo "❌ Verified release signing certificate identity is unavailable." >&2
+            exit 1
+          fi
+          if [[ "${AQL_RELEASE_AAB_CERT_SHA256:-}" != "$AQL_RELEASE_CERT_SHA256" ]]; then
+            echo "❌ Verified AAB signing identity is inconsistent." >&2
             exit 1
           fi
           echo "Release signing certificate SHA-256: ${AQL_RELEASE_CERT_SHA256}"
@@ -356,14 +403,16 @@ jobs:
             **/build/reports/lint-results-*.html
             **/build/reports/lint-results-*.xml
             unused-resources.txt
+            signed-aab-verification.txt
             **/build/reports/tests/testReleaseUnitTest/*
           if-no-files-found: ignore
 
-      - name: 📤 Upload Release APK
+      - name: 📤 Upload Signed Release AAB
         uses: actions/upload-artifact@v4
         with:
-          name: AquaLight-Release-${{ github.run_number }}
-          path: app/build/outputs/apk/release/AquaLight.apk
+          name: AquaLight-AAB-${{ github.run_number }}
+          path: app/build/outputs/bundle/release/AquaLight-*.aab
+          if-no-files-found: error
 
       - name: 🧹 Cleanup release signing material
         if: always()
