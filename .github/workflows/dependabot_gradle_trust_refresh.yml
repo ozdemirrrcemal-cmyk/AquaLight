@@ -1,0 +1,338 @@
+name: Dependabot Gradle Trust Refresh
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    paths:
+      - "app/build.gradle"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle.properties"
+      - "gradle/libs.versions.toml"
+      - "app/gradle.lockfile"
+      - "gradle/verification-metadata.xml"
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Dependabot Gradle pull request number to validate
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: dependabot-gradle-trust-${{ github.event_name }}-${{ github.event.pull_request.number || inputs.pr_number }}
+  cancel-in-progress: true
+
+env:
+  GRADLE_OPTS: >-
+    -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8"
+    -Dorg.gradle.daemon=false
+
+jobs:
+  generate:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.user.login == 'dependabot[bot]' &&
+       github.event.pull_request.head.repo.full_name == github.repository &&
+       startsWith(github.event.pull_request.head.ref, 'dependabot/gradle/'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Resolve and validate Dependabot pull request
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUESTED_PR: ${{ github.event.pull_request.number || inputs.pr_number }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if [[ ! "$REQUESTED_PR" =~ ^[1-9][0-9]*$ ]]; then
+            echo "Dependabot PR number is invalid." >&2
+            exit 1
+          fi
+
+          gh api "repos/${GITHUB_REPOSITORY}/pulls/${REQUESTED_PR}" \
+            > dependabot-pr.json
+
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          pull = json.loads(Path("dependabot-pr.json").read_text(encoding="utf-8"))
+          repository = os.environ["GITHUB_REPOSITORY"]
+          if pull.get("state") != "open":
+              raise SystemExit("Dependabot pull request is not open.")
+          if pull.get("user", {}).get("login") != "dependabot[bot]":
+              raise SystemExit("Pull request author is not Dependabot.")
+          if pull.get("base", {}).get("ref") != "main":
+              raise SystemExit("Dependabot pull request does not target main.")
+          if pull.get("head", {}).get("repo", {}).get("full_name") != repository:
+              raise SystemExit("Dependabot pull request head is not in this repository.")
+          head_ref = str(pull.get("head", {}).get("ref", ""))
+          head_sha = str(pull.get("head", {}).get("sha", ""))
+          if not re.fullmatch(r"dependabot/gradle/[A-Za-z0-9._/-]+", head_ref):
+              raise SystemExit("Only canonical Dependabot Gradle branches are supported.")
+          if ".." in head_ref or head_ref.endswith("/"):
+              raise SystemExit("Dependabot branch name is invalid.")
+          if not re.fullmatch(r"[0-9a-f]{40}", head_sha):
+              raise SystemExit("Dependabot head SHA is invalid.")
+
+          output = Path(os.environ["GITHUB_OUTPUT"])
+          with output.open("a", encoding="utf-8") as handle:
+              handle.write(f"number={pull['number']}\n")
+              handle.write(f"head-ref={head_ref}\n")
+              handle.write(f"head-sha={head_sha}\n")
+          print(f"Validated Dependabot Gradle PR #{pull['number']} at {head_sha}.")
+          PY
+
+      - name: Checkout exact Dependabot head
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ steps.pr.outputs.head-sha }}
+          persist-credentials: false
+
+      - name: Validate Dependabot PR scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          gh api --paginate \
+            "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/files?per_page=100" \
+            --jq '.[].filename' > pr-files.txt
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          allowed = {
+              "app/build.gradle",
+              "build.gradle",
+              "settings.gradle",
+              "gradle.properties",
+              "gradle/libs.versions.toml",
+              "app/gradle.lockfile",
+              "gradle/verification-metadata.xml",
+          }
+          manifests = {
+              "app/build.gradle",
+              "build.gradle",
+              "settings.gradle",
+              "gradle.properties",
+              "gradle/libs.versions.toml",
+          }
+          files = {
+              line.strip()
+              for line in Path("pr-files.txt").read_text(encoding="utf-8").splitlines()
+              if line.strip()
+          }
+          unexpected = sorted(files - allowed)
+          if unexpected:
+              raise SystemExit(
+                  "Dependabot Gradle trust refresh refuses unexpected files: "
+                  + ", ".join(unexpected)
+              )
+          if not files.intersection(manifests):
+              raise SystemExit("No approved Gradle dependency manifest changed.")
+          print("Dependabot Gradle PR scope accepted: " + ", ".join(sorted(files)))
+          PY
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@b5418f5a58f5fd2eb486dd7efb368fe7be7eae45 # v2
+
+      - name: Install JDK 17
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+
+      - name: Install compile SDK
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
+          sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1"
+          chmod +x ./gradlew
+
+      - name: Run repository architecture and policy guards
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          for guard in \
+            architecture_guard.py \
+            composition_root_guard.py \
+            ui_dependency_construction_guard.py \
+            session_startup_guard.py \
+            navigation_guard.py \
+            ws_protocol_guard.py \
+            permission_architecture_guard.py \
+            notification_reminder_architecture_guard.py \
+            process_safe_feedback_guard.py \
+            stage9_feedback_media_guard.py \
+            firebase_telemetry_guard.py \
+            privacy_legal_guard.py \
+            design_system_resource_guard.py \
+            localization_accessibility_guard.py; do
+            python3 "tools/$guard"
+          done
+
+      - name: Generate CI-only signing keys
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p ~/.android
+          if [[ ! -s ~/.android/debug.keystore ]]; then
+            keytool -genkeypair -noprompt \
+              -keystore ~/.android/debug.keystore \
+              -storepass android \
+              -alias AndroidDebugKey \
+              -keypass android \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -storetype JKS \
+              -dname "CN=Android,O=AquaLight,C=TR"
+          fi
+
+          rm -f release-key.jks
+          keytool -genkeypair -noprompt \
+            -keystore release-key.jks \
+            -storepass aqualight-ci \
+            -alias aqualight-ci \
+            -keypass aqualight-ci \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 1 \
+            -storetype JKS \
+            -dname "CN=AquaLight Dependabot CI,O=AquaLight,C=TR"
+
+      - name: Regenerate and validate Gradle trust state
+        env:
+          CI: "true"
+          RELEASE_KEYSTORE_PASSWORD: aqualight-ci
+          RELEASE_KEY_ALIAS: aqualight-ci
+          RELEASE_KEY_PASSWORD: aqualight-ci
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          ./gradlew \
+            :app:dependencies \
+            :app:verifyFirebaseRuntimePolicy \
+            :app:createDebugUnitTestCoverageReport \
+            :app:assembleDebug \
+            :app:assembleReleaseSmoke \
+            :app:lintDebug \
+            :app:lintStaging \
+            :app:lintRelease \
+            --continue \
+            --write-locks \
+            --write-verification-metadata sha256 \
+            --no-daemon \
+            --stacktrace
+
+          test -s app/gradle.lockfile
+          test -s gradle/verification-metadata.xml
+
+          python3 tools/verify_dependency_integrity.py \
+            --lockfile app/gradle.lockfile \
+            --metadata gradle/verification-metadata.xml \
+            --summary build/reports/dependabot-trust-refresh.json
+
+      - name: Validate generated file scope
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git diff --name-only > generated-files.txt
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          expected = {
+              "app/gradle.lockfile",
+              "gradle/verification-metadata.xml",
+          }
+          changed = {
+              line.strip()
+              for line in Path("generated-files.txt").read_text(encoding="utf-8").splitlines()
+              if line.strip()
+          }
+          unexpected = sorted(changed - expected)
+          if unexpected:
+              raise SystemExit(
+                  "Gradle changed files outside the approved trust state: "
+                  + ", ".join(unexpected)
+              )
+          print(
+              "Generated trust-state changes: "
+              + (", ".join(sorted(changed)) if changed else "<already current>")
+          )
+          PY
+
+      - name: Require committed trust state on dispatched validation
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git diff --exit-code -- \
+            app/gradle.lockfile \
+            gradle/verification-metadata.xml
+
+      - name: Prepare trust-state artifact
+        if: github.event_name == 'pull_request'
+        env:
+          HEAD_REF: ${{ steps.pr.outputs.head-ref }}
+          HEAD_SHA: ${{ steps.pr.outputs.head-sha }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          SOURCE_RUN_ID: ${{ github.run_id }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p trust-refresh/app trust-refresh/gradle
+          cp app/gradle.lockfile trust-refresh/app/gradle.lockfile
+          cp gradle/verification-metadata.xml \
+            trust-refresh/gradle/verification-metadata.xml
+
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          metadata = {
+              "pull_request": int(os.environ["PR_NUMBER"]),
+              "head_ref": os.environ["HEAD_REF"],
+              "head_sha": os.environ["HEAD_SHA"],
+              "source_run_id": int(os.environ["SOURCE_RUN_ID"]),
+          }
+          Path("trust-refresh/metadata.json").write_text(
+              json.dumps(metadata, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Upload generated Gradle trust state
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: dependabot-gradle-trust-${{ github.run_id }}
+          path: trust-refresh/
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Remove CI-only release keystore
+        if: always()
+        shell: bash
+        run: rm -f release-key.jks
