@@ -1,0 +1,47 @@
+name: Stage 15 Export Verified Blobs
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/stage15_export_verified_blobs.yml
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Download verified pinned workflows
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          gh run download 30093636738 \
+            --repo "$GITHUB_REPOSITORY" \
+            --name stage15-pinned-workflows-30093636738 \
+            --dir stage15-artifact
+          test "$(find stage15-artifact/pinned-workflows -maxdepth 1 -type f -name '*.yml' | wc -l)" -eq 7
+
+      - name: Publish blobs outside workflow paths
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          cp -R stage15-artifact /tmp/stage15-artifact
+          git checkout --orphan stage15-blob-export
+          git rm -rf .
+          mkdir -p staged-workflows
+          cp /tmp/stage15-artifact/pinned-workflows/*.yml staged-workflows/
+          test "$(find staged-workflows -maxdepth 1 -type f -name '*.yml' | wc -l)" -eq 7
+          git add staged-workflows
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(ci): stage verified pinned workflow blobs"
+          git push --force origin HEAD:refs/heads/automation/stage15-blobs
