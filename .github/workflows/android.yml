@@ -9,6 +9,12 @@ on:
       - "app/**"
       - "protocol/**"
       - "tools/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle.properties"
+      - "gradle/**"
+      - "gradlew"
+      - "gradlew.bat"
       - ".github/workflows/android.yml"
 
 concurrency:
@@ -121,21 +127,47 @@ jobs:
               -dname "CN=Android,O=AquaLight,C=TR"
           fi
 
-      - name: Run Android Lint
+      - name: Run standard Android Lint gate
+        shell: bash
         run: |
-          set -o pipefail
-          ./gradlew lintDebug --no-daemon --stacktrace 2>&1 | tee lint-debug.log
+          set -Eeuo pipefail
+          ./gradlew \
+            :app:lintDebug \
+            :app:lintStaging \
+            :app:lintRelease \
+            --continue \
+            --no-daemon \
+            --stacktrace \
+            2>&1 | tee android-lint.log
 
-      - name: Upload Lint Reports
+      - name: Verify Android Lint reports
+        if: success()
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          required_reports=(
+            app/build/reports/lint-results-debug.xml
+            app/build/reports/lint-results-staging.xml
+            app/build/reports/lint-results-release.xml
+          )
+          for report in "${required_reports[@]}"; do
+            if [[ ! -s "$report" ]]; then
+              echo "Required Android Lint report is missing or empty: $report" >&2
+              exit 1
+            fi
+          done
+          echo "Android Lint reports verified for debug, staging and production release."
+
+      - name: Upload Android Lint reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: lint-reports-${{ github.run_number }}
+          name: android-lint-reports-${{ github.run_number }}
           path: |
-            lint-debug.log
-            **/build/reports/lint-results-*.html
-            **/build/reports/lint-results-*.xml
-          if-no-files-found: ignore
+            android-lint.log
+            app/build/reports/lint-results-*.html
+            app/build/reports/lint-results-*.xml
+          if-no-files-found: warn
 
       - name: Run Unit Tests
         run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
