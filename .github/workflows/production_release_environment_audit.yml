@@ -25,6 +25,19 @@ jobs:
           repository_api="repos/${GITHUB_REPOSITORY}"
           environment_name="production-release"
 
+          gh api "${repository_api}/environments?per_page=100" > environments.json
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          environments = json.loads(Path("environments.json").read_text(encoding="utf-8"))
+          names = sorted(item.get("name", "") for item in environments.get("environments", []))
+          print("repository environments: " + (", ".join(names) if names else "<none>"))
+          if "production-release" not in names:
+              raise SystemExit("production-release environment is missing")
+          PY
+
           gh api "${repository_api}/environments/${environment_name}" > environment.json
           gh api "${repository_api}/environments/${environment_name}/variables" > variables.json
           gh api "${repository_api}/environments/${environment_name}/secrets" > secrets.json
@@ -36,9 +49,6 @@ jobs:
           environment = json.loads(Path("environment.json").read_text(encoding="utf-8"))
           variables = json.loads(Path("variables.json").read_text(encoding="utf-8"))
           secrets = json.loads(Path("secrets.json").read_text(encoding="utf-8"))
-
-          if environment.get("name") != "production-release":
-              raise SystemExit("production-release environment is missing")
 
           required_secret_names = {
               "RELEASE_KEYSTORE_BASE64",
