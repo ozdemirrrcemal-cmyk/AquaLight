@@ -1,0 +1,125 @@
+name: One-time Gradle Trust Repair
+
+on:
+  push:
+    branches:
+      - agent/fix-main-gradle-trust
+
+permissions:
+  contents: write
+
+concurrency:
+  group: one-time-gradle-trust-repair
+  cancel-in-progress: false
+
+env:
+  GRADLE_OPTS: >-
+    -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8"
+    -Dorg.gradle.daemon=false
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: agent/fix-main-gradle-trust
+          fetch-depth: 0
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@b5418f5a58f5fd2eb486dd7efb368fe7be7eae45 # v2
+
+      - name: Install JDK 17
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          set +o pipefail
+          yes | sdkmanager --licenses >/dev/null
+          set -o pipefail
+          sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
+          sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1" || true
+          chmod +x ./gradlew
+
+      - name: Generate CI-only signing keys
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p ~/.android
+          if [[ ! -s ~/.android/debug.keystore ]]; then
+            keytool -genkeypair -noprompt \
+              -keystore ~/.android/debug.keystore \
+              -storepass android \
+              -alias AndroidDebugKey \
+              -keypass android \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -storetype JKS \
+              -dname "CN=Android,O=AquaLight,C=TR"
+          fi
+          keytool -genkeypair -noprompt \
+            -keystore release-key.jks \
+            -storepass aqualight-ci \
+            -alias aqualight-ci \
+            -keypass aqualight-ci \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 1 \
+            -storetype JKS \
+            -dname "CN=AquaLight Trust Repair,O=AquaLight,C=TR"
+
+      - name: Regenerate Gradle trust state
+        env:
+          CI: "true"
+          RELEASE_KEYSTORE_PASSWORD: aqualight-ci
+          RELEASE_KEY_ALIAS: aqualight-ci
+          RELEASE_KEY_PASSWORD: aqualight-ci
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          common=(--write-locks --write-verification-metadata sha256 --no-daemon --stacktrace)
+          ./gradlew :app:dependencies "${common[@]}"
+          ./gradlew :app:assembleDebug :app:assembleReleaseSmoke "${common[@]}"
+          ./gradlew :app:createDebugUnitTestCoverageReport "${common[@]}"
+          ./gradlew :app:lintDebug "${common[@]}"
+          test -s app/gradle.lockfile
+          test -s gradle/verification-metadata.xml
+          python3 tools/verify_dependency_integrity.py \
+            --lockfile app/gradle.lockfile \
+            --metadata gradle/verification-metadata.xml \
+            --summary build/reports/gradle-trust-repair.json
+
+      - name: Commit only regenerated trust files
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git add app/gradle.lockfile gradle/verification-metadata.xml
+          staged="$(git diff --cached --name-only)"
+          expected=$'app/gradle.lockfile\ngradle/verification-metadata.xml'
+          if [[ "$staged" != "$expected" ]]; then
+            echo "Unexpected staged files:"
+            printf '%s\n' "$staged"
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "ci(deps): refresh Gradle trust state [skip ci]"
+          git push origin HEAD:agent/fix-main-gradle-trust
+
+      - name: Remove CI-only release keystore
+        if: always()
+        shell: bash
+        run: rm -f release-key.jks
