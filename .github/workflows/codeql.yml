@@ -24,17 +24,17 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Install JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
         with:
           distribution: temurin
           java-version: 17
           cache: gradle
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
 
       - name: Install SDK packages
         run: |
@@ -71,7 +71,7 @@ jobs:
           } 2>&1 | tee architecture-guards.log
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@4187e74d05793876e9989daffde9c3e66b4acd07 # v3
         with:
           languages: java-kotlin
           build-mode: manual
@@ -151,7 +151,7 @@ jobs:
 
       - name: Upload validation logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: codeql-validation-logs-${{ github.run_number }}
           path: |
@@ -175,7 +175,7 @@ jobs:
         run: rm -f release-key.jks
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@4187e74d05793876e9989daffde9c3e66b4acd07 # v3
         with:
           output: codeql-results
           upload-database: false
