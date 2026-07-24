@@ -9,6 +9,13 @@ on:
       - "app/**"
       - "protocol/**"
       - "tools/**"
+      - "config/coverage/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle.properties"
+      - "gradle/**"
+      - "gradlew"
+      - "gradlew.bat"
       - ".github/workflows/android.yml"
 
 concurrency:
@@ -29,20 +36,20 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v2
+        uses: gradle/wrapper-validation-action@b5418f5a58f5fd2eb486dd7efb368fe7be7eae45 # v2
 
       - name: Install JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: gradle
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
         env:
           SKIP_JDK_VERSION_CHECK: true
 
@@ -58,7 +65,7 @@ jobs:
       # Cache restore, sadece TEMİZ İSTENMİYORSA yapılır
       - name: Cache Gradle build-cache
         if: ${{ !contains(github.event.head_commit.message, 'clean') && !contains(github.event.head_commit.message, 'clean-cache') }}
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: |
             ~/.gradle/caches/build-cache-1
@@ -121,24 +128,88 @@ jobs:
               -dname "CN=Android,O=AquaLight,C=TR"
           fi
 
-      - name: Run Android Lint
+      - name: Run standard Android Lint gate
+        shell: bash
         run: |
-          set -o pipefail
-          ./gradlew lintDebug --no-daemon --stacktrace 2>&1 | tee lint-debug.log
+          set -Eeuo pipefail
+          ./gradlew \
+            :app:lintDebug \
+            :app:lintStaging \
+            :app:lintRelease \
+            --continue \
+            --no-daemon \
+            --stacktrace \
+            2>&1 | tee android-lint.log
 
-      - name: Upload Lint Reports
+      - name: Verify Android Lint reports
+        if: success()
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          required_reports=(
+            app/build/reports/lint-results-debug.xml
+            app/build/reports/lint-results-staging.xml
+            app/build/reports/lint-results-release.xml
+          )
+          for report in "${required_reports[@]}"; do
+            if [[ ! -s "$report" ]]; then
+              echo "Required Android Lint report is missing or empty: $report" >&2
+              exit 1
+            fi
+          done
+          echo "Android Lint reports verified for debug, staging and production release."
+
+      - name: Upload Android Lint reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: lint-reports-${{ github.run_number }}
+          name: android-lint-reports-${{ github.run_number }}
           path: |
-            lint-debug.log
-            **/build/reports/lint-results-*.html
-            **/build/reports/lint-results-*.xml
-          if-no-files-found: ignore
+            android-lint.log
+            app/build/reports/lint-results-*.html
+            app/build/reports/lint-results-*.xml
+          if-no-files-found: warn
 
-      - name: Run Unit Tests
-        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
+      - name: Run Debug unit tests with JaCoCo coverage
+        run: ./gradlew :app:createDebugUnitTestCoverageReport --no-daemon --stacktrace
+
+      - name: Verify JaCoCo coverage reports
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          coverage_dir="app/build/reports/coverage/test/debug"
+          required_reports=(
+            "${coverage_dir}/report.xml"
+            "${coverage_dir}/index.html"
+          )
+          for report in "${required_reports[@]}"; do
+            if [[ ! -s "$report" ]]; then
+              echo "Required JaCoCo coverage report is missing or empty: $report" >&2
+              exit 1
+            fi
+          done
+          if ! grep -q '<report' "${coverage_dir}/report.xml"; then
+            echo "JaCoCo XML report does not contain a report element." >&2
+            exit 1
+          fi
+          echo "JaCoCo debug unit-test coverage reports verified."
+
+      - name: Enforce critical package coverage thresholds
+        run: |
+          python3 tools/verify_jacoco_coverage.py \
+            --report app/build/reports/coverage/test/debug/report.xml \
+            --policy config/coverage/critical-packages.json \
+            --summary app/build/reports/coverage/test/debug/critical-package-thresholds.json
+
+      - name: Upload JaCoCo coverage reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: jacoco-debug-unit-test-coverage-${{ github.run_number }}
+          path: |
+            app/build/reports/coverage/test/debug/
+            app/build/outputs/unit_test_code_coverage/debugUnitTest/*.exec
+          if-no-files-found: error
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace --no-daemon --refresh-dependencies
@@ -162,7 +233,7 @@ jobs:
           fi
 
       - name: Upload Debug APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: app-debug-${{ github.run_number }}
           path: app/build/outputs/apk/debug/*.apk

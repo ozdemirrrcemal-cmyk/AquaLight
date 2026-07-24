@@ -1,0 +1,8 @@
+import org.gradle.api.artifacts.dsl.LockMode
+
+gradle.beforeProject { project ->
+    project.dependencyLocking {
+        lockAllConfigurations()
+        lockMode = LockMode.STRICT
+    }
+}

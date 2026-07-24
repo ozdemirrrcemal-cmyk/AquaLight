@@ -2,225 +2,293 @@ name: Android Release CI/CD
 
 on:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing vMAJOR.MINOR.PATCH tag to release
+        required: true
+        type: string
+      include_apk:
+        description: Include the optional signed APK in the final release package
+        required: false
+        default: false
+        type: boolean
   push:
-    branches: ["main"]
+    tags:
+      - "v*.*.*"
 
 concurrency:
-  group: release-ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: release-ci-${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+env:
+  GRADLE_OPTS: >-
+    -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8"
+    -Dorg.gradle.daemon=false
 
+jobs:
+  quality:
+    name: 01-04 Guard, quality, coverage and instrumentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    outputs:
+      release-tag: ${{ steps.quality.outputs.release-tag }}
+      release-version: ${{ steps.quality.outputs.release-version }}
+      release-commit: ${{ steps.quality.outputs.release-commit }}
+      include-apk: ${{ steps.quality.outputs.include-apk }}
     env:
-      GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8" -Dorg.gradle.daemon=false
+      CI: "true"
+      AQL_RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
+      AQL_INCLUDE_APK: ${{ github.event_name == 'workflow_dispatch' && inputs.include_apk || false }}
       AQL_OTA_MANIFEST_PUBLIC_KEY_PEM: ${{ secrets.AQL_OTA_MANIFEST_PUBLIC_KEY_PEM }}
       AQL_OTA_MANIFEST_KEY_ID: ${{ secrets.AQL_OTA_MANIFEST_KEY_ID }}
 
     steps:
-      - name: 🧩 Checkout repository
-        uses: actions/checkout@v4
+      - name: 01 Guard - checkout controlled release tag
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref }}
 
-      - name: ☕ Install JDK 17
-        uses: actions/setup-java@v4
+      - name: 01 Guard - validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@b5418f5a58f5fd2eb486dd7efb368fe7be7eae45 # v2
+
+      - name: Install JDK 17
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          distribution: temurin
+          java-version: "17"
           cache: gradle
 
-      - name: 🧰 Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
 
-      - name: 📦 Install SDK packages
-        run: |
-          yes | sdkmanager --licenses >/dev/null
-          sdkmanager --update
-          sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
-          sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1" || true
-          echo "Installed packages (first 120 lines):"
-          sdkmanager --list | sed -n '1,120p' || true
-
-      - name: ⚡ Cache Gradle build-cache
-        if: ${{ !contains(github.event.head_commit.message, 'clean-cache') && !startsWith(github.event.head_commit.message, 'clean ') && !endsWith(github.event.head_commit.message, ' clean') && !contains(github.event.head_commit.message, ' clean ') && github.event.head_commit.message != 'clean' }}
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches/build-cache-1
-          key: ${{ runner.os }}-gradle-buildcache-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-buildcache-
-
-      - name: ⚙️ Grant permission for Gradle
-        run: chmod +x ./gradlew
-
-      - name: 🔐 Verify OTA manifest signature config
+      - name: Install Android SDK packages
         shell: bash
         run: |
-          set -euo pipefail
-          if [[ -z "${AQL_OTA_MANIFEST_PUBLIC_KEY_PEM:-}" ]]; then
-            echo "❌ AQL_OTA_MANIFEST_PUBLIC_KEY_PEM secret is missing or empty." >&2
-            exit 1
-          fi
-          if [[ -z "${AQL_OTA_MANIFEST_KEY_ID:-}" ]]; then
-            echo "❌ AQL_OTA_MANIFEST_KEY_ID secret is missing or empty." >&2
-            exit 1
-          fi
-          if [[ "$AQL_OTA_MANIFEST_KEY_ID" != "aql-ota-manifest-2026-01" ]]; then
-            echo "❌ AQL_OTA_MANIFEST_KEY_ID must be aql-ota-manifest-2026-01." >&2
-            exit 1
-          fi
-          if ! grep -q -- "-----BEGIN PUBLIC KEY-----" <<< "$AQL_OTA_MANIFEST_PUBLIC_KEY_PEM"; then
-            echo "❌ OTA manifest public key must be PEM encoded." >&2
-            exit 1
-          fi
-          if ! grep -q -- "-----END PUBLIC KEY-----" <<< "$AQL_OTA_MANIFEST_PUBLIC_KEY_PEM"; then
-            echo "❌ OTA manifest public key PEM footer is missing." >&2
-            exit 1
-          fi
-          echo "✅ OTA manifest signature config is present."
+          set -Eeuo pipefail
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
+          sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1"
+          chmod +x ./gradlew
 
-      - name: Run Architecture Guard
-        run: |
-          python3 tools/architecture_guard.py
-          python3 tools/composition_root_guard.py
-          python3 tools/ui_dependency_construction_guard.py
-          python3 tools/session_startup_guard.py
-          python3 tools/navigation_guard.py
-          python3 tools/ws_protocol_guard.py
-          python3 tools/permission_architecture_guard.py
-          python3 tools/notification_reminder_architecture_guard.py
-          python3 tools/process_safe_feedback_guard.py
-          python3 tools/stage9_feedback_media_guard.py
-          python3 tools/firebase_telemetry_guard.py
-          python3 tools/privacy_legal_guard.py
-          python3 tools/design_system_resource_guard.py
-          python3 tools/localization_accessibility_guard.py
-
-      - name: 🔄 Force refresh dependencies optional
-        if: contains(github.event.head_commit.message, 'refresh-deps')
-        run: |
-          rm -rf ~/.gradle/caches/modules-2 ~/.gradle/caches/transforms-* ~/.gradle/caches/jars-* || true
-          echo "Gradle module caches cleared."
-
-      - name: 🧹 Hard clean caches & outputs on demand
-        if: ${{ contains(github.event.head_commit.message, 'clean-cache') || startsWith(github.event.head_commit.message, 'clean ') || endsWith(github.event.head_commit.message, ' clean') || contains(github.event.head_commit.message, ' clean ') || github.event.head_commit.message == 'clean' }}
-        run: |
-          echo "💥 Hard clean requested. Purging Gradle caches and build outputs..."
-          rm -rf ~/.gradle/caches ~/.gradle/daemon ~/.gradle/native ~/.gradle/wrapper || true
-          rm -rf **/build build app/build || true
-
-      - name: ⚡ Quick project clean optional
-        if: contains(github.event.head_commit.message, 'quick-clean')
-        run: ./gradlew clean --no-daemon
-
-      - name: 🔑 Set up release keystore
-        if: ${{ !cancelled() }}
+      - name: 01-03 Guard, Lint/Detekt and unit coverage
+        id: quality
+        shell: bash
         env:
+          AQL_FIREBASE_PRODUCTION_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_PRODUCTION_CONFIG_BASE64 }}
+        run: bash tools/release_pipeline/guard_quality.sh
+
+      - name: 04 Instrumentation - prepare minified release smoke
+        shell: bash
+        env:
+          AQL_FIREBASE_PRODUCTION_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_PRODUCTION_CONFIG_BASE64 }}
+        run: bash tools/release_pipeline/prepare_instrumentation.sh
+
+      - name: Enable KVM group permissions
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: 04 Instrumentation - API 27
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 27
+          target: default
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-boot-timeout: 900
+          emulator-options: >-
+            -no-window -gpu swiftshader_indirect -no-snapshot-save
+            -noaudio -no-boot-anim -camera-back none
+          script: bash tools/run_release_smoke.sh 27
+
+      - name: 04 Instrumentation - API 35
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 35
+          target: default
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-boot-timeout: 900
+          emulator-options: >-
+            -no-window -gpu swiftshader_indirect -no-snapshot-save
+            -noaudio -no-boot-anim -camera-back none
+          script: bash tools/run_release_smoke.sh 35
+
+      - name: Upload pre-signing quality evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: AquaLight-Pre-Signing-Quality-${{ steps.quality.outputs.release-tag }}
+          path: |
+            release-quality/**
+            app/build/reports/lint-results-*.html
+            app/build/reports/lint-results-*.xml
+            app/build/reports/detekt/**
+            app/build/reports/coverage/test/debug/**
+            app/build/reports/tests/testReleaseUnitTest/**
+            app/build/reports/androidTests/connected/**
+            app/build/outputs/androidTest-results/connected/**
+            release-smoke-*.txt
+            release-smoke-*.xml
+            release-smoke-screens/**
+          if-no-files-found: warn
+
+      - name: Remove CI-only signing material
+        if: always()
+        run: rm -f release-key.jks
+
+  release:
+    name: 05-09 Signing, build, checksum, attestation and publication
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: production-release
+    permissions:
+      attestations: write
+      contents: read
+      id-token: write
+    env:
+      AQL_RELEASE_TAG: ${{ needs.quality.outputs.release-tag }}
+      AQL_RELEASE_VERSION: ${{ needs.quality.outputs.release-version }}
+      AQL_RELEASE_COMMIT: ${{ needs.quality.outputs.release-commit }}
+      AQL_INCLUDE_APK: ${{ needs.quality.outputs.include-apk }}
+      AQL_PRODUCTION_RELEASE_ENABLED: ${{ vars.AQL_PRODUCTION_RELEASE_ENABLED }}
+      AQL_OTA_MANIFEST_PUBLIC_KEY_PEM: ${{ secrets.AQL_OTA_MANIFEST_PUBLIC_KEY_PEM }}
+      AQL_OTA_MANIFEST_KEY_ID: ${{ secrets.AQL_OTA_MANIFEST_KEY_ID }}
+
+    steps:
+      - name: Checkout verified release commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.quality.outputs.release-tag }}
+
+      - name: Install JDK 17
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+
+      - name: Install release SDK packages
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
+          sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1"
+          chmod +x ./gradlew
+
+      - name: 05-06 Signing and release build
+        shell: bash
+        env:
+          AQL_FIREBASE_PRODUCTION_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_PRODUCTION_CONFIG_BASE64 }}
           RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
-        run: |
-          echo "$RELEASE_KEYSTORE_BASE64" | base64 --decode > release-key.jks
-          echo "✅ release-key.jks oluşturuldu repo kökü"
-          ls -la
-
-      - name: 🚀 Build Signed Release APK
-        env:
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-        run: ./gradlew assembleRelease --stacktrace --no-daemon
+          RELEASE_SIGNING_CERT_SHA256: ${{ secrets.RELEASE_SIGNING_CERT_SHA256 }}
+        run: bash tools/release_pipeline/build_release.sh
 
-      - name: Verify resolved Firebase runtime and merged manifest policy
-        run: |
-          ./gradlew :app:verifyFirebaseRuntimePolicy --no-daemon --stacktrace
-          python3 tools/firebase_telemetry_guard.py --scan-build-output
+      - name: 07 Checksum - generate and verify SHA-256 manifests
+        shell: bash
+        run: bash tools/release_pipeline/checksum.sh
 
-      - name: 📋 Dump releaseRuntimeClasspath on failure
-        if: failure()
-        run: ./gradlew :app:dependencies --configuration releaseRuntimeClasspath --no-daemon
+      - name: 08 SBOM - generate AAB SPDX JSON
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          file: final-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.aab
+          format: spdx-json
+          output-file: final-release/supply-chain/AquaLight-${{ needs.quality.outputs.release-version }}.aab.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
 
-      - name: ✅ Verify release output
+      - name: 08 SBOM - generate APK SPDX JSON
+        if: ${{ needs.quality.outputs.include-apk == 'true' }}
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          file: final-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.apk
+          format: spdx-json
+          output-file: final-release/supply-chain/AquaLight-${{ needs.quality.outputs.release-version }}.apk.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: 08 Provenance - attest AAB
+        id: aab-provenance
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        with:
+          subject-path: final-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.aab
+
+      - name: 08 Provenance - attest AAB SBOM
+        id: aab-sbom
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        with:
+          subject-path: final-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.aab
+          sbom-path: final-release/supply-chain/AquaLight-${{ needs.quality.outputs.release-version }}.aab.spdx.json
+
+      - name: 08 Provenance - attest APK
+        if: ${{ needs.quality.outputs.include-apk == 'true' }}
+        id: apk-provenance
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        with:
+          subject-path: final-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.apk
+
+      - name: 08 Provenance - attest APK SBOM
+        if: ${{ needs.quality.outputs.include-apk == 'true' }}
+        id: apk-sbom
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        with:
+          subject-path: final-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.apk
+          sbom-path: final-release/supply-chain/AquaLight-${{ needs.quality.outputs.release-version }}.apk.spdx.json
+
+      - name: 08 Provenance - materialize and verify evidence
+        shell: bash
+        env:
+          AAB_PROVENANCE_BUNDLE: ${{ steps.aab-provenance.outputs.bundle-path }}
+          AAB_SBOM_BUNDLE: ${{ steps.aab-sbom.outputs.bundle-path }}
+          APK_PROVENANCE_BUNDLE: ${{ steps.apk-provenance.outputs.bundle-path }}
+          APK_SBOM_BUNDLE: ${{ steps.apk-sbom.outputs.bundle-path }}
+        run: bash tools/release_pipeline/materialize_evidence.sh
+
+      - name: 09 Publish - verify complete release package
+        shell: bash
+        run: bash tools/release_pipeline/verify_publication.sh
+
+      - name: 09 Publish - upload final commercial release
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: AquaLight-Release-${{ needs.quality.outputs.release-tag }}
+          path: final-release/
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Write release pipeline summary
         shell: bash
         run: |
-          set -e
-          ls -la "app/build/outputs/apk/release" || true
-          if [ -f "app/build/outputs/apk/release/AquaLight.apk" ]; then
-            echo "✅ Release APK hazır"
-          else
-            echo "❌ APK bulunamadı!"
-            exit 1
-          fi
+          {
+            echo "## AquaLight commercial release"
+            echo
+            echo "Release: \`${{ needs.quality.outputs.release-tag }}\`"
+            echo
+            echo "Enforced order: guard → lint/Detekt → unit test/coverage → instrumentation → signing → release build → checksum → SBOM/provenance → publication"
+            echo
+            echo "Verify the AAB attestation with:"
+            echo
+            echo "\`gh attestation verify AquaLight-${AQL_RELEASE_VERSION}.aab --repo ${GITHUB_REPOSITORY}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: 🔍 Print Release Keystore SHA-1
-        env:
-          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
-          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
-        run: |
-          keytool -list -v \
-            -keystore release-key.jks \
-            -storepass "$RELEASE_KEYSTORE_PASSWORD" \
-            -alias "$RELEASE_KEY_ALIAS" | grep -E "SHA( |-)?1" || true
-
-      - name: 🧪 Run Lint & Unit Tests
-        run: ./gradlew lintRelease testReleaseUnitTest --no-daemon --stacktrace
-
-      - name: 🧹 Extract unused resources list
+      - name: Cleanup production signing material
         if: always()
         run: |
-          python3 - <<'PY' > unused-resources.txt
-          import xml.etree.ElementTree as ET
-          from pathlib import Path
-
-          reports = list(Path(".").glob("**/build/reports/lint-results-*.xml"))
-          unused = []
-
-          for report in reports:
-              try:
-                  root = ET.parse(report).getroot()
-              except Exception as e:
-                  print(f"Could not parse {report}: {e}")
-                  continue
-
-              for issue in root.findall("issue"):
-                  if issue.attrib.get("id") == "UnusedResources":
-                      msg = issue.attrib.get("message", "")
-                      loc = issue.find("location")
-                      file = loc.attrib.get("file", "") if loc is not None else ""
-                      unused.append((file, msg))
-
-          for file, msg in sorted(set(unused)):
-              print(file)
-              print(f"  {msg}")
-              print()
-
-          print(f"TOTAL UNUSED RESOURCES: {len(set(unused))}")
-          PY
-
-          cat unused-resources.txt
-
-      - name: 📊 Upload Reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: QA-Reports-${{ github.run_number }}
-          path: |
-            **/build/reports/lint-results-*.html
-            **/build/reports/lint-results-*.xml
-            unused-resources.txt
-            **/build/reports/tests/testReleaseUnitTest/*
-          if-no-files-found: ignore
-
-      - name: 📤 Upload Release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: AquaLight-Release-${{ github.run_number }}
-          path: app/build/outputs/apk/release/AquaLight.apk
-
-      - name: 🧹 Cleanup keystore
-        if: always()
-        run: rm -f release-key.jks
+          rm -f release-key.jks
+          rm -rf "${RUNNER_TEMP}/aqualight-signing"

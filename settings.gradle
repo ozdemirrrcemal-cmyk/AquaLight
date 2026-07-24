@@ -28,3 +28,5 @@ maven { url 'https://jitpack.io' }
 
 rootProject.name = "AquaLight"
 include(":app")
+
+apply from: file("gradle/dependency-locking.settings.gradle")

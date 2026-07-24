@@ -59,6 +59,7 @@ gen/
 # --- Lint & Test ---
 lint/
 lint-results*
+/app/lint-baseline.xml
 test-results/
 reports/
 
