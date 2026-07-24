@@ -224,10 +224,15 @@ potential-bugs:
         def appDirectoryPath = projectDir.absolutePath
 
         android {
+            testCoverage {
+                jacocoVersion = "0.8.15"
+            }
+
             buildTypes {
                 debug {
                     applicationIdSuffix ".debug"
                     versionNameSuffix "-debug"
+                    enableUnitTestCoverage true
                     buildConfigField "String", "AQL_ENVIRONMENT", '"debug"'
                     buildConfigField "boolean", "AQL_IS_PRODUCTION", "false"
                 }

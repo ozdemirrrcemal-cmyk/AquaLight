@@ -169,8 +169,39 @@ jobs:
             app/build/reports/lint-results-*.xml
           if-no-files-found: warn
 
-      - name: Run Unit Tests
-        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
+      - name: Run Debug unit tests with JaCoCo coverage
+        run: ./gradlew :app:createDebugUnitTestCoverageReport --no-daemon --stacktrace
+
+      - name: Verify JaCoCo coverage reports
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          coverage_dir="app/build/reports/coverage/test/debug"
+          required_reports=(
+            "${coverage_dir}/report.xml"
+            "${coverage_dir}/index.html"
+          )
+          for report in "${required_reports[@]}"; do
+            if [[ ! -s "$report" ]]; then
+              echo "Required JaCoCo coverage report is missing or empty: $report" >&2
+              exit 1
+            fi
+          done
+          if ! grep -q '<report' "${coverage_dir}/report.xml"; then
+            echo "JaCoCo XML report does not contain a report element." >&2
+            exit 1
+          fi
+          echo "JaCoCo debug unit-test coverage reports verified."
+
+      - name: Upload JaCoCo coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-debug-unit-test-coverage-${{ github.run_number }}
+          path: |
+            app/build/reports/coverage/test/debug/
+            app/build/outputs/unit_test_code_coverage/debugUnitTest/*.exec
+          if-no-files-found: error
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace --no-daemon --refresh-dependencies
