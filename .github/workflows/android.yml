@@ -9,6 +9,7 @@ on:
       - "app/**"
       - "protocol/**"
       - "tools/**"
+      - "config/coverage/**"
       - "build.gradle"
       - "settings.gradle"
       - "gradle.properties"
@@ -192,6 +193,13 @@ jobs:
             exit 1
           fi
           echo "JaCoCo debug unit-test coverage reports verified."
+
+      - name: Enforce critical package coverage thresholds
+        run: |
+          python3 tools/verify_jacoco_coverage.py \
+            --report app/build/reports/coverage/test/debug/report.xml \
+            --policy config/coverage/critical-packages.json \
+            --summary app/build/reports/coverage/test/debug/critical-package-thresholds.json
 
       - name: Upload JaCoCo coverage reports
         if: always()
