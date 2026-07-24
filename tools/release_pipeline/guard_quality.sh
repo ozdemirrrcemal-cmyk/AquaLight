@@ -61,6 +61,22 @@ if [[ ! -s ~/.android/debug.keystore ]]; then
     -dname "CN=Android,O=AquaLight,C=TR"
 fi
 
+# Release lint and unit-test variants use an ephemeral CI-only key. Production
+# signing material is unavailable until the later environment-protected job.
+rm -f release-key.jks
+keytool -genkeypair -noprompt \
+  -keystore release-key.jks \
+  -storepass aqualight-ci \
+  -alias aqualight-ci \
+  -keypass aqualight-ci \
+  -keyalg RSA \
+  -keysize 2048 \
+  -validity 1 \
+  -dname "CN=AquaLight CI Quality,O=AquaLight,C=TR"
+export RELEASE_KEYSTORE_PASSWORD=aqualight-ci
+export RELEASE_KEY_ALIAS=aqualight-ci
+export RELEASE_KEY_PASSWORD=aqualight-ci
+
 ./gradlew \
   :app:detekt \
   :app:lintDebug \
