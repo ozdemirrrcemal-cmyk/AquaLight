@@ -343,6 +343,38 @@ jobs:
 
           echo "✅ Signed release AAB verified: $CANONICAL_AAB"
 
+      - name: 🔐 Generate and verify release AAB SHA-256 checksum
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          export LC_ALL=C
+
+          ARTIFACT_PATH="${AQL_RELEASE_AAB_PATH:-}"
+          if [[ -z "$ARTIFACT_PATH" || ! -s "$ARTIFACT_PATH" ]]; then
+            echo "❌ Verified release AAB path is missing or empty." >&2
+            exit 1
+          fi
+
+          ARTIFACT_DIR="$(dirname "$ARTIFACT_PATH")"
+          ARTIFACT_NAME="$(basename "$ARTIFACT_PATH")"
+          CHECKSUM_NAME="${ARTIFACT_NAME}.sha256"
+          CHECKSUM_PATH="${ARTIFACT_DIR}/${CHECKSUM_NAME}"
+
+          (
+            cd "$ARTIFACT_DIR"
+            sha256sum "$ARTIFACT_NAME" > "$CHECKSUM_NAME"
+            sha256sum --check --strict "$CHECKSUM_NAME"
+          )
+
+          ARTIFACT_SHA256="$(awk '{print $1}' "$CHECKSUM_PATH")"
+          if [[ ! "$ARTIFACT_SHA256" =~ ^[0-9a-f]{64}$ ]]; then
+            echo "❌ Release AAB checksum is not a canonical SHA-256 digest." >&2
+            exit 1
+          fi
+
+          echo "AQL_RELEASE_AAB_SHA256=$ARTIFACT_SHA256" >> "$GITHUB_ENV"
+          echo "✅ Release AAB SHA-256: $ARTIFACT_SHA256"
+
       - name: 🔍 Report verified release signing identity
         shell: bash
         run: |
@@ -411,7 +443,9 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: AquaLight-AAB-${{ github.run_number }}
-          path: app/build/outputs/bundle/release/AquaLight-*.aab
+          path: |
+            app/build/outputs/bundle/release/AquaLight-*.aab
+            app/build/outputs/bundle/release/AquaLight-*.aab.sha256
           if-no-files-found: error
 
       - name: 🧹 Cleanup release signing material
