@@ -3,6 +3,8 @@ set -Eeuo pipefail
 export LC_ALL=C
 
 [[ "${AQL_PRODUCTION_RELEASE_ENABLED:-}" == "true" ]]
+[[ "${AQL_RELEASE_COMMIT:-}" =~ ^[0-9a-f]{40}$ ]]
+[[ "$(git rev-parse HEAD)" == "$AQL_RELEASE_COMMIT" ]]
 for name in \
   RELEASE_KEYSTORE_BASE64 \
   RELEASE_KEYSTORE_PASSWORD \
@@ -77,8 +79,8 @@ if [[ "${AQL_INCLUDE_APK:-false}" == "true" ]]; then
   apk_cert="$(sed -n 's/^Signer #1 certificate SHA-256 digest:[[:space:]]*//p' "$artifacts/signed-apk-verification.txt" | head -n 1)"
   [[ "$(normalize "$apk_cert")" == "$actual" ]]
   apkanalyzer="${ANDROID_HOME}/cmdline-tools/latest/bin/apkanalyzer"
-  [[ "$("$apkanalyzer" manifest application-id "$apk")" == "com.aqua.aqualight" ]]
-  [[ "$("$apkanalyzer" manifest version-name "$apk")" == "$AQL_RELEASE_VERSION" ]]
+  [[ "$($apkanalyzer manifest application-id "$apk")" == "com.aqua.aqualight" ]]
+  [[ "$($apkanalyzer manifest version-name "$apk")" == "$AQL_RELEASE_VERSION" ]]
 fi
 
 echo "AQL_RELEASE_CERT_SHA256=$actual" >> "$GITHUB_ENV"
