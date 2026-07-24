@@ -1,0 +1,305 @@
+name: Release Supply-Chain Attestations
+
+on:
+  workflow_run:
+    workflows:
+      - Android Release CI/CD
+      - Optional Signed APK Artifact
+    types:
+      - completed
+
+concurrency:
+  group: release-supply-chain-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+  attestations: write
+  contents: read
+  id-token: write
+
+jobs:
+  attest:
+    name: SBOM and provenance for release artifact
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      (github.event.workflow_run.event == 'push' ||
+       github.event.workflow_run.event == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Download signed AAB artifact
+        if: ${{ github.event.workflow_run.name == 'Android Release CI/CD' }}
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          pattern: AquaLight-AAB-*
+          path: release-input
+          merge-multiple: true
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      - name: Download optional signed APK artifact
+        if: ${{ github.event.workflow_run.name == 'Optional Signed APK Artifact' }}
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          pattern: AquaLight-APK-*
+          path: release-input
+          merge-multiple: true
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      - name: Resolve and verify release subject
+        id: subject
+        shell: bash
+        env:
+          SOURCE_EVENT: ${{ github.event.workflow_run.event }}
+          SOURCE_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
+          SOURCE_RUN_URL: ${{ github.event.workflow_run.html_url }}
+          SOURCE_WORKFLOW: ${{ github.event.workflow_run.name }}
+        run: |
+          set -Eeuo pipefail
+          export LC_ALL=C
+
+          case "$SOURCE_WORKFLOW" in
+            "Android Release CI/CD")
+              extension="aab"
+              artifact_kind="AAB"
+              ;;
+            "Optional Signed APK Artifact")
+              extension="apk"
+              artifact_kind="APK"
+              ;;
+            *)
+              echo "Unsupported source workflow: $SOURCE_WORKFLOW" >&2
+              exit 1
+              ;;
+          esac
+
+          if [[ ! "$SOURCE_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Source workflow head SHA is invalid." >&2
+            exit 1
+          fi
+
+          mapfile -t artifacts < <(
+            find release-input -type f -name "AquaLight-*.${extension}" -print | sort
+          )
+          if (( ${#artifacts[@]} != 1 )); then
+            echo "Expected exactly one canonical ${artifact_kind} artifact, found ${#artifacts[@]}." >&2
+            find release-input -maxdepth 4 -type f -print 2>/dev/null || true
+            exit 1
+          fi
+
+          artifact_path="${artifacts[0]}"
+          artifact_name="$(basename "$artifact_path")"
+          checksum_path="${artifact_path}.sha256"
+          if [[ ! -s "$artifact_path" || ! -s "$checksum_path" ]]; then
+            echo "Release artifact or SHA-256 sidecar is missing or empty." >&2
+            exit 1
+          fi
+
+          (
+            cd "$(dirname "$artifact_path")"
+            sha256sum --check --strict "$(basename "$checksum_path")"
+          )
+
+          artifact_sha256="$(awk '{print $1}' "$checksum_path")"
+          if [[ ! "$artifact_sha256" =~ ^[0-9a-f]{64}$ ]]; then
+            echo "Release artifact SHA-256 is not canonical." >&2
+            exit 1
+          fi
+
+          supply_chain_dir="release-supply-chain"
+          mkdir -p "$supply_chain_dir"
+          sbom_path="${supply_chain_dir}/${artifact_name}.spdx.json"
+
+          python3 - \
+            "$supply_chain_dir/source-workflow.json" \
+            "$SOURCE_WORKFLOW" \
+            "$SOURCE_RUN_ID" \
+            "$SOURCE_RUN_URL" \
+            "$SOURCE_EVENT" \
+            "$SOURCE_HEAD_SHA" \
+            "$artifact_kind" \
+            "$artifact_name" \
+            "$artifact_sha256" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          (
+              output_path,
+              workflow_name,
+              run_id,
+              run_url,
+              event_name,
+              head_sha,
+              artifact_kind,
+              artifact_name,
+              artifact_sha256,
+          ) = sys.argv[1:]
+
+          document = {
+              "schemaVersion": 1,
+              "sourceWorkflow": {
+                  "name": workflow_name,
+                  "runId": int(run_id),
+                  "url": run_url,
+                  "event": event_name,
+                  "headSha": head_sha,
+              },
+              "subject": {
+                  "kind": artifact_kind,
+                  "name": artifact_name,
+                  "digest": {"sha256": artifact_sha256},
+              },
+          }
+          path = Path(output_path)
+          path.write_text(
+              json.dumps(document, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+          {
+            echo "artifact-path=$artifact_path"
+            echo "artifact-name=$artifact_name"
+            echo "artifact-kind=$artifact_kind"
+            echo "artifact-sha256=$artifact_sha256"
+            echo "sbom-path=$sbom_path"
+            echo "supply-chain-dir=$supply_chain_dir"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Generate SPDX JSON SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          file: ${{ steps.subject.outputs.artifact-path }}
+          format: spdx-json
+          output-file: ${{ steps.subject.outputs.sbom-path }}
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: Verify SPDX SBOM
+        shell: bash
+        env:
+          ARTIFACT_NAME: ${{ steps.subject.outputs.artifact-name }}
+          SBOM_PATH: ${{ steps.subject.outputs.sbom-path }}
+        run: |
+          set -Eeuo pipefail
+
+          python3 - "$SBOM_PATH" "$ARTIFACT_NAME" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          path = Path(sys.argv[1])
+          artifact_name = sys.argv[2]
+          if not path.is_file() or path.stat().st_size == 0:
+              raise SystemExit(f"SBOM is missing or empty: {path}")
+
+          document = json.loads(path.read_text(encoding="utf-8"))
+          if not str(document.get("spdxVersion", "")).startswith("SPDX-"):
+              raise SystemExit("SBOM does not declare a valid SPDX version.")
+          if document.get("SPDXID") != "SPDXRef-DOCUMENT":
+              raise SystemExit("SBOM root SPDXID is invalid.")
+          if not isinstance(document.get("packages"), list):
+              raise SystemExit("SBOM packages collection is missing.")
+          if not isinstance(document.get("files", []), list):
+              raise SystemExit("SBOM files collection is invalid.")
+
+          print(
+              f"Verified SPDX SBOM for {artifact_name}: "
+              f"{len(document['packages'])} packages, "
+              f"{len(document.get('files', []))} files."
+          )
+          PY
+
+      - name: Attest release provenance
+        id: provenance
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        with:
+          subject-path: ${{ steps.subject.outputs.artifact-path }}
+
+      - name: Attest release SBOM
+        id: sbom-attestation
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        with:
+          subject-path: ${{ steps.subject.outputs.artifact-path }}
+          sbom-path: ${{ steps.subject.outputs.sbom-path }}
+
+      - name: Materialize and verify attestation bundles
+        shell: bash
+        env:
+          ARTIFACT_NAME: ${{ steps.subject.outputs.artifact-name }}
+          PROVENANCE_BUNDLE: ${{ steps.provenance.outputs.bundle-path }}
+          SBOM_BUNDLE: ${{ steps.sbom-attestation.outputs.bundle-path }}
+          SUPPLY_CHAIN_DIR: ${{ steps.subject.outputs.supply-chain-dir }}
+        run: |
+          set -Eeuo pipefail
+
+          if [[ ! -s "$PROVENANCE_BUNDLE" || ! -s "$SBOM_BUNDLE" ]]; then
+            echo "One or more GitHub attestation bundles are missing or empty." >&2
+            exit 1
+          fi
+
+          provenance_target="${SUPPLY_CHAIN_DIR}/${ARTIFACT_NAME}.provenance.attestation.json"
+          sbom_target="${SUPPLY_CHAIN_DIR}/${ARTIFACT_NAME}.sbom.attestation.json"
+          cp "$PROVENANCE_BUNDLE" "$provenance_target"
+          cp "$SBOM_BUNDLE" "$sbom_target"
+
+          python3 - "$provenance_target" "$sbom_target" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          for raw_path in sys.argv[1:]:
+              path = Path(raw_path)
+              document = json.loads(path.read_text(encoding="utf-8"))
+              if not isinstance(document, dict) or not document:
+                  raise SystemExit(f"Attestation bundle is invalid: {path}")
+              print(f"Verified attestation bundle JSON: {path}")
+          PY
+
+          (
+            cd "$SUPPLY_CHAIN_DIR"
+            sha256sum \
+              "${ARTIFACT_NAME}.spdx.json" \
+              "${ARTIFACT_NAME}.provenance.attestation.json" \
+              "${ARTIFACT_NAME}.sbom.attestation.json" \
+              "source-workflow.json" \
+              > SHA256SUMS
+            sha256sum --check --strict SHA256SUMS
+          )
+
+      - name: Upload release supply-chain evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: AquaLight-Supply-Chain-${{ steps.subject.outputs.artifact-kind }}-${{ github.event.workflow_run.id }}
+          path: release-supply-chain/
+          if-no-files-found: error
+
+      - name: Write supply-chain summary
+        shell: bash
+        env:
+          ARTIFACT_KIND: ${{ steps.subject.outputs.artifact-kind }}
+          ARTIFACT_NAME: ${{ steps.subject.outputs.artifact-name }}
+          ARTIFACT_SHA256: ${{ steps.subject.outputs.artifact-sha256 }}
+          SOURCE_RUN_URL: ${{ github.event.workflow_run.html_url }}
+        run: |
+          {
+            echo "## AquaLight release supply-chain evidence"
+            echo
+            echo "- Artifact: \`${ARTIFACT_NAME}\` (${ARTIFACT_KIND})"
+            echo "- SHA-256: \`${ARTIFACT_SHA256}\`"
+            echo "- Source workflow: ${SOURCE_RUN_URL}"
+            echo "- SBOM: SPDX JSON"
+            echo "- Attestations: release provenance and SBOM"
+            echo
+            echo "Verify the subject with:"
+            echo
+            echo "\`gh attestation verify ${ARTIFACT_NAME} --repo ${GITHUB_REPOSITORY}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
