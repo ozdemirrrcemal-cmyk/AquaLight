@@ -10,7 +10,7 @@ permissions:
 
 concurrency:
   group: one-time-gradle-trust-repair
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 env:
   GRADLE_OPTS: >-
@@ -81,6 +81,21 @@ jobs:
             -storetype JKS \
             -dname "CN=AquaLight Trust Repair,O=AquaLight,C=TR"
 
+      - name: Remove stale JaCoCo lock entries
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          lockfile = Path("app/gradle.lockfile")
+          lines = lockfile.read_text(encoding="utf-8").splitlines()
+          filtered = [line for line in lines if not line.startswith("org.jacoco:")]
+          if len(filtered) == len(lines):
+              raise SystemExit("Expected stale JaCoCo lock entries were not found.")
+          lockfile.write_text("\n".join(filtered) + "\n", encoding="utf-8")
+          PY
+
       - name: Regenerate Gradle trust state
         env:
           CI: "true"
@@ -90,13 +105,15 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          common=(--write-locks --write-verification-metadata sha256 --no-daemon --stacktrace)
+          common=(--write-locks --write-verification-metadata sha256 --no-configuration-cache --no-daemon --stacktrace)
           ./gradlew :app:dependencies "${common[@]}"
           ./gradlew :app:assembleDebug :app:assembleReleaseSmoke "${common[@]}"
           ./gradlew :app:createDebugUnitTestCoverageReport "${common[@]}"
           ./gradlew :app:lintDebug "${common[@]}"
           test -s app/gradle.lockfile
           test -s gradle/verification-metadata.xml
+          grep -q '^org.jacoco:org.jacoco.agent:0.8.15=' app/gradle.lockfile
+          grep -q '^org.jacoco:org.jacoco.ant:0.8.15=' app/gradle.lockfile
           python3 tools/verify_dependency_integrity.py \
             --lockfile app/gradle.lockfile \
             --metadata gradle/verification-metadata.xml \
