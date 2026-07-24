@@ -1,12 +1,14 @@
 name: One-time Gradle Trust Repair
 
 on:
-  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
     branches:
-      - agent/fix-main-gradle-trust
+      - main
 
 permissions:
   contents: write
+  pull-requests: read
 
 concurrency:
   group: one-time-gradle-trust-repair
@@ -19,7 +21,10 @@ env:
 
 jobs:
   repair:
-    if: github.actor != 'github-actions[bot]'
+    if: >-
+      github.actor != 'github-actions[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'agent/fix-main-gradle-trust'
     runs-on: ubuntu-latest
     timeout-minutes: 120
 
