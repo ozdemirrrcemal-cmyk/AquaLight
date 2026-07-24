@@ -7,7 +7,7 @@ on:
       - main
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: read
 
 concurrency:
@@ -34,6 +34,7 @@ jobs:
         with:
           ref: agent/fix-main-gradle-trust
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Validate Gradle Wrapper
         uses: gradle/wrapper-validation-action@b5418f5a58f5fd2eb486dd7efb368fe7be7eae45 # v2
@@ -86,6 +87,32 @@ jobs:
             -storetype JKS \
             -dname "CN=AquaLight Trust Repair,O=AquaLight,C=TR"
 
+      - name: Align Gradle and Android JaCoCo versions
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("app/build.gradle")
+          text = path.read_text(encoding="utf-8")
+
+          plugin_anchor = "    id 'androidx.navigation.safeargs.kotlin'\n"
+          if "    id 'jacoco'\n" not in text:
+              if text.count(plugin_anchor) != 1:
+                  raise SystemExit("Could not locate the app plugin anchor exactly once.")
+              text = text.replace(plugin_anchor, plugin_anchor + "    id 'jacoco'\n", 1)
+
+          config_block = 'jacoco {\n    toolVersion = "0.8.15"\n}\n\n'
+          class_anchor = "abstract class ExpandLintBaselineTask extends DefaultTask {"
+          if config_block not in text:
+              if text.count(class_anchor) != 1:
+                  raise SystemExit("Could not locate the JaCoCo configuration anchor exactly once.")
+              text = text.replace(class_anchor, config_block + class_anchor, 1)
+
+          path.write_text(text, encoding="utf-8")
+          PY
+
       - name: Remove stale JaCoCo lock entries
         shell: bash
         run: |
@@ -117,57 +144,29 @@ jobs:
           ./gradlew :app:lintDebug "${common[@]}"
           test -s app/gradle.lockfile
           test -s gradle/verification-metadata.xml
-          grep -q '^org.jacoco:org.jacoco.agent:0.8.15=' app/gradle.lockfile
-          grep -q '^org.jacoco:org.jacoco.ant:0.8.15=' app/gradle.lockfile
+          if grep -q '^org.jacoco:.*:0.8.12=' app/gradle.lockfile; then
+            echo "Stale JaCoCo 0.8.12 lock entries remain."
+            grep '^org.jacoco:' app/gradle.lockfile
+            exit 1
+          fi
+          grep -q '^org.jacoco:org.jacoco.agent:0.8.15=androidJacocoAnt,jacocoAgent,jacocoAnt$' app/gradle.lockfile
+          grep -q '^org.jacoco:org.jacoco.ant:0.8.15=androidJacocoAnt,jacocoAnt$' app/gradle.lockfile
           python3 tools/verify_dependency_integrity.py \
             --lockfile app/gradle.lockfile \
             --metadata gradle/verification-metadata.xml \
             --summary build/reports/gradle-trust-repair.json
 
-      - name: Upload regenerated trust files
+      - name: Upload regenerated repair files
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: main-gradle-trust-repair-${{ github.run_id }}
           path: |
+            app/build.gradle
             app/gradle.lockfile
             gradle/verification-metadata.xml
             build/reports/gradle-trust-repair.json
           if-no-files-found: error
           retention-days: 3
-
-      - name: Commit regenerated trust files
-        shell: bash
-        run: |
-          set -Eeuo pipefail
-          git add app/gradle.lockfile gradle/verification-metadata.xml
-          mapfile -t staged < <(git diff --cached --name-only)
-          if [[ ${#staged[@]} -eq 0 ]]; then
-            echo "No Gradle trust files changed."
-            exit 1
-          fi
-          lockfile_changed=false
-          for path in "${staged[@]}"; do
-            case "$path" in
-              app/gradle.lockfile)
-                lockfile_changed=true
-                ;;
-              gradle/verification-metadata.xml)
-                ;;
-              *)
-                echo "Unexpected staged file: $path"
-                exit 1
-                ;;
-            esac
-          done
-          if [[ "$lockfile_changed" != true ]]; then
-            echo "app/gradle.lockfile was not regenerated."
-            exit 1
-          fi
-          printf 'Committing regenerated files:\n%s\n' "${staged[*]}"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "ci(deps): refresh Gradle trust state [skip ci]"
-          git push origin HEAD:agent/fix-main-gradle-trust
 
       - name: Remove CI-only release keystore
         if: always()
