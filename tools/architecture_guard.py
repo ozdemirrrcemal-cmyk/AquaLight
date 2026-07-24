@@ -381,7 +381,7 @@ require(
     "authoritative Proto corruption recovery requires an Android DataStore test",
 )
 
-emulator_workflow_path = ".github/workflows/android_instrumentation.yml"
+emulator_workflow_path = ".github/workflows/android_emulator_tests.yml"
 emulator_workflow = read(emulator_workflow_path)
 for token, reason in (
     ("connectedDebugAndroidTest", "instrumentation tests must run in CI"),
