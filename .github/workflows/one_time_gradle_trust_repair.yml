@@ -124,18 +124,46 @@ jobs:
             --metadata gradle/verification-metadata.xml \
             --summary build/reports/gradle-trust-repair.json
 
-      - name: Commit only regenerated trust files
+      - name: Upload regenerated trust files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: main-gradle-trust-repair-${{ github.run_id }}
+          path: |
+            app/gradle.lockfile
+            gradle/verification-metadata.xml
+            build/reports/gradle-trust-repair.json
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Commit regenerated trust files
         shell: bash
         run: |
           set -Eeuo pipefail
           git add app/gradle.lockfile gradle/verification-metadata.xml
-          staged="$(git diff --cached --name-only)"
-          expected=$'app/gradle.lockfile\ngradle/verification-metadata.xml'
-          if [[ "$staged" != "$expected" ]]; then
-            echo "Unexpected staged files:"
-            printf '%s\n' "$staged"
+          mapfile -t staged < <(git diff --cached --name-only)
+          if [[ ${#staged[@]} -eq 0 ]]; then
+            echo "No Gradle trust files changed."
             exit 1
           fi
+          lockfile_changed=false
+          for path in "${staged[@]}"; do
+            case "$path" in
+              app/gradle.lockfile)
+                lockfile_changed=true
+                ;;
+              gradle/verification-metadata.xml)
+                ;;
+              *)
+                echo "Unexpected staged file: $path"
+                exit 1
+                ;;
+            esac
+          done
+          if [[ "$lockfile_changed" != true ]]; then
+            echo "app/gradle.lockfile was not regenerated."
+            exit 1
+          fi
+          printf 'Committing regenerated files:\n%s\n' "${staged[*]}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "ci(deps): refresh Gradle trust state [skip ci]"
