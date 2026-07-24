@@ -1,0 +1,296 @@
+name: Optional Signed APK Artifact
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing vMAJOR.MINOR.PATCH tag to package as an APK
+        required: true
+        type: string
+
+concurrency:
+  group: release-apk-${{ inputs.release_tag }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+
+    env:
+      GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8" -Dorg.gradle.daemon=false
+      AQL_RELEASE_TAG: ${{ inputs.release_tag }}
+      AQL_OTA_MANIFEST_PUBLIC_KEY_PEM: ${{ secrets.AQL_OTA_MANIFEST_PUBLIC_KEY_PEM }}
+      AQL_OTA_MANIFEST_KEY_ID: ${{ secrets.AQL_OTA_MANIFEST_KEY_ID }}
+      AQL_FIREBASE_PRODUCTION_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_PRODUCTION_CONFIG_BASE64 }}
+
+    steps:
+      - name: Checkout controlled release tag
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.release_tag }}
+
+      - name: Verify controlled release tag
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          if [[ ! "$AQL_RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "Release tag must use canonical vMAJOR.MINOR.PATCH format: $AQL_RELEASE_TAG" >&2
+            exit 1
+          fi
+
+          git fetch --force --tags origin
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+
+          TAG_COMMIT="$(git rev-list -n 1 "$AQL_RELEASE_TAG")"
+          if [[ -z "$TAG_COMMIT" ]]; then
+            echo "Release tag does not resolve to a commit: $AQL_RELEASE_TAG" >&2
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$TAG_COMMIT" origin/main; then
+            echo "Release tag must point to a commit contained in main: $AQL_RELEASE_TAG" >&2
+            exit 1
+          fi
+          if [[ "$(git rev-parse HEAD)" != "$TAG_COMMIT" ]]; then
+            echo "Checked-out commit does not match release tag." >&2
+            exit 1
+          fi
+
+      - name: Install JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
+          sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1"
+
+      - name: Grant Gradle execute permission
+        run: chmod +x ./gradlew
+
+      - name: Verify OTA manifest signature config
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if [[ -z "${AQL_OTA_MANIFEST_PUBLIC_KEY_PEM//[[:space:]]/}" ]]; then
+            echo "AQL_OTA_MANIFEST_PUBLIC_KEY_PEM secret is missing or empty." >&2
+            exit 1
+          fi
+          if [[ "$AQL_OTA_MANIFEST_KEY_ID" != "aql-ota-manifest-2026-01" ]]; then
+            echo "AQL_OTA_MANIFEST_KEY_ID must be aql-ota-manifest-2026-01." >&2
+            exit 1
+          fi
+          grep -Fq -- "-----BEGIN PUBLIC KEY-----" <<< "$AQL_OTA_MANIFEST_PUBLIC_KEY_PEM"
+          grep -Fq -- "-----END PUBLIC KEY-----" <<< "$AQL_OTA_MANIFEST_PUBLIC_KEY_PEM"
+
+      - name: Validate and materialize release signing key
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+          RELEASE_SIGNING_CERT_SHA256: ${{ secrets.RELEASE_SIGNING_CERT_SHA256 }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          export LC_ALL=C
+
+          required_secrets=(
+            RELEASE_KEYSTORE_BASE64
+            RELEASE_KEYSTORE_PASSWORD
+            RELEASE_KEY_ALIAS
+            RELEASE_KEY_PASSWORD
+            RELEASE_SIGNING_CERT_SHA256
+          )
+          for secret_name in "${required_secrets[@]}"; do
+            secret_value="${!secret_name:-}"
+            if [[ -z "${secret_value//[[:space:]]/}" ]]; then
+              echo "Required release signing secret is missing or empty: ${secret_name}" >&2
+              exit 1
+            fi
+          done
+
+          normalize_fingerprint() {
+            local value="$1"
+            value="${value#SHA256:}"
+            value="${value#sha256:}"
+            printf '%s' "$value" | tr -d '[:space:]:' | tr '[:lower:]' '[:upper:]'
+          }
+
+          umask 077
+          SIGNING_DIR="${RUNNER_TEMP}/aqualight-apk-signing"
+          KEYSTORE_PATH="${SIGNING_DIR}/release-key.jks"
+          TEMP_KEYSTORE_PATH="${KEYSTORE_PATH}.tmp"
+          PROBE_DIR="${SIGNING_DIR}/probe"
+          PROBE_JAR="${SIGNING_DIR}/signing-probe.jar"
+          SIGNED_PROBE_JAR="${SIGNING_DIR}/signing-probe-signed.jar"
+
+          rm -rf "$SIGNING_DIR"
+          mkdir -p "$PROBE_DIR"
+
+          if ! printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 --decode > "$TEMP_KEYSTORE_PATH"; then
+            echo "RELEASE_KEYSTORE_BASE64 is not valid base64." >&2
+            rm -f "$TEMP_KEYSTORE_PATH"
+            exit 1
+          fi
+          if [[ ! -s "$TEMP_KEYSTORE_PATH" ]]; then
+            echo "Decoded release keystore is empty." >&2
+            exit 1
+          fi
+          mv "$TEMP_KEYSTORE_PATH" "$KEYSTORE_PATH"
+          chmod 600 "$KEYSTORE_PATH"
+
+          if ! KEYTOOL_OUTPUT="$(keytool -list -v \
+              -keystore "$KEYSTORE_PATH" \
+              -storepass "$RELEASE_KEYSTORE_PASSWORD" \
+              -alias "$RELEASE_KEY_ALIAS" 2>&1)"; then
+            echo "Keystore password or alias validation failed." >&2
+            exit 1
+          fi
+          if ! grep -Fq "Entry type: PrivateKeyEntry" <<< "$KEYTOOL_OUTPUT"; then
+            echo "RELEASE_KEY_ALIAS must identify a PrivateKeyEntry." >&2
+            exit 1
+          fi
+
+          ACTUAL_CERT_SHA256="$(
+            sed -n 's/^[[:space:]]*SHA256:[[:space:]]*//p' <<< "$KEYTOOL_OUTPUT" | head -n 1
+          )"
+          ACTUAL_CERT_SHA256_NORMALIZED="$(normalize_fingerprint "$ACTUAL_CERT_SHA256")"
+          EXPECTED_CERT_SHA256_NORMALIZED="$(normalize_fingerprint "$RELEASE_SIGNING_CERT_SHA256")"
+
+          if [[ ! "$EXPECTED_CERT_SHA256_NORMALIZED" =~ ^[0-9A-F]{64}$ ]]; then
+            echo "RELEASE_SIGNING_CERT_SHA256 must contain exactly 64 hexadecimal characters." >&2
+            exit 1
+          fi
+          if [[ "$ACTUAL_CERT_SHA256_NORMALIZED" != "$EXPECTED_CERT_SHA256_NORMALIZED" ]]; then
+            echo "Release signing certificate SHA-256 does not match the trusted fingerprint." >&2
+            exit 1
+          fi
+
+          printf 'AquaLight optional APK signing probe\n' > "${PROBE_DIR}/payload.txt"
+          jar --create --file "$PROBE_JAR" -C "$PROBE_DIR" payload.txt
+          jarsigner \
+            -keystore "$KEYSTORE_PATH" \
+            -storepass "$RELEASE_KEYSTORE_PASSWORD" \
+            -keypass "$RELEASE_KEY_PASSWORD" \
+            -signedjar "$SIGNED_PROBE_JAR" \
+            "$PROBE_JAR" \
+            "$RELEASE_KEY_ALIAS" >/dev/null
+          jarsigner -verify "$SIGNED_PROBE_JAR" >/dev/null
+
+          rm -f release-key.jks
+          ln -s "$KEYSTORE_PATH" release-key.jks
+          test -L release-key.jks
+
+          {
+            echo "AQL_RELEASE_CERT_SHA256=$ACTUAL_CERT_SHA256_NORMALIZED"
+            echo "AQL_RELEASE_KEYSTORE_PATH=$KEYSTORE_PATH"
+          } >> "$GITHUB_ENV"
+
+      - name: Build optional signed release APK
+        env:
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease --stacktrace --no-daemon
+
+      - name: Verify optional signed release APK
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          normalize_fingerprint() {
+            local value="$1"
+            value="${value#SHA256:}"
+            value="${value#sha256:}"
+            printf '%s' "$value" | tr -d '[:space:]:' | tr '[:lower:]' '[:upper:]'
+          }
+
+          APK_DIR="app/build/outputs/apk/release"
+          ORIGINAL_APK="$(find "$APK_DIR" -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          if [[ -z "$ORIGINAL_APK" || ! -s "$ORIGINAL_APK" ]]; then
+            echo "Signed release APK was not produced." >&2
+            find app/build/outputs -maxdepth 4 -type f -print 2>/dev/null || true
+            exit 1
+          fi
+
+          RELEASE_VERSION="${AQL_RELEASE_TAG#v}"
+          CANONICAL_APK="${APK_DIR}/AquaLight-${RELEASE_VERSION}.apk"
+          if [[ "$ORIGINAL_APK" != "$CANONICAL_APK" ]]; then
+            mv "$ORIGINAL_APK" "$CANONICAL_APK"
+          fi
+
+          APKSIGNER="$(find "${ANDROID_HOME}/build-tools" -maxdepth 2 -type f -name apksigner -print | sort -V | tail -n 1)"
+          if [[ -z "$APKSIGNER" || ! -x "$APKSIGNER" ]]; then
+            echo "apksigner was not found in the Android SDK." >&2
+            exit 1
+          fi
+
+          if ! "$APKSIGNER" verify --verbose --print-certs "$CANONICAL_APK" \
+              > signed-apk-verification.txt 2>&1; then
+            cat signed-apk-verification.txt >&2
+            echo "Release APK signature verification failed." >&2
+            exit 1
+          fi
+
+          APK_CERT_SHA256="$(
+            sed -n 's/^Signer #1 certificate SHA-256 digest:[[:space:]]*//p' \
+              signed-apk-verification.txt | head -n 1
+          )"
+          APK_CERT_SHA256_NORMALIZED="$(normalize_fingerprint "$APK_CERT_SHA256")"
+          if [[ ! "$APK_CERT_SHA256_NORMALIZED" =~ ^[0-9A-F]{64}$ ]]; then
+            echo "Release APK signer certificate SHA-256 could not be resolved." >&2
+            exit 1
+          fi
+          if [[ "$APK_CERT_SHA256_NORMALIZED" != "${AQL_RELEASE_CERT_SHA256:-}" ]]; then
+            echo "Release APK signer does not match the trusted signing certificate." >&2
+            exit 1
+          fi
+
+          APKANALYZER="${ANDROID_HOME}/cmdline-tools/latest/bin/apkanalyzer"
+          if [[ ! -x "$APKANALYZER" ]]; then
+            echo "apkanalyzer is unavailable." >&2
+            exit 1
+          fi
+          APK_APPLICATION_ID="$("$APKANALYZER" manifest application-id "$CANONICAL_APK")"
+          APK_VERSION_NAME="$("$APKANALYZER" manifest version-name "$CANONICAL_APK")"
+          if [[ "$APK_APPLICATION_ID" != "com.aqua.aqualight" ]]; then
+            echo "Release APK application ID is invalid: $APK_APPLICATION_ID" >&2
+            exit 1
+          fi
+          if [[ "$APK_VERSION_NAME" != "$RELEASE_VERSION" ]]; then
+            echo "Release APK versionName mismatch: expected $RELEASE_VERSION, got $APK_VERSION_NAME" >&2
+            exit 1
+          fi
+
+          echo "AQL_RELEASE_APK_PATH=$CANONICAL_APK" >> "$GITHUB_ENV"
+          echo "Signed release APK verified: $CANONICAL_APK"
+
+      - name: Upload optional signed APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AquaLight-APK-${{ inputs.release_tag }}
+          path: |
+            app/build/outputs/apk/release/AquaLight-*.apk
+            signed-apk-verification.txt
+          if-no-files-found: error
+
+      - name: Cleanup release signing material
+        if: always()
+        shell: bash
+        run: |
+          rm -f release-key.jks
+          rm -rf "${RUNNER_TEMP}/aqualight-apk-signing"
