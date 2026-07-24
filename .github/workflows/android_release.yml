@@ -225,13 +225,13 @@ jobs:
 
       - name: 08 Provenance - attest AAB
         id: aab-provenance
-        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
         with:
           subject-path: final-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.aab
 
       - name: 08 Provenance - attest AAB SBOM
         id: aab-sbom
-        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
         with:
           subject-path: final-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.aab
           sbom-path: final-release/supply-chain/AquaLight-${{ needs.quality.outputs.release-version }}.aab.spdx.json
@@ -239,14 +239,14 @@ jobs:
       - name: 08 Provenance - attest APK
         if: ${{ needs.quality.outputs.include-apk == 'true' }}
         id: apk-provenance
-        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
         with:
           subject-path: final-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.apk
 
       - name: 08 Provenance - attest APK SBOM
         if: ${{ needs.quality.outputs.include-apk == 'true' }}
         id: apk-sbom
-        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
         with:
           subject-path: final-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.apk
           sbom-path: final-release/supply-chain/AquaLight-${{ needs.quality.outputs.release-version }}.apk.spdx.json
