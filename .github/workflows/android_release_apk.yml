@@ -279,12 +279,45 @@ jobs:
           echo "AQL_RELEASE_APK_PATH=$CANONICAL_APK" >> "$GITHUB_ENV"
           echo "Signed release APK verified: $CANONICAL_APK"
 
+      - name: Generate and verify release APK SHA-256 checksum
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          export LC_ALL=C
+
+          ARTIFACT_PATH="${AQL_RELEASE_APK_PATH:-}"
+          if [[ -z "$ARTIFACT_PATH" || ! -s "$ARTIFACT_PATH" ]]; then
+            echo "Verified release APK path is missing or empty." >&2
+            exit 1
+          fi
+
+          ARTIFACT_DIR="$(dirname "$ARTIFACT_PATH")"
+          ARTIFACT_NAME="$(basename "$ARTIFACT_PATH")"
+          CHECKSUM_NAME="${ARTIFACT_NAME}.sha256"
+          CHECKSUM_PATH="${ARTIFACT_DIR}/${CHECKSUM_NAME}"
+
+          (
+            cd "$ARTIFACT_DIR"
+            sha256sum "$ARTIFACT_NAME" > "$CHECKSUM_NAME"
+            sha256sum --check --strict "$CHECKSUM_NAME"
+          )
+
+          ARTIFACT_SHA256="$(awk '{print $1}' "$CHECKSUM_PATH")"
+          if [[ ! "$ARTIFACT_SHA256" =~ ^[0-9a-f]{64}$ ]]; then
+            echo "Release APK checksum is not a canonical SHA-256 digest." >&2
+            exit 1
+          fi
+
+          echo "AQL_RELEASE_APK_SHA256=$ARTIFACT_SHA256" >> "$GITHUB_ENV"
+          echo "Release APK SHA-256: $ARTIFACT_SHA256"
+
       - name: Upload optional signed APK artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: AquaLight-APK-${{ inputs.release_tag }}
           path: |
             app/build/outputs/apk/release/AquaLight-*.apk
+            app/build/outputs/apk/release/AquaLight-*.apk.sha256
             signed-apk-verification.txt
           if-no-files-found: error
 
