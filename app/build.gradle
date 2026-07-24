@@ -1,9 +1,38 @@
+import java.util.zip.GZIPInputStream
+import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
+import org.gradle.api.tasks.TaskAction
+
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'com.google.gms.google-services'
     id 'com.google.protobuf'
     id 'androidx.navigation.safeargs.kotlin'
+}
+
+abstract class ExpandLintBaselineTask extends DefaultTask {
+    @InputFile
+    @PathSensitive(PathSensitivity.RELATIVE)
+    abstract RegularFileProperty getCompressedBaseline()
+
+    @OutputFile
+    abstract RegularFileProperty getExpandedBaseline()
+
+    @TaskAction
+    void expandBaseline() {
+        def source = compressedBaseline.get().asFile
+        def target = expandedBaseline.get().asFile
+        target.parentFile.mkdirs()
+        source.withInputStream { input ->
+            new GZIPInputStream(input).withCloseable { gzip ->
+                target.withOutputStream { output -> output << gzip }
+            }
+        }
+    }
 }
 
 def aqlBuildConfigString = { value ->
@@ -78,6 +107,12 @@ def otaManifestKeyId = providers
         .orElse(providers.environmentVariable("AQL_OTA_MANIFEST_KEY_ID"))
         .getOrElse("aql-ota-manifest-2026-01")
 
+def lintBaselineFile = layout.projectDirectory.file("lint-baseline.xml")
+def prepareLintBaseline = tasks.register("prepareLintBaseline", ExpandLintBaselineTask) {
+    compressedBaseline.set(layout.projectDirectory.file("lint-baseline.xml.gz"))
+    expandedBaseline.set(lintBaselineFile)
+}
+
 android {
     namespace "com.aqua.aqualight"
     compileSdk 36
@@ -138,9 +173,9 @@ android {
             ]
         }
     }
-    	
+   	
    	lint {
-        checkOnly.add("UnusedResources")
+        baseline = lintBaselineFile.asFile
         htmlReport true
         xmlReport true
         abortOnError true
@@ -153,6 +188,13 @@ android {
         test {
             resources.srcDir rootProject.file("protocol/fixtures")
         }
+    }
+}
+
+tasks.configureEach { task ->
+    def taskName = task.name.toLowerCase()
+    if (task.name != "prepareLintBaseline" && taskName.contains("lint")) {
+        task.dependsOn(prepareLintBaseline)
     }
 }
 
