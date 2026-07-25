@@ -66,8 +66,9 @@ if [[ ! -s ~/.android/debug.keystore ]]; then
     -dname "CN=Android,O=AquaLight,C=TR"
 fi
 
-# Release lint and unit-test variants use an ephemeral CI-only key. Production
-# signing material is unavailable until the later environment-protected job.
+# Pre-signing quality validation uses the minified non-production release-smoke
+# variant. The real production Release variant remains exclusive to the
+# production-release environment and the blocking CodeQL release gate.
 rm -f release-key.jks
 keytool -genkeypair -noprompt \
   -keystore release-key.jks \
@@ -86,7 +87,7 @@ export RELEASE_KEY_PASSWORD=aqualight-ci
   :app:detekt \
   :app:lintDebug \
   :app:lintStaging \
-  :app:lintRelease \
+  :app:lintReleaseSmoke \
   --continue \
   --no-daemon \
   --stacktrace \
@@ -95,7 +96,7 @@ export RELEASE_KEY_PASSWORD=aqualight-ci
 for report in \
   app/build/reports/lint-results-debug.xml \
   app/build/reports/lint-results-staging.xml \
-  app/build/reports/lint-results-release.xml \
+  app/build/reports/lint-results-releaseSmoke.xml \
   app/build/reports/lint-results-detekt.xml \
   app/build/reports/detekt/detekt.sarif; do
   test -s "$report"
@@ -106,7 +107,7 @@ set +e
 ./gradlew \
   :app:testDebugUnitTest \
   :app:testStagingUnitTest \
-  :app:testReleaseUnitTest \
+  :app:testReleaseSmokeUnitTest \
   :app:createDebugUnitTestCoverageReport \
   --continue \
   --no-daemon \
@@ -118,7 +119,7 @@ set -e
 python3 tools/release_pipeline/verify_junit_reports.py \
   --variant debug=app/build/test-results/testDebugUnitTest \
   --variant staging=app/build/test-results/testStagingUnitTest \
-  --variant release=app/build/test-results/testReleaseUnitTest \
+  --variant releaseSmoke=app/build/test-results/testReleaseSmokeUnitTest \
   --allowlist config/testing/allowed-skipped-unit-tests.json \
   --output release-quality/unit-tests
 
