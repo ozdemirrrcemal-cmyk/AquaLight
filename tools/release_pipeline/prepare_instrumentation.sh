@@ -36,6 +36,10 @@ for token in \
   verify_upgrade_install_evidence.py \
   UPGRADE_INSTALL_CANDIDATE_PASS \
   "adb install -r" \
+  verify_stage14_junit_evidence.py \
+  process-recreation-instrumentation \
+  tank-care-corruption-instrumentation \
+  verify_force_stop_evidence.py \
   AccountDeletionProcessDeathSmokeActivity \
   ACCOUNT_DELETION_PROCESS_DEATH_PASS \
   auth-confirmed-before-checkpoint \

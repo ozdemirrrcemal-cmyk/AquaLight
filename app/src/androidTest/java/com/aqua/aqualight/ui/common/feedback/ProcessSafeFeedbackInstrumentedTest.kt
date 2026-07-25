@@ -5,6 +5,7 @@ import android.os.Parcel
 import androidx.core.os.bundleOf
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.aqua.aqualight.application.care.CareTaskType
 import com.aqua.aqualight.base.loading.LoadingOverlayDialogFragment
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetAction
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetActionStyle
@@ -126,7 +127,7 @@ class ProcessSafeFeedbackInstrumentedTest {
     }
 
     @Test
-    fun feedbackSheetSurvivesActivityRecreationWithArgumentsIntact() {
+    fun feedbackAndCareSheetsSurviveActivityRecreationWithArgumentsIntact() {
         var expectedArguments: Bundle? = null
         ActivityScenario.launch(Stage8DialogTestActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
@@ -148,10 +149,40 @@ class ProcessSafeFeedbackInstrumentedTest {
                 )
             }
         }
+
+        var expectedCareArguments: Bundle? = null
+        ActivityScenario.launch(Stage8DialogTestActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                CareTaskTypeBottomSheetFragment.show(
+                    fragmentManager = activity.supportFragmentManager,
+                    title = "Select care task",
+                    resultRequestKey = "stage14_care_rotation_result",
+                    selectedType = CareTaskType.WATER_CHANGE
+                )
+                activity.supportFragmentManager.executePendingTransactions()
+                val sheet = activity.supportFragmentManager.fragments
+                    .filterIsInstance<CareTaskTypeBottomSheetFragment>()
+                    .single()
+                expectedCareArguments = Bundle(sheet.requireArguments())
+            }
+
+            scenario.recreate()
+
+            scenario.onActivity { activity ->
+                val restored = activity.supportFragmentManager.fragments
+                    .filterIsInstance<CareTaskTypeBottomSheetFragment>()
+                    .singleOrNull()
+                assertNotNull(restored)
+                assertBundlesEquivalent(
+                    expected = requireNotNull(expectedCareArguments),
+                    actual = requireNotNull(restored).requireArguments()
+                )
+            }
+        }
     }
 
     @Test
-    fun tankEditorArgumentsCanRecreateTheSameModeAndValues() {
+    fun tankEditorSurvivesActivityRecreationWithArgumentsIntact() {
         val original = TankSettingsEditorBottomSheet().apply {
             arguments = bundleOf(
                 "arg_mode" to TankSettingsEditorBottomSheet.Mode.SIZE.name,
@@ -168,15 +199,25 @@ class ProcessSafeFeedbackInstrumentedTest {
                 "arg_current_unit" to "cm"
             )
         }
-        val recreated = TankSettingsEditorBottomSheet::class.java
-            .getDeclaredConstructor()
-            .newInstance()
-            .apply { arguments = Bundle(original.requireArguments()) }
+        val expected = Bundle(original.requireArguments())
+        ActivityScenario.launch(Stage8DialogTestActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                original.show(activity.supportFragmentManager, TEST_TANK_EDITOR_TAG)
+                activity.supportFragmentManager.executePendingTransactions()
+            }
 
-        assertBundlesEquivalent(
-            expected = original.requireArguments(),
-            actual = recreated.requireArguments()
-        )
+            scenario.recreate()
+
+            scenario.onActivity { activity ->
+                val restored = activity.supportFragmentManager
+                    .findFragmentByTag(TEST_TANK_EDITOR_TAG) as? TankSettingsEditorBottomSheet
+                assertNotNull(restored)
+                assertBundlesEquivalent(
+                    expected = expected,
+                    actual = requireNotNull(restored).requireArguments()
+                )
+            }
+        }
     }
 
     @Test
@@ -234,5 +275,6 @@ class ProcessSafeFeedbackInstrumentedTest {
 
     private companion object {
         const val TEST_FEEDBACK_TAG = "stage8_feedback_rotation_test"
+        const val TEST_TANK_EDITOR_TAG = "stage14_tank_editor_rotation_test"
     }
 }

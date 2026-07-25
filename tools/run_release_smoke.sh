@@ -11,7 +11,8 @@ CLEAN_INSTALL_SMOKE_ACTIVITY="com.aqua.aqualight.smoke.CleanInstallSmokeActivity
 CLEAN_INSTALL_SMOKE_COMPONENT="${PACKAGE_NAME}/${CLEAN_INSTALL_SMOKE_ACTIVITY}"
 UPGRADE_INSTALL_SMOKE_ACTIVITY="com.aqua.aqualight.smoke.UpgradeInstallSmokeActivity"
 UPGRADE_INSTALL_SMOKE_COMPONENT="${PACKAGE_NAME}/${UPGRADE_INSTALL_SMOKE_ACTIVITY}"
-SMOKE_PREFIX="release-smoke"
+SMOKE_PREFIX="release-smoke-api-${API_LEVEL}"
+SMOKE_SCREEN_DIR="release-smoke-screens/api-${API_LEVEL}"
 PASS_MARKER="RELEASE_SMOKE_PASS"
 CLEAN_INSTALL_PASS_MARKER="CLEAN_INSTALL_PASS"
 CLEAN_INSTALL_FAIL_MARKER="CLEAN_INSTALL_FAIL"
@@ -97,6 +98,7 @@ run_account_deletion_process_death_scenario() {
   prepare_dump="${scenario_prefix}-prepare-window.xml"
   resume_dump="${scenario_prefix}-resume-window.xml"
 
+  adb logcat -c
   adb shell am start -W -S -n "$ACCOUNT_DELETION_SMOKE_COMPONENT" \
     --es aqua_account_deletion_action prepare \
     --es aqua_account_deletion_scenario "$scenario" \
@@ -121,6 +123,7 @@ run_account_deletion_process_death_scenario() {
   wait_for_ui_marker \
     "${ACCOUNT_DELETION_PASS_MARKER}:${scenario}" \
     "$resume_dump"
+  adb logcat -d > "${scenario_prefix}-logcat.txt" 2>&1
 
   echo "Account-deletion process-death scenario passed: ${scenario} (API ${API_LEVEL})."
   adb shell am force-stop "$PACKAGE_NAME"
@@ -212,7 +215,32 @@ finish() {
 }
 trap finish EXIT
 
-./gradlew connectedDebugAndroidTest --no-daemon --stacktrace
+mkdir -p stage14-evidence
+rm -rf \
+  app/build/outputs/androidTest-results/connected \
+  app/build/reports/androidTests/connected
+./gradlew connectedDebugAndroidTest --rerun-tasks --no-daemon --stacktrace
+instrumentation_report_source="app/build/outputs/androidTest-results/connected"
+instrumentation_report_archive="stage14-evidence/junit-api-${API_LEVEL}"
+test -d "$instrumentation_report_source"
+rm -rf "$instrumentation_report_archive"
+mkdir -p "$instrumentation_report_archive"
+cp -R "${instrumentation_report_source}/." "$instrumentation_report_archive/"
+test -n "$(
+  find "$instrumentation_report_archive" -type f -name 'TEST-*.xml' -size +0c \
+    -print -quit
+)"
+for evidence_set in \
+  process-recreation-instrumentation \
+  tank-care-corruption-instrumentation; do
+  python3 tools/verify_stage14_junit_evidence.py \
+    --contract config/commercial/stage14-junit-evidence-contract.json \
+    --evidence-set "$evidence_set" \
+    --report "api-${API_LEVEL}=${instrumentation_report_archive}" \
+    --api-level "$API_LEVEL" \
+    --commit "$(git rev-parse HEAD)" \
+    --summary "stage14-evidence/${evidence_set}-api-${API_LEVEL}.json"
+done
 DEBUG_APK="$(
   find app/build/outputs/apk/debug -type f -name '*.apk' ! -name '*androidTest*' \
     | sort \
@@ -233,10 +261,8 @@ SMOKE_APK="$(cat release-smoke-apk-path.txt)"
 adb install "$SMOKE_APK" 2>&1 | tee "${SMOKE_PREFIX}-install.txt"
 adb shell pm path "$PACKAGE_NAME" 2>&1 | tee "${SMOKE_PREFIX}-package-path.txt"
 adb logcat -c
-rm -rf release-smoke-screens
-mkdir -p release-smoke-screens
-rm -rf stage14-evidence
-mkdir -p stage14-evidence
+rm -rf "$SMOKE_SCREEN_DIR"
+mkdir -p "$SMOKE_SCREEN_DIR"
 
 clean_install_prefix="${SMOKE_PREFIX}-clean-install"
 clean_install_activity_evidence="${clean_install_prefix}-activity.json"
@@ -276,6 +302,11 @@ for deletion_scenario in \
   account-deleted; do
   run_account_deletion_process_death_scenario "$deletion_scenario"
 done
+python3 tools/verify_force_stop_evidence.py \
+  --prefix "${SMOKE_PREFIX}-account-deletion" \
+  --api-level "$API_LEVEL" \
+  --commit "$(git rev-parse HEAD)" \
+  --summary "stage14-evidence/account-deletion-force-stop-api-${API_LEVEL}.json"
 echo "Account-deletion process-death release matrix passed on API ${API_LEVEL}."
 
 run_visual_profile() {
@@ -311,8 +342,12 @@ run_visual_profile() {
 
     if grep -q "${PASS_MARKER}:${profile}" "$profile_dump" 2>/dev/null; then
       adb pull "/sdcard/Android/data/${PACKAGE_NAME}/files/smoke-screens/." \
-        "release-smoke-screens/" >/dev/null
-      screenshot_count="$(find release-smoke-screens -type f -name "${profile}-*.png" | wc -l | tr -d ' ')"
+        "$SMOKE_SCREEN_DIR/" >/dev/null
+      screenshot_count="$(
+        find "$SMOKE_SCREEN_DIR" -type f -name "${profile}-*.png" \
+          | wc -l \
+          | tr -d ' '
+      )"
       if [ "$screenshot_count" -ne 4 ]; then
         echo "Expected 4 ${profile} screenshots, found ${screenshot_count}."
         return 1

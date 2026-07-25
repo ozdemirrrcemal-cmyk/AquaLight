@@ -86,6 +86,9 @@ jobs:
           python3 -m unittest discover \
             -s tools/tests \
             -p 'test_verify_stage14_policy.py'
+          python3 -m unittest discover \
+            -s tools/tests \
+            -p 'test_verify_stage14_junit_evidence.py'
           python3 tools/verify_stage14_policy.py \
             --policy config/commercial/stage14-validation-policy.json \
             --app-gradle app/build.gradle \
@@ -201,6 +204,29 @@ jobs:
             --no-daemon \
             --stacktrace
 
+      - name: Create named Stage 14 unit evidence
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          commit="$(git rev-parse HEAD)"
+          reports=(
+            --report "debug=app/build/test-results/testDebugUnitTest"
+            --report "staging=app/build/test-results/testStagingUnitTest"
+          )
+          for evidence_set in \
+            permission-permanent-denial-unit \
+            process-recreation-unit \
+            rapid-account-switch-unit \
+            tank-care-corruption-unit \
+            websocket-account-cleanup-unit; do
+            python3 tools/verify_stage14_junit_evidence.py \
+              --contract config/commercial/stage14-junit-evidence-contract.json \
+              --evidence-set "$evidence_set" \
+              "${reports[@]}" \
+              --commit "$commit" \
+              --summary "build/reports/stage14/junit/${evidence_set}.json"
+          done
+
       - name: Verify JaCoCo coverage reports
         shell: bash
         run: |
@@ -241,6 +267,7 @@ jobs:
             app/build/test-results/testStagingUnitTest/**
             app/build/reports/tests/testDebugUnitTest/**
             app/build/reports/tests/testStagingUnitTest/**
+            build/reports/stage14/junit/**
           if-no-files-found: error
 
       - name: Build Debug APK

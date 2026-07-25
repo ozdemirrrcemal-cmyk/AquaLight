@@ -30,6 +30,9 @@ python3 tools/verify_stage14_policy.py \
   --emulator-workflow .github/workflows/android_emulator_tests.yml \
   --release-workflow .github/workflows/android_release.yml \
   --summary release-quality/stage14-policy-validation.json
+python3 -m unittest discover \
+  -s tools/tests \
+  -p 'test_verify_stage14_junit_evidence.py'
 
 for guard in \
   architecture_guard.py \
@@ -151,6 +154,27 @@ for suite in \
   result_directory="app/build/test-results/${suite}"
   test -d "$result_directory"
   test -n "$(find "$result_directory" -type f -name 'TEST-*.xml' -size +0c -print -quit)"
+done
+
+mkdir -p release-quality/stage14-evidence
+unit_reports=(
+  --report "debug=app/build/test-results/testDebugUnitTest"
+  --report "staging=app/build/test-results/testStagingUnitTest"
+  --report "release-smoke=app/build/test-results/testReleaseSmokeUnitTest"
+  --report "release=app/build/test-results/testReleaseUnitTest"
+)
+for evidence_set in \
+  permission-permanent-denial-unit \
+  process-recreation-unit \
+  rapid-account-switch-unit \
+  tank-care-corruption-unit \
+  websocket-account-cleanup-unit; do
+  python3 tools/verify_stage14_junit_evidence.py \
+    --contract config/commercial/stage14-junit-evidence-contract.json \
+    --evidence-set "$evidence_set" \
+    "${unit_reports[@]}" \
+    --commit "$release_commit" \
+    --summary "release-quality/stage14-evidence/${evidence_set}.json"
 done
 
 coverage_dir="app/build/reports/coverage/test/debug"

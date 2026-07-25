@@ -1,0 +1,207 @@
+{
+  "schemaVersion": 1,
+  "policyId": "aqualight-stage14-junit-evidence",
+  "evidenceSets": [
+    {
+      "id": "permission-permanent-denial-unit",
+      "suite": "permission-permanent-denial",
+      "runner": "unit",
+      "requiredTests": [
+        {
+          "className": "com.aqua.aqualight.platform.permissions.PermissionPolicyTest",
+          "methodName": "BLE provisioning requests complete permission set"
+        },
+        {
+          "className": "com.aqua.aqualight.platform.permissions.PermissionPolicyTest",
+          "methodName": "WiFi SSID requests fine and coarse location where Android requires both"
+        },
+        {
+          "className": "com.aqua.aqualight.platform.permissions.PermissionPolicyTest",
+          "methodName": "camera capabilities use camera permission on every supported API"
+        },
+        {
+          "className": "com.aqua.aqualight.platform.permissions.PermissionPolicyTest",
+          "methodName": "decision contract distinguishes request rationale and permanent denial"
+        },
+        {
+          "className": "com.aqua.aqualight.platform.permissions.PermissionPolicyTest",
+          "methodName": "notification permission starts at API 33"
+        }
+      ]
+    },
+    {
+      "id": "process-recreation-instrumentation",
+      "suite": "process-recreation-rotation-force-stop",
+      "runner": "instrumentation",
+      "requiredTests": [
+        {
+          "className": "com.aqua.aqualight.ui.common.feedback.ProcessSafeFeedbackInstrumentedTest",
+          "methodName": "feedbackAndCareSheetsSurviveActivityRecreationWithArgumentsIntact"
+        },
+        {
+          "className": "com.aqua.aqualight.ui.common.feedback.ProcessSafeFeedbackInstrumentedTest",
+          "methodName": "parcelRoundTripPreservesArgumentsAcrossProcessBoundary"
+        },
+        {
+          "className": "com.aqua.aqualight.ui.common.feedback.ProcessSafeFeedbackInstrumentedTest",
+          "methodName": "tankEditorSurvivesActivityRecreationWithArgumentsIntact"
+        }
+      ]
+    },
+    {
+      "id": "process-recreation-unit",
+      "suite": "process-recreation-rotation-force-stop",
+      "runner": "unit",
+      "requiredTests": [
+        {
+          "className": "com.aqua.aqualight.base.ProcessUiStateRestorePolicyTest",
+          "methodName": "processDeathDropsStaleOwnerUiState"
+        },
+        {
+          "className": "com.aqua.aqualight.base.ProcessUiStateRestorePolicyTest",
+          "methodName": "sameProcessConfigurationRecreationRestoresUiState"
+        },
+        {
+          "className": "com.aqua.aqualight.data.auth.AccountDeletionProcessDeathMatrixTest",
+          "methodName": "everyDurableStageResumesInANewProcessWithoutRepeatingCompletedWork"
+        },
+        {
+          "className": "com.aqua.aqualight.data.auth.AppSessionCoordinatorTest",
+          "methodName": "processRecreationResolvesCurrentOwnerWithoutOldCoordinatorState"
+        },
+        {
+          "className": "com.aqua.aqualight.data.devices.repository.DeviceRuntimeProcessDeathContractTest",
+          "methodName": "processDeathEquivalentTerminalShutdownLeavesNoJobsCollectorsSocketsOrTokenAccess"
+        },
+        {
+          "className": "com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModelTest",
+          "methodName": "draftSurvivesViewModelRecreationAndCanBeClearedAfterCommit"
+        }
+      ]
+    },
+    {
+      "id": "rapid-account-switch-unit",
+      "suite": "rapid-account-switch",
+      "runner": "unit",
+      "requiredTests": [
+        {
+          "className": "com.aqua.aqualight.data.auth.AppSessionCoordinatorTest",
+          "methodName": "rapidAccountSwitchSettlesOnNewestOwner"
+        },
+        {
+          "className": "com.aqua.aqualight.data.auth.OwnerSessionStateMachineTest",
+          "methodName": "A to B to A allows only final generation to commit"
+        },
+        {
+          "className": "com.aqua.aqualight.data.auth.OwnerSessionStateMachineTest",
+          "methodName": "close with stale expected owner cannot clear current session"
+        },
+        {
+          "className": "com.aqua.aqualight.data.auth.OwnerSessionStateMachineTest",
+          "methodName": "newer transition invalidates delayed older work"
+        },
+        {
+          "className": "com.aqua.aqualight.data.care.reminder.CareReminderReconcileRuntimeTest",
+          "methodName": "accountSwitchDuringReconcileCancelsOutgoingOwner"
+        },
+        {
+          "className": "com.aqua.aqualight.data.user.UserPreferencesSessionRulesTest",
+          "methodName": "accountSwitchCachesPreviousProfileAndLoadsNextOwnerCache"
+        },
+        {
+          "className": "com.aqua.aqualight.data.user.UserPreferencesSessionRulesTest",
+          "methodName": "accountSwitchWithoutNextCacheClearsPreviousActiveProjection"
+        }
+      ]
+    },
+    {
+      "id": "tank-care-corruption-instrumentation",
+      "suite": "tank-care-corruption",
+      "runner": "instrumentation",
+      "requiredTests": [
+        {
+          "className": "com.aqua.aqualight.data.care.integrity.TankCareIntegrityRecoveryInstrumentedTest",
+          "methodName": "completedDeletionRejectsAStaleCareWriterForTheRestOfTheProcess"
+        },
+        {
+          "className": "com.aqua.aqualight.data.care.integrity.TankCareIntegrityRecoveryInstrumentedTest",
+          "methodName": "processDeathAfterTankDeleteFinishesCleanupWithoutRestoringTasks"
+        },
+        {
+          "className": "com.aqua.aqualight.data.care.integrity.TankCareIntegrityRecoveryInstrumentedTest",
+          "methodName": "processDeathBeforeTankDeleteRestoresCapturedTasks"
+        },
+        {
+          "className": "com.aqua.aqualight.data.recovery.ProtoCorruptionRecoveryInstrumentedTest",
+          "methodName": "allAuthoritativeProtoStoresRecoverFailClosedAndReportRecovery"
+        }
+      ]
+    },
+    {
+      "id": "tank-care-corruption-unit",
+      "suite": "tank-care-corruption",
+      "runner": "unit",
+      "requiredTests": [
+        {
+          "className": "com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentsSerializerTest",
+          "methodName": "serializer rejects duplicate device assignment for one owner"
+        },
+        {
+          "className": "com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentsSerializerTest",
+          "methodName": "serializer rejects malformed protobuf bytes"
+        },
+        {
+          "className": "com.aqua.aqualight.data.store.CommercialStoreSerializerTest",
+          "methodName": "duplicatePersistedIdsFailClosed"
+        },
+        {
+          "className": "com.aqua.aqualight.data.store.CommercialStoreSerializerTest",
+          "methodName": "everyEmptyUnversionedStoreFailsClosedOnReadAndWrite"
+        },
+        {
+          "className": "com.aqua.aqualight.data.store.CommercialStoreSerializerTest",
+          "methodName": "futureStoreVersionsFailClosedUntilExplicitlySupported"
+        },
+        {
+          "className": "com.aqua.aqualight.data.store.CommercialStoreSerializerTest",
+          "methodName": "invalidPersistedEnumFailsClosed"
+        },
+        {
+          "className": "com.aqua.aqualight.data.store.CommercialStoreSerializerTest",
+          "methodName": "unversionedStoresWithDataFailClosed"
+        }
+      ]
+    },
+    {
+      "id": "websocket-account-cleanup-unit",
+      "suite": "websocket-account-cleanup",
+      "runner": "unit",
+      "requiredTests": [
+        {
+          "className": "com.aqua.aqualight.data.auth.AppSessionCoordinatorTest",
+          "methodName": "logoutTransitionsExistingGraphAuthorityToUnauthenticated"
+        },
+        {
+          "className": "com.aqua.aqualight.data.auth.OwnerSessionStateMachineTest",
+          "methodName": "close with stale expected owner cannot clear current session"
+        },
+        {
+          "className": "com.aqua.aqualight.data.devices.repository.DeviceRuntimeProcessDeathContractTest",
+          "methodName": "processDeathEquivalentTerminalShutdownLeavesNoJobsCollectorsSocketsOrTokenAccess"
+        },
+        {
+          "className": "com.aqua.aqualight.data.devices.runtime.ws.AqlWsClientLifecycleTest",
+          "methodName": "callbacksFromDisconnectedSocketCannotPublishStateOrEvents"
+        },
+        {
+          "className": "com.aqua.aqualight.data.devices.runtime.ws.AqlWsClientLifecycleTest",
+          "methodName": "reconnectRejectsCallbacksFromPreviousSocketForSameDevice"
+        },
+        {
+          "className": "com.aqua.aqualight.data.devices.runtime.ws.AqlWsClientLifecycleTest",
+          "methodName": "terminalShutdownCancelsSocketAndRejectsFurtherConnects"
+        }
+      ]
+    }
+  ]
+}

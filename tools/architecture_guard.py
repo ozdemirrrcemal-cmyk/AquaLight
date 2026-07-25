@@ -405,6 +405,10 @@ for token, reason in (
         "verify_upgrade_install_evidence.py",
         "emulator CI must publish fail-closed upgrade-install evidence",
     ),
+    (
+        "verify_stage14_junit_evidence.py",
+        "emulator CI must publish named instrumentation evidence",
+    ),
     ("api-level: [27, 36]", "emulator CI must cover minimum and target Android APIs"),
     (
         "android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d",
@@ -518,8 +522,116 @@ for token, reason in (
         "verify_upgrade_install_evidence.py",
         "the upgrade gate must fail closed on its machine-readable evidence",
     ),
+    (
+        "process-recreation-instrumentation",
+        "rotation and process recreation must publish named JUnit evidence",
+    ),
+    (
+        "tank-care-corruption-instrumentation",
+        "Tank/Care corruption must publish named JUnit evidence",
+    ),
+    (
+        "junit-api-${API_LEVEL}",
+        "instrumentation JUnit XML must be retained independently for each API",
+    ),
+    (
+        "connectedDebugAndroidTest --rerun-tasks",
+        "sequential API runs must execute instrumentation on each emulator",
+    ),
+    (
+        "verify_force_stop_evidence.py",
+        "force-stop recovery must publish independent machine-readable evidence",
+    ),
 ):
     require(release_smoke_runner_path, release_smoke_runner, token, reason)
+
+junit_contract_path = "config/commercial/stage14-junit-evidence-contract.json"
+junit_contract = read(junit_contract_path)
+for token, reason in (
+    (
+        '"rapid-account-switch-unit"',
+        "rapid account switching must have an explicit commercial test contract",
+    ),
+    (
+        '"process-recreation-instrumentation"',
+        "process recreation must have an instrumentation contract",
+    ),
+    (
+        '"permission-permanent-denial-unit"',
+        "permanent-denial policy must have an automated contract",
+    ),
+    (
+        '"tank-care-corruption-instrumentation"',
+        "Tank/Care corruption must have an instrumentation contract",
+    ),
+    (
+        '"websocket-account-cleanup-unit"',
+        "WebSocket and account cleanup must have an explicit contract",
+    ),
+):
+    require(junit_contract_path, junit_contract, token, reason)
+
+junit_verifier_path = "tools/verify_stage14_junit_evidence.py"
+junit_verifier = read(junit_verifier_path)
+for token, reason in (
+    (
+        "JUnit testcase did not pass",
+        "failed or skipped named tests must fail the commercial gate",
+    ),
+    (
+        "must contain exactly one passing",
+        "missing or duplicate named tests must fail the commercial gate",
+    ),
+    (
+        "release-smoke",
+        "release evidence must include the releaseSmoke unit-test variant",
+    ),
+    (
+        "SUPPORTED_API_LEVELS = (27, 36)",
+        "instrumentation evidence must remain bound to API 27 and API 36",
+    ),
+):
+    require(junit_verifier_path, junit_verifier, token, reason)
+
+process_safe_instrumentation_path = (
+    "app/src/androidTest/java/com/aqua/aqualight/ui/common/feedback/"
+    "ProcessSafeFeedbackInstrumentedTest.kt"
+)
+process_safe_instrumentation = read(process_safe_instrumentation_path)
+for token, reason in (
+    (
+        "feedbackAndCareSheetsSurviveActivityRecreationWithArgumentsIntact",
+        "Care UI must survive real Activity recreation",
+    ),
+    (
+        "tankEditorSurvivesActivityRecreationWithArgumentsIntact",
+        "Tank UI must survive real Activity recreation",
+    ),
+):
+    require(
+        process_safe_instrumentation_path,
+        process_safe_instrumentation,
+        token,
+        reason,
+    )
+
+force_stop_verifier_path = "tools/verify_force_stop_evidence.py"
+force_stop_verifier = read(force_stop_verifier_path)
+for token, reason in (
+    (
+        "ACCOUNT_DELETION_PROCESS_DEATH_PREPARED",
+        "force-stop evidence must prove each durable checkpoint was prepared",
+    ),
+    (
+        "pid-(\\d+)-to-(\\d+)",
+        "force-stop evidence must prove recovery used a new process",
+    ),
+    (
+        '"scenarioCount": len(scenario_evidence)',
+        "force-stop evidence must record the complete recovery matrix",
+    ),
+):
+    require(force_stop_verifier_path, force_stop_verifier, token, reason)
 
 uninstall_test_path = "tools/verify_uninstall_clears_data.sh"
 uninstall_test = read(uninstall_test_path)
@@ -583,21 +695,47 @@ for token, reason in (
 
 android_workflow_path = ".github/workflows/android.yml"
 android_workflow = read(android_workflow_path)
-require(
-    android_workflow_path,
-    android_workflow,
-    ":app:verifyDetektPolicy",
-    "PR CI must enforce zero blocker findings and zero new Detekt debt",
-)
+for token, reason in (
+    (
+        ":app:verifyDetektPolicy",
+        "PR CI must enforce zero blocker findings and zero new Detekt debt",
+    ),
+    (
+        "verify_stage14_junit_evidence.py",
+        "PR CI must materialize named unit-test evidence",
+    ),
+    (
+        "rapid-account-switch-unit",
+        "PR CI must prove rapid account switching",
+    ),
+    (
+        "websocket-account-cleanup-unit",
+        "PR CI must prove WebSocket and account cleanup",
+    ),
+):
+    require(android_workflow_path, android_workflow, token, reason)
 
 release_quality_path = "tools/release_pipeline/guard_quality.sh"
 release_quality = read(release_quality_path)
-require(
-    release_quality_path,
-    release_quality,
-    ":app:verifyDetektPolicy",
-    "commercial release quality must enforce the Detekt policy gate",
-)
+for token, reason in (
+    (
+        ":app:verifyDetektPolicy",
+        "commercial release quality must enforce the Detekt policy gate",
+    ),
+    (
+        "release-smoke=app/build/test-results/testReleaseSmokeUnitTest",
+        "commercial behavior evidence must cover the releaseSmoke variant",
+    ),
+    (
+        "release=app/build/test-results/testReleaseUnitTest",
+        "commercial behavior evidence must cover the release variant",
+    ),
+    (
+        "verify_stage14_junit_evidence.py",
+        "commercial release quality must materialize named behavior evidence",
+    ),
+):
+    require(release_quality_path, release_quality, token, reason)
 
 pr_workflow_path = ".github/workflows/codeql.yml"
 pr_workflow = read(pr_workflow_path)
