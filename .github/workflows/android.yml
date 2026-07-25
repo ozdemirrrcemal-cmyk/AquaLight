@@ -31,6 +31,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      CI: "true"
       GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8" -Dorg.gradle.daemon=false
       AQL_OTA_MANIFEST_PUBLIC_KEY_PEM: ${{ secrets.AQL_OTA_MANIFEST_PUBLIC_KEY_PEM }}
       AQL_OTA_MANIFEST_KEY_ID: ${{ secrets.AQL_OTA_MANIFEST_KEY_ID }}
@@ -136,7 +137,7 @@ jobs:
           ./gradlew \
             :app:lintDebug \
             :app:lintStaging \
-            :app:lintRelease \
+            :app:lintReleaseSmoke \
             --continue \
             --no-daemon \
             --stacktrace \
@@ -150,7 +151,7 @@ jobs:
           required_reports=(
             app/build/reports/lint-results-debug.xml
             app/build/reports/lint-results-staging.xml
-            app/build/reports/lint-results-release.xml
+            app/build/reports/lint-results-releaseSmoke.xml
           )
           for report in "${required_reports[@]}"; do
             if [[ ! -s "$report" ]]; then
@@ -158,7 +159,7 @@ jobs:
               exit 1
             fi
           done
-          echo "Android Lint reports verified for debug, staging and production release."
+          echo "Android Lint reports verified for debug, staging and minified release smoke."
 
       - name: Upload Android Lint reports
         if: always()
