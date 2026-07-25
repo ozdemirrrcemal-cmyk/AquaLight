@@ -68,10 +68,19 @@ class PermissionPolicyTest {
     }
 
     @Test
-    fun `WiFi SSID uses fine location across current implementation matrix`() {
-        listOf(27, 30, 31, 33, 36).forEach { sdk ->
+    fun `WiFi SSID requests fine and coarse location where Android requires both`() {
+        listOf(27, 30).forEach { sdk ->
             assertEquals(
                 listOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                PermissionPolicy.requiredPermissions(AppCapability.WIFI_SSID, sdk)
+            )
+        }
+        listOf(31, 33, 36).forEach { sdk ->
+            assertEquals(
+                listOf(
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ),
                 PermissionPolicy.requiredPermissions(AppCapability.WIFI_SSID, sdk)
             )
         }

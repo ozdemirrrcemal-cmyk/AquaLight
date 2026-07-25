@@ -33,7 +33,7 @@ private class MlKitProvisioningQrFrameDecoder : ProvisioningQrFrameDecoder {
             .build()
     )
 
-    @OptIn(ExperimentalGetImage::class)
+    @ExperimentalGetImage
     override fun decode(
         imageProxy: ImageProxy,
         onResult: (Result<String?>) -> Unit

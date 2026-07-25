@@ -11,6 +11,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.ParcelUuid
+import android.util.Log
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -133,6 +134,7 @@ class AqlBleProvisioningScanner(
         }
     }
 
+    @SuppressLint("MissingPermission")
     private fun upsertCandidate(result: ScanResult) {
         val address = runCatching { result.device.address }
             .getOrNull()
@@ -140,9 +142,24 @@ class AqlBleProvisioningScanner(
             ?: return
 
         val now = clockMillis()
-        val fallbackName = runCatching { result.device.name }
-            .getOrNull()
-            .orEmpty()
+        val platformName = if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            !hasPermission(Manifest.permission.BLUETOOTH_CONNECT)
+        ) {
+            ""
+        } else {
+            try {
+                result.device.name.orEmpty()
+            } catch (error: SecurityException) {
+                Log.w(
+                    TAG,
+                    "BLE device name became unavailable after the permission check.",
+                    error
+                )
+                ""
+            }
+        }
+        val fallbackName = platformName
             .ifBlank { result.scanRecord?.deviceName.orEmpty() }
             .ifBlank { "AquaLight Device" }
 
@@ -200,5 +217,9 @@ class AqlBleProvisioningScanner(
         object BluetoothUnavailable : StartResult
         object BluetoothOff : StartResult
         data class Failed(val message: String) : StartResult
+    }
+
+    private companion object {
+        const val TAG = "AqlBleScanner"
     }
 }

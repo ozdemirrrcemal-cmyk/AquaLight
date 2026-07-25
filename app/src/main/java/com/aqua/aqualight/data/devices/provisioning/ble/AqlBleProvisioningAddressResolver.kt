@@ -12,6 +12,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.ParcelUuid
+import android.util.Log
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningDraft
@@ -252,11 +253,26 @@ class AqlBleProvisioningAddressResolver(
         )
     }
 
+    @SuppressLint("MissingPermission")
     private fun ScanResult.toScanCandidate(address: String): ScanCandidate {
         val advertisedName = scanRecord?.deviceName.orEmpty()
-        val deviceName = runCatching {
-            device.name
-        }.getOrNull().orEmpty()
+        val deviceName = if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            !hasPermission(Manifest.permission.BLUETOOTH_CONNECT)
+        ) {
+            ""
+        } else {
+            try {
+                device.name.orEmpty()
+            } catch (error: SecurityException) {
+                Log.w(
+                    TAG,
+                    "BLE device name became unavailable after the permission check.",
+                    error
+                )
+                ""
+            }
+        }
 
         return ScanCandidate(
             address = address,
@@ -324,6 +340,7 @@ class AqlBleProvisioningAddressResolver(
         const val RESOLVE_TIMEOUT_MS = 12_000L
         const val MAX_QR_CANDIDATES_TO_PREFLIGHT = 4
         const val QR_PREFLIGHT_GATT_SETTLE_DELAY_MS = 250L
+        const val TAG = "AqlBleAddressResolver"
         val MAC_ADDRESS_REGEX =
             Regex("^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$")
     }

@@ -534,7 +534,7 @@ object TankPdfExporter {
       page = document.startPage(pageInfo)
       canvas = page.canvas
       canvas.drawColor(ContextCompat.getColor(context, R.color.aqua_content_on_dark))
-     y = PAGE_MARGIN
+      y = PAGE_MARGIN
     }
 
     private fun finishCurrentPage() {
@@ -568,25 +568,25 @@ object TankPdfExporter {
         titlePaint
       )
 
-     y += 23f
+      y += 23f
 
       canvas.drawText(
         "${texts.labelTankName}: ${tankName.ifBlank { texts.noValue }}",
         PAGE_MARGIN,
         y,
         subtitlePaint
-    )
+      )
 
       y += 15f
 
       canvas.drawText(
         "${texts.labelGenerated}: $generatedDate",
         PAGE_MARGIN,
-       y,
+        y,
         subtitlePaint
-    )
+      )
 
-    y += 16f
+      y += 16f
 
       canvas.drawLine(
         PAGE_MARGIN,
@@ -596,7 +596,7 @@ object TankPdfExporter {
         linePaint
       )
 
-    y += 20f
+      y += 20f
     }
 
     fun drawTankPhoto(
@@ -606,7 +606,7 @@ object TankPdfExporter {
 
       val photoRect = RectF(
         PAGE_MARGIN,
-       y,
+        y,
         PAGE_WIDTH - PAGE_MARGIN,
         y + PHOTO_HEIGHT
       )
@@ -622,7 +622,7 @@ object TankPdfExporter {
         backgroundPaint
       )
 
-    if (bitmap != null) {
+      if (bitmap != null) {
         drawBitmapCenterCrop(
           bitmap = bitmap,
           destination = photoRect
@@ -632,7 +632,7 @@ object TankPdfExporter {
           color = ContextCompat.getColor(context, R.color.aqua_content_secondary)
           textSize = 12f
           textAlign = Paint.Align.CENTER
-      }
+        }
 
         canvas.drawText(
           texts.noTankPhoto,
@@ -664,12 +664,12 @@ object TankPdfExporter {
       y += 16f
 
       canvas.drawLine(
-       PAGE_MARGIN,
+        PAGE_MARGIN,
         y,
         PAGE_WIDTH - PAGE_MARGIN,
         y,
         linePaint
-     )
+      )
 
       y += 13f
     }
@@ -677,7 +677,7 @@ object TankPdfExporter {
     fun drawLabelValue(
       label: String,
       value: String
-   ) {
+    ) {
       val valueX = PAGE_MARGIN + 125f
       val maxValueWidth = PAGE_WIDTH - PAGE_MARGIN - valueX
 
