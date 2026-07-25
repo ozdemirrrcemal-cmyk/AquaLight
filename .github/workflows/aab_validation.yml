@@ -1,0 +1,134 @@
+name: Commercial AAB Validation
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "app/**"
+      - "tools/release_pipeline/install_bundletool.sh"
+      - "tools/release_pipeline/validate_release_aab.sh"
+      - "tools/release_pipeline/verify_release_aab.py"
+      - "tools/release_pipeline/build_release.sh"
+      - "tools/release_pipeline/verify_publication.sh"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle.properties"
+      - "gradle/**"
+      - "gradlew"
+      - ".github/workflows/aab_validation.yml"
+
+concurrency:
+  group: commercial-aab-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CI: "true"
+  GRADLE_OPTS: >-
+    -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8"
+    -Dorg.gradle.daemon=false
+  AQL_RELEASE_VERSION: "0.0.0"
+  AQL_VERSION_CODE: ${{ github.run_number }}
+  AQL_FIREBASE_PRODUCTION_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_PRODUCTION_CONFIG_BASE64 }}
+
+jobs:
+  validate-aab:
+    name: Build and validate minified release AAB
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@b5418f5a58f5fd2eb486dd7efb368fe7be7eae45 # v2
+
+      - name: Install JDK 17
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          set -Eeu
+          set +o pipefail
+          yes 2>/dev/null | sdkmanager --licenses >/dev/null
+          set -o pipefail
+          sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
+          sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1"
+          chmod +x ./gradlew
+
+      - name: Verify API matrix and workflow supply chain
+        run: |
+          python3 tools/verify_android_api_matrix.py \
+            --summary release-quality-aab-api-matrix.json
+          python3 tools/verify_github_action_pinning.py \
+            --summary release-quality-aab-action-pinning.json
+
+      - name: Generate CI-only release keystore
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          rm -f release-key.jks
+          keytool -genkeypair -noprompt \
+            -keystore release-key.jks \
+            -storepass aqualight-ci \
+            -alias aqualight-ci \
+            -keypass aqualight-ci \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 1 \
+            -dname "CN=AquaLight AAB Validation,O=AquaLight,C=TR"
+
+      - name: Build minified release AAB
+        shell: bash
+        env:
+          RELEASE_KEYSTORE_PASSWORD: aqualight-ci
+          RELEASE_KEY_ALIAS: aqualight-ci
+          RELEASE_KEY_PASSWORD: aqualight-ci
+        run: |
+          set -Eeuo pipefail
+          ./gradlew :app:bundleRelease --no-daemon --stacktrace
+          aab="$(find app/build/outputs/bundle/release -maxdepth 1 -type f -name '*.aab' -print -quit)"
+          test -s "$aab"
+          printf '%s\n' "$aab" > release-aab-path.txt
+
+      - name: Validate AAB identity, structure, signing and R8 evidence
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          aab="$(cat release-aab-path.txt)"
+          mkdir -p release-quality/aab
+          jarsigner -verify -verbose -certs "$aab" \
+            > release-quality/aab/signing-verification.txt 2>&1
+          keytool -printcert -jarfile "$aab" \
+            > release-quality/aab/signing-certificate.txt
+          bash tools/release_pipeline/validate_release_aab.sh \
+            "$aab" \
+            release-quality/aab
+
+      - name: Upload commercial AAB evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: commercial-aab-validation-${{ github.run_number }}
+          path: |
+            release-quality/aab/**
+            release-aab-path.txt
+            release-quality-aab-api-matrix.json
+            release-quality-aab-action-pinning.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Remove CI-only release keystore
+        if: always()
+        run: rm -f release-key.jks
