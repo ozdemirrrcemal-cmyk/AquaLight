@@ -1,0 +1,19 @@
+build:
+  maxIssues: 0
+  excludeCorrectable: false
+
+config:
+  validation: true
+  warningsAsErrors: true
+
+exceptions:
+  NotImplementedDeclaration:
+    active: true
+
+potential-bugs:
+  ExplicitGarbageCollectionCall:
+    active: true
+  InvalidRange:
+    active: true
+  UnreachableCode:
+    active: true

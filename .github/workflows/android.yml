@@ -12,6 +12,7 @@ on:
       - "tools/**"
       - "config/coverage/**"
       - "config/commercial/**"
+      - "config/detekt/**"
       - "build.gradle"
       - "settings.gradle"
       - "gradle.properties"
@@ -150,11 +151,12 @@ jobs:
               -dname "CN=Android,O=AquaLight,C=TR"
           fi
 
-      - name: Run non-production Android Lint gate
+      - name: Run Detekt and baseline-free non-production Android Lint
         shell: bash
         run: |
           set -Eeuo pipefail
-          ./gradlew \
+          ./gradlew -PAQL_FINAL_LINT=true \
+            :app:detekt \
             :app:lintDebug \
             :app:lintStaging \
             --continue \
@@ -162,37 +164,39 @@ jobs:
             --stacktrace \
             2>&1 | tee android-lint.log
 
-      - name: Verify Android Lint reports
-        if: success()
+      - name: Verify Android Lint blocker evidence
+        if: always()
         shell: bash
         run: |
           set -Eeuo pipefail
-          required_reports=(
-            app/build/reports/lint-results-debug.xml
-            app/build/reports/lint-results-staging.xml
-          )
-          for report in "${required_reports[@]}"; do
-            if [[ ! -s "$report" ]]; then
-              echo "Required Android Lint report is missing or empty: $report" >&2
-              exit 1
-            fi
-          done
-          echo "Android Lint reports verified for debug and staging."
+          python3 tools/verify_android_lint.py \
+            --required-variant debug \
+            --required-variant staging \
+            --report app/build/reports/lint-results-debug.xml \
+            --report app/build/reports/lint-results-staging.xml \
+            --summary build/reports/stage14/android-lint-summary.json
 
-      - name: Upload Android Lint reports
+      - name: Upload static-analysis reports
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: android-lint-reports-${{ github.run_number }}
+          name: static-analysis-reports-${{ github.run_number }}
           path: |
             build/reports/stage14/policy-validation.json
+            build/reports/stage14/android-lint-summary.json
             android-lint.log
             app/build/reports/lint-results-*.html
             app/build/reports/lint-results-*.xml
+            app/build/reports/detekt/**
           if-no-files-found: warn
 
-      - name: Run Debug unit tests with JaCoCo coverage
-        run: ./gradlew :app:createDebugUnitTestCoverageReport --no-daemon --stacktrace
+      - name: Run non-production unit tests with JaCoCo coverage
+        run: |
+          ./gradlew \
+            :app:createDebugUnitTestCoverageReport \
+            :app:testStagingUnitTest \
+            --no-daemon \
+            --stacktrace
 
       - name: Verify JaCoCo coverage reports
         shell: bash
@@ -230,6 +234,10 @@ jobs:
           path: |
             app/build/reports/coverage/test/debug/
             app/build/outputs/unit_test_code_coverage/debugUnitTest/*.exec
+            app/build/test-results/testDebugUnitTest/**
+            app/build/test-results/testStagingUnitTest/**
+            app/build/reports/tests/testDebugUnitTest/**
+            app/build/reports/tests/testStagingUnitTest/**
           if-no-files-found: error
 
       - name: Build Debug APK

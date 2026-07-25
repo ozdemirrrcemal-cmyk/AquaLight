@@ -113,6 +113,18 @@ def otaManifestKeyId = providers
         .getOrElse("aql-ota-manifest-2026-01")
 
 def lintBaselineFile = layout.projectDirectory.file("lint-baseline.xml")
+def finalLintModeValue = providers
+        .gradleProperty("AQL_FINAL_LINT")
+        .getOrElse("false")
+        .trim()
+        .toLowerCase(Locale.ROOT)
+if (!(finalLintModeValue in ["true", "false"])) {
+    throw new GradleException(
+            "AQL_FINAL_LINT must be exactly 'true' or 'false', got '${finalLintModeValue}'."
+    )
+}
+def finalLintMode = finalLintModeValue == "true"
+
 def prepareLintBaseline = tasks.register("prepareLintBaseline", ExpandLintBaselineTask) {
     compressedBaseline.set(layout.projectDirectory.file("lint-baseline.xml.gz"))
     expandedBaseline.set(lintBaselineFile)
@@ -154,7 +166,7 @@ android {
             initWith release
             signingConfig signingConfigs.release
             matchingFallbacks = ['release']
-            debuggable true
+            debuggable false
             minifyEnabled true
             shrinkResources true
             versionNameSuffix "-smoke"
@@ -179,12 +191,15 @@ android {
         }
     }
    	
-   	lint {
-        baseline = lintBaselineFile.asFile
+    lint {
+        if (!finalLintMode) {
+            baseline = lintBaselineFile.asFile
+        }
         htmlReport true
         xmlReport true
         abortOnError true
-        warningsAsErrors true
+        warningsAsErrors !finalLintMode
+        checkReleaseBuilds true
     }
 
     buildFeatures { buildConfig true; viewBinding true }
@@ -198,7 +213,9 @@ android {
 
 tasks.configureEach { task ->
     def taskName = task.name.toLowerCase()
-    if (task.name != "prepareLintBaseline" && taskName.contains("lint")) {
+    if (!finalLintMode &&
+            task.name != "prepareLintBaseline" &&
+            taskName.contains("lint")) {
         task.dependsOn(prepareLintBaseline)
     }
 }

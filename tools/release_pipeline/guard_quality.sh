@@ -31,9 +31,17 @@ python3 tools/verify_stage14_policy.py \
 
 for guard in \
   architecture_guard.py \
+  session_startup_guard.py \
   composition_root_guard.py \
   ui_dependency_construction_guard.py \
-  session_startup_guard.py \
+  device_application_boundary_guard.py \
+  device_root_application_boundary_guard.py \
+  tank_device_assignment_boundary_guard.py \
+  aquarium_application_boundary_guard.py \
+  care_application_boundary_guard.py \
+  provisioning_discovery_boundary_guard.py \
+  provisioning_progress_boundary_guard.py \
+  provisioning_commit_recovery_guard.py \
   navigation_guard.py \
   ws_protocol_guard.py \
   permission_architecture_guard.py \
@@ -93,10 +101,11 @@ export RELEASE_KEY_PASSWORD=aqualight-ci
 test -s app/build/reports/firebase/configuration-contract.json
 test -s app/build/reports/firebase/environment-isolation.json
 
-./gradlew \
+./gradlew -PAQL_FINAL_LINT=true \
   :app:detekt \
   :app:lintDebug \
   :app:lintStaging \
+  :app:lintReleaseSmoke \
   :app:lintRelease \
   --continue \
   --no-daemon \
@@ -106,17 +115,38 @@ test -s app/build/reports/firebase/environment-isolation.json
 for report in \
   app/build/reports/lint-results-debug.xml \
   app/build/reports/lint-results-staging.xml \
+  app/build/reports/lint-results-releaseSmoke.xml \
   app/build/reports/lint-results-release.xml \
   app/build/reports/lint-results-detekt.xml \
   app/build/reports/detekt/detekt.sarif; do
   test -s "$report"
 done
 
+python3 tools/verify_android_lint.py \
+  --report app/build/reports/lint-results-debug.xml \
+  --report app/build/reports/lint-results-staging.xml \
+  --report app/build/reports/lint-results-releaseSmoke.xml \
+  --report app/build/reports/lint-results-release.xml \
+  --summary release-quality/android-lint-summary.json
+
 ./gradlew \
   :app:createDebugUnitTestCoverageReport \
+  :app:testStagingUnitTest \
+  :app:testReleaseSmokeUnitTest \
   :app:testReleaseUnitTest \
   --no-daemon \
-  --stacktrace
+  --stacktrace \
+  2>&1 | tee release-quality/unit-test-coverage.log
+
+for suite in \
+  testDebugUnitTest \
+  testStagingUnitTest \
+  testReleaseSmokeUnitTest \
+  testReleaseUnitTest; do
+  result_directory="app/build/test-results/${suite}"
+  test -d "$result_directory"
+  test -n "$(find "$result_directory" -type f -name 'TEST-*.xml' -size +0c -print -quit)"
+done
 
 coverage_dir="app/build/reports/coverage/test/debug"
 test -s "${coverage_dir}/report.xml"

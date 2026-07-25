@@ -146,7 +146,14 @@ jobs:
             app/build/reports/lint-results-*.xml
             app/build/reports/detekt/**
             app/build/reports/coverage/test/debug/**
+            app/build/reports/tests/testDebugUnitTest/**
+            app/build/reports/tests/testStagingUnitTest/**
+            app/build/reports/tests/testReleaseSmokeUnitTest/**
             app/build/reports/tests/testReleaseUnitTest/**
+            app/build/test-results/testDebugUnitTest/**
+            app/build/test-results/testStagingUnitTest/**
+            app/build/test-results/testReleaseSmokeUnitTest/**
+            app/build/test-results/testReleaseUnitTest/**
             app/build/reports/androidTests/connected/**
             app/build/outputs/androidTest-results/connected/**
             release-smoke-*.txt
