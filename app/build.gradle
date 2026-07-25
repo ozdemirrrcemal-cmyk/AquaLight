@@ -12,6 +12,11 @@ plugins {
     id 'com.google.gms.google-services'
     id 'com.google.protobuf'
     id 'androidx.navigation.safeargs.kotlin'
+    id 'jacoco'
+}
+
+jacoco {
+    toolVersion = "0.8.15"
 }
 
 abstract class ExpandLintBaselineTask extends DefaultTask {
