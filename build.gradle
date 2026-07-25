@@ -34,9 +34,20 @@ class FirebaseConfigSupport {
     }
 
     static String createCiPlaceholder(String environment, String packageName) {
-        def suffix = environment == "debug" ? "01" : "02"
-        def projectId = "aqualight-ci-${environment}"
-        def webClientId = "000000000000-${environment}.apps.googleusercontent.com"
+        def suffixByEnvironment = [
+                debug       : "01",
+                staging     : "02",
+                releaseSmoke: "03"
+        ]
+        def suffix = suffixByEnvironment[environment]
+        if (suffix == null) {
+            throw new GradleException(
+                    "CI Firebase placeholders are not allowed for environment '${environment}'."
+            )
+        }
+
+        def projectId = "aqualight-ci-${environment.toLowerCase()}"
+        def webClientId = "000000000000-${environment.toLowerCase()}.apps.googleusercontent.com"
         def config = [
                 project_info          : [
                         project_number: "000000000000",
@@ -76,16 +87,13 @@ class FirebaseConfigSupport {
             } catch (IllegalArgumentException error) {
                 throw new GradleException("${secretName} is not valid base64.", error)
             }
-        } else if (environment == "production") {
-            def legacyProductionConfig = new File(appDirectoryPath, "google-services.json")
-            if (!legacyProductionConfig.isFile()) {
-                throw new GradleException("Production Firebase config is missing. Set ${secretName}.")
-            }
-            rawConfig = legacyProductionConfig.getText("UTF-8")
         } else if (allowCiPlaceholder && "true".equalsIgnoreCase(System.getenv("CI"))) {
             rawConfig = createCiPlaceholder(environment, expectedPackage)
         } else {
-            throw new GradleException("Firebase config for ${environment} is missing. Set ${secretName}.")
+            throw new GradleException(
+                    "Firebase config for ${environment} is missing. Set ${secretName}; " +
+                            "repository and legacy-file fallbacks are forbidden."
+            )
         }
 
         def validated = validate(rawConfig, expectedPackage, environment)
@@ -97,18 +105,40 @@ class FirebaseConfigSupport {
         return validated
     }
 
-    static Map readProjectIds(String appDirectoryPath) {
-        return [
-                debug     : new JsonSlurper().parse(
-                        new File(appDirectoryPath, "src/debug/google-services.json")
-                ).project_info.project_id,
-                staging   : new JsonSlurper().parse(
-                        new File(appDirectoryPath, "src/staging/google-services.json")
-                ).project_info.project_id,
-                production: new JsonSlurper().parse(
-                        new File(appDirectoryPath, "src/release/google-services.json")
-                ).project_info.project_id
-        ]
+    static Map readProjectIds(String appDirectoryPath, Map<String, String> environmentBuildTypes) {
+        return environmentBuildTypes.collectEntries { environment, buildType ->
+            def configFile = new File(
+                    appDirectoryPath,
+                    "src/${buildType}/google-services.json"
+            )
+            if (!configFile.isFile()) {
+                throw new GradleException(
+                        "Generated Firebase config is missing for ${environment}: ${configFile}."
+                )
+            }
+
+            [
+                    (environment): new JsonSlurper()
+                            .parse(configFile)
+                            .project_info
+                            .project_id
+                            .toString()
+                            .trim()
+            ]
+        }
+    }
+
+    static void requireDistinctProjectIds(Map<String, String> projectIds, String scope) {
+        if (projectIds.any { environment, projectId -> !projectId }) {
+            throw new GradleException(
+                    "Firebase ${scope} isolation contains an empty project ID: ${projectIds}."
+            )
+        }
+        if (projectIds.values().toSet().size() != projectIds.size()) {
+            throw new GradleException(
+                    "Firebase ${scope} projects must be distinct: ${projectIds}."
+            )
+        }
     }
 }
 
@@ -214,7 +244,7 @@ potential-bugs:
     }
 
     tasks.matching { task ->
-        task.name in ["lintDebug", "lintStaging", "lintRelease"]
+        task.name in ["lintDebug", "lintStaging", "lintRelease", "lintReleaseSmoke"]
     }.configureEach {
         dependsOn(detektGate)
     }
@@ -222,6 +252,8 @@ potential-bugs:
     plugins.withId("com.android.application") {
         def baseApplicationId = "com.aqua.aqualight"
         def appDirectoryPath = projectDir.absolutePath
+        def legacyFirebaseConfigPath = new File(appDirectoryPath, "google-services.json").absolutePath
+        def repositoryRootPath = rootProject.projectDir.absolutePath
 
         android {
             testCoverage {
@@ -259,6 +291,45 @@ potential-bugs:
             }
         }
 
+        def verifyNoLegacyFirebaseConfig = tasks.register("verifyNoLegacyFirebaseConfig") {
+            group = "verification"
+            description = "Rejects repository or source-set Firebase configuration files."
+
+            doLast {
+                def legacyFirebaseConfig = new File(legacyFirebaseConfigPath)
+                if (legacyFirebaseConfig.exists()) {
+                    throw new GradleException(
+                            "Legacy Firebase config is forbidden: ${legacyFirebaseConfig}. " +
+                                    "Use environment-scoped base64 secrets."
+                    )
+                }
+
+                def trackedConfigProcess = new ProcessBuilder([
+                        "git",
+                        "ls-files",
+                        "--",
+                        "app/google-services.json",
+                        ":(glob)app/src/**/google-services.json"
+                ])
+                        .directory(new File(repositoryRootPath))
+                        .redirectErrorStream(true)
+                        .start()
+                def trackedConfigs = trackedConfigProcess.inputStream.getText("UTF-8").trim()
+                def exitCode = trackedConfigProcess.waitFor()
+                if (exitCode != 0) {
+                    throw new GradleException(
+                            "Unable to verify tracked Firebase files (git exit ${exitCode}): " +
+                                    trackedConfigs
+                    )
+                }
+                if (!trackedConfigs.isEmpty()) {
+                    throw new GradleException(
+                            "Firebase configuration files must not be tracked: ${trackedConfigs}."
+                    )
+                }
+            }
+        }
+
         def registerFirebaseConfigTask = { String environment,
                                            String expectedPackage,
                                            String secretName,
@@ -272,6 +343,7 @@ potential-bugs:
             tasks.register("prepare${capitalizedEnvironment}FirebaseConfig") {
                 group = "firebase"
                 description = "Materializes and validates ${environment} Firebase configuration."
+                dependsOn(verifyNoLegacyFirebaseConfig)
                 doNotTrackState("Firebase configuration is provided through environment variables at execution time.")
                 outputs.files(outputFiles)
 
@@ -306,32 +378,89 @@ potential-bugs:
                 ["staging"],
                 true
         )
+        def prepareReleaseSmokeFirebaseConfig = registerFirebaseConfigTask(
+                "releaseSmoke",
+                baseApplicationId,
+                "AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64",
+                ["releaseSmoke"],
+                true
+        )
         def prepareProductionFirebaseConfig = registerFirebaseConfigTask(
                 "production",
                 baseApplicationId,
                 "AQL_FIREBASE_PRODUCTION_CONFIG_BASE64",
-                ["release", "releaseSmoke"],
+                ["release"],
                 false
         )
 
-        def verifyFirebaseEnvironmentIsolation = tasks.register("verifyFirebaseEnvironmentIsolation") {
+        def verifyFirebaseNonProductionEnvironmentIsolation =
+                tasks.register("verifyFirebaseNonProductionEnvironmentIsolation") {
             group = "verification"
-            description = "Verifies that debug, staging and production use distinct Firebase projects."
+            description = "Verifies distinct debug, staging and release-smoke Firebase projects."
+            dependsOn(
+                    prepareDebugFirebaseConfig,
+                    prepareStagingFirebaseConfig,
+                    prepareReleaseSmokeFirebaseConfig
+            )
+            doNotTrackState("Firebase project identities are generated from execution-time environment inputs.")
+
+            doLast { task ->
+                def projectIds = FirebaseConfigSupport.readProjectIds(
+                        appDirectoryPath,
+                        [
+                                debug       : "debug",
+                                staging     : "staging",
+                                releaseSmoke: "releaseSmoke"
+                        ]
+                )
+                FirebaseConfigSupport.requireDistinctProjectIds(projectIds, "non-production")
+                task.logger.lifecycle(
+                        "Firebase non-production environment isolation verified: ${projectIds}."
+                )
+            }
+        }
+
+        def verifyFirebaseProductionEnvironmentIsolation =
+                tasks.register("verifyFirebaseProductionEnvironmentIsolation") {
+            group = "verification"
+            description = "Verifies real debug, staging and production Firebase projects are distinct."
             dependsOn(
                     prepareDebugFirebaseConfig,
                     prepareStagingFirebaseConfig,
                     prepareProductionFirebaseConfig
             )
-            doNotTrackState("Firebase project identities are generated from execution-time environment inputs.")
+            doNotTrackState("Firebase project identities are generated from protected environment inputs.")
 
-            doLast { task ->
-                def projectIds = FirebaseConfigSupport.readProjectIds(appDirectoryPath)
-                if (projectIds.values().toSet().size() != projectIds.size()) {
+            doFirst {
+                def requiredSecrets = [
+                        "AQL_FIREBASE_DEBUG_CONFIG_BASE64",
+                        "AQL_FIREBASE_STAGING_CONFIG_BASE64",
+                        "AQL_FIREBASE_PRODUCTION_CONFIG_BASE64"
+                ]
+                def missingSecrets = requiredSecrets.findAll { secretName ->
+                    def value = System.getenv(secretName)
+                    value == null || value.trim().isEmpty()
+                }
+                if (!missingSecrets.isEmpty()) {
                     throw new GradleException(
-                            "Firebase projects must be distinct by environment: ${projectIds}."
+                            "Production Firebase isolation requires protected configs: ${missingSecrets}."
                     )
                 }
-                task.logger.lifecycle("Firebase environment isolation verified: ${projectIds}.")
+            }
+
+            doLast { task ->
+                def projectIds = FirebaseConfigSupport.readProjectIds(
+                        appDirectoryPath,
+                        [
+                                debug     : "debug",
+                                staging   : "staging",
+                                production: "release"
+                        ]
+                )
+                FirebaseConfigSupport.requireDistinctProjectIds(projectIds, "production")
+                task.logger.lifecycle(
+                        "Firebase production environment isolation verified: ${projectIds}."
+                )
             }
         }
 
@@ -343,15 +472,20 @@ potential-bugs:
                 case "processStagingGoogleServices":
                     task.dependsOn(prepareStagingFirebaseConfig)
                     break
-                case "processReleaseGoogleServices":
                 case "processReleaseSmokeGoogleServices":
+                    task.dependsOn(prepareReleaseSmokeFirebaseConfig)
+                    break
+                case "processReleaseGoogleServices":
                     task.dependsOn(prepareProductionFirebaseConfig)
                     break
                 case "verifyFirebaseRuntimePolicy":
-                    task.inputs.files(configurations.named("stagingRuntimeClasspath"))
-                            .withPropertyName("stagingFirebaseRuntimeClasspath")
+                    task.inputs.files(
+                            configurations.named("stagingRuntimeClasspath"),
+                            configurations.named("releaseSmokeRuntimeClasspath")
+                    )
+                            .withPropertyName("nonProductionFirebaseRuntimeClasspaths")
                             .withPathSensitivity(PathSensitivity.NONE)
-                    task.dependsOn(verifyFirebaseEnvironmentIsolation)
+                    task.dependsOn(verifyFirebaseNonProductionEnvironmentIsolation)
                     break
             }
         }
