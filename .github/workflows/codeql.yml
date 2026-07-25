@@ -53,7 +53,7 @@ jobs:
       AQL_RELEASE_GATE: ${{ inputs.release_gate || false }}
       AQL_RELEASE_TAG: ${{ inputs.release_tag || '' }}
       AQL_FIREBASE_PRODUCTION_CONFIG_BASE64: >-
-        ${{ secrets.firebase_production_config_base64 || secrets.AQL_FIREBASE_PRODUCTION_CONFIG_BASE64 }}
+        ${{ inputs.release_gate && secrets.firebase_production_config_base64 || '' }}
 
     strategy:
       fail-fast: false
@@ -192,11 +192,20 @@ jobs:
         run: |
           set -Eeuo pipefail
           mkdir -p codeql-unit-tests
+
+          if [[ "${AQL_RELEASE_GATE}" == "true" ]]; then
+            commercial_task=":app:testReleaseUnitTest"
+            commercial_variant="release=app/build/test-results/testReleaseUnitTest"
+          else
+            commercial_task=":app:testReleaseSmokeUnitTest"
+            commercial_variant="releaseSmoke=app/build/test-results/testReleaseSmokeUnitTest"
+          fi
+
           set +e
           ./gradlew \
             :app:testDebugUnitTest \
             :app:testStagingUnitTest \
-            :app:testReleaseUnitTest \
+            "${commercial_task}" \
             --continue \
             --no-daemon \
             --stacktrace \
@@ -207,7 +216,7 @@ jobs:
           python3 tools/release_pipeline/verify_junit_reports.py \
             --variant debug=app/build/test-results/testDebugUnitTest \
             --variant staging=app/build/test-results/testStagingUnitTest \
-            --variant release=app/build/test-results/testReleaseUnitTest \
+            --variant "${commercial_variant}" \
             --allowlist config/testing/allowed-skipped-unit-tests.json \
             --output codeql-unit-tests
 
@@ -216,27 +225,51 @@ jobs:
             exit "${unit_test_gradle_status}"
           fi
 
-      - name: Run Release lint
+      - name: Run commercial-variant lint
         shell: bash
         env:
           RELEASE_KEYSTORE_PASSWORD: aqualight-ci
           RELEASE_KEY_ALIAS: aqualight-ci
           RELEASE_KEY_PASSWORD: aqualight-ci
         run: |
-          set -o pipefail
-          ./gradlew lintRelease --no-daemon --stacktrace 2>&1 | tee lint-release.log
+          set -Eeuo pipefail
+          if [[ "${AQL_RELEASE_GATE}" == "true" ]]; then
+            lint_task="lintRelease"
+            lint_log="lint-release.log"
+          else
+            lint_task="lintReleaseSmoke"
+            lint_log="lint-release-smoke.log"
+          fi
+          ./gradlew "${lint_task}" --no-daemon --stacktrace 2>&1 | tee "${lint_log}"
 
-      - name: Build minified Release APK with CI-only signing
+      - name: Build minified commercial-validation APK
         shell: bash
         env:
           RELEASE_KEYSTORE_PASSWORD: aqualight-ci
           RELEASE_KEY_ALIAS: aqualight-ci
           RELEASE_KEY_PASSWORD: aqualight-ci
         run: |
-          set -o pipefail
-          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee assemble-release.log
-          test -s app/build/outputs/apk/release/AquaLight.apk
-          test -s app/build/outputs/mapping/release/mapping.txt
+          set -Eeuo pipefail
+          if [[ "${AQL_RELEASE_GATE}" == "true" ]]; then
+            build_task="assembleRelease"
+            build_log="assemble-release.log"
+            apk_path="app/build/outputs/apk/release/AquaLight.apk"
+            mapping_path="app/build/outputs/mapping/release/mapping.txt"
+          else
+            build_task="assembleReleaseSmoke"
+            build_log="assemble-release-smoke.log"
+            apk_path="$(find app/build/outputs/apk/releaseSmoke -type f -name '*.apk' -print -quit 2>/dev/null || true)"
+            mapping_path="app/build/outputs/mapping/releaseSmoke/mapping.txt"
+          fi
+
+          ./gradlew "${build_task}" --no-daemon --stacktrace 2>&1 | tee "${build_log}"
+
+          if [[ "${AQL_RELEASE_GATE}" != "true" ]]; then
+            apk_path="$(find app/build/outputs/apk/releaseSmoke -type f -name '*.apk' -print -quit)"
+          fi
+          test -n "${apk_path}"
+          test -s "${apk_path}"
+          test -s "${mapping_path}"
 
       - name: Perform CodeQL Analysis and wait for processing
         id: codeql
@@ -300,19 +333,28 @@ jobs:
             codeql-unit-tests/**
             lint-debug.log
             lint-release.log
+            lint-release-smoke.log
             assemble-debug.log
             assemble-release.log
+            assemble-release-smoke.log
             app/build/outputs/mapping/release/mapping.txt
+            app/build/outputs/mapping/releaseSmoke/mapping.txt
             app/build/reports/tests/testDebugUnitTest/**
             app/build/reports/tests/testStagingUnitTest/**
             app/build/reports/tests/testReleaseUnitTest/**
+            app/build/reports/tests/testReleaseSmokeUnitTest/**
             app/build/test-results/testDebugUnitTest/**
             app/build/test-results/testStagingUnitTest/**
             app/build/test-results/testReleaseUnitTest/**
+            app/build/test-results/testReleaseSmokeUnitTest/**
             app/build/reports/lint-results-debug.*
             app/build/reports/lint-results-release.*
+            app/build/reports/lint-results-releaseSmoke.*
           if-no-files-found: ignore
 
-      - name: Remove CI-only release keystore
+      - name: Remove CI-only material
         if: always()
-        run: rm -f release-key.jks
+        shell: bash
+        run: |
+          rm -f release-key.jks
+          find app/src -type f -name google-services.json -delete
