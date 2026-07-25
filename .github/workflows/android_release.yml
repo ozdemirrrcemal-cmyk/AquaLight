@@ -94,6 +94,7 @@ jobs:
           name: AquaLight-Pre-Security-Quality-${{ steps.quality.outputs.release-tag }}
           path: |
             release-quality/**
+            app/build/reports/stage14/detekt-policy-summary.json
             app/build/reports/lint-results-*.html
             app/build/reports/lint-results-*.xml
             app/build/reports/detekt/**
@@ -333,7 +334,9 @@ jobs:
             app/build/outputs/androidTest-results/connected/**
             release-smoke-*.txt
             release-smoke-*.xml
+            release-smoke-*.json
             release-smoke-screens/**
+            stage14-evidence/**
           if-no-files-found: warn
 
       - name: Remove CI-only material

@@ -16,6 +16,9 @@ for token in \
   verify_uninstall_clears_data.sh \
   RELEASE_SMOKE_PASS \
   ReleaseSmokeActivity \
+  CleanInstallSmokeActivity \
+  verify_clean_install_evidence.py \
+  CLEAN_INSTALL_PASS \
   AccountDeletionProcessDeathSmokeActivity \
   ACCOUNT_DELETION_PROCESS_DEATH_PASS \
   auth-confirmed-before-checkpoint \

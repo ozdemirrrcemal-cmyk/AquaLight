@@ -7,8 +7,12 @@ SMOKE_ACTIVITY="com.aqua.aqualight.smoke.ReleaseSmokeActivity"
 SMOKE_COMPONENT="${PACKAGE_NAME}/${SMOKE_ACTIVITY}"
 ACCOUNT_DELETION_SMOKE_ACTIVITY="com.aqua.aqualight.smoke.AccountDeletionProcessDeathSmokeActivity"
 ACCOUNT_DELETION_SMOKE_COMPONENT="${PACKAGE_NAME}/${ACCOUNT_DELETION_SMOKE_ACTIVITY}"
+CLEAN_INSTALL_SMOKE_ACTIVITY="com.aqua.aqualight.smoke.CleanInstallSmokeActivity"
+CLEAN_INSTALL_SMOKE_COMPONENT="${PACKAGE_NAME}/${CLEAN_INSTALL_SMOKE_ACTIVITY}"
 SMOKE_PREFIX="release-smoke"
 PASS_MARKER="RELEASE_SMOKE_PASS"
+CLEAN_INSTALL_PASS_MARKER="CLEAN_INSTALL_PASS"
+CLEAN_INSTALL_FAIL_MARKER="CLEAN_INSTALL_FAIL"
 ACCOUNT_DELETION_PREPARED_MARKER="ACCOUNT_DELETION_PROCESS_DEATH_PREPARED"
 ACCOUNT_DELETION_PASS_MARKER="ACCOUNT_DELETION_PROCESS_DEATH_PASS"
 ACCOUNT_DELETION_FAIL_MARKER="ACCOUNT_DELETION_PROCESS_DEATH_FAIL"
@@ -63,6 +67,10 @@ wait_for_ui_marker() {
       return 0
     fi
     if grep -Fq "$ACCOUNT_DELETION_FAIL_MARKER" "$local_dump" 2>/dev/null; then
+      cat "$local_dump" || true
+      return 1
+    fi
+    if grep -Fq "$CLEAN_INSTALL_FAIL_MARKER" "$local_dump" 2>/dev/null; then
       cat "$local_dump" || true
       return 1
     fi
@@ -129,12 +137,48 @@ test -s "$DEBUG_APK"
 bash tools/verify_uninstall_clears_data.sh "$DEBUG_APK"
 
 adb uninstall "$PACKAGE_NAME" >/dev/null 2>&1 || true
+if adb shell pm list packages --user 0 "$PACKAGE_NAME" 2>/dev/null \
+  | tr -d '\r' \
+  | grep -Fxq "package:${PACKAGE_NAME}"; then
+  echo "Release-smoke package remained installed before the clean-install gate." >&2
+  exit 1
+fi
 SMOKE_APK="$(cat release-smoke-apk-path.txt)"
 adb install "$SMOKE_APK" 2>&1 | tee "${SMOKE_PREFIX}-install.txt"
 adb shell pm path "$PACKAGE_NAME" 2>&1 | tee "${SMOKE_PREFIX}-package-path.txt"
 adb logcat -c
 rm -rf release-smoke-screens
 mkdir -p release-smoke-screens
+rm -rf stage14-evidence
+mkdir -p stage14-evidence
+
+clean_install_prefix="${SMOKE_PREFIX}-clean-install"
+clean_install_activity_evidence="${clean_install_prefix}-activity.json"
+clean_install_window="${clean_install_prefix}-window.xml"
+clean_install_logcat="${clean_install_prefix}-logcat.txt"
+clean_install_start="${clean_install_prefix}-start.txt"
+adb shell am start -W -S -n "$CLEAN_INSTALL_SMOKE_COMPONENT" \
+  2>&1 | tee "$clean_install_start"
+set +e
+wait_for_ui_marker "$CLEAN_INSTALL_PASS_MARKER" "$clean_install_window"
+clean_install_marker_status=$?
+set -e
+adb pull \
+  "/sdcard/Android/data/${PACKAGE_NAME}/files/stage14/clean-install-activity.json" \
+  "$clean_install_activity_evidence" >/dev/null 2>&1 || true
+adb logcat -d > "$clean_install_logcat" 2>&1
+python3 tools/verify_clean_install_evidence.py \
+  --activity-evidence "$clean_install_activity_evidence" \
+  --install-log "${SMOKE_PREFIX}-install.txt" \
+  --launch-log "$clean_install_start" \
+  --window-dump "$clean_install_window" \
+  --logcat "$clean_install_logcat" \
+  --api-level "$API_LEVEL" \
+  --commit "$(git rev-parse HEAD)" \
+  --summary "stage14-evidence/clean-install-api-${API_LEVEL}.json"
+test "$clean_install_marker_status" -eq 0
+echo "Clean-install release candidate gate passed on API ${API_LEVEL}."
+adb shell am force-stop "$PACKAGE_NAME"
 
 for deletion_scenario in \
   started \

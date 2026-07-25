@@ -191,6 +191,11 @@
       "requirement": "required"
     },
     {
+      "id": "detekt-policy",
+      "format": "json",
+      "requirement": "required"
+    },
+    {
       "id": "unit-tests",
       "format": "junit-xml",
       "requirement": "required"

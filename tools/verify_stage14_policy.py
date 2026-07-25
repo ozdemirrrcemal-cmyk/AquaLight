@@ -70,6 +70,7 @@ REQUIRED_ARTIFACTS = [
     ("dependency-integrity", "json", "required"),
     ("android-lint", "xml", "required"),
     ("detekt", "sarif", "required"),
+    ("detekt-policy", "json", "required"),
     ("unit-tests", "junit-xml", "required"),
     ("coverage", "jacoco-xml", "required"),
     ("coverage-thresholds", "json", "required"),

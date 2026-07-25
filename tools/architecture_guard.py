@@ -389,6 +389,14 @@ for token, reason in (
         "bash tools/verify_uninstall_clears_data.sh",
         "emulator CI must verify uninstall/reinstall data removal",
     ),
+    (
+        "CleanInstallSmokeActivity",
+        "emulator CI must inspect first-launch state inside the non-debuggable candidate",
+    ),
+    (
+        "verify_clean_install_evidence.py",
+        "emulator CI must publish fail-closed clean-install evidence",
+    ),
     ("api-level: [27, 36]", "emulator CI must cover minimum and target Android APIs"),
     (
         "android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d",
@@ -396,6 +404,55 @@ for token, reason in (
     ),
 ):
     require(emulator_workflow_path, emulator_workflow, token, reason)
+
+clean_install_activity_path = (
+    "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/"
+    "CleanInstallSmokeActivity.kt"
+)
+clean_install_activity = read(clean_install_activity_path)
+for token, reason in (
+    (
+        "ApplicationInfo.FLAG_DEBUGGABLE",
+        "the candidate must prove it is non-debuggable from inside its sandbox",
+    ),
+    (
+        "ApplicationInfo.FLAG_ALLOW_BACKUP",
+        "the candidate must prove backup is disabled from inside its sandbox",
+    ),
+    (
+        "FirebaseAuth.getInstance().currentUser == null",
+        "clean install must prove no Firebase owner session exists",
+    ),
+    (
+        "userPrivateProjectionFields",
+        "clean install must inspect the complete private user projection",
+    ),
+    (
+        "known_devices.pb",
+        "clean install must inspect durable known and ignored devices",
+    ),
+    (
+        "aquarium_tanks.pb",
+        "clean install must inspect durable tank state",
+    ),
+    (
+        "tank_device_assignments.pb",
+        "clean install must inspect durable assignment state",
+    ),
+    (
+        "care_tasks.pb",
+        "clean install must inspect durable Care Task state",
+    ),
+    (
+        "tankCareIntegrityEntries",
+        "clean install must inspect pending Tank/Care compensation state",
+    ),
+    (
+        "encryptedOwnerEntries",
+        "clean install must inspect encrypted credential and recovery stores",
+    ),
+):
+    require(clean_install_activity_path, clean_install_activity, token, reason)
 
 uninstall_test_path = "tools/verify_uninstall_clears_data.sh"
 uninstall_test = read(uninstall_test_path)
@@ -421,6 +478,59 @@ for backup_rules_path in (
             excluded_path,
             "device registry and credential data must remain excluded from backup/transfer",
         )
+
+detekt_gradle_path = "gradle/aqualight-detekt.gradle"
+detekt_gradle = read(detekt_gradle_path)
+for token, reason in (
+    (
+        "aqualight-detekt-advisory.yml",
+        "Detekt must retain an all-default-rules advisory analysis",
+    ),
+    (
+        "advisory-debt-baseline.json",
+        "Detekt advisory debt must use a versioned inventory",
+    ),
+    (
+        "verify_detekt_policy.py",
+        "Detekt blocker and advisory evidence must be fail-closed",
+    ),
+    (
+        'tasks.register("verifyDetektPolicy", Exec)',
+        "Detekt policy verification must be a first-class Gradle gate",
+    ),
+    (
+        "dependsOn(detektPolicyGate)",
+        "Android lint/check tasks must not bypass the Detekt policy gate",
+    ),
+):
+    require(detekt_gradle_path, detekt_gradle, token, reason)
+
+detekt_policy_path = "config/detekt/aqualight-detekt.yml"
+detekt_policy = read(detekt_policy_path)
+for token, reason in (
+    ("maxIssues: 0", "Detekt blocker findings must remain zero"),
+    ("warningsAsErrors: true", "Detekt configuration warnings must fail closed"),
+    ("potential-bugs:", "Detekt potential-bug rules must remain enabled"),
+):
+    require(detekt_policy_path, detekt_policy, token, reason)
+
+android_workflow_path = ".github/workflows/android.yml"
+android_workflow = read(android_workflow_path)
+require(
+    android_workflow_path,
+    android_workflow,
+    ":app:verifyDetektPolicy",
+    "PR CI must enforce zero blocker findings and zero new Detekt debt",
+)
+
+release_quality_path = "tools/release_pipeline/guard_quality.sh"
+release_quality = read(release_quality_path)
+require(
+    release_quality_path,
+    release_quality,
+    ":app:verifyDetektPolicy",
+    "commercial release quality must enforce the Detekt policy gate",
+)
 
 pr_workflow_path = ".github/workflows/codeql.yml"
 pr_workflow = read(pr_workflow_path)
