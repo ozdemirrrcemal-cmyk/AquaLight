@@ -159,12 +159,6 @@ jobs:
             --stacktrace \
             2>&1 | tee codeql-extraction-build.log
 
-      - name: Run Debug unit tests
-        shell: bash
-        run: |
-          set -o pipefail
-          ./gradlew testDebugUnitTest --no-daemon --stacktrace 2>&1 | tee unit-test.log
-
       - name: Run Debug lint
         shell: bash
         run: |
@@ -189,15 +183,38 @@ jobs:
             -validity 1 \
             -dname "CN=AquaLight CI,O=AquaLight,C=TR"
 
-      - name: Run Release unit tests
+      - name: Run all unit-test variants and verify JUnit evidence
         shell: bash
         env:
           RELEASE_KEYSTORE_PASSWORD: aqualight-ci
           RELEASE_KEY_ALIAS: aqualight-ci
           RELEASE_KEY_PASSWORD: aqualight-ci
         run: |
-          set -o pipefail
-          ./gradlew testReleaseUnitTest --no-daemon --stacktrace 2>&1 | tee unit-test-release.log
+          set -Eeuo pipefail
+          mkdir -p codeql-unit-tests
+          set +e
+          ./gradlew \
+            :app:testDebugUnitTest \
+            :app:testStagingUnitTest \
+            :app:testReleaseUnitTest \
+            --continue \
+            --no-daemon \
+            --stacktrace \
+            2>&1 | tee codeql-unit-tests/gradle-unit-tests.log
+          unit_test_gradle_status=${PIPESTATUS[0]}
+          set -e
+
+          python3 tools/release_pipeline/verify_junit_reports.py \
+            --variant debug=app/build/test-results/testDebugUnitTest \
+            --variant staging=app/build/test-results/testStagingUnitTest \
+            --variant release=app/build/test-results/testReleaseUnitTest \
+            --allowlist config/testing/allowed-skipped-unit-tests.json \
+            --output codeql-unit-tests
+
+          if (( unit_test_gradle_status != 0 )); then
+            echo "Gradle reported a unit-test task failure: ${unit_test_gradle_status}" >&2
+            exit "${unit_test_gradle_status}"
+          fi
 
       - name: Run Release lint
         shell: bash
@@ -280,15 +297,18 @@ jobs:
             architecture-guards.log
             codeql-extraction-build.log
             codeql-results/**
-            unit-test.log
-            unit-test-release.log
+            codeql-unit-tests/**
             lint-debug.log
             lint-release.log
             assemble-debug.log
             assemble-release.log
             app/build/outputs/mapping/release/mapping.txt
             app/build/reports/tests/testDebugUnitTest/**
+            app/build/reports/tests/testStagingUnitTest/**
             app/build/reports/tests/testReleaseUnitTest/**
+            app/build/test-results/testDebugUnitTest/**
+            app/build/test-results/testStagingUnitTest/**
+            app/build/test-results/testReleaseUnitTest/**
             app/build/reports/lint-results-debug.*
             app/build/reports/lint-results-release.*
           if-no-files-found: ignore
