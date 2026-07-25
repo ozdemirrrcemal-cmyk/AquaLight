@@ -12,6 +12,7 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.graphics.createBitmap
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.Lifecycle
@@ -279,7 +280,7 @@ class ReleaseSmokeActivity : BaseActivity() {
         check(root.width > 0 && root.height > 0) {
             "${screen.name} has invalid render bounds ${root.width}x${root.height}"
         }
-        val bitmap = Bitmap.createBitmap(root.width, root.height, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(root.width, root.height, Bitmap.Config.ARGB_8888)
         root.draw(Canvas(bitmap))
         val screenshotRoot = getExternalFilesDir(null) ?: filesDir
         val directory = File(screenshotRoot, SCREENSHOT_DIRECTORY).apply { mkdirs() }
