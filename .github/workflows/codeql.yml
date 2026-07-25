@@ -18,6 +18,9 @@ jobs:
     name: Analyze Kotlin/Java
     runs-on: ubuntu-latest
 
+    env:
+      CI: "true"
+
     strategy:
       fail-fast: false
       matrix:
@@ -106,7 +109,7 @@ jobs:
           set -o pipefail
           ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee assemble-debug.log
 
-      - name: Generate CI-only release keystore
+      - name: Generate CI-only release-smoke keystore
         run: |
           keytool -genkeypair -noprompt \
             -keystore release-key.jks \
@@ -118,7 +121,7 @@ jobs:
             -validity 1 \
             -dname "CN=AquaLight CI,O=AquaLight,C=TR"
 
-      - name: Run Release unit tests
+      - name: Run Release Smoke unit tests
         shell: bash
         env:
           RELEASE_KEYSTORE_PASSWORD: aqualight-ci
@@ -126,9 +129,10 @@ jobs:
           RELEASE_KEY_PASSWORD: aqualight-ci
         run: |
           set -o pipefail
-          ./gradlew testReleaseUnitTest --no-daemon --stacktrace 2>&1 | tee unit-test-release.log
+          ./gradlew testReleaseSmokeUnitTest --no-daemon --stacktrace \
+            2>&1 | tee unit-test-release-smoke.log
 
-      - name: Run Release lint
+      - name: Run Release Smoke lint
         shell: bash
         env:
           RELEASE_KEYSTORE_PASSWORD: aqualight-ci
@@ -136,19 +140,23 @@ jobs:
           RELEASE_KEY_PASSWORD: aqualight-ci
         run: |
           set -o pipefail
-          ./gradlew lintRelease --no-daemon --stacktrace 2>&1 | tee lint-release.log
+          ./gradlew lintReleaseSmoke --no-daemon --stacktrace \
+            2>&1 | tee lint-release-smoke.log
 
-      - name: Build minified Release APK with CI-only signing
+      - name: Build minified Release Smoke APK with CI-only signing
         shell: bash
         env:
           RELEASE_KEYSTORE_PASSWORD: aqualight-ci
           RELEASE_KEY_ALIAS: aqualight-ci
           RELEASE_KEY_PASSWORD: aqualight-ci
         run: |
-          set -o pipefail
-          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee assemble-release.log
-          test -s app/build/outputs/apk/release/AquaLight.apk
-          test -s app/build/outputs/mapping/release/mapping.txt
+          set -Eeuo pipefail
+          ./gradlew assembleReleaseSmoke --no-daemon --stacktrace \
+            2>&1 | tee assemble-release-smoke.log
+          smoke_apk="$(find app/build/outputs/apk/releaseSmoke -type f -name '*.apk' -print -quit)"
+          test -n "$smoke_apk"
+          test -s "$smoke_apk"
+          test -s app/build/outputs/mapping/releaseSmoke/mapping.txt
 
       - name: Upload validation logs
         if: always()
@@ -159,19 +167,19 @@ jobs:
             architecture-guards.log
             codeql-extraction-build.log
             unit-test.log
-            unit-test-release.log
+            unit-test-release-smoke.log
             lint-debug.log
-            lint-release.log
+            lint-release-smoke.log
             assemble-debug.log
-            assemble-release.log
-            app/build/outputs/mapping/release/mapping.txt
+            assemble-release-smoke.log
+            app/build/outputs/mapping/releaseSmoke/mapping.txt
             app/build/reports/tests/testDebugUnitTest/**
-            app/build/reports/tests/testReleaseUnitTest/**
+            app/build/reports/tests/testReleaseSmokeUnitTest/**
             app/build/reports/lint-results-debug.*
-            app/build/reports/lint-results-release.*
+            app/build/reports/lint-results-releaseSmoke.*
           if-no-files-found: ignore
 
-      - name: Remove CI-only release keystore
+      - name: Remove CI-only release-smoke keystore
         if: always()
         run: rm -f release-key.jks
 
