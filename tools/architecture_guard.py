@@ -397,6 +397,14 @@ for token, reason in (
         "verify_clean_install_evidence.py",
         "emulator CI must publish fail-closed clean-install evidence",
     ),
+    (
+        "UpgradeInstallSmokeActivity",
+        "emulator CI must exercise a real package over-install",
+    ),
+    (
+        "verify_upgrade_install_evidence.py",
+        "emulator CI must publish fail-closed upgrade-install evidence",
+    ),
     ("api-level: [27, 36]", "emulator CI must cover minimum and target Android APIs"),
     (
         "android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d",
@@ -453,6 +461,65 @@ for token, reason in (
     ),
 ):
     require(clean_install_activity_path, clean_install_activity, token, reason)
+
+upgrade_install_activity_path = (
+    "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/"
+    "UpgradeInstallSmokeActivity.kt"
+)
+upgrade_install_activity = read(upgrade_install_activity_path)
+for token, reason in (
+    (
+        "same-commit-lower-version-code",
+        "the first-release upgrade baseline mode must remain explicit",
+    ),
+    (
+        "signerUnchanged",
+        "upgrade validation must compare APK signer identity",
+    ),
+    (
+        "versionCodeIncreased",
+        "upgrade validation must prove versionCode monotonicity",
+    ),
+    (
+        "processRecreated",
+        "package replacement must start a new application process",
+    ),
+    (
+        "processNonce",
+        "process recreation must use a collision-resistant process identity",
+    ),
+    (
+        "StartupAppearanceCache",
+        "supported durable appearance state must survive over-install",
+    ),
+    (
+        "discardStagedTokens",
+        "staged runtime credentials must not survive recovery",
+    ),
+    (
+        "retainTokensFor(emptyList())",
+        "orphaned committed credentials must be removed after upgrade",
+    ),
+):
+    require(upgrade_install_activity_path, upgrade_install_activity, token, reason)
+
+release_smoke_runner_path = "tools/run_release_smoke.sh"
+release_smoke_runner = read(release_smoke_runner_path)
+for token, reason in (
+    (
+        'adb install -r "$SMOKE_APK"',
+        "the upgrade gate must replace the installed lower-version package",
+    ),
+    (
+        "release-smoke-upgrade-baseline-apk-path.txt",
+        "the upgrade gate must install the separately built lower-version APK",
+    ),
+    (
+        "verify_upgrade_install_evidence.py",
+        "the upgrade gate must fail closed on its machine-readable evidence",
+    ),
+):
+    require(release_smoke_runner_path, release_smoke_runner, token, reason)
 
 uninstall_test_path = "tools/verify_uninstall_clears_data.sh"
 uninstall_test = read(uninstall_test_path)

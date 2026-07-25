@@ -12,7 +12,7 @@ on:
       - "gradlew"
       - "gradle.properties"
       - "settings.gradle"
-      - "tools/run_release_smoke.sh"
+      - "tools/**"
 
 concurrency:
   group: android-emulator-${{ github.event.pull_request.number || github.ref }}
@@ -25,7 +25,7 @@ jobs:
   instrumentation:
     name: Emulator API ${{ matrix.api-level }}
     runs-on: ubuntu-latest
-    timeout-minutes: 55
+    timeout-minutes: 90
     env:
       CI: "true"
       AQL_FIREBASE_DEBUG_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_DEBUG_CONFIG_BASE64 }}
@@ -90,6 +90,10 @@ jobs:
           grep -Fq "CleanInstallSmokeActivity" tools/run_release_smoke.sh
           grep -Fq "verify_clean_install_evidence.py" tools/run_release_smoke.sh
           grep -Fq "CLEAN_INSTALL_PASS" tools/run_release_smoke.sh
+          grep -Fq "UpgradeInstallSmokeActivity" tools/run_release_smoke.sh
+          grep -Fq "verify_upgrade_install_evidence.py" tools/run_release_smoke.sh
+          grep -Fq "UPGRADE_INSTALL_CANDIDATE_PASS" tools/run_release_smoke.sh
+          grep -Fq "adb install -r" tools/run_release_smoke.sh
           grep -Fq "AccountDeletionProcessDeathSmokeActivity" tools/run_release_smoke.sh
           grep -Fq "ACCOUNT_DELETION_PROCESS_DEATH_PASS" tools/run_release_smoke.sh
           grep -Fq "auth-confirmed-before-checkpoint" tools/run_release_smoke.sh
@@ -97,31 +101,9 @@ jobs:
           grep -Fq "large-font-light" tools/run_release_smoke.sh
           grep -Fq "rtl-light" tools/run_release_smoke.sh
 
-      - name: Generate CI-only release keystore
-        run: |
-          keytool -genkeypair -noprompt \
-            -keystore release-key.jks \
-            -storepass aqualight-ci \
-            -alias aqualight-ci \
-            -keypass aqualight-ci \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 1 \
-            -dname "CN=AquaLight CI,O=AquaLight,C=TR"
-
-      - name: Build minified release-smoke APK
-        env:
-          RELEASE_KEYSTORE_PASSWORD: aqualight-ci
-          RELEASE_KEY_ALIAS: aqualight-ci
-          RELEASE_KEY_PASSWORD: aqualight-ci
-        run: |
-          set -o pipefail
-          ./gradlew assembleReleaseSmoke --no-daemon --stacktrace \
-            2>&1 | tee assemble-release-smoke.log
-          SMOKE_APK="$(find app/build/outputs/apk/releaseSmoke -type f -name '*.apk' | head -n 1)"
-          test -n "$SMOKE_APK"
-          test -s "$SMOKE_APK"
-          printf '%s\n' "$SMOKE_APK" > release-smoke-apk-path.txt
+      - name: Prepare lower-version baseline and minified candidate APKs
+        shell: bash
+        run: bash tools/release_pipeline/prepare_instrumentation.sh
 
       - name: Enable KVM group permissions
         run: |
@@ -153,7 +135,7 @@ jobs:
             build/reports/stage14/policy-validation.json
             app/build/reports/androidTests/connected/**
             app/build/outputs/androidTest-results/connected/**
-            assemble-release-smoke.log
+            release-quality/**
             release-smoke-run.txt
             release-smoke-window.xml
             release-smoke-logcat.txt

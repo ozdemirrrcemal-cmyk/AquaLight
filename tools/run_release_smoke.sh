@@ -9,10 +9,15 @@ ACCOUNT_DELETION_SMOKE_ACTIVITY="com.aqua.aqualight.smoke.AccountDeletionProcess
 ACCOUNT_DELETION_SMOKE_COMPONENT="${PACKAGE_NAME}/${ACCOUNT_DELETION_SMOKE_ACTIVITY}"
 CLEAN_INSTALL_SMOKE_ACTIVITY="com.aqua.aqualight.smoke.CleanInstallSmokeActivity"
 CLEAN_INSTALL_SMOKE_COMPONENT="${PACKAGE_NAME}/${CLEAN_INSTALL_SMOKE_ACTIVITY}"
+UPGRADE_INSTALL_SMOKE_ACTIVITY="com.aqua.aqualight.smoke.UpgradeInstallSmokeActivity"
+UPGRADE_INSTALL_SMOKE_COMPONENT="${PACKAGE_NAME}/${UPGRADE_INSTALL_SMOKE_ACTIVITY}"
 SMOKE_PREFIX="release-smoke"
 PASS_MARKER="RELEASE_SMOKE_PASS"
 CLEAN_INSTALL_PASS_MARKER="CLEAN_INSTALL_PASS"
 CLEAN_INSTALL_FAIL_MARKER="CLEAN_INSTALL_FAIL"
+UPGRADE_BASELINE_PASS_MARKER="UPGRADE_INSTALL_BASELINE_PASS"
+UPGRADE_CANDIDATE_PASS_MARKER="UPGRADE_INSTALL_CANDIDATE_PASS"
+UPGRADE_INSTALL_FAIL_MARKER="UPGRADE_INSTALL_FAIL"
 ACCOUNT_DELETION_PREPARED_MARKER="ACCOUNT_DELETION_PROCESS_DEATH_PREPARED"
 ACCOUNT_DELETION_PASS_MARKER="ACCOUNT_DELETION_PROCESS_DEATH_PASS"
 ACCOUNT_DELETION_FAIL_MARKER="ACCOUNT_DELETION_PROCESS_DEATH_FAIL"
@@ -74,6 +79,10 @@ wait_for_ui_marker() {
       cat "$local_dump" || true
       return 1
     fi
+    if grep -Fq "$UPGRADE_INSTALL_FAIL_MARKER" "$local_dump" 2>/dev/null; then
+      cat "$local_dump" || true
+      return 1
+    fi
     sleep 1
   done
 
@@ -114,6 +123,83 @@ run_account_deletion_process_death_scenario() {
     "$resume_dump"
 
   echo "Account-deletion process-death scenario passed: ${scenario} (API ${API_LEVEL})."
+  adb shell am force-stop "$PACKAGE_NAME"
+}
+
+run_upgrade_install_gate() {
+  upgrade_prefix="${SMOKE_PREFIX}-upgrade-install"
+  baseline_apk="$(cat release-smoke-upgrade-baseline-apk-path.txt)"
+  test -s "$baseline_apk"
+  test -s "$SMOKE_APK"
+
+  adb shell am force-stop "$PACKAGE_NAME"
+  adb uninstall "$PACKAGE_NAME" >/dev/null 2>&1 || true
+  if adb shell pm list packages --user 0 "$PACKAGE_NAME" 2>/dev/null \
+    | tr -d '\r' \
+    | grep -Fxq "package:${PACKAGE_NAME}"; then
+    echo "Release-smoke package remained installed before upgrade baseline." >&2
+    return 1
+  fi
+
+  adb install "$baseline_apk" 2>&1 | tee "${upgrade_prefix}-baseline-install.txt"
+  adb logcat -c
+  adb shell am start -W -S -n "$UPGRADE_INSTALL_SMOKE_COMPONENT" \
+    --es aqua_upgrade_install_action seed \
+    2>&1 | tee "${upgrade_prefix}-baseline-start.txt"
+  set +e
+  wait_for_ui_marker \
+    "$UPGRADE_BASELINE_PASS_MARKER" \
+    "${upgrade_prefix}-baseline-window.xml"
+  baseline_marker_status=$?
+  set -e
+  adb pull \
+    "/sdcard/Android/data/${PACKAGE_NAME}/files/stage14/upgrade-install-baseline.json" \
+    "${upgrade_prefix}-baseline-activity.json" >/dev/null 2>&1 || true
+  adb shell dumpsys package "$PACKAGE_NAME" \
+    > "${upgrade_prefix}-baseline-package.txt"
+  adb logcat -d > "${upgrade_prefix}-baseline-logcat.txt" 2>&1
+  test "$baseline_marker_status" -eq 0
+
+  adb shell am force-stop "$PACKAGE_NAME"
+  adb install -r "$SMOKE_APK" \
+    2>&1 | tee "${upgrade_prefix}-candidate-install.txt"
+  adb logcat -c
+  adb shell am start -W -S -n "$UPGRADE_INSTALL_SMOKE_COMPONENT" \
+    --es aqua_upgrade_install_action verify \
+    2>&1 | tee "${upgrade_prefix}-candidate-start.txt"
+  set +e
+  wait_for_ui_marker \
+    "$UPGRADE_CANDIDATE_PASS_MARKER" \
+    "${upgrade_prefix}-candidate-window.xml"
+  candidate_marker_status=$?
+  set -e
+  adb pull \
+    "/sdcard/Android/data/${PACKAGE_NAME}/files/stage14/upgrade-install-candidate.json" \
+    "${upgrade_prefix}-candidate-activity.json" >/dev/null 2>&1 || true
+  adb shell dumpsys package "$PACKAGE_NAME" \
+    > "${upgrade_prefix}-candidate-package.txt"
+  adb logcat -d > "${upgrade_prefix}-candidate-logcat.txt" 2>&1
+
+  python3 tools/verify_upgrade_install_evidence.py \
+    --baseline-evidence "${upgrade_prefix}-baseline-activity.json" \
+    --candidate-evidence "${upgrade_prefix}-candidate-activity.json" \
+    --baseline-apk "$baseline_apk" \
+    --candidate-apk "$SMOKE_APK" \
+    --baseline-install-log "${upgrade_prefix}-baseline-install.txt" \
+    --candidate-install-log "${upgrade_prefix}-candidate-install.txt" \
+    --baseline-launch-log "${upgrade_prefix}-baseline-start.txt" \
+    --candidate-launch-log "${upgrade_prefix}-candidate-start.txt" \
+    --baseline-window "${upgrade_prefix}-baseline-window.xml" \
+    --candidate-window "${upgrade_prefix}-candidate-window.xml" \
+    --baseline-package-dump "${upgrade_prefix}-baseline-package.txt" \
+    --candidate-package-dump "${upgrade_prefix}-candidate-package.txt" \
+    --baseline-logcat "${upgrade_prefix}-baseline-logcat.txt" \
+    --candidate-logcat "${upgrade_prefix}-candidate-logcat.txt" \
+    --api-level "$API_LEVEL" \
+    --commit "$(git rev-parse HEAD)" \
+    --summary "stage14-evidence/upgrade-install-api-${API_LEVEL}.json"
+  test "$candidate_marker_status" -eq 0
+  echo "Upgrade-install release candidate gate passed on API ${API_LEVEL}."
   adb shell am force-stop "$PACKAGE_NAME"
 }
 
@@ -179,6 +265,8 @@ python3 tools/verify_clean_install_evidence.py \
 test "$clean_install_marker_status" -eq 0
 echo "Clean-install release candidate gate passed on API ${API_LEVEL}."
 adb shell am force-stop "$PACKAGE_NAME"
+
+run_upgrade_install_gate
 
 for deletion_scenario in \
   started \
