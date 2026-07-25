@@ -66,5 +66,5 @@ reports/
 # --- Node / Firebase maintenance ---
 **/node_modules/
 
-# --- (Opsiyonel) Firebase dosyası ---
+# --- Firebase environment material: never commit ---
 **/google-services.json
