@@ -252,7 +252,8 @@ potential-bugs:
     plugins.withId("com.android.application") {
         def baseApplicationId = "com.aqua.aqualight"
         def appDirectoryPath = projectDir.absolutePath
-        def legacyFirebaseConfig = file("google-services.json")
+        def legacyFirebaseConfigPath = new File(appDirectoryPath, "google-services.json").absolutePath
+        def repositoryRootPath = rootProject.projectDir.absolutePath
 
         android {
             testCoverage {
@@ -295,6 +296,7 @@ potential-bugs:
             description = "Rejects repository or source-set Firebase configuration files."
 
             doLast {
+                def legacyFirebaseConfig = new File(legacyFirebaseConfigPath)
                 if (legacyFirebaseConfig.exists()) {
                     throw new GradleException(
                             "Legacy Firebase config is forbidden: ${legacyFirebaseConfig}. " +
@@ -309,7 +311,7 @@ potential-bugs:
                         "app/google-services.json",
                         ":(glob)app/src/**/google-services.json"
                 ])
-                        .directory(rootProject.projectDir)
+                        .directory(new File(repositoryRootPath))
                         .redirectErrorStream(true)
                         .start()
                 def trackedConfigs = trackedConfigProcess.inputStream.getText("UTF-8").trim()
