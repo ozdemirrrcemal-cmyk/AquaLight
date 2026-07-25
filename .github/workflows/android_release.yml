@@ -69,7 +69,9 @@ jobs:
         shell: bash
         run: |
           set -Eeu
-          yes | sdkmanager --licenses >/dev/null
+          set +o pipefail
+          yes 2>/dev/null | sdkmanager --licenses >/dev/null
+          set -o pipefail
           sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
           sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1"
           chmod +x ./gradlew
@@ -184,7 +186,9 @@ jobs:
         shell: bash
         run: |
           set -Eeu
-          yes | sdkmanager --licenses >/dev/null
+          set +o pipefail
+          yes 2>/dev/null | sdkmanager --licenses >/dev/null
+          set -o pipefail
           sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
           sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1"
           chmod +x ./gradlew
