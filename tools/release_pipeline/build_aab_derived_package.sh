@@ -24,6 +24,14 @@ normalize() {
   printf '%s' "$value" | tr -d '[:space:]:' | tr '[:lower:]' '[:upper:]'
 }
 
+apk_certificate_sha256() {
+  local verification_file="$1"
+  sed -n -E \
+    's/^(Signer #1|V[0-9.]+ Signer): certificate SHA-256 digest:[[:space:]]*//p' \
+    "$verification_file" \
+    | head -n 1
+}
+
 rm -rf "$output_dir"
 mkdir -p "$output_dir"
 chmod 700 "$output_dir"
@@ -58,8 +66,12 @@ test -x "$apkanalyzer"
   > "$output_dir/apk-signing-verification.txt" 2>&1
 
 readonly aab_cert="$(keytool -printcert -jarfile "$aab" | sed -n 's/^[[:space:]]*SHA256:[[:space:]]*//p' | head -n 1)"
-readonly apk_cert="$(sed -n 's/^Signer #1 certificate SHA-256 digest:[[:space:]]*//p' "$output_dir/apk-signing-verification.txt" | head -n 1)"
-[[ "$(normalize "$aab_cert")" == "$(normalize "$apk_cert")" ]]
+readonly apk_cert="$(apk_certificate_sha256 "$output_dir/apk-signing-verification.txt")"
+readonly normalized_aab_cert="$(normalize "$aab_cert")"
+readonly normalized_apk_cert="$(normalize "$apk_cert")"
+[[ "$normalized_aab_cert" =~ ^[0-9A-F]{64}$ ]]
+[[ "$normalized_apk_cert" =~ ^[0-9A-F]{64}$ ]]
+[[ "$normalized_aab_cert" == "$normalized_apk_cert" ]]
 
 readonly actual_package="$("$apkanalyzer" manifest application-id "$universal_apk" | tr -d '\r\n')"
 readonly actual_version_name="$("$apkanalyzer" manifest version-name "$universal_apk" | tr -d '\r\n')"
@@ -76,7 +88,7 @@ python3 - \
   "$actual_package" \
   "$actual_version_name" \
   "$actual_version_code" \
-  "$(normalize "$aab_cert")" <<'PY'
+  "$normalized_aab_cert" <<'PY'
 import hashlib
 import json
 import sys

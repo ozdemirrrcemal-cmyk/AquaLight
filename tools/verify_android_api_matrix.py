@@ -64,6 +64,29 @@ def matrix_api_levels(text: str, path: Path) -> list[int]:
     return values
 
 
+def step_blocks(text: str) -> list[str]:
+    starts = [match.start() for match in re.finditer(r"(?m)^\s{6}- name:\s*", text)]
+    if not starts:
+        return []
+    starts.append(len(text))
+    return [text[starts[index] : starts[index + 1]] for index in range(len(starts) - 1)]
+
+
+def api_levels_for_script(text: str, script: str) -> list[int]:
+    levels: list[int] = []
+    for block in step_blocks(text):
+        if script not in block:
+            continue
+        matches = re.findall(r"(?m)^\s*api-level:\s*([0-9]+)\s*$", block)
+        if len(matches) != 1:
+            raise MatrixFailure(
+                f"Release workflow step using {script} must declare exactly one numeric "
+                f"api-level, found {matches}."
+            )
+        levels.append(int(matches[0]))
+    return levels
+
+
 def release_smoke_levels(text: str) -> list[int]:
     return [
         int(value)
@@ -94,35 +117,59 @@ def main() -> int:
         if len(set(expected)) != 2:
             raise MatrixFailure("Commercial API matrix requires distinct minSdk and targetSdk.")
 
-        release_levels = numeric_api_levels(release_text)
+        all_release_levels = numeric_api_levels(release_text)
+        pre_signing_levels = api_levels_for_script(release_text, "tools/run_release_smoke.sh")
+        aab_derived_levels = api_levels_for_script(
+            release_text,
+            "tools/release_pipeline/run_aab_derived_smoke.sh",
+        )
         emulator_levels = matrix_api_levels(emulator_text, args.emulator_workflow)
         smoke_levels = release_smoke_levels(release_text)
 
         for label, actual in (
-            ("release workflow emulator jobs", release_levels),
-            ("release workflow smoke commands", smoke_levels),
+            ("release pre-signing emulator jobs", pre_signing_levels),
+            ("release pre-signing smoke commands", smoke_levels),
             ("pull-request emulator matrix", emulator_levels),
         ):
             if actual != expected:
                 raise MatrixFailure(f"{label} must be exactly {expected}, got {actual}.")
 
+        expected_aab_derived = [target_sdk]
+        if aab_derived_levels != expected_aab_derived:
+            raise MatrixFailure(
+                "AAB-derived post-signing smoke must run exactly on targetSdk "
+                f"{expected_aab_derived}, got {aab_derived_levels}."
+            )
+
+        classified_release_levels = pre_signing_levels + aab_derived_levels
+        if sorted(all_release_levels) != sorted(classified_release_levels):
+            raise MatrixFailure(
+                "Release workflow contains unclassified emulator API levels: "
+                f"all={all_release_levels}, classified={classified_release_levels}."
+            )
+
         summary = {
-            "schemaVersion": 1,
+            "schemaVersion": 2,
             "approved": True,
             "minSdk": min_sdk,
             "targetSdk": target_sdk,
             "expectedApiLevels": expected,
-            "releaseWorkflowApiLevels": release_levels,
+            "releasePreSigningApiLevels": pre_signing_levels,
             "releaseSmokeApiLevels": smoke_levels,
+            "releaseAabDerivedApiLevels": aab_derived_levels,
+            "allReleaseWorkflowApiLevels": all_release_levels,
             "pullRequestApiLevels": emulator_levels,
         }
         write_summary(args.summary, summary)
-        print(f"Android API matrix approved: minSdk={min_sdk}, targetSdk={target_sdk}.")
+        print(
+            "Android API matrix approved: "
+            f"pre-signing={expected}, AAB-derived={expected_aab_derived}."
+        )
         return 0
     except (OSError, MatrixFailure) as error:
         write_summary(
             args.summary,
-            {"schemaVersion": 1, "approved": False, "failure": str(error)},
+            {"schemaVersion": 2, "approved": False, "failure": str(error)},
         )
         print(f"Android API matrix verification failed: {error}", file=sys.stderr)
         return 1

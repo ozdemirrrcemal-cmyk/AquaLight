@@ -22,6 +22,14 @@ normalize() {
   printf '%s' "$value" | tr -d '[:space:]:' | tr '[:lower:]' '[:upper:]'
 }
 
+apk_certificate_sha256() {
+  local verification_file="$1"
+  sed -n -E \
+    's/^(Signer #1|V[0-9.]+ Signer): certificate SHA-256 digest:[[:space:]]*//p' \
+    "$verification_file" \
+    | head -n 1
+}
+
 umask 077
 signing_dir="${RUNNER_TEMP}/aqualight-signing"
 keystore_path="${signing_dir}/release-key.jks"
@@ -91,8 +99,10 @@ if [[ "${AQL_INCLUDE_APK:-false}" == "true" ]]; then
   cp "$source_apk" "$apk"
   apksigner="$(find "${ANDROID_HOME}/build-tools" -maxdepth 2 -type f -name apksigner -print | sort -V | tail -n 1)"
   "$apksigner" verify --verbose --print-certs "$apk" > "$artifacts/signed-apk-verification.txt" 2>&1
-  apk_cert="$(sed -n 's/^Signer #1 certificate SHA-256 digest:[[:space:]]*//p' "$artifacts/signed-apk-verification.txt" | head -n 1)"
-  [[ "$(normalize "$apk_cert")" == "$actual" ]]
+  apk_cert="$(apk_certificate_sha256 "$artifacts/signed-apk-verification.txt")"
+  normalized_apk_cert="$(normalize "$apk_cert")"
+  [[ "$normalized_apk_cert" =~ ^[0-9A-F]{64}$ ]]
+  [[ "$normalized_apk_cert" == "$actual" ]]
   apkanalyzer="${ANDROID_HOME}/cmdline-tools/latest/bin/apkanalyzer"
   [[ "$("$apkanalyzer" manifest application-id "$apk")" == "com.aqua.aqualight" ]]
   [[ "$("$apkanalyzer" manifest version-name "$apk")" == "$AQL_RELEASE_VERSION" ]]

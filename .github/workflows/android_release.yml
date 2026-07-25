@@ -165,7 +165,7 @@ jobs:
     name: 05-09 Signing, build, checksum, attestation and publication
     needs: [quality, security]
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 150
     environment: production-release
     permissions:
       actions: read
@@ -215,12 +215,12 @@ jobs:
 
           summary = json.loads(
               Path("final-release/evidence/security/codeql-summary.json").read_text(
-                  encoding="utf-8"
-              )
+                encoding="utf-8"
+            )
           )
           expected_commit = os.environ["AQL_RELEASE_COMMIT"]
           expected_ref = f"refs/tags/{os.environ['AQL_RELEASE_TAG']}"
-          if summary.get("approved") is not True:
+          if summary.get("approved") is Not True:
               raise SystemExit("CodeQL evidence is not approved.")
           if summary.get("releaseCommit") != expected_commit:
               raise SystemExit("CodeQL evidence commit does not match the release commit.")
@@ -245,7 +245,7 @@ jobs:
         run: |
           set -Eeu
           set +o pipefail
-          yes 2>/dev/null | sdkmanager --licenses >/dev/null
+         yes 2>/dev/null | sdkmanager --licenses >/dev/null
           set -o pipefail
           sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
           sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1"
@@ -262,11 +262,61 @@ jobs:
           RELEASE_SIGNING_CERT_SHA256: ${{ secrets.RELEASE_SIGNING_CERT_SHA256 }}
         run: bash tools/release_pipeline/build_release.sh
 
-      - name: 07 Checksum - generate and verify SHA-256 manifests
+      - name: Verify signing material was removed before emulator execution
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test ! -e release-key.jks
+          test ! -d "${RUNNER_TEMP}/aqualight-signing"
+          test -s release-validation/aab-derived-apk-path.txt
+          test -s trelease-validation/aab-derived/source-link.json
+
+      - name: Enable KVM for AAB-derived smoke
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: 07 AAB-derived install and launch smoke - API 36
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 36
+          target: default
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-boot-timeout: 900
+          emulator-options: >-
+            -no-window -gpu swiftshader_indirect -no-snapshot-save
+            -noaudio -no-boot-anim -camera-back none
+          script: >-
+            bash tools/release_pipeline/run_aab_derived_smoke.sh
+            "$(cat release-validation/aab-derived-apk-path.txt)"
+            release-validation/aab-derived/source-link.json
+            final-release/evidence/aab-derived
+
+      - name: Upload AAB-derived smoke diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: AquaLight-AAB-Derived-Smoke-${{ needs.quality.outputs.release-tag }}
+          path: |
+            final-release/evidence/aab-derived/**
+            release-validation/aab-derived/source-link.json
+            release-validation/aab-derived/apk-signing-verification.txt
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Remove non-publishable AAB-derived APK input
+        if: always()
+        run: rm -rf release-validation
+
+      - name: 08 Checksum - generate and verify SHA-256 manifests
         shell: bash
         run: bash tools/release_pipeline/checksum.sh
 
-      - name: 08 SBOM - generate AAB SPDX JSON
+      - name: 09 SBOM - generate AAB SPDX JSON
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
           file: final-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.aab
@@ -275,7 +325,7 @@ jobs:
           upload-artifact: false
           upload-release-assets: false
 
-      - name: 08 SBOM - generate APK SPDX JSON
+      - name: 09 SBOM - generate APK SPDX JSON
         if: ${{ needs.quality.outputs.include-apk == 'true' }}
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
@@ -285,27 +335,27 @@ jobs:
           upload-artifact: false
           upload-release-assets: false
 
-      - name: 08 Provenance - attest AAB
+      - name: 09 Provenance - attest AAB
         id: aab-provenance
         uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
         with:
           subject-path: final-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.aab
 
-      - name: 08 Provenance - attest AAB SBOM
+      - name: 09 Provenance - attest AAB SBOM
         id: aab-sbom
         uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
         with:
           subject-path: final-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.aab
           sbom-path: final-release/supply-chain/AquaLight-${{ needs.quality.outputs.release-version }}.aab.spdx.json
 
-      - name: 08 Provenance - attest APK
+      - name: 09 Provenance - attest APK
         if: ${{ needs.quality.outputs.include-apk == 'true' }}
         id: apk-provenance
         uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
         with:
           subject-path: final-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.apk
 
-      - name: 08 Provenance - attest APK SBOM
+      - name: 09 Provenance - attest APK SBOM
         if: ${{ needs.quality.outputs.include-apk == 'true' }}
         id: apk-sbom
         uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
@@ -313,7 +363,7 @@ jobs:
           subject-path: final-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.apk
           sbom-path: final-release/supply-chain/AquaLight-${{ needs.quality.outputs.release-version }}.apk.spdx.json
 
-      - name: 08 Provenance - materialize and verify evidence
+      - name: 09 Provenance - materialize and verify evidence
         shell: bash
         env:
           AAB_PROVENANCE_BUNDLE: ${{ steps.aab-provenance.outputs.bundle-path }}
@@ -322,11 +372,11 @@ jobs:
           APK_SBOM_BUNDLE: ${{ steps.apk-sbom.outputs.bundle-path }}
         run: bash tools/release_pipeline/materialize_evidence.sh
 
-      - name: 09 Publish - verify complete release package
+      - name: 10 Publish - verify complete release package
         shell: bash
         run: bash tools/release_pipeline/verify_publication.sh
 
-      - name: 09 Publish - upload final commercial release
+      - name: 10 Publish - upload final commercial release
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: AquaLight-Release-${{ needs.quality.outputs.release-tag }}
@@ -342,7 +392,7 @@ jobs:
             echo
             echo "Release: \`${{ needs.quality.outputs.release-tag }}\`"
             echo
-            echo "Enforced order: CodeQL security → guard → lint/Detekt → unit test/coverage → instrumentation → signing → release build → checksum → SBOM/provenance → publication"
+            echo "Enforced order: CodeQL security → guard → strict lint/Detekt → unit test/coverage → instrumentation → signing → AAB validation → AAB-derived smoke → checksum → SBOM/provenance → publication"
             echo
             echo "Verify the AAB attestation with:"
             echo
@@ -354,3 +404,4 @@ jobs:
         run: |
           rm -f release-key.jks
           rm -rf "${RUNNER_TEMP}/aqualight-signing"
+          rm -rf release-validation
