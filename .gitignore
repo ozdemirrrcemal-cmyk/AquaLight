@@ -68,3 +68,7 @@ reports/
 
 # --- Firebase execution-time configuration (never tracked) ---
 **/google-services.json
+
+# --- Python tooling ---
+__pycache__/
+*.py[cod]

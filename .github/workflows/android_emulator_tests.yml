@@ -7,6 +7,7 @@ on:
       - ".github/workflows/android_emulator_tests.yml"
       - "app/**"
       - "build.gradle"
+      - "config/commercial/**"
       - "gradle/**"
       - "gradlew"
       - "gradle.properties"
@@ -37,17 +38,17 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Install JDK 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
         with:
           distribution: temurin
           java-version: 17
           cache: gradle
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
 
       - name: Install compile SDK
         run: |
@@ -56,6 +57,13 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+
+      - name: Verify Stage 14 commercial policy
+        run: |
+          python3 tools/verify_stage14_policy.py \
+            --policy config/commercial/stage14-validation-policy.json \
+            --app-gradle app/build.gradle \
+            --summary build/reports/stage14/policy-validation.json
 
       - name: Verify non-production Firebase inputs
         shell: bash
@@ -133,10 +141,11 @@ jobs:
 
       - name: Upload instrumentation and smoke reports
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: instrumentation-api-${{ matrix.api-level }}-${{ github.run_number }}
           path: |
+            build/reports/stage14/policy-validation.json
             app/build/reports/androidTests/connected/**
             app/build/outputs/androidTest-results/connected/**
             assemble-release-smoke.log

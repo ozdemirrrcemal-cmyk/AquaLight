@@ -313,7 +313,7 @@ jobs:
             echo
             echo "Release: \`${{ needs.quality.outputs.release-tag }}\`"
             echo
-            echo "Enforced order: guard → lint/Detekt → unit test/coverage → instrumentation → signing → release build → checksum → SBOM/provenance → publication"
+            echo "Stage 14 policy: \`config/commercial/stage14-validation-policy.json\` (embedded by SHA-256 in final evidence)"
             echo
             echo "Verify the AAB attestation with:"
             echo

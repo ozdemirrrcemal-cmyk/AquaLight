@@ -3,6 +3,13 @@ set -Eeuo pipefail
 
 evidence="final-release/supply-chain"
 mkdir -p "$evidence/attestations"
+policy_evidence="$evidence/stage14-validation-policy.json"
+python3 tools/verify_stage14_policy.py \
+  --policy config/commercial/stage14-validation-policy.json \
+  --app-gradle app/build.gradle \
+  --summary "$policy_evidence"
+test -s "$policy_evidence"
+
 test -s "$AAB_PROVENANCE_BUNDLE"
 test -s "$AAB_SBOM_BUNDLE"
 cp "$AAB_PROVENANCE_BUNDLE" "$evidence/attestations/AquaLight-${AQL_RELEASE_VERSION}.aab.provenance.json"
@@ -32,11 +39,15 @@ python3 - \
   final-release/RELEASE.json \
   "$AQL_RELEASE_TAG" \
   "$AQL_RELEASE_COMMIT" \
-  "${AQL_INCLUDE_APK:-false}" <<'PY'
+  "${AQL_INCLUDE_APK:-false}" \
+  "$policy_evidence" <<'PY'
 import json
 import sys
 from pathlib import Path
-output, tag, commit, include_apk = sys.argv[1:]
+output, tag, commit, include_apk, policy_path = sys.argv[1:]
+policy = json.loads(Path(policy_path).read_text(encoding="utf-8"))
+if policy.get("passed") is not True:
+    raise SystemExit("Stage 14 policy evidence did not pass validation.")
 Path(output).write_text(
     json.dumps(
         {
@@ -45,17 +56,12 @@ Path(output).write_text(
             "releaseTag": tag,
             "releaseCommit": commit,
             "includeApk": include_apk == "true",
-            "pipelineOrder": [
-                "guard",
-                "lint-detekt",
-                "unit-test-coverage",
-                "instrumentation",
-                "signing",
-                "release-build",
-                "checksum",
-                "sbom-provenance",
-                "publish",
-            ],
+            "stage14Policy": {
+                "policyId": policy["policyId"],
+                "sourceSha256": policy["sourceSha256"],
+                "canonicalSha256": policy["canonicalSha256"],
+            },
+            "pipelineOrder": policy["pipelineOrder"],
         },
         indent=2,
         sort_keys=True,

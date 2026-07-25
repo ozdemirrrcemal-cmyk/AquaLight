@@ -11,6 +11,7 @@ on:
       - "protocol/**"
       - "tools/**"
       - "config/coverage/**"
+      - "config/commercial/**"
       - "build.gradle"
       - "settings.gradle"
       - "gradle.properties"
@@ -79,8 +80,15 @@ jobs:
       - name: Grant execute permission to gradlew
         run: chmod +x ./gradlew
 
-      - name: Run Architecture Guard
+      - name: Run commercial policy and architecture guards
         run: |
+          python3 -m unittest discover \
+            -s tools/tests \
+            -p 'test_verify_stage14_policy.py'
+          python3 tools/verify_stage14_policy.py \
+            --policy config/commercial/stage14-validation-policy.json \
+            --app-gradle app/build.gradle \
+            --summary build/reports/stage14/policy-validation.json
           python3 tools/architecture_guard.py
           python3 tools/navigation_guard.py
           python3 tools/ws_protocol_guard.py
@@ -177,6 +185,7 @@ jobs:
         with:
           name: android-lint-reports-${{ github.run_number }}
           path: |
+            build/reports/stage14/policy-validation.json
             android-lint.log
             app/build/reports/lint-results-*.html
             app/build/reports/lint-results-*.xml

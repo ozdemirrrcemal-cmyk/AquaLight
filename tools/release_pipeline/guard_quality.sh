@@ -24,6 +24,11 @@ include_apk="false"
 } >> "$GITHUB_OUTPUT"
 
 mkdir -p release-quality
+python3 tools/verify_stage14_policy.py \
+  --policy config/commercial/stage14-validation-policy.json \
+  --app-gradle app/build.gradle \
+  --summary release-quality/stage14-policy-validation.json
+
 for guard in \
   architecture_guard.py \
   composition_root_guard.py \

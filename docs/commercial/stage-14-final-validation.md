@@ -50,9 +50,17 @@ Acceptance criteria:
 
 ### 3. Add a machine-readable Stage 14 validation policy
 
-- [ ] Define required API levels, suites, blocker thresholds and artifacts.
-- [ ] Add fail-closed policy schema validation.
-- [ ] Use the policy as the source of truth for final evidence.
+- [x] Define required API levels, suites, blocker thresholds and artifacts.
+- [x] Add fail-closed policy schema validation.
+- [x] Use the policy as the source of truth for final evidence.
+
+Implementation:
+
+- `config/commercial/stage14-validation-policy.json` is the reviewed commercial contract.
+- `tools/verify_stage14_policy.py` rejects missing fields, unknown fields, weakened blocker
+  thresholds, incomplete suites/artifacts and SDK drift.
+- Android CI, emulator validation, CodeQL and the controlled release quality gate materialize the
+  same deterministic policy evidence.
 
 ### 4. Standardize guard, unit-test and coverage gates
 

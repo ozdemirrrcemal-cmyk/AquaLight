@@ -5,6 +5,7 @@ set -Eeuo pipefail
 
 test -s "final-release/artifacts/AquaLight-${AQL_RELEASE_VERSION}.aab"
 test -s "final-release/artifacts/AquaLight-${AQL_RELEASE_VERSION}.aab.sha256"
+test -s "final-release/supply-chain/stage14-validation-policy.json"
 test -s "final-release/supply-chain/AquaLight-${AQL_RELEASE_VERSION}.aab.spdx.json"
 test -s "final-release/supply-chain/attestations/AquaLight-${AQL_RELEASE_VERSION}.aab.provenance.json"
 test -s "final-release/supply-chain/attestations/AquaLight-${AQL_RELEASE_VERSION}.aab.sbom.json"
@@ -16,3 +17,21 @@ if [[ "${AQL_INCLUDE_APK:-false}" == "true" ]]; then
   test -s "final-release/supply-chain/attestations/AquaLight-${AQL_RELEASE_VERSION}.apk.provenance.json"
   test -s "final-release/supply-chain/attestations/AquaLight-${AQL_RELEASE_VERSION}.apk.sbom.json"
 fi
+
+python3 - \
+  final-release/RELEASE.json \
+  final-release/supply-chain/stage14-validation-policy.json <<'PY'
+import json
+import sys
+from pathlib import Path
+
+release_path, policy_path = map(Path, sys.argv[1:])
+release = json.loads(release_path.read_text(encoding="utf-8"))
+policy = json.loads(policy_path.read_text(encoding="utf-8"))
+if policy.get("passed") is not True:
+    raise SystemExit("Stage 14 policy evidence is not approved.")
+release_policy = release.get("stage14Policy", {})
+for field in ("policyId", "sourceSha256", "canonicalSha256"):
+    if release_policy.get(field) != policy.get(field):
+        raise SystemExit(f"Release policy identity mismatch: {field}")
+PY
