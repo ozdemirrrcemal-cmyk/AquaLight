@@ -8,6 +8,7 @@ legacy storage path.
 """
 from pathlib import Path
 import re
+import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -39,6 +40,33 @@ def require(relative_path: str, text: str, token: str, reason: str) -> None:
     if token not in text:
         errors.append(f"{relative_path}: {reason}: {token}")
 
+
+def run_external_guard(relative_path: str, *arguments: str) -> None:
+    path = ROOT / relative_path
+    if not path.is_file():
+        errors.append(f"{relative_path}: required external commercial guard is missing")
+        return
+    result = subprocess.run(
+        [sys.executable, str(path), *arguments],
+        cwd=ROOT,
+        check=False,
+    )
+    if result.returncode != 0:
+        errors.append(f"{relative_path}: external commercial guard failed")
+
+
+run_external_guard(
+    "tools/verify_android_api_matrix.py",
+    "--summary",
+    "build/reports/guards/android-api-matrix.json",
+)
+optional_action_pinning_guard = ROOT / "tools/verify_github_action_pinning.py"
+if optional_action_pinning_guard.is_file():
+    run_external_guard(
+        "tools/verify_github_action_pinning.py",
+        "--summary",
+        "build/reports/guards/github-action-pinning.json",
+    )
 
 for guarded_dir in GUARDED_DIRS:
     if not guarded_dir.exists():
@@ -389,7 +417,7 @@ for token, reason in (
         "bash tools/verify_uninstall_clears_data.sh",
         "emulator CI must verify uninstall/reinstall data removal",
     ),
-    ("api-level: [27, 35]", "emulator CI must cover min and modern Android APIs"),
+    ("api-level: [27, 36]", "emulator CI must cover minSdk and targetSdk"),
     (
         "android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d",
         "emulator CI action must remain pinned to its reviewed v2.38.0 commit",

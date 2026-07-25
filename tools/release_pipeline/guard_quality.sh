@@ -24,6 +24,9 @@ include_apk="false"
 } >> "$GITHUB_OUTPUT"
 
 mkdir -p release-quality
+python3 tools/verify_android_api_matrix.py \
+  --summary release-quality/android-api-matrix.json
+
 for guard in \
   architecture_guard.py \
   composition_root_guard.py \
