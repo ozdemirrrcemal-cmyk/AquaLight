@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.os.Process
 import android.view.Gravity
 import android.widget.TextView
+import androidx.core.content.edit
 import com.aqua.aqualight.data.auth.AccountDeletionCheckpoint
 import com.aqua.aqualight.data.auth.AccountDeletionCheckpointStore
 import com.aqua.aqualight.data.auth.AccountDeletionManager
@@ -71,15 +72,20 @@ class AccountDeletionProcessDeathSmokeActivity : Activity() {
         store.read()?.let { previous -> store.clear(previous.ownerUid) }
 
         val state = statePreferences()
-        check(state.edit().clear().commit()) {
+        state.edit(commit = true) { clear() }
+        check(state.all.isEmpty()) {
             "Process-death smoke state could not be reset."
         }
+
+        state.edit(commit = true) {
+            putString(KEY_SCENARIO, scenario.id)
+            putString(KEY_CURRENT_UID, scenario.currentUid)
+            putInt(KEY_PREPARE_PID, Process.myPid())
+        }
         check(
-            state.edit()
-                .putString(KEY_SCENARIO, scenario.id)
-                .putString(KEY_CURRENT_UID, scenario.currentUid)
-                .putInt(KEY_PREPARE_PID, Process.myPid())
-                .commit()
+            state.getString(KEY_SCENARIO, null) == scenario.id &&
+                state.getString(KEY_CURRENT_UID, null) == scenario.currentUid &&
+                state.getInt(KEY_PREPARE_PID, 0) == Process.myPid()
         ) {
             "Process-death smoke preparation could not be persisted."
         }
@@ -222,7 +228,8 @@ class AccountDeletionProcessDeathSmokeActivity : Activity() {
                 return IllegalStateException("Smoke authenticated owner mismatch.")
             }
             increment(KEY_AUTH_DELETE_CALLS)
-            check(state.edit().remove(KEY_CURRENT_UID).commit()) {
+            state.edit(commit = true) { remove(KEY_CURRENT_UID) }
+            check(currentOwnerUid() == null) {
                 "Smoke authentication state could not be persisted."
             }
             return null
@@ -243,14 +250,17 @@ class AccountDeletionProcessDeathSmokeActivity : Activity() {
 
         override fun signOut(): Throwable? {
             increment(KEY_SIGN_OUT_CALLS)
-            check(state.edit().remove(KEY_CURRENT_UID).commit()) {
+            state.edit(commit = true) { remove(KEY_CURRENT_UID) }
+            check(currentOwnerUid() == null) {
                 "Smoke sign-out state could not be persisted."
             }
             return null
         }
 
         private fun increment(key: String) {
-            check(state.edit().putInt(key, state.getInt(key, 0) + 1).commit()) {
+            val nextValue = state.getInt(key, 0) + 1
+            state.edit(commit = true) { putInt(key, nextValue) }
+            check(state.getInt(key, Int.MIN_VALUE) == nextValue) {
                 "Smoke operation counter could not be persisted: $key"
             }
         }
