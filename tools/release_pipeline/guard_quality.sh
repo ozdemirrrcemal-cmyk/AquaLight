@@ -26,6 +26,8 @@ include_apk="false"
 mkdir -p release-quality
 python3 tools/verify_android_api_matrix.py \
   --summary release-quality/android-api-matrix.json
+python3 tools/verify_github_action_pinning.py \
+  --summary release-quality/github-action-pinning.json
 
 for guard in \
   architecture_guard.py \
