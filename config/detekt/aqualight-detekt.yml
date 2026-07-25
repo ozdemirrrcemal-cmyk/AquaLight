@@ -20,8 +20,6 @@ complexity:
     active: false
   LongParameterList:
     active: false
-  LoopWithTooManyJumpStatements:
-    active: false
   NestedBlockDepth:
     active: false
   TooManyFunctions:
@@ -35,8 +33,6 @@ exceptions:
   RethrowCaughtException:
     active: false
   SwallowedException:
-    active: false
-  ThrowsCount:
     active: false
   TooGenericExceptionCaught:
     active: false
@@ -53,6 +49,8 @@ potential-bugs:
   active: true
 
 style:
+  LoopWithTooManyJumpStatements:
+    active: false
   MagicNumber:
     active: false
   MaxLineLength:
@@ -60,6 +58,8 @@ style:
   NewLineAtEndOfFile:
     active: false
   ReturnCount:
+    active: false
+  ThrowsCount:
     active: false
   UnusedParameter:
     active: false
