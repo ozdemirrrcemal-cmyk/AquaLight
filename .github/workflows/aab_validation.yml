@@ -8,6 +8,8 @@ on:
       - "tools/release_pipeline/install_bundletool.sh"
       - "tools/release_pipeline/validate_release_aab.sh"
       - "tools/release_pipeline/verify_release_aab.py"
+      - "tools/release_pipeline/build_aab_derived_package.sh"
+      - "tools/release_pipeline/run_aab_derived_smoke.sh"
       - "tools/release_pipeline/build_release.sh"
       - "tools/release_pipeline/verify_publication.sh"
       - "build.gradle"
@@ -35,9 +37,9 @@ env:
 
 jobs:
   validate-aab:
-    name: Build and validate minified release AAB
+    name: Build, validate and launch AAB-derived APK
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    timeout-minutes: 120
 
     steps:
       - name: Checkout repository
@@ -102,8 +104,12 @@ jobs:
           test -s "$aab"
           printf '%s\n' "$aab" > release-aab-path.txt
 
-      - name: Validate AAB identity, structure, signing and R8 evidence
+      - name: Validate AAB and derive a signed universal APK
         shell: bash
+        env:
+          RELEASE_KEYSTORE_PASSWORD: aqualight-ci
+          RELEASE_KEY_ALIAS: aqualight-ci
+          RELEASE_KEY_PASSWORD: aqualight-ci
         run: |
           set -Eeuo pipefail
           aab="$(cat release-aab-path.txt)"
@@ -115,20 +121,67 @@ jobs:
           bash tools/release_pipeline/validate_release_aab.sh \
             "$aab" \
             release-quality/aab
+          derived_apk="$(
+            bash tools/release_pipeline/build_aab_derived_package.sh \
+              "$aab" \
+              release-quality/aab-derived-input \
+              release-key.jks \
+              | tail -n 1
+          )"
+          test -s "$derived_apk"
+          printf '%s\n' "$derived_apk" > aab-derived-apk-path.txt
 
-      - name: Upload commercial AAB evidence
+      - name: Remove signing material before emulator execution
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          rm -f release-key.jks
+          test ! -e release-key.jks
+
+      - name: Enable KVM group permissions
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install and launch APK derived from the final AAB
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 36
+          target: default
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-boot-timeout: 900
+          emulator-options: >-
+            -no-window -gpu swiftshader_indirect -no-snapshot-save
+            -noaudio -no-boot-anim -camera-back none
+          script: >-
+            bash tools/release_pipeline/run_aab_derived_smoke.sh
+            "$(cat aab-derived-apk-path.txt)"
+            release-quality/aab-derived-input/source-link.json
+            release-quality/aab-derived-smoke
+
+      - name: Upload commercial AAB and derived-smoke evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: commercial-aab-validation-${{ github.run_number }}
           path: |
             release-quality/aab/**
+            release-quality/aab-derived-input/source-link.json
+            release-quality/aab-derived-input/apk-signing-verification.txt
+            release-quality/aab-derived-smoke/**
             release-aab-path.txt
+            aab-derived-apk-path.txt
             release-quality-aab-api-matrix.json
             release-quality-aab-action-pinning.json
           if-no-files-found: error
           retention-days: 90
 
-      - name: Remove CI-only release keystore
+      - name: Remove CI-only signing and derived APK material
         if: always()
-        run: rm -f release-key.jks
+        run: |
+          rm -f release-key.jks
+          rm -rf release-quality/aab-derived-input
