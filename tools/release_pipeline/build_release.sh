@@ -6,6 +6,9 @@ export LC_ALL=C
 [[ "${AQL_RELEASE_COMMIT:-}" =~ ^[0-9a-f]{40}$ ]]
 [[ "$(git rev-parse HEAD)" == "$AQL_RELEASE_COMMIT" ]]
 for name in \
+  AQL_FIREBASE_DEBUG_CONFIG_BASE64 \
+  AQL_FIREBASE_STAGING_CONFIG_BASE64 \
+  AQL_FIREBASE_PRODUCTION_CONFIG_BASE64 \
   RELEASE_KEYSTORE_BASE64 \
   RELEASE_KEYSTORE_PASSWORD \
   RELEASE_KEY_ALIAS \
@@ -53,6 +56,8 @@ jarsigner \
   "$RELEASE_KEY_ALIAS" >/dev/null
 jarsigner -verify "$signing_dir/probe-signed.jar" >/dev/null
 ln -s "$keystore_path" release-key.jks
+
+./gradlew :app:verifyFirebaseProductionEnvironmentIsolation --no-daemon --stacktrace
 
 tasks=(bundleRelease)
 [[ "${AQL_INCLUDE_APK:-false}" == "true" ]] && tasks+=(assembleRelease)
