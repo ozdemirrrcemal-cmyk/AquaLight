@@ -164,6 +164,7 @@ unit_reports=(
   --report "release=app/build/test-results/testReleaseUnitTest"
 )
 for evidence_set in \
+  accessibility-unit \
   permission-permanent-denial-unit \
   process-recreation-unit \
   rapid-account-switch-unit \

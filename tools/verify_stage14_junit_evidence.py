@@ -22,6 +22,8 @@ UNIT_REPORT_PROFILES = {
     frozenset({"debug", "staging", "release-smoke", "release"}): "release",
 }
 REQUIRED_EVIDENCE_SETS = {
+    "accessibility-instrumentation": ("accessibility-profiles", "instrumentation"),
+    "accessibility-unit": ("accessibility-profiles", "unit"),
     "permission-permanent-denial-unit": (
         "permission-permanent-denial",
         "unit",

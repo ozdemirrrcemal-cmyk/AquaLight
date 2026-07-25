@@ -542,12 +542,24 @@ for token, reason in (
         "verify_force_stop_evidence.py",
         "force-stop recovery must publish independent machine-readable evidence",
     ),
+    (
+        "verify_accessibility_evidence.py",
+        "visual accessibility profiles must publish independent evidence",
+    ),
 ):
     require(release_smoke_runner_path, release_smoke_runner, token, reason)
 
 junit_contract_path = "config/commercial/stage14-junit-evidence-contract.json"
 junit_contract = read(junit_contract_path)
 for token, reason in (
+    (
+        '"accessibility-instrumentation"',
+        "touch-target accessibility must have an instrumentation contract",
+    ),
+    (
+        '"accessibility-unit"',
+        "large-font and touch-target policies must have a unit contract",
+    ),
     (
         '"rapid-account-switch-unit"',
         "rapid account switching must have an explicit commercial test contract",
@@ -633,6 +645,37 @@ for token, reason in (
 ):
     require(force_stop_verifier_path, force_stop_verifier, token, reason)
 
+accessibility_verifier_path = "tools/verify_accessibility_evidence.py"
+accessibility_verifier = read(accessibility_verifier_path)
+for token, reason in (
+    (
+        '"large-font-light"',
+        "accessibility evidence must retain the 200% light profile",
+    ),
+    (
+        '"rtl-dark"',
+        "accessibility evidence must retain the RTL dark profile",
+    ),
+    (
+        "iconAccessibilityPassedInsideCandidate",
+        "the candidate must attest its icon-label scan",
+    ),
+    (
+        "largeFontClippingCheckPassedInsideCandidate",
+        "the candidate must attest its 200% font clipping scan",
+    ),
+    (
+        "screenshot set mismatch",
+        "missing or unknown visual evidence must fail closed",
+    ),
+):
+    require(
+        accessibility_verifier_path,
+        accessibility_verifier,
+        token,
+        reason,
+    )
+
 uninstall_test_path = "tools/verify_uninstall_clears_data.sh"
 uninstall_test = read(uninstall_test_path)
 for token, reason in (
@@ -707,6 +750,10 @@ for token, reason in (
     (
         "rapid-account-switch-unit",
         "PR CI must prove rapid account switching",
+    ),
+    (
+        "accessibility-unit",
+        "PR CI must prove automated accessibility policies",
     ),
     (
         "websocket-account-cleanup-unit",

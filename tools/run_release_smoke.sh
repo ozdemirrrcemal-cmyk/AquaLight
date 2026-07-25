@@ -231,6 +231,7 @@ test -n "$(
     -print -quit
 )"
 for evidence_set in \
+  accessibility-instrumentation \
   process-recreation-instrumentation \
   tank-care-corruption-instrumentation; do
   python3 tools/verify_stage14_junit_evidence.py \
@@ -316,11 +317,13 @@ run_visual_profile() {
   force_rtl="$4"
   profile_dump="${SMOKE_PREFIX}-${profile}-window.xml"
   remote_profile_dump="/sdcard/${profile_dump}"
+  profile_logcat="${SMOKE_PREFIX}-${profile}-logcat.txt"
 
   adb shell settings put system font_scale "$font_scale"
   adb shell settings put global debug.force_rtl "$force_rtl"
   adb shell setprop debug.force_rtl "$force_rtl"
   adb shell am force-stop "$PACKAGE_NAME"
+  adb logcat -c
 
   set +e
   adb shell am start -W -S -n "$SMOKE_COMPONENT" \
@@ -331,6 +334,7 @@ run_visual_profile() {
   set -e
 
   if [ "$start_status" -ne 0 ]; then
+    adb logcat -d > "$profile_logcat" 2>&1
     echo "Smoke Activity could not be started for ${profile} on API ${API_LEVEL}."
     return "$start_status"
   fi
@@ -349,14 +353,17 @@ run_visual_profile() {
           | tr -d ' '
       )"
       if [ "$screenshot_count" -ne 4 ]; then
+        adb logcat -d > "$profile_logcat" 2>&1
         echo "Expected 4 ${profile} screenshots, found ${screenshot_count}."
         return 1
       fi
+      adb logcat -d > "$profile_logcat" 2>&1
       echo "${profile} visual smoke passed with ${screenshot_count} screenshots on API ${API_LEVEL}."
       return 0
     fi
 
     if grep -q "RELEASE_SMOKE_FAIL" "$profile_dump" 2>/dev/null; then
+      adb logcat -d > "$profile_logcat" 2>&1
       echo "Minified release smoke reported an application failure for ${profile} on API ${API_LEVEL}."
       cat "$profile_dump" || true
       return 1
@@ -364,6 +371,7 @@ run_visual_profile() {
     sleep 1
   done
 
+  adb logcat -d > "$profile_logcat" 2>&1
   echo "Minified release smoke timed out for ${profile} on API ${API_LEVEL}."
   return 1
 }
@@ -374,5 +382,11 @@ run_visual_profile large-font-light light 2.0 0
 run_visual_profile large-font-dark dark 2.0 0
 run_visual_profile rtl-light light 1.0 1
 run_visual_profile rtl-dark dark 1.0 1
+python3 tools/verify_accessibility_evidence.py \
+  --prefix "$SMOKE_PREFIX" \
+  --screens "$SMOKE_SCREEN_DIR" \
+  --api-level "$API_LEVEL" \
+  --commit "$(git rev-parse HEAD)" \
+  --summary "stage14-evidence/accessibility-api-${API_LEVEL}.json"
 cp "${SMOKE_PREFIX}-dark-window.xml" "$WINDOW_DUMP"
 echo "Minified Light/Dark, 200% font and RTL visual smoke passed on API ${API_LEVEL}."

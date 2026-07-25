@@ -3,6 +3,64 @@
   "policyId": "aqualight-stage14-junit-evidence",
   "evidenceSets": [
     {
+      "id": "accessibility-instrumentation",
+      "suite": "accessibility-profiles",
+      "runner": "instrumentation",
+      "requiredTests": [
+        {
+          "className": "com.aqua.aqualight.base.accessibility.MinimumTouchTargetInstrumentedTest",
+          "methodName": "foreignDelegateKeepsPriorityAndIsRestoredAfterAquaTargetsDisappear"
+        },
+        {
+          "className": "com.aqua.aqualight.base.accessibility.MinimumTouchTargetInstrumentedTest",
+          "methodName": "nearestExpandedTargetWinsOverlapGapAndRemovedTargetsAreReleasedDynamically"
+        },
+        {
+          "className": "com.aqua.aqualight.base.accessibility.MinimumTouchTargetInstrumentedTest",
+          "methodName": "viewsAddedRemovedAndReplacedAfterInstallAreRebuiltWithoutManualReinstall"
+        }
+      ]
+    },
+    {
+      "id": "accessibility-unit",
+      "suite": "accessibility-profiles",
+      "runner": "unit",
+      "requiredTests": [
+        {
+          "className": "com.aqua.aqualight.base.accessibility.LargeFontCompactCopyPolicyTest",
+          "methodName": "nearTwoHundredPercentCompactsLeadingPlusActionOnly"
+        },
+        {
+          "className": "com.aqua.aqualight.base.accessibility.LargeFontCompactCopyPolicyTest",
+          "methodName": "nonAddHeaderActionsRemainUnchangedAtLargeFontScale"
+        },
+        {
+          "className": "com.aqua.aqualight.base.accessibility.LargeFontCompactCopyPolicyTest",
+          "methodName": "normalFontScalePreservesOriginalPrimaryActionCopy"
+        },
+        {
+          "className": "com.aqua.aqualight.base.accessibility.MinimumTouchTargetArchitectureTest",
+          "methodName": "oneWindowHostPreservesForeignOwnershipAndObservesDynamicHierarchyChanges"
+        },
+        {
+          "className": "com.aqua.aqualight.base.accessibility.MinimumTouchTargetSelectorTest",
+          "methodName": "nearestVisualTargetOwnsAnExpandedOverlapGap"
+        },
+        {
+          "className": "com.aqua.aqualight.base.accessibility.MinimumTouchTargetSelectorTest",
+          "methodName": "pointOutsideEveryExpandedAreaHasNoTarget"
+        },
+        {
+          "className": "com.aqua.aqualight.base.accessibility.MinimumTouchTargetSelectorTest",
+          "methodName": "smallerVisualTargetWinsWhenClickableViewsAreNested"
+        },
+        {
+          "className": "com.aqua.aqualight.base.accessibility.MinimumTouchTargetSelectorTest",
+          "methodName": "visualHitWinsOverAnotherTargetsExpandedArea"
+        }
+      ]
+    },
+    {
       "id": "permission-permanent-denial-unit",
       "suite": "permission-permanent-denial",
       "runner": "unit",
