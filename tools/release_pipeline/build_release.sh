@@ -26,7 +26,11 @@ umask 077
 signing_dir="${RUNNER_TEMP}/aqualight-signing"
 keystore_path="${signing_dir}/release-key.jks"
 rm -rf "$signing_dir"
-mkdir -p "$signing_dir/probe" final-release/artifacts final-release/supply-chain/attestations
+mkdir -p \
+  "$signing_dir/probe" \
+  final-release/artifacts \
+  final-release/evidence/aab \
+  final-release/supply-chain/attestations
 printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 --decode > "$keystore_path"
 test -s "$keystore_path"
 chmod 600 "$keystore_path"
@@ -68,6 +72,10 @@ cp "$source_aab" "$aab"
 jarsigner -verify -verbose -certs "$aab" > "$artifacts/signed-aab-verification.txt" 2>&1
 aab_cert="$(keytool -printcert -jarfile "$aab" | sed -n 's/^[[:space:]]*SHA256:[[:space:]]*//p' | head -n 1)"
 [[ "$(normalize "$aab_cert")" == "$actual" ]]
+
+bash tools/release_pipeline/validate_release_aab.sh \
+  "$aab" \
+  final-release/evidence/aab
 
 if [[ "${AQL_INCLUDE_APK:-false}" == "true" ]]; then
   source_apk="$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' -print -quit)"
