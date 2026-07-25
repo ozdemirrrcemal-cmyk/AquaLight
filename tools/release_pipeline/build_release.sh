@@ -25,12 +25,19 @@ normalize() {
 umask 077
 signing_dir="${RUNNER_TEMP}/aqualight-signing"
 keystore_path="${signing_dir}/release-key.jks"
-rm -rf "$signing_dir"
+cleanup_signing() {
+  rm -f release-key.jks
+  rm -rf "$signing_dir"
+}
+trap cleanup_signing EXIT
+
+rm -rf "$signing_dir" release-validation/aab-derived
 mkdir -p \
   "$signing_dir/probe" \
   final-release/artifacts \
   final-release/evidence/aab \
-  final-release/supply-chain/attestations
+  final-release/supply-chain/attestations \
+  release-validation/aab-derived
 printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 --decode > "$keystore_path"
 test -s "$keystore_path"
 chmod 600 "$keystore_path"
@@ -90,5 +97,15 @@ if [[ "${AQL_INCLUDE_APK:-false}" == "true" ]]; then
   [[ "$("$apkanalyzer" manifest application-id "$apk")" == "com.aqua.aqualight" ]]
   [[ "$("$apkanalyzer" manifest version-name "$apk")" == "$AQL_RELEASE_VERSION" ]]
 fi
+
+derived_apk="$(
+  bash tools/release_pipeline/build_aab_derived_package.sh \
+    "$aab" \
+    release-validation/aab-derived \
+    "$keystore_path" \
+    | tail -n 1
+)"
+test -s "$derived_apk"
+printf '%s\n' "$derived_apk" > release-validation/aab-derived-apk-path.txt
 
 echo "AQL_RELEASE_CERT_SHA256=$actual" >> "$GITHUB_ENV"
