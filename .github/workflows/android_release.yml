@@ -79,8 +79,6 @@ jobs:
       - name: 01-03 Guard, Lint/Detekt and unit coverage
         id: quality
         shell: bash
-        env:
-          AQL_FIREBASE_PRODUCTION_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_PRODUCTION_CONFIG_BASE64 }}
         run: bash tools/release_pipeline/guard_quality.sh
 
       - name: 04 Instrumentation - prepare minified release smoke
@@ -133,7 +131,7 @@ jobs:
             app/build/reports/lint-results-*.xml
             app/build/reports/detekt/**
             app/build/reports/coverage/test/debug/**
-            app/build/reports/tests/testReleaseUnitTest/**
+            app/build/reports/tests/testReleaseSmokeUnitTest/**
             app/build/reports/androidTests/connected/**
             app/build/outputs/androidTest-results/connected/**
             release-smoke-*.txt
@@ -141,9 +139,12 @@ jobs:
             release-smoke-screens/**
           if-no-files-found: warn
 
-      - name: Remove CI-only signing material
+      - name: Remove CI-only material
         if: always()
-        run: rm -f release-key.jks
+        shell: bash
+        run: |
+          rm -f release-key.jks
+          find app/src -type f -name google-services.json -delete
 
   release:
     name: 05-09 Signing, build, checksum, attestation and publication
@@ -292,8 +293,10 @@ jobs:
             echo "\`gh attestation verify AquaLight-${AQL_RELEASE_VERSION}.aab --repo ${GITHUB_REPOSITORY}\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Cleanup production signing material
+      - name: Cleanup protected release material
         if: always()
+        shell: bash
         run: |
           rm -f release-key.jks
+          find app/src -type f -name google-services.json -delete
           rm -rf "${RUNNER_TEMP}/aqualight-signing"
