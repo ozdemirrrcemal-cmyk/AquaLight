@@ -24,6 +24,11 @@ include_apk="false"
 } >> "$GITHUB_OUTPUT"
 
 mkdir -p release-quality
+python3 tools/verify_android_api_matrix.py \
+  --summary release-quality/android-api-matrix.json
+python3 tools/verify_github_action_pinning.py \
+  --summary release-quality/github-action-pinning.json
+
 for guard in \
   architecture_guard.py \
   composition_root_guard.py \
@@ -96,11 +101,31 @@ for report in \
   test -s "$report"
 done
 
+mkdir -p release-quality/unit-tests
+set +e
 ./gradlew \
-  :app:createDebugUnitTestCoverageReport \
+  :app:testDebugUnitTest \
+  :app:testStagingUnitTest \
   :app:testReleaseUnitTest \
+  :app:createDebugUnitTestCoverageReport \
+  --continue \
   --no-daemon \
-  --stacktrace
+  --stacktrace \
+  2>&1 | tee release-quality/unit-tests/gradle-unit-tests.log
+unit_test_gradle_status=${PIPESTATUS[0]}
+set -e
+
+python3 tools/release_pipeline/verify_junit_reports.py \
+  --variant debug=app/build/test-results/testDebugUnitTest \
+  --variant staging=app/build/test-results/testStagingUnitTest \
+  --variant release=app/build/test-results/testReleaseUnitTest \
+  --allowlist config/testing/allowed-skipped-unit-tests.json \
+  --output release-quality/unit-tests
+
+if (( unit_test_gradle_status != 0 )); then
+  echo "Gradle reported a unit-test task failure: ${unit_test_gradle_status}" >&2
+  exit "$unit_test_gradle_status"
+fi
 
 coverage_dir="app/build/reports/coverage/test/debug"
 test -s "${coverage_dir}/report.xml"

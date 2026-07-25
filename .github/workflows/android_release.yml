@@ -29,6 +29,20 @@ env:
     -Dorg.gradle.daemon=false
 
 jobs:
+  security:
+    name: 00 Blocking CodeQL release gate
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    uses: ./.github/workflows/codeql.yml
+    with:
+      checkout_ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref }}
+      release_tag: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
+      release_gate: true
+    secrets:
+      firebase_production_config_base64: ${{ secrets.AQL_FIREBASE_PRODUCTION_CONFIG_BASE64 }}
+
   quality:
     name: 01-04 Guard, quality, coverage and instrumentation
     runs-on: ubuntu-latest
@@ -110,10 +124,10 @@ jobs:
             -noaudio -no-boot-anim -camera-back none
           script: bash tools/run_release_smoke.sh 27
 
-      - name: 04 Instrumentation - API 35
+      - name: 04 Instrumentation - API 36
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
-          api-level: 35
+          api-level: 36
           target: default
           arch: x86_64
           profile: pixel_2
@@ -122,7 +136,7 @@ jobs:
           emulator-options: >-
             -no-window -gpu swiftshader_indirect -no-snapshot-save
             -noaudio -no-boot-anim -camera-back none
-          script: bash tools/run_release_smoke.sh 35
+          script: bash tools/run_release_smoke.sh 36
 
       - name: Upload pre-signing quality evidence
         if: always()
@@ -149,11 +163,12 @@ jobs:
 
   release:
     name: 05-09 Signing, build, checksum, attestation and publication
-    needs: quality
+    needs: [quality, security]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     environment: production-release
     permissions:
+      actions: read
       attestations: write
       contents: read
       id-token: write
@@ -171,6 +186,49 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ needs.quality.outputs.release-tag }}
+
+      - name: Verify quality and CodeQL analyzed the same release commit
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test "${{ needs.security.outputs.release-commit }}" = "${AQL_RELEASE_COMMIT}"
+          test "$(git rev-parse HEAD)" = "${AQL_RELEASE_COMMIT}"
+
+      - name: Download blocking CodeQL release evidence
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        with:
+          name: ${{ needs.security.outputs.evidence-artifact }}
+          path: final-release/evidence/security
+
+      - name: Verify blocking CodeQL release evidence
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test -s final-release/evidence/security/codeql-analysis.json
+          test -s final-release/evidence/security/code-scanning-alerts.json
+          test -s final-release/evidence/security/codeql-summary.json
+          find final-release/evidence/security/sarif -type f -name '*.sarif' -size +0c -print -quit | grep -q .
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          summary = json.loads(
+              Path("final-release/evidence/security/codeql-summary.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          expected_commit = os.environ["AQL_RELEASE_COMMIT"]
+          expected_ref = f"refs/tags/{os.environ['AQL_RELEASE_TAG']}"
+          if summary.get("approved") is not True:
+              raise SystemExit("CodeQL evidence is not approved.")
+          if summary.get("releaseCommit") != expected_commit:
+              raise SystemExit("CodeQL evidence commit does not match the release commit.")
+          if summary.get("releaseRef") != expected_ref:
+              raise SystemExit("CodeQL evidence ref does not match the release tag.")
+          if summary.get("blockingAlertCount") != 0:
+              raise SystemExit("CodeQL evidence contains critical/high blocking alerts.")
+          PY
 
       - name: Install JDK 17
         uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
@@ -284,7 +342,7 @@ jobs:
             echo
             echo "Release: \`${{ needs.quality.outputs.release-tag }}\`"
             echo
-            echo "Enforced order: guard → lint/Detekt → unit test/coverage → instrumentation → signing → release build → checksum → SBOM/provenance → publication"
+            echo "Enforced order: CodeQL security → guard → lint/Detekt → unit test/coverage → instrumentation → signing → release build → checksum → SBOM/provenance → publication"
             echo
             echo "Verify the AAB attestation with:"
             echo
