@@ -85,10 +85,7 @@ jobs:
         run: |
           python3 -m unittest discover \
             -s tools/tests \
-            -p 'test_verify_stage14_policy.py'
-          python3 -m unittest discover \
-            -s tools/tests \
-            -p 'test_verify_stage14_junit_evidence.py'
+            -p 'test_*.py'
           python3 tools/verify_stage14_policy.py \
             --policy config/commercial/stage14-validation-policy.json \
             --app-gradle app/build.gradle \

@@ -32,7 +32,7 @@ python3 tools/verify_stage14_policy.py \
   --summary release-quality/stage14-policy-validation.json
 python3 -m unittest discover \
   -s tools/tests \
-  -p 'test_verify_stage14_junit_evidence.py'
+  -p 'test_*.py'
 
 for guard in \
   architecture_guard.py \

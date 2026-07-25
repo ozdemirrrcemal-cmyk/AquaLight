@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "releaseTag": "v0.0.0",
+  "releaseCommit": "0000000000000000000000000000000000000000",
+  "packageApproval": {
+    "approvedBy": "replace-with-release-manager-login",
+    "role": "release-manager",
+    "approvedAt": "2000-01-01T00:00:00Z",
+    "source": "production-release-environment-secret"
+  },
+  "gates": [
+    {
+      "id": "physical-phone-reboot",
+      "approved": false,
+      "executedAt": "2000-01-01T00:00:00Z",
+      "approvedBy": "replace-with-approver-login",
+      "approverRole": "qa-engineer",
+      "subject": "Replace with device model, OS build and test record",
+      "evidenceUri": "urn:aqualight:manual-evidence:replace-phone-reboot",
+      "evidenceSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "physical-permission-permanent-denial",
+      "approved": false,
+      "executedAt": "2000-01-01T00:00:00Z",
+      "approvedBy": "replace-with-approver-login",
+      "approverRole": "qa-engineer",
+      "subject": "Replace with real camera, BLE and notification denial record",
+      "evidenceUri": "urn:aqualight:manual-evidence:replace-permission-denial",
+      "evidenceSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "physical-network-power-interruption",
+      "approved": false,
+      "executedAt": "2000-01-01T00:00:00Z",
+      "approvedBy": "replace-with-approver-login",
+      "approverRole": "qa-engineer",
+      "subject": "Replace with physical Wi-Fi and power interruption record",
+      "evidenceUri": "urn:aqualight:manual-evidence:replace-network-power",
+      "evidenceSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "talkback",
+      "approved": false,
+      "executedAt": "2000-01-01T00:00:00Z",
+      "approvedBy": "replace-with-approver-login",
+      "approverRole": "accessibility-reviewer",
+      "subject": "Replace with real-device TalkBack review record",
+      "evidenceUri": "urn:aqualight:manual-evidence:replace-talkback",
+      "evidenceSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "privacy-terms-approval",
+      "approved": false,
+      "executedAt": "2000-01-01T00:00:00Z",
+      "approvedBy": "replace-with-legal-approver-login",
+      "approverRole": "legal-approver",
+      "subject": "Replace with approved Privacy Policy and Terms versions",
+      "evidenceUri": "urn:aqualight:manual-evidence:replace-privacy-terms",
+      "evidenceSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "physical-device-release-candidate",
+      "approved": false,
+      "executedAt": "2000-01-01T00:00:00Z",
+      "approvedBy": "replace-with-approver-login",
+      "approverRole": "release-manager",
+      "subject": "Replace with signed RC, device model and end-to-end test record",
+      "evidenceUri": "urn:aqualight:manual-evidence:replace-release-candidate",
+      "evidenceSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ]
+}

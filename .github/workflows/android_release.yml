@@ -34,6 +34,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     environment: production-release
+    permissions:
+      contents: read
+      issues: read
     outputs:
       release-tag: ${{ steps.quality.outputs.release-tag }}
       release-version: ${{ steps.quality.outputs.release-version }}
@@ -86,6 +89,23 @@ jobs:
         env:
           AQL_FIREBASE_PRODUCTION_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_PRODUCTION_CONFIG_BASE64 }}
         run: bash tools/release_pipeline/guard_quality.sh
+
+      - name: Inventory open release blockers
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+          gh api --paginate --slurp \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "repos/${GITHUB_REPOSITORY}/issues?state=open&per_page=100" \
+            > release-quality/open-issues-pages.json
+          python3 tools/verify_release_blockers.py \
+            --issues release-quality/open-issues-pages.json \
+            --repository "${GITHUB_REPOSITORY}" \
+            --commit "${{ steps.quality.outputs.release-commit }}" \
+            --summary release-quality/release-blocker-inventory.json
 
       - name: Upload pre-security quality evidence
         if: always()
@@ -359,9 +379,11 @@ jobs:
     timeout-minutes: 60
     environment: production-release
     permissions:
+      actions: read
       attestations: write
       contents: read
       id-token: write
+      issues: read
     env:
       AQL_RELEASE_TAG: ${{ needs.quality.outputs.release-tag }}
       AQL_RELEASE_VERSION: ${{ needs.quality.outputs.release-version }}
@@ -404,6 +426,18 @@ jobs:
           name: AquaLight-CodeQL-${{ needs.quality.outputs.release-tag }}
           path: final-release/supply-chain/security/codeql
 
+      - name: Download verified quality evidence
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: AquaLight-Pre-Security-Quality-${{ needs.quality.outputs.release-tag }}
+          path: final-release/validation/quality
+
+      - name: Download verified instrumentation evidence
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: AquaLight-Instrumentation-${{ needs.quality.outputs.release-tag }}
+          path: final-release/validation/instrumentation
+
       - name: Reverify CodeQL evidence identity
         shell: bash
         run: |
@@ -412,6 +446,24 @@ jobs:
             --sarif-dir final-release/supply-chain/security/codeql \
             --commit "${AQL_RELEASE_COMMIT}" \
             --summary final-release/supply-chain/security/codeql/codeql-summary.json
+
+      - name: Verify protected manual acceptance evidence
+        shell: bash
+        env:
+          AQL_STAGE14_MANUAL_ACCEPTANCE_BASE64: ${{ secrets.AQL_STAGE14_MANUAL_ACCEPTANCE_BASE64 }}
+        run: |
+          set -Eeuo pipefail
+          value="${AQL_STAGE14_MANUAL_ACCEPTANCE_BASE64:-}"
+          [[ -n "${value//[[:space:]]/}" ]]
+          umask 077
+          acceptance="${RUNNER_TEMP}/stage14-manual-acceptance.json"
+          printf '%s' "$value" | base64 --decode > "$acceptance"
+          python3 tools/verify_manual_acceptance.py \
+            --acceptance "$acceptance" \
+            --release-tag "${AQL_RELEASE_TAG}" \
+            --commit "${AQL_RELEASE_COMMIT}" \
+            --summary final-release/validation/manual-acceptance.json
+          rm -f "$acceptance"
 
       - name: 06-07 Signing and release build
         shell: bash
@@ -486,6 +538,24 @@ jobs:
         with:
           subject-path: final-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.apk
           sbom-path: final-release/supply-chain/AquaLight-${{ needs.quality.outputs.release-version }}.apk.spdx.json
+
+      - name: Recheck release blockers immediately before final evidence
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+          mkdir -p final-release/validation
+          gh api --paginate --slurp \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "repos/${GITHUB_REPOSITORY}/issues?state=open&per_page=100" \
+            > final-release/validation/open-issues-pages.json
+          python3 tools/verify_release_blockers.py \
+            --issues final-release/validation/open-issues-pages.json \
+            --repository "${GITHUB_REPOSITORY}" \
+            --commit "${AQL_RELEASE_COMMIT}" \
+            --summary final-release/validation/release-blocker-inventory.json
 
       - name: 08 Provenance - materialize and verify evidence
         shell: bash

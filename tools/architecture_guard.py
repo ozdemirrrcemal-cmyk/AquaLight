@@ -784,6 +784,146 @@ for token, reason in (
 ):
     require(release_quality_path, release_quality, token, reason)
 
+release_workflow_path = ".github/workflows/android_release.yml"
+release_workflow = read(release_workflow_path)
+for token, reason in (
+    (
+        "gh api --paginate --slurp",
+        "the controlled release must query the complete paginated issue inventory",
+    ),
+    (
+        "verify_release_blockers.py",
+        "the controlled release must fail closed on critical, high and untriaged issues",
+    ),
+    (
+        "AQL_STAGE14_MANUAL_ACCEPTANCE_BASE64",
+        "manual acceptance must come from the protected release environment",
+    ),
+    (
+        "verify_manual_acceptance.py",
+        "manual physical and legal gates must be machine-verified",
+    ),
+    (
+        "AquaLight-Pre-Security-Quality-",
+        "final evidence must retain the verified quality artifact",
+    ),
+    (
+        "AquaLight-Instrumentation-",
+        "final evidence must retain the verified API 27/36 artifact",
+    ),
+):
+    require(release_workflow_path, release_workflow, token, reason)
+
+blocker_verifier_path = "tools/verify_release_blockers.py"
+blocker_verifier = read(blocker_verifier_path)
+for token, reason in (
+    (
+        '"severity:critical"',
+        "the issue inventory must recognize the canonical critical label",
+    ),
+    (
+        '"severity:high"',
+        "the issue inventory must recognize the canonical high label",
+    ),
+    (
+        'RELEASE_BLOCKER_LABEL = "release:blocker"',
+        "the issue inventory must recognize the canonical release-blocker label",
+    ),
+    (
+        '"untriagedIssuesBlockRelease": True',
+        "missing issue triage must fail closed",
+    ),
+):
+    require(blocker_verifier_path, blocker_verifier, token, reason)
+
+manual_verifier_path = "tools/verify_manual_acceptance.py"
+manual_verifier = read(manual_verifier_path)
+for token, reason in (
+    (
+        '"physical-phone-reboot"',
+        "manual evidence must cover a real phone reboot",
+    ),
+    (
+        '"physical-network-power-interruption"',
+        "manual evidence must cover physical network and power interruption",
+    ),
+    (
+        '"privacy-terms-approval"',
+        "manual evidence must cover legal approval",
+    ),
+    (
+        '"physical-device-release-candidate"',
+        "manual evidence must cover the signed RC on a real device",
+    ),
+    (
+        '"production-release-environment-secret"',
+        "manual evidence must retain its protected-environment source",
+    ),
+):
+    require(manual_verifier_path, manual_verifier, token, reason)
+
+final_evidence_path = "tools/generate_stage14_final_evidence.py"
+final_evidence = read(final_evidence_path)
+for token, reason in (
+    (
+        "QUALITY_STAGE14_JSON",
+        "final evidence must enforce the exact named quality set",
+    ),
+    (
+        "INSTRUMENTATION_STAGE14_JSON",
+        "final evidence must enforce the exact API 27/36 set",
+    ),
+    (
+        '"release-mapping"',
+        "final evidence must retain the production obfuscation mapping",
+    ),
+    (
+        '"manual-acceptance"',
+        "final evidence must retain protected manual acceptance",
+    ),
+    (
+        '"approved-for-publication"',
+        "final evidence must expose an explicit publication decision",
+    ),
+):
+    require(final_evidence_path, final_evidence, token, reason)
+
+materialize_path = "tools/release_pipeline/materialize_evidence.sh"
+materialize = read(materialize_path)
+for token, reason in (
+    (
+        "generate_stage14_final_evidence.py",
+        "the supply-chain stage must generate the complete final manifest",
+    ),
+    (
+        "manualAcceptanceSha256",
+        "the release identity must bind protected manual evidence",
+    ),
+    (
+        "releaseBlockerInventorySha256",
+        "the release identity must bind the final blocker inventory",
+    ),
+):
+    require(materialize_path, materialize, token, reason)
+
+publication_path = "tools/release_pipeline/verify_publication.sh"
+publication = read(publication_path)
+for token, reason in (
+    (
+        "approved-for-publication",
+        "publication must require the explicit final decision",
+    ),
+    (
+        "Final artifact order does not match the Stage 14 policy",
+        "publication must reverify the complete artifact contract",
+    ),
+    (
+        "Artifact SHA-256 mismatch",
+        "publication must rehash every retained evidence file",
+    ),
+):
+    require(publication_path, publication, token, reason)
+
 pr_workflow_path = ".github/workflows/codeql.yml"
 pr_workflow = read(pr_workflow_path)
 for token, reason in (

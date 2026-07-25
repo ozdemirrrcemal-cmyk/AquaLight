@@ -143,7 +143,22 @@ Implementation:
 - [ ] Build the production-signed minified AAB and optional APK.
 - [ ] Verify mapping, signatures, checksums, SBOM and provenance.
 - [ ] Generate final JSON and Markdown evidence summaries.
-- [ ] Allow publication only when every automated requirement passes.
+- [ ] Allow publication only when every automated and protected manual requirement passes.
+
+Implementation:
+
+- The blocker inventory queries every open GitHub issue twice: once before the
+  security chain and again immediately before release assembly. Missing or
+  ambiguous severity triage fails closed.
+- Quality, CodeQL and API 27/36 instrumentation artifacts are downloaded from the
+  same workflow run. The final generator rejects missing, unknown, failed,
+  cross-commit or unsafe evidence files and hashes every retained artifact.
+- The six physical, accessibility and legal gates are accepted only through the
+  protected release environment contract documented in
+  `docs/commercial/stage-14-manual-acceptance.md`.
+- Production signing, mapping, checksum, SBOM and provenance remain incomplete
+  until the controlled tag workflow runs successfully with real protected
+  credentials and manual evidence.
 
 ## Required pipeline order
 

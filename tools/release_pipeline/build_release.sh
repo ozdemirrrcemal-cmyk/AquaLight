@@ -72,6 +72,9 @@ cp "$source_aab" "$aab"
 jarsigner -verify -verbose -certs "$aab" > "$artifacts/signed-aab-verification.txt" 2>&1
 aab_cert="$(keytool -printcert -jarfile "$aab" | sed -n 's/^[[:space:]]*SHA256:[[:space:]]*//p' | head -n 1)"
 [[ "$(normalize "$aab_cert")" == "$actual" ]]
+source_mapping="app/build/outputs/mapping/release/mapping.txt"
+test -s "$source_mapping"
+cp "$source_mapping" "$artifacts/AquaLight-${AQL_RELEASE_VERSION}-mapping.txt"
 
 if [[ "${AQL_INCLUDE_APK:-false}" == "true" ]]; then
   source_apk="$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' -print -quit)"
