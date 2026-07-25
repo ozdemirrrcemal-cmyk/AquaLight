@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+smoke_apk_path_file="release-smoke-apk-path.txt"
+mkdir -p release-quality
+rm -f "$smoke_apk_path_file"
+
 for token in \
   connectedDebugAndroidTest \
   verify_uninstall_clears_data.sh \
@@ -35,3 +39,5 @@ RELEASE_KEY_PASSWORD=aqualight-ci \
 smoke_apk="$(find app/build/outputs/apk/releaseSmoke -type f -name '*.apk' -print -quit)"
 test -n "$smoke_apk"
 test -s "$smoke_apk"
+printf '%s\n' "$smoke_apk" > "$smoke_apk_path_file"
+test -s "$smoke_apk_path_file"
