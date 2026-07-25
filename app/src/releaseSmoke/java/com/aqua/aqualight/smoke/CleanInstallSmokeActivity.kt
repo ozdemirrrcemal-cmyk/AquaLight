@@ -116,7 +116,7 @@ private class CleanInstallEvidenceCollector(
             putAll(privateStateCounts(preferences))
         }
         val checks = buildChecks(preferences, counts)
-        requirePassingState(checks, counts)
+        CountEvidence.requirePassingState(checks, counts)
         val packageInfo = activity.packageManager.getPackageInfo(
             activity.packageName,
             0
@@ -326,20 +326,6 @@ private class CleanInstallEvidenceCollector(
         return if (file.exists()) parse(file.readBytes()) else defaultValue()
     }
 
-    private fun requirePassingState(
-        checks: Map<String, Boolean>,
-        counts: Map<String, Int>
-    ) {
-        val failedChecks = checks.filterValues { passed -> !passed }.keys
-        check(failedChecks.isEmpty()) {
-            "Clean-install state checks failed: ${failedChecks.sorted()}"
-        }
-        val nonZeroCounts = counts.filterValues { count -> count != 0 }.keys
-        check(nonZeroCounts.isEmpty()) {
-            "Clean-install state counts were non-zero: ${nonZeroCounts.sorted()}"
-        }
-    }
-
 }
 
 private object PackageVersionReader {
@@ -364,6 +350,20 @@ private object CleanInstallJson {
 private object CountEvidence {
     fun isZero(counts: Map<String, Int>, key: String): Boolean =
         counts.getValue(key) == 0
+
+    fun requirePassingState(
+        checks: Map<String, Boolean>,
+        counts: Map<String, Int>
+    ) {
+        val failedChecks = checks.filterValues { passed -> !passed }.keys
+        check(failedChecks.isEmpty()) {
+            "Clean-install state checks failed: ${failedChecks.sorted()}"
+        }
+        val nonZeroCounts = counts.filterValues { count -> count != 0 }.keys
+        check(nonZeroCounts.isEmpty()) {
+            "Clean-install state counts were non-zero: ${nonZeroCounts.sorted()}"
+        }
+    }
 }
 
 private object CleanInstallContract {
