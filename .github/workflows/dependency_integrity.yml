@@ -37,6 +37,9 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    env:
+      CI: "true"
+      AQL_FIREBASE_DEBUG_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_DEBUG_CONFIG_BASE64 }}
 
     steps:
       - name: Checkout
@@ -64,6 +67,16 @@ jobs:
       - name: Grant Gradle execute permission
         run: chmod +x ./gradlew
 
+      - name: Verify debug Firebase input
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          value="${AQL_FIREBASE_DEBUG_CONFIG_BASE64:-}"
+          if [[ -z "${value//[[:space:]]/}" ]]; then
+            echo "Required dependency-validation Firebase input is missing: AQL_FIREBASE_DEBUG_CONFIG_BASE64" >&2
+            exit 1
+          fi
+
       - name: Generate debug keystore
         run: |
           mkdir -p ~/.android
@@ -81,8 +94,6 @@ jobs:
           fi
 
       - name: Verify strict dependency locks and checksums
-        env:
-          CI: true
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -118,3 +129,7 @@ jobs:
             build/reports/dependency-integrity-summary.json
             build/reports/dependency-verification/
           if-no-files-found: warn
+
+      - name: Remove generated Firebase configuration
+        if: always()
+        run: rm -f app/src/debug/google-services.json

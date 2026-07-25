@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 API_LEVEL="${1:-unknown}"
-PACKAGE_NAME="com.aqua.aqualight"
+PACKAGE_NAME="com.aqua.aqualight.smoke"
 SMOKE_ACTIVITY="com.aqua.aqualight.smoke.ReleaseSmokeActivity"
 SMOKE_COMPONENT="${PACKAGE_NAME}/${SMOKE_ACTIVITY}"
 ACCOUNT_DELETION_SMOKE_ACTIVITY="com.aqua.aqualight.smoke.AccountDeletionProcessDeathSmokeActivity"

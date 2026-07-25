@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+release_smoke_config="${AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64:-}"
+if [[ -z "${release_smoke_config//[[:space:]]/}" ]]; then
+  echo "AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64 is required." >&2
+  exit 1
+fi
+
 smoke_apk_path_file="release-smoke-apk-path.txt"
 mkdir -p release-quality
 rm -f "$smoke_apk_path_file"

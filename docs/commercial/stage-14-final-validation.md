@@ -41,12 +41,12 @@ Acceptance criteria:
 
 ### 2. Make Firebase production configuration environment-scoped and fail-closed
 
-- [ ] Remove repository and legacy production configuration fallback.
-- [ ] Separate debug, staging, release-smoke and production identities.
-- [ ] Require protected production configuration for real release builds.
-- [ ] Reject missing, malformed, wrong-package or duplicate Firebase project configurations.
-- [ ] Prohibit tracked `google-services.json` files.
-- [ ] Validate all affected Gradle tasks and CI workflows before completion.
+- [x] Remove repository and legacy production configuration fallback.
+- [x] Separate debug, staging, release-smoke and production identities.
+- [x] Require protected production configuration for real release builds.
+- [x] Reject missing, malformed, wrong-package or duplicate Firebase project configurations.
+- [x] Prohibit tracked `google-services.json` files.
+- [x] Validate all affected Gradle tasks and CI workflows before completion.
 
 ### 3. Add a machine-readable Stage 14 validation policy
 

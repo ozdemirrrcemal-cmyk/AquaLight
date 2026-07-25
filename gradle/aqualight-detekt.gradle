@@ -1,0 +1,107 @@
+project(":app") {
+    def detektVersion = "1.23.8"
+    def detektCli = configurations.create("detektCli") {
+        canBeConsumed = false
+        canBeResolved = true
+        visible = false
+    }
+    dependencies.add(detektCli.name, "io.gitlab.arturbosch.detekt:detekt-cli:${detektVersion}")
+
+    def detektConfigFile = layout.buildDirectory.file("generated/detekt/aqualight-detekt.yml")
+    def detektXmlReport = layout.buildDirectory.file("reports/lint-results-detekt.xml").get().asFile
+    def detektHtmlReport = layout.buildDirectory.file("reports/lint-results-detekt.html").get().asFile
+    def detektSarifReport = layout.buildDirectory.file("reports/detekt/detekt.sarif").get().asFile
+    def detektSourceDirectories = [
+            file("src/main/java"),
+            file("src/main/kotlin"),
+            file("src/test/java"),
+            file("src/test/kotlin"),
+            file("src/androidTest/java"),
+            file("src/androidTest/kotlin"),
+            file("src/debug/java"),
+            file("src/staging/java"),
+            file("src/release/java"),
+            file("src/releaseSmoke/java")
+    ].findAll { sourceDirectory -> sourceDirectory.isDirectory() }
+
+    def prepareDetektConfig = tasks.register("prepareDetektConfig") {
+        group = "verification"
+        description = "Materializes the deterministic AquaLight Detekt policy."
+        outputs.file(detektConfigFile)
+
+        doLast {
+            def target = detektConfigFile.get().asFile
+            target.parentFile.mkdirs()
+            [detektXmlReport, detektHtmlReport, detektSarifReport].each { report ->
+                report.parentFile.mkdirs()
+            }
+            target.setText('''build:
+  maxIssues: 0
+  excludeCorrectable: false
+  weights:
+    comments: 0
+    complexity: 0
+    coroutines: 0
+    empty-blocks: 0
+    exceptions: 0
+    naming: 0
+    performance: 0
+    potential-bugs: 0
+    style: 0
+    ExplicitGarbageCollectionCall: 1
+    InvalidRange: 1
+    NotImplementedDeclaration: 1
+    UnreachableCode: 1
+
+config:
+  validation: true
+  warningsAsErrors: true
+
+exceptions:
+  NotImplementedDeclaration:
+    active: true
+
+potential-bugs:
+  ExplicitGarbageCollectionCall:
+    active: true
+  InvalidRange:
+    active: true
+  UnreachableCode:
+    active: true
+''', "UTF-8")
+        }
+    }
+
+    def detektGate = tasks.register("detekt", JavaExec) {
+        group = "verification"
+        description = "Runs the deterministic AquaLight Kotlin static-analysis gate."
+        dependsOn(prepareDetektConfig)
+        classpath = detektCli
+        mainClass.set("io.gitlab.arturbosch.detekt.cli.Main")
+
+        inputs.files(detektSourceDirectories)
+                .withPropertyName("detektSources")
+                .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.file(detektConfigFile)
+                .withPropertyName("detektConfig")
+                .withPathSensitivity(PathSensitivity.RELATIVE)
+        outputs.files(detektXmlReport, detektHtmlReport, detektSarifReport)
+
+        args(
+                "--input", detektSourceDirectories.collect { it.absolutePath }.join(","),
+                "--config", detektConfigFile.get().asFile.absolutePath,
+                "--build-upon-default-config",
+                "--parallel",
+                "--base-path", rootProject.projectDir.absolutePath,
+                "--report", "xml:${detektXmlReport.absolutePath}",
+                "--report", "html:${detektHtmlReport.absolutePath}",
+                "--report", "sarif:${detektSarifReport.absolutePath}"
+        )
+    }
+
+    tasks.matching { task ->
+        task.name in ["lintDebug", "lintStaging", "lintRelease"]
+    }.configureEach {
+        dependsOn(detektGate)
+    }
+}

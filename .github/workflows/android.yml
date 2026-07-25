@@ -31,7 +31,10 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      CI: "true"
       GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8" -Dorg.gradle.daemon=false
+      AQL_FIREBASE_DEBUG_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_DEBUG_CONFIG_BASE64 }}
+      AQL_FIREBASE_STAGING_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_STAGING_CONFIG_BASE64 }}
       AQL_OTA_MANIFEST_PUBLIC_KEY_PEM: ${{ secrets.AQL_OTA_MANIFEST_PUBLIC_KEY_PEM }}
       AQL_OTA_MANIFEST_KEY_ID: ${{ secrets.AQL_OTA_MANIFEST_KEY_ID }}
 
@@ -63,7 +66,6 @@ jobs:
           echo "Installed packages (first 120 lines):"
           sdkmanager --list | sed -n '1,120p' || true
 
-      # Cache restore, sadece TEMİZ İSTENMİYORSA yapılır
       - name: Cache Gradle build-cache
         if: ${{ !contains(github.event.head_commit.message, 'clean') && !contains(github.event.head_commit.message, 'clean-cache') }}
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
@@ -91,29 +93,40 @@ jobs:
           python3 tools/design_system_resource_guard.py
           python3 tools/localization_accessibility_guard.py
 
-      # İsteğe bağlı: bağımlılık modül cache'lerini temizle (refresh-deps)
-      - name: 🔄 Force refresh dependencies (optional)
+      - name: Force refresh dependencies (optional)
         if: contains(github.event.head_commit.message, 'refresh-deps')
         run: |
           rm -rf ~/.gradle/caches/modules-2 ~/.gradle/caches/transforms-* ~/.gradle/caches/jars-* || true
           echo "Gradle module caches cleared."
 
-      # İsteğe bağlı: TAM TEMİZLEME – commit mesajında 'clean' veya 'clean-cache' varsa
-      # (setup-java ve cache restore'dan SONRA konumlandırıldı ki gerçekten silsin)
-      - name: 🧹 Hard clean caches & outputs (on demand)
+      - name: Hard clean caches and outputs (on demand)
         if: ${{ contains(github.event.head_commit.message, 'clean') || contains(github.event.head_commit.message, 'clean-cache') }}
         run: |
-          echo "💥 Hard clean requested. Purging Gradle caches and build outputs..."
+          echo "Hard clean requested. Purging Gradle caches and build outputs..."
           rm -rf ~/.gradle/caches ~/.gradle/daemon ~/.gradle/native ~/.gradle/wrapper || true
           rm -rf **/build build app/build || true
 
-      - name: Clean project (light)
+      - name: Clean project
         run: ./gradlew clean --no-daemon
 
       - name: Verify resolved Firebase runtime policy
         run: ./gradlew :app:verifyFirebaseRuntimePolicy --no-daemon --stacktrace
 
-      - name: Generate debug keystore (if missing)
+      - name: Verify non-production Firebase inputs
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          for name in \
+            AQL_FIREBASE_DEBUG_CONFIG_BASE64 \
+            AQL_FIREBASE_STAGING_CONFIG_BASE64; do
+            value="${!name:-}"
+            if [[ -z "${value//[[:space:]]/}" ]]; then
+              echo "Required non-production Firebase input is missing: ${name}" >&2
+              exit 1
+            fi
+          done
+
+      - name: Generate debug keystore
         run: |
           mkdir -p ~/.android
           if [ ! -s ~/.android/debug.keystore ]; then
@@ -129,14 +142,13 @@ jobs:
               -dname "CN=Android,O=AquaLight,C=TR"
           fi
 
-      - name: Run standard Android Lint gate
+      - name: Run non-production Android Lint gate
         shell: bash
         run: |
           set -Eeuo pipefail
           ./gradlew \
             :app:lintDebug \
             :app:lintStaging \
-            :app:lintRelease \
             --continue \
             --no-daemon \
             --stacktrace \
@@ -150,7 +162,6 @@ jobs:
           required_reports=(
             app/build/reports/lint-results-debug.xml
             app/build/reports/lint-results-staging.xml
-            app/build/reports/lint-results-release.xml
           )
           for report in "${required_reports[@]}"; do
             if [[ ! -s "$report" ]]; then
@@ -158,7 +169,7 @@ jobs:
               exit 1
             fi
           done
-          echo "Android Lint reports verified for debug, staging and production release."
+          echo "Android Lint reports verified for debug and staging."
 
       - name: Upload Android Lint reports
         if: always()
@@ -218,7 +229,7 @@ jobs:
       - name: Verify merged manifest telemetry policy
         run: python3 tools/firebase_telemetry_guard.py --scan-build-output
 
-      - name: 📋 Dump debugRuntimeClasspath (on failure)
+      - name: Dump debugRuntimeClasspath on failure
         if: failure()
         run: ./gradlew :app:dependencies --configuration debugRuntimeClasspath --no-daemon
 
@@ -227,9 +238,9 @@ jobs:
           set -e
           ls -la app/build/outputs/apk/debug || true
           if [ -f app/build/outputs/apk/debug/app-debug.apk ]; then
-            echo "✅ APK bulundu"
+            echo "Debug APK found."
           else
-            echo "❌ APK yok"
+            echo "Debug APK missing." >&2
             exit 1
           fi
 
@@ -238,3 +249,10 @@ jobs:
         with:
           name: app-debug-${{ github.run_number }}
           path: app/build/outputs/apk/debug/*.apk
+
+      - name: Remove generated Firebase configurations
+        if: always()
+        shell: bash
+        run: |
+          rm -f app/src/debug/google-services.json
+          rm -f app/src/staging/google-services.json

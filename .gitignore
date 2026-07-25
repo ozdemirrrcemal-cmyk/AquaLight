@@ -66,5 +66,5 @@ reports/
 # --- Node / Firebase maintenance ---
 **/node_modules/
 
-# --- (Opsiyonel) Firebase dosyası ---
+# --- Firebase execution-time configuration (never tracked) ---
 **/google-services.json

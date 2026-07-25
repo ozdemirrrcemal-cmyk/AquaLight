@@ -33,6 +33,7 @@ jobs:
     name: 01-04 Guard, quality, coverage and instrumentation
     runs-on: ubuntu-latest
     timeout-minutes: 150
+    environment: production-release
     outputs:
       release-tag: ${{ steps.quality.outputs.release-tag }}
       release-version: ${{ steps.quality.outputs.release-version }}
@@ -42,6 +43,9 @@ jobs:
       CI: "true"
       AQL_RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
       AQL_INCLUDE_APK: ${{ github.event_name == 'workflow_dispatch' && inputs.include_apk || false }}
+      AQL_FIREBASE_DEBUG_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_DEBUG_CONFIG_BASE64 }}
+      AQL_FIREBASE_STAGING_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_STAGING_CONFIG_BASE64 }}
+      AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64 }}
       AQL_OTA_MANIFEST_PUBLIC_KEY_PEM: ${{ secrets.AQL_OTA_MANIFEST_PUBLIC_KEY_PEM }}
       AQL_OTA_MANIFEST_KEY_ID: ${{ secrets.AQL_OTA_MANIFEST_KEY_ID }}
 
@@ -83,10 +87,17 @@ jobs:
           AQL_FIREBASE_PRODUCTION_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_PRODUCTION_CONFIG_BASE64 }}
         run: bash tools/release_pipeline/guard_quality.sh
 
+      - name: Remove generated Firebase configurations after quality gates
+        if: always()
+        shell: bash
+        run: |
+          rm -f app/src/debug/google-services.json
+          rm -f app/src/staging/google-services.json
+          rm -f app/src/releaseSmoke/google-services.json
+          rm -f app/src/release/google-services.json
+
       - name: 04 Instrumentation - prepare minified release smoke
         shell: bash
-        env:
-          AQL_FIREBASE_PRODUCTION_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_PRODUCTION_CONFIG_BASE64 }}
         run: bash tools/release_pipeline/prepare_instrumentation.sh
 
       - name: Enable KVM group permissions
@@ -143,9 +154,15 @@ jobs:
             release-smoke-screens/**
           if-no-files-found: warn
 
-      - name: Remove CI-only signing material
+      - name: Remove CI-only material
         if: always()
-        run: rm -f release-key.jks
+        shell: bash
+        run: |
+          rm -f release-key.jks
+          rm -f app/src/debug/google-services.json
+          rm -f app/src/staging/google-services.json
+          rm -f app/src/releaseSmoke/google-services.json
+          rm -f app/src/release/google-services.json
 
   release:
     name: 05-09 Signing, build, checksum, attestation and publication
@@ -196,6 +213,9 @@ jobs:
       - name: 05-06 Signing and release build
         shell: bash
         env:
+          AQL_FIREBASE_DEBUG_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_DEBUG_CONFIG_BASE64 }}
+          AQL_FIREBASE_STAGING_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_STAGING_CONFIG_BASE64 }}
+          AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64 }}
           AQL_FIREBASE_PRODUCTION_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_PRODUCTION_CONFIG_BASE64 }}
           RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
@@ -203,6 +223,15 @@ jobs:
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
           RELEASE_SIGNING_CERT_SHA256: ${{ secrets.RELEASE_SIGNING_CERT_SHA256 }}
         run: bash tools/release_pipeline/build_release.sh
+
+      - name: Remove generated Firebase configurations after release build
+        if: always()
+        shell: bash
+        run: |
+          rm -f app/src/debug/google-services.json
+          rm -f app/src/staging/google-services.json
+          rm -f app/src/releaseSmoke/google-services.json
+          rm -f app/src/release/google-services.json
 
       - name: 07 Checksum - generate and verify SHA-256 manifests
         shell: bash
@@ -291,8 +320,13 @@ jobs:
             echo "\`gh attestation verify AquaLight-${AQL_RELEASE_VERSION}.aab --repo ${GITHUB_REPOSITORY}\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Cleanup production signing material
+      - name: Cleanup production signing and Firebase material
         if: always()
+        shell: bash
         run: |
           rm -f release-key.jks
+          rm -f app/src/debug/google-services.json
+          rm -f app/src/staging/google-services.json
+          rm -f app/src/releaseSmoke/google-services.json
+          rm -f app/src/release/google-services.json
           rm -rf "${RUNNER_TEMP}/aqualight-signing"

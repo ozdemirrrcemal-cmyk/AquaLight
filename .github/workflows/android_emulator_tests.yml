@@ -6,6 +6,7 @@ on:
     paths:
       - ".github/workflows/android_emulator_tests.yml"
       - "app/**"
+      - "build.gradle"
       - "gradle/**"
       - "gradlew"
       - "gradle.properties"
@@ -24,6 +25,10 @@ jobs:
     name: Emulator API ${{ matrix.api-level }}
     runs-on: ubuntu-latest
     timeout-minutes: 55
+    env:
+      CI: "true"
+      AQL_FIREBASE_DEBUG_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_DEBUG_CONFIG_BASE64 }}
+      AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64 }}
 
     strategy:
       fail-fast: false
@@ -51,6 +56,20 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+
+      - name: Verify non-production Firebase inputs
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          for name in \
+            AQL_FIREBASE_DEBUG_CONFIG_BASE64 \
+            AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64; do
+            value="${!name:-}"
+            if [[ -z "${value//[[:space:]]/}" ]]; then
+              echo "Required emulator Firebase input is missing: ${name}" >&2
+              exit 1
+            fi
+          done
 
       - name: Verify release-smoke runner contract
         run: |
@@ -134,6 +153,10 @@ jobs:
             release-smoke-screens/**
           if-no-files-found: ignore
 
-      - name: Remove CI-only release keystore
+      - name: Remove CI-only build material
         if: always()
-        run: rm -f release-key.jks
+        shell: bash
+        run: |
+          rm -f release-key.jks
+          rm -f app/src/debug/google-services.json
+          rm -f app/src/releaseSmoke/google-services.json

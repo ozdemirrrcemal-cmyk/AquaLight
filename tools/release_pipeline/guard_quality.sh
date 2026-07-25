@@ -78,6 +78,17 @@ export RELEASE_KEY_ALIAS=aqualight-ci
 export RELEASE_KEY_PASSWORD=aqualight-ci
 
 ./gradlew \
+  :app:verifyFirebaseConfigurationContract \
+  :app:verifyFirebaseEnvironmentIsolation \
+  :app:verifyFirebaseRuntimePolicy \
+  --no-daemon \
+  --stacktrace \
+  2>&1 | tee release-quality/firebase-configuration.log
+
+test -s app/build/reports/firebase/configuration-contract.json
+test -s app/build/reports/firebase/environment-isolation.json
+
+./gradlew \
   :app:detekt \
   :app:lintDebug \
   :app:lintStaging \
