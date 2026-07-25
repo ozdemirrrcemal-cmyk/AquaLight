@@ -1,6 +1,33 @@
 name: CodeQL Security Scan
 
 on:
+  workflow_call:
+    inputs:
+      checkout_ref:
+        description: Branch, tag, or commit to analyze
+        required: false
+        default: ""
+        type: string
+      release_tag:
+        description: Canonical vMAJOR.MINOR.PATCH tag for a blocking release scan
+        required: false
+        default: ""
+        type: string
+      release_gate:
+        description: Enforce exact-ref processing and block critical/high alerts
+        required: false
+        default: false
+        type: boolean
+    secrets:
+      firebase_production_config_base64:
+        required: false
+    outputs:
+      release-commit:
+        description: Exact commit analyzed by CodeQL
+        value: ${{ jobs.analyze.outputs.release-commit }}
+      evidence-artifact:
+        description: Blocking release CodeQL evidence artifact name
+        value: ${{ jobs.analyze.outputs.evidence-artifact }}
   workflow_dispatch:
   push:
     branches: [ "main", "release" ]
@@ -17,6 +44,16 @@ jobs:
   analyze:
     name: Analyze Kotlin/Java
     runs-on: ubuntu-latest
+    timeout-minutes: 150
+    outputs:
+      release-commit: ${{ steps.identity.outputs.release-commit }}
+      evidence-artifact: ${{ steps.release-evidence.outputs.artifact-name }}
+    env:
+      CI: "true"
+      AQL_RELEASE_GATE: ${{ inputs.release_gate || false }}
+      AQL_RELEASE_TAG: ${{ inputs.release_tag || '' }}
+      AQL_FIREBASE_PRODUCTION_CONFIG_BASE64: >-
+        ${{ secrets.firebase_production_config_base64 || secrets.AQL_FIREBASE_PRODUCTION_CONFIG_BASE64 }}
 
     strategy:
       fail-fast: false
@@ -26,6 +63,37 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.checkout_ref != '' && inputs.checkout_ref || github.ref }}
+
+      - name: Resolve exact CodeQL identity
+        id: identity
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          checked_out_commit="$(git rev-parse HEAD)"
+          codeql_ref="${GITHUB_REF}"
+
+          if [[ "${AQL_RELEASE_GATE}" == "true" ]]; then
+            if [[ ! "${AQL_RELEASE_TAG}" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+              echo "Release CodeQL gate requires vMAJOR.MINOR.PATCH, got: ${AQL_RELEASE_TAG}" >&2
+              exit 1
+            fi
+
+            git fetch --force --tags origin
+            git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+            release_commit="$(git rev-list -n 1 "${AQL_RELEASE_TAG}")"
+            test -n "${release_commit}"
+            test "${checked_out_commit}" = "${release_commit}"
+            git merge-base --is-ancestor "${release_commit}" origin/main
+            codeql_ref="refs/tags/${AQL_RELEASE_TAG}"
+          else
+            release_commit="${checked_out_commit}"
+          fi
+
+          echo "release-commit=${release_commit}" >> "${GITHUB_OUTPUT}"
+          echo "codeql-ref=${codeql_ref}" >> "${GITHUB_OUTPUT}"
 
       - name: Install JDK 17
         uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
@@ -38,12 +106,15 @@ jobs:
         uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
 
       - name: Install SDK packages
+        shell: bash
         run: |
-          yes | sdkmanager --licenses >/dev/null
-          sdkmanager "platform-tools" "platforms;android-36"
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+          set -Eeu
+          set +o pipefail
+          yes 2>/dev/null | sdkmanager --licenses >/dev/null
+          set -o pipefail
+          sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
+          sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1"
+          chmod +x gradlew
 
       - name: Run architecture and navigation guards
         shell: bash
@@ -150,6 +221,56 @@ jobs:
           test -s app/build/outputs/apk/release/AquaLight.apk
           test -s app/build/outputs/mapping/release/mapping.txt
 
+      - name: Perform CodeQL Analysis and wait for processing
+        id: codeql
+        uses: github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
+        with:
+          output: codeql-results
+          post-processed-sarif-path: release-quality/security/sarif
+          upload-database: false
+          wait-for-processing: true
+          category: ${{ inputs.release_gate && 'aqualight-release-java-kotlin' || 'aqualight-java-kotlin' }}
+          ref: ${{ steps.identity.outputs.codeql-ref }}
+          sha: ${{ steps.identity.outputs.release-commit }}
+
+      - name: Enforce exact release CodeQL alert gate
+        if: ${{ inputs.release_gate }}
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python3 tools/release_pipeline/verify_codeql_release_gate.py \
+            --repository "${GITHUB_REPOSITORY}" \
+            --commit "${{ steps.identity.outputs.release-commit }}" \
+            --ref "${{ steps.identity.outputs.codeql-ref }}" \
+            --category "aqualight-release-java-kotlin" \
+            --sarif-directory release-quality/security/sarif \
+            --analysis-output release-quality/security/codeql-analysis.json \
+            --alerts-output release-quality/security/code-scanning-alerts.json \
+            --summary-output release-quality/security/codeql-summary.json
+
+      - name: Prepare blocking release security evidence
+        id: release-evidence
+        if: ${{ inputs.release_gate }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          artifact_name="AquaLight-CodeQL-${AQL_RELEASE_TAG}"
+          test -s release-quality/security/codeql-analysis.json
+          test -s release-quality/security/code-scanning-alerts.json
+          test -s release-quality/security/codeql-summary.json
+          find release-quality/security/sarif -type f -name '*.sarif' -size +0c -print -quit | grep -q .
+          echo "artifact-name=${artifact_name}" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload blocking release security evidence
+        if: ${{ inputs.release_gate }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ steps.release-evidence.outputs.artifact-name }}
+          path: release-quality/security/
+          if-no-files-found: error
+          retention-days: 90
+
       - name: Upload validation logs
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -158,6 +279,7 @@ jobs:
           path: |
             architecture-guards.log
             codeql-extraction-build.log
+            codeql-results/**
             unit-test.log
             unit-test-release.log
             lint-debug.log
@@ -174,10 +296,3 @@ jobs:
       - name: Remove CI-only release keystore
         if: always()
         run: rm -f release-key.jks
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
-        with:
-          output: codeql-results
-          upload-database: false
-          wait-for-processing: false
