@@ -134,15 +134,19 @@ class AqlBleProvisioningScanner(
     }
 
     private fun upsertCandidate(result: ScanResult) {
-        val address = runCatching { result.device.address }
-            .getOrNull()
-            ?.takeIf { value -> value.isNotBlank() }
-            ?: return
+        val address = try {
+            result.device.address
+        } catch (_: SecurityException) {
+            return
+        }.takeIf { value -> value.isNotBlank() } ?: return
 
         val now = clockMillis()
-        val fallbackName = runCatching { result.device.name }
-            .getOrNull()
-            .orEmpty()
+        val bluetoothName = try {
+            result.device.name.orEmpty()
+        } catch (_: SecurityException) {
+            ""
+        }
+        val fallbackName = bluetoothName
             .ifBlank { result.scanRecord?.deviceName.orEmpty() }
             .ifBlank { "AquaLight Device" }
 

@@ -568,25 +568,25 @@ object TankPdfExporter {
         titlePaint
       )
 
-     y += 23f
+      y += 23f
 
       canvas.drawText(
         "${texts.labelTankName}: ${tankName.ifBlank { texts.noValue }}",
         PAGE_MARGIN,
         y,
         subtitlePaint
-    )
+      )
 
       y += 15f
 
       canvas.drawText(
         "${texts.labelGenerated}: $generatedDate",
         PAGE_MARGIN,
-       y,
+        y,
         subtitlePaint
-    )
+      )
 
-    y += 16f
+      y += 16f
 
       canvas.drawLine(
         PAGE_MARGIN,
@@ -596,7 +596,7 @@ object TankPdfExporter {
         linePaint
       )
 
-    y += 20f
+      y += 20f
     }
 
     fun drawTankPhoto(

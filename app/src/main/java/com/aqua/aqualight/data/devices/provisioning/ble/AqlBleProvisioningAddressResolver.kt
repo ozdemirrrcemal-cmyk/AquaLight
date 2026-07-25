@@ -254,9 +254,11 @@ class AqlBleProvisioningAddressResolver(
 
     private fun ScanResult.toScanCandidate(address: String): ScanCandidate {
         val advertisedName = scanRecord?.deviceName.orEmpty()
-        val deviceName = runCatching {
-            device.name
-        }.getOrNull().orEmpty()
+        val deviceName = try {
+            device.name.orEmpty()
+        } catch (_: SecurityException) {
+            ""
+        }
 
         return ScanCandidate(
             address = address,

@@ -101,6 +101,11 @@ for report in \
   test -s "$report"
 done
 
+python3 tools/release_pipeline/run_strict_release_lint.py \
+  --project-file app/build.gradle \
+  --gradle ./gradlew \
+  --output-directory release-quality/lint/strict-release
+
 mkdir -p release-quality/unit-tests
 set +e
 ./gradlew \
