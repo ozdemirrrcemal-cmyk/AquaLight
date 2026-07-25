@@ -18,6 +18,7 @@ REMOTE_WINDOW_DUMP="/sdcard/${WINDOW_DUMP}"
 ORIGINAL_FONT_SCALE="$(adb shell settings get system font_scale 2>/dev/null | tr -d '\r')"
 ORIGINAL_FORCE_RTL="$(adb shell settings get global debug.force_rtl 2>/dev/null | tr -d '\r')"
 ORIGINAL_FORCE_RTL_PROP="$(adb shell getprop debug.force_rtl 2>/dev/null | tr -d '\r')"
+ORIGINAL_HIDE_ERROR_DIALOGS="$(adb shell settings get global hide_error_dialogs 2>/dev/null | tr -d '\r')"
 
 exec > >(tee "$RUN_LOG") 2>&1
 
@@ -46,7 +47,75 @@ restore_setting() {
 restore_device_configuration() {
   restore_setting system font_scale "$ORIGINAL_FONT_SCALE"
   restore_setting global debug.force_rtl "$ORIGINAL_FORCE_RTL"
+  restore_setting global hide_error_dialogs "$ORIGINAL_HIDE_ERROR_DIALOGS"
   adb shell setprop debug.force_rtl "$ORIGINAL_FORCE_RTL_PROP" >/dev/null 2>&1 || true
+}
+
+# Android 16 headless emulator images can occasionally surface a launcher-only ANR
+# above the application under test. Dismiss only known system launcher dialogs. An
+# AquaLight or unknown process ANR remains a hard failure and is never hidden.
+dismiss_known_system_anr() {
+  local_dump="$1"
+  coordinates="$(python3 - "$local_dump" <<'PY'
+from __future__ import annotations
+
+import re
+import sys
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+path = Path(sys.argv[1])
+try:
+    root = ET.parse(path).getroot()
+except (OSError, ET.ParseError):
+    raise SystemExit(1)
+
+allowed_titles = (
+    "Quickstep isn't responding",
+    "System UI isn't responding",
+    "Pixel Launcher isn't responding",
+    "Launcher3 isn't responding",
+)
+titles = {
+    node.attrib.get("text", "").strip()
+    for node in root.iter()
+    if node.attrib.get("resource-id") == "android:id/alertTitle"
+}
+if not any(title in allowed_titles for title in titles):
+    raise SystemExit(1)
+
+for node in root.iter():
+    if node.attrib.get("resource-id") != "android:id/aerr_close":
+        continue
+    match = re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", node.attrib.get("bounds", ""))
+    if match is None:
+        continue
+    left, top, right, bottom = map(int, match.groups())
+    print(f"{(left + right) // 2} {(top + bottom) // 2}")
+    raise SystemExit(0)
+
+raise SystemExit(1)
+PY
+  )" || return 1
+
+  read -r tap_x tap_y <<< "$coordinates"
+  [[ "$tap_x" =~ ^[0-9]+$ && "$tap_y" =~ ^[0-9]+$ ]] || return 1
+  echo "Dismissing known system launcher ANR at ${tap_x},${tap_y} on API ${API_LEVEL}."
+  adb shell input tap "$tap_x" "$tap_y" >/dev/null 2>&1 || return 1
+  sleep 1
+}
+
+handle_anr_dialog() {
+  local_dump="$1"
+  if ! grep -Fq 'resource-id="android:id/aerr_close"' "$local_dump" 2>/dev/null; then
+    return 1
+  fi
+  if dismiss_known_system_anr "$local_dump"; then
+    return 0
+  fi
+  echo "Unexpected ANR dialog detected while waiting for AquaLight UI on API ${API_LEVEL}."
+  cat "$local_dump" || true
+  return 2
 }
 
 wait_for_ui_marker() {
@@ -64,6 +133,17 @@ wait_for_ui_marker() {
     fi
     if grep -Fq "$ACCOUNT_DELETION_FAIL_MARKER" "$local_dump" 2>/dev/null; then
       cat "$local_dump" || true
+      return 1
+    fi
+
+    set +e
+    handle_anr_dialog "$local_dump"
+    anr_status=$?
+    set -e
+    if [ "$anr_status" -eq 0 ]; then
+      continue
+    fi
+    if [ "$anr_status" -eq 2 ]; then
       return 1
     fi
     sleep 1
@@ -117,6 +197,10 @@ finish() {
   exit "$status"
 }
 trap finish EXIT
+
+# Suppress platform-owned crash/ANR dialogs from obscuring the app under test.
+# AquaLight failures still fail through missing markers, explicit fail markers and log evidence.
+adb shell settings put global hide_error_dialogs 1 >/dev/null 2>&1 || true
 
 ./gradlew connectedDebugAndroidTest --no-daemon --stacktrace
 DEBUG_APK="$(
@@ -192,6 +276,17 @@ run_visual_profile() {
     if grep -q "RELEASE_SMOKE_FAIL" "$profile_dump" 2>/dev/null; then
       echo "Minified release smoke reported an application failure for ${profile} on API ${API_LEVEL}."
       cat "$profile_dump" || true
+      return 1
+    fi
+
+    set +e
+    handle_anr_dialog "$profile_dump"
+    anr_status=$?
+    set -e
+    if [ "$anr_status" -eq 0 ]; then
+      continue
+    fi
+    if [ "$anr_status" -eq 2 ]; then
       return 1
     fi
     sleep 1
