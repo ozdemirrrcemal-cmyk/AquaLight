@@ -226,6 +226,8 @@ class AndroidNotificationRenderer(
         entityId: String,
         intent: Intent
     ): PendingIntent {
+        intent.setClass(appContext, MainActivity::class.java)
+        intent.setPackage(appContext.packageName)
         return PendingIntent.getActivity(
             appContext,
             NotificationIdentity.requestCode(category, ownerUid, entityId),

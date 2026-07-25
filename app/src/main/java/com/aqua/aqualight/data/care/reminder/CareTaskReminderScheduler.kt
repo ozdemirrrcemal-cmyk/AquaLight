@@ -158,20 +158,18 @@ object CareTaskReminderScheduler {
       "taskId must be positive"
     }
 
-    val intent = Intent(
-      context,
-      CareTaskReminderReceiver::class.java
-    ).apply {
-      action = ACTION_CARE_TASK_REMINDER
-      data = CareReminderIdentity.alarmData(
-        ownerUid = normalizedOwnerUid,
-        taskId = taskId
-      )
-      putExtra(EXTRA_TASK_ID, taskId)
-      putExtra(EXTRA_OWNER_UID, normalizedOwnerUid)
-      occurrence?.let { value ->
-        putExtra(EXTRA_OCCURRENCE, value.name)
-      }
+    val intent = Intent()
+    intent.setClass(context, CareTaskReminderReceiver::class.java)
+    intent.setPackage(context.packageName)
+    intent.action = ACTION_CARE_TASK_REMINDER
+    intent.data = CareReminderIdentity.alarmData(
+      ownerUid = normalizedOwnerUid,
+      taskId = taskId
+    )
+    intent.putExtra(EXTRA_TASK_ID, taskId)
+    intent.putExtra(EXTRA_OWNER_UID, normalizedOwnerUid)
+    occurrence?.let { value ->
+      intent.putExtra(EXTRA_OCCURRENCE, value.name)
     }
 
     return PendingIntent.getBroadcast(
