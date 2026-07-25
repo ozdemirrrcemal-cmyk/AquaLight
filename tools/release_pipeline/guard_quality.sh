@@ -104,7 +104,7 @@ test -s app/build/reports/firebase/configuration-contract.json
 test -s app/build/reports/firebase/environment-isolation.json
 
 ./gradlew -PAQL_FINAL_LINT=true \
-  :app:detekt \
+  :app:verifyDetektPolicy \
   :app:lintDebug \
   :app:lintStaging \
   :app:lintReleaseSmoke \
@@ -120,7 +120,10 @@ for report in \
   app/build/reports/lint-results-releaseSmoke.xml \
   app/build/reports/lint-results-release.xml \
   app/build/reports/lint-results-detekt.xml \
-  app/build/reports/detekt/detekt.sarif; do
+  app/build/reports/lint-results-detekt-advisory.xml \
+  app/build/reports/detekt/detekt.sarif \
+  app/build/reports/detekt/detekt-advisory.sarif \
+  app/build/reports/stage14/detekt-policy-summary.json; do
   test -s "$report"
 done
 

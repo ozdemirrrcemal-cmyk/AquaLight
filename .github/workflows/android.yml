@@ -153,12 +153,12 @@ jobs:
               -dname "CN=Android,O=AquaLight,C=TR"
           fi
 
-      - name: Run Detekt and baseline-free non-production Android Lint
+      - name: Run zero-new-debt Detekt and baseline-free Android Lint
         shell: bash
         run: |
           set -Eeuo pipefail
           ./gradlew -PAQL_FINAL_LINT=true \
-            :app:detekt \
+            :app:verifyDetektPolicy \
             :app:lintDebug \
             :app:lintStaging \
             --continue \
@@ -187,6 +187,7 @@ jobs:
             build/reports/stage14/policy-validation.json
             build/reports/stage14/android-lint-summary.json
             android-lint.log
+            app/build/reports/stage14/detekt-policy-summary.json
             app/build/reports/lint-results-*.html
             app/build/reports/lint-results-*.xml
             app/build/reports/detekt/**

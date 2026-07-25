@@ -128,6 +128,9 @@ jobs:
             dependency-integrity.log
             build/reports/dependency-integrity-summary.json
             build/reports/dependency-verification/
+            app/build/reports/stage14/detekt-policy-summary.json
+            app/build/reports/detekt/**
+            app/build/reports/lint-results-detekt*.xml
           if-no-files-found: warn
 
       - name: Remove generated Firebase configuration

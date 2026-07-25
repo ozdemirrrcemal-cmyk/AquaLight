@@ -206,6 +206,8 @@ jobs:
             assemble-debug.log
             assemble-release-smoke.log
             app/build/outputs/mapping/releaseSmoke/mapping.txt
+            app/build/reports/stage14/detekt-policy-summary.json
+            app/build/reports/detekt/**
             app/build/reports/tests/testDebugUnitTest/**
             app/build/reports/tests/testReleaseSmokeUnitTest/**
             app/build/reports/lint-results-debug.*
