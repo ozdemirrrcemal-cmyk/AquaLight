@@ -7,6 +7,8 @@ policy_evidence="$evidence/stage14-validation-policy.json"
 python3 tools/verify_stage14_policy.py \
   --policy config/commercial/stage14-validation-policy.json \
   --app-gradle app/build.gradle \
+  --emulator-workflow .github/workflows/android_emulator_tests.yml \
+  --release-workflow .github/workflows/android_release.yml \
   --summary "$policy_evidence"
 test -s "$policy_evidence"
 

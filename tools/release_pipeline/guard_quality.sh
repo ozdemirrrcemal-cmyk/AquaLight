@@ -27,6 +27,8 @@ mkdir -p release-quality
 python3 tools/verify_stage14_policy.py \
   --policy config/commercial/stage14-validation-policy.json \
   --app-gradle app/build.gradle \
+  --emulator-workflow .github/workflows/android_emulator_tests.yml \
+  --release-workflow .github/workflows/android_release.yml \
   --summary release-quality/stage14-policy-validation.json
 
 for guard in \

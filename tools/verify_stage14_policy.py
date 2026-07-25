@@ -105,6 +105,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--policy", required=True, type=Path)
     parser.add_argument("--app-gradle", required=True, type=Path)
+    parser.add_argument("--emulator-workflow", required=True, type=Path)
+    parser.add_argument("--release-workflow", required=True, type=Path)
     parser.add_argument("--summary", required=True, type=Path)
     return parser.parse_args()
 
@@ -169,7 +171,74 @@ def validate_release(value: Any) -> None:
         raise PolicyFailure("release.tagPattern does not enforce canonical semantic tags")
 
 
-def validate_android(value: Any, app_gradle_text: str) -> None:
+def validate_android_workflows(
+    emulator_workflow_text: str,
+    release_workflow_text: str,
+) -> None:
+    matrix_matches = re.findall(
+        r"(?m)^\s*api-level:\s*\[([^\]]+)\]\s*$",
+        emulator_workflow_text,
+    )
+    if len(matrix_matches) != 1:
+        raise PolicyFailure(
+            "emulator workflow must define exactly one literal api-level matrix"
+        )
+    try:
+        emulator_levels = [
+            int(value.strip()) for value in matrix_matches[0].split(",")
+        ]
+    except ValueError as error:
+        raise PolicyFailure("emulator workflow API matrix is not numeric") from error
+    require_exact(
+        emulator_levels,
+        EMULATOR_API_LEVELS,
+        "emulator workflow API matrix",
+    )
+    require_exact(
+        emulator_workflow_text.count("api-level: ${{ matrix.api-level }}"),
+        1,
+        "emulator workflow matrix runner binding count",
+    )
+    require_exact(
+        emulator_workflow_text.count(
+            'script: bash tools/run_release_smoke.sh "${{ matrix.api-level }}"'
+        ),
+        1,
+        "emulator workflow smoke runner binding count",
+    )
+
+    release_levels = [
+        int(value)
+        for value in re.findall(
+            r"(?m)^\s*api-level:\s*([0-9]+)\s*$",
+            release_workflow_text,
+        )
+    ]
+    require_exact(
+        release_levels,
+        EMULATOR_API_LEVELS,
+        "release workflow API levels",
+    )
+    release_smoke_levels = [
+        int(value)
+        for value in re.findall(
+            r"(?m)^\s*script:\s*bash tools/run_release_smoke\.sh ([0-9]+)\s*$",
+            release_workflow_text,
+        )
+    ]
+    require_exact(
+        release_smoke_levels,
+        EMULATOR_API_LEVELS,
+        "release workflow smoke API levels",
+    )
+
+
+def validate_android(
+    value: Any,
+    app_gradle_text: str,
+    emulator_workflow_text: str,
+    release_workflow_text: str,
+) -> None:
     android = require_object(value, "android")
     require_exact_keys(
         android,
@@ -203,6 +272,7 @@ def validate_android(value: Any, app_gradle_text: str) -> None:
             raise PolicyFailure(
                 f"android.{key}={android[key]} does not match app Gradle {key}={actual}"
             )
+    validate_android_workflows(emulator_workflow_text, release_workflow_text)
 
 
 def validate_blockers(value: Any) -> None:
@@ -281,7 +351,12 @@ def validate_completion(value: Any) -> None:
         require_exact(completion[key], True, f"completion.{key}")
 
 
-def validate_policy(policy: Any, app_gradle_text: str) -> dict[str, Any]:
+def validate_policy(
+    policy: Any,
+    app_gradle_text: str,
+    emulator_workflow_text: str,
+    release_workflow_text: str,
+) -> dict[str, Any]:
     root = require_object(policy, "policy")
     require_exact_keys(
         root,
@@ -301,7 +376,12 @@ def validate_policy(policy: Any, app_gradle_text: str) -> dict[str, Any]:
     require_exact(root["schemaVersion"], SCHEMA_VERSION, "schemaVersion")
     require_exact(root["policyId"], POLICY_ID, "policyId")
     validate_release(root["release"])
-    validate_android(root["android"], app_gradle_text)
+    validate_android(
+        root["android"],
+        app_gradle_text,
+        emulator_workflow_text,
+        release_workflow_text,
+    )
     validate_blockers(root["blockerThresholds"])
     validate_suites(root["requiredSuites"])
     validate_artifacts(root["requiredArtifacts"])
@@ -346,11 +426,18 @@ def main() -> int:
     try:
         raw_policy = args.policy.read_bytes()
         app_gradle_text = args.app_gradle.read_text(encoding="utf-8")
+        emulator_workflow_text = args.emulator_workflow.read_text(encoding="utf-8")
+        release_workflow_text = args.release_workflow.read_text(encoding="utf-8")
         try:
             parsed = json.loads(raw_policy)
         except (UnicodeDecodeError, json.JSONDecodeError) as error:
             raise PolicyFailure(f"policy is not valid UTF-8 JSON: {error}") from error
-        policy = validate_policy(parsed, app_gradle_text)
+        policy = validate_policy(
+            parsed,
+            app_gradle_text,
+            emulator_workflow_text,
+            release_workflow_text,
+        )
         summary = build_summary(policy, raw_policy)
         write_summary(args.summary, summary)
     except (OSError, PolicyFailure) as error:

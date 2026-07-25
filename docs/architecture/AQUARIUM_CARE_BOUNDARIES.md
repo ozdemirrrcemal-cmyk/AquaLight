@@ -54,5 +54,5 @@
 - Debug and Release unit tests and lint.
 - Uncached Debug and minified signed Release builds.
 - CodeQL.
-- API 27 and API 35 minified release-smoke instrumentation.
+- API 27 and API 36 minified release-smoke instrumentation.
 - Targeted physical regression for tank lifecycle, assignment cleanup, Smart Care, care commands and reminders.

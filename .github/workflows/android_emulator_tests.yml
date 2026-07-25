@@ -34,7 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        api-level: [27, 35]
+        api-level: [27, 36]
 
     steps:
       - name: Checkout repository
@@ -63,6 +63,8 @@ jobs:
           python3 tools/verify_stage14_policy.py \
             --policy config/commercial/stage14-validation-policy.json \
             --app-gradle app/build.gradle \
+            --emulator-workflow .github/workflows/android_emulator_tests.yml \
+            --release-workflow .github/workflows/android_release.yml \
             --summary build/reports/stage14/policy-validation.json
 
       - name: Verify non-production Firebase inputs

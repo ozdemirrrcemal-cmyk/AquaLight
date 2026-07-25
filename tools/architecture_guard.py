@@ -389,7 +389,7 @@ for token, reason in (
         "bash tools/verify_uninstall_clears_data.sh",
         "emulator CI must verify uninstall/reinstall data removal",
     ),
-    ("api-level: [27, 35]", "emulator CI must cover min and modern Android APIs"),
+    ("api-level: [27, 36]", "emulator CI must cover minimum and target Android APIs"),
     (
         "android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d",
         "emulator CI action must remain pinned to its reviewed v2.38.0 commit",

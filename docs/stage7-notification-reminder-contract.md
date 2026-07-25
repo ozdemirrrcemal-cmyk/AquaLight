@@ -181,7 +181,7 @@ Stage 7 is not complete until all of the following pass:
 - removed global field/projection/helper absence;
 - exact permanent channel-ID contract for all three categories;
 - API 27 channel-not-required behavior;
-- API 35 channel creation and blocked/enabled behavior;
+- API 36 channel creation and blocked/enabled behavior;
 - app preference, runtime permission, app-level block and per-channel block separation;
 - App Settings and Add Care Task common-use-case verification;
 - precise-reminder special-access denial, Settings return and exactly-once continuation;
@@ -198,7 +198,7 @@ Stage 7 is not complete until all of the following pass:
 - notification-preference and schedule-ledger corruption recovery;
 - device-alert and device-update renderer/category contract tests;
 - architecture guards in Android CI, CodeQL and release workflows;
-- API 27/API 35 instrumentation and minified release smoke;
+- API 27/API 36 instrumentation and minified release smoke;
 - real-device closed-app acceptance at the selected time, reboot restore and account switch.
 
 The PR remains draft and unmerged until automated gates and physical acceptance are complete.
