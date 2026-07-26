@@ -63,14 +63,14 @@ class CleanInstallEvidenceTest(unittest.TestCase):
         self.assertFalse(summary["candidate"]["debuggable"])
         self.assertEqual(0, sum(summary["counts"].values()))
 
-    def test_api_37_clean_install_passes(self) -> None:
+    def test_api_36_clean_install_passes(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            paths = self.evidence_files(Path(temporary), 37)
+            paths = self.evidence_files(Path(temporary), 36)
 
-            summary = validate(*paths, 37, COMMIT)
+            summary = validate(*paths, 36, COMMIT)
 
         self.assertTrue(summary["passed"])
-        self.assertEqual(37, summary["apiLevel"])
+        self.assertEqual(36, summary["apiLevel"])
 
     def test_nonzero_private_state_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

@@ -16,7 +16,7 @@ import xml.etree.ElementTree as ElementTree
 COMMIT_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 LABEL_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 POLICY_ID = "aqualight-stage14-junit-evidence"
-SUPPORTED_API_LEVELS = (27, 37)
+SUPPORTED_API_LEVELS = (27, 36)
 UNIT_REPORT_PROFILES = {
     frozenset({"debug", "staging"}): "pull-request",
     frozenset({"debug", "staging", "release-smoke", "release"}): "release",

@@ -14,7 +14,7 @@ from typing import Any
 SCHEMA_VERSION = 1
 POLICY_ID = "aqualight-stage14-commercial-release"
 TAG_PATTERN = r"^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$"
-EMULATOR_API_LEVELS = [27, 37]
+EMULATOR_API_LEVELS = [27, 36]
 VISUAL_PROFILES = [
     "light",
     "dark",
@@ -29,7 +29,7 @@ PIPELINE_ORDER = [
     "lint-detekt",
     "unit-test-coverage",
     "codeql",
-    "instrumentation-api-27-37",
+    "instrumentation-api-27-36",
     "clean-install",
     "upgrade-install",
     "release-signing-build",
@@ -76,7 +76,7 @@ REQUIRED_ARTIFACTS = [
     ("coverage-thresholds", "json", "required"),
     ("codeql", "sarif", "required"),
     ("instrumentation-api-27", "junit-xml", "required"),
-    ("instrumentation-api-37", "junit-xml", "required"),
+    ("instrumentation-api-36", "junit-xml", "required"),
     ("clean-install", "json", "required"),
     ("upgrade-install", "json", "required"),
     ("rapid-account-switch", "json", "required"),
@@ -186,8 +186,8 @@ def validate_android_workflows(
             "resolved Android SDK manager binding",
         ),
         (
-            "system-images;android-37.0;google_apis_ps16k;x86_64",
-            "Android 17 16 KB system image installation",
+            "system-images;android-36;default;x86_64",
+            "Android 16 stable system image installation",
         ),
     ):
         if token not in emulator_workflow_text:
@@ -196,53 +196,61 @@ def validate_android_workflows(
             raise PolicyFailure(f"release workflow is missing {label}")
 
     if (
-        "system-images/android-37.0/google_apis_ps16k/x86_64/package.xml"
+        "system-images/android-36/default/x86_64/package.xml"
         not in emulator_workflow_text
     ):
         raise PolicyFailure(
             "emulator workflow is missing installed system-image verification"
         )
     if (
-        "system-images/android-37.0/google_apis_ps16k/x86_64/package.xml"
+        "system-images/android-36/default/x86_64/package.xml"
         not in release_workflow_text
     ):
         raise PolicyFailure(
-            "release workflow is missing installed Android 17 image verification"
+            "release workflow is missing installed Android 16 image verification"
         )
     require_exact(
+        emulator_workflow_text.count("channel: stable"),
+        1,
+        "emulator workflow stable-channel binding count",
+    )
+    require_exact(
         emulator_workflow_text.count(
-            "channel: ${{ matrix.api-level == 37 && 'canary' || 'stable' }}"
+            "system-images;android-36;default;x86_64"
         ),
         1,
-        "emulator workflow API 37 canary-channel binding count",
+        "emulator workflow API 36 stable image binding count",
     )
     require_exact(
-        emulator_workflow_text.count("--channel=3"),
-        2,
-        "emulator workflow API 37 catalog and install binding count",
-    )
-    require_exact(
-        release_workflow_text.count("channel: canary"),
+        release_workflow_text.count("channel: stable"),
         1,
-        "release workflow API 37 canary-channel binding count",
+        "release workflow API 36 stable-channel binding count",
     )
     require_exact(
-        release_workflow_text.count("target: google_apis_ps16k"),
-        1,
-        "release workflow API 37 image-target binding count",
-    )
-    require_exact(
-        release_workflow_text.count("--channel=3"),
+        release_workflow_text.count("target: default"),
         2,
-        "release workflow API 37 preview-package install count",
+        "release workflow API 36 image-target binding count",
+    )
+    require_exact(
+        release_workflow_text.count(
+            "system-images;android-36;default;x86_64"
+        ),
+        2,
+        "release workflow API 36 stable-package install count",
     )
     for workflow_name, workflow_text in (
         ("emulator", emulator_workflow_text),
         ("release", release_workflow_text),
     ):
-        if "channel: beta" in workflow_text or "channel: dev" in workflow_text:
+        if (
+            "channel: canary" in workflow_text
+            or "channel: beta" in workflow_text
+            or "channel: dev" in workflow_text
+            or "--channel=3" in workflow_text
+            or "--canary" in workflow_text
+        ):
             raise PolicyFailure(
-                f"{workflow_name} workflow must not use undeclared beta or dev SDK channels"
+                f"{workflow_name} workflow must use only the stable SDK channel"
             )
 
     require_exact(
@@ -288,16 +296,12 @@ def validate_android_workflows(
         "emulator workflow API matrix",
     )
     require_exact(
-        emulator_workflow_text.count(
-            "api-level: ${{ matrix.api-level == 37 && '37.0' || matrix.api-level }}"
-        ),
+        emulator_workflow_text.count("api-level: ${{ matrix.api-level }}"),
         1,
         "emulator workflow matrix runner binding count",
     )
     require_exact(
-        emulator_workflow_text.count(
-            "target: ${{ matrix.api-level == 37 && 'google_apis_ps16k' || 'default' }}"
-        ),
+        emulator_workflow_text.count("target: default"),
         1,
         "emulator workflow matrix image-target binding count",
     )
@@ -309,7 +313,7 @@ def validate_android_workflows(
     require_exact(
         release_workflow_text.count("disk-size: 8G"),
         1,
-        "release workflow API 37 AVD disk-size binding count",
+        "release workflow API 36 AVD disk-size binding count",
     )
     require_exact(
         emulator_workflow_text.count(
@@ -320,12 +324,12 @@ def validate_android_workflows(
     )
 
     release_levels = re.findall(
-        r"(?m)^\s*api-level:\s*(27|37\.0)\s*$",
+        r"(?m)^\s*api-level:\s*(27|36)\s*$",
         release_workflow_text,
     )
     require_exact(
         release_levels,
-        ["27", "37.0"],
+        ["27", "36"],
         "release workflow runner API identities",
     )
     release_smoke_levels = [

@@ -19,7 +19,7 @@ The provisioning architecture remains approved only while all of the following a
 - final registration commit is recoverable if Android kills the process between durable writes;
 - QR decoder and camera frame lifecycle are race-safe and idempotently closable;
 - production and release-smoke composition remain behaviorally aligned;
-- architecture guards, Debug/Release tests, lint, minified release builds, CodeQL and API 27/API 37 emulator gates pass for affected release candidates;
+- architecture guards, Debug/Release tests, lint, minified release builds, CodeQL and API 27/API 36 emulator gates pass for affected release candidates;
 - targeted physical regression passes before release approval.
 
 ## Findings discovered and closed during audit
@@ -33,7 +33,7 @@ Closure:
 - added an Android Keystore-backed `ProvisioningCommitRecoveryStore`;
 - journaled the verified snapshot and runtime token before final commit begins;
 - added idempotent owner-session startup recovery;
-- added API 27/API 37 instrumentation for recovery, owner isolation and plaintext absence;
+- added API 27/API 36 instrumentation for recovery, owner isolation and plaintext absence;
 - added a CI architecture guard for commit ordering and startup recovery sequencing.
 
 Status: closed and validated.

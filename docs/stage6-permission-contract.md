@@ -57,7 +57,7 @@ The decision combines the current API level, current grants, Android rationale s
 
 ## API matrix
 
-A permanent unit-test matrix covers API 27 through current API 37:
+A permanent test matrix covers API 27 through target API 36:
 
 - Camera: `CAMERA`
 - BLE scan, API 27–30: `ACCESS_FINE_LOCATION`
@@ -70,4 +70,4 @@ Bluetooth or Wi-Fi being switched off is a capability-readiness issue, not a run
 
 ## Stage closure gate
 
-Stage 6 is complete only when every current camera, QR, BLE, Wi-Fi SSID, and notification runtime-permission path uses this contract; legacy per-screen permission controllers and constructor/callback permission sheets are removed; manifest permissions are audited; the visual resolver covers every capability and both sheet modes; and API 27/API 37 instrumentation plus process-recreation/settings-return tests pass.
+Stage 6 is complete only when every current camera, QR, BLE, Wi-Fi SSID, and notification runtime-permission path uses this contract; legacy per-screen permission controllers and constructor/callback permission sheets are removed; manifest permissions are audited; the visual resolver covers every capability and both sheet modes; and API 27/API 36 instrumentation plus process-recreation/settings-return tests pass.

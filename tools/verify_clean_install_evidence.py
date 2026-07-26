@@ -13,7 +13,7 @@ from typing import Any
 
 COMMIT_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 PACKAGE_NAME = "com.aqua.aqualight.smoke"
-SUPPORTED_API_LEVELS = (27, 37)
+SUPPORTED_API_LEVELS = (27, 36)
 REQUIRED_CHECKS = {
     "nonDebuggable",
     "backupDisabled",

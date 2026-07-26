@@ -34,7 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        api-level: [27, 37]
+        api-level: [27, 36]
 
     steps:
       - name: Checkout repository
@@ -86,34 +86,14 @@ jobs:
                 "$platform_package" \
                 "$system_image_package"
               ;;
-            37)
-              echo "::group::Android 17 SDK catalog"
-              set +o pipefail
-              "$sdkmanager_path" --list --channel=3 2>&1 \
-                | grep -E "platforms;android-|system-images;android-" \
-                | tail -n 160 \
-                || true
-              android_cli_path="${sdkmanager_path%/sdkmanager}/android"
-              test -x "$android_cli_path"
-              yes 2>/dev/null | "$android_cli_path" \
-                --sdk="$ANDROID_SDK_ROOT" \
-                sdk list ".*" \
-                --all \
-                --all-versions \
-                --canary 2>&1 \
-                | grep -E "platforms/android-|system-images/android-" \
-                | tail -n 160 \
-                || true
-              set -o pipefail
-              echo "::endgroup::"
-              platform_package="platforms;android-37.0"
-              system_image_package="system-images;android-37.0;google_apis_ps16k;x86_64"
-              installed_platform="${ANDROID_SDK_ROOT}/platforms/android-37.0/android.jar"
-              installed_image="${ANDROID_SDK_ROOT}/system-images/android-37.0/google_apis_ps16k/x86_64/package.xml"
+            36)
+              platform_package="platforms;android-36"
+              system_image_package="system-images;android-36;default;x86_64"
+              installed_platform="${ANDROID_SDK_ROOT}/platforms/android-36/android.jar"
+              installed_image="${ANDROID_SDK_ROOT}/system-images/android-36/default/x86_64/package.xml"
               "$sdkmanager_path" --install \
                 "$platform_package" \
-                "$system_image_package" \
-                --channel=3
+                "$system_image_package"
               ;;
             *)
               echo "Unsupported commercial emulator API: $matrix_api" >&2
@@ -189,19 +169,17 @@ jobs:
       - name: Run instrumentation and minified release smoke
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
-          api-level: ${{ matrix.api-level == 37 && '37.0' || matrix.api-level }}
-          channel: ${{ matrix.api-level == 37 && 'canary' || 'stable' }}
-          target: ${{ matrix.api-level == 37 && 'google_apis_ps16k' || 'default' }}
+          api-level: ${{ matrix.api-level }}
+          channel: stable
+          target: default
           arch: x86_64
           profile: pixel_2
-          ram-size: ${{ matrix.api-level == 37 && '4096M' || '1536M' }}
+          ram-size: ${{ matrix.api-level == 36 && '4096M' || '1536M' }}
           disk-size: 8G
           disable-animations: true
           emulator-boot-timeout: 900
           emulator-options: >-
-            -no-window
-            -gpu ${{ matrix.api-level == 37 && 'swiftshader' || 'swiftshader_indirect' }}
-            -no-snapshot
+            -no-window -gpu swiftshader_indirect -no-snapshot
             -noaudio -no-boot-anim -camera-back none
           script: bash tools/run_release_smoke.sh "${{ matrix.api-level }}"
 

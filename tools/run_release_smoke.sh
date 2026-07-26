@@ -28,116 +28,6 @@ REMOTE_WINDOW_DUMP="/sdcard/${WINDOW_DUMP}"
 
 exec > >(tee "$RUN_LOG") 2>&1
 
-android_service_is_ready() {
-  adb shell service check "$1" 2>/dev/null \
-    | tr -d '\r' \
-    | grep -Fq ": found"
-}
-
-stabilize_api37_surfaceflinger() {
-  if [[ "$API_LEVEL" != "37" ]]; then
-    return 0
-  fi
-
-  local build_type
-  local root_uid
-  local initial_pid=""
-  local current_pid=""
-  local stable_pid=""
-  local stable_checks=0
-  local surfaceflinger_state=""
-
-  # The Android 17 16 KB preview image can request a CPU-readable region
-  # sample without ANDROID_EMU_read_color_buffer_dma. mapper.ranchu aborts
-  # SurfaceFlinger, and init then restarts zygote/system_server mid-test.
-  # Luma sampling is optional for this app gate, so disable that exact path
-  # before Gradle or APK installation starts.
-  adb wait-for-device
-  build_type="$(
-    adb shell getprop ro.build.type 2>/dev/null \
-      | tr -d '\r' \
-      || true
-  )"
-  case "$build_type" in
-    eng|userdebug) ;;
-    *)
-      echo "API 37 graphics stabilization requires a debuggable image; got ${build_type:-unknown}." >&2
-      return 1
-      ;;
-  esac
-
-  root_uid="$(
-    adb shell su root id -u 2>/dev/null \
-      | tr -d '\r' \
-      || true
-  )"
-  if [[ "$root_uid" != "0" ]]; then
-    echo "Could not obtain emulator root for API 37 graphics stabilization." >&2
-    return 1
-  fi
-
-  adb shell su root setprop debug.sf.luma_sampling 0
-  if [[ "$(adb shell getprop debug.sf.luma_sampling 2>/dev/null | tr -d '\r')" != "0" ]]; then
-    echo "Could not disable API 37 SurfaceFlinger luma sampling." >&2
-    return 1
-  fi
-
-  for attempt in $(seq 1 30); do
-    initial_pid="$(
-      adb shell pidof surfaceflinger 2>/dev/null \
-        | tr -d '\r' \
-        || true
-    )"
-    if [[ "$initial_pid" =~ ^[0-9]+$ ]]; then
-      break
-    fi
-    sleep 1
-  done
-  if [[ ! "$initial_pid" =~ ^[0-9]+$ ]]; then
-    echo "Could not resolve the API 37 SurfaceFlinger process." >&2
-    return 1
-  fi
-
-  # SurfaceFlinger reads debug.sf.luma_sampling only during construction.
-  # A controlled restart makes the setting effective before any test work.
-  adb shell su root kill -TERM "$initial_pid" >/dev/null 2>&1 || true
-
-  for attempt in $(seq 1 120); do
-    current_pid="$(adb shell pidof surfaceflinger 2>/dev/null | tr -d '\r' || true)"
-    surfaceflinger_state="$(
-      adb shell getprop init.svc.surfaceflinger 2>/dev/null \
-        | tr -d '\r' \
-        || true
-    )"
-
-    if [[ "$current_pid" =~ ^[0-9]+$ ]] \
-      && [[ "$current_pid" != "$initial_pid" ]] \
-      && [[ "$surfaceflinger_state" == "running" ]] \
-      && [[ "$(adb shell getprop debug.sf.luma_sampling 2>/dev/null | tr -d '\r')" == "0" ]] \
-      && android_service_is_ready activity \
-      && android_service_is_ready package; then
-      if [[ "$current_pid" == "$stable_pid" ]]; then
-        stable_checks=$((stable_checks + 1))
-      else
-        stable_pid="$current_pid"
-        stable_checks=1
-      fi
-
-      if (( stable_checks >= 10 )); then
-        echo "API 37 SurfaceFlinger is stable with luma sampling disabled (pid=${current_pid})."
-        return 0
-      fi
-    else
-      stable_pid=""
-      stable_checks=0
-    fi
-    sleep 1
-  done
-
-  echo "API 37 SurfaceFlinger did not stabilize (pid=${current_pid:-missing}, state=${surfaceflinger_state:-unknown})." >&2
-  return 1
-}
-
 wait_for_unlocked_user() {
   local user_id
   local state="unknown"
@@ -175,7 +65,6 @@ wait_for_unlocked_user() {
   return 1
 }
 
-stabilize_api37_surfaceflinger
 wait_for_unlocked_user
 
 ORIGINAL_FONT_SCALE="$(adb shell settings get system font_scale 2>/dev/null | tr -d '\r')"

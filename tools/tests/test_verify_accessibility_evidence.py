@@ -82,12 +82,12 @@ class AccessibilityEvidenceTest(unittest.TestCase):
         self.assertEqual(6, summary["profileCount"])
         self.assertEqual(24, summary["screenshotCount"])
 
-    def test_api_37_profiles_pass(self) -> None:
+    def test_api_36_profiles_pass(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             prefix, screens = self.evidence(Path(temporary))
-            summary = validate(prefix, screens, 37, COMMIT)
+            summary = validate(prefix, screens, 36, COMMIT)
 
-        self.assertEqual(37, summary["apiLevel"])
+        self.assertEqual(36, summary["apiLevel"])
 
     def test_missing_screenshot_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

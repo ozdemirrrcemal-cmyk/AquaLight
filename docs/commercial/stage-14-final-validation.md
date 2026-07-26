@@ -84,21 +84,23 @@ Implementation:
 - [ ] Enforce the configured SARIF severity policy.
 - [ ] Prevent release build and signing when the security gate fails.
 
-### 7. Standardize the emulator matrix to API 27 and current API 37
+### 7. Standardize the emulator matrix to API 27 and target API 36
 
 - [ ] Keep minimum-supported API 27.
-- [ ] Run Android 17, the current API 37 runtime, while retaining the reviewed
+- [ ] Run the stable Android 16 API 36 runtime that matches the reviewed
   `targetSdk 36` Play submission baseline.
 - [ ] Execute required instrumentation and minified release-smoke suites on both.
 
 Implementation note:
 
-- Google's current Android 17 SDK setup still publishes the API 37 SDK and system
-  image through the preview package channel. CI pins command-line tools package
-  `15859902`, binds API 37 to the published `android-37.0` 16 KB Google APIs image,
-  keeps API 27 on `stable`, and scopes the `canary` package catalog to API 37
-  only. The controlled release remains blocked until the same candidate passes
-  the required real-device Android 17 acceptance.
+- CI pins command-line tools package `15859902`, restores the last-known-good
+  `android-36` default image and `swiftshader_indirect` renderer, and keeps both
+  API 27 and API 36 on the stable SDK channel. API 37 preview/canary 16 KB images
+  are not release blockers: their `mapper.ranchu` graphics path can abort Android
+  system processes while producing region samples or task snapshots,
+  independently of application code.
+  The controlled release remains blocked until the same candidate passes the
+  required real-device Android 17 acceptance.
 
 ### 8. Complete clean-install automation
 
@@ -160,7 +162,7 @@ Implementation:
 - The blocker inventory queries every open GitHub issue twice: once before the
   security chain and again immediately before release assembly. Missing or
   ambiguous severity triage fails closed.
-- Quality, CodeQL and API 27/37 instrumentation artifacts are downloaded from the
+- Quality, CodeQL and API 27/36 instrumentation artifacts are downloaded from the
   same workflow run. The final generator rejects missing, unknown, failed,
   cross-commit or unsafe evidence files and hashes every retained artifact.
 - The six physical, accessibility and legal gates are accepted only through the
@@ -172,7 +174,7 @@ Implementation:
 
 ## Required pipeline order
 
-`guard → dependency integrity → lint/Detekt → unit test/coverage → CodeQL → instrumentation API 27/37 → clean install → upgrade install → release signing/build → checksum → SBOM/provenance → final evidence → publication`
+`guard → dependency integrity → lint/Detekt → unit test/coverage → CodeQL → instrumentation API 27/36 → clean install → upgrade install → release signing/build → checksum → SBOM/provenance → final evidence → publication`
 
 ## Completion rule
 

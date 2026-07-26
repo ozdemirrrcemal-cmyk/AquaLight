@@ -103,16 +103,14 @@ jobs:
             "platforms;android-27" \
             "system-images;android-27;default;x86_64"
           "$sdkmanager_path" --install \
-            "platforms;android-37.0" \
-            "system-images;android-37.0;google_apis_ps16k;x86_64" \
-            --channel=3
+            "system-images;android-36;default;x86_64"
           test -s "${ANDROID_SDK_ROOT}/platforms/android-27/android.jar"
           test -s \
-            "${ANDROID_SDK_ROOT}/platforms/android-37.0/android.jar"
+            "${ANDROID_SDK_ROOT}/platforms/android-36/android.jar"
           test -s \
             "${ANDROID_SDK_ROOT}/system-images/android-27/default/x86_64/package.xml"
           test -s \
-            "${ANDROID_SDK_ROOT}/system-images/android-37.0/google_apis_ps16k/x86_64/package.xml"
+            "${ANDROID_SDK_ROOT}/system-images/android-36/default/x86_64/package.xml"
           chmod +x ./gradlew
 
       - name: 01-03 Guard, Lint/Detekt and unit coverage
@@ -358,16 +356,14 @@ jobs:
             "platforms;android-27" \
             "system-images;android-27;default;x86_64"
           "$sdkmanager_path" --install \
-            "platforms;android-37.0" \
-            "system-images;android-37.0;google_apis_ps16k;x86_64" \
-            --channel=3
+            "system-images;android-36;default;x86_64"
           test -s "${ANDROID_SDK_ROOT}/platforms/android-27/android.jar"
           test -s \
-            "${ANDROID_SDK_ROOT}/platforms/android-37.0/android.jar"
+            "${ANDROID_SDK_ROOT}/platforms/android-36/android.jar"
           test -s \
             "${ANDROID_SDK_ROOT}/system-images/android-27/default/x86_64/package.xml"
           test -s \
-            "${ANDROID_SDK_ROOT}/system-images/android-37.0/google_apis_ps16k/x86_64/package.xml"
+            "${ANDROID_SDK_ROOT}/system-images/android-36/default/x86_64/package.xml"
           chmod +x ./gradlew
 
       - name: Prepare minified release smoke
@@ -395,21 +391,21 @@ jobs:
             -noaudio -no-boot-anim -camera-back none
           script: bash tools/run_release_smoke.sh 27
 
-      - name: Instrumentation - API 37
+      - name: Instrumentation - API 36
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
-          api-level: 37.0
-          channel: canary
-          target: google_apis_ps16k
+          api-level: 36
+          channel: stable
+          target: default
           arch: x86_64
           profile: pixel_2
           disk-size: 8G
           disable-animations: true
           emulator-boot-timeout: 900
           emulator-options: >-
-            -no-window -gpu swiftshader -no-snapshot-save
+            -no-window -gpu swiftshader_indirect -no-snapshot-save
             -noaudio -no-boot-anim -camera-back none
-          script: bash tools/run_release_smoke.sh 37
+          script: bash tools/run_release_smoke.sh 36
 
       - name: Upload instrumentation evidence
         if: always()

@@ -110,7 +110,7 @@ Rules:
 4. Release unit tests and lint;
 5. minified Release build;
 6. CodeQL;
-7. API 27 and current API 37 emulator tests;
+7. API 27 and target API 36 emulator tests;
 8. targeted physical regression for affected flows.
 
 ## Completion baseline

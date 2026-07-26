@@ -409,7 +409,7 @@ for token, reason in (
         "verify_stage14_junit_evidence.py",
         "emulator CI must publish named instrumentation evidence",
     ),
-    ("api-level: [27, 37]", "emulator CI must cover minimum and current Android APIs"),
+    ("api-level: [27, 36]", "emulator CI must cover minimum and target Android APIs"),
     (
         "android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d",
         "emulator CI action must remain pinned to its reviewed v2.38.0 commit",
@@ -423,28 +423,24 @@ for token, reason in (
         "emulator CI must resolve and validate the configured SDK manager binary",
     ),
     (
-        "system-images;android-37.0;google_apis_ps16k;x86_64",
-        "emulator CI must install the current Android 17 16 KB system image",
+        "system-images;android-36;default;x86_64",
+        "emulator CI must install the stable Android 16 system image",
     ),
     (
-        "channel: ${{ matrix.api-level == 37 && 'canary' || 'stable' }}",
-        "emulator CI must scope the preview catalog to API 37 only",
+        "channel: stable",
+        "emulator CI must use the stable SDK package channel",
     ),
     (
-        "--channel=3",
-        "SDK Manager must opt into the documented API 37 preview package catalog",
-    ),
-    (
-        "system-images/android-37.0/google_apis_ps16k/x86_64/package.xml",
+        "system-images/android-36/default/x86_64/package.xml",
         "emulator CI must verify the installed system-image package metadata",
     ),
     (
-        "api-level: ${{ matrix.api-level == 37 && '37.0' || matrix.api-level }}",
-        "emulator CI must bind API 37 evidence to its published 37.0 package",
+        "api-level: ${{ matrix.api-level }}",
+        "emulator CI must bind evidence to the literal stable API matrix",
     ),
     (
-        "target: ${{ matrix.api-level == 37 && 'google_apis_ps16k' || 'default' }}",
-        "emulator CI must use the published API 37 16 KB Google APIs image target",
+        "target: default",
+        "emulator CI must use the last-known-good default image target",
     ),
 ):
     require(emulator_workflow_path, emulator_workflow, token, reason)
@@ -661,8 +657,8 @@ for token, reason in (
         "release evidence must include the releaseSmoke unit-test variant",
     ),
     (
-        "SUPPORTED_API_LEVELS = (27, 37)",
-        "instrumentation evidence must remain bound to API 27 and API 37",
+        "SUPPORTED_API_LEVELS = (27, 36)",
+        "instrumentation evidence must remain bound to API 27 and API 36",
     ),
 ):
     require(junit_verifier_path, junit_verifier, token, reason)
@@ -871,7 +867,7 @@ for token, reason in (
     ),
     (
         "AquaLight-Instrumentation-",
-        "final evidence must retain the verified API 27/37 artifact",
+        "final evidence must retain the verified API 27/36 artifact",
     ),
 ):
     require(release_workflow_path, release_workflow, token, reason)
@@ -933,7 +929,7 @@ for token, reason in (
     ),
     (
         "INSTRUMENTATION_STAGE14_JSON",
-        "final evidence must enforce the exact API 27/37 set",
+        "final evidence must enforce the exact API 27/36 set",
     ),
     (
         '"release-mapping"',
