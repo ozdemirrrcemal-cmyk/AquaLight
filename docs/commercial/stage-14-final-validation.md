@@ -1,6 +1,6 @@
 # AquaLight — Stage 14 Final Commercial Validation Plan
 
-**Status:** In progress  
+**Status:** Automated PR validation complete; controlled release closure pending  
 **Working branch:** `commercial/14-final-validation`  
 **Base branch:** `main`
 
@@ -64,94 +64,95 @@ Implementation:
 
 ### 4. Standardize guard, unit-test and coverage gates
 
-- [ ] Run architecture and policy guards first.
-- [ ] Run dependency integrity before build resolution.
-- [ ] Run Detekt and Android Lint.
-- [ ] Run all required debug, staging and release unit tests.
-- [ ] Generate JaCoCo reports and enforce critical-package thresholds.
+- [x] Run architecture and policy guards first.
+- [x] Run dependency integrity before build resolution.
+- [x] Run Detekt and Android Lint.
+- [x] Run all required debug, staging and release unit tests.
+- [x] Generate JaCoCo reports and enforce critical-package thresholds.
 
 ### 5. Add a full Android Lint blocker gate
 
-- [ ] Preserve normal baseline regression control.
-- [ ] Run final validation without hiding blockers behind the baseline.
-- [ ] Require zero Fatal and Error findings for required variants.
-- [ ] Publish remaining warnings separately.
+- [x] Preserve normal baseline regression control.
+- [x] Run final validation without hiding blockers behind the baseline.
+- [x] Require zero Fatal and Error findings for required variants.
+- [x] Publish remaining warnings separately.
 
 ### 6. Make CodeQL a blocking release prerequisite
 
-- [ ] Bind CodeQL to the controlled release chain.
-- [ ] Wait for result processing.
-- [ ] Enforce the configured SARIF severity policy.
-- [ ] Prevent release build and signing when the security gate fails.
+- [x] Bind CodeQL to the controlled release chain.
+- [x] Wait for result processing.
+- [x] Enforce the configured SARIF severity policy.
+- [x] Prevent release build and signing when the security gate fails.
 
 ### 7. Standardize the emulator matrix to API 27 and target API 36
 
-- [ ] Keep minimum-supported API 27.
-- [ ] Run the stable Android 16 API 36 runtime that matches the reviewed
+- [x] Keep minimum-supported API 27.
+- [x] Run the stable Android 16 API 36 runtime that matches the reviewed
   `targetSdk 36` Play submission baseline.
-- [ ] Execute required instrumentation and minified release-smoke suites on both.
+- [x] Execute required instrumentation and minified release-smoke suites on both.
 
 Implementation note:
 
-- CI pins command-line tools package `15859902`, restores the last-known-good
-  `android-36` default image and `swiftshader_indirect` renderer, and keeps both
-  API 27 and API 36 on the stable SDK channel. API 37 preview/canary 16 KB images
-  are not release blockers: their `mapper.ranchu` graphics path can abort Android
-  system processes while producing region samples or task snapshots,
-  independently of application code.
-  The controlled release remains blocked until the same candidate passes the
-  required real-device Android 17 acceptance.
+- CI pins command-line tools package `15859902`, the last-known-good
+  `android-36` default image and the `swiftshader_indirect` renderer.
+- API 27 and API 36 remain the required stable emulator matrix for the reviewed
+  `targetSdk 36` submission baseline. Newer-platform coverage belongs to the
+  protected physical-device acceptance, not to the blocking emulator matrix.
 
 ### 8. Complete clean-install automation
 
-- [ ] Install the minified candidate on a clean emulator.
-- [ ] Verify deterministic first start.
-- [ ] Verify no private owner, tank, assignment, credential or preference state exists.
-- [ ] Reject startup crash or ANR evidence.
+- [x] Install the minified candidate on a clean emulator.
+- [x] Verify deterministic first start.
+- [x] Verify no private owner, tank, assignment, credential or preference state exists.
+- [x] Reject startup crash or ANR evidence.
 
 ### 9. Add application upgrade and over-install validation
 
-- [ ] Build and install a lower-version baseline with the same signing identity.
-- [ ] Seed deterministic data.
-- [ ] Install the candidate with a higher versionCode.
-- [ ] Verify supported data preservation or explicit migration.
-- [ ] Verify stale runtime and credential state is not restored.
+- [x] Build and install a lower-version baseline with the same signing identity.
+- [x] Seed deterministic data.
+- [x] Install the candidate with a higher versionCode.
+- [x] Verify supported data preservation or explicit migration.
+- [x] Verify stale runtime and credential state is not restored.
 
 ### 10. Add end-to-end rapid account-switch validation
 
-- [ ] Transition rapidly from Owner A through signed-out state to Owner B.
-- [ ] Verify Owner A resources close.
-- [ ] Verify Owner B resources open exactly once.
-- [ ] Verify delayed Owner A work cannot affect Owner B.
-- [ ] Verify no cross-owner data projection.
+- [x] Transition rapidly from Owner A through signed-out state to Owner B.
+- [x] Verify Owner A resources close.
+- [x] Verify Owner B resources open exactly once.
+- [x] Verify delayed Owner A work cannot affect Owner B.
+- [x] Verify no cross-owner data projection.
 
 ### 11. Complete process recreation, rotation and force-stop validation
 
-- [ ] Recreate authenticated application state.
-- [ ] Rotate representative Tank and Care flows.
-- [ ] Force-stop and restart the application.
-- [ ] Verify durable state survives and runtime-only state is reconstructed.
-- [ ] Verify stale owner state is not revived.
+- [x] Recreate authenticated application state.
+- [x] Rotate representative Tank and Care flows.
+- [x] Force-stop and restart the application.
+- [x] Verify durable state survives and runtime-only state is reconstructed.
+- [x] Verify stale owner state is not revived.
 
 ### 12. Promote Tank and Care Task corruption checks into a named release suite
 
-- [ ] Run corruption recovery as an explicit Stage 14 suite.
-- [ ] Cover truncated data, invalid values, owner mismatch and orphan tasks where required.
-- [ ] Preserve fail-closed recovery and recovery telemetry assertions.
-- [ ] Publish independent machine-readable evidence.
+- [x] Run corruption recovery as an explicit Stage 14 suite.
+- [x] Cover truncated data, invalid values, owner mismatch and orphan tasks where required.
+- [x] Preserve fail-closed recovery and recovery telemetry assertions.
+- [x] Publish independent machine-readable evidence.
 
 ### 13. Add WebSocket closure and account-cleanup integration validation
 
-- [ ] Verify current socket closure clears current runtime proof.
-- [ ] Verify delayed old-socket events cannot clear a newer session.
-- [ ] Verify logout and account deletion close owner-scoped runtime resources.
-- [ ] Verify duplicate active runtimes cannot exist.
+- [x] Verify current socket closure clears current runtime proof.
+- [x] Verify delayed old-socket events cannot clear a newer session.
+- [x] Verify logout and account deletion close owner-scoped runtime resources.
+- [x] Verify duplicate active runtimes cannot exist.
 
 ### 14. Assemble accessibility, blocker and final release-candidate evidence
 
-- [ ] Run Light, Dark, 200% font, LTR and RTL profiles.
-- [ ] Add deterministic automated accessibility scanning.
-- [ ] Require zero open critical, high and release-blocker issues.
+- [x] Run Light, Dark, 200% font, LTR and RTL profiles.
+- [x] Add deterministic automated accessibility scanning.
+- [x] Require zero open critical, high and release-blocker issues.
+- [ ] Split the controlled release into signed-candidate generation and final
+  publication phases.
+- [ ] Bind protected manual acceptance to the exact candidate AAB/APK SHA-256 and
+  publish only the byte-identical accepted candidate.
 - [ ] Build the production-signed minified AAB and optional APK.
 - [ ] Verify mapping, signatures, checksums, SBOM and provenance.
 - [ ] Generate final JSON and Markdown evidence summaries.
@@ -171,11 +172,25 @@ Implementation:
 - Production signing, mapping, checksum, SBOM and provenance remain incomplete
   until the controlled tag workflow runs successfully with real protected
   credentials and manual evidence.
+- The current single-phase workflow validates manual acceptance before it builds
+  the signed candidate and does not bind that acceptance to the candidate digest.
+  Stage 14 cannot close until candidate generation and final publication are split
+  and the accepted artifact identity is enforced fail-closed.
 
 ## Required pipeline order
 
-`guard → dependency integrity → lint/Detekt → unit test/coverage → CodeQL → instrumentation API 27/36 → clean install → upgrade install → release signing/build → checksum → SBOM/provenance → final evidence → publication`
+Automated branch validation:
+
+`guard → dependency integrity → lint/Detekt → unit test/coverage → CodeQL → instrumentation API 27/36 → clean install → upgrade install`
+
+Repository integration:
+
+`complete candidate/final workflow and artifact-hash binding → current PR checks green → merge into main → tag the exact main commit`
+
+Controlled release closure:
+
+`rerun controlled quality/security/instrumentation gates → build signed candidate → record candidate SHA-256 → complete physical-device and legal acceptance → verify tag + commit + candidate digest → checksum/SBOM/provenance → final evidence → publish the byte-identical accepted candidate`
 
 ## Completion rule
 
-Stage 14 is code-complete only when every included requirement passes on the same commit and its evidence is retained. The device-menu architecture and Light, Cooling, Timer and Dosing development sequence may begin only after this stage is complete.
+The application and emulator implementation is complete, and all required PR workflows passed on the last application/harness head. Stage 14 remains open until the two-phase release workflow and candidate-digest binding are implemented, the current PR head is green and merged, and the protected manual acceptance and controlled final publication complete for the same tagged commit and accepted artifact. The device-menu architecture and Light, Cooling, Timer and Dosing development sequence may begin only after this stage is complete.
