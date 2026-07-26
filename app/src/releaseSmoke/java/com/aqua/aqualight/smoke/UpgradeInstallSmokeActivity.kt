@@ -12,9 +12,11 @@ import android.os.Bundle
 import android.os.Process
 import android.view.Gravity
 import android.widget.TextView
+import com.aqua.aqualight.app.AquaApp
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
 import com.aqua.aqualight.data.user.StartupAppearanceCache
+import com.aqua.aqualight.i18n.AppLanguageController
 import java.io.File
 import java.security.MessageDigest
 import java.util.UUID
@@ -22,6 +24,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -116,6 +119,7 @@ private object UpgradeInstallValidator {
     suspend fun seed(activity: Activity): JSONObject {
         val identity = PackageIdentityReader.read(activity)
         val stateStore = UpgradeStateStore(activity)
+        stateStore.awaitStartupAppearanceSync()
         stateStore.reset()
         stateStore.seed(identity)
         UpgradeCredentialProbe(activity).seed()
@@ -136,6 +140,7 @@ private object UpgradeInstallValidator {
     suspend fun verify(activity: Activity): JSONObject {
         val candidate = PackageIdentityReader.read(activity)
         val stateStore = UpgradeStateStore(activity)
+        stateStore.awaitStartupAppearanceSync()
         val baseline = stateStore.load()
         val credentialEvidence = UpgradeCredentialProbe(activity).verifyAndCleanup()
         val checks = linkedMapOf(
@@ -176,15 +181,22 @@ private class UpgradeStateStore(
     context: Context
 ) {
     private val appContext = context.applicationContext
+    private val application = appContext as AquaApp
     private val state = appContext.getSharedPreferences(
         UpgradeInstallContract.STATE_PREFERENCES,
         Context.MODE_PRIVATE
     )
-    private val appearance = StartupAppearanceCache.create(appContext)
+    private val appearance = application.appContainer.startupAppearanceCache
+    private val userPreferences = application.appContainer.userPreferencesManager
+    private val userSettings = application.appContainer.userSettingsOperations
     private val markerFile = File(
         appContext.filesDir,
         UpgradeInstallContract.MARKER_FILE
     )
+
+    suspend fun awaitStartupAppearanceSync() {
+        application.awaitStartupAppearanceSyncForProcess()
+    }
 
     fun reset() {
         state.edit().clear().commitOrThrow(
@@ -195,7 +207,7 @@ private class UpgradeStateStore(
         }
     }
 
-    fun seed(identity: PackageIdentity) {
+    suspend fun seed(identity: PackageIdentity) {
         state.edit()
             .putString(
                 UpgradeInstallContract.KEY_MARKER,
@@ -216,13 +228,14 @@ private class UpgradeStateStore(
             UpgradeInstallContract.FILE_MARKER + "\n",
             Charsets.UTF_8
         )
-        appearance.write(
-            themeMode = UpgradeInstallContract.APPEARANCE_THEME,
-            languageCode = UpgradeInstallContract.APPEARANCE_LANGUAGE
-        )
+        userSettings.updateThemeMode(UpgradeInstallContract.APPEARANCE_THEME)
+        userSettings.updateLanguage(UpgradeInstallContract.APPEARANCE_LANGUAGE)
+        check(isAppearancePreserved()) {
+            "Upgrade appearance baseline could not be seeded through production settings."
+        }
     }
 
-    fun load(): SeededUpgradeState {
+    suspend fun load(): SeededUpgradeState {
         val seededIdentity = PackageIdentity(
             versionName = state.getString(
                 UpgradeInstallContract.KEY_VERSION_NAME,
@@ -251,12 +264,23 @@ private class UpgradeStateStore(
             ) == UpgradeInstallContract.PREFERENCE_MARKER,
             fileMarkerPreserved = markerFile.readText(Charsets.UTF_8).trim() ==
                 UpgradeInstallContract.FILE_MARKER,
-            appearancePreserved = (
-                currentAppearance.themeMode == UpgradeInstallContract.APPEARANCE_THEME &&
-                    currentAppearance.languageCode ==
-                    UpgradeInstallContract.APPEARANCE_LANGUAGE
-                )
+            appearancePreserved = isAppearancePreserved(currentAppearance)
         )
+    }
+
+    private suspend fun isAppearancePreserved(
+        currentAppearance: StartupAppearanceCache.Appearance = appearance.read()
+    ): Boolean {
+        val durablePreferences = userPreferences.userPrefsFlow.first()
+        val cacheMatches =
+            currentAppearance.themeMode == UpgradeInstallContract.APPEARANCE_THEME &&
+                currentAppearance.languageCode == UpgradeInstallContract.APPEARANCE_LANGUAGE
+        val durablePreferencesMatch =
+            durablePreferences.themeMode == UpgradeInstallContract.APPEARANCE_THEME &&
+                durablePreferences.languageCode == UpgradeInstallContract.APPEARANCE_LANGUAGE
+        val runtimeLanguageMatches =
+            AppLanguageController.current() == UpgradeInstallContract.APPEARANCE_LANGUAGE
+        return cacheMatches && durablePreferencesMatch && runtimeLanguageMatches
     }
 
     fun clearValidationState() {
@@ -462,7 +486,7 @@ private object UpgradeInstallContract {
     const val MARKER_FILE = "stage14/upgrade-install-marker.txt"
     const val FILE_MARKER = "aqualight-stage14-upgrade-file-v1"
 
-    const val APPEARANCE_THEME = "dark"
+    const val APPEARANCE_THEME = "light"
     const val APPEARANCE_LANGUAGE = "tr"
     const val OWNER_UID = "stage14-upgrade-owner"
     const val DEVICE_UID = "stage14-upgrade-orphan-device"

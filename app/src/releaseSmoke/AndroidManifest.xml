@@ -3,6 +3,7 @@
     <application>
         <activity
             android:name="com.aqua.aqualight.smoke.UpgradeInstallSmokeActivity"
+            android:configChanges="locale|layoutDirection"
             android:exported="true"
             android:theme="@style/AppTheme" />
         <activity

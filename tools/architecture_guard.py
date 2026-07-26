@@ -179,6 +179,17 @@ for token in (
     "DeviceCredentialStore(this)",
 ):
     forbid(app_path, app_bootstrap, token, "process-global token provider is forbidden")
+for token, reason in (
+    (
+        "private val startupAppearanceSync = CompletableDeferred<Unit>()",
+        "release-smoke appearance checks require an explicit application bootstrap barrier",
+    ),
+    (
+        "internal suspend fun awaitStartupAppearanceSyncForProcess()",
+        "release-smoke must be able to await authoritative appearance synchronization",
+    ),
+):
+    require(app_path, app_bootstrap, token, reason)
 
 repository_path = (
     "app/src/main/java/com/aqua/aqualight/data/devices/repository/DevicesRepository.kt"
@@ -529,6 +540,14 @@ upgrade_install_activity_path = (
     "UpgradeInstallSmokeActivity.kt"
 )
 upgrade_install_activity = read(upgrade_install_activity_path)
+release_smoke_manifest_path = "app/src/releaseSmoke/AndroidManifest.xml"
+release_smoke_manifest = read(release_smoke_manifest_path)
+require(
+    release_smoke_manifest_path,
+    release_smoke_manifest,
+    'android:configChanges="locale|layoutDirection"',
+    "the locale seeder must not be interrupted by a test-only configuration restart",
+)
 for token, reason in (
     (
         "same-commit-lower-version-code",
@@ -553,6 +572,30 @@ for token, reason in (
     (
         "StartupAppearanceCache",
         "supported durable appearance state must survive over-install",
+    ),
+    (
+        "awaitStartupAppearanceSyncForProcess",
+        "upgrade validation must inspect appearance only after application bootstrap",
+    ),
+    (
+        "userSettings.updateThemeMode",
+        "upgrade validation must seed the production theme preference boundary",
+    ),
+    (
+        "userSettings.updateLanguage",
+        "upgrade validation must seed the production application-locale boundary",
+    ),
+    (
+        "userPreferences.userPrefsFlow.first()",
+        "upgrade validation must inspect authoritative encrypted appearance preferences",
+    ),
+    (
+        "AppLanguageController.current()",
+        "upgrade validation must inspect the Android/AppCompat locale source of truth",
+    ),
+    (
+        'const val APPEARANCE_THEME = "light"',
+        "upgrade validation must seed a non-default theme value",
     ),
     (
         "discardStagedTokens",
