@@ -15,7 +15,11 @@ class CareTaskBootReceiver : BroadcastReceiver() {
         intent: Intent
     ) {
         val action = intent.getAction()
-        if (!CareTaskSystemIntentVerifier.hasAllowedAction(intent)) {
+        if (
+            action != Intent.ACTION_BOOT_COMPLETED &&
+            action != Intent.ACTION_MY_PACKAGE_REPLACED &&
+            action != AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED
+        ) {
             return
         }
 
