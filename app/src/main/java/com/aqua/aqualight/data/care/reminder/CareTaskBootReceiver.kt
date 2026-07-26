@@ -14,7 +14,10 @@ class CareTaskBootReceiver : BroadcastReceiver() {
         context: Context,
         intent: Intent
     ) {
-        val action = CareTaskSystemIntentVerifier.verifiedAction(intent) ?: return
+        val action = intent.getAction()
+        if (!CareTaskSystemIntentVerifier.hasAllowedAction(intent)) {
+            return
+        }
 
         if (
             action == AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED &&
