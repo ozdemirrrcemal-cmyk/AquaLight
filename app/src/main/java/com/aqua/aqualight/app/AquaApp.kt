@@ -101,13 +101,7 @@ class AquaApp : Application() {
                     applyTheme(resolvedThemeMode)
                 }
             }
-        }.invokeOnCompletion { error ->
-            if (error == null) {
-                startupAppearanceSync.complete(Unit)
-            } else {
-                startupAppearanceSync.completeExceptionally(error)
-            }
-        }
+        }.invokeOnCompletion(::completeStartupAppearanceSync)
 
         // Local media reconciliation belongs to process startup. It preserves candidates already
         // referenced by the active owner's durable stores and expires only unreferenced candidates.
@@ -154,6 +148,14 @@ class AquaApp : Application() {
      */
     internal suspend fun awaitStartupAppearanceSyncForProcess() {
         startupAppearanceSync.await()
+    }
+
+    private fun completeStartupAppearanceSync(error: Throwable?) {
+        if (error == null) {
+            startupAppearanceSync.complete(Unit)
+        } else {
+            startupAppearanceSync.completeExceptionally(error)
+        }
     }
 
     private fun applyTheme(mode: String) {
