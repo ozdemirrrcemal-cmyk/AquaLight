@@ -213,6 +213,36 @@ def validate_android_workflows(
         raise PolicyFailure(
             "release workflow is missing installed Android 17 image verification"
         )
+    require_exact(
+        emulator_workflow_text.count(
+            "channel: ${{ matrix.api-level == 37 && 'beta' || 'stable' }}"
+        ),
+        1,
+        "emulator workflow API 37 beta-channel binding count",
+    )
+    require_exact(
+        emulator_workflow_text.count("sdk install --beta"),
+        1,
+        "emulator workflow API 37 Android CLI install count",
+    )
+    require_exact(
+        release_workflow_text.count("channel: beta"),
+        1,
+        "release workflow API 37 beta-channel binding count",
+    )
+    require_exact(
+        release_workflow_text.count("sdk install --beta"),
+        2,
+        "release workflow API 37 Android CLI install count",
+    )
+    for workflow_name, workflow_text in (
+        ("emulator", emulator_workflow_text),
+        ("release", release_workflow_text),
+    ):
+        if "channel: dev" in workflow_text or "channel: canary" in workflow_text:
+            raise PolicyFailure(
+                f"{workflow_name} workflow must not use dev or canary SDK channels"
+            )
 
     require_exact(
         emulator_workflow_text.count('cmdline-tools-version: "15859902"'),

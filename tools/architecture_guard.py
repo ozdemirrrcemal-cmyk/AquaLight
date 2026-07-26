@@ -431,6 +431,14 @@ for token, reason in (
         "emulator CI must install the stable Android 17 system image with Android CLI",
     ),
     (
+        "channel: ${{ matrix.api-level == 37 && 'beta' || 'stable' }}",
+        "emulator CI must use beta only for the currently preview-packaged API 37 SDK",
+    ),
+    (
+        "sdk install --beta",
+        "Android CLI must opt into the documented API 37 package channel",
+    ),
+    (
         "system-images/android-${matrix_api}/default/x86_64/package.xml",
         "emulator CI must verify the installed system-image package metadata",
     ),

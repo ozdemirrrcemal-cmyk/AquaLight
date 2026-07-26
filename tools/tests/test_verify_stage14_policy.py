@@ -150,6 +150,23 @@ class Stage14PolicyTest(unittest.TestCase):
                 self.release_workflow,
             )
 
+    def test_api_37_preview_package_channel_cannot_be_removed(self) -> None:
+        drifted_workflow = self.emulator_workflow.replace(
+            "channel: ${{ matrix.api-level == 37 && 'beta' || 'stable' }}",
+            "channel: stable",
+        )
+
+        with self.assertRaisesRegex(
+            PolicyFailure,
+            "beta-channel binding",
+        ):
+            validate_policy(
+                self.policy,
+                self.app_gradle,
+                drifted_workflow,
+                self.release_workflow,
+            )
+
     def validate(self, policy: dict) -> dict:
         return validate_policy(
             policy,

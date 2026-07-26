@@ -91,6 +91,13 @@ Implementation:
   `targetSdk 36` Play submission baseline.
 - [ ] Execute required instrumentation and minified release-smoke suites on both.
 
+Implementation note:
+
+- Google's current Android 17 SDK setup still publishes the API 37 SDK and system
+  image through the preview package channel. CI pins command-line tools package
+  `15859902`, keeps API 27 on `stable`, scopes `beta` to API 37 only, and rejects
+  `dev` or `canary` channels.
+
 ### 8. Complete clean-install automation
 
 - [ ] Install the minified candidate on a clean emulator.

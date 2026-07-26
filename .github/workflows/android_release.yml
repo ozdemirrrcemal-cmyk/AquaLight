@@ -107,7 +107,7 @@ jobs:
           set +o pipefail
           yes 2>/dev/null | "$android_cli_path" \
             --sdk="$ANDROID_SDK_ROOT" \
-            sdk install \
+            sdk install --beta \
             "platforms/android-37" \
             "system-images/android-37/default/x86_64"
           set -o pipefail
@@ -366,7 +366,7 @@ jobs:
           set +o pipefail
           yes 2>/dev/null | "$android_cli_path" \
             --sdk="$ANDROID_SDK_ROOT" \
-            sdk install \
+            sdk install --beta \
             "platforms/android-37" \
             "system-images/android-37/default/x86_64"
           set -o pipefail
@@ -407,6 +407,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: 37
+          channel: beta
           target: default
           arch: x86_64
           profile: pixel_2
