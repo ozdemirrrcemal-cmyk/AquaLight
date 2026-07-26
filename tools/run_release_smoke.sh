@@ -68,8 +68,6 @@ wait_for_unlocked_user() {
 wait_for_unlocked_user
 
 ORIGINAL_FONT_SCALE="$(adb shell settings get system font_scale 2>/dev/null | tr -d '\r')"
-ORIGINAL_FORCE_RTL="$(adb shell settings get global debug.force_rtl 2>/dev/null | tr -d '\r')"
-ORIGINAL_FORCE_RTL_PROP="$(adb shell getprop debug.force_rtl 2>/dev/null | tr -d '\r')"
 
 capture_smoke_diagnostics() {
   set +e
@@ -95,8 +93,6 @@ restore_setting() {
 
 restore_device_configuration() {
   restore_setting system font_scale "$ORIGINAL_FONT_SCALE"
-  restore_setting global debug.force_rtl "$ORIGINAL_FORCE_RTL"
-  adb shell setprop debug.force_rtl "$ORIGINAL_FORCE_RTL_PROP" >/dev/null 2>&1 || true
 }
 
 wait_for_ui_marker() {
@@ -354,14 +350,11 @@ run_visual_profile() {
   profile="$1"
   theme="$2"
   font_scale="$3"
-  force_rtl="$4"
   profile_dump="${SMOKE_PREFIX}-${profile}-window.xml"
   remote_profile_dump="/sdcard/${profile_dump}"
   profile_logcat="${SMOKE_PREFIX}-${profile}-logcat.txt"
 
   adb shell settings put system font_scale "$font_scale"
-  adb shell settings put global debug.force_rtl "$force_rtl"
-  adb shell setprop debug.force_rtl "$force_rtl"
   adb shell am force-stop "$PACKAGE_NAME"
   adb logcat -c
 
@@ -416,12 +409,12 @@ run_visual_profile() {
   return 1
 }
 
-run_visual_profile light light 1.0 0
-run_visual_profile dark dark 1.0 0
-run_visual_profile large-font-light light 2.0 0
-run_visual_profile large-font-dark dark 2.0 0
-run_visual_profile rtl-light light 1.0 1
-run_visual_profile rtl-dark dark 1.0 1
+run_visual_profile light light 1.0
+run_visual_profile dark dark 1.0
+run_visual_profile large-font-light light 2.0
+run_visual_profile large-font-dark dark 2.0
+run_visual_profile rtl-light light 1.0
+run_visual_profile rtl-dark dark 1.0
 python3 tools/verify_accessibility_evidence.py \
   --prefix "$SMOKE_PREFIX" \
   --screens "$SMOKE_SCREEN_DIR" \

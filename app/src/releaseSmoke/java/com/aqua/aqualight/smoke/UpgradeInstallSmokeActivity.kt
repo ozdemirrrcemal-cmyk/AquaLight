@@ -25,6 +25,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -40,11 +41,21 @@ import org.json.JSONObject
 class UpgradeInstallSmokeActivity : AppCompatActivity() {
 
     private val activityScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private var validationStarted = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         render(UpgradeInstallContract.RUNNING_MARKER)
+    }
 
+    override fun onPostResume() {
+        super.onPostResume()
+        if (validationStarted) return
+        validationStarted = true
+        startValidation()
+    }
+
+    private fun startValidation() {
         activityScope.launch {
             val action = intent.getStringExtra(UpgradeInstallContract.EXTRA_ACTION).orEmpty()
             val result = runCatching {
@@ -231,9 +242,7 @@ private class UpgradeStateStore(
         )
         userSettings.updateThemeMode(UpgradeInstallContract.APPEARANCE_THEME)
         userSettings.updateLanguage(UpgradeInstallContract.APPEARANCE_LANGUAGE)
-        check(isAppearancePreserved()) {
-            "Upgrade appearance baseline could not be seeded through production settings."
-        }
+        awaitAppearancePreserved()
     }
 
     suspend fun load(): SeededUpgradeState {
@@ -272,16 +281,42 @@ private class UpgradeStateStore(
     private suspend fun isAppearancePreserved(
         currentAppearance: StartupAppearanceCache.Appearance = appearance.read()
     ): Boolean {
+        return appearanceFailures(currentAppearance).isEmpty()
+    }
+
+    private suspend fun awaitAppearancePreserved() {
+        repeat(UpgradeInstallContract.APPEARANCE_SYNC_ATTEMPTS) {
+            if (appearanceFailures().isEmpty()) return
+            delay(UpgradeInstallContract.APPEARANCE_SYNC_DELAY_MILLIS)
+        }
+        val failures = appearanceFailures()
+        error(
+            "Upgrade appearance baseline could not be seeded through production settings; " +
+                "failed checks: ${failures.sorted()}."
+        )
+    }
+
+    private suspend fun appearanceFailures(
+        currentAppearance: StartupAppearanceCache.Appearance = appearance.read()
+    ): List<String> {
         val durablePreferences = userPreferences.userPrefsFlow.first()
-        val cacheMatches =
-            currentAppearance.themeMode == UpgradeInstallContract.APPEARANCE_THEME &&
-                currentAppearance.languageCode == UpgradeInstallContract.APPEARANCE_LANGUAGE
-        val durablePreferencesMatch =
-            durablePreferences.themeMode == UpgradeInstallContract.APPEARANCE_THEME &&
-                durablePreferences.languageCode == UpgradeInstallContract.APPEARANCE_LANGUAGE
-        val runtimeLanguageMatches =
-            AppLanguageController.current() == UpgradeInstallContract.APPEARANCE_LANGUAGE
-        return cacheMatches && durablePreferencesMatch && runtimeLanguageMatches
+        val failures = mutableListOf<String>()
+        if (
+            currentAppearance.themeMode != UpgradeInstallContract.APPEARANCE_THEME ||
+            currentAppearance.languageCode != UpgradeInstallContract.APPEARANCE_LANGUAGE
+        ) {
+            failures += "startupCache"
+        }
+        if (
+            durablePreferences.themeMode != UpgradeInstallContract.APPEARANCE_THEME ||
+            durablePreferences.languageCode != UpgradeInstallContract.APPEARANCE_LANGUAGE
+        ) {
+            failures += "durablePreferences"
+        }
+        if (AppLanguageController.current() != UpgradeInstallContract.APPEARANCE_LANGUAGE) {
+            failures += "runtimeLanguage"
+        }
+        return failures
     }
 
     fun clearValidationState() {
@@ -489,6 +524,8 @@ private object UpgradeInstallContract {
 
     const val APPEARANCE_THEME = "light"
     const val APPEARANCE_LANGUAGE = "tr"
+    const val APPEARANCE_SYNC_ATTEMPTS = 50
+    const val APPEARANCE_SYNC_DELAY_MILLIS = 100L
     const val OWNER_UID = "stage14-upgrade-owner"
     const val DEVICE_UID = "stage14-upgrade-orphan-device"
     val PROCESS_NONCE_PATTERN = Regex(

@@ -554,6 +554,10 @@ for token, reason in (
         "API 33+ application locales require an active AppCompat activity delegate",
     ),
     (
+        "override fun onPostResume()",
+        "application-locale validation must start after the AppCompat activity is resumed",
+    ),
+    (
         "same-commit-lower-version-code",
         "the first-release upgrade baseline mode must remain explicit",
     ),
@@ -596,6 +600,14 @@ for token, reason in (
     (
         "AppLanguageController.current()",
         "upgrade validation must inspect the Android/AppCompat locale source of truth",
+    ),
+    (
+        "awaitAppearancePreserved()",
+        "upgrade validation must await bounded appearance convergence on API 33+",
+    ),
+    (
+        "failed checks:",
+        "upgrade appearance failures must identify the source that did not converge",
     ),
     (
         'const val APPEARANCE_THEME = "light"',
