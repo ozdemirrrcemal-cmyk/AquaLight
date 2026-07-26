@@ -218,8 +218,8 @@ def validate_android_workflows(
     )
     require_exact(
         emulator_workflow_text.count("--channel=3"),
-        1,
-        "emulator workflow API 37 preview-package install count",
+        2,
+        "emulator workflow API 37 catalog and install binding count",
     )
     require_exact(
         release_workflow_text.count("channel: canary"),
