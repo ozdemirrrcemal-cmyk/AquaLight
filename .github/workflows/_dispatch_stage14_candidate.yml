@@ -1,13 +1,13 @@
 name: Dispatch Stage 14 Candidate
 
 on:
-  push:
-    branches:
-      - _stage14-dispatch-candidate-v0140-final
+  pull_request:
+    paths:
+      - ".github/workflows/_dispatch_stage14_candidate.yml"
 
 permissions:
   actions: write
-  contents: write
+  contents: read
   issues: write
 
 jobs:
@@ -21,16 +21,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           EXPECTED_COMMIT: da88a8e317b759c5832d05144a29f7941cc8a884
           RELEASE_TAG: v0.14.0
-          TEMP_BRANCH: _stage14-dispatch-candidate-v0140-final
         run: |
           set -Eeuo pipefail
-
-          cleanup() {
-            gh api --method DELETE \
-              "repos/${GITHUB_REPOSITORY}/git/refs/heads/${TEMP_BRANCH}" \
-              >/dev/null 2>&1 || true
-          }
-          trap cleanup EXIT
 
           main_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')"
           tag_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}" --jq '.object.sha')"
@@ -66,11 +58,9 @@ jobs:
 
           body="Stage 14 candidate yeniden başlatıldı.\n\n- Tag: \`${RELEASE_TAG}\`\n- Commit: \`${EXPECTED_COMMIT}\`\n- Run ID: \`${run_id}\`\n- Run: ${run_url}\n- Phase: \`candidate\`\n- APK inclusion: \`true\`"
           gh api --method POST \
-            "repos/${GITHUB_REPOSITORY}/issues/105/comments" \
+            "repos/${GITHUB_REPOSITORY}/issues/${{ github.event.pull_request.number }}/comments" \
             -f body="$body" \
             >/dev/null
 
           echo "Candidate run ID: ${run_id}"
           echo "Candidate run URL: ${run_url}"
-
-# second push intentionally triggers this already-registered workflow
