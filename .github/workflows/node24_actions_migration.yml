@@ -1,0 +1,144 @@
+name: Node 24 Actions Migration
+
+on:
+  push:
+    branches:
+      - chore/node24-actions-migration
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: node24-actions-migration
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout migration branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: chore/node24-actions-migration
+          fetch-depth: 0
+
+      - name: Replace Node 20 action pins
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          workflow_dir = Path('.github/workflows')
+          migration_file = workflow_dir / 'node24_actions_migration.yml'
+          files = sorted(workflow_dir.glob('*.yml')) + [Path('tools/architecture_guard.py')]
+          files = [path for path in files if path != migration_file]
+
+          replacements = {
+              'actions/checkout@11d5960a326750d5838078e36cf38b85af677262':
+                  'actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd',
+              'gradle/wrapper-validation-action@b5418f5a58f5fd2eb486dd7efb368fe7be7eae45':
+                  'gradle/actions/wrapper-validation@3f131e8634966bd73d06cc69884922b02e6faf92',
+              'android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407':
+                  'android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699',
+              'actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830':
+                  'actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae',
+              'actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0':
+                  'actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c',
+          }
+          version_comments = {
+              'actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4':
+                  'actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2',
+              'gradle/actions/wrapper-validation@3f131e8634966bd73d06cc69884922b02e6faf92 # v2':
+                  'gradle/actions/wrapper-validation@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0',
+              'android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v3':
+                  'android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1',
+              'actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v4':
+                  'actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5',
+              'actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v5':
+                  'actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1',
+          }
+          minimum_counts = {
+              'actions/checkout@11d5960a326750d5838078e36cf38b85af677262': 8,
+              'gradle/wrapper-validation-action@b5418f5a58f5fd2eb486dd7efb368fe7be7eae45': 5,
+              'android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407': 6,
+              'actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830': 1,
+              'actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0': 1,
+          }
+
+          totals = {old: 0 for old in replacements}
+          for path in files:
+              text = path.read_text(encoding='utf-8')
+              original = text
+              for old, new in replacements.items():
+                  count = text.count(old)
+                  totals[old] += count
+                  text = text.replace(old, new)
+              if path == Path('tools/architecture_guard.py'):
+                  old_sha = '9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407'
+                  new_sha = '40fd30fb8d7440372e1316f5d1809ec01dcd3699'
+                  if old_sha in text:
+                      totals['android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407'] += text.count(old_sha)
+                      text = text.replace(old_sha, new_sha)
+              for old, new in version_comments.items():
+                  text = text.replace(old, new)
+              if text != original:
+                  path.write_text(text, encoding='utf-8')
+
+          for old, minimum in minimum_counts.items():
+              found = totals[old]
+              print(f'{old}: replaced {found}')
+              if found < minimum:
+                  raise SystemExit(f'Expected at least {minimum} occurrences of {old}, found {found}')
+
+          searchable = [path for path in files if path.exists()]
+          for old in replacements:
+              leftovers = [str(path) for path in searchable if old in path.read_text(encoding='utf-8')]
+              if leftovers:
+                  raise SystemExit(f'Old action pin remains for {old}: {leftovers}')
+
+          guard = Path('tools/architecture_guard.py').read_text(encoding='utf-8')
+          if '40fd30fb8d7440372e1316f5d1809ec01dcd3699' not in guard:
+              raise SystemExit('architecture_guard.py does not contain the new setup-android SHA')
+          if 'cmdline-tools-version: "15859902"' not in guard:
+              raise SystemExit('Reviewed Android command-line tools pin changed unexpectedly')
+          PY
+
+      - name: Run repository guard tests
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 -m unittest discover -s tools/tests -p 'test_*.py'
+          python3 tools/architecture_guard.py
+          git diff --check
+
+      - name: Commit migration to branch
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          rm -f .github/workflows/node24_actions_migration.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows tools/architecture_guard.py
+          git diff --cached --check
+          git commit -m 'ci: migrate GitHub Actions to Node 24 runtimes'
+          git push origin HEAD:chore/node24-actions-migration
+
+      - name: Dispatch branch validation workflows
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          for workflow in \
+            android.yml \
+            codeql.yml \
+            dependency_integrity.yml \
+            android_emulator_tests.yml \
+            firebase_secret_guard.yml; do
+            gh workflow run "$workflow" --ref chore/node24-actions-migration
+            echo "Dispatched $workflow"
+          done
