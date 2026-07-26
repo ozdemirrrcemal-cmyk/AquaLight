@@ -414,6 +414,14 @@ for token, reason in (
         "android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d",
         "emulator CI action must remain pinned to its reviewed v2.38.0 commit",
     ),
+    (
+        "cmdline-tools/latest/bin/sdkmanager",
+        "emulator CI must place the current SDK manager ahead of legacy tools",
+    ),
+    (
+        "system-images;android-37;default;x86_64",
+        "emulator CI must preflight the stable Android 17 system image",
+    ),
 ):
     require(emulator_workflow_path, emulator_workflow, token, reason)
 

@@ -176,6 +176,21 @@ def validate_android_workflows(
     emulator_workflow_text: str,
     release_workflow_text: str,
 ) -> None:
+    for token, label in (
+        (
+            "cmdline-tools/latest/bin/sdkmanager",
+            "current Android SDK manager binding",
+        ),
+        (
+            "system-images;android-37;default;x86_64",
+            "Android 17 system image preflight",
+        ),
+    ):
+        if token not in emulator_workflow_text:
+            raise PolicyFailure(f"emulator workflow is missing {label}")
+        if token not in release_workflow_text:
+            raise PolicyFailure(f"release workflow is missing {label}")
+
     matrix_matches = re.findall(
         r"(?m)^\s*api-level:\s*\[([^\]]+)\]\s*$",
         emulator_workflow_text,

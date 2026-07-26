@@ -79,8 +79,21 @@ jobs:
           set +o pipefail
           yes 2>/dev/null | sdkmanager --licenses >/dev/null
           set -o pipefail
-          sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
-          sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1"
+          sdkmanager "cmdline-tools;latest"
+          current_sdkmanager="${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager"
+          test -x "$current_sdkmanager"
+          echo "${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          set +o pipefail
+          yes 2>/dev/null | "$current_sdkmanager" --licenses >/dev/null
+          set -o pipefail
+          "$current_sdkmanager" "platform-tools" "platforms;android-36"
+          "$current_sdkmanager" "build-tools;36.0.0" \
+            || "$current_sdkmanager" "build-tools;36.0.1"
+          available_packages="$("$current_sdkmanager" --list)"
+          grep -Fq "platforms;android-37" <<< "$available_packages"
+          grep -Fq \
+            "system-images;android-37;default;x86_64" \
+            <<< "$available_packages"
           chmod +x ./gradlew
 
       - name: 01-03 Guard, Lint/Detekt and unit coverage
@@ -300,8 +313,21 @@ jobs:
           set +o pipefail
           yes 2>/dev/null | sdkmanager --licenses >/dev/null
           set -o pipefail
-          sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
-          sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1"
+          sdkmanager "cmdline-tools;latest"
+          current_sdkmanager="${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager"
+          test -x "$current_sdkmanager"
+          echo "${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          set +o pipefail
+          yes 2>/dev/null | "$current_sdkmanager" --licenses >/dev/null
+          set -o pipefail
+          "$current_sdkmanager" "platform-tools" "platforms;android-36"
+          "$current_sdkmanager" "build-tools;36.0.0" \
+            || "$current_sdkmanager" "build-tools;36.0.1"
+          available_packages="$("$current_sdkmanager" --list)"
+          grep -Fq "platforms;android-37" <<< "$available_packages"
+          grep -Fq \
+            "system-images;android-37;default;x86_64" \
+            <<< "$available_packages"
           chmod +x ./gradlew
 
       - name: Prepare minified release smoke

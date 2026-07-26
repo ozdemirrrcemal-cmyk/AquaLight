@@ -119,6 +119,20 @@ class Stage14PolicyTest(unittest.TestCase):
                 drifted_workflow,
             )
 
+    def test_current_sdk_manager_preflight_cannot_be_removed(self) -> None:
+        drifted_workflow = self.emulator_workflow.replace(
+            "system-images;android-37;default;x86_64",
+            "system-images;android-36;default;x86_64",
+        )
+
+        with self.assertRaisesRegex(PolicyFailure, "system image preflight"):
+            validate_policy(
+                self.policy,
+                self.app_gradle,
+                drifted_workflow,
+                self.release_workflow,
+            )
+
     def validate(self, policy: dict) -> dict:
         return validate_policy(
             policy,
