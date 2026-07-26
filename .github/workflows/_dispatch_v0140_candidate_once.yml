@@ -2,7 +2,7 @@ name: Dispatch v0.14.0 Candidate Once
 
 on:
   pull_request_target:
-    types: [opened]
+    types: [opened, synchronize, reopened]
 
 permissions:
   actions: write
@@ -29,7 +29,7 @@ jobs:
           set -Eeuo pipefail
 
           main_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')"
-          [[ "$main_sha" == "${{ github.event.pull_request.base.sha }}" ]]
+          [[ "$main_sha" == "$GITHUB_SHA" ]]
 
           workflow_blob_sha="$(gh api \
             "repos/${GITHUB_REPOSITORY}/contents/${WORKFLOW_PATH}?ref=main" \
