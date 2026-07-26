@@ -73,6 +73,11 @@ for value in sys.argv[1:]:
         raise SystemExit(f"Invalid SPDX root: {path}")
 PY
 
+instrumentation_validation="$validation/instrumentation"
+if [[ -d "$instrumentation_validation" ]]; then
+  find "$instrumentation_validation" -type f -name '*.lck' -delete
+fi
+
 python3 tools/release_candidate_manifest.py create \
   --root "$release_root" \
   --release-tag "$AQL_RELEASE_TAG" \
