@@ -302,6 +302,16 @@ def validate_android_workflows(
         "emulator workflow matrix image-target binding count",
     )
     require_exact(
+        emulator_workflow_text.count("disk-size: 8G"),
+        1,
+        "emulator workflow commercial AVD disk-size binding count",
+    )
+    require_exact(
+        release_workflow_text.count("disk-size: 8G"),
+        1,
+        "release workflow API 37 AVD disk-size binding count",
+    )
+    require_exact(
         emulator_workflow_text.count(
             'script: bash tools/run_release_smoke.sh "${{ matrix.api-level }}"'
         ),

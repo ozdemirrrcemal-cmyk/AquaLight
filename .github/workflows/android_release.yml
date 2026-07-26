@@ -403,6 +403,7 @@ jobs:
           target: google_apis_ps16k
           arch: x86_64
           profile: pixel_2
+          disk-size: 8G
           disable-animations: true
           emulator-boot-timeout: 900
           emulator-options: >-

@@ -14,7 +14,7 @@ class CareTaskBootReceiver : BroadcastReceiver() {
         context: Context,
         intent: Intent
     ) {
-        val action = intent.action
+        val action = intent.getAction()
         if (
             action != Intent.ACTION_BOOT_COMPLETED &&
             action != Intent.ACTION_MY_PACKAGE_REPLACED &&

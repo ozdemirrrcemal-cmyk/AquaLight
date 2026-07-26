@@ -109,6 +109,52 @@ class CodeQlSarifEvidenceTest(unittest.TestCase):
         self.assertFalse(summary["passed"])
         self.assertEqual(1, summary["counts"]["critical"])
 
+    def test_codeql_extension_rule_reference_is_resolved(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            path = self.write_sarif(directory, "8.2")
+            document = json.loads(path.read_text(encoding="utf-8"))
+            run = document["runs"][0]
+            rule = run["tool"]["driver"]["rules"].pop()
+            run["tool"]["extensions"] = [
+                {
+                    "name": "codeql-action/pr-diff-range",
+                    "rules": [],
+                },
+                {
+                    "name": "codeql/java-queries",
+                    "rules": [rule],
+                },
+            ]
+            run["results"][0]["rule"] = {
+                "id": "java/example",
+                "index": 0,
+                "toolComponent": {"index": 1},
+            }
+            path.write_text(json.dumps(document), encoding="utf-8")
+
+            summary = validate_sarif_directory(directory, COMMIT)
+
+        self.assertFalse(summary["passed"])
+        self.assertEqual(1, summary["counts"]["high"])
+        self.assertEqual(1, summary["reports"][0]["runs"][0]["ruleCount"])
+
+    def test_invalid_extension_rule_reference_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            path = self.write_sarif(directory, "8.2")
+            document = json.loads(path.read_text(encoding="utf-8"))
+            result = document["runs"][0]["results"][0]
+            result["rule"] = {
+                "id": "java/example",
+                "index": 0,
+                "toolComponent": {"index": 3},
+            }
+            path.write_text(json.dumps(document), encoding="utf-8")
+
+            with self.assertRaisesRegex(CodeQlFailure, "extension index"):
+                validate_sarif_directory(directory, COMMIT)
+
     def test_missing_sarif_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             with self.assertRaisesRegex(CodeQlFailure, "no CodeQL SARIF"):

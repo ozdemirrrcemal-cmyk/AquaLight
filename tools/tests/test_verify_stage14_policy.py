@@ -170,6 +170,23 @@ class Stage14PolicyTest(unittest.TestCase):
                 self.release_workflow,
             )
 
+    def test_commercial_avd_disk_size_cannot_be_removed(self) -> None:
+        drifted_workflow = self.emulator_workflow.replace(
+            "disk-size: 8G",
+            "disk-size: 2G",
+        )
+
+        with self.assertRaisesRegex(
+            PolicyFailure,
+            "AVD disk-size binding",
+        ):
+            validate_policy(
+                self.policy,
+                self.app_gradle,
+                drifted_workflow,
+                self.release_workflow,
+            )
+
     def validate(self, policy: dict) -> dict:
         return validate_policy(
             policy,

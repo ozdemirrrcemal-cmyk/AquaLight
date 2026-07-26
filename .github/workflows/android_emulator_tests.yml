@@ -194,6 +194,7 @@ jobs:
           target: ${{ matrix.api-level == 37 && 'google_apis_ps16k' || 'default' }}
           arch: x86_64
           profile: pixel_2
+          disk-size: 8G
           disable-animations: true
           emulator-boot-timeout: 900
           emulator-options: >-
