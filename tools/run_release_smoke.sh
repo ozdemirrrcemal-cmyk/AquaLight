@@ -52,10 +52,12 @@ wait_for_unlocked_user() {
         | tr -d '\r' \
         || true
     )"
-    if [ "$state" = "3" ]; then
-      echo "Android user ${user_id} is RUNNING_UNLOCKED."
-      return 0
-    fi
+    case "$state" in
+      3|RUNNING_UNLOCKED)
+        echo "Android user ${user_id} is RUNNING_UNLOCKED."
+        return 0
+        ;;
+    esac
     sleep 1
   done
 
