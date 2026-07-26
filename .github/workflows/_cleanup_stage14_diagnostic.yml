@@ -1,0 +1,23 @@
+name: Cleanup Stage 14 Diagnostic
+
+on:
+  push:
+    branches:
+      - _stage14-release-log-diagnostic
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Remove temporary tag and branch
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+          gh api --method DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/diag-v0.14.0" >/dev/null 2>&1 || true
+          gh api --method DELETE "repos/${GITHUB_REPOSITORY}/git/refs/heads/_stage14-release-log-diagnostic" >/dev/null 2>&1 || true
