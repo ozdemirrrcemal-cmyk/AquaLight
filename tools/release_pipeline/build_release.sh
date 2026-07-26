@@ -29,6 +29,47 @@ normalize() {
   printf '%s' "$value" | tr -d '[:space:]:' | tr '[:lower:]' '[:upper:]'
 }
 
+certificate_sha256s_from_pem_file() {
+  local pem_file="$1"
+  python3 - "$pem_file" <<'PY'
+import base64
+import hashlib
+import re
+import sys
+from pathlib import Path
+
+text = Path(sys.argv[1]).read_text(encoding="utf-8", errors="strict")
+blocks = re.findall(
+    r"-----BEGIN CERTIFICATE-----\s*(.*?)\s*-----END CERTIFICATE-----",
+    text,
+    flags=re.DOTALL,
+)
+if not blocks:
+    raise SystemExit(f"No PEM signing certificate found in {sys.argv[1]}")
+for block in blocks:
+    encoded = "".join(block.split())
+    certificate = base64.b64decode(encoded, validate=True)
+    print(hashlib.sha256(certificate).hexdigest().upper())
+PY
+}
+
+require_expected_certificate() {
+  local label="$1"
+  local expected_sha256="$2"
+  shift 2
+  local certificate
+  for certificate in "$@"; do
+    if [[ "$certificate" == "$expected_sha256" ]]; then
+      return 0
+    fi
+  done
+  printf '%s certificate mismatch. Expected %s; discovered: %s\n' \
+    "$label" \
+    "$expected_sha256" \
+    "$*" >&2
+  return 1
+}
+
 umask 077
 signing_dir="${RUNNER_TEMP}/aqualight-signing"
 keystore_path="${signing_dir}/release-key.jks"
@@ -47,8 +88,16 @@ keytool_output="$(keytool -list -v \
   -storepass "$RELEASE_KEYSTORE_PASSWORD" \
   -alias "$RELEASE_KEY_ALIAS")"
 grep -Fq "Entry type: PrivateKeyEntry" <<< "$keytool_output"
-actual="$(sed -n 's/^[[:space:]]*SHA256:[[:space:]]*//p' <<< "$keytool_output" | head -n 1)"
-actual="$(normalize "$actual")"
+keytool -exportcert -rfc \
+  -keystore "$keystore_path" \
+  -storepass "$RELEASE_KEYSTORE_PASSWORD" \
+  -alias "$RELEASE_KEY_ALIAS" \
+  > "$signing_dir/release-certificate.pem"
+mapfile -t release_certificates < <(
+  certificate_sha256s_from_pem_file "$signing_dir/release-certificate.pem"
+)
+[[ "${#release_certificates[@]}" -eq 1 ]]
+actual="${release_certificates[0]}"
 expected="$(normalize "$RELEASE_SIGNING_CERT_SHA256")"
 [[ "$expected" =~ ^[0-9A-F]{64}$ ]]
 [[ "$actual" == "$expected" ]]
@@ -71,25 +120,52 @@ tasks=(bundleRelease assembleRelease)
 python3 tools/firebase_telemetry_guard.py --scan-build-output
 
 artifacts="$release_root/artifacts"
-source_aab="$(find app/build/outputs/bundle/release -maxdepth 1 -type f -name '*.aab' -print -quit)"
+mapfile -t aab_candidates < <(
+  find app/build/outputs/bundle/release \
+    -maxdepth 1 \
+    -type f \
+    -name '*.aab' \
+    -print | sort
+)
+[[ "${#aab_candidates[@]}" -eq 1 ]]
+source_aab="${aab_candidates[0]}"
 test -s "$source_aab"
 aab="$artifacts/AquaLight-${AQL_RELEASE_VERSION}.aab"
 cp "$source_aab" "$aab"
 jarsigner -verify -verbose -certs "$aab" > "$artifacts/signed-aab-verification.txt" 2>&1
-aab_cert="$(keytool -printcert -jarfile "$aab" | sed -n 's/^[[:space:]]*SHA256:[[:space:]]*//p' | head -n 1)"
-[[ "$(normalize "$aab_cert")" == "$actual" ]]
+keytool -printcert -rfc -jarfile "$aab" > "$artifacts/signed-aab-certificates.pem"
+mapfile -t aab_certificates < <(
+  certificate_sha256s_from_pem_file "$artifacts/signed-aab-certificates.pem"
+)
+require_expected_certificate "AAB" "$actual" "${aab_certificates[@]}"
 source_mapping="app/build/outputs/mapping/release/mapping.txt"
 test -s "$source_mapping"
 cp "$source_mapping" "$artifacts/AquaLight-${AQL_RELEASE_VERSION}-mapping.txt"
 
-source_apk="$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' -print -quit)"
+mapfile -t apk_candidates < <(
+  find app/build/outputs/apk/release \
+    -maxdepth 1 \
+    -type f \
+    -name '*.apk' \
+    -print | sort
+)
+[[ "${#apk_candidates[@]}" -eq 1 ]]
+source_apk="${apk_candidates[0]}"
 test -s "$source_apk"
 apk="$artifacts/AquaLight-${AQL_RELEASE_VERSION}.apk"
 cp "$source_apk" "$apk"
 apksigner="$(find "${ANDROID_HOME}/build-tools" -maxdepth 2 -type f -name apksigner -print | sort -V | tail -n 1)"
-"$apksigner" verify --verbose --print-certs "$apk" > "$artifacts/signed-apk-verification.txt" 2>&1
-apk_cert="$(sed -n 's/^Signer #1 certificate SHA-256 digest:[[:space:]]*//p' "$artifacts/signed-apk-verification.txt" | head -n 1)"
-[[ "$(normalize "$apk_cert")" == "$actual" ]]
+[[ -x "$apksigner" ]]
+"$apksigner" verify \
+  --verbose \
+  --print-certs \
+  --print-certs-pem \
+  "$apk" \
+  > "$artifacts/signed-apk-verification.txt" 2>&1
+mapfile -t apk_certificates < <(
+  certificate_sha256s_from_pem_file "$artifacts/signed-apk-verification.txt"
+)
+require_expected_certificate "APK" "$actual" "${apk_certificates[@]}"
 apkanalyzer="$(command -v apkanalyzer)"
 [[ -x "$apkanalyzer" ]]
 [[ "$("$apkanalyzer" manifest application-id "$apk")" == "com.aqua.aqualight" ]]
