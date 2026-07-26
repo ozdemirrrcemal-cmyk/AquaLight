@@ -1,12 +1,12 @@
 name: Diagnose Stage 14 Candidate Failure
 
 on:
-  pull_request:
-    paths:
-      - ".github/workflows/_diagnose_stage14_release.yml"
+  push:
+    tags:
+      - "diag-v0.14.0"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   diagnose:
@@ -58,6 +58,7 @@ jobs:
       - name: Run release build with failing command diagnostic
         shell: bash
         env:
+          GH_TOKEN: ${{ github.token }}
           AQL_FIREBASE_DEBUG_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_DEBUG_CONFIG_BASE64 }}
           AQL_FIREBASE_STAGING_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_STAGING_CONFIG_BASE64 }}
           AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64 }}
@@ -69,5 +70,10 @@ jobs:
           RELEASE_SIGNING_CERT_SHA256: ${{ secrets.RELEASE_SIGNING_CERT_SHA256 }}
         run: |
           set -Eeuo pipefail
+          cleanup() {
+            gh api --method DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/diag-v0.14.0" >/dev/null 2>&1 || true
+            gh api --method DELETE "repos/${GITHUB_REPOSITORY}/git/refs/heads/_stage14-release-log-diagnostic" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
           trap 'rc=$?; printf "::error::build_release.sh line %s failed while running: %s (exit %s)\n" "$LINENO" "$BASH_COMMAND" "$rc"; exit "$rc"' ERR
           source tools/release_pipeline/build_release.sh
