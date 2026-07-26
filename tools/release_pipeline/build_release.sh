@@ -29,6 +29,30 @@ normalize() {
   printf '%s' "$value" | tr -d '[:space:]:' | tr '[:lower:]' '[:upper:]'
 }
 
+certificate_sha256s_from_pem_file() {
+  local pem_file="$1"
+  python3 - "$pem_file" <<'PY'
+import base64
+import hashlib
+import re
+import sys
+from pathlib import Path
+
+text = Path(sys.argv[1]).read_text(encoding="utf-8", errors="strict")
+blocks = re.findall(
+    r"-----BEGIN CERTIFICATE-----\s*(.*?)\s*-----END CERTIFICATE-----",
+    text,
+    flags=re.DOTALL,
+)
+if not blocks:
+    raise SystemExit(f"No PEM signing certificate found in {sys.argv[1]}")
+for block in blocks:
+    encoded = "".join(block.split())
+    certificate = base64.b64decode(encoded, validate=True)
+    print(hashlib.sha256(certificate).hexdigest().upper())
+PY
+}
+
 umask 077
 signing_dir="${RUNNER_TEMP}/aqualight-signing"
 keystore_path="${signing_dir}/release-key.jks"
@@ -87,9 +111,18 @@ test -s "$source_apk"
 apk="$artifacts/AquaLight-${AQL_RELEASE_VERSION}.apk"
 cp "$source_apk" "$apk"
 apksigner="$(find "${ANDROID_HOME}/build-tools" -maxdepth 2 -type f -name apksigner -print | sort -V | tail -n 1)"
-"$apksigner" verify --verbose --print-certs "$apk" > "$artifacts/signed-apk-verification.txt" 2>&1
-apk_cert="$(sed -n 's/^Signer #1 certificate SHA-256 digest:[[:space:]]*//p' "$artifacts/signed-apk-verification.txt" | head -n 1)"
-[[ "$(normalize "$apk_cert")" == "$actual" ]]
+[[ -x "$apksigner" ]]
+"$apksigner" verify \
+  --verbose \
+  --print-certs \
+  --print-certs-pem \
+  "$apk" \
+  > "$artifacts/signed-apk-verification.txt" 2>&1
+mapfile -t apk_certificates < <(
+  certificate_sha256s_from_pem_file "$artifacts/signed-apk-verification.txt"
+)
+[[ "${#apk_certificates[@]}" -eq 1 ]]
+[[ "${apk_certificates[0]}" == "$actual" ]]
 apkanalyzer="$(command -v apkanalyzer)"
 [[ -x "$apkanalyzer" ]]
 [[ "$("$apkanalyzer" manifest application-id "$apk")" == "com.aqua.aqualight" ]]
