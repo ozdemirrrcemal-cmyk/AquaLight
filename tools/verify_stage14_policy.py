@@ -186,8 +186,12 @@ def validate_android_workflows(
             "resolved Android SDK manager binding",
         ),
         (
-            "system-images;android-37;default;x86_64",
-            "Android 17 system image installation",
+            'android_cli_path="${sdkmanager_path%/sdkmanager}/android"',
+            "reviewed Android CLI binary binding",
+        ),
+        (
+            "system-images/android-37/default/x86_64",
+            "Android 17 system image installation with Android CLI",
         ),
     ):
         if token not in emulator_workflow_text:

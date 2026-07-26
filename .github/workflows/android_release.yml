@@ -93,19 +93,24 @@ jobs:
             exit 1
           fi
           echo "$(dirname "$sdkmanager_path")" >> "$GITHUB_PATH"
+          android_cli_path="${sdkmanager_path%/sdkmanager}/android"
+          test -x "$android_cli_path"
           set +o pipefail
           yes 2>/dev/null | "$sdkmanager_path" --licenses >/dev/null
           set -o pipefail
           "$sdkmanager_path" "platform-tools" "platforms;android-36"
           "$sdkmanager_path" "build-tools;36.0.0" \
             || "$sdkmanager_path" "build-tools;36.0.1"
-          for package in \
+          "$sdkmanager_path" --install \
             "platforms;android-27" \
-            "system-images;android-27;default;x86_64" \
-            "platforms;android-37" \
-            "system-images;android-37;default;x86_64"; do
-            "$sdkmanager_path" --install "$package"
-          done
+            "system-images;android-27;default;x86_64"
+          set +o pipefail
+          yes 2>/dev/null | "$android_cli_path" \
+            --sdk="$ANDROID_SDK_ROOT" \
+            sdk install \
+            "platforms/android-37" \
+            "system-images/android-37/default/x86_64"
+          set -o pipefail
           test -s "${ANDROID_SDK_ROOT}/platforms/android-27/android.jar"
           test -s "${ANDROID_SDK_ROOT}/platforms/android-37/android.jar"
           test -s \
@@ -347,19 +352,24 @@ jobs:
             exit 1
           fi
           echo "$(dirname "$sdkmanager_path")" >> "$GITHUB_PATH"
+          android_cli_path="${sdkmanager_path%/sdkmanager}/android"
+          test -x "$android_cli_path"
           set +o pipefail
           yes 2>/dev/null | "$sdkmanager_path" --licenses >/dev/null
           set -o pipefail
           "$sdkmanager_path" "platform-tools" "platforms;android-36"
           "$sdkmanager_path" "build-tools;36.0.0" \
             || "$sdkmanager_path" "build-tools;36.0.1"
-          for package in \
+          "$sdkmanager_path" --install \
             "platforms;android-27" \
-            "system-images;android-27;default;x86_64" \
-            "platforms;android-37" \
-            "system-images;android-37;default;x86_64"; do
-            "$sdkmanager_path" --install "$package"
-          done
+            "system-images;android-27;default;x86_64"
+          set +o pipefail
+          yes 2>/dev/null | "$android_cli_path" \
+            --sdk="$ANDROID_SDK_ROOT" \
+            sdk install \
+            "platforms/android-37" \
+            "system-images/android-37/default/x86_64"
+          set -o pipefail
           test -s "${ANDROID_SDK_ROOT}/platforms/android-27/android.jar"
           test -s "${ANDROID_SDK_ROOT}/platforms/android-37/android.jar"
           test -s \

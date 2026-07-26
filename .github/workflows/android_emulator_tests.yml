@@ -71,6 +71,8 @@ jobs:
             exit 1
           fi
           echo "$(dirname "$sdkmanager_path")" >> "$GITHUB_PATH"
+          android_cli_path="${sdkmanager_path%/sdkmanager}/android"
+          test -x "$android_cli_path"
           set +o pipefail
           yes 2>/dev/null | "$sdkmanager_path" --licenses >/dev/null
           set -o pipefail
@@ -80,19 +82,26 @@ jobs:
             27)
               platform_package="platforms;android-27"
               system_image_package="system-images;android-27;default;x86_64"
+              "$sdkmanager_path" --install \
+                "$platform_package" \
+                "$system_image_package"
               ;;
             37)
-              platform_package="platforms;android-37"
-              system_image_package="system-images;android-37;default;x86_64"
+              platform_package="platforms/android-37"
+              system_image_package="system-images/android-37/default/x86_64"
+              set +o pipefail
+              yes 2>/dev/null | "$android_cli_path" \
+                --sdk="$ANDROID_SDK_ROOT" \
+                sdk install \
+                "$platform_package" \
+                "$system_image_package"
+              set -o pipefail
               ;;
             *)
               echo "Unsupported commercial emulator API: $matrix_api" >&2
               exit 1
               ;;
           esac
-          "$sdkmanager_path" --install \
-            "$platform_package" \
-            "$system_image_package"
           test -s \
             "${ANDROID_SDK_ROOT}/platforms/android-${matrix_api}/android.jar"
           test -s \

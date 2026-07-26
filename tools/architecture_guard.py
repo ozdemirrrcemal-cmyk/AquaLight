@@ -423,8 +423,12 @@ for token, reason in (
         "emulator CI must resolve and validate the configured SDK manager binary",
     ),
     (
-        "system-images;android-37;default;x86_64",
-        "emulator CI must install the stable Android 17 system image",
+        'android_cli_path="${sdkmanager_path%/sdkmanager}/android"',
+        "emulator CI must use the reviewed Android CLI binary for current SDKs",
+    ),
+    (
+        "system-images/android-37/default/x86_64",
+        "emulator CI must install the stable Android 17 system image with Android CLI",
     ),
     (
         "system-images/android-${matrix_api}/default/x86_64/package.xml",
