@@ -133,6 +133,23 @@ class Stage14PolicyTest(unittest.TestCase):
                 self.release_workflow,
             )
 
+    def test_pinned_sdk_manager_cannot_be_removed(self) -> None:
+        drifted_workflow = self.emulator_workflow.replace(
+            'cmdline-tools-version: "15859902"',
+            'cmdline-tools-version: "12266719"',
+        )
+
+        with self.assertRaisesRegex(
+            PolicyFailure,
+            "command-line tools pin",
+        ):
+            validate_policy(
+                self.policy,
+                self.app_gradle,
+                drifted_workflow,
+                self.release_workflow,
+            )
+
     def validate(self, policy: dict) -> dict:
         return validate_policy(
             policy,

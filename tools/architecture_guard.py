@@ -415,8 +415,12 @@ for token, reason in (
         "emulator CI action must remain pinned to its reviewed v2.38.0 commit",
     ),
     (
-        "cmdline-tools/latest/bin/sdkmanager",
-        "emulator CI must place the current SDK manager ahead of legacy tools",
+        'cmdline-tools-version: "15859902"',
+        "emulator CI must pin the reviewed stable Android command-line tools",
+    ),
+    (
+        'readlink -f "$(command -v sdkmanager)"',
+        "emulator CI must resolve and validate the configured SDK manager binary",
     ),
     (
         "system-images;android-37;default;x86_64",
@@ -424,6 +428,36 @@ for token, reason in (
     ),
 ):
     require(emulator_workflow_path, emulator_workflow, token, reason)
+
+android_setup_action = (
+    "uses: android-actions/setup-android@"
+    "9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407"
+)
+cmdline_tools_pin = 'cmdline-tools-version: "15859902"'
+for workflow_file in sorted((ROOT / ".github/workflows").glob("*.yml")):
+    workflow_text = workflow_file.read_text(encoding="utf-8", errors="ignore")
+    setup_count = workflow_text.count(android_setup_action)
+    if setup_count == 0:
+        continue
+    relative_workflow = str(workflow_file.relative_to(ROOT))
+    pin_count = workflow_text.count(cmdline_tools_pin)
+    if pin_count != setup_count:
+        errors.append(
+            f"{relative_workflow}: each Android SDK setup must use the reviewed "
+            f"command-line tools pin {cmdline_tools_pin}"
+        )
+    forbid(
+        relative_workflow,
+        workflow_text,
+        "cmdline-tools;latest",
+        "mutable Android command-line tools packages are forbidden in CI",
+    )
+    forbid(
+        relative_workflow,
+        workflow_text,
+        "sdkmanager --update",
+        "unbounded Android SDK updates are forbidden in CI",
+    )
 
 clean_install_activity_path = (
     "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/"

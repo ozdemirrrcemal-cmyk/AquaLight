@@ -178,8 +178,12 @@ def validate_android_workflows(
 ) -> None:
     for token, label in (
         (
-            "cmdline-tools/latest/bin/sdkmanager",
-            "current Android SDK manager binding",
+            'cmdline-tools-version: "15859902"',
+            "reviewed Android command-line tools pin",
+        ),
+        (
+            'readlink -f "$(command -v sdkmanager)"',
+            "resolved Android SDK manager binding",
         ),
         (
             "system-images;android-37;default;x86_64",
@@ -190,6 +194,29 @@ def validate_android_workflows(
             raise PolicyFailure(f"emulator workflow is missing {label}")
         if token not in release_workflow_text:
             raise PolicyFailure(f"release workflow is missing {label}")
+
+    require_exact(
+        emulator_workflow_text.count('cmdline-tools-version: "15859902"'),
+        1,
+        "emulator workflow command-line tools pin count",
+    )
+    require_exact(
+        release_workflow_text.count('cmdline-tools-version: "15859902"'),
+        4,
+        "release workflow command-line tools pin count",
+    )
+    for workflow_name, workflow_text in (
+        ("emulator", emulator_workflow_text),
+        ("release", release_workflow_text),
+    ):
+        if "cmdline-tools;latest" in workflow_text:
+            raise PolicyFailure(
+                f"{workflow_name} workflow uses mutable cmdline-tools;latest"
+            )
+        if "sdkmanager --update" in workflow_text:
+            raise PolicyFailure(
+                f"{workflow_name} workflow uses an unbounded SDK update"
+            )
 
     matrix_matches = re.findall(
         r"(?m)^\s*api-level:\s*\[([^\]]+)\]\s*$",

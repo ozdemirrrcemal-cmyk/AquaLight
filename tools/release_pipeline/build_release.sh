@@ -85,7 +85,8 @@ if [[ "${AQL_INCLUDE_APK:-false}" == "true" ]]; then
   "$apksigner" verify --verbose --print-certs "$apk" > "$artifacts/signed-apk-verification.txt" 2>&1
   apk_cert="$(sed -n 's/^Signer #1 certificate SHA-256 digest:[[:space:]]*//p' "$artifacts/signed-apk-verification.txt" | head -n 1)"
   [[ "$(normalize "$apk_cert")" == "$actual" ]]
-  apkanalyzer="${ANDROID_HOME}/cmdline-tools/latest/bin/apkanalyzer"
+  apkanalyzer="$(command -v apkanalyzer)"
+  [[ -x "$apkanalyzer" ]]
   [[ "$("$apkanalyzer" manifest application-id "$apk")" == "com.aqua.aqualight" ]]
   [[ "$("$apkanalyzer" manifest version-name "$apk")" == "$AQL_RELEASE_VERSION" ]]
 fi

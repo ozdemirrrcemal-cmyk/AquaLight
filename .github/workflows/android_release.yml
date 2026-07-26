@@ -71,25 +71,35 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          cmdline-tools-version: "15859902"
 
       - name: Install Android SDK packages
         shell: bash
         run: |
           set -Eeu
+          sdkmanager_path="$(readlink -f "$(command -v sdkmanager)")"
+          test -x "$sdkmanager_path"
+          case "$sdkmanager_path" in
+            "${ANDROID_SDK_ROOT}/cmdline-tools/"*/bin/sdkmanager) ;;
+            *)
+              echo "Untrusted sdkmanager path: $sdkmanager_path" >&2
+              exit 1
+              ;;
+          esac
+          if [[ "$sdkmanager_path" == \
+            "${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager" ]]; then
+            echo "Mutable cmdline-tools/latest must not drive commercial CI" >&2
+            exit 1
+          fi
+          echo "$(dirname "$sdkmanager_path")" >> "$GITHUB_PATH"
           set +o pipefail
-          yes 2>/dev/null | sdkmanager --licenses >/dev/null
+          yes 2>/dev/null | "$sdkmanager_path" --licenses >/dev/null
           set -o pipefail
-          sdkmanager "cmdline-tools;latest"
-          current_sdkmanager="${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager"
-          test -x "$current_sdkmanager"
-          echo "${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
-          set +o pipefail
-          yes 2>/dev/null | "$current_sdkmanager" --licenses >/dev/null
-          set -o pipefail
-          "$current_sdkmanager" "platform-tools" "platforms;android-36"
-          "$current_sdkmanager" "build-tools;36.0.0" \
-            || "$current_sdkmanager" "build-tools;36.0.1"
-          available_packages="$("$current_sdkmanager" --list)"
+          "$sdkmanager_path" "platform-tools" "platforms;android-36"
+          "$sdkmanager_path" "build-tools;36.0.0" \
+            || "$sdkmanager_path" "build-tools;36.0.1"
+          available_packages="$("$sdkmanager_path" --list)"
           grep -Fq "platforms;android-37" <<< "$available_packages"
           grep -Fq \
             "system-images;android-37;default;x86_64" \
@@ -195,6 +205,8 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          cmdline-tools-version: "15859902"
 
       - name: Install Android SDK packages
         shell: bash
@@ -203,7 +215,7 @@ jobs:
           set +o pipefail
           yes 2>/dev/null | sdkmanager --licenses >/dev/null
           set -o pipefail
-          sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
+          sdkmanager "platform-tools" "platforms;android-36"
           sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1"
           chmod +x ./gradlew
 
@@ -305,25 +317,35 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          cmdline-tools-version: "15859902"
 
       - name: Install Android SDK packages
         shell: bash
         run: |
           set -Eeu
+          sdkmanager_path="$(readlink -f "$(command -v sdkmanager)")"
+          test -x "$sdkmanager_path"
+          case "$sdkmanager_path" in
+            "${ANDROID_SDK_ROOT}/cmdline-tools/"*/bin/sdkmanager) ;;
+            *)
+              echo "Untrusted sdkmanager path: $sdkmanager_path" >&2
+              exit 1
+              ;;
+          esac
+          if [[ "$sdkmanager_path" == \
+            "${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager" ]]; then
+            echo "Mutable cmdline-tools/latest must not drive commercial CI" >&2
+            exit 1
+          fi
+          echo "$(dirname "$sdkmanager_path")" >> "$GITHUB_PATH"
           set +o pipefail
-          yes 2>/dev/null | sdkmanager --licenses >/dev/null
+          yes 2>/dev/null | "$sdkmanager_path" --licenses >/dev/null
           set -o pipefail
-          sdkmanager "cmdline-tools;latest"
-          current_sdkmanager="${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager"
-          test -x "$current_sdkmanager"
-          echo "${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
-          set +o pipefail
-          yes 2>/dev/null | "$current_sdkmanager" --licenses >/dev/null
-          set -o pipefail
-          "$current_sdkmanager" "platform-tools" "platforms;android-36"
-          "$current_sdkmanager" "build-tools;36.0.0" \
-            || "$current_sdkmanager" "build-tools;36.0.1"
-          available_packages="$("$current_sdkmanager" --list)"
+          "$sdkmanager_path" "platform-tools" "platforms;android-36"
+          "$sdkmanager_path" "build-tools;36.0.0" \
+            || "$sdkmanager_path" "build-tools;36.0.1"
+          available_packages="$("$sdkmanager_path" --list)"
           grep -Fq "platforms;android-37" <<< "$available_packages"
           grep -Fq \
             "system-images;android-37;default;x86_64" \
@@ -434,6 +456,8 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          cmdline-tools-version: "15859902"
 
       - name: Install release SDK packages
         shell: bash
@@ -442,7 +466,7 @@ jobs:
           set +o pipefail
           yes 2>/dev/null | sdkmanager --licenses >/dev/null
           set -o pipefail
-          sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
+          sdkmanager "platform-tools" "platforms;android-36"
           sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1"
           chmod +x ./gradlew
 
