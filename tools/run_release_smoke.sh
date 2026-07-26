@@ -68,6 +68,9 @@ wait_for_unlocked_user() {
 wait_for_unlocked_user
 
 ORIGINAL_FONT_SCALE="$(adb shell settings get system font_scale 2>/dev/null | tr -d '\r')"
+ORIGINAL_HIDE_ERROR_DIALOGS="$(
+  adb shell settings get global hide_error_dialogs 2>/dev/null | tr -d '\r'
+)"
 
 capture_smoke_diagnostics() {
   set +e
@@ -93,6 +96,12 @@ restore_setting() {
 
 restore_device_configuration() {
   restore_setting system font_scale "$ORIGINAL_FONT_SCALE"
+  restore_setting global hide_error_dialogs "$ORIGINAL_HIDE_ERROR_DIALOGS"
+}
+
+dismiss_blocking_system_dialogs() {
+  adb shell am broadcast \
+    -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1 || true
 }
 
 wait_for_ui_marker() {
@@ -100,6 +109,7 @@ wait_for_ui_marker() {
   local_dump="$2"
   remote_dump="/sdcard/${local_dump}"
 
+  dismiss_blocking_system_dialogs
   rm -f "$local_dump"
   for attempt in $(seq 1 40); do
     adb shell uiautomator dump "$remote_dump" >/dev/null 2>&1 || true
@@ -119,6 +129,10 @@ wait_for_ui_marker() {
     if grep -Fq "$UPGRADE_INSTALL_FAIL_MARKER" "$local_dump" 2>/dev/null; then
       cat "$local_dump" || true
       return 1
+    fi
+    if grep -Fq 'resource-id="android:id/aerr_' "$local_dump" 2>/dev/null; then
+      echo "Dismissing an Android system error dialog blocking ${expected_marker}."
+      dismiss_blocking_system_dialogs
     fi
     sleep 1
   done
@@ -251,6 +265,12 @@ finish() {
 }
 trap finish EXIT
 
+adb shell settings put global hide_error_dialogs 1
+test "$(
+  adb shell settings get global hide_error_dialogs 2>/dev/null | tr -d '\r'
+)" = "1"
+dismiss_blocking_system_dialogs
+
 mkdir -p stage14-evidence
 rm -rf \
   app/build/outputs/androidTest-results/connected \
@@ -357,6 +377,7 @@ run_visual_profile() {
   adb shell settings put system font_scale "$font_scale"
   adb shell am force-stop "$PACKAGE_NAME"
   adb logcat -c
+  dismiss_blocking_system_dialogs
 
   set +e
   adb shell am start -W -S -n "$SMOKE_COMPONENT" \
@@ -400,6 +421,10 @@ run_visual_profile() {
       echo "Minified release smoke reported an application failure for ${profile} on API ${API_LEVEL}."
       cat "$profile_dump" || true
       return 1
+    fi
+    if grep -Fq 'resource-id="android:id/aerr_' "$profile_dump" 2>/dev/null; then
+      echo "Dismissing an Android system error dialog blocking ${profile}."
+      dismiss_blocking_system_dialogs
     fi
     sleep 1
   done

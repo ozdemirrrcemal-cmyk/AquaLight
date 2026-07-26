@@ -663,6 +663,26 @@ for token, reason in (
         "verify_accessibility_evidence.py",
         "visual accessibility profiles must publish independent evidence",
     ),
+    (
+        "settings put global hide_error_dialogs 1",
+        "unrelated emulator process dialogs must not cover release-smoke evidence",
+    ),
+    (
+        "ORIGINAL_HIDE_ERROR_DIALOGS",
+        "the original emulator error-dialog policy must be retained for restoration",
+    ),
+    (
+        "restore_setting global hide_error_dialogs",
+        "the emulator error-dialog policy must be restored after validation",
+    ),
+    (
+        "android.intent.action.CLOSE_SYSTEM_DIALOGS",
+        "stale Android system dialogs must be dismissed before marker inspection",
+    ),
+    (
+        'resource-id="android:id/aerr_',
+        "marker polling must detect Android error dialogs that survived suppression",
+    ),
 ):
     require(release_smoke_runner_path, release_smoke_runner, token, reason)
 

@@ -154,6 +154,8 @@ jobs:
           grep -Fq "aqua_smoke_profile" tools/run_release_smoke.sh
           grep -Fq "large-font-light" tools/run_release_smoke.sh
           grep -Fq "rtl-light" tools/run_release_smoke.sh
+          grep -Fq "hide_error_dialogs" tools/run_release_smoke.sh
+          grep -Fq "CLOSE_SYSTEM_DIALOGS" tools/run_release_smoke.sh
 
       - name: Prepare lower-version baseline and minified candidate APKs
         shell: bash
