@@ -423,7 +423,7 @@ for token, reason in (
         "emulator CI must resolve and validate the configured SDK manager binary",
     ),
     (
-        "system-images;android-CinnamonBun;google_apis_ps16k;x86_64",
+        "system-images;android-37.0;google_apis_ps16k;x86_64",
         "emulator CI must install the current Android 17 16 KB system image",
     ),
     (
@@ -435,12 +435,12 @@ for token, reason in (
         "SDK Manager must opt into the documented API 37 preview package catalog",
     ),
     (
-        "system-images/android-CinnamonBun/google_apis_ps16k/x86_64/package.xml",
+        "system-images/android-37.0/google_apis_ps16k/x86_64/package.xml",
         "emulator CI must verify the installed system-image package metadata",
     ),
     (
-        "api-level: ${{ matrix.api-level == 37 && 'CinnamonBun' || matrix.api-level }}",
-        "emulator CI must bind API 37 evidence to its published CinnamonBun package",
+        "api-level: ${{ matrix.api-level == 37 && '37.0' || matrix.api-level }}",
+        "emulator CI must bind API 37 evidence to its published 37.0 package",
     ),
     (
         "target: ${{ matrix.api-level == 37 && 'google_apis_ps16k' || 'default' }}",

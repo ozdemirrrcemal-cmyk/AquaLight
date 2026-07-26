@@ -186,7 +186,7 @@ def validate_android_workflows(
             "resolved Android SDK manager binding",
         ),
         (
-            "system-images;android-CinnamonBun;google_apis_ps16k;x86_64",
+            "system-images;android-37.0;google_apis_ps16k;x86_64",
             "Android 17 16 KB system image installation",
         ),
     ):
@@ -196,14 +196,14 @@ def validate_android_workflows(
             raise PolicyFailure(f"release workflow is missing {label}")
 
     if (
-        "system-images/android-CinnamonBun/google_apis_ps16k/x86_64/package.xml"
+        "system-images/android-37.0/google_apis_ps16k/x86_64/package.xml"
         not in emulator_workflow_text
     ):
         raise PolicyFailure(
             "emulator workflow is missing installed system-image verification"
         )
     if (
-        "system-images/android-CinnamonBun/google_apis_ps16k/x86_64/package.xml"
+        "system-images/android-37.0/google_apis_ps16k/x86_64/package.xml"
         not in release_workflow_text
     ):
         raise PolicyFailure(
@@ -289,7 +289,7 @@ def validate_android_workflows(
     )
     require_exact(
         emulator_workflow_text.count(
-            "api-level: ${{ matrix.api-level == 37 && 'CinnamonBun' || matrix.api-level }}"
+            "api-level: ${{ matrix.api-level == 37 && '37.0' || matrix.api-level }}"
         ),
         1,
         "emulator workflow matrix runner binding count",
@@ -310,12 +310,12 @@ def validate_android_workflows(
     )
 
     release_levels = re.findall(
-        r"(?m)^\s*api-level:\s*(27|CinnamonBun)\s*$",
+        r"(?m)^\s*api-level:\s*(27|37\.0)\s*$",
         release_workflow_text,
     )
     require_exact(
         release_levels,
-        ["27", "CinnamonBun"],
+        ["27", "37.0"],
         "release workflow runner API identities",
     )
     release_smoke_levels = [

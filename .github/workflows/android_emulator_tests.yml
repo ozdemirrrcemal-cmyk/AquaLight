@@ -106,10 +106,10 @@ jobs:
                 || true
               set -o pipefail
               echo "::endgroup::"
-              platform_package="platforms;android-CinnamonBun"
-              system_image_package="system-images;android-CinnamonBun;google_apis_ps16k;x86_64"
-              installed_platform="${ANDROID_SDK_ROOT}/platforms/android-CinnamonBun/android.jar"
-              installed_image="${ANDROID_SDK_ROOT}/system-images/android-CinnamonBun/google_apis_ps16k/x86_64/package.xml"
+              platform_package="platforms;android-37.0"
+              system_image_package="system-images;android-37.0;google_apis_ps16k;x86_64"
+              installed_platform="${ANDROID_SDK_ROOT}/platforms/android-37.0/android.jar"
+              installed_image="${ANDROID_SDK_ROOT}/system-images/android-37.0/google_apis_ps16k/x86_64/package.xml"
               "$sdkmanager_path" --install \
                 "$platform_package" \
                 "$system_image_package" \
@@ -189,7 +189,7 @@ jobs:
       - name: Run instrumentation and minified release smoke
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
-          api-level: ${{ matrix.api-level == 37 && 'CinnamonBun' || matrix.api-level }}
+          api-level: ${{ matrix.api-level == 37 && '37.0' || matrix.api-level }}
           channel: ${{ matrix.api-level == 37 && 'canary' || 'stable' }}
           target: ${{ matrix.api-level == 37 && 'google_apis_ps16k' || 'default' }}
           arch: x86_64

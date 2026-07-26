@@ -107,7 +107,7 @@ class Stage14PolicyTest(unittest.TestCase):
 
     def test_release_workflow_api_drift_is_rejected(self) -> None:
         drifted_workflow = self.release_workflow.replace(
-            "api-level: CinnamonBun",
+            "api-level: 37.0",
             "api-level: Baklava",
         )
 
@@ -124,7 +124,7 @@ class Stage14PolicyTest(unittest.TestCase):
 
     def test_current_system_image_install_cannot_be_removed(self) -> None:
         drifted_workflow = self.emulator_workflow.replace(
-            "system-images/android-CinnamonBun/google_apis_ps16k/x86_64",
+            "system-images/android-37.0/google_apis_ps16k/x86_64",
             "system-images/android-Baklava/google_apis_ps16k/x86_64",
         )
 

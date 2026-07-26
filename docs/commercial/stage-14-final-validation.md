@@ -95,7 +95,7 @@ Implementation note:
 
 - Google's current Android 17 SDK setup still publishes the API 37 SDK and system
   image through the preview package channel. CI pins command-line tools package
-  `15859902`, binds API 37 to the published `CinnamonBun` 16 KB Google APIs image,
+  `15859902`, binds API 37 to the published `android-37.0` 16 KB Google APIs image,
   keeps API 27 on `stable`, and scopes the `canary` package catalog to API 37
   only. The controlled release remains blocked until the same candidate passes
   the required real-device Android 17 acceptance.
