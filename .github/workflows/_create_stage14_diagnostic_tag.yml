@@ -1,0 +1,26 @@
+name: Create Stage 14 Diagnostic Tag
+
+on:
+  push:
+    branches:
+      - _stage14-release-log-diagnostic
+
+permissions:
+  contents: write
+
+jobs:
+  create-tag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Create temporary diagnostic tag
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+          gh api --method DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/diag-v0.14.0" >/dev/null 2>&1 || true
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+            -f ref="refs/tags/diag-v0.14.0" \
+            -f sha="${GITHUB_SHA}" \
+            >/dev/null
