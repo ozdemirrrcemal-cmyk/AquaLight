@@ -1,11 +1,8 @@
 name: Dispatch Stage 14 Candidate
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - ".github/workflows/_dispatch_stage14_candidate.yml"
+  pull_request_target:
+    types: [opened, synchronize, reopened]
 
 permissions:
   actions: write
@@ -14,6 +11,9 @@ permissions:
 
 jobs:
   dispatch:
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == '_stage14-final-dispatch-trigger'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -27,7 +27,6 @@ jobs:
           set -Eeuo pipefail
 
           main_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')"
-          [[ "$main_sha" == "$GITHUB_SHA" ]]
 
           workflow_blob_sha="$(gh api \
             "repos/${GITHUB_REPOSITORY}/contents/${WORKFLOW_PATH}?ref=main" \
@@ -45,13 +44,13 @@ jobs:
             release_commit="$(gh api \
               "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" \
               --jq '.object.sha')"
-            if [[ "$release_commit" != "$GITHUB_SHA" ]]; then
+            if [[ "$release_commit" != "$main_sha" ]]; then
               break
             fi
             sleep 2
           done
           [[ "$release_commit" =~ ^[0-9a-f]{40}$ ]]
-          [[ "$release_commit" != "$GITHUB_SHA" ]]
+          [[ "$release_commit" != "$main_sha" ]]
 
           gh api --method PATCH \
             "repos/${GITHUB_REPOSITORY}/git/refs/tags/${RELEASE_TAG}" \
@@ -93,11 +92,9 @@ jobs:
 
           body="Stage 14 candidate yeniden başlatıldı.\n\n- Tag: \`${RELEASE_TAG}\`\n- Clean main commit: \`${release_commit}\`\n- Run ID: \`${run_id}\`\n- Run: ${run_url}\n- Phase: \`candidate\`\n- APK inclusion: \`true\`"
           gh api --method POST \
-            "repos/${GITHUB_REPOSITORY}/issues/106/comments" \
+            "repos/${GITHUB_REPOSITORY}/issues/${{ github.event.pull_request.number }}/comments" \
             -f body="$body" \
             >/dev/null
 
           echo "Candidate run ID: ${run_id}"
           echo "Candidate run URL: ${run_url}"
-
-# registered workflow trigger refresh
