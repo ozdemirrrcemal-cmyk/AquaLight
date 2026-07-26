@@ -108,3 +108,5 @@ jobs:
           gh api --method DELETE \
             "repos/${GITHUB_REPOSITORY}/git/refs/heads/${TRIGGER_BRANCH}" \
             >/dev/null
+
+# merge-trigger refresh
