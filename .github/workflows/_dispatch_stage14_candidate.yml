@@ -72,3 +72,5 @@ jobs:
 
           echo "Candidate run ID: ${run_id}"
           echo "Candidate run URL: ${run_url}"
+
+# second push intentionally triggers this already-registered workflow
