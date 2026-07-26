@@ -1,0 +1,3189 @@
+{
+  "schemaVersion": 1,
+  "policyId": "aqualight-detekt-advisory-debt",
+  "detektVersion": "1.23.8",
+  "sourceCommit": "a48942a06391e5463e85f9f20e80543c1ef41e69",
+  "totalFindings": 1021,
+  "fingerprints": [
+    {
+      "ruleId": "detekt.complexity.ComplexCondition",
+      "path": "app/src/main/java/com/aqua/aqualight/composition/OwnerDependencyGraph.kt",
+      "message": "This condition is too complex (4). Defined complexity threshold for conditions is set to '4'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.ComplexCondition",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt",
+      "message": "This condition is too complex (6). Defined complexity threshold for conditions is set to '4'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.ComplexCondition",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/firmware/DeviceFirmwareUpdatePlanner.kt",
+      "message": "This condition is too complex (4). Defined complexity threshold for conditions is set to '4'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.ComplexCondition",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsClient.kt",
+      "message": "This condition is too complex (4). Defined complexity threshold for conditions is set to '4'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.ComplexCondition",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsCrypto.kt",
+      "message": "This condition is too complex (4). Defined complexity threshold for conditions is set to '4'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.ComplexCondition",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsWireCodec.kt",
+      "message": "This condition is too complex (4). Defined complexity threshold for conditions is set to '4'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.ComplexCondition",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/SettingsFragment.kt",
+      "message": "This condition is too complex (4). Defined complexity threshold for conditions is set to '4'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/composition/OwnerViewModelFactory.kt",
+      "message": "The function create appears to be too complex based on Cyclomatic Complexity (complexity: 17). Defined complexity threshold for methods is set to '15'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/delete/OwnerTankDataCleaner.kt",
+      "message": "The function deleteTanks appears to be too complex based on Cyclomatic Complexity (complexity: 16). Defined complexity threshold for methods is set to '15'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/auth/AccountDeletionManager.kt",
+      "message": "The function deleteOrResumeLocked appears to be too complex based on Cyclomatic Complexity (complexity: 18). Defined complexity threshold for methods is set to '15'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/auth/AuthErrorMapper.kt",
+      "message": "The function messageFor appears to be too complex based on Cyclomatic Complexity (complexity: 34). Defined complexity threshold for methods is set to '15'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/auth/OwnerSessionCoordinator.kt",
+      "message": "The function open appears to be too complex based on Cyclomatic Complexity (complexity: 15). Defined complexity threshold for methods is set to '15'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/CareTaskStoreRules.kt",
+      "message": "The function validateStateRelationships appears to be too complex based on Cyclomatic Complexity (complexity: 20). Defined complexity threshold for methods is set to '15'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareTaskGenerator.kt",
+      "message": "The function buildShortMessage appears to be too complex based on Cyclomatic Complexity (complexity: 15). Defined complexity threshold for methods is set to '15'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/DeviceApplicationMapping.kt",
+      "message": "The function rootMenuFeatures appears to be too complex based on Cyclomatic Complexity (complexity: 24). Defined complexity threshold for methods is set to '15'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/discovery/udp/AqlDiscoveryParser.kt",
+      "message": "The function parseDeviceAnnounce appears to be too complex based on Cyclomatic Complexity (complexity: 21). Defined complexity threshold for methods is set to '15'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleDeviceInfoPreflightClient.kt",
+      "message": "The function validateQrCandidateDeviceInfo appears to be too complex based on Cyclomatic Complexity (complexity: 39). Defined complexity threshold for methods is set to '15'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt",
+      "message": "The function validateDeviceInfo appears to be too complex based on Cyclomatic Complexity (complexity: 40). Defined complexity threshold for methods is set to '15'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/repository/AqlProvisioningRuntimeMetadataResolver.kt",
+      "message": "The function resolveAndConnect appears to be too complex based on Cyclomatic Complexity (complexity: 17). Defined complexity threshold for methods is set to '15'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/time/DeviceSystemTimePayloadFactory.kt",
+      "message": "The function posixFor appears to be too complex based on Cyclomatic Complexity (complexity: 27). Defined complexity threshold for methods is set to '15'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/media/ImageMediaProcessor.kt",
+      "message": "The function process appears to be too complex based on Cyclomatic Complexity (complexity: 25). Defined complexity threshold for methods is set to '15'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/TankSettingsEditorBottomSheet.kt",
+      "message": "The function bindSizeEditor appears to be too complex based on Cyclomatic Complexity (complexity: 15). Defined complexity threshold for methods is set to '15'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/header/AquaHeaderBindingExt.kt",
+      "message": "The function setupAquaHeader appears to be too complex based on Cyclomatic Complexity (complexity: 27). Defined complexity threshold for methods is set to '15'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsBasicFragment.kt",
+      "message": "The function setupTankEditorResultListener appears to be too complex based on Cyclomatic Complexity (complexity: 19). Defined complexity threshold for methods is set to '15'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/userinfo/UserAddressFragment.kt",
+      "message": "The function saveAddress appears to be too complex based on Cyclomatic Complexity (complexity: 15). Defined complexity threshold for methods is set to '15'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
+      "path": "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeAppContainer.kt",
+      "message": "The function create appears to be too complex based on Cyclomatic Complexity (complexity: 16). Defined complexity threshold for methods is set to '15'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
+      "path": "app/src/test/java/com/aqua/aqualight/i18n/UserVisibleTextResourceGuardTest.kt",
+      "message": "The function codeWithoutComments appears to be too complex based on Cyclomatic Complexity (complexity: 17). Defined complexity threshold for methods is set to '15'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LargeClass",
+      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/store/AquariumTankDataStoreManager.kt",
+      "message": "Class AquariumTankDataStoreManager is too large. Consider splitting it into smaller pieces.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LargeClass",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/CareTaskDataStoreManager.kt",
+      "message": "Class CareTaskDataStoreManager is too large. Consider splitting it into smaller pieces.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LargeClass",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareTaskGenerator.kt",
+      "message": "Class SmartCareTaskGenerator is too large. Consider splitting it into smaller pieces.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LargeClass",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt",
+      "message": "Class AqlBleProvisioningGattClient is too large. Consider splitting it into smaller pieces.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LargeClass",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsWireCodec.kt",
+      "message": "Class AqlWsWireCodec is too large. Consider splitting it into smaller pieces.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LargeClass",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt",
+      "message": "Class TankDetailActivityFragment is too large. Consider splitting it into smaller pieces.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LargeClass",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt",
+      "message": "Class PdfWriter is too large. Consider splitting it into smaller pieces.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LargeClass",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AquariumMaintenanceFragment.kt",
+      "message": "Class AquariumMaintenanceFragment is too large. Consider splitting it into smaller pieces.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/androidTest/java/com/aqua/aqualight/base/accessibility/MinimumTouchTargetInstrumentedTest.kt",
+      "message": "The function foreignDelegateKeepsPriorityAndIsRestoredAfterAquaTargetsDisappear is too long (74). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/androidTest/java/com/aqua/aqualight/base/accessibility/MinimumTouchTargetInstrumentedTest.kt",
+      "message": "The function nearestExpandedTargetWinsOverlapGapAndRemovedTargetsAreReleasedDynamically is too long (70). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/androidTest/java/com/aqua/aqualight/base/accessibility/MinimumTouchTargetInstrumentedTest.kt",
+      "message": "The function viewsAddedRemovedAndReplacedAfterInstallAreRebuiltWithoutManualReinstall is too long (71). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/androidTest/java/com/aqua/aqualight/base/loading/LoadingOverlayRaceInstrumentedTest.kt",
+      "message": "The function visibleOverlayMirrorsTheHostSystemBarAppearance is too long (71). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/androidTest/java/com/aqua/aqualight/data/notifications/OwnerNotificationCancellationInstrumentedTest.kt",
+      "message": "The function cancellingOneOwnerLeavesOtherOwnersVisibleNotificationUntouched is too long (80). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/androidTest/java/com/aqua/aqualight/data/recovery/ProtoCorruptionRecoveryInstrumentedTest.kt",
+      "message": "The function allAuthoritativeProtoStoresRecoverFailClosedAndReportRecovery is too long (68). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/composition/OwnerDependencyGraph.kt",
+      "message": "The function requireActive is too long (87). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/composition/OwnerViewModelFactory.kt",
+      "message": "The function create is too long (139). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/delete/OwnerTankDataCleaner.kt",
+      "message": "The function deleteTanks is too long (107). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/store/AquariumTankDataStoreManager.kt",
+      "message": "The function duplicateTank is too long (64). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/auth/AccountDeletionManager.kt",
+      "message": "The function deleteOrResumeLocked is too long (115). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/auth/AuthErrorMapper.kt",
+      "message": "The function messageFor is too long (77). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/auth/OwnerSessionCoordinator.kt",
+      "message": "The function open is too long (115). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/CareTaskDataStoreManager.kt",
+      "message": "The function addOrUpdateAutomaticTask is too long (72). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/CareTaskDataStoreManager.kt",
+      "message": "The function syncAutomaticTasks is too long (62). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/CareTaskStoreRules.kt",
+      "message": "The function validateStateRelationships is too long (67). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareProfileBuilder.kt",
+      "message": "The function build is too long (142). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareTaskGenerator.kt",
+      "message": "The function buildShortMessage is too long (60). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/discovery/udp/AqlDiscoveryParser.kt",
+      "message": "The function parseDeviceAnnounce is too long (96). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleDeviceInfoPreflightClient.kt",
+      "message": "The function validateQrCandidateDeviceInfo is too long (89). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningAdvertisementParser.kt",
+      "message": "The function parse is too long (75). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/repository/AqlProvisioningHandoffSaver.kt",
+      "message": "The function prepareAndConnectOrThrow is too long (94). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/remove/OwnerDeviceDataCleaner.kt",
+      "message": "The function deleteDevices is too long (72). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/repository/DeviceRuntimeMetadataReducer.kt",
+      "message": "The function applyDeviceIdentity is too long (67). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/repository/DevicesRepository.kt",
+      "message": "The function start is too long (61). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsClient.kt",
+      "message": "The function authenticateCurrentConnection is too long (64). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsWireCodec.kt",
+      "message": "The function decodeHello is too long (83). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/store/KnownDeviceProtoMapper.kt",
+      "message": "The function toSnapshot is too long (81). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/data/user/UserDataCleaner.kt",
+      "message": "The function clearLocalUserData is too long (73). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/media/ImageMediaProcessor.kt",
+      "message": "The function process is too long (137). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CareProfileBottomSheet.kt",
+      "message": "The function onViewCreated is too long (71). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CareTaskTypeBottomSheetFragment.kt",
+      "message": "The function createTaskTypeCard is too long (83). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/header/AquaHeaderBindingExt.kt",
+      "message": "The function setupAquaHeader is too long (325). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/material/AquaMaterialCategoryRowFactory.kt",
+      "message": "The function create is too long (116). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionUiSpecResolver.kt",
+      "message": "The function resolve is too long (76). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/careprofile/CareProfileCalculator.kt",
+      "message": "The function calculate is too long (130). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/materials/MaterialPickerFragment.kt",
+      "message": "The function createKeywordChip is too long (60). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/materials/MaterialPickerFragment.kt",
+      "message": "The function createMaterialCard is too long (122). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/plants/PlantPickerFragment.kt",
+      "message": "The function createPlantCard is too long (75). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankInfoFragment.kt",
+      "message": "The function setupEditorResultListener is too long (66). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt",
+      "message": "The function createActivityTaskCard is too long (120). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt",
+      "message": "The function createLivestockCard is too long (144). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailPlantsFragment.kt",
+      "message": "The function createPlantCard is too long (62). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailTankFragment.kt",
+      "message": "The function createTankComponentCard is too long (99). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsBasicFragment.kt",
+      "message": "The function setupTankEditorResultListener is too long (80). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsOthersFragment.kt",
+      "message": "The function deleteCurrentTank is too long (63). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt",
+      "message": "The function createTankReportPdf is too long (122). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/plants/PlantTagUiRenderer.kt",
+      "message": "The function createPlantCard is too long (77). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceProvisioningProgressViewModel.kt",
+      "message": "The function handleCompletedEvent is too long (65). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceProvisioningProgressViewModel.kt",
+      "message": "The function reduceTransportEvent is too long (81). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceProvisioningProgressViewModel.kt",
+      "message": "The function saveRuntimeHandoff is too long (81). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceQrScanViewModel.kt",
+      "message": "The function startQrBleScan is too long (92). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt",
+      "message": "The function saveTaskInternal is too long (91). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AquariumMaintenanceFragment.kt",
+      "message": "The function createHistoryTaskCard is too long (122). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/TaskDetailFragment.kt",
+      "message": "The function renderTask is too long (87). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/feedback/FeedbackViewModel.kt",
+      "message": "The function submit is too long (63). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/logout/ChangeEmailFragment.kt",
+      "message": "The function attemptEmailChange is too long (64). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/userinfo/UserAddressFragment.kt",
+      "message": "The function saveAddress is too long (111). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeAppContainer.kt",
+      "message": "The function create is too long (109). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/test/java/com/aqua/aqualight/data/aquarium/DefaultAquariumTankOperationsMapperTest.kt",
+      "message": "The function saved tank maps every UI-facing field without owner leakage is too long (86). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/test/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsWireCodecGoldenTest.kt",
+      "message": "The function shared golden handshake and signed runtime frames are interoperable is too long (82). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/test/java/com/aqua/aqualight/data/devices/store/KnownDevicesStoreReducerTest.kt",
+      "message": "The function snapshot is too long (73). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongMethod",
+      "path": "app/src/test/java/com/aqua/aqualight/i18n/PopulatedTankLocalizationContractTest.kt",
+      "message": "The function populatedTankKeepsCalendarDaysAndLocalizedMeasurementsAcrossLanguagesAndZones is too long (97). The maximum length is 60.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/androidTest/java/com/aqua/aqualight/data/care/reminder/CareReminderLocaleInstrumentedTest.kt",
+      "message": "The function task(type: CareTaskType, source: CareTaskSource, title: String, description: String, note: String, waterChangePercent: Int?, generatedRuleKey: String) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/delete/OwnerTankDataCleaner.kt",
+      "message": "The constructor(deleteTankRecords: suspend (List<Long>) -> Unit, snapshotCareTasksForTank: suspend (Long) -> List<CareTask>, deleteCareTasksForTank: suspend (Long) -> Unit, restoreCareTasksForTank: suspend (Long, List<CareTask>) -> Unit, removeDeviceAssignmentsForTank: suspend (Long) -> TankAssignmentCleanupResult, cancelCareTaskReminder: suspend (String, Long) -> Unit, reconcileCareReminders: suspend (String) -> Unit, integrityTransactions: TankCareIntegrityTransactions, ownerUidProvider: () -> String) has too many parameters. The current threshold is set to 7.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/CareTaskDataStoreManager.kt",
+      "message": "The function addCompletedActivity(tankId: Long, title: String, description: String, type: CareTaskType, completedAtMillis: Long, waterChangePercent: Int?, note: String) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/CareTaskDataStoreManager.kt",
+      "message": "The function addManualTask(tankId: Long, title: String, description: String, type: CareTaskType, dueAtMillis: Long, repeatEnabled: Boolean, repeatIntervalDays: Int, reminderEnabled: Boolean, missedReminderEnabled: Boolean, missedReminderDays: Int, waterChangePercent: Int?, note: String) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/CareTaskDataStoreManager.kt",
+      "message": "The function updateManualTask(taskId: Long, tankId: Long, title: String, description: String, type: CareTaskType, dueAtMillis: Long, repeatEnabled: Boolean, repeatIntervalDays: Int, reminderEnabled: Boolean, missedReminderEnabled: Boolean, missedReminderDays: Int, waterChangePercent: Int?, note: String) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/CareTaskStoreRules.kt",
+      "message": "The function validateStateRelationships(type: CareTaskType, source: CareTaskSource, status: CareTaskStatus, completedAtMillis: Long, updatedAtMillis: Long, repeatEnabled: Boolean, repeatIntervalDays: Int, reminderEnabled: Boolean, missedReminderEnabled: Boolean, missedReminderDays: Int, waterChangePercent: Int, generatedRuleKey: String) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareProfileBuilder.kt",
+      "message": "The function buildConditions(hasPlants: Boolean, hasCo2: Boolean, hasActiveSoil: Boolean, hasFertilizer: Boolean, hasLivestock: Boolean, hasShrimp: Boolean, hasFish: Boolean, hasLight: Boolean, hasFilter: Boolean, isStartupPeriod: Boolean, isMatureTank: Boolean, isHighTech: Boolean, isLowTech: Boolean) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningCrypto.kt",
+      "message": "The function transcript(sessionMode: String, purpose: String, deviceUid: String, provisioningId: String, deviceNonce: String, appNonce: String) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/ProvisioningDraftStorage.kt",
+      "message": "The function create(candidateId: String, bleAddress: String, bleName: String, claimCode: String, rawQrPayload: String, deviceTitle: String, deviceSerial: String, deviceModel: String, wifiCredentials: AqlWifiCredentials, createdAtMillis: Long) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/repository/DevicesRepository.kt",
+      "message": "The constructor(discoveryRepository: DeviceDiscoveryRepository, registryStore: DeviceRegistryStore, knownStore: DeviceKnownStore?, runtimeRepository: DeviceRuntimeRepository?, runtimeMetadataReducer: DeviceRuntimeMetadataReducer, statusAggregator: DeviceStatusAggregator, connectivityObserver: DeviceConnectivityObserver?) has too many parameters. The current threshold is set to 7.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/data/user/UserPreferencesManager.kt",
+      "message": "The function saveAddress(firstName: String, lastName: String, city: String, addressLine: String, postCode: String, phoneNumber: String, country: String) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CareProfileBottomSheet.kt",
+      "message": "The function show(fragmentManager: FragmentManager, percent: Int, percentText: String, summaryText: String, profileColor: Int, titles: List<String>, subtitles: List<String>, completed: BooleanArray, tokens: List<String>, requestKey: String) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/GlobalActionBottomSheet.kt",
+      "message": "The function newInstance(title: String, message: String?, details: List<BottomSheetDetailRow>, actions: List<BottomSheetAction>, requestKey: String, payloadId: String) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/GlobalActionBottomSheet.kt",
+      "message": "The function show(fragmentManager: FragmentManager, title: String, message: String?, details: List<BottomSheetDetailRow>, actions: List<BottomSheetAction>, requestKey: String, payloadId: String) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/SingleChoiceBottomSheet.kt",
+      "message": "The function show(fragmentManager: FragmentManager, title: String, options: List<Pair<String, String>>, selectedId: String?, columns: Int, requestKey: String, payloadId: String) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/TankSettingsEditorBottomSheet.kt",
+      "message": "The function publishResult(status: String, textValue: String?, millisValue: Long?, widthCm: Int?, lengthCm: Int?, heightCm: Int?, unit: String?) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/TankSettingsEditorBottomSheet.kt",
+      "message": "The function show(fragmentManager: FragmentManager, mode: Mode, title: String, currentText: String, validationMessage: String, currentMillis: Long?, minYear: Int, maxYear: Int, locale: Locale, widthCm: Int, lengthCm: Int, heightCm: Int, currentUnit: String) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/TextInputBottomSheet.kt",
+      "message": "The function show(fragmentManager: FragmentManager, title: String, label: String, hint: String, initialValue: String, secondaryLabel: String, secondaryValue: String, saveText: String, cancelText: String, required: Boolean, requiredMessage: String, requestKey: String, payloadId: String) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/dialog/AppDatePickerDialogFragment.kt",
+      "message": "The function show(fragmentManager: FragmentManager, requestKey: String, initialMillis: Long, payloadId: String, minMillis: Long?, maxMillis: Long?) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/feedback/FeedbackBottomSheet.kt",
+      "message": "The function newInstance(title: String, message: String, primaryText: String, cancelText: String?, tone: FeedbackTone, requestKey: String, actionId: String, autoDismissMillis: Long) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/feedback/FeedbackBottomSheet.kt",
+      "message": "The function show(fragmentManager: FragmentManager, title: String, message: String, primaryText: String, cancelText: String?, tone: FeedbackTone, requestKey: String, actionId: String, autoDismissMillis: Long) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/media/MediaFlowCoordinatorViewModel.kt",
+      "message": "The constructor(savedStateHandle: SavedStateHandle, context: Context, scope: AppMediaScope, ownerToken: String, ownerUid: String, cropSpec: MediaCropSpec, mediaProcessor: ImageMediaProcessor, dispatcher: CoroutineDispatcher) has too many parameters. The current threshold is set to 7.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/media/MediaFlowCoordinatorViewModel.kt",
+      "message": "The function factory(context: Context, scope: AppMediaScope, ownerToken: String, ownerUid: String, cropSpec: MediaCropSpec, mediaProcessor: ImageMediaProcessor) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/common/AquariumDimensionFormatter.kt",
+      "message": "The function labeledSizeText(context: Context, widthCm: Int, lengthCm: Int, heightCm: Int, sizeUnit: String, formatRes: Int) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/common/AquariumDimensionFormatter.kt",
+      "message": "The function sizeText(context: Context, widthCm: Int, lengthCm: Int, heightCm: Int, sizeUnit: String, separatorRes: Int) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/common/AquariumDimensionFormatter.kt",
+      "message": "The function volumeText(context: Context, widthCm: Int, lengthCm: Int, heightCm: Int, volumeUnit: String, rounded: Boolean) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/MaintenanceViewModel.kt",
+      "message": "The function addManualTask(tankId: Long, title: String, description: String, type: CareTaskType, dueAtMillis: Long, repeatEnabled: Boolean, repeatIntervalDays: Int, reminderEnabled: Boolean, missedReminderEnabled: Boolean, missedReminderDays: Int, waterChangePercent: Int?, note: String) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/MaintenanceViewModel.kt",
+      "message": "The function updateManualTask(taskId: Long, tankId: Long, title: String, description: String, type: CareTaskType, dueAtMillis: Long, repeatEnabled: Boolean, repeatIntervalDays: Int, reminderEnabled: Boolean, missedReminderEnabled: Boolean, missedReminderDays: Int, waterChangePercent: Int?, note: String) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/main/java/com/aqua/aqualight/utils/DialogManager.kt",
+      "message": "The function showInfoDialog(context: Context, type: DialogType, title: String, message: String, buttonTextResId: Int, autoDismissMillis: Long) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/test/java/com/aqua/aqualight/data/aquarium/delete/OwnerTankDataCleanerTest.kt",
+      "message": "The function cleaner(integrity: RecordingIntegrityTransactions, deleteTankRecords: suspend (List<Long>) -> Unit, snapshotCareTasksForTank: suspend (Long) -> List<CareTask>, deleteCareTasksForTank: suspend (Long) -> Unit, restoreCareTasksForTank: suspend (Long, List<CareTask>) -> Unit, removeAssignmentsForTank: suspend (Long) -> TankAssignmentCleanupResult, cancelCareTaskReminder: suspend (String, Long) -> Unit, reconcileCareReminders: suspend (String) -> Unit) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/test/java/com/aqua/aqualight/data/auth/AccountDeletionProcessDeathMatrixTest.kt",
+      "message": "The constructor(currentUid: String?, cloudFailuresRemaining: Int, authFailuresRemaining: Int, localFailuresRemaining: Int, cloudCalls: Int, authDeleteCalls: Int, localCalls: Int, revokeCalls: Int, signOutCalls: Int) has too many parameters. The current threshold is set to 7.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.LongParameterList",
+      "path": "app/src/test/java/com/aqua/aqualight/ui/tabs/maintenance/MaintenanceLiveLocaleTest.kt",
+      "message": "The function task(id: Long, type: CareTaskType, source: CareTaskSource, title: String, description: String, note: String, generatedRuleKey: String) has too many parameters. The current threshold is set to 6.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.NestedBlockDepth",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/media/ImageMediaProcessor.kt",
+      "message": "Function stageSource is nested too deeply.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.NestedBlockDepth",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt",
+      "message": "Function getTankPhotoBitmap is nested too deeply.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.NestedBlockDepth",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt",
+      "message": "Function wrapText is nested too deeply.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/application/aquarium/AquariumTankOperations.kt",
+      "message": "Interface 'AquariumTankOperations' with '18' functions detected. Defined threshold inside interfaces is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/base/BaseActivity.kt",
+      "message": "Class 'BaseActivity' with '14' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/DefaultAquariumTankOperations.kt",
+      "message": "Class 'DefaultAquariumTankOperations' with '18' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/devices/TankDeviceAssignmentRepository.kt",
+      "message": "Class 'TankDeviceAssignmentRepository' with '11' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/devices/TankDeviceAssignmentRules.kt",
+      "message": "Object 'TankDeviceAssignmentRules' with '13' functions detected. Defined threshold inside objects is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/store/AquariumTankDataStoreManager.kt",
+      "message": "Class 'AquariumTankDataStoreManager' with '33' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/store/TankStoreRules.kt",
+      "message": "Object 'TankStoreRules' with '17' functions detected. Defined threshold inside objects is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/CareTaskDataStoreManager.kt",
+      "message": "Class 'CareTaskDataStoreManager' with '36' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/CareTaskStoreRules.kt",
+      "message": "Object 'CareTaskStoreRules' with '16' functions detected. Defined threshold inside objects is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/integrity/TankCareIntegrityJournal.kt",
+      "message": "Object 'TankCareIntegrityJournal' with '23' functions detected. Defined threshold inside objects is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareTaskGenerator.kt",
+      "message": "Object 'SmartCareTaskGenerator' with '22' functions detected. Defined threshold inside objects is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/monitor/DevicePresenceRuntimeMonitor.kt",
+      "message": "Class 'DevicePresenceRuntimeMonitor' with '16' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/DefaultProvisioningProgressOperations.kt",
+      "message": "Class 'DefaultProvisioningProgressOperations' with '16' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleDeviceInfoPreflightClient.kt",
+      "message": "Class 'AqlBleDeviceInfoPreflightClient' with '19' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningAddressResolver.kt",
+      "message": "Class 'AqlBleProvisioningAddressResolver' with '12' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningCrypto.kt",
+      "message": "Object 'AqlBleProvisioningCrypto' with '21' functions detected. Defined threshold inside objects is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt",
+      "message": "Class 'AqlBleProvisioningGattClient' with '47' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningMessageCodec.kt",
+      "message": "Class 'AqlBleProvisioningMessageCodec' with '11' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/repository/AqlProvisioningHandoffSaver.kt",
+      "message": "Class 'AqlProvisioningHandoffSaver' with '11' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/AqlProvisioningDraftStore.kt",
+      "message": "Class 'AqlProvisioningDraftStore' with '11' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/store/ProvisioningCommitRecoveryStore.kt",
+      "message": "Class 'ProvisioningCommitRecoveryStore' with '12' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/repository/DeviceRuntimeMetadataReducer.kt",
+      "message": "Class 'DeviceRuntimeMetadataReducer' with '13' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/repository/DeviceRuntimeRepository.kt",
+      "message": "Class 'DeviceRuntimeRepository' with '20' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/repository/DevicesRepository.kt",
+      "message": "Class 'DevicesRepository' with '39' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/DeviceDosingRuntimeRepository.kt",
+      "message": "Class 'DeviceDosingRuntimeRepository' with '13' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/firmware/DeviceFirmwareManifestParser.kt",
+      "message": "Object 'DeviceFirmwareManifestParser' with '11' functions detected. Defined threshold inside objects is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsClient.kt",
+      "message": "Class 'AqlWsClient' with '26' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsCommandClient.kt",
+      "message": "Class 'AqlWsCommandClient' with '13' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsCommandFactory.kt",
+      "message": "Object 'AqlWsCommandFactory' with '12' functions detected. Defined threshold inside objects is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsCrypto.kt",
+      "message": "Object 'AqlWsCrypto' with '13' functions detected. Defined threshold inside objects is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsWireCodec.kt",
+      "message": "Class 'AqlWsWireCodec' with '38' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/store/DeviceCredentialStore.kt",
+      "message": "Class 'DeviceCredentialStore' with '14' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/store/DeviceKnownStore.kt",
+      "message": "Class 'DeviceKnownStore' with '12' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/store/KnownDevicesStoreReducer.kt",
+      "message": "Object 'KnownDevicesStoreReducer' with '18' functions detected. Defined threshold inside objects is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/data/user/UserPreferencesManager.kt",
+      "message": "Class 'UserPreferencesManager' with '29' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/i18n/LocaleFormatter.kt",
+      "message": "Object 'LocaleFormatter' with '21' functions detected. Defined threshold inside objects is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/media/AppMediaStorage.kt",
+      "message": "Object 'AppMediaStorage' with '44' functions detected. Defined threshold inside objects is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/media/ImageMediaProcessor.kt",
+      "message": "Class 'AndroidImageMediaProcessor' with '14' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/notifications/AndroidNotificationRenderer.kt",
+      "message": "Class 'AndroidNotificationRenderer' with '11' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/text/AndroidMaintenanceTextResolver.kt",
+      "message": "Class 'AndroidMaintenanceTextResolver' with '18' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/auth/AuthContainerFragment.kt",
+      "message": "Class 'AuthContainerFragment' with '12' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/auth/security/ReAuthenticateFragment.kt",
+      "message": "Class 'ReAuthenticateFragment' with '17' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/TankSettingsEditorBottomSheet.kt",
+      "message": "Class 'TankSettingsEditorBottomSheet' with '17' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/media/MediaFlowCoordinatorViewModel.kt",
+      "message": "Class 'MediaFlowCoordinatorViewModel' with '20' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionCoordinator.kt",
+      "message": "Class 'CapabilityPermissionCoordinator' with '21' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/main/AquaAppShellLayout.kt",
+      "message": "Class 'AquaAppShellLayout' with '12' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/main/MainActivity.kt",
+      "message": "Class 'MainActivity' with '19' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/AquariumFragment.kt",
+      "message": "Class 'AquariumFragment' with '20' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/AquariumTankViewModel.kt",
+      "message": "Class 'AquariumTankViewModel' with '18' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/CreateTankFragment.kt",
+      "message": "Class 'CreateTankFragment' with '15' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/CreateTankViewModel.kt",
+      "message": "Class 'CreateTankViewModel' with '17' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/materials/MaterialPickerFragment.kt",
+      "message": "Class 'MaterialPickerFragment' with '28' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/plants/PlantTagFragment.kt",
+      "message": "Class 'PlantTagFragment' with '12' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankInfoFragment.kt",
+      "message": "Class 'TankInfoFragment' with '16' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankPhotoFragment.kt",
+      "message": "Class 'TankPhotoFragment' with '16' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt",
+      "message": "Class 'TankDetailActivityFragment' with '30' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailDevicesFragment.kt",
+      "message": "Class 'TankDetailDevicesFragment' with '13' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailFragment.kt",
+      "message": "Class 'TankDetailFragment' with '23' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt",
+      "message": "Class 'TankDetailLifeFragment' with '14' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt",
+      "message": "Class 'TankDetailLivestockFormFragment' with '26' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailPlantTagFragment.kt",
+      "message": "Class 'TankDetailPlantTagFragment' with '13' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailTankFragment.kt",
+      "message": "Class 'TankDetailTankFragment' with '19' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsBasicFragment.kt",
+      "message": "Class 'TankSettingsBasicFragment' with '29' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsFragment.kt",
+      "message": "Class 'TankSettingsFragment' with '26' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsOthersFragment.kt",
+      "message": "Class 'TankSettingsOthersFragment' with '15' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt",
+      "message": "Class 'PdfWriter' with '21' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/DevicesFragment.kt",
+      "message": "Class 'DevicesFragment' with '15' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceAddFragment.kt",
+      "message": "Class 'DeviceAddFragment' with '11' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceAddViewModel.kt",
+      "message": "Class 'DeviceAddViewModel' with '16' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceProvisioningProgressFragment.kt",
+      "message": "Class 'DeviceProvisioningProgressFragment' with '17' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceProvisioningProgressViewModel.kt",
+      "message": "Class 'DeviceProvisioningProgressViewModel' with '21' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceQrScanFragment.kt",
+      "message": "Class 'DeviceQrScanFragment' with '23' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceWifiProvisioningFragment.kt",
+      "message": "Class 'DeviceWifiProvisioningFragment' with '19' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/DeviceLightRootViewModel.kt",
+      "message": "Class 'DeviceLightRootViewModel' with '12' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt",
+      "message": "Class 'AddCareTaskFragment' with '30' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AquariumMaintenanceFragment.kt",
+      "message": "Class 'AquariumMaintenanceFragment' with '33' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt",
+      "message": "Class 'CareTaskAdapter' with '11' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/MaintenanceViewModel.kt",
+      "message": "Class 'MaintenanceViewModel' with '29' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/TaskDetailFragment.kt",
+      "message": "Class 'TaskDetailFragment' with '24' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/text/MaintenanceTextResolver.kt",
+      "message": "Interface 'MaintenanceTextResolver' with '18' functions detected. Defined threshold inside interfaces is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/SettingsFragment.kt",
+      "message": "Class 'SettingsFragment' with '12' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/app/AppSettingsFragment.kt",
+      "message": "Class 'AppSettingsFragment' with '15' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/feedback/FeedbackFragment.kt",
+      "message": "Class 'FeedbackFragment' with '16' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/logout/ChangeEmailFragment.kt",
+      "message": "Class 'ChangeEmailFragment' with '12' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/logout/ChangePasswordFragment.kt",
+      "message": "Class 'ChangePasswordFragment' with '11' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/logout/LogoutFragment.kt",
+      "message": "Class 'LogoutFragment' with '13' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/profile/EditProfileFragment.kt",
+      "message": "Class 'EditProfileFragment' with '13' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/userinfo/UserAddressFragment.kt",
+      "message": "Class 'UserAddressFragment' with '21' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/userinfo/UserInfoFragment.kt",
+      "message": "Class 'UserInfoFragment' with '12' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.complexity.TooManyFunctions",
+      "path": "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeActivity.kt",
+      "message": "Class 'ReleaseSmokeActivity' with '12' functions detected. Defined threshold inside classes is set to '11'",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.InstanceOfCheckForException",
+      "path": "app/src/main/java/com/aqua/aqualight/data/auth/AppSessionCoordinator.kt",
+      "message": "Instead of catching for a general exception type and checking for a specific exception type, use multiple catch blocks.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.InstanceOfCheckForException",
+      "path": "app/src/main/java/com/aqua/aqualight/data/auth/OwnerSessionCoordinator.kt",
+      "message": "Instead of catching for a general exception type and checking for a specific exception type, use multiple catch blocks.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.exceptions.InstanceOfCheckForException",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/devices/TankDetailDevicesViewModel.kt",
+      "message": "Instead of catching for a general exception type and checking for a specific exception type, use multiple catch blocks.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.InstanceOfCheckForException",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/DevicesViewModel.kt",
+      "message": "Instead of catching for a general exception type and checking for a specific exception type, use multiple catch blocks.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.exceptions.PrintStackTrace",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareReminderDeliveryWorker.kt",
+      "message": "Do not print a stack trace. These debug statements should be removed or replaced with a logger.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.PrintStackTrace",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareReminderReconcileWorker.kt",
+      "message": "Do not print a stack trace. These debug statements should be removed or replaced with a logger.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.PrintStackTrace",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareDailyWorker.kt",
+      "message": "Do not print a stack trace. These debug statements should be removed or replaced with a logger.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.PrintStackTrace",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/DefaultProvisioningProgressOperations.kt",
+      "message": "Do not print a stack trace. These debug statements should be removed or replaced with a logger.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.PrintStackTrace",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsBasicFragment.kt",
+      "message": "Do not print a stack trace. These debug statements should be removed or replaced with a logger.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.PrintStackTrace",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt",
+      "message": "Do not print a stack trace. These debug statements should be removed or replaced with a logger.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.RethrowCaughtException",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankPhotoFragment.kt",
+      "message": "Do not rethrow a caught exception of the same type.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.RethrowCaughtException",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsBasicFragment.kt",
+      "message": "Do not rethrow a caught exception of the same type.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.RethrowCaughtException",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/profile/EditProfileFragment.kt",
+      "message": "Do not rethrow a caught exception of the same type.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.SwallowedException",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningScanner.kt",
+      "message": "The caught exception is swallowed. The original exception could be lost.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/base/loading/LoadingOverlayDialogFragment.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/DefaultAquariumTankOperations.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/delete/OwnerTankDataCleaner.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 9
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/devices/TankDeviceAssignmentRepository.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 6
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/store/AquariumTankDataStoreManager.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/data/auth/AppSessionCoordinator.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/data/auth/AuthenticatedOwnerProvider.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/data/auth/OwnerSessionCoordinator.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareReminderDeliveryWorker.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareReminderReconcileWorker.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareDailyWorker.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/DefaultProvisioningProgressOperations.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 3
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningScanner.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/repository/AqlProvisioningHandoffSaver.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 5
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/remove/OwnerDeviceDataCleaner.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 3
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/repository/DevicesRepository.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsClient.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/data/feedback/FirebaseFeedbackSubmissionOperations.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/data/user/CloudUserDataCleaner.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/data/user/DefaultUserProfileOperations.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/data/user/EncryptedUserPreferencesSerializer.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/auth/GoogleIdentityClient.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/media/ImageMediaProcessor.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/AquariumFragment.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/CreateTankFragment.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/materials/MaterialPickerFragment.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 3
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailPlantTagFragment.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailTankFragment.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/devices/TankDetailDevicesViewModel.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsBasicFragment.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 3
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsOthersFragment.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 5
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/DevicesViewModel.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/feedback/FeedbackViewModel.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/profile/EditProfileFragment.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/userinfo/UserInfoFragment.kt",
+      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.naming.MatchingDeclarationName",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/DevicesEvents.kt",
+      "message": "The file name 'DevicesEvents' does not match the name of the single top-level declaration 'DevicesEvent'.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.performance.SpreadOperator",
+      "path": "app/src/main/java/com/aqua/aqualight/data/auth/AuthUiText.kt",
+      "message": "In most cases using a spread operator causes a full copy of the array to be created before calling a method. This may result in a performance penalty.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.performance.SpreadOperator",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/text/AquaUiText.kt",
+      "message": "In most cases using a spread operator causes a full copy of the array to be created before calling a method. This may result in a performance penalty.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.LoopWithTooManyJumpStatements",
+      "path": "app/src/main/java/com/aqua/aqualight/data/auth/AppSessionCoordinator.kt",
+      "message": "The loop contains more than one break or continue statement. The code should be refactored to increase readability.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.LoopWithTooManyJumpStatements",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/discovery/udp/AqlDiscoveryUdpScanner.kt",
+      "message": "The loop contains more than one break or continue statement. The code should be refactored to increase readability.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.LoopWithTooManyJumpStatements",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/media/ImageMediaProcessor.kt",
+      "message": "The loop contains more than one break or continue statement. The code should be refactored to increase readability.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.LoopWithTooManyJumpStatements",
+      "path": "app/src/test/java/com/aqua/aqualight/i18n/UserVisibleTextResourceGuardTest.kt",
+      "message": "The loop contains more than one break or continue statement. The code should be refactored to increase readability.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/application/aquarium/AquariumVolumeCalculator.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/material/MaterialCatalog.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/store/TankStoreRules.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 6
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/CareTaskStoreRules.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/integrity/TankCareIntegrityJournal.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 5
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareDailyWorker.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareProfileBuilder.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 5
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareTaskGenerator.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 58
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartFertilizerDoseCalculator.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 13
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/model/DeviceRuntimeEndpoint.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 8
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningCrypto.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/model/AqlWifiCredentials.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/cooling/DeviceCoolingStatusParser.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/DeviceDosingModels.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/DeviceDosingStatusParser.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/firmware/DeviceFirmwareManifestSignatureVerifier.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/firmware/DeviceFirmwareStatusParser.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/DeviceLightModels.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/DeviceLightStatusParser.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 4
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/time/DeviceSystemTimePayloadFactory.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 7
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/time/DeviceTimeStatusParser.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/timer/DeviceTimerModels.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/timer/DeviceTimerStatusParser.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlPrivateLanEndpoint.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsClient.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 5
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsCrypto.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 3
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsWireCodec.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 9
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/user/UserDataScope.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/data/user/UserPreferencesStoreRules.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/i18n/LocaleFormatter.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/media/ImageMediaPolicy.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/media/ImageMediaProcessor.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 5
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/notifications/AndroidNotificationRenderer.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/text/AndroidSmartCareTextResolver.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/auth/AuthContainerFragment.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 5
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/auth/security/ReAuthenticateFragment.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 8
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/auth/viewmodel/ChangePasswordViewModel.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/auth/viewmodel/RegisterViewModel.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CareProfileBottomSheet.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CareTaskTypeBottomSheetFragment.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CountryPickerBottomSheet.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 5
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/TankSettingsEditorBottomSheet.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/header/AquaHeaderBindingExt.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 3
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/material/AquaMaterialCategoryRowFactory.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 12
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/AquariumTankAdapter.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/careprofile/CareProfileCalculator.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/CreateTankFragment.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 3
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/plants/PlantTagFragment.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankDescriptionFragment.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailFragment.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 3
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 7
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailPlantTagFragment.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsFragment.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 3
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 74
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/plants/PlantTagUiRenderer.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 13
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceAddFragment.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceProvisioningProgressFragment.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceScanPulseView.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 10
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/DeviceLightRootViewModel.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 15
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AquariumMaintenanceFragment.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/CareTaskAdapter.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/MaintenanceViewModel.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/TaskDetailFragment.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/device/DeviceStatusSnapshotMapper.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 8
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/logout/ChangePasswordFragment.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/userinfo/UserAddressFragment.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 5
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/AccountDeletionProcessDeathSmokeActivity.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MagicNumber",
+      "path": "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeActivity.kt",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.MaxLineLength",
+      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/plant/PlantCatalog.kt",
+      "message": "Line detected, which is longer than the defined maximum line length in the code style.",
+      "count": 52
+    },
+    {
+      "ruleId": "detekt.style.MaxLineLength",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/DefaultDeviceFirmwareUpdateOperations.kt",
+      "message": "Line detected, which is longer than the defined maximum line length in the code style.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MaxLineLength",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/monitor/DevicePresenceRuntimeMonitor.kt",
+      "message": "Line detected, which is longer than the defined maximum line length in the code style.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MaxLineLength",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleDeviceInfoPreflightClient.kt",
+      "message": "Line detected, which is longer than the defined maximum line length in the code style.",
+      "count": 30
+    },
+    {
+      "ruleId": "detekt.style.MaxLineLength",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningCrypto.kt",
+      "message": "Line detected, which is longer than the defined maximum line length in the code style.",
+      "count": 3
+    },
+    {
+      "ruleId": "detekt.style.MaxLineLength",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt",
+      "message": "Line detected, which is longer than the defined maximum line length in the code style.",
+      "count": 50
+    },
+    {
+      "ruleId": "detekt.style.MaxLineLength",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningMessageCodec.kt",
+      "message": "Line detected, which is longer than the defined maximum line length in the code style.",
+      "count": 5
+    },
+    {
+      "ruleId": "detekt.style.MaxLineLength",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/qr/AqlProvisioningQrParser.kt",
+      "message": "Line detected, which is longer than the defined maximum line length in the code style.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MaxLineLength",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/cooling/DeviceCoolingModels.kt",
+      "message": "Line detected, which is longer than the defined maximum line length in the code style.",
+      "count": 4
+    },
+    {
+      "ruleId": "detekt.style.MaxLineLength",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/DeviceDosingModels.kt",
+      "message": "Line detected, which is longer than the defined maximum line length in the code style.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.MaxLineLength",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/DeviceLightModels.kt",
+      "message": "Line detected, which is longer than the defined maximum line length in the code style.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.MaxLineLength",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsWireCodec.kt",
+      "message": "Line detected, which is longer than the defined maximum line length in the code style.",
+      "count": 6
+    },
+    {
+      "ruleId": "detekt.style.MaxLineLength",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/store/DeviceCredentialStore.kt",
+      "message": "Line detected, which is longer than the defined maximum line length in the code style.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.MaxLineLength",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/AquariumFragment.kt",
+      "message": "Line detected, which is longer than the defined maximum line length in the code style.",
+      "count": 4
+    },
+    {
+      "ruleId": "detekt.style.MaxLineLength",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailPlantsFragment.kt",
+      "message": "Line detected, which is longer than the defined maximum line length in the code style.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.MaxLineLength",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailTankFragment.kt",
+      "message": "Line detected, which is longer than the defined maximum line length in the code style.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.MaxLineLength",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt",
+      "message": "Line detected, which is longer than the defined maximum line length in the code style.",
+      "count": 6
+    },
+    {
+      "ruleId": "detekt.style.MaxLineLength",
+      "path": "app/src/test/java/com/aqua/aqualight/ui/tabs/aquarium/common/AquariumMeasurementArchitectureTest.kt",
+      "message": "Line detected, which is longer than the defined maximum line length in the code style.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.MaxLineLength",
+      "path": "app/src/test/java/com/aqua/aqualight/ui/tabs/devices/detail/DeviceRootViewModelBoundaryTest.kt",
+      "message": "Line detected, which is longer than the defined maximum line length in the code style.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/livestock/LivestockCategories.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/livestock/LivestockCategories.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/CareTaskStoreRules.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/care/CareTaskStoreRules.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/integrity/CareTaskSnapshotIntegrity.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/care/integrity/CareTaskSnapshotIntegrity.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/integrity/TankCareIntegrityJournal.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/care/integrity/TankCareIntegrityJournal.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/integrity/TankCareIntegrityRecovery.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/care/integrity/TankCareIntegrityRecovery.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/model/CareTask.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/care/model/CareTask.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/smartcare/FertilizerDoseCatalog.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/care/smartcare/FertilizerDoseCatalog.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareGeneratedTask.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareGeneratedTask.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareRuleCatalog.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareRuleCatalog.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareTaskGenerator.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareTaskGenerator.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartFertilizerDoseCalculator.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartFertilizerDoseCalculator.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartFertilizerDoseModels.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartFertilizerDoseModels.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleGattOperationQueue.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleGattOperationQueue.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningMessageCodec.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningMessageCodec.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/main/java/com/aqua/aqualight/data/security/KeyStoreUtils.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/data/security/KeyStoreUtils.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CountryPickerBottomSheet.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/CountryPickerBottomSheet.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/PhotoSourceBottomSheet.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/PhotoSourceBottomSheet.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/header/AquaHeaderAction.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/ui/common/header/AquaHeaderAction.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/header/AquaHeaderConfig.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/ui/common/header/AquaHeaderConfig.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/timeline/TimelineDayStatus.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/ui/common/timeline/TimelineDayStatus.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankDescriptionFragment.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankDescriptionFragment.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankNameFragment.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankNameFragment.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankStepFragment.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankStepFragment.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/model/MaintenanceTab.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/model/MaintenanceTab.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/test/java/com/aqua/aqualight/ExampleUnitTest.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/test/java/com/aqua/aqualight/ExampleUnitTest.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.NewLineAtEndOfFile",
+      "path": "app/src/test/java/com/aqua/aqualight/data/care/CareTaskStoreRulesTest.kt",
+      "message": "The file /home/runner/work/AquaLight/AquaLight/app/src/test/java/com/aqua/aqualight/data/care/CareTaskStoreRulesTest.kt is not ending with a new line.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/application/feedback/FeedbackSubmissionOperations.kt",
+      "message": "Function isEmailValid has 5 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/application/feedback/FeedbackSubmissionOperations.kt",
+      "message": "Function validate has 7 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/application/notifications/NotificationContracts.kt",
+      "message": "Function dispatch has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/base/accessibility/MinimumTouchTargetInstaller.kt",
+      "message": "Function beginGesture has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/base/accessibility/MinimumTouchTargetInstaller.kt",
+      "message": "Function createTouchEntry has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/base/accessibility/MinimumTouchTargetInstaller.kt",
+      "message": "Function rebuild has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/base/loading/LoadingOverlayDialogFragment.kt",
+      "message": "Function show has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/delete/OwnerTankDataCleaner.kt",
+      "message": "Function deleteTanks has 5 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/auth/AccountDeletionManager.kt",
+      "message": "Function deleteCurrentAccount has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/auth/AccountDeletionManager.kt",
+      "message": "Function deleteOrResumeLocked has 11 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/auth/AuthenticatedOwnerProvider.kt",
+      "message": "Function validateCurrentOwner has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareReminderDeliveryWorker.kt",
+      "message": "Function deliver has 7 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareReminderReconcileRuntime.kt",
+      "message": "Function run has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareReminderSchedulePolicy.kt",
+      "message": "Function plan has 6 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/reminder/CareTaskBootReceiver.kt",
+      "message": "Function onReceive has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareDailyWorker.kt",
+      "message": "Function doWork has 5 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareTaskGenerator.kt",
+      "message": "Function buildFertilizerMessage has 4 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareTaskGenerator.kt",
+      "message": "Function getWaterChangePercent has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/discovery/udp/AqlDiscoveryParser.kt",
+      "message": "Function parseDeviceAnnounce has 17 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/menu/DefaultDeviceMenuAccessOperations.kt",
+      "message": "Function accepts has 4 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/menu/DefaultDeviceMenuAccessOperations.kt",
+      "message": "Function resolve has 5 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/menu/DefaultDeviceMenuAccessOperations.kt",
+      "message": "Function verifyLiveSnapshot has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/model/DeviceRuntimeEndpoint.kt",
+      "message": "Function isPrivateLanIpv4Literal has 5 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/monitor/DevicePresenceRuntimeMonitor.kt",
+      "message": "Function recoverAfterLocalNetworkRestored has 4 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/monitor/DeviceStatusAggregator.kt",
+      "message": "Function resolve has 6 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/DefaultProvisioningProgressOperations.kt",
+      "message": "Function commitPreparedRegistration has 5 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/DefaultProvisioningProgressOperations.kt",
+      "message": "Function prepareRegistration has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleDeviceInfoPreflightClient.kt",
+      "message": "Function onServicesDiscovered has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleDeviceInfoPreflightClient.kt",
+      "message": "Function validateManualDeviceInfo has 9 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleDeviceInfoPreflightClient.kt",
+      "message": "Function validateQrCandidateDeviceInfo has 22 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleDeviceInfoPreflightClient.kt",
+      "message": "Function verifyManualSetup has 7 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleDeviceInfoPreflightClient.kt",
+      "message": "Function verifyQrCandidate has 7 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningAddressResolver.kt",
+      "message": "Function resolveAddress has 4 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningAddressResolver.kt",
+      "message": "Function resolveQrAddress has 6 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningAddressResolver.kt",
+      "message": "Function scannerOrFailure has 4 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningAddressResolver.kt",
+      "message": "Function verifyQrCandidates has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt",
+      "message": "Function enableNotifications has 4 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt",
+      "message": "Function handleCharacteristicReadValue has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt",
+      "message": "Function handleDeviceInfoRead has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt",
+      "message": "Function handleRuntimeEndpointValue has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt",
+      "message": "Function onServicesDiscovered has 4 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt",
+      "message": "Function readDeviceInfo has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt",
+      "message": "Function readProvisioningStatus has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt",
+      "message": "Function readRuntimeEndpoint has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt",
+      "message": "Function start has 4 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt",
+      "message": "Function validateDeviceInfo has 23 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt",
+      "message": "Function writeFinalizeSetup has 6 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt",
+      "message": "Function writeStartSession has 6 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt",
+      "message": "Function writeString has 4 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt",
+      "message": "Function writeWifiCredentials has 8 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt",
+      "message": "Function writeWifiCredentialsIfReady has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningMessageCodec.kt",
+      "message": "Function parseStatus has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningScanner.kt",
+      "message": "Function startScan has 6 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/repository/DevicesRepository.kt",
+      "message": "Function applyRuntimeMetadataMessage has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/repository/DevicesRepository.kt",
+      "message": "Function connectRuntime has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/firmware/DeviceFirmwareOtaEventMapper.kt",
+      "message": "Function parse has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/firmware/DeviceFirmwareUpdatePlanner.kt",
+      "message": "Function versionPartsOrNull has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/time/DeviceSystemTimePayloadFactory.kt",
+      "message": "Function posixFor has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlPrivateLanEndpoint.kt",
+      "message": "Function route has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsClient.kt",
+      "message": "Function authenticateCurrentConnection has 4 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsClient.kt",
+      "message": "Function handleTextFrame has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsCrypto.kt",
+      "message": "Function constantTimeHexEquals has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsCrypto.kt",
+      "message": "Function serverProofMatches has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsCrypto.kt",
+      "message": "Function verifyDevice has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/notifications/DefaultNotificationScheduler.kt",
+      "message": "Function isEligible has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/user/UserDataCleaner.kt",
+      "message": "Function deleteAppOwnedUri has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/i18n/LocaleFormatter.kt",
+      "message": "Function parseDecimal has 4 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/i18n/SupportedLocaleRegistry.kt",
+      "message": "Function canonicalize has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/media/AppMediaStorage.kt",
+      "message": "Function copyInternalMedia has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/media/AppMediaStorage.kt",
+      "message": "Function deleteAfterCommit has 4 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/media/AppMediaStorage.kt",
+      "message": "Function isInside has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/media/AppMediaStorage.kt",
+      "message": "Function promoteCropOutput has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/media/AppMediaStorage.kt",
+      "message": "Function resolveInternalMediaFile has 4 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/media/AppMediaStorage.kt",
+      "message": "Function rollbackPendingMedia has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/media/AppMediaStorage.kt",
+      "message": "Function toContentUriForOwnedPath has 5 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/media/ImageMediaPolicy.kt",
+      "message": "Function validateSource has 4 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/media/ImageMediaProcessor.kt",
+      "message": "Function resolveOwnedFile has 4 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/media/ImageMediaProcessor.kt",
+      "message": "Function restore has 5 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/notifications/AndroidNotificationRenderer.kt",
+      "message": "Function createLargeIconBitmap has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/permissions/PermissionPolicy.kt",
+      "message": "Function evaluate has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/text/AndroidSmartCareTextResolver.kt",
+      "message": "Function generationMillis has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/text/AndroidSmartCareTextResolver.kt",
+      "message": "Function resolve has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/vision/ProvisioningQrFrameDecoder.kt",
+      "message": "Function decode has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/common/web/SecureLocalWebContent.kt",
+      "message": "Function approvedLocalAssetNameOrNull has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/main/AquaAppShellLayout.kt",
+      "message": "Function applySystemBarAppearance has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/main/AquaAppShellLayout.kt",
+      "message": "Function findActivity has 4 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/main/MainActivity.kt",
+      "message": "Function consumePendingCareTaskIfPossible has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/navigation/AppDestinationContract.kt",
+      "message": "Function shouldShowBottomBar has 4 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/common/AquariumDimensionInputPolicy.kt",
+      "message": "Function canonicalCentimeters has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/common/AquariumDimensionInputPolicy.kt",
+      "message": "Function convert has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/CreateTankFragment.kt",
+      "message": "Function handleBackNavigation has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/materials/MaterialPickerFragment.kt",
+      "message": "Function getCurrentMaterialSelections has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankDescriptionFragment.kt",
+      "message": "Function validateAndSave has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankInfoFragment.kt",
+      "message": "Function validateAndSave has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankNameFragment.kt",
+      "message": "Function validateAndSave has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailFragment.kt",
+      "message": "Function restoreSelectedTab has 4 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/DevicesViewModel.kt",
+      "message": "Function onDeviceClicked has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceProvisioningProgressViewModel.kt",
+      "message": "Function resolveBleAddressIfNeeded has 4 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceProvisioningProgressViewModel.kt",
+      "message": "Function startProvisioning has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceQrScanViewModel.kt",
+      "message": "Function onQrDetected has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceWifiProvisioningFragment.kt",
+      "message": "Function currentWifiSsid has 4 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt",
+      "message": "Function readScheduleValues has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt",
+      "message": "Function saveTaskInternal has 5 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AquariumMaintenanceFragment.kt",
+      "message": "Function renderCareProfileWarning has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/MaintenanceViewModel.kt",
+      "message": "Function getTaskTitle has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/logout/ChangeEmailFragment.kt",
+      "message": "Function attemptEmailChange has 5 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/userinfo/UserAddressFragment.kt",
+      "message": "Function afterTextChanged has 4 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/userinfo/UserAddressFragment.kt",
+      "message": "Function saveAddress has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ReturnCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/userinfo/UserInfoFragment.kt",
+      "message": "Function saveUserInfo has 3 return statements which exceeds the limit of 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ThrowsCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/store/AquariumTankDataStoreManager.kt",
+      "message": "Too many throw statements in the function duplicateTank. The maximum number of allowed throw statements is 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ThrowsCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/auth/AuthRepository.kt",
+      "message": "Too many throw statements in the function requestEmailChangeVerification. The maximum number of allowed throw statements is 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ThrowsCount",
+      "path": "app/src/main/java/com/aqua/aqualight/data/notifications/NotificationPreferenceStoreRules.kt",
+      "message": "Too many throw statements in the function validatePreference. The maximum number of allowed throw statements is 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.ThrowsCount",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsOthersFragment.kt",
+      "message": "Too many throw statements in the function deleteCurrentTank. The maximum number of allowed throw statements is 2.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.UnusedParameter",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/menu/DefaultDeviceMenuAccessOperations.kt",
+      "message": "Function parameter `fallbackSnapshot` is unused.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.UnusedParameter",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt",
+      "message": "Function parameter `gatt` is unused.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.UnusedPrivateProperty",
+      "path": "app/src/main/java/com/aqua/aqualight/data/devices/repository/DeviceRuntimeRepository.kt",
+      "message": "Private property `repositoryScope` is unused.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.UnusedPrivateProperty",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/plants/PlantPickerFragment.kt",
+      "message": "Private property `args` is unused.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.UnusedPrivateProperty",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt",
+      "message": "Private property `ARG_LIVESTOCK_ID` is unused.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.UnusedPrivateProperty",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt",
+      "message": "Private property `ARG_TANK_ID` is unused.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.UnusedPrivateProperty",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/logout/ChangeEmailFragment.kt",
+      "message": "Private property `baseActivity` is unused.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.UnusedPrivateProperty",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/userinfo/UserInfoFragment.kt",
+      "message": "Private property `USERNAME_MAX_LENGTH` is unused.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.UseCheckOrError",
+      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/DefaultAquariumTankOperations.kt",
+      "message": "Use check() or error() instead of throwing an IllegalStateException.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.UseCheckOrError",
+      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/store/AquariumTankDataStoreManager.kt",
+      "message": "Use check() or error() instead of throwing an IllegalStateException.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.UseCheckOrError",
+      "path": "app/src/main/java/com/aqua/aqualight/data/auth/AuthSessionManager.kt",
+      "message": "Use check() or error() instead of throwing an IllegalStateException.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.UseCheckOrError",
+      "path": "app/src/main/java/com/aqua/aqualight/data/auth/FirebaseAccountSecurityOperations.kt",
+      "message": "Use check() or error() instead of throwing an IllegalStateException.",
+      "count": 3
+    },
+    {
+      "ruleId": "detekt.style.UseCheckOrError",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/integrity/TankCareIntegrityJournal.kt",
+      "message": "Use check() or error() instead of throwing an IllegalStateException.",
+      "count": 2
+    },
+    {
+      "ruleId": "detekt.style.UseCheckOrError",
+      "path": "app/src/main/java/com/aqua/aqualight/platform/media/ImageMediaProcessor.kt",
+      "message": "Use check() or error() instead of throwing an IllegalStateException.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.UseCheckOrError",
+      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsOthersFragment.kt",
+      "message": "Use check() or error() instead of throwing an IllegalStateException.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.UseCheckOrError",
+      "path": "app/src/test/java/com/aqua/aqualight/data/devices/remove/OwnerDeviceDataCleanerTest.kt",
+      "message": "Use check() or error() instead of throwing an IllegalStateException.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.UseCheckOrError",
+      "path": "app/src/test/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsClientLifecycleTest.kt",
+      "message": "Use check() or error() instead of throwing an IllegalStateException.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.UseRequire",
+      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/store/AquariumTankDataStoreManager.kt",
+      "message": "Use require() instead of throwing an IllegalArgumentException.",
+      "count": 3
+    },
+    {
+      "ruleId": "detekt.style.UseRequire",
+      "path": "app/src/main/java/com/aqua/aqualight/data/care/CareTaskDataStoreManager.kt",
+      "message": "Use require() instead of throwing an IllegalArgumentException.",
+      "count": 1
+    },
+    {
+      "ruleId": "detekt.style.WildcardImport",
+      "path": "app/src/test/java/com/aqua/aqualight/ExampleUnitTest.kt",
+      "message": "org.junit.Assert.* is a wildcard import. Replace it with fully qualified imports.",
+      "count": 1
+    }
+  ]
+}

@@ -1,0 +1,455 @@
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+import java.util.regex.Pattern
+
+class AquaLightFirebaseConfig {
+    private static String requireText(Object value, String field, String environment) {
+        def normalized = value?.toString()?.trim()
+        if (!normalized) {
+            throw new GradleException("Firebase ${field} is missing for ${environment}.")
+        }
+        return normalized
+    }
+
+    static Map validate(String rawJson, String expectedPackage, String environment) {
+        def parsed
+        try {
+            parsed = new JsonSlurper().parseText(rawJson)
+        } catch (Exception error) {
+            throw new GradleException("Invalid Firebase JSON for ${environment}.", error)
+        }
+        if (!(parsed instanceof Map)) {
+            throw new GradleException("Firebase JSON root must be an object for ${environment}.")
+        }
+
+        def configurationVersion = requireText(
+                parsed.configuration_version,
+                "configuration_version",
+                environment
+        )
+        if (configurationVersion != "1") {
+            throw new GradleException(
+                    "Unsupported Firebase configuration_version '${configurationVersion}' for ${environment}."
+            )
+        }
+
+        def projectInfo = parsed.project_info instanceof Map ? parsed.project_info : [:]
+        def projectId = requireText(projectInfo.project_id, "project_id", environment)
+        if (!(projectId ==~ /[a-z][a-z0-9-]{4,28}[a-z0-9]/)) {
+            throw new GradleException("Malformed Firebase project_id '${projectId}' for ${environment}.")
+        }
+
+        def projectNumber = requireText(projectInfo.project_number, "project_number", environment)
+        if (!(projectNumber ==~ /[0-9]+/)) {
+            throw new GradleException("Malformed Firebase project_number for ${environment}.")
+        }
+
+        def clients = parsed.client instanceof Collection ? parsed.client : []
+        if (clients.size() != 1) {
+            throw new GradleException(
+                    "Firebase config for ${environment} must contain exactly one client; found ${clients.size()}."
+            )
+        }
+        def matchingClient = clients[0]
+        def packageName = requireText(
+                matchingClient?.client_info?.android_client_info?.package_name,
+                "android package_name",
+                environment
+        )
+        if (packageName != expectedPackage) {
+            throw new GradleException(
+                    "Firebase config for ${environment} targets ${packageName}; expected ${expectedPackage}."
+            )
+        }
+
+        def mobileSdkAppId = requireText(
+                matchingClient?.client_info?.mobilesdk_app_id,
+                "mobilesdk_app_id",
+                environment
+        )
+        def mobileSdkPattern = Pattern.compile(
+                '^1:' + Pattern.quote(projectNumber) + ':android:[0-9a-f]+$'
+        )
+        if (!mobileSdkPattern.matcher(mobileSdkAppId).matches()) {
+            throw new GradleException(
+                    "Malformed Firebase mobilesdk_app_id for ${environment}; expected project " +
+                            "number ${projectNumber}."
+            )
+        }
+
+        def apiKeys = matchingClient?.api_key instanceof Collection ? matchingClient.api_key : []
+        if (apiKeys.size() != 1) {
+            throw new GradleException(
+                    "Firebase config for ${environment} must contain exactly one API key; " +
+                            "found ${apiKeys.size()}."
+            )
+        }
+        def apiKey = requireText(apiKeys[0]?.current_key, "api_key.current_key", environment)
+        if (!(apiKey ==~ /AIza[0-9A-Za-z_-]{35}/)) {
+            throw new GradleException("Malformed Firebase API key for ${environment}.")
+        }
+
+        def webOAuthClients = matchingClient?.oauth_client instanceof Collection
+                ? matchingClient.oauth_client.findAll { oauthClient ->
+                    oauthClient?.client_type?.toString() == "3"
+                }
+                : []
+        if (webOAuthClients.size() != 1) {
+            throw new GradleException(
+                    "Firebase config for ${environment} must contain exactly one Web OAuth client; " +
+                            "found ${webOAuthClients.size()}."
+            )
+        }
+        def webClientId = requireText(
+                webOAuthClients[0]?.client_id,
+                "Web OAuth client_id",
+                environment
+        )
+        if (!(webClientId ==~ /[0-9]+-[0-9A-Za-z_-]+\.apps\.googleusercontent\.com/)) {
+            throw new GradleException("Malformed Firebase Web OAuth client_id for ${environment}.")
+        }
+
+        return [
+                normalizedJson: JsonOutput.prettyPrint(JsonOutput.toJson(parsed)) + System.lineSeparator(),
+                packageName   : expectedPackage,
+                projectId     : projectId,
+                projectNumber : projectNumber,
+                mobileSdkAppId: mobileSdkAppId
+        ]
+    }
+
+    static Map materialize(File appDirectory,
+                           String environment,
+                           String expectedPackage,
+                           String secretName,
+                           String buildType) {
+        def target = new File(appDirectory, "src/${buildType}/google-services.json")
+        if (target.exists() && !target.delete()) {
+            throw new GradleException(
+                    "Unable to remove stale Firebase configuration for ${environment}: ${target}."
+            )
+        }
+
+        def encodedConfig = System.getenv(secretName)?.trim()
+        if (!encodedConfig) {
+            throw new GradleException(
+                    "Firebase config for ${environment} is missing. Set protected input ${secretName}."
+            )
+        }
+
+        byte[] decoded
+        try {
+            decoded = Base64.getDecoder().decode(encodedConfig)
+        } catch (IllegalArgumentException error) {
+            throw new GradleException("${secretName} is not valid base64.", error)
+        }
+        if (decoded.length == 0) {
+            throw new GradleException("${secretName} decoded to an empty Firebase configuration.")
+        }
+
+        def rawJson = new String(decoded, StandardCharsets.UTF_8)
+        if (!rawJson.trim()) {
+            throw new GradleException("${secretName} decoded to a blank Firebase configuration.")
+        }
+
+        def validated = validate(rawJson, expectedPackage, environment)
+        if (!target.parentFile.mkdirs() && !target.parentFile.isDirectory()) {
+            throw new GradleException(
+                    "Unable to create Firebase configuration directory for ${environment}: ${target.parentFile}."
+            )
+        }
+        target.setText(validated.normalizedJson as String, "UTF-8")
+        return validated
+    }
+
+    static Map readIdentity(File configFile, String expectedPackage, String environment) {
+        if (!configFile.isFile()) {
+            throw new GradleException("Generated Firebase config is missing for ${environment}: ${configFile}.")
+        }
+        def validated = validate(configFile.getText("UTF-8"), expectedPackage, environment)
+        return [
+                packageName   : validated.packageName,
+                projectId     : validated.projectId,
+                projectNumber : validated.projectNumber,
+                mobileSdkAppId: validated.mobileSdkAppId
+        ]
+    }
+
+    private static void collectConfigurationFiles(File current,
+                                                  File excludedBuildDirectory,
+                                                  Set<File> discovered) {
+        if (!current.exists()) {
+            return
+        }
+        def canonical = current.canonicalFile
+        if (canonical == excludedBuildDirectory ||
+                canonical.toPath().startsWith(excludedBuildDirectory.toPath())) {
+            return
+        }
+        if (canonical.isFile()) {
+            if (canonical.name.equalsIgnoreCase("google-services.json")) {
+                discovered.add(canonical)
+            }
+            return
+        }
+        def children = canonical.listFiles()
+        if (children != null) {
+            children.each { child ->
+                collectConfigurationFiles(child, excludedBuildDirectory, discovered)
+            }
+        }
+    }
+
+    static Set<File> findConfigurationFiles(File appDirectory) {
+        def discovered = new LinkedHashSet<File>()
+        collectConfigurationFiles(
+                appDirectory.canonicalFile,
+                new File(appDirectory, "build").canonicalFile,
+                discovered
+        )
+        return discovered
+    }
+
+    static Map readIdentities(File appDirectory, Map environments) {
+        return environments.collectEntries { environment, specification ->
+            def configFile = new File(
+                    appDirectory,
+                    "src/${specification.buildType}/google-services.json"
+            )
+            [(environment): readIdentity(
+                    configFile,
+                    specification.expectedPackage as String,
+                    environment as String
+            )]
+        }
+    }
+
+    static void writeEvidence(File target, Map evidence) {
+        if (!target.parentFile.mkdirs() && !target.parentFile.isDirectory()) {
+            throw new GradleException("Unable to create Firebase evidence directory: ${target.parentFile}.")
+        }
+        target.setText(
+                JsonOutput.prettyPrint(JsonOutput.toJson(evidence)) + System.lineSeparator(),
+                "UTF-8"
+        )
+    }
+
+    static void verifyConfigurationContract(File appDirectory,
+                                            Map environments,
+                                            File reportFile) {
+        def allowedFiles = environments.values().collect { specification ->
+            new File(
+                    appDirectory,
+                    "src/${specification.buildType}/google-services.json"
+            ).canonicalFile
+        }.toSet()
+        def unexpectedFiles = findConfigurationFiles(appDirectory) - allowedFiles
+        if (!unexpectedFiles.isEmpty()) {
+            throw new GradleException(
+                    "Firebase configuration files are restricted to generated build-type locations: " +
+                            unexpectedFiles.collect { it.absolutePath }.sort()
+            )
+        }
+
+        writeEvidence(
+                reportFile,
+                [schemaVersion: 1, environments: readIdentities(appDirectory, environments)]
+        )
+    }
+
+    static void verifyEnvironmentIsolation(File appDirectory,
+                                           Map environments,
+                                           File reportFile) {
+        def identities = readIdentities(appDirectory, environments)
+        ["packageName", "projectId", "projectNumber", "mobileSdkAppId"].each { field ->
+            def values = identities.collectEntries { environment, identity ->
+                [(environment): identity[field]]
+            }
+            if (values.values().toSet().size() != values.size()) {
+                throw new GradleException(
+                        "Firebase ${field} values must be distinct by environment: ${values}."
+                )
+            }
+        }
+
+        writeEvidence(
+                reportFile,
+                [schemaVersion: 1, isolated: true, environments: identities]
+        )
+    }
+}
+
+project(":app") {
+    plugins.withId("com.android.application") {
+        def baseApplicationId = "com.aqua.aqualight"
+        def appDirectory = projectDir.canonicalFile
+
+        android {
+            buildTypes {
+                staging {
+                    initWith release
+                    applicationIdSuffix ".staging"
+                    versionNameSuffix "-staging"
+                    signingConfig signingConfigs.debug
+                    matchingFallbacks = ['release']
+                }
+            }
+        }
+
+        androidComponents {
+            finalizeDsl { extension ->
+                def debug = extension.buildTypes.getByName("debug")
+                debug.applicationIdSuffix = ".debug"
+                debug.versionNameSuffix = "-debug"
+                debug.enableUnitTestCoverage = true
+                debug.buildConfigField "String", "AQL_ENVIRONMENT", '"debug"'
+                debug.buildConfigField "boolean", "AQL_IS_PRODUCTION", "false"
+
+                def staging = extension.buildTypes.getByName("staging")
+                staging.applicationIdSuffix = ".staging"
+                staging.versionNameSuffix = "-staging"
+                staging.buildConfigField "String", "AQL_ENVIRONMENT", '"staging"'
+                staging.buildConfigField "boolean", "AQL_IS_PRODUCTION", "false"
+
+                def releaseSmoke = extension.buildTypes.getByName("releaseSmoke")
+                releaseSmoke.applicationIdSuffix = ".smoke"
+                releaseSmoke.buildConfigField "String", "AQL_ENVIRONMENT", '"releaseSmoke"'
+                releaseSmoke.buildConfigField "boolean", "AQL_IS_PRODUCTION", "false"
+
+                def release = extension.buildTypes.getByName("release")
+                release.buildConfigField "String", "AQL_ENVIRONMENT", '"production"'
+                release.buildConfigField "boolean", "AQL_IS_PRODUCTION", "true"
+            }
+        }
+
+        def environments = [
+                debug: [
+                        taskSuffix: "Debug",
+                        buildType: "debug",
+                        expectedPackage: "${baseApplicationId}.debug",
+                        secretName: "AQL_FIREBASE_DEBUG_CONFIG_BASE64"
+                ],
+                staging: [
+                        taskSuffix: "Staging",
+                        buildType: "staging",
+                        expectedPackage: "${baseApplicationId}.staging",
+                        secretName: "AQL_FIREBASE_STAGING_CONFIG_BASE64"
+                ],
+                releaseSmoke: [
+                        taskSuffix: "ReleaseSmoke",
+                        buildType: "releaseSmoke",
+                        expectedPackage: "${baseApplicationId}.smoke",
+                        secretName: "AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64"
+                ],
+                production: [
+                        taskSuffix: "Production",
+                        buildType: "release",
+                        expectedPackage: baseApplicationId,
+                        secretName: "AQL_FIREBASE_PRODUCTION_CONFIG_BASE64"
+                ]
+        ]
+        def serializableEnvironments = environments.collectEntries { environment, specification ->
+            [(environment.toString()): specification.collectEntries { key, value ->
+                [(key.toString()): value.toString()]
+            }]
+        }
+
+        def prepareTasks = environments.collectEntries { environment, specification ->
+            def environmentName = environment.toString()
+            def buildType = specification.buildType.toString()
+            def expectedPackage = specification.expectedPackage.toString()
+            def secretName = specification.secretName.toString()
+            def outputFile = new File(appDirectory, "src/${buildType}/google-services.json")
+
+            def taskProvider = tasks.register("prepare${specification.taskSuffix}FirebaseConfig") {
+                group = "firebase"
+                description = "Materializes and validates ${environmentName} Firebase configuration."
+                doNotTrackState(
+                        "Firebase configuration is protected execution-time material and is always revalidated."
+                )
+                outputs.file(outputFile)
+
+                doLast { task ->
+                    def validated = AquaLightFirebaseConfig.materialize(
+                            appDirectory,
+                            environmentName,
+                            expectedPackage,
+                            secretName,
+                            buildType
+                    )
+                    task.logger.lifecycle(
+                            "Firebase ${environmentName} config prepared for ${validated.packageName} " +
+                                    "(project ${validated.projectId})."
+                    )
+                }
+            }
+            [(environment): taskProvider]
+        }
+
+        def configurationContractReport = layout.buildDirectory.file(
+                "reports/firebase/configuration-contract.json"
+        ).get().asFile
+        def environmentIsolationReport = layout.buildDirectory.file(
+                "reports/firebase/environment-isolation.json"
+        ).get().asFile
+
+        def verifyConfigurationContract = tasks.register("verifyFirebaseConfigurationContract") {
+            group = "verification"
+            description = "Validates all Firebase environment identities and generated file locations."
+            dependsOn(prepareTasks.values())
+            doNotTrackState("Firebase identities are supplied through protected execution-time inputs.")
+            outputs.file(configurationContractReport)
+
+            doLast {
+                AquaLightFirebaseConfig.verifyConfigurationContract(
+                        appDirectory,
+                        serializableEnvironments,
+                        configurationContractReport
+                )
+            }
+        }
+
+        def verifyEnvironmentIsolation = tasks.register("verifyFirebaseEnvironmentIsolation") {
+            group = "verification"
+            description = "Verifies that all Firebase and Android environment identities are distinct."
+            dependsOn(verifyConfigurationContract)
+            doNotTrackState("Firebase identities are supplied through protected execution-time inputs.")
+            outputs.file(environmentIsolationReport)
+
+            doLast { task ->
+                AquaLightFirebaseConfig.verifyEnvironmentIsolation(
+                        appDirectory,
+                        serializableEnvironments,
+                        environmentIsolationReport
+                )
+                task.logger.lifecycle("Firebase environment isolation verified for all four identities.")
+            }
+        }
+
+        tasks.configureEach { task ->
+            switch (task.name) {
+                case "processDebugGoogleServices":
+                    task.dependsOn(prepareTasks.debug)
+                    break
+                case "processStagingGoogleServices":
+                    task.dependsOn(prepareTasks.staging)
+                    break
+                case "processReleaseSmokeGoogleServices":
+                    task.dependsOn(prepareTasks.releaseSmoke)
+                    break
+                case "processReleaseGoogleServices":
+                    task.dependsOn(prepareTasks.production)
+                    break
+                case "verifyFirebaseRuntimePolicy":
+                    task.inputs.files(
+                            configurations.named("stagingRuntimeClasspath"),
+                            configurations.named("releaseSmokeRuntimeClasspath")
+                    ).withPropertyName("additionalFirebaseRuntimeClasspaths")
+                            .withPathSensitivity(PathSensitivity.NONE)
+                    break
+            }
+        }
+    }
+}

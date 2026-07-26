@@ -436,19 +436,38 @@ def validate_locale_formatting(errors: list[str]) -> None:
 
 def validate_visual_smoke_contract(errors: list[str]) -> None:
     script = ROOT / "tools/run_release_smoke.sh"
-    text = script.read_text(encoding="utf-8")
-    required = (
+    script_text = script.read_text(encoding="utf-8")
+    activity = (
+        ROOT
+        / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeActivity.kt"
+    )
+    activity_text = activity.read_text(encoding="utf-8")
+    required_script_tokens = (
         "large-font-light",
         "large-font-dark",
         "rtl-light",
         "rtl-dark",
         "font_scale",
-        "debug.force_rtl",
     )
-    for token in required:
-        if token not in text:
+    for token in required_script_tokens:
+        if token not in script_text:
             errors.append(
                 f"{relative(script)} is missing visual profile token {token}"
+            )
+    if "debug.force_rtl" in script_text:
+        errors.append(
+            f"{relative(script)} must not restart the API 27 framework with debug.force_rtl"
+        )
+
+    required_activity_tokens = (
+        "smokeProfile.startsWith(RTL_PROFILE_PREFIX)",
+        "View.LAYOUT_DIRECTION_RTL",
+        "verifyRequestedLayoutDirection",
+    )
+    for token in required_activity_tokens:
+        if token not in activity_text:
+            errors.append(
+                f"{relative(activity)} is missing in-process RTL verification token {token}"
             )
 
 

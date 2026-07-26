@@ -7,6 +7,7 @@
   <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
   <!-- Connected Wi-Fi SSID and BLE scan on API 27-30 -->
+  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
   <!-- Camera -->
@@ -91,7 +92,7 @@
     <receiver
       android:name="com.aqua.aqualight.data.care.reminder.CareTaskBootReceiver"
       android:enabled="true"
-      android:exported="true">
+      android:exported="false">
 
       <intent-filter>
         <action android:name="android.intent.action.BOOT_COMPLETED" />

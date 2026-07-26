@@ -1,0 +1,160 @@
+project(":app") {
+    def detektVersion = "1.23.8"
+    def detektCli = configurations.create("detektCli") {
+        canBeConsumed = false
+        canBeResolved = true
+        visible = false
+    }
+    dependencies.add(detektCli.name, "io.gitlab.arturbosch.detekt:detekt-cli:${detektVersion}")
+
+    def detektConfigFile = rootProject.layout.projectDirectory.file(
+            "config/detekt/aqualight-detekt.yml"
+    )
+    def detektAdvisoryConfigFile = rootProject.layout.projectDirectory.file(
+            "config/detekt/aqualight-detekt-advisory.yml"
+    )
+    def detektDebtBaselineFile = rootProject.layout.projectDirectory.file(
+            "config/detekt/advisory-debt-baseline.json"
+    )
+    def detektPolicyVerifier = rootProject.layout.projectDirectory.file(
+            "tools/verify_detekt_policy.py"
+    )
+    def detektXmlReport = layout.buildDirectory.file("reports/lint-results-detekt.xml").get().asFile
+    def detektHtmlReport = layout.buildDirectory.file("reports/lint-results-detekt.html").get().asFile
+    def detektSarifReport = layout.buildDirectory.file("reports/detekt/detekt.sarif").get().asFile
+    def detektAdvisoryXmlReport = layout.buildDirectory.file(
+            "reports/lint-results-detekt-advisory.xml"
+    ).get().asFile
+    def detektAdvisoryHtmlReport = layout.buildDirectory.file(
+            "reports/lint-results-detekt-advisory.html"
+    ).get().asFile
+    def detektAdvisorySarifReport = layout.buildDirectory.file(
+            "reports/detekt/detekt-advisory.sarif"
+    ).get().asFile
+    def detektPolicySummary = layout.buildDirectory.file(
+            "reports/stage14/detekt-policy-summary.json"
+    ).get().asFile
+    def detektSourceDirectories = [
+            file("src/main/java"),
+            file("src/main/kotlin"),
+            file("src/test/java"),
+            file("src/test/kotlin"),
+            file("src/androidTest/java"),
+            file("src/androidTest/kotlin"),
+            file("src/debug/java"),
+            file("src/staging/java"),
+            file("src/release/java"),
+            file("src/releaseSmoke/java")
+    ].findAll { sourceDirectory -> sourceDirectory.isDirectory() }
+
+    def detektGate = tasks.register("detekt", JavaExec) {
+        group = "verification"
+        description = "Runs the fail-closed AquaLight Kotlin static-analysis gate."
+        classpath = detektCli
+        mainClass.set("io.gitlab.arturbosch.detekt.cli.Main")
+
+        inputs.files(detektSourceDirectories)
+                .withPropertyName("detektSources")
+                .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.file(detektConfigFile)
+                .withPropertyName("detektConfig")
+                .withPathSensitivity(PathSensitivity.RELATIVE)
+        outputs.files(detektXmlReport, detektHtmlReport, detektSarifReport)
+
+        doFirst {
+            [detektXmlReport, detektHtmlReport, detektSarifReport].each { report ->
+                report.parentFile.mkdirs()
+            }
+        }
+
+        args(
+                "--input", detektSourceDirectories.collect { it.absolutePath }.join(","),
+                "--config", detektConfigFile.asFile.absolutePath,
+                "--build-upon-default-config",
+                "--parallel",
+                "--base-path", rootProject.projectDir.absolutePath,
+                "--report", "xml:${detektXmlReport.absolutePath}",
+                "--report", "html:${detektHtmlReport.absolutePath}",
+                "--report", "sarif:${detektSarifReport.absolutePath}"
+        )
+    }
+
+    def detektAdvisory = tasks.register("detektAdvisory", JavaExec) {
+        group = "verification"
+        description = "Reports all default Detekt rules for zero-new-debt enforcement."
+        classpath = detektCli
+        mainClass.set("io.gitlab.arturbosch.detekt.cli.Main")
+
+        inputs.files(detektSourceDirectories)
+                .withPropertyName("detektAdvisorySources")
+                .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.file(detektAdvisoryConfigFile)
+                .withPropertyName("detektAdvisoryConfig")
+                .withPathSensitivity(PathSensitivity.RELATIVE)
+        outputs.files(
+                detektAdvisoryXmlReport,
+                detektAdvisoryHtmlReport,
+                detektAdvisorySarifReport
+        )
+
+        doFirst {
+            [
+                    detektAdvisoryXmlReport,
+                    detektAdvisoryHtmlReport,
+                    detektAdvisorySarifReport
+            ].each { report ->
+                report.parentFile.mkdirs()
+            }
+        }
+
+        args(
+                "--input", detektSourceDirectories.collect { it.absolutePath }.join(","),
+                "--config", detektAdvisoryConfigFile.asFile.absolutePath,
+                "--build-upon-default-config",
+                "--parallel",
+                "--base-path", rootProject.projectDir.absolutePath,
+                "--report", "xml:${detektAdvisoryXmlReport.absolutePath}",
+                "--report", "html:${detektAdvisoryHtmlReport.absolutePath}",
+                "--report", "sarif:${detektAdvisorySarifReport.absolutePath}"
+        )
+    }
+
+    def detektPolicyGate = tasks.register("verifyDetektPolicy", Exec) {
+        group = "verification"
+        description = "Rejects blocker findings and any growth in advisory Detekt debt."
+        dependsOn(detektGate, detektAdvisory)
+
+        inputs.file(detektDebtBaselineFile)
+                .withPropertyName("detektDebtBaseline")
+                .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.file(detektPolicyVerifier)
+                .withPropertyName("detektPolicyVerifier")
+                .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.files(detektSarifReport, detektAdvisorySarifReport)
+                .withPropertyName("detektSarifEvidence")
+                .withPathSensitivity(PathSensitivity.RELATIVE)
+        outputs.file(detektPolicySummary)
+
+        doFirst {
+            detektPolicySummary.parentFile.mkdirs()
+            commandLine(
+                    "python3",
+                    detektPolicyVerifier.asFile.absolutePath,
+                    "--baseline", detektDebtBaselineFile.asFile.absolutePath,
+                    "--blocker-sarif", detektSarifReport.absolutePath,
+                    "--advisory-sarif", detektAdvisorySarifReport.absolutePath,
+                    "--summary", detektPolicySummary.absolutePath
+            )
+        }
+    }
+
+    tasks.matching { task ->
+        task.name in ["lintDebug", "lintStaging", "lintReleaseSmoke", "lintRelease"]
+    }.configureEach {
+        dependsOn(detektPolicyGate)
+    }
+
+    tasks.matching { task -> task.name == "check" }.configureEach {
+        dependsOn(detektPolicyGate)
+    }
+}

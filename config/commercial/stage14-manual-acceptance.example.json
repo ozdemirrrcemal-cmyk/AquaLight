@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 2,
+  "releaseTag": "v0.0.0",
+  "releaseCommit": "0000000000000000000000000000000000000000",
+  "candidateApproval": {
+    "workflowRunId": "1",
+    "manifestSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "signingCertificateSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "aabSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "apkSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "mappingSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "packageApproval": {
+    "approvedBy": "replace-with-release-manager-login",
+    "role": "release-manager",
+    "approvedAt": "2000-01-01T00:00:00Z",
+    "source": "production-release-environment-secret"
+  },
+  "gates": [
+    {
+      "id": "signed-apk-clean-install",
+      "approved": false,
+      "executedAt": "2000-01-01T00:00:00Z",
+      "approvedBy": "replace-with-approver-login",
+      "approverRole": "qa-engineer",
+      "subject": "Replace with device model, OS build, clean-install and launch record",
+      "evidenceUri": "urn:aqualight:manual-evidence:replace-clean-install",
+      "evidenceSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "authentication-account-isolation",
+      "approved": false,
+      "executedAt": "2000-01-01T00:00:00Z",
+      "approvedBy": "replace-with-approver-login",
+      "approverRole": "qa-engineer",
+      "subject": "Replace with login, logout and cross-account isolation record",
+      "evidenceUri": "urn:aqualight:manual-evidence:replace-account-isolation",
+      "evidenceSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "process-restart-reboot",
+      "approved": false,
+      "executedAt": "2000-01-01T00:00:00Z",
+      "approvedBy": "replace-with-approver-login",
+      "approverRole": "qa-engineer",
+      "subject": "Replace with force-stop, relaunch and physical reboot record",
+      "evidenceUri": "urn:aqualight:manual-evidence:replace-process-reboot",
+      "evidenceSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "permission-connectivity-resilience",
+      "approved": false,
+      "executedAt": "2000-01-01T00:00:00Z",
+      "approvedBy": "replace-with-approver-login",
+      "approverRole": "qa-engineer",
+      "subject": "Replace with permission denial and connectivity interruption record",
+      "evidenceUri": "urn:aqualight:manual-evidence:replace-resilience",
+      "evidenceSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "critical-end-to-end",
+      "approved": false,
+      "executedAt": "2000-01-01T00:00:00Z",
+      "approvedBy": "replace-with-approver-login",
+      "approverRole": "release-manager",
+      "subject": "Replace with signed APK critical-path end-to-end record",
+      "evidenceUri": "urn:aqualight:manual-evidence:replace-critical-e2e",
+      "evidenceSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ]
+}

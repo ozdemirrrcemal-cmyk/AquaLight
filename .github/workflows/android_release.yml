@@ -4,20 +4,27 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Existing vMAJOR.MINOR.PATCH tag to release
+        description: Existing vMAJOR.MINOR.PATCH tag to process
         required: true
         type: string
-      include_apk:
-        description: Include the optional signed APK in the final release package
+      phase:
+        description: Build a signed candidate or finalize an accepted candidate
+        required: true
+        default: candidate
+        type: choice
+        options:
+          - candidate
+          - finalize
+      candidate_run_id:
+        description: Successful candidate workflow run ID (finalize only)
         required: false
-        default: false
-        type: boolean
+        type: string
   push:
     tags:
       - "v*.*.*"
 
 concurrency:
-  group: release-ci-${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref }}
+  group: release-ci-${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}-${{ github.event_name == 'workflow_dispatch' && inputs.phase || 'candidate' }}
   cancel-in-progress: false
 
 permissions:
@@ -30,18 +37,24 @@ env:
 
 jobs:
   quality:
-    name: 01-04 Guard, quality, coverage and instrumentation
+    name: 01-03 Guard, dependency, static quality and coverage
+    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.phase == 'candidate') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 150
+    timeout-minutes: 90
+    environment: production-release
+    permissions:
+      contents: read
+      issues: read
     outputs:
       release-tag: ${{ steps.quality.outputs.release-tag }}
       release-version: ${{ steps.quality.outputs.release-version }}
       release-commit: ${{ steps.quality.outputs.release-commit }}
-      include-apk: ${{ steps.quality.outputs.include-apk }}
     env:
       CI: "true"
       AQL_RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
-      AQL_INCLUDE_APK: ${{ github.event_name == 'workflow_dispatch' && inputs.include_apk || false }}
+      AQL_FIREBASE_DEBUG_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_DEBUG_CONFIG_BASE64 }}
+      AQL_FIREBASE_STAGING_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_STAGING_CONFIG_BASE64 }}
+      AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64 }}
       AQL_OTA_MANIFEST_PUBLIC_KEY_PEM: ${{ secrets.AQL_OTA_MANIFEST_PUBLIC_KEY_PEM }}
       AQL_OTA_MANIFEST_KEY_ID: ${{ secrets.AQL_OTA_MANIFEST_KEY_ID }}
 
@@ -64,16 +77,46 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          cmdline-tools-version: "15859902"
 
       - name: Install Android SDK packages
         shell: bash
         run: |
           set -Eeu
+          sdkmanager_path="$(readlink -f "$(command -v sdkmanager)")"
+          test -x "$sdkmanager_path"
+          case "$sdkmanager_path" in
+            "${ANDROID_SDK_ROOT}/cmdline-tools/"*/bin/sdkmanager) ;;
+            *)
+              echo "Untrusted sdkmanager path: $sdkmanager_path" >&2
+              exit 1
+              ;;
+          esac
+          if [[ "$sdkmanager_path" == \
+            "${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager" ]]; then
+            echo "Mutable cmdline-tools/latest must not drive commercial CI" >&2
+            exit 1
+          fi
+          echo "$(dirname "$sdkmanager_path")" >> "$GITHUB_PATH"
           set +o pipefail
-          yes 2>/dev/null | sdkmanager --licenses >/dev/null
+          yes 2>/dev/null | "$sdkmanager_path" --licenses >/dev/null
           set -o pipefail
-          sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
-          sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1"
+          "$sdkmanager_path" "platform-tools" "platforms;android-36"
+          "$sdkmanager_path" "build-tools;36.0.0" \
+            || "$sdkmanager_path" "build-tools;36.0.1"
+          "$sdkmanager_path" --install \
+            "platforms;android-27" \
+            "system-images;android-27;default;x86_64"
+          "$sdkmanager_path" --install \
+            "system-images;android-36;default;x86_64"
+          test -s "${ANDROID_SDK_ROOT}/platforms/android-27/android.jar"
+          test -s \
+            "${ANDROID_SDK_ROOT}/platforms/android-36/android.jar"
+          test -s \
+            "${ANDROID_SDK_ROOT}/system-images/android-27/default/x86_64/package.xml"
+          test -s \
+            "${ANDROID_SDK_ROOT}/system-images/android-36/default/x86_64/package.xml"
           chmod +x ./gradlew
 
       - name: 01-03 Guard, Lint/Detekt and unit coverage
@@ -83,10 +126,254 @@ jobs:
           AQL_FIREBASE_PRODUCTION_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_PRODUCTION_CONFIG_BASE64 }}
         run: bash tools/release_pipeline/guard_quality.sh
 
-      - name: 04 Instrumentation - prepare minified release smoke
+      - name: Inventory open release blockers
         shell: bash
         env:
-          AQL_FIREBASE_PRODUCTION_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_PRODUCTION_CONFIG_BASE64 }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+          gh api --paginate --slurp \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "repos/${GITHUB_REPOSITORY}/issues?state=open&per_page=100" \
+            > release-quality/open-issues-pages.json
+          python3 tools/verify_release_blockers.py \
+            --issues release-quality/open-issues-pages.json \
+            --repository "${GITHUB_REPOSITORY}" \
+            --commit "${{ steps.quality.outputs.release-commit }}" \
+            --summary release-quality/release-blocker-inventory.json
+
+      - name: Upload pre-security quality evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: AquaLight-Pre-Security-Quality-${{ steps.quality.outputs.release-tag }}
+          path: |
+            release-quality/**
+            app/build/reports/stage14/detekt-policy-summary.json
+            app/build/reports/lint-results-*.html
+            app/build/reports/lint-results-*.xml
+            app/build/reports/detekt/**
+            app/build/reports/coverage/test/debug/**
+            app/build/reports/tests/testDebugUnitTest/**
+            app/build/reports/tests/testStagingUnitTest/**
+            app/build/reports/tests/testReleaseSmokeUnitTest/**
+            app/build/reports/tests/testReleaseUnitTest/**
+            app/build/test-results/testDebugUnitTest/**
+            app/build/test-results/testStagingUnitTest/**
+            app/build/test-results/testReleaseSmokeUnitTest/**
+            app/build/test-results/testReleaseUnitTest/**
+          if-no-files-found: warn
+
+      - name: Remove CI-only quality material
+        if: always()
+        shell: bash
+        run: |
+          rm -f release-key.jks
+          rm -f app/src/debug/google-services.json
+          rm -f app/src/staging/google-services.json
+          rm -f app/src/releaseSmoke/google-services.json
+          rm -f app/src/release/google-services.json
+
+  security:
+    name: 04 Blocking CodeQL security gate
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment: production-release
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    env:
+      CI: "true"
+      AQL_RELEASE_TAG: ${{ needs.quality.outputs.release-tag }}
+      AQL_RELEASE_COMMIT: ${{ needs.quality.outputs.release-commit }}
+      AQL_FIREBASE_DEBUG_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_DEBUG_CONFIG_BASE64 }}
+      AQL_OTA_MANIFEST_PUBLIC_KEY_PEM: ${{ secrets.AQL_OTA_MANIFEST_PUBLIC_KEY_PEM }}
+      AQL_OTA_MANIFEST_KEY_ID: ${{ secrets.AQL_OTA_MANIFEST_KEY_ID }}
+
+    steps:
+      - name: Checkout verified release commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.quality.outputs.release-tag }}
+
+      - name: Verify security scan commit identity
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          [[ "${AQL_RELEASE_COMMIT}" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$(git rev-parse HEAD)" == "${AQL_RELEASE_COMMIT}" ]]
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@b5418f5a58f5fd2eb486dd7efb368fe7be7eae45 # v2
+
+      - name: Install JDK 17
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          cmdline-tools-version: "15859902"
+
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          set -Eeu
+          set +o pipefail
+          yes 2>/dev/null | sdkmanager --licenses >/dev/null
+          set -o pipefail
+          sdkmanager "platform-tools" "platforms;android-36"
+          sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1"
+          chmod +x ./gradlew
+
+      - name: Verify CodeQL Firebase input
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          value="${AQL_FIREBASE_DEBUG_CONFIG_BASE64:-}"
+          [[ -n "${value//[[:space:]]/}" ]]
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
+        with:
+          languages: java-kotlin
+          build-mode: manual
+
+      - name: Build uncached application for CodeQL extraction
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew clean assembleDebug \
+            --no-daemon \
+            --no-build-cache \
+            --rerun-tasks \
+            --stacktrace \
+            2>&1 | tee codeql-extraction-build.log
+
+      - name: Analyze and wait for CodeQL processing
+        uses: github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
+        with:
+          category: /language:java-kotlin/commercial-release
+          output: release-security/codeql-results
+          upload-database: false
+          wait-for-processing: true
+
+      - name: Enforce zero critical and high findings
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 tools/verify_codeql_sarif.py \
+            --sarif-dir release-security/codeql-results \
+            --commit "${AQL_RELEASE_COMMIT}" \
+            --summary release-security/codeql-summary.json
+
+      - name: Upload blocking CodeQL evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: AquaLight-CodeQL-${{ needs.quality.outputs.release-tag }}
+          path: |
+            release-security/**
+            codeql-extraction-build.log
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Remove generated Firebase configuration
+        if: always()
+        run: rm -f app/src/debug/google-services.json
+
+  instrumentation:
+    name: 05 Instrumentation validation
+    needs:
+      - quality
+      - security
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    environment: production-release
+    env:
+      CI: "true"
+      AQL_RELEASE_TAG: ${{ needs.quality.outputs.release-tag }}
+      AQL_RELEASE_COMMIT: ${{ needs.quality.outputs.release-commit }}
+      AQL_FIREBASE_DEBUG_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_DEBUG_CONFIG_BASE64 }}
+      AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64 }}
+      AQL_OTA_MANIFEST_PUBLIC_KEY_PEM: ${{ secrets.AQL_OTA_MANIFEST_PUBLIC_KEY_PEM }}
+      AQL_OTA_MANIFEST_KEY_ID: ${{ secrets.AQL_OTA_MANIFEST_KEY_ID }}
+
+    steps:
+      - name: Checkout verified release commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.quality.outputs.release-tag }}
+
+      - name: Verify instrumentation commit identity
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          [[ "${AQL_RELEASE_COMMIT}" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$(git rev-parse HEAD)" == "${AQL_RELEASE_COMMIT}" ]]
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@b5418f5a58f5fd2eb486dd7efb368fe7be7eae45 # v2
+
+      - name: Install JDK 17
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          cmdline-tools-version: "15859902"
+
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          set -Eeu
+          sdkmanager_path="$(readlink -f "$(command -v sdkmanager)")"
+          test -x "$sdkmanager_path"
+          case "$sdkmanager_path" in
+            "${ANDROID_SDK_ROOT}/cmdline-tools/"*/bin/sdkmanager) ;;
+            *)
+              echo "Untrusted sdkmanager path: $sdkmanager_path" >&2
+              exit 1
+              ;;
+          esac
+          if [[ "$sdkmanager_path" == \
+            "${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager" ]]; then
+            echo "Mutable cmdline-tools/latest must not drive commercial CI" >&2
+            exit 1
+          fi
+          echo "$(dirname "$sdkmanager_path")" >> "$GITHUB_PATH"
+          set +o pipefail
+          yes 2>/dev/null | "$sdkmanager_path" --licenses >/dev/null
+          set -o pipefail
+          "$sdkmanager_path" "platform-tools" "platforms;android-36"
+          "$sdkmanager_path" "build-tools;36.0.0" \
+            || "$sdkmanager_path" "build-tools;36.0.1"
+          "$sdkmanager_path" --install \
+            "platforms;android-27" \
+            "system-images;android-27;default;x86_64"
+          "$sdkmanager_path" --install \
+            "system-images;android-36;default;x86_64"
+          test -s "${ANDROID_SDK_ROOT}/platforms/android-27/android.jar"
+          test -s \
+            "${ANDROID_SDK_ROOT}/platforms/android-36/android.jar"
+          test -s \
+            "${ANDROID_SDK_ROOT}/system-images/android-27/default/x86_64/package.xml"
+          test -s \
+            "${ANDROID_SDK_ROOT}/system-images/android-36/default/x86_64/package.xml"
+          chmod +x ./gradlew
+
+      - name: Prepare minified release smoke
+        shell: bash
         run: bash tools/release_pipeline/prepare_instrumentation.sh
 
       - name: Enable KVM group permissions
@@ -96,7 +383,7 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: 04 Instrumentation - API 27
+      - name: Instrumentation - API 27
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: 27
@@ -110,50 +397,59 @@ jobs:
             -noaudio -no-boot-anim -camera-back none
           script: bash tools/run_release_smoke.sh 27
 
-      - name: 04 Instrumentation - API 35
+      - name: Instrumentation - API 36
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
-          api-level: 35
+          api-level: 36
+          channel: stable
           target: default
           arch: x86_64
           profile: pixel_2
+          disk-size: 8G
           disable-animations: true
           emulator-boot-timeout: 900
           emulator-options: >-
             -no-window -gpu swiftshader_indirect -no-snapshot-save
             -noaudio -no-boot-anim -camera-back none
-          script: bash tools/run_release_smoke.sh 35
+          script: bash tools/run_release_smoke.sh 36
 
-      - name: Upload pre-signing quality evidence
+      - name: Upload instrumentation evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: AquaLight-Pre-Signing-Quality-${{ steps.quality.outputs.release-tag }}
+          name: AquaLight-Instrumentation-${{ needs.quality.outputs.release-tag }}
           path: |
             release-quality/**
-            app/build/reports/lint-results-*.html
-            app/build/reports/lint-results-*.xml
-            app/build/reports/detekt/**
-            app/build/reports/coverage/test/debug/**
-            app/build/reports/tests/testReleaseUnitTest/**
             app/build/reports/androidTests/connected/**
             app/build/outputs/androidTest-results/connected/**
             release-smoke-*.txt
             release-smoke-*.xml
+            release-smoke-*.json
             release-smoke-screens/**
+            stage14-evidence/**
           if-no-files-found: warn
 
-      - name: Remove CI-only signing material
+      - name: Remove CI-only material
         if: always()
-        run: rm -f release-key.jks
+        shell: bash
+        run: |
+          rm -f release-key.jks
+          rm -f app/src/debug/google-services.json
+          rm -f app/src/staging/google-services.json
+          rm -f app/src/releaseSmoke/google-services.json
+          rm -f app/src/release/google-services.json
 
-  release:
-    name: 05-09 Signing, build, checksum, attestation and publication
-    needs: quality
+  candidate:
+    name: 06-09 Build and archive immutable signed candidate
+    needs:
+      - quality
+      - security
+      - instrumentation
     runs-on: ubuntu-latest
     timeout-minutes: 60
     environment: production-release
     permissions:
+      actions: read
       attestations: write
       contents: read
       id-token: write
@@ -161,7 +457,8 @@ jobs:
       AQL_RELEASE_TAG: ${{ needs.quality.outputs.release-tag }}
       AQL_RELEASE_VERSION: ${{ needs.quality.outputs.release-version }}
       AQL_RELEASE_COMMIT: ${{ needs.quality.outputs.release-commit }}
-      AQL_INCLUDE_APK: ${{ needs.quality.outputs.include-apk }}
+      AQL_INCLUDE_APK: "true"
+      AQL_RELEASE_ROOT: candidate-release
       AQL_PRODUCTION_RELEASE_ENABLED: ${{ vars.AQL_PRODUCTION_RELEASE_ENABLED }}
       AQL_OTA_MANIFEST_PUBLIC_KEY_PEM: ${{ secrets.AQL_OTA_MANIFEST_PUBLIC_KEY_PEM }}
       AQL_OTA_MANIFEST_KEY_ID: ${{ secrets.AQL_OTA_MANIFEST_KEY_ID }}
@@ -181,6 +478,8 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          cmdline-tools-version: "15859902"
 
       - name: Install release SDK packages
         shell: bash
@@ -189,13 +488,43 @@ jobs:
           set +o pipefail
           yes 2>/dev/null | sdkmanager --licenses >/dev/null
           set -o pipefail
-          sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
+          sdkmanager "platform-tools" "platforms;android-36"
           sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1"
           chmod +x ./gradlew
 
-      - name: 05-06 Signing and release build
+      - name: Download verified CodeQL evidence
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: AquaLight-CodeQL-${{ needs.quality.outputs.release-tag }}
+          path: candidate-release/supply-chain/security/codeql
+
+      - name: Download verified quality evidence
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: AquaLight-Pre-Security-Quality-${{ needs.quality.outputs.release-tag }}
+          path: candidate-release/validation/quality
+
+      - name: Download verified instrumentation evidence
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: AquaLight-Instrumentation-${{ needs.quality.outputs.release-tag }}
+          path: candidate-release/validation/instrumentation
+
+      - name: Reverify CodeQL evidence identity
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 tools/verify_codeql_sarif.py \
+            --sarif-dir candidate-release/supply-chain/security/codeql \
+            --commit "${AQL_RELEASE_COMMIT}" \
+            --summary candidate-release/supply-chain/security/codeql/codeql-summary.json
+
+      - name: 06 Build production-signed minified APK and AAB
         shell: bash
         env:
+          AQL_FIREBASE_DEBUG_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_DEBUG_CONFIG_BASE64 }}
+          AQL_FIREBASE_STAGING_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_STAGING_CONFIG_BASE64 }}
+          AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64 }}
           AQL_FIREBASE_PRODUCTION_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_PRODUCTION_CONFIG_BASE64 }}
           RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
@@ -204,95 +533,303 @@ jobs:
           RELEASE_SIGNING_CERT_SHA256: ${{ secrets.RELEASE_SIGNING_CERT_SHA256 }}
         run: bash tools/release_pipeline/build_release.sh
 
-      - name: 07 Checksum - generate and verify SHA-256 manifests
+      - name: Remove generated Firebase configurations
+        if: always()
+        shell: bash
+        run: |
+          rm -f app/src/debug/google-services.json
+          rm -f app/src/staging/google-services.json
+          rm -f app/src/releaseSmoke/google-services.json
+          rm -f app/src/release/google-services.json
+
+      - name: 07 Generate and verify candidate SHA-256 manifests
         shell: bash
         run: bash tools/release_pipeline/checksum.sh
 
-      - name: 08 SBOM - generate AAB SPDX JSON
+      - name: 08 Generate AAB SPDX JSON
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
-          file: final-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.aab
+          file: candidate-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.aab
           format: spdx-json
-          output-file: final-release/supply-chain/AquaLight-${{ needs.quality.outputs.release-version }}.aab.spdx.json
+          output-file: candidate-release/supply-chain/AquaLight-${{ needs.quality.outputs.release-version }}.aab.spdx.json
           upload-artifact: false
           upload-release-assets: false
 
-      - name: 08 SBOM - generate APK SPDX JSON
-        if: ${{ needs.quality.outputs.include-apk == 'true' }}
+      - name: 08 Generate APK SPDX JSON
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
-          file: final-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.apk
+          file: candidate-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.apk
           format: spdx-json
-          output-file: final-release/supply-chain/AquaLight-${{ needs.quality.outputs.release-version }}.apk.spdx.json
+          output-file: candidate-release/supply-chain/AquaLight-${{ needs.quality.outputs.release-version }}.apk.spdx.json
           upload-artifact: false
           upload-release-assets: false
 
-      - name: 08 Provenance - attest AAB
+      - name: 08 Attest AAB provenance
         id: aab-provenance
         uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
         with:
-          subject-path: final-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.aab
+          subject-path: candidate-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.aab
 
-      - name: 08 Provenance - attest AAB SBOM
+      - name: 08 Attest AAB SBOM
         id: aab-sbom
         uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
         with:
-          subject-path: final-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.aab
-          sbom-path: final-release/supply-chain/AquaLight-${{ needs.quality.outputs.release-version }}.aab.spdx.json
+          subject-path: candidate-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.aab
+          sbom-path: candidate-release/supply-chain/AquaLight-${{ needs.quality.outputs.release-version }}.aab.spdx.json
 
-      - name: 08 Provenance - attest APK
-        if: ${{ needs.quality.outputs.include-apk == 'true' }}
+      - name: 08 Attest APK provenance
         id: apk-provenance
         uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
         with:
-          subject-path: final-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.apk
+          subject-path: candidate-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.apk
 
-      - name: 08 Provenance - attest APK SBOM
-        if: ${{ needs.quality.outputs.include-apk == 'true' }}
+      - name: 08 Attest APK SBOM
         id: apk-sbom
         uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
         with:
-          subject-path: final-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.apk
-          sbom-path: final-release/supply-chain/AquaLight-${{ needs.quality.outputs.release-version }}.apk.spdx.json
+          subject-path: candidate-release/artifacts/AquaLight-${{ needs.quality.outputs.release-version }}.apk
+          sbom-path: candidate-release/supply-chain/AquaLight-${{ needs.quality.outputs.release-version }}.apk.spdx.json
 
-      - name: 08 Provenance - materialize and verify evidence
+      - name: 09 Materialize and verify candidate manifest
         shell: bash
         env:
           AAB_PROVENANCE_BUNDLE: ${{ steps.aab-provenance.outputs.bundle-path }}
           AAB_SBOM_BUNDLE: ${{ steps.aab-sbom.outputs.bundle-path }}
           APK_PROVENANCE_BUNDLE: ${{ steps.apk-provenance.outputs.bundle-path }}
           APK_SBOM_BUNDLE: ${{ steps.apk-sbom.outputs.bundle-path }}
-        run: bash tools/release_pipeline/materialize_evidence.sh
+        run: bash tools/release_pipeline/materialize_candidate.sh
 
-      - name: 09 Publish - verify complete release package
-        shell: bash
-        run: bash tools/release_pipeline/verify_publication.sh
-
-      - name: 09 Publish - upload final commercial release
+      - name: 09 Archive immutable signed candidate
+        id: candidate-artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: AquaLight-Release-${{ needs.quality.outputs.release-tag }}
+          name: AquaLight-Candidate-${{ needs.quality.outputs.release-tag }}
+          path: candidate-release/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Write candidate handoff summary
+        shell: bash
+        run: |
+          {
+            echo "## AquaLight signed release candidate"
+            echo
+            echo "Release: \`${AQL_RELEASE_TAG}\`"
+            echo
+            echo "Candidate workflow run ID: \`${GITHUB_RUN_ID}\`"
+            echo
+            echo "Candidate artifact digest: \`${{ steps.candidate-artifact.outputs.artifact-digest }}\`"
+            echo
+            echo "Download \`AquaLight-Candidate-${AQL_RELEASE_TAG}\`, test its signed APK on a physical device, then dispatch the \`finalize\` phase with this run ID."
+            echo
+            echo "No Google Play upload is performed."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Cleanup production signing and Firebase material
+        if: always()
+        shell: bash
+        run: |
+          rm -f release-key.jks
+          rm -f app/src/debug/google-services.json
+          rm -f app/src/staging/google-services.json
+          rm -f app/src/releaseSmoke/google-services.json
+          rm -f app/src/release/google-services.json
+          rm -rf "${RUNNER_TEMP}/aqualight-signing"
+
+  finalize_identity:
+    name: Resolve accepted candidate identity
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.phase == 'finalize' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      release-tag: ${{ steps.identity.outputs.release-tag }}
+      release-version: ${{ steps.identity.outputs.release-version }}
+      release-commit: ${{ steps.identity.outputs.release-commit }}
+      candidate-run-id: ${{ steps.identity.outputs.candidate-run-id }}
+
+    steps:
+      - name: Checkout controlled release tag
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.release_tag }}
+
+      - name: Verify tag and successful candidate workflow run
+        id: identity
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AQL_RELEASE_TAG: ${{ inputs.release_tag }}
+          AQL_CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+        run: |
+          set -Eeuo pipefail
+          [[ "$AQL_RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          [[ "$AQL_CANDIDATE_RUN_ID" =~ ^[1-9][0-9]*$ ]]
+          [[ "$AQL_CANDIDATE_RUN_ID" != "$GITHUB_RUN_ID" ]]
+          git fetch --force --tags origin
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          release_commit="$(git rev-list -n 1 "$AQL_RELEASE_TAG")"
+          [[ "$release_commit" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$(git rev-parse HEAD)" == "$release_commit" ]]
+          git merge-base --is-ancestor "$release_commit" origin/main
+          gh api \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "repos/${GITHUB_REPOSITORY}/actions/runs/${AQL_CANDIDATE_RUN_ID}" \
+            > "${RUNNER_TEMP}/candidate-run.json"
+          python3 - \
+            "${RUNNER_TEMP}/candidate-run.json" \
+            "$release_commit" \
+            "$GITHUB_REPOSITORY" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          run = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          expected_commit = sys.argv[2]
+          expected_repository = sys.argv[3]
+          checks = {
+              "status": run.get("status") == "completed",
+              "conclusion": run.get("conclusion") == "success",
+              "commit": run.get("head_sha") == expected_commit,
+              "repository": run.get("repository", {}).get("full_name")
+              == expected_repository,
+              "workflow": run.get("path")
+              == ".github/workflows/android_release.yml",
+              "event": run.get("event") in {"push", "workflow_dispatch"},
+          }
+          failed = [name for name, passed in checks.items() if not passed]
+          if failed:
+              raise SystemExit(
+                  "Candidate workflow run identity failed: " + ", ".join(failed)
+              )
+          PY
+          {
+            echo "release-tag=$AQL_RELEASE_TAG"
+            echo "release-version=${AQL_RELEASE_TAG#v}"
+            echo "release-commit=$release_commit"
+            echo "candidate-run-id=$AQL_CANDIDATE_RUN_ID"
+          } >> "$GITHUB_OUTPUT"
+
+  finalize:
+    name: 10 Verify acceptance and archive byte-identical candidate
+    needs: finalize_identity
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production-release
+    permissions:
+      actions: read
+      contents: read
+      issues: read
+    env:
+      AQL_RELEASE_TAG: ${{ needs.finalize_identity.outputs.release-tag }}
+      AQL_RELEASE_VERSION: ${{ needs.finalize_identity.outputs.release-version }}
+      AQL_RELEASE_COMMIT: ${{ needs.finalize_identity.outputs.release-commit }}
+      AQL_CANDIDATE_RUN_ID: ${{ needs.finalize_identity.outputs.candidate-run-id }}
+      AQL_INCLUDE_APK: "true"
+
+    steps:
+      - name: Checkout verified release commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.finalize_identity.outputs.release-tag }}
+
+      - name: Download immutable signed candidate
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: AquaLight-Candidate-${{ needs.finalize_identity.outputs.release-tag }}
+          path: candidate-release
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ needs.finalize_identity.outputs.candidate-run-id }}
+
+      - name: Verify downloaded candidate identity and bytes
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 tools/release_candidate_manifest.py verify \
+            --root candidate-release \
+            --manifest candidate-release/CANDIDATE.json \
+            --release-tag "$AQL_RELEASE_TAG" \
+            --commit "$AQL_RELEASE_COMMIT" \
+            --run-id "$AQL_CANDIDATE_RUN_ID" \
+            --repository "$GITHUB_REPOSITORY" \
+            --summary "${RUNNER_TEMP}/candidate-verification.json"
+
+      - name: Materialize byte-identical final archive input
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          [[ ! -e final-release ]]
+          mkdir final-release
+          cp -a candidate-release/. final-release/
+
+      - name: Verify protected physical candidate acceptance
+        shell: bash
+        env:
+          AQL_STAGE14_MANUAL_ACCEPTANCE_BASE64: ${{ secrets.AQL_STAGE14_MANUAL_ACCEPTANCE_BASE64 }}
+        run: |
+          set -Eeuo pipefail
+          value="${AQL_STAGE14_MANUAL_ACCEPTANCE_BASE64:-}"
+          [[ -n "${value//[[:space:]]/}" ]]
+          umask 077
+          acceptance="${RUNNER_TEMP}/stage14-manual-acceptance.json"
+          trap 'rm -f "$acceptance"' EXIT
+          printf '%s' "$value" | base64 --decode > "$acceptance"
+          python3 tools/verify_manual_acceptance.py \
+            --acceptance "$acceptance" \
+            --release-tag "$AQL_RELEASE_TAG" \
+            --commit "$AQL_RELEASE_COMMIT" \
+            --candidate-manifest final-release/CANDIDATE.json \
+            --summary final-release/validation/manual-acceptance.json
+
+      - name: Recheck release blockers before final archive
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+          gh api --paginate --slurp \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "repos/${GITHUB_REPOSITORY}/issues?state=open&per_page=100" \
+            > final-release/validation/open-issues-pages.json
+          python3 tools/verify_release_blockers.py \
+            --issues final-release/validation/open-issues-pages.json \
+            --repository "$GITHUB_REPOSITORY" \
+            --commit "$AQL_RELEASE_COMMIT" \
+            --summary final-release/validation/release-blocker-inventory.json
+
+      - name: Materialize final evidence without rebuilding
+        shell: bash
+        run: bash tools/release_pipeline/materialize_evidence.sh
+
+      - name: Verify complete byte-identical final archive
+        shell: bash
+        run: bash tools/release_pipeline/verify_final_archive.sh
+
+      - name: Archive final Stage 14 package
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: AquaLight-Final-${{ needs.finalize_identity.outputs.release-tag }}
           path: final-release/
           if-no-files-found: error
           retention-days: 90
 
-      - name: Write release pipeline summary
+      - name: Write final archive summary
         shell: bash
         run: |
           {
-            echo "## AquaLight commercial release"
+            echo "## AquaLight Stage 14 final archive"
             echo
-            echo "Release: \`${{ needs.quality.outputs.release-tag }}\`"
+            echo "Release: \`${AQL_RELEASE_TAG}\`"
             echo
-            echo "Enforced order: guard → lint/Detekt → unit test/coverage → instrumentation → signing → release build → checksum → SBOM/provenance → publication"
+            echo "Accepted candidate run: \`${AQL_CANDIDATE_RUN_ID}\`"
             echo
-            echo "Verify the AAB attestation with:"
+            echo "The production-signed APK and AAB were finalized without rebuilding or re-signing."
             echo
-            echo "\`gh attestation verify AquaLight-${AQL_RELEASE_VERSION}.aab --repo ${GITHUB_REPOSITORY}\`"
+            echo "No Google Play upload was performed."
           } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Cleanup production signing material
-        if: always()
-        run: |
-          rm -f release-key.jks
-          rm -rf "${RUNNER_TEMP}/aqualight-signing"

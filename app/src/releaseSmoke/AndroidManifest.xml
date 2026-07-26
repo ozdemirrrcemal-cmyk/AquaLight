@@ -2,6 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
         <activity
+            android:name="com.aqua.aqualight.smoke.UpgradeInstallSmokeActivity"
+            android:configChanges="locale|layoutDirection"
+            android:exported="true"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name="com.aqua.aqualight.smoke.CleanInstallSmokeActivity"
+            android:exported="true"
+            android:theme="@style/AppTheme" />
+        <activity
             android:name="com.aqua.aqualight.smoke.ReleaseSmokeActivity"
             android:exported="true"
             android:theme="@style/AppTheme" />

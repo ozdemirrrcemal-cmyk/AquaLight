@@ -1,7 +1,9 @@
 package com.aqua.aqualight.smoke
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.Process
 import android.view.Gravity
@@ -19,6 +21,16 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
+@SuppressLint("UseKtx")
+private inline fun SharedPreferences.commitOrThrow(
+    failureMessage: String,
+    update: SharedPreferences.Editor.() -> Unit
+) {
+    val editor = edit()
+    editor.update()
+    check(editor.commit()) { failureMessage }
+}
 
 /**
  * CI-only harness packaged exclusively in the minified releaseSmoke APK.
@@ -71,17 +83,13 @@ class AccountDeletionProcessDeathSmokeActivity : Activity() {
         store.read()?.let { previous -> store.clear(previous.ownerUid) }
 
         val state = statePreferences()
-        check(state.edit().clear().commit()) {
-            "Process-death smoke state could not be reset."
+        state.commitOrThrow("Process-death smoke state could not be reset.") {
+            clear()
         }
-        check(
-            state.edit()
-                .putString(KEY_SCENARIO, scenario.id)
-                .putString(KEY_CURRENT_UID, scenario.currentUid)
-                .putInt(KEY_PREPARE_PID, Process.myPid())
-                .commit()
-        ) {
-            "Process-death smoke preparation could not be persisted."
+        state.commitOrThrow("Process-death smoke preparation could not be persisted.") {
+            putString(KEY_SCENARIO, scenario.id)
+            putString(KEY_CURRENT_UID, scenario.currentUid)
+            putInt(KEY_PREPARE_PID, Process.myPid())
         }
 
         store.begin(OWNER_UID)
@@ -222,8 +230,8 @@ class AccountDeletionProcessDeathSmokeActivity : Activity() {
                 return IllegalStateException("Smoke authenticated owner mismatch.")
             }
             increment(KEY_AUTH_DELETE_CALLS)
-            check(state.edit().remove(KEY_CURRENT_UID).commit()) {
-                "Smoke authentication state could not be persisted."
+            state.commitOrThrow("Smoke authentication state could not be persisted.") {
+                remove(KEY_CURRENT_UID)
             }
             return null
         }
@@ -243,15 +251,15 @@ class AccountDeletionProcessDeathSmokeActivity : Activity() {
 
         override fun signOut(): Throwable? {
             increment(KEY_SIGN_OUT_CALLS)
-            check(state.edit().remove(KEY_CURRENT_UID).commit()) {
-                "Smoke sign-out state could not be persisted."
+            state.commitOrThrow("Smoke sign-out state could not be persisted.") {
+                remove(KEY_CURRENT_UID)
             }
             return null
         }
 
         private fun increment(key: String) {
-            check(state.edit().putInt(key, state.getInt(key, 0) + 1).commit()) {
-                "Smoke operation counter could not be persisted: $key"
+            state.commitOrThrow("Smoke operation counter could not be persisted: $key") {
+                putInt(key, state.getInt(key, 0) + 1)
             }
         }
     }
@@ -277,7 +285,7 @@ class AccountDeletionProcessDeathSmokeActivity : Activity() {
         const val KEY_REVOKE_CALLS = "revoke_calls"
         const val KEY_SIGN_OUT_CALLS = "sign_out_calls"
 
-        fun readCounts(state: android.content.SharedPreferences): OperationCounts {
+        fun readCounts(state: SharedPreferences): OperationCounts {
             return OperationCounts(
                 cloud = state.getInt(KEY_CLOUD_CALLS, 0),
                 authDelete = state.getInt(KEY_AUTH_DELETE_CALLS, 0),

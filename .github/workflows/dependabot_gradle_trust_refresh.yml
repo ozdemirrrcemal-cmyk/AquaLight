@@ -125,6 +125,8 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          cmdline-tools-version: "15859902"
 
       - name: Install Android SDK packages
         shell: bash
@@ -132,8 +134,8 @@ jobs:
           set +o pipefail
           yes | sdkmanager --licenses >/dev/null
           set -o pipefail
-          sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
-          sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1" || true
+          sdkmanager "platform-tools" "platforms;android-36"
+          sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1"
           chmod +x ./gradlew
 
       - name: Generate CI-only signing keys

@@ -1,0 +1,345 @@
+{
+  "schemaVersion": 2,
+  "policyId": "aqualight-stage14-commercial-release",
+  "release": {
+    "baseBranch": "main",
+    "tagPattern": "^v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+    "applicationId": "com.aqua.aqualight",
+    "candidateVariant": "release",
+    "smokeVariant": "releaseSmoke",
+    "minifiedCandidateRequired": true,
+    "signedAabRequired": true,
+    "apkMode": "required"
+  },
+  "android": {
+    "minSdk": 27,
+    "targetSdk": 36,
+    "emulatorApiLevels": [
+      27,
+      36
+    ],
+    "visualProfiles": [
+      "light",
+      "dark",
+      "large-font-light",
+      "large-font-dark",
+      "rtl-light",
+      "rtl-dark"
+    ],
+    "largeFontScale": 2.0
+  },
+  "blockerThresholds": {
+    "androidLint": {
+      "fatal": 0,
+      "error": 0
+    },
+    "codeql": {
+      "critical": 0,
+      "high": 0
+    },
+    "knownDefects": {
+      "critical": 0,
+      "high": 0
+    }
+  },
+  "requiredSuites": [
+    {
+      "id": "repository-guards",
+      "mode": "automated",
+      "required": true
+    },
+    {
+      "id": "dependency-integrity",
+      "mode": "automated",
+      "required": true
+    },
+    {
+      "id": "static-analysis",
+      "mode": "automated",
+      "required": true
+    },
+    {
+      "id": "unit-tests",
+      "mode": "automated",
+      "required": true
+    },
+    {
+      "id": "critical-package-coverage",
+      "mode": "automated",
+      "required": true
+    },
+    {
+      "id": "codeql",
+      "mode": "automated",
+      "required": true
+    },
+    {
+      "id": "instrumentation",
+      "mode": "automated",
+      "required": true
+    },
+    {
+      "id": "clean-install",
+      "mode": "automated",
+      "required": true
+    },
+    {
+      "id": "upgrade-install",
+      "mode": "automated",
+      "required": true
+    },
+    {
+      "id": "rapid-account-switch",
+      "mode": "automated",
+      "required": true
+    },
+    {
+      "id": "process-recreation-rotation-force-stop",
+      "mode": "automated",
+      "required": true
+    },
+    {
+      "id": "permission-permanent-denial",
+      "mode": "automated",
+      "required": true
+    },
+    {
+      "id": "tank-care-corruption",
+      "mode": "automated",
+      "required": true
+    },
+    {
+      "id": "websocket-account-cleanup",
+      "mode": "automated",
+      "required": true
+    },
+    {
+      "id": "accessibility-profiles",
+      "mode": "automated",
+      "required": true
+    },
+    {
+      "id": "release-blocker-inventory",
+      "mode": "automated",
+      "required": true
+    },
+    {
+      "id": "release-build",
+      "mode": "automated",
+      "required": true
+    },
+    {
+      "id": "supply-chain",
+      "mode": "automated",
+      "required": true
+    },
+    {
+      "id": "final-evidence",
+      "mode": "automated",
+      "required": true
+    },
+    {
+      "id": "signed-apk-clean-install",
+      "mode": "manual",
+      "required": true
+    },
+    {
+      "id": "authentication-account-isolation",
+      "mode": "manual",
+      "required": true
+    },
+    {
+      "id": "process-restart-reboot",
+      "mode": "manual",
+      "required": true
+    },
+    {
+      "id": "permission-connectivity-resilience",
+      "mode": "manual",
+      "required": true
+    },
+    {
+      "id": "critical-end-to-end",
+      "mode": "manual",
+      "required": true
+    }
+  ],
+  "requiredArtifacts": [
+    {
+      "id": "policy-validation",
+      "format": "json",
+      "requirement": "required"
+    },
+    {
+      "id": "dependency-integrity",
+      "format": "json",
+      "requirement": "required"
+    },
+    {
+      "id": "android-lint",
+      "format": "xml",
+      "requirement": "required"
+    },
+    {
+      "id": "detekt",
+      "format": "sarif",
+      "requirement": "required"
+    },
+    {
+      "id": "detekt-policy",
+      "format": "json",
+      "requirement": "required"
+    },
+    {
+      "id": "unit-tests",
+      "format": "junit-xml",
+      "requirement": "required"
+    },
+    {
+      "id": "coverage",
+      "format": "jacoco-xml",
+      "requirement": "required"
+    },
+    {
+      "id": "coverage-thresholds",
+      "format": "json",
+      "requirement": "required"
+    },
+    {
+      "id": "codeql",
+      "format": "sarif",
+      "requirement": "required"
+    },
+    {
+      "id": "instrumentation-api-27",
+      "format": "junit-xml",
+      "requirement": "required"
+    },
+    {
+      "id": "instrumentation-api-36",
+      "format": "junit-xml",
+      "requirement": "required"
+    },
+    {
+      "id": "clean-install",
+      "format": "json",
+      "requirement": "required"
+    },
+    {
+      "id": "upgrade-install",
+      "format": "json",
+      "requirement": "required"
+    },
+    {
+      "id": "rapid-account-switch",
+      "format": "json",
+      "requirement": "required"
+    },
+    {
+      "id": "process-recreation",
+      "format": "json",
+      "requirement": "required"
+    },
+    {
+      "id": "permission-denial",
+      "format": "json",
+      "requirement": "required"
+    },
+    {
+      "id": "tank-care-corruption",
+      "format": "json",
+      "requirement": "required"
+    },
+    {
+      "id": "websocket-account-cleanup",
+      "format": "json",
+      "requirement": "required"
+    },
+    {
+      "id": "accessibility",
+      "format": "json",
+      "requirement": "required"
+    },
+    {
+      "id": "release-blocker-inventory",
+      "format": "json",
+      "requirement": "required"
+    },
+    {
+      "id": "release-aab",
+      "format": "aab",
+      "requirement": "required"
+    },
+    {
+      "id": "release-apk",
+      "format": "apk",
+      "requirement": "required"
+    },
+    {
+      "id": "release-mapping",
+      "format": "text",
+      "requirement": "required"
+    },
+    {
+      "id": "release-checksums",
+      "format": "sha256-manifest",
+      "requirement": "required"
+    },
+    {
+      "id": "release-sbom",
+      "format": "spdx-json",
+      "requirement": "required"
+    },
+    {
+      "id": "release-provenance",
+      "format": "json",
+      "requirement": "required"
+    },
+    {
+      "id": "release-candidate-manifest",
+      "format": "json",
+      "requirement": "required"
+    },
+    {
+      "id": "manual-acceptance",
+      "format": "json",
+      "requirement": "required"
+    },
+    {
+      "id": "final-summary-json",
+      "format": "json",
+      "requirement": "required"
+    },
+    {
+      "id": "final-summary-markdown",
+      "format": "markdown",
+      "requirement": "required"
+    }
+  ],
+  "pipelineOrder": [
+    "guard",
+    "dependency-integrity",
+    "lint-detekt",
+    "unit-test-coverage",
+    "codeql",
+    "instrumentation-api-27-36",
+    "clean-install",
+    "upgrade-install",
+    "release-candidate-signing-build",
+    "candidate-checksum",
+    "candidate-sbom-provenance",
+    "candidate-archive",
+    "physical-candidate-acceptance",
+    "candidate-identity-verification",
+    "final-evidence",
+    "final-archive"
+  ],
+  "completion": {
+    "sameCommitEvidenceRequired": true,
+    "sameCandidateArtifactsRequired": true,
+    "failClosed": true,
+    "manualGatesMustBeApproved": true,
+    "finalArchiveRequiresAllRequiredArtifacts": true,
+    "googlePlayUploadAllowed": false
+  }
+}

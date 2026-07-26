@@ -16,6 +16,7 @@ import com.aqua.aqualight.data.user.StartupAppearanceCache
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.i18n.AppLanguageController
 import com.aqua.aqualight.i18n.SupportedLocaleRegistry
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -28,6 +29,7 @@ class AquaApp : Application() {
     private val applicationScope = CoroutineScope(
         SupervisorJob() + Dispatchers.Default
     )
+    private val startupAppearanceSync = CompletableDeferred<Unit>()
 
     lateinit var appContainer: AppContainer
         private set
@@ -99,7 +101,7 @@ class AquaApp : Application() {
                     applyTheme(resolvedThemeMode)
                 }
             }
-        }
+        }.invokeOnCompletion(::completeStartupAppearanceSync)
 
         // Local media reconciliation belongs to process startup. It preserves candidates already
         // referenced by the active owner's durable stores and expires only unreferenced candidates.
@@ -136,6 +138,24 @@ class AquaApp : Application() {
      */
     internal fun replaceAppContainerForProcess(container: AppContainer) {
         appContainer = container
+    }
+
+    /**
+     * Release-smoke barrier for inspecting the post-bootstrap appearance state.
+     *
+     * The release-smoke source set is absent from production Release APKs, so its sole caller and
+     * this method are removed by release shrinking.
+     */
+    internal suspend fun awaitStartupAppearanceSyncForProcess() {
+        startupAppearanceSync.await()
+    }
+
+    private fun completeStartupAppearanceSync(error: Throwable?) {
+        if (error == null) {
+            startupAppearanceSync.complete(Unit)
+        } else {
+            startupAppearanceSync.completeExceptionally(error)
+        }
     }
 
     private fun applyTheme(mode: String) {

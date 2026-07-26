@@ -14,21 +14,52 @@ release_commit="$(git rev-list -n 1 "$release_tag")"
 git merge-base --is-ancestor "$release_commit" origin/main
 [[ "$(git rev-parse HEAD)" == "$release_commit" ]]
 
-include_apk="false"
-[[ "${AQL_INCLUDE_APK:-false}" == "true" ]] && include_apk="true"
 {
   echo "release-tag=$release_tag"
   echo "release-version=${release_tag#v}"
   echo "release-commit=$release_commit"
-  echo "include-apk=$include_apk"
+  echo "include-apk=true"
 } >> "$GITHUB_OUTPUT"
 
 mkdir -p release-quality
+for name in \
+  AQL_FIREBASE_DEBUG_CONFIG_BASE64 \
+  AQL_FIREBASE_STAGING_CONFIG_BASE64 \
+  AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64 \
+  AQL_FIREBASE_PRODUCTION_CONFIG_BASE64; do
+  value="${!name:-}"
+  if [[ -z "${value//[[:space:]]/}" ]]; then
+    echo "Required protected Firebase input is missing: ${name}" >&2
+    exit 1
+  fi
+done
+
+./gradlew help --no-daemon --stacktrace \
+  2>&1 | tee release-quality/firebase-gradle-configuration.log
+
+python3 tools/verify_stage14_policy.py \
+  --policy config/commercial/stage14-validation-policy.json \
+  --app-gradle app/build.gradle \
+  --emulator-workflow .github/workflows/android_emulator_tests.yml \
+  --release-workflow .github/workflows/android_release.yml \
+  --summary release-quality/stage14-policy-validation.json
+python3 -m unittest discover \
+  -s tools/tests \
+  -p 'test_*.py'
+
 for guard in \
   architecture_guard.py \
+  session_startup_guard.py \
   composition_root_guard.py \
   ui_dependency_construction_guard.py \
-  session_startup_guard.py \
+  device_application_boundary_guard.py \
+  device_root_application_boundary_guard.py \
+  tank_device_assignment_boundary_guard.py \
+  aquarium_application_boundary_guard.py \
+  care_application_boundary_guard.py \
+  provisioning_discovery_boundary_guard.py \
+  provisioning_progress_boundary_guard.py \
+  provisioning_commit_recovery_guard.py \
   navigation_guard.py \
   ws_protocol_guard.py \
   permission_architecture_guard.py \
@@ -78,9 +109,35 @@ export RELEASE_KEY_ALIAS=aqualight-ci
 export RELEASE_KEY_PASSWORD=aqualight-ci
 
 ./gradlew \
-  :app:detekt \
+  :app:verifyFirebaseConfigurationContract \
+  :app:verifyFirebaseEnvironmentIsolation \
+  :app:verifyFirebaseRuntimePolicy \
+  :app:processDebugGoogleServices \
+  :app:processStagingGoogleServices \
+  :app:processReleaseSmokeGoogleServices \
+  :app:processReleaseGoogleServices \
+  --no-daemon \
+  --stacktrace \
+  2>&1 | tee release-quality/firebase-configuration.log
+
+test -s app/build/reports/firebase/configuration-contract.json
+test -s app/build/reports/firebase/environment-isolation.json
+test -s app/src/debug/google-services.json
+test -s app/src/staging/google-services.json
+test -s app/src/releaseSmoke/google-services.json
+test -s app/src/release/google-services.json
+
+mkdir -p release-quality/firebase
+cp app/build/reports/firebase/configuration-contract.json \
+  release-quality/firebase/configuration-contract.json
+cp app/build/reports/firebase/environment-isolation.json \
+  release-quality/firebase/environment-isolation.json
+
+./gradlew -PAQL_FINAL_LINT=true \
+  :app:verifyDetektPolicy \
   :app:lintDebug \
   :app:lintStaging \
+  :app:lintReleaseSmoke \
   :app:lintRelease \
   --continue \
   --no-daemon \
@@ -90,17 +147,63 @@ export RELEASE_KEY_PASSWORD=aqualight-ci
 for report in \
   app/build/reports/lint-results-debug.xml \
   app/build/reports/lint-results-staging.xml \
+  app/build/reports/lint-results-releaseSmoke.xml \
   app/build/reports/lint-results-release.xml \
   app/build/reports/lint-results-detekt.xml \
-  app/build/reports/detekt/detekt.sarif; do
+  app/build/reports/lint-results-detekt-advisory.xml \
+  app/build/reports/detekt/detekt.sarif \
+  app/build/reports/detekt/detekt-advisory.sarif \
+  app/build/reports/stage14/detekt-policy-summary.json; do
   test -s "$report"
 done
 
+python3 tools/verify_android_lint.py \
+  --report app/build/reports/lint-results-debug.xml \
+  --report app/build/reports/lint-results-staging.xml \
+  --report app/build/reports/lint-results-releaseSmoke.xml \
+  --report app/build/reports/lint-results-release.xml \
+  --summary release-quality/android-lint-summary.json
+
 ./gradlew \
   :app:createDebugUnitTestCoverageReport \
+  :app:testStagingUnitTest \
+  :app:testReleaseSmokeUnitTest \
   :app:testReleaseUnitTest \
   --no-daemon \
-  --stacktrace
+  --stacktrace \
+  2>&1 | tee release-quality/unit-test-coverage.log
+
+for suite in \
+  testDebugUnitTest \
+  testStagingUnitTest \
+  testReleaseSmokeUnitTest \
+  testReleaseUnitTest; do
+  result_directory="app/build/test-results/${suite}"
+  test -d "$result_directory"
+  test -n "$(find "$result_directory" -type f -name 'TEST-*.xml' -size +0c -print -quit)"
+done
+
+mkdir -p release-quality/stage14-evidence
+unit_reports=(
+  --report "debug=app/build/test-results/testDebugUnitTest"
+  --report "staging=app/build/test-results/testStagingUnitTest"
+  --report "release-smoke=app/build/test-results/testReleaseSmokeUnitTest"
+  --report "release=app/build/test-results/testReleaseUnitTest"
+)
+for evidence_set in \
+  accessibility-unit \
+  permission-permanent-denial-unit \
+  process-recreation-unit \
+  rapid-account-switch-unit \
+  tank-care-corruption-unit \
+  websocket-account-cleanup-unit; do
+  python3 tools/verify_stage14_junit_evidence.py \
+    --contract config/commercial/stage14-junit-evidence-contract.json \
+    --evidence-set "$evidence_set" \
+    "${unit_reports[@]}" \
+    --commit "$release_commit" \
+    --summary "release-quality/stage14-evidence/${evidence_set}.json"
+done
 
 coverage_dir="app/build/reports/coverage/test/debug"
 test -s "${coverage_dir}/report.xml"

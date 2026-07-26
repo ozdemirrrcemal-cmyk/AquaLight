@@ -10,7 +10,7 @@ The `releaseSmoke` variant inherits the production `release` configuration, is s
 ephemeral CI key, and remains minified and resource-shrunk. The only additional surface is a
 CI-only Activity that is absent from the production Release APK.
 
-For every row below, `tools/run_release_smoke.sh` performs these steps on API 27 and API 35:
+For every row below, `tools/run_release_smoke.sh` performs these steps on API 27 and API 36:
 
 1. Persist the selected checkpoint with `EncryptedAccountDeletionCheckpointStore`.
 2. Record the preparation process ID and render the prepared marker.
@@ -46,7 +46,7 @@ process while retaining only the durable store and external state. It verifies:
 ## Evidence location
 
 - Workflow: `Android Emulator Integration Tests`
-- Device profiles: Android API 27 and API 35 emulators
+- Device profiles: Android API 27 and target API 36 emulators
 - Build: CI-signed, minified `releaseSmoke` APK
 - JVM coverage: debug and release unit-test tasks, including the failure/retry cases above
 - Pull request record: AquaLight PR #65 and its head-commit workflow results

@@ -104,7 +104,14 @@ class PermissionPolicy(
 
                 // AquaLight currently reads the connected SSID. That operation remains
                 // location-sensitive across the supported API range (27..36).
-                AppCapability.WIFI_SSID -> listOf(Manifest.permission.ACCESS_FINE_LOCATION)
+                AppCapability.WIFI_SSID -> if (sdkInt >= Build.VERSION_CODES.S) {
+                    listOf(
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    )
+                } else {
+                    listOf(Manifest.permission.ACCESS_FINE_LOCATION)
+                }
 
                 AppCapability.NOTIFICATIONS -> if (
                     sdkInt >= Build.VERSION_CODES.TIRAMISU

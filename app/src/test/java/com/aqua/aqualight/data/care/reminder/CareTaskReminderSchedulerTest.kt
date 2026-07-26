@@ -18,5 +18,7 @@ class CareTaskReminderSchedulerTest {
         assertTrue(CareTaskReminderScheduler.shouldUseExactAlarm(31, true))
         assertFalse(CareTaskReminderScheduler.shouldUseExactAlarm(36, false))
         assertTrue(CareTaskReminderScheduler.shouldUseExactAlarm(36, true))
+        assertFalse(CareTaskReminderScheduler.shouldUseExactAlarm(37, false))
+        assertTrue(CareTaskReminderScheduler.shouldUseExactAlarm(37, true))
     }
 }

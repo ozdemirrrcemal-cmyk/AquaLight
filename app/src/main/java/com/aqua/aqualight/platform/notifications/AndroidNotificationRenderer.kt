@@ -255,7 +255,7 @@ class AndroidNotificationRenderer(
         @DrawableRes iconRes: Int,
         @ColorRes colorRes: Int
     ): Bitmap? {
-        if (iconRes <= 0) return null
+        if (iconRes == 0) return null
 
         val size = appContext.resources.getDimensionPixelOffset(R.dimen.aqua_size_48)
         val iconSize = appContext.resources.getDimensionPixelOffset(R.dimen.aqua_size_25)

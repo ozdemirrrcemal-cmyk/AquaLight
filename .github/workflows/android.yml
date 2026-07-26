@@ -11,6 +11,8 @@ on:
       - "protocol/**"
       - "tools/**"
       - "config/coverage/**"
+      - "config/commercial/**"
+      - "config/detekt/**"
       - "build.gradle"
       - "settings.gradle"
       - "gradle.properties"
@@ -18,6 +20,8 @@ on:
       - "gradlew"
       - "gradlew.bat"
       - ".github/workflows/android.yml"
+      - ".github/workflows/android_emulator_tests.yml"
+      - ".github/workflows/android_release.yml"
 
 concurrency:
   group: android-ci-${{ github.ref }}
@@ -31,7 +35,11 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      CI: "true"
       GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8" -Dorg.gradle.daemon=false
+      AQL_FIREBASE_DEBUG_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_DEBUG_CONFIG_BASE64 }}
+      AQL_FIREBASE_STAGING_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_STAGING_CONFIG_BASE64 }}
+      AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64 }}
       AQL_OTA_MANIFEST_PUBLIC_KEY_PEM: ${{ secrets.AQL_OTA_MANIFEST_PUBLIC_KEY_PEM }}
       AQL_OTA_MANIFEST_KEY_ID: ${{ secrets.AQL_OTA_MANIFEST_KEY_ID }}
 
@@ -51,19 +59,19 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          cmdline-tools-version: "15859902"
         env:
           SKIP_JDK_VERSION_CHECK: true
 
       - name: Install required SDK packages
         run: |
           yes | sdkmanager --licenses >/dev/null
-          sdkmanager --update
-          sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
-          sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1" || true
+          sdkmanager "platform-tools" "platforms;android-36"
+          sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1"
           echo "Installed packages (first 120 lines):"
           sdkmanager --list | sed -n '1,120p' || true
 
-      # Cache restore, sadece TEMİZ İSTENMİYORSA yapılır
       - name: Cache Gradle build-cache
         if: ${{ !contains(github.event.head_commit.message, 'clean') && !contains(github.event.head_commit.message, 'clean-cache') }}
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
@@ -77,8 +85,17 @@ jobs:
       - name: Grant execute permission to gradlew
         run: chmod +x ./gradlew
 
-      - name: Run Architecture Guard
+      - name: Run commercial policy and architecture guards
         run: |
+          python3 -m unittest discover \
+            -s tools/tests \
+            -p 'test_*.py'
+          python3 tools/verify_stage14_policy.py \
+            --policy config/commercial/stage14-validation-policy.json \
+            --app-gradle app/build.gradle \
+            --emulator-workflow .github/workflows/android_emulator_tests.yml \
+            --release-workflow .github/workflows/android_release.yml \
+            --summary build/reports/stage14/policy-validation.json
           python3 tools/architecture_guard.py
           python3 tools/navigation_guard.py
           python3 tools/ws_protocol_guard.py
@@ -91,29 +108,63 @@ jobs:
           python3 tools/design_system_resource_guard.py
           python3 tools/localization_accessibility_guard.py
 
-      # İsteğe bağlı: bağımlılık modül cache'lerini temizle (refresh-deps)
-      - name: 🔄 Force refresh dependencies (optional)
+      - name: Force refresh dependencies (optional)
         if: contains(github.event.head_commit.message, 'refresh-deps')
         run: |
           rm -rf ~/.gradle/caches/modules-2 ~/.gradle/caches/transforms-* ~/.gradle/caches/jars-* || true
           echo "Gradle module caches cleared."
 
-      # İsteğe bağlı: TAM TEMİZLEME – commit mesajında 'clean' veya 'clean-cache' varsa
-      # (setup-java ve cache restore'dan SONRA konumlandırıldı ki gerçekten silsin)
-      - name: 🧹 Hard clean caches & outputs (on demand)
+      - name: Hard clean caches and outputs (on demand)
         if: ${{ contains(github.event.head_commit.message, 'clean') || contains(github.event.head_commit.message, 'clean-cache') }}
         run: |
-          echo "💥 Hard clean requested. Purging Gradle caches and build outputs..."
+          echo "Hard clean requested. Purging Gradle caches and build outputs..."
           rm -rf ~/.gradle/caches ~/.gradle/daemon ~/.gradle/native ~/.gradle/wrapper || true
           rm -rf **/build build app/build || true
 
-      - name: Clean project (light)
+      - name: Clean project
         run: ./gradlew clean --no-daemon
 
-      - name: Verify resolved Firebase runtime policy
-        run: ./gradlew :app:verifyFirebaseRuntimePolicy --no-daemon --stacktrace
+      - name: Validate Gradle configuration model
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          ./gradlew help --no-daemon --stacktrace \
+            2>&1 | tee firebase-gradle-configuration.log
 
-      - name: Generate debug keystore (if missing)
+      - name: Verify non-production Firebase inputs
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          for name in \
+            AQL_FIREBASE_DEBUG_CONFIG_BASE64 \
+            AQL_FIREBASE_STAGING_CONFIG_BASE64 \
+            AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64; do
+            value="${!name:-}"
+            if [[ -z "${value//[[:space:]]/}" ]]; then
+              echo "Required non-production Firebase input is missing: ${name}" >&2
+              exit 1
+            fi
+          done
+
+      - name: Validate non-production Firebase configuration
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          ./gradlew \
+            :app:verifyFirebaseRuntimePolicy \
+            :app:processDebugGoogleServices \
+            :app:processStagingGoogleServices \
+            :app:processReleaseSmokeGoogleServices \
+            --no-daemon \
+            --stacktrace \
+            2>&1 | tee firebase-non-production.log
+
+          test -s app/src/debug/google-services.json
+          test -s app/src/staging/google-services.json
+          test -s app/src/releaseSmoke/google-services.json
+          test ! -e app/src/release/google-services.json
+
+      - name: Generate debug keystore
         run: |
           mkdir -p ~/.android
           if [ ! -s ~/.android/debug.keystore ]; then
@@ -129,50 +180,79 @@ jobs:
               -dname "CN=Android,O=AquaLight,C=TR"
           fi
 
-      - name: Run standard Android Lint gate
+      - name: Run zero-new-debt Detekt and baseline-free Android Lint
         shell: bash
         run: |
           set -Eeuo pipefail
-          ./gradlew \
+          ./gradlew -PAQL_FINAL_LINT=true \
+            :app:verifyDetektPolicy \
             :app:lintDebug \
             :app:lintStaging \
-            :app:lintRelease \
             --continue \
             --no-daemon \
             --stacktrace \
             2>&1 | tee android-lint.log
 
-      - name: Verify Android Lint reports
-        if: success()
+      - name: Verify Android Lint blocker evidence
+        if: always()
         shell: bash
         run: |
           set -Eeuo pipefail
-          required_reports=(
-            app/build/reports/lint-results-debug.xml
-            app/build/reports/lint-results-staging.xml
-            app/build/reports/lint-results-release.xml
-          )
-          for report in "${required_reports[@]}"; do
-            if [[ ! -s "$report" ]]; then
-              echo "Required Android Lint report is missing or empty: $report" >&2
-              exit 1
-            fi
-          done
-          echo "Android Lint reports verified for debug, staging and production release."
+          python3 tools/verify_android_lint.py \
+            --required-variant debug \
+            --required-variant staging \
+            --report app/build/reports/lint-results-debug.xml \
+            --report app/build/reports/lint-results-staging.xml \
+            --summary build/reports/stage14/android-lint-summary.json
 
-      - name: Upload Android Lint reports
+      - name: Upload static-analysis reports
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: android-lint-reports-${{ github.run_number }}
+          name: static-analysis-reports-${{ github.run_number }}
           path: |
+            build/reports/stage14/policy-validation.json
+            build/reports/stage14/android-lint-summary.json
+            firebase-gradle-configuration.log
+            firebase-non-production.log
             android-lint.log
+            app/build/reports/stage14/detekt-policy-summary.json
             app/build/reports/lint-results-*.html
             app/build/reports/lint-results-*.xml
+            app/build/reports/detekt/**
           if-no-files-found: warn
 
-      - name: Run Debug unit tests with JaCoCo coverage
-        run: ./gradlew :app:createDebugUnitTestCoverageReport --no-daemon --stacktrace
+      - name: Run non-production unit tests with JaCoCo coverage
+        run: |
+          ./gradlew \
+            :app:createDebugUnitTestCoverageReport \
+            :app:testStagingUnitTest \
+            --no-daemon \
+            --stacktrace
+
+      - name: Create named Stage 14 unit evidence
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          commit="$(git rev-parse HEAD)"
+          reports=(
+            --report "debug=app/build/test-results/testDebugUnitTest"
+            --report "staging=app/build/test-results/testStagingUnitTest"
+          )
+          for evidence_set in \
+            accessibility-unit \
+            permission-permanent-denial-unit \
+            process-recreation-unit \
+            rapid-account-switch-unit \
+            tank-care-corruption-unit \
+            websocket-account-cleanup-unit; do
+            python3 tools/verify_stage14_junit_evidence.py \
+              --contract config/commercial/stage14-junit-evidence-contract.json \
+              --evidence-set "$evidence_set" \
+              "${reports[@]}" \
+              --commit "$commit" \
+              --summary "build/reports/stage14/junit/${evidence_set}.json"
+          done
 
       - name: Verify JaCoCo coverage reports
         shell: bash
@@ -210,6 +290,11 @@ jobs:
           path: |
             app/build/reports/coverage/test/debug/
             app/build/outputs/unit_test_code_coverage/debugUnitTest/*.exec
+            app/build/test-results/testDebugUnitTest/**
+            app/build/test-results/testStagingUnitTest/**
+            app/build/reports/tests/testDebugUnitTest/**
+            app/build/reports/tests/testStagingUnitTest/**
+            build/reports/stage14/junit/**
           if-no-files-found: error
 
       - name: Build Debug APK
@@ -218,7 +303,7 @@ jobs:
       - name: Verify merged manifest telemetry policy
         run: python3 tools/firebase_telemetry_guard.py --scan-build-output
 
-      - name: 📋 Dump debugRuntimeClasspath (on failure)
+      - name: Dump debugRuntimeClasspath on failure
         if: failure()
         run: ./gradlew :app:dependencies --configuration debugRuntimeClasspath --no-daemon
 
@@ -227,9 +312,9 @@ jobs:
           set -e
           ls -la app/build/outputs/apk/debug || true
           if [ -f app/build/outputs/apk/debug/app-debug.apk ]; then
-            echo "✅ APK bulundu"
+            echo "Debug APK found."
           else
-            echo "❌ APK yok"
+            echo "Debug APK missing." >&2
             exit 1
           fi
 
@@ -238,3 +323,12 @@ jobs:
         with:
           name: app-debug-${{ github.run_number }}
           path: app/build/outputs/apk/debug/*.apk
+
+      - name: Remove generated Firebase configurations
+        if: always()
+        shell: bash
+        run: |
+          rm -f app/src/debug/google-services.json
+          rm -f app/src/staging/google-services.json
+          rm -f app/src/releaseSmoke/google-services.json
+          rm -f app/src/release/google-services.json
