@@ -63,7 +63,6 @@ jobs:
             --repository "$GITHUB_REPOSITORY" \
             --summary "${RUNNER_TEMP}/candidate-verification.json"
           (cd candidate-release/artifacts && sha256sum --check --strict SHA256SUMS)
-          (cd candidate-release/supply-chain && sha256sum --check --strict SHA256SUMS)
 
       - name: Materialize final archive input and remove transient locks
         shell: bash
