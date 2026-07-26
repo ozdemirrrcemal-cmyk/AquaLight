@@ -1,20 +1,20 @@
 name: Dispatch v0.14.0 Candidate Once
 
 on:
-  pull_request_target:
-    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/_dispatch_v0140_candidate_once.yml"
 
 permissions:
   actions: write
   contents: write
+  issues: write
   pull-requests: write
 
 jobs:
   dispatch:
-    if: >-
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      github.event.pull_request.head.ref == '_v0140-candidate-trigger-once' &&
-      github.event.pull_request.base.ref == 'main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -25,6 +25,7 @@ jobs:
           RELEASE_TAG: v0.14.0
           WORKFLOW_PATH: .github/workflows/_dispatch_v0140_candidate_once.yml
           TRIGGER_BRANCH: _v0140-candidate-trigger-once
+          TRIGGER_PR: "109"
         run: |
           set -Eeuo pipefail
 
@@ -95,12 +96,12 @@ jobs:
 
           body="v0.14.0 candidate başlatıldı.\n\n- Clean main commit: \`${release_commit}\`\n- Candidate run ID: \`${run_id}\`\n- Run: ${run_url}\n- Phase: \`candidate\`\n- APK + AAB: workflow tarafından zorunlu üretiliyor\n- Google Play upload: yok"
           gh api --method POST \
-            "repos/${GITHUB_REPOSITORY}/issues/${{ github.event.pull_request.number }}/comments" \
+            "repos/${GITHUB_REPOSITORY}/issues/${TRIGGER_PR}/comments" \
             -f body="$body" \
             >/dev/null
 
           gh api --method PATCH \
-            "repos/${GITHUB_REPOSITORY}/pulls/${{ github.event.pull_request.number }}" \
+            "repos/${GITHUB_REPOSITORY}/pulls/${TRIGGER_PR}" \
             -f state=closed \
             >/dev/null
 
