@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Extract exact reproduced failure
+      - name: Print exact reproduced failure line
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -31,14 +31,9 @@ jobs:
 
           lines = Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace").splitlines()
           cleaned = [re.sub(r"^\ufeff?\d{4}-\d{2}-\d{2}T[^ ]+Z\s+", "", line) for line in lines]
-          hits = [
-              i for i, line in enumerate(cleaned)
-              if "build_release.sh line" in line
-              or "##[error]" in line
-              or "Process completed with exit code" in line
-          ]
-          selected = set()
-          for hit in hits[-10:]:
-              selected.update(range(max(0, hit - 12), min(len(cleaned), hit + 14)))
-          print("\n".join(cleaned[i] for i in sorted(selected)))
+          exact = [line for line in cleaned if line.startswith("##[error]build_release.sh line")]
+          if not exact:
+              exact = [line for line in cleaned if line.startswith("##[error]")]
+          for line in exact:
+              print(line)
           PY
