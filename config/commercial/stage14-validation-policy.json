@@ -16,7 +16,7 @@
     "targetSdk": 36,
     "emulatorApiLevels": [
       27,
-      36
+      37
     ],
     "visualProfiles": [
       "light",
@@ -221,7 +221,7 @@
       "requirement": "required"
     },
     {
-      "id": "instrumentation-api-36",
+      "id": "instrumentation-api-37",
       "format": "junit-xml",
       "requirement": "required"
     },
@@ -322,7 +322,7 @@
     "lint-detekt",
     "unit-test-coverage",
     "codeql",
-    "instrumentation-api-27-36",
+    "instrumentation-api-27-37",
     "clean-install",
     "upgrade-install",
     "release-signing-build",

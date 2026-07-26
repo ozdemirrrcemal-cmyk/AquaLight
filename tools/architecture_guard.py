@@ -409,7 +409,7 @@ for token, reason in (
         "verify_stage14_junit_evidence.py",
         "emulator CI must publish named instrumentation evidence",
     ),
-    ("api-level: [27, 36]", "emulator CI must cover minimum and target Android APIs"),
+    ("api-level: [27, 37]", "emulator CI must cover minimum and current Android APIs"),
     (
         "android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d",
         "emulator CI action must remain pinned to its reviewed v2.38.0 commit",
@@ -599,8 +599,8 @@ for token, reason in (
         "release evidence must include the releaseSmoke unit-test variant",
     ),
     (
-        "SUPPORTED_API_LEVELS = (27, 36)",
-        "instrumentation evidence must remain bound to API 27 and API 36",
+        "SUPPORTED_API_LEVELS = (27, 37)",
+        "instrumentation evidence must remain bound to API 27 and API 37",
     ),
 ):
     require(junit_verifier_path, junit_verifier, token, reason)
@@ -809,7 +809,7 @@ for token, reason in (
     ),
     (
         "AquaLight-Instrumentation-",
-        "final evidence must retain the verified API 27/36 artifact",
+        "final evidence must retain the verified API 27/37 artifact",
     ),
 ):
     require(release_workflow_path, release_workflow, token, reason)
@@ -871,7 +871,7 @@ for token, reason in (
     ),
     (
         "INSTRUMENTATION_STAGE14_JSON",
-        "final evidence must enforce the exact API 27/36 set",
+        "final evidence must enforce the exact API 27/37 set",
     ),
     (
         '"release-mapping"',

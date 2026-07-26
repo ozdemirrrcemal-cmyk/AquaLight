@@ -27,6 +27,6 @@ The instrumentation contract verifies:
 3. dynamic target addition after installation;
 4. stale-target removal without a manual reinstall call;
 5. dynamic replacement at a new location;
-6. API 27 and API 36 minified release-smoke execution.
+6. API 27 and current API 37 minified release-smoke execution.
 
 The JVM architecture test prevents direct delegate clearing, foreign hierarchy-listener replacement and additional production owners of `View.touchDelegate`.

@@ -18,7 +18,7 @@ PROCESS_NONCE_PATTERN = re.compile(
     r"[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
 )
 PACKAGE_NAME = "com.aqua.aqualight.smoke"
-SUPPORTED_API_LEVELS = (27, 36)
+SUPPORTED_API_LEVELS = (27, 37)
 BASELINE_MODE = "same-commit-lower-version-code"
 REQUIRED_CHECKS = {
     "versionCodeIncreased",

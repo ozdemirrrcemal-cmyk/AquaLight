@@ -37,7 +37,7 @@ class Stage14PolicyTest(unittest.TestCase):
 
         self.assertTrue(summary["passed"])
         self.assertEqual("aqualight-stage14-commercial-release", summary["policyId"])
-        self.assertEqual([27, 36], summary["android"]["emulatorApiLevels"])
+        self.assertEqual([27, 37], summary["android"]["emulatorApiLevels"])
         self.assertEqual(64, len(summary["sourceSha256"]))
         self.assertEqual(64, len(summary["canonicalSha256"]))
 
@@ -93,7 +93,7 @@ class Stage14PolicyTest(unittest.TestCase):
 
     def test_emulator_matrix_drift_is_rejected(self) -> None:
         drifted_workflow = self.emulator_workflow.replace(
-            "api-level: [27, 36]",
+            "api-level: [27, 37]",
             "api-level: [27, 35]",
         )
 
@@ -107,7 +107,7 @@ class Stage14PolicyTest(unittest.TestCase):
 
     def test_release_workflow_api_drift_is_rejected(self) -> None:
         drifted_workflow = self.release_workflow.replace(
-            "api-level: 36",
+            "api-level: 37",
             "api-level: 35",
         )
 

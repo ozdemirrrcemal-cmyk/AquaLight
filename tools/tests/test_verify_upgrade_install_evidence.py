@@ -152,12 +152,12 @@ class UpgradeInstallEvidenceTest(unittest.TestCase):
         self.assertEqual(41, summary["baseline"]["versionCode"])
         self.assertEqual(42, summary["candidate"]["versionCode"])
 
-    def test_api_36_upgrade_passes(self) -> None:
+    def test_api_37_upgrade_passes(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            summary = self.validate_paths(self.evidence(Path(temporary), 36), 36)
+            summary = self.validate_paths(self.evidence(Path(temporary), 37), 37)
 
         self.assertTrue(summary["passed"])
-        self.assertEqual(36, summary["apiLevel"])
+        self.assertEqual(37, summary["apiLevel"])
 
     def test_same_signer_is_required(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

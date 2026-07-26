@@ -8,7 +8,7 @@ class PermissionPolicyTest {
 
     @Test
     fun `camera capabilities use camera permission on every supported API`() {
-        listOf(27, 30, 31, 33, 36).forEach { sdk ->
+        listOf(27, 30, 31, 33, 36, 37).forEach { sdk ->
             assertEquals(
                 listOf(Manifest.permission.CAMERA),
                 PermissionPolicy.requiredPermissions(AppCapability.CAMERA_PHOTO, sdk)
@@ -36,7 +36,7 @@ class PermissionPolicyTest {
         )
         assertEquals(
             listOf(Manifest.permission.BLUETOOTH_SCAN),
-            PermissionPolicy.requiredPermissions(AppCapability.BLE_SCAN, 36)
+            PermissionPolicy.requiredPermissions(AppCapability.BLE_SCAN, 37)
         )
     }
 
@@ -75,7 +75,7 @@ class PermissionPolicyTest {
                 PermissionPolicy.requiredPermissions(AppCapability.WIFI_SSID, sdk)
             )
         }
-        listOf(31, 33, 36).forEach { sdk ->
+        listOf(31, 33, 36, 37).forEach { sdk ->
             assertEquals(
                 listOf(
                     Manifest.permission.ACCESS_COARSE_LOCATION,
@@ -98,13 +98,13 @@ class PermissionPolicyTest {
         )
         assertEquals(
             listOf(Manifest.permission.POST_NOTIFICATIONS),
-            PermissionPolicy.requiredPermissions(AppCapability.NOTIFICATIONS, 36)
+            PermissionPolicy.requiredPermissions(AppCapability.NOTIFICATIONS, 37)
         )
     }
 
     @Test
     fun `precise reminders use special access instead of runtime permission`() {
-        listOf(27, 30, 31, 33, 36).forEach { sdk ->
+        listOf(27, 30, 31, 33, 36, 37).forEach { sdk ->
             assertEquals(
                 emptyList<String>(),
                 PermissionPolicy.requiredPermissions(AppCapability.PRECISE_REMINDERS, sdk)

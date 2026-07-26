@@ -91,13 +91,13 @@ entry for removing its constructor parameter is obsolete rather than pending.
 
 Instrumentation verifies no-argument reconstruction, argument Bundle recreation, Parcel
 round-trip across a simulated process boundary, real Activity recreation with a visible feedback
-sheet, and rapid loading-overlay show/hide cancellation. The API 27 and API 36 emulator jobs
+sheet, and rapid loading-overlay show/hide cancellation. The API 27 and API 37 emulator jobs
 execute these tests.
 
 ## Completion gate
 
 Stage 8 is complete when architecture guard, lint, unit tests, debug build, CodeQL, API 27
-instrumentation, API 36 instrumentation and minified release-smoke validation all pass on the
+instrumentation, API 37 instrumentation and minified release-smoke validation all pass on the
 same branch head. The branch remains draft until that gate is green.
 
 The validation result must belong to the final connector-authored branch head; intermediate patch

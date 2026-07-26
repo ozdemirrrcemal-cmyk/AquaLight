@@ -12,5 +12,6 @@ class PreciseReminderAccessPolicyTest {
         assertFalse(PreciseReminderAccessPolicy.requiresSpecialAccess(30))
         assertTrue(PreciseReminderAccessPolicy.requiresSpecialAccess(31))
         assertTrue(PreciseReminderAccessPolicy.requiresSpecialAccess(36))
+        assertTrue(PreciseReminderAccessPolicy.requiresSpecialAccess(37))
     }
 }

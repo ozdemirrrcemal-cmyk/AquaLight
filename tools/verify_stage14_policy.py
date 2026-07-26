@@ -14,7 +14,7 @@ from typing import Any
 SCHEMA_VERSION = 1
 POLICY_ID = "aqualight-stage14-commercial-release"
 TAG_PATTERN = r"^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$"
-EMULATOR_API_LEVELS = [27, 36]
+EMULATOR_API_LEVELS = [27, 37]
 VISUAL_PROFILES = [
     "light",
     "dark",
@@ -29,7 +29,7 @@ PIPELINE_ORDER = [
     "lint-detekt",
     "unit-test-coverage",
     "codeql",
-    "instrumentation-api-27-36",
+    "instrumentation-api-27-37",
     "clean-install",
     "upgrade-install",
     "release-signing-build",
@@ -76,7 +76,7 @@ REQUIRED_ARTIFACTS = [
     ("coverage-thresholds", "json", "required"),
     ("codeql", "sarif", "required"),
     ("instrumentation-api-27", "junit-xml", "required"),
-    ("instrumentation-api-36", "junit-xml", "required"),
+    ("instrumentation-api-37", "junit-xml", "required"),
     ("clean-install", "json", "required"),
     ("upgrade-install", "json", "required"),
     ("rapid-account-switch", "json", "required"),

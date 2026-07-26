@@ -62,7 +62,7 @@ The composition root consumes only `currentRepository(ownerUid)`. This preserves
 - `AquaViewModelFactoryTest` verifies exact routing, unknown-binding rejection and duplicate-scope rejection.
 - `OwnerDependencyGraphSessionTest` verifies committed, pending, mismatched and signed-out session behavior before dependency construction.
 - Existing architecture, session, provisioning and UI construction guards remain in the CI chain.
-- Debug/Release unit tests, lint, minified Release, CodeQL and API 27/API 36 emulator workflows remain mandatory for affected release candidates.
+- Debug/Release unit tests, lint, minified Release, CodeQL and API 27/API 37 emulator workflows remain mandatory for affected release candidates.
 
 ## Physical validation baseline
 

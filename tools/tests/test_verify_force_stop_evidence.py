@@ -66,11 +66,11 @@ class ForceStopEvidenceTest(unittest.TestCase):
             )
         )
 
-    def test_api_36_force_stop_matrix_passes(self) -> None:
+    def test_api_37_force_stop_matrix_passes(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            summary = validate(self.evidence(Path(temporary)), 36, COMMIT)
+            summary = validate(self.evidence(Path(temporary)), 37, COMMIT)
 
-        self.assertEqual(36, summary["apiLevel"])
+        self.assertEqual(37, summary["apiLevel"])
 
     def test_missing_scenario_file_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

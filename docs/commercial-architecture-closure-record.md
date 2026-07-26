@@ -11,7 +11,7 @@ This document records the completed execution order and the permanent engineerin
 - No dual path, service-locator fallback, temporary bridge or silent compatibility mechanism may remain after a workstream is complete.
 - Every completed vertical workstream receives fake-backed unit tests and a CI architecture guard before merge.
 - Unknown ViewModel bindings and unsupported application operations fail closed.
-- A release candidate is accepted only after Debug/Release unit tests, lint, minified Release, CodeQL, API 27/API 36 instrumentation and targeted physical regression pass.
+- A release candidate is accepted only after Debug/Release unit tests, lint, minified Release, CodeQL, API 27/API 37 instrumentation and targeted physical regression pass.
 
 ## Completed workstreams
 

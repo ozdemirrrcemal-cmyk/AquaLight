@@ -118,7 +118,7 @@ class EvidenceFixture:
         write_json(self.codeql / "codeql-summary.json", commit=COMMIT)
 
         instrumentation_stage14 = self.instrumentation / "stage14-evidence"
-        for api_level in (27, 36):
+        for api_level in (27, 37):
             write(
                 instrumentation_stage14
                 / f"junit-api-{api_level}/TEST-commercial.xml",

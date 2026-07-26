@@ -34,7 +34,7 @@ QUALITY_STAGE14_JSON = (
 )
 INSTRUMENTATION_STAGE14_JSON = tuple(
     f"{name}-api-{api_level}.json"
-    for api_level in (27, 36)
+    for api_level in (27, 37)
     for name in (
         "accessibility",
         "accessibility-instrumentation",
@@ -284,10 +284,10 @@ def build_artifact_paths(
         "**/TEST-*.xml",
         "API 27 instrumentation JUnit evidence",
     )
-    instrumentation_36 = require_glob(
-        instrumentation_stage14 / "junit-api-36",
+    instrumentation_37 = require_glob(
+        instrumentation_stage14 / "junit-api-37",
         "**/TEST-*.xml",
-        "API 36 instrumentation JUnit evidence",
+        "API 37 instrumentation JUnit evidence",
     )
     codeql_sarif = require_glob(codeql_root, "**/*.sarif", "CodeQL SARIF")
 
@@ -415,19 +415,19 @@ def build_artifact_paths(
         "coverage-thresholds": (True, [coverage_thresholds]),
         "codeql": (True, codeql_sarif),
         "instrumentation-api-27": (True, instrumentation_27),
-        "instrumentation-api-36": (True, instrumentation_36),
+        "instrumentation-api-37": (True, instrumentation_37),
         "clean-install": (
             True,
             [
                 instrumentation_json[f"clean-install-api-{api_level}.json"]
-                for api_level in (27, 36)
+                for api_level in (27, 37)
             ],
         ),
         "upgrade-install": (
             True,
             [
                 instrumentation_json[f"upgrade-install-api-{api_level}.json"]
-                for api_level in (27, 36)
+                for api_level in (27, 37)
             ],
         ),
         "rapid-account-switch": (
@@ -442,13 +442,13 @@ def build_artifact_paths(
                     instrumentation_json[
                         f"process-recreation-instrumentation-api-{api_level}.json"
                     ]
-                    for api_level in (27, 36)
+                    for api_level in (27, 37)
                 ],
                 *[
                     instrumentation_json[
                         f"account-deletion-force-stop-api-{api_level}.json"
                     ]
-                    for api_level in (27, 36)
+                    for api_level in (27, 37)
                 ],
             ],
         ),
@@ -464,7 +464,7 @@ def build_artifact_paths(
                     instrumentation_json[
                         f"tank-care-corruption-instrumentation-api-{api_level}.json"
                     ]
-                    for api_level in (27, 36)
+                    for api_level in (27, 37)
                 ],
             ],
         ),
@@ -480,13 +480,13 @@ def build_artifact_paths(
                     instrumentation_json[
                         f"accessibility-instrumentation-api-{api_level}.json"
                     ]
-                    for api_level in (27, 36)
+                    for api_level in (27, 37)
                 ],
                 *[
                     instrumentation_json[
                         f"accessibility-api-{api_level}.json"
                     ]
-                    for api_level in (27, 36)
+                    for api_level in (27, 37)
                 ],
             ],
         ),

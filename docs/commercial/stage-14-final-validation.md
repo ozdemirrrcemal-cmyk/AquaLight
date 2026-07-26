@@ -84,10 +84,11 @@ Implementation:
 - [ ] Enforce the configured SARIF severity policy.
 - [ ] Prevent release build and signing when the security gate fails.
 
-### 7. Standardize the emulator matrix to API 27 and API 36
+### 7. Standardize the emulator matrix to API 27 and current API 37
 
 - [ ] Keep minimum-supported API 27.
-- [ ] Run the current target API 36.
+- [ ] Run Android 17, the current API 37 runtime, while retaining the reviewed
+  `targetSdk 36` Play submission baseline.
 - [ ] Execute required instrumentation and minified release-smoke suites on both.
 
 ### 8. Complete clean-install automation
@@ -150,7 +151,7 @@ Implementation:
 - The blocker inventory queries every open GitHub issue twice: once before the
   security chain and again immediately before release assembly. Missing or
   ambiguous severity triage fails closed.
-- Quality, CodeQL and API 27/36 instrumentation artifacts are downloaded from the
+- Quality, CodeQL and API 27/37 instrumentation artifacts are downloaded from the
   same workflow run. The final generator rejects missing, unknown, failed,
   cross-commit or unsafe evidence files and hashes every retained artifact.
 - The six physical, accessibility and legal gates are accepted only through the
@@ -162,7 +163,7 @@ Implementation:
 
 ## Required pipeline order
 
-`guard → dependency integrity → lint/Detekt → unit test/coverage → CodeQL → instrumentation API 27/36 → clean install → upgrade install → release signing/build → checksum → SBOM/provenance → final evidence → publication`
+`guard → dependency integrity → lint/Detekt → unit test/coverage → CodeQL → instrumentation API 27/37 → clean install → upgrade install → release signing/build → checksum → SBOM/provenance → final evidence → publication`
 
 ## Completion rule
 

@@ -59,7 +59,7 @@ On first launch, a Turkish device locale selects Turkish. Every other device loc
 - Expanded areas that overlap are partitioned deterministically: a point inside a real visual control selects that control; otherwise the nearest real visual bounds win.
 - Nested clickable controls use the smaller visual target when both real bounds contain the point.
 - The installer clears only the delegate marked with AquaLight's private ownership ID when a window no longer contains undersized clickable controls.
-- JVM geometry tests, an architecture ownership test and a real-window API 27/API 36 instrumentation test protect overlap routing and stale-target cleanup.
+- JVM geometry tests, an architecture ownership test and a real-window API 27/API 37 instrumentation test protect overlap routing and stale-target cleanup.
 
 ## Visual invariant
 

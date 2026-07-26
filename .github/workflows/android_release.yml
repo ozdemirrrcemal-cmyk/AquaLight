@@ -329,10 +329,10 @@ jobs:
             -noaudio -no-boot-anim -camera-back none
           script: bash tools/run_release_smoke.sh 27
 
-      - name: Instrumentation - API 36
+      - name: Instrumentation - API 37
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
-          api-level: 36
+          api-level: 37
           target: default
           arch: x86_64
           profile: pixel_2
@@ -341,7 +341,7 @@ jobs:
           emulator-options: >-
             -no-window -gpu swiftshader_indirect -no-snapshot-save
             -noaudio -no-boot-anim -camera-back none
-          script: bash tools/run_release_smoke.sh 36
+          script: bash tools/run_release_smoke.sh 37
 
       - name: Upload instrumentation evidence
         if: always()
