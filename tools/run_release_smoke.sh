@@ -25,11 +25,49 @@ ACCOUNT_DELETION_FAIL_MARKER="ACCOUNT_DELETION_PROCESS_DEATH_FAIL"
 RUN_LOG="${SMOKE_PREFIX}-run.txt"
 WINDOW_DUMP="${SMOKE_PREFIX}-window.xml"
 REMOTE_WINDOW_DUMP="/sdcard/${WINDOW_DUMP}"
+
+exec > >(tee "$RUN_LOG") 2>&1
+
+wait_for_unlocked_user() {
+  local user_id
+  local state="unknown"
+
+  user_id="$(adb shell am get-current-user 2>/dev/null | tr -d '\r')"
+  case "$user_id" in
+    ''|*[!0-9]*)
+      echo "Could not resolve the current Android user: ${user_id:-empty}" >&2
+      return 1
+      ;;
+  esac
+
+  # A boot-complete emulator can still be in Direct Boot. Instrumentation is not
+  # direct-boot aware and must not start until credential-encrypted storage exists.
+  adb shell input keyevent 82 >/dev/null 2>&1 || true
+  adb shell wm dismiss-keyguard >/dev/null 2>&1 || true
+  adb shell am unlock-user "$user_id" >/dev/null 2>&1 || true
+
+  for attempt in $(seq 1 60); do
+    state="$(
+      adb shell am get-started-user-state "$user_id" 2>/dev/null \
+        | tr -d '\r' \
+        || true
+    )"
+    if [ "$state" = "3" ]; then
+      echo "Android user ${user_id} is RUNNING_UNLOCKED."
+      return 0
+    fi
+    sleep 1
+  done
+
+  echo "Android user ${user_id} did not reach RUNNING_UNLOCKED (state=${state})." >&2
+  return 1
+}
+
+wait_for_unlocked_user
+
 ORIGINAL_FONT_SCALE="$(adb shell settings get system font_scale 2>/dev/null | tr -d '\r')"
 ORIGINAL_FORCE_RTL="$(adb shell settings get global debug.force_rtl 2>/dev/null | tr -d '\r')"
 ORIGINAL_FORCE_RTL_PROP="$(adb shell getprop debug.force_rtl 2>/dev/null | tr -d '\r')"
-
-exec > >(tee "$RUN_LOG") 2>&1
 
 capture_smoke_diagnostics() {
   set +e
