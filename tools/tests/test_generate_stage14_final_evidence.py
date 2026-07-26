@@ -48,7 +48,7 @@ def write_json(
 
 
 class EvidenceFixture:
-    def __init__(self, root: Path, include_apk: bool = False) -> None:
+    def __init__(self, root: Path, include_apk: bool = True) -> None:
         self.release = root / "final-release"
         self.quality = self.release / "validation/quality"
         self.instrumentation = self.release / "validation/instrumentation"
@@ -129,6 +129,7 @@ class EvidenceFixture:
 
         write_json(self.blocker, commit=COMMIT)
         write_json(self.manual, commit=COMMIT)
+        write_json(self.release / "CANDIDATE.json", commit=COMMIT)
 
         artifacts = self.release / "artifacts"
         supply_chain = self.release / "supply-chain"
@@ -208,27 +209,20 @@ class FinalEvidenceTest(unittest.TestCase):
             summary = fixture.generate()
 
             self.assertTrue(summary["passed"])
-            self.assertEqual(29, summary["artifactContractCount"])
-            self.assertEqual(29, len(summary["artifacts"]))
+            self.assertEqual(30, summary["artifactContractCount"])
+            self.assertEqual(30, len(summary["artifacts"]))
             self.assertTrue(fixture.json_output.is_file())
             self.assertTrue(fixture.markdown_output.is_file())
 
-    def test_optional_apk_is_explicitly_not_requested(self) -> None:
+    def test_apk_is_required_for_final_archive(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            fixture = EvidenceFixture(Path(temporary))
-            summary = fixture.generate()
-
-        apk = next(
-            artifact
-            for artifact in summary["artifacts"]
-            if artifact["id"] == "release-apk"
-        )
-        self.assertEqual("not-requested", apk["status"])
-        self.assertFalse(apk["requiredThisRelease"])
+            fixture = EvidenceFixture(Path(temporary), include_apk=False)
+            with self.assertRaisesRegex(FinalEvidenceFailure, "requires"):
+                fixture.generate()
 
     def test_requested_apk_requires_complete_supply_chain(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            fixture = EvidenceFixture(Path(temporary), include_apk=True)
+            fixture = EvidenceFixture(Path(temporary))
             fixture.generate()
             (
                 fixture.release
@@ -327,7 +321,7 @@ class FinalEvidenceTest(unittest.TestCase):
                     release_tag="v1.2.4",
                     release_version=VERSION,
                     commit=COMMIT,
-                    include_apk=False,
+                    include_apk=True,
                     json_output=fixture.json_output,
                     markdown_output=fixture.markdown_output,
                 )

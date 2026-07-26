@@ -1,196 +1,135 @@
-# AquaLight — Stage 14 Final Commercial Validation Plan
+# AquaLight — Stage 14 Commercial Validation and Artifact Closure
 
-**Status:** Automated PR validation complete; controlled release closure pending  
-**Working branch:** `commercial/14-final-validation`  
+**Repository status:** implementation complete; PR validation and merge pending
+
+**Working branch:** `commercial/14-final-validation`
+
 **Base branch:** `main`
 
-## Commercial implementation rules
+**Distribution in this stage:** verified GitHub Actions artifacts only
 
-- All Stage 14 work will continue on this single branch.
-- No parallel Stage 14 branch will be created.
-- No temporary workaround, compatibility fallback, patch-only solution or dual-path implementation is allowed.
-- Every code change must be permanent, fail-closed and suitable for commercial release.
-- A step is marked complete only after its required build, lint, test and evidence checks pass.
-- Physical-device-only checks remain final operational release gates and are not represented as completed by emulator-only evidence.
+## Purpose
 
-## Scope excluded from code migration
+Stage 14 proves that the current application can be built, tested, signed and
+handed off as a traceable APK+AAB pair. It does not claim that unfinished device
+menus are product-complete and it does not upload anything to Google Play.
 
-The following items require physical-device, operational or legal validation and are not implemented as application-code changes in this stage:
+The release contract is build once, test that signed candidate, and finalize the
+same bytes without rebuilding or re-signing.
 
-- Physical phone reboot validation
-- Real camera, BLE and notification permanent-denial scenarios
-- Physical Wi-Fi or power-loss testing
-- Real TalkBack user validation
-- Privacy and Terms legal approval
-- Final signed release candidate end-to-end validation on a real device
+## Blocking policy
 
-## Required implementation order
+Only the following block Stage 14:
 
-### 1. Establish the single Stage 14 branch and validation contract
+- repository architecture and security guards;
+- dependency integrity, Android Lint, Detekt, unit tests and configured coverage;
+- CodeQL critical/high threshold;
+- API 27 and API 36 instrumentation, clean-install and upgrade-install evidence;
+- a production-signed, minified APK and AAB from the same tagged commit;
+- exact signing certificate, mapping and SHA-256 identity;
+- physical acceptance of the signed APK’s currently implemented critical path;
+- byte-identical final artifact verification.
 
-- [x] Confirm `main` as the only base branch.
-- [x] Create exactly one Stage 14 working branch: `commercial/14-final-validation`.
-- [x] Record the scope, exclusions, commercial rules and implementation order in this document.
-- [x] Make no application, Gradle, Firebase or CI code changes in this step.
+SBOM, provenance and machine-readable evidence remain in the existing pipeline
+because they are already automated. They are not a substitute for physical
+testing.
 
-Acceptance criteria:
+Full TalkBack review, final Privacy Policy/Terms approval, Play Console Data
+Safety/App Content declarations, store listing, testing tracks and rollout are
+future product-release gates. They become relevant after the device menus, UI and
+data flows are complete.
 
-- The branch exists directly from `main`.
-- Only this document differs from `main`.
-- No pull request is opened in this step.
+## Completed repository implementation
 
-### 2. Make Firebase production configuration environment-scoped and fail-closed
+### Configuration and policy
 
-- [x] Remove repository and legacy production configuration fallback.
-- [x] Separate debug, staging, release-smoke and production identities.
-- [x] Require protected production configuration for real release builds.
-- [x] Reject missing, malformed, wrong-package or duplicate Firebase project configurations.
-- [x] Prohibit tracked `google-services.json` files.
-- [x] Validate all affected Gradle tasks and CI workflows before completion.
+- [x] Production Firebase configuration is protected, environment-scoped and
+  fail-closed.
+- [x] Debug, staging, release-smoke and production identities are isolated.
+- [x] Tracked or fallback production `google-services.json` files are rejected.
+- [x] `config/commercial/stage14-validation-policy.json` is the machine-readable
+  source of truth.
+- [x] The policy pins minSdk 27, targetSdk 36 and the API 27/36 emulator matrix.
+- [x] APK and AAB are both mandatory Stage 14 candidate artifacts.
+- [x] Google Play upload is explicitly outside the Stage 14 pipeline.
 
-### 3. Add a machine-readable Stage 14 validation policy
+### Automated validation
 
-- [x] Define required API levels, suites, blocker thresholds and artifacts.
-- [x] Add fail-closed policy schema validation.
-- [x] Use the policy as the source of truth for final evidence.
+- [x] Architecture and product-policy guards run before commercial packaging.
+- [x] Dependency integrity is verified.
+- [x] Baseline-free blocker Lint and zero-new-debt Detekt are enforced.
+- [x] Debug, staging, release-smoke and release unit tests run.
+- [x] Critical-package JaCoCo thresholds are enforced.
+- [x] CodeQL critical/high findings block the controlled release.
+- [x] API 27 and API 36 run instrumentation and minified release-smoke tests.
+- [x] Clean install, same-signer upgrade, process recreation, force-stop,
+  account switching, permission denial, corruption recovery and runtime cleanup
+  generate machine-readable evidence.
+- [x] Light, dark, 200% font and RTL profiles generate deterministic evidence.
 
-Implementation:
+### Signed candidate and finalization
 
-- `config/commercial/stage14-validation-policy.json` is the reviewed commercial contract.
-- `tools/verify_stage14_policy.py` rejects missing fields, unknown fields, weakened blocker
-  thresholds, incomplete suites/artifacts and SDK drift.
-- Android CI, emulator validation, CodeQL and the controlled release quality gate materialize the
-  same deterministic policy evidence.
+- [x] The release workflow has separate `candidate` and `finalize` phases.
+- [x] The candidate phase builds the production-signed minified APK and AAB once.
+- [x] Candidate APK, AAB, mapping, certificate and SHA-256 identities are recorded
+  in `CANDIDATE.json`.
+- [x] Candidate checksums, SBOM and provenance are generated before handoff.
+- [x] The immutable candidate is archived under
+  `AquaLight-Candidate-vMAJOR.MINOR.PATCH`.
+- [x] Finalization requires the exact successful candidate workflow run ID.
+- [x] Protected physical acceptance is bound to the candidate manifest, signing
+  certificate and APK/AAB/mapping digests.
+- [x] The finalize phase contains no Gradle, build, signing or attestation task.
+- [x] Finalization rehashes the downloaded candidate and copies the same bytes into
+  the final archive.
+- [x] Final JSON/Markdown evidence and `RELEASE.json` use the
+  `approved-for-archive` decision.
+- [x] The final package is archived under
+  `AquaLight-Final-vMAJOR.MINOR.PATCH`.
+- [x] No Google Play upload action exists in the workflow.
 
-### 4. Standardize guard, unit-test and coverage gates
+## Required order
 
-- [x] Run architecture and policy guards first.
-- [x] Run dependency integrity before build resolution.
-- [x] Run Detekt and Android Lint.
-- [x] Run all required debug, staging and release unit tests.
-- [x] Generate JaCoCo reports and enforce critical-package thresholds.
+### Repository integration
 
-### 5. Add a full Android Lint blocker gate
+1. Make this single implementation commit.
+2. Require all PR checks on that exact commit to pass.
+3. Merge PR #103 into `main`.
 
-- [x] Preserve normal baseline regression control.
-- [x] Run final validation without hiding blockers behind the baseline.
-- [x] Require zero Fatal and Error findings for required variants.
-- [x] Publish remaining warnings separately.
+After the implementation commit is green, merge is the only remaining repository
+action. Do not create the tag from the PR branch.
 
-### 6. Make CodeQL a blocking release prerequisite
+### Post-merge Stage 14 operational closure
 
-- [x] Bind CodeQL to the controlled release chain.
-- [x] Wait for result processing.
-- [x] Enforce the configured SARIF severity policy.
-- [x] Prevent release build and signing when the security gate fails.
+1. Tag the exact merged `main` commit as `v0.14.0`.
+2. Run the `candidate` phase; tag push may start it automatically.
+3. Download `AquaLight-Candidate-v0.14.0` and retain its workflow run ID.
+4. Test the signed APK on a physical phone:
+   - clean install and first launch;
+   - login, logout and owner isolation;
+   - force-stop, relaunch and reboot;
+   - permission denial and connectivity interruption;
+   - currently implemented critical path end to end.
+5. Complete schema-v2 manual acceptance from the candidate manifest and store it
+   as the protected `AQL_STAGE14_MANUAL_ACCEPTANCE_BASE64` secret.
+6. Dispatch `finalize` with `release_tag=v0.14.0` and the successful candidate
+   workflow run ID.
+7. Require `AquaLight-Final-v0.14.0` verification to pass.
 
-### 7. Standardize the emulator matrix to API 27 and target API 36
-
-- [x] Keep minimum-supported API 27.
-- [x] Run the stable Android 16 API 36 runtime that matches the reviewed
-  `targetSdk 36` Play submission baseline.
-- [x] Execute required instrumentation and minified release-smoke suites on both.
-
-Implementation note:
-
-- CI pins command-line tools package `15859902`, the last-known-good
-  `android-36` default image and the `swiftshader_indirect` renderer.
-- API 27 and API 36 remain the required stable emulator matrix for the reviewed
-  `targetSdk 36` submission baseline. Newer-platform coverage belongs to the
-  protected physical-device acceptance, not to the blocking emulator matrix.
-
-### 8. Complete clean-install automation
-
-- [x] Install the minified candidate on a clean emulator.
-- [x] Verify deterministic first start.
-- [x] Verify no private owner, tank, assignment, credential or preference state exists.
-- [x] Reject startup crash or ANR evidence.
-
-### 9. Add application upgrade and over-install validation
-
-- [x] Build and install a lower-version baseline with the same signing identity.
-- [x] Seed deterministic data.
-- [x] Install the candidate with a higher versionCode.
-- [x] Verify supported data preservation or explicit migration.
-- [x] Verify stale runtime and credential state is not restored.
-
-### 10. Add end-to-end rapid account-switch validation
-
-- [x] Transition rapidly from Owner A through signed-out state to Owner B.
-- [x] Verify Owner A resources close.
-- [x] Verify Owner B resources open exactly once.
-- [x] Verify delayed Owner A work cannot affect Owner B.
-- [x] Verify no cross-owner data projection.
-
-### 11. Complete process recreation, rotation and force-stop validation
-
-- [x] Recreate authenticated application state.
-- [x] Rotate representative Tank and Care flows.
-- [x] Force-stop and restart the application.
-- [x] Verify durable state survives and runtime-only state is reconstructed.
-- [x] Verify stale owner state is not revived.
-
-### 12. Promote Tank and Care Task corruption checks into a named release suite
-
-- [x] Run corruption recovery as an explicit Stage 14 suite.
-- [x] Cover truncated data, invalid values, owner mismatch and orphan tasks where required.
-- [x] Preserve fail-closed recovery and recovery telemetry assertions.
-- [x] Publish independent machine-readable evidence.
-
-### 13. Add WebSocket closure and account-cleanup integration validation
-
-- [x] Verify current socket closure clears current runtime proof.
-- [x] Verify delayed old-socket events cannot clear a newer session.
-- [x] Verify logout and account deletion close owner-scoped runtime resources.
-- [x] Verify duplicate active runtimes cannot exist.
-
-### 14. Assemble accessibility, blocker and final release-candidate evidence
-
-- [x] Run Light, Dark, 200% font, LTR and RTL profiles.
-- [x] Add deterministic automated accessibility scanning.
-- [x] Require zero open critical, high and release-blocker issues.
-- [ ] Split the controlled release into signed-candidate generation and final
-  publication phases.
-- [ ] Bind protected manual acceptance to the exact candidate AAB/APK SHA-256 and
-  publish only the byte-identical accepted candidate.
-- [ ] Build the production-signed minified AAB and optional APK.
-- [ ] Verify mapping, signatures, checksums, SBOM and provenance.
-- [ ] Generate final JSON and Markdown evidence summaries.
-- [ ] Allow publication only when every automated and protected manual requirement passes.
-
-Implementation:
-
-- The blocker inventory queries every open GitHub issue twice: once before the
-  security chain and again immediately before release assembly. Missing or
-  ambiguous severity triage fails closed.
-- Quality, CodeQL and API 27/36 instrumentation artifacts are downloaded from the
-  same workflow run. The final generator rejects missing, unknown, failed,
-  cross-commit or unsafe evidence files and hashes every retained artifact.
-- The six physical, accessibility and legal gates are accepted only through the
-  protected release environment contract documented in
-  `docs/commercial/stage-14-manual-acceptance.md`.
-- Production signing, mapping, checksum, SBOM and provenance remain incomplete
-  until the controlled tag workflow runs successfully with real protected
-  credentials and manual evidence.
-- The current single-phase workflow validates manual acceptance before it builds
-  the signed candidate and does not bind that acceptance to the candidate digest.
-  Stage 14 cannot close until candidate generation and final publication are split
-  and the accepted artifact identity is enforced fail-closed.
-
-## Required pipeline order
-
-Automated branch validation:
-
-`guard → dependency integrity → lint/Detekt → unit test/coverage → CodeQL → instrumentation API 27/36 → clean install → upgrade install`
-
-Repository integration:
-
-`complete candidate/final workflow and artifact-hash binding → current PR checks green → merge into main → tag the exact main commit`
-
-Controlled release closure:
-
-`rerun controlled quality/security/instrumentation gates → build signed candidate → record candidate SHA-256 → complete physical-device and legal acceptance → verify tag + commit + candidate digest → checksum/SBOM/provenance → final evidence → publish the byte-identical accepted candidate`
+If the candidate changes for any reason, create a new candidate run and repeat
+physical acceptance. Never edit an accepted artifact or replace it with a rebuild.
 
 ## Completion rule
 
-The application and emulator implementation is complete, and all required PR workflows passed on the last application/harness head. Stage 14 remains open until the two-phase release workflow and candidate-digest binding are implemented, the current PR head is green and merged, and the protected manual acceptance and controlled final publication complete for the same tagged commit and accepted artifact. The device-menu architecture and Light, Cooling, Timer and Dosing development sequence may begin only after this stage is complete.
+Stage 14 is complete only when:
+
+- PR #103 is green and merged;
+- the tag points to the merged `main` commit;
+- the production-signed APK and AAB candidate succeeds;
+- the physical acceptance summary matches that candidate;
+- finalization succeeds without rebuilding; and
+- the final archive contains the same APK/AAB/mapping digests.
+
+Device-menu implementation begins after this operational closure. Full
+accessibility, legal and store-release closure occurs later, against the completed
+product rather than the current partial UI.

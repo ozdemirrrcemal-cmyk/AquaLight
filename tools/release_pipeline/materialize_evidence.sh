@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+[[ "${AQL_INCLUDE_APK:-}" == "true" ]]
+[[ "${AQL_CANDIDATE_RUN_ID:-}" =~ ^[1-9][0-9]*$ ]]
 evidence="final-release/supply-chain"
 mkdir -p "$evidence/attestations"
 policy_evidence="$evidence/stage14-validation-policy.json"
@@ -26,17 +28,14 @@ for field in ("policyId", "sourceSha256", "canonicalSha256"):
         raise SystemExit(f"Quality policy identity mismatch: {field}")
 PY
 
-test -s "$AAB_PROVENANCE_BUNDLE"
-test -s "$AAB_SBOM_BUNDLE"
-cp "$AAB_PROVENANCE_BUNDLE" "$evidence/attestations/AquaLight-${AQL_RELEASE_VERSION}.aab.provenance.json"
-cp "$AAB_SBOM_BUNDLE" "$evidence/attestations/AquaLight-${AQL_RELEASE_VERSION}.aab.sbom.json"
-
-if [[ "${AQL_INCLUDE_APK:-false}" == "true" ]]; then
-  test -s "$APK_PROVENANCE_BUNDLE"
-  test -s "$APK_SBOM_BUNDLE"
-  cp "$APK_PROVENANCE_BUNDLE" "$evidence/attestations/AquaLight-${AQL_RELEASE_VERSION}.apk.provenance.json"
-  cp "$APK_SBOM_BUNDLE" "$evidence/attestations/AquaLight-${AQL_RELEASE_VERSION}.apk.sbom.json"
-fi
+test -s "final-release/CANDIDATE.json"
+for required in \
+  "$evidence/attestations/AquaLight-${AQL_RELEASE_VERSION}.aab.provenance.json" \
+  "$evidence/attestations/AquaLight-${AQL_RELEASE_VERSION}.aab.sbom.json" \
+  "$evidence/attestations/AquaLight-${AQL_RELEASE_VERSION}.apk.provenance.json" \
+  "$evidence/attestations/AquaLight-${AQL_RELEASE_VERSION}.apk.sbom.json"; do
+  test -s "$required"
+done
 
 python3 - "$evidence"/*.spdx.json <<'PY'
 import json
@@ -62,7 +61,7 @@ python3 tools/generate_stage14_final_evidence.py \
   --release-tag "$AQL_RELEASE_TAG" \
   --release-version "$AQL_RELEASE_VERSION" \
   --commit "$AQL_RELEASE_COMMIT" \
-  --include-apk "${AQL_INCLUDE_APK:-false}" \
+  --include-apk true \
   --json "$evidence/final-evidence.json" \
   --markdown "$evidence/final-evidence.md"
 
@@ -70,8 +69,9 @@ python3 - \
   final-release/RELEASE.json \
   "$AQL_RELEASE_TAG" \
   "$AQL_RELEASE_COMMIT" \
-  "${AQL_INCLUDE_APK:-false}" \
+  "$AQL_CANDIDATE_RUN_ID" \
   "$policy_evidence" \
+  final-release/CANDIDATE.json \
   "$evidence/final-evidence.json" \
   "$evidence/final-evidence.md" \
   final-release/validation/release-blocker-inventory.json \
@@ -85,8 +85,9 @@ from pathlib import Path
     output,
     tag,
     commit,
-    include_apk,
+    candidate_run_id,
     policy_path,
+    candidate_path,
     final_json_path,
     final_markdown_path,
     blocker_path,
@@ -96,6 +97,7 @@ policy = json.loads(Path(policy_path).read_text(encoding="utf-8"))
 if policy.get("passed") is not True:
     raise SystemExit("Stage 14 policy evidence did not pass validation.")
 final_evidence = json.loads(Path(final_json_path).read_text(encoding="utf-8"))
+candidate = json.loads(Path(candidate_path).read_text(encoding="utf-8"))
 blocker = json.loads(Path(blocker_path).read_text(encoding="utf-8"))
 manual = json.loads(Path(manual_path).read_text(encoding="utf-8"))
 for label, value in (
@@ -114,11 +116,18 @@ def sha256(path: str) -> str:
 Path(output).write_text(
     json.dumps(
         {
-            "schemaVersion": 1,
-            "status": "approved-for-publication",
+            "schemaVersion": 2,
+            "status": "approved-for-archive",
             "releaseTag": tag,
             "releaseCommit": commit,
-            "includeApk": include_apk == "true",
+            "includeApk": True,
+            "candidate": {
+                "workflowRunId": candidate_run_id,
+                "manifestSha256": sha256(candidate_path),
+                "aabSha256": candidate["artifactDigests"]["aabSha256"],
+                "apkSha256": candidate["artifactDigests"]["apkSha256"],
+                "mappingSha256": candidate["artifactDigests"]["mappingSha256"],
+            },
             "stage14Policy": {
                 "policyId": policy["policyId"],
                 "sourceSha256": policy["sourceSha256"],

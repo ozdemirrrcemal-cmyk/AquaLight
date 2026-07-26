@@ -12,6 +12,12 @@ import re
 import sys
 from typing import Any
 
+from release_candidate_manifest import (
+    CandidateManifestFailure,
+    candidate_approval_identity,
+    parse_manifest,
+)
+
 COMMIT_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 TAG_PATTERN = re.compile(
     r"^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$"
@@ -27,25 +33,31 @@ EVIDENCE_URI_PATTERN = re.compile(
     r"^(?:https://[^\s]+|urn:aqualight:manual-evidence:[A-Za-z0-9._:/-]+)$"
 )
 MANUAL_GATES = (
-    "physical-phone-reboot",
-    "physical-permission-permanent-denial",
-    "physical-network-power-interruption",
-    "talkback",
-    "privacy-terms-approval",
-    "physical-device-release-candidate",
+    "signed-apk-clean-install",
+    "authentication-account-isolation",
+    "process-restart-reboot",
+    "permission-connectivity-resilience",
+    "critical-end-to-end",
 )
 ALLOWED_GATE_ROLES = {
     "qa-engineer",
     "release-manager",
-    "accessibility-reviewer",
-    "legal-approver",
 }
 ROOT_KEYS = {
     "schemaVersion",
     "releaseTag",
     "releaseCommit",
+    "candidateApproval",
     "packageApproval",
     "gates",
+}
+CANDIDATE_APPROVAL_KEYS = {
+    "workflowRunId",
+    "manifestSha256",
+    "signingCertificateSha256",
+    "aabSha256",
+    "apkSha256",
+    "mappingSha256",
 }
 PACKAGE_APPROVAL_KEYS = {
     "approvedBy",
@@ -74,6 +86,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--acceptance", required=True, type=Path)
     parser.add_argument("--release-tag", required=True)
     parser.add_argument("--commit", required=True)
+    parser.add_argument("--candidate-manifest", required=True, type=Path)
     parser.add_argument("--summary", required=True, type=Path)
     return parser.parse_args()
 
@@ -131,6 +144,7 @@ def validate(
     raw: bytes,
     expected_tag: str,
     expected_commit: str,
+    candidate_manifest_raw: bytes,
 ) -> dict[str, Any]:
     if not TAG_PATTERN.fullmatch(expected_tag):
         raise ManualAcceptanceFailure(
@@ -149,8 +163,8 @@ def validate(
 
     root = require_object(document, "acceptance")
     require_exact_keys(root, ROOT_KEYS, "acceptance")
-    if root["schemaVersion"] != 1:
-        raise ManualAcceptanceFailure("acceptance.schemaVersion must equal 1")
+    if root["schemaVersion"] != 2:
+        raise ManualAcceptanceFailure("acceptance.schemaVersion must equal 2")
     if root["releaseTag"] != expected_tag:
         raise ManualAcceptanceFailure(
             "acceptance.releaseTag does not match the controlled release tag"
@@ -158,6 +172,38 @@ def validate(
     if root["releaseCommit"] != expected_commit:
         raise ManualAcceptanceFailure(
             "acceptance.releaseCommit does not match the controlled release commit"
+        )
+
+    try:
+        candidate_manifest = parse_manifest(candidate_manifest_raw)
+        expected_candidate_approval = candidate_approval_identity(
+            candidate_manifest_raw
+        )
+    except CandidateManifestFailure as error:
+        raise ManualAcceptanceFailure(
+            f"signed candidate manifest is invalid: {error}"
+        ) from error
+    if candidate_manifest["releaseTag"] != expected_tag:
+        raise ManualAcceptanceFailure(
+            "signed candidate manifest does not match the controlled release tag"
+        )
+    if candidate_manifest["releaseCommit"] != expected_commit:
+        raise ManualAcceptanceFailure(
+            "signed candidate manifest does not match the controlled release commit"
+        )
+    candidate_approval = require_object(
+        root["candidateApproval"],
+        "acceptance.candidateApproval",
+    )
+    require_exact_keys(
+        candidate_approval,
+        CANDIDATE_APPROVAL_KEYS,
+        "acceptance.candidateApproval",
+    )
+    if candidate_approval != expected_candidate_approval:
+        raise ManualAcceptanceFailure(
+            "acceptance.candidateApproval does not match the immutable signed "
+            "candidate manifest and artifact digests"
         )
 
     package_approval = require_object(
@@ -212,26 +258,15 @@ def validate(
         if gate["approved"] is not True:
             raise ManualAcceptanceFailure(f"{path}.approved must equal true")
         executed_at = parse_timestamp(gate["executedAt"], f"{path}.executedAt")
-        if executed_at > package_approved_at:
+        if executed_at >= package_approved_at:
             raise ManualAcceptanceFailure(
-                f"{path}.executedAt is later than package approval"
+                f"{path}.executedAt must be earlier than package approval"
             )
         require_login(gate["approvedBy"], f"{path}.approvedBy")
         role = require_string(gate["approverRole"], f"{path}.approverRole")
         if role not in ALLOWED_GATE_ROLES:
             raise ManualAcceptanceFailure(
                 f"{path}.approverRole is not an approved commercial role"
-            )
-        if gate_id == "privacy-terms-approval" and role != "legal-approver":
-            raise ManualAcceptanceFailure(
-                f"{path}.approverRole must equal legal-approver"
-            )
-        if gate_id == "talkback" and role not in {
-            "accessibility-reviewer",
-            "qa-engineer",
-        }:
-            raise ManualAcceptanceFailure(
-                f"{path}.approverRole must be accessibility-reviewer or qa-engineer"
             )
         require_string(gate["subject"], f"{path}.subject")
         evidence_uri = require_string(
@@ -253,12 +288,13 @@ def validate(
         gates.append(gate)
 
     return {
-        "schemaVersion": 1,
+        "schemaVersion": 2,
         "passed": True,
         "suite": "manual-acceptance",
         "releaseTag": expected_tag,
         "releaseCommit": expected_commit,
         "sourceSha256": hashlib.sha256(raw).hexdigest(),
+        "candidateApproval": candidate_approval,
         "packageApproval": package_approval,
         "gates": gates,
     }
@@ -276,12 +312,18 @@ def main() -> int:
     args = parse_args()
     try:
         raw = args.acceptance.read_bytes()
-        summary = validate(raw, args.release_tag, args.commit)
+        candidate_manifest_raw = args.candidate_manifest.read_bytes()
+        summary = validate(
+            raw,
+            args.release_tag,
+            args.commit,
+            candidate_manifest_raw,
+        )
     except (OSError, ManualAcceptanceFailure) as error:
         write_summary(
             args.summary,
             {
-                "schemaVersion": 1,
+                "schemaVersion": 2,
                 "passed": False,
                 "suite": "manual-acceptance",
                 "releaseTag": args.release_tag,

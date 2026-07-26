@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "policyId": "aqualight-stage14-commercial-release",
   "release": {
     "baseBranch": "main",
@@ -9,7 +9,7 @@
     "smokeVariant": "releaseSmoke",
     "minifiedCandidateRequired": true,
     "signedAabRequired": true,
-    "apkMode": "optional-on-request"
+    "apkMode": "required"
   },
   "android": {
     "minSdk": 27,
@@ -139,32 +139,27 @@
       "required": true
     },
     {
-      "id": "physical-phone-reboot",
+      "id": "signed-apk-clean-install",
       "mode": "manual",
       "required": true
     },
     {
-      "id": "physical-permission-permanent-denial",
+      "id": "authentication-account-isolation",
       "mode": "manual",
       "required": true
     },
     {
-      "id": "physical-network-power-interruption",
+      "id": "process-restart-reboot",
       "mode": "manual",
       "required": true
     },
     {
-      "id": "talkback",
+      "id": "permission-connectivity-resilience",
       "mode": "manual",
       "required": true
     },
     {
-      "id": "privacy-terms-approval",
-      "mode": "manual",
-      "required": true
-    },
-    {
-      "id": "physical-device-release-candidate",
+      "id": "critical-end-to-end",
       "mode": "manual",
       "required": true
     }
@@ -278,7 +273,7 @@
     {
       "id": "release-apk",
       "format": "apk",
-      "requirement": "when-apk-requested"
+      "requirement": "required"
     },
     {
       "id": "release-mapping",
@@ -297,6 +292,11 @@
     },
     {
       "id": "release-provenance",
+      "format": "json",
+      "requirement": "required"
+    },
+    {
+      "id": "release-candidate-manifest",
       "format": "json",
       "requirement": "required"
     },
@@ -325,16 +325,21 @@
     "instrumentation-api-27-36",
     "clean-install",
     "upgrade-install",
-    "release-signing-build",
-    "checksum",
-    "sbom-provenance",
+    "release-candidate-signing-build",
+    "candidate-checksum",
+    "candidate-sbom-provenance",
+    "candidate-archive",
+    "physical-candidate-acceptance",
+    "candidate-identity-verification",
     "final-evidence",
-    "publication"
+    "final-archive"
   ],
   "completion": {
     "sameCommitEvidenceRequired": true,
+    "sameCandidateArtifactsRequired": true,
     "failClosed": true,
     "manualGatesMustBeApproved": true,
-    "publicationRequiresAllRequiredArtifacts": true
+    "finalArchiveRequiresAllRequiredArtifacts": true,
+    "googlePlayUploadAllowed": false
   }
 }

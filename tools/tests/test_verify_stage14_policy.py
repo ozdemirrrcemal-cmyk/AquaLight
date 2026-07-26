@@ -62,7 +62,7 @@ class Stage14PolicyTest(unittest.TestCase):
         with self.assertRaisesRegex(PolicyFailure, "complete ordered"):
             self.validate(policy)
 
-    def test_optional_required_artifact_cannot_be_removed(self) -> None:
+    def test_required_apk_artifact_cannot_be_removed(self) -> None:
         policy = self.mutated_policy()
         policy["requiredArtifacts"] = [
             artifact
@@ -71,6 +71,20 @@ class Stage14PolicyTest(unittest.TestCase):
         ]
 
         with self.assertRaisesRegex(PolicyFailure, "complete ordered"):
+            self.validate(policy)
+
+    def test_apk_cannot_be_made_optional(self) -> None:
+        policy = self.mutated_policy()
+        policy["release"]["apkMode"] = "optional-on-request"
+
+        with self.assertRaisesRegex(PolicyFailure, "apkMode"):
+            self.validate(policy)
+
+    def test_google_play_upload_cannot_be_enabled(self) -> None:
+        policy = self.mutated_policy()
+        policy["completion"]["googlePlayUploadAllowed"] = True
+
+        with self.assertRaisesRegex(PolicyFailure, "googlePlayUploadAllowed"):
             self.validate(policy)
 
     def test_gradle_sdk_drift_is_rejected(self) -> None:

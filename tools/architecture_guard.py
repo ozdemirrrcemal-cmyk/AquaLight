@@ -938,7 +938,19 @@ for token, reason in (
     ),
     (
         "verify_manual_acceptance.py",
-        "manual physical and legal gates must be machine-verified",
+        "signed candidate physical gates must be machine-verified",
+    ),
+    (
+        "AquaLight-Candidate-",
+        "the signed candidate must be archived before physical acceptance",
+    ),
+    (
+        "candidate_run_id",
+        "finalization must select one immutable candidate workflow run",
+    ),
+    (
+        "release_candidate_manifest.py verify",
+        "finalization must rehash the selected candidate before acceptance",
     ),
     (
         "AquaLight-Pre-Security-Quality-",
@@ -977,20 +989,28 @@ manual_verifier_path = "tools/verify_manual_acceptance.py"
 manual_verifier = read(manual_verifier_path)
 for token, reason in (
     (
-        '"physical-phone-reboot"',
-        "manual evidence must cover a real phone reboot",
+        '"signed-apk-clean-install"',
+        "manual evidence must cover signed APK clean install and launch",
     ),
     (
-        '"physical-network-power-interruption"',
-        "manual evidence must cover physical network and power interruption",
+        '"authentication-account-isolation"',
+        "manual evidence must cover real-device account isolation",
     ),
     (
-        '"privacy-terms-approval"',
-        "manual evidence must cover legal approval",
+        '"process-restart-reboot"',
+        "manual evidence must cover force-stop and a physical reboot",
     ),
     (
-        '"physical-device-release-candidate"',
-        "manual evidence must cover the signed RC on a real device",
+        '"permission-connectivity-resilience"',
+        "manual evidence must cover permission and connectivity resilience",
+    ),
+    (
+        '"critical-end-to-end"',
+        "manual evidence must cover the signed candidate critical path",
+    ),
+    (
+        '"candidateApproval"',
+        "manual evidence must bind the candidate run and artifact digests",
     ),
     (
         '"production-release-environment-secret"',
@@ -1019,8 +1039,8 @@ for token, reason in (
         "final evidence must retain protected manual acceptance",
     ),
     (
-        '"approved-for-publication"',
-        "final evidence must expose an explicit publication decision",
+        '"approved-for-archive"',
+        "final evidence must expose an explicit archive decision",
     ),
 ):
     require(final_evidence_path, final_evidence, token, reason)
@@ -1037,29 +1057,37 @@ for token, reason in (
         "the release identity must bind protected manual evidence",
     ),
     (
+        "candidate_run_id",
+        "the release identity must bind the accepted candidate run",
+    ),
+    (
         "releaseBlockerInventorySha256",
         "the release identity must bind the final blocker inventory",
     ),
 ):
     require(materialize_path, materialize, token, reason)
 
-publication_path = "tools/release_pipeline/verify_publication.sh"
-publication = read(publication_path)
+final_archive_path = "tools/release_pipeline/verify_final_archive.sh"
+final_archive = read(final_archive_path)
 for token, reason in (
     (
-        "approved-for-publication",
-        "publication must require the explicit final decision",
+        "approved-for-archive",
+        "final archive must require the explicit final decision",
     ),
     (
         "Final artifact order does not match the Stage 14 policy",
-        "publication must reverify the complete artifact contract",
+        "final archive must reverify the complete artifact contract",
     ),
     (
         "Artifact SHA-256 mismatch",
-        "publication must rehash every retained evidence file",
+        "final archive must rehash every retained evidence file",
+    ),
+    (
+        "release_candidate_manifest.py verify",
+        "final archive must reverify the immutable candidate manifest",
     ),
 ):
-    require(publication_path, publication, token, reason)
+    require(final_archive_path, final_archive, token, reason)
 
 pr_workflow_path = ".github/workflows/codeql.yml"
 pr_workflow = read(pr_workflow_path)

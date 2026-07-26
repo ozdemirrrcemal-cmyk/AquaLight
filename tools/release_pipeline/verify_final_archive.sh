@@ -1,11 +1,26 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
+[[ "${AQL_INCLUDE_APK:-}" == "true" ]]
+[[ "${AQL_CANDIDATE_RUN_ID:-}" =~ ^[1-9][0-9]*$ ]]
+
+python3 tools/release_candidate_manifest.py verify \
+  --root final-release \
+  --manifest final-release/CANDIDATE.json \
+  --release-tag "$AQL_RELEASE_TAG" \
+  --commit "$AQL_RELEASE_COMMIT" \
+  --run-id "$AQL_CANDIDATE_RUN_ID" \
+  --repository "$GITHUB_REPOSITORY" \
+  --summary "${RUNNER_TEMP}/final-candidate-verification.json"
+
 (cd final-release/artifacts && sha256sum --check --strict SHA256SUMS)
 (cd final-release/supply-chain && sha256sum --check --strict SHA256SUMS)
 
 test -s "final-release/artifacts/AquaLight-${AQL_RELEASE_VERSION}.aab"
 test -s "final-release/artifacts/AquaLight-${AQL_RELEASE_VERSION}.aab.sha256"
+test -s "final-release/artifacts/AquaLight-${AQL_RELEASE_VERSION}.apk"
+test -s "final-release/artifacts/AquaLight-${AQL_RELEASE_VERSION}.apk.sha256"
 test -s "final-release/artifacts/AquaLight-${AQL_RELEASE_VERSION}-mapping.txt"
+test -s "final-release/CANDIDATE.json"
 test -s "final-release/supply-chain/stage14-validation-policy.json"
 test -s "final-release/supply-chain/security/codeql/codeql-summary.json"
 test -s "final-release/supply-chain/final-evidence.json"
@@ -25,17 +40,13 @@ test -n "$(
 test -s "final-release/supply-chain/AquaLight-${AQL_RELEASE_VERSION}.aab.spdx.json"
 test -s "final-release/supply-chain/attestations/AquaLight-${AQL_RELEASE_VERSION}.aab.provenance.json"
 test -s "final-release/supply-chain/attestations/AquaLight-${AQL_RELEASE_VERSION}.aab.sbom.json"
-
-if [[ "${AQL_INCLUDE_APK:-false}" == "true" ]]; then
-  test -s "final-release/artifacts/AquaLight-${AQL_RELEASE_VERSION}.apk"
-  test -s "final-release/artifacts/AquaLight-${AQL_RELEASE_VERSION}.apk.sha256"
-  test -s "final-release/supply-chain/AquaLight-${AQL_RELEASE_VERSION}.apk.spdx.json"
-  test -s "final-release/supply-chain/attestations/AquaLight-${AQL_RELEASE_VERSION}.apk.provenance.json"
-  test -s "final-release/supply-chain/attestations/AquaLight-${AQL_RELEASE_VERSION}.apk.sbom.json"
-fi
+test -s "final-release/supply-chain/AquaLight-${AQL_RELEASE_VERSION}.apk.spdx.json"
+test -s "final-release/supply-chain/attestations/AquaLight-${AQL_RELEASE_VERSION}.apk.provenance.json"
+test -s "final-release/supply-chain/attestations/AquaLight-${AQL_RELEASE_VERSION}.apk.sbom.json"
 
 python3 - \
   final-release/RELEASE.json \
+  final-release/CANDIDATE.json \
   final-release/supply-chain/stage14-validation-policy.json \
   final-release/supply-chain/security/codeql/codeql-summary.json \
   final-release/supply-chain/final-evidence.json \
@@ -44,37 +55,60 @@ python3 - \
   final-release/validation/manual-acceptance.json \
   "$AQL_RELEASE_TAG" \
   "$AQL_RELEASE_COMMIT" \
-  "${AQL_INCLUDE_APK:-false}" <<'PY'
+  "$AQL_CANDIDATE_RUN_ID" <<'PY'
 import hashlib
 import json
 import sys
 from pathlib import Path
 
 release_path = Path(sys.argv[1])
-policy_path = Path(sys.argv[2])
-codeql_path = Path(sys.argv[3])
-final_path = Path(sys.argv[4])
-final_markdown_path = Path(sys.argv[5])
-blocker_path = Path(sys.argv[6])
-manual_path = Path(sys.argv[7])
-expected_tag = sys.argv[8]
-expected_commit = sys.argv[9]
-include_apk = sys.argv[10] == "true"
+candidate_path = Path(sys.argv[2])
+policy_path = Path(sys.argv[3])
+codeql_path = Path(sys.argv[4])
+final_path = Path(sys.argv[5])
+final_markdown_path = Path(sys.argv[6])
+blocker_path = Path(sys.argv[7])
+manual_path = Path(sys.argv[8])
+expected_tag = sys.argv[9]
+expected_commit = sys.argv[10]
+candidate_run_id = sys.argv[11]
 release = json.loads(release_path.read_text(encoding="utf-8"))
+candidate = json.loads(candidate_path.read_text(encoding="utf-8"))
 policy = json.loads(policy_path.read_text(encoding="utf-8"))
 codeql = json.loads(codeql_path.read_text(encoding="utf-8"))
 final = json.loads(final_path.read_text(encoding="utf-8"))
 blocker = json.loads(blocker_path.read_text(encoding="utf-8"))
 manual = json.loads(manual_path.read_text(encoding="utf-8"))
 
-if release.get("status") != "approved-for-publication":
-    raise SystemExit("Release package is not approved for publication.")
+if release.get("status") != "approved-for-archive":
+    raise SystemExit("Release package is not approved for final archive.")
 if release.get("releaseTag") != expected_tag:
     raise SystemExit("Release tag identity mismatch.")
 if release.get("releaseCommit") != expected_commit:
     raise SystemExit("Release commit identity mismatch.")
-if release.get("includeApk") is not include_apk:
-    raise SystemExit("Release APK mode mismatch.")
+if release.get("includeApk") is not True:
+    raise SystemExit("Final archive must include the signed APK and AAB.")
+
+def sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+expected_candidate = {
+    "workflowRunId": candidate_run_id,
+    "manifestSha256": sha256(candidate_path),
+    "aabSha256": candidate["artifactDigests"]["aabSha256"],
+    "apkSha256": candidate["artifactDigests"]["apkSha256"],
+    "mappingSha256": candidate["artifactDigests"]["mappingSha256"],
+}
+if release.get("candidate") != expected_candidate:
+    raise SystemExit("Final archive candidate identity mismatch.")
+expected_manual_candidate = {
+    "workflowRunId": candidate_run_id,
+    "manifestSha256": sha256(candidate_path),
+    "signingCertificateSha256": candidate["signingCertificateSha256"],
+    **candidate["artifactDigests"],
+}
+if manual.get("candidateApproval") != expected_manual_candidate:
+    raise SystemExit("Manual acceptance candidate identity mismatch.")
 
 for label, value, commit_required in (
     ("Stage 14 policy", policy, False),
@@ -87,6 +121,8 @@ for label, value, commit_required in (
         raise SystemExit(f"{label} evidence is not approved.")
     if commit_required and value.get("releaseCommit") != expected_commit:
         raise SystemExit(f"{label} evidence does not belong to the release commit.")
+if final.get("status") != "approved-for-archive":
+    raise SystemExit("Final evidence does not approve the archive.")
 
 release_policy = release.get("stage14Policy", {})
 for field in ("policyId", "sourceSha256", "canonicalSha256"):
@@ -94,9 +130,6 @@ for field in ("policyId", "sourceSha256", "canonicalSha256"):
         raise SystemExit(f"Release policy identity mismatch: {field}")
     if final.get("stage14Policy", {}).get(field) != policy.get(field):
         raise SystemExit(f"Final evidence policy identity mismatch: {field}")
-
-def sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 release_evidence = release.get("finalEvidence", {})
 expected_hashes = {

@@ -323,59 +323,59 @@ def build_artifact_paths(
         "AAB SBOM attestation",
     )
 
-    apk_paths: list[Path] = []
-    checksum_paths = [checksums, aab_checksum]
-    sbom_paths = [aab_sbom]
-    provenance_paths = [aab_provenance, aab_sbom_attestation]
+    if not include_apk:
+        raise FinalEvidenceFailure(
+            "Stage 14 final evidence requires both the signed APK and AAB"
+        )
+    apk = require_file(
+        artifacts / f"AquaLight-{version}.apk",
+        "signed release APK",
+    )
+    apk_checksum = require_file(
+        artifacts / f"AquaLight-{version}.apk.sha256",
+        "APK checksum",
+    )
+    require_file(
+        artifacts / "signed-apk-verification.txt",
+        "APK signing verification",
+    )
+    apk_sbom = require_file(
+        supply_chain / f"AquaLight-{version}.apk.spdx.json",
+        "APK SPDX SBOM",
+    )
+    apk_provenance = require_file(
+        supply_chain
+        / f"attestations/AquaLight-{version}.apk.provenance.json",
+        "APK provenance",
+    )
+    apk_sbom_attestation = require_file(
+        supply_chain / f"attestations/AquaLight-{version}.apk.sbom.json",
+        "APK SBOM attestation",
+    )
+    candidate_manifest = release_root / "CANDIDATE.json"
+    require_passed_json(
+        candidate_manifest,
+        "release candidate manifest",
+        commit,
+    )
+    checksum_paths = [checksums, aab_checksum, apk_checksum]
+    sbom_paths = [aab_sbom, apk_sbom]
+    provenance_paths = [
+        aab_provenance,
+        aab_sbom_attestation,
+        apk_provenance,
+        apk_sbom_attestation,
+    ]
     expected_artifact_names = {
         f"AquaLight-{version}.aab",
         f"AquaLight-{version}.aab.sha256",
+        f"AquaLight-{version}.apk",
+        f"AquaLight-{version}.apk.sha256",
         f"AquaLight-{version}-mapping.txt",
         "SHA256SUMS",
         "signed-aab-verification.txt",
+        "signed-apk-verification.txt",
     }
-    if include_apk:
-        apk = require_file(
-            artifacts / f"AquaLight-{version}.apk",
-            "signed release APK",
-        )
-        apk_paths.append(apk)
-        checksum_paths.append(
-            require_file(
-                artifacts / f"AquaLight-{version}.apk.sha256",
-                "APK checksum",
-            )
-        )
-        require_file(
-            artifacts / "signed-apk-verification.txt",
-            "APK signing verification",
-        )
-        expected_artifact_names.update(
-            {
-                f"AquaLight-{version}.apk",
-                f"AquaLight-{version}.apk.sha256",
-                "signed-apk-verification.txt",
-            }
-        )
-        sbom_paths.append(
-            require_file(
-                supply_chain / f"AquaLight-{version}.apk.spdx.json",
-                "APK SPDX SBOM",
-            )
-        )
-        provenance_paths.extend(
-            [
-                require_file(
-                    supply_chain
-                    / f"attestations/AquaLight-{version}.apk.provenance.json",
-                    "APK provenance",
-                ),
-                require_file(
-                    supply_chain / f"attestations/AquaLight-{version}.apk.sbom.json",
-                    "APK SBOM attestation",
-                ),
-            ]
-        )
     actual_artifact_names = {
         path.name
         for path in artifacts.iterdir()
@@ -492,11 +492,12 @@ def build_artifact_paths(
         ),
         "release-blocker-inventory": (True, [blocker]),
         "release-aab": (True, [aab]),
-        "release-apk": (include_apk, apk_paths),
+        "release-apk": (True, [apk]),
         "release-mapping": (True, [mapping]),
         "release-checksums": (True, checksum_paths),
         "release-sbom": (True, sbom_paths),
         "release-provenance": (True, provenance_paths),
+        "release-candidate-manifest": (True, [candidate_manifest]),
         "manual-acceptance": (True, [manual]),
         "final-summary-json": (True, []),
         "final-summary-markdown": (True, []),
@@ -509,8 +510,8 @@ def render_markdown(summary: dict[str, Any]) -> str:
         "",
         f"- Release: `{summary['releaseTag']}`",
         f"- Commit: `{summary['releaseCommit']}`",
-        f"- APK included: `{'yes' if summary['includeApk'] else 'no'}`",
-        "- Decision: `approved-for-publication`",
+        "- APK included: `yes`",
+        "- Decision: `approved-for-archive`",
         "",
         "| Artifact | Status | Files |",
         "|---|---:|---:|",
@@ -523,9 +524,10 @@ def render_markdown(summary: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-            "All automated evidence belongs to the release commit. The six "
-            "physical, accessibility and legal gates were supplied through the "
-            "protected production release environment and verified fail-closed.",
+            "All automated evidence belongs to the release commit. The five "
+            "signed-candidate physical acceptance gates were supplied through "
+            "the protected production release environment and verified against "
+            "the immutable candidate manifest.",
             "",
         ]
     )
@@ -561,6 +563,10 @@ def generate(
     if not COMMIT_PATTERN.fullmatch(commit):
         raise FinalEvidenceFailure(
             "commit must be a lowercase 40-character Git SHA"
+        )
+    if not include_apk:
+        raise FinalEvidenceFailure(
+            "Stage 14 final archive requires the signed APK and AAB"
         )
     for root, label in (
         (release_root, "release"),
@@ -642,14 +648,14 @@ def generate(
     artifacts.sort(key=lambda artifact: order[artifact["id"]])
 
     summary = {
-        "schemaVersion": 1,
+        "schemaVersion": 2,
         "passed": True,
-        "status": "approved-for-publication",
+        "status": "approved-for-archive",
         "suite": "final-evidence",
         "releaseTag": release_tag,
         "releaseVersion": release_version,
         "releaseCommit": commit,
-        "includeApk": include_apk,
+        "includeApk": True,
         "stage14Policy": {
             "policyId": policy["policyId"],
             "sourceSha256": policy["sourceSha256"],

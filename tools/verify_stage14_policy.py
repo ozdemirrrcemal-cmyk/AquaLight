@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 POLICY_ID = "aqualight-stage14-commercial-release"
 TAG_PATTERN = r"^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$"
 EMULATOR_API_LEVELS = [27, 36]
@@ -32,11 +32,14 @@ PIPELINE_ORDER = [
     "instrumentation-api-27-36",
     "clean-install",
     "upgrade-install",
-    "release-signing-build",
-    "checksum",
-    "sbom-provenance",
+    "release-candidate-signing-build",
+    "candidate-checksum",
+    "candidate-sbom-provenance",
+    "candidate-archive",
+    "physical-candidate-acceptance",
+    "candidate-identity-verification",
     "final-evidence",
-    "publication",
+    "final-archive",
 ]
 REQUIRED_SUITES = [
     ("repository-guards", "automated"),
@@ -58,12 +61,11 @@ REQUIRED_SUITES = [
     ("release-build", "automated"),
     ("supply-chain", "automated"),
     ("final-evidence", "automated"),
-    ("physical-phone-reboot", "manual"),
-    ("physical-permission-permanent-denial", "manual"),
-    ("physical-network-power-interruption", "manual"),
-    ("talkback", "manual"),
-    ("privacy-terms-approval", "manual"),
-    ("physical-device-release-candidate", "manual"),
+    ("signed-apk-clean-install", "manual"),
+    ("authentication-account-isolation", "manual"),
+    ("process-restart-reboot", "manual"),
+    ("permission-connectivity-resilience", "manual"),
+    ("critical-end-to-end", "manual"),
 ]
 REQUIRED_ARTIFACTS = [
     ("policy-validation", "json", "required"),
@@ -87,11 +89,12 @@ REQUIRED_ARTIFACTS = [
     ("accessibility", "json", "required"),
     ("release-blocker-inventory", "json", "required"),
     ("release-aab", "aab", "required"),
-    ("release-apk", "apk", "when-apk-requested"),
+    ("release-apk", "apk", "required"),
     ("release-mapping", "text", "required"),
     ("release-checksums", "sha256-manifest", "required"),
     ("release-sbom", "spdx-json", "required"),
     ("release-provenance", "json", "required"),
+    ("release-candidate-manifest", "json", "required"),
     ("manual-acceptance", "json", "required"),
     ("final-summary-json", "json", "required"),
     ("final-summary-markdown", "markdown", "required"),
@@ -160,7 +163,7 @@ def validate_release(value: Any) -> None:
         "smokeVariant": "releaseSmoke",
         "minifiedCandidateRequired": True,
         "signedAabRequired": True,
-        "apkMode": "optional-on-request",
+        "apkMode": "required",
     }
     for key, expected_value in expected.items():
         require_exact(release[key], expected_value, f"release.{key}")
@@ -176,6 +179,69 @@ def validate_android_workflows(
     emulator_workflow_text: str,
     release_workflow_text: str,
 ) -> None:
+    for token, label in (
+        ("candidate_run_id:", "candidate workflow-run selector input"),
+        ("inputs.phase == 'candidate'", "candidate phase dispatch"),
+        ("inputs.phase == 'finalize'", "finalize phase dispatch"),
+        (
+            "materialize_candidate.sh",
+            "signed candidate manifest materialization",
+        ),
+        (
+            "release_candidate_manifest.py verify",
+            "immutable candidate verification",
+        ),
+        (
+            "verify_final_archive.sh",
+            "final byte-identical archive verification",
+        ),
+        (
+            "AquaLight-Candidate-",
+            "signed candidate artifact archive",
+        ),
+        (
+            "AquaLight-Final-",
+            "accepted final artifact archive",
+        ),
+    ):
+        if token not in release_workflow_text:
+            raise PolicyFailure(f"release workflow is missing {label}")
+    require_exact(
+        release_workflow_text.count('AQL_INCLUDE_APK: "true"'),
+        2,
+        "release workflow mandatory APK binding count",
+    )
+    candidate_marker = "\n  candidate:\n"
+    finalize_marker = "\n  finalize:\n"
+    if (
+        release_workflow_text.count(candidate_marker) != 1
+        or release_workflow_text.count(finalize_marker) != 1
+    ):
+        raise PolicyFailure(
+            "release workflow must define one candidate and one finalize job"
+        )
+    candidate_text = release_workflow_text.split(candidate_marker, 1)[1].split(
+        "\n  finalize_identity:\n",
+        1,
+    )[0]
+    finalize_text = release_workflow_text.split(finalize_marker, 1)[1]
+    if "verify_manual_acceptance.py" in candidate_text:
+        raise PolicyFailure(
+            "candidate build must finish before protected manual acceptance"
+        )
+    for token in (
+        "./gradlew",
+        "build_release.sh",
+        "assembleRelease",
+        "bundleRelease",
+        "RELEASE_KEYSTORE_BASE64",
+        "actions/attest@",
+    ):
+        if token in finalize_text:
+            raise PolicyFailure(
+                f"finalize phase must not rebuild or re-sign the candidate: {token}"
+            )
+
     for token, label in (
         (
             'cmdline-tools-version: "15859902"',
@@ -455,13 +521,20 @@ def validate_completion(value: Any) -> None:
     completion = require_object(value, "completion")
     keys = {
         "sameCommitEvidenceRequired",
+        "sameCandidateArtifactsRequired",
         "failClosed",
         "manualGatesMustBeApproved",
-        "publicationRequiresAllRequiredArtifacts",
+        "finalArchiveRequiresAllRequiredArtifacts",
+        "googlePlayUploadAllowed",
     }
     require_exact_keys(completion, keys, "completion")
-    for key in keys:
+    for key in keys - {"googlePlayUploadAllowed"}:
         require_exact(completion[key], True, f"completion.{key}")
+    require_exact(
+        completion["googlePlayUploadAllowed"],
+        False,
+        "completion.googlePlayUploadAllowed",
+    )
 
 
 def validate_policy(

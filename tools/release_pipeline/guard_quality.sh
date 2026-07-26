@@ -14,13 +14,11 @@ release_commit="$(git rev-list -n 1 "$release_tag")"
 git merge-base --is-ancestor "$release_commit" origin/main
 [[ "$(git rev-parse HEAD)" == "$release_commit" ]]
 
-include_apk="false"
-[[ "${AQL_INCLUDE_APK:-false}" == "true" ]] && include_apk="true"
 {
   echo "release-tag=$release_tag"
   echo "release-version=${release_tag#v}"
   echo "release-commit=$release_commit"
-  echo "include-apk=$include_apk"
+  echo "include-apk=true"
 } >> "$GITHUB_OUTPUT"
 
 mkdir -p release-quality

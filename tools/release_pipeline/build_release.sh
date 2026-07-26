@@ -5,6 +5,9 @@ export LC_ALL=C
 [[ "${AQL_PRODUCTION_RELEASE_ENABLED:-}" == "true" ]]
 [[ "${AQL_RELEASE_COMMIT:-}" =~ ^[0-9a-f]{40}$ ]]
 [[ "$(git rev-parse HEAD)" == "$AQL_RELEASE_COMMIT" ]]
+[[ "${AQL_INCLUDE_APK:-}" == "true" ]]
+release_root="${AQL_RELEASE_ROOT:-candidate-release}"
+[[ "$release_root" == "candidate-release" ]]
 for name in \
   AQL_FIREBASE_DEBUG_CONFIG_BASE64 \
   AQL_FIREBASE_STAGING_CONFIG_BASE64 \
@@ -30,7 +33,11 @@ umask 077
 signing_dir="${RUNNER_TEMP}/aqualight-signing"
 keystore_path="${signing_dir}/release-key.jks"
 rm -rf "$signing_dir"
-mkdir -p "$signing_dir/probe" final-release/artifacts final-release/supply-chain/attestations
+rm -rf "$release_root/artifacts" "$release_root/supply-chain/attestations"
+mkdir -p \
+  "$signing_dir/probe" \
+  "$release_root/artifacts" \
+  "$release_root/supply-chain/attestations"
 printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 --decode > "$keystore_path"
 test -s "$keystore_path"
 chmod 600 "$keystore_path"
@@ -58,13 +65,12 @@ jarsigner \
 jarsigner -verify "$signing_dir/probe-signed.jar" >/dev/null
 ln -s "$keystore_path" release-key.jks
 
-tasks=(bundleRelease)
-[[ "${AQL_INCLUDE_APK:-false}" == "true" ]] && tasks+=(assembleRelease)
+tasks=(bundleRelease assembleRelease)
 ./gradlew "${tasks[@]}" --no-daemon --stacktrace
 ./gradlew :app:verifyFirebaseRuntimePolicy --no-daemon --stacktrace
 python3 tools/firebase_telemetry_guard.py --scan-build-output
 
-artifacts="final-release/artifacts"
+artifacts="$release_root/artifacts"
 source_aab="$(find app/build/outputs/bundle/release -maxdepth 1 -type f -name '*.aab' -print -quit)"
 test -s "$source_aab"
 aab="$artifacts/AquaLight-${AQL_RELEASE_VERSION}.aab"
@@ -76,19 +82,23 @@ source_mapping="app/build/outputs/mapping/release/mapping.txt"
 test -s "$source_mapping"
 cp "$source_mapping" "$artifacts/AquaLight-${AQL_RELEASE_VERSION}-mapping.txt"
 
-if [[ "${AQL_INCLUDE_APK:-false}" == "true" ]]; then
-  source_apk="$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' -print -quit)"
-  test -s "$source_apk"
-  apk="$artifacts/AquaLight-${AQL_RELEASE_VERSION}.apk"
-  cp "$source_apk" "$apk"
-  apksigner="$(find "${ANDROID_HOME}/build-tools" -maxdepth 2 -type f -name apksigner -print | sort -V | tail -n 1)"
-  "$apksigner" verify --verbose --print-certs "$apk" > "$artifacts/signed-apk-verification.txt" 2>&1
-  apk_cert="$(sed -n 's/^Signer #1 certificate SHA-256 digest:[[:space:]]*//p' "$artifacts/signed-apk-verification.txt" | head -n 1)"
-  [[ "$(normalize "$apk_cert")" == "$actual" ]]
-  apkanalyzer="$(command -v apkanalyzer)"
-  [[ -x "$apkanalyzer" ]]
-  [[ "$("$apkanalyzer" manifest application-id "$apk")" == "com.aqua.aqualight" ]]
-  [[ "$("$apkanalyzer" manifest version-name "$apk")" == "$AQL_RELEASE_VERSION" ]]
-fi
+source_apk="$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' -print -quit)"
+test -s "$source_apk"
+apk="$artifacts/AquaLight-${AQL_RELEASE_VERSION}.apk"
+cp "$source_apk" "$apk"
+apksigner="$(find "${ANDROID_HOME}/build-tools" -maxdepth 2 -type f -name apksigner -print | sort -V | tail -n 1)"
+"$apksigner" verify --verbose --print-certs "$apk" > "$artifacts/signed-apk-verification.txt" 2>&1
+apk_cert="$(sed -n 's/^Signer #1 certificate SHA-256 digest:[[:space:]]*//p' "$artifacts/signed-apk-verification.txt" | head -n 1)"
+[[ "$(normalize "$apk_cert")" == "$actual" ]]
+apkanalyzer="$(command -v apkanalyzer)"
+[[ -x "$apkanalyzer" ]]
+[[ "$("$apkanalyzer" manifest application-id "$apk")" == "com.aqua.aqualight" ]]
+version_name="$("$apkanalyzer" manifest version-name "$apk")"
+version_code="$("$apkanalyzer" manifest version-code "$apk")"
+[[ "$version_name" == "$AQL_RELEASE_VERSION" ]]
+[[ "$version_code" =~ ^[1-9][0-9]*$ ]]
+(( version_code <= 2100000000 ))
 
 echo "AQL_RELEASE_CERT_SHA256=$actual" >> "$GITHUB_ENV"
+echo "AQL_RELEASE_VERSION_NAME=$version_name" >> "$GITHUB_ENV"
+echo "AQL_RELEASE_VERSION_CODE=$version_code" >> "$GITHUB_ENV"
