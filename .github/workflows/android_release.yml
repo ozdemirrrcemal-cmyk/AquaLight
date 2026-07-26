@@ -99,11 +99,19 @@ jobs:
           "$sdkmanager_path" "platform-tools" "platforms;android-36"
           "$sdkmanager_path" "build-tools;36.0.0" \
             || "$sdkmanager_path" "build-tools;36.0.1"
-          available_packages="$("$sdkmanager_path" --list)"
-          grep -Fq "platforms;android-37" <<< "$available_packages"
-          grep -Fq \
-            "system-images;android-37;default;x86_64" \
-            <<< "$available_packages"
+          for package in \
+            "platforms;android-27" \
+            "system-images;android-27;default;x86_64" \
+            "platforms;android-37" \
+            "system-images;android-37;default;x86_64"; do
+            "$sdkmanager_path" --install "$package"
+          done
+          test -s "${ANDROID_SDK_ROOT}/platforms/android-27/android.jar"
+          test -s "${ANDROID_SDK_ROOT}/platforms/android-37/android.jar"
+          test -s \
+            "${ANDROID_SDK_ROOT}/system-images/android-27/default/x86_64/package.xml"
+          test -s \
+            "${ANDROID_SDK_ROOT}/system-images/android-37/default/x86_64/package.xml"
           chmod +x ./gradlew
 
       - name: 01-03 Guard, Lint/Detekt and unit coverage
@@ -345,11 +353,19 @@ jobs:
           "$sdkmanager_path" "platform-tools" "platforms;android-36"
           "$sdkmanager_path" "build-tools;36.0.0" \
             || "$sdkmanager_path" "build-tools;36.0.1"
-          available_packages="$("$sdkmanager_path" --list)"
-          grep -Fq "platforms;android-37" <<< "$available_packages"
-          grep -Fq \
-            "system-images;android-37;default;x86_64" \
-            <<< "$available_packages"
+          for package in \
+            "platforms;android-27" \
+            "system-images;android-27;default;x86_64" \
+            "platforms;android-37" \
+            "system-images;android-37;default;x86_64"; do
+            "$sdkmanager_path" --install "$package"
+          done
+          test -s "${ANDROID_SDK_ROOT}/platforms/android-27/android.jar"
+          test -s "${ANDROID_SDK_ROOT}/platforms/android-37/android.jar"
+          test -s \
+            "${ANDROID_SDK_ROOT}/system-images/android-27/default/x86_64/package.xml"
+          test -s \
+            "${ANDROID_SDK_ROOT}/system-images/android-37/default/x86_64/package.xml"
           chmod +x ./gradlew
 
       - name: Prepare minified release smoke

@@ -187,13 +187,28 @@ def validate_android_workflows(
         ),
         (
             "system-images;android-37;default;x86_64",
-            "Android 17 system image preflight",
+            "Android 17 system image installation",
         ),
     ):
         if token not in emulator_workflow_text:
             raise PolicyFailure(f"emulator workflow is missing {label}")
         if token not in release_workflow_text:
             raise PolicyFailure(f"release workflow is missing {label}")
+
+    if (
+        "system-images/android-${matrix_api}/default/x86_64/package.xml"
+        not in emulator_workflow_text
+    ):
+        raise PolicyFailure(
+            "emulator workflow is missing installed system-image verification"
+        )
+    if (
+        "system-images/android-37/default/x86_64/package.xml"
+        not in release_workflow_text
+    ):
+        raise PolicyFailure(
+            "release workflow is missing installed Android 17 image verification"
+        )
 
     require_exact(
         emulator_workflow_text.count('cmdline-tools-version: "15859902"'),

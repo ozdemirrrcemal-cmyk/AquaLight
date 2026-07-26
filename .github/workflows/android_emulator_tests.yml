@@ -75,11 +75,28 @@ jobs:
           yes 2>/dev/null | "$sdkmanager_path" --licenses >/dev/null
           set -o pipefail
           "$sdkmanager_path" "platform-tools" "platforms;android-36"
-          available_packages="$("$sdkmanager_path" --list)"
-          grep -Fq "platforms;android-37" <<< "$available_packages"
-          grep -Fq \
-            "system-images;android-37;default;x86_64" \
-            <<< "$available_packages"
+          matrix_api="${{ matrix.api-level }}"
+          case "$matrix_api" in
+            27)
+              platform_package="platforms;android-27"
+              system_image_package="system-images;android-27;default;x86_64"
+              ;;
+            37)
+              platform_package="platforms;android-37"
+              system_image_package="system-images;android-37;default;x86_64"
+              ;;
+            *)
+              echo "Unsupported commercial emulator API: $matrix_api" >&2
+              exit 1
+              ;;
+          esac
+          "$sdkmanager_path" --install \
+            "$platform_package" \
+            "$system_image_package"
+          test -s \
+            "${ANDROID_SDK_ROOT}/platforms/android-${matrix_api}/android.jar"
+          test -s \
+            "${ANDROID_SDK_ROOT}/system-images/android-${matrix_api}/default/x86_64/package.xml"
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew

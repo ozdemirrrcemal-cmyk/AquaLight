@@ -424,7 +424,11 @@ for token, reason in (
     ),
     (
         "system-images;android-37;default;x86_64",
-        "emulator CI must preflight the stable Android 17 system image",
+        "emulator CI must install the stable Android 17 system image",
+    ),
+    (
+        "system-images/android-${matrix_api}/default/x86_64/package.xml",
+        "emulator CI must verify the installed system-image package metadata",
     ),
 ):
     require(emulator_workflow_path, emulator_workflow, token, reason)
