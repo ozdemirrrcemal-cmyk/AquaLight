@@ -29,14 +29,16 @@ project IDs, project numbers and mobile SDK app IDs.
 
 ## GitHub Actions protection
 
-Non-production pull-request jobs use only the debug, staging and release-smoke repository secrets.
-They never reference the production Firebase input or the `production-release` environment.
+The ordinary Android CI workflow owns the non-production Firebase contract. Pull-request jobs use
+only the debug, staging and release-smoke repository secrets and never reference the production
+Firebase input or the `production-release` environment.
 
-The Stage 14 protected Firebase job, the production release-variant validation job and the release
-workflow reference the `production-release` GitHub environment only on an allowed branch push or
-controlled release tag. Production configuration therefore cannot reach a runner until that
-environment's protection and deployment rules allow the job to start. The environment must restrict
-access to `commercial/14-final-validation` while Stage 14 is active and to controlled `v*.*.*` tags.
+The Android release workflow owns the complete four-environment contract. Its quality job validates
+the exact controlled `v*.*.*` tag under the protected `production-release` environment before any
+candidate is packaged. Production configuration therefore cannot reach an ordinary pull-request
+runner and cannot reach a release runner until the environment's protection and deployment rules
+allow the job to start. The environment must restrict access to controlled tags created from merged
+`main` commits.
 
 The following input names are used by the controlled chain:
 
@@ -60,7 +62,8 @@ Pull requests must pass the non-production Firebase tasks without access to prod
 :app:processReleaseSmokeGoogleServices
 ```
 
-The protected Stage 14 branch push must pass the complete contract on the same commit:
+The protected release-candidate quality job must pass the complete contract on the exact controlled
+tag commit:
 
 ```text
 :app:verifyFirebaseConfigurationContract

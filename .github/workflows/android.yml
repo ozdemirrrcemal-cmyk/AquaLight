@@ -20,6 +20,8 @@ on:
       - "gradlew"
       - "gradlew.bat"
       - ".github/workflows/android.yml"
+      - ".github/workflows/android_emulator_tests.yml"
+      - ".github/workflows/android_release.yml"
 
 concurrency:
   group: android-ci-${{ github.ref }}
@@ -37,6 +39,7 @@ jobs:
       GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8" -Dorg.gradle.daemon=false
       AQL_FIREBASE_DEBUG_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_DEBUG_CONFIG_BASE64 }}
       AQL_FIREBASE_STAGING_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_STAGING_CONFIG_BASE64 }}
+      AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64 }}
       AQL_OTA_MANIFEST_PUBLIC_KEY_PEM: ${{ secrets.AQL_OTA_MANIFEST_PUBLIC_KEY_PEM }}
       AQL_OTA_MANIFEST_KEY_ID: ${{ secrets.AQL_OTA_MANIFEST_KEY_ID }}
 
@@ -121,8 +124,12 @@ jobs:
       - name: Clean project
         run: ./gradlew clean --no-daemon
 
-      - name: Verify resolved Firebase runtime policy
-        run: ./gradlew :app:verifyFirebaseRuntimePolicy --no-daemon --stacktrace
+      - name: Validate Gradle configuration model
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          ./gradlew help --no-daemon --stacktrace \
+            2>&1 | tee firebase-gradle-configuration.log
 
       - name: Verify non-production Firebase inputs
         shell: bash
@@ -130,13 +137,32 @@ jobs:
           set -Eeuo pipefail
           for name in \
             AQL_FIREBASE_DEBUG_CONFIG_BASE64 \
-            AQL_FIREBASE_STAGING_CONFIG_BASE64; do
+            AQL_FIREBASE_STAGING_CONFIG_BASE64 \
+            AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64; do
             value="${!name:-}"
             if [[ -z "${value//[[:space:]]/}" ]]; then
               echo "Required non-production Firebase input is missing: ${name}" >&2
               exit 1
             fi
           done
+
+      - name: Validate non-production Firebase configuration
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          ./gradlew \
+            :app:verifyFirebaseRuntimePolicy \
+            :app:processDebugGoogleServices \
+            :app:processStagingGoogleServices \
+            :app:processReleaseSmokeGoogleServices \
+            --no-daemon \
+            --stacktrace \
+            2>&1 | tee firebase-non-production.log
+
+          test -s app/src/debug/google-services.json
+          test -s app/src/staging/google-services.json
+          test -s app/src/releaseSmoke/google-services.json
+          test ! -e app/src/release/google-services.json
 
       - name: Generate debug keystore
         run: |
@@ -187,6 +213,8 @@ jobs:
           path: |
             build/reports/stage14/policy-validation.json
             build/reports/stage14/android-lint-summary.json
+            firebase-gradle-configuration.log
+            firebase-non-production.log
             android-lint.log
             app/build/reports/stage14/detekt-policy-summary.json
             app/build/reports/lint-results-*.html
@@ -302,3 +330,5 @@ jobs:
         run: |
           rm -f app/src/debug/google-services.json
           rm -f app/src/staging/google-services.json
+          rm -f app/src/releaseSmoke/google-services.json
+          rm -f app/src/release/google-services.json

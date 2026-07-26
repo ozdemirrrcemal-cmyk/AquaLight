@@ -22,6 +22,21 @@ git merge-base --is-ancestor "$release_commit" origin/main
 } >> "$GITHUB_OUTPUT"
 
 mkdir -p release-quality
+for name in \
+  AQL_FIREBASE_DEBUG_CONFIG_BASE64 \
+  AQL_FIREBASE_STAGING_CONFIG_BASE64 \
+  AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64 \
+  AQL_FIREBASE_PRODUCTION_CONFIG_BASE64; do
+  value="${!name:-}"
+  if [[ -z "${value//[[:space:]]/}" ]]; then
+    echo "Required protected Firebase input is missing: ${name}" >&2
+    exit 1
+  fi
+done
+
+./gradlew help --no-daemon --stacktrace \
+  2>&1 | tee release-quality/firebase-gradle-configuration.log
+
 python3 tools/verify_stage14_policy.py \
   --policy config/commercial/stage14-validation-policy.json \
   --app-gradle app/build.gradle \
@@ -97,12 +112,26 @@ export RELEASE_KEY_PASSWORD=aqualight-ci
   :app:verifyFirebaseConfigurationContract \
   :app:verifyFirebaseEnvironmentIsolation \
   :app:verifyFirebaseRuntimePolicy \
+  :app:processDebugGoogleServices \
+  :app:processStagingGoogleServices \
+  :app:processReleaseSmokeGoogleServices \
+  :app:processReleaseGoogleServices \
   --no-daemon \
   --stacktrace \
   2>&1 | tee release-quality/firebase-configuration.log
 
 test -s app/build/reports/firebase/configuration-contract.json
 test -s app/build/reports/firebase/environment-isolation.json
+test -s app/src/debug/google-services.json
+test -s app/src/staging/google-services.json
+test -s app/src/releaseSmoke/google-services.json
+test -s app/src/release/google-services.json
+
+mkdir -p release-quality/firebase
+cp app/build/reports/firebase/configuration-contract.json \
+  release-quality/firebase/configuration-contract.json
+cp app/build/reports/firebase/environment-isolation.json \
+  release-quality/firebase/environment-isolation.json
 
 ./gradlew -PAQL_FINAL_LINT=true \
   :app:verifyDetektPolicy \
