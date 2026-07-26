@@ -550,6 +550,10 @@ require(
 )
 for token, reason in (
     (
+        "class UpgradeInstallSmokeActivity : AppCompatActivity()",
+        "API 33+ application locales require an active AppCompat activity delegate",
+    ),
+    (
         "same-commit-lower-version-code",
         "the first-release upgrade baseline mode must remain explicit",
     ),

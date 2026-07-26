@@ -12,6 +12,7 @@ import android.os.Bundle
 import android.os.Process
 import android.view.Gravity
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import com.aqua.aqualight.app.AquaApp
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
@@ -36,7 +37,7 @@ import org.json.JSONObject
  * state. The higher-version candidate must preserve supported state, start in a new process,
  * discard staged credentials and remove orphaned committed credentials.
  */
-class UpgradeInstallSmokeActivity : Activity() {
+class UpgradeInstallSmokeActivity : AppCompatActivity() {
 
     private val activityScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
