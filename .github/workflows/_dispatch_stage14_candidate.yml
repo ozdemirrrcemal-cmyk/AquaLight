@@ -99,3 +99,5 @@ jobs:
 
           echo "Candidate run ID: ${run_id}"
           echo "Candidate run URL: ${run_url}"
+
+# registered workflow trigger refresh
