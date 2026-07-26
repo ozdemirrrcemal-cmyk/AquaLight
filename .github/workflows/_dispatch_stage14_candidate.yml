@@ -1,0 +1,74 @@
+name: Dispatch Stage 14 Candidate
+
+on:
+  push:
+    branches:
+      - _stage14-dispatch-candidate-v0140-final
+
+permissions:
+  actions: write
+  contents: write
+  issues: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Dispatch candidate and report run
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_COMMIT: da88a8e317b759c5832d05144a29f7941cc8a884
+          RELEASE_TAG: v0.14.0
+          TEMP_BRANCH: _stage14-dispatch-candidate-v0140-final
+        run: |
+          set -Eeuo pipefail
+
+          cleanup() {
+            gh api --method DELETE \
+              "repos/${GITHUB_REPOSITORY}/git/refs/heads/${TEMP_BRANCH}" \
+              >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          main_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')"
+          tag_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}" --jq '.object.sha')"
+          [[ "$main_sha" == "$EXPECTED_COMMIT" ]]
+          [[ "$tag_sha" == "$EXPECTED_COMMIT" ]]
+
+          before_id="$(gh api \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/android_release.yml/runs?event=workflow_dispatch&per_page=1" \
+            --jq '.workflow_runs[0].id // 0')"
+
+          gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/android_release.yml/dispatches" \
+            -f ref=main \
+            -f "inputs[release_tag]=${RELEASE_TAG}" \
+            -f 'inputs[phase]=candidate'
+
+          run_id=""
+          run_url=""
+          for _ in $(seq 1 90); do
+            row="$(gh api \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/android_release.yml/runs?event=workflow_dispatch&branch=main&per_page=30" \
+              --jq ".workflow_runs[] | select(.id > ${before_id} and .head_sha == \"${EXPECTED_COMMIT}\") | [.id, .html_url] | @tsv" \
+              | head -n 1)"
+            if [[ -n "$row" ]]; then
+              IFS=$'\t' read -r run_id run_url <<< "$row"
+              break
+            fi
+            sleep 4
+          done
+
+          [[ "$run_id" =~ ^[1-9][0-9]*$ ]]
+          [[ "$run_url" == https://github.com/* ]]
+
+          body="Stage 14 candidate yeniden başlatıldı.\n\n- Tag: \`${RELEASE_TAG}\`\n- Commit: \`${EXPECTED_COMMIT}\`\n- Run ID: \`${run_id}\`\n- Run: ${run_url}\n- Phase: \`candidate\`\n- APK inclusion: \`true\`"
+          gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/issues/105/comments" \
+            -f body="$body" \
+            >/dev/null
+
+          echo "Candidate run ID: ${run_id}"
+          echo "Candidate run URL: ${run_url}"
