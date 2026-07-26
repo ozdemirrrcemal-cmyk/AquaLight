@@ -190,8 +190,8 @@ def validate_android_workflows(
             "reviewed Android CLI binary binding",
         ),
         (
-            "system-images/android-37/default/x86_64",
-            "Android 17 system image installation with Android CLI",
+            "system-images/android-CinnamonBun/google_apis_ps16k/x86_64",
+            "Android 17 16 KB system image installation with Android CLI",
         ),
     ):
         if token not in emulator_workflow_text:
@@ -200,14 +200,14 @@ def validate_android_workflows(
             raise PolicyFailure(f"release workflow is missing {label}")
 
     if (
-        "system-images/android-${matrix_api}/default/x86_64/package.xml"
+        "system-images/android-CinnamonBun/google_apis_ps16k/x86_64/package.xml"
         not in emulator_workflow_text
     ):
         raise PolicyFailure(
             "emulator workflow is missing installed system-image verification"
         )
     if (
-        "system-images/android-37/default/x86_64/package.xml"
+        "system-images/android-CinnamonBun/google_apis_ps16k/x86_64/package.xml"
         not in release_workflow_text
     ):
         raise PolicyFailure(
@@ -229,6 +229,11 @@ def validate_android_workflows(
         release_workflow_text.count("channel: beta"),
         1,
         "release workflow API 37 beta-channel binding count",
+    )
+    require_exact(
+        release_workflow_text.count("target: google_apis_ps16k"),
+        1,
+        "release workflow API 37 image-target binding count",
     )
     require_exact(
         release_workflow_text.count("sdk install --beta"),
@@ -287,9 +292,18 @@ def validate_android_workflows(
         "emulator workflow API matrix",
     )
     require_exact(
-        emulator_workflow_text.count("api-level: ${{ matrix.api-level }}"),
+        emulator_workflow_text.count(
+            "api-level: ${{ matrix.api-level == 37 && 'CinnamonBun' || matrix.api-level }}"
+        ),
         1,
         "emulator workflow matrix runner binding count",
+    )
+    require_exact(
+        emulator_workflow_text.count(
+            "target: ${{ matrix.api-level == 37 && 'google_apis_ps16k' || 'default' }}"
+        ),
+        1,
+        "emulator workflow matrix image-target binding count",
     )
     require_exact(
         emulator_workflow_text.count(
@@ -299,17 +313,14 @@ def validate_android_workflows(
         "emulator workflow smoke runner binding count",
     )
 
-    release_levels = [
-        int(value)
-        for value in re.findall(
-            r"(?m)^\s*api-level:\s*([0-9]+)\s*$",
-            release_workflow_text,
-        )
-    ]
+    release_levels = re.findall(
+        r"(?m)^\s*api-level:\s*(27|CinnamonBun)\s*$",
+        release_workflow_text,
+    )
     require_exact(
         release_levels,
-        EMULATOR_API_LEVELS,
-        "release workflow API levels",
+        ["27", "CinnamonBun"],
+        "release workflow runner API identities",
     )
     release_smoke_levels = [
         int(value)

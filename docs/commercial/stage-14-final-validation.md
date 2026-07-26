@@ -95,8 +95,9 @@ Implementation note:
 
 - Google's current Android 17 SDK setup still publishes the API 37 SDK and system
   image through the preview package channel. CI pins command-line tools package
-  `15859902`, keeps API 27 on `stable`, scopes `beta` to API 37 only, and rejects
-  `dev` or `canary` channels.
+  `15859902`, binds API 37 to the published `CinnamonBun` 16 KB Google APIs image,
+  keeps API 27 on `stable`, scopes `beta` to API 37 only, and rejects `dev` or
+  `canary` channels.
 
 ### 8. Complete clean-install automation
 

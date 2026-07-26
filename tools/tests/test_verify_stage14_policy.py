@@ -107,11 +107,14 @@ class Stage14PolicyTest(unittest.TestCase):
 
     def test_release_workflow_api_drift_is_rejected(self) -> None:
         drifted_workflow = self.release_workflow.replace(
-            "api-level: 37",
-            "api-level: 35",
+            "api-level: CinnamonBun",
+            "api-level: Baklava",
         )
 
-        with self.assertRaisesRegex(PolicyFailure, "release workflow API levels"):
+        with self.assertRaisesRegex(
+            PolicyFailure,
+            "release workflow runner API identities",
+        ):
             validate_policy(
                 self.policy,
                 self.app_gradle,
@@ -121,8 +124,8 @@ class Stage14PolicyTest(unittest.TestCase):
 
     def test_current_system_image_install_cannot_be_removed(self) -> None:
         drifted_workflow = self.emulator_workflow.replace(
-            "system-images/android-37/default/x86_64",
-            "system-images/android-36/default/x86_64",
+            "system-images/android-CinnamonBun/google_apis_ps16k/x86_64",
+            "system-images/android-Baklava/google_apis_ps16k/x86_64",
         )
 
         with self.assertRaisesRegex(PolicyFailure, "system image installation"):
