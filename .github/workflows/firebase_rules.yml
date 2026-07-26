@@ -1,154 +1,60 @@
-name: AquaLight v0.14.0 Candidate Bootstrap Once
+name: Firebase Rules Validation
 
 on:
-  schedule:
-    - cron: '*/5 * * * *'
+  push:
+    branches:
+      - main
+    paths:
+      - firebase.json
+      - firestore.rules
+      - firestore.indexes.json
+      - firebase/**
+      - .github/workflows/firebase_rules.yml
+  pull_request:
+    paths:
+      - firebase.json
+      - firestore.rules
+      - firestore.indexes.json
+      - firebase/**
+      - .github/workflows/firebase_rules.yml
 
 permissions:
-  actions: write
-  contents: write
-  issues: write
+  contents: read
 
 concurrency:
-  group: v0140-candidate-bootstrap-once
-  cancel-in-progress: false
+  group: firebase-rules-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  bootstrap:
+  validate-rules:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
+
     steps:
-      - name: Clean temporary state, move tag and dispatch candidate once
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: v0.14.0
-          CLEAN_SOURCE_COMMIT: 538a59836191ecb8ca3de452415041f1aee7bbce
-          MAIN_WORKFLOW_PATH: .github/workflows/firebase_rules.yml
-          TEMP_WORKFLOW_PATH: .github/workflows/_dispatch_v0140_candidate_once.yml
-          TEMP_BRANCH: _v0140-bootstrap-once
-          TRACKING_ISSUE: '110'
-        run: |
-          set -Eeuo pipefail
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-          current_main="$(gh api \
-            -H 'Accept: application/vnd.github+json' \
-            -H 'X-GitHub-Api-Version: 2022-11-28' \
-            "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" \
-            --jq '.object.sha')"
-          [[ "$current_main" == "$GITHUB_SHA" ]]
+      - name: Set up Node.js 22
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
 
-          original_content="$(gh api \
-            -H 'Accept: application/vnd.github+json' \
-            -H 'X-GitHub-Api-Version: 2022-11-28' \
-            "repos/${GITHUB_REPOSITORY}/contents/${MAIN_WORKFLOW_PATH}?ref=${CLEAN_SOURCE_COMMIT}" \
-            --jq '.content | gsub("\\n"; "")')"
-          [[ -n "$original_content" ]]
+      - name: Set up JDK 21 for Firestore emulator
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          distribution: temurin
+          java-version: '21'
 
-          current_workflow_sha="$(gh api \
-            -H 'Accept: application/vnd.github+json' \
-            -H 'X-GitHub-Api-Version: 2022-11-28' \
-            "repos/${GITHUB_REPOSITORY}/contents/${MAIN_WORKFLOW_PATH}?ref=main" \
-            --jq '.sha')"
+      - name: Install pinned Firebase test dependencies
+        working-directory: firebase
+        run: npm ci --ignore-scripts --no-audit --no-fund
 
-          gh api --method PUT \
-            -H 'Accept: application/vnd.github+json' \
-            -H 'X-GitHub-Api-Version: 2022-11-28' \
-            "repos/${GITHUB_REPOSITORY}/contents/${MAIN_WORKFLOW_PATH}" \
-            -f message='ci: restore Firebase rules workflow' \
-            -f content="$original_content" \
-            -f sha="$current_workflow_sha" \
-            -f branch=main \
-            >/dev/null
+      - name: Validate index JSON
+        run: node -e "JSON.parse(require('fs').readFileSync('firestore.indexes.json', 'utf8'))"
 
-          temp_workflow_sha="$(gh api \
-            -H 'Accept: application/vnd.github+json' \
-            -H 'X-GitHub-Api-Version: 2022-11-28' \
-            "repos/${GITHUB_REPOSITORY}/contents/${TEMP_WORKFLOW_PATH}?ref=main" \
-            --jq '.sha')"
-
-          gh api --method DELETE \
-            -H 'Accept: application/vnd.github+json' \
-            -H 'X-GitHub-Api-Version: 2022-11-28' \
-            "repos/${GITHUB_REPOSITORY}/contents/${TEMP_WORKFLOW_PATH}" \
-            -f message='ci: remove one-time v0.14.0 dispatcher' \
-            -f sha="$temp_workflow_sha" \
-            -f branch=main \
-            >/dev/null
-
-          release_commit="$(gh api \
-            -H 'Accept: application/vnd.github+json' \
-            -H 'X-GitHub-Api-Version: 2022-11-28' \
-            "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" \
-            --jq '.object.sha')"
-          [[ "$release_commit" =~ ^[0-9a-f]{40}$ ]]
-          [[ "$release_commit" != "$current_main" ]]
-
-          gh api --method PATCH \
-            -H 'Accept: application/vnd.github+json' \
-            -H 'X-GitHub-Api-Version: 2022-11-28' \
-            "repos/${GITHUB_REPOSITORY}/git/refs/tags/${RELEASE_TAG}" \
-            -f sha="$release_commit" \
-            -F force=true \
-            >/dev/null
-
-          tag_sha="$(gh api \
-            -H 'Accept: application/vnd.github+json' \
-            -H 'X-GitHub-Api-Version: 2022-11-28' \
-            "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}" \
-            --jq '.object.sha')"
-          [[ "$tag_sha" == "$release_commit" ]]
-
-          before_id="$(gh api \
-            -H 'Accept: application/vnd.github+json' \
-            -H 'X-GitHub-Api-Version: 2022-11-28' \
-            "repos/${GITHUB_REPOSITORY}/actions/workflows/android_release.yml/runs?event=workflow_dispatch&per_page=1" \
-            --jq '.workflow_runs[0].id // 0')"
-
-          gh api --method POST \
-            -H 'Accept: application/vnd.github+json' \
-            -H 'X-GitHub-Api-Version: 2022-11-28' \
-            "repos/${GITHUB_REPOSITORY}/actions/workflows/android_release.yml/dispatches" \
-            -f ref=main \
-            -f "inputs[release_tag]=${RELEASE_TAG}" \
-            -f 'inputs[phase]=candidate'
-
-          run_id=''
-          run_url=''
-          for _ in $(seq 1 90); do
-            row="$(gh api \
-              -H 'Accept: application/vnd.github+json' \
-              -H 'X-GitHub-Api-Version: 2022-11-28' \
-              "repos/${GITHUB_REPOSITORY}/actions/workflows/android_release.yml/runs?event=workflow_dispatch&branch=main&per_page=30" \
-              --jq ".workflow_runs[] | select(.id > ${before_id} and .head_sha == \"${release_commit}\" and .path == \".github/workflows/android_release.yml\") | [.id, .html_url] | @tsv" \
-              | head -n 1)"
-            if [[ -n "$row" ]]; then
-              IFS=$'\t' read -r run_id run_url <<< "$row"
-              break
-            fi
-            sleep 4
-          done
-
-          [[ "$run_id" =~ ^[1-9][0-9]*$ ]]
-          [[ "$run_url" == https://github.com/* ]]
-
-          body="v0.14.0 candidate başlatıldı.\n\n- Clean main commit: \`${release_commit}\`\n- Candidate run ID: \`${run_id}\`\n- Run: ${run_url}\n- Phase: \`candidate\`\n- APK + AAB: zorunlu\n- Google Play upload: yok"
-          gh api --method POST \
-            -H 'Accept: application/vnd.github+json' \
-            -H 'X-GitHub-Api-Version: 2022-11-28' \
-            "repos/${GITHUB_REPOSITORY}/issues/${TRACKING_ISSUE}/comments" \
-            -f body="$body" \
-            >/dev/null
-
-          gh api --method PATCH \
-            -H 'Accept: application/vnd.github+json' \
-            -H 'X-GitHub-Api-Version: 2022-11-28' \
-            "repos/${GITHUB_REPOSITORY}/issues/${TRACKING_ISSUE}" \
-            -f state=closed \
-            >/dev/null
-
-          gh api --method DELETE \
-            -H 'Accept: application/vnd.github+json' \
-            -H 'X-GitHub-Api-Version: 2022-11-28' \
-            "repos/${GITHUB_REPOSITORY}/git/refs/heads/${TEMP_BRANCH}" \
-            >/dev/null
+      - name: Run Firestore rules tests
+        run: >-
+          npx --yes firebase-tools@15.24.0 emulators:exec
+          --only firestore
+          --project demo-aqualight-feedback
+          "node firebase/rules.test.mjs"
