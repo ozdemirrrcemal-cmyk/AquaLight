@@ -1,0 +1,101 @@
+name: Dispatch Stage 14 Candidate
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/_dispatch_stage14_candidate.yml"
+
+permissions:
+  actions: write
+  contents: write
+  issues: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Remove dispatcher, retag clean main and start candidate
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: v0.14.0
+          WORKFLOW_PATH: .github/workflows/_dispatch_stage14_candidate.yml
+        run: |
+          set -Eeuo pipefail
+
+          main_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')"
+          [[ "$main_sha" == "$GITHUB_SHA" ]]
+
+          workflow_blob_sha="$(gh api \
+            "repos/${GITHUB_REPOSITORY}/contents/${WORKFLOW_PATH}?ref=main" \
+            --jq '.sha')"
+
+          gh api --method DELETE \
+            "repos/${GITHUB_REPOSITORY}/contents/${WORKFLOW_PATH}" \
+            -f message='ci: remove temporary candidate dispatcher' \
+            -f sha="$workflow_blob_sha" \
+            -f branch=main \
+            >/dev/null
+
+          release_commit=""
+          for _ in $(seq 1 60); do
+            release_commit="$(gh api \
+              "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" \
+              --jq '.object.sha')"
+            if [[ "$release_commit" != "$GITHUB_SHA" ]]; then
+              break
+            fi
+            sleep 2
+          done
+          [[ "$release_commit" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$release_commit" != "$GITHUB_SHA" ]]
+
+          gh api --method PATCH \
+            "repos/${GITHUB_REPOSITORY}/git/refs/tags/${RELEASE_TAG}" \
+            -f sha="$release_commit" \
+            -F force=true \
+            >/dev/null
+
+          tag_sha="$(gh api \
+            "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}" \
+            --jq '.object.sha')"
+          [[ "$tag_sha" == "$release_commit" ]]
+
+          before_id="$(gh api \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/android_release.yml/runs?event=workflow_dispatch&per_page=1" \
+            --jq '.workflow_runs[0].id // 0')"
+
+          gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/android_release.yml/dispatches" \
+            -f ref=main \
+            -f "inputs[release_tag]=${RELEASE_TAG}" \
+            -f 'inputs[phase]=candidate'
+
+          run_id=""
+          run_url=""
+          for _ in $(seq 1 90); do
+            row="$(gh api \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/android_release.yml/runs?event=workflow_dispatch&branch=main&per_page=30" \
+              --jq ".workflow_runs[] | select(.id > ${before_id} and .head_sha == \"${release_commit}\") | [.id, .html_url] | @tsv" \
+              | head -n 1)"
+            if [[ -n "$row" ]]; then
+              IFS=$'\t' read -r run_id run_url <<< "$row"
+              break
+            fi
+            sleep 4
+          done
+
+          [[ "$run_id" =~ ^[1-9][0-9]*$ ]]
+          [[ "$run_url" == https://github.com/* ]]
+
+          body="Stage 14 candidate yeniden başlatıldı.\n\n- Tag: \`${RELEASE_TAG}\`\n- Clean main commit: \`${release_commit}\`\n- Run ID: \`${run_id}\`\n- Run: ${run_url}\n- Phase: \`candidate\`\n- APK inclusion: \`true\`"
+          gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/issues/106/comments" \
+            -f body="$body" \
+            >/dev/null
+
+          echo "Candidate run ID: ${run_id}"
+          echo "Candidate run URL: ${run_url}"
