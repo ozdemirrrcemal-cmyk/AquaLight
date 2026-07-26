@@ -128,7 +128,7 @@ class Stage14PolicyTest(unittest.TestCase):
             "system-images/android-Baklava/google_apis_ps16k/x86_64",
         )
 
-        with self.assertRaisesRegex(PolicyFailure, "system image installation"):
+        with self.assertRaisesRegex(PolicyFailure, "system-image verification"):
             validate_policy(
                 self.policy,
                 self.app_gradle,
@@ -155,13 +155,13 @@ class Stage14PolicyTest(unittest.TestCase):
 
     def test_api_37_preview_package_channel_cannot_be_removed(self) -> None:
         drifted_workflow = self.emulator_workflow.replace(
-            "channel: ${{ matrix.api-level == 37 && 'beta' || 'stable' }}",
+            "channel: ${{ matrix.api-level == 37 && 'canary' || 'stable' }}",
             "channel: stable",
         )
 
         with self.assertRaisesRegex(
             PolicyFailure,
-            "beta-channel binding",
+            "canary-channel binding",
         ):
             validate_policy(
                 self.policy,

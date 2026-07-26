@@ -71,8 +71,6 @@ jobs:
             exit 1
           fi
           echo "$(dirname "$sdkmanager_path")" >> "$GITHUB_PATH"
-          android_cli_path="${sdkmanager_path%/sdkmanager}/android"
-          test -x "$android_cli_path"
           set +o pipefail
           yes 2>/dev/null | "$sdkmanager_path" --licenses >/dev/null
           set -o pipefail
@@ -89,17 +87,14 @@ jobs:
                 "$system_image_package"
               ;;
             37)
-              platform_package="platforms/android-CinnamonBun"
-              system_image_package="system-images/android-CinnamonBun/google_apis_ps16k/x86_64"
+              platform_package="platforms;android-CinnamonBun"
+              system_image_package="system-images;android-CinnamonBun;google_apis_ps16k;x86_64"
               installed_platform="${ANDROID_SDK_ROOT}/platforms/android-CinnamonBun/android.jar"
               installed_image="${ANDROID_SDK_ROOT}/system-images/android-CinnamonBun/google_apis_ps16k/x86_64/package.xml"
-              set +o pipefail
-              yes 2>/dev/null | "$android_cli_path" \
-                --sdk="$ANDROID_SDK_ROOT" \
-                sdk install --beta \
+              "$sdkmanager_path" --install \
                 "$platform_package" \
-                "$system_image_package"
-              set -o pipefail
+                "$system_image_package" \
+                --channel=3
               ;;
             *)
               echo "Unsupported commercial emulator API: $matrix_api" >&2
@@ -176,7 +171,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: ${{ matrix.api-level == 37 && 'CinnamonBun' || matrix.api-level }}
-          channel: ${{ matrix.api-level == 37 && 'beta' || 'stable' }}
+          channel: ${{ matrix.api-level == 37 && 'canary' || 'stable' }}
           target: ${{ matrix.api-level == 37 && 'google_apis_ps16k' || 'default' }}
           arch: x86_64
           profile: pixel_2

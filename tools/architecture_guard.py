@@ -423,20 +423,16 @@ for token, reason in (
         "emulator CI must resolve and validate the configured SDK manager binary",
     ),
     (
-        'android_cli_path="${sdkmanager_path%/sdkmanager}/android"',
-        "emulator CI must use the reviewed Android CLI binary for current SDKs",
-    ),
-    (
-        "system-images/android-CinnamonBun/google_apis_ps16k/x86_64",
+        "system-images;android-CinnamonBun;google_apis_ps16k;x86_64",
         "emulator CI must install the current Android 17 16 KB system image",
     ),
     (
-        "channel: ${{ matrix.api-level == 37 && 'beta' || 'stable' }}",
-        "emulator CI must use beta only for the currently preview-packaged API 37 SDK",
+        "channel: ${{ matrix.api-level == 37 && 'canary' || 'stable' }}",
+        "emulator CI must scope the preview catalog to API 37 only",
     ),
     (
-        "sdk install --beta",
-        "Android CLI must opt into the documented API 37 package channel",
+        "--channel=3",
+        "SDK Manager must opt into the documented API 37 preview package catalog",
     ),
     (
         "system-images/android-CinnamonBun/google_apis_ps16k/x86_64/package.xml",

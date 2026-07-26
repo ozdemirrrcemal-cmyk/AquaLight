@@ -93,8 +93,6 @@ jobs:
             exit 1
           fi
           echo "$(dirname "$sdkmanager_path")" >> "$GITHUB_PATH"
-          android_cli_path="${sdkmanager_path%/sdkmanager}/android"
-          test -x "$android_cli_path"
           set +o pipefail
           yes 2>/dev/null | "$sdkmanager_path" --licenses >/dev/null
           set -o pipefail
@@ -104,13 +102,10 @@ jobs:
           "$sdkmanager_path" --install \
             "platforms;android-27" \
             "system-images;android-27;default;x86_64"
-          set +o pipefail
-          yes 2>/dev/null | "$android_cli_path" \
-            --sdk="$ANDROID_SDK_ROOT" \
-            sdk install --beta \
-            "platforms/android-CinnamonBun" \
-            "system-images/android-CinnamonBun/google_apis_ps16k/x86_64"
-          set -o pipefail
+          "$sdkmanager_path" --install \
+            "platforms;android-CinnamonBun" \
+            "system-images;android-CinnamonBun;google_apis_ps16k;x86_64" \
+            --channel=3
           test -s "${ANDROID_SDK_ROOT}/platforms/android-27/android.jar"
           test -s \
             "${ANDROID_SDK_ROOT}/platforms/android-CinnamonBun/android.jar"
@@ -353,8 +348,6 @@ jobs:
             exit 1
           fi
           echo "$(dirname "$sdkmanager_path")" >> "$GITHUB_PATH"
-          android_cli_path="${sdkmanager_path%/sdkmanager}/android"
-          test -x "$android_cli_path"
           set +o pipefail
           yes 2>/dev/null | "$sdkmanager_path" --licenses >/dev/null
           set -o pipefail
@@ -364,13 +357,10 @@ jobs:
           "$sdkmanager_path" --install \
             "platforms;android-27" \
             "system-images;android-27;default;x86_64"
-          set +o pipefail
-          yes 2>/dev/null | "$android_cli_path" \
-            --sdk="$ANDROID_SDK_ROOT" \
-            sdk install --beta \
-            "platforms/android-CinnamonBun" \
-            "system-images/android-CinnamonBun/google_apis_ps16k/x86_64"
-          set -o pipefail
+          "$sdkmanager_path" --install \
+            "platforms;android-CinnamonBun" \
+            "system-images;android-CinnamonBun;google_apis_ps16k;x86_64" \
+            --channel=3
           test -s "${ANDROID_SDK_ROOT}/platforms/android-27/android.jar"
           test -s \
             "${ANDROID_SDK_ROOT}/platforms/android-CinnamonBun/android.jar"
@@ -409,7 +399,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: CinnamonBun
-          channel: beta
+          channel: canary
           target: google_apis_ps16k
           arch: x86_64
           profile: pixel_2

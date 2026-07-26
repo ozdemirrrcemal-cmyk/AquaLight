@@ -186,12 +186,8 @@ def validate_android_workflows(
             "resolved Android SDK manager binding",
         ),
         (
-            'android_cli_path="${sdkmanager_path%/sdkmanager}/android"',
-            "reviewed Android CLI binary binding",
-        ),
-        (
-            "system-images/android-CinnamonBun/google_apis_ps16k/x86_64",
-            "Android 17 16 KB system image installation with Android CLI",
+            "system-images;android-CinnamonBun;google_apis_ps16k;x86_64",
+            "Android 17 16 KB system image installation",
         ),
     ):
         if token not in emulator_workflow_text:
@@ -215,20 +211,20 @@ def validate_android_workflows(
         )
     require_exact(
         emulator_workflow_text.count(
-            "channel: ${{ matrix.api-level == 37 && 'beta' || 'stable' }}"
+            "channel: ${{ matrix.api-level == 37 && 'canary' || 'stable' }}"
         ),
         1,
-        "emulator workflow API 37 beta-channel binding count",
+        "emulator workflow API 37 canary-channel binding count",
     )
     require_exact(
-        emulator_workflow_text.count("sdk install --beta"),
+        emulator_workflow_text.count("--channel=3"),
         1,
-        "emulator workflow API 37 Android CLI install count",
+        "emulator workflow API 37 preview-package install count",
     )
     require_exact(
-        release_workflow_text.count("channel: beta"),
+        release_workflow_text.count("channel: canary"),
         1,
-        "release workflow API 37 beta-channel binding count",
+        "release workflow API 37 canary-channel binding count",
     )
     require_exact(
         release_workflow_text.count("target: google_apis_ps16k"),
@@ -236,17 +232,17 @@ def validate_android_workflows(
         "release workflow API 37 image-target binding count",
     )
     require_exact(
-        release_workflow_text.count("sdk install --beta"),
+        release_workflow_text.count("--channel=3"),
         2,
-        "release workflow API 37 Android CLI install count",
+        "release workflow API 37 preview-package install count",
     )
     for workflow_name, workflow_text in (
         ("emulator", emulator_workflow_text),
         ("release", release_workflow_text),
     ):
-        if "channel: dev" in workflow_text or "channel: canary" in workflow_text:
+        if "channel: beta" in workflow_text or "channel: dev" in workflow_text:
             raise PolicyFailure(
-                f"{workflow_name} workflow must not use dev or canary SDK channels"
+                f"{workflow_name} workflow must not use undeclared beta or dev SDK channels"
             )
 
     require_exact(
