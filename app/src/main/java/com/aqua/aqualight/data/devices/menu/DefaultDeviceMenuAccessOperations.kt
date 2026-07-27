@@ -24,8 +24,6 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 
 internal interface DeviceMenuRuntimePort {
@@ -86,7 +84,10 @@ internal class DefaultDeviceMenuAccessOperations(
     private val elapsedRealtimeMillis: () -> Long = DeviceElapsedRealtimeClock::nowMillis
 ) : DeviceMenuAccessOperations {
 
-    private val deviceLocks = ConcurrentHashMap<DeviceUid, Mutex>()
+    private val inFlight = ConcurrentHashMap<
+        DeviceUid,
+        CompletableDeferred<DeviceMenuAccessResult>
+    >()
 
     override suspend fun resolve(deviceUid: String): DeviceMenuAccessResult {
         val requestedDeviceUid = deviceUid.trim()
@@ -98,13 +99,25 @@ internal class DefaultDeviceMenuAccessOperations(
         }
 
         val typedDeviceUid = DeviceUid(requestedDeviceUid)
-        val lock = deviceLocks.computeIfAbsent(typedDeviceUid) { Mutex() }
-        return lock.withLock {
-            resolveLocked(typedDeviceUid)
+        val leader = CompletableDeferred<DeviceMenuAccessResult>()
+        val existing = inFlight.putIfAbsent(typedDeviceUid, leader)
+        if (existing != null) {
+            return existing.await()
+        }
+
+        return try {
+            val result = resolveSingle(typedDeviceUid)
+            leader.complete(result)
+            result
+        } catch (error: Throwable) {
+            leader.completeExceptionally(error)
+            throw error
+        } finally {
+            inFlight.remove(typedDeviceUid, leader)
         }
     }
 
-    private suspend fun resolveLocked(
+    private suspend fun resolveSingle(
         deviceUid: DeviceUid
     ): DeviceMenuAccessResult {
         val initialSnapshot = runtimePort.currentDevice(deviceUid)
