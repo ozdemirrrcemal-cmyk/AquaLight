@@ -39,7 +39,7 @@ class DevicesRepository(
     private val runtimeMetadataReducer: DeviceRuntimeMetadataReducer = DeviceRuntimeMetadataReducer(),
     private val statusAggregator: DeviceStatusAggregator = DeviceStatusAggregator(),
     connectivityObserver: DeviceConnectivityObserver? = null,
-    private val wallClockMillis: () -> Long = System.currentTimeMillis,
+    private val wallClockMillis: () -> Long = System::currentTimeMillis,
     private val elapsedRealtimeMillis: () -> Long = DeviceElapsedRealtimeClock::nowMillis
 ) {
 
@@ -187,12 +187,14 @@ class DevicesRepository(
         return runtime.connect(snapshot)
     }
 
-    fun replaceRuntimeAfterControlFailure(deviceUid: DeviceUid): Result<Unit> {
-        val runtime = runtimeRepository
-            ?: return Result.failure(IllegalStateException("Device runtime is not configured."))
-        val snapshot = registryStore.currentDevice(deviceUid)
-            ?: return Result.failure(IllegalArgumentException("Device is not registered."))
-        return runtime.reconnectAfterNetworkRestore(snapshot)
+    fun replaceRuntimeAfterControlFailure(deviceUid: DeviceUid): Result<Unit> = runCatching {
+        val runtime = checkNotNull(runtimeRepository) {
+            "Device runtime is not configured."
+        }
+        val snapshot = requireNotNull(registryStore.currentDevice(deviceUid)) {
+            "Device is not registered."
+        }
+        runtime.reconnectAfterNetworkRestore(snapshot).getOrThrow()
     }
 
     fun commandClient(): AqlWsCommandClient? = runtimeRepository?.commandClient()
