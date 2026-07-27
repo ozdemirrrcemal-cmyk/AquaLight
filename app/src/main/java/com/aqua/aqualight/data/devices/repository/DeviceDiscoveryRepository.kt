@@ -44,10 +44,12 @@ class DeviceDiscoveryRepository(
             return DeviceDiscoveryRepository(
                 discoverySupervisor = AqlDiscoverySupervisor(
                     scanner = AqlDiscoveryUdpScanner(
-                        networkProvider = networkProvider
+                        networkProvider = networkProvider,
+                        requireLocalNetwork = true
                     ),
                     refreshSender = AqlDiscoveryRefreshSender(
-                        networkProvider = networkProvider
+                        networkProvider = networkProvider,
+                        requireLocalNetwork = true
                     ),
                     initialScanningActive = connectivityObserver.isLocalNetworkAvailable()
                 )
