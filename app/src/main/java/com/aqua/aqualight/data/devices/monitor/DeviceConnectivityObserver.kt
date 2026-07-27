@@ -83,13 +83,12 @@ class DeviceConnectivityObserver(context: Context) {
     }
 
     fun currentLocalNetwork(): Network? {
-        val cachedPath = currentPath.get()
-        val cachedNetwork = cachedPath?.network?.takeIf(::hasLocalTransport)
-        if (cachedPath != null && cachedNetwork == null) {
-            currentPath.compareAndSet(cachedPath, null)
-        }
+        // NetworkCallback owns the canonical Wi-Fi/Ethernet set. Trusting its selected path avoids
+        // a false unavailable result while Android is still delivering the first capabilities
+        // callback after onAvailable. onLost removes the cached path synchronously.
+        val callbackNetwork = currentPath.get()?.network
         val activeNetwork = connectivityManager.activeNetwork?.takeIf(::hasLocalTransport)
-        return cachedNetwork ?: activeNetwork
+        return callbackNetwork ?: activeNetwork
     }
 
     fun currentLocalNetworkGeneration(): Long = currentPath.get()?.generation ?: 0L
