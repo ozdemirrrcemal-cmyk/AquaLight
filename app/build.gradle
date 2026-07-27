@@ -304,7 +304,7 @@ dependencies {
 
     // Test
     testImplementation "junit:junit:4.13.2"
-    testImplementation "org.json:json:20250517"
+    testImplementation "org.json:json:20260719"
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2"
     testImplementation "androidx.arch.core:core-testing:2.2.0"
     androidTestImplementation "androidx.test:core-ktx:1.6.1"
