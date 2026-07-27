@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.withTimeoutOrNull
 
+@Suppress("TooManyFunctions")
 internal interface DeviceMenuRuntimePort {
     fun currentDevice(deviceUid: DeviceUid): DeviceSnapshot?
     fun observeDevice(deviceUid: DeviceUid): Flow<DeviceSnapshot?>
@@ -40,6 +41,7 @@ internal interface DeviceMenuRuntimePort {
     fun recordControlProof(deviceUid: DeviceUid): DeviceSnapshot?
 }
 
+@Suppress("TooManyFunctions")
 internal class RepositoryDeviceMenuRuntimePort(
     private val devicesRepository: DevicesRepository
 ) : DeviceMenuRuntimePort {
@@ -79,6 +81,7 @@ internal class RepositoryDeviceMenuRuntimePort(
         devicesRepository.recordControlProof(deviceUid)
 }
 
+@Suppress("TooManyFunctions")
 internal class DefaultDeviceMenuAccessOperations(
     private val runtimePort: DeviceMenuRuntimePort,
     private val elapsedRealtimeMillis: () -> Long = DeviceElapsedRealtimeClock::nowMillis
@@ -91,108 +94,137 @@ internal class DefaultDeviceMenuAccessOperations(
 
     override suspend fun resolve(deviceUid: String): DeviceMenuAccessResult {
         val requestedDeviceUid = deviceUid.trim()
-        if (requestedDeviceUid.isBlank()) {
-            return DeviceMenuAccessResult.Unavailable(
+        return if (requestedDeviceUid.isBlank()) {
+            DeviceMenuAccessResult.Unavailable(
                 title = "",
                 reason = DeviceMenuUnavailableReason.INVALID_DEVICE_UID
             )
+        } else {
+            resolveSerialized(DeviceUid(requestedDeviceUid))
         }
+    }
 
-        val typedDeviceUid = DeviceUid(requestedDeviceUid)
+    private suspend fun resolveSerialized(
+        deviceUid: DeviceUid
+    ): DeviceMenuAccessResult {
         val leader = CompletableDeferred<DeviceMenuAccessResult>()
-        val existing = inFlight.putIfAbsent(typedDeviceUid, leader)
-        if (existing != null) {
-            return existing.await()
-        }
+        val existing = inFlight.putIfAbsent(deviceUid, leader)
 
-        return try {
-            val result = resolveSingle(typedDeviceUid)
-            leader.complete(result)
-            result
-        } catch (error: Throwable) {
-            leader.completeExceptionally(error)
-            throw error
-        } finally {
-            inFlight.remove(typedDeviceUid, leader)
+        return if (existing != null) {
+            existing.await()
+        } else {
+            try {
+                val outcome = runCatching { resolveSingle(deviceUid) }
+                outcome.fold(
+                    onSuccess = { result ->
+                        leader.complete(result)
+                        result
+                    },
+                    onFailure = { error ->
+                        leader.completeExceptionally(error)
+                        throw error
+                    }
+                )
+            } finally {
+                inFlight.remove(deviceUid, leader)
+            }
         }
     }
 
     private suspend fun resolveSingle(
         deviceUid: DeviceUid
     ): DeviceMenuAccessResult {
+        return when (val preparation = prepareAccess(deviceUid)) {
+            is AccessPreparation.Immediate -> preparation.result
+            is AccessPreparation.Verify -> verifyPreparedAccess(
+                deviceUid = deviceUid,
+                initialSnapshot = preparation.snapshot
+            )
+        }
+    }
+
+    private fun prepareAccess(deviceUid: DeviceUid): AccessPreparation {
         val initialSnapshot = runtimePort.currentDevice(deviceUid)
-            ?: return DeviceMenuAccessResult.Unavailable(
-                title = "",
-                reason = DeviceMenuUnavailableReason.DEVICE_NOT_REGISTERED
+        return if (initialSnapshot == null) {
+            AccessPreparation.Immediate(
+                DeviceMenuAccessResult.Unavailable(
+                    title = "",
+                    reason = DeviceMenuUnavailableReason.DEVICE_NOT_REGISTERED
+                )
             )
-
-        val localNetworkAvailable = runtimePort.isLocalNetworkAvailable()
-        runtimePort.refreshVisibleDevices(localNetworkAvailable = localNetworkAvailable)
-        if (!localNetworkAvailable) {
-            return unavailable(
-                snapshot = initialSnapshot,
-                reason = DeviceMenuUnavailableReason.LOCAL_NETWORK_UNAVAILABLE
-            )
-        }
-
-        fastFailureReason(initialSnapshot)?.let { reason ->
-            return unavailable(
-                snapshot = initialSnapshot,
-                reason = reason
-            )
-        }
-
-        if (initialSnapshot.hasRecentControlProof(elapsedRealtimeMillis())) {
-            val currentRuntime = runtimePort.currentRuntimeConnectionState(deviceUid)
-            if (
+        } else {
+            val localNetworkAvailable = runtimePort.isLocalNetworkAvailable()
+            runtimePort.refreshVisibleDevices(localNetworkAvailable = localNetworkAvailable)
+            val failureReason = when {
+                !localNetworkAvailable -> DeviceMenuUnavailableReason.LOCAL_NETWORK_UNAVAILABLE
+                else -> fastFailureReason(initialSnapshot)
+            }
+            val activeRuntime = runtimePort.currentRuntimeConnectionState(deviceUid)
+            val reusableProof = initialSnapshot.hasRecentControlProof(elapsedRealtimeMillis()) &&
                 DeviceMenuAuthenticationPolicy.isActiveAuthenticatedSession(
-                    state = currentRuntime,
+                    state = activeRuntime,
                     requestedDeviceUid = deviceUid
                 )
-            ) {
-                return available(initialSnapshot)
+
+            when {
+                failureReason != null -> AccessPreparation.Immediate(
+                    unavailable(initialSnapshot, failureReason)
+                )
+                reusableProof -> AccessPreparation.Immediate(available(initialSnapshot))
+                else -> AccessPreparation.Verify(initialSnapshot)
             }
         }
+    }
 
+    private suspend fun verifyPreparedAccess(
+        deviceUid: DeviceUid,
+        initialSnapshot: DeviceSnapshot
+    ): DeviceMenuAccessResult {
         val gateStartedElapsedMillis = elapsedRealtimeMillis()
-        val verifiedSnapshot = withTimeoutOrNull(MENU_ACCESS_BUDGET_MS) {
+        val verification = withTimeoutOrNull(MENU_ACCESS_BUDGET_MS) {
             runCatching { runtimePort.refreshNow() }
-
             val refreshedSnapshot = runtimePort.currentDevice(deviceUid) ?: initialSnapshot
-            fastFailureReason(refreshedSnapshot)?.let { reason ->
-                return@withTimeoutOrNull VerificationResult.Unavailable(reason)
-            }
+            val failureReason = fastFailureReason(refreshedSnapshot)
 
-            if (refreshedSnapshot.endpoint.hasWebSocketEndpoint) {
-                verifyRuntimeLiveSnapshot(
+            when {
+                failureReason != null -> VerificationResult.Unavailable(failureReason)
+                refreshedSnapshot.endpoint.hasWebSocketEndpoint -> verifyRuntimeLiveSnapshot(
                     deviceUid = deviceUid,
                     fallbackSnapshot = refreshedSnapshot
                 )
-            } else {
-                val lanSnapshot = verifyFreshLanSnapshot(
+                else -> verifyLanAccess(
                     deviceUid = deviceUid,
                     fallbackSnapshot = refreshedSnapshot,
                     gateStartedElapsedMillis = gateStartedElapsedMillis
                 )
-                if (lanSnapshot == null) {
-                    VerificationResult.Unavailable(
-                        DeviceMenuUnavailableReason.VERIFICATION_TIMED_OUT
-                    )
-                } else {
-                    VerificationResult.Available(lanSnapshot)
-                }
             }
         } ?: VerificationResult.Unavailable(
             DeviceMenuUnavailableReason.VERIFICATION_TIMED_OUT
         )
 
-        return when (verifiedSnapshot) {
-            is VerificationResult.Available -> available(verifiedSnapshot.snapshot)
+        return when (verification) {
+            is VerificationResult.Available -> available(verification.snapshot)
             is VerificationResult.Unavailable -> unavailable(
                 snapshot = runtimePort.currentDevice(deviceUid) ?: initialSnapshot,
-                reason = verifiedSnapshot.reason
+                reason = verification.reason
             )
         }
+    }
+
+    private suspend fun verifyLanAccess(
+        deviceUid: DeviceUid,
+        fallbackSnapshot: DeviceSnapshot,
+        gateStartedElapsedMillis: Long
+    ): VerificationResult {
+        val lanSnapshot = verifyFreshLanSnapshot(
+            deviceUid = deviceUid,
+            fallbackSnapshot = fallbackSnapshot,
+            gateStartedElapsedMillis = gateStartedElapsedMillis
+        )
+        return lanSnapshot?.let(VerificationResult::Available)
+            ?: VerificationResult.Unavailable(
+                DeviceMenuUnavailableReason.VERIFICATION_TIMED_OUT
+            )
     }
 
     private suspend fun verifyRuntimeLiveSnapshot(
@@ -200,36 +232,42 @@ internal class DefaultDeviceMenuAccessOperations(
         fallbackSnapshot: DeviceSnapshot
     ): VerificationResult {
         return when (awaitAuthenticatedRuntime(deviceUid)) {
-            AuthenticationOutcome.Authenticated -> {
-                val proofReceived = requestFreshRuntimeProof(deviceUid) || run {
-                    delay(RUNTIME_PROBE_RETRY_DELAY_MS)
-                    requestFreshRuntimeProof(deviceUid)
-                }
-
-                if (!proofReceived) {
-                    VerificationResult.Unavailable(
-                        DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE
-                    )
-                } else {
-                    val canonicalSnapshot = runtimePort.recordControlProof(deviceUid)
-                        ?: runtimePort.currentDevice(deviceUid)
-                        ?: fallbackSnapshot
-                    VerificationResult.Available(canonicalSnapshot)
-                }
-            }
-
+            AuthenticationOutcome.Authenticated -> verifyAuthenticatedRuntime(
+                deviceUid = deviceUid,
+                fallbackSnapshot = fallbackSnapshot
+            )
             AuthenticationOutcome.AuthRequired -> VerificationResult.Unavailable(
                 DeviceMenuUnavailableReason.AUTHENTICATION_REQUIRED
             )
-
             AuthenticationOutcome.Failed -> VerificationResult.Unavailable(
                 DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE
             )
-
             AuthenticationOutcome.TimedOut -> VerificationResult.Unavailable(
                 DeviceMenuUnavailableReason.VERIFICATION_TIMED_OUT
             )
         }
+    }
+
+    private suspend fun verifyAuthenticatedRuntime(
+        deviceUid: DeviceUid,
+        fallbackSnapshot: DeviceSnapshot
+    ): VerificationResult {
+        val proofReceived = requestFreshRuntimeProof(deviceUid) || run {
+            delay(RUNTIME_PROBE_RETRY_DELAY_MS)
+            requestFreshRuntimeProof(deviceUid)
+        }
+        val canonicalSnapshot = if (proofReceived) {
+            runtimePort.recordControlProof(deviceUid)
+                ?: runtimePort.currentDevice(deviceUid)
+                ?: fallbackSnapshot
+        } else {
+            null
+        }
+
+        return canonicalSnapshot?.let(VerificationResult::Available)
+            ?: VerificationResult.Unavailable(
+                DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE
+            )
     }
 
     private suspend fun awaitAuthenticatedRuntime(
@@ -375,6 +413,16 @@ internal class DefaultDeviceMenuAccessOperations(
         )
     }
 
+    private sealed interface AccessPreparation {
+        data class Immediate(
+            val result: DeviceMenuAccessResult
+        ) : AccessPreparation
+
+        data class Verify(
+            val snapshot: DeviceSnapshot
+        ) : AccessPreparation
+    }
+
     private sealed interface VerificationResult {
         data class Available(val snapshot: DeviceSnapshot) : VerificationResult
         data class Unavailable(
@@ -455,32 +503,20 @@ internal object DeviceMenuRuntimeProofPolicy {
         requestedDeviceUid: DeviceUid,
         expectedRequestId: String
     ): Boolean {
-        if (expectedRequestId.isBlank() || event.deviceUid != requestedDeviceUid) {
-            return false
-        }
-
         val response = (event as? AqlWsEvent.Message)
             ?.parsed as? AqlWsIncomingMessage.Response
-            ?: return false
 
-        if (response.id != expectedRequestId || !response.ok) {
-            return false
-        }
-
-        if (
+        return when {
+            expectedRequestId.isBlank() -> false
+            event.deviceUid != requestedDeviceUid -> false
+            response == null -> false
+            response.id != expectedRequestId -> false
+            !response.ok -> false
             response.module.isNotBlank() &&
-            response.module != AqlWsContract.MODULE_NETWORK
-        ) {
-            return false
-        }
-
-        if (
+                response.module != AqlWsContract.MODULE_NETWORK -> false
             response.action.isNotBlank() &&
-            response.action != AqlWsContract.ACTION_NETWORK_STATUS_GET
-        ) {
-            return false
+                response.action != AqlWsContract.ACTION_NETWORK_STATUS_GET -> false
+            else -> true
         }
-
-        return true
     }
 }
