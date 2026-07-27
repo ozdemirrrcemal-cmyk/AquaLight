@@ -1,27 +1,16 @@
 package com.aqua.aqualight.data.care.reminder;
 
-import android.app.AlarmManager;
 import android.content.Intent;
 
-/**
- * Verifies that a boot-reconciliation broadcast carries an explicitly supported system action.
- *
- * <p>The verification is centralized here so every caller performs the same fail-closed check
- * before touching authenticated owner state or scheduling work.</p>
- */
+/** Verifies that the action observed by the receiver still matches the received Intent. */
 final class CareTaskBootIntentVerifier {
 
     private CareTaskBootIntentVerifier() {
         // Utility class.
     }
 
-    static boolean isVerified(Intent intent, String observedAction) {
+    static boolean matchesObservedAction(Intent intent, String observedAction) {
         final String action = intent.getAction();
-        if (action == null || !action.equals(observedAction)) {
-            return false;
-        }
-        return Intent.ACTION_BOOT_COMPLETED.equals(action)
-                || Intent.ACTION_MY_PACKAGE_REPLACED.equals(action)
-                || AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED.equals(action);
+        return action != null && action.equals(observedAction);
     }
 }
