@@ -4,13 +4,16 @@ import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.data.devices.contract.AqlWsContract
+import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.devices.monitor.DeviceElapsedRealtimeClock
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import com.aqua.aqualight.data.devices.toOwnerDeviceFamily
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
@@ -20,6 +23,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 
 internal interface DeviceMenuRuntimePort {
@@ -33,6 +39,7 @@ internal interface DeviceMenuRuntimePort {
     fun connectRuntime(deviceUid: DeviceUid): Boolean
     fun runtimeEvents(): Flow<AqlWsEvent>?
     suspend fun requestNetworkStatus(deviceUid: DeviceUid): String?
+    fun recordControlProof(deviceUid: DeviceUid): DeviceSnapshot?
 }
 
 internal class RepositoryDeviceMenuRuntimePort(
@@ -69,11 +76,17 @@ internal class RepositoryDeviceMenuRuntimePort(
 
     override suspend fun requestNetworkStatus(deviceUid: DeviceUid): String? =
         devicesRepository.commandClient(deviceUid)?.requestNetworkStatus()
+
+    override fun recordControlProof(deviceUid: DeviceUid): DeviceSnapshot? =
+        devicesRepository.recordControlProof(deviceUid)
 }
 
 internal class DefaultDeviceMenuAccessOperations(
-    private val runtimePort: DeviceMenuRuntimePort
+    private val runtimePort: DeviceMenuRuntimePort,
+    private val elapsedRealtimeMillis: () -> Long = DeviceElapsedRealtimeClock::nowMillis
 ) : DeviceMenuAccessOperations {
+
+    private val deviceLocks = ConcurrentHashMap<DeviceUid, Mutex>()
 
     override suspend fun resolve(deviceUid: String): DeviceMenuAccessResult {
         val requestedDeviceUid = deviceUid.trim()
@@ -84,9 +97,17 @@ internal class DefaultDeviceMenuAccessOperations(
             )
         }
 
-        val gateStartedAtMillis = System.currentTimeMillis()
         val typedDeviceUid = DeviceUid(requestedDeviceUid)
-        val initialSnapshot = runtimePort.currentDevice(typedDeviceUid)
+        val lock = deviceLocks.computeIfAbsent(typedDeviceUid) { Mutex() }
+        return lock.withLock {
+            resolveLocked(typedDeviceUid)
+        }
+    }
+
+    private suspend fun resolveLocked(
+        deviceUid: DeviceUid
+    ): DeviceMenuAccessResult {
+        val initialSnapshot = runtimePort.currentDevice(deviceUid)
             ?: return DeviceMenuAccessResult.Unavailable(
                 title = "",
                 reason = DeviceMenuUnavailableReason.DEVICE_NOT_REGISTERED
@@ -101,154 +122,142 @@ internal class DefaultDeviceMenuAccessOperations(
             )
         }
 
-        runCatching { runtimePort.refreshNow() }
-
-        val refreshedSnapshot = runtimePort.currentDevice(typedDeviceUid) ?: initialSnapshot
-        val liveSnapshot = verifyLiveSnapshot(
-            deviceUid = typedDeviceUid,
-            fallbackSnapshot = refreshedSnapshot,
-            gateStartedAtMillis = gateStartedAtMillis
-        )
-
-        if (liveSnapshot != null) {
-            return DeviceMenuAccessResult.Available(
-                deviceUid = liveSnapshot.deviceUid.value,
-                title = liveSnapshot.title.ifBlank { liveSnapshot.deviceUid.value },
-                family = liveSnapshot.product.family.toOwnerDeviceFamily()
+        fastFailureReason(initialSnapshot)?.let { reason ->
+            return unavailable(
+                snapshot = initialSnapshot,
+                reason = reason
             )
         }
 
-        return unavailable(
-            snapshot = runtimePort.currentDevice(typedDeviceUid) ?: refreshedSnapshot,
-            reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
-        )
-    }
+        if (initialSnapshot.hasRecentControlProof(elapsedRealtimeMillis())) {
+            val currentRuntime = runtimePort.currentRuntimeConnectionState(deviceUid)
+            if (
+                DeviceMenuAuthenticationPolicy.isActiveAuthenticatedSession(
+                    state = currentRuntime,
+                    requestedDeviceUid = deviceUid
+                )
+            ) {
+                return available(initialSnapshot)
+            }
+        }
 
-    private fun unavailable(
-        snapshot: DeviceSnapshot,
-        reason: DeviceMenuUnavailableReason
-    ): DeviceMenuAccessResult.Unavailable {
-        return DeviceMenuAccessResult.Unavailable(
-            title = snapshot.title.ifBlank { snapshot.deviceUid.value },
-            reason = reason
-        )
-    }
+        val gateStartedElapsedMillis = elapsedRealtimeMillis()
+        val verifiedSnapshot = withTimeoutOrNull(MENU_ACCESS_BUDGET_MS) {
+            runCatching { runtimePort.refreshNow() }
 
-    private suspend fun verifyLiveSnapshot(
-        deviceUid: DeviceUid,
-        fallbackSnapshot: DeviceSnapshot,
-        gateStartedAtMillis: Long
-    ): DeviceSnapshot? {
-        if (fallbackSnapshot.endpoint.hasWebSocketEndpoint) {
-            return verifyRuntimeLiveSnapshot(
-                deviceUid = deviceUid,
-                fallbackSnapshot = fallbackSnapshot,
-                gateStartedAtMillis = gateStartedAtMillis
+            val refreshedSnapshot = runtimePort.currentDevice(deviceUid) ?: initialSnapshot
+            fastFailureReason(refreshedSnapshot)?.let { reason ->
+                return@withTimeoutOrNull VerificationResult.Unavailable(reason)
+            }
+
+            if (refreshedSnapshot.endpoint.hasWebSocketEndpoint) {
+                verifyRuntimeLiveSnapshot(
+                    deviceUid = deviceUid,
+                    fallbackSnapshot = refreshedSnapshot
+                )
+            } else {
+                val lanSnapshot = verifyFreshLanSnapshot(
+                    deviceUid = deviceUid,
+                    fallbackSnapshot = refreshedSnapshot,
+                    gateStartedElapsedMillis = gateStartedElapsedMillis
+                )
+                if (lanSnapshot == null) {
+                    VerificationResult.Unavailable(
+                        DeviceMenuUnavailableReason.VERIFICATION_TIMED_OUT
+                    )
+                } else {
+                    VerificationResult.Available(lanSnapshot)
+                }
+            }
+        } ?: VerificationResult.Unavailable(
+            DeviceMenuUnavailableReason.VERIFICATION_TIMED_OUT
+        )
+
+        return when (verifiedSnapshot) {
+            is VerificationResult.Available -> available(verifiedSnapshot.snapshot)
+            is VerificationResult.Unavailable -> unavailable(
+                snapshot = runtimePort.currentDevice(deviceUid) ?: initialSnapshot,
+                reason = verifiedSnapshot.reason
             )
         }
-
-        val currentSnapshot = runtimePort.currentDevice(deviceUid) ?: fallbackSnapshot
-        if (currentSnapshot.hasFreshLanProof(gateStartedAtMillis)) {
-            return currentSnapshot
-        }
-
-        return waitForFreshLanSnapshot(
-            deviceUid = deviceUid,
-            fallbackSnapshot = fallbackSnapshot,
-            gateStartedAtMillis = gateStartedAtMillis
-        )
     }
 
     private suspend fun verifyRuntimeLiveSnapshot(
         deviceUid: DeviceUid,
-        fallbackSnapshot: DeviceSnapshot,
-        gateStartedAtMillis: Long
-    ): DeviceSnapshot? = coroutineScope {
-        if (
-            !awaitAuthenticatedRuntime(
-                deviceUid = deviceUid,
-                fallbackSnapshot = fallbackSnapshot,
-                gateStartedAtMillis = gateStartedAtMillis
-            )
-        ) {
-            return@coroutineScope null
-        }
+        fallbackSnapshot: DeviceSnapshot
+    ): VerificationResult {
+        return when (awaitAuthenticatedRuntime(deviceUid)) {
+            AuthenticationOutcome.Authenticated -> {
+                val proofReceived = requestFreshRuntimeProof(deviceUid) || run {
+                    delay(RUNTIME_PROBE_RETRY_DELAY_MS)
+                    requestFreshRuntimeProof(deviceUid)
+                }
 
-        if (!requestFreshRuntimeProof(deviceUid)) {
-            delay(RUNTIME_PROBE_RETRY_DELAY_MS)
-            if (!requestFreshRuntimeProof(deviceUid)) {
-                return@coroutineScope null
+                if (!proofReceived) {
+                    VerificationResult.Unavailable(
+                        DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE
+                    )
+                } else {
+                    val canonicalSnapshot = runtimePort.recordControlProof(deviceUid)
+                        ?: runtimePort.currentDevice(deviceUid)
+                        ?: fallbackSnapshot
+                    VerificationResult.Available(canonicalSnapshot)
+                }
             }
-        }
 
-        return@coroutineScope runtimePort.currentDevice(deviceUid) ?: fallbackSnapshot
+            AuthenticationOutcome.AuthRequired -> VerificationResult.Unavailable(
+                DeviceMenuUnavailableReason.AUTHENTICATION_REQUIRED
+            )
+
+            AuthenticationOutcome.Failed -> VerificationResult.Unavailable(
+                DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE
+            )
+
+            AuthenticationOutcome.TimedOut -> VerificationResult.Unavailable(
+                DeviceMenuUnavailableReason.VERIFICATION_TIMED_OUT
+            )
+        }
     }
 
     private suspend fun awaitAuthenticatedRuntime(
-        deviceUid: DeviceUid,
-        fallbackSnapshot: DeviceSnapshot,
-        gateStartedAtMillis: Long
-    ): Boolean {
-        if (
-            awaitAuthenticatedRuntimeAttempt(
-                deviceUid = deviceUid,
-                fallbackSnapshot = fallbackSnapshot,
-                gateStartedAtMillis = gateStartedAtMillis,
-                timeoutMillis = INITIAL_AUTHENTICATION_TIMEOUT_MS
-            )
-        ) {
-            return true
+        deviceUid: DeviceUid
+    ): AuthenticationOutcome = coroutineScope {
+        DeviceMenuAuthenticationPolicy.classify(
+            state = runtimePort.currentRuntimeConnectionState(deviceUid),
+            requestedDeviceUid = deviceUid
+        )?.let { currentOutcome ->
+            return@coroutineScope currentOutcome
         }
 
-        delay(RECONNECT_RETRY_DELAY_MS)
-
-        return awaitAuthenticatedRuntimeAttempt(
-            deviceUid = deviceUid,
-            fallbackSnapshot = runtimePort.currentDevice(deviceUid) ?: fallbackSnapshot,
-            gateStartedAtMillis = gateStartedAtMillis,
-            timeoutMillis = RETRY_AUTHENTICATION_TIMEOUT_MS
-        )
-    }
-
-    private suspend fun awaitAuthenticatedRuntimeAttempt(
-        deviceUid: DeviceUid,
-        fallbackSnapshot: DeviceSnapshot,
-        gateStartedAtMillis: Long,
-        timeoutMillis: Long
-    ): Boolean = coroutineScope {
         val connectionStates = runtimePort.runtimeConnectionStates()
-            ?: return@coroutineScope false
+            ?: return@coroutineScope AuthenticationOutcome.Failed
         val authenticationSignal = async(start = CoroutineStart.UNDISPATCHED) {
-            withTimeoutOrNull(timeoutMillis) {
+            withTimeoutOrNull(AUTHENTICATION_TIMEOUT_MS) {
                 connectionStates
-                    .filter { state ->
-                        DeviceMenuAuthenticationPolicy.accepts(
+                    .mapNotNull { state ->
+                        DeviceMenuAuthenticationPolicy.classify(
                             state = state,
-                            requestedDeviceUid = deviceUid,
-                            gateStartedAtMillis = gateStartedAtMillis
+                            requestedDeviceUid = deviceUid
                         )
                     }
                     .first()
-            }
+            } ?: AuthenticationOutcome.TimedOut
         }
 
         if (!runtimePort.connectRuntime(deviceUid)) {
             authenticationSignal.cancel()
-            return@coroutineScope false
+            return@coroutineScope AuthenticationOutcome.Failed
         }
 
-        val currentState = runtimePort.currentRuntimeConnectionState(deviceUid)
-        if (
-            DeviceMenuAuthenticationPolicy.isActiveAuthenticatedSession(
-                state = currentState,
-                requestedDeviceUid = deviceUid
-            )
-        ) {
+        DeviceMenuAuthenticationPolicy.classify(
+            state = runtimePort.currentRuntimeConnectionState(deviceUid),
+            requestedDeviceUid = deviceUid
+        )?.let { currentOutcome ->
             authenticationSignal.cancel()
-            return@coroutineScope true
+            return@coroutineScope currentOutcome
         }
 
-        return@coroutineScope authenticationSignal.await() != null
+        authenticationSignal.await()
     }
 
     private suspend fun requestFreshRuntimeProof(
@@ -279,31 +288,85 @@ internal class DefaultDeviceMenuAccessOperations(
         }
 
         expectedRequestId.complete(requestId)
-        return@coroutineScope proofSignal.await() != null
+        proofSignal.await() != null
     }
 
-    private suspend fun waitForFreshLanSnapshot(
+    private suspend fun verifyFreshLanSnapshot(
         deviceUid: DeviceUid,
         fallbackSnapshot: DeviceSnapshot,
-        gateStartedAtMillis: Long
+        gateStartedElapsedMillis: Long
     ): DeviceSnapshot? {
+        val currentSnapshot = runtimePort.currentDevice(deviceUid) ?: fallbackSnapshot
+        if (currentSnapshot.hasFreshLanProof(gateStartedElapsedMillis)) {
+            return currentSnapshot
+        }
+
         val registryFreshLanFlow = runtimePort
             .observeDevice(deviceUid)
             .filterNotNull()
-            .filter { snapshot -> snapshot.hasFreshLanProof(gateStartedAtMillis) }
+            .filter { snapshot -> snapshot.hasFreshLanProof(gateStartedElapsedMillis) }
 
-        return withTimeoutOrNull(STRICT_LIVE_CHECK_TIMEOUT_MS) {
+        return withTimeoutOrNull(LAN_PROOF_TIMEOUT_MS) {
             registryFreshLanFlow.first()
         } ?: runtimePort.currentDevice(deviceUid)
-            ?.takeIf { snapshot -> snapshot.hasFreshLanProof(gateStartedAtMillis) }
-            ?: fallbackSnapshot.takeIf { snapshot -> snapshot.hasFreshLanProof(gateStartedAtMillis) }
+            ?.takeIf { snapshot -> snapshot.hasFreshLanProof(gateStartedElapsedMillis) }
+    }
+
+    private fun fastFailureReason(
+        snapshot: DeviceSnapshot
+    ): DeviceMenuUnavailableReason? {
+        return when (snapshot.connectionState.onlineState) {
+            DeviceOnlineState.AUTH_REQUIRED -> {
+                DeviceMenuUnavailableReason.AUTHENTICATION_REQUIRED
+            }
+            DeviceOnlineState.LOCAL_NETWORK_OFFLINE -> {
+                DeviceMenuUnavailableReason.LOCAL_NETWORK_UNAVAILABLE
+            }
+            DeviceOnlineState.OFFLINE,
+            DeviceOnlineState.ERROR -> {
+                DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE
+            }
+            else -> null
+        }
+    }
+
+    private fun DeviceSnapshot.hasRecentControlProof(
+        nowElapsedMillis: Long
+    ): Boolean {
+        val proofAt = connectionState.lastControlProofElapsedMillis ?: return false
+        return (nowElapsedMillis - proofAt).coerceAtLeast(0L) <= MENU_PROOF_REUSE_MS
     }
 
     private fun DeviceSnapshot.hasFreshLanProof(
-        gateStartedAtMillis: Long
+        gateStartedElapsedMillis: Long
     ): Boolean {
-        val lastUdpSeenAtMillis = connectionState.lastUdpSeenAtMillis ?: return false
-        return lastUdpSeenAtMillis + LAN_PROOF_CLOCK_GRACE_MS >= gateStartedAtMillis
+        val lastUdpSeenElapsedMillis = connectionState.lastUdpSeenElapsedMillis ?: return false
+        return lastUdpSeenElapsedMillis + LAN_PROOF_CLOCK_GRACE_MS >= gateStartedElapsedMillis
+    }
+
+    private fun available(snapshot: DeviceSnapshot): DeviceMenuAccessResult.Available {
+        return DeviceMenuAccessResult.Available(
+            deviceUid = snapshot.deviceUid.value,
+            title = snapshot.title.ifBlank { snapshot.deviceUid.value },
+            family = snapshot.product.family.toOwnerDeviceFamily()
+        )
+    }
+
+    private fun unavailable(
+        snapshot: DeviceSnapshot,
+        reason: DeviceMenuUnavailableReason
+    ): DeviceMenuAccessResult.Unavailable {
+        return DeviceMenuAccessResult.Unavailable(
+            title = snapshot.title.ifBlank { snapshot.deviceUid.value },
+            reason = reason
+        )
+    }
+
+    private sealed interface VerificationResult {
+        data class Available(val snapshot: DeviceSnapshot) : VerificationResult
+        data class Unavailable(
+            val reason: DeviceMenuUnavailableReason
+        ) : VerificationResult
     }
 
     companion object {
@@ -313,33 +376,63 @@ internal class DefaultDeviceMenuAccessOperations(
             )
         }
 
-        private const val INITIAL_AUTHENTICATION_TIMEOUT_MS = 6_000L
-        private const val RECONNECT_RETRY_DELAY_MS = 4_000L
-        private const val RETRY_AUTHENTICATION_TIMEOUT_MS = 12_000L
-        private const val RUNTIME_PROBE_TIMEOUT_MS = 3_000L
-        private const val RUNTIME_PROBE_RETRY_DELAY_MS = 250L
-        private const val STRICT_LIVE_CHECK_TIMEOUT_MS = 12_000L
-        private const val LAN_PROOF_CLOCK_GRACE_MS = 1_000L
+        private const val MENU_ACCESS_BUDGET_MS = 2_500L
+        private const val MENU_PROOF_REUSE_MS = 4_000L
+        private const val AUTHENTICATION_TIMEOUT_MS = 1_200L
+        private const val RUNTIME_PROBE_TIMEOUT_MS = 850L
+        private const val RUNTIME_PROBE_RETRY_DELAY_MS = 100L
+        private const val LAN_PROOF_TIMEOUT_MS = 1_800L
+        private const val LAN_PROOF_CLOCK_GRACE_MS = 250L
     }
 }
 
+internal enum class AuthenticationOutcome {
+    Authenticated,
+    AuthRequired,
+    Failed,
+    TimedOut
+}
+
 internal object DeviceMenuAuthenticationPolicy {
+
     fun isActiveAuthenticatedSession(
         state: AqlWsConnectionState?,
         requestedDeviceUid: DeviceUid
     ): Boolean {
-        val authenticated = state as? AqlWsConnectionState.Authenticated ?: return false
-        return authenticated.deviceUid == requestedDeviceUid
+        return classify(state, requestedDeviceUid) == AuthenticationOutcome.Authenticated
     }
 
-    fun accepts(
-        state: AqlWsConnectionState,
-        requestedDeviceUid: DeviceUid,
-        gateStartedAtMillis: Long
-    ): Boolean {
-        val authenticated = state as? AqlWsConnectionState.Authenticated ?: return false
-        return authenticated.deviceUid == requestedDeviceUid &&
-            authenticated.authenticatedAtMillis >= gateStartedAtMillis
+    fun classify(
+        state: AqlWsConnectionState?,
+        requestedDeviceUid: DeviceUid
+    ): AuthenticationOutcome? {
+        return when (state) {
+            is AqlWsConnectionState.Authenticated -> {
+                if (state.deviceUid == requestedDeviceUid) {
+                    AuthenticationOutcome.Authenticated
+                } else {
+                    null
+                }
+            }
+            is AqlWsConnectionState.AuthRequired -> {
+                if (state.deviceUid == requestedDeviceUid) {
+                    AuthenticationOutcome.AuthRequired
+                } else {
+                    null
+                }
+            }
+            is AqlWsConnectionState.Failed -> {
+                if (state.deviceUid == requestedDeviceUid) {
+                    AuthenticationOutcome.Failed
+                } else {
+                    null
+                }
+            }
+            AqlWsConnectionState.Disconnected,
+            is AqlWsConnectionState.Connecting,
+            is AqlWsConnectionState.Connected,
+            null -> null
+        }
     }
 }
 
@@ -361,7 +454,20 @@ internal object DeviceMenuRuntimeProofPolicy {
             return false
         }
 
-        return response.module == AqlWsContract.MODULE_NETWORK &&
-            response.action == AqlWsContract.ACTION_NETWORK_STATUS_GET
+        if (
+            response.module.isNotBlank() &&
+            response.module != AqlWsContract.MODULE_NETWORK
+        ) {
+            return false
+        }
+
+        if (
+            response.action.isNotBlank() &&
+            response.action != AqlWsContract.ACTION_NETWORK_STATUS_GET
+        ) {
+            return false
+        }
+
+        return true
     }
 }
