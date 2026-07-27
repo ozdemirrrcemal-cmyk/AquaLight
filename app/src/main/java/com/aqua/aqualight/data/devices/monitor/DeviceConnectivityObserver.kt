@@ -12,6 +12,8 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 
 /**
  * Observes the concrete Android Network used for local AquaLight traffic.
@@ -28,12 +30,12 @@ class DeviceConnectivityObserver(context: Context) {
     private val generation = AtomicLong(0L)
     private val currentPath = AtomicReference<DeviceLocalNetworkPath?>(initialActivePath())
 
-    fun observeLocalNetworkAvailable(): Flow<Boolean> = callbackFlow {
+    fun observeLocalNetworkPath(): Flow<DeviceLocalNetworkPath?> = callbackFlow {
         val localNetworks = ConcurrentHashMap.newKeySet<Network>()
         val capabilitiesByNetwork = ConcurrentHashMap<Network, NetworkCapabilities>()
         val linkPropertiesByNetwork = ConcurrentHashMap<Network, LinkProperties>()
 
-        fun publishAvailability() {
+        fun publishPath() {
             val previous = currentPath.get()
             val selected = selectPreferredNetwork(
                 networks = localNetworks,
@@ -41,20 +43,24 @@ class DeviceConnectivityObserver(context: Context) {
                 previousNetwork = previous?.network
             )
             val next = selected?.let { network ->
-                val nextGeneration = if (previous?.network == network) {
-                    previous.generation
-                } else {
+                val capabilities = capabilitiesByNetwork[network]
+                val linkProperties = linkPropertiesByNetwork[network]
+                val pathChanged = previous?.network != network ||
+                    previous.linkProperties != linkProperties
+                val nextGeneration = if (pathChanged) {
                     generation.incrementAndGet()
+                } else {
+                    previous.generation
                 }
                 DeviceLocalNetworkPath(
                     network = network,
-                    capabilities = capabilitiesByNetwork[network],
-                    linkProperties = linkPropertiesByNetwork[network],
+                    capabilities = capabilities,
+                    linkProperties = linkProperties,
                     generation = nextGeneration
                 )
             }
             currentPath.set(next)
-            trySend(next != null)
+            trySend(next)
         }
 
         fun updateNetwork(
@@ -69,7 +75,7 @@ class DeviceConnectivityObserver(context: Context) {
                 capabilitiesByNetwork.remove(network)
                 linkPropertiesByNetwork.remove(network)
             }
-            publishAvailability()
+            publishPath()
         }
 
         val callback = object : ConnectivityManager.NetworkCallback() {
@@ -77,14 +83,14 @@ class DeviceConnectivityObserver(context: Context) {
                 // The request itself matches only Wi-Fi or Ethernet. Capabilities arrive through
                 // onCapabilitiesChanged; accepting the network here avoids a false Offline pulse.
                 localNetworks.add(network)
-                publishAvailability()
+                publishPath()
             }
 
             override fun onLost(network: Network) {
                 localNetworks.remove(network)
                 capabilitiesByNetwork.remove(network)
                 linkPropertiesByNetwork.remove(network)
-                publishAvailability()
+                publishPath()
             }
 
             override fun onCapabilitiesChanged(
@@ -103,7 +109,7 @@ class DeviceConnectivityObserver(context: Context) {
             ) {
                 if (network in localNetworks) {
                     linkPropertiesByNetwork[network] = linkProperties
-                    publishAvailability()
+                    publishPath()
                 }
             }
         }
@@ -125,12 +131,18 @@ class DeviceConnectivityObserver(context: Context) {
                 }
             }
         }
-        publishAvailability()
+        publishPath()
 
         awaitClose {
             runCatching { connectivityManager.unregisterNetworkCallback(callback) }
             currentPath.set(null)
         }
+    }
+
+    fun observeLocalNetworkAvailable(): Flow<Boolean> {
+        return observeLocalNetworkPath()
+            .map { path -> path != null }
+            .distinctUntilChanged()
     }
 
     fun currentLocalNetwork(): Network? {
