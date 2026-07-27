@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
  * monitor owns active discovery, authenticated runtime heartbeat, foreground revalidation,
  * Android local-network generation changes and bounded device-scoped recovery.
  */
+@Suppress("TooManyFunctions")
 class DevicePresenceRuntimeMonitor(
     private val discoveryRepository: DeviceDiscoveryRepository,
     private val registryStore: DeviceRegistryStore,
@@ -204,20 +205,21 @@ class DevicePresenceRuntimeMonitor(
     }
 
     private suspend fun performForegroundRefresh() {
-        if (!appForeground.get()) return
-        val available = currentLocalNetworkAvailable()
-        localNetworkAvailable.value = available
-        if (!available) {
-            reevaluateNow(localNetworkAvailable = false)
-            return
+        if (appForeground.get()) {
+            val available = currentLocalNetworkAvailable()
+            localNetworkAvailable.value = available
+            if (!available) {
+                reevaluateNow(localNetworkAvailable = false)
+            } else {
+                beginForegroundVerification()
+                probeRuntimeForVisibleDevices(force = true)
+                sendAuthenticatedHeartbeat(force = true)
+                refreshForegroundDiscoverySafely()
+                if (appForeground.get() && localNetworkAvailable.value) {
+                    reevaluateNow(localNetworkAvailable = true)
+                }
+            }
         }
-
-        beginForegroundVerification()
-        probeRuntimeForVisibleDevices(force = true)
-        sendAuthenticatedHeartbeat(force = true)
-        refreshForegroundDiscoverySafely()
-        if (!appForeground.get() || !localNetworkAvailable.value) return
-        reevaluateNow(localNetworkAvailable = true)
     }
 
     /**
