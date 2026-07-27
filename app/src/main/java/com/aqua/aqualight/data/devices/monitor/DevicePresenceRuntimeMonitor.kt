@@ -416,8 +416,8 @@ class DevicePresenceRuntimeMonitor(
         val nowMillis = elapsedRealtimeMillis()
         registryStore.currentDevices().forEach { snapshot ->
             val deviceUid = snapshot.deviceUid
-            val authenticated = runtime.currentConnectionState(deviceUid)
-                is AqlWsConnectionState.Authenticated
+            val authenticated =
+                runtime.currentConnectionState(deviceUid) is AqlWsConnectionState.Authenticated
             if (!authenticated) return@forEach
 
             val lastHeartbeatAt = lastHeartbeatAtMillis[deviceUid]
