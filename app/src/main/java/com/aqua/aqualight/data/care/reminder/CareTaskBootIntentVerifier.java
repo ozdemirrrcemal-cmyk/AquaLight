@@ -15,13 +15,13 @@ final class CareTaskBootIntentVerifier {
         // Utility class.
     }
 
-    static String verifiedAction(Intent intent) {
+    static boolean isVerified(Intent intent, String observedAction) {
         final String action = intent.getAction();
-        if (Intent.ACTION_BOOT_COMPLETED.equals(action)
-                || Intent.ACTION_MY_PACKAGE_REPLACED.equals(action)
-                || AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED.equals(action)) {
-            return action;
+        if (action == null || !action.equals(observedAction)) {
+            return false;
         }
-        return null;
+        return Intent.ACTION_BOOT_COMPLETED.equals(action)
+                || Intent.ACTION_MY_PACKAGE_REPLACED.equals(action)
+                || AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED.equals(action);
     }
 }
