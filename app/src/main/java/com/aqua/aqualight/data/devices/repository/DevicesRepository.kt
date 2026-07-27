@@ -499,8 +499,10 @@ class DevicesRepository(
                         onlineState = DeviceOnlineState.AUTHENTICATED,
                         lastAuthenticatedAtMillis = state.authenticatedAtMillis,
                         lastAuthenticatedElapsedMillis = nowElapsedMillis,
-                        lastRuntimeMessageAtMillis = state.authenticatedAtMillis,
-                        lastRuntimeMessageElapsedMillis = nowElapsedMillis,
+                        lastRuntimeMessageAtMillis = null,
+                        lastRuntimeMessageElapsedMillis = null,
+                        lastControlProofAtMillis = null,
+                        lastControlProofElapsedMillis = null,
                         lastErrorMessage = null
                     )
                 }
