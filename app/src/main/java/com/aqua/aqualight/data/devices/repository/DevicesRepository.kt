@@ -568,9 +568,3 @@ class DevicePersistenceTransactionException(
     cause: Throwable,
     val rollbackError: Throwable? = null
 ) : IllegalStateException(message, cause)
-
-internal object RuntimeClosedEventPolicy {
-    fun shouldClearRuntimeProof(currentState: AqlWsConnectionState?): Boolean {
-        return currentState == null || currentState is AqlWsConnectionState.Disconnected
-    }
-}
