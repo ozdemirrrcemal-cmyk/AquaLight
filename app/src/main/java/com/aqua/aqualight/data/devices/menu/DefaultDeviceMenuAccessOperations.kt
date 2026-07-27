@@ -9,6 +9,7 @@ import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.monitor.DeviceElapsedRealtimeClock
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
+import com.aqua.aqualight.data.devices.repository.recordControlFailure
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
@@ -39,6 +40,7 @@ internal interface DeviceMenuRuntimePort {
     fun runtimeEvents(): Flow<AqlWsEvent>?
     suspend fun requestNetworkStatus(deviceUid: DeviceUid): String?
     fun recordControlProof(deviceUid: DeviceUid): DeviceSnapshot?
+    fun recordControlFailure(deviceUid: DeviceUid): DeviceSnapshot? = null
 }
 
 @Suppress("TooManyFunctions")
@@ -79,6 +81,9 @@ internal class RepositoryDeviceMenuRuntimePort(
 
     override fun recordControlProof(deviceUid: DeviceUid): DeviceSnapshot? =
         devicesRepository.recordControlProof(deviceUid)
+
+    override fun recordControlFailure(deviceUid: DeviceUid): DeviceSnapshot? =
+        devicesRepository.recordControlFailure(deviceUid)
 }
 
 @Suppress("TooManyFunctions")
@@ -211,8 +216,9 @@ internal class DefaultDeviceMenuAccessOperations(
                     gateStartedElapsedMillis = gateStartedElapsedMillis
                 )
             }
-        } ?: VerificationResult.Unavailable(
-            DeviceMenuUnavailableReason.VERIFICATION_TIMED_OUT
+        } ?: unavailableAfterControlFailure(
+            deviceUid = deviceUid,
+            reason = DeviceMenuUnavailableReason.VERIFICATION_TIMED_OUT
         )
 
         return when (verification) {
@@ -235,8 +241,9 @@ internal class DefaultDeviceMenuAccessOperations(
             gateStartedElapsedMillis = gateStartedElapsedMillis
         )
         return lanSnapshot?.let(VerificationResult::Available)
-            ?: VerificationResult.Unavailable(
-                DeviceMenuUnavailableReason.VERIFICATION_TIMED_OUT
+            ?: unavailableAfterControlFailure(
+                deviceUid = deviceUid,
+                reason = DeviceMenuUnavailableReason.VERIFICATION_TIMED_OUT
             )
     }
 
@@ -252,11 +259,13 @@ internal class DefaultDeviceMenuAccessOperations(
             AuthenticationOutcome.AuthRequired -> VerificationResult.Unavailable(
                 DeviceMenuUnavailableReason.AUTHENTICATION_REQUIRED
             )
-            AuthenticationOutcome.Failed -> VerificationResult.Unavailable(
-                DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE
+            AuthenticationOutcome.Failed -> unavailableAfterControlFailure(
+                deviceUid = deviceUid,
+                reason = DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE
             )
-            AuthenticationOutcome.TimedOut -> VerificationResult.Unavailable(
-                DeviceMenuUnavailableReason.VERIFICATION_TIMED_OUT
+            AuthenticationOutcome.TimedOut -> unavailableAfterControlFailure(
+                deviceUid = deviceUid,
+                reason = DeviceMenuUnavailableReason.VERIFICATION_TIMED_OUT
             )
         }
     }
@@ -278,9 +287,18 @@ internal class DefaultDeviceMenuAccessOperations(
         }
 
         return canonicalSnapshot?.let(VerificationResult::Available)
-            ?: VerificationResult.Unavailable(
-                DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE
+            ?: unavailableAfterControlFailure(
+                deviceUid = deviceUid,
+                reason = DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE
             )
+    }
+
+    private fun unavailableAfterControlFailure(
+        deviceUid: DeviceUid,
+        reason: DeviceMenuUnavailableReason
+    ): VerificationResult.Unavailable {
+        runtimePort.recordControlFailure(deviceUid)
+        return VerificationResult.Unavailable(reason)
     }
 
     private suspend fun awaitAuthenticatedRuntime(
