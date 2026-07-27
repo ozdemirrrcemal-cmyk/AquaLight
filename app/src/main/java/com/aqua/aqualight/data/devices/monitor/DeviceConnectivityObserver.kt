@@ -191,7 +191,7 @@ class DeviceConnectivityObserver(context: Context) {
     }
 }
 
-internal data class DeviceLocalNetworkPath(
+data class DeviceLocalNetworkPath(
     val network: Network,
     val capabilities: NetworkCapabilities?,
     val linkProperties: LinkProperties?,
