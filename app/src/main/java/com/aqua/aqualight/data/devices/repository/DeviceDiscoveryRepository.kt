@@ -22,6 +22,10 @@ class DeviceDiscoveryRepository(
             presenceSupervisor.onDiscoveredDevice(discovered)
         }
 
+    fun restartScanner(localNetworkAvailable: Boolean) {
+        discoverySupervisor.restartScanner(localNetworkAvailable)
+    }
+
     suspend fun refreshNow(): AqlDiscoveryRefreshSender.SendResult =
         discoverySupervisor.sendRefreshNow()
 
@@ -44,7 +48,8 @@ class DeviceDiscoveryRepository(
                     ),
                     refreshSender = AqlDiscoveryRefreshSender(
                         networkProvider = networkProvider
-                    )
+                    ),
+                    initialScanningActive = connectivityObserver.isLocalNetworkAvailable()
                 )
             )
         }
