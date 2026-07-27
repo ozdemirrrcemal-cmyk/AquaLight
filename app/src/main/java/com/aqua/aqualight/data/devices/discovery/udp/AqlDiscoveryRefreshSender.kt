@@ -1,22 +1,25 @@
 package com.aqua.aqualight.data.devices.discovery.udp
 
+import android.net.Network
 import com.aqua.aqualight.data.devices.contract.AqlDiscoveryContract
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
+import java.net.InetSocketAddress
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 /**
  * Sends UDP v2 discovery refresh requests.
  *
  * This sender never carries runtime commands. It only asks firmware devices to announce their
- * current UDP v2 discovery payload. Runtime control belongs to WebSocket.
+ * current discovery payload and binds each socket to the selected Android local network.
  */
 class AqlDiscoveryRefreshSender(
     private val port: Int = AqlDiscoveryContract.PORT,
-    private val addressResolver: () -> List<InetAddress> = AqlBroadcastAddressResolver::resolve
+    private val addressResolver: () -> List<InetAddress> = AqlBroadcastAddressResolver::resolve,
+    private val networkProvider: () -> Network? = { null }
 ) {
 
     suspend fun sendRefresh(): SendResult = withContext(Dispatchers.IO) {
@@ -25,8 +28,11 @@ class AqlDiscoveryRefreshSender(
         var successCount = 0
         var lastError: String? = null
 
-        DatagramSocket().use { socket ->
+        DatagramSocket(null).use { socket ->
+            networkProvider()?.bindSocket(socket)
+            socket.reuseAddress = true
             socket.broadcast = true
+            socket.bind(InetSocketAddress(0))
             for (address in addresses) {
                 runCatching {
                     val packet = DatagramPacket(payload, payload.size, address, port)
