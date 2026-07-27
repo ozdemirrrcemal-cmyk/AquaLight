@@ -39,6 +39,6 @@ internal class AqlLocalNetworkSocketFactory(
     ): Socket = delegate().createSocket(address, port, localAddress, localPort)
 
     private fun delegate(): SocketFactory {
-        return networkProvider()?.socketFactory ?: getDefault()
+        return networkProvider()?.socketFactory ?: SocketFactory.getDefault()
     }
 }
