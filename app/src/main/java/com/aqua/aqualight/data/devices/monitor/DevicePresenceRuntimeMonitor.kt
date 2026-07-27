@@ -37,12 +37,18 @@ class DevicePresenceRuntimeMonitor(
     private val appForeground = AtomicBoolean(true)
     private val localNetworkAvailable = MutableStateFlow(currentLocalNetworkAvailable())
     private val foregroundVerificationUntilMillis = AtomicLong(0L)
-    private val observedNetworkGeneration = AtomicLong(0L)
+    private val observedNetworkGeneration = AtomicLong(
+        connectivityObserver?.currentLocalNetworkGeneration() ?: 0L
+    )
     private val lastRuntimeProbeAtMillis = ConcurrentHashMap<DeviceUid, Long>()
     private val lastHeartbeatAtMillis = ConcurrentHashMap<DeviceUid, Long>()
+    private val foregroundRefreshLock = Any()
 
     @Volatile
     private var runtimeScope: CoroutineScope? = null
+
+    @Volatile
+    private var foregroundRefreshJob: Job? = null
 
     fun start(scope: CoroutineScope): Job {
         if (!started.compareAndSet(false, true)) {
@@ -54,10 +60,8 @@ class DevicePresenceRuntimeMonitor(
             val connectivityJob = launchConnectivityWatcher()
             val presenceJob = launchPresenceLoop()
             val discoveryJob = launchDiscoveryRefreshLoop()
-            val foregroundRefreshJob = if (appForeground.get()) {
-                launch { performForegroundRefresh() }
-            } else {
-                null
+            if (appForeground.get()) {
+                scheduleForegroundRefresh()
             }
 
             try {
@@ -66,7 +70,7 @@ class DevicePresenceRuntimeMonitor(
                 connectivityJob?.cancel()
                 presenceJob.cancel()
                 discoveryJob.cancel()
-                foregroundRefreshJob?.cancel()
+                cancelForegroundRefresh()
                 runtimeScope = null
                 started.set(false)
             }
@@ -75,14 +79,17 @@ class DevicePresenceRuntimeMonitor(
 
     fun setAppForeground(isForeground: Boolean) {
         val changed = appForeground.getAndSet(isForeground) != isForeground
-        if (!isForeground) return
+        if (!isForeground) {
+            cancelForegroundRefresh()
+            return
+        }
 
         beginForegroundVerification()
         if (changed) {
             lastRuntimeProbeAtMillis.clear()
             lastHeartbeatAtMillis.clear()
         }
-        runtimeScope?.launch { performForegroundRefresh() }
+        scheduleForegroundRefresh()
     }
 
     fun reevaluateNow(localNetworkAvailable: Boolean = this.localNetworkAvailable.value) {
@@ -110,10 +117,7 @@ class DevicePresenceRuntimeMonitor(
 
         beginForegroundVerification()
         this.localNetworkAvailable.value = true
-        probeRuntimeForVisibleDevices(force = true)
-        sendAuthenticatedHeartbeat(force = true)
-        reevaluateNow(localNetworkAvailable = true)
-        runtimeScope?.launch { refreshForegroundDiscoverySafely() }
+        scheduleForegroundRefresh()
     }
 
     fun isLocalNetworkAvailable(): Boolean = currentLocalNetworkAvailable()
@@ -130,6 +134,34 @@ class DevicePresenceRuntimeMonitor(
             return candidate
         }
         return DeviceOnlineState.AUTHENTICATED
+    }
+
+    private fun scheduleForegroundRefresh() {
+        val scope = runtimeScope ?: return
+        synchronized(foregroundRefreshLock) {
+            if (foregroundRefreshJob?.isActive == true) return
+
+            val job = scope.launch {
+                performForegroundRefresh()
+            }
+            foregroundRefreshJob = job
+            job.invokeOnCompletion {
+                synchronized(foregroundRefreshLock) {
+                    if (foregroundRefreshJob === job) {
+                        foregroundRefreshJob = null
+                    }
+                }
+            }
+        }
+    }
+
+    private fun cancelForegroundRefresh() {
+        val job = synchronized(foregroundRefreshLock) {
+            foregroundRefreshJob.also {
+                foregroundRefreshJob = null
+            }
+        }
+        job?.cancel()
     }
 
     private fun CoroutineScope.launchConnectivityWatcher(): Job? {
