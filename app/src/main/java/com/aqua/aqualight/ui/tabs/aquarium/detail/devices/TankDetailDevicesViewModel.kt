@@ -42,6 +42,7 @@ class TankDetailDevicesViewModel(
     private val removingDevice = MutableStateFlow(false)
     private var boundTankId: Long = 0L
     private var observeJob: Job? = null
+    private var menuOpenJob: Job? = null
 
     fun bind(tankId: Long) {
         if (tankId <= 0L || boundTankId == tankId) return
@@ -88,16 +89,12 @@ class TankDetailDevicesViewModel(
     }
 
     fun onDeviceClicked(deviceUid: String) {
-        if (
-            deviceUid.isBlank() ||
-            openingDeviceUid.value != null ||
-            removingDevice.value
-        ) {
-            return
-        }
+        if (deviceUid.isBlank() || removingDevice.value) return
+        if (openingDeviceUid.value == deviceUid) return
 
-        viewModelScope.launch {
-            openingDeviceUid.value = deviceUid
+        menuOpenJob?.cancel()
+        openingDeviceUid.value = deviceUid
+        menuOpenJob = viewModelScope.launch {
             val result = try {
                 menuAccessOperations.resolve(deviceUid)
             } catch (error: Throwable) {
