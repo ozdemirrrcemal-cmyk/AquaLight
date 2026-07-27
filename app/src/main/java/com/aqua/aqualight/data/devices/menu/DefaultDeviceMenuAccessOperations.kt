@@ -145,22 +145,32 @@ internal class DefaultDeviceMenuAccessOperations(
 
     private fun prepareAccess(deviceUid: DeviceUid): AccessPreparation {
         val initialSnapshot = runtimePort.currentDevice(deviceUid)
-            ?: return AccessPreparation.Immediate(
+        return if (initialSnapshot == null) {
+            AccessPreparation.Immediate(
                 DeviceMenuAccessResult.Unavailable(
                     title = "",
                     reason = DeviceMenuUnavailableReason.DEVICE_NOT_REGISTERED
                 )
             )
-        val localNetworkAvailable = runtimePort.isLocalNetworkAvailable()
-        if (!localNetworkAvailable) {
-            return AccessPreparation.Immediate(
+        } else if (!runtimePort.isLocalNetworkAvailable()) {
+            AccessPreparation.Immediate(
                 unavailable(
                     snapshot = initialSnapshot,
                     reason = DeviceMenuUnavailableReason.LOCAL_NETWORK_UNAVAILABLE
                 )
             )
+        } else {
+            prepareNetworkAvailableAccess(
+                deviceUid = deviceUid,
+                initialSnapshot = initialSnapshot
+            )
         }
+    }
 
+    private fun prepareNetworkAvailableAccess(
+        deviceUid: DeviceUid,
+        initialSnapshot: DeviceSnapshot
+    ): AccessPreparation {
         runtimePort.refreshVisibleDevices(localNetworkAvailable = true)
         val failureReason = fastFailureReason(initialSnapshot)
         val activeRuntime = runtimePort.currentRuntimeConnectionState(deviceUid)
