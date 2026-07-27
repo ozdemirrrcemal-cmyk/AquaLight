@@ -53,7 +53,6 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         observeViewModel()
     }
 
-
     private fun setupFeedbackResultListener() {
         childFragmentManager.setFragmentResultListener(
             DELETE_DEVICES_REQUEST_KEY,
@@ -77,12 +76,19 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             fragment = this,
             config = if (state.selectionMode) {
                 AquaHeaderConfig(
-                    titleOverride = getString(R.string.devices_selected_count_title, state.selectedCount),
+                    titleOverride = getString(
+                        R.string.devices_selected_count_title,
+                        state.selectedCount
+                    ),
                     showBackButton = false,
                     filledIconAction = AquaHeaderFilledIconAction(
                         iconRes = R.drawable.ic_delete_24,
-                        contentDescription = getString(R.string.devices_delete_selected_content_description),
-                        enabled = state.selectedCount > 0 && !state.isDeletingDevices,
+                        contentDescription = getString(
+                            R.string.devices_delete_selected_content_description
+                        ),
+                        enabled = state.selectedCount > 0 &&
+                            !state.isDeletingDevices &&
+                            !state.isOpeningDeviceMenu,
                         onClick = {
                             showDeleteConfirmation()
                         }
@@ -93,9 +99,14 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                     showBackButton = false,
                     primaryAction = AquaHeaderPrimaryAction(
                         text = getString(R.string.devices_add_action),
-                        contentDescription = getString(R.string.devices_add_content_description),
+                        contentDescription = getString(
+                            R.string.devices_add_content_description
+                        ),
                         onClick = {
-                            if (!state.isDeletingDevices) {
+                            if (
+                                !state.isDeletingDevices &&
+                                !state.isOpeningDeviceMenu
+                            ) {
                                 openAddDevice()
                             }
                         }
@@ -106,7 +117,8 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     }
 
     private fun openAddDevice() {
-        if (viewModel.uiState.value.isDeletingDevices) {
+        val state = viewModel.uiState.value
+        if (state.isDeletingDevices || state.isOpeningDeviceMenu) {
             return
         }
 
@@ -138,7 +150,9 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                     viewModel.events.collect { event ->
                         when (event) {
                             is DevicesEvent.OpenRoute -> openDeviceRoute(event.route)
-                            is DevicesEvent.ShowDeviceUnavailable -> showDeviceUnavailable(event)
+                            is DevicesEvent.ShowDeviceUnavailable -> {
+                                showDeviceUnavailable(event)
+                            }
                             is DevicesEvent.ShowDeletePartialSuccess -> {
                                 showDeletePartialSuccess(event)
                             }
@@ -158,12 +172,13 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         setupHeader(state)
         deviceAdapter.submitList(state.devices)
         binding.rvSelectedDevices.isEnabled = !state.isDeletingDevices
-        binding.btnEmptyAddDevice.isEnabled = !state.isDeletingDevices
+        binding.btnEmptyAddDevice.isEnabled =
+            !state.isDeletingDevices && !state.isOpeningDeviceMenu
         binding.rvSelectedDevices.isVisible = state.devices.isNotEmpty()
         binding.tvEmptyState.isVisible = state.isEmpty
         baseActivity()?.setGlobalLoading(
             ownerKey = DEVICE_OPERATION_LOADING_OWNER,
-            show = state.isOpeningDeviceMenu || state.isDeletingDevices
+            show = state.isDeletingDevices
         )
     }
 
@@ -216,7 +231,13 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     private fun showDeleteConfirmation() {
         val state = viewModel.uiState.value
         val selectedCount = state.selectedCount
-        if (selectedCount <= 0 || state.isDeletingDevices) return
+        if (
+            selectedCount <= 0 ||
+            state.isDeletingDevices ||
+            state.isOpeningDeviceMenu
+        ) {
+            return
+        }
 
         FeedbackBottomSheet.show(
             fragmentManager = childFragmentManager,
