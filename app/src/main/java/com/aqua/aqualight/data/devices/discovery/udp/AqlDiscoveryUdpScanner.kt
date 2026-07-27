@@ -26,15 +26,21 @@ class AqlDiscoveryUdpScanner(
     private val packetSizeBytes: Int = AqlDiscoveryContract.MAX_PACKET_SIZE_BYTES,
     private val receiveTimeoutMillis: Int = DEFAULT_RECEIVE_TIMEOUT_MS,
     private val clockMillis: () -> Long = System::currentTimeMillis,
-    private val networkProvider: () -> Network? = { null }
+    private val networkProvider: () -> Network? = { null },
+    private val requireLocalNetwork: Boolean = false
 ) {
 
     fun scan(): Flow<AqlDiscoveredDevice> = callbackFlow {
         val socketRef = AtomicReference<DatagramSocket?>()
 
         val job = launch(Dispatchers.IO) {
+            val network = networkProvider()
+            if (requireLocalNetwork && network == null) {
+                return@launch
+            }
+
             val socket = DatagramSocket(null).also { datagramSocket ->
-                networkProvider()?.bindSocket(datagramSocket)
+                network?.bindSocket(datagramSocket)
                 datagramSocket.reuseAddress = true
                 datagramSocket.soTimeout = receiveTimeoutMillis
                 datagramSocket.bind(InetSocketAddress(listenPort))
