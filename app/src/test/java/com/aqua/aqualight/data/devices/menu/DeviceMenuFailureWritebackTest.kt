@@ -12,8 +12,8 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -53,6 +53,7 @@ class DeviceMenuFailureWritebackTest {
 
     private class NoResponsePort(snapshot: DeviceSnapshot) : DeviceMenuRuntimePort {
         private val snapshotFlow = MutableStateFlow(snapshot)
+        private val eventFlow = MutableSharedFlow<AqlWsEvent>()
         private val authenticatedState = AqlWsConnectionState.Authenticated(
             deviceUid = snapshot.deviceUid,
             authenticatedAtMillis = 100L
@@ -82,7 +83,7 @@ class DeviceMenuFailureWritebackTest {
 
         override fun connectRuntime(deviceUid: DeviceUid): Boolean = true
 
-        override fun runtimeEvents(): Flow<AqlWsEvent> = emptyFlow()
+        override fun runtimeEvents(): Flow<AqlWsEvent> = eventFlow
 
         override suspend fun requestNetworkStatus(deviceUid: DeviceUid): String = "no-response"
 
