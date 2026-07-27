@@ -2,7 +2,9 @@ package com.aqua.aqualight.data.devices.menu
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -12,29 +14,28 @@ class DeviceMenuAuthenticationPolicyTest {
 
     @Test
     fun `socket connected is not sufficient to open menu`() {
-        assertFalse(
-            DeviceMenuAuthenticationPolicy.accepts(
+        assertNull(
+            DeviceMenuAuthenticationPolicy.classify(
                 state = AqlWsConnectionState.Connected(
                     deviceUid = requestedUid,
                     url = "ws://192.168.1.20:81/ws",
                     connectedAtMillis = 1_000L
                 ),
-                requestedDeviceUid = requestedUid,
-                gateStartedAtMillis = 900L
+                requestedDeviceUid = requestedUid
             )
         )
     }
 
     @Test
     fun `fresh authentication for requested device opens menu`() {
-        assertTrue(
-            DeviceMenuAuthenticationPolicy.accepts(
+        assertEquals(
+            AuthenticationOutcome.Authenticated,
+            DeviceMenuAuthenticationPolicy.classify(
                 state = AqlWsConnectionState.Authenticated(
                     deviceUid = requestedUid,
                     authenticatedAtMillis = 1_000L
                 ),
-                requestedDeviceUid = requestedUid,
-                gateStartedAtMillis = 900L
+                requestedDeviceUid = requestedUid
             )
         )
     }
@@ -76,25 +77,38 @@ class DeviceMenuAuthenticationPolicyTest {
     }
 
     @Test
-    fun `stale or different-device authentication is rejected`() {
-        assertFalse(
-            DeviceMenuAuthenticationPolicy.accepts(
-                state = AqlWsConnectionState.Authenticated(
+    fun `authentication required is a terminal typed result`() {
+        assertEquals(
+            AuthenticationOutcome.AuthRequired,
+            DeviceMenuAuthenticationPolicy.classify(
+                state = AqlWsConnectionState.AuthRequired(
                     deviceUid = requestedUid,
-                    authenticatedAtMillis = 899L
+                    message = "pairing required"
                 ),
-                requestedDeviceUid = requestedUid,
-                gateStartedAtMillis = 900L
+                requestedDeviceUid = requestedUid
             )
         )
-        assertFalse(
-            DeviceMenuAuthenticationPolicy.accepts(
-                state = AqlWsConnectionState.Authenticated(
-                    deviceUid = DeviceUid("AQL-OTHER"),
-                    authenticatedAtMillis = 1_000L
+    }
+
+    @Test
+    fun `connection failure is terminal only for requested device`() {
+        assertEquals(
+            AuthenticationOutcome.Failed,
+            DeviceMenuAuthenticationPolicy.classify(
+                state = AqlWsConnectionState.Failed(
+                    deviceUid = requestedUid,
+                    message = "connection failed"
                 ),
-                requestedDeviceUid = requestedUid,
-                gateStartedAtMillis = 900L
+                requestedDeviceUid = requestedUid
+            )
+        )
+        assertNull(
+            DeviceMenuAuthenticationPolicy.classify(
+                state = AqlWsConnectionState.Failed(
+                    deviceUid = DeviceUid("AQL-OTHER"),
+                    message = "connection failed"
+                ),
+                requestedDeviceUid = requestedUid
             )
         )
     }
