@@ -83,6 +83,10 @@ for token, reason in (
     ("data class Available", "approved routing metadata must be explicit"),
     ("data class Unavailable", "blocked menu decisions must be explicit"),
     ("enum class DeviceMenuUnavailableReason", "blocked decisions need typed reasons"),
+    ("LOCAL_NETWORK_UNAVAILABLE", "local network loss needs a dedicated product reason"),
+    ("AUTHENTICATION_REQUIRED", "pairing/authentication failure needs a dedicated product reason"),
+    ("DEVICE_UNRESPONSIVE", "target-device failure needs a dedicated product reason"),
+    ("VERIFICATION_TIMED_OUT", "bounded verification timeout needs a dedicated product reason"),
 ):
     if token not in menu_contract:
         errors.append(f"{MENU_CONTRACT.relative_to(ROOT)}: {reason}: {token}")
@@ -137,6 +141,8 @@ for token, reason in (
     ("DeviceFamily.LIGHT", "data family must be mapped explicitly"),
     ("fun DeviceSnapshot.toOwnerDeviceListItem", "list mapping must be centralized"),
     ("fun DeviceSnapshot.toOwnerDeviceStatusSnapshot", "status mapping must be centralized"),
+    ("lastControlProofAtMillis", "latest-seen mapping must include correlated control proof"),
+    ("lastRuntimeMessageAtMillis", "latest-seen mapping must include decoded runtime traffic"),
     ("lastAuthenticatedAtMillis", "latest-seen mapping must include authenticated runtime activity"),
     ("lastWsConnectedAtMillis", "latest-seen mapping must include WebSocket activity"),
     ("lastUdpSeenAtMillis", "latest-seen mapping must include LAN discovery activity"),
@@ -151,7 +157,11 @@ for token, reason in (
     ("DeviceMenuAuthenticationPolicy", "fresh authenticated sessions must be verified"),
     ("DeviceMenuRuntimeProofPolicy", "command responses must prove current liveness"),
     ("expectedRequestId", "runtime proof must correlate request ids"),
-    ("CURRENT_LIVENESS_NOT_PROVEN", "failed liveness must be typed"),
+    ("recordControlProof", "successful liveness proof must update the canonical registry"),
+    ("MENU_ACCESS_BUDGET_MS", "interactive liveness verification must be bounded"),
+    ("AUTHENTICATION_REQUIRED", "authentication failure must remain typed"),
+    ("DEVICE_UNRESPONSIVE", "unresponsive target failure must remain typed"),
+    ("VERIFICATION_TIMED_OUT", "timeout failure must remain typed"),
 ):
     if token not in menu_adapter:
         errors.append(f"{MENU_ADAPTER.relative_to(ROOT)}: {reason}: {token}")
