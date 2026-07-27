@@ -19,17 +19,27 @@ import kotlinx.coroutines.withContext
 class AqlDiscoveryRefreshSender(
     private val port: Int = AqlDiscoveryContract.PORT,
     private val addressResolver: () -> List<InetAddress> = AqlBroadcastAddressResolver::resolve,
-    private val networkProvider: () -> Network? = { null }
+    private val networkProvider: () -> Network? = { null },
+    private val requireLocalNetwork: Boolean = false
 ) {
 
     suspend fun sendRefresh(): SendResult = withContext(Dispatchers.IO) {
         val payload = AqlDiscoveryContract.buildRefreshPayload().toByteArray(Charsets.UTF_8)
         val addresses = addressResolver().distinctBy { it.hostAddress }
+        val network = networkProvider()
+
+        if (requireLocalNetwork && network == null) {
+            return@withContext SendResult(
+                attemptedAddressCount = addresses.size,
+                sentAddressCount = 0,
+                lastErrorMessage = LOCAL_NETWORK_UNAVAILABLE_MESSAGE
+            )
+        }
+
         var successCount = 0
         var lastError: String? = null
-
         DatagramSocket(null).use { socket ->
-            networkProvider()?.bindSocket(socket)
+            network?.bindSocket(socket)
             socket.reuseAddress = true
             socket.broadcast = true
             socket.bind(InetSocketAddress(0))
@@ -73,5 +83,7 @@ class AqlDiscoveryRefreshSender(
 
     companion object {
         val DEFAULT_FOREGROUND_BURST_DELAYS_MS: List<Long> = listOf(0L, 1_500L, 5_000L)
+        private const val LOCAL_NETWORK_UNAVAILABLE_MESSAGE =
+            "Local Wi-Fi or Ethernet network is unavailable."
     }
 }
