@@ -4,4 +4,9 @@
     <string name="device_menu_offline_dialog_title">Device Offline</string>
     <string name="device_menu_offline_dialog_message">%1$s is offline right now.\n\n%2$s</string>
     <string name="device_menu_offline_message">Make sure it is powered on and connected to the same Wi-Fi network.</string>
+    <string name="device_menu_checking_accessibility">Checking device connection</string>
+    <string name="device_menu_local_network_unavailable_message">Connect this phone to the same Wi-Fi network as the device, then try again.</string>
+    <string name="device_menu_authentication_required_message">This device must be paired with your account again before its controls can be opened.</string>
+    <string name="device_menu_device_unresponsive_message">The device is on the local network but is not responding. Check its power and Wi-Fi connection.</string>
+    <string name="device_menu_verification_timed_out_message">The connection check took too long. AquaLight will keep trying automatically.</string>
 </resources>
