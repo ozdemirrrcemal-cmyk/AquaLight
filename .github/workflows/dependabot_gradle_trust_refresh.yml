@@ -74,6 +74,9 @@ jobs:
           ref: ${{ steps.pr.outputs.head-sha }}
           persist-credentials: false
 
+      - name: Provision Dependabot Firebase fixtures
+        uses: ./.github/actions/provision-dependabot-firebase
+
       - name: Validate Dependabot PR scope
         env:
           GH_TOKEN: ${{ github.token }}
@@ -114,7 +117,7 @@ jobs:
           PY
 
       - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@b5418f5a58f5fd2eb486dd7efb368fe7be7eae45 # v2
+        uses: gradle/actions/wrapper-validation@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
 
       - name: Install JDK 17
         uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
