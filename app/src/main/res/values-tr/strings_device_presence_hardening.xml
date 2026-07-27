@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_menu_checking_accessibility">Cihaz bağlantısı kontrol ediliyor</string>
+    <string name="device_menu_local_network_unavailable_message">Telefonunuzu cihazla aynı Wi-Fi ağına bağlayıp yeniden deneyin.</string>
+    <string name="device_menu_authentication_required_message">Cihaz kontrollerini açmadan önce bu cihazı hesabınızla yeniden eşleştirmeniz gerekiyor.</string>
+    <string name="device_menu_device_unresponsive_message">Cihaz yerel ağda görünüyor ancak yanıt vermiyor. Güç ve Wi-Fi bağlantısını kontrol edin.</string>
+    <string name="device_menu_verification_timed_out_message">Bağlantı kontrolü gereğinden uzun sürdü. AquaLight otomatik olarak denemeye devam edecek.</string>
+</resources>
