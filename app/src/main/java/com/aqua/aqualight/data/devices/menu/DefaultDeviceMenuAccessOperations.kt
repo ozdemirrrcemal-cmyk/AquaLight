@@ -370,9 +370,6 @@ internal class DefaultDeviceMenuAccessOperations(
             DeviceOnlineState.AUTH_REQUIRED -> {
                 DeviceMenuUnavailableReason.AUTHENTICATION_REQUIRED
             }
-            DeviceOnlineState.LOCAL_NETWORK_OFFLINE -> {
-                DeviceMenuUnavailableReason.LOCAL_NETWORK_UNAVAILABLE
-            }
             DeviceOnlineState.OFFLINE,
             DeviceOnlineState.ERROR -> {
                 DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE
