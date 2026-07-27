@@ -25,7 +25,6 @@ data class DeviceConnectionState(
     val latestRuntimeProofElapsedMillis: Long?
         get() = listOfNotNull(
             lastControlProofElapsedMillis,
-            lastRuntimeMessageElapsedMillis,
-            lastAuthenticatedElapsedMillis
+            lastRuntimeMessageElapsedMillis
         ).maxOrNull()
 }
