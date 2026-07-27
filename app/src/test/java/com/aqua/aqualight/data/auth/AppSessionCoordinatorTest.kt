@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.auth
 
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -155,6 +156,32 @@ class AppSessionCoordinatorTest {
     }
 
     @Test
+    fun foregroundConsumersDriveRuntimeOnlyOnBoundaryTransitions() = runBlocking {
+        val provider = FakeOwnerProvider("owner-a")
+        val runtimeController = RecordingForegroundRuntimeController()
+        val coordinator = coordinator(
+            provider = provider,
+            foregroundRuntimeController = runtimeController
+        ) {
+            provider.currentOwnerUid().toResolution()
+        }
+
+        try {
+            coordinator.enterForeground()
+            coordinator.enterForeground()
+            assertEquals(listOf(true), runtimeController.transitions)
+
+            coordinator.leaveForeground()
+            assertEquals(listOf(true), runtimeController.transitions)
+
+            coordinator.leaveForeground()
+            assertEquals(listOf(true, false), runtimeController.transitions)
+        } finally {
+            coordinator.close()
+        }
+    }
+
+    @Test
     fun processRecreationResolvesCurrentOwnerWithoutOldCoordinatorState() = runBlocking {
         val provider = FakeOwnerProvider("owner-a")
         val first = coordinator(provider) {
@@ -210,6 +237,8 @@ class AppSessionCoordinatorTest {
 
     private fun coordinator(
         provider: FakeOwnerProvider,
+        foregroundRuntimeController: ForegroundRuntimeController =
+            ForegroundRuntimeController { },
         resolve: suspend () -> ForegroundSessionResolution
     ): AppSessionCoordinator {
         return AppSessionCoordinator(
@@ -217,7 +246,8 @@ class AppSessionCoordinatorTest {
             sessionResolver = ForegroundSessionResolver {
                 resolve()
             },
-            dispatcher = Dispatchers.Unconfined
+            dispatcher = Dispatchers.Unconfined,
+            foregroundRuntimeController = foregroundRuntimeController
         )
     }
 
@@ -234,6 +264,14 @@ class AppSessionCoordinatorTest {
             ForegroundSessionResolution.Unauthenticated
         } else {
             ForegroundSessionResolution.Authenticated(this)
+        }
+    }
+
+    private class RecordingForegroundRuntimeController : ForegroundRuntimeController {
+        val transitions = CopyOnWriteArrayList<Boolean>()
+
+        override fun setForeground(isForeground: Boolean) {
+            transitions += isForeground
         }
     }
 
