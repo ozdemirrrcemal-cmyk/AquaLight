@@ -1,3 +1,5 @@
+@file:Suppress("LongParameterList")
+
 package com.aqua.aqualight.data.devices.repository
 
 import com.aqua.aqualight.data.devices.discovery.udp.AqlDiscoveryRefreshSender
@@ -28,6 +30,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+@Suppress("TooManyFunctions")
 class DevicesRepository(
     private val discoveryRepository: DeviceDiscoveryRepository = DeviceDiscoveryRepository(),
     private val registryStore: DeviceRegistryStore = DeviceRegistryStore(),
@@ -444,6 +447,7 @@ class DevicesRepository(
         applyRuntimeUnavailable(deviceUid = event.deviceUid)
     }
 
+    @Suppress("LongMethod")
     private fun applyRuntimeConnectionState(state: AqlWsConnectionState) {
         val nowElapsedMillis = elapsedRealtimeMillis()
         when (state) {
@@ -564,3 +568,9 @@ class DevicePersistenceTransactionException(
     cause: Throwable,
     val rollbackError: Throwable? = null
 ) : IllegalStateException(message, cause)
+
+internal object RuntimeClosedEventPolicy {
+    fun shouldClearRuntimeProof(currentState: AqlWsConnectionState?): Boolean {
+        return currentState == null || currentState is AqlWsConnectionState.Disconnected
+    }
+}
