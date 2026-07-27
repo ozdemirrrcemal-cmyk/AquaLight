@@ -14,17 +14,13 @@ class CareTaskBootReceiver : BroadcastReceiver() {
         context: Context,
         intent: Intent
     ) {
-        when (intent.action) {
-            Intent.ACTION_BOOT_COMPLETED,
-            Intent.ACTION_MY_PACKAGE_REPLACED -> Unit
+        val action = CareTaskBootIntentVerifier.verifiedAction(intent) ?: return
 
-            AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED -> {
-                if (!PreciseReminderAccessPolicy(context).isGranted()) {
-                    return
-                }
-            }
-
-            else -> return
+        if (
+            action == AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED &&
+            !PreciseReminderAccessPolicy(context).isGranted()
+        ) {
+            return
         }
 
         val ownerUid = FirebaseAuthenticatedOwnerProvider.create(
