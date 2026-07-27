@@ -9,6 +9,7 @@ import com.aqua.aqualight.application.devices.OwnerDevicesOperations
 import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import java.util.concurrent.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,6 +34,8 @@ class DevicesViewModel(
     private val _events = Channel<DevicesEvent>(capacity = Channel.BUFFERED)
     val events: Flow<DevicesEvent> = _events.receiveAsFlow()
 
+    private var menuOpenJob: Job? = null
+
     init {
         operations.start(viewModelScope)
         observeDevices()
@@ -49,10 +52,11 @@ class DevicesViewModel(
             toggleDeviceSelection(deviceUid)
             return
         }
-        if (openingDeviceUid.value != null) return
+        if (openingDeviceUid.value == deviceUid) return
 
-        viewModelScope.launch {
-            openingDeviceUid.value = deviceUid
+        menuOpenJob?.cancel()
+        openingDeviceUid.value = deviceUid
+        menuOpenJob = viewModelScope.launch {
             val result = try {
                 menuAccessOperations.resolve(deviceUid)
             } catch (error: Throwable) {
