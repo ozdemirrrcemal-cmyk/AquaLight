@@ -3,8 +3,8 @@ package com.aqua.aqualight.data.care.reminder
 import android.app.AlarmManager
 import android.content.Intent
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -12,7 +12,7 @@ import org.junit.runner.RunWith
 class CareTaskBootIntentVerifierInstrumentedTest {
 
     @Test
-    fun acceptsOnlySupportedSystemActions() {
+    fun acceptsOnlyMatchingSupportedSystemActions() {
         val supportedActions = listOf(
             Intent.ACTION_BOOT_COMPLETED,
             Intent.ACTION_MY_PACKAGE_REPLACED,
@@ -20,19 +20,28 @@ class CareTaskBootIntentVerifierInstrumentedTest {
         )
 
         supportedActions.forEach { action ->
-            assertEquals(
-                action,
-                CareTaskBootIntentVerifier.verifiedAction(Intent(action))
+            assertTrue(
+                CareTaskBootIntentVerifier.isVerified(
+                    Intent(action),
+                    action
+                )
             )
         }
     }
 
     @Test
-    fun rejectsMissingAndUnsupportedActions() {
-        assertNull(CareTaskBootIntentVerifier.verifiedAction(Intent()))
-        assertNull(
-            CareTaskBootIntentVerifier.verifiedAction(
-                Intent("com.aqua.aqualight.UNTRUSTED_ACTION")
+    fun rejectsMissingUnsupportedAndMismatchedActions() {
+        assertFalse(CareTaskBootIntentVerifier.isVerified(Intent(), null))
+        assertFalse(
+            CareTaskBootIntentVerifier.isVerified(
+                Intent("com.aqua.aqualight.UNTRUSTED_ACTION"),
+                "com.aqua.aqualight.UNTRUSTED_ACTION"
+            )
+        )
+        assertFalse(
+            CareTaskBootIntentVerifier.isVerified(
+                Intent(Intent.ACTION_BOOT_COMPLETED),
+                Intent.ACTION_MY_PACKAGE_REPLACED
             )
         )
     }
