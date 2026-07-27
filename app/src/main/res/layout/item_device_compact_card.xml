@@ -31,7 +31,7 @@
             android:id="@+id/deviceIconContainer"
             android:layout_width="@dimen/aqua_size_54"
             android:layout_height="@dimen/aqua_size_54"
-                    app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:strokeWidth="@dimen/aqua_size_1">
@@ -116,6 +116,17 @@
                 android:src="@drawable/ic_status_wifi"
                 app:tint="@color/aqua_accent_positive"
                 tools:tint="@color/aqua_accent_positive" />
+
+            <ProgressBar
+                android:id="@+id/progressCardAction"
+                style="?android:attr/progressBarStyleSmall"
+                android:layout_width="@dimen/aqua_size_24"
+                android:layout_height="@dimen/aqua_size_24"
+                android:layout_gravity="center"
+                android:contentDescription="@string/device_menu_checking_accessibility"
+                android:indeterminate="true"
+                android:visibility="gone"
+                tools:visibility="gone" />
 
             <TextView
                 style="@style/Widget.Aqua.Chip.Action"
