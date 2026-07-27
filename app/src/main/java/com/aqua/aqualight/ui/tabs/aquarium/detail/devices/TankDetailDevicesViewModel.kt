@@ -38,7 +38,7 @@ class TankDetailDevicesViewModel(
     private val _events = Channel<TankDetailDevicesEvent>(Channel.BUFFERED)
     val events: Flow<TankDetailDevicesEvent> = _events.receiveAsFlow()
 
-    private val openingDeviceUid = MutableStateFlow<String?>(null)
+    private val openingDeviceId = MutableStateFlow<String?>(null)
     private val removingDevice = MutableStateFlow(false)
     private var boundTankId: Long = 0L
     private var observeJob: Job? = null
@@ -53,15 +53,15 @@ class TankDetailDevicesViewModel(
         observeJob = viewModelScope.launch {
             combine(
                 assignmentOperations.assignedDevices(tankId),
-                openingDeviceUid,
+                openingDeviceId,
                 removingDevice
-            ) { devices, currentOpeningDeviceUid, isRemovingDevice ->
+            ) { devices, currentOpeningDeviceId, isRemovingDevice ->
                 val items = devices.map { device ->
                     TankAssignedDeviceItem(
                         deviceUid = device.deviceUid,
                         title = device.displayName,
                         card = DeviceCompactSnapshotMapper.map(device).copy(
-                            isBusy = currentOpeningDeviceUid == device.deviceUid
+                            isBusy = currentOpeningDeviceId == device.deviceUid
                         )
                     )
                 }
@@ -69,8 +69,8 @@ class TankDetailDevicesViewModel(
                     devices = items,
                     isEmpty = items.isEmpty(),
                     isLoading = false,
-                    openingDeviceUid = currentOpeningDeviceUid,
-                    isOpeningDeviceMenu = currentOpeningDeviceUid != null,
+                    openingDeviceId = currentOpeningDeviceId,
+                    isOpeningDeviceMenu = currentOpeningDeviceId != null,
                     isRemovingDevice = isRemovingDevice
                 )
             }.catch {
@@ -90,10 +90,10 @@ class TankDetailDevicesViewModel(
 
     fun onDeviceClicked(deviceUid: String) {
         if (deviceUid.isBlank() || removingDevice.value) return
-        if (openingDeviceUid.value == deviceUid) return
+        if (openingDeviceId.value == deviceUid) return
 
         menuOpenJob?.cancel()
-        openingDeviceUid.value = deviceUid
+        openingDeviceId.value = deviceUid
         menuOpenJob = viewModelScope.launch {
             val result = try {
                 menuAccessOperations.resolve(deviceUid)
@@ -104,8 +104,8 @@ class TankDetailDevicesViewModel(
                     reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
                 )
             } finally {
-                if (openingDeviceUid.value == deviceUid) {
-                    openingDeviceUid.value = null
+                if (openingDeviceId.value == deviceUid) {
+                    openingDeviceId.value = null
                 }
             }
 
@@ -135,7 +135,7 @@ class TankDetailDevicesViewModel(
             tankId <= 0L ||
             deviceUid.isBlank() ||
             removingDevice.value ||
-            openingDeviceUid.value != null
+            openingDeviceId.value != null
         ) {
             return
         }
@@ -163,7 +163,7 @@ data class TankDetailDevicesUiState(
     val devices: List<TankAssignedDeviceItem> = emptyList(),
     val isEmpty: Boolean = true,
     val isLoading: Boolean = true,
-    val openingDeviceUid: String? = null,
+    val openingDeviceId: String? = null,
     val isOpeningDeviceMenu: Boolean = false,
     val isRemovingDevice: Boolean = false
 )
