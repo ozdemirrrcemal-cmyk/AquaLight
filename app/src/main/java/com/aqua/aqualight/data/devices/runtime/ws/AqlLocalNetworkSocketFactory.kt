@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.devices.runtime.ws
 import android.net.Network
 import java.net.InetAddress
 import java.net.Socket
+import java.net.SocketException
 import javax.net.SocketFactory
 
 /**
@@ -10,7 +11,8 @@ import javax.net.SocketFactory
  *
  * OkHttp resolves the app-owned synthetic hostname through [AqlPrivateLanDns] and then asks this
  * factory for the raw socket. The socket therefore stays on Wi-Fi/Ethernet even when VPN or mobile
- * data is the process default route.
+ * data is the process default route. No process-default fallback is allowed when the local route is
+ * absent.
  */
 internal class AqlLocalNetworkSocketFactory(
     private val networkProvider: () -> Network?
@@ -39,6 +41,7 @@ internal class AqlLocalNetworkSocketFactory(
     ): Socket = delegate().createSocket(address, port, localAddress, localPort)
 
     private fun delegate(): SocketFactory {
-        return networkProvider()?.socketFactory ?: SocketFactory.getDefault()
+        return networkProvider()?.socketFactory
+            ?: throw SocketException("Local Wi-Fi or Ethernet network is unavailable.")
     }
 }
