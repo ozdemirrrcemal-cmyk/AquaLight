@@ -40,25 +40,25 @@ class DeviceConnectivityObserver(context: Context) {
         )
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
-                tracker.onAvailable(network)
+                tracker.updateAvailability(network, available = true)
             }
 
             override fun onLost(network: Network) {
-                tracker.onLost(network)
+                tracker.updateAvailability(network, available = false)
             }
 
             override fun onCapabilitiesChanged(
                 network: Network,
                 networkCapabilities: NetworkCapabilities
             ) {
-                tracker.onCapabilitiesChanged(network, networkCapabilities)
+                tracker.updateCapabilities(network, networkCapabilities)
             }
 
             override fun onLinkPropertiesChanged(
                 network: Network,
                 linkProperties: LinkProperties
             ) {
-                tracker.onLinkPropertiesChanged(network, linkProperties)
+                tracker.updateLinkProperties(network, linkProperties)
             }
         }
 
@@ -126,28 +126,35 @@ private class LocalNetworkPathTracker(
     private val capabilitiesByNetwork = ConcurrentHashMap<Network, NetworkCapabilities>()
     private val linkPropertiesByNetwork = ConcurrentHashMap<Network, LinkProperties>()
 
-    fun onAvailable(network: Network) {
-        // The request itself matches only Wi-Fi or Ethernet. Capabilities arrive through
-        // onCapabilitiesChanged; accepting the network here avoids a false Offline pulse.
-        localNetworks.add(network)
+    fun updateAvailability(network: Network, available: Boolean) {
+        if (available) {
+            // The request itself matches only Wi-Fi or Ethernet. Capabilities arrive through
+            // onCapabilitiesChanged; accepting the network here avoids a false Offline pulse.
+            localNetworks.add(network)
+        } else {
+            localNetworks.remove(network)
+            capabilitiesByNetwork.remove(network)
+            linkPropertiesByNetwork.remove(network)
+        }
         publishPath()
     }
 
-    fun onLost(network: Network) {
-        localNetworks.remove(network)
-        capabilitiesByNetwork.remove(network)
-        linkPropertiesByNetwork.remove(network)
-        publishPath()
-    }
-
-    fun onCapabilitiesChanged(
+    fun updateCapabilities(
         network: Network,
         capabilities: NetworkCapabilities
     ) {
-        updateNetwork(network, capabilities)
+        if (DeviceLocalTransportPolicy.hasLocalTransport(capabilities)) {
+            localNetworks.add(network)
+            capabilitiesByNetwork[network] = capabilities
+        } else {
+            localNetworks.remove(network)
+            capabilitiesByNetwork.remove(network)
+            linkPropertiesByNetwork.remove(network)
+        }
+        publishPath()
     }
 
-    fun onLinkPropertiesChanged(
+    fun updateLinkProperties(
         network: Network,
         linkProperties: LinkProperties
     ) {
@@ -167,21 +174,6 @@ private class LocalNetworkPathTracker(
                     linkPropertiesByNetwork[network] = linkProperties
                 }
             }
-        }
-        publishPath()
-    }
-
-    private fun updateNetwork(
-        network: Network,
-        capabilities: NetworkCapabilities?
-    ) {
-        if (DeviceLocalTransportPolicy.hasLocalTransport(capabilities)) {
-            localNetworks.add(network)
-            capabilities?.let { capabilitiesByNetwork[network] = it }
-        } else {
-            localNetworks.remove(network)
-            capabilitiesByNetwork.remove(network)
-            linkPropertiesByNetwork.remove(network)
         }
         publishPath()
     }
@@ -223,31 +215,26 @@ private class LocalNetworkPathTracker(
         network: Network,
         linkProperties: LinkProperties?
     ): Boolean {
-        val previousLinkProperties = previous.linkProperties
-        return previous.network == network &&
-            previousLinkProperties != null &&
-            linkProperties != null &&
-            previousLinkProperties != linkProperties
+        return when {
+            previous.network != network -> false
+            previous.linkProperties == null -> false
+            linkProperties == null -> false
+            else -> previous.linkProperties != linkProperties
+        }
     }
 
     private fun selectPreferredNetwork(previousNetwork: Network?): Network? {
         return when {
             previousNetwork != null && previousNetwork in localNetworks -> previousNetwork
-            else -> ethernetNetwork() ?: wifiNetwork() ?: localNetworks.firstOrNull()
+            else -> networkWithTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+                ?: networkWithTransport(NetworkCapabilities.TRANSPORT_WIFI)
+                ?: localNetworks.firstOrNull()
         }
     }
 
-    private fun ethernetNetwork(): Network? {
+    private fun networkWithTransport(transport: Int): Network? {
         return localNetworks.firstOrNull { network ->
-            capabilitiesByNetwork[network]
-                ?.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) == true
-        }
-    }
-
-    private fun wifiNetwork(): Network? {
-        return localNetworks.firstOrNull { network ->
-            capabilitiesByNetwork[network]
-                ?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
+            capabilitiesByNetwork[network]?.hasTransport(transport) == true
         }
     }
 }
