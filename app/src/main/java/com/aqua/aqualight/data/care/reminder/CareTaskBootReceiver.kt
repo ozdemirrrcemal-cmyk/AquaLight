@@ -16,22 +16,22 @@ class CareTaskBootReceiver : BroadcastReceiver() {
         intent: Intent
     ) {
         // Keep this direct call in the receiver so the system-intent trust boundary remains explicit.
-        val action = intent.getAction() ?: return
-
-        when (action) {
+        val action = intent.getAction()
+        val isSupportedAction = when (action) {
             Intent.ACTION_BOOT_COMPLETED,
-            Intent.ACTION_MY_PACKAGE_REPLACED -> Unit
+            Intent.ACTION_MY_PACKAGE_REPLACED,
+            AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED -> true
 
-            AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED -> {
-                if (
-                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-                    !PreciseReminderAccessPolicy(context).isGranted()
-                ) {
-                    return
-                }
-            }
+            else -> false
+        }
+        val hasRequiredTimingAccess = when {
+            action != AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED -> true
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.S -> true
+            else -> PreciseReminderAccessPolicy(context).isGranted()
+        }
 
-            else -> return
+        if (!isSupportedAction || !hasRequiredTimingAccess) {
+            return
         }
 
         val appContext = context.applicationContext
