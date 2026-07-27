@@ -15,9 +15,13 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -119,6 +123,44 @@ class DefaultDeviceMenuAccessOperationsTest {
         assertEquals(1, port.requestNetworkStatusCalls)
         assertEquals(1, port.recordControlProofCalls)
         assertEquals(DeviceOnlineState.AUTHENTICATED, port.snapshot().connectionState.onlineState)
+    }
+
+    @Test
+    fun `concurrent requests for one device share one runtime proof`() = runTest {
+        val snapshot = snapshot(
+            state = DeviceConnectionState(onlineState = DeviceOnlineState.CONNECTING_WS)
+        )
+        val requestGate = CompletableDeferred<Unit>()
+        val port = FakeDeviceMenuRuntimePort(snapshot = snapshot).apply {
+            currentRuntimeState = AqlWsConnectionState.Authenticated(
+                deviceUid = snapshot.deviceUid,
+                authenticatedAtMillis = 100L
+            )
+            responseOnNetworkStatusRequest = successfulResponse(
+                id = REQUEST_ID,
+                module = "",
+                action = ""
+            )
+            networkStatusRequestGate = requestGate
+        }
+        val operations = DefaultDeviceMenuAccessOperations(
+            runtimePort = port,
+            elapsedRealtimeMillis = { testScheduler.currentTime }
+        )
+
+        val first = async { operations.resolve(snapshot.deviceUid.value) }
+        runCurrent()
+        val second = async { operations.resolve(snapshot.deviceUid.value) }
+        runCurrent()
+
+        assertEquals(1, port.requestNetworkStatusCalls)
+        requestGate.complete(Unit)
+        advanceUntilIdle()
+
+        assertTrue(first.await() is DeviceMenuAccessResult.Available)
+        assertTrue(second.await() is DeviceMenuAccessResult.Available)
+        assertEquals(1, port.requestNetworkStatusCalls)
+        assertEquals(1, port.recordControlProofCalls)
     }
 
     @Test
@@ -255,6 +297,7 @@ class DefaultDeviceMenuAccessOperationsTest {
             }
         var connectSucceeds: Boolean = true
         var responseOnNetworkStatusRequest: AqlWsIncomingMessage.Response? = null
+        var networkStatusRequestGate: CompletableDeferred<Unit>? = null
 
         var currentDeviceCalls = 0
         var refreshVisibleCalls = 0
@@ -297,6 +340,7 @@ class DefaultDeviceMenuAccessOperationsTest {
 
         override suspend fun requestNetworkStatus(deviceUid: DeviceUid): String? {
             requestNetworkStatusCalls += 1
+            networkStatusRequestGate?.await()
             val response = responseOnNetworkStatusRequest ?: return REQUEST_ID
             eventFlow.tryEmit(
                 AqlWsEvent.Message(
