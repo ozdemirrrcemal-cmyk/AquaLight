@@ -3,20 +3,21 @@ package com.aqua.aqualight.data.devices.monitor
 /**
  * Central timing policy for device presence decisions.
  *
- * Firmware announces periodically and Android actively refreshes while the app process is alive.
- * These values keep online/offline decisions live without allowing UI screens to invent their own
- * timing rules or causing runtime/auth badges to flicker.
+ * Authentication establishes a secure session, but sustained Online state is renewed by decoded
+ * runtime traffic and correlated command responses. UDP remains a LAN-discovery signal only.
  */
 data class DeviceHeartbeatPolicy(
     val udpFreshMillis: Long = 20_000L,
     val udpStaleMillis: Long = 35_000L,
-    val wsFreshMillis: Long = 20_000L,
-    val authFreshMillis: Long = 60_000L
+    val wsFreshMillis: Long = 8_000L,
+    val authenticationBootstrapFreshMillis: Long = 5_000L,
+    val runtimeProofFreshMillis: Long = 15_000L
 ) {
     init {
         require(udpFreshMillis > 0L)
         require(udpStaleMillis >= udpFreshMillis)
         require(wsFreshMillis > 0L)
-        require(authFreshMillis > 0L)
+        require(authenticationBootstrapFreshMillis > 0L)
+        require(runtimeProofFreshMillis >= authenticationBootstrapFreshMillis)
     }
 }
