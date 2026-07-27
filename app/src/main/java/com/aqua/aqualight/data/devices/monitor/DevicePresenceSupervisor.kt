@@ -14,15 +14,16 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
 /**
- * Professional replacement for the old presence monitor.
+ * Discovery-side presence collector.
  *
- * UDP discovery only proves LAN visibility and endpoint reachability. It must not downgrade a more
- * authoritative WebSocket/authenticated runtime state or erase runtime metadata that was already
- * resolved for the same deviceUid.
+ * UDP proves only current LAN visibility. Runtime/authentication evidence is preserved and all
+ * freshness decisions use a monotonic clock, while wall-clock timestamps remain available for
+ * human-readable "last seen" presentation.
  */
 class DevicePresenceSupervisor(
     private val statusAggregator: DeviceStatusAggregator = DeviceStatusAggregator(),
-    private val clockMillis: () -> Long = System::currentTimeMillis
+    private val wallClockMillis: () -> Long = System::currentTimeMillis,
+    private val elapsedRealtimeMillis: () -> Long = DeviceElapsedRealtimeClock::nowMillis
 ) {
 
     private val _snapshots = MutableStateFlow<Map<DeviceUid, DeviceSnapshot>>(emptyMap())
@@ -30,37 +31,61 @@ class DevicePresenceSupervisor(
     val snapshots: StateFlow<Map<DeviceUid, DeviceSnapshot>> = _snapshots.asStateFlow()
 
     val devices: Flow<List<DeviceSnapshot>> = snapshots.map { byUid ->
-        byUid.values.sortedWith(compareBy<DeviceSnapshot> { it.title.lowercase() }.thenBy { it.deviceUid.value })
+        byUid.values.sortedWith(
+            compareBy<DeviceSnapshot> { it.title.lowercase() }
+                .thenBy { it.deviceUid.value }
+        )
     }
 
     fun onDiscoveredDevice(device: AqlDiscoveredDevice) {
         val incoming = device.snapshot
         val uid = incoming.deviceUid
-        val now = device.receivedAtMillis
+        val receivedAtMillis = device.receivedAtMillis
+        val receivedAtElapsedMillis = elapsedRealtimeMillis()
 
         _snapshots.update { current ->
             val previous = current[uid]
-            val merged = mergeDiscovery(previous, incoming, now)
+            val merged = mergeDiscovery(
+                previous = previous,
+                incoming = incoming,
+                receivedAtMillis = receivedAtMillis,
+                receivedAtElapsedMillis = receivedAtElapsedMillis
+            )
             current + (uid to merged)
         }
     }
 
-    fun markWebSocketConnected(deviceUid: DeviceUid, connectedAtMillis: Long = clockMillis()) {
+    fun markWebSocketConnected(
+        deviceUid: DeviceUid,
+        connectedAtMillis: Long = wallClockMillis()
+    ) {
+        val connectedAtElapsedMillis = elapsedRealtimeMillis()
         updateConnection(deviceUid) { previous ->
             previous.copy(
                 onlineState = DeviceOnlineState.CONNECTING_WS,
                 lastWsConnectedAtMillis = connectedAtMillis,
+                lastWsConnectedElapsedMillis = connectedAtElapsedMillis,
                 lastErrorMessage = null
             )
         }
     }
 
-    fun markAuthenticated(deviceUid: DeviceUid, authenticatedAtMillis: Long = clockMillis()) {
+    fun markAuthenticated(
+        deviceUid: DeviceUid,
+        authenticatedAtMillis: Long = wallClockMillis()
+    ) {
+        val authenticatedAtElapsedMillis = elapsedRealtimeMillis()
         updateConnection(deviceUid) { previous ->
             previous.copy(
                 onlineState = DeviceOnlineState.AUTHENTICATED,
                 lastAuthenticatedAtMillis = authenticatedAtMillis,
-                lastWsConnectedAtMillis = previous.lastWsConnectedAtMillis ?: authenticatedAtMillis,
+                lastAuthenticatedElapsedMillis = authenticatedAtElapsedMillis,
+                lastRuntimeMessageAtMillis = authenticatedAtMillis,
+                lastRuntimeMessageElapsedMillis = authenticatedAtElapsedMillis,
+                lastWsConnectedAtMillis = previous.lastWsConnectedAtMillis
+                    ?: authenticatedAtMillis,
+                lastWsConnectedElapsedMillis = previous.lastWsConnectedElapsedMillis
+                    ?: authenticatedAtElapsedMillis,
                 lastErrorMessage = null
             )
         }
@@ -70,6 +95,12 @@ class DevicePresenceSupervisor(
         updateConnection(deviceUid) { previous ->
             previous.copy(
                 onlineState = DeviceOnlineState.AUTH_REQUIRED,
+                lastAuthenticatedAtMillis = null,
+                lastAuthenticatedElapsedMillis = null,
+                lastRuntimeMessageAtMillis = null,
+                lastRuntimeMessageElapsedMillis = null,
+                lastControlProofAtMillis = null,
+                lastControlProofElapsedMillis = null,
                 lastErrorMessage = message
             )
         }
@@ -84,12 +115,15 @@ class DevicePresenceSupervisor(
         }
     }
 
-    fun reevaluate(localNetworkAvailable: Boolean = true, nowMillis: Long = clockMillis()) {
+    fun reevaluate(
+        localNetworkAvailable: Boolean = true,
+        nowElapsedMillis: Long = elapsedRealtimeMillis()
+    ) {
         _snapshots.update { current ->
             current.mapValues { (_, snapshot) ->
                 val resolved = statusAggregator.resolve(
                     state = snapshot.connectionState,
-                    nowMillis = nowMillis,
+                    nowElapsedMillis = nowElapsedMillis,
                     localNetworkAvailable = localNetworkAvailable
                 )
                 snapshot.copy(
@@ -106,19 +140,23 @@ class DevicePresenceSupervisor(
     private fun mergeDiscovery(
         previous: DeviceSnapshot?,
         incoming: DeviceSnapshot,
-        nowMillis: Long
+        receivedAtMillis: Long,
+        receivedAtElapsedMillis: Long
     ): DeviceSnapshot {
         val previousState = previous?.connectionState ?: DeviceConnectionState()
+        val stateWithUdpProof = previousState.copy(
+            lastUdpSeenAtMillis = receivedAtMillis,
+            lastUdpSeenElapsedMillis = receivedAtElapsedMillis,
+            lastErrorMessage = null
+        )
         val incomingWithPresence = incoming.copy(
-            connectionState = previousState.copy(
+            connectionState = stateWithUdpProof.copy(
                 onlineState = statusAggregator.resolve(
-                    state = previousState.copy(lastUdpSeenAtMillis = nowMillis),
-                    nowMillis = nowMillis
-                ),
-                lastUdpSeenAtMillis = nowMillis,
-                lastErrorMessage = null
+                    state = stateWithUdpProof,
+                    nowElapsedMillis = receivedAtElapsedMillis
+                )
             ),
-            lastSeenAtMillis = nowMillis
+            lastSeenAtMillis = receivedAtMillis
         )
 
         return DeviceSnapshotMerger.merge(
