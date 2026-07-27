@@ -14,6 +14,7 @@ import androidx.navigation.ui.setupWithNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.auth.AppSessionCoordinator
+import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.aqua.aqualight.databinding.ActivityMainBinding
 import com.aqua.aqualight.ui.navigation.AppDestinationContract
@@ -75,10 +76,12 @@ class MainActivity : BaseActivity() {
 
     override fun onStart() {
         super.onStart()
+        DevicesRepositoryProvider.setAppForeground(true)
         appSessionCoordinator.enterForeground()
     }
 
     override fun onStop() {
+        DevicesRepositoryProvider.setAppForeground(false)
         appSessionCoordinator.leaveForeground()
         super.onStop()
     }
