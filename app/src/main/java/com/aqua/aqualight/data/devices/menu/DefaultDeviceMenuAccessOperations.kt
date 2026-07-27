@@ -145,34 +145,37 @@ internal class DefaultDeviceMenuAccessOperations(
 
     private fun prepareAccess(deviceUid: DeviceUid): AccessPreparation {
         val initialSnapshot = runtimePort.currentDevice(deviceUid)
-        return if (initialSnapshot == null) {
-            AccessPreparation.Immediate(
+            ?: return AccessPreparation.Immediate(
                 DeviceMenuAccessResult.Unavailable(
                     title = "",
                     reason = DeviceMenuUnavailableReason.DEVICE_NOT_REGISTERED
                 )
             )
-        } else {
-            val localNetworkAvailable = runtimePort.isLocalNetworkAvailable()
-            runtimePort.refreshVisibleDevices(localNetworkAvailable = localNetworkAvailable)
-            val failureReason = when {
-                !localNetworkAvailable -> DeviceMenuUnavailableReason.LOCAL_NETWORK_UNAVAILABLE
-                else -> fastFailureReason(initialSnapshot)
-            }
-            val activeRuntime = runtimePort.currentRuntimeConnectionState(deviceUid)
-            val reusableProof = initialSnapshot.hasRecentControlProof(elapsedRealtimeMillis()) &&
-                DeviceMenuAuthenticationPolicy.isActiveAuthenticatedSession(
-                    state = activeRuntime,
-                    requestedDeviceUid = deviceUid
+        val localNetworkAvailable = runtimePort.isLocalNetworkAvailable()
+        if (!localNetworkAvailable) {
+            return AccessPreparation.Immediate(
+                unavailable(
+                    snapshot = initialSnapshot,
+                    reason = DeviceMenuUnavailableReason.LOCAL_NETWORK_UNAVAILABLE
                 )
+            )
+        }
 
-            when {
-                failureReason != null -> AccessPreparation.Immediate(
-                    unavailable(initialSnapshot, failureReason)
-                )
-                reusableProof -> AccessPreparation.Immediate(available(initialSnapshot))
-                else -> AccessPreparation.Verify(initialSnapshot)
-            }
+        runtimePort.refreshVisibleDevices(localNetworkAvailable = true)
+        val failureReason = fastFailureReason(initialSnapshot)
+        val activeRuntime = runtimePort.currentRuntimeConnectionState(deviceUid)
+        val reusableProof = initialSnapshot.hasRecentControlProof(elapsedRealtimeMillis()) &&
+            DeviceMenuAuthenticationPolicy.isActiveAuthenticatedSession(
+                state = activeRuntime,
+                requestedDeviceUid = deviceUid
+            )
+
+        return when {
+            failureReason != null -> AccessPreparation.Immediate(
+                unavailable(initialSnapshot, failureReason)
+            )
+            reusableProof -> AccessPreparation.Immediate(available(initialSnapshot))
+            else -> AccessPreparation.Verify(initialSnapshot)
         }
     }
 
