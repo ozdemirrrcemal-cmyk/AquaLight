@@ -1,0 +1,8 @@
+name: Provision Dependabot Firebase fixtures
+description: Provision deterministic non-production Firebase configs for trusted Dependabot pull requests.
+runs:
+  using: composite
+  steps:
+    - name: Validate Dependabot context and provision fixtures
+      shell: bash
+      run: python3 "${GITHUB_ACTION_PATH}/provision.py"
