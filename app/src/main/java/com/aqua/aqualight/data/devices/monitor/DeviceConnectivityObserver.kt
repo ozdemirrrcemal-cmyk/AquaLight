@@ -32,91 +32,33 @@ class DeviceConnectivityObserver(context: Context) {
     private val currentPath = AtomicReference<DeviceLocalNetworkPath?>(initialActivePath())
 
     fun observeLocalNetworkPath(): Flow<DeviceLocalNetworkPath?> = callbackFlow {
-        val localNetworks = ConcurrentHashMap.newKeySet<Network>()
-        val capabilitiesByNetwork = ConcurrentHashMap<Network, NetworkCapabilities>()
-        val linkPropertiesByNetwork = ConcurrentHashMap<Network, LinkProperties>()
-
-        fun publishPath() {
-            val previous = currentPath.get()
-            val selected = selectPreferredNetwork(
-                networks = localNetworks,
-                capabilitiesByNetwork = capabilitiesByNetwork,
-                previousNetwork = previous?.network
-            )
-            val next = selected?.let { network ->
-                val capabilities = capabilitiesByNetwork[network]
-                val linkProperties = linkPropertiesByNetwork[network]
-                val sameNetwork = previous?.network == network
-                val routeChanged = sameNetwork &&
-                    previous?.linkProperties != null &&
-                    linkProperties != null &&
-                    previous.linkProperties != linkProperties
-                val pathChanged = previous == null || !sameNetwork || routeChanged
-                val nextGeneration = if (pathChanged) {
-                    generation.incrementAndGet()
-                } else {
-                    requireNotNull(previous).generation
-                }
-                DeviceLocalNetworkPath(
-                    network = network,
-                    capabilities = capabilities,
-                    linkProperties = linkProperties
-                        ?: previous?.takeIf { it.network == network }?.linkProperties,
-                    generation = nextGeneration
-                )
-            }
-            currentPath.set(next)
-            trySend(next)
-        }
-
-        fun updateNetwork(
-            network: Network,
-            capabilities: NetworkCapabilities?
-        ) {
-            if (DeviceLocalTransportPolicy.hasLocalTransport(capabilities)) {
-                localNetworks.add(network)
-                if (capabilities != null) capabilitiesByNetwork[network] = capabilities
-            } else {
-                localNetworks.remove(network)
-                capabilitiesByNetwork.remove(network)
-                linkPropertiesByNetwork.remove(network)
-            }
-            publishPath()
-        }
-
+        val tracker = LocalNetworkPathTracker(
+            connectivityManager = connectivityManager,
+            generation = generation,
+            currentPath = currentPath,
+            publish = { path -> trySend(path) }
+        )
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
-                // The request itself matches only Wi-Fi or Ethernet. Capabilities arrive through
-                // onCapabilitiesChanged; accepting the network here avoids a false Offline pulse.
-                localNetworks.add(network)
-                publishPath()
+                tracker.onAvailable(network)
             }
 
             override fun onLost(network: Network) {
-                localNetworks.remove(network)
-                capabilitiesByNetwork.remove(network)
-                linkPropertiesByNetwork.remove(network)
-                publishPath()
+                tracker.onLost(network)
             }
 
             override fun onCapabilitiesChanged(
                 network: Network,
                 networkCapabilities: NetworkCapabilities
             ) {
-                updateNetwork(
-                    network = network,
-                    capabilities = networkCapabilities
-                )
+                tracker.onCapabilitiesChanged(network, networkCapabilities)
             }
 
             override fun onLinkPropertiesChanged(
                 network: Network,
                 linkProperties: LinkProperties
             ) {
-                if (network in localNetworks) {
-                    linkPropertiesByNetwork[network] = linkProperties
-                    publishPath()
-                }
+                tracker.onLinkPropertiesChanged(network, linkProperties)
             }
         }
 
@@ -126,18 +68,7 @@ class DeviceConnectivityObserver(context: Context) {
             .build()
 
         connectivityManager.registerNetworkCallback(request, callback)
-
-        connectivityManager.activeNetwork?.let { network ->
-            val capabilities = connectivityManager.getNetworkCapabilities(network)
-            if (DeviceLocalTransportPolicy.hasLocalTransport(capabilities)) {
-                localNetworks.add(network)
-                if (capabilities != null) capabilitiesByNetwork[network] = capabilities
-                connectivityManager.getLinkProperties(network)?.let { linkProperties ->
-                    linkPropertiesByNetwork[network] = linkProperties
-                }
-            }
-        }
-        publishPath()
+        tracker.seedActiveNetwork()
 
         awaitClose {
             runCatching { connectivityManager.unregisterNetworkCallback(callback) }
@@ -152,53 +83,172 @@ class DeviceConnectivityObserver(context: Context) {
     }
 
     fun currentLocalNetwork(): Network? {
-        currentPath.get()?.network?.let { network ->
-            val capabilities = connectivityManager.getNetworkCapabilities(network)
-            if (DeviceLocalTransportPolicy.hasLocalTransport(capabilities)) {
-                return network
-            }
-            currentPath.compareAndSet(currentPath.get(), null)
+        val cachedPath = currentPath.get()
+        val cachedNetwork = cachedPath?.network?.takeIf(::hasLocalTransport)
+        if (cachedPath != null && cachedNetwork == null) {
+            currentPath.compareAndSet(cachedPath, null)
         }
-
-        val activeNetwork = connectivityManager.activeNetwork ?: return null
-        val capabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
-        return activeNetwork.takeIf {
-            DeviceLocalTransportPolicy.hasLocalTransport(capabilities)
-        }
+        val activeNetwork = connectivityManager.activeNetwork?.takeIf(::hasLocalTransport)
+        return cachedNetwork ?: activeNetwork
     }
 
     fun currentLocalNetworkGeneration(): Long = currentPath.get()?.generation ?: 0L
 
     fun isLocalNetworkAvailable(): Boolean = currentLocalNetwork() != null
 
-    private fun initialActivePath(): DeviceLocalNetworkPath? {
-        val network = connectivityManager.activeNetwork ?: return null
-        val capabilities = connectivityManager.getNetworkCapabilities(network)
-        if (!DeviceLocalTransportPolicy.hasLocalTransport(capabilities)) return null
-        return DeviceLocalNetworkPath(
-            network = network,
-            capabilities = capabilities,
-            linkProperties = connectivityManager.getLinkProperties(network),
-            generation = generation.incrementAndGet()
+    private fun hasLocalTransport(network: Network): Boolean {
+        return DeviceLocalTransportPolicy.hasLocalTransport(
+            connectivityManager.getNetworkCapabilities(network)
         )
     }
 
-    private fun selectPreferredNetwork(
-        networks: Set<Network>,
-        capabilitiesByNetwork: Map<Network, NetworkCapabilities>,
-        previousNetwork: Network?
-    ): Network? {
-        if (previousNetwork != null && previousNetwork in networks) {
-            return previousNetwork
+    private fun initialActivePath(): DeviceLocalNetworkPath? {
+        return connectivityManager.activeNetwork
+            ?.takeIf(::hasLocalTransport)
+            ?.let { network ->
+                DeviceLocalNetworkPath(
+                    network = network,
+                    capabilities = connectivityManager.getNetworkCapabilities(network),
+                    linkProperties = connectivityManager.getLinkProperties(network),
+                    generation = generation.incrementAndGet()
+                )
+            }
+    }
+}
+
+private class LocalNetworkPathTracker(
+    private val connectivityManager: ConnectivityManager,
+    private val generation: AtomicLong,
+    private val currentPath: AtomicReference<DeviceLocalNetworkPath?>,
+    private val publish: (DeviceLocalNetworkPath?) -> Unit
+) {
+    private val localNetworks = ConcurrentHashMap.newKeySet<Network>()
+    private val capabilitiesByNetwork = ConcurrentHashMap<Network, NetworkCapabilities>()
+    private val linkPropertiesByNetwork = ConcurrentHashMap<Network, LinkProperties>()
+
+    fun onAvailable(network: Network) {
+        // The request itself matches only Wi-Fi or Ethernet. Capabilities arrive through
+        // onCapabilitiesChanged; accepting the network here avoids a false Offline pulse.
+        localNetworks.add(network)
+        publishPath()
+    }
+
+    fun onLost(network: Network) {
+        localNetworks.remove(network)
+        capabilitiesByNetwork.remove(network)
+        linkPropertiesByNetwork.remove(network)
+        publishPath()
+    }
+
+    fun onCapabilitiesChanged(
+        network: Network,
+        capabilities: NetworkCapabilities
+    ) {
+        updateNetwork(network, capabilities)
+    }
+
+    fun onLinkPropertiesChanged(
+        network: Network,
+        linkProperties: LinkProperties
+    ) {
+        if (network in localNetworks) {
+            linkPropertiesByNetwork[network] = linkProperties
+            publishPath()
+        }
+    }
+
+    fun seedActiveNetwork() {
+        connectivityManager.activeNetwork?.let { network ->
+            val capabilities = connectivityManager.getNetworkCapabilities(network)
+            if (DeviceLocalTransportPolicy.hasLocalTransport(capabilities)) {
+                localNetworks.add(network)
+                capabilities?.let { capabilitiesByNetwork[network] = it }
+                connectivityManager.getLinkProperties(network)?.let { linkProperties ->
+                    linkPropertiesByNetwork[network] = linkProperties
+                }
+            }
+        }
+        publishPath()
+    }
+
+    private fun updateNetwork(
+        network: Network,
+        capabilities: NetworkCapabilities?
+    ) {
+        if (DeviceLocalTransportPolicy.hasLocalTransport(capabilities)) {
+            localNetworks.add(network)
+            capabilities?.let { capabilitiesByNetwork[network] = it }
+        } else {
+            localNetworks.remove(network)
+            capabilitiesByNetwork.remove(network)
+            linkPropertiesByNetwork.remove(network)
+        }
+        publishPath()
+    }
+
+    private fun publishPath() {
+        val previous = currentPath.get()
+        val selected = selectPreferredNetwork(previous?.network)
+        val next = selected?.let { network -> buildPath(previous, network) }
+        currentPath.set(next)
+        publish(next)
+    }
+
+    private fun buildPath(
+        previous: DeviceLocalNetworkPath?,
+        network: Network
+    ): DeviceLocalNetworkPath {
+        val capabilities = capabilitiesByNetwork[network]
+        val linkProperties = linkPropertiesByNetwork[network]
+        val pathChanged = previous == null ||
+            previous.network != network ||
+            hasRouteChanged(previous, network, linkProperties)
+        val nextGeneration = if (pathChanged) {
+            generation.incrementAndGet()
+        } else {
+            requireNotNull(previous).generation
         }
 
-        return networks.firstOrNull { network ->
+        return DeviceLocalNetworkPath(
+            network = network,
+            capabilities = capabilities,
+            linkProperties = linkProperties
+                ?: previous?.takeIf { path -> path.network == network }?.linkProperties,
+            generation = nextGeneration
+        )
+    }
+
+    private fun hasRouteChanged(
+        previous: DeviceLocalNetworkPath,
+        network: Network,
+        linkProperties: LinkProperties?
+    ): Boolean {
+        val previousLinkProperties = previous.linkProperties
+        return previous.network == network &&
+            previousLinkProperties != null &&
+            linkProperties != null &&
+            previousLinkProperties != linkProperties
+    }
+
+    private fun selectPreferredNetwork(previousNetwork: Network?): Network? {
+        return when {
+            previousNetwork != null && previousNetwork in localNetworks -> previousNetwork
+            else -> ethernetNetwork() ?: wifiNetwork() ?: localNetworks.firstOrNull()
+        }
+    }
+
+    private fun ethernetNetwork(): Network? {
+        return localNetworks.firstOrNull { network ->
             capabilitiesByNetwork[network]
                 ?.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) == true
-        } ?: networks.firstOrNull { network ->
+        }
+    }
+
+    private fun wifiNetwork(): Network? {
+        return localNetworks.firstOrNull { network ->
             capabilitiesByNetwork[network]
                 ?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
-        } ?: networks.firstOrNull()
+        }
     }
 }
 
