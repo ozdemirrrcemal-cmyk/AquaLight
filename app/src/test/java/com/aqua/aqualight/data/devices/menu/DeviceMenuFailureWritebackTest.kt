@@ -5,6 +5,7 @@ import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.data.devices.model.DeviceConnectionState
 import com.aqua.aqualight.data.devices.model.DeviceIdentity
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
+import com.aqua.aqualight.data.devices.model.DeviceProduct
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -24,6 +25,7 @@ class DeviceMenuFailureWritebackTest {
     fun `failed control proof publishes offline before unavailable result`() = runTest {
         val snapshot = DeviceSnapshot(
             identity = DeviceIdentity(uid = DeviceUid("device-no-response")),
+            product = DeviceProduct(),
             endpoint = DeviceRuntimeEndpoint(ip = "192.168.1.90", wsPort = 80),
             connectionState = DeviceConnectionState(
                 onlineState = DeviceOnlineState.AUTHENTICATED
