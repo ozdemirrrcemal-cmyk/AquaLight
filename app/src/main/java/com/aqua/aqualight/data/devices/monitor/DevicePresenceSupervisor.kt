@@ -14,15 +14,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
 /**
- * Discovery-side presence collector.
+ * Raw discovery collector.
  *
- * UDP proves only current LAN visibility. Runtime/authentication evidence is preserved and all
- * freshness decisions use a monotonic clock, while wall-clock timestamps remain available for
- * human-readable "last seen" presentation.
+ * This class stamps UDP evidence and preserves discovery metadata only. It deliberately does not
+ * calculate time-based product presence. [DevicePresenceRuntimeMonitor] is the single reducer that
+ * combines UDP, authenticated runtime proof, Android local-network state and elapsed time into the
+ * canonical registry state consumed by every UI surface.
  */
 class DevicePresenceSupervisor(
-    private val statusAggregator: DeviceStatusAggregator = DeviceStatusAggregator(),
-    private val wallClockMillis: () -> Long = System::currentTimeMillis,
     private val elapsedRealtimeMillis: () -> Long = DeviceElapsedRealtimeClock::nowMillis
 ) {
 
@@ -55,79 +54,15 @@ class DevicePresenceSupervisor(
         }
     }
 
-    fun markWebSocketConnected(
-        deviceUid: DeviceUid,
-        connectedAtMillis: Long = wallClockMillis()
-    ) {
-        val connectedAtElapsedMillis = elapsedRealtimeMillis()
-        updateConnection(deviceUid) { previous ->
-            previous.copy(
-                onlineState = DeviceOnlineState.CONNECTING_WS,
-                lastWsConnectedAtMillis = connectedAtMillis,
-                lastWsConnectedElapsedMillis = connectedAtElapsedMillis,
-                lastErrorMessage = null
-            )
-        }
-    }
+    fun reevaluate(localNetworkAvailable: Boolean = true) {
+        if (localNetworkAvailable) return
 
-    fun markAuthenticated(
-        deviceUid: DeviceUid,
-        authenticatedAtMillis: Long = wallClockMillis()
-    ) {
-        val authenticatedAtElapsedMillis = elapsedRealtimeMillis()
-        updateConnection(deviceUid) { previous ->
-            previous.copy(
-                onlineState = DeviceOnlineState.AUTHENTICATED,
-                lastAuthenticatedAtMillis = authenticatedAtMillis,
-                lastAuthenticatedElapsedMillis = authenticatedAtElapsedMillis,
-                lastRuntimeMessageAtMillis = authenticatedAtMillis,
-                lastRuntimeMessageElapsedMillis = authenticatedAtElapsedMillis,
-                lastWsConnectedAtMillis = previous.lastWsConnectedAtMillis
-                    ?: authenticatedAtMillis,
-                lastWsConnectedElapsedMillis = previous.lastWsConnectedElapsedMillis
-                    ?: authenticatedAtElapsedMillis,
-                lastErrorMessage = null
-            )
-        }
-    }
-
-    fun markAuthRequired(deviceUid: DeviceUid, message: String? = null) {
-        updateConnection(deviceUid) { previous ->
-            previous.copy(
-                onlineState = DeviceOnlineState.AUTH_REQUIRED,
-                lastAuthenticatedAtMillis = null,
-                lastAuthenticatedElapsedMillis = null,
-                lastRuntimeMessageAtMillis = null,
-                lastRuntimeMessageElapsedMillis = null,
-                lastControlProofAtMillis = null,
-                lastControlProofElapsedMillis = null,
-                lastErrorMessage = message
-            )
-        }
-    }
-
-    fun markRuntimeError(deviceUid: DeviceUid, message: String?) {
-        updateConnection(deviceUid) { previous ->
-            previous.copy(
-                onlineState = DeviceOnlineState.ERROR,
-                lastErrorMessage = message
-            )
-        }
-    }
-
-    fun reevaluate(
-        localNetworkAvailable: Boolean = true,
-        nowElapsedMillis: Long = elapsedRealtimeMillis()
-    ) {
         _snapshots.update { current ->
             current.mapValues { (_, snapshot) ->
-                val resolved = statusAggregator.resolve(
-                    state = snapshot.connectionState,
-                    nowElapsedMillis = nowElapsedMillis,
-                    localNetworkAvailable = localNetworkAvailable
-                )
                 snapshot.copy(
-                    connectionState = snapshot.connectionState.copy(onlineState = resolved)
+                    connectionState = snapshot.connectionState.copy(
+                        onlineState = DeviceOnlineState.LOCAL_NETWORK_OFFLINE
+                    )
                 )
             }
         }
@@ -144,17 +79,12 @@ class DevicePresenceSupervisor(
         receivedAtElapsedMillis: Long
     ): DeviceSnapshot {
         val previousState = previous?.connectionState ?: DeviceConnectionState()
-        val stateWithUdpProof = previousState.copy(
-            lastUdpSeenAtMillis = receivedAtMillis,
-            lastUdpSeenElapsedMillis = receivedAtElapsedMillis,
-            lastErrorMessage = null
-        )
         val incomingWithPresence = incoming.copy(
-            connectionState = stateWithUdpProof.copy(
-                onlineState = statusAggregator.resolve(
-                    state = stateWithUdpProof,
-                    nowElapsedMillis = receivedAtElapsedMillis
-                )
+            connectionState = previousState.copy(
+                onlineState = DeviceOnlineState.ONLINE_LAN,
+                lastUdpSeenAtMillis = receivedAtMillis,
+                lastUdpSeenElapsedMillis = receivedAtElapsedMillis,
+                lastErrorMessage = null
             ),
             lastSeenAtMillis = receivedAtMillis
         )
@@ -163,15 +93,5 @@ class DevicePresenceSupervisor(
             previous = previous,
             incoming = incomingWithPresence
         )
-    }
-
-    private fun updateConnection(
-        deviceUid: DeviceUid,
-        update: (DeviceConnectionState) -> DeviceConnectionState
-    ) {
-        _snapshots.update { current ->
-            val snapshot = current[deviceUid] ?: return@update current
-            current + (deviceUid to snapshot.copy(connectionState = update(snapshot.connectionState)))
-        }
     }
 }
