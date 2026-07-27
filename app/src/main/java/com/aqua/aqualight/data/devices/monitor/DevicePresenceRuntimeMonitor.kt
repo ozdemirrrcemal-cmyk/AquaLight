@@ -15,7 +15,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
@@ -23,8 +22,8 @@ import kotlinx.coroutines.launch
  * Process-level live presence engine for all AquaLight device surfaces.
  *
  * UI screens observe the shared registry and never run their own Online/Offline engines. This
- * monitor owns active discovery, authenticated runtime heartbeat, foreground revalidation and
- * bounded device-scoped recovery.
+ * monitor owns active discovery, authenticated runtime heartbeat, foreground revalidation,
+ * Android local-network generation changes and bounded device-scoped recovery.
  */
 class DevicePresenceRuntimeMonitor(
     private val discoveryRepository: DeviceDiscoveryRepository,
@@ -38,6 +37,7 @@ class DevicePresenceRuntimeMonitor(
     private val appForeground = AtomicBoolean(true)
     private val localNetworkAvailable = MutableStateFlow(currentLocalNetworkAvailable())
     private val foregroundVerificationUntilMillis = AtomicLong(0L)
+    private val observedNetworkGeneration = AtomicLong(0L)
     private val lastRuntimeProbeAtMillis = ConcurrentHashMap<DeviceUid, Long>()
     private val lastHeartbeatAtMillis = ConcurrentHashMap<DeviceUid, Long>()
 
@@ -137,21 +137,38 @@ class DevicePresenceRuntimeMonitor(
         return launch {
             var networkRecoveryJob: Job? = null
             try {
-                observer.observeLocalNetworkAvailable()
-                    .distinctUntilChanged()
-                    .collect { available ->
-                        networkRecoveryJob?.cancel()
-                        reevaluateNow(localNetworkAvailable = available)
-                        networkRecoveryJob = if (available && appForeground.get()) {
-                            launch { recoverAfterLocalNetworkRestored() }
-                        } else {
-                            null
-                        }
+                observer.observeLocalNetworkPath().collect { path ->
+                    networkRecoveryJob?.cancel()
+
+                    val nextGeneration = path?.generation ?: 0L
+                    val previousGeneration = observedNetworkGeneration.getAndSet(nextGeneration)
+                    val networkPathChanged = path != null &&
+                        previousGeneration > 0L &&
+                        previousGeneration != nextGeneration
+                    if (networkPathChanged) {
+                        handleLocalNetworkPathChanged()
                     }
+
+                    val available = path != null
+                    reevaluateNow(localNetworkAvailable = available)
+                    networkRecoveryJob = if (available && appForeground.get()) {
+                        launch { recoverAfterLocalNetworkRestored() }
+                    } else {
+                        null
+                    }
+                }
             } finally {
                 networkRecoveryJob?.cancel()
             }
         }
+    }
+
+    private fun handleLocalNetworkPathChanged() {
+        beginForegroundVerification()
+        lastRuntimeProbeAtMillis.clear()
+        lastHeartbeatAtMillis.clear()
+        invalidateRuntimeProofsForLocalNetworkChange()
+        runtimeRepository?.disconnectForLocalNetworkLoss()
     }
 
     private suspend fun performForegroundRefresh() {
@@ -315,6 +332,31 @@ class DevicePresenceRuntimeMonitor(
         }
     }
 
+    private fun invalidateRuntimeProofsForLocalNetworkChange() {
+        registryStore.currentDevices().forEach { snapshot ->
+            registryStore.updateConnectionState(snapshot.deviceUid) { previous ->
+                previous.copy(
+                    onlineState = if (
+                        appForeground.get() &&
+                        previous.onlineState == DeviceOnlineState.AUTHENTICATED
+                    ) {
+                        DeviceOnlineState.AUTHENTICATED
+                    } else {
+                        DeviceOnlineState.UNKNOWN
+                    },
+                    lastWsConnectedAtMillis = null,
+                    lastWsConnectedElapsedMillis = null,
+                    lastAuthenticatedAtMillis = null,
+                    lastAuthenticatedElapsedMillis = null,
+                    lastRuntimeMessageAtMillis = null,
+                    lastRuntimeMessageElapsedMillis = null,
+                    lastControlProofAtMillis = null,
+                    lastControlProofElapsedMillis = null
+                )
+            }
+        }
+    }
+
     private fun probeRuntimeForVisibleDevices(force: Boolean = false) {
         val runtime = runtimeRepository ?: return
         val nowMillis = elapsedRealtimeMillis()
@@ -322,12 +364,14 @@ class DevicePresenceRuntimeMonitor(
             .asSequence()
             .filter { snapshot -> snapshot.endpoint.hasWebSocketEndpoint }
             .filter { snapshot ->
-                force && snapshot.connectionState.onlineState !in NON_RECONNECTABLE_STATES ||
-                    shouldProbeRuntime(
-                        state = snapshot.connectionState.onlineState,
-                        deviceUid = snapshot.deviceUid,
-                        nowMillis = nowMillis
-                    )
+                (
+                    force &&
+                        snapshot.connectionState.onlineState !in NON_RECONNECTABLE_STATES
+                    ) || shouldProbeRuntime(
+                    state = snapshot.connectionState.onlineState,
+                    deviceUid = snapshot.deviceUid,
+                    nowMillis = nowMillis
+                )
             }
             .forEach { snapshot ->
                 lastRuntimeProbeAtMillis[snapshot.deviceUid] = nowMillis
