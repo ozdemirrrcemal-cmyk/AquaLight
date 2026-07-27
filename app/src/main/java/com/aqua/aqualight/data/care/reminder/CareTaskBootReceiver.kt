@@ -4,6 +4,7 @@ import android.app.AlarmManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import com.aqua.aqualight.data.auth.FirebaseAuthenticatedOwnerProvider
 import com.aqua.aqualight.platform.permissions.PreciseReminderAccessPolicy
 
@@ -22,9 +23,11 @@ class CareTaskBootReceiver : BroadcastReceiver() {
 
             else -> false
         }
+        val requiresTimingAccess =
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                action == AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED
         val hasRequiredTimingAccess =
-            action != AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED ||
-                PreciseReminderAccessPolicy(context).isGranted()
+            !requiresTimingAccess || PreciseReminderAccessPolicy(context).isGranted()
 
         if (
             isSupportedAction &&
