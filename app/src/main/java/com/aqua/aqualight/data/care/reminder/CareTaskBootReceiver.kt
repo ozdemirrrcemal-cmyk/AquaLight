@@ -14,8 +14,7 @@ class CareTaskBootReceiver : BroadcastReceiver() {
         context: Context,
         intent: Intent
     ) {
-        val action = intent.action
-        when (action) {
+        when (intent.action) {
             Intent.ACTION_BOOT_COMPLETED,
             Intent.ACTION_MY_PACKAGE_REPLACED,
             AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED -> Unit
@@ -23,6 +22,7 @@ class CareTaskBootReceiver : BroadcastReceiver() {
             else -> return
         }
 
+        val action = intent.action ?: return
         if (!CareTaskBootIntentVerifier.isVerified(intent, action)) {
             return
         }
