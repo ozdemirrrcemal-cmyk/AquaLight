@@ -79,16 +79,22 @@ object DevicesRepositoryProvider {
                 val repositoryScope = CoroutineScope(
                     SupervisorJob() + Dispatchers.IO
                 )
+                val connectivityObserver = DeviceConnectivityObserver(appContext)
                 val repository = DevicesRepository(
+                    discoveryRepository = DeviceDiscoveryRepository.withConnectivityObserver(
+                        connectivityObserver
+                    ),
                     knownStore = DeviceKnownStore(
                         context = appContext,
                         ownerUid = ownerUid
                     ),
-                    runtimeRepository = DeviceRuntimeRepository.withCredentialStore(
-                        context = appContext,
-                        ownerUid = ownerUid
-                    ),
-                    connectivityObserver = DeviceConnectivityObserver(appContext)
+                    runtimeRepository =
+                        DeviceRuntimeRepository.withCredentialStoreOnLocalNetwork(
+                            context = appContext,
+                            ownerUid = ownerUid,
+                            networkProvider = connectivityObserver::currentLocalNetwork
+                        ),
+                    connectivityObserver = connectivityObserver
                 )
 
                 repository.setAppForeground(appForeground)
