@@ -104,13 +104,17 @@ class AppSessionCoordinator internal constructor(
 
     fun leaveForeground() {
         val becameBackground = synchronized(lifecycleLock) {
-            foregroundConsumerCount = (foregroundConsumerCount - 1).coerceAtLeast(0)
-            if (foregroundConsumerCount == 0) {
-                validationJob?.cancel()
-                validationJob = null
-                true
-            } else {
+            if (foregroundConsumerCount <= 0) {
                 false
+            } else {
+                foregroundConsumerCount -= 1
+                if (foregroundConsumerCount == 0) {
+                    validationJob?.cancel()
+                    validationJob = null
+                    true
+                } else {
+                    false
+                }
             }
         }
 
