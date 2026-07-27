@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
+      - ".github/actions/provision-dependabot-firebase/**"
       - ".github/workflows/android_emulator_tests.yml"
       - "app/**"
       - "build.gradle"
@@ -39,6 +40,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Provision Dependabot Firebase fixtures
+        if: ${{ github.actor == 'dependabot[bot]' }}
+        uses: ./.github/actions/provision-dependabot-firebase
 
       - name: Install JDK 17
         uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
