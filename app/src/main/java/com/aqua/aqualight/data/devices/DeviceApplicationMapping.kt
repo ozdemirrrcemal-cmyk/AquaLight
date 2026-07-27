@@ -173,6 +173,8 @@ private fun DeviceSnapshot.serialText(): String {
 
 private fun DeviceSnapshot.latestSeenAtMillis(): Long {
     return listOfNotNull(
+        connectionState.lastControlProofAtMillis,
+        connectionState.lastRuntimeMessageAtMillis,
         connectionState.lastAuthenticatedAtMillis,
         connectionState.lastWsConnectedAtMillis,
         connectionState.lastUdpSeenAtMillis,
