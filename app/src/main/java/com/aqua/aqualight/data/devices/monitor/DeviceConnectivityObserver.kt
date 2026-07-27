@@ -45,12 +45,13 @@ class DeviceConnectivityObserver(context: Context) {
             val next = selected?.let { network ->
                 val capabilities = capabilitiesByNetwork[network]
                 val linkProperties = linkPropertiesByNetwork[network]
-                val pathChanged = previous?.network != network ||
+                val pathChanged = previous == null ||
+                    previous.network != network ||
                     previous.linkProperties != linkProperties
                 val nextGeneration = if (pathChanged) {
                     generation.incrementAndGet()
                 } else {
-                    previous.generation
+                    requireNotNull(previous).generation
                 }
                 DeviceLocalNetworkPath(
                     network = network,
