@@ -173,16 +173,23 @@ class DevicePresenceRuntimeMonitor(
                 observer.observeLocalNetworkPath().collect { path ->
                     networkRecoveryJob?.cancel()
 
+                    val available = path != null
                     val nextGeneration = path?.generation ?: 0L
                     val previousGeneration = observedNetworkGeneration.getAndSet(nextGeneration)
-                    val networkPathChanged = path != null &&
+                    val generationChanged = previousGeneration != nextGeneration
+                    if (generationChanged) {
+                        discoveryRepository.restartScanner(
+                            localNetworkAvailable = available
+                        )
+                    }
+
+                    val networkPathChanged = available &&
                         previousGeneration > 0L &&
                         previousGeneration != nextGeneration
                     if (networkPathChanged) {
                         handleLocalNetworkPathChanged()
                     }
 
-                    val available = path != null
                     reevaluateNow(localNetworkAvailable = available)
                     networkRecoveryJob = if (available && appForeground.get()) {
                         launch { recoverAfterLocalNetworkRestored() }
