@@ -1,30 +1,32 @@
 package com.aqua.aqualight.data.devices.discovery.udp
 
+import android.net.Network
 import com.aqua.aqualight.data.devices.contract.AqlDiscoveryContract
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetSocketAddress
 import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.util.concurrent.atomic.AtomicReference
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 /**
  * UDP v2 discovery scanner.
  *
- * It listens only for firmware `aql.discovery.v2` `device_announce` packets. Invalid or legacy
- * packets are ignored at this layer by the strict [AqlDiscoveryParser].
+ * The socket is bound to the canonical Android Wi-Fi/Ethernet Network when available, preventing
+ * VPN or cellular default-route changes from silently moving local discovery traffic elsewhere.
  */
 class AqlDiscoveryUdpScanner(
     private val listenPort: Int = AqlDiscoveryContract.PORT,
     private val packetSizeBytes: Int = AqlDiscoveryContract.MAX_PACKET_SIZE_BYTES,
     private val receiveTimeoutMillis: Int = DEFAULT_RECEIVE_TIMEOUT_MS,
-    private val clockMillis: () -> Long = System::currentTimeMillis
+    private val clockMillis: () -> Long = System::currentTimeMillis,
+    private val networkProvider: () -> Network? = { null }
 ) {
 
     fun scan(): Flow<AqlDiscoveredDevice> = callbackFlow {
@@ -32,6 +34,7 @@ class AqlDiscoveryUdpScanner(
 
         val job = launch(Dispatchers.IO) {
             val socket = DatagramSocket(null).also { datagramSocket ->
+                networkProvider()?.bindSocket(datagramSocket)
                 datagramSocket.reuseAddress = true
                 datagramSocket.soTimeout = receiveTimeoutMillis
                 datagramSocket.bind(InetSocketAddress(listenPort))
@@ -55,11 +58,13 @@ class AqlDiscoveryUdpScanner(
                     val sourceIp = packet.address?.hostAddress.orEmpty()
                     val receivedAt = clockMillis()
 
-                    when (val result = AqlDiscoveryParser.parseDeviceAnnounce(
-                        rawPayload = rawPayload,
-                        sourceIp = sourceIp,
-                        receivedAtMillis = receivedAt
-                    )) {
+                    when (
+                        val result = AqlDiscoveryParser.parseDeviceAnnounce(
+                            rawPayload = rawPayload,
+                            sourceIp = sourceIp,
+                            receivedAtMillis = receivedAt
+                        )
+                    ) {
                         is AqlDiscoveryParser.ParseResult.Valid -> trySend(result.device)
                         is AqlDiscoveryParser.ParseResult.Invalid -> Unit
                     }
