@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.devices.repository
 
 import com.aqua.aqualight.data.devices.model.DeviceIdentity
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
+import com.aqua.aqualight.data.devices.model.DeviceProduct
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -35,6 +36,7 @@ class DeviceControlProofFailureTest {
         val repository = DevicesRepository(runtimeRepository = runtime)
         val snapshot = DeviceSnapshot(
             identity = DeviceIdentity(uid = DeviceUid("device-control-failure")),
+            product = DeviceProduct(),
             endpoint = DeviceRuntimeEndpoint(ip = "192.168.1.91", wsPort = 80)
         )
         repository.registerSnapshot(snapshot)
