@@ -4,6 +4,7 @@ import android.app.AlarmManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import com.aqua.aqualight.data.auth.FirebaseAuthenticatedOwnerProvider
 import com.aqua.aqualight.platform.permissions.PreciseReminderAccessPolicy
 
@@ -14,30 +15,35 @@ class CareTaskBootReceiver : BroadcastReceiver() {
         context: Context,
         intent: Intent
     ) {
-        when (intent.action) {
+        val action = intent.action
+        val isSupportedAction = when (intent.action) {
             Intent.ACTION_BOOT_COMPLETED,
-            Intent.ACTION_MY_PACKAGE_REPLACED -> Unit
+            Intent.ACTION_MY_PACKAGE_REPLACED,
+            AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED -> true
 
-            AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED -> {
-                if (!PreciseReminderAccessPolicy(context).isGranted()) {
-                    return
-                }
+            else -> false
+        }
+        val requiresTimingAccess =
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                action == AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED
+        val hasRequiredTimingAccess =
+            !requiresTimingAccess || PreciseReminderAccessPolicy(context).isGranted()
+
+        if (
+            isSupportedAction &&
+            CareTaskBootIntentVerifier.matchesObservedAction(intent, action) &&
+            hasRequiredTimingAccess
+        ) {
+            val ownerUid = FirebaseAuthenticatedOwnerProvider.create(
+                context.applicationContext
+            ).currentOwnerUid().orEmpty().trim()
+
+            if (ownerUid.isNotBlank()) {
+                CareReminderReconcileWorker.enqueue(
+                    context = context.applicationContext,
+                    ownerUid = ownerUid
+                )
             }
-
-            else -> return
         }
-
-        val ownerUid = FirebaseAuthenticatedOwnerProvider.create(
-            context.applicationContext
-        ).currentOwnerUid().orEmpty().trim()
-
-        if (ownerUid.isBlank()) {
-            return
-        }
-
-        CareReminderReconcileWorker.enqueue(
-            context = context.applicationContext,
-            ownerUid = ownerUid
-        )
     }
 }
