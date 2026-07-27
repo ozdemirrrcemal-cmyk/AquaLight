@@ -19,55 +19,74 @@ class DeviceStatusAggregator(
         nowElapsedMillis: Long = DeviceElapsedRealtimeClock.nowMillis(),
         localNetworkAvailable: Boolean = true
     ): DeviceOnlineState {
-        if (!localNetworkAvailable) return DeviceOnlineState.LOCAL_NETWORK_OFFLINE
-
-        when (state.onlineState) {
-            DeviceOnlineState.AUTH_REQUIRED -> return DeviceOnlineState.AUTH_REQUIRED
-            DeviceOnlineState.PROVISIONING -> return DeviceOnlineState.PROVISIONING
-            DeviceOnlineState.OTA_UPDATING -> return DeviceOnlineState.OTA_UPDATING
-            else -> Unit
-        }
-
-        val runtimeProofAt = state.latestRuntimeProofElapsedMillis
-        if (
-            runtimeProofAt != null &&
-            isFresh(nowElapsedMillis, runtimeProofAt, policy.runtimeProofFreshMillis)
-        ) {
-            return DeviceOnlineState.AUTHENTICATED
-        }
-
-        val authenticatedAt = state.lastAuthenticatedElapsedMillis
-        if (
-            authenticatedAt != null &&
-            isFresh(
-                nowElapsedMillis,
-                authenticatedAt,
-                policy.authenticationBootstrapFreshMillis
-            )
-        ) {
-            return DeviceOnlineState.AUTHENTICATED
-        }
-
-        val wsConnectedAt = state.lastWsConnectedElapsedMillis
-        if (
-            wsConnectedAt != null &&
-            isFresh(nowElapsedMillis, wsConnectedAt, policy.wsFreshMillis)
-        ) {
-            return DeviceOnlineState.CONNECTING_WS
-        }
-
-        val lastUdpSeenAt = state.lastUdpSeenElapsedMillis
-            ?: return DeviceOnlineState.UNKNOWN
-        val ageMillis = elapsedAge(nowElapsedMillis, lastUdpSeenAt)
+        val protectedState = protectedState(state)
+        val runtimeState = runtimeState(state, nowElapsedMillis)
 
         return when {
-            ageMillis <= policy.udpFreshMillis -> DeviceOnlineState.ONLINE_LAN
-            ageMillis <= policy.udpStaleMillis -> DeviceOnlineState.STALE
-            else -> DeviceOnlineState.OFFLINE
+            !localNetworkAvailable -> DeviceOnlineState.LOCAL_NETWORK_OFFLINE
+            protectedState != null -> protectedState
+            runtimeState != null -> runtimeState
+            else -> udpState(state, nowElapsedMillis)
         }
     }
 
-    private fun isFresh(nowElapsedMillis: Long, proofAtMillis: Long, freshnessMillis: Long): Boolean {
+    private fun protectedState(state: DeviceConnectionState): DeviceOnlineState? {
+        return when (state.onlineState) {
+            DeviceOnlineState.AUTH_REQUIRED -> DeviceOnlineState.AUTH_REQUIRED
+            DeviceOnlineState.PROVISIONING -> DeviceOnlineState.PROVISIONING
+            DeviceOnlineState.OTA_UPDATING -> DeviceOnlineState.OTA_UPDATING
+            else -> null
+        }
+    }
+
+    private fun runtimeState(
+        state: DeviceConnectionState,
+        nowElapsedMillis: Long
+    ): DeviceOnlineState? {
+        val runtimeProofIsFresh = state.latestRuntimeProofElapsedMillis
+            ?.let { proofAt -> isFresh(nowElapsedMillis, proofAt, policy.runtimeProofFreshMillis) }
+            ?: false
+        val authenticationBootstrapIsFresh = state.lastAuthenticatedElapsedMillis
+            ?.let { authenticatedAt ->
+                isFresh(
+                    nowElapsedMillis = nowElapsedMillis,
+                    proofAtMillis = authenticatedAt,
+                    freshnessMillis = policy.authenticationBootstrapFreshMillis
+                )
+            }
+            ?: false
+        val webSocketIsFresh = state.lastWsConnectedElapsedMillis
+            ?.let { connectedAt -> isFresh(nowElapsedMillis, connectedAt, policy.wsFreshMillis) }
+            ?: false
+
+        return when {
+            runtimeProofIsFresh || authenticationBootstrapIsFresh -> {
+                DeviceOnlineState.AUTHENTICATED
+            }
+            webSocketIsFresh -> DeviceOnlineState.CONNECTING_WS
+            else -> null
+        }
+    }
+
+    private fun udpState(
+        state: DeviceConnectionState,
+        nowElapsedMillis: Long
+    ): DeviceOnlineState {
+        return state.lastUdpSeenElapsedMillis?.let { lastUdpSeenAt ->
+            val ageMillis = elapsedAge(nowElapsedMillis, lastUdpSeenAt)
+            when {
+                ageMillis <= policy.udpFreshMillis -> DeviceOnlineState.ONLINE_LAN
+                ageMillis <= policy.udpStaleMillis -> DeviceOnlineState.STALE
+                else -> DeviceOnlineState.OFFLINE
+            }
+        } ?: DeviceOnlineState.UNKNOWN
+    }
+
+    private fun isFresh(
+        nowElapsedMillis: Long,
+        proofAtMillis: Long,
+        freshnessMillis: Long
+    ): Boolean {
         return elapsedAge(nowElapsedMillis, proofAtMillis) <= freshnessMillis
     }
 
