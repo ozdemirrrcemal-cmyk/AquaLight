@@ -131,14 +131,7 @@ class TankDetailDevicesViewModel(
 
     fun removeDeviceFromTank(deviceUid: String) {
         val tankId = boundTankId
-        if (
-            tankId <= 0L ||
-            deviceUid.isBlank() ||
-            removingDevice.value ||
-            openingDeviceId.value != null
-        ) {
-            return
-        }
+        if (!canRemoveDevice(tankId, deviceUid)) return
 
         viewModelScope.launch {
             removingDevice.value = true
@@ -156,6 +149,12 @@ class TankDetailDevicesViewModel(
                     _events.send(TankDetailDevicesEvent.ShowRemoveFailed)
             }
         }
+    }
+
+    private fun canRemoveDevice(tankId: Long, deviceUid: String): Boolean {
+        val requestIsValid = tankId > 0L && deviceUid.isNotBlank()
+        val operationsAreIdle = !removingDevice.value && openingDeviceId.value == null
+        return requestIsValid && operationsAreIdle
     }
 }
 
