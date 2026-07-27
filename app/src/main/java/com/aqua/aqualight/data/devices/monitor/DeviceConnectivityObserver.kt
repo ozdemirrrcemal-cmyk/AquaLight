@@ -13,6 +13,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
 
 /**
@@ -45,12 +46,12 @@ class DeviceConnectivityObserver(context: Context) {
             val next = selected?.let { network ->
                 val capabilities = capabilitiesByNetwork[network]
                 val linkProperties = linkPropertiesByNetwork[network]
-                val routeChanged = previous?.linkProperties != null &&
+                val sameNetwork = previous?.network == network
+                val routeChanged = sameNetwork &&
+                    previous?.linkProperties != null &&
                     linkProperties != null &&
                     previous.linkProperties != linkProperties
-                val pathChanged = previous == null ||
-                    previous.network != network ||
-                    routeChanged
+                val pathChanged = previous == null || !sameNetwork || routeChanged
                 val nextGeneration = if (pathChanged) {
                     generation.incrementAndGet()
                 } else {
@@ -59,7 +60,8 @@ class DeviceConnectivityObserver(context: Context) {
                 DeviceLocalNetworkPath(
                     network = network,
                     capabilities = capabilities,
-                    linkProperties = linkProperties ?: previous?.linkProperties,
+                    linkProperties = linkProperties
+                        ?: previous?.takeIf { it.network == network }?.linkProperties,
                     generation = nextGeneration
                 )
             }
@@ -141,7 +143,7 @@ class DeviceConnectivityObserver(context: Context) {
             runCatching { connectivityManager.unregisterNetworkCallback(callback) }
             currentPath.set(null)
         }
-    }
+    }.distinctUntilChangedBy { path -> path?.generation }
 
     fun observeLocalNetworkAvailable(): Flow<Boolean> {
         return observeLocalNetworkPath()
@@ -150,7 +152,13 @@ class DeviceConnectivityObserver(context: Context) {
     }
 
     fun currentLocalNetwork(): Network? {
-        currentPath.get()?.network?.let { return it }
+        currentPath.get()?.network?.let { network ->
+            val capabilities = connectivityManager.getNetworkCapabilities(network)
+            if (DeviceLocalTransportPolicy.hasLocalTransport(capabilities)) {
+                return network
+            }
+            currentPath.compareAndSet(currentPath.get(), null)
+        }
 
         val activeNetwork = connectivityManager.activeNetwork ?: return null
         val capabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
