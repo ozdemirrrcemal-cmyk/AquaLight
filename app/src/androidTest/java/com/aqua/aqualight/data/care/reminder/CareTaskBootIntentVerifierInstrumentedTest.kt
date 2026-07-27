@@ -12,16 +12,17 @@ import org.junit.runner.RunWith
 class CareTaskBootIntentVerifierInstrumentedTest {
 
     @Test
-    fun acceptsOnlyMatchingSupportedSystemActions() {
-        val supportedActions = listOf(
+    fun acceptsMatchingObservedActions() {
+        val actions = listOf(
             Intent.ACTION_BOOT_COMPLETED,
             Intent.ACTION_MY_PACKAGE_REPLACED,
-            AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED
+            AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED,
+            "com.aqua.aqualight.UNTRUSTED_ACTION"
         )
 
-        supportedActions.forEach { action ->
+        actions.forEach { action ->
             assertTrue(
-                CareTaskBootIntentVerifier.isVerified(
+                CareTaskBootIntentVerifier.matchesObservedAction(
                     Intent(action),
                     action
                 )
@@ -30,16 +31,10 @@ class CareTaskBootIntentVerifierInstrumentedTest {
     }
 
     @Test
-    fun rejectsMissingUnsupportedAndMismatchedActions() {
-        assertFalse(CareTaskBootIntentVerifier.isVerified(Intent(), null))
+    fun rejectsMissingAndMismatchedActions() {
+        assertFalse(CareTaskBootIntentVerifier.matchesObservedAction(Intent(), null))
         assertFalse(
-            CareTaskBootIntentVerifier.isVerified(
-                Intent("com.aqua.aqualight.UNTRUSTED_ACTION"),
-                "com.aqua.aqualight.UNTRUSTED_ACTION"
-            )
-        )
-        assertFalse(
-            CareTaskBootIntentVerifier.isVerified(
+            CareTaskBootIntentVerifier.matchesObservedAction(
                 Intent(Intent.ACTION_BOOT_COMPLETED),
                 Intent.ACTION_MY_PACKAGE_REPLACED
             )
