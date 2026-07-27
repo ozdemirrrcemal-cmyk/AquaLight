@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_menu_default_title">Gerät</string>
+    <string name="device_menu_offline_dialog_title">Gerät offline</string>
+    <string name="device_menu_offline_dialog_message">%1$s ist derzeit offline.\n\n%2$s</string>
+    <string name="device_menu_offline_message">Stellen Sie sicher, dass es eingeschaltet und mit demselben WLAN verbunden ist.</string>
+    <string name="device_menu_checking_accessibility">Geräteverbindung wird geprüft</string>
+    <string name="device_menu_local_network_unavailable_message">Verbinden Sie dieses Telefon mit demselben WLAN wie das Gerät und versuchen Sie es erneut.</string>
+    <string name="device_menu_authentication_required_message">Dieses Gerät muss erneut mit Ihrem Konto gekoppelt werden, bevor die Steuerung geöffnet werden kann.</string>
+    <string name="device_menu_device_unresponsive_message">Das Gerät ist im lokalen Netzwerk sichtbar, antwortet jedoch nicht. Prüfen Sie die Stromversorgung und die WLAN-Verbindung.</string>
+    <string name="device_menu_verification_timed_out_message">Die Verbindungsprüfung hat zu lange gedauert. AquaLight versucht es automatisch weiter.</string>
+</resources>
