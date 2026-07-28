@@ -1,14 +1,16 @@
 package com.aqua.aqualight.data.devices
 
+import com.aqua.aqualight.application.devices.DeviceMetadataReadiness
 import com.aqua.aqualight.application.devices.DeviceRootCapability
-import com.aqua.aqualight.application.devices.DeviceRootMenuFeature
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.OwnerDeviceListItem
 import com.aqua.aqualight.application.devices.OwnerDeviceStatusSnapshot
 import com.aqua.aqualight.application.devices.TankDeviceListItem
+import com.aqua.aqualight.data.devices.model.DeviceCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceFamily
+import com.aqua.aqualight.data.devices.model.DeviceLimits
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 
@@ -66,6 +68,7 @@ internal fun DeviceSnapshot.toDeviceRootSnapshot(): DeviceRootSnapshot {
         deviceUid = deviceUid.value,
         title = product.displayName.ifBlank { product.model },
         availability = connectionState.onlineState.toOwnerDeviceAvailability(),
+        metadataReadiness = metadataReadiness(),
         ipAddress = endpoint.ip.trim(),
         firmwareLabel = listOf(
             firmwareVersion.ifBlank { null },
@@ -79,10 +82,11 @@ internal fun DeviceSnapshot.toDeviceRootSnapshot(): DeviceRootSnapshot {
         timerChannelCount = limits.timerChannelCount,
         dosingChannelCount = limits.dosingChannelCount,
         fanOutputCount = limits.fanOutputCount,
+        temperatureSensorCount = limits.temperatureSensorCount,
         capabilities = rootCapabilities,
         supportedFeatures = supportedFeatures.filter(String::isNotBlank),
         supportedScreens = supportedScreens.filter(String::isNotBlank),
-        menuFeatures = rootMenuFeatures()
+        menuFeatures = DeviceRootMenuFeatureResolver.resolve(this)
     )
 }
 
@@ -114,54 +118,23 @@ internal fun DeviceOnlineState.toOwnerDeviceAvailability(): OwnerDeviceAvailabil
     }
 }
 
-private fun DeviceSnapshot.rootMenuFeatures(): Set<DeviceRootMenuFeature> = buildSet {
-    if (capabilities.manualLight || hasAnyScreen("light.manual", "manual", "manualLight")) {
-        add(DeviceRootMenuFeature.LIGHT_MANUAL)
-    }
-    if (hasAnyScreen("light.quickSetup", "quickSetup", "quick_setup")) {
-        add(DeviceRootMenuFeature.LIGHT_QUICK_SETUP)
-    }
-    if (capabilities.lightProgram || hasAnyScreen("light.programs", "programs", "programList", "program_list")) {
-        add(DeviceRootMenuFeature.LIGHT_PROGRAMS)
-    }
-    if (capabilities.lightPresets || hasAnyScreen("light.presets", "presets")) {
-        add(DeviceRootMenuFeature.LIGHT_PRESETS)
-    }
-    if (capabilities.lightSimulation || hasAnyScreen("light.simulation", "simulation")) {
-        add(DeviceRootMenuFeature.LIGHT_SIMULATION)
-    }
-    if (capabilities.dosing || hasAnyScreen("dosing.channels", "channels", "dosing")) {
-        add(DeviceRootMenuFeature.DOSING_CHANNELS)
-    }
-    if (hasAnyScreen("dosing.calibration", "calibration")) {
-        add(DeviceRootMenuFeature.DOSING_CALIBRATION)
-    }
-    if (hasAnyScreen("dosing.schedules", "schedules", "singleDose", "hourly24", "customPeriods", "timerMode")) {
-        add(DeviceRootMenuFeature.DOSING_SCHEDULES)
-    }
-    if (capabilities.standaloneTimer || hasAnyScreen("timer.channels", "channels", "timer")) {
-        add(DeviceRootMenuFeature.TIMER_CHANNELS)
-    }
-    if (hasAnyScreen("timer.schedules", "schedules")) {
-        add(DeviceRootMenuFeature.TIMER_SCHEDULES)
-    }
-    if (capabilities.cooling || capabilities.fan || hasAnyScreen("cooling.fans", "fan", "fans", "cooling")) {
-        add(DeviceRootMenuFeature.COOLING_FANS)
-    }
-    if (capabilities.temperature || hasAnyScreen("cooling.temperature", "temperature")) {
-        add(DeviceRootMenuFeature.COOLING_TEMPERATURE)
-    }
-    if (capabilities.ota || hasAnyScreen("device.settings", "settings")) {
-        add(DeviceRootMenuFeature.DEVICE_SETTINGS)
-    }
-}
+private fun DeviceSnapshot.metadataReadiness(): DeviceMetadataReadiness {
+    val hasMetadata = capabilities != DeviceCapabilities() ||
+        limits != DeviceLimits() ||
+        supportedFeatures.isNotEmpty() ||
+        supportedScreens.isNotEmpty() ||
+        modules.isNotEmpty()
 
-private fun DeviceSnapshot.hasAnyScreen(vararg names: String): Boolean {
-    val normalizedSupported = (supportedScreens + supportedFeatures)
-        .map { value -> value.trim().lowercase() }
-        .filter(String::isNotBlank)
-        .toSet()
-    return names.any { name -> normalizedSupported.contains(name.trim().lowercase()) }
+    return when {
+        hasMetadata && product.family == DeviceFamily.UNKNOWN ->
+            DeviceMetadataReadiness.UNSUPPORTED
+
+        connectionState.onlineState.toOwnerDeviceAvailability() ==
+            OwnerDeviceAvailability.UNREACHABLE -> DeviceMetadataReadiness.OFFLINE
+
+        !hasMetadata -> DeviceMetadataReadiness.LOADING
+        else -> DeviceMetadataReadiness.READY
+    }
 }
 
 private fun DeviceSnapshot.serialText(): String {

@@ -5,11 +5,12 @@ import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeSyncCoordinator
+import com.aqua.aqualight.data.devices.runtime.ws.AqlPrivateLanEndpoint
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsClient
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
-import com.aqua.aqualight.data.devices.runtime.ws.AqlPrivateLanEndpoint
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsTokenProvider
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsTransport
 import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
@@ -45,6 +46,7 @@ class DeviceRuntimeRepository(
         val commandClient: AqlWsCommandClient,
         val sessionJob: CompletableJob,
         val sessionScope: CoroutineScope,
+        val bootstrapGate: DeviceRuntimeBootstrapGate = DeviceRuntimeBootstrapGate(),
         @Volatile var endpointUrl: String? = null
     ) : AutoCloseable {
         private val closed = AtomicBoolean(false)
@@ -383,29 +385,36 @@ class DeviceRuntimeRepository(
             is AqlWsEvent.Opened -> Unit
 
             is AqlWsEvent.Authenticated -> {
-                sendAuthenticatedBootstrap(session.commandClient)
-                timeSyncCoordinator.syncPhoneNowIfNeeded(deviceUid = event.deviceUid)
+                session.bootstrapGate.reset()
+                sendMetadataBootstrap(session.commandClient)
             }
 
-            is AqlWsEvent.Message -> Unit
+            is AqlWsEvent.Message -> {
+                val response = event.parsed as? AqlWsIncomingMessage.Response ?: return
+                val plan = session.bootstrapGate.accept(response) ?: return
+                val commandClient = session.commandClient
+                commandClient.securityStatus()
+                commandClient.deviceStatus()
+                commandClient.networkStatus()
+                if (plan.requestTimeStatus) commandClient.timeStatus()
+                if (plan.requestFirmwareStatus) commandClient.firmwareStatus()
+                if (plan.requestLightStatus) commandClient.lightStatus()
+                if (plan.requestCoolingStatus) commandClient.coolingStatus()
+                if (plan.requestTimerStatus) commandClient.timerStatus()
+                if (plan.requestDosingStatus) commandClient.dosingStatus()
+                if (plan.requestTimeStatus) {
+                    timeSyncCoordinator.syncPhoneNowIfNeeded(deviceUid = event.deviceUid)
+                }
+            }
 
             is AqlWsEvent.Closed,
             is AqlWsEvent.Failure -> Unit
         }
     }
 
-    private fun sendAuthenticatedBootstrap(commandClient: AqlWsCommandClient) {
-        commandClient.securityStatus()
+    private fun sendMetadataBootstrap(commandClient: AqlWsCommandClient) {
         commandClient.deviceIdentity()
-        commandClient.deviceStatus()
         commandClient.deviceCapabilities()
-        commandClient.networkStatus()
-        commandClient.timeStatus()
-        commandClient.firmwareStatus()
-        commandClient.lightStatus()
-        commandClient.coolingStatus()
-        commandClient.timerStatus()
-        commandClient.dosingStatus()
     }
 
     companion object {

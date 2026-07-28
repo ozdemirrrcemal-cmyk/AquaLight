@@ -15,6 +15,7 @@ data class DeviceRootSnapshot(
     val deviceUid: String,
     val title: String,
     val availability: OwnerDeviceAvailability,
+    val metadataReadiness: DeviceMetadataReadiness = DeviceMetadataReadiness.LOADING,
     val ipAddress: String = "",
     val firmwareLabel: String = "",
     val modelLabel: String = "",
@@ -22,11 +23,19 @@ data class DeviceRootSnapshot(
     val timerChannelCount: Int = 0,
     val dosingChannelCount: Int = 0,
     val fanOutputCount: Int = 0,
+    val temperatureSensorCount: Int = 0,
     val capabilities: Set<DeviceRootCapability> = emptySet(),
     val supportedFeatures: List<String> = emptyList(),
     val supportedScreens: List<String> = emptyList(),
     val menuFeatures: Set<DeviceRootMenuFeature> = emptySet()
 )
+
+enum class DeviceMetadataReadiness {
+    LOADING,
+    READY,
+    OFFLINE,
+    UNSUPPORTED
+}
 
 enum class DeviceRootCapability {
     MANUAL_LIGHT,
