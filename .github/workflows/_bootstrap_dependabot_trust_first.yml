@@ -1,0 +1,82 @@
+name: Bootstrap Dependabot Trust-First Gate
+
+on:
+  push:
+    branches:
+      - agent/dependabot-trust-refresh-first
+    paths:
+      - ".github/workflows/_bootstrap_dependabot_trust_first.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Gate initial Dependabot Gradle validation
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          jobs = {
+              ".github/workflows/android.yml": "build",
+              ".github/workflows/android_emulator_tests.yml": "instrumentation",
+              ".github/workflows/codeql.yml": "analyze",
+              ".github/workflows/dependency_integrity.yml": "verify",
+          }
+          marker = "# Dependabot Gradle PRs run this job only after trust refresh dispatch."
+          condition = (
+              f"    {marker}\n"
+              "    if: >-\n"
+              "      github.event_name != 'pull_request' ||\n"
+              "      github.event.pull_request.user.login != 'dependabot[bot]' ||\n"
+              "      !startsWith(github.event.pull_request.head.ref, 'dependabot/gradle/')\n"
+          )
+
+          for filename, job in jobs.items():
+              path = Path(filename)
+              text = path.read_text(encoding="utf-8")
+              if marker in text:
+                  continue
+              anchor = f"  {job}:\n"
+              if text.count(anchor) != 1:
+                  raise SystemExit(f"Expected exactly one job anchor in {filename}: {anchor!r}")
+              path.write_text(text.replace(anchor, anchor + condition, 1), encoding="utf-8")
+
+          bootstrap = Path(".github/workflows/_bootstrap_dependabot_trust_first.yml")
+          bootstrap.unlink()
+          PY
+
+          for file in \
+            .github/workflows/android.yml \
+            .github/workflows/android_emulator_tests.yml \
+            .github/workflows/codeql.yml \
+            .github/workflows/dependency_integrity.yml; do
+            grep -Fq "Dependabot Gradle PRs run this job only after trust refresh dispatch." "$file"
+            grep -Fq "github.event_name != 'pull_request'" "$file"
+            grep -Fq "!startsWith(github.event.pull_request.head.ref, 'dependabot/gradle/')" "$file"
+          done
+          git diff --check
+
+      - name: Commit workflow gates
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            .github/workflows/android.yml \
+            .github/workflows/android_emulator_tests.yml \
+            .github/workflows/codeql.yml \
+            .github/workflows/dependency_integrity.yml \
+            .github/workflows/_bootstrap_dependabot_trust_first.yml
+          git commit -m "ci: run Dependabot validation after trust refresh"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
