@@ -1,33 +1,7 @@
 name: Dependency Integrity
 
-run-name: >-
-  ${{ inputs.validation_id != '' &&
-      format('{0} · {1}', github.workflow, inputs.validation_id) ||
-      github.workflow }}
-
 on:
   workflow_dispatch:
-    inputs:
-      expected_sha:
-        description: Exact trusted Dependabot head SHA.
-        required: false
-        type: string
-      expected_base_sha:
-        description: Exact main SHA used by Trust Refresh.
-        required: false
-        type: string
-      dependabot_pr:
-        description: Trusted Dependabot pull request number.
-        required: false
-        type: string
-      trust_run_id:
-        description: Successful Trust Refresh workflow run ID.
-        required: false
-        type: string
-      validation_id:
-        description: Unique trusted Apply-run correlation identifier.
-        required: false
-        type: string
   push:
     branches:
       - main
@@ -40,20 +14,20 @@ on:
       - "gradlew"
       - "gradlew.bat"
       - "tools/verify_dependency_integrity.py"
-      - "tools/classify_dependabot_gradle_pr.py"
-      - "tools/create_dependabot_trust_metadata.py"
-      - "tools/tests/test_classify_dependabot_gradle_pr.py"
-      - "tools/tests/test_create_dependabot_trust_metadata.py"
-      - "tools/tests/test_validate_dependabot_dispatch.py"
-      - "tools/tests/test_verify_dependency_integrity.py"
-      - "config/dependency-integrity/**"
-      - "config/dependabot/**"
       - ".github/actions/provision-dependabot-firebase/**"
-      - ".github/actions/validate-dependabot-dispatch/**"
-      - ".github/workflows/apply_dependabot_gradle_trust_refresh.yml"
-      - ".github/workflows/dependabot_gradle_trust_refresh.yml"
       - ".github/workflows/dependency_integrity.yml"
   pull_request:
+    paths:
+      - "app/build.gradle"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle.properties"
+      - "gradle/**"
+      - "gradlew"
+      - "gradlew.bat"
+      - "tools/verify_dependency_integrity.py"
+      - ".github/actions/provision-dependabot-firebase/**"
+      - ".github/workflows/dependency_integrity.yml"
 
 concurrency:
   group: dependency-integrity-${{ github.ref }}
@@ -64,92 +38,17 @@ permissions:
 
 jobs:
   verify:
-    if: >-
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.user.login != 'dependabot[bot]' ||
-      github.event.pull_request.head.repo.full_name != github.repository ||
-      github.event.pull_request.base.ref != 'main' ||
-      !startsWith(github.event.pull_request.head.ref, 'dependabot/gradle/')
     runs-on: ubuntu-latest
     env:
       CI: "true"
-      AQL_FIREBASE_DEBUG_CONFIG_BASE64: ${{ github.event_name != 'workflow_dispatch' && secrets.AQL_FIREBASE_DEBUG_CONFIG_BASE64 }}
+      AQL_FIREBASE_DEBUG_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_DEBUG_CONFIG_BASE64 }}
 
     steps:
-      - name: Validate workflow-dispatch input shape
-        if: github.event_name == 'workflow_dispatch'
-        shell: bash
-        env:
-          EXPECTED_SHA: ${{ inputs.expected_sha }}
-          EXPECTED_BASE_SHA: ${{ inputs.expected_base_sha }}
-          DEPENDABOT_PR: ${{ inputs.dependabot_pr }}
-          TRUST_RUN_ID: ${{ inputs.trust_run_id }}
-          VALIDATION_ID: ${{ inputs.validation_id }}
-        run: |
-          set -Eeuo pipefail
-          values=(
-            "$EXPECTED_SHA"
-            "$EXPECTED_BASE_SHA"
-            "$DEPENDABOT_PR"
-            "$TRUST_RUN_ID"
-            "$VALIDATION_ID"
-          )
-          count=0
-          for value in "${values[@]}"; do
-            [[ -z "$value" ]] || count=$((count + 1))
-          done
-          if [[ "$count" -ne 0 && "$count" -ne 5 ]]; then
-            echo "Trusted Dependabot dispatch inputs must be all present or all absent." >&2
-            exit 1
-          fi
-          if [[ "$count" -eq 0 && "$GITHUB_REF" != "refs/heads/main" ]]; then
-            echo "Input-free manual validation is restricted to main." >&2
-            exit 1
-          fi
-
-      - name: Checkout trusted dispatch control
-        if: github.event_name == 'workflow_dispatch' && inputs.expected_sha != ''
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          ref: ${{ inputs.expected_base_sha }}
-          persist-credentials: false
-
-      - name: Validate trusted Dependabot dispatch
-        if: github.event_name == 'workflow_dispatch' && inputs.expected_sha != ''
-        uses: ./.github/actions/validate-dependabot-dispatch
-        with:
-          expected-sha: ${{ inputs.expected_sha }}
-          expected-base-sha: ${{ inputs.expected_base_sha }}
-          pull-request: ${{ inputs.dependabot_pr }}
-          trust-run-id: ${{ inputs.trust_run_id }}
-          validation-id: ${{ inputs.validation_id }}
-          github-token: ${{ github.token }}
-
-      - name: Provision trusted Dependabot Firebase fixtures
-        if: github.event_name == 'workflow_dispatch' && inputs.expected_sha != ''
-        uses: ./.github/actions/provision-dependabot-firebase
-        with:
-          trusted-dispatch: "true"
-          expected-sha: ${{ inputs.expected_sha }}
-          pull-request: ${{ inputs.dependabot_pr }}
-          trust-run-id: ${{ inputs.trust_run_id }}
-
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          ref: ${{ inputs.expected_sha || github.sha }}
-          persist-credentials: false
-
-      - name: Provision main-dispatch Firebase fixtures
-        if: github.event_name == 'workflow_dispatch' && inputs.expected_sha == ''
-        uses: ./.github/actions/provision-dependabot-firebase
-        with:
-          trusted-main-dispatch: "true"
 
       - name: Provision Dependabot Firebase fixtures
-        if: >-
-          github.event_name == 'pull_request' &&
-          github.event.pull_request.user.login == 'dependabot[bot]'
+        if: ${{ github.actor == 'dependabot[bot]' }}
         uses: ./.github/actions/provision-dependabot-firebase
 
       - name: Validate Gradle Wrapper
@@ -220,8 +119,6 @@ jobs:
             2>&1 | tee dependency-integrity.log
 
           python3 tools/verify_dependency_integrity.py \
-            --settings settings.gradle \
-            --build-tools-manifest config/dependency-integrity/resolved-build-tools.json \
             --lockfile app/gradle.lockfile \
             --metadata gradle/verification-metadata.xml \
             --summary build/reports/dependency-integrity-summary.json

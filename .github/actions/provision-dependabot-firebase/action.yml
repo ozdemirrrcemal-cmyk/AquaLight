@@ -1,35 +1,8 @@
 name: Provision Dependabot Firebase fixtures
 description: Provision deterministic non-production Firebase configs for trusted Dependabot pull requests.
-inputs:
-  trusted-dispatch:
-    description: Whether this is an API-validated Dependabot workflow dispatch.
-    required: false
-    default: "false"
-  trusted-main-dispatch:
-    description: Whether this is a no-input workflow dispatch on the main branch.
-    required: false
-    default: "false"
-  expected-sha:
-    description: Exact trusted dispatch head SHA.
-    required: false
-    default: ""
-  pull-request:
-    description: Trusted dispatch pull request number.
-    required: false
-    default: ""
-  trust-run-id:
-    description: Trusted dispatch source Trust Refresh run.
-    required: false
-    default: ""
 runs:
   using: composite
   steps:
     - name: Validate Dependabot context and provision fixtures
       shell: bash
-      env:
-        AQL_TRUSTED_DEPENDABOT_DISPATCH: ${{ inputs.trusted-dispatch }}
-        AQL_TRUSTED_MAIN_DISPATCH: ${{ inputs.trusted-main-dispatch }}
-        AQL_EXPECTED_SHA: ${{ inputs.expected-sha }}
-        AQL_DEPENDABOT_PR: ${{ inputs.pull-request }}
-        AQL_TRUST_RUN_ID: ${{ inputs.trust-run-id }}
       run: python3 "${GITHUB_ACTION_PATH}/provision.py"

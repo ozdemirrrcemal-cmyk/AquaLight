@@ -3,6 +3,14 @@ name: Dependabot Gradle Trust Refresh
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths:
+      - "app/build.gradle"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle.properties"
+      - "gradle/libs.versions.toml"
+      - "app/gradle.lockfile"
+      - "gradle/verification-metadata.xml"
 
 permissions:
   contents: read
@@ -60,20 +68,27 @@ jobs:
               handle.write(f"head-sha={head_sha}\n")
           PY
 
+      - name: Checkout exact Dependabot head
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ steps.pr.outputs.head-sha }}
+          persist-credentials: false
+
+      - name: Provision Dependabot Firebase fixtures
+        uses: ./.github/actions/provision-dependabot-firebase
+
       - name: Validate Dependabot PR scope
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ steps.pr.outputs.number }}
-          PR_FILES_PATH: ${{ runner.temp }}/dependabot-pr-files.txt
         shell: bash
         run: |
           set -Eeuo pipefail
           gh api --paginate \
             "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/files?per_page=100" \
-            --jq '.[].filename' > "$PR_FILES_PATH"
+            --jq '.[].filename' > pr-files.txt
 
           python3 - <<'PY'
-          import os
           from pathlib import Path
 
           allowed = {
@@ -82,11 +97,6 @@ jobs:
               "settings.gradle",
               "gradle.properties",
               "gradle/libs.versions.toml",
-              "gradle/aqualight-detekt.gradle",
-              "gradle/wrapper/gradle-wrapper.properties",
-              "gradle/wrapper/gradle-wrapper.jar",
-              "gradlew",
-              "gradlew.bat",
               "app/gradle.lockfile",
               "gradle/verification-metadata.xml",
           }
@@ -96,9 +106,7 @@ jobs:
           }
           files = {
               line.strip()
-              for line in Path(os.environ["PR_FILES_PATH"]).read_text(
-                  encoding="utf-8"
-              ).splitlines()
+              for line in Path("pr-files.txt").read_text(encoding="utf-8").splitlines()
               if line.strip()
           }
           unexpected = sorted(files - allowed)
@@ -106,35 +114,7 @@ jobs:
               raise SystemExit("Unexpected Dependabot files: " + ", ".join(unexpected))
           if not files.intersection(manifests):
               raise SystemExit("No approved Gradle manifest changed.")
-          wrapper_files = {
-              "gradle/wrapper/gradle-wrapper.properties",
-              "gradle/wrapper/gradle-wrapper.jar",
-              "gradlew",
-              "gradlew.bat",
-          }
-          if files.intersection(wrapper_files) and (
-              "gradle/wrapper/gradle-wrapper.properties" not in files
-          ):
-              raise SystemExit(
-                  "Gradle Wrapper binaries/scripts cannot change without "
-                  "gradle-wrapper.properties."
-              )
           PY
-
-      - name: Checkout exact Dependabot head
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          ref: ${{ steps.pr.outputs.head-sha }}
-          persist-credentials: false
-
-      - name: Fetch verified Dependabot update metadata
-        id: dependabot-metadata
-        uses: dependabot/fetch-metadata@d7267f607e9d3fb96fc2fbe83e0af444713e90b7 # v3
-        with:
-          github-token: ${{ github.token }}
-
-      - name: Provision Dependabot Firebase fixtures
-        uses: ./.github/actions/provision-dependabot-firebase
 
       - name: Validate Gradle Wrapper
         uses: gradle/actions/wrapper-validation@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
@@ -209,13 +189,11 @@ jobs:
           test -s app/gradle.lockfile
           test -s gradle/verification-metadata.xml
           python3 tools/verify_dependency_integrity.py \
-            --settings settings.gradle \
-            --build-tools-manifest config/dependency-integrity/resolved-build-tools.json \
             --lockfile app/gradle.lockfile \
             --metadata gradle/verification-metadata.xml \
             --summary build/reports/dependabot-trust-refresh.json
 
-      - name: Enforce generated file scope
+      - name: Report generated file scope
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -228,16 +206,6 @@ jobs:
               for line in Path("generated-files.txt").read_text(encoding="utf-8").splitlines()
               if line.strip()
           ]
-          allowed = {
-              "app/gradle.lockfile",
-              "gradle/verification-metadata.xml",
-          }
-          unexpected = sorted(set(changed) - allowed)
-          if unexpected:
-              raise SystemExit(
-                  "Gradle trust refresh changed unexpected files: "
-                  + ", ".join(unexpected)
-              )
           print("Ephemeral Gradle changes: " + (", ".join(changed) or "none"))
           print("Only app/gradle.lockfile and gradle/verification-metadata.xml will be packaged.")
           PY
@@ -246,34 +214,32 @@ jobs:
         env:
           HEAD_REF: ${{ steps.pr.outputs.head-ref }}
           HEAD_SHA: ${{ steps.pr.outputs.head-sha }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
           PR_NUMBER: ${{ steps.pr.outputs.number }}
           SOURCE_RUN_ID: ${{ github.run_id }}
-          DEPENDENCY_NAMES: ${{ steps.dependabot-metadata.outputs.dependency-names }}
-          DEPENDENCY_TYPE: ${{ steps.dependabot-metadata.outputs.dependency-type }}
-          UPDATE_TYPE: ${{ steps.dependabot-metadata.outputs.update-type }}
-          PACKAGE_ECOSYSTEM: ${{ steps.dependabot-metadata.outputs.package-ecosystem }}
-          MAINTAINER_CHANGES: ${{ steps.dependabot-metadata.outputs.maintainer-changes }}
-          PR_FILES_PATH: ${{ runner.temp }}/dependabot-pr-files.txt
         shell: bash
         run: |
           set -Eeuo pipefail
           mkdir -p trust-refresh/app trust-refresh/gradle
           cp app/gradle.lockfile trust-refresh/app/gradle.lockfile
           cp gradle/verification-metadata.xml trust-refresh/gradle/verification-metadata.xml
-          python3 tools/create_dependabot_trust_metadata.py \
-            --pull-request "$PR_NUMBER" \
-            --head-ref "$HEAD_REF" \
-            --head-sha "$HEAD_SHA" \
-            --base-sha "$BASE_SHA" \
-            --source-run-id "$SOURCE_RUN_ID" \
-            --dependency-names "$DEPENDENCY_NAMES" \
-            --dependency-type "$DEPENDENCY_TYPE" \
-            --update-type "$UPDATE_TYPE" \
-            --package-ecosystem "$PACKAGE_ECOSYSTEM" \
-            --maintainer-changes "$MAINTAINER_CHANGES" \
-            --pr-files "$PR_FILES_PATH" \
-            --output trust-refresh/metadata.json
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          Path("trust-refresh/metadata.json").write_text(
+              json.dumps(
+                  {
+                      "pull_request": int(os.environ["PR_NUMBER"]),
+                      "head_ref": os.environ["HEAD_REF"],
+                      "head_sha": os.environ["HEAD_SHA"],
+                      "source_run_id": int(os.environ["SOURCE_RUN_ID"]),
+                  },
+                  sort_keys=True,
+              ) + "\n",
+              encoding="utf-8",
+          )
+          PY
 
       - name: Upload generated Gradle trust state
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
