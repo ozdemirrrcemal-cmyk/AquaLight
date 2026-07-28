@@ -1,0 +1,405 @@
+{
+  "fixtureVersion": 1,
+  "schema": "aql.product.catalog.fixture.v1",
+  "source": {
+    "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
+    "commit": "2ac54677f19b270f970894b21880ab99753ac7f4",
+    "catalogPath": "src/product/AqlProductCatalog.hpp",
+    "exporterPath": "tools/aql_export_product_catalog.cpp",
+    "otaManifestSchema": "aql.ota.manifest.v1"
+  },
+  "profiles": {
+    "lightWrgbProElite": {
+      "capabilities": {
+        "light": true,
+        "manualLight": true,
+        "lightProgram": true,
+        "lightPresets": true,
+        "lightSimulation": false,
+        "fan": true,
+        "cooling": true,
+        "temperature": true,
+        "standaloneTimer": false,
+        "dosing": false,
+        "timeSync": true,
+        "ota": true
+      },
+      "supportedFeatures": [
+        "WIFI_SETUP",
+        "LAN_DISCOVERY",
+        "LIGHT_CONTROL",
+        "LIGHT_QUICK_SETUP",
+        "LIGHT_PRESETS",
+        "LIGHT_MOONLIGHT",
+        "LIGHT_ACCLIMATION",
+        "LIGHT_TEMPERATURE_PROTECTION",
+        "LIGHT_FAN_CONTROL",
+        "TEMPERATURE_READ",
+        "COOLING_CONTROL",
+        "OTA_UPDATE"
+      ],
+      "supportedScreens": [
+        "OVERVIEW",
+        "LIGHT_CONTROL",
+        "LIGHT_CHANNELS",
+        "LIGHT_SCHEDULE",
+        "LIGHT_PRESETS",
+        "LIGHT_QUICK_SETUP",
+        "LIGHT_MOONLIGHT",
+        "LIGHT_ACCLIMATION",
+        "LIGHT_TEMPERATURE_PROTECTION",
+        "LIGHT_FAN_CONTROL",
+        "COOLING_CONTROL",
+        "ADVANCED"
+      ],
+      "expectedMenuFeatures": [
+        "LIGHT_MANUAL",
+        "LIGHT_QUICK_SETUP",
+        "LIGHT_PROGRAMS",
+        "LIGHT_PRESETS",
+        "COOLING_FANS",
+        "COOLING_TEMPERATURE",
+        "DEVICE_SETTINGS"
+      ]
+    },
+    "lightRgbProSlim": {
+      "capabilities": {
+        "light": true,
+        "manualLight": true,
+        "lightProgram": true,
+        "lightPresets": true,
+        "lightSimulation": false,
+        "fan": false,
+        "cooling": false,
+        "temperature": false,
+        "standaloneTimer": false,
+        "dosing": false,
+        "timeSync": true,
+        "ota": true
+      },
+      "supportedFeatures": [
+        "WIFI_SETUP",
+        "LAN_DISCOVERY",
+        "LIGHT_CONTROL",
+        "LIGHT_QUICK_SETUP",
+        "LIGHT_PRESETS",
+        "LIGHT_MOONLIGHT",
+        "LIGHT_ACCLIMATION",
+        "OTA_UPDATE"
+      ],
+      "supportedScreens": [
+        "OVERVIEW",
+        "LIGHT_CONTROL",
+        "LIGHT_CHANNELS",
+        "LIGHT_SCHEDULE",
+        "LIGHT_PRESETS",
+        "LIGHT_QUICK_SETUP",
+        "LIGHT_MOONLIGHT",
+        "LIGHT_ACCLIMATION",
+        "ADVANCED"
+      ],
+      "expectedMenuFeatures": [
+        "LIGHT_MANUAL",
+        "LIGHT_QUICK_SETUP",
+        "LIGHT_PROGRAMS",
+        "LIGHT_PRESETS",
+        "DEVICE_SETTINGS"
+      ]
+    },
+    "timerRelayPro": {
+      "capabilities": {
+        "light": false,
+        "manualLight": false,
+        "lightProgram": false,
+        "lightPresets": false,
+        "lightSimulation": false,
+        "fan": false,
+        "cooling": false,
+        "temperature": false,
+        "standaloneTimer": true,
+        "dosing": false,
+        "timeSync": true,
+        "ota": true
+      },
+      "supportedFeatures": [
+        "WIFI_SETUP",
+        "LAN_DISCOVERY",
+        "TIMER_CONTROL",
+        "TIMER_MANUAL_RUN",
+        "OTA_UPDATE"
+      ],
+      "supportedScreens": [
+        "OVERVIEW",
+        "TIMER_CONTROL",
+        "TIMER_CHANNELS",
+        "TIMER_SCHEDULES",
+        "TIMER_MANUAL_RUN",
+        "ADVANCED"
+      ],
+      "expectedMenuFeatures": [
+        "TIMER_CHANNELS",
+        "TIMER_SCHEDULES",
+        "DEVICE_SETTINGS"
+      ]
+    },
+    "dosingDosePro": {
+      "capabilities": {
+        "light": false,
+        "manualLight": false,
+        "lightProgram": false,
+        "lightPresets": false,
+        "lightSimulation": false,
+        "fan": false,
+        "cooling": false,
+        "temperature": false,
+        "standaloneTimer": false,
+        "dosing": true,
+        "timeSync": true,
+        "ota": true
+      },
+      "supportedFeatures": [
+        "WIFI_SETUP",
+        "LAN_DISCOVERY",
+        "DOSING_CONTROL",
+        "DOSING_CALIBRATION",
+        "DOSING_RESERVOIR_TRACKING",
+        "OTA_UPDATE"
+      ],
+      "supportedScreens": [
+        "OVERVIEW",
+        "DOSING_CONTROL",
+        "DOSING_CHANNELS",
+        "DOSING_SCHEDULES",
+        "DOSING_CALIBRATION",
+        "DOSING_RESERVOIR",
+        "DOSING_MANUAL_RUN",
+        "ADVANCED"
+      ],
+      "expectedMenuFeatures": [
+        "DOSING_CHANNELS",
+        "DOSING_CALIBRATION",
+        "DOSING_SCHEDULES",
+        "DEVICE_SETTINGS"
+      ]
+    },
+    "coolingCoolPro": {
+      "capabilities": {
+        "light": false,
+        "manualLight": false,
+        "lightProgram": false,
+        "lightPresets": false,
+        "lightSimulation": false,
+        "fan": true,
+        "cooling": true,
+        "temperature": true,
+        "standaloneTimer": false,
+        "dosing": false,
+        "timeSync": true,
+        "ota": true
+      },
+      "supportedFeatures": [
+        "WIFI_SETUP",
+        "LAN_DISCOVERY",
+        "COOLING_CONTROL",
+        "COOLING_FAN_DISPLAY_NAME",
+        "TEMPERATURE_READ",
+        "OTA_UPDATE"
+      ],
+      "supportedScreens": [
+        "OVERVIEW",
+        "COOLING_CONTROL",
+        "COOLING_RULES",
+        "COOLING_FANS",
+        "COOLING_SENSOR_STATUS",
+        "ADVANCED"
+      ],
+      "expectedMenuFeatures": [
+        "COOLING_FANS",
+        "COOLING_TEMPERATURE",
+        "DEVICE_SETTINGS"
+      ]
+    }
+  },
+  "products": [
+    {
+      "profile": "lightWrgbProElite",
+      "env": "light_wrgb_pro_elite",
+      "productKey": "LIGHT_WRGB_PRO_ELITE",
+      "productId": "com.aqualight.light.wrgb_pro_elite",
+      "family": "light",
+      "line": "wrgb_pro",
+      "model": "wrgb_pro_elite_120",
+      "displayName": "WRGB Pro Elite 120",
+      "skuId": "com.aqualight.light.wrgb_pro_elite_120.global.black",
+      "skuCode": "AQL-L-WPE120-GLB-BLK",
+      "hardwareRevision": "2.0",
+      "limits": {
+        "lightChannelCount": 4,
+        "fanOutputCount": 2,
+        "temperatureSensorCount": 1,
+        "timerChannelCount": 0,
+        "dosingChannelCount": 0
+      }
+    },
+    {
+      "profile": "lightRgbProSlim",
+      "env": "light_rgb_pro_slim",
+      "productKey": "LIGHT_RGB_PRO_SLIM",
+      "productId": "com.aqualight.light.rgb_pro_slim",
+      "family": "light",
+      "line": "rgb_pro",
+      "model": "rgb_pro_slim",
+      "displayName": "RGB Pro Slim",
+      "skuId": "com.aqualight.light.rgb_pro_slim.global.black",
+      "skuCode": "AQL-L-RPS-GLB-BLK",
+      "hardwareRevision": "2.0",
+      "limits": {
+        "lightChannelCount": 3,
+        "fanOutputCount": 0,
+        "temperatureSensorCount": 0,
+        "timerChannelCount": 0,
+        "dosingChannelCount": 0
+      }
+    },
+    {
+      "profile": "timerRelayPro",
+      "env": "timer_relay_pro_2",
+      "productKey": "TIMER_RELAY_PRO_2",
+      "productId": "com.aqualight.timer.relay_pro_2",
+      "family": "timer",
+      "line": "relay_pro",
+      "model": "relay_pro_2",
+      "displayName": "Relay Pro 2",
+      "skuId": "com.aqualight.timer.relay_pro_2.global.black",
+      "skuCode": "AQL-T-RP2-GLB-BLK",
+      "hardwareRevision": "2.0",
+      "limits": {
+        "lightChannelCount": 0,
+        "fanOutputCount": 0,
+        "temperatureSensorCount": 0,
+        "timerChannelCount": 2,
+        "dosingChannelCount": 0
+      }
+    },
+    {
+      "profile": "timerRelayPro",
+      "env": "timer_relay_pro_4",
+      "productKey": "TIMER_RELAY_PRO_4",
+      "productId": "com.aqualight.timer.relay_pro_4",
+      "family": "timer",
+      "line": "relay_pro",
+      "model": "relay_pro_4",
+      "displayName": "Relay Pro 4",
+      "skuId": "com.aqualight.timer.relay_pro_4.global.black",
+      "skuCode": "AQL-T-RP4-GLB-BLK",
+      "hardwareRevision": "2.0",
+      "limits": {
+        "lightChannelCount": 0,
+        "fanOutputCount": 0,
+        "temperatureSensorCount": 0,
+        "timerChannelCount": 4,
+        "dosingChannelCount": 0
+      }
+    },
+    {
+      "profile": "dosingDosePro",
+      "env": "dosing_dose_pro_2",
+      "productKey": "DOSING_DOSE_PRO_2",
+      "productId": "com.aqualight.dosing.dose_pro_2",
+      "family": "dosing",
+      "line": "dose_pro",
+      "model": "dose_pro_2",
+      "displayName": "Dose Pro 2",
+      "skuId": "com.aqualight.dosing.dose_pro_2.global.black",
+      "skuCode": "AQL-D-DP2-GLB-BLK",
+      "hardwareRevision": "2.0",
+      "limits": {
+        "lightChannelCount": 0,
+        "fanOutputCount": 0,
+        "temperatureSensorCount": 0,
+        "timerChannelCount": 0,
+        "dosingChannelCount": 2
+      }
+    },
+    {
+      "profile": "dosingDosePro",
+      "env": "dosing_dose_pro_4",
+      "productKey": "DOSING_DOSE_PRO_4",
+      "productId": "com.aqualight.dosing.dose_pro_4",
+      "family": "dosing",
+      "line": "dose_pro",
+      "model": "dose_pro_4",
+      "displayName": "Dose Pro 4",
+      "skuId": "com.aqualight.dosing.dose_pro_4.global.black",
+      "skuCode": "AQL-D-DP4-GLB-BLK",
+      "hardwareRevision": "2.0",
+      "limits": {
+        "lightChannelCount": 0,
+        "fanOutputCount": 0,
+        "temperatureSensorCount": 0,
+        "timerChannelCount": 0,
+        "dosingChannelCount": 4
+      }
+    },
+    {
+      "profile": "coolingCoolPro",
+      "env": "cooling_cool_pro_1f",
+      "productKey": "COOLING_COOL_PRO_1F",
+      "productId": "com.aqualight.cooling.cool_pro_1f",
+      "family": "cooling",
+      "line": "cool_pro",
+      "model": "cool_pro_1f",
+      "displayName": "Cool Pro 1 Fan",
+      "skuId": "com.aqualight.cooling.cool_pro_1f.global.black",
+      "skuCode": "AQL-C-CP1F-GLB-BLK",
+      "hardwareRevision": "2.0",
+      "limits": {
+        "lightChannelCount": 0,
+        "fanOutputCount": 1,
+        "temperatureSensorCount": 1,
+        "timerChannelCount": 0,
+        "dosingChannelCount": 0
+      }
+    },
+    {
+      "profile": "coolingCoolPro",
+      "env": "cooling_cool_pro_2f",
+      "productKey": "COOLING_COOL_PRO_2F",
+      "productId": "com.aqualight.cooling.cool_pro_2f",
+      "family": "cooling",
+      "line": "cool_pro",
+      "model": "cool_pro_2f",
+      "displayName": "Cool Pro 2 Fan",
+      "skuId": "com.aqualight.cooling.cool_pro_2f.global.black",
+      "skuCode": "AQL-C-CP2F-GLB-BLK",
+      "hardwareRevision": "2.0",
+      "limits": {
+        "lightChannelCount": 0,
+        "fanOutputCount": 2,
+        "temperatureSensorCount": 1,
+        "timerChannelCount": 0,
+        "dosingChannelCount": 0
+      }
+    },
+    {
+      "profile": "coolingCoolPro",
+      "env": "cooling_cool_pro_3f",
+      "productKey": "COOLING_COOL_PRO_3F",
+      "productId": "com.aqualight.cooling.cool_pro_3f",
+      "family": "cooling",
+      "line": "cool_pro",
+      "model": "cool_pro_3f",
+      "displayName": "Cool Pro 3 Fan",
+      "skuId": "com.aqualight.cooling.cool_pro_3f.global.black",
+      "skuCode": "AQL-C-CP3F-GLB-BLK",
+      "hardwareRevision": "2.0",
+      "limits": {
+        "lightChannelCount": 0,
+        "fanOutputCount": 3,
+        "temperatureSensorCount": 1,
+        "timerChannelCount": 0,
+        "dosingChannelCount": 0
+      }
+    }
+  ]
+}
