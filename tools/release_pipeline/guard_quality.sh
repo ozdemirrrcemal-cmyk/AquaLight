@@ -74,6 +74,8 @@ for guard in \
 done
 
 python3 tools/verify_dependency_integrity.py \
+  --settings settings.gradle \
+  --build-tools-manifest config/dependency-integrity/resolved-build-tools.json \
   --lockfile app/gradle.lockfile \
   --metadata gradle/verification-metadata.xml \
   --summary release-quality/dependency-integrity.json

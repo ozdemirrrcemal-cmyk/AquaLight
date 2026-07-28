@@ -1,0 +1,16 @@
+{
+  "androidGradlePluginVersion": "8.10.0",
+  "components": [
+    {
+      "group": "com.android.tools.build",
+      "name": "aapt2",
+      "version": "8.10.0-12782657"
+    },
+    {
+      "group": "com.android.tools.lint",
+      "name": "lint-gradle",
+      "version": "31.10.0"
+    }
+  ],
+  "schemaVersion": 1
+}
