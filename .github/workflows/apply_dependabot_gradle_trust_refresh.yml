@@ -1,3 +1,4 @@
+# Privileged apply phase; only a verified generation workflow may trigger it.
 name: Apply Dependabot Gradle Trust Refresh
 
 on:
