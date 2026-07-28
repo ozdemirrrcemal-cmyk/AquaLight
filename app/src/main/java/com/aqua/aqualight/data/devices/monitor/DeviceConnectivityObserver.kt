@@ -216,9 +216,15 @@ private class LocalNetworkPathTracker(
     ): DeviceLocalNetworkPath {
         val capabilities = capabilitiesByNetwork[network]
         val linkProperties = linkPropertiesByNetwork[network]
+        val routeChanged = previous
+            ?.takeIf { path -> path.network == network }
+            ?.linkProperties
+            ?.let { previousLinkProperties ->
+                linkProperties != null && previousLinkProperties != linkProperties
+            } == true
         val pathChanged = previous == null ||
             previous.network != network ||
-            hasRouteChanged(previous, network, linkProperties)
+            routeChanged
         val nextGeneration = if (pathChanged) {
             generation.incrementAndGet()
         } else {
@@ -232,19 +238,6 @@ private class LocalNetworkPathTracker(
                 ?: previous?.takeIf { path -> path.network == network }?.linkProperties,
             generation = nextGeneration
         )
-    }
-
-    private fun hasRouteChanged(
-        previous: DeviceLocalNetworkPath,
-        network: Network,
-        linkProperties: LinkProperties?
-    ): Boolean {
-        return when {
-            previous.network != network -> false
-            previous.linkProperties == null -> false
-            linkProperties == null -> false
-            else -> previous.linkProperties != linkProperties
-        }
     }
 
     private fun selectPreferredNetwork(previousNetwork: Network?): Network? {

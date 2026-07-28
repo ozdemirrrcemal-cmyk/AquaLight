@@ -64,10 +64,7 @@ class AquaApp : Application() {
 
         appContainer = DefaultAppContainer(this)
         LocalDataRecoveryTracker.initialize(this)
-        processLifecycleObserver = AppProcessLifecycleObserver(
-            controller = AppSessionCoordinator.create(this)
-        )
-        ProcessLifecycleOwner.get().lifecycle.addObserver(processLifecycleObserver)
+        installProcessLifecycleObserver()
 
         val appearanceCache = appContainer.startupAppearanceCache
         val cachedAppearance = appearanceCache.read()
@@ -156,6 +153,13 @@ class AquaApp : Application() {
      */
     internal suspend fun awaitStartupAppearanceSyncForProcess() {
         startupAppearanceSync.await()
+    }
+
+    private fun installProcessLifecycleObserver() {
+        processLifecycleObserver = AppProcessLifecycleObserver(
+            controller = AppSessionCoordinator.create(this)
+        )
+        ProcessLifecycleOwner.get().lifecycle.addObserver(processLifecycleObserver)
     }
 
     private fun completeStartupAppearanceSync(error: Throwable?) {
