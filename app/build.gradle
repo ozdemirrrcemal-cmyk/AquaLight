@@ -249,7 +249,7 @@ dependencies {
    	// İmageCrop
    	implementation 'com.github.yalantis:ucrop:2.2.11'
    	
-   	implementation "com.google.code.gson:gson:2.13.2"
+   	implementation "com.google.code.gson:gson:2.14.0"
 
     // WebSocket runtime
     implementation "com.squareup.okhttp3:okhttp:5.4.0"
