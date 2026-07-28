@@ -6,6 +6,11 @@ on:
       - agent/dependabot-trust-refresh-first
     paths:
       - ".github/workflows/_bootstrap_dependabot_trust_first.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/_bootstrap_dependabot_trust_first.yml"
 
 permissions:
   contents: write
@@ -17,7 +22,7 @@ jobs:
       - name: Checkout branch
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          ref: ${{ github.ref_name }}
+          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Gate initial Dependabot Gradle validation
         shell: bash
@@ -70,6 +75,7 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
+          branch="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
@@ -79,4 +85,4 @@ jobs:
             .github/workflows/dependency_integrity.yml \
             .github/workflows/_bootstrap_dependabot_trust_first.yml
           git commit -m "ci: run Dependabot validation after trust refresh"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+          git push origin "HEAD:${branch}"
