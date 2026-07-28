@@ -46,9 +46,10 @@ class DeviceRuntimeRepository(
         val commandClient: AqlWsCommandClient,
         val sessionJob: CompletableJob,
         val sessionScope: CoroutineScope,
-        val bootstrapGate: DeviceRuntimeBootstrapGate = DeviceRuntimeBootstrapGate(),
         @Volatile var endpointUrl: String? = null
     ) : AutoCloseable {
+        val bootstrapGate = DeviceRuntimeBootstrapGate()
+
         private val closed = AtomicBoolean(false)
         private val collectorJobs = CopyOnWriteArrayList<Job>()
 

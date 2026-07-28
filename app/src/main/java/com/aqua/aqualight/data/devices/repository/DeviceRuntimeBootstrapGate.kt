@@ -28,29 +28,31 @@ internal class DeviceRuntimeBootstrapGate {
     }
 
     fun accept(response: AqlWsIncomingMessage.Response): DeviceRuntimeBootstrapPlan? {
-        if (!response.ok || dispatched) return null
+        if (response.ok && !dispatched) {
+            when {
+                response.isDeviceAction(AqlWsContract.ACTION_DEVICE_IDENTITY_GET) -> {
+                    identityReceived = true
+                    family = DeviceFamily.fromWire(response.data.optString("family"))
+                }
 
-        when {
-            response.isDeviceAction(AqlWsContract.ACTION_DEVICE_IDENTITY_GET) -> {
-                identityReceived = true
-                family = DeviceFamily.fromWire(response.data.optString("family"))
-            }
-
-            response.isDeviceAction(AqlWsContract.ACTION_DEVICE_CAPABILITIES_GET) -> {
-                capabilities = response.data
-                    .optJSONObject("capabilities")
-                    .toBootstrapCapabilities()
+                response.isDeviceAction(AqlWsContract.ACTION_DEVICE_CAPABILITIES_GET) -> {
+                    capabilities = response.data
+                        .optJSONObject("capabilities")
+                        .toBootstrapCapabilities()
+                }
             }
         }
 
         val reportedCapabilities = capabilities
-        if (!identityReceived || reportedCapabilities == null) return null
-
-        dispatched = true
-        return DeviceRuntimeBootstrapPlan.from(
-            family = family,
-            capabilities = reportedCapabilities
-        )
+        return if (!dispatched && identityReceived && reportedCapabilities != null) {
+            dispatched = true
+            DeviceRuntimeBootstrapPlan.from(
+                family = family,
+                capabilities = reportedCapabilities
+            )
+        } else {
+            null
+        }
     }
 
     private fun AqlWsIncomingMessage.Response.isDeviceAction(actionName: String): Boolean =

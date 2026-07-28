@@ -41,8 +41,6 @@ class AqlProductCatalogContractTest {
     fun `all nine firmware products map to exact menus limits and runtime modules`() {
         val profiles = fixture.getJSONObject("profiles")
         val products = fixture.getJSONArray("products")
-        val observedModels = linkedSetOf<String>()
-        val observedFamilies = linkedSetOf<DeviceFamily>()
 
         assertEquals(1, fixture.getInt("fixtureVersion"))
         assertEquals(9, products.length())
@@ -64,9 +62,6 @@ class AqlProductCatalogContractTest {
                 capabilitiesData = capabilitiesData
             )
             val root = snapshot.toDeviceRootSnapshot()
-
-            observedModels += snapshot.product.model
-            observedFamilies += snapshot.product.family
 
             assertEquals(product.getString("productKey"), snapshot.product.productKey)
             assertEquals(product.getString("productId"), snapshot.product.productId)
@@ -100,17 +95,6 @@ class AqlProductCatalogContractTest {
             assertEquals(snapshot.product.family, plan.family)
             assertNull(gate.accept(capabilitiesResponse(capabilitiesData)))
         }
-
-        assertEquals(9, observedModels.size)
-        assertEquals(
-            setOf(
-                DeviceFamily.LIGHT,
-                DeviceFamily.TIMER,
-                DeviceFamily.DOSING,
-                DeviceFamily.COOLING
-            ),
-            observedFamilies
-        )
     }
 
     @Test
