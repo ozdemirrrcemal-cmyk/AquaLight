@@ -1,0 +1,35 @@
+{
+  "allowedConfigurations": [
+    "androidTestImplementation",
+    "testImplementation"
+  ],
+  "allowedDependencies": [
+    "androidx.arch.core:core-testing",
+    "androidx.test.espresso:espresso-core",
+    "androidx.test.ext:junit",
+    "androidx.test:core-ktx",
+    "junit:junit",
+    "org.jetbrains.kotlinx:kotlinx-coroutines-test"
+  ],
+  "allowedUpdateTypes": [
+    "version-update:semver-minor",
+    "version-update:semver-patch"
+  ],
+  "alwaysManualDependencies": [
+    "androidx.navigation.safeargs.kotlin",
+    "com.android.application",
+    "com.google.firebase:firebase-bom",
+    "com.google.gms.google-services",
+    "com.google.protobuf",
+    "gradle-wrapper",
+    "org.jetbrains.kotlin.android"
+  ],
+  "alwaysManualPrefixes": [
+    "com.android.tools.build:",
+    "com.google.firebase:",
+    "io.gitlab.arturbosch.detekt",
+    "org.jacoco:",
+    "org.jetbrains.kotlin:"
+  ],
+  "schemaVersion": 1
+}

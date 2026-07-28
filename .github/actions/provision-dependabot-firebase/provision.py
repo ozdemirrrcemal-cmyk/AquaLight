@@ -6,11 +6,14 @@ from __future__ import annotations
 import base64
 import json
 import os
+import re
 from pathlib import Path
 from typing import Mapping, MutableMapping
 
 DEPENDABOT_ACTOR = "dependabot[bot]"
 ALLOWED_REPOSITORY = "ozdemirrrcemal-cmyk/AquaLight"
+SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+NUMBER_RE = re.compile(r"^[1-9][0-9]*$")
 
 ENVIRONMENTS: Mapping[str, Mapping[str, str]] = {
     "AQL_FIREBASE_DEBUG_CONFIG_BASE64": {
@@ -43,20 +46,94 @@ ENVIRONMENTS: Mapping[str, Mapping[str, str]] = {
 }
 
 
-def _require_trusted_context(environment: Mapping[str, str]) -> None:
-    checks = {
+def _read_pull_request_event(environment: Mapping[str, str]) -> dict[str, object]:
+    raw_path = environment.get("GITHUB_EVENT_PATH", "").strip()
+    if not raw_path:
+        raise SystemExit("Refusing Dependabot fixture provisioning without event payload.")
+    try:
+        payload = json.loads(Path(raw_path).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise SystemExit(
+            f"Cannot read Dependabot pull-request event payload: {error}"
+        ) from error
+    if not isinstance(payload, dict):
+        raise SystemExit("Dependabot pull-request event payload must be an object.")
+    return payload
+
+
+def _require_trusted_context(environment: Mapping[str, str]) -> bool:
+    trusted_dispatch = (
+        environment.get("AQL_TRUSTED_DEPENDABOT_DISPATCH") == "true"
+    )
+    trusted_main_dispatch = (
+        environment.get("AQL_TRUSTED_MAIN_DISPATCH") == "true"
+    )
+    if trusted_dispatch and trusted_main_dispatch:
+        raise SystemExit("Dependabot and main dispatch fixture modes are mutually exclusive.")
+    common_checks = {
         "GITHUB_ACTIONS": environment.get("GITHUB_ACTIONS") == "true",
-        "GITHUB_EVENT_NAME": environment.get("GITHUB_EVENT_NAME") == "pull_request",
-        "GITHUB_ACTOR": environment.get("GITHUB_ACTOR") == DEPENDABOT_ACTOR,
-        "GITHUB_REPOSITORY": environment.get("GITHUB_REPOSITORY") == ALLOWED_REPOSITORY,
-        "GITHUB_HEAD_REF": environment.get("GITHUB_HEAD_REF", "").startswith("dependabot/"),
+        "GITHUB_REPOSITORY": environment.get("GITHUB_REPOSITORY")
+        == ALLOWED_REPOSITORY,
     }
+    if trusted_dispatch:
+        expected_sha = environment.get("AQL_EXPECTED_SHA", "")
+        checks = {
+            **common_checks,
+            "GITHUB_EVENT_NAME": environment.get("GITHUB_EVENT_NAME")
+            == "workflow_dispatch",
+            "expected SHA": bool(SHA_RE.fullmatch(expected_sha)),
+            "dispatch SHA": environment.get("GITHUB_SHA") == expected_sha,
+            "pull request": bool(
+                NUMBER_RE.fullmatch(environment.get("AQL_DEPENDABOT_PR", ""))
+            ),
+            "trust run ID": bool(
+                NUMBER_RE.fullmatch(environment.get("AQL_TRUST_RUN_ID", ""))
+            ),
+            "GITHUB_REF": environment.get("GITHUB_REF", "").startswith(
+                "refs/heads/dependabot/gradle/"
+            ),
+        }
+    elif trusted_main_dispatch:
+        checks = {
+            **common_checks,
+            "GITHUB_EVENT_NAME": environment.get("GITHUB_EVENT_NAME")
+            == "workflow_dispatch",
+            "GITHUB_REF": environment.get("GITHUB_REF") == "refs/heads/main",
+            "main SHA": bool(
+                SHA_RE.fullmatch(environment.get("GITHUB_SHA", ""))
+            ),
+        }
+    else:
+        payload = _read_pull_request_event(environment)
+        pull = payload.get("pull_request")
+        if not isinstance(pull, dict):
+            raise SystemExit("Event payload has no pull_request object.")
+        head = pull.get("head")
+        base = pull.get("base")
+        user = pull.get("user")
+        if not isinstance(head, dict) or not isinstance(base, dict) or not isinstance(user, dict):
+            raise SystemExit("Event payload pull-request identity is incomplete.")
+        head_repo = head.get("repo")
+        if not isinstance(head_repo, dict):
+            raise SystemExit("Event payload pull-request head repository is missing.")
+        checks = {
+            **common_checks,
+            "GITHUB_EVENT_NAME": environment.get("GITHUB_EVENT_NAME")
+            == "pull_request",
+            "Dependabot author": user.get("login") == DEPENDABOT_ACTOR,
+            "same repository": head_repo.get("full_name") == ALLOWED_REPOSITORY,
+            "main base": base.get("ref") == "main",
+            "Dependabot head": isinstance(head.get("ref"), str)
+            and head["ref"].startswith("dependabot/"),
+            "GITHUB_HEAD_REF": environment.get("GITHUB_HEAD_REF") == head.get("ref"),
+        }
     failed = [name for name, valid in checks.items() if not valid]
     if failed:
         raise SystemExit(
             "Refusing to provision Dependabot Firebase fixtures outside the trusted "
-            f"pull-request context; failed checks: {', '.join(failed)}"
+            f"context; failed checks: {', '.join(failed)}"
         )
+    return trusted_dispatch or trusted_main_dispatch
 
 
 def build_config(specification: Mapping[str, str]) -> dict[str, object]:
@@ -105,7 +182,7 @@ def provision(
     github_env_path: Path | None = None,
 ) -> list[str]:
     active_environment = os.environ if environment is None else environment
-    _require_trusted_context(active_environment)
+    trusted_dispatch = _require_trusted_context(active_environment)
 
     if github_env_path is None:
         raw_path = active_environment.get("GITHUB_ENV", "").strip()
@@ -117,7 +194,10 @@ def provision(
     provisioned: list[str] = []
     with github_env_path.open("a", encoding="utf-8", newline="\n") as handle:
         for variable_name, specification in ENVIRONMENTS.items():
-            if active_environment.get(variable_name, "").strip():
+            if (
+                not trusted_dispatch
+                and active_environment.get(variable_name, "").strip()
+            ):
                 continue
             handle.write(f"{variable_name}={encode_config(specification)}\n")
             provisioned.append(variable_name)
