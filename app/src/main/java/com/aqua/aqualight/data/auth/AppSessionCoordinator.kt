@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.auth
 
 import android.content.Context
+import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -22,15 +23,18 @@ import kotlinx.coroutines.sync.withLock
 /**
  * Single foreground authority for startup and authenticated-owner transitions.
  *
- * Splash never opens a session. MainActivity observes this coordinator and the
- * coordinator serializes every Firebase owner change through the foreground
- * [OwnerRuntimeSession] path exposed by [AuthSessionManager].
+ * Splash never opens a session. MainActivity observes this coordinator, the Application owns the
+ * process foreground boundary, and the coordinator serializes every Firebase owner change through
+ * [OwnerRuntimeSession] exposed by [AuthSessionManager]. UI never reaches concrete device
+ * repositories directly.
  */
 class AppSessionCoordinator internal constructor(
     private val ownerProvider: AuthenticatedOwnerProvider,
     private val sessionResolver: ForegroundSessionResolver,
-    dispatcher: CoroutineDispatcher = Dispatchers.Default
-) : AutoCloseable {
+    dispatcher: CoroutineDispatcher = Dispatchers.Default,
+    private val foregroundRuntimeController: ForegroundRuntimeController =
+        ForegroundRuntimeController(DevicesRepositoryProvider::setAppForeground)
+) : AppForegroundLifecycleController, AutoCloseable {
 
     sealed interface State {
         data object Starting : State
@@ -72,32 +76,50 @@ class AppSessionCoordinator internal constructor(
         }
     }
 
-    /** Starts token validation while at least one MainActivity is foreground. */
-    fun enterForeground() {
+    /** Starts owner validation and device presence while the application process is foreground. */
+    override fun enterForeground() {
         start()
 
-        synchronized(lifecycleLock) {
+        val becameForeground = synchronized(lifecycleLock) {
             foregroundConsumerCount += 1
-            if (foregroundConsumerCount > 1 || validationJob?.isActive == true) {
-                return
-            }
-
-            validationJob = scope.launch {
-                while (isActive) {
-                    validateRemoteSession()
-                    delay(REMOTE_VALIDATION_INTERVAL_MILLIS)
+            if (foregroundConsumerCount > 1) {
+                false
+            } else {
+                if (validationJob?.isActive != true) {
+                    validationJob = scope.launch {
+                        while (isActive) {
+                            validateRemoteSession()
+                            delay(REMOTE_VALIDATION_INTERVAL_MILLIS)
+                        }
+                    }
                 }
+                true
             }
+        }
+
+        if (becameForeground) {
+            foregroundRuntimeController.setForeground(true)
         }
     }
 
-    fun leaveForeground() {
-        synchronized(lifecycleLock) {
-            foregroundConsumerCount = (foregroundConsumerCount - 1).coerceAtLeast(0)
-            if (foregroundConsumerCount == 0) {
-                validationJob?.cancel()
-                validationJob = null
+    override fun leaveForeground() {
+        val becameBackground = synchronized(lifecycleLock) {
+            if (foregroundConsumerCount <= 0) {
+                false
+            } else {
+                foregroundConsumerCount -= 1
+                if (foregroundConsumerCount == 0) {
+                    validationJob?.cancel()
+                    validationJob = null
+                    true
+                } else {
+                    false
+                }
             }
+        }
+
+        if (becameBackground) {
+            foregroundRuntimeController.setForeground(false)
         }
     }
 
@@ -176,6 +198,14 @@ class AppSessionCoordinator internal constructor(
     }
 
     override fun close() {
+        val wasForeground = synchronized(lifecycleLock) {
+            val active = foregroundConsumerCount > 0
+            foregroundConsumerCount = 0
+            active
+        }
+        if (wasForeground) {
+            foregroundRuntimeController.setForeground(false)
+        }
         ownerObservationJob?.cancel()
         validationJob?.cancel()
         scope.cancel()
@@ -204,6 +234,10 @@ class AppSessionCoordinator internal constructor(
             }
         }
     }
+}
+
+internal fun interface ForegroundRuntimeController {
+    fun setForeground(isForeground: Boolean)
 }
 
 internal fun interface ForegroundSessionResolver {

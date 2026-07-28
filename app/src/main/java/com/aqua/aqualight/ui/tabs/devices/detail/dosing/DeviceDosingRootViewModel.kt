@@ -6,10 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
+import com.aqua.aqualight.ui.common.text.AquaUiText
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootMenuMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootPresentationMapper
-import com.aqua.aqualight.ui.common.text.AquaUiText
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,8 +41,9 @@ class DeviceDosingRootViewModel(
 
         boundDeviceUid = deviceUid
         observeJob?.cancel()
+        _uiState.value = operations.current(deviceUid)?.toRootUiState(fallbackTitle)
+            ?: emptyState(fallbackTitle, deviceUid)
         operations.connect(deviceUid)
-        _uiState.value = emptyState(fallbackTitle, deviceUid)
         observeJob = viewModelScope.launch {
             operations.observe(deviceUid).collect { snapshot ->
                 _uiState.value = snapshot?.toRootUiState(fallbackTitle)

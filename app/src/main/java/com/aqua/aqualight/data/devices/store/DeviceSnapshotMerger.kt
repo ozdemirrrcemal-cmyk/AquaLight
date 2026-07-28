@@ -100,7 +100,8 @@ object DeviceSnapshotMerger {
             wsProtocol = incoming.wsProtocol.ifBlank { previous.wsProtocol },
             wsProtocolVersion = incoming.wsProtocolVersion.takeIf { version -> version > 0 }
                 ?: previous.wsProtocolVersion,
-            discoveryPort = incoming.discoveryPort.takeIf { port -> port > 0 } ?: previous.discoveryPort
+            discoveryPort = incoming.discoveryPort.takeIf { port -> port > 0 }
+                ?: previous.discoveryPort
         )
     }
 
@@ -108,22 +109,14 @@ object DeviceSnapshotMerger {
         previous: DeviceCapabilities,
         incoming: DeviceCapabilities
     ): DeviceCapabilities {
-        return if (incoming == DeviceCapabilities()) {
-            previous
-        } else {
-            incoming
-        }
+        return if (incoming == DeviceCapabilities()) previous else incoming
     }
 
     private fun mergeLimits(
         previous: DeviceLimits,
         incoming: DeviceLimits
     ): DeviceLimits {
-        return if (incoming == DeviceLimits()) {
-            previous
-        } else {
-            incoming
-        }
+        return if (incoming == DeviceLimits()) previous else incoming
     }
 
     private fun mergeConnectionState(
@@ -141,7 +134,10 @@ object DeviceSnapshotMerger {
 
         return incoming.copy(
             onlineState = resolvedOnlineState,
-            lastUdpSeenAtMillis = maxNullable(previous.lastUdpSeenAtMillis, incoming.lastUdpSeenAtMillis),
+            lastUdpSeenAtMillis = maxNullable(
+                previous.lastUdpSeenAtMillis,
+                incoming.lastUdpSeenAtMillis
+            ),
             lastWsConnectedAtMillis = maxNullable(
                 previous.lastWsConnectedAtMillis,
                 incoming.lastWsConnectedAtMillis
@@ -149,6 +145,34 @@ object DeviceSnapshotMerger {
             lastAuthenticatedAtMillis = maxNullable(
                 previous.lastAuthenticatedAtMillis,
                 incoming.lastAuthenticatedAtMillis
+            ),
+            lastRuntimeMessageAtMillis = maxNullable(
+                previous.lastRuntimeMessageAtMillis,
+                incoming.lastRuntimeMessageAtMillis
+            ),
+            lastControlProofAtMillis = maxNullable(
+                previous.lastControlProofAtMillis,
+                incoming.lastControlProofAtMillis
+            ),
+            lastUdpSeenElapsedMillis = maxNullable(
+                previous.lastUdpSeenElapsedMillis,
+                incoming.lastUdpSeenElapsedMillis
+            ),
+            lastWsConnectedElapsedMillis = maxNullable(
+                previous.lastWsConnectedElapsedMillis,
+                incoming.lastWsConnectedElapsedMillis
+            ),
+            lastAuthenticatedElapsedMillis = maxNullable(
+                previous.lastAuthenticatedElapsedMillis,
+                incoming.lastAuthenticatedElapsedMillis
+            ),
+            lastRuntimeMessageElapsedMillis = maxNullable(
+                previous.lastRuntimeMessageElapsedMillis,
+                incoming.lastRuntimeMessageElapsedMillis
+            ),
+            lastControlProofElapsedMillis = maxNullable(
+                previous.lastControlProofElapsedMillis,
+                incoming.lastControlProofElapsedMillis
             ),
             lastErrorMessage = incoming.lastErrorMessage ?: previous.lastErrorMessage
         )

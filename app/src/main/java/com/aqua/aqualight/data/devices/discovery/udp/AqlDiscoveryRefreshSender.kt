@@ -1,32 +1,48 @@
 package com.aqua.aqualight.data.devices.discovery.udp
 
+import android.net.Network
 import com.aqua.aqualight.data.devices.contract.AqlDiscoveryContract
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
+import java.net.InetSocketAddress
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 /**
- * Sends UDP v2 discovery refresh requests.
+ * Sends UDP v1 discovery refresh requests.
  *
  * This sender never carries runtime commands. It only asks firmware devices to announce their
- * current UDP v2 discovery payload. Runtime control belongs to WebSocket.
+ * current discovery payload and binds each socket to the selected Android local network.
  */
 class AqlDiscoveryRefreshSender(
     private val port: Int = AqlDiscoveryContract.PORT,
-    private val addressResolver: () -> List<InetAddress> = AqlBroadcastAddressResolver::resolve
+    private val addressResolver: () -> List<InetAddress> = AqlBroadcastAddressResolver::resolve,
+    private val networkProvider: () -> Network? = { null },
+    private val requireLocalNetwork: Boolean = false
 ) {
 
     suspend fun sendRefresh(): SendResult = withContext(Dispatchers.IO) {
         val payload = AqlDiscoveryContract.buildRefreshPayload().toByteArray(Charsets.UTF_8)
         val addresses = addressResolver().distinctBy { it.hostAddress }
+        val network = networkProvider()
+
+        if (requireLocalNetwork && network == null) {
+            return@withContext SendResult(
+                attemptedAddressCount = addresses.size,
+                sentAddressCount = 0,
+                lastErrorMessage = LOCAL_NETWORK_UNAVAILABLE_MESSAGE
+            )
+        }
+
         var successCount = 0
         var lastError: String? = null
-
-        DatagramSocket().use { socket ->
+        DatagramSocket(null).use { socket ->
+            network?.bindSocket(socket)
+            socket.reuseAddress = true
             socket.broadcast = true
+            socket.bind(InetSocketAddress(0))
             for (address in addresses) {
                 runCatching {
                     val packet = DatagramPacket(payload, payload.size, address, port)
@@ -67,5 +83,7 @@ class AqlDiscoveryRefreshSender(
 
     companion object {
         val DEFAULT_FOREGROUND_BURST_DELAYS_MS: List<Long> = listOf(0L, 1_500L, 5_000L)
+        private const val LOCAL_NETWORK_UNAVAILABLE_MESSAGE =
+            "Local Wi-Fi or Ethernet network is unavailable."
     }
 }

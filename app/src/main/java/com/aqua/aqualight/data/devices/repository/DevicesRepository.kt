@@ -1,3 +1,5 @@
+@file:Suppress("LongParameterList")
+
 package com.aqua.aqualight.data.devices.repository
 
 import com.aqua.aqualight.data.devices.discovery.udp.AqlDiscoveryRefreshSender
@@ -6,6 +8,7 @@ import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.monitor.DeviceConnectivityObserver
+import com.aqua.aqualight.data.devices.monitor.DeviceElapsedRealtimeClock
 import com.aqua.aqualight.data.devices.monitor.DevicePresenceRuntimeMonitor
 import com.aqua.aqualight.data.devices.monitor.DeviceStatusAggregator
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
@@ -27,6 +30,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+@Suppress("TooManyFunctions")
 class DevicesRepository(
     private val discoveryRepository: DeviceDiscoveryRepository = DeviceDiscoveryRepository(),
     private val registryStore: DeviceRegistryStore = DeviceRegistryStore(),
@@ -34,7 +38,9 @@ class DevicesRepository(
     private val runtimeRepository: DeviceRuntimeRepository? = null,
     private val runtimeMetadataReducer: DeviceRuntimeMetadataReducer = DeviceRuntimeMetadataReducer(),
     private val statusAggregator: DeviceStatusAggregator = DeviceStatusAggregator(),
-    connectivityObserver: DeviceConnectivityObserver? = null
+    connectivityObserver: DeviceConnectivityObserver? = null,
+    private val wallClockMillis: () -> Long = System::currentTimeMillis,
+    private val elapsedRealtimeMillis: () -> Long = DeviceElapsedRealtimeClock::nowMillis
 ) {
 
     private val presenceRuntimeMonitor = DevicePresenceRuntimeMonitor(
@@ -42,7 +48,8 @@ class DevicesRepository(
         registryStore = registryStore,
         runtimeRepository = runtimeRepository,
         statusAggregator = statusAggregator,
-        connectivityObserver = connectivityObserver
+        connectivityObserver = connectivityObserver,
+        elapsedRealtimeMillis = elapsedRealtimeMillis
     )
 
     @Volatile
@@ -165,6 +172,10 @@ class DevicesRepository(
         presenceRuntimeMonitor.refreshVisibleDevices(localNetworkAvailable = localNetworkAvailable)
     }
 
+    fun setAppForeground(isForeground: Boolean) {
+        presenceRuntimeMonitor.setAppForeground(isForeground)
+    }
+
     fun isLocalNetworkAvailable(): Boolean =
         presenceRuntimeMonitor.isLocalNetworkAvailable()
 
@@ -174,6 +185,16 @@ class DevicesRepository(
         val snapshot = registryStore.currentDevice(deviceUid)
             ?: return Result.failure(IllegalArgumentException("Device is not registered."))
         return runtime.connect(snapshot)
+    }
+
+    fun replaceRuntimeAfterControlFailure(deviceUid: DeviceUid): Result<Unit> = runCatching {
+        val runtime = checkNotNull(runtimeRepository) {
+            "Device runtime is not configured."
+        }
+        val snapshot = requireNotNull(registryStore.currentDevice(deviceUid)) {
+            "Device is not registered."
+        }
+        runtime.reconnectAfterNetworkRestore(snapshot).getOrThrow()
     }
 
     fun commandClient(): AqlWsCommandClient? = runtimeRepository?.commandClient()
@@ -190,6 +211,13 @@ class DevicesRepository(
 
     fun currentRuntimeConnectionState(deviceUid: DeviceUid): AqlWsConnectionState? =
         runtimeRepository?.currentConnectionState(deviceUid)
+
+    fun recordControlProof(deviceUid: DeviceUid): DeviceSnapshot? {
+        return recordRuntimeProof(
+            deviceUid = deviceUid,
+            isControlProof = true
+        )
+    }
 
     suspend fun saveRuntimeToken(deviceUid: DeviceUid, token: String) {
         runtimeRepository?.saveToken(deviceUid = deviceUid, token = token)
@@ -355,7 +383,9 @@ class DevicesRepository(
         )
     }
 
-    private suspend fun filterIgnoredDevices(snapshots: Iterable<DeviceSnapshot>): List<DeviceSnapshot> {
+    private suspend fun filterIgnoredDevices(
+        snapshots: Iterable<DeviceSnapshot>
+    ): List<DeviceSnapshot> {
         val ignoredDeviceUids = knownStore?.ignoredDeviceUidValues().orEmpty()
         if (ignoredDeviceUids.isEmpty()) return snapshots.toList()
         return snapshots.filterNot { snapshot ->
@@ -365,7 +395,13 @@ class DevicesRepository(
 
     private suspend fun applyRuntimeEvent(event: AqlWsEvent) {
         when (event) {
-            is AqlWsEvent.Message -> applyRuntimeMetadataMessage(event)
+            is AqlWsEvent.Message -> {
+                recordRuntimeProof(
+                    deviceUid = event.deviceUid,
+                    isControlProof = (event.parsed as? AqlWsIncomingMessage.Response)?.ok == true
+                )
+                applyRuntimeMetadataMessage(event)
+            }
             is AqlWsEvent.Closed -> applyRuntimeClosed(event)
             is AqlWsEvent.Opened,
             is AqlWsEvent.Authenticated,
@@ -386,23 +422,62 @@ class DevicesRepository(
         knownStore?.saveSnapshot(registered)
     }
 
+    private fun recordRuntimeProof(
+        deviceUid: DeviceUid,
+        isControlProof: Boolean
+    ): DeviceSnapshot? {
+        val nowWallMillis = wallClockMillis()
+        val nowElapsedMillis = elapsedRealtimeMillis()
+        return registryStore.updateConnectionState(deviceUid) { previous ->
+            previous.copy(
+                onlineState = DeviceOnlineState.AUTHENTICATED,
+                lastRuntimeMessageAtMillis = nowWallMillis,
+                lastRuntimeMessageElapsedMillis = nowElapsedMillis,
+                lastControlProofAtMillis = if (isControlProof) {
+                    nowWallMillis
+                } else {
+                    previous.lastControlProofAtMillis
+                },
+                lastControlProofElapsedMillis = if (isControlProof) {
+                    nowElapsedMillis
+                } else {
+                    previous.lastControlProofElapsedMillis
+                },
+                lastErrorMessage = null
+            )
+        }
+    }
+
     private fun applyRuntimeClosed(event: AqlWsEvent.Closed) {
         val currentState = runtimeRepository?.currentConnectionState(event.deviceUid)
         if (!RuntimeClosedEventPolicy.shouldClearRuntimeProof(currentState)) return
 
-        // A closed active socket invalidates the longer-lived authenticated/WebSocket proof.
-        // Fresh UDP presence can still keep the device visible and trigger a safe reconnect.
+        // A closed active socket invalidates authenticated/runtime proof. Fresh UDP presence can
+        // still keep the device discoverable and trigger a safe device-scoped reconnect.
         applyRuntimeUnavailable(deviceUid = event.deviceUid)
     }
 
+    @Suppress("LongMethod")
     private fun applyRuntimeConnectionState(state: AqlWsConnectionState) {
+        val nowElapsedMillis = elapsedRealtimeMillis()
         when (state) {
             AqlWsConnectionState.Disconnected -> Unit
 
             is AqlWsConnectionState.Connecting -> {
                 registryStore.updateConnectionState(state.deviceUid) { previous ->
                     previous.copy(
-                        onlineState = DeviceOnlineState.CONNECTING_WS,
+                        onlineState = presenceRuntimeMonitor.visibleStateDuringForegroundVerification(
+                            previous = previous.onlineState,
+                            candidate = DeviceOnlineState.CONNECTING_WS
+                        ),
+                        lastWsConnectedAtMillis = null,
+                        lastWsConnectedElapsedMillis = null,
+                        lastAuthenticatedAtMillis = null,
+                        lastAuthenticatedElapsedMillis = null,
+                        lastRuntimeMessageAtMillis = null,
+                        lastRuntimeMessageElapsedMillis = null,
+                        lastControlProofAtMillis = null,
+                        lastControlProofElapsedMillis = null,
                         lastErrorMessage = null
                     )
                 }
@@ -411,9 +486,18 @@ class DevicesRepository(
             is AqlWsConnectionState.Connected -> {
                 registryStore.updateConnectionState(state.deviceUid) { previous ->
                     previous.copy(
-                        onlineState = DeviceOnlineState.CONNECTING_WS,
+                        onlineState = presenceRuntimeMonitor.visibleStateDuringForegroundVerification(
+                            previous = previous.onlineState,
+                            candidate = DeviceOnlineState.CONNECTING_WS
+                        ),
                         lastWsConnectedAtMillis = state.connectedAtMillis,
+                        lastWsConnectedElapsedMillis = nowElapsedMillis,
                         lastAuthenticatedAtMillis = null,
+                        lastAuthenticatedElapsedMillis = null,
+                        lastRuntimeMessageAtMillis = null,
+                        lastRuntimeMessageElapsedMillis = null,
+                        lastControlProofAtMillis = null,
+                        lastControlProofElapsedMillis = null,
                         lastErrorMessage = null
                     )
                 }
@@ -424,6 +508,11 @@ class DevicesRepository(
                     previous.copy(
                         onlineState = DeviceOnlineState.AUTHENTICATED,
                         lastAuthenticatedAtMillis = state.authenticatedAtMillis,
+                        lastAuthenticatedElapsedMillis = nowElapsedMillis,
+                        lastRuntimeMessageAtMillis = null,
+                        lastRuntimeMessageElapsedMillis = null,
+                        lastControlProofAtMillis = null,
+                        lastControlProofElapsedMillis = null,
                         lastErrorMessage = null
                     )
                 }
@@ -434,6 +523,11 @@ class DevicesRepository(
                     previous.copy(
                         onlineState = DeviceOnlineState.AUTH_REQUIRED,
                         lastAuthenticatedAtMillis = null,
+                        lastAuthenticatedElapsedMillis = null,
+                        lastRuntimeMessageAtMillis = null,
+                        lastRuntimeMessageElapsedMillis = null,
+                        lastControlProofAtMillis = null,
+                        lastControlProofElapsedMillis = null,
                         lastErrorMessage = state.message
                             .trim()
                             .takeIf(String::isNotBlank)
@@ -452,20 +546,28 @@ class DevicesRepository(
     }
 
     private fun applyRuntimeUnavailable(deviceUid: DeviceUid, message: String? = null) {
-        val nowMillis = System.currentTimeMillis()
+        val nowElapsedMillis = elapsedRealtimeMillis()
         registryStore.updateConnectionState(deviceUid) { previous ->
             val clearedRuntimeState = previous.copy(
                 lastWsConnectedAtMillis = null,
+                lastWsConnectedElapsedMillis = null,
                 lastAuthenticatedAtMillis = null,
+                lastAuthenticatedElapsedMillis = null,
+                lastRuntimeMessageAtMillis = null,
+                lastRuntimeMessageElapsedMillis = null,
+                lastControlProofAtMillis = null,
+                lastControlProofElapsedMillis = null,
                 lastErrorMessage = message?.ifBlank { null }
             )
             val resolved = statusAggregator.resolve(
                 state = clearedRuntimeState,
-                nowMillis = nowMillis,
+                nowElapsedMillis = nowElapsedMillis,
                 localNetworkAvailable = presenceRuntimeMonitor.isLocalNetworkAvailable()
             )
             val visibleState = when {
-                resolved == DeviceOnlineState.UNKNOWN && !message.isNullOrBlank() -> DeviceOnlineState.OFFLINE
+                resolved == DeviceOnlineState.UNKNOWN && !message.isNullOrBlank() -> {
+                    DeviceOnlineState.OFFLINE
+                }
                 else -> resolved
             }
             clearedRuntimeState.copy(onlineState = visibleState)

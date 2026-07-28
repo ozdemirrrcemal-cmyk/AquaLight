@@ -36,6 +36,22 @@ require(
     "appContainer.startupAppearanceCache",
     "startup theme/language mirror must be resolved through the composition root",
 )
+for token, reason in (
+    ("ProcessLifecycleOwner.get().lifecycle.addObserver", "process lifecycle must own foreground state"),
+    ("AppProcessLifecycleObserver", "process lifecycle must drive the session coordinator"),
+):
+    require(app_path, app, token, reason)
+
+process_lifecycle_path = (
+    "app/src/main/java/com/aqua/aqualight/data/auth/AppProcessLifecycleObserver.kt"
+)
+process_lifecycle = read(process_lifecycle_path)
+for token, reason in (
+    ("DefaultLifecycleObserver", "foreground ownership must use the Android process lifecycle"),
+    ("controller.enterForeground()", "process start must enter the device foreground"),
+    ("controller.leaveForeground()", "process stop must leave the device foreground"),
+):
+    require(process_lifecycle_path, process_lifecycle, token, reason)
 
 splash_path = "app/src/main/java/com/aqua/aqualight/ui/splash/SplashActivity.kt"
 splash = read(splash_path)
@@ -87,7 +103,12 @@ for token, reason in (
 
 main_path = "app/src/main/java/com/aqua/aqualight/ui/main/MainActivity.kt"
 main = read(main_path)
-for token in ("currentSessionState()", "SessionBoundServiceManager.start("):
+for token in (
+    "currentSessionState()",
+    "SessionBoundServiceManager.start(",
+    "appSessionCoordinator.enterForeground()",
+    "appSessionCoordinator.leaveForeground()",
+):
     forbid(main_path, main, token, "MainActivity must delegate startup to AppSessionCoordinator")
 for token, reason in (
     ("appSessionCoordinator.state.collect", "MainActivity must observe the single session authority"),
@@ -235,6 +256,17 @@ for token, reason in (
     ("logoutTransitionsExistingGraphAuthorityToUnauthenticated", "logout needs a regression test"),
 ):
     require(session_tests_path, session_tests, token, reason)
+
+process_lifecycle_tests_path = (
+    "app/src/test/java/com/aqua/aqualight/data/auth/AppProcessLifecycleObserverTest.kt"
+)
+process_lifecycle_tests = read(process_lifecycle_tests_path)
+require(
+    process_lifecycle_tests_path,
+    process_lifecycle_tests,
+    "processStartAndStopDriveOneForegroundAuthority",
+    "process foreground ownership needs a regression test",
+)
 
 reminder_runtime_tests_path = (
     "app/src/test/java/com/aqua/aqualight/data/care/reminder/"

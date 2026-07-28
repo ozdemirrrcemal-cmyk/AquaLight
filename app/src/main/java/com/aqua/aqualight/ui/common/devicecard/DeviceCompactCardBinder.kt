@@ -27,6 +27,7 @@ object DeviceCompactCardBinder {
                 R.string.device_offline
             }
         )
+        val checkingText = context.getString(R.string.device_menu_checking_accessibility)
 
         binding.tvDeviceName.text = name
         binding.tvSerialNumber.text = context.getString(R.string.device_serial_value, serial)
@@ -42,16 +43,26 @@ object DeviceCompactCardBinder {
             presenceIconColor(binding, item.statusStyle)
         )
         binding.ivPresenceIcon.contentDescription = presenceText
-        binding.ivPresenceIcon.isVisible = !item.showAction
+        binding.ivPresenceIcon.isVisible = !item.isBusy && !item.showAction
+
+        binding.progressCardAction.isVisible = item.isBusy
+        binding.progressCardAction.contentDescription = checkingText
 
         binding.tvCardAction.text = item.actionText
-        binding.tvCardAction.isVisible = item.showAction && item.actionText.isNotBlank()
+        binding.tvCardAction.isVisible =
+            !item.isBusy && item.showAction && item.actionText.isNotBlank()
 
         binding.trailingContainer.isVisible =
-            binding.ivPresenceIcon.isVisible || binding.tvCardAction.isVisible
+            binding.ivPresenceIcon.isVisible ||
+                binding.progressCardAction.isVisible ||
+                binding.tvCardAction.isVisible
 
-        val trailingText = item.actionText.takeIf { item.showAction && it.isNotBlank() }
-            ?: presenceText
+        binding.root.isEnabled = !item.isBusy
+        val trailingText = when {
+            item.isBusy -> checkingText
+            item.showAction && item.actionText.isNotBlank() -> item.actionText
+            else -> presenceText
+        }
         binding.root.contentDescription = if (supporting.isBlank()) {
             context.getString(R.string.device_card_accessibility, name, serial, trailingText)
         } else {

@@ -76,7 +76,10 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
             REMOVE_DEVICE_REQUEST_KEY,
             viewLifecycleOwner
         ) { _, result ->
-            if (result.getString(FeedbackBottomSheet.RESULT_KEY) != FeedbackBottomSheet.RESULT_PRIMARY) {
+            if (
+                result.getString(FeedbackBottomSheet.RESULT_KEY) !=
+                FeedbackBottomSheet.RESULT_PRIMARY
+            ) {
                 return@setFragmentResultListener
             }
 
@@ -105,9 +108,12 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
 
     private fun setupClickListeners() {
         binding.btnAddDevice.setOnClickListener {
-            parentHost()?.onTankDetailAddDeviceClicked(
-                tankId = tankId
-            )
+            val state = viewModel.uiState.value
+            if (!state.isRemovingDevice && !state.isOpeningDeviceMenu) {
+                parentHost()?.onTankDetailAddDeviceClicked(
+                    tankId = tankId
+                )
+            }
         }
     }
 
@@ -134,7 +140,9 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
                             TankDetailDevicesEvent.ShowRemoveFailed -> {
                                 showError(
                                     title = getString(R.string.tank_device_remove_failed_title),
-                                    message = getString(R.string.aquarium_error_device_remove_failed)
+                                    message = getString(
+                                        R.string.aquarium_error_device_remove_failed
+                                    )
                                 )
                             }
 
@@ -154,18 +162,17 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     private fun renderState(
         state: TankDetailDevicesUiState
     ) {
-        val isBusy = state.isLoading ||
-            state.isOpeningDeviceMenu ||
-            state.isRemovingDevice
+        val globalBusy = state.isLoading || state.isRemovingDevice
 
         adapter.submitList(state.devices)
-        binding.rvAssignedDevices.isEnabled = !isBusy
-        binding.btnAddDevice.isEnabled = !isBusy
+        binding.rvAssignedDevices.isEnabled = !globalBusy
+        binding.btnAddDevice.isEnabled =
+            !globalBusy && !state.isOpeningDeviceMenu
         binding.rvAssignedDevices.isVisible = !state.isLoading && state.isEmpty.not()
         binding.cardDevicesEmpty.isVisible = !state.isLoading && state.isEmpty
         baseActivity()?.setGlobalLoading(
             ownerKey = TANK_DEVICE_LOADING_OWNER,
-            show = isBusy
+            show = globalBusy
         )
     }
 
@@ -193,7 +200,8 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     private fun confirmRemoveDevice(
         item: TankAssignedDeviceItem
     ) {
-        if (viewModel.uiState.value.isRemovingDevice) {
+        val state = viewModel.uiState.value
+        if (state.isRemovingDevice || state.isOpeningDeviceMenu) {
             return
         }
 

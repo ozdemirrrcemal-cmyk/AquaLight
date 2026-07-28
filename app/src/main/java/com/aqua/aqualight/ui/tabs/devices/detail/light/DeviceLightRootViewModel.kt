@@ -8,9 +8,9 @@ import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
+import com.aqua.aqualight.ui.common.text.AquaUiText
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootMenuMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootPresentationMapper
-import com.aqua.aqualight.ui.common.text.AquaUiText
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,8 +49,9 @@ class DeviceLightRootViewModel(
         boundDeviceUid = deviceUid
         observeJob?.cancel()
         clearOtaTestState()
+        _uiState.value = rootOperations.current(deviceUid)?.toLightRootUiState(fallbackTitle)
+            ?: emptyState(fallbackTitle, deviceUid)
         rootOperations.connect(deviceUid)
-        _uiState.value = emptyState(fallbackTitle, deviceUid)
         observeJob = viewModelScope.launch {
             rootOperations.observe(deviceUid).collect { snapshot ->
                 _uiState.value = snapshot?.toLightRootUiState(fallbackTitle)

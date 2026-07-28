@@ -10,6 +10,7 @@ import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.RemoveDeviceFromTankResult
 import com.aqua.aqualight.application.devices.TankDeviceAssignmentOperations
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactSnapshotMapper
+import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import java.util.concurrent.CancellationException
@@ -37,10 +38,11 @@ class TankDetailDevicesViewModel(
     private val _events = Channel<TankDetailDevicesEvent>(Channel.BUFFERED)
     val events: Flow<TankDetailDevicesEvent> = _events.receiveAsFlow()
 
-    private val openingDeviceMenu = MutableStateFlow(false)
+    private val openingDeviceId = MutableStateFlow<String?>(null)
     private val removingDevice = MutableStateFlow(false)
     private var boundTankId: Long = 0L
     private var observeJob: Job? = null
+    private var menuOpenJob: Job? = null
 
     fun bind(tankId: Long) {
         if (tankId <= 0L || boundTankId == tankId) return
@@ -51,21 +53,24 @@ class TankDetailDevicesViewModel(
         observeJob = viewModelScope.launch {
             combine(
                 assignmentOperations.assignedDevices(tankId),
-                openingDeviceMenu,
+                openingDeviceId,
                 removingDevice
-            ) { devices, isOpeningDeviceMenu, isRemovingDevice ->
+            ) { devices, currentOpeningDeviceId, isRemovingDevice ->
                 val items = devices.map { device ->
                     TankAssignedDeviceItem(
                         deviceUid = device.deviceUid,
                         title = device.displayName,
-                        card = DeviceCompactSnapshotMapper.map(device)
+                        card = DeviceCompactSnapshotMapper.map(device).copy(
+                            isBusy = currentOpeningDeviceId == device.deviceUid
+                        )
                     )
                 }
                 TankDetailDevicesUiState(
                     devices = items,
                     isEmpty = items.isEmpty(),
                     isLoading = false,
-                    isOpeningDeviceMenu = isOpeningDeviceMenu,
+                    openingDeviceId = currentOpeningDeviceId,
+                    isOpeningDeviceMenu = currentOpeningDeviceId != null,
                     isRemovingDevice = isRemovingDevice
                 )
             }.catch {
@@ -84,10 +89,12 @@ class TankDetailDevicesViewModel(
     }
 
     fun onDeviceClicked(deviceUid: String) {
-        if (deviceUid.isBlank() || openingDeviceMenu.value || removingDevice.value) return
+        if (deviceUid.isBlank() || removingDevice.value) return
+        if (openingDeviceId.value == deviceUid) return
 
-        viewModelScope.launch {
-            openingDeviceMenu.value = true
+        menuOpenJob?.cancel()
+        openingDeviceId.value = deviceUid
+        menuOpenJob = viewModelScope.launch {
             val result = try {
                 menuAccessOperations.resolve(deviceUid)
             } catch (error: Throwable) {
@@ -97,7 +104,9 @@ class TankDetailDevicesViewModel(
                     reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
                 )
             } finally {
-                openingDeviceMenu.value = false
+                if (openingDeviceId.value == deviceUid) {
+                    openingDeviceId.value = null
+                }
             }
 
             when (result) {
@@ -111,7 +120,9 @@ class TankDetailDevicesViewModel(
                     _events.send(
                         TankDetailDevicesEvent.ShowDeviceUnavailable(
                             title = result.title,
-                            messageRes = R.string.device_menu_offline_message
+                            messageRes = DeviceMenuUnavailableMessageMapper.messageRes(
+                                result.reason
+                            )
                         )
                     )
             }
@@ -120,7 +131,7 @@ class TankDetailDevicesViewModel(
 
     fun removeDeviceFromTank(deviceUid: String) {
         val tankId = boundTankId
-        if (tankId <= 0L || deviceUid.isBlank() || removingDevice.value) return
+        if (!canRemoveDevice(tankId, deviceUid)) return
 
         viewModelScope.launch {
             removingDevice.value = true
@@ -139,12 +150,19 @@ class TankDetailDevicesViewModel(
             }
         }
     }
+
+    private fun canRemoveDevice(tankId: Long, deviceUid: String): Boolean {
+        val requestIsValid = tankId > 0L && deviceUid.isNotBlank()
+        val operationsAreIdle = !removingDevice.value && openingDeviceId.value == null
+        return requestIsValid && operationsAreIdle
+    }
 }
 
 data class TankDetailDevicesUiState(
     val devices: List<TankAssignedDeviceItem> = emptyList(),
     val isEmpty: Boolean = true,
     val isLoading: Boolean = true,
+    val openingDeviceId: String? = null,
     val isOpeningDeviceMenu: Boolean = false,
     val isRemovingDevice: Boolean = false
 )

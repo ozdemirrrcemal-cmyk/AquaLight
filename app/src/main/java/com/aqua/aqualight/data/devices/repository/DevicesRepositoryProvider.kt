@@ -13,10 +13,9 @@ import kotlinx.coroutines.cancel
 /**
  * Process-level owner-bound device repository holder.
  *
- * A repository can never be created without Android context or authenticated
- * owner identity. Owner switches must pass through the suspending [clear] barrier;
- * a new owner repository is never exposed while the old owner's collectors,
- * sockets or token operations are still shutting down.
+ * A repository can never be created without Android context or authenticated owner identity. Owner
+ * switches pass through the suspending [clear] barrier. Foreground state is retained independently
+ * of owner creation so a newly opened owner repository starts with the correct probe policy.
  */
 object DevicesRepositoryProvider {
 
@@ -50,6 +49,9 @@ object DevicesRepositoryProvider {
     @Volatile
     private var closingOwnerUid: String? = null
 
+    @Volatile
+    private var appForeground: Boolean = false
+
     fun get(
         context: Context
     ): DevicesRepository {
@@ -77,18 +79,25 @@ object DevicesRepositoryProvider {
                 val repositoryScope = CoroutineScope(
                     SupervisorJob() + Dispatchers.IO
                 )
+                val connectivityObserver = DeviceConnectivityObserver(appContext)
                 val repository = DevicesRepository(
+                    discoveryRepository = DeviceDiscoveryRepository.withConnectivityObserver(
+                        connectivityObserver
+                    ),
                     knownStore = DeviceKnownStore(
                         context = appContext,
                         ownerUid = ownerUid
                     ),
-                    runtimeRepository = DeviceRuntimeRepository.withCredentialStore(
-                        context = appContext,
-                        ownerUid = ownerUid
-                    ),
-                    connectivityObserver = DeviceConnectivityObserver(appContext)
+                    runtimeRepository =
+                        DeviceRuntimeRepository.withCredentialStoreOnLocalNetwork(
+                            context = appContext,
+                            ownerUid = ownerUid,
+                            networkProvider = connectivityObserver::currentLocalNetwork
+                        ),
+                    connectivityObserver = connectivityObserver
                 )
 
+                repository.setAppForeground(appForeground)
                 repository.start(repositoryScope)
 
                 entry = Entry(
@@ -100,6 +109,11 @@ object DevicesRepositoryProvider {
                 repository
             }
         }
+    }
+
+    fun setAppForeground(isForeground: Boolean) {
+        appForeground = isForeground
+        entry?.repository?.setAppForeground(isForeground)
     }
 
     suspend fun clear(

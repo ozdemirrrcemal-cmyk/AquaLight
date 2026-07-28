@@ -30,6 +30,8 @@ STATUS_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/settings/devi
 SETTINGS_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/settings/SettingsViewModelBoundaryTest.kt"
 AUTH_POLICY_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/data/devices/menu/DeviceMenuAuthenticationPolicyTest.kt"
 PROOF_POLICY_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/data/devices/menu/DeviceMenuRuntimeProofPolicyTest.kt"
+MENU_ACCESS_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/data/devices/menu/DefaultDeviceMenuAccessOperationsTest.kt"
+DISCOVERY_CONTRACT_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/data/devices/discovery/udp/AqlDiscoveryParserContractTest.kt"
 SEQUENCE = ROOT / "docs/commercial-architecture-closure-record.md"
 
 errors: list[str] = []
@@ -64,6 +66,8 @@ status_test = read(STATUS_TEST)
 settings_test = read(SETTINGS_TEST)
 auth_policy_test = read(AUTH_POLICY_TEST)
 proof_policy_test = read(PROOF_POLICY_TEST)
+menu_access_test = read(MENU_ACCESS_TEST)
+discovery_contract_test = read(DISCOVERY_CONTRACT_TEST)
 sequence = read(SEQUENCE)
 
 for token, reason in (
@@ -83,6 +87,11 @@ for token, reason in (
     ("data class Available", "approved routing metadata must be explicit"),
     ("data class Unavailable", "blocked menu decisions must be explicit"),
     ("enum class DeviceMenuUnavailableReason", "blocked decisions need typed reasons"),
+    ("LOCAL_NETWORK_UNAVAILABLE", "local network loss needs a dedicated product reason"),
+    ("AUTHENTICATION_REQUIRED", "pairing/authentication failure needs a dedicated product reason"),
+    ("DEVICE_UNRESPONSIVE", "target-device failure needs a dedicated product reason"),
+    ("VERIFICATION_TIMED_OUT", "bounded verification timeout needs a dedicated product reason"),
+    ("CURRENT_LIVENESS_NOT_PROVEN", "UDP-only discovery must fail closed"),
 ):
     if token not in menu_contract:
         errors.append(f"{MENU_CONTRACT.relative_to(ROOT)}: {reason}: {token}")
@@ -137,6 +146,8 @@ for token, reason in (
     ("DeviceFamily.LIGHT", "data family must be mapped explicitly"),
     ("fun DeviceSnapshot.toOwnerDeviceListItem", "list mapping must be centralized"),
     ("fun DeviceSnapshot.toOwnerDeviceStatusSnapshot", "status mapping must be centralized"),
+    ("lastControlProofAtMillis", "latest-seen mapping must include correlated control proof"),
+    ("lastRuntimeMessageAtMillis", "latest-seen mapping must include decoded runtime traffic"),
     ("lastAuthenticatedAtMillis", "latest-seen mapping must include authenticated runtime activity"),
     ("lastWsConnectedAtMillis", "latest-seen mapping must include WebSocket activity"),
     ("lastUdpSeenAtMillis", "latest-seen mapping must include LAN discovery activity"),
@@ -151,10 +162,47 @@ for token, reason in (
     ("DeviceMenuAuthenticationPolicy", "fresh authenticated sessions must be verified"),
     ("DeviceMenuRuntimeProofPolicy", "command responses must prove current liveness"),
     ("expectedRequestId", "runtime proof must correlate request ids"),
-    ("CURRENT_LIVENESS_NOT_PROVEN", "failed liveness must be typed"),
+    ("recordControlProof", "successful liveness proof must update the canonical registry"),
+    ("MENU_ACCESS_BUDGET_MS", "interactive liveness verification must be bounded"),
+    ("AUTHENTICATION_REQUIRED", "authentication failure must remain typed"),
+    ("DEVICE_UNRESPONSIVE", "unresponsive target failure must remain typed"),
+    ("VERIFICATION_TIMED_OUT", "timeout failure must remain typed"),
+    ("CURRENT_LIVENESS_NOT_PROVEN", "UDP-only discovery must not authorize controls"),
 ):
     if token not in menu_adapter:
         errors.append(f"{MENU_ADAPTER.relative_to(ROOT)}: {reason}: {token}")
+
+for forbidden in ("verifyLanAccess", "hasFreshLanProof"):
+    if forbidden in menu_adapter:
+        errors.append(
+            f"{MENU_ADAPTER.relative_to(ROOT)}: UDP discovery cannot authorize menu access: {forbidden}"
+        )
+
+for token, reason in (
+    (
+        "fresh UDP proof without authenticated runtime endpoint is rejected",
+        "UDP-only menu denial regression test is missing",
+    ),
+    (
+        "discovered endpoint still requires authenticated runtime proof",
+        "endpoint discovery must not bypass authenticated runtime proof",
+    ),
+):
+    if token not in menu_access_test:
+        errors.append(f"{MENU_ACCESS_TEST.relative_to(ROOT)}: {reason}")
+
+for token, reason in (
+    (
+        "firmware sentAt does not replace Android receive clocks",
+        "firmware uptime must not determine Android freshness",
+    ),
+    (
+        "stale v2 documentation shape is not accepted as a runtime contract",
+        "the executable UDP v1 baseline needs a regression test",
+    ),
+):
+    if token not in discovery_contract_test:
+        errors.append(f"{DISCOVERY_CONTRACT_TEST.relative_to(ROOT)}: {reason}")
 
 for path, text in (
     (DEVICES_VIEW_MODEL, devices_view_model),

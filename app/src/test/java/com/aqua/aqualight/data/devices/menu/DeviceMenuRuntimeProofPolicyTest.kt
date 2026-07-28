@@ -30,8 +30,8 @@ class DeviceMenuRuntimeProofPolicyTest {
     }
 
     @Test
-    fun `response without typed command fields cannot prove liveness`() {
-        assertFalse(
+    fun `response without echoed command fields proves exact correlated liveness`() {
+        assertTrue(
             DeviceMenuRuntimeProofPolicy.accepts(
                 event = responseEvent(
                     deviceUid = requestedUid,

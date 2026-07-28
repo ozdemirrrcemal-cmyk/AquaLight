@@ -12,17 +12,48 @@ class DeviceStatusAggregatorTest {
             udpFreshMillis = 1_000L,
             udpStaleMillis = 2_000L,
             wsFreshMillis = 1_000L,
-            authFreshMillis = 3_000L
+            authenticationBootstrapFreshMillis = 500L,
+            runtimeProofFreshMillis = 3_000L
         )
     )
 
     @Test
-    fun `fresh authenticated runtime remains authenticated`() {
+    fun `fresh decoded runtime proof remains authenticated`() {
         assertEquals(
             DeviceOnlineState.AUTHENTICATED,
             aggregator.resolve(
-                state = DeviceConnectionState(lastAuthenticatedAtMillis = 1_000L),
-                nowMillis = 3_500L
+                state = DeviceConnectionState(
+                    lastAuthenticatedElapsedMillis = 1_000L,
+                    lastRuntimeMessageElapsedMillis = 1_500L
+                ),
+                nowElapsedMillis = 4_000L
+            )
+        )
+    }
+
+    @Test
+    fun `fresh correlated control proof remains authenticated`() {
+        assertEquals(
+            DeviceOnlineState.AUTHENTICATED,
+            aggregator.resolve(
+                state = DeviceConnectionState(
+                    lastControlProofElapsedMillis = 2_000L
+                ),
+                nowElapsedMillis = 4_500L
+            )
+        )
+    }
+
+    @Test
+    fun `authentication alone is only a short bootstrap proof`() {
+        assertEquals(
+            DeviceOnlineState.ONLINE_LAN,
+            aggregator.resolve(
+                state = DeviceConnectionState(
+                    lastAuthenticatedElapsedMillis = 1_000L,
+                    lastUdpSeenElapsedMillis = 1_800L
+                ),
+                nowElapsedMillis = 2_000L
             )
         )
     }
@@ -32,8 +63,10 @@ class DeviceStatusAggregatorTest {
         assertEquals(
             DeviceOnlineState.CONNECTING_WS,
             aggregator.resolve(
-                state = DeviceConnectionState(lastWsConnectedAtMillis = 1_000L),
-                nowMillis = 1_500L
+                state = DeviceConnectionState(
+                    lastWsConnectedElapsedMillis = 1_000L
+                ),
+                nowElapsedMillis = 1_500L
             )
         )
     }
@@ -45,26 +78,39 @@ class DeviceStatusAggregatorTest {
             aggregator.resolve(
                 state = DeviceConnectionState(
                     onlineState = DeviceOnlineState.AUTH_REQUIRED,
-                    lastUdpSeenAtMillis = 1_000L
+                    lastUdpSeenElapsedMillis = 1_000L
                 ),
-                nowMillis = 1_100L
+                nowElapsedMillis = 1_100L
             )
         )
     }
 
     @Test
-    fun `local network loss overrides fresh authenticated runtime proof`() {
+    fun `local network loss overrides fresh runtime proof`() {
         assertEquals(
             DeviceOnlineState.LOCAL_NETWORK_OFFLINE,
             aggregator.resolve(
                 state = DeviceConnectionState(
                     onlineState = DeviceOnlineState.AUTHENTICATED,
-                    lastAuthenticatedAtMillis = 1_000L,
-                    lastWsConnectedAtMillis = 1_000L,
-                    lastUdpSeenAtMillis = 1_000L
+                    lastRuntimeMessageElapsedMillis = 1_000L,
+                    lastUdpSeenElapsedMillis = 1_000L
                 ),
-                nowMillis = 1_100L,
+                nowElapsedMillis = 1_100L,
                 localNetworkAvailable = false
+            )
+        )
+    }
+
+    @Test
+    fun `wall clock jumps do not change freshness decisions`() {
+        assertEquals(
+            DeviceOnlineState.AUTHENTICATED,
+            aggregator.resolve(
+                state = DeviceConnectionState(
+                    lastRuntimeMessageAtMillis = Long.MAX_VALUE,
+                    lastRuntimeMessageElapsedMillis = 5_000L
+                ),
+                nowElapsedMillis = 6_000L
             )
         )
     }

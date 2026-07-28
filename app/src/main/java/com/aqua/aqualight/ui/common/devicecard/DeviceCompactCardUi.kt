@@ -10,7 +10,8 @@ data class DeviceCompactCardUi(
     @DrawableRes val iconRes: Int,
     val statusStyle: DeviceCompactStatusStyle = DeviceCompactStatusStyle.OFFLINE,
     val actionText: String = "",
-    val showAction: Boolean = false
+    val showAction: Boolean = false,
+    val isBusy: Boolean = false
 )
 
 enum class DeviceCompactStatusStyle {

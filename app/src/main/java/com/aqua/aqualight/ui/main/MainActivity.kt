@@ -2,23 +2,18 @@ package com.aqua.aqualight.ui.main
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
-import androidx.navigation.NavDestination
 import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.ui.setupWithNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.auth.AppSessionCoordinator
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.aqua.aqualight.databinding.ActivityMainBinding
 import com.aqua.aqualight.ui.navigation.AppDestinationContract
-import com.aqua.aqualight.ui.navigation.AppRouteNavigator
-import com.aqua.aqualight.ui.navigation.CareTaskNotificationRoutePolicy
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.flow.collect
@@ -37,6 +32,7 @@ class MainActivity : BaseActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var navController: NavController
+    private lateinit var navigationCoordinator: MainNavigationCoordinator
 
     private val appSessionCoordinator by lazy {
         AppSessionCoordinator.create(applicationContext)
@@ -46,10 +42,6 @@ class MainActivity : BaseActivity() {
     private var activeOwnerUid: String = ""
     private var renderedSessionKey: String? = null
     private var lastShownStartupFailure: Throwable? = null
-    private var pendingCareTaskId: Long = -1L
-    private var pendingCareTaskOwnerUid: String = ""
-    private var bottomBarSetup: Boolean = false
-    private var exitFromTopLevelBackCallback: OnBackPressedCallback? = null
 
     override fun onCreate(
         savedInstanceState: Bundle?
@@ -68,19 +60,21 @@ class MainActivity : BaseActivity() {
         binding.navHost.isVisible = false
         binding.bottomNav.isVisible = false
 
-        captureCareTaskIntent(intent)
+        navigationCoordinator = MainNavigationCoordinator(
+            host = this,
+            binding = binding,
+            navController = navController,
+            restoreSettingsExtra = EXTRA_RESTORE_SETTINGS_ROOT_AFTER_THEME_CHANGE,
+            sessionSnapshot = {
+                MainNavigationSessionSnapshot(
+                    isAuthenticated = isAuthenticated,
+                    activeOwnerUid = activeOwnerUid
+                )
+            }
+        )
+        navigationCoordinator.captureCareTaskIntent(intent)
         observeSessionState()
         appSessionCoordinator.start()
-    }
-
-    override fun onStart() {
-        super.onStart()
-        appSessionCoordinator.enterForeground()
-    }
-
-    override fun onStop() {
-        appSessionCoordinator.leaveForeground()
-        super.onStop()
     }
 
     override fun onNewIntent(
@@ -89,9 +83,9 @@ class MainActivity : BaseActivity() {
         super.onNewIntent(intent)
 
         setIntent(intent)
-        captureCareTaskIntent(intent)
+        navigationCoordinator.captureCareTaskIntent(intent)
         appSessionCoordinator.requestReconcile()
-        consumePendingCareTaskIfPossible()
+        navigationCoordinator.consumePendingCareTaskIfPossible()
     }
 
     override fun onPostResume() {
@@ -105,8 +99,8 @@ class MainActivity : BaseActivity() {
         }
 
         binding.root.post {
-            restoreSettingsRootAfterThemeChangeIfNeeded()
-            syncBottomBarState(
+            navigationCoordinator.restoreSettingsRootAfterThemeChangeIfNeeded()
+            navigationCoordinator.syncBottomBarState(
                 navController.currentDestination
             )
         }
@@ -116,8 +110,7 @@ class MainActivity : BaseActivity() {
         isAuthenticated = false
         activeOwnerUid = ""
         renderedSessionKey = null
-        pendingCareTaskId = -1L
-        pendingCareTaskOwnerUid = ""
+        navigationCoordinator.clearPendingCareTask()
 
         intent?.removeExtra(EXTRA_OPEN_CARE_TASK_ID)
         intent?.removeExtra(EXTRA_START_IN_APP)
@@ -170,12 +163,12 @@ class MainActivity : BaseActivity() {
                     renderedSessionKey = sessionKey
                 }
 
-                setupBottomBarIfNeeded(navController)
+                navigationCoordinator.setupBottomBarIfNeeded()
                 binding.navHost.isVisible = true
                 showLocalDataRecoveryIfNeeded()
-                restoreSettingsRootAfterThemeChangeIfNeeded()
-                consumePendingCareTaskIfPossible()
-                syncBottomBarState(navController.currentDestination)
+                navigationCoordinator.restoreSettingsRootAfterThemeChangeIfNeeded()
+                navigationCoordinator.consumePendingCareTaskIfPossible()
+                navigationCoordinator.syncBottomBarState(navController.currentDestination)
             }
 
             AppSessionCoordinator.State.Unauthenticated -> {
@@ -189,10 +182,10 @@ class MainActivity : BaseActivity() {
                     renderedSessionKey = sessionKey
                 }
 
-                setupBottomBarIfNeeded(navController)
+                navigationCoordinator.setupBottomBarIfNeeded()
                 binding.navHost.isVisible = true
                 binding.bottomNav.isVisible = false
-                syncBottomBarState(navController.currentDestination)
+                navigationCoordinator.syncBottomBarState(navController.currentDestination)
             }
 
             is AppSessionCoordinator.State.Failure -> {
@@ -204,7 +197,7 @@ class MainActivity : BaseActivity() {
                     renderedSessionKey = "startup-failure"
                 }
 
-                setupBottomBarIfNeeded(navController)
+                navigationCoordinator.setupBottomBarIfNeeded()
                 binding.navHost.isVisible = true
                 binding.bottomNav.isVisible = false
                 showSessionStartupFailureIfNeeded(state.error)
@@ -274,208 +267,5 @@ class MainActivity : BaseActivity() {
         }
 
         navController.graph = graph
-    }
-
-    private fun restoreSettingsRootAfterThemeChangeIfNeeded() {
-        val shouldRestore = intent?.getBooleanExtra(
-            EXTRA_RESTORE_SETTINGS_ROOT_AFTER_THEME_CHANGE,
-            false
-        ) == true
-
-        if (!shouldRestore || !isAuthenticated) {
-            return
-        }
-
-        intent?.removeExtra(
-            EXTRA_RESTORE_SETTINGS_ROOT_AFTER_THEME_CHANGE
-        )
-
-        binding.root.post {
-            val currentDestination = navController.currentDestination
-            val restored = if (currentDestination?.id == R.id.settingsFragment) {
-                true
-            } else {
-                runCatching {
-                    navController.popBackStack(
-                        R.id.settingsFragment,
-                        false
-                    )
-                }.getOrDefault(false)
-            }
-
-            if (!restored) {
-                selectBottomNavItemSafely(
-                    R.id.nav_settings
-                )
-            }
-
-            syncBottomBarState(
-                navController.currentDestination
-            )
-        }
-    }
-
-    private fun selectBottomNavItemSafely(
-        itemId: Int
-    ) {
-        if (
-            navController.currentDestination == null ||
-            binding.bottomNav.menu.findItem(itemId) == null
-        ) {
-            return
-        }
-
-        binding.bottomNav.post {
-            runCatching {
-                binding.bottomNav.selectedItemId = itemId
-            }
-        }
-    }
-
-    private fun captureCareTaskIntent(
-        intent: Intent?
-    ) {
-        val taskId = intent?.getLongExtra(
-            EXTRA_OPEN_CARE_TASK_ID,
-            -1L
-        ) ?: -1L
-
-        if (taskId <= 0L) {
-            return
-        }
-
-        val ownerUid = intent?.getStringExtra(
-            EXTRA_OWNER_UID
-        ).orEmpty()
-
-        pendingCareTaskId = taskId
-        pendingCareTaskOwnerUid = ownerUid
-        intent?.removeExtra(EXTRA_OPEN_CARE_TASK_ID)
-        intent?.removeExtra(EXTRA_START_IN_APP)
-        intent?.removeExtra(EXTRA_OWNER_UID)
-    }
-
-    private fun consumePendingCareTaskIfPossible() {
-        val taskId = pendingCareTaskId
-        val ownerUid = pendingCareTaskOwnerUid
-
-        if (taskId <= 0L || !isAuthenticated) {
-            return
-        }
-
-        if (
-            !CareTaskNotificationRoutePolicy.canOpen(
-                taskId = taskId,
-                notificationOwnerUid = ownerUid,
-                activeOwnerUid = activeOwnerUid,
-                isAuthenticated = true
-            )
-        ) {
-            pendingCareTaskId = -1L
-            pendingCareTaskOwnerUid = ""
-            return
-        }
-
-        if (!AppDestinationContract.isInsideAppGraph(navController.currentDestination)) {
-            return
-        }
-
-        pendingCareTaskId = -1L
-        pendingCareTaskOwnerUid = ""
-
-        binding.navHost.post {
-            runCatching {
-                AppRouteNavigator.openTaskDetail(
-                    navController = navController,
-                    taskId = taskId
-                )
-            }.onFailure {
-                pendingCareTaskId = taskId
-                pendingCareTaskOwnerUid = ownerUid
-            }
-        }
-    }
-
-    private fun setupBottomBarIfNeeded(
-        navController: NavController
-    ) {
-        if (bottomBarSetup || navController.currentDestination == null) {
-            return
-        }
-
-        bottomBarSetup = true
-
-        binding.bottomNav.setupWithNavController(navController)
-
-        exitFromTopLevelBackCallback =
-            object : OnBackPressedCallback(false) {
-
-                override fun handleOnBackPressed() {
-                    finish()
-                }
-            }
-
-        onBackPressedDispatcher.addCallback(
-            this,
-            requireNotNull(exitFromTopLevelBackCallback)
-        )
-
-        navController.addOnDestinationChangedListener { _, destination, _ ->
-            syncBottomBarState(destination)
-        }
-
-        observeBottomBarBackStack(navController)
-
-        syncBottomBarState(
-            navController.currentDestination
-        )
-
-        binding.root.post {
-            syncBottomBarState(
-                navController.currentDestination
-            )
-        }
-    }
-
-    private fun observeBottomBarBackStack(
-        navController: NavController
-    ) {
-        lifecycleScope.launch {
-            repeatOnLifecycle(
-                Lifecycle.State.STARTED
-            ) {
-                navController.currentBackStackEntryFlow.collect { backStackEntry ->
-                    syncBottomBarState(
-                        backStackEntry.destination
-                    )
-                }
-            }
-        }
-    }
-
-    private fun syncBottomBarState(
-        destination: NavDestination?
-    ) {
-        val shouldShowBottomBar =
-            isAuthenticated &&
-                AppDestinationContract.shouldShowBottomBar(destination)
-
-        binding.bottomNav.isVisible =
-            shouldShowBottomBar
-
-        if (shouldShowBottomBar) {
-            binding.bottomNav.alpha = 1f
-            binding.bottomNav.bringToFront()
-        }
-
-        exitFromTopLevelBackCallback?.isEnabled =
-            shouldShowBottomBar &&
-                destination?.id?.let(
-                    AppDestinationContract::isTopLevelDestination
-                ) == true
-
-        if (AppDestinationContract.isInsideAppGraph(destination)) {
-            consumePendingCareTaskIfPossible()
-        }
     }
 }
