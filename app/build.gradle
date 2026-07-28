@@ -274,10 +274,10 @@ dependencies {
    	implementation "com.googlecode.libphonenumber:libphonenumber:9.0.18"
    	
     // Lifecycle
-    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.10.0"
-    implementation "androidx.lifecycle:lifecycle-process:2.10.0"
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.10.0"
-    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.11.0"
+    implementation "androidx.lifecycle:lifecycle-process:2.11.0"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.11.0"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.11.0"
    	
    	// WorkManager
     implementation "androidx.work:work-runtime-ktx:2.11.2"
