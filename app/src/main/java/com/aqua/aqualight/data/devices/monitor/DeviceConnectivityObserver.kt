@@ -19,9 +19,9 @@ import kotlinx.coroutines.flow.map
 /**
  * Observes the concrete Android Network used for local AquaLight traffic.
  *
- * A Boolean Wi-Fi flag is not enough when VPN, cellular, Wi-Fi and Ethernet coexist. Discovery and
- * runtime sockets query [currentLocalNetwork] so each connection is bound to the same canonical
- * local path that drives Online/Offline decisions.
+ * A Boolean Wi-Fi flag is not enough when VPN, blocked policy, cellular, Wi-Fi and Ethernet
+ * coexist. Discovery and runtime sockets query [currentLocalNetwork] so each connection is bound to
+ * the same canonical local path that drives Online/Offline decisions.
  */
 class DeviceConnectivityObserver(context: Context) {
 
@@ -29,12 +29,14 @@ class DeviceConnectivityObserver(context: Context) {
     private val connectivityManager =
         appContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     private val generation = AtomicLong(0L)
+    private val blockedNetworks = ConcurrentHashMap.newKeySet<Network>()
     private val currentPath = AtomicReference<DeviceLocalNetworkPath?>(initialActivePath())
 
     fun observeLocalNetworkPath(): Flow<DeviceLocalNetworkPath?> = callbackFlow {
         val tracker = LocalNetworkPathTracker(
             connectivityManager = connectivityManager,
             generation = generation,
+            blockedNetworks = blockedNetworks,
             currentPath = currentPath,
             publish = { path -> trySend(path) }
         )
@@ -60,11 +62,16 @@ class DeviceConnectivityObserver(context: Context) {
             ) {
                 tracker.updateLinkProperties(network, linkProperties)
             }
+
+            override fun onBlockedStatusChanged(network: Network, blocked: Boolean) {
+                tracker.updateBlockedStatus(network, blocked)
+            }
         }
 
         val request = NetworkRequest.Builder()
             .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
             .addTransportType(NetworkCapabilities.TRANSPORT_ETHERNET)
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
             .build()
 
         connectivityManager.registerNetworkCallback(request, callback)
@@ -72,6 +79,7 @@ class DeviceConnectivityObserver(context: Context) {
 
         awaitClose {
             runCatching { connectivityManager.unregisterNetworkCallback(callback) }
+            blockedNetworks.clear()
             currentPath.set(null)
         }
     }.distinctUntilChangedBy { path -> path?.generation }
@@ -85,9 +93,14 @@ class DeviceConnectivityObserver(context: Context) {
     fun currentLocalNetwork(): Network? {
         // NetworkCallback owns the canonical Wi-Fi/Ethernet set. Trusting its selected path avoids
         // a false unavailable result while Android is still delivering the first capabilities
-        // callback after onAvailable. onLost removes the cached path synchronously.
-        val callbackNetwork = currentPath.get()?.network
-        val activeNetwork = connectivityManager.activeNetwork?.takeIf(::hasLocalTransport)
+        // callback after onAvailable. Loss or a blocked-status callback removes the cached path
+        // synchronously.
+        val callbackNetwork = currentPath.get()
+            ?.network
+            ?.takeUnless { network -> blockedNetworks.contains(network) }
+        val activeNetwork = connectivityManager.activeNetwork
+            ?.takeUnless { network -> blockedNetworks.contains(network) }
+            ?.takeIf(::hasLocalTransport)
         return callbackNetwork ?: activeNetwork
     }
 
@@ -118,6 +131,7 @@ class DeviceConnectivityObserver(context: Context) {
 private class LocalNetworkPathTracker(
     private val connectivityManager: ConnectivityManager,
     private val generation: AtomicLong,
+    private val blockedNetworks: MutableSet<Network>,
     private val currentPath: AtomicReference<DeviceLocalNetworkPath?>,
     private val publish: (DeviceLocalNetworkPath?) -> Unit
 ) {
@@ -132,6 +146,7 @@ private class LocalNetworkPathTracker(
             localNetworks.add(network)
         } else {
             localNetworks.remove(network)
+            blockedNetworks.remove(network)
             capabilitiesByNetwork.remove(network)
             linkPropertiesByNetwork.remove(network)
         }
@@ -147,6 +162,7 @@ private class LocalNetworkPathTracker(
             capabilitiesByNetwork[network] = capabilities
         } else {
             localNetworks.remove(network)
+            blockedNetworks.remove(network)
             capabilitiesByNetwork.remove(network)
             linkPropertiesByNetwork.remove(network)
         }
@@ -161,6 +177,15 @@ private class LocalNetworkPathTracker(
             linkPropertiesByNetwork[network] = linkProperties
             publishPath()
         }
+    }
+
+    fun updateBlockedStatus(network: Network, blocked: Boolean) {
+        if (blocked) {
+            blockedNetworks.add(network)
+        } else {
+            blockedNetworks.remove(network)
+        }
+        publishPath()
     }
 
     fun seedActiveNetwork() {
@@ -224,17 +249,25 @@ private class LocalNetworkPathTracker(
 
     private fun selectPreferredNetwork(previousNetwork: Network?): Network? {
         return when {
-            previousNetwork != null && previousNetwork in localNetworks -> previousNetwork
+            previousNetwork != null && isUsable(previousNetwork) -> previousNetwork
             else -> networkWithTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
                 ?: networkWithTransport(NetworkCapabilities.TRANSPORT_WIFI)
-                ?: localNetworks.firstOrNull()
+                ?: localNetworks.firstOrNull(::isUsable)
         }
     }
 
     private fun networkWithTransport(transport: Int): Network? {
         return localNetworks.firstOrNull { network ->
-            capabilitiesByNetwork[network]?.hasTransport(transport) == true
+            isUsable(network) &&
+                capabilitiesByNetwork[network]?.hasTransport(transport) == true
         }
+    }
+
+    private fun isUsable(network: Network): Boolean {
+        return DeviceLocalTransportPolicy.isUsableLocalPath(
+            hasLocalTransport = network in localNetworks,
+            isBlocked = network in blockedNetworks
+        )
     }
 }
 
@@ -250,12 +283,19 @@ internal object DeviceLocalTransportPolicy {
     fun hasLocalTransport(capabilities: NetworkCapabilities?): Boolean {
         return capabilities != null && isLocalTransport(
             hasWifi = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI),
-            hasEthernet = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+            hasEthernet = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET),
+            isNotVpn = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
         )
     }
 
     fun isLocalTransport(
         hasWifi: Boolean,
-        hasEthernet: Boolean
-    ): Boolean = hasWifi || hasEthernet
+        hasEthernet: Boolean,
+        isNotVpn: Boolean
+    ): Boolean = isNotVpn && (hasWifi || hasEthernet)
+
+    fun isUsableLocalPath(
+        hasLocalTransport: Boolean,
+        isBlocked: Boolean
+    ): Boolean = hasLocalTransport && !isBlocked
 }

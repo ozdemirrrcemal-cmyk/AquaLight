@@ -16,7 +16,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
- * UDP v2 discovery scanner.
+ * UDP v1 discovery scanner.
  *
  * The socket is bound to the canonical Android Wi-Fi/Ethernet Network when available, preventing
  * VPN or cellular default-route changes from silently moving local discovery traffic elsewhere.

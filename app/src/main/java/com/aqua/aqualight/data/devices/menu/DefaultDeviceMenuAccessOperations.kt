@@ -198,7 +198,6 @@ internal class DefaultDeviceMenuAccessOperations(
         deviceUid: DeviceUid,
         initialSnapshot: DeviceSnapshot
     ): DeviceMenuAccessResult {
-        val gateStartedElapsedMillis = elapsedRealtimeMillis()
         val verification = withTimeoutOrNull(MENU_ACCESS_BUDGET_MS) {
             runCatching { runtimePort.refreshNow() }
             val refreshedSnapshot = runtimePort.currentDevice(deviceUid) ?: initialSnapshot
@@ -206,15 +205,7 @@ internal class DefaultDeviceMenuAccessOperations(
 
             when {
                 failureReason != null -> VerificationResult.Unavailable(failureReason)
-                refreshedSnapshot.endpoint.hasWebSocketEndpoint -> verifyRuntimeLiveSnapshot(
-                    deviceUid = deviceUid,
-                    fallbackSnapshot = refreshedSnapshot
-                )
-                else -> verifyLanAccess(
-                    deviceUid = deviceUid,
-                    fallbackSnapshot = refreshedSnapshot,
-                    gateStartedElapsedMillis = gateStartedElapsedMillis
-                )
+                else -> verifyDiscoveredRuntimeEndpoint(deviceUid, refreshedSnapshot)
             }
         } ?: unavailableAfterControlFailure(
             deviceUid = deviceUid,
@@ -230,21 +221,48 @@ internal class DefaultDeviceMenuAccessOperations(
         }
     }
 
-    private suspend fun verifyLanAccess(
+    private suspend fun verifyDiscoveredRuntimeEndpoint(
         deviceUid: DeviceUid,
-        fallbackSnapshot: DeviceSnapshot,
-        gateStartedElapsedMillis: Long
+        fallbackSnapshot: DeviceSnapshot
     ): VerificationResult {
-        val lanSnapshot = verifyFreshLanSnapshot(
+        val runtimeSnapshot = awaitRuntimeEndpointSnapshot(
             deviceUid = deviceUid,
-            fallbackSnapshot = fallbackSnapshot,
-            gateStartedElapsedMillis = gateStartedElapsedMillis
+            fallbackSnapshot = fallbackSnapshot
+        ) ?: return VerificationResult.Unavailable(
+            DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
         )
-        return lanSnapshot?.let(VerificationResult::Available)
-            ?: unavailableAfterControlFailure(
-                deviceUid = deviceUid,
-                reason = DeviceMenuUnavailableReason.VERIFICATION_TIMED_OUT
+        val failureReason = fastFailureReason(runtimeSnapshot)
+
+        return when {
+            !runtimePort.isLocalNetworkAvailable() -> VerificationResult.Unavailable(
+                DeviceMenuUnavailableReason.LOCAL_NETWORK_UNAVAILABLE
             )
+            failureReason != null -> VerificationResult.Unavailable(failureReason)
+            else -> verifyRuntimeLiveSnapshot(
+                deviceUid = deviceUid,
+                fallbackSnapshot = runtimeSnapshot
+            )
+        }
+    }
+
+    private suspend fun awaitRuntimeEndpointSnapshot(
+        deviceUid: DeviceUid,
+        fallbackSnapshot: DeviceSnapshot
+    ): DeviceSnapshot? {
+        val currentSnapshot = runtimePort.currentDevice(deviceUid) ?: fallbackSnapshot
+        if (currentSnapshot.endpoint.hasWebSocketEndpoint) {
+            return currentSnapshot
+        }
+
+        val runtimeEndpointFlow = runtimePort
+            .observeDevice(deviceUid)
+            .filterNotNull()
+            .filter { snapshot -> snapshot.endpoint.hasWebSocketEndpoint }
+
+        return withTimeoutOrNull(RUNTIME_ENDPOINT_DISCOVERY_TIMEOUT_MS) {
+            runtimeEndpointFlow.first()
+        } ?: runtimePort.currentDevice(deviceUid)
+            ?.takeIf { snapshot -> snapshot.endpoint.hasWebSocketEndpoint }
     }
 
     private suspend fun verifyRuntimeLiveSnapshot(
@@ -373,27 +391,6 @@ internal class DefaultDeviceMenuAccessOperations(
         proofSignal.await() != null
     }
 
-    private suspend fun verifyFreshLanSnapshot(
-        deviceUid: DeviceUid,
-        fallbackSnapshot: DeviceSnapshot,
-        gateStartedElapsedMillis: Long
-    ): DeviceSnapshot? {
-        val currentSnapshot = runtimePort.currentDevice(deviceUid) ?: fallbackSnapshot
-        if (currentSnapshot.hasFreshLanProof(gateStartedElapsedMillis)) {
-            return currentSnapshot
-        }
-
-        val registryFreshLanFlow = runtimePort
-            .observeDevice(deviceUid)
-            .filterNotNull()
-            .filter { snapshot -> snapshot.hasFreshLanProof(gateStartedElapsedMillis) }
-
-        return withTimeoutOrNull(LAN_PROOF_TIMEOUT_MS) {
-            registryFreshLanFlow.first()
-        } ?: runtimePort.currentDevice(deviceUid)
-            ?.takeIf { snapshot -> snapshot.hasFreshLanProof(gateStartedElapsedMillis) }
-    }
-
     private fun fastFailureReason(
         snapshot: DeviceSnapshot
     ): DeviceMenuUnavailableReason? {
@@ -414,13 +411,6 @@ internal class DefaultDeviceMenuAccessOperations(
     ): Boolean {
         val proofAt = connectionState.lastControlProofElapsedMillis ?: return false
         return (nowElapsedMillis - proofAt).coerceAtLeast(0L) <= MENU_PROOF_REUSE_MS
-    }
-
-    private fun DeviceSnapshot.hasFreshLanProof(
-        gateStartedElapsedMillis: Long
-    ): Boolean {
-        val lastUdpSeenElapsedMillis = connectionState.lastUdpSeenElapsedMillis ?: return false
-        return lastUdpSeenElapsedMillis + LAN_PROOF_CLOCK_GRACE_MS >= gateStartedElapsedMillis
     }
 
     private fun available(snapshot: DeviceSnapshot): DeviceMenuAccessResult.Available {
@@ -468,10 +458,9 @@ internal class DefaultDeviceMenuAccessOperations(
         private const val MENU_ACCESS_BUDGET_MS = 2_500L
         private const val MENU_PROOF_REUSE_MS = 4_000L
         private const val AUTHENTICATION_TIMEOUT_MS = 1_200L
+        private const val RUNTIME_ENDPOINT_DISCOVERY_TIMEOUT_MS = 350L
         private const val RUNTIME_PROBE_TIMEOUT_MS = 850L
         private const val RUNTIME_PROBE_RETRY_DELAY_MS = 100L
-        private const val LAN_PROOF_TIMEOUT_MS = 1_800L
-        private const val LAN_PROOF_CLOCK_GRACE_MS = 250L
     }
 }
 

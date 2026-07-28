@@ -4,11 +4,14 @@ import android.app.Application
 import android.content.Context
 import android.os.Build
 import android.util.Log
+import androidx.lifecycle.ProcessLifecycleOwner
 import com.aqua.aqualight.base.accessibility.AccessibilityRuntimeInstaller
 import com.aqua.aqualight.base.theme.AppThemeController
 import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.composition.DefaultAppContainer
 import com.aqua.aqualight.data.auth.AccountDeletionManager
+import com.aqua.aqualight.data.auth.AppProcessLifecycleObserver
+import com.aqua.aqualight.data.auth.AppSessionCoordinator
 import com.aqua.aqualight.data.media.AppMediaRecoveryManager
 import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
@@ -30,6 +33,7 @@ class AquaApp : Application() {
         SupervisorJob() + Dispatchers.Default
     )
     private val startupAppearanceSync = CompletableDeferred<Unit>()
+    private lateinit var processLifecycleObserver: AppProcessLifecycleObserver
 
     lateinit var appContainer: AppContainer
         private set
@@ -60,6 +64,10 @@ class AquaApp : Application() {
 
         appContainer = DefaultAppContainer(this)
         LocalDataRecoveryTracker.initialize(this)
+        processLifecycleObserver = AppProcessLifecycleObserver(
+            controller = AppSessionCoordinator.create(this)
+        )
+        ProcessLifecycleOwner.get().lifecycle.addObserver(processLifecycleObserver)
 
         val appearanceCache = appContainer.startupAppearanceCache
         val cachedAppearance = appearanceCache.read()

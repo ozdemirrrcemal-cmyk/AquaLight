@@ -23,10 +23,10 @@ import kotlinx.coroutines.sync.withLock
 /**
  * Single foreground authority for startup and authenticated-owner transitions.
  *
- * Splash never opens a session. MainActivity observes this coordinator and the coordinator
- * serializes every Firebase owner change through the foreground [OwnerRuntimeSession] path exposed
- * by [AuthSessionManager]. Device runtime foreground/background policy follows the same process
- * boundary, so UI never reaches concrete device repositories directly.
+ * Splash never opens a session. MainActivity observes this coordinator, the Application owns the
+ * process foreground boundary, and the coordinator serializes every Firebase owner change through
+ * [OwnerRuntimeSession] exposed by [AuthSessionManager]. UI never reaches concrete device
+ * repositories directly.
  */
 class AppSessionCoordinator internal constructor(
     private val ownerProvider: AuthenticatedOwnerProvider,
@@ -34,7 +34,7 @@ class AppSessionCoordinator internal constructor(
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val foregroundRuntimeController: ForegroundRuntimeController =
         ForegroundRuntimeController(DevicesRepositoryProvider::setAppForeground)
-) : AutoCloseable {
+) : AppForegroundLifecycleController, AutoCloseable {
 
     sealed interface State {
         data object Starting : State
@@ -76,8 +76,8 @@ class AppSessionCoordinator internal constructor(
         }
     }
 
-    /** Starts owner validation and device presence while the app has a foreground consumer. */
-    fun enterForeground() {
+    /** Starts owner validation and device presence while the application process is foreground. */
+    override fun enterForeground() {
         start()
 
         val becameForeground = synchronized(lifecycleLock) {
@@ -102,7 +102,7 @@ class AppSessionCoordinator internal constructor(
         }
     }
 
-    fun leaveForeground() {
+    override fun leaveForeground() {
         val becameBackground = synchronized(lifecycleLock) {
             if (foregroundConsumerCount <= 0) {
                 false

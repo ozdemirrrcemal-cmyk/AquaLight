@@ -73,16 +73,6 @@ class MainActivity : BaseActivity() {
         appSessionCoordinator.start()
     }
 
-    override fun onStart() {
-        super.onStart()
-        appSessionCoordinator.enterForeground()
-    }
-
-    override fun onStop() {
-        appSessionCoordinator.leaveForeground()
-        super.onStop()
-    }
-
     override fun onNewIntent(
         intent: Intent
     ) {

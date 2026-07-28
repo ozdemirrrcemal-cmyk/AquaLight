@@ -15,16 +15,47 @@ This contract governs every user-facing AquaLight device surface:
 No UI screen may implement a separate Online/Offline engine. All surfaces consume the canonical
 `DevicesRepository` snapshot.
 
+## Source of truth and verified protocol baseline
+
+When prose and executable behavior disagree, the source order is:
+
+1. the Android and firmware protocol constants, parsers and automated tests;
+2. this commercial presence contract;
+3. README files and historical protocol notes.
+
+The deployed firmware source currently uses the following UDP discovery contract:
+
+| Field | Runtime value |
+| --- | --- |
+| schema | `aql.discovery.v1` |
+| announce type | `device.announce` |
+| refresh type | `refresh` |
+| version | `1` |
+| UDP port | `10888` |
+| maximum datagram | `768` bytes |
+
+The firmware definitions in `src/contracts/AqlDiscoveryContract.hpp` and
+`src/network/AqlDiscoveryService.hpp` agree with Android's `AqlDiscoveryContract` and strict
+`AqlDiscoveryParser`. Firmware prose that describes `aql.discovery.v2`, `device_announce`, version
+`20260624` or a 1536-byte packet is not the active runtime contract and must not be copied into
+Android.
+
+Firmware `sentAtMs` is boot-relative diagnostic metadata. Android does not compare it with the
+phone's clock or use it for freshness. Android stamps every accepted datagram on receipt with its
+own elapsed-realtime clock.
+
 ## Product states
 
 The user-facing product remains deliberately binary:
 
-- **Online**: authenticated device controls are currently usable;
-- **Offline**: authenticated device controls are not currently proven usable.
+- **Online**: the canonical state is `AUTHENTICATED`, `PROVISIONING` or `OTA_UPDATING`;
+- **Offline**: every other technical state.
 
 Technical states such as LAN discovery, WebSocket connection, authentication handshake, stale
 proof, retry and route recovery remain internal. During a short foreground verification window the
 last stable product state may be retained, but controls must never bypass authenticated liveness.
+`PROVISIONING` and `OTA_UPDATING` are protected transaction-display exceptions; they do not
+authorize the ordinary device menu. `ONLINE_LAN` and `CONNECTING_WS` always present as Offline.
 
 ## Evidence hierarchy
 
@@ -49,23 +80,40 @@ metadata.
 
 Current policy:
 
-| Evidence | Freshness |
+| Policy | Value |
 | --- | ---: |
-| correlated control/runtime proof | 15 seconds |
+| correlated control/runtime proof for product presence | 15 seconds |
+| menu control-proof reuse with the same active authenticated session | 4 seconds |
 | authenticated bootstrap | 5 seconds |
 | connected WebSocket | 8 seconds |
 | UDP fresh | 20 seconds |
 | UDP stale boundary | 35 seconds |
-| authenticated heartbeat cadence | 8 seconds |
+| authenticated application-liveness probe cadence | 8 seconds |
 | foreground verification grace | 3 seconds |
+| runtime-endpoint discovery wait inside the menu budget | 350 milliseconds |
+| complete menu-verification budget | 2.5 seconds |
 
-These values are one central policy. UI code must not define independent timing thresholds.
+These are canonical runtime constants. UI and presentation code must not define independent timing
+thresholds.
+
+The Android client also sends RFC 6455 transport pings every 20 seconds. The current firmware
+WebSocket server sends transport pings every 5 seconds, waits 2 seconds for a pong and disconnects
+after two missed pongs. Transport control frames detect a broken socket; they do not replace the
+authenticated, correlated `network.status.get` application proof used by product presence and menu
+access.
+
+Firmware emits a periodic UDP announcement approximately every 40 seconds. While Android is in the
+foreground it sends a refresh every 5 seconds, plus the bounded foreground burst. Consequently the
+20/35-second UDP thresholds describe active foreground discovery behavior; a periodic firmware
+announcement alone is not an authenticated Online guarantee.
 
 ## Menu-access invariant
 
 For one device and one canonical registry revision:
 
 - an Online card may open only through an authenticated session and a recent control proof;
+- fresh UDP without a usable WebSocket endpoint returns `CURRENT_LIVENESS_NOT_PROVEN` and never
+  opens controls;
 - a newly successful menu proof is written to the canonical registry before navigation;
 - a menu may not render Online from a private transport state while its canonical card remains
   Offline;
@@ -79,26 +127,32 @@ it does not block the entire application shell.
 
 ## Foreground and background behavior
 
+`ProcessLifecycleOwner` is the sole process foreground authority. Activities observe session state
+but do not start or stop device presence. Its delayed background dispatch prevents Activity
+recreation and configuration changes from producing a false process stop/start cycle.
+
 When the app enters foreground:
 
 1. start one foreground verification generation;
 2. retain a previously stable Online label for at most the grace window while active proof is
    requested;
 3. force one runtime probe regardless of periodic backoff;
-4. send a read-only authenticated network-status heartbeat;
+4. send a read-only authenticated network-status liveness probe;
 5. send the bounded foreground UDP discovery burst;
 6. publish the verified canonical result.
 
 When the app enters background:
 
-- high-frequency UDP refresh, runtime probe and heartbeat loops stop;
+- high-frequency UDP refresh, runtime connection probe and application-liveness loops stop;
 - cached timestamps are not treated as perpetual liveness;
 - the next foreground transition always revalidates the current local route and device proof.
 
 ## Android local-network routing
 
-One `DeviceConnectivityObserver` selects the canonical Wi-Fi or Ethernet `Network`.
+One `DeviceConnectivityObserver` selects the canonical, non-VPN Wi-Fi or Ethernet `Network`.
 
+- `NetworkCallback` callback values are the route-state source of truth;
+- on API 29 and later, networks reported as blocked for this app are excluded from selection;
 - UDP listener sockets are bound with `Network.bindSocket`;
 - UDP refresh sockets are bound with `Network.bindSocket`;
 - WebSocket sockets are created from the selected `Network.socketFactory`;
@@ -107,6 +161,17 @@ One `DeviceConnectivityObserver` selects the canonical Wi-Fi or Ethernet `Networ
 - recovery is device-scoped so one stalled device cannot interrupt another authenticated device.
 
 The target device still needs an authenticated response. Route binding is not itself presence proof.
+
+## Firmware network-lifecycle obligations
+
+The ESP-IDF network lifecycle and the Android route-generation lifecycle are symmetrical:
+
+- firmware discovery and WebSocket services start only after the station has a usable IP address;
+- Wi-Fi disconnect, IP loss or IP change invalidates existing sockets;
+- services close and recreate sockets after connectivity returns instead of reusing stale handles;
+- firmware uptime values never determine Android freshness;
+- RFC 6455 ping/pong remains transport-owned, while AquaLight application liveness remains an
+  authenticated request/response.
 
 ## User-facing failure reasons
 
@@ -120,14 +185,16 @@ The target device still needs an authenticated response. Route binding is not it
 
 ## Commercial service-level objectives
 
+These are physical release-acceptance targets, not guarantees created by timing constants alone.
+
 | Scenario | Objective |
 | --- | ---: |
-| phone has no local network | offline feedback under 100 ms |
-| canonical device is definitively Offline | offline feedback under 300 ms |
-| recent control proof exists | menu navigation under 200 ms |
+| phone has no usable local network | P95 offline feedback at or below 100 ms |
+| canonical device is definitively Offline | P95 offline feedback at or below 300 ms |
+| recent control proof and authenticated session exist | P95 menu navigation at or below 200 ms |
 | uncertain device state | blocking verification at most 2.5 seconds |
 | foreground return | no visible Online → Offline → Online flash |
-| device power-off while phone remains on Wi-Fi | stable Offline within 15 seconds, never over 20 seconds |
+| device power-off while phone remains on Wi-Fi | P95 stable Offline at or below 20 seconds |
 | device recovery on the same LAN | automatic Online recovery without card tap |
 | Wi-Fi A → Wi-Fi B or route generation change | old socket and proof never reused |
 
@@ -139,13 +206,17 @@ acceptance evidence.
 - fresh correlated proof remains Online;
 - authentication alone expires after the bootstrap window;
 - wall-clock jumps do not alter presence freshness;
+- firmware `sentAtMs` never determines Android freshness;
 - local-network loss overrides all cached proof;
+- a blocked or VPN route is not selected as the local device path;
 - definitive Offline and AuthRequired states do not wait for timeout;
 - stalled authentication remains within the 2.5-second interaction budget;
+- fresh UDP without an authenticated runtime endpoint never authorizes menu access;
 - firmware responses that omit optional command metadata still correlate by device and request id;
 - contradictory metadata, stale ids, failed responses and wrong devices are rejected;
 - successful menu proof updates the canonical card state before route navigation;
 - foreground verification does not publish a transient false Offline state;
+- Activity recreation does not create a process foreground/background cycle;
 - network-generation changes invalidate old sessions;
 - one device recovery does not replace another authenticated device session.
 
@@ -166,21 +237,47 @@ Test both a Debug build and the signed/minified release candidate where applicab
 11. multiple devices where only one device stalls;
 12. force stop, process death and phone reboot;
 13. account A → account B → account A isolation;
-14. 30-minute endurance run with periodic foreground/background transitions.
+14. 30-minute endurance run with periodic foreground/background transitions;
+15. Activity recreation by rotation, locale and theme changes;
+16. API-29-or-later Android-blocked local network and VPN coexistence.
 
 Acceptance requires no crash, ANR, duplicate/ghost device, cross-account data leak, stale Online
 control surface or user-visible Connecting label.
 
 ## Android platform migration gate
 
-The current application targets SDK 36. Before target SDK 37:
+The current application targets SDK 36. Under the Android 17 local-network model:
 
-- run Android 16 compatibility tests with local-network restrictions enabled;
-- add and exercise the Android 17 local-network runtime permission flow when the SDK contract is
-  available in the build toolchain;
-- keep all permission denial paths typed as local-network unavailable rather than device failure;
-- preserve direct local routing through the selected Android `Network` after permission grant;
-- include denial, one-time grant, permanent denial and Settings recovery in the release matrix.
+- while targeting SDK 36 or lower, keep `INTERNET` and do **not** declare or request
+  `ACCESS_LOCAL_NETWORK`;
+- exercise Android 16's `RESTRICT_LOCAL_NETWORK` compatibility mode; its temporary
+  `NEARBY_WIFI_DEVICES` grant is test scaffolding, not the target-SDK-37 production flow;
+- when raising the target to SDK 37, declare and request `ACCESS_LOCAL_NETWORK` before UDP broadcast,
+  UDP receive or direct WebSocket/TCP access;
+- AquaLight's proprietary UDP broadcast plus direct device WebSocket needs broad local-network
+  access; do not describe a system picker or mDNS-only path as sufficient;
+- treat denial or later revocation as local-network unavailable before socket work, and recover
+  after a grant in Settings;
+- test fresh grant, denial, revocation, Settings recovery and permission-group pre-grant. Another
+  already-granted nearby-device permission can pre-grant local-network access, so the presence or
+  absence of a prompt is not a reliable state check;
+- do not classify raw socket symptoms as the permission source of truth: denied UDP commonly fails
+  immediately while TCP may only time out.
 
 Target SDK must not be raised to 37 until this matrix passes on physical Android 17 hardware or an
 official final emulator image.
+
+## Normative platform references
+
+- Android
+  [`ProcessLifecycleOwner`](https://developer.android.com/reference/androidx/lifecycle/ProcessLifecycleOwner)
+- Android
+  [read network state with `NetworkCallback`](https://developer.android.com/develop/connectivity/network-ops/reading-network-state)
+- Android
+  [`Network` socket binding](https://developer.android.com/reference/android/net/Network)
+- Android
+  [local-network permission](https://developer.android.com/privacy-and-security/local-network-permission)
+- ESP-IDF
+  [high-resolution timer and boot-relative time](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/esp_timer.html)
+- ESP-IDF 5.5.4
+  [Wi-Fi station/IP and socket lifecycle](https://docs.espressif.com/projects/esp-idf/en/v5.5.4/esp32s3/api-guides/wifi.html)

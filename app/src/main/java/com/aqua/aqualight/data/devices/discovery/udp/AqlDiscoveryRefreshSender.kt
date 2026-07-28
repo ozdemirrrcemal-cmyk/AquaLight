@@ -11,7 +11,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 /**
- * Sends UDP v2 discovery refresh requests.
+ * Sends UDP v1 discovery refresh requests.
  *
  * This sender never carries runtime commands. It only asks firmware devices to announce their
  * current discovery payload and binds each socket to the selected Android local network.

@@ -2,7 +2,6 @@ package com.aqua.aqualight.data.devices.menu
 
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
-import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.data.devices.contract.AqlWsContract
 import com.aqua.aqualight.data.devices.model.DeviceConnectionState
 import com.aqua.aqualight.data.devices.model.DeviceFamily
@@ -32,7 +31,7 @@ import org.junit.Test
 class DefaultDeviceMenuAccessOperationsTest {
 
     @Test
-    fun `fresh LAN proof returns typed available result`() = runTest {
+    fun `fresh UDP proof without authenticated runtime endpoint is rejected`() = runTest {
         val snapshot = snapshot(
             state = DeviceConnectionState(
                 onlineState = DeviceOnlineState.ONLINE_LAN,
@@ -48,12 +47,52 @@ class DefaultDeviceMenuAccessOperationsTest {
 
         val result = operations.resolve(snapshot.deviceUid.value)
 
-        val available = result as DeviceMenuAccessResult.Available
-        assertEquals(snapshot.deviceUid.value, available.deviceUid)
-        assertEquals("AquaLight One", available.title)
-        assertEquals(OwnerDeviceFamily.LIGHT, available.family)
+        val unavailable = result as DeviceMenuAccessResult.Unavailable
+        assertEquals(
+            DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN,
+            unavailable.reason
+        )
         assertEquals(1, port.refreshVisibleCalls)
         assertEquals(1, port.refreshNowCalls)
+        assertEquals(0, port.connectCalls)
+        assertEquals(0, port.requestNetworkStatusCalls)
+        assertEquals(0, port.recordControlProofCalls)
+    }
+
+    @Test
+    fun `discovered endpoint still requires authenticated runtime proof`() = runTest {
+        val udpSnapshot = snapshot(
+            state = DeviceConnectionState(
+                onlineState = DeviceOnlineState.ONLINE_LAN,
+                lastUdpSeenElapsedMillis = 1_000L
+            ),
+            withRuntimeEndpoint = false
+        )
+        val runtimeSnapshot = snapshot(
+            state = DeviceConnectionState(onlineState = DeviceOnlineState.CONNECTING_WS)
+        )
+        val port = FakeDeviceMenuRuntimePort(snapshot = udpSnapshot).apply {
+            snapshotAfterRefresh = runtimeSnapshot
+            currentRuntimeState = AqlWsConnectionState.Authenticated(
+                deviceUid = runtimeSnapshot.deviceUid,
+                authenticatedAtMillis = 100L
+            )
+            responseOnNetworkStatusRequest = successfulResponse(
+                id = REQUEST_ID,
+                module = "",
+                action = ""
+            )
+        }
+        val operations = DefaultDeviceMenuAccessOperations(
+            runtimePort = port,
+            elapsedRealtimeMillis = { testScheduler.currentTime }
+        )
+
+        val result = operations.resolve(udpSnapshot.deviceUid.value)
+
+        assertTrue(result is DeviceMenuAccessResult.Available)
+        assertEquals(1, port.requestNetworkStatusCalls)
+        assertEquals(1, port.recordControlProofCalls)
     }
 
     @Test
@@ -296,6 +335,7 @@ class DefaultDeviceMenuAccessOperationsTest {
                 if (value != null) connectionStateFlow.value = value
             }
         var connectSucceeds: Boolean = true
+        var snapshotAfterRefresh: DeviceSnapshot? = null
         var responseOnNetworkStatusRequest: AqlWsIncomingMessage.Response? = null
         var networkStatusRequestGate: CompletableDeferred<Unit>? = null
 
@@ -323,6 +363,7 @@ class DefaultDeviceMenuAccessOperationsTest {
 
         override suspend fun refreshNow() {
             refreshNowCalls += 1
+            snapshotAfterRefresh?.let { snapshotFlow.value = it }
         }
 
         override fun runtimeConnectionStates(): Flow<AqlWsConnectionState> = connectionStateFlow

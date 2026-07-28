@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
  * Process-level live presence engine for all AquaLight device surfaces.
  *
  * UI screens observe the shared registry and never run their own Online/Offline engines. This
- * monitor owns active discovery, authenticated runtime heartbeat, foreground revalidation,
+ * monitor owns active discovery, authenticated application-liveness probes, foreground revalidation,
  * Android local-network generation changes and bounded device-scoped recovery.
  */
 @Suppress("TooManyFunctions")
@@ -42,7 +42,7 @@ class DevicePresenceRuntimeMonitor(
         connectivityObserver?.currentLocalNetworkGeneration() ?: 0L
     )
     private val lastRuntimeProbeAtMillis = ConcurrentHashMap<DeviceUid, Long>()
-    private val lastHeartbeatAtMillis = ConcurrentHashMap<DeviceUid, Long>()
+    private val lastLivenessProbeAtMillis = ConcurrentHashMap<DeviceUid, Long>()
     private val foregroundRefreshLock = Any()
 
     @Volatile
@@ -88,7 +88,7 @@ class DevicePresenceRuntimeMonitor(
         beginForegroundVerification()
         if (changed) {
             lastRuntimeProbeAtMillis.clear()
-            lastHeartbeatAtMillis.clear()
+            lastLivenessProbeAtMillis.clear()
         }
         scheduleForegroundRefresh()
     }
@@ -101,7 +101,7 @@ class DevicePresenceRuntimeMonitor(
         if (transitionedToUnavailable) {
             foregroundVerificationUntilMillis.set(0L)
             lastRuntimeProbeAtMillis.clear()
-            lastHeartbeatAtMillis.clear()
+            lastLivenessProbeAtMillis.clear()
             invalidateRuntimeProofsForLocalNetworkLoss()
             runtimeRepository?.disconnectForLocalNetworkLoss()
         }
@@ -206,7 +206,7 @@ class DevicePresenceRuntimeMonitor(
     private fun handleLocalNetworkPathChanged() {
         beginForegroundVerification()
         lastRuntimeProbeAtMillis.clear()
-        lastHeartbeatAtMillis.clear()
+        lastLivenessProbeAtMillis.clear()
         invalidateRuntimeProofsForLocalNetworkChange()
         runtimeRepository?.disconnectForLocalNetworkLoss()
     }
@@ -220,7 +220,7 @@ class DevicePresenceRuntimeMonitor(
             } else {
                 beginForegroundVerification()
                 probeRuntimeForVisibleDevices(force = true)
-                sendAuthenticatedHeartbeat(force = true)
+                sendAuthenticatedLivenessProbe(force = true)
                 refreshForegroundDiscoverySafely()
                 if (appForeground.get() && localNetworkAvailable.value) {
                     reevaluateNow(localNetworkAvailable = true)
@@ -244,7 +244,7 @@ class DevicePresenceRuntimeMonitor(
 
         reevaluateNow(localNetworkAvailable = true)
         probeRuntimeForVisibleDevices(force = true)
-        sendAuthenticatedHeartbeat(force = true)
+        sendAuthenticatedLivenessProbe(force = true)
 
         delay(NETWORK_RECOVERY_RETRY_DELAY_MS)
         if (
@@ -270,7 +270,7 @@ class DevicePresenceRuntimeMonitor(
                 reevaluateNow(localNetworkAvailable = available)
                 if (available) {
                     probeRuntimeForVisibleDevices()
-                    sendAuthenticatedHeartbeat()
+                    sendAuthenticatedLivenessProbe()
                 }
                 delay(PRESENCE_REEVALUATE_INTERVAL_MS)
             } else {
@@ -307,7 +307,7 @@ class DevicePresenceRuntimeMonitor(
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Throwable) {
-            // A later periodic refresh or runtime heartbeat can still prove liveness.
+            // A later periodic refresh or authenticated application probe can still prove liveness.
         }
     }
 
@@ -420,7 +420,7 @@ class DevicePresenceRuntimeMonitor(
             }
     }
 
-    private fun sendAuthenticatedHeartbeat(force: Boolean = false) {
+    private fun sendAuthenticatedLivenessProbe(force: Boolean = false) {
         val runtime = runtimeRepository ?: return
         val nowMillis = elapsedRealtimeMillis()
         registryStore.currentDevices().forEach { snapshot ->
@@ -429,20 +429,20 @@ class DevicePresenceRuntimeMonitor(
                 runtime.currentConnectionState(deviceUid) is AqlWsConnectionState.Authenticated
             if (!authenticated) return@forEach
 
-            val lastHeartbeatAt = lastHeartbeatAtMillis[deviceUid]
+            val lastProbeAt = lastLivenessProbeAtMillis[deviceUid]
             if (
                 !force &&
-                lastHeartbeatAt != null &&
-                nowMillis - lastHeartbeatAt < AUTHENTICATED_HEARTBEAT_INTERVAL_MS
+                lastProbeAt != null &&
+                nowMillis - lastProbeAt < AUTHENTICATED_LIVENESS_PROBE_INTERVAL_MS
             ) {
                 return@forEach
             }
 
             val requestId = runtime.commandClient(deviceUid)?.requestNetworkStatus()
             if (requestId.isNullOrBlank()) {
-                lastHeartbeatAtMillis.remove(deviceUid)
+                lastLivenessProbeAtMillis.remove(deviceUid)
             } else {
-                lastHeartbeatAtMillis[deviceUid] = nowMillis
+                lastLivenessProbeAtMillis[deviceUid] = nowMillis
             }
         }
     }
@@ -504,7 +504,7 @@ class DevicePresenceRuntimeMonitor(
         const val BACKGROUND_IDLE_INTERVAL_MS = 15_000L
         const val RUNTIME_PROBE_BACKOFF_MS = 15_000L
         const val OFFLINE_PROBE_BACKOFF_MS = 7_500L
-        const val AUTHENTICATED_HEARTBEAT_INTERVAL_MS = 8_000L
+        const val AUTHENTICATED_LIVENESS_PROBE_INTERVAL_MS = 8_000L
         const val FOREGROUND_REVALIDATION_GRACE_MS = 3_000L
         const val NETWORK_RECOVERY_SETTLE_MS = 1_000L
         const val NETWORK_RECOVERY_RETRY_DELAY_MS = 6_000L
