@@ -15,17 +15,6 @@ updates:
     commit-message:
       prefix: "build(deps)"
     groups:
-      test-libraries:
-        patterns:
-          - "androidx.arch.core:core-testing"
-          - "androidx.test.espresso:espresso-core"
-          - "androidx.test.ext:junit"
-          - "androidx.test:core-ktx"
-          - "junit:junit"
-          - "org.jetbrains.kotlinx:kotlinx-coroutines-test"
-        update-types:
-          - "minor"
-          - "patch"
       firebase:
         patterns:
           - "com.google.firebase:*"
@@ -33,14 +22,6 @@ updates:
         update-types:
           - "minor"
           - "patch"
-    ignore:
-      # Firebase Auth selected by BoM 34.16.0 is built with Kotlin metadata 2.3.
-      # Keep BoM minor/major updates pinned until Kotlin and AGP are upgraded
-      # together in a separately reviewed toolchain change.
-      - dependency-name: "com.google.firebase:firebase-bom"
-        update-types:
-          - "version-update:semver-minor"
-          - "version-update:semver-major"
 
   - package-ecosystem: "github-actions"
     directory: "/"

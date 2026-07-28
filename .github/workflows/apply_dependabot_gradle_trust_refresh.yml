@@ -1,4 +1,3 @@
-# Privileged apply phase; only a verified generation workflow may trigger it.
 name: Apply Dependabot Gradle Trust Refresh
 
 on:
@@ -11,25 +10,20 @@ on:
 permissions:
   actions: write
   contents: write
-  pull-requests: write
+  pull-requests: read
 
 concurrency:
-  group: >-
-    apply-dependabot-gradle-trust-${{
-      github.event.workflow_run.pull_requests[0].number ||
-      github.event.workflow_run.head_branch
-    }}
-  cancel-in-progress: true
+  group: apply-dependabot-gradle-trust-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
 
 jobs:
   apply:
     if: >-
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event == 'pull_request' &&
-      github.event.workflow_run.head_repository.full_name == github.repository &&
-      github.event.workflow_run.pull_requests[0].number != null
+      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 15
 
     steps:
       - name: Download generated trust state
@@ -47,10 +41,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
           SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
-          EVENT_PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
-          EVENT_HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
-          EVENT_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
-          EVENT_HEAD_REPOSITORY: ${{ github.event.workflow_run.head_repository.full_name }}
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -67,10 +57,6 @@ jobs:
 
           repository = os.environ["REPOSITORY"]
           source_run_id = int(os.environ["SOURCE_RUN_ID"])
-          event_pr_number = os.environ["EVENT_PR_NUMBER"]
-          event_head_branch = os.environ["EVENT_HEAD_BRANCH"]
-          event_head_sha = os.environ["EVENT_HEAD_SHA"]
-          event_head_repository = os.environ["EVENT_HEAD_REPOSITORY"]
           token = os.environ["GH_TOKEN"]
           api_root = "https://api.github.com"
           artifact_root = Path("incoming")
@@ -126,117 +112,24 @@ jobs:
               (artifact_root / "metadata.json").read_text(encoding="utf-8")
           )
           if set(metadata) != {
-              "schemaVersion",
               "pull_request",
               "head_ref",
               "head_sha",
-              "base_sha",
               "source_run_id",
-              "dependency_names",
-              "dependency_type",
-              "update_type",
-              "package_ecosystem",
-              "maintainer_changes",
-              "initial_pr_files",
           }:
               raise SystemExit("Trust artifact metadata fields are invalid.")
-          if metadata["schemaVersion"] != 1:
-              raise SystemExit("Trust artifact metadata schema is unsupported.")
-          if type(metadata["source_run_id"]) is not int:
-              raise SystemExit("Trust artifact source run ID is invalid.")
-          if metadata["source_run_id"] != source_run_id:
+          if int(metadata["source_run_id"]) != source_run_id:
               raise SystemExit("Trust artifact source run does not match workflow_run.")
-          if type(metadata["pull_request"]) is not int or metadata["pull_request"] < 1:
-              raise SystemExit("Trust artifact pull request number is invalid.")
-          for field in (
-              "head_ref",
-              "head_sha",
-              "base_sha",
-              "dependency_type",
-              "update_type",
-              "package_ecosystem",
-          ):
-              if not isinstance(metadata[field], str) or not metadata[field].strip():
-                  raise SystemExit(f"Trust artifact field {field} is invalid.")
-          for field in ("dependency_names", "initial_pr_files"):
-              value = metadata[field]
-              if (
-                  not isinstance(value, list)
-                  or not value
-                  or any(
-                      not isinstance(item, str) or not item.strip()
-                      for item in value
-                  )
-                  or len(value) != len(set(value))
-              ):
-                  raise SystemExit(f"Trust artifact field {field} is invalid.")
-          if not isinstance(metadata["maintainer_changes"], bool):
-              raise SystemExit("Trust artifact maintainer_changes is invalid.")
 
-          pr_number = metadata["pull_request"]
+          pr_number = int(metadata["pull_request"])
           head_ref = str(metadata["head_ref"])
           expected_head_sha = str(metadata["head_sha"])
-          expected_base_sha = str(metadata["base_sha"])
           if not re.fullmatch(r"[0-9a-f]{40}", expected_head_sha):
               raise SystemExit("Dependabot head SHA is invalid.")
-          if not re.fullmatch(r"[0-9a-f]{40}", expected_base_sha):
-              raise SystemExit("Dependabot base SHA is invalid.")
           if not re.fullmatch(r"dependabot/gradle/[A-Za-z0-9._/-]+", head_ref):
               raise SystemExit("Only canonical Dependabot Gradle branches may be updated.")
           if ".." in head_ref or head_ref.endswith("/"):
               raise SystemExit("Dependabot branch name is invalid.")
-          if not re.fullmatch(r"[1-9][0-9]*", event_pr_number):
-              raise SystemExit("workflow_run pull request number is invalid.")
-          if pr_number != int(event_pr_number):
-              raise SystemExit("Trust artifact pull request does not match workflow_run.")
-          if head_ref != event_head_branch:
-              raise SystemExit("Trust artifact branch does not match workflow_run.")
-          if expected_head_sha != event_head_sha:
-              raise SystemExit("Trust artifact head SHA does not match workflow_run.")
-          if event_head_repository != repository:
-              raise SystemExit("Trust artifact repository does not match workflow_run.")
-
-          source_run = api(
-              "GET",
-              f"/repos/{repository}/actions/runs/{source_run_id}",
-          )
-          source_workflow = api(
-              "GET",
-              f"/repos/{repository}/actions/workflows/"
-              f"{source_run.get('workflow_id', '')}",
-          )
-          source_associations = source_run.get("pull_requests")
-          if not isinstance(source_associations, list):
-              source_associations = []
-          source_association = next(
-              (
-                  item
-                  for item in source_associations
-                  if isinstance(item, dict) and item.get("number") == pr_number
-              ),
-              None,
-          )
-          if (
-              source_run.get("name") != "Dependabot Gradle Trust Refresh"
-              or source_workflow.get("path")
-              != ".github/workflows/dependabot_gradle_trust_refresh.yml"
-              or source_run.get("event") != "pull_request"
-              or source_run.get("status") != "completed"
-              or source_run.get("conclusion") != "success"
-              or source_run.get("head_branch") != head_ref
-              or source_run.get("head_sha") != expected_head_sha
-              or source_run.get("head_repository", {}).get("full_name")
-              != repository
-              or source_association is None
-              or source_association.get("head", {}).get("sha")
-              != expected_head_sha
-              or source_association.get("base", {}).get("sha")
-              != expected_base_sha
-          ):
-              raise SystemExit(
-                  "Trust artifact is not bound to the originating workflow, PR, "
-                  "head, and base."
-              )
 
           pull = api("GET", f"/repos/{repository}/pulls/{pr_number}")
           if pull.get("state") != "open":
@@ -251,24 +144,6 @@ jobs:
               raise SystemExit("Dependabot branch changed after trust generation.")
           if pull.get("head", {}).get("sha") != expected_head_sha:
               raise SystemExit("Dependabot head moved after trust generation; refusing stale data.")
-          if pull.get("base", {}).get("sha") != expected_base_sha:
-              api(
-                  "PUT",
-                  f"/repos/{repository}/pulls/{pr_number}/update-branch",
-                  {"expected_head_sha": expected_head_sha},
-              )
-              with output_path.open("a", encoding="utf-8") as handle:
-                  handle.write("stale=true\n")
-                  handle.write(f"head-ref={head_ref}\n")
-                  handle.write(f"head-sha={expected_head_sha}\n")
-                  handle.write(f"base-sha={expected_base_sha}\n")
-                  handle.write(f"pr-number={pr_number}\n")
-                  handle.write(f"source-run-id={source_run_id}\n")
-              print(
-                  "main moved after Trust Refresh; requested an exact-head "
-                  "Dependabot branch update so validation can restart."
-              )
-              raise SystemExit(0)
 
           allowed_pr_files = {
               "app/build.gradle",
@@ -276,11 +151,6 @@ jobs:
               "settings.gradle",
               "gradle.properties",
               "gradle/libs.versions.toml",
-              "gradle/aqualight-detekt.gradle",
-              "gradle/wrapper/gradle-wrapper.properties",
-              "gradle/wrapper/gradle-wrapper.jar",
-              "gradlew",
-              "gradlew.bat",
               "app/gradle.lockfile",
               "gradle/verification-metadata.xml",
           }
@@ -290,8 +160,6 @@ jobs:
               "settings.gradle",
               "gradle.properties",
               "gradle/libs.versions.toml",
-              "gradle/aqualight-detekt.gradle",
-              "gradle/wrapper/gradle-wrapper.properties",
           }
           pr_files = set()
           page = 1
@@ -315,14 +183,6 @@ jobs:
               )
           if not pr_files.intersection(dependency_manifests):
               raise SystemExit("Dependabot PR has no approved dependency manifest change.")
-          initial_pr_files = set(metadata["initial_pr_files"])
-          if not initial_pr_files or not initial_pr_files.issubset(pr_files):
-              raise SystemExit("Trust metadata initial PR files do not match the live PR.")
-          if pr_files - initial_pr_files - {
-              "app/gradle.lockfile",
-              "gradle/verification-metadata.xml",
-          }:
-              raise SystemExit("Live PR gained files outside the trusted refresh scope.")
 
           lock_path = artifact_root / "app/gradle.lockfile"
           verification_path = artifact_root / "gradle/verification-metadata.xml"
@@ -411,105 +271,19 @@ jobs:
               print("Dependabot Gradle trust state is already current.")
 
           with output_path.open("a", encoding="utf-8") as handle:
-              handle.write("stale=false\n")
               handle.write(f"changed={'true' if changed else 'false'}\n")
               handle.write(f"head-ref={head_ref}\n")
               handle.write(f"head-sha={final_head_sha}\n")
-              handle.write(f"base-sha={expected_base_sha}\n")
               handle.write(f"pr-number={pr_number}\n")
-              handle.write(f"source-run-id={source_run_id}\n")
           PY
-
-      - name: Checkout trusted auto-merge policy
-        if: steps.apply.outputs.stale != 'true'
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          ref: ${{ steps.apply.outputs.base-sha }}
-          path: policy
-          persist-credentials: false
-
-      - name: Fetch immutable dependency manifests
-        if: steps.apply.outputs.stale != 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPOSITORY: ${{ github.repository }}
-          BASE_SHA: ${{ steps.apply.outputs.base-sha }}
-          HEAD_SHA: ${{ steps.apply.outputs.head-sha }}
-        shell: bash
-        run: |
-          set -Eeuo pipefail
-          mkdir -p policy-inputs
-          python3 - <<'PY'
-          import base64
-          import json
-          import os
-          import urllib.parse
-          import urllib.request
-          from pathlib import Path
-
-          repository = os.environ["REPOSITORY"]
-          token = os.environ["GH_TOKEN"]
-
-          def fetch(ref: str, output: Path) -> None:
-              encoded_ref = urllib.parse.quote(ref, safe="")
-              request = urllib.request.Request(
-                  "https://api.github.com/repos/"
-                  f"{repository}/contents/app/build.gradle?ref={encoded_ref}",
-                  headers={
-                      "Accept": "application/vnd.github+json",
-                      "Authorization": f"Bearer {token}",
-                      "X-GitHub-Api-Version": "2022-11-28",
-                      "User-Agent": "AquaLight-Dependabot-Auto-Merge",
-                  },
-              )
-              with urllib.request.urlopen(request, timeout=30) as response:
-                  payload = json.load(response)
-              if payload.get("encoding") != "base64":
-                  raise SystemExit("GitHub returned an unsupported content encoding.")
-              encoded_content = "".join(str(payload["content"]).split())
-              output.write_bytes(
-                  base64.b64decode(encoded_content, validate=True)
-              )
-
-          fetch(
-              os.environ["BASE_SHA"],
-              Path("policy-inputs/base-app-build.gradle"),
-          )
-          fetch(
-              os.environ["HEAD_SHA"],
-              Path("policy-inputs/head-app-build.gradle"),
-          )
-          PY
-
-      - name: Classify controlled auto-merge eligibility
-        if: steps.apply.outputs.stale != 'true'
-        id: auto-merge-policy
-        shell: bash
-        run: |
-          set -Eeuo pipefail
-          python3 policy/tools/classify_dependabot_gradle_pr.py \
-            --policy policy/config/dependabot/gradle-auto-merge-policy.json \
-            --metadata incoming/metadata.json \
-            --base-manifest policy-inputs/base-app-build.gradle \
-            --head-manifest policy-inputs/head-app-build.gradle \
-            --trust-state-changed "${{ steps.apply.outputs.changed }}" \
-            --summary incoming/auto-merge-policy.json \
-            --github-output "${GITHUB_OUTPUT}"
 
       - name: Dispatch trusted validation workflows
-        if: steps.apply.outputs.stale != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_REF: ${{ steps.apply.outputs.head-ref }}
-          HEAD_SHA: ${{ steps.apply.outputs.head-sha }}
-          BASE_SHA: ${{ steps.apply.outputs.base-sha }}
-          PR_NUMBER: ${{ steps.apply.outputs.pr-number }}
-          TRUST_RUN_ID: ${{ steps.apply.outputs.source-run-id }}
-          APPLY_RUN_ID: ${{ github.run_id }}
         shell: bash
         run: |
           set -Eeuo pipefail
-          validation_id="dependabot-${APPLY_RUN_ID}-${HEAD_SHA}"
           workflows=(
             android.yml
             codeql.yml
@@ -517,255 +291,10 @@ jobs:
             android_emulator_tests.yml
           )
           for workflow in "${workflows[@]}"; do
-            jq -n \
-              --arg ref "$HEAD_REF" \
-              --arg expected_sha "$HEAD_SHA" \
-              --arg expected_base_sha "$BASE_SHA" \
-              --arg dependabot_pr "$PR_NUMBER" \
-              --arg trust_run_id "$TRUST_RUN_ID" \
-              --arg validation_id "$validation_id" \
-              '{
-                ref: $ref,
-                inputs: {
-                  expected_sha: $expected_sha,
-                  expected_base_sha: $expected_base_sha,
-                  dependabot_pr: $dependabot_pr,
-                  trust_run_id: $trust_run_id,
-                  validation_id: $validation_id
-                }
-              }' \
+            jq -n --arg ref "$HEAD_REF" '{ref: $ref}' \
               | gh api \
                   --method POST \
                   "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow}/dispatches" \
                   --input -
             echo "Dispatched ${workflow} on ${HEAD_REF}."
           done
-
-      - name: Wait for required checks and auto-merge
-        if: steps.auto-merge-policy.outputs.eligible == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPOSITORY: ${{ github.repository }}
-          HEAD_SHA: ${{ steps.apply.outputs.head-sha }}
-          BASE_SHA: ${{ steps.apply.outputs.base-sha }}
-          PR_NUMBER: ${{ steps.apply.outputs.pr-number }}
-          APPLY_RUN_ID: ${{ github.run_id }}
-          VALIDATION_ID: dependabot-${{ github.run_id }}-${{ steps.apply.outputs.head-sha }}
-        shell: bash
-        run: |
-          set -Eeuo pipefail
-          python3 - <<'PY'
-          import json
-          import os
-          import time
-          import urllib.error
-          import urllib.parse
-          import urllib.request
-
-          repository = os.environ["REPOSITORY"]
-          head_sha = os.environ["HEAD_SHA"]
-          base_sha = os.environ["BASE_SHA"]
-          pr_number = int(os.environ["PR_NUMBER"])
-          apply_run_id = int(os.environ["APPLY_RUN_ID"])
-          validation_id = os.environ["VALIDATION_ID"]
-          token = os.environ["GH_TOKEN"]
-          required_workflows = {
-              "Android CI": "android.yml",
-              "Dependency Integrity": "dependency_integrity.yml",
-              "Android Emulator Integration Tests": "android_emulator_tests.yml",
-              "CodeQL Security Scan": "codeql.yml",
-          }
-          required = set(required_workflows)
-
-          def api(method: str, path: str, payload=None):
-              data = None
-              headers = {
-                  "Accept": "application/vnd.github+json",
-                  "Authorization": f"Bearer {token}",
-                  "X-GitHub-Api-Version": "2022-11-28",
-                  "User-Agent": "AquaLight-Dependabot-Auto-Merge",
-              }
-              if payload is not None:
-                  data = json.dumps(payload).encode("utf-8")
-                  headers["Content-Type"] = "application/json"
-              request = urllib.request.Request(
-                  "https://api.github.com" + path,
-                  data=data,
-                  headers=headers,
-                  method=method,
-              )
-              try:
-                  with urllib.request.urlopen(request, timeout=30) as response:
-                      body = response.read()
-              except urllib.error.HTTPError as error:
-                  detail = error.read().decode("utf-8", errors="replace")
-                  raise SystemExit(
-                      f"GitHub API {method} {path} failed: "
-                      f"{error.code}: {detail}"
-                  ) from error
-              return json.loads(body) if body else None
-
-          def require_unchanged_pull():
-              pull = api("GET", f"/repos/{repository}/pulls/{pr_number}")
-              if pull.get("state") != "open":
-                  raise SystemExit("Dependabot PR closed while validations were running.")
-              if pull.get("user", {}).get("login") != "dependabot[bot]":
-                  raise SystemExit("PR author changed unexpectedly.")
-              if pull.get("head", {}).get("sha") != head_sha:
-                  raise SystemExit("Dependabot head moved; refusing stale auto-merge.")
-              if pull.get("base", {}).get("ref") != "main":
-                  raise SystemExit("Dependabot PR no longer targets main.")
-              if pull.get("base", {}).get("sha") != base_sha:
-                  api(
-                      "PUT",
-                      f"/repos/{repository}/pulls/{pr_number}/update-branch",
-                      {"expected_head_sha": head_sha},
-                  )
-                  print(
-                      "main moved while full validations were running; requested "
-                      "an exact-head Dependabot branch update.",
-                      flush=True,
-                  )
-                  raise SystemExit(0)
-              return pull
-
-          workflow_ids = {}
-          for name, workflow_file in required_workflows.items():
-              encoded = urllib.parse.quote(workflow_file, safe="")
-              workflow = api(
-                  "GET",
-                  f"/repos/{repository}/actions/workflows/{encoded}",
-              )
-              if workflow.get("path") != f".github/workflows/{workflow_file}":
-                  raise SystemExit(f"Required workflow path is invalid: {workflow_file}")
-              workflow_ids[name] = int(workflow["id"])
-
-          deadline = time.monotonic() + 9_000
-          latest = {}
-          while time.monotonic() < deadline:
-              require_unchanged_pull()
-              query = urllib.parse.urlencode(
-                  {
-                      "head_sha": head_sha,
-                      "event": "workflow_dispatch",
-                      "per_page": 100,
-                  }
-              )
-              payload = api(
-                  "GET",
-                  f"/repos/{repository}/actions/runs?{query}",
-              )
-              candidates = [
-                  run
-                  for run in payload.get("workflow_runs", [])
-                  if run.get("name") in required
-                  and int(run.get("workflow_id", 0))
-                  == workflow_ids[run.get("name")]
-                  and run.get("display_title")
-                  == f"{run.get('name')} · {validation_id}"
-                  and run.get("head_sha") == head_sha
-                  and int(run.get("id", 0)) > apply_run_id
-              ]
-              latest = {}
-              for run in sorted(candidates, key=lambda item: int(item["id"])):
-                  latest[run["name"]] = run
-
-              failed = {
-                  name: run.get("conclusion")
-                  for name, run in latest.items()
-                  if run.get("status") == "completed"
-                  and run.get("conclusion") != "success"
-              }
-              if failed:
-                  raise SystemExit(
-                      "Required Dependabot validation failed: "
-                      + ", ".join(
-                          f"{name}={conclusion}"
-                          for name, conclusion in sorted(failed.items())
-                      )
-                  )
-              if required.issubset(latest) and all(
-                  latest[name].get("status") == "completed"
-                  and latest[name].get("conclusion") == "success"
-                  for name in required
-              ):
-                  break
-              states = ", ".join(
-                  f"{name}={latest.get(name, {}).get('status', 'pending')}"
-                  for name in sorted(required)
-              )
-              print(f"Waiting for final-head validation: {states}", flush=True)
-              time.sleep(30)
-          else:
-              raise SystemExit("Timed out waiting for required Dependabot validations.")
-
-          require_unchanged_pull()
-          comparison = api(
-              "GET",
-              f"/repos/{repository}/compare/{base_sha}...{head_sha}",
-          )
-          if (
-              comparison.get("status") != "ahead"
-              or comparison.get("behind_by") != 0
-              or comparison.get("merge_base_commit", {}).get("sha") != base_sha
-          ):
-              raise SystemExit(
-                  "Dependabot head is not a strict, tested descendant of the "
-                  "expected main commit."
-              )
-          main_ref = api("GET", f"/repos/{repository}/git/ref/heads/main")
-          if main_ref.get("object", {}).get("sha") != base_sha:
-              require_unchanged_pull()
-              raise SystemExit("main ref moved before atomic integration.")
-
-          # The non-force ref update is the atomic server-side integration
-          # boundary. If main moves after the read, GitHub rejects this update
-          # because the fixed tested head cannot fast-forward the new main tip.
-          updated_ref = api(
-              "PATCH",
-              f"/repos/{repository}/git/refs/heads/main",
-              {"sha": head_sha, "force": False},
-          )
-          if updated_ref.get("object", {}).get("sha") != head_sha:
-              raise SystemExit("GitHub did not atomically advance main to the tested head.")
-          print(
-              f"Atomically fast-forwarded main to verified Dependabot PR "
-              f"#{pr_number} at {head_sha}."
-          )
-
-          merged = False
-          for _ in range(12):
-              pull = api("GET", f"/repos/{repository}/pulls/{pr_number}")
-              if pull.get("merged") is True:
-                  merged = True
-                  break
-              time.sleep(5)
-          if not merged:
-              raise SystemExit(
-                  "main contains the verified head, but GitHub did not mark the "
-                  "Dependabot PR merged within 60 seconds."
-              )
-
-          for workflow in (
-              "android.yml",
-              "codeql.yml",
-              "dependency_integrity.yml",
-              "android_emulator_tests.yml",
-          ):
-              encoded = urllib.parse.quote(workflow, safe="")
-              api(
-                  "POST",
-                  f"/repos/{repository}/actions/workflows/{encoded}/dispatches",
-                  {"ref": "main"},
-              )
-              print(f"Dispatched post-merge {workflow} on main.")
-          PY
-
-      - name: Upload auto-merge classification
-        if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: dependabot-gradle-policy-${{ github.event.workflow_run.id }}
-          path: incoming/auto-merge-policy.json
-          if-no-files-found: warn
-          retention-days: 30

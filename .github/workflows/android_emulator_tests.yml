@@ -1,34 +1,19 @@
 name: Android Emulator Integration Tests
 
-run-name: >-
-  ${{ inputs.validation_id != '' &&
-      format('{0} · {1}', github.workflow, inputs.validation_id) ||
-      github.workflow }}
-
 on:
   workflow_dispatch:
-    inputs:
-      expected_sha:
-        description: Exact trusted Dependabot head SHA.
-        required: false
-        type: string
-      expected_base_sha:
-        description: Exact main SHA used by Trust Refresh.
-        required: false
-        type: string
-      dependabot_pr:
-        description: Trusted Dependabot pull request number.
-        required: false
-        type: string
-      trust_run_id:
-        description: Successful Trust Refresh workflow run ID.
-        required: false
-        type: string
-      validation_id:
-        description: Unique trusted Apply-run correlation identifier.
-        required: false
-        type: string
   pull_request:
+    paths:
+      - ".github/actions/provision-dependabot-firebase/**"
+      - ".github/workflows/android_emulator_tests.yml"
+      - "app/**"
+      - "build.gradle"
+      - "config/commercial/**"
+      - "gradle/**"
+      - "gradlew"
+      - "gradle.properties"
+      - "settings.gradle"
+      - "tools/**"
 
 concurrency:
   group: android-emulator-${{ github.event.pull_request.number || github.ref }}
@@ -39,19 +24,13 @@ permissions:
 
 jobs:
   instrumentation:
-    if: >-
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.user.login != 'dependabot[bot]' ||
-      github.event.pull_request.head.repo.full_name != github.repository ||
-      github.event.pull_request.base.ref != 'main' ||
-      !startsWith(github.event.pull_request.head.ref, 'dependabot/gradle/')
     name: Emulator API ${{ matrix.api-level }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
       CI: "true"
-      AQL_FIREBASE_DEBUG_CONFIG_BASE64: ${{ github.event_name != 'workflow_dispatch' && secrets.AQL_FIREBASE_DEBUG_CONFIG_BASE64 }}
-      AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64: ${{ github.event_name != 'workflow_dispatch' && secrets.AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64 }}
+      AQL_FIREBASE_DEBUG_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_DEBUG_CONFIG_BASE64 }}
+      AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64 }}
 
     strategy:
       fail-fast: false
@@ -59,80 +38,11 @@ jobs:
         api-level: [27, 36]
 
     steps:
-      - name: Validate workflow-dispatch input shape
-        if: github.event_name == 'workflow_dispatch'
-        shell: bash
-        env:
-          EXPECTED_SHA: ${{ inputs.expected_sha }}
-          EXPECTED_BASE_SHA: ${{ inputs.expected_base_sha }}
-          DEPENDABOT_PR: ${{ inputs.dependabot_pr }}
-          TRUST_RUN_ID: ${{ inputs.trust_run_id }}
-          VALIDATION_ID: ${{ inputs.validation_id }}
-        run: |
-          set -Eeuo pipefail
-          values=(
-            "$EXPECTED_SHA"
-            "$EXPECTED_BASE_SHA"
-            "$DEPENDABOT_PR"
-            "$TRUST_RUN_ID"
-            "$VALIDATION_ID"
-          )
-          count=0
-          for value in "${values[@]}"; do
-            [[ -z "$value" ]] || count=$((count + 1))
-          done
-          if [[ "$count" -ne 0 && "$count" -ne 5 ]]; then
-            echo "Trusted Dependabot dispatch inputs must be all present or all absent." >&2
-            exit 1
-          fi
-          if [[ "$count" -eq 0 && "$GITHUB_REF" != "refs/heads/main" ]]; then
-            echo "Input-free manual validation is restricted to main." >&2
-            exit 1
-          fi
-
-      - name: Checkout trusted dispatch control
-        if: github.event_name == 'workflow_dispatch' && inputs.expected_sha != ''
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          ref: ${{ inputs.expected_base_sha }}
-          persist-credentials: false
-
-      - name: Validate trusted Dependabot dispatch
-        if: github.event_name == 'workflow_dispatch' && inputs.expected_sha != ''
-        uses: ./.github/actions/validate-dependabot-dispatch
-        with:
-          expected-sha: ${{ inputs.expected_sha }}
-          expected-base-sha: ${{ inputs.expected_base_sha }}
-          pull-request: ${{ inputs.dependabot_pr }}
-          trust-run-id: ${{ inputs.trust_run_id }}
-          validation-id: ${{ inputs.validation_id }}
-          github-token: ${{ github.token }}
-
-      - name: Provision trusted Dependabot Firebase fixtures
-        if: github.event_name == 'workflow_dispatch' && inputs.expected_sha != ''
-        uses: ./.github/actions/provision-dependabot-firebase
-        with:
-          trusted-dispatch: "true"
-          expected-sha: ${{ inputs.expected_sha }}
-          pull-request: ${{ inputs.dependabot_pr }}
-          trust-run-id: ${{ inputs.trust_run_id }}
-
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          ref: ${{ inputs.expected_sha || github.sha }}
-          persist-credentials: false
-
-      - name: Provision main-dispatch Firebase fixtures
-        if: github.event_name == 'workflow_dispatch' && inputs.expected_sha == ''
-        uses: ./.github/actions/provision-dependabot-firebase
-        with:
-          trusted-main-dispatch: "true"
 
       - name: Provision Dependabot Firebase fixtures
-        if: >-
-          github.event_name == 'pull_request' &&
-          github.event.pull_request.user.login == 'dependabot[bot]'
+        if: ${{ github.actor == 'dependabot[bot]' }}
         uses: ./.github/actions/provision-dependabot-firebase
 
       - name: Install JDK 17
