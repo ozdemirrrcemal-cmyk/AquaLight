@@ -35,6 +35,8 @@ class AuthContainerFragment : Fragment() {
     private var blurView: BlurView? = null
     private var posterImage: ImageView? = null
     private var safeContent: View? = null
+    private var branding: View? = null
+    private var authNavHost: View? = null
     private var topSystemBarScrim: View? = null
     private var bottomSystemBarScrim: View? = null
     private var appShell: AquaAppShellLayout? = null
@@ -56,6 +58,8 @@ class AuthContainerFragment : Fragment() {
         blurView = root.findViewById(R.id.blurView)
         posterImage = root.findViewById(R.id.posterImage)
         safeContent = root.findViewById(R.id.authSafeContent)
+        branding = root.findViewById(R.id.authBranding)
+        authNavHost = root.findViewById(R.id.auth_nav_host)
         topSystemBarScrim = root.findViewById(R.id.authTopSystemBarScrim)
         bottomSystemBarScrim = root.findViewById(R.id.authBottomSystemBarScrim)
 
@@ -109,6 +113,8 @@ class AuthContainerFragment : Fragment() {
         blurView = null
         posterImage = null
         safeContent = null
+        branding = null
+        authNavHost = null
         topSystemBarScrim = null
         bottomSystemBarScrim = null
         appShell = null
@@ -120,6 +126,7 @@ class AuthContainerFragment : Fragment() {
         ViewCompat.setOnApplyWindowInsetsListener(root) { _, windowInsets ->
             val safeDrawingInsets = windowInsets.getInsets(safeDrawingTypes)
             val imeInsets = windowInsets.getInsets(WindowInsetsCompat.Type.ime())
+            val imeVisible = windowInsets.isVisible(WindowInsetsCompat.Type.ime())
 
             topSystemBarScrim.setInsetScrimHeight(safeDrawingInsets.top)
             bottomSystemBarScrim.setInsetScrimHeight(safeDrawingInsets.bottom)
@@ -128,14 +135,34 @@ class AuthContainerFragment : Fragment() {
                 left = safeDrawingInsets.left,
                 top = safeDrawingInsets.top,
                 right = safeDrawingInsets.right,
-                bottom = maxOf(
-                    safeDrawingInsets.bottom,
-                    imeInsets.bottom
-                )
+                bottom = safeDrawingInsets.bottom
             )
 
-            // The auth container is the sole inset owner for its interactive foreground. Child
-            // login/register screens therefore remain simple and cannot accidentally double-inset.
+            safeContent?.post {
+                val navHost = authNavHost ?: return@post
+                val brandingBottom = branding?.bottom ?: 0
+                val brandingClearance = resources.getDimensionPixelSize(R.dimen.aqua_size_8)
+                val formTopPadding = if (imeVisible) {
+                    (brandingBottom - navHost.top + brandingClearance).coerceAtLeast(0)
+                } else {
+                    0
+                }
+                val formBottomPadding = if (imeVisible) {
+                    (imeInsets.bottom - safeDrawingInsets.bottom).coerceAtLeast(0)
+                } else {
+                    0
+                }
+
+                navHost.updatePadding(
+                    left = navHost.paddingLeft,
+                    top = formTopPadding,
+                    right = navHost.paddingRight,
+                    bottom = formBottomPadding
+                )
+            }
+
+            // The auth container remains the sole inset owner. Child auth screens only provide
+            // scrollable form content, so system-bar and IME insets cannot be applied twice.
             WindowInsetsCompat.Builder(windowInsets)
                 .setInsets(
                     safeDrawingTypes,
