@@ -10,6 +10,7 @@ import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsOutgoingMessage
 
 /** Owner-scoped, correlated and fail-closed authenticated metadata bootstrap. */
+@Suppress("TooManyFunctions")
 internal class DeviceRuntimeMetadataBootstrapCoordinator(
     private val reducer: DeviceRuntimeMetadataReducer = DeviceRuntimeMetadataReducer()
 ) {
@@ -144,22 +145,25 @@ internal class DeviceRuntimeMetadataBootstrapCoordinator(
     private fun processAccepted(
         ticket: DeviceRuntimeMetadataBootstrapTicket,
         response: AqlWsIncomingMessage.Response
-    ): DeviceRuntimeMetadataBootstrapProcessing {
-        val fragment = parseFragment(ticket, response).getOrElse { error ->
-            val rejected = reject(
+    ): DeviceRuntimeMetadataBootstrapProcessing = parseFragment(ticket, response).fold(
+        onSuccess = { fragment ->
+            accept(ticket, fragment)
+                ?.let(DeviceRuntimeMetadataBootstrapProcessing::Reduced)
+                ?: DeviceRuntimeMetadataBootstrapProcessing.Unmatched
+        },
+        onFailure = { error ->
+            reject(
                 ticket.deviceUid,
                 ticket.generation,
                 ticket.kind.parseFailureCode,
                 "${ticket.kind.module}.${ticket.kind.action}:${error.message.orEmpty()}"
-            ) ?: return DeviceRuntimeMetadataBootstrapProcessing.Unmatched
-            return DeviceRuntimeMetadataBootstrapProcessing.Reduced(
-                DeviceRuntimeMetadataReduction.Rejected(rejected)
-            )
+            )?.let { rejected ->
+                DeviceRuntimeMetadataBootstrapProcessing.Reduced(
+                    DeviceRuntimeMetadataReduction.Rejected(rejected)
+                )
+            } ?: DeviceRuntimeMetadataBootstrapProcessing.Unmatched
         }
-        val reduction = accept(ticket, fragment)
-            ?: return DeviceRuntimeMetadataBootstrapProcessing.Unmatched
-        return DeviceRuntimeMetadataBootstrapProcessing.Reduced(reduction)
-    }
+    )
 
     private fun parseFragment(
         ticket: DeviceRuntimeMetadataBootstrapTicket,
@@ -188,23 +192,24 @@ internal class DeviceRuntimeMetadataBootstrapCoordinator(
     private fun registerTicket(ticket: DeviceRuntimeMetadataBootstrapTicket): Boolean =
         synchronized(lock) {
             val current = states[ticket.deviceUid]
-            val duplicateKind = ticketsByRequestId.values.any {
-                it.deviceUid == ticket.deviceUid &&
-                    it.generation == ticket.generation &&
-                    it.kind == ticket.kind
-            }
-            if (
-                ticket.requestId.isNotBlank() &&
+            val hasCurrentGeneration =
                 current is DeviceRuntimeMetadataGenerationState.Collecting &&
-                current.generation == ticket.generation &&
-                !ticketsByRequestId.containsKey(ticket.requestId) &&
-                !duplicateKind
-            ) {
-                ticketsByRequestId[ticket.requestId] = ticket
-                true
-            } else {
-                false
+                    current.generation == ticket.generation
+            val hasUniqueRequestId = !ticketsByRequestId.containsKey(ticket.requestId)
+            val hasUniqueKind = ticketsByRequestId.values.none { registered ->
+                registered.deviceUid == ticket.deviceUid &&
+                    registered.generation == ticket.generation &&
+                    registered.kind == ticket.kind
             }
+            val canRegister = ticket.requestId.isNotBlank() &&
+                hasCurrentGeneration &&
+                hasUniqueRequestId &&
+                hasUniqueKind
+
+            if (canRegister) {
+                ticketsByRequestId[ticket.requestId] = ticket
+            }
+            canRegister
         }
 
     private fun removeTicketsLocked(deviceUid: DeviceUid) {
