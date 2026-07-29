@@ -21,6 +21,11 @@ class DeviceDosingPumpCountResolverTest {
     }
 
     @Test
+    fun `recognizes hyphenated case insensitive Pro 2 identity`() {
+        assertEquals(2, resolveDosingPumpCount(channelCount = 0, modelLabel = "DOSE-PRO-2"))
+    }
+
+    @Test
     fun `defaults unknown dosing models to four pumps`() {
         assertEquals(4, resolveDosingPumpCount(channelCount = 0, modelLabel = "Dosing"))
     }
