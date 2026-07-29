@@ -8,6 +8,7 @@ import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 
 internal fun DeviceSnapshot.toDeviceRootSnapshot(): DeviceRootSnapshot {
+    if (!hasValidatedRuntimeMetadata) return toInvalidDeviceRootSnapshot()
     return when (val validation = AqlCommercialDeviceCatalog.validateSnapshot(this)) {
         is AqlCommercialCatalogValidation.Valid -> toValidatedDeviceRootSnapshot(validation.product)
         is AqlCommercialCatalogValidation.Invalid -> toInvalidDeviceRootSnapshot()
@@ -36,27 +37,23 @@ private fun DeviceSnapshot.toValidatedDeviceRootSnapshot(
         dosingChannelCount = product.limits.dosingChannelCount,
         fanOutputCount = product.limits.fanOutputCount,
         capabilities = product.profile.capabilities.toRootCapabilities(),
-        supportedFeatures = product.profile.supportedFeatures.map { feature -> feature.wireValue },
-        supportedScreens = product.profile.supportedScreens.map { screen -> screen.wireValue },
+        supportedFeatures = product.profile.supportedFeatures.map { it.wireValue },
+        supportedScreens = product.profile.supportedScreens.map { it.wireValue },
         menuFeatures = menuFeatures,
         allowedRoutes = DeviceRootRoutePolicy.allowedRoutes(product)
     )
 }
 
-private fun DeviceSnapshot.toInvalidDeviceRootSnapshot(): DeviceRootSnapshot {
-    return DeviceRootSnapshot(
-        deviceUid = deviceUid.value,
-        title = title,
-        availability = connectionState.onlineState.toOwnerDeviceAvailability(),
-        catalogState = DeviceRootCatalogState.INVALID,
-        ipAddress = endpoint.ip.trim(),
-        firmwareLabel = firmwareLabel()
-    )
-}
+private fun DeviceSnapshot.toInvalidDeviceRootSnapshot(): DeviceRootSnapshot = DeviceRootSnapshot(
+    deviceUid = deviceUid.value,
+    title = title,
+    availability = connectionState.onlineState.toOwnerDeviceAvailability(),
+    catalogState = DeviceRootCatalogState.INVALID,
+    ipAddress = endpoint.ip.trim(),
+    firmwareLabel = firmwareLabel()
+)
 
-private fun DeviceSnapshot.firmwareLabel(): String {
-    return listOf(
-        firmwareVersion.ifBlank { null },
-        firmwareBuild.ifBlank { null }
-    ).filterNotNull().joinToString(separator = " / ")
-}
+private fun DeviceSnapshot.firmwareLabel(): String = listOf(
+    firmwareVersion.ifBlank { null },
+    firmwareBuild.ifBlank { null }
+).filterNotNull().joinToString(separator = " / ")
