@@ -65,6 +65,24 @@ class AqlCommercialDeviceCatalogTest {
     }
 
     @Test
+    fun `runtime module drift rejects an otherwise exact dosing product`() {
+        val product = product("DOSING_DOSE_PRO_2")
+        val metadata = product.toMetadata().let { current ->
+            current.copy(
+                modules = current.modules.copy(
+                    timerApi = true,
+                    dosing = false
+                )
+            )
+        }
+
+        val invalid = AqlCommercialDeviceCatalog.validate(metadata)
+            as AqlCommercialCatalogValidation.Invalid
+        assertEquals(AqlCommercialCatalogFailureCode.MODULES_MISMATCH, invalid.failure.code)
+        assertEquals("modules", invalid.failure.field)
+    }
+
+    @Test
     fun `unknown compatibility identity fails closed without model fallback`() {
         val product = product("TIMER_RELAY_PRO_2")
         val metadata = product.toMetadata().let { current ->
@@ -99,14 +117,11 @@ class AqlCommercialDeviceCatalogTest {
         assertEquals("", root.productKey)
     }
 
-    private fun product(productKey: String): AqlCommercialCatalogProduct {
-        return AqlCommercialDeviceCatalog.products.single { product ->
-            product.productKey.value == productKey
-        }
-    }
+    private fun product(productKey: String): AqlCommercialCatalogProduct =
+        AqlCommercialDeviceCatalog.products.single { it.productKey.value == productKey }
 
-    private fun AqlCommercialCatalogProduct.toMetadata(): DeviceRuntimeMetadata {
-        return DeviceRuntimeMetadata(
+    private fun AqlCommercialCatalogProduct.toMetadata(): DeviceRuntimeMetadata =
+        DeviceRuntimeMetadata(
             identity = DeviceRuntimeIdentity(
                 deviceUid = DeviceUid("catalog-${model.value}"),
                 productKey = productKey,
@@ -143,53 +158,51 @@ class AqlCommercialDeviceCatalogTest {
                 system = true
             )
         )
-    }
 
-    private fun AqlCommercialCatalogProduct.toSnapshot(): DeviceSnapshot {
-        return DeviceSnapshot(
-            identity = DeviceIdentity(
-                uid = DeviceUid("catalog-${model.value}"),
-                customName = "Fixture ${displayName}"
-            ),
-            product = DeviceProduct(
-                brand = "AquaLight",
-                productId = productId.value,
-                productKey = productKey.value,
-                family = family,
-                familyRaw = family.wireValue,
-                line = line.value,
-                model = model.value,
-                displayName = displayName,
-                skuId = skuId.value,
-                skuCode = skuCode.value,
-                hardwareRevision = hardwareRevision.value
-            ),
-            firmwareVersion = "6.0.0",
-            apiVersion = "1",
-            protocolVersion = "1",
-            capabilities = DeviceCapabilities(
-                light = profile.capabilities.light,
-                manualLight = profile.capabilities.manualLight,
-                lightProgram = profile.capabilities.lightProgram,
-                lightPresets = profile.capabilities.lightPresets,
-                lightSimulation = profile.capabilities.lightSimulation,
-                fan = profile.capabilities.fan,
-                cooling = profile.capabilities.cooling,
-                temperature = profile.capabilities.temperature,
-                standaloneTimer = profile.capabilities.standaloneTimer,
-                dosing = profile.capabilities.dosing,
-                timeSync = profile.capabilities.timeSync,
-                ota = profile.capabilities.ota
-            ),
-            limits = DeviceLimits(
-                lightChannelCount = limits.lightChannelCount,
-                fanOutputCount = limits.fanOutputCount,
-                temperatureSensorCount = limits.temperatureSensorCount,
-                timerChannelCount = limits.timerChannelCount,
-                dosingChannelCount = limits.dosingChannelCount
-            ),
-            supportedFeatures = profile.supportedFeatures.map { feature -> feature.wireValue },
-            supportedScreens = profile.supportedScreens.map { screen -> screen.wireValue }
-        )
-    }
+    private fun AqlCommercialCatalogProduct.toSnapshot(): DeviceSnapshot = DeviceSnapshot(
+        identity = DeviceIdentity(
+            uid = DeviceUid("catalog-${model.value}"),
+            customName = "Fixture $displayName"
+        ),
+        product = DeviceProduct(
+            brand = "AquaLight",
+            productId = productId.value,
+            productKey = productKey.value,
+            family = family,
+            familyRaw = family.wireValue,
+            line = line.value,
+            model = model.value,
+            displayName = displayName,
+            skuId = skuId.value,
+            skuCode = skuCode.value,
+            hardwareRevision = hardwareRevision.value
+        ),
+        firmwareVersion = "6.0.0",
+        apiVersion = "1",
+        protocolVersion = "1",
+        capabilities = DeviceCapabilities(
+            light = profile.capabilities.light,
+            manualLight = profile.capabilities.manualLight,
+            lightProgram = profile.capabilities.lightProgram,
+            lightPresets = profile.capabilities.lightPresets,
+            lightSimulation = profile.capabilities.lightSimulation,
+            fan = profile.capabilities.fan,
+            cooling = profile.capabilities.cooling,
+            temperature = profile.capabilities.temperature,
+            standaloneTimer = profile.capabilities.standaloneTimer,
+            dosing = profile.capabilities.dosing,
+            timeSync = profile.capabilities.timeSync,
+            ota = profile.capabilities.ota
+        ),
+        limits = DeviceLimits(
+            lightChannelCount = limits.lightChannelCount,
+            fanOutputCount = limits.fanOutputCount,
+            temperatureSensorCount = limits.temperatureSensorCount,
+            timerChannelCount = limits.timerChannelCount,
+            dosingChannelCount = limits.dosingChannelCount
+        ),
+        supportedFeatures = profile.supportedFeatures.map { it.wireValue },
+        supportedScreens = profile.supportedScreens.map { it.wireValue },
+        runtimeMetadataGeneration = 1L
+    )
 }
