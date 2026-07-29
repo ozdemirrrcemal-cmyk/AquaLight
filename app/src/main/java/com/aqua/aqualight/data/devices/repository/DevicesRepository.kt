@@ -166,12 +166,14 @@ class DevicesRepository(
 
     fun isLocalNetworkAvailable(): Boolean = presenceRuntimeMonitor.isLocalNetworkAvailable()
 
-    fun connectRuntime(deviceUid: DeviceUid): Result<Unit> {
-        val runtime = runtimeRepository
-            ?: return Result.failure(IllegalStateException("Device runtime is not configured."))
-        val snapshot = registryStore.currentDevice(deviceUid)
-            ?: return Result.failure(IllegalArgumentException("Device is not registered."))
-        return runtime.connect(snapshot)
+    fun connectRuntime(deviceUid: DeviceUid): Result<Unit> = runCatching {
+        val runtime = checkNotNull(runtimeRepository) {
+            "Device runtime is not configured."
+        }
+        val snapshot = requireNotNull(registryStore.currentDevice(deviceUid)) {
+            "Device is not registered."
+        }
+        runtime.connect(snapshot).getOrThrow()
     }
 
     fun replaceRuntimeAfterControlFailure(deviceUid: DeviceUid): Result<Unit> = runCatching {
@@ -211,7 +213,7 @@ class DevicesRepository(
 
     suspend fun stageProvisioningSnapshot(snapshot: DeviceSnapshot): DeviceSnapshot {
         runtimeRepository?.activate(snapshot.deviceUid)
-        val registered = registryStore.upsert(DeviceRuntimeMetadataProjector.invalidate(snapshot))
+        val registered = registerUntrustedSnapshot(snapshot)
         if (registered.endpoint.hasWebSocketEndpoint) runtimeRepository?.connect(registered)
         return registered
     }
@@ -227,8 +229,8 @@ class DevicesRepository(
         if (mergedSnapshots.isEmpty()) return
         mergedSnapshots.forEach { snapshot -> runtimeRepository?.activate(snapshot.deviceUid) }
         knownStore?.saveSnapshots(mergedSnapshots)
-        registryStore.upsertAll(mergedSnapshots.map(DeviceRuntimeMetadataProjector::invalidate))
-        mergedSnapshots
+        val registeredSnapshots = mergedSnapshots.map(::registerUntrustedSnapshot)
+        registeredSnapshots
             .filter { snapshot -> snapshot.endpoint.hasWebSocketEndpoint }
             .forEach { snapshot -> runtimeRepository?.connect(snapshot) }
     }
@@ -284,9 +286,19 @@ class DevicesRepository(
         )
         runtimeRepository?.activate(merged.deviceUid)
         knownStore?.saveSnapshot(merged)
-        val registered = registryStore.upsert(DeviceRuntimeMetadataProjector.invalidate(merged))
+        val registered = registerUntrustedSnapshot(merged)
         if (registered.endpoint.hasWebSocketEndpoint) runtimeRepository?.connect(registered)
         return registered
+    }
+
+    private fun registerUntrustedSnapshot(snapshot: DeviceSnapshot): DeviceSnapshot {
+        val merged = DeviceSnapshotMerger.merge(
+            previous = registryStore.currentDevice(snapshot.deviceUid),
+            incoming = snapshot
+        )
+        val untrusted = DeviceRuntimeMetadataProjector.invalidate(merged)
+        return registryStore.updateSnapshot(snapshot.deviceUid) { untrusted }
+            ?: registryStore.upsert(untrusted)
     }
 
     private fun mergeIncomingSnapshots(snapshots: Iterable<DeviceSnapshot>): List<DeviceSnapshot> {
@@ -334,8 +346,11 @@ class DevicesRepository(
         snapshots: Iterable<DeviceSnapshot>
     ): List<DeviceSnapshot> {
         val ignoredDeviceUids = knownStore?.ignoredDeviceUidValues().orEmpty()
-        if (ignoredDeviceUids.isEmpty()) return snapshots.toList()
-        return snapshots.filterNot { snapshot -> snapshot.deviceUid.value in ignoredDeviceUids }
+        return if (ignoredDeviceUids.isEmpty()) {
+            snapshots.toList()
+        } else {
+            snapshots.filterNot { snapshot -> snapshot.deviceUid.value in ignoredDeviceUids }
+        }
     }
 
     private suspend fun applyRuntimeEvent(event: AqlWsEvent) {
@@ -355,16 +370,19 @@ class DevicesRepository(
     }
 
     private suspend fun applyRuntimeMetadataMessage(event: AqlWsEvent.Message) {
-        val response = event.parsed as? AqlWsIncomingMessage.Response ?: return
-        val runtime = runtimeRepository ?: return
-        when (val update = runtime.processMetadataResponse(event.deviceUid, response)) {
+        val response = event.parsed as? AqlWsIncomingMessage.Response
+        val update = response?.let { message ->
+            runtimeRepository?.processMetadataResponse(event.deviceUid, message)
+        } ?: DeviceRuntimeMetadataUpdate.Unmatched
+
+        when (update) {
             DeviceRuntimeMetadataUpdate.Unmatched,
             is DeviceRuntimeMetadataUpdate.Collecting -> Unit
             is DeviceRuntimeMetadataUpdate.Ready -> {
                 val registered = registryStore.updateSnapshot(event.deviceUid) { current ->
                     DeviceRuntimeMetadataProjector.applyReady(current, update.state)
-                } ?: return
-                knownStore?.saveSnapshot(registered)
+                }
+                registered?.let { snapshot -> knownStore?.saveSnapshot(snapshot) }
             }
             is DeviceRuntimeMetadataUpdate.Rejected -> {
                 invalidateRuntimeMetadata(event.deviceUid)
@@ -403,8 +421,9 @@ class DevicesRepository(
 
     private fun applyRuntimeClosed(event: AqlWsEvent.Closed) {
         val currentState = runtimeRepository?.currentConnectionState(event.deviceUid)
-        if (!RuntimeClosedEventPolicy.shouldClearRuntimeProof(currentState)) return
-        applyRuntimeUnavailable(event.deviceUid)
+        if (RuntimeClosedEventPolicy.shouldClearRuntimeProof(currentState)) {
+            applyRuntimeUnavailable(event.deviceUid)
+        }
     }
 
     @Suppress("LongMethod")
@@ -482,8 +501,7 @@ class DevicesRepository(
                     )
                 }
             }
-            is AqlWsConnectionState.Failed -> {
-                val deviceUid = state.deviceUid ?: return
+            is AqlWsConnectionState.Failed -> state.deviceUid?.let { deviceUid ->
                 applyRuntimeUnavailable(
                     deviceUid,
                     state.message.ifBlank { "Connection failed." }
