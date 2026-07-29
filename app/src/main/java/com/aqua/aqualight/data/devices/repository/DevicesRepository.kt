@@ -219,10 +219,10 @@ class DevicesRepository(
     }
 
     suspend fun commitProvisioningSnapshot(snapshot: DeviceSnapshot): DeviceSnapshot =
-        persistThenRegister(snapshot)
+        persistThenRegister(snapshot, preserveCurrentRuntimeTrust = true)
 
     suspend fun registerSnapshot(snapshot: DeviceSnapshot): DeviceSnapshot =
-        persistThenRegister(snapshot)
+        persistThenRegister(snapshot, preserveCurrentRuntimeTrust = false)
 
     suspend fun registerSnapshots(snapshots: Iterable<DeviceSnapshot>) {
         val mergedSnapshots = mergeIncomingSnapshots(snapshots)
@@ -279,14 +279,24 @@ class DevicesRepository(
         registryStore.clear()
     }
 
-    private suspend fun persistThenRegister(snapshot: DeviceSnapshot): DeviceSnapshot {
+    private suspend fun persistThenRegister(
+        snapshot: DeviceSnapshot,
+        preserveCurrentRuntimeTrust: Boolean
+    ): DeviceSnapshot {
         val merged = DeviceSnapshotMerger.merge(
             previous = registryStore.currentDevice(snapshot.deviceUid),
             incoming = snapshot
         )
         runtimeRepository?.activate(merged.deviceUid)
         knownStore?.saveSnapshot(merged)
-        val registered = registerUntrustedSnapshot(merged)
+        val preserveTrust = preserveCurrentRuntimeTrust &&
+            runtimeRepository?.isCurrentValidatedMetadata(merged) == true
+        val registered = if (preserveTrust) {
+            registryStore.updateSnapshot(merged.deviceUid) { merged }
+                ?: registryStore.upsert(merged)
+        } else {
+            registerUntrustedSnapshot(merged)
+        }
         if (registered.endpoint.hasWebSocketEndpoint) runtimeRepository?.connect(registered)
         return registered
     }
