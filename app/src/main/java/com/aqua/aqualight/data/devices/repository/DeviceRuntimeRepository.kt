@@ -1,15 +1,16 @@
 package com.aqua.aqualight.data.devices.repository
 
 import android.content.Context
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataFailureCode
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeSyncCoordinator
+import com.aqua.aqualight.data.devices.runtime.ws.AqlPrivateLanEndpoint
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsClient
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
-import com.aqua.aqualight.data.devices.runtime.ws.AqlPrivateLanEndpoint
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsTokenProvider
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsTransport
 import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
@@ -102,6 +103,8 @@ class DeviceRuntimeRepository(
     private val tokenLifecycleMutex = Mutex()
     private val sessions = ConcurrentHashMap<DeviceUid, RuntimeSession>()
     private val retiredDeviceUids = ConcurrentHashMap.newKeySet<DeviceUid>()
+
+    internal val metadataBootstrapCoordinator = DeviceRuntimeMetadataBootstrapCoordinator()
 
     val runtimeModules: DeviceRuntimeModuleProvider = DeviceRuntimeModuleProvider { deviceUid ->
         sessions[deviceUid]?.commandClient
@@ -203,6 +206,14 @@ class DeviceRuntimeRepository(
             sessions.values.toList()
         }
         activeSessions.forEach { session ->
+            metadataBootstrapCoordinator.currentState(session.deviceUid)?.let { state ->
+                metadataBootstrapCoordinator.reject(
+                    deviceUid = session.deviceUid,
+                    generation = state.generation,
+                    code = DeviceRuntimeMetadataFailureCode.RUNTIME_UNAVAILABLE,
+                    field = "localNetwork"
+                )
+            }
             synchronized(session) {
                 session.wsClient.disconnect(reason = LOCAL_NETWORK_UNAVAILABLE_REASON)
             }
@@ -248,6 +259,7 @@ class DeviceRuntimeRepository(
      */
     suspend fun retire(deviceUid: DeviceUid) {
         val session = detachSessionForRetirement(deviceUid)
+        metadataBootstrapCoordinator.clear(deviceUid)
         timeSyncCoordinator.clearSessionMemory(deviceUid)
         session?.shutdown()
     }
@@ -255,12 +267,14 @@ class DeviceRuntimeRepository(
     /** Immediate terminal fallback; deletion flows should prefer [retire]. */
     fun close(deviceUid: DeviceUid) {
         val session = detachSessionForRetirement(deviceUid)
+        metadataBootstrapCoordinator.clear(deviceUid)
         timeSyncCoordinator.clearSessionMemory(deviceUid)
         session?.close()
     }
 
     override fun close() {
         val activeSessions = beginRepositoryClose() ?: return
+        metadataBootstrapCoordinator.clearAll()
         repositoryJob.cancel()
         activeSessions.forEach { session ->
             timeSyncCoordinator.clearSessionMemory(session.deviceUid)
@@ -274,6 +288,7 @@ class DeviceRuntimeRepository(
      */
     suspend fun shutdown() {
         val activeSessions = beginRepositoryClose()
+        metadataBootstrapCoordinator.clearAll()
         repositoryJob.cancel()
 
         if (activeSessions != null) {
@@ -383,34 +398,48 @@ class DeviceRuntimeRepository(
             is AqlWsEvent.Opened -> Unit
 
             is AqlWsEvent.Authenticated -> {
-                sendAuthenticatedBootstrap(session.commandClient)
-                timeSyncCoordinator.syncPhoneNowIfNeeded(deviceUid = event.deviceUid)
+                if (!sendAuthenticatedBootstrap(session)) {
+                    session.wsClient.disconnect(reason = METADATA_BOOTSTRAP_FAILED_REASON)
+                }
             }
 
             is AqlWsEvent.Message -> Unit
 
-            is AqlWsEvent.Closed,
-            is AqlWsEvent.Failure -> Unit
+            is AqlWsEvent.Closed -> {
+                metadataBootstrapCoordinator.currentState(event.deviceUid)?.let { state ->
+                    metadataBootstrapCoordinator.reject(
+                        deviceUid = event.deviceUid,
+                        generation = state.generation,
+                        code = DeviceRuntimeMetadataFailureCode.RUNTIME_UNAVAILABLE,
+                        field = "closed"
+                    )
+                }
+            }
+
+            is AqlWsEvent.Failure -> {
+                metadataBootstrapCoordinator.currentState(event.deviceUid)?.let { state ->
+                    metadataBootstrapCoordinator.reject(
+                        deviceUid = event.deviceUid,
+                        generation = state.generation,
+                        code = DeviceRuntimeMetadataFailureCode.RUNTIME_UNAVAILABLE,
+                        field = "failure"
+                    )
+                }
+            }
         }
     }
 
-    private fun sendAuthenticatedBootstrap(commandClient: AqlWsCommandClient) {
-        commandClient.securityStatus()
-        commandClient.deviceIdentity()
-        commandClient.deviceStatus()
-        commandClient.deviceCapabilities()
-        commandClient.networkStatus()
-        commandClient.timeStatus()
-        commandClient.firmwareStatus()
-        commandClient.lightStatus()
-        commandClient.coolingStatus()
-        commandClient.timerStatus()
-        commandClient.dosingStatus()
+    private fun sendAuthenticatedBootstrap(session: RuntimeSession): Boolean {
+        return metadataBootstrapCoordinator.beginAndDispatch(
+            deviceUid = session.deviceUid,
+            send = session.wsClient::send
+        ).isSuccess
     }
 
     companion object {
         private const val EVENT_BUFFER_CAPACITY = 256
         private const val LOCAL_NETWORK_UNAVAILABLE_REASON = "local network unavailable"
+        private const val METADATA_BOOTSTRAP_FAILED_REASON = "metadata bootstrap failed"
 
         fun withCredentialStore(
             context: Context,
