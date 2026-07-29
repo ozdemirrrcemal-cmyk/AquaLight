@@ -16,29 +16,15 @@ import com.aqua.aqualight.data.devices.model.DeviceProductModel
 import com.aqua.aqualight.data.devices.model.DeviceProtocolVersion
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeIdentity
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeIdentityEnvelope
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeTransportMetadata
 import com.aqua.aqualight.data.devices.model.DeviceSkuCode
 import com.aqua.aqualight.data.devices.model.DeviceSkuId
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import org.json.JSONArray
 import org.json.JSONObject
 
-data class ParsedDeviceRuntimeIdentity(
-    val identity: DeviceRuntimeIdentity,
-    val shortId: String,
-    val serialNumber: String,
-    val firmwareSerial: String,
-    val macAddress: String,
-    val setupCode: String,
-    val runtime: DeviceRuntimeTransportMetadata
-)
-
-data class DeviceRuntimeTransportMetadata(
-    val transport: String,
-    val wsSchema: String,
-    val wsPath: String,
-    val wsPort: Int,
-    val wsProtocolVersion: Int
-)
+typealias ParsedDeviceRuntimeIdentity = DeviceRuntimeIdentityEnvelope
 
 object DeviceRuntimeIdentityParser {
 
@@ -54,10 +40,9 @@ object DeviceRuntimeIdentityParser {
         require(reportedDeviceUid == expectedDeviceUid) {
             "device.identity.get deviceUid does not match the authenticated device."
         }
-        val familyWire = data.requireExactString("family")
-        val family = requireNotNull(DeviceFamily.fromWireExact(familyWire)) {
-            "device.identity.get family is not an exact commercial family."
-        }
+        val family = requireNotNull(
+            DeviceFamily.fromWireExact(data.requireExactString("family"))
+        ) { "device.identity.get family is not an exact commercial family." }
 
         ParsedDeviceRuntimeIdentity(
             identity = DeviceRuntimeIdentity(
@@ -78,9 +63,7 @@ object DeviceRuntimeIdentityParser {
                     data.requireExactString("firmwareVersion")
                 ),
                 apiVersion = DeviceApiVersion(data.requireExactInt("apiVersion")),
-                protocolVersion = DeviceProtocolVersion(
-                    data.requireExactInt("protocolVersion")
-                )
+                protocolVersion = DeviceProtocolVersion(data.requireExactInt("protocolVersion"))
             ),
             shortId = data.requireExactString("shortId"),
             serialNumber = data.requireExactString("serialNumber"),
@@ -98,34 +81,13 @@ object DeviceRuntimeIdentityParser {
     }
 
     private val IDENTITY_KEYS = setOf(
-        "productKey",
-        "productId",
-        "setupCode",
-        "deviceUid",
-        "shortId",
-        "serialNumber",
-        "firmwareSerial",
-        "macAddress",
-        "brand",
-        "family",
-        "line",
-        "model",
-        "displayName",
-        "skuId",
-        "skuCode",
-        "firmwareVersion",
-        "hardwareRevision",
-        "apiVersion",
-        "protocolVersion",
-        "runtime"
+        "productKey", "productId", "setupCode", "deviceUid", "shortId",
+        "serialNumber", "firmwareSerial", "macAddress", "brand", "family",
+        "line", "model", "displayName", "skuId", "skuCode", "firmwareVersion",
+        "hardwareRevision", "apiVersion", "protocolVersion", "runtime"
     )
-
     private val RUNTIME_KEYS = setOf(
-        "transport",
-        "wsSchema",
-        "wsPath",
-        "wsPort",
-        "wsProtocolVersion"
+        "transport", "wsSchema", "wsPath", "wsPort", "wsProtocolVersion"
     )
 }
 
@@ -188,33 +150,15 @@ object DeviceRuntimeCapabilitiesParser {
     }
 
     private val CAPABILITY_RESPONSE_KEYS = setOf(
-        "capabilities",
-        "limits",
-        "supportedFeatures",
-        "supportedScreens"
+        "capabilities", "limits", "supportedFeatures", "supportedScreens"
     )
-
     private val CAPABILITY_KEYS = setOf(
-        "light",
-        "manualLight",
-        "lightProgram",
-        "lightPresets",
-        "lightSimulation",
-        "fan",
-        "cooling",
-        "temperature",
-        "standaloneTimer",
-        "dosing",
-        "timeSync",
-        "ota"
+        "light", "manualLight", "lightProgram", "lightPresets", "lightSimulation",
+        "fan", "cooling", "temperature", "standaloneTimer", "dosing", "timeSync", "ota"
     )
-
     private val LIMIT_KEYS = setOf(
-        "lightChannelCount",
-        "fanOutputCount",
-        "temperatureSensorCount",
-        "timerChannelCount",
-        "dosingChannelCount"
+        "lightChannelCount", "fanOutputCount", "temperatureSensorCount",
+        "timerChannelCount", "dosingChannelCount"
     )
 }
 
