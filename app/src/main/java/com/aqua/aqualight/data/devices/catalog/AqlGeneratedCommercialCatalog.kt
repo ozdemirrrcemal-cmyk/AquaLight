@@ -1,6 +1,6 @@
 // GENERATED FILE. DO NOT EDIT.
 // Source: protocol/fixtures/aql_product_catalog_v1.json
-// Source firmware commit: 2ac54677f19b270f970894b21880ab99753ac7f4
+// Source firmware commit: cf2222e58e6c69a729071a5d1205497b3fceaa70
 
 package com.aqua.aqualight.data.devices.catalog
 
@@ -57,7 +57,6 @@ private val PROFILE_LIGHT_WRGB_PRO_ELITE = AqlCommercialCatalogProfile(
         AqlDeviceScreenKey.LIGHT_ACCLIMATION,
         AqlDeviceScreenKey.LIGHT_TEMPERATURE_PROTECTION,
         AqlDeviceScreenKey.LIGHT_FAN_CONTROL,
-        AqlDeviceScreenKey.COOLING_CONTROL,
         AqlDeviceScreenKey.ADVANCED,
     ),
     expectedMenuFeatureNames = setOf(
@@ -136,6 +135,7 @@ private val PROFILE_TIMER_RELAY_PRO = AqlCommercialCatalogProfile(
         AqlDeviceFeatureKey.LAN_DISCOVERY,
         AqlDeviceFeatureKey.TIMER_CONTROL,
         AqlDeviceFeatureKey.TIMER_MANUAL_RUN,
+        AqlDeviceFeatureKey.TIMER_CHANNEL_DISPLAY_NAME,
         AqlDeviceFeatureKey.OTA_UPDATE,
     ),
     supportedScreens = setOf(
@@ -174,6 +174,7 @@ private val PROFILE_DOSING_DOSE_PRO = AqlCommercialCatalogProfile(
         AqlDeviceFeatureKey.DOSING_CONTROL,
         AqlDeviceFeatureKey.DOSING_CALIBRATION,
         AqlDeviceFeatureKey.DOSING_RESERVOIR_TRACKING,
+        AqlDeviceFeatureKey.DOSING_CHANNEL_DISPLAY_NAME,
         AqlDeviceFeatureKey.OTA_UPDATE,
     ),
     supportedScreens = setOf(

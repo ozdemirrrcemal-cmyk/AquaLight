@@ -15,8 +15,8 @@ CONTRACT_PATH = ROOT / "app/src/main/java/com/aqua/aqualight/data/devices/contra
 MAPPING_PATH = ROOT / "app/src/main/java/com/aqua/aqualight/data/devices/DeviceApplicationMapping.kt"
 RESOLVER_PATH = ROOT / "app/src/main/java/com/aqua/aqualight/data/devices/DeviceRootMenuFeatureResolver.kt"
 
-FIXTURE_SHA256 = "f98d0543dd4efabedb562fa8d34fd85aab68991e000bc0d916d173ce8b9f296d"
-FIRMWARE_MERGE_COMMIT = "2ac54677f19b270f970894b21880ab99753ac7f4"
+FIXTURE_SHA256 = "87e27dd22078620ef59db4effab82b8e4e87cec95eea23ae5be8d4b3d697a1b3"
+FIRMWARE_MERGE_COMMIT = "cf2222e58e6c69a729071a5d1205497b3fceaa70"
 
 CAPABILITY_KEYS = {
     "light",
@@ -156,6 +156,13 @@ if isinstance(source, dict):
 
 feature_values = enum_wire_values(contract_text, "AqlDeviceFeatureKey")
 screen_values = enum_wire_values(contract_text, "AqlDeviceScreenKey")
+
+require(
+    {"TIMER_CHANNEL_DISPLAY_NAME", "DOSING_CHANNEL_DISPLAY_NAME"}.issubset(
+        feature_values
+    ),
+    "current firmware display-name feature tokens are missing from Android",
+)
 require("value.trim()" not in contract_text, "wire keys must not be trimmed")
 require(".lowercase()" not in contract_text, "wire keys must remain case-sensitive")
 require(
@@ -165,6 +172,16 @@ require(
 
 profiles = fixture.get("profiles")
 products = fixture.get("products")
+
+if isinstance(profiles, dict):
+    wrgb_screens = set(
+        profiles.get("lightWrgbProElite", {}).get("supportedScreens", [])
+    )
+    require(
+        "LIGHT_FAN_CONTROL" in wrgb_screens
+        and "COOLING_CONTROL" not in wrgb_screens,
+        "WRGB must expose only the LIGHT_FAN_CONTROL family destination",
+    )
 require(
     isinstance(profiles, dict) and len(profiles) == 5,
     "catalog must contain exactly five shared capability profiles",

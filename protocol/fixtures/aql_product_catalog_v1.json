@@ -3,7 +3,7 @@
   "schema": "aql.product.catalog.fixture.v1",
   "source": {
     "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
-    "commit": "2ac54677f19b270f970894b21880ab99753ac7f4",
+    "commit": "cf2222e58e6c69a729071a5d1205497b3fceaa70",
     "catalogPath": "src/product/AqlProductCatalog.hpp",
     "exporterPath": "tools/aql_export_product_catalog.cpp",
     "otaManifestSchema": "aql.ota.manifest.v1"
@@ -49,7 +49,6 @@
         "LIGHT_ACCLIMATION",
         "LIGHT_TEMPERATURE_PROTECTION",
         "LIGHT_FAN_CONTROL",
-        "COOLING_CONTROL",
         "ADVANCED"
       ],
       "expectedMenuFeatures": [
@@ -126,6 +125,7 @@
         "LAN_DISCOVERY",
         "TIMER_CONTROL",
         "TIMER_MANUAL_RUN",
+        "TIMER_CHANNEL_DISPLAY_NAME",
         "OTA_UPDATE"
       ],
       "supportedScreens": [
@@ -163,6 +163,7 @@
         "DOSING_CONTROL",
         "DOSING_CALIBRATION",
         "DOSING_RESERVOIR_TRACKING",
+        "DOSING_CHANNEL_DISPLAY_NAME",
         "OTA_UPDATE"
       ],
       "supportedScreens": [
