@@ -18,10 +18,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -45,7 +47,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 
@@ -81,8 +82,9 @@ fun DeviceDosingPumpScreen(
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = SCREEN_HORIZONTAL_PADDING, vertical = SCREEN_VERTICAL_PADDING),
-        contentAlignment = Alignment.Center
+            .padding(horizontal = SCREEN_HORIZONTAL_PADDING)
+            .padding(top = SCREEN_TOP_PADDING),
+        contentAlignment = Alignment.TopCenter
     ) {
         val maximumDeviceWidth = if (supportedPumpCount == DOSING_PRO_2_PUMP_COUNT) {
             DOSING_PRO_2_MAX_WIDTH
@@ -110,69 +112,65 @@ fun DosingPumpDevice(
             pumpHeads.size == DOSING_PRO_4_PUMP_COUNT
     )
 
-    BoxWithConstraints(modifier = modifier) {
-        val totalSpacing = PUMP_SPACING * (pumpHeads.size - 1)
-        val pumpSize = (maxWidth - totalSpacing) / pumpHeads.size.toFloat()
-
+    Box(
+        modifier = modifier
+            .shadow(
+                elevation = DEVICE_SHADOW_ELEVATION,
+                shape = DEVICE_OUTER_SHAPE,
+                clip = false
+            )
+            .background(
+                brush = DosingPumpPalette.outerShell,
+                shape = DEVICE_OUTER_SHAPE
+            )
+            .border(
+                width = DEVICE_EDGE_WIDTH,
+                color = DosingPumpPalette.outerEdge,
+                shape = DEVICE_OUTER_SHAPE
+            )
+            .padding(DEVICE_OUTER_INSET)
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .shadow(
-                    elevation = DEVICE_SHADOW_ELEVATION,
-                    shape = DEVICE_OUTER_SHAPE,
-                    clip = false
-                )
                 .background(
-                    brush = DosingPumpPalette.outerShell,
-                    shape = DEVICE_OUTER_SHAPE
+                    brush = DosingPumpPalette.innerShell,
+                    shape = DEVICE_INNER_SHAPE
                 )
                 .border(
                     width = DEVICE_EDGE_WIDTH,
-                    color = DosingPumpPalette.outerEdge,
-                    shape = DEVICE_OUTER_SHAPE
+                    color = DosingPumpPalette.innerEdge,
+                    shape = DEVICE_INNER_SHAPE
                 )
-                .padding(DEVICE_OUTER_INSET)
+                .padding(DEVICE_INNER_INSET)
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        brush = DosingPumpPalette.innerShell,
-                        shape = DEVICE_INNER_SHAPE
+                        brush = DosingPumpPalette.metalDeck,
+                        shape = DEVICE_DECK_SHAPE
                     )
                     .border(
                         width = DEVICE_EDGE_WIDTH,
-                        color = DosingPumpPalette.innerEdge,
-                        shape = DEVICE_INNER_SHAPE
+                        color = DosingPumpPalette.metalHighlight,
+                        shape = DEVICE_DECK_SHAPE
                     )
-                    .padding(DEVICE_INNER_INSET)
+                    .padding(DEVICE_DECK_INSET)
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            brush = DosingPumpPalette.metalDeck,
-                            shape = DEVICE_DECK_SHAPE
-                        )
-                        .border(
-                            width = DEVICE_EDGE_WIDTH,
-                            color = DosingPumpPalette.metalHighlight,
-                            shape = DEVICE_DECK_SHAPE
-                        )
-                        .padding(DEVICE_DECK_INSET)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(PUMP_SPACING),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(PUMP_SPACING),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        pumpHeads.forEach { pumpHead ->
-                            DosingPumpHead(
-                                pumpHead = pumpHead,
-                                pumpSize = pumpSize,
-                                onClick = { onPumpClick(pumpHead.channelNumber) }
-                            )
-                        }
+                    pumpHeads.forEach { pumpHead ->
+                        DosingPumpHead(
+                            pumpHead = pumpHead,
+                            onClick = { onPumpClick(pumpHead.channelNumber) },
+                            modifier = Modifier
+                                .weight(NORMAL_SCALE)
+                                .aspectRatio(NORMAL_SCALE)
+                        )
                     }
                 }
             }
@@ -183,8 +181,8 @@ fun DosingPumpDevice(
 @Composable
 private fun DosingPumpHead(
     pumpHead: DosingPumpHeadUiState,
-    pumpSize: Dp,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
@@ -195,11 +193,9 @@ private fun DosingPumpHead(
         stateLabel
     )
     val pressedScale = if (pressed) PRESSED_SCALE else NORMAL_SCALE
-    val hubSize = pumpSize * HUB_SIZE_RATIO
 
-    Box(
-        modifier = Modifier
-            .size(pumpSize)
+    BoxWithConstraints(
+        modifier = modifier
             .graphicsLayer {
                 scaleX = pressedScale
                 scaleY = pressedScale
@@ -224,6 +220,8 @@ private fun DosingPumpHead(
             .padding(PUMP_FRAME_INSET),
         contentAlignment = Alignment.Center
     ) {
+        val hubSize = maxWidth * HUB_SIZE_RATIO
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -472,7 +470,7 @@ private const val RUNNING_PULSE_DURATION_MS = 1_450
 private const val ERROR_PULSE_DURATION_MS = 720
 
 private val SCREEN_HORIZONTAL_PADDING = 16.dp
-private val SCREEN_VERTICAL_PADDING = 24.dp
+private val SCREEN_TOP_PADDING = 12.dp
 private val DOSING_PRO_2_MAX_WIDTH = 320.dp
 private val DOSING_PRO_4_MAX_WIDTH = 760.dp
 private val DEVICE_OUTER_SHAPE = RoundedCornerShape(30.dp)
