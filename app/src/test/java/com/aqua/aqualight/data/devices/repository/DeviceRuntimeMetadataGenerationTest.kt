@@ -1,5 +1,7 @@
 package com.aqua.aqualight.data.devices.repository
 
+import com.aqua.aqualight.data.devices.contract.AqlDeviceFeatureKey
+import com.aqua.aqualight.data.devices.contract.AqlDeviceScreenKey
 import com.aqua.aqualight.data.devices.model.DeviceApiVersion
 import com.aqua.aqualight.data.devices.model.DeviceCapabilitySet
 import com.aqua.aqualight.data.devices.model.DeviceFamily
@@ -16,12 +18,14 @@ import com.aqua.aqualight.data.devices.model.DeviceProtocolVersion
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeIdentity
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeIdentityEnvelope
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataFailureCode
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataFragment
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataGenerationState
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataReduction
-import com.aqua.aqualight.data.devices.model.DeviceRuntimeModuleKey
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeModuleStatus
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeModules
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeTransportMetadata
 import com.aqua.aqualight.data.devices.model.DeviceSkuCode
 import com.aqua.aqualight.data.devices.model.DeviceSkuId
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
@@ -31,7 +35,6 @@ import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -41,153 +44,107 @@ class DeviceRuntimeMetadataGenerationTest {
     private val deviceUid = DeviceUid("typed-generation-device")
 
     @Test
-    fun `metadata publishes only after all three fragments from one generation`() {
-        val collecting = reducer.begin(deviceUid = deviceUid, previous = null)
-        assertNull(collecting.publishedMetadata)
-
+    fun `metadata publishes only after exact three fragments from one generation`() {
+        val collecting = reducer.begin(deviceUid, null)
         val afterModules = reducer.accept(
             collecting,
-            DeviceRuntimeMetadataFragment.Modules(collecting.generation, modules())
+            DeviceRuntimeMetadataFragment.Modules(collecting.generation, moduleStatus())
         )
         assertTrue(afterModules is DeviceRuntimeMetadataGenerationState.Collecting)
         assertNull(afterModules.publishedMetadata)
 
         val afterIdentity = reducer.accept(
             afterModules,
-            DeviceRuntimeMetadataFragment.Identity(collecting.generation, identity())
+            DeviceRuntimeMetadataFragment.Identity(collecting.generation, identityEnvelope())
         )
         assertTrue(afterIdentity is DeviceRuntimeMetadataGenerationState.Collecting)
-        assertNull(afterIdentity.publishedMetadata)
 
         val ready = reducer.accept(
             afterIdentity,
             DeviceRuntimeMetadataFragment.Capabilities(collecting.generation, capabilities())
-        )
-        assertTrue(ready is DeviceRuntimeMetadataGenerationState.Ready)
-        val metadata = checkNotNull(ready.publishedMetadata)
-        assertEquals(identity(), metadata.identity)
-        assertEquals(capabilities(), metadata.capabilities)
-        assertEquals(modules(), metadata.modules)
+        ) as DeviceRuntimeMetadataGenerationState.Ready
+
+        assertEquals(identity(), ready.metadata.identity)
+        assertEquals(capabilities(), ready.metadata.capabilities)
+        assertEquals(modules(), ready.metadata.modules)
+        assertEquals(identityEnvelope(), ready.identityEnvelope)
+        assertEquals(moduleStatus(), ready.moduleStatus)
     }
 
     @Test
-    fun `new authentication invalidates ready metadata and ignores stale fragments`() {
-        val first = reducer.begin(deviceUid = deviceUid, previous = null)
+    fun `new authentication withdraws publication and ignores stale fragments`() {
+        val first = reducer.begin(deviceUid, null)
         val firstReady = readyState(first)
-        assertTrue(firstReady is DeviceRuntimeMetadataGenerationState.Ready)
+        val second = reducer.begin(deviceUid, firstReady)
 
-        val second = reducer.begin(deviceUid = deviceUid, previous = firstReady)
         assertEquals(first.generation.value + 1L, second.generation.value)
         assertNull(second.publishedMetadata)
         assertNull(second.identity)
         assertNull(second.capabilities)
-        assertNull(second.modules)
+        assertNull(second.moduleStatus)
 
         val stale = reducer.reduce(
-            current = second,
-            fragment = DeviceRuntimeMetadataFragment.Identity(first.generation, identity())
+            second,
+            DeviceRuntimeMetadataFragment.Identity(first.generation, identityEnvelope())
         )
         assertTrue(stale is DeviceRuntimeMetadataReduction.IgnoredStale)
-        assertEquals(second, stale.state)
         assertNull(stale.state.publishedMetadata)
     }
 
     @Test
-    fun `conflicting duplicate rejects generation and withdraws publication`() {
-        val collecting = reducer.begin(deviceUid = deviceUid, previous = null)
-        val ready = readyState(collecting)
-        val conflicting = identity().copy(model = DeviceProductModel("relay_pro_4"))
-
-        val reduction = reducer.reduce(
-            current = ready,
-            fragment = DeviceRuntimeMetadataFragment.Identity(collecting.generation, conflicting)
+    fun `status product envelope mismatch rejects generation in either arrival order`() {
+        val collecting = reducer.begin(deviceUid, null)
+        val wrongStatus = moduleStatus().copy(model = DeviceProductModel("relay_pro_4"))
+        val afterIdentity = reducer.accept(
+            collecting,
+            DeviceRuntimeMetadataFragment.Identity(collecting.generation, identityEnvelope())
         )
+        val rejected = reducer.reduce(
+            afterIdentity,
+            DeviceRuntimeMetadataFragment.Modules(collecting.generation, wrongStatus)
+        ) as DeviceRuntimeMetadataReduction.Rejected
 
-        assertTrue(reduction is DeviceRuntimeMetadataReduction.Rejected)
-        val rejected = reduction.state as DeviceRuntimeMetadataGenerationState.Rejected
         assertEquals(
-            DeviceRuntimeMetadataFailureCode.CONFLICTING_IDENTITY,
-            rejected.failure.code
+            DeviceRuntimeMetadataFailureCode.STATUS_IDENTITY_MISMATCH,
+            rejected.state.failure.code
         )
-        assertNull(rejected.publishedMetadata)
+        assertEquals("model", rejected.state.failure.field)
+        assertNull(rejected.state.publishedMetadata)
     }
 
     @Test
-    fun `identity for another device rejects current generation`() {
-        val collecting = reducer.begin(deviceUid = deviceUid, previous = null)
-        val wrongIdentity = identity().copy(deviceUid = DeviceUid("another-device"))
+    fun `exact parsers reject runtime mismatch unknown fields and type coercion`() {
+        assertEquals(identityEnvelope(), DeviceRuntimeIdentityParser.parse(deviceUid, identityJson()).getOrThrow())
+        assertEquals(capabilities(), DeviceRuntimeCapabilitiesParser.parse(capabilitiesJson()).getOrThrow())
 
-        val reduction = reducer.reduce(
-            current = collecting,
-            fragment = DeviceRuntimeMetadataFragment.Identity(
-                collecting.generation,
-                wrongIdentity
-            )
-        )
-
-        val rejected = reduction.state as DeviceRuntimeMetadataGenerationState.Rejected
-        assertEquals(DeviceRuntimeMetadataFailureCode.DEVICE_UID_MISMATCH, rejected.failure.code)
-        assertNull(rejected.publishedMetadata)
-    }
-
-    @Test
-    fun `exact parsers reject missing unknown normalized and coerced fields`() {
-        val identityJson = identityJson()
-        val parsedIdentity = DeviceRuntimeIdentityParser.parse(deviceUid, identityJson).getOrThrow()
-        assertEquals(identity(), parsedIdentity.identity)
-
-        val missingModel = JSONObject(identityJson.toString()).apply { remove("model") }
-        assertTrue(DeviceRuntimeIdentityParser.parse(deviceUid, missingModel).isFailure)
-
-        val unknownField = JSONObject(identityJson.toString()).put("legacyModel", "relay_pro_2")
-        assertTrue(DeviceRuntimeIdentityParser.parse(deviceUid, unknownField).isFailure)
-
-        val normalizedFamily = JSONObject(identityJson.toString()).put("family", "TIMER")
-        assertTrue(DeviceRuntimeIdentityParser.parse(deviceUid, normalizedFamily).isFailure)
-
-        val coercedVersion = JSONObject(identityJson.toString()).put("apiVersion", "1")
-        assertTrue(DeviceRuntimeIdentityParser.parse(deviceUid, coercedVersion).isFailure)
-
-        val capabilitiesJson = capabilitiesJson()
-        assertEquals(
-            capabilities(),
-            DeviceRuntimeCapabilitiesParser.parse(capabilitiesJson).getOrThrow()
-        )
-
-        val missingBoolean = JSONObject(capabilitiesJson.toString()).apply {
-            getJSONObject("capabilities").remove("dosing")
+        val wrongPort = JSONObject(identityJson().toString()).apply {
+            getJSONObject("runtime").put("wsPort", 81)
         }
-        assertTrue(DeviceRuntimeCapabilitiesParser.parse(missingBoolean).isFailure)
-
-        val coercedBoolean = JSONObject(capabilitiesJson.toString()).apply {
+        val wrongApi = JSONObject(identityJson().toString()).put("apiVersion", 2)
+        val unknownIdentity = JSONObject(identityJson().toString()).put("legacyModel", "relay_pro_2")
+        val coercedCapability = JSONObject(capabilitiesJson().toString()).apply {
             getJSONObject("capabilities").put("dosing", "false")
         }
-        assertTrue(DeviceRuntimeCapabilitiesParser.parse(coercedBoolean).isFailure)
-
-        val unknownFeature = JSONObject(capabilitiesJson.toString()).apply {
+        val unknownFeature = JSONObject(capabilitiesJson().toString()).apply {
             getJSONArray("supportedFeatures").put("TIMER_CONTROL_V2")
         }
+
+        assertTrue(DeviceRuntimeIdentityParser.parse(deviceUid, wrongPort).isFailure)
+        assertTrue(DeviceRuntimeIdentityParser.parse(deviceUid, wrongApi).isFailure)
+        assertTrue(DeviceRuntimeIdentityParser.parse(deviceUid, unknownIdentity).isFailure)
+        assertTrue(DeviceRuntimeCapabilitiesParser.parse(coercedCapability).isFailure)
         assertTrue(DeviceRuntimeCapabilitiesParser.parse(unknownFeature).isFailure)
     }
 
     @Test
-    fun `provisioning projection is atomic and preserves owner fields`() {
+    fun `ready projection is atomic preserves owner fields and publishes generation`() {
         val provisional = DeviceSnapshot(
-            identity = DeviceIdentity(
-                uid = deviceUid,
-                customName = "My timer"
-            ),
+            identity = DeviceIdentity(uid = deviceUid, customName = "My timer"),
             product = DeviceProduct(),
             endpoint = DeviceRuntimeEndpoint(ip = "192.168.1.20")
         )
-        val parsedIdentity = DeviceRuntimeIdentityParser.parse(deviceUid, identityJson()).getOrThrow()
-        val parsedCapabilities = DeviceRuntimeCapabilitiesParser.parse(capabilitiesJson()).getOrThrow()
-
-        val projected = DeviceRuntimeMetadataProjector.applyProvisioningMetadata(
-            snapshot = provisional,
-            parsedIdentity = parsedIdentity,
-            capabilities = parsedCapabilities
-        )
+        val ready = readyState(reducer.begin(deviceUid, null))
+        val projected = DeviceRuntimeMetadataProjector.applyReady(provisional, ready)
 
         assertEquals("My timer", projected.identity.customName)
         assertEquals("192.168.1.20", projected.endpoint.ip)
@@ -195,15 +152,23 @@ class DeviceRuntimeMetadataGenerationTest {
         assertEquals(2, projected.limits.timerChannelCount)
         assertTrue(projected.capabilities.standaloneTimer)
         assertFalse(projected.capabilities.dosing)
+        assertEquals(ready.generation.value, projected.runtimeMetadataGeneration)
+        assertTrue(projected.hasValidatedRuntimeMetadata)
+
+        val invalidated = DeviceRuntimeMetadataProjector.invalidate(projected)
+        assertFalse(invalidated.hasValidatedRuntimeMetadata)
+        assertTrue(invalidated.supportedFeatures.isEmpty())
+        assertTrue(invalidated.modules.isEmpty())
+        assertEquals("My timer", invalidated.identity.customName)
     }
 
     private fun readyState(
         collecting: DeviceRuntimeMetadataGenerationState.Collecting
-    ): DeviceRuntimeMetadataGenerationState {
+    ): DeviceRuntimeMetadataGenerationState.Ready {
         var state: DeviceRuntimeMetadataGenerationState = collecting
         state = reducer.accept(
             state,
-            DeviceRuntimeMetadataFragment.Identity(collecting.generation, identity())
+            DeviceRuntimeMetadataFragment.Identity(collecting.generation, identityEnvelope())
         )
         state = reducer.accept(
             state,
@@ -211,9 +176,9 @@ class DeviceRuntimeMetadataGenerationTest {
         )
         state = reducer.accept(
             state,
-            DeviceRuntimeMetadataFragment.Modules(collecting.generation, modules())
+            DeviceRuntimeMetadataFragment.Modules(collecting.generation, moduleStatus())
         )
-        return state
+        return state as DeviceRuntimeMetadataGenerationState.Ready
     }
 
     private fun DeviceRuntimeMetadataReducer.accept(
@@ -242,6 +207,22 @@ class DeviceRuntimeMetadataGenerationTest {
         protocolVersion = DeviceProtocolVersion(1)
     )
 
+    private fun identityEnvelope(): DeviceRuntimeIdentityEnvelope = DeviceRuntimeIdentityEnvelope(
+        identity = identity(),
+        shortId = "A1B2C3",
+        serialNumber = "AQL-T-RP2-000001",
+        firmwareSerial = "FW-000001",
+        macAddress = "AA:BB:CC:DD:EE:FF",
+        setupCode = "AQL-T-RP2",
+        runtime = DeviceRuntimeTransportMetadata(
+            transport = "websocket",
+            wsSchema = "aql.ws.v1",
+            wsPath = "/aql/v1/ws",
+            wsPort = 80,
+            wsProtocolVersion = 1
+        )
+    )
+
     private fun capabilities(): DeviceRuntimeCapabilities = DeviceRuntimeCapabilities(
         capabilities = DeviceCapabilitySet(
             light = false,
@@ -257,27 +238,22 @@ class DeviceRuntimeMetadataGenerationTest {
             timeSync = true,
             ota = true
         ),
-        limits = DeviceLimitSet(
-            lightChannelCount = 0,
-            fanOutputCount = 0,
-            temperatureSensorCount = 0,
-            timerChannelCount = 2,
-            dosingChannelCount = 0
-        ),
+        limits = DeviceLimitSet(0, 0, 0, 2, 0),
         supportedFeatures = setOf(
-            com.aqua.aqualight.data.devices.contract.AqlDeviceFeatureKey.WIFI_SETUP,
-            com.aqua.aqualight.data.devices.contract.AqlDeviceFeatureKey.LAN_DISCOVERY,
-            com.aqua.aqualight.data.devices.contract.AqlDeviceFeatureKey.TIMER_CONTROL,
-            com.aqua.aqualight.data.devices.contract.AqlDeviceFeatureKey.TIMER_MANUAL_RUN,
-            com.aqua.aqualight.data.devices.contract.AqlDeviceFeatureKey.OTA_UPDATE
+            AqlDeviceFeatureKey.WIFI_SETUP,
+            AqlDeviceFeatureKey.LAN_DISCOVERY,
+            AqlDeviceFeatureKey.TIMER_CONTROL,
+            AqlDeviceFeatureKey.TIMER_MANUAL_RUN,
+            AqlDeviceFeatureKey.TIMER_CHANNEL_DISPLAY_NAME,
+            AqlDeviceFeatureKey.OTA_UPDATE
         ),
         supportedScreens = setOf(
-            com.aqua.aqualight.data.devices.contract.AqlDeviceScreenKey.OVERVIEW,
-            com.aqua.aqualight.data.devices.contract.AqlDeviceScreenKey.TIMER_CONTROL,
-            com.aqua.aqualight.data.devices.contract.AqlDeviceScreenKey.TIMER_CHANNELS,
-            com.aqua.aqualight.data.devices.contract.AqlDeviceScreenKey.TIMER_SCHEDULES,
-            com.aqua.aqualight.data.devices.contract.AqlDeviceScreenKey.TIMER_MANUAL_RUN,
-            com.aqua.aqualight.data.devices.contract.AqlDeviceScreenKey.ADVANCED
+            AqlDeviceScreenKey.OVERVIEW,
+            AqlDeviceScreenKey.TIMER_CONTROL,
+            AqlDeviceScreenKey.TIMER_CHANNELS,
+            AqlDeviceScreenKey.TIMER_SCHEDULES,
+            AqlDeviceScreenKey.TIMER_MANUAL_RUN,
+            AqlDeviceScreenKey.ADVANCED
         )
     )
 
@@ -292,6 +268,15 @@ class DeviceRuntimeMetadataGenerationTest {
         discovery = true,
         firmware = true,
         system = true
+    )
+
+    private fun moduleStatus(): DeviceRuntimeModuleStatus = DeviceRuntimeModuleStatus(
+        productKey = identity().productKey,
+        family = identity().family,
+        model = identity().model,
+        displayName = identity().displayName,
+        uptimeMs = 123_456L,
+        modules = modules()
     )
 
     private fun identityJson(): JSONObject = JSONObject()
@@ -320,7 +305,7 @@ class DeviceRuntimeMetadataGenerationTest {
                 .put("transport", "websocket")
                 .put("wsSchema", "aql.ws.v1")
                 .put("wsPath", "/aql/v1/ws")
-                .put("wsPort", 81)
+                .put("wsPort", 80)
                 .put("wsProtocolVersion", 1)
         )
 
@@ -352,27 +337,10 @@ class DeviceRuntimeMetadataGenerationTest {
         )
         .put(
             "supportedFeatures",
-            JSONArray(
-                listOf(
-                    "WIFI_SETUP",
-                    "LAN_DISCOVERY",
-                    "TIMER_CONTROL",
-                    "TIMER_MANUAL_RUN",
-                    "OTA_UPDATE"
-                )
-            )
+            JSONArray(capabilities().supportedFeatures.map { it.wireValue })
         )
         .put(
             "supportedScreens",
-            JSONArray(
-                listOf(
-                    "OVERVIEW",
-                    "TIMER_CONTROL",
-                    "TIMER_CHANNELS",
-                    "TIMER_SCHEDULES",
-                    "TIMER_MANUAL_RUN",
-                    "ADVANCED"
-                )
-            )
+            JSONArray(capabilities().supportedScreens.map { it.wireValue })
         )
 }
