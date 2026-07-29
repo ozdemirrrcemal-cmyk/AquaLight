@@ -1,7 +1,7 @@
 package com.aqua.aqualight.data.devices.repository
 
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeCapabilities
-import com.aqua.aqualight.data.devices.model.DeviceRuntimeIdentity
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeIdentityEnvelope
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadata
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataFailure
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataFailureCode
@@ -9,16 +9,10 @@ import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataFragment
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataGeneration
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataGenerationState
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataReduction
-import com.aqua.aqualight.data.devices.model.DeviceRuntimeModules
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeModuleStatus
 import com.aqua.aqualight.data.devices.model.DeviceUid
 
-/**
- * Pure reducer for one authenticated runtime-metadata generation.
- *
- * The reducer never parses wire JSON and never merges with metadata from an older authentication.
- * A publication exists only when identity, capabilities and modules from the same generation have
- * all been accepted. Stale fragments are ignored; contradictory fragments reject the generation.
- */
+/** Pure reducer for one authenticated runtime-metadata generation. */
 class DeviceRuntimeMetadataReducer {
 
     fun begin(
@@ -34,7 +28,7 @@ class DeviceRuntimeMetadataReducer {
             generation = generation,
             identity = null,
             capabilities = null,
-            modules = null
+            moduleStatus = null
         )
     }
 
@@ -46,51 +40,32 @@ class DeviceRuntimeMetadataReducer {
             state = current,
             staleGeneration = fragment.generation
         )
-
         current is DeviceRuntimeMetadataGenerationState.Rejected ->
             DeviceRuntimeMetadataReduction.Rejected(current)
-
-        else -> reduceCurrent(current = current, fragment = fragment)
+        else -> reduceCurrent(current, fragment)
     }
 
     fun reject(
         current: DeviceRuntimeMetadataGenerationState,
         code: DeviceRuntimeMetadataFailureCode,
         field: String?
-    ): DeviceRuntimeMetadataReduction.Rejected {
-        return DeviceRuntimeMetadataReduction.Rejected(
-            DeviceRuntimeMetadataGenerationState.Rejected(
-                deviceUid = current.deviceUid,
-                generation = current.generation,
-                failure = DeviceRuntimeMetadataFailure(
-                    code = code,
-                    field = field
-                )
-            )
+    ): DeviceRuntimeMetadataReduction.Rejected = DeviceRuntimeMetadataReduction.Rejected(
+        DeviceRuntimeMetadataGenerationState.Rejected(
+            deviceUid = current.deviceUid,
+            generation = current.generation,
+            failure = DeviceRuntimeMetadataFailure(code = code, field = field)
         )
-    }
+    )
 
     private fun reduceCurrent(
         current: DeviceRuntimeMetadataGenerationState,
         fragment: DeviceRuntimeMetadataFragment
     ): DeviceRuntimeMetadataReduction {
-        val merge = current.fragments().merge(
-            deviceUid = current.deviceUid,
-            fragment = fragment
-        )
-        return when (merge) {
+        return when (val merge = current.fragments().merge(current.deviceUid, fragment)) {
             is FragmentMerge.Accepted -> DeviceRuntimeMetadataReduction.Accepted(
-                merge.fragments.toState(
-                    deviceUid = current.deviceUid,
-                    generation = current.generation
-                )
+                merge.fragments.toState(current.deviceUid, current.generation)
             )
-
-            is FragmentMerge.Conflict -> reject(
-                current = current,
-                code = merge.code,
-                field = merge.field
-            )
+            is FragmentMerge.Conflict -> reject(current, merge.code, merge.field)
         }
     }
 
@@ -98,32 +73,35 @@ class DeviceRuntimeMetadataReducer {
         deviceUid: DeviceUid,
         fragment: DeviceRuntimeMetadataFragment
     ): FragmentMerge = when (fragment) {
-        is DeviceRuntimeMetadataFragment.Identity -> mergeIdentity(
-            deviceUid = deviceUid,
-            incoming = fragment.value
-        )
-
+        is DeviceRuntimeMetadataFragment.Identity -> mergeIdentity(deviceUid, fragment.value)
         is DeviceRuntimeMetadataFragment.Capabilities -> mergeCapabilities(fragment.value)
-        is DeviceRuntimeMetadataFragment.Modules -> mergeModules(fragment.value)
+        is DeviceRuntimeMetadataFragment.Modules -> mergeModuleStatus(fragment.value)
     }
 
     private fun Fragments.mergeIdentity(
         deviceUid: DeviceUid,
-        incoming: DeviceRuntimeIdentity
-    ): FragmentMerge = when {
-        incoming.deviceUid != deviceUid -> FragmentMerge.Conflict(
-            code = DeviceRuntimeMetadataFailureCode.DEVICE_UID_MISMATCH,
-            field = "deviceUid"
-        )
-
-        identity == null || identity == incoming -> FragmentMerge.Accepted(
-            copy(identity = incoming)
-        )
-
-        else -> FragmentMerge.Conflict(
-            code = DeviceRuntimeMetadataFailureCode.CONFLICTING_IDENTITY,
-            field = "identity"
-        )
+        incoming: DeviceRuntimeIdentityEnvelope
+    ): FragmentMerge {
+        if (incoming.identity.deviceUid != deviceUid) {
+            return FragmentMerge.Conflict(
+                DeviceRuntimeMetadataFailureCode.DEVICE_UID_MISMATCH,
+                "deviceUid"
+            )
+        }
+        moduleStatus?.mismatchField(incoming.identity)?.let { field ->
+            return FragmentMerge.Conflict(
+                DeviceRuntimeMetadataFailureCode.STATUS_IDENTITY_MISMATCH,
+                field
+            )
+        }
+        return if (identity == null || identity == incoming) {
+            FragmentMerge.Accepted(copy(identity = incoming))
+        } else {
+            FragmentMerge.Conflict(
+                DeviceRuntimeMetadataFailureCode.CONFLICTING_IDENTITY,
+                "identity"
+            )
+        }
     }
 
     private fun Fragments.mergeCapabilities(
@@ -132,35 +110,41 @@ class DeviceRuntimeMetadataReducer {
         FragmentMerge.Accepted(copy(capabilities = incoming))
     } else {
         FragmentMerge.Conflict(
-            code = DeviceRuntimeMetadataFailureCode.CONFLICTING_CAPABILITIES,
-            field = "capabilities"
+            DeviceRuntimeMetadataFailureCode.CONFLICTING_CAPABILITIES,
+            "capabilities"
         )
     }
 
-    private fun Fragments.mergeModules(
-        incoming: DeviceRuntimeModules
-    ): FragmentMerge = if (modules == null || modules == incoming) {
-        FragmentMerge.Accepted(copy(modules = incoming))
-    } else {
-        FragmentMerge.Conflict(
-            code = DeviceRuntimeMetadataFailureCode.CONFLICTING_MODULES,
-            field = "modules"
-        )
+    private fun Fragments.mergeModuleStatus(
+        incoming: DeviceRuntimeModuleStatus
+    ): FragmentMerge {
+        identity?.identity?.let(incoming::mismatchField)?.let { field ->
+            return FragmentMerge.Conflict(
+                DeviceRuntimeMetadataFailureCode.STATUS_IDENTITY_MISMATCH,
+                field
+            )
+        }
+        return if (moduleStatus == null || moduleStatus == incoming) {
+            FragmentMerge.Accepted(copy(moduleStatus = incoming))
+        } else {
+            FragmentMerge.Conflict(
+                DeviceRuntimeMetadataFailureCode.CONFLICTING_MODULES,
+                "modules"
+            )
+        }
     }
 
     private fun DeviceRuntimeMetadataGenerationState.fragments(): Fragments = when (this) {
         is DeviceRuntimeMetadataGenerationState.Collecting -> Fragments(
             identity = identity,
             capabilities = capabilities,
-            modules = modules
+            moduleStatus = moduleStatus
         )
-
         is DeviceRuntimeMetadataGenerationState.Ready -> Fragments(
-            identity = metadata.identity,
+            identity = identityEnvelope,
             capabilities = metadata.capabilities,
-            modules = metadata.modules
+            moduleStatus = moduleStatus
         )
-
         is DeviceRuntimeMetadataGenerationState.Rejected -> error(
             "Rejected metadata generations do not expose reusable fragments."
         )
@@ -172,19 +156,17 @@ class DeviceRuntimeMetadataReducer {
     ): DeviceRuntimeMetadataGenerationState {
         val readyIdentity = identity
         val readyCapabilities = capabilities
-        val readyModules = modules
-        return if (
-            readyIdentity != null &&
-            readyCapabilities != null &&
-            readyModules != null
-        ) {
+        val readyModuleStatus = moduleStatus
+        return if (readyIdentity != null && readyCapabilities != null && readyModuleStatus != null) {
             DeviceRuntimeMetadataGenerationState.Ready(
                 deviceUid = deviceUid,
                 generation = generation,
+                identityEnvelope = readyIdentity,
+                moduleStatus = readyModuleStatus,
                 metadata = DeviceRuntimeMetadata(
-                    identity = readyIdentity,
+                    identity = readyIdentity.identity,
                     capabilities = readyCapabilities,
-                    modules = readyModules
+                    modules = readyModuleStatus.modules
                 )
             )
         } else {
@@ -193,14 +175,13 @@ class DeviceRuntimeMetadataReducer {
                 generation = generation,
                 identity = readyIdentity,
                 capabilities = readyCapabilities,
-                modules = readyModules
+                moduleStatus = readyModuleStatus
             )
         }
     }
 
     private sealed interface FragmentMerge {
         data class Accepted(val fragments: Fragments) : FragmentMerge
-
         data class Conflict(
             val code: DeviceRuntimeMetadataFailureCode,
             val field: String
@@ -208,8 +189,8 @@ class DeviceRuntimeMetadataReducer {
     }
 
     private data class Fragments(
-        val identity: DeviceRuntimeIdentity?,
+        val identity: DeviceRuntimeIdentityEnvelope?,
         val capabilities: DeviceRuntimeCapabilities?,
-        val modules: DeviceRuntimeModules?
+        val moduleStatus: DeviceRuntimeModuleStatus?
     )
 }
