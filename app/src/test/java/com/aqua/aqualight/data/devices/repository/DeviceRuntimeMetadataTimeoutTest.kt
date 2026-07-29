@@ -12,6 +12,7 @@ import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsOutgoingMessage
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsTransport
 import java.util.concurrent.CopyOnWriteArrayList
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -26,6 +27,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class DeviceRuntimeMetadataTimeoutTest {
 
     @Test
