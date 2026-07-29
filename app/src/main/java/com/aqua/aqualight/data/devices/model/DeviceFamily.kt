@@ -9,6 +9,13 @@ enum class DeviceFamily(val wireValue: String) {
     UNKNOWN("unknown");
 
     companion object {
+        private val exactFamilies = entries
+            .filterNot { family -> family == UNKNOWN }
+            .associateBy(DeviceFamily::wireValue)
+
+        /** Strict commercial parser. No trimming, casing conversion, aliases, or fallback. */
+        fun fromWireExact(value: String): DeviceFamily? = exactFamilies[value]
+
         fun fromWire(value: String?): DeviceFamily = when (value?.trim()?.lowercase()) {
             LIGHT.wireValue -> LIGHT
             TIMER.wireValue -> TIMER
