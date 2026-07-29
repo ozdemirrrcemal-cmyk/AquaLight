@@ -25,19 +25,32 @@ internal class CommercialDeviceMenuAccessOperations(
         liveness: DeviceMenuAccessResult.Available
     ): DeviceMenuAccessResult {
         val snapshot = currentSnapshot(DeviceUid(liveness.deviceUid))
-            ?: return unavailable(liveness, DeviceMenuUnavailableReason.DEVICE_NOT_REGISTERED)
-        if (!snapshot.hasValidatedRuntimeMetadata) {
-            return unavailable(liveness, DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
-        }
-        return when (val validation = AqlCommercialDeviceCatalog.validateSnapshot(snapshot)) {
-            is AqlCommercialCatalogValidation.Valid -> liveness.copy(
-                family = validation.product.family.toOwnerDeviceFamily()
-            )
-            is AqlCommercialCatalogValidation.Invalid -> unavailable(
+        return when {
+            snapshot == null -> unavailable(
                 liveness,
-                DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH
+                DeviceMenuUnavailableReason.DEVICE_NOT_REGISTERED
             )
+            !snapshot.hasValidatedRuntimeMetadata -> unavailable(
+                liveness,
+                DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+            )
+            else -> validateCatalog(snapshot, liveness)
         }
+    }
+
+    private fun validateCatalog(
+        snapshot: DeviceSnapshot,
+        liveness: DeviceMenuAccessResult.Available
+    ): DeviceMenuAccessResult = when (
+        val validation = AqlCommercialDeviceCatalog.validateSnapshot(snapshot)
+    ) {
+        is AqlCommercialCatalogValidation.Valid -> liveness.copy(
+            family = validation.product.family.toOwnerDeviceFamily()
+        )
+        is AqlCommercialCatalogValidation.Invalid -> unavailable(
+            liveness,
+            DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH
+        )
     }
 
     private fun unavailable(
