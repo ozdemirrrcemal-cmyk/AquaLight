@@ -4,29 +4,14 @@ import com.aqua.aqualight.data.devices.contract.AqlWsContract
 import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceProductKey
 import com.aqua.aqualight.data.devices.model.DeviceProductModel
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeModuleStatus
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeModules
 import org.json.JSONObject
 
-/** Exact typed projection of the commercial `device.status.get` response. */
-data class ParsedDeviceRuntimeStatus(
-    val productKey: DeviceProductKey,
-    val family: DeviceFamily,
-    val model: DeviceProductModel,
-    val displayName: String,
-    val uptimeMs: Long,
-    val modules: DeviceRuntimeModules
-)
-
-/**
- * Strict parser for the firmware `device.status.get.data` contract.
- *
- * Product and runtime fields are validated as part of the signed/authenticated response envelope but
- * are not merged into identity. The returned module object is complete: no missing key is interpreted
- * as false and no unknown key is ignored.
- */
+/** Strict parser for the complete commercial `device.status.get.data` contract. */
 object DeviceRuntimeModulesParser {
 
-    fun parseDeviceStatus(data: JSONObject): Result<ParsedDeviceRuntimeStatus> = runCatching {
+    fun parseDeviceStatus(data: JSONObject): Result<DeviceRuntimeModuleStatus> = runCatching {
         data.requireStatusKeys()
         require(data.requireStatusString("state") == BOOTED_STATE) {
             "device.status.get.data.state must be $BOOTED_STATE."
@@ -37,10 +22,9 @@ object DeviceRuntimeModulesParser {
 
         val product = data.requireStatusObject("product")
         product.requireStatusKeys(PRODUCT_KEYS, "device.status.get.data.product")
-        val familyWire = product.requireStatusString("family")
-        val family = requireNotNull(DeviceFamily.fromWireExact(familyWire)) {
-            "device.status.get.data.product.family is not an exact commercial family."
-        }
+        val family = requireNotNull(
+            DeviceFamily.fromWireExact(product.requireStatusString("family"))
+        ) { "device.status.get.data.product.family is not an exact commercial family." }
 
         val runtime = data.requireStatusObject("runtime")
         runtime.requireStatusKeys(RUNTIME_KEYS, "device.status.get.data.runtime")
@@ -49,7 +33,7 @@ object DeviceRuntimeModulesParser {
         val modules = data.requireStatusObject("modules")
         modules.requireStatusKeys(MODULE_KEYS, "device.status.get.data.modules")
 
-        ParsedDeviceRuntimeStatus(
+        DeviceRuntimeModuleStatus(
             productKey = DeviceProductKey(product.requireStatusString("productKey")),
             family = family,
             model = DeviceProductModel(product.requireStatusString("model")),
@@ -134,26 +118,10 @@ private fun JSONObject.requireExactRuntimeContract() {
 private const val BOOTED_STATE = "booted"
 private const val STATUS_TRANSPORT = "websocket"
 private const val STATUS_WS_PORT = 80
-
-private val STATUS_KEYS = setOf(
-    "state",
-    "authenticated",
-    "uptimeMs",
-    "product",
-    "runtime",
-    "modules"
-)
+private val STATUS_KEYS = setOf("state", "authenticated", "uptimeMs", "product", "runtime", "modules")
 private val PRODUCT_KEYS = setOf("productKey", "family", "model", "displayName")
 private val RUNTIME_KEYS = setOf("transport", "wsSchema", "wsPath", "wsPort")
 private val MODULE_KEYS = setOf(
-    "light",
-    "cooling",
-    "temperature",
-    "timerApi",
-    "timerEngine",
-    "dosing",
-    "network",
-    "discovery",
-    "firmware",
-    "system"
+    "light", "cooling", "temperature", "timerApi", "timerEngine", "dosing",
+    "network", "discovery", "firmware", "system"
 )
