@@ -24,7 +24,10 @@ class DeviceRuntimeMetadataGenerationGuardTest(unittest.TestCase):
             result.returncode,
             msg=f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}",
         )
-        self.assertIn("Runtime metadata generation guard passed.", result.stdout)
+        self.assertIn(
+            "Runtime metadata generation guard passed (live three-response pipeline enforced).",
+            result.stdout,
+        )
 
 
 if __name__ == "__main__":
