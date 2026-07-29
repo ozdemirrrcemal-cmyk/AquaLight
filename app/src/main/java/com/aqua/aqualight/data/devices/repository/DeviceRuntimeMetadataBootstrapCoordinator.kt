@@ -125,6 +125,25 @@ internal class DeviceRuntimeMetadataBootstrapCoordinator(
         reducer.reject(current, code, field).state.also { states[deviceUid] = it }
     }
 
+    fun expire(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeMetadataGeneration
+    ): DeviceRuntimeMetadataGenerationState.Rejected? = synchronized(lock) {
+        val current = states[deviceUid]
+        if (
+            current !is DeviceRuntimeMetadataGenerationState.Collecting ||
+            current.generation != generation
+        ) {
+            return@synchronized null
+        }
+        removeTicketsLocked(deviceUid)
+        reducer.reject(
+            current = current,
+            code = DeviceRuntimeMetadataFailureCode.BOOTSTRAP_TIMEOUT,
+            field = "device.metadata.bootstrap"
+        ).state.also { rejected -> states[deviceUid] = rejected }
+    }
+
     fun clear(deviceUid: DeviceUid) {
         synchronized(lock) {
             removeTicketsLocked(deviceUid)
