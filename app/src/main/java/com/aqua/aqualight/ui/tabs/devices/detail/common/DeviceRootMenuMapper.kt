@@ -3,10 +3,13 @@ package com.aqua.aqualight.ui.tabs.devices.detail.common
 import androidx.annotation.StringRes
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceRootMenuFeature
+import com.aqua.aqualight.application.devices.DeviceRootRoute
+import com.aqua.aqualight.application.devices.DeviceRootRouteResolver
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.ui.common.text.AquaUiText
 
 data class DeviceRootMenuItemUi(
+    val route: DeviceRootRoute,
     @StringRes val titleRes: Int,
     @StringRes val subtitleRes: Int
 )
@@ -43,54 +46,52 @@ private fun formatDeviceRootMenuItems(
 
 object DeviceRootMenuMapper {
 
-    fun light(snapshot: DeviceRootSnapshot): DeviceRootMenuSections {
-        return DeviceRootMenuSections(
-            primary = listOfNotNull(
-                snapshot.itemIfSupported(
-                    feature = DeviceRootMenuFeature.LIGHT_MANUAL,
-                    titleRes = R.string.device_menu_manual_control_title,
-                    subtitleRes = R.string.device_menu_manual_control_description
-                ),
-                snapshot.itemIfSupported(
-                    feature = DeviceRootMenuFeature.LIGHT_QUICK_SETUP,
-                    titleRes = R.string.device_menu_quick_setup_title,
-                    subtitleRes = R.string.device_menu_quick_setup_description
-                )
+    fun light(snapshot: DeviceRootSnapshot): DeviceRootMenuSections = DeviceRootMenuSections(
+        primary = listOfNotNull(
+            snapshot.itemIfSupported(
+                DeviceRootMenuFeature.LIGHT_MANUAL,
+                R.string.device_menu_manual_control_title,
+                R.string.device_menu_manual_control_description
             ),
-            secondary = listOfNotNull(
-                snapshot.itemIfSupported(
-                    feature = DeviceRootMenuFeature.LIGHT_PROGRAMS,
-                    titleRes = R.string.device_menu_programs_title,
-                    subtitleRes = R.string.device_menu_programs_description
-                ),
-                snapshot.itemIfSupported(
-                    feature = DeviceRootMenuFeature.LIGHT_PRESETS,
-                    titleRes = R.string.device_menu_presets_title,
-                    subtitleRes = R.string.device_menu_presets_description
-                ),
-                snapshot.itemIfSupported(
-                    feature = DeviceRootMenuFeature.LIGHT_SIMULATION,
-                    titleRes = R.string.device_menu_simulation_title,
-                    subtitleRes = R.string.device_menu_simulation_description
-                ),
-                snapshot.itemIfSupported(
-                    feature = DeviceRootMenuFeature.COOLING_FANS,
-                    titleRes = R.string.device_menu_fan_control_title,
-                    subtitleRes = R.string.device_menu_fan_control_description
-                ),
-                snapshot.itemIfSupported(
-                    feature = DeviceRootMenuFeature.COOLING_TEMPERATURE,
-                    titleRes = R.string.device_menu_temperature_automation_title,
-                    subtitleRes = R.string.device_menu_temperature_automation_description
-                ),
-                snapshot.itemIfSupported(
-                    feature = DeviceRootMenuFeature.DEVICE_SETTINGS,
-                    titleRes = R.string.device_menu_settings_title,
-                    subtitleRes = R.string.device_menu_light_settings_description
-                )
+            snapshot.itemIfSupported(
+                DeviceRootMenuFeature.LIGHT_QUICK_SETUP,
+                R.string.device_menu_quick_setup_title,
+                R.string.device_menu_quick_setup_description
+            )
+        ),
+        secondary = listOfNotNull(
+            snapshot.itemIfSupported(
+                DeviceRootMenuFeature.LIGHT_PROGRAMS,
+                R.string.device_menu_programs_title,
+                R.string.device_menu_programs_description
+            ),
+            snapshot.itemIfSupported(
+                DeviceRootMenuFeature.LIGHT_PRESETS,
+                R.string.device_menu_presets_title,
+                R.string.device_menu_presets_description
+            ),
+            snapshot.itemIfSupported(
+                DeviceRootMenuFeature.LIGHT_SIMULATION,
+                R.string.device_menu_simulation_title,
+                R.string.device_menu_simulation_description
+            ),
+            snapshot.itemIfSupported(
+                DeviceRootMenuFeature.COOLING_FANS,
+                R.string.device_menu_fan_control_title,
+                R.string.device_menu_fan_control_description
+            ),
+            snapshot.itemIfSupported(
+                DeviceRootMenuFeature.COOLING_TEMPERATURE,
+                R.string.device_menu_temperature_automation_title,
+                R.string.device_menu_temperature_automation_description
+            ),
+            snapshot.itemIfSupported(
+                DeviceRootMenuFeature.DEVICE_SETTINGS,
+                R.string.device_menu_settings_title,
+                R.string.device_menu_light_settings_description
             )
         )
-    }
+    )
 
     fun overview(
         kind: DeviceRootKind,
@@ -104,26 +105,26 @@ object DeviceRootMenuMapper {
     private fun dosing(snapshot: DeviceRootSnapshot) = DeviceRootMenuSections(
         primary = listOfNotNull(
             snapshot.itemIfSupported(
-                feature = DeviceRootMenuFeature.DOSING_CHANNELS,
-                titleRes = R.string.device_menu_channels_title,
-                subtitleRes = R.string.device_menu_dosing_channels_description
+                DeviceRootMenuFeature.DOSING_CHANNELS,
+                R.string.device_menu_channels_title,
+                R.string.device_menu_dosing_channels_description
             ),
             snapshot.itemIfSupported(
-                feature = DeviceRootMenuFeature.DOSING_CALIBRATION,
-                titleRes = R.string.device_menu_calibration_title,
-                subtitleRes = R.string.device_menu_calibration_description
+                DeviceRootMenuFeature.DOSING_CALIBRATION,
+                R.string.device_menu_calibration_title,
+                R.string.device_menu_calibration_description
             )
         ),
         secondary = listOfNotNull(
             snapshot.itemIfSupported(
-                feature = DeviceRootMenuFeature.DOSING_SCHEDULES,
-                titleRes = R.string.device_menu_schedules_title,
-                subtitleRes = R.string.device_menu_dosing_schedules_description
+                DeviceRootMenuFeature.DOSING_SCHEDULES,
+                R.string.device_menu_schedules_title,
+                R.string.device_menu_dosing_schedules_description
             ),
             snapshot.itemIfSupported(
-                feature = DeviceRootMenuFeature.DEVICE_SETTINGS,
-                titleRes = R.string.device_menu_settings_title,
-                subtitleRes = R.string.device_menu_settings_description
+                DeviceRootMenuFeature.DEVICE_SETTINGS,
+                R.string.device_menu_settings_title,
+                R.string.device_menu_settings_description
             )
         )
     )
@@ -131,21 +132,21 @@ object DeviceRootMenuMapper {
     private fun timer(snapshot: DeviceRootSnapshot) = DeviceRootMenuSections(
         primary = listOfNotNull(
             snapshot.itemIfSupported(
-                feature = DeviceRootMenuFeature.TIMER_CHANNELS,
-                titleRes = R.string.device_menu_timer_channels_title,
-                subtitleRes = R.string.device_menu_timer_channels_description
+                DeviceRootMenuFeature.TIMER_CHANNELS,
+                R.string.device_menu_timer_channels_title,
+                R.string.device_menu_timer_channels_description
             )
         ),
         secondary = listOfNotNull(
             snapshot.itemIfSupported(
-                feature = DeviceRootMenuFeature.TIMER_SCHEDULES,
-                titleRes = R.string.device_menu_schedules_title,
-                subtitleRes = R.string.device_menu_timer_schedules_description
+                DeviceRootMenuFeature.TIMER_SCHEDULES,
+                R.string.device_menu_schedules_title,
+                R.string.device_menu_timer_schedules_description
             ),
             snapshot.itemIfSupported(
-                feature = DeviceRootMenuFeature.DEVICE_SETTINGS,
-                titleRes = R.string.device_menu_settings_title,
-                subtitleRes = R.string.device_menu_settings_description
+                DeviceRootMenuFeature.DEVICE_SETTINGS,
+                R.string.device_menu_settings_title,
+                R.string.device_menu_settings_description
             )
         )
     )
@@ -153,21 +154,21 @@ object DeviceRootMenuMapper {
     private fun cooling(snapshot: DeviceRootSnapshot) = DeviceRootMenuSections(
         primary = listOfNotNull(
             snapshot.itemIfSupported(
-                feature = DeviceRootMenuFeature.COOLING_FANS,
-                titleRes = R.string.device_menu_fan_control_title,
-                subtitleRes = R.string.device_menu_fan_control_description
+                DeviceRootMenuFeature.COOLING_FANS,
+                R.string.device_menu_fan_control_title,
+                R.string.device_menu_fan_control_description
             )
         ),
         secondary = listOfNotNull(
             snapshot.itemIfSupported(
-                feature = DeviceRootMenuFeature.COOLING_TEMPERATURE,
-                titleRes = R.string.device_menu_temperature_automation_title,
-                subtitleRes = R.string.device_menu_temperature_automation_description
+                DeviceRootMenuFeature.COOLING_TEMPERATURE,
+                R.string.device_menu_temperature_automation_title,
+                R.string.device_menu_temperature_automation_description
             ),
             snapshot.itemIfSupported(
-                feature = DeviceRootMenuFeature.DEVICE_SETTINGS,
-                titleRes = R.string.device_menu_settings_title,
-                subtitleRes = R.string.device_menu_settings_description
+                DeviceRootMenuFeature.DEVICE_SETTINGS,
+                R.string.device_menu_settings_title,
+                R.string.device_menu_settings_description
             )
         )
     )
@@ -177,13 +178,13 @@ object DeviceRootMenuMapper {
         @StringRes titleRes: Int,
         @StringRes subtitleRes: Int
     ): DeviceRootMenuItemUi? {
-        return if (feature in menuFeatures) {
-            DeviceRootMenuItemUi(
-                titleRes = titleRes,
-                subtitleRes = subtitleRes
-            )
-        } else {
-            null
-        }
+        if (feature !in menuFeatures) return null
+        val route = DeviceRootRouteResolver.resolve(family, feature) ?: return null
+        if (route !in allowedRoutes) return null
+        return DeviceRootMenuItemUi(
+            route = route,
+            titleRes = titleRes,
+            subtitleRes = subtitleRes
+        )
     }
 }
