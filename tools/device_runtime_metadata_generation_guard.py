@@ -22,6 +22,7 @@ FILES = {
     "devices": SOURCE / "repository/DevicesRepository.kt",
     "provisioning": SOURCE / "provisioning/repository/AqlProvisioningRuntimeMetadataResolver.kt",
     "catalog": SOURCE / "catalog/AqlCommercialDeviceCatalog.kt",
+    "module_contract": SOURCE / "catalog/AqlCommercialRuntimeModuleContract.kt",
     "snapshot": SOURCE / "model/DeviceSnapshot.kt",
     "root_mapping": SOURCE / "DeviceRootSnapshotMapping.kt",
 }
@@ -197,8 +198,15 @@ require_tokens(
         "MODULES_MISMATCH",
         "reported.modules != null",
         "product.expectedRuntimeModules()",
+    ),
+)
+require_tokens(
+    "module_contract",
+    (
+        "fun AqlCommercialCatalogProduct.expectedRuntimeModules()",
         "timerApi = standaloneTimer",
         "timerEngine = standaloneTimer || dosingProduct",
+        "dosing = dosingProduct",
     ),
 )
 
@@ -239,11 +247,13 @@ require_tokens(
 require_tokens(
     "devices",
     (
-        "runtime.processMetadataResponse(event.deviceUid, response)",
+        "processMetadataResponse(event.deviceUid, message)",
         "DeviceRuntimeMetadataProjector.applyReady",
         "DeviceRuntimeMetadataProjector::invalidate",
         "invalidateRuntimeMetadata(state.deviceUid)",
-        "knownStore?.saveSnapshot(registered)",
+        "private fun registerUntrustedSnapshot(",
+        "registryStore.updateSnapshot(snapshot.deviceUid) { untrusted }",
+        "knownStore?.saveSnapshot(snapshot)",
     ),
 )
 require(
