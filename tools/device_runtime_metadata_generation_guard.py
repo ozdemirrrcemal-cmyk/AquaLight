@@ -134,8 +134,9 @@ require(
     "legacy direct wire reduction must be explicitly blocked",
 )
 require(
-    "): DeviceSnapshot? = null" in wire_boundary,
-    "direct wire metadata must fail closed without mutating the snapshot",
+    "error(\"Wire metadata must be parsed into generation-tagged typed fragments before reduction.\")"
+    in wire_boundary,
+    "direct wire metadata must terminate without mutating the snapshot",
 )
 for forbidden in (
     "snapshot.copy(",
