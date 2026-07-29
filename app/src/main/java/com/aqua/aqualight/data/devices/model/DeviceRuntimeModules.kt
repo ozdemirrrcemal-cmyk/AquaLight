@@ -52,7 +52,7 @@ data class DeviceRuntimeModules(
     }
 
     val enabled: Set<DeviceRuntimeModuleKey>
-        get() = DeviceRuntimeModuleKey.entries.filterTo(linkedSetOf(), ::get)
+        get() = DeviceRuntimeModuleKey.entries.filterTo(linkedSetOf()) { key -> this[key] }
 
     val exposesStandaloneTimerApi: Boolean
         get() = timerApi
