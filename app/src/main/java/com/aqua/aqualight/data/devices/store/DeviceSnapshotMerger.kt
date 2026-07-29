@@ -33,7 +33,10 @@ object DeviceSnapshotMerger {
                 previous.runtimeMetadataGeneration,
                 incoming.runtimeMetadataGeneration
             ),
-            connectionState = mergeConnectionState(previous.connectionState, incoming.connectionState),
+            connectionState = mergeConnectionState(
+                previous.connectionState,
+                incoming.connectionState
+            ),
             lastSeenAtMillis = maxOf(previous.lastSeenAtMillis, incoming.lastSeenAtMillis)
         )
     }
@@ -112,16 +115,46 @@ object DeviceSnapshotMerger {
         }
         return incoming.copy(
             onlineState = resolvedOnlineState,
-            lastUdpSeenAtMillis = maxNullable(previous.lastUdpSeenAtMillis, incoming.lastUdpSeenAtMillis),
-            lastWsConnectedAtMillis = maxNullable(previous.lastWsConnectedAtMillis, incoming.lastWsConnectedAtMillis),
-            lastAuthenticatedAtMillis = maxNullable(previous.lastAuthenticatedAtMillis, incoming.lastAuthenticatedAtMillis),
-            lastRuntimeMessageAtMillis = maxNullable(previous.lastRuntimeMessageAtMillis, incoming.lastRuntimeMessageAtMillis),
-            lastControlProofAtMillis = maxNullable(previous.lastControlProofAtMillis, incoming.lastControlProofAtMillis),
-            lastUdpSeenElapsedMillis = maxNullable(previous.lastUdpSeenElapsedMillis, incoming.lastUdpSeenElapsedMillis),
-            lastWsConnectedElapsedMillis = maxNullable(previous.lastWsConnectedElapsedMillis, incoming.lastWsConnectedElapsedMillis),
-            lastAuthenticatedElapsedMillis = maxNullable(previous.lastAuthenticatedElapsedMillis, incoming.lastAuthenticatedElapsedMillis),
-            lastRuntimeMessageElapsedMillis = maxNullable(previous.lastRuntimeMessageElapsedMillis, incoming.lastRuntimeMessageElapsedMillis),
-            lastControlProofElapsedMillis = maxNullable(previous.lastControlProofElapsedMillis, incoming.lastControlProofElapsedMillis),
+            lastUdpSeenAtMillis = maxNullable(
+                previous.lastUdpSeenAtMillis,
+                incoming.lastUdpSeenAtMillis
+            ),
+            lastWsConnectedAtMillis = maxNullable(
+                previous.lastWsConnectedAtMillis,
+                incoming.lastWsConnectedAtMillis
+            ),
+            lastAuthenticatedAtMillis = maxNullable(
+                previous.lastAuthenticatedAtMillis,
+                incoming.lastAuthenticatedAtMillis
+            ),
+            lastRuntimeMessageAtMillis = maxNullable(
+                previous.lastRuntimeMessageAtMillis,
+                incoming.lastRuntimeMessageAtMillis
+            ),
+            lastControlProofAtMillis = maxNullable(
+                previous.lastControlProofAtMillis,
+                incoming.lastControlProofAtMillis
+            ),
+            lastUdpSeenElapsedMillis = maxNullable(
+                previous.lastUdpSeenElapsedMillis,
+                incoming.lastUdpSeenElapsedMillis
+            ),
+            lastWsConnectedElapsedMillis = maxNullable(
+                previous.lastWsConnectedElapsedMillis,
+                incoming.lastWsConnectedElapsedMillis
+            ),
+            lastAuthenticatedElapsedMillis = maxNullable(
+                previous.lastAuthenticatedElapsedMillis,
+                incoming.lastAuthenticatedElapsedMillis
+            ),
+            lastRuntimeMessageElapsedMillis = maxNullable(
+                previous.lastRuntimeMessageElapsedMillis,
+                incoming.lastRuntimeMessageElapsedMillis
+            ),
+            lastControlProofElapsedMillis = maxNullable(
+                previous.lastControlProofElapsedMillis,
+                incoming.lastControlProofElapsedMillis
+            ),
             lastErrorMessage = incoming.lastErrorMessage ?: previous.lastErrorMessage
         )
     }
