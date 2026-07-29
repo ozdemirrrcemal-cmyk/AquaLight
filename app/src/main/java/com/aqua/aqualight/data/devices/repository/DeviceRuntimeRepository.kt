@@ -4,6 +4,7 @@ import android.content.Context
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogValidation
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataFailureCode
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataGeneration
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataGenerationState
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataReduction
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
@@ -29,6 +30,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -115,6 +117,7 @@ class DeviceRuntimeRepository(
     private val tokenLifecycleMutex = Mutex()
     private val sessions = ConcurrentHashMap<DeviceUid, RuntimeSession>()
     private val retiredDeviceUids = ConcurrentHashMap.newKeySet<DeviceUid>()
+    private val metadataTimeoutJobs = ConcurrentHashMap<DeviceUid, Job>()
 
     internal val metadataBootstrapCoordinator = DeviceRuntimeMetadataBootstrapCoordinator()
 
@@ -178,6 +181,7 @@ class DeviceRuntimeRepository(
                 if (lastActiveDeviceUid == snapshot.deviceUid) lastActiveDeviceUid = null
             }
         }
+        cancelMetadataTimeout(snapshot.deviceUid)
         detached?.close()
         metadataBootstrapCoordinator.clear(snapshot.deviceUid)
         return connect(snapshot)
@@ -246,6 +250,7 @@ class DeviceRuntimeRepository(
 
     suspend fun retire(deviceUid: DeviceUid) {
         val session = detachSessionForRetirement(deviceUid)
+        cancelMetadataTimeout(deviceUid)
         metadataBootstrapCoordinator.clear(deviceUid)
         timeSyncCoordinator.clearSessionMemory(deviceUid)
         session?.shutdown()
@@ -253,6 +258,7 @@ class DeviceRuntimeRepository(
 
     fun close(deviceUid: DeviceUid) {
         val session = detachSessionForRetirement(deviceUid)
+        cancelMetadataTimeout(deviceUid)
         metadataBootstrapCoordinator.clear(deviceUid)
         timeSyncCoordinator.clearSessionMemory(deviceUid)
         session?.close()
@@ -260,6 +266,7 @@ class DeviceRuntimeRepository(
 
     override fun close() {
         val activeSessions = beginRepositoryClose() ?: return
+        cancelAllMetadataTimeouts()
         metadataBootstrapCoordinator.clearAll()
         repositoryJob.cancel()
         activeSessions.forEach { session ->
@@ -270,6 +277,7 @@ class DeviceRuntimeRepository(
 
     suspend fun shutdown() {
         val activeSessions = beginRepositoryClose()
+        cancelAllMetadataTimeouts()
         metadataBootstrapCoordinator.clearAll()
         repositoryJob.cancel()
         activeSessions?.forEach { session ->
@@ -286,14 +294,19 @@ class DeviceRuntimeRepository(
     ): DeviceRuntimeMetadataUpdate = when (reduction) {
         is DeviceRuntimeMetadataReduction.IgnoredStale -> DeviceRuntimeMetadataUpdate.Unmatched
         is DeviceRuntimeMetadataReduction.Rejected -> {
+            cancelMetadataTimeout(deviceUid)
             disconnectMetadataFailure(deviceUid)
             DeviceRuntimeMetadataUpdate.Rejected(reduction.state)
         }
         is DeviceRuntimeMetadataReduction.Accepted -> when (val state = reduction.state) {
             is DeviceRuntimeMetadataGenerationState.Collecting ->
                 DeviceRuntimeMetadataUpdate.Collecting(state)
-            is DeviceRuntimeMetadataGenerationState.Ready -> validateReadyState(state)
+            is DeviceRuntimeMetadataGenerationState.Ready -> {
+                cancelMetadataTimeout(deviceUid)
+                validateReadyState(state)
+            }
             is DeviceRuntimeMetadataGenerationState.Rejected -> {
+                cancelMetadataTimeout(deviceUid)
                 disconnectMetadataFailure(deviceUid)
                 DeviceRuntimeMetadataUpdate.Rejected(state)
             }
@@ -330,6 +343,7 @@ class DeviceRuntimeRepository(
     }
 
     private fun rejectActiveGeneration(deviceUid: DeviceUid, field: String) {
+        cancelMetadataTimeout(deviceUid)
         val state = metadataBootstrapCoordinator.currentState(deviceUid) ?: return
         if (state is DeviceRuntimeMetadataGenerationState.Rejected) return
         metadataBootstrapCoordinator.reject(
@@ -338,6 +352,36 @@ class DeviceRuntimeRepository(
             code = DeviceRuntimeMetadataFailureCode.RUNTIME_UNAVAILABLE,
             field = field
         )
+    }
+
+    private fun scheduleMetadataTimeout(
+        session: RuntimeSession,
+        generation: DeviceRuntimeMetadataGeneration
+    ) {
+        cancelMetadataTimeout(session.deviceUid)
+        val timeoutJob = session.sessionScope.launch {
+            delay(METADATA_BOOTSTRAP_TIMEOUT_MILLIS)
+            val rejected = metadataBootstrapCoordinator.expire(
+                deviceUid = session.deviceUid,
+                generation = generation
+            )
+            if (rejected != null) {
+                disconnectMetadataFailure(session.deviceUid)
+            }
+        }
+        metadataTimeoutJobs[session.deviceUid] = timeoutJob
+        timeoutJob.invokeOnCompletion {
+            metadataTimeoutJobs.remove(session.deviceUid, timeoutJob)
+        }
+    }
+
+    private fun cancelMetadataTimeout(deviceUid: DeviceUid) {
+        metadataTimeoutJobs.remove(deviceUid)?.cancel()
+    }
+
+    private fun cancelAllMetadataTimeouts() {
+        metadataTimeoutJobs.values.forEach(Job::cancel)
+        metadataTimeoutJobs.clear()
     }
 
     private fun detachSessionForRetirement(deviceUid: DeviceUid): RuntimeSession? =
@@ -412,16 +456,20 @@ class DeviceRuntimeRepository(
         }
     }
 
-    private fun sendAuthenticatedBootstrap(session: RuntimeSession): Boolean =
-        metadataBootstrapCoordinator.beginAndDispatch(
+    private fun sendAuthenticatedBootstrap(session: RuntimeSession): Boolean {
+        val generation = metadataBootstrapCoordinator.beginAndDispatch(
             deviceUid = session.deviceUid,
             send = session.wsClient::send
-        ).isSuccess
+        ).getOrNull() ?: return false
+        scheduleMetadataTimeout(session, generation)
+        return true
+    }
 
     companion object {
         private const val EVENT_BUFFER_CAPACITY = 256
         private const val LOCAL_NETWORK_UNAVAILABLE_REASON = "local network unavailable"
         private const val METADATA_BOOTSTRAP_FAILED_REASON = "metadata bootstrap failed"
+        private const val METADATA_BOOTSTRAP_TIMEOUT_MILLIS = 10_000L
 
         fun withCredentialStore(context: Context, ownerUid: String): DeviceRuntimeRepository =
             DeviceRuntimeRepository(
