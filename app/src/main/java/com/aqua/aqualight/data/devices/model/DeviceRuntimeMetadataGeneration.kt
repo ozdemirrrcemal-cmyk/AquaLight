@@ -2,18 +2,14 @@ package com.aqua.aqualight.data.devices.model
 
 @JvmInline
 value class DeviceRuntimeMetadataGeneration(val value: Long) {
-    init {
-        require(value > 0L) { "Runtime metadata generation must be greater than zero." }
-    }
+    init { require(value > 0L) { "Runtime metadata generation must be greater than zero." } }
 
     internal fun next(): DeviceRuntimeMetadataGeneration {
         check(value < Long.MAX_VALUE) { "Runtime metadata generation space is exhausted." }
         return DeviceRuntimeMetadataGeneration(value + 1L)
     }
 
-    companion object {
-        val FIRST = DeviceRuntimeMetadataGeneration(1L)
-    }
+    companion object { val FIRST = DeviceRuntimeMetadataGeneration(1L) }
 }
 
 enum class DeviceRuntimeMetadataFailureCode {
@@ -24,6 +20,8 @@ enum class DeviceRuntimeMetadataFailureCode {
     BOOTSTRAP_RESPONSE_FAILED,
     BOOTSTRAP_RESPONSE_MISMATCH,
     DEVICE_UID_MISMATCH,
+    STATUS_IDENTITY_MISMATCH,
+    CATALOG_VALIDATION_FAILED,
     CONFLICTING_IDENTITY,
     CONFLICTING_CAPABILITIES,
     CONFLICTING_MODULES,
@@ -43,9 +41,9 @@ sealed interface DeviceRuntimeMetadataGenerationState {
     data class Collecting(
         override val deviceUid: DeviceUid,
         override val generation: DeviceRuntimeMetadataGeneration,
-        val identity: DeviceRuntimeIdentity?,
+        val identity: DeviceRuntimeIdentityEnvelope?,
         val capabilities: DeviceRuntimeCapabilities?,
-        val modules: DeviceRuntimeModules?
+        val moduleStatus: DeviceRuntimeModuleStatus?
     ) : DeviceRuntimeMetadataGenerationState {
         override val publishedMetadata: DeviceRuntimeMetadata? = null
     }
@@ -53,6 +51,8 @@ sealed interface DeviceRuntimeMetadataGenerationState {
     data class Ready(
         override val deviceUid: DeviceUid,
         override val generation: DeviceRuntimeMetadataGeneration,
+        val identityEnvelope: DeviceRuntimeIdentityEnvelope,
+        val moduleStatus: DeviceRuntimeModuleStatus,
         val metadata: DeviceRuntimeMetadata
     ) : DeviceRuntimeMetadataGenerationState {
         override val publishedMetadata: DeviceRuntimeMetadata = metadata
@@ -72,7 +72,7 @@ sealed interface DeviceRuntimeMetadataFragment {
 
     data class Identity(
         override val generation: DeviceRuntimeMetadataGeneration,
-        val value: DeviceRuntimeIdentity
+        val value: DeviceRuntimeIdentityEnvelope
     ) : DeviceRuntimeMetadataFragment
 
     data class Capabilities(
@@ -82,7 +82,7 @@ sealed interface DeviceRuntimeMetadataFragment {
 
     data class Modules(
         override val generation: DeviceRuntimeMetadataGeneration,
-        val value: DeviceRuntimeModules
+        val value: DeviceRuntimeModuleStatus
     ) : DeviceRuntimeMetadataFragment
 }
 
