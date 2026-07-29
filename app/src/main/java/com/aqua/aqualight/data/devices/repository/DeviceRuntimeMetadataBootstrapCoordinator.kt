@@ -9,13 +9,7 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsOutgoingMessage
 
-/**
- * Owner-scoped authenticated metadata bootstrap.
- *
- * Only the exact identity, capabilities and status/modules commands are dispatched. Every command is
- * correlated before transport send. Any dispatch or response-contract failure rejects the complete
- * generation and removes all remaining tickets; no partial metadata can become reusable.
- */
+/** Owner-scoped, correlated and fail-closed authenticated metadata bootstrap. */
 internal class DeviceRuntimeMetadataBootstrapCoordinator(
     private val reducer: DeviceRuntimeMetadataReducer = DeviceRuntimeMetadataReducer()
 ) {
@@ -38,19 +32,19 @@ internal class DeviceRuntimeMetadataBootstrapCoordinator(
             )
             if (!registerTicket(ticket)) {
                 reject(
-                    deviceUid = deviceUid,
-                    generation = collecting.generation,
-                    code = DeviceRuntimeMetadataFailureCode.BOOTSTRAP_DISPATCH_FAILED,
-                    field = "${kind.module}.${kind.action}:correlation"
+                    deviceUid,
+                    collecting.generation,
+                    DeviceRuntimeMetadataFailureCode.BOOTSTRAP_DISPATCH_FAILED,
+                    "${kind.module}.${kind.action}:correlation"
                 )
                 error("Metadata bootstrap correlation registration failed.")
             }
             if (!send(command)) {
                 reject(
-                    deviceUid = deviceUid,
-                    generation = collecting.generation,
-                    code = DeviceRuntimeMetadataFailureCode.BOOTSTRAP_DISPATCH_FAILED,
-                    field = "${kind.module}.${kind.action}:transport"
+                    deviceUid,
+                    collecting.generation,
+                    DeviceRuntimeMetadataFailureCode.BOOTSTRAP_DISPATCH_FAILED,
+                    "${kind.module}.${kind.action}:transport"
                 )
                 error("Metadata bootstrap transport dispatch failed.")
             }
@@ -58,31 +52,38 @@ internal class DeviceRuntimeMetadataBootstrapCoordinator(
         collecting.generation
     }
 
+    fun process(
+        deviceUid: DeviceUid,
+        response: AqlWsIncomingMessage.Response
+    ): DeviceRuntimeMetadataBootstrapProcessing = when (
+        val claim = claim(deviceUid, response)
+    ) {
+        DeviceRuntimeMetadataBootstrapClaim.Unmatched ->
+            DeviceRuntimeMetadataBootstrapProcessing.Unmatched
+        is DeviceRuntimeMetadataBootstrapClaim.Rejected ->
+            DeviceRuntimeMetadataBootstrapProcessing.Reduced(
+                DeviceRuntimeMetadataReduction.Rejected(claim.state)
+            )
+        is DeviceRuntimeMetadataBootstrapClaim.Accepted ->
+            processAccepted(claim.ticket, response)
+    }
+
     fun claim(
         deviceUid: DeviceUid,
         response: AqlWsIncomingMessage.Response
     ): DeviceRuntimeMetadataBootstrapClaim {
-        val ticket = synchronized(lock) {
-            ticketsByRequestId.remove(response.id)
-        }
-        if (ticket == null) return DeviceRuntimeMetadataBootstrapClaim.Unmatched
-
-        val failure = ticket.responseFailure(deviceUid = deviceUid, response = response)
-        val rejected = failure?.let { responseFailure ->
-            reject(
-                deviceUid = ticket.deviceUid,
-                generation = ticket.generation,
-                code = responseFailure.code,
-                field = responseFailure.field
-            )
+        val ticket = synchronized(lock) { ticketsByRequestId.remove(response.id) }
+            ?: return DeviceRuntimeMetadataBootstrapClaim.Unmatched
+        val failure = ticket.responseFailure(deviceUid, response)
+        val rejected = failure?.let {
+            reject(ticket.deviceUid, ticket.generation, it.code, it.field)
         }
         val current = currentState(ticket.deviceUid)
         return when {
             rejected != null -> DeviceRuntimeMetadataBootstrapClaim.Rejected(rejected)
             failure != null -> DeviceRuntimeMetadataBootstrapClaim.Unmatched
-            current?.generation == ticket.generation -> {
+            current?.generation == ticket.generation ->
                 DeviceRuntimeMetadataBootstrapClaim.Accepted(ticket)
-            }
             else -> DeviceRuntimeMetadataBootstrapClaim.Unmatched
         }
     }
@@ -90,20 +91,22 @@ internal class DeviceRuntimeMetadataBootstrapCoordinator(
     fun accept(
         ticket: DeviceRuntimeMetadataBootstrapTicket,
         fragment: DeviceRuntimeMetadataFragment
-    ): DeviceRuntimeMetadataReduction? = if (
-        ticket.generation != fragment.generation || !ticket.kind.accepts(fragment)
-    ) {
-        reject(
-            deviceUid = ticket.deviceUid,
-            generation = ticket.generation,
-            code = DeviceRuntimeMetadataFailureCode.BOOTSTRAP_RESPONSE_MISMATCH,
-            field = ticket.kind.name
-        )?.let { rejected -> DeviceRuntimeMetadataReduction.Rejected(rejected) }
-    } else {
-        synchronized(lock) {
+    ): DeviceRuntimeMetadataReduction? {
+        if (ticket.generation != fragment.generation || !ticket.kind.accepts(fragment)) {
+            return reject(
+                ticket.deviceUid,
+                ticket.generation,
+                DeviceRuntimeMetadataFailureCode.BOOTSTRAP_RESPONSE_MISMATCH,
+                ticket.kind.name
+            )?.let(DeviceRuntimeMetadataReduction::Rejected)
+        }
+        return synchronized(lock) {
             states[ticket.deviceUid]?.let { current ->
-                reducer.reduce(current = current, fragment = fragment).also { reduction ->
+                reducer.reduce(current, fragment).also { reduction ->
                     states[ticket.deviceUid] = reduction.state
+                    if (reduction.state !is DeviceRuntimeMetadataGenerationState.Collecting) {
+                        removeTicketsLocked(ticket.deviceUid)
+                    }
                 }
             }
         }
@@ -118,9 +121,7 @@ internal class DeviceRuntimeMetadataBootstrapCoordinator(
         val current = states[deviceUid] ?: return@synchronized null
         if (current.generation != generation) return@synchronized null
         removeTicketsLocked(deviceUid)
-        reducer.reject(current = current, code = code, field = field).state.also { rejected ->
-            states[deviceUid] = rejected
-        }
+        reducer.reject(current, code, field).state.also { states[deviceUid] = it }
     }
 
     fun clear(deviceUid: DeviceUid) {
@@ -140,31 +141,65 @@ internal class DeviceRuntimeMetadataBootstrapCoordinator(
     fun currentState(deviceUid: DeviceUid): DeviceRuntimeMetadataGenerationState? =
         synchronized(lock) { states[deviceUid] }
 
-    private fun startGeneration(
-        deviceUid: DeviceUid
-    ): DeviceRuntimeMetadataGenerationState.Collecting = synchronized(lock) {
-        removeTicketsLocked(deviceUid)
-        reducer.begin(deviceUid = deviceUid, previous = states[deviceUid]).also { collecting ->
-            states[deviceUid] = collecting
+    private fun processAccepted(
+        ticket: DeviceRuntimeMetadataBootstrapTicket,
+        response: AqlWsIncomingMessage.Response
+    ): DeviceRuntimeMetadataBootstrapProcessing {
+        val fragment = parseFragment(ticket, response).getOrElse { error ->
+            val rejected = reject(
+                ticket.deviceUid,
+                ticket.generation,
+                ticket.kind.parseFailureCode,
+                "${ticket.kind.module}.${ticket.kind.action}:${error.message.orEmpty()}"
+            ) ?: return DeviceRuntimeMetadataBootstrapProcessing.Unmatched
+            return DeviceRuntimeMetadataBootstrapProcessing.Reduced(
+                DeviceRuntimeMetadataReduction.Rejected(rejected)
+            )
         }
+        val reduction = accept(ticket, fragment)
+            ?: return DeviceRuntimeMetadataBootstrapProcessing.Unmatched
+        return DeviceRuntimeMetadataBootstrapProcessing.Reduced(reduction)
+    }
+
+    private fun parseFragment(
+        ticket: DeviceRuntimeMetadataBootstrapTicket,
+        response: AqlWsIncomingMessage.Response
+    ): Result<DeviceRuntimeMetadataFragment> = when (ticket.kind) {
+        DeviceRuntimeMetadataBootstrapKind.IDENTITY -> DeviceRuntimeIdentityParser.parse(
+            ticket.deviceUid,
+            response.data
+        ).map { DeviceRuntimeMetadataFragment.Identity(ticket.generation, it) }
+        DeviceRuntimeMetadataBootstrapKind.CAPABILITIES ->
+            DeviceRuntimeCapabilitiesParser.parse(response.data).map {
+                DeviceRuntimeMetadataFragment.Capabilities(ticket.generation, it)
+            }
+        DeviceRuntimeMetadataBootstrapKind.STATUS_MODULES ->
+            DeviceRuntimeModulesParser.parseDeviceStatus(response.data).map {
+                DeviceRuntimeMetadataFragment.Modules(ticket.generation, it)
+            }
+    }
+
+    private fun startGeneration(deviceUid: DeviceUid):
+        DeviceRuntimeMetadataGenerationState.Collecting = synchronized(lock) {
+        removeTicketsLocked(deviceUid)
+        reducer.begin(deviceUid, states[deviceUid]).also { states[deviceUid] = it }
     }
 
     private fun registerTicket(ticket: DeviceRuntimeMetadataBootstrapTicket): Boolean =
         synchronized(lock) {
             val current = states[ticket.deviceUid]
-            val duplicateKind = ticketsByRequestId.values.any { registered ->
-                registered.deviceUid == ticket.deviceUid &&
-                    registered.generation == ticket.generation &&
-                    registered.kind == ticket.kind
+            val duplicateKind = ticketsByRequestId.values.any {
+                it.deviceUid == ticket.deviceUid &&
+                    it.generation == ticket.generation &&
+                    it.kind == ticket.kind
             }
-            val registrationChecks = listOf(
-                ticket.requestId.isNotBlank(),
-                current is DeviceRuntimeMetadataGenerationState.Collecting,
-                current?.generation == ticket.generation,
-                !ticketsByRequestId.containsKey(ticket.requestId),
+            if (
+                ticket.requestId.isNotBlank() &&
+                current is DeviceRuntimeMetadataGenerationState.Collecting &&
+                current.generation == ticket.generation &&
+                !ticketsByRequestId.containsKey(ticket.requestId) &&
                 !duplicateKind
-            )
-            if (registrationChecks.all { valid -> valid }) {
+            ) {
                 ticketsByRequestId[ticket.requestId] = ticket
                 true
             } else {
@@ -180,6 +215,17 @@ internal class DeviceRuntimeMetadataBootstrapCoordinator(
     }
 }
 
+private val DeviceRuntimeMetadataBootstrapKind.parseFailureCode:
+    DeviceRuntimeMetadataFailureCode
+    get() = when (this) {
+        DeviceRuntimeMetadataBootstrapKind.IDENTITY ->
+            DeviceRuntimeMetadataFailureCode.IDENTITY_PARSE_FAILED
+        DeviceRuntimeMetadataBootstrapKind.CAPABILITIES ->
+            DeviceRuntimeMetadataFailureCode.CAPABILITIES_PARSE_FAILED
+        DeviceRuntimeMetadataBootstrapKind.STATUS_MODULES ->
+            DeviceRuntimeMetadataFailureCode.MODULES_PARSE_FAILED
+    }
+
 private data class BootstrapResponseFailure(
     val code: DeviceRuntimeMetadataFailureCode,
     val field: String
@@ -190,23 +236,22 @@ private fun DeviceRuntimeMetadataBootstrapTicket.responseFailure(
     response: AqlWsIncomingMessage.Response
 ): BootstrapResponseFailure? = when {
     this.deviceUid != deviceUid -> BootstrapResponseFailure(
-        code = DeviceRuntimeMetadataFailureCode.BOOTSTRAP_RESPONSE_MISMATCH,
-        field = "deviceUid"
+        DeviceRuntimeMetadataFailureCode.BOOTSTRAP_RESPONSE_MISMATCH,
+        "deviceUid"
     )
     response.module != kind.module -> BootstrapResponseFailure(
-        code = DeviceRuntimeMetadataFailureCode.BOOTSTRAP_RESPONSE_MISMATCH,
-        field = "module"
+        DeviceRuntimeMetadataFailureCode.BOOTSTRAP_RESPONSE_MISMATCH,
+        "module"
     )
     response.action != kind.action -> BootstrapResponseFailure(
-        code = DeviceRuntimeMetadataFailureCode.BOOTSTRAP_RESPONSE_MISMATCH,
-        field = "action"
+        DeviceRuntimeMetadataFailureCode.BOOTSTRAP_RESPONSE_MISMATCH,
+        "action"
     )
-    !response.ok || response.statusCode !in SUCCESS_MIN_STATUS..SUCCESS_MAX_STATUS -> {
+    !response.ok || response.statusCode !in SUCCESS_MIN_STATUS..SUCCESS_MAX_STATUS ->
         BootstrapResponseFailure(
-            code = DeviceRuntimeMetadataFailureCode.BOOTSTRAP_RESPONSE_FAILED,
-            field = "${kind.module}.${kind.action}"
+            DeviceRuntimeMetadataFailureCode.BOOTSTRAP_RESPONSE_FAILED,
+            "${kind.module}.${kind.action}"
         )
-    }
     else -> null
 }
 
