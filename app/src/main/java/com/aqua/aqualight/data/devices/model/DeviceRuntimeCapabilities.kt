@@ -47,13 +47,4 @@ data class DeviceRuntimeCapabilities(
     val limits: DeviceLimitSet,
     val supportedFeatures: Set<AqlDeviceFeatureKey>,
     val supportedScreens: Set<AqlDeviceScreenKey>
-) {
-    init {
-        require(supportedFeatures.size == supportedFeatures.toList().distinct().size) {
-            "supportedFeatures must not contain duplicate values."
-        }
-        require(supportedScreens.size == supportedScreens.toList().distinct().size) {
-            "supportedScreens must not contain duplicate values."
-        }
-    }
-}
+)
