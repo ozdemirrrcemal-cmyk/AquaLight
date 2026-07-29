@@ -44,7 +44,6 @@ class AqlDeviceCatalogFoundationTest {
     @Test
     fun `all generated products resolve the fixture declared family menus`() {
         assertEquals(9, AqlCommercialDeviceCatalog.products.size)
-
         AqlCommercialDeviceCatalog.products.forEach { product ->
             assertEquals(
                 product.profile.expectedMenuFeatureNames,
@@ -67,6 +66,20 @@ class AqlDeviceCatalogFoundationTest {
         assertFalse(DeviceRootMenuFeature.COOLING_TEMPERATURE in slimMenus)
         assertTrue(DeviceRootMenuFeature.LIGHT_MANUAL in eliteMenus)
         assertTrue(DeviceRootMenuFeature.LIGHT_MANUAL in slimMenus)
+    }
+
+    @Test
+    fun `wrgb and cool pro retain distinct family destinations over shared cooling api`() {
+        val eliteRoutes = DeviceRootRoutePolicy.allowedRoutes(product("LIGHT_WRGB_PRO_ELITE"))
+        val coolRoutes = DeviceRootRoutePolicy.allowedRoutes(product("COOLING_COOL_PRO_2F"))
+
+        assertTrue(DeviceRootRoute.LIGHT_FAN_CONTROL in eliteRoutes)
+        assertTrue(DeviceRootRoute.LIGHT_TEMPERATURE_PROTECTION in eliteRoutes)
+        assertFalse(DeviceRootRoute.COOLING_CONTROL in eliteRoutes)
+
+        assertTrue(DeviceRootRoute.COOLING_CONTROL in coolRoutes)
+        assertTrue(DeviceRootRoute.COOLING_TEMPERATURE in coolRoutes)
+        assertFalse(DeviceRootRoute.LIGHT_FAN_CONTROL in coolRoutes)
     }
 
     @Test
