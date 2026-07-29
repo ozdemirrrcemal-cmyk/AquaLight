@@ -116,6 +116,10 @@ class AqlProvisioningRuntimeMetadataResolver {
                 null
             }
         }
+
+        private fun AqlWsIncomingMessage.Response.isDeviceAction(
+            actionName: String
+        ): Boolean = module == AqlWsContract.MODULE_DEVICE && action == actionName
     }
 
     private fun AqlWsEvent.successfulResponseFor(
@@ -125,10 +129,6 @@ class AqlProvisioningRuntimeMetadataResolver {
         ?.parsed
         ?.let { parsed -> parsed as? AqlWsIncomingMessage.Response }
         ?.takeIf(AqlWsIncomingMessage.Response::ok)
-
-    private fun AqlWsIncomingMessage.Response.isDeviceAction(actionName: String): Boolean {
-        return module == AqlWsContract.MODULE_DEVICE && action == actionName
-    }
 
     private companion object {
         const val DEFAULT_TIMEOUT_MILLIS = 10_000L
