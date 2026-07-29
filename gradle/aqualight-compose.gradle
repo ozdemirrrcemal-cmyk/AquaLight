@@ -1,5 +1,9 @@
 project(":app") {
-    apply plugin: "org.jetbrains.kotlin.plugin.compose"
+    pluginManager.withPlugin("org.jetbrains.kotlin.android") {
+        afterEvaluate {
+            pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
+        }
+    }
 
     pluginManager.withPlugin("com.android.application") {
         android {
