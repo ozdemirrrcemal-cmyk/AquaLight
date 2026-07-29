@@ -24,4 +24,14 @@ class DeviceDosingPumpCountResolverTest {
     fun `defaults unknown dosing models to four pumps`() {
         assertEquals(4, resolveDosingPumpCount(channelCount = 0, modelLabel = "Dosing"))
     }
+
+    @Test
+    fun `keeps two pump Compose layout`() {
+        assertEquals(2, normalizeDosingPumpCount(2))
+    }
+
+    @Test
+    fun `normalizes unsupported Compose layouts to four pumps`() {
+        assertEquals(4, normalizeDosingPumpCount(3))
+    }
 }
