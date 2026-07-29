@@ -99,6 +99,7 @@ data class DeviceRuntimeIdentity(
         require(family != DeviceFamily.UNKNOWN) {
             "Runtime identity must contain an exact commercial product family."
         }
+        requireExactText(deviceUid.value, "deviceUid")
         requireExactText(brand, "brand")
         requireExactText(displayName, "displayName")
     }
@@ -131,8 +132,12 @@ private fun requireExact(
 
 private fun requireExactText(value: String, field: String) {
     require(value.isNotEmpty()) { "$field must not be empty." }
-    require(value == value.trim()) { "$field must not contain surrounding whitespace." }
-    require(value.none(Char::isISOControl)) { "$field must not contain control characters." }
+    require(value.first().isWhitespace().not() && value.last().isWhitespace().not()) {
+        "$field must not contain surrounding whitespace."
+    }
+    require(value.none { character -> character.isISOControl() }) {
+        "$field must not contain control characters."
+    }
 }
 
 private val PRODUCT_KEY_PATTERN = Regex("^[A-Z][A-Z0-9_]*$")
