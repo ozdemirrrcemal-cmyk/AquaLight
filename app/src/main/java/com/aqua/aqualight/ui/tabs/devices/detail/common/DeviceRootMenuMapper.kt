@@ -178,13 +178,16 @@ object DeviceRootMenuMapper {
         @StringRes titleRes: Int,
         @StringRes subtitleRes: Int
     ): DeviceRootMenuItemUi? {
-        if (feature !in menuFeatures) return null
-        val route = DeviceRootRouteResolver.resolve(family, feature) ?: return null
-        if (route !in allowedRoutes) return null
-        return DeviceRootMenuItemUi(
-            route = route,
-            titleRes = titleRes,
-            subtitleRes = subtitleRes
-        )
+        val route = DeviceRootRouteResolver.resolve(family, feature)
+        val isAuthorized = feature in menuFeatures && route in allowedRoutes
+        return if (route != null && isAuthorized) {
+            DeviceRootMenuItemUi(
+                route = route,
+                titleRes = titleRes,
+                subtitleRes = subtitleRes
+            )
+        } else {
+            null
+        }
     }
 }
