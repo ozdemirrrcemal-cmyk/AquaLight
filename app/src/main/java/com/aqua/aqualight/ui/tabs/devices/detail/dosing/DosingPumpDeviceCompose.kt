@@ -66,9 +66,9 @@ enum class DosingPumpVisualState(
 @Composable
 fun DeviceDosingPumpScreen(
     pumpCount: Int,
+    modifier: Modifier = Modifier,
     pumpStates: List<DosingPumpVisualState> = emptyList(),
-    onPumpClick: (Int) -> Unit = {},
-    modifier: Modifier = Modifier
+    onPumpClick: (Int) -> Unit = {}
 ) {
     val supportedPumpCount = normalizeDosingPumpCount(pumpCount)
     val pumpHeads = List(supportedPumpCount) { index ->
