@@ -82,22 +82,20 @@ class DeviceRuntimeMetadataReducer {
         deviceUid: DeviceUid,
         incoming: DeviceRuntimeIdentityEnvelope
     ): FragmentMerge {
-        if (incoming.identity.deviceUid != deviceUid) {
-            return FragmentMerge.Conflict(
+        val statusMismatch = moduleStatus?.mismatchField(incoming.identity)
+        return when {
+            incoming.identity.deviceUid != deviceUid -> FragmentMerge.Conflict(
                 DeviceRuntimeMetadataFailureCode.DEVICE_UID_MISMATCH,
                 "deviceUid"
             )
-        }
-        moduleStatus?.mismatchField(incoming.identity)?.let { field ->
-            return FragmentMerge.Conflict(
+            statusMismatch != null -> FragmentMerge.Conflict(
                 DeviceRuntimeMetadataFailureCode.STATUS_IDENTITY_MISMATCH,
-                field
+                statusMismatch
             )
-        }
-        return if (identity == null || identity == incoming) {
-            FragmentMerge.Accepted(copy(identity = incoming))
-        } else {
-            FragmentMerge.Conflict(
+            identity == null || identity == incoming -> FragmentMerge.Accepted(
+                copy(identity = incoming)
+            )
+            else -> FragmentMerge.Conflict(
                 DeviceRuntimeMetadataFailureCode.CONFLICTING_IDENTITY,
                 "identity"
             )
@@ -118,16 +116,16 @@ class DeviceRuntimeMetadataReducer {
     private fun Fragments.mergeModuleStatus(
         incoming: DeviceRuntimeModuleStatus
     ): FragmentMerge {
-        identity?.identity?.let(incoming::mismatchField)?.let { field ->
-            return FragmentMerge.Conflict(
+        val identityMismatch = identity?.identity?.let(incoming::mismatchField)
+        return when {
+            identityMismatch != null -> FragmentMerge.Conflict(
                 DeviceRuntimeMetadataFailureCode.STATUS_IDENTITY_MISMATCH,
-                field
+                identityMismatch
             )
-        }
-        return if (moduleStatus == null || moduleStatus == incoming) {
-            FragmentMerge.Accepted(copy(moduleStatus = incoming))
-        } else {
-            FragmentMerge.Conflict(
+            moduleStatus == null || moduleStatus == incoming -> FragmentMerge.Accepted(
+                copy(moduleStatus = incoming)
+            )
+            else -> FragmentMerge.Conflict(
                 DeviceRuntimeMetadataFailureCode.CONFLICTING_MODULES,
                 "modules"
             )
