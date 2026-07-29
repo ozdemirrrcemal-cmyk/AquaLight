@@ -1,0 +1,125 @@
+name: Apply Dosing Compose Setup
+
+on:
+  push:
+    branches:
+      - feature/dosing-pump-compose
+    paths:
+      - ".github/workflows/apply_dosing_compose_setup.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    env:
+      CI: "true"
+      AQL_FIREBASE_DEBUG_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_DEBUG_CONFIG_BASE64 }}
+
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: feature/dosing-pump-compose
+          fetch-depth: 0
+
+      - name: Install JDK 17
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          java-version: "17"
+          distribution: temurin
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+        with:
+          cmdline-tools-version: "15859902"
+
+      - name: Install required SDK packages
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platform-tools" "platforms;android-36"
+          sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1"
+
+      - name: Move Compose configuration into app module
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          app_gradle = Path("app/build.gradle")
+          text = app_gradle.read_text(encoding="utf-8")
+
+          kotlin_plugin = "    id 'org.jetbrains.kotlin.android'\n"
+          compose_plugin = "    id 'org.jetbrains.kotlin.plugin.compose'\n"
+          if compose_plugin not in text:
+              if kotlin_plugin not in text:
+                  raise SystemExit("Kotlin Android plugin anchor not found")
+              text = text.replace(kotlin_plugin, kotlin_plugin + compose_plugin, 1)
+
+          old_features = "    buildFeatures { buildConfig true; viewBinding true }"
+          new_features = "    buildFeatures { buildConfig true; viewBinding true; compose true }"
+          if new_features not in text:
+              if old_features not in text:
+                  raise SystemExit("buildFeatures anchor not found")
+              text = text.replace(old_features, new_features, 1)
+
+          dependency_anchor = '    implementation "androidx.webkit:webkit:1.14.0"\n'
+          compose_dependencies = '''
+
+              // Jetpack Compose - dosing device UI
+              implementation platform("androidx.compose:compose-bom:2026.06.00")
+              implementation "androidx.compose.ui:ui"
+              implementation "androidx.compose.ui:ui-tooling-preview"
+              implementation "androidx.compose.foundation:foundation"
+              implementation "androidx.compose.animation:animation"
+              implementation "androidx.lifecycle:lifecycle-runtime-compose:2.10.0"
+              debugImplementation "androidx.compose.ui:ui-tooling"
+          '''
+          compose_dependencies = "\n".join(line[12:] if line.startswith("            ") else line for line in compose_dependencies.splitlines())
+          compose_marker = 'implementation platform("androidx.compose:compose-bom:2026.06.00")'
+          if compose_marker not in text:
+              if dependency_anchor not in text:
+                  raise SystemExit("AndroidX dependency anchor not found")
+              text = text.replace(dependency_anchor, dependency_anchor + compose_dependencies + "\n", 1)
+
+          app_gradle.write_text(text, encoding="utf-8")
+
+          Path("build.gradle").write_text(
+              'apply from: rootProject.file("gradle/aqualight-detekt.gradle")\n'
+              'apply from: rootProject.file("gradle/aqualight-firebase.gradle")\n',
+              encoding="utf-8",
+          )
+
+          for removable in (
+              Path("gradle/aqualight-compose.gradle"),
+              Path(".github/workflows/compose_dependency_refresh.yml"),
+              Path(".github/workflows/apply_dosing_compose_setup.yml"),
+          ):
+              removable.unlink(missing_ok=True)
+          PY
+
+      - name: Refresh dependency locks and checksums
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          chmod +x ./gradlew
+          ./gradlew \
+            :app:dependencies \
+            --write-locks \
+            --write-verification-metadata sha256 \
+            --no-daemon \
+            --stacktrace
+
+      - name: Commit generated setup
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "build(compose): integrate and lock app dependencies"
+          git push origin HEAD:feature/dosing-pump-compose
