@@ -1,9 +1,9 @@
 name: Temporary Runtime Trust Patch
 
 on:
-  push:
+  pull_request:
     branches:
-      - agent/android-typed-device-metadata
+      - main
     paths:
       - .github/workflows/temporary_runtime_trust_patch.yml
 
