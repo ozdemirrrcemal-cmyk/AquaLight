@@ -18,6 +18,7 @@ import com.aqua.aqualight.data.devices.model.DeviceProductKey
 import com.aqua.aqualight.data.devices.model.DeviceProductLine
 import com.aqua.aqualight.data.devices.model.DeviceProductModel
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadata
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeModules
 import com.aqua.aqualight.data.devices.model.DeviceSkuCode
 import com.aqua.aqualight.data.devices.model.DeviceSkuId
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
@@ -33,7 +34,8 @@ internal enum class AqlCommercialCatalogFailureCode {
     CAPABILITIES_MISMATCH,
     LIMITS_MISMATCH,
     FEATURES_MISMATCH,
-    SCREENS_MISMATCH
+    SCREENS_MISMATCH,
+    MODULES_MISMATCH
 }
 
 internal data class AqlCommercialCatalogFailure(
@@ -42,13 +44,8 @@ internal data class AqlCommercialCatalogFailure(
 )
 
 internal sealed interface AqlCommercialCatalogValidation {
-    data class Valid(
-        val product: AqlCommercialCatalogProduct
-    ) : AqlCommercialCatalogValidation
-
-    data class Invalid(
-        val failure: AqlCommercialCatalogFailure
-    ) : AqlCommercialCatalogValidation
+    data class Valid(val product: AqlCommercialCatalogProduct) : AqlCommercialCatalogValidation
+    data class Invalid(val failure: AqlCommercialCatalogFailure) : AqlCommercialCatalogValidation
 }
 
 internal object AqlCommercialDeviceCatalog {
@@ -67,30 +64,23 @@ internal object AqlCommercialDeviceCatalog {
         }
     }
 
-    fun validate(metadata: DeviceRuntimeMetadata): AqlCommercialCatalogValidation {
-        return validateReported(metadata.toReportedCatalogProduct())
-    }
+    fun validate(metadata: DeviceRuntimeMetadata): AqlCommercialCatalogValidation =
+        validateReported(metadata.toReportedCatalogProduct())
 
     fun validateSnapshot(snapshot: DeviceSnapshot): AqlCommercialCatalogValidation {
         val reported = snapshot.toReportedCatalogProduct().getOrElse {
-            return invalid(
-                code = AqlCommercialCatalogFailureCode.MALFORMED_REPORTED_PRODUCT,
-                field = "snapshot"
-            )
+            return invalid(AqlCommercialCatalogFailureCode.MALFORMED_REPORTED_PRODUCT, "snapshot")
         }
         return validateReported(reported)
     }
 
-    private fun validateReported(
-        reported: ReportedCatalogProduct
-    ): AqlCommercialCatalogValidation {
+    private fun validateReported(reported: ReportedCatalogProduct): AqlCommercialCatalogValidation {
         val product = productsByIdentity[reported.compatibilityIdentity]
             ?: return invalid(
-                code = AqlCommercialCatalogFailureCode.UNKNOWN_COMPATIBILITY_IDENTITY,
-                field = "compatibilityIdentity"
+                AqlCommercialCatalogFailureCode.UNKNOWN_COMPATIBILITY_IDENTITY,
+                "compatibilityIdentity"
             )
-        val failure = compareIdentity(product = product, reported = reported)
-            ?: compareProfile(product = product, reported = reported)
+        val failure = compareIdentity(product, reported) ?: compareProfile(product, reported)
         return failure?.let(AqlCommercialCatalogValidation::Invalid)
             ?: AqlCommercialCatalogValidation.Valid(product)
     }
@@ -98,55 +88,55 @@ internal object AqlCommercialDeviceCatalog {
     private fun compareIdentity(
         product: AqlCommercialCatalogProduct,
         reported: ReportedCatalogProduct
-    ): AqlCommercialCatalogFailure? {
-        return when {
-            reported.family != product.family -> mismatch(
-                AqlCommercialCatalogFailureCode.FAMILY_MISMATCH,
-                "family"
-            )
-            reported.line != product.line -> mismatch(
-                AqlCommercialCatalogFailureCode.LINE_MISMATCH,
-                "line"
-            )
-            reported.displayName != product.displayName -> mismatch(
-                AqlCommercialCatalogFailureCode.DISPLAY_NAME_MISMATCH,
-                "displayName"
-            )
-            reported.skuId != product.skuId -> mismatch(
-                AqlCommercialCatalogFailureCode.SKU_ID_MISMATCH,
-                "skuId"
-            )
-            reported.skuCode != product.skuCode -> mismatch(
-                AqlCommercialCatalogFailureCode.SKU_CODE_MISMATCH,
-                "skuCode"
-            )
-            else -> null
-        }
+    ): AqlCommercialCatalogFailure? = when {
+        reported.family != product.family -> mismatch(
+            AqlCommercialCatalogFailureCode.FAMILY_MISMATCH,
+            "family"
+        )
+        reported.line != product.line -> mismatch(
+            AqlCommercialCatalogFailureCode.LINE_MISMATCH,
+            "line"
+        )
+        reported.displayName != product.displayName -> mismatch(
+            AqlCommercialCatalogFailureCode.DISPLAY_NAME_MISMATCH,
+            "displayName"
+        )
+        reported.skuId != product.skuId -> mismatch(
+            AqlCommercialCatalogFailureCode.SKU_ID_MISMATCH,
+            "skuId"
+        )
+        reported.skuCode != product.skuCode -> mismatch(
+            AqlCommercialCatalogFailureCode.SKU_CODE_MISMATCH,
+            "skuCode"
+        )
+        else -> null
     }
 
     private fun compareProfile(
         product: AqlCommercialCatalogProduct,
         reported: ReportedCatalogProduct
-    ): AqlCommercialCatalogFailure? {
-        return when {
-            reported.capabilities != product.profile.capabilities -> mismatch(
-                AqlCommercialCatalogFailureCode.CAPABILITIES_MISMATCH,
-                "capabilities"
-            )
-            reported.limits != product.limits -> mismatch(
-                AqlCommercialCatalogFailureCode.LIMITS_MISMATCH,
-                "limits"
-            )
-            reported.supportedFeatures != product.profile.supportedFeatures -> mismatch(
-                AqlCommercialCatalogFailureCode.FEATURES_MISMATCH,
-                "supportedFeatures"
-            )
-            reported.supportedScreens != product.profile.supportedScreens -> mismatch(
-                AqlCommercialCatalogFailureCode.SCREENS_MISMATCH,
-                "supportedScreens"
-            )
-            else -> null
-        }
+    ): AqlCommercialCatalogFailure? = when {
+        reported.capabilities != product.profile.capabilities -> mismatch(
+            AqlCommercialCatalogFailureCode.CAPABILITIES_MISMATCH,
+            "capabilities"
+        )
+        reported.limits != product.limits -> mismatch(
+            AqlCommercialCatalogFailureCode.LIMITS_MISMATCH,
+            "limits"
+        )
+        reported.supportedFeatures != product.profile.supportedFeatures -> mismatch(
+            AqlCommercialCatalogFailureCode.FEATURES_MISMATCH,
+            "supportedFeatures"
+        )
+        reported.supportedScreens != product.profile.supportedScreens -> mismatch(
+            AqlCommercialCatalogFailureCode.SCREENS_MISMATCH,
+            "supportedScreens"
+        )
+        reported.modules != null && reported.modules != product.expectedRuntimeModules() -> mismatch(
+            AqlCommercialCatalogFailureCode.MODULES_MISMATCH,
+            "modules"
+        )
+        else -> null
     }
 
     private const val EXPECTED_PRODUCT_COUNT = 9
@@ -162,11 +152,12 @@ private data class ReportedCatalogProduct(
     val capabilities: DeviceCapabilitySet,
     val limits: DeviceLimitSet,
     val supportedFeatures: Set<AqlDeviceFeatureKey>,
-    val supportedScreens: Set<AqlDeviceScreenKey>
+    val supportedScreens: Set<AqlDeviceScreenKey>,
+    val modules: DeviceRuntimeModules?
 )
 
-private fun DeviceRuntimeMetadata.toReportedCatalogProduct(): ReportedCatalogProduct {
-    return ReportedCatalogProduct(
+private fun DeviceRuntimeMetadata.toReportedCatalogProduct(): ReportedCatalogProduct =
+    ReportedCatalogProduct(
         compatibilityIdentity = identity.compatibilityIdentity,
         family = identity.family,
         line = identity.line,
@@ -176,9 +167,9 @@ private fun DeviceRuntimeMetadata.toReportedCatalogProduct(): ReportedCatalogPro
         capabilities = capabilities.capabilities,
         limits = capabilities.limits,
         supportedFeatures = capabilities.supportedFeatures,
-        supportedScreens = capabilities.supportedScreens
+        supportedScreens = capabilities.supportedScreens,
+        modules = modules
     )
-}
 
 private fun DeviceSnapshot.toReportedCatalogProduct(): Result<ReportedCatalogProduct> = runCatching {
     ReportedCatalogProduct(
@@ -191,45 +182,59 @@ private fun DeviceSnapshot.toReportedCatalogProduct(): Result<ReportedCatalogPro
         capabilities = capabilities.toExactCapabilitySet(),
         limits = limits.toExactLimitSet(),
         supportedFeatures = supportedFeatures.toExactFeatureSet(),
-        supportedScreens = supportedScreens.toExactScreenSet()
+        supportedScreens = supportedScreens.toExactScreenSet(),
+        modules = null
     )
 }
 
-private fun DeviceProduct.toCompatibilityIdentity(): DeviceCompatibilityIdentity {
-    return DeviceCompatibilityIdentity(
+private fun AqlCommercialCatalogProduct.expectedRuntimeModules(): DeviceRuntimeModules {
+    val profileCapabilities = profile.capabilities
+    val standaloneTimer = family == DeviceFamily.TIMER && profileCapabilities.standaloneTimer
+    val dosingProduct = family == DeviceFamily.DOSING && profileCapabilities.dosing
+    return DeviceRuntimeModules(
+        light = family == DeviceFamily.LIGHT && profileCapabilities.light,
+        cooling = profileCapabilities.cooling,
+        temperature = profileCapabilities.temperature,
+        timerApi = standaloneTimer,
+        timerEngine = standaloneTimer || dosingProduct,
+        dosing = dosingProduct,
+        network = true,
+        discovery = true,
+        firmware = true,
+        system = true
+    )
+}
+
+private fun DeviceProduct.toCompatibilityIdentity(): DeviceCompatibilityIdentity =
+    DeviceCompatibilityIdentity(
         productKey = DeviceProductKey(productKey),
         productId = DeviceProductId(productId),
         model = DeviceProductModel(model),
         hardwareRevision = DeviceHardwareRevision(hardwareRevision)
     )
-}
 
-private fun DeviceCapabilities.toExactCapabilitySet(): DeviceCapabilitySet {
-    return DeviceCapabilitySet(
-        light = light,
-        manualLight = manualLight,
-        lightProgram = lightProgram,
-        lightPresets = lightPresets,
-        lightSimulation = lightSimulation,
-        fan = fan,
-        cooling = cooling,
-        temperature = temperature,
-        standaloneTimer = standaloneTimer,
-        dosing = dosing,
-        timeSync = timeSync,
-        ota = ota
-    )
-}
+private fun DeviceCapabilities.toExactCapabilitySet(): DeviceCapabilitySet = DeviceCapabilitySet(
+    light = light,
+    manualLight = manualLight,
+    lightProgram = lightProgram,
+    lightPresets = lightPresets,
+    lightSimulation = lightSimulation,
+    fan = fan,
+    cooling = cooling,
+    temperature = temperature,
+    standaloneTimer = standaloneTimer,
+    dosing = dosing,
+    timeSync = timeSync,
+    ota = ota
+)
 
-private fun DeviceLimits.toExactLimitSet(): DeviceLimitSet {
-    return DeviceLimitSet(
-        lightChannelCount = lightChannelCount,
-        fanOutputCount = fanOutputCount,
-        temperatureSensorCount = temperatureSensorCount,
-        timerChannelCount = timerChannelCount,
-        dosingChannelCount = dosingChannelCount
-    )
-}
+private fun DeviceLimits.toExactLimitSet(): DeviceLimitSet = DeviceLimitSet(
+    lightChannelCount = lightChannelCount,
+    fanOutputCount = fanOutputCount,
+    temperatureSensorCount = temperatureSensorCount,
+    timerChannelCount = timerChannelCount,
+    dosingChannelCount = dosingChannelCount
+)
 
 private fun List<String>.toExactFeatureSet(): Set<AqlDeviceFeatureKey> {
     require(size == toSet().size) { "supportedFeatures must not contain duplicates." }
@@ -259,11 +264,11 @@ private fun requireExactText(value: String, field: String): String {
 private fun mismatch(
     code: AqlCommercialCatalogFailureCode,
     field: String
-): AqlCommercialCatalogFailure = AqlCommercialCatalogFailure(code = code, field = field)
+): AqlCommercialCatalogFailure = AqlCommercialCatalogFailure(code, field)
 
 private fun invalid(
     code: AqlCommercialCatalogFailureCode,
     field: String
 ): AqlCommercialCatalogValidation.Invalid = AqlCommercialCatalogValidation.Invalid(
-    AqlCommercialCatalogFailure(code = code, field = field)
+    AqlCommercialCatalogFailure(code, field)
 )
