@@ -2,13 +2,20 @@ package com.aqua.aqualight.application.devices
 
 import kotlinx.coroutines.flow.Flow
 
-/** Read-only application boundary for device root screens. */
+/** Read-only application boundary for device root screens and route authorization. */
 interface DeviceRootOperations {
     fun observe(deviceUid: String): Flow<DeviceRootSnapshot?>
 
     fun current(deviceUid: String): DeviceRootSnapshot?
 
     fun connect(deviceUid: String): Result<Unit>
+
+    /** Second-stage authorization immediately before navigation/command dispatch. */
+    fun authorizeRoute(deviceUid: String, route: DeviceRootRoute): Boolean {
+        val snapshot = current(deviceUid) ?: return false
+        return snapshot.catalogState == DeviceRootCatalogState.VALID &&
+            route in snapshot.allowedRoutes
+    }
 }
 
 data class DeviceRootSnapshot(
