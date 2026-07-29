@@ -14,6 +14,7 @@ import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsOutgoingMessage
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsTransport
+import com.aqua.aqualight.data.devices.store.DeviceRegistryStore
 import com.aqua.aqualight.data.devices.toDeviceRootSnapshot
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -62,7 +64,10 @@ class DeviceRuntimeMetadataLivePipelineTest {
         assertTrue(statusUpdate is DeviceRuntimeMetadataUpdate.Collecting)
         assertTrue(identityUpdate is DeviceRuntimeMetadataUpdate.Collecting)
         val ready = (readyUpdate as DeviceRuntimeMetadataUpdate.Ready).state
-        assertTrue(AqlCommercialDeviceCatalog.validate(ready.metadata) is AqlCommercialCatalogValidation.Valid)
+        assertTrue(
+            AqlCommercialDeviceCatalog.validate(ready.metadata) is
+                AqlCommercialCatalogValidation.Valid
+        )
 
         val projected = DeviceRuntimeMetadataProjector.applyReady(initial, ready)
         assertTrue(projected.hasValidatedRuntimeMetadata)
@@ -78,6 +83,26 @@ class DeviceRuntimeMetadataLivePipelineTest {
         assertTrue(DeviceRootRoute.DOSING_SCHEDULES in root.allowedRoutes)
         assertFalse(DeviceRootRoute.TIMER_CHANNELS in root.allowedRoutes)
         assertFalse(DeviceRootRoute.TIMER_SCHEDULES in root.allowedRoutes)
+        assertTrue(repository.isCurrentValidatedMetadata(projected))
+        assertFalse(
+            repository.isCurrentValidatedMetadata(
+                projected.copy(runtimeMetadataGeneration = 0L)
+            )
+        )
+
+        val registry = DeviceRegistryStore().apply { upsert(projected) }
+        val devicesRepository = DevicesRepository(
+            registryStore = registry,
+            runtimeRepository = repository
+        )
+        val committed = runBlocking {
+            devicesRepository.commitProvisioningSnapshot(projected)
+        }
+        assertTrue(committed.hasValidatedRuntimeMetadata)
+        assertEquals(
+            projected.runtimeMetadataGeneration,
+            committed.runtimeMetadataGeneration
+        )
         repository.close()
     }
 
@@ -112,7 +137,10 @@ class DeviceRuntimeMetadataLivePipelineTest {
 
         assertTrue(rejected is DeviceRuntimeMetadataUpdate.Rejected)
         assertEquals("metadata bootstrap failed", transport.lastDisconnectReason)
-        assertFalse(repository.metadataBootstrapCoordinator.currentState(DEVICE_UID)!!.publishedMetadata != null)
+        assertFalse(
+            repository.metadataBootstrapCoordinator.currentState(DEVICE_UID)!!
+                .publishedMetadata != null
+        )
         repository.close()
     }
 
