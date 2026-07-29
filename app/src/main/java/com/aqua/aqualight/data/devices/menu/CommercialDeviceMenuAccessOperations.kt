@@ -25,18 +25,26 @@ internal class CommercialDeviceMenuAccessOperations(
         liveness: DeviceMenuAccessResult.Available
     ): DeviceMenuAccessResult {
         val snapshot = currentSnapshot(DeviceUid(liveness.deviceUid))
-            ?: return DeviceMenuAccessResult.Unavailable(
-                title = liveness.title,
-                reason = DeviceMenuUnavailableReason.DEVICE_NOT_REGISTERED
-            )
+            ?: return unavailable(liveness, DeviceMenuUnavailableReason.DEVICE_NOT_REGISTERED)
+        if (!snapshot.hasValidatedRuntimeMetadata) {
+            return unavailable(liveness, DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
+        }
         return when (val validation = AqlCommercialDeviceCatalog.validateSnapshot(snapshot)) {
             is AqlCommercialCatalogValidation.Valid -> liveness.copy(
                 family = validation.product.family.toOwnerDeviceFamily()
             )
-            is AqlCommercialCatalogValidation.Invalid -> DeviceMenuAccessResult.Unavailable(
-                title = liveness.title,
-                reason = DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH
+            is AqlCommercialCatalogValidation.Invalid -> unavailable(
+                liveness,
+                DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH
             )
         }
     }
+
+    private fun unavailable(
+        liveness: DeviceMenuAccessResult.Available,
+        reason: DeviceMenuUnavailableReason
+    ): DeviceMenuAccessResult.Unavailable = DeviceMenuAccessResult.Unavailable(
+        title = liveness.title,
+        reason = reason
+    )
 }
