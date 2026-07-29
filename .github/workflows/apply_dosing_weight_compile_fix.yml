@@ -1,0 +1,53 @@
+name: Apply Dosing Weight Compile Fix
+
+on:
+  push:
+    branches:
+      - feature/dosing-pump-compose
+    paths:
+      - ".github/workflows/apply_dosing_weight_compile_fix.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: feature/dosing-pump-compose
+          fetch-depth: 0
+
+      - name: Remove invalid weight import
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          source = Path(
+              "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/"
+              "DosingPumpDeviceCompose.kt"
+          )
+          text = source.read_text(encoding="utf-8")
+          invalid_import = "import androidx.compose.foundation.layout.weight\n"
+          if invalid_import not in text:
+              raise SystemExit("Invalid Compose weight import was not found")
+          source.write_text(text.replace(invalid_import, "", 1), encoding="utf-8")
+
+          Path(".github/workflows/apply_dosing_weight_compile_fix.yml").unlink()
+          PY
+
+      - name: Commit compile fix
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "fix(dosing): use RowScope weight modifier"
+          git push origin HEAD:feature/dosing-pump-compose
