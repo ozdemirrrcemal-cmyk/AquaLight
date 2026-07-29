@@ -167,7 +167,11 @@ class DeviceRuntimeRepository(
             val endpointMatches = session.endpointUrl == endpointUrl
             val currentState = session.wsClient.connectionState.value
             if (!RuntimeConnectionReusePolicy.shouldReconnect(currentState, deviceUid, endpointMatches)) {
-                return@synchronized Result.success(Unit)
+                return@synchronized ensureCurrentMetadataBootstrap(
+                    session = session,
+                    snapshot = snapshot,
+                    connectionState = currentState
+                )
             }
             session.endpointUrl = endpointUrl
             session.wsClient.connect(deviceUid = deviceUid, endpoint = snapshot.endpoint)
@@ -197,6 +201,13 @@ class DeviceRuntimeRepository(
     fun currentConnectionState(deviceUid: DeviceUid): AqlWsConnectionState? =
         sessions[deviceUid]?.wsClient?.connectionState?.value
 
+    internal fun isCurrentValidatedMetadata(snapshot: DeviceSnapshot): Boolean {
+        val ready = metadataBootstrapCoordinator.currentState(snapshot.deviceUid) as?
+            DeviceRuntimeMetadataGenerationState.Ready
+        return snapshot.hasValidatedRuntimeMetadata &&
+            ready?.generation?.value == snapshot.runtimeMetadataGeneration
+    }
+
     internal fun processMetadataResponse(
         deviceUid: DeviceUid,
         response: AqlWsIncomingMessage.Response
@@ -205,6 +216,23 @@ class DeviceRuntimeRepository(
             DeviceRuntimeMetadataBootstrapProcessing.Unmatched -> DeviceRuntimeMetadataUpdate.Unmatched
             is DeviceRuntimeMetadataBootstrapProcessing.Reduced ->
                 mapMetadataReduction(deviceUid, processing.reduction)
+        }
+    }
+
+    private fun ensureCurrentMetadataBootstrap(
+        session: RuntimeSession,
+        snapshot: DeviceSnapshot,
+        connectionState: AqlWsConnectionState
+    ): Result<Unit> {
+        val metadataState = metadataBootstrapCoordinator.currentState(snapshot.deviceUid)
+        return when {
+            isCurrentValidatedMetadata(snapshot) -> Result.success(Unit)
+            metadataState is DeviceRuntimeMetadataGenerationState.Collecting -> Result.success(Unit)
+            connectionState !is AqlWsConnectionState.Authenticated -> Result.success(Unit)
+            sendAuthenticatedBootstrap(session) -> Result.success(Unit)
+            else -> Result.failure(
+                IllegalStateException("Authenticated metadata bootstrap could not be restarted.")
+            )
         }
     }
 
