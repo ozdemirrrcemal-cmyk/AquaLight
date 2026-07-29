@@ -50,6 +50,13 @@ internal sealed interface DeviceRuntimeMetadataUpdate {
     ) : DeviceRuntimeMetadataUpdate
 }
 
+/**
+ * Owner-scoped runtime session orchestrator.
+ *
+ * The public and private operations intentionally remain together because session ownership,
+ * authenticated bootstrap correlation, token lifecycle and socket teardown share one lock domain.
+ */
+@Suppress("TooManyFunctions")
 class DeviceRuntimeRepository(
     private val tokenProvider: AqlWsTokenProvider? = null,
     private val wsClientFactory: (AqlWsTokenProvider?) -> AqlWsTransport = { provider ->
