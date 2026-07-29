@@ -1,5 +1,7 @@
 package com.aqua.aqualight.data.devices.repository
 
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeCapabilities
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeIdentity
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadata
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataFailure
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataFailureCode
@@ -7,6 +9,7 @@ import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataFragment
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataGeneration
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataGenerationState
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataReduction
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeModules
 import com.aqua.aqualight.data.devices.model.DeviceUid
 
 /**
@@ -59,53 +62,42 @@ class DeviceRuntimeMetadataReducer {
                         field = "deviceUid"
                     )
                 }
-                val identity = acceptUnique(
-                    previous = existing.identity,
-                    incoming = fragment.value,
-                    conflictCode = DeviceRuntimeMetadataFailureCode.CONFLICTING_IDENTITY,
-                    current = current
-                ) ?: return reject(
-                    current = current,
-                    code = DeviceRuntimeMetadataFailureCode.CONFLICTING_IDENTITY,
-                    field = "identity"
-                )
-                existing.copy(identity = identity)
+                val accepted = acceptUnique(existing.identity, fragment.value)
+                    ?: return reject(
+                        current = current,
+                        code = DeviceRuntimeMetadataFailureCode.CONFLICTING_IDENTITY,
+                        field = "identity"
+                    )
+                existing.copy(identity = accepted)
             }
 
             is DeviceRuntimeMetadataFragment.Capabilities -> {
-                val capabilities = acceptUnique(
-                    previous = existing.capabilities,
-                    incoming = fragment.value,
-                    conflictCode = DeviceRuntimeMetadataFailureCode.CONFLICTING_CAPABILITIES,
-                    current = current
-                ) ?: return reject(
-                    current = current,
-                    code = DeviceRuntimeMetadataFailureCode.CONFLICTING_CAPABILITIES,
-                    field = "capabilities"
-                )
-                existing.copy(capabilities = capabilities)
+                val accepted = acceptUnique(existing.capabilities, fragment.value)
+                    ?: return reject(
+                        current = current,
+                        code = DeviceRuntimeMetadataFailureCode.CONFLICTING_CAPABILITIES,
+                        field = "capabilities"
+                    )
+                existing.copy(capabilities = accepted)
             }
 
             is DeviceRuntimeMetadataFragment.Modules -> {
-                val modules = acceptUnique(
-                    previous = existing.modules,
-                    incoming = fragment.value,
-                    conflictCode = DeviceRuntimeMetadataFailureCode.CONFLICTING_MODULES,
-                    current = current
-                ) ?: return reject(
-                    current = current,
-                    code = DeviceRuntimeMetadataFailureCode.CONFLICTING_MODULES,
-                    field = "modules"
-                )
-                existing.copy(modules = modules)
+                val accepted = acceptUnique(existing.modules, fragment.value)
+                    ?: return reject(
+                        current = current,
+                        code = DeviceRuntimeMetadataFailureCode.CONFLICTING_MODULES,
+                        field = "modules"
+                    )
+                existing.copy(modules = accepted)
             }
         }
 
-        val next = updated.toState(
-            deviceUid = current.deviceUid,
-            generation = current.generation
+        return DeviceRuntimeMetadataReduction.Accepted(
+            updated.toState(
+                deviceUid = current.deviceUid,
+                generation = current.generation
+            )
         )
-        return DeviceRuntimeMetadataReduction.Accepted(next)
     }
 
     fun reject(
@@ -113,15 +105,16 @@ class DeviceRuntimeMetadataReducer {
         code: DeviceRuntimeMetadataFailureCode,
         field: String?
     ): DeviceRuntimeMetadataReduction.Rejected {
-        val rejected = DeviceRuntimeMetadataGenerationState.Rejected(
-            deviceUid = current.deviceUid,
-            generation = current.generation,
-            failure = DeviceRuntimeMetadataFailure(
-                code = code,
-                field = field
+        return DeviceRuntimeMetadataReduction.Rejected(
+            DeviceRuntimeMetadataGenerationState.Rejected(
+                deviceUid = current.deviceUid,
+                generation = current.generation,
+                failure = DeviceRuntimeMetadataFailure(
+                    code = code,
+                    field = field
+                )
             )
         )
-        return DeviceRuntimeMetadataReduction.Rejected(rejected)
     }
 
     private fun DeviceRuntimeMetadataGenerationState.fragments(): Fragments = when (this) {
@@ -174,26 +167,15 @@ class DeviceRuntimeMetadataReducer {
         }
     }
 
-    private fun <T> acceptUnique(
-        previous: T?,
-        incoming: T,
-        conflictCode: DeviceRuntimeMetadataFailureCode,
-        current: DeviceRuntimeMetadataGenerationState
-    ): T? {
-        @Suppress("UNUSED_VARIABLE")
-        val guardedConflictCode = conflictCode
-        @Suppress("UNUSED_VARIABLE")
-        val guardedCurrent = current
-        return when {
-            previous == null -> incoming
-            previous == incoming -> previous
-            else -> null
-        }
+    private fun <T> acceptUnique(previous: T?, incoming: T): T? = when {
+        previous == null -> incoming
+        previous == incoming -> previous
+        else -> null
     }
 
     private data class Fragments(
-        val identity: com.aqua.aqualight.data.devices.model.DeviceRuntimeIdentity?,
-        val capabilities: com.aqua.aqualight.data.devices.model.DeviceRuntimeCapabilities?,
-        val modules: com.aqua.aqualight.data.devices.model.DeviceRuntimeModules?
+        val identity: DeviceRuntimeIdentity?,
+        val capabilities: DeviceRuntimeCapabilities?,
+        val modules: DeviceRuntimeModules?
     )
 }
