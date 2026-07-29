@@ -99,7 +99,7 @@ class DeviceRuntimeRepository(
 
         private fun beginCloseLocked(): List<Job>? {
             if (!closed.compareAndSet(false, true)) return null
-            return collectorJobs.toList().also(collectorJobs::clear)
+            return collectorJobs.toList().also { collectorJobs.clear() }
         }
     }
 
@@ -164,7 +164,6 @@ class DeviceRuntimeRepository(
         }
     }
 
-    /** Replaces a stale socket without retiring the registered device. */
     fun reconnectAfterNetworkRestore(snapshot: DeviceSnapshot): Result<Unit> {
         val detached = synchronized(lifecycleLock) {
             if (closed || snapshot.deviceUid in retiredDeviceUids) return@synchronized null
