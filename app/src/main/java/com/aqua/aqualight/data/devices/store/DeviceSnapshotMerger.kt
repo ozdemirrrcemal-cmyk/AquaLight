@@ -10,13 +10,7 @@ import com.aqua.aqualight.data.devices.model.DeviceProduct
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 
-/**
- * Central merge rules for one logical device.
- *
- * Device identity is keyed by deviceUid. UDP discovery is a LAN presence/endpoint source, not a
- * full metadata source. Runtime/provisioning metadata must therefore survive later UDP announces,
- * app restarts and device reboots unless a new runtime response explicitly replaces it.
- */
+/** Central merge rules for one logical device. */
 object DeviceSnapshotMerger {
 
     fun merge(previous: DeviceSnapshot?, incoming: DeviceSnapshot): DeviceSnapshot {
@@ -35,16 +29,17 @@ object DeviceSnapshotMerger {
             supportedFeatures = incoming.supportedFeatures.ifEmpty { previous.supportedFeatures },
             supportedScreens = incoming.supportedScreens.ifEmpty { previous.supportedScreens },
             modules = incoming.modules.ifEmpty { previous.modules },
+            runtimeMetadataGeneration = maxOf(
+                previous.runtimeMetadataGeneration,
+                incoming.runtimeMetadataGeneration
+            ),
             connectionState = mergeConnectionState(previous.connectionState, incoming.connectionState),
             lastSeenAtMillis = maxOf(previous.lastSeenAtMillis, incoming.lastSeenAtMillis)
         )
     }
 
-    private fun mergeIdentity(
-        previous: DeviceIdentity,
-        incoming: DeviceIdentity
-    ): DeviceIdentity {
-        return incoming.copy(
+    private fun mergeIdentity(previous: DeviceIdentity, incoming: DeviceIdentity): DeviceIdentity =
+        incoming.copy(
             shortId = incoming.shortId.ifBlank { previous.shortId },
             chipId = incoming.chipId.ifBlank { previous.chipId },
             espChipId = incoming.espChipId.ifBlank { previous.espChipId },
@@ -57,12 +52,8 @@ object DeviceSnapshotMerger {
             setupCode = incoming.setupCode.ifBlank { previous.setupCode },
             setupSsid = incoming.setupSsid.ifBlank { previous.setupSsid }
         )
-    }
 
-    private fun mergeProduct(
-        previous: DeviceProduct,
-        incoming: DeviceProduct
-    ): DeviceProduct {
+    private fun mergeProduct(previous: DeviceProduct, incoming: DeviceProduct): DeviceProduct {
         val familyRaw = incoming.familyRaw.ifBlank { previous.familyRaw }
         val family = when {
             incoming.family != DeviceFamily.UNKNOWN -> incoming.family
@@ -70,7 +61,6 @@ object DeviceSnapshotMerger {
             familyRaw.isNotBlank() -> DeviceFamily.fromWire(familyRaw)
             else -> DeviceFamily.UNKNOWN
         }
-
         return incoming.copy(
             brand = incoming.brand.ifBlank { previous.brand },
             productId = incoming.productId.ifBlank { previous.productId },
@@ -90,34 +80,25 @@ object DeviceSnapshotMerger {
     private fun mergeEndpoint(
         previous: DeviceRuntimeEndpoint,
         incoming: DeviceRuntimeEndpoint
-    ): DeviceRuntimeEndpoint {
-        return incoming.copy(
-            ip = incoming.ip.ifBlank { previous.ip },
-            wifiMode = incoming.wifiMode.ifBlank { previous.wifiMode },
-            runtimeTransport = incoming.runtimeTransport.ifBlank { previous.runtimeTransport },
-            wsPort = incoming.wsPort.takeIf { port -> port > 0 } ?: previous.wsPort,
-            wsPath = incoming.wsPath.ifBlank { previous.wsPath },
-            wsProtocol = incoming.wsProtocol.ifBlank { previous.wsProtocol },
-            wsProtocolVersion = incoming.wsProtocolVersion.takeIf { version -> version > 0 }
-                ?: previous.wsProtocolVersion,
-            discoveryPort = incoming.discoveryPort.takeIf { port -> port > 0 }
-                ?: previous.discoveryPort
-        )
-    }
+    ): DeviceRuntimeEndpoint = incoming.copy(
+        ip = incoming.ip.ifBlank { previous.ip },
+        wifiMode = incoming.wifiMode.ifBlank { previous.wifiMode },
+        runtimeTransport = incoming.runtimeTransport.ifBlank { previous.runtimeTransport },
+        wsPort = incoming.wsPort.takeIf { it > 0 } ?: previous.wsPort,
+        wsPath = incoming.wsPath.ifBlank { previous.wsPath },
+        wsProtocol = incoming.wsProtocol.ifBlank { previous.wsProtocol },
+        wsProtocolVersion = incoming.wsProtocolVersion.takeIf { it > 0 }
+            ?: previous.wsProtocolVersion,
+        discoveryPort = incoming.discoveryPort.takeIf { it > 0 } ?: previous.discoveryPort
+    )
 
     private fun mergeCapabilities(
         previous: DeviceCapabilities,
         incoming: DeviceCapabilities
-    ): DeviceCapabilities {
-        return if (incoming == DeviceCapabilities()) previous else incoming
-    }
+    ): DeviceCapabilities = if (incoming == DeviceCapabilities()) previous else incoming
 
-    private fun mergeLimits(
-        previous: DeviceLimits,
-        incoming: DeviceLimits
-    ): DeviceLimits {
-        return if (incoming == DeviceLimits()) previous else incoming
-    }
+    private fun mergeLimits(previous: DeviceLimits, incoming: DeviceLimits): DeviceLimits =
+        if (incoming == DeviceLimits()) previous else incoming
 
     private fun mergeConnectionState(
         previous: DeviceConnectionState,
@@ -126,54 +107,21 @@ object DeviceSnapshotMerger {
         val resolvedOnlineState = when {
             incoming.onlineState == DeviceOnlineState.UNKNOWN &&
                 previous.onlineState != DeviceOnlineState.UNKNOWN -> previous.onlineState
-
             shouldPreserveRuntimeState(previous, incoming) -> previous.onlineState
-
             else -> incoming.onlineState
         }
-
         return incoming.copy(
             onlineState = resolvedOnlineState,
-            lastUdpSeenAtMillis = maxNullable(
-                previous.lastUdpSeenAtMillis,
-                incoming.lastUdpSeenAtMillis
-            ),
-            lastWsConnectedAtMillis = maxNullable(
-                previous.lastWsConnectedAtMillis,
-                incoming.lastWsConnectedAtMillis
-            ),
-            lastAuthenticatedAtMillis = maxNullable(
-                previous.lastAuthenticatedAtMillis,
-                incoming.lastAuthenticatedAtMillis
-            ),
-            lastRuntimeMessageAtMillis = maxNullable(
-                previous.lastRuntimeMessageAtMillis,
-                incoming.lastRuntimeMessageAtMillis
-            ),
-            lastControlProofAtMillis = maxNullable(
-                previous.lastControlProofAtMillis,
-                incoming.lastControlProofAtMillis
-            ),
-            lastUdpSeenElapsedMillis = maxNullable(
-                previous.lastUdpSeenElapsedMillis,
-                incoming.lastUdpSeenElapsedMillis
-            ),
-            lastWsConnectedElapsedMillis = maxNullable(
-                previous.lastWsConnectedElapsedMillis,
-                incoming.lastWsConnectedElapsedMillis
-            ),
-            lastAuthenticatedElapsedMillis = maxNullable(
-                previous.lastAuthenticatedElapsedMillis,
-                incoming.lastAuthenticatedElapsedMillis
-            ),
-            lastRuntimeMessageElapsedMillis = maxNullable(
-                previous.lastRuntimeMessageElapsedMillis,
-                incoming.lastRuntimeMessageElapsedMillis
-            ),
-            lastControlProofElapsedMillis = maxNullable(
-                previous.lastControlProofElapsedMillis,
-                incoming.lastControlProofElapsedMillis
-            ),
+            lastUdpSeenAtMillis = maxNullable(previous.lastUdpSeenAtMillis, incoming.lastUdpSeenAtMillis),
+            lastWsConnectedAtMillis = maxNullable(previous.lastWsConnectedAtMillis, incoming.lastWsConnectedAtMillis),
+            lastAuthenticatedAtMillis = maxNullable(previous.lastAuthenticatedAtMillis, incoming.lastAuthenticatedAtMillis),
+            lastRuntimeMessageAtMillis = maxNullable(previous.lastRuntimeMessageAtMillis, incoming.lastRuntimeMessageAtMillis),
+            lastControlProofAtMillis = maxNullable(previous.lastControlProofAtMillis, incoming.lastControlProofAtMillis),
+            lastUdpSeenElapsedMillis = maxNullable(previous.lastUdpSeenElapsedMillis, incoming.lastUdpSeenElapsedMillis),
+            lastWsConnectedElapsedMillis = maxNullable(previous.lastWsConnectedElapsedMillis, incoming.lastWsConnectedElapsedMillis),
+            lastAuthenticatedElapsedMillis = maxNullable(previous.lastAuthenticatedElapsedMillis, incoming.lastAuthenticatedElapsedMillis),
+            lastRuntimeMessageElapsedMillis = maxNullable(previous.lastRuntimeMessageElapsedMillis, incoming.lastRuntimeMessageElapsedMillis),
+            lastControlProofElapsedMillis = maxNullable(previous.lastControlProofElapsedMillis, incoming.lastControlProofElapsedMillis),
             lastErrorMessage = incoming.lastErrorMessage ?: previous.lastErrorMessage
         )
     }
@@ -183,13 +131,9 @@ object DeviceSnapshotMerger {
         incoming: DeviceConnectionState
     ): Boolean {
         if (!incoming.onlineState.isLanPresenceOnly) return false
-
-        return when (previous.onlineState) {
-            DeviceOnlineState.AUTHENTICATED,
-            DeviceOnlineState.PROVISIONING,
-            DeviceOnlineState.OTA_UPDATING -> true
-            else -> false
-        }
+        return previous.onlineState == DeviceOnlineState.AUTHENTICATED ||
+            previous.onlineState == DeviceOnlineState.PROVISIONING ||
+            previous.onlineState == DeviceOnlineState.OTA_UPDATING
     }
 
     private val DeviceOnlineState.isLanPresenceOnly: Boolean
