@@ -11,8 +11,10 @@ ROOT_CONTRACT = SOURCE / "application/devices/DeviceRootOperations.kt"
 FIRMWARE_CONTRACT = SOURCE / "application/devices/DeviceFirmwareUpdateOperations.kt"
 ROOT_ADAPTER = SOURCE / "data/devices/DefaultDeviceRootOperations.kt"
 FIRMWARE_ADAPTER = SOURCE / "data/devices/DefaultDeviceFirmwareUpdateOperations.kt"
-MAPPING = SOURCE / "data/devices/DeviceApplicationMapping.kt"
+MAPPING = SOURCE / "data/devices/DeviceRootSnapshotMapping.kt"
+CAPABILITY_MAPPING = SOURCE / "data/devices/DeviceRootCapabilityMapping.kt"
 MENU_RESOLVER = SOURCE / "data/devices/DeviceRootMenuFeatureResolver.kt"
+ROUTE_POLICY = SOURCE / "data/devices/DeviceRootRoutePolicy.kt"
 MENU_MAPPER = SOURCE / "ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt"
 PRESENTATION_MAPPER = SOURCE / "ui/tabs/devices/detail/common/DeviceRootPresentationMapper.kt"
 FACTORY = SOURCE / "composition/OwnerViewModelFactory.kt"
@@ -41,7 +43,9 @@ firmware_contract = read(FIRMWARE_CONTRACT)
 root_adapter = read(ROOT_ADAPTER)
 firmware_adapter = read(FIRMWARE_ADAPTER)
 mapping = read(MAPPING)
+capability_mapping = read(CAPABILITY_MAPPING)
 menu_resolver = read(MENU_RESOLVER)
+route_policy = read(ROUTE_POLICY)
 menu_mapper = read(MENU_MAPPER)
 presentation_mapper = read(PRESENTATION_MAPPER)
 factory = read(FACTORY)
@@ -113,18 +117,30 @@ for path, text, tokens in (
 
 for token in (
     "fun DeviceSnapshot.toDeviceRootSnapshot",
-    "DeviceRootCapability.MANUAL_LIGHT",
-    "DeviceRootMenuFeatureResolver.resolve(this)",
+    "AqlCommercialDeviceCatalog.validateSnapshot(this)",
+    "DeviceRootMenuFeatureResolver.resolve(product)",
+    "DeviceRootRoutePolicy.allowedRoutes(product)",
 ):
     if token not in mapping:
         errors.append(f"{MAPPING.relative_to(ROOT)}: root mapping token is missing: {token}")
+
+for token in (
+    "fun DeviceCapabilitySet.toRootCapabilities",
+    "DeviceRootCapability.MANUAL_LIGHT",
+    "DeviceRootCapability.OTA",
+):
+    if token not in capability_mapping:
+        errors.append(
+            f"{CAPABILITY_MAPPING.relative_to(ROOT)}: root capability mapping token is missing: {token}"
+        )
 
 for token in (
     "DeviceRootMenuFeature.LIGHT_MANUAL",
     "DeviceRootMenuFeature.DOSING_CHANNELS",
     "DeviceRootMenuFeature.TIMER_CHANNELS",
     "DeviceRootMenuFeature.COOLING_FANS",
-    "when (snapshot.product.family)",
+    "fun resolve(product: AqlCommercialCatalogProduct)",
+    "when (product.family)",
     "DeviceFamily.UNKNOWN -> emptySet()",
 ):
     if token not in menu_resolver:
@@ -132,15 +148,25 @@ for token in (
             f"{MENU_RESOLVER.relative_to(ROOT)}: root menu resolution token is missing: {token}"
         )
 
+for token in (
+    "fun allowedRoutes(product: AqlCommercialCatalogProduct)",
+    "fun authorize(",
+    "route in allowedRoutes(product)",
+):
+    if token not in route_policy:
+        errors.append(f"{ROUTE_POLICY.relative_to(ROOT)}: route authorization token is missing: {token}")
+
 for forbidden in (
     '"channels"',
     '"settings"',
     '"quick_setup"',
     ".lowercase()",
+    "DeviceSnapshot",
+    "product.model",
 ):
-    if forbidden in mapping or forbidden in menu_resolver:
+    if forbidden in menu_resolver:
         errors.append(
-            f"{MENU_RESOLVER.relative_to(ROOT)}: permissive/legacy menu resolution is forbidden: {forbidden}"
+            f"{MENU_RESOLVER.relative_to(ROOT)}: permissive/model-specific menu resolution is forbidden: {forbidden}"
         )
 
 for path, text in view_models.items():

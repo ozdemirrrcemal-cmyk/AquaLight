@@ -1,7 +1,5 @@
 package com.aqua.aqualight.data.devices
 
-import com.aqua.aqualight.application.devices.DeviceRootCapability
-import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.OwnerDeviceListItem
@@ -43,45 +41,6 @@ internal fun DeviceSnapshot.toTankDeviceListItem(): TankDeviceListItem {
         serialText = serialText(),
         family = product.family.toOwnerDeviceFamily(),
         availability = connectionState.onlineState.toOwnerDeviceAvailability()
-    )
-}
-
-internal fun DeviceSnapshot.toDeviceRootSnapshot(): DeviceRootSnapshot {
-    val rootCapabilities = buildSet {
-        if (capabilities.manualLight) add(DeviceRootCapability.MANUAL_LIGHT)
-        if (capabilities.lightProgram) add(DeviceRootCapability.LIGHT_PROGRAM)
-        if (capabilities.lightPresets) add(DeviceRootCapability.LIGHT_PRESETS)
-        if (capabilities.lightSimulation) add(DeviceRootCapability.LIGHT_SIMULATION)
-        if (capabilities.dosing) add(DeviceRootCapability.DOSING)
-        if (capabilities.standaloneTimer) add(DeviceRootCapability.STANDALONE_TIMER)
-        if (capabilities.cooling) add(DeviceRootCapability.COOLING)
-        if (capabilities.fan) add(DeviceRootCapability.FAN)
-        if (capabilities.temperature) add(DeviceRootCapability.TEMPERATURE)
-        if (capabilities.timeSync) add(DeviceRootCapability.TIME_SYNC)
-        if (capabilities.ota) add(DeviceRootCapability.OTA)
-    }
-
-    return DeviceRootSnapshot(
-        deviceUid = deviceUid.value,
-        title = product.displayName.ifBlank { product.model },
-        availability = connectionState.onlineState.toOwnerDeviceAvailability(),
-        ipAddress = endpoint.ip.trim(),
-        firmwareLabel = listOf(
-            firmwareVersion.ifBlank { null },
-            firmwareBuild.ifBlank { null }
-        ).filterNotNull().joinToString(separator = " / "),
-        modelLabel = listOf(
-            product.model.ifBlank { null },
-            product.hardwareRevision.ifBlank { null }
-        ).filterNotNull().joinToString(separator = " / "),
-        lightChannelCount = limits.lightChannelCount,
-        timerChannelCount = limits.timerChannelCount,
-        dosingChannelCount = limits.dosingChannelCount,
-        fanOutputCount = limits.fanOutputCount,
-        capabilities = rootCapabilities,
-        supportedFeatures = supportedFeatures,
-        supportedScreens = supportedScreens,
-        menuFeatures = DeviceRootMenuFeatureResolver.resolve(this)
     )
 }
 

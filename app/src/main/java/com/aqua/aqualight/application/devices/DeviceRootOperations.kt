@@ -15,6 +15,12 @@ data class DeviceRootSnapshot(
     val deviceUid: String,
     val title: String,
     val availability: OwnerDeviceAvailability,
+    val family: OwnerDeviceFamily = OwnerDeviceFamily.UNKNOWN,
+    val catalogState: DeviceRootCatalogState = DeviceRootCatalogState.INVALID,
+    val productKey: String = "",
+    val productId: String = "",
+    val model: String = "",
+    val hardwareRevision: String = "",
     val ipAddress: String = "",
     val firmwareLabel: String = "",
     val modelLabel: String = "",
@@ -25,7 +31,8 @@ data class DeviceRootSnapshot(
     val capabilities: Set<DeviceRootCapability> = emptySet(),
     val supportedFeatures: List<String> = emptyList(),
     val supportedScreens: List<String> = emptyList(),
-    val menuFeatures: Set<DeviceRootMenuFeature> = emptySet()
+    val menuFeatures: Set<DeviceRootMenuFeature> = emptySet(),
+    val allowedRoutes: Set<DeviceRootRoute> = emptySet()
 )
 
 enum class DeviceRootCapability {
