@@ -1,2 +1,3 @@
 apply from: rootProject.file("gradle/aqualight-detekt.gradle")
 apply from: rootProject.file("gradle/aqualight-firebase.gradle")
+apply from: rootProject.file("gradle/aqualight-compose.gradle")
