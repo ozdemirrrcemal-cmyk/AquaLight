@@ -67,7 +67,7 @@ require(
 
 require("// GENERATED FILE. DO NOT EDIT." in generated_catalog, "generated catalog header is missing")
 require(
-    "2ac54677f19b270f970894b21880ab99753ac7f4" in generated_catalog,
+    "cf2222e58e6c69a729071a5d1205497b3fceaa70" in generated_catalog,
     "generated catalog must remain pinned to the firmware merge commit",
 )
 require(
