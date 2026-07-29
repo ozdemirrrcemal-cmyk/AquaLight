@@ -1,3 +1,5 @@
+@file:Suppress("FunctionNaming", "LongMethod", "MagicNumber", "UnusedPrivateMember")
+
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 
 import androidx.annotation.StringRes
