@@ -141,12 +141,7 @@ class AqlProvisioningHandoffSaver(
                     "Runtime device identity did not include a supported product family."
                 }
 
-                repository.stageProvisioningSnapshot(
-                    DeviceSnapshotMerger.merge(
-                        previous = previousSnapshot,
-                        incoming = resolved
-                    )
-                )
+                resolved
             } catch (error: Throwable) {
                 val rollbackError = withContext(NonCancellable) {
                     rollbackRegistration(
