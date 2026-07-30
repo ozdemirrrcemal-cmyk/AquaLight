@@ -20,13 +20,19 @@ class PersistentDebugSigningTest(unittest.TestCase):
             workflow,
         )
         self.assertIn(
-            "ANDROID_USER_HOME: ${{ runner.temp }}/aqualight-android-user-home",
+            'android_user_home="${RUNNER_TEMP}/aqualight-android-user-home"',
             workflow,
         )
         self.assertIn(
-            "AQL_DEBUG_KEYSTORE_PATH: ${{ runner.temp }}/aqualight-android-user-home/debug.keystore",
+            'echo "ANDROID_USER_HOME=${android_user_home}" >> "$GITHUB_ENV"',
             workflow,
         )
+        self.assertIn(
+            'echo "AQL_DEBUG_KEYSTORE_PATH=${android_user_home}/debug.keystore" >> "$GITHUB_ENV"',
+            workflow,
+        )
+        self.assertNotIn("ANDROID_USER_HOME: ${{ runner.temp }}", workflow)
+        self.assertNotIn("AQL_DEBUG_KEYSTORE_PATH: ${{ runner.temp }}", workflow)
         self.assertIn(
             "bash tools/provision_persistent_debug_keystore.sh",
             workflow,
