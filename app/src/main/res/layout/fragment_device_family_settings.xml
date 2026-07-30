@@ -101,7 +101,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="@dimen/aqua_size_12"
-                            android:text="@string/common_edit_action"
+                            android:text="@string/device_settings_edit_action"
                             android:textColor="@color/aqua_content_secondary"
                             android:textSize="@dimen/aqua_text_size_caption_plus"
                             android:textStyle="bold" />
@@ -185,7 +185,7 @@
                         android:layout_marginTop="@dimen/aqua_size_16"
                         android:textColor="@color/aqua_content_secondary"
                         android:textSize="@dimen/aqua_text_size_caption"
-                        tools:text="Installed firmware version" />
+                        tools:text="Installed software version" />
 
                     <TextView
                         android:id="@+id/tvFirmwareVersionValue"
@@ -204,16 +204,34 @@
                         android:textColor="@color/aqua_content_secondary"
                         android:textSize="@dimen/aqua_text_size_caption"
                         android:visibility="gone"
-                        tools:text="Up to date · Checked just now"
+                        tools:text="Version 1.1.0 is available"
                         tools:visibility="visible" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnCheckForUpdates"
-                        style="@style/Widget.Aqua.Button.Primary"
+                    <FrameLayout
+                        android:id="@+id/firmwareUpdateActionContainer"
                         android:layout_width="match_parent"
                         android:layout_height="@dimen/aqua_button_height"
-                        android:layout_marginTop="@dimen/aqua_size_18"
-                        tools:text="Check for updates" />
+                        android:layout_marginTop="@dimen/aqua_size_18">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnCheckForUpdates"
+                            style="@style/Widget.Aqua.Button.Primary"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            tools:text="Check for updates" />
+
+                        <com.google.android.material.progressindicator.CircularProgressIndicator
+                            android:id="@+id/progressCheckForUpdates"
+                            android:layout_width="@dimen/aqua_size_24"
+                            android:layout_height="@dimen/aqua_size_24"
+                            android:layout_gravity="center"
+                            android:indeterminate="true"
+                            android:visibility="gone"
+                            app:indicatorColor="@color/white"
+                            app:indicatorSize="@dimen/aqua_size_24"
+                            app:trackThickness="@dimen/aqua_size_2"
+                            tools:visibility="visible" />
+                    </FrameLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
