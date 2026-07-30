@@ -4,6 +4,5 @@
     <string name="device_dosing_pump_state_running">Çalışıyor</string>
     <string name="device_dosing_pump_state_error">Hata</string>
     <string name="device_dosing_pump_channel_content_description">Dozaj kanalı %1$d, %2$s</string>
-    <string name="device_dosing_settings_title">Dozaj Ayarları</string>
-    <string name="device_dosing_open_settings_description">Dozaj ayarlarını aç</string>
+    <string name="device_dosing_open_settings_description">Cihaz ayarlarını aç</string>
 </resources>
