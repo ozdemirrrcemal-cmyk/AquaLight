@@ -1,0 +1,146 @@
+name: Installable Debug APK
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "app/**"
+      - "protocol/**"
+      - "gradle/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle.properties"
+      - "gradlew"
+      - "gradlew.bat"
+      - "config/signing/**"
+      - "tools/provision_persistent_debug_keystore.sh"
+      - ".github/workflows/installable_debug_apk.yml"
+
+concurrency:
+  group: installable-debug-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+
+    env:
+      CI: "true"
+      GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8" -Dorg.gradle.daemon=false
+      AQL_FIREBASE_DEBUG_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_DEBUG_CONFIG_BASE64 }}
+      AQL_DEBUG_KEYSTORE_BASE64: ${{ secrets.AQL_DEBUG_KEYSTORE_BASE64 }}
+      AQL_OTA_MANIFEST_PUBLIC_KEY_PEM: ${{ secrets.AQL_OTA_MANIFEST_PUBLIC_KEY_PEM }}
+      AQL_OTA_MANIFEST_KEY_ID: ${{ secrets.AQL_OTA_MANIFEST_KEY_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
+
+      - name: Install JDK 17
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+        with:
+          cmdline-tools-version: "15859902"
+        env:
+          SKIP_JDK_VERSION_CHECK: true
+
+      - name: Install required SDK packages
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platform-tools" "platforms;android-36"
+          sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1"
+
+      - name: Grant execute permission to Gradle wrapper
+        run: chmod +x ./gradlew
+
+      - name: Verify protected debug inputs
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          for name in \
+            AQL_FIREBASE_DEBUG_CONFIG_BASE64 \
+            AQL_DEBUG_KEYSTORE_BASE64; do
+            value="${!name:-}"
+            if [[ -z "${value//[[:space:]]/}" ]]; then
+              echo "Required protected input is missing: ${name}" >&2
+              exit 1
+            fi
+          done
+
+      - name: Set monotonic installable debug version code
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          version_code=$((1000000000 + GITHUB_RUN_NUMBER))
+          echo "AQL_VERSION_CODE=${version_code}" >> "$GITHUB_ENV"
+          echo "Installable debug versionCode: ${version_code}"
+
+      - name: Provision persistent debug signing key
+        shell: bash
+        run: bash tools/provision_persistent_debug_keystore.sh
+
+      - name: Build installable Debug APK
+        run: ./gradlew :app:assembleDebug --stacktrace --no-daemon
+
+      - name: Verify APK certificate contract
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          apk="app/build/outputs/apk/debug/app-debug.apk"
+          contract="config/signing/debug-certificate.properties"
+          test -s "$apk"
+
+          apksigner verify --verbose --print-certs "$apk" | tee debug-apk-signing.txt
+
+          expected_sha256="$(
+            sed -n 's/^sha256=//p' "$contract" \
+              | head -n 1 \
+              | tr '[:upper:]' '[:lower:]' \
+              | tr -d ':' \
+              | tr -d '[:space:]'
+          )"
+          actual_sha256="$(
+            sed -n 's/^Signer #1 certificate SHA-256 digest: //p' debug-apk-signing.txt \
+              | head -n 1 \
+              | tr '[:upper:]' '[:lower:]' \
+              | tr -d ':' \
+              | tr -d '[:space:]'
+          )"
+
+          if [[ -z "$actual_sha256" || "$actual_sha256" != "$expected_sha256" ]]; then
+            echo "Debug APK certificate does not match the persistent signing contract." >&2
+            exit 1
+          fi
+
+          echo "Debug APK certificate verified: ${expected_sha256}"
+
+      - name: Upload installable Debug APK
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: AquaLight-installable-debug-${{ github.run_number }}
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            debug-apk-signing.txt
+          if-no-files-found: error
+
+      - name: Remove protected build material
+        if: always()
+        shell: bash
+        run: |
+          rm -f "$HOME/.android/debug.keystore"
+          rm -f app/src/debug/google-services.json
