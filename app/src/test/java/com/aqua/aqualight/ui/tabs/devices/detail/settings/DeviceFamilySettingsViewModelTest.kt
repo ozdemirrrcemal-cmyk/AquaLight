@@ -88,7 +88,7 @@ class DeviceFamilySettingsViewModelTest {
         }
     }
 
-    private class SettingsMainDispatcherRule(
+    class SettingsMainDispatcherRule(
         private val dispatcher: TestDispatcher = UnconfinedTestDispatcher()
     ) : TestWatcher() {
         override fun starting(description: Description) {
