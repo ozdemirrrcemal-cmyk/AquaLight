@@ -20,6 +20,14 @@ class PersistentDebugSigningTest(unittest.TestCase):
             workflow,
         )
         self.assertIn(
+            "ANDROID_USER_HOME: ${{ runner.temp }}/aqualight-android-user-home",
+            workflow,
+        )
+        self.assertIn(
+            "AQL_DEBUG_KEYSTORE_PATH: ${{ runner.temp }}/aqualight-android-user-home/debug.keystore",
+            workflow,
+        )
+        self.assertIn(
             "bash tools/provision_persistent_debug_keystore.sh",
             workflow,
         )
@@ -48,6 +56,7 @@ class PersistentDebugSigningTest(unittest.TestCase):
         provisioner = PROVISIONER.read_text(encoding="utf-8")
 
         self.assertIn("AQL_DEBUG_KEYSTORE_BASE64 is missing", provisioner)
+        self.assertIn("AQL_DEBUG_KEYSTORE_PATH", provisioner)
         self.assertIn("SHA-1 certificate fingerprint", provisioner)
         self.assertIn("SHA-256 certificate fingerprint", provisioner)
         self.assertNotIn("-genkeypair", provisioner)
