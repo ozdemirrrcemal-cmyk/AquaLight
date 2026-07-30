@@ -56,6 +56,10 @@ object DeviceLightRuntimeContract {
         const val TEMPERATURE_PROTECTION_SET = "temperatureProtectionSet"
     }
 
+    object QualifiedCommand {
+        const val TEMPERATURE_PROTECTION_SET = "light.temperature-protection.set"
+    }
+
     object Event {
         const val STATUS_CHANGED = "light.status.changed"
     }
@@ -73,7 +77,8 @@ object DeviceLightRuntimeContract {
         const val MAX_PROGRAM_POINTS = 96
         const val MILLIS_IN_DAY = 86_400_000L
 
-        const val MIN_TEMPERATURE_PROTECTION_C = 0.0
-        const val MAX_TEMPERATURE_PROTECTION_C = 120.0
+        const val MIN_TEMPERATURE_PROTECTION_C = 50.0
+        const val DEFAULT_TEMPERATURE_PROTECTION_C = 60.0
+        const val MAX_TEMPERATURE_PROTECTION_C = 70.0
     }
 }
