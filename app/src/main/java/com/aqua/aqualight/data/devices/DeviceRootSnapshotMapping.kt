@@ -19,6 +19,7 @@ private fun DeviceSnapshot.toValidatedDeviceRootSnapshot(
     product: AqlCommercialCatalogProduct
 ): DeviceRootSnapshot {
     val menuFeatures = DeviceRootMenuFeatureResolver.resolve(product)
+    val channelSlots = DeviceChannelSlotResolver.resolve(product)
     return DeviceRootSnapshot(
         deviceUid = deviceUid.value,
         title = title,
@@ -32,10 +33,12 @@ private fun DeviceSnapshot.toValidatedDeviceRootSnapshot(
         ipAddress = endpoint.ip.trim(),
         firmwareLabel = firmwareLabel(),
         modelLabel = "${product.model.value} / ${product.hardwareRevision.value}",
-        lightChannelCount = product.limits.lightChannelCount,
-        timerChannelCount = product.limits.timerChannelCount,
-        dosingChannelCount = product.limits.dosingChannelCount,
-        fanOutputCount = product.limits.fanOutputCount,
+        lightChannelCount = channelSlots.lightChannels.size,
+        timerChannelCount = channelSlots.timerChannels.size,
+        dosingChannelCount = channelSlots.dosingChannels.size,
+        fanOutputCount = channelSlots.fanOutputs.size,
+        temperatureSensorCount = channelSlots.temperatureSensors.size,
+        channelSlots = channelSlots,
         capabilities = product.profile.capabilities.toRootCapabilities(),
         supportedFeatures = product.profile.supportedFeatures.map { it.wireValue },
         supportedScreens = product.profile.supportedScreens.map { it.wireValue },
