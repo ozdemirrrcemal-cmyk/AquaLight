@@ -82,7 +82,8 @@
                 android:layout_width="@dimen/aqua_size_0"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                tools:ignore="InefficientWeight">
 
                 <TextView
                     android:id="@+id/tvTemperatureProtectionThresholdLabel"
