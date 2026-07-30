@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.devices.repository
 
 import android.content.Context
 import com.aqua.aqualight.data.devices.monitor.DeviceConnectivityObserver
+import com.aqua.aqualight.data.devices.runtime.state.DeviceRuntimeDataRepository
 import com.aqua.aqualight.data.devices.store.DeviceKnownStore
 import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.CoroutineScope
@@ -22,10 +23,12 @@ object DevicesRepositoryProvider {
     private data class Entry(
         val ownerUid: String,
         val scope: CoroutineScope,
-        val repository: DevicesRepository
+        val repository: DevicesRepository,
+        val runtimeData: DeviceRuntimeDataRepository
     ) : AutoCloseable {
         override fun close() {
             try {
+                runtimeData.close()
                 repository.stop()
             } finally {
                 scope.cancel()
@@ -34,6 +37,7 @@ object DevicesRepositoryProvider {
 
         suspend fun shutdown() {
             try {
+                runtimeData.close()
                 repository.shutdown()
             } finally {
                 val scopeJob = scope.coroutineContext[Job]
@@ -54,13 +58,19 @@ object DevicesRepositoryProvider {
 
     fun get(
         context: Context
-    ): DevicesRepository {
+    ): DevicesRepository = getOrCreateEntry(context).repository
+
+    fun getRuntimeData(
+        context: Context
+    ): DeviceRuntimeDataRepository = getOrCreateEntry(context).runtimeData
+
+    private fun getOrCreateEntry(context: Context): Entry {
         val appContext = context.applicationContext
         val ownerUid = UserDataScope.requireCurrentUid()
         val current = entry
 
         if (current?.ownerUid == ownerUid) {
-            return current.repository
+            return current
         }
 
         return synchronized(this) {
@@ -70,7 +80,7 @@ object DevicesRepositoryProvider {
 
             val synchronizedEntry = entry
             if (synchronizedEntry?.ownerUid == ownerUid) {
-                synchronizedEntry.repository
+                synchronizedEntry
             } else {
                 check(synchronizedEntry == null) {
                     "Owner repository must be cleared before switching authenticated owners."
@@ -96,17 +106,18 @@ object DevicesRepositoryProvider {
                         ),
                     connectivityObserver = connectivityObserver
                 )
+                val runtimeData = DeviceRuntimeDataRepository(repository)
 
                 repository.setAppForeground(appForeground)
+                runtimeData.start(repositoryScope)
                 repository.start(repositoryScope)
 
-                entry = Entry(
+                Entry(
                     ownerUid = ownerUid,
                     scope = repositoryScope,
-                    repository = repository
-                )
-
-                repository
+                    repository = repository,
+                    runtimeData = runtimeData
+                ).also { created -> entry = created }
             }
         }
     }
@@ -155,9 +166,7 @@ object DevicesRepositoryProvider {
         }
     }
 
-    fun currentOwnerUid(): String? {
-        return entry?.ownerUid
-    }
+    fun currentOwnerUid(): String? = entry?.ownerUid
 
     fun currentRepository(
         expectedOwnerUid: String
@@ -168,5 +177,16 @@ object DevicesRepositoryProvider {
         return entry?.takeIf { current ->
             current.ownerUid == normalizedOwnerUid
         }?.repository
+    }
+
+    fun currentRuntimeData(
+        expectedOwnerUid: String
+    ): DeviceRuntimeDataRepository? {
+        val normalizedOwnerUid = expectedOwnerUid.trim()
+        if (normalizedOwnerUid.isBlank()) return null
+
+        return entry?.takeIf { current ->
+            current.ownerUid == normalizedOwnerUid
+        }?.runtimeData
     }
 }
