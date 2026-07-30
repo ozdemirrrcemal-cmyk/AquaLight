@@ -34,8 +34,6 @@ jobs:
     env:
       CI: "true"
       GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8" -Dorg.gradle.daemon=false
-      ANDROID_USER_HOME: ${{ runner.temp }}/aqualight-android-user-home
-      AQL_DEBUG_KEYSTORE_PATH: ${{ runner.temp }}/aqualight-android-user-home/debug.keystore
       AQL_FIREBASE_DEBUG_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_DEBUG_CONFIG_BASE64 }}
       AQL_DEBUG_KEYSTORE_BASE64: ${{ secrets.AQL_DEBUG_KEYSTORE_BASE64 }}
       AQL_OTA_MANIFEST_PUBLIC_KEY_PEM: ${{ secrets.AQL_OTA_MANIFEST_PUBLIC_KEY_PEM }}
@@ -70,6 +68,14 @@ jobs:
 
       - name: Grant execute permission to Gradle wrapper
         run: chmod +x ./gradlew
+
+      - name: Configure persistent debug signing paths
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          android_user_home="${RUNNER_TEMP}/aqualight-android-user-home"
+          echo "ANDROID_USER_HOME=${android_user_home}" >> "$GITHUB_ENV"
+          echo "AQL_DEBUG_KEYSTORE_PATH=${android_user_home}/debug.keystore" >> "$GITHUB_ENV"
 
       - name: Verify protected debug inputs
         shell: bash
