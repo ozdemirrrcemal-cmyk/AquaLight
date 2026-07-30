@@ -33,6 +33,8 @@ jobs:
     env:
       CI: "true"
       GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8" -Dorg.gradle.daemon=false
+      ANDROID_USER_HOME: ${{ runner.temp }}/aqualight-android-user-home
+      AQL_DEBUG_KEYSTORE_PATH: ${{ runner.temp }}/aqualight-android-user-home/debug.keystore
       AQL_FIREBASE_DEBUG_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_DEBUG_CONFIG_BASE64 }}
       AQL_DEBUG_KEYSTORE_BASE64: ${{ secrets.AQL_DEBUG_KEYSTORE_BASE64 }}
       AQL_OTA_MANIFEST_PUBLIC_KEY_PEM: ${{ secrets.AQL_OTA_MANIFEST_PUBLIC_KEY_PEM }}
@@ -130,7 +132,7 @@ jobs:
               | tr -d '[:space:]'
           )"
           actual_sha256="$(
-            sed -n 's/^Signer #1 certificate SHA-256 digest: //p' debug-apk-signing.txt \
+            sed -n 's/^[^:]*certificate SHA-256 digest: //p' debug-apk-signing.txt \
               | head -n 1 \
               | tr '[:upper:]' '[:lower:]' \
               | tr -d ':' \
@@ -157,5 +159,6 @@ jobs:
         if: always()
         shell: bash
         run: |
-          rm -f "$HOME/.android/debug.keystore"
+          rm -f "${AQL_DEBUG_KEYSTORE_PATH:-}"
+          rm -rf "${ANDROID_USER_HOME:-}"
           rm -f app/src/debug/google-services.json
