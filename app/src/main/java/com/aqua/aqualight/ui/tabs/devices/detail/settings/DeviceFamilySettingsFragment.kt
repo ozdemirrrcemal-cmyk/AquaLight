@@ -2,7 +2,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail.settings
 
 import android.os.Bundle
 import android.view.View
-import androidx.annotation.StringRes
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -23,10 +22,14 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import kotlinx.coroutines.launch
 
+/**
+ * Shared commercial Settings shell for every AquaLight device family.
+ *
+ * Family entry fragments only provide a device UID. Device information, software actions,
+ * centralized text-input presentation and optional Light protection inventory remain owned here.
+ */
 @Suppress("TooManyFunctions")
-abstract class DeviceFamilySettingsFragment(
-    private val copy: DeviceFamilySettingsCopy
-) : Fragment(R.layout.fragment_device_family_settings) {
+abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_family_settings) {
 
     protected abstract val deviceUid: String
 
@@ -58,10 +61,8 @@ abstract class DeviceFamilySettingsFragment(
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = getString(copy.screenTitleRes),
-                onBackClick = {
-                    findNavController().navigateUp()
-                }
+                titleOverride = getString(R.string.device_settings_title),
+                onBackClick = findNavController()::navigateUp
             )
         )
     }
@@ -71,6 +72,7 @@ abstract class DeviceFamilySettingsFragment(
             R.string.device_settings_device_information_section
         )
         binding.tvDeviceNameLabel.setText(R.string.device_settings_device_name_label)
+        binding.tvEditDeviceNameAction.setText(R.string.device_settings_edit_action)
         binding.deviceNameRow.contentDescription = getString(
             R.string.device_settings_edit_device_name_description
         )
@@ -186,111 +188,121 @@ abstract class DeviceFamilySettingsFragment(
         binding.tvHardwareRevisionValue.text = state.hardwareRevision.ifBlank { unavailable }
         binding.tvFirmwareVersionValue.text = state.firmwareVersion.ifBlank { unavailable }
         binding.deviceNameRow.isEnabled = !state.isSavingDeviceName
+        binding.tvEditDeviceNameAction.alpha = if (state.isSavingDeviceName) {
+            DISABLED_ACTION_ALPHA
+        } else {
+            ENABLED_ACTION_ALPHA
+        }
 
         renderFirmwareState(state)
         renderLightInventory(
             show = state.showLightProtectionInventory,
-            copy = copy.lightCopy,
             unavailable = unavailable
         )
     }
 
     @Suppress("CyclomaticComplexMethod", "LongMethod")
     private fun renderFirmwareState(state: DeviceFamilySettingsUiState) {
-        val statusText: CharSequence?
-        val buttonTextRes: Int
-        val buttonEnabled: Boolean
-
-        when (val otaState = state.otaState) {
-            is DeviceOtaState.Idle -> {
-                buttonTextRes = R.string.device_settings_check_updates_action
-                statusText = null
-                buttonEnabled = true
+        val presentation = when (val otaState = state.otaState) {
+            is DeviceOtaState.Idle -> FirmwareActionPresentation(
+                buttonText = getString(R.string.device_settings_check_updates_action),
+                enabled = true
+            )
+            is DeviceOtaState.Checking -> FirmwareActionPresentation(
+                buttonText = getString(R.string.device_settings_checking_updates),
+                enabled = false,
+                showProgress = true
+            )
+            is DeviceOtaState.UpToDate -> if (state.showUpToDateAction) {
+                FirmwareActionPresentation(
+                    buttonText = getString(R.string.device_settings_firmware_up_to_date),
+                    enabled = false
+                )
+            } else {
+                FirmwareActionPresentation(
+                    buttonText = getString(R.string.device_settings_check_updates_action),
+                    enabled = true
+                )
             }
-            is DeviceOtaState.Checking -> {
-                buttonTextRes = R.string.device_settings_checking_updates
-                statusText = null
-                buttonEnabled = false
-            }
-            is DeviceOtaState.UpToDate -> {
-                buttonTextRes = if (state.showUpToDateAction) {
-                    R.string.device_settings_up_to_date_action
-                } else {
-                    R.string.device_settings_check_updates_action
-                }
-                statusText = getString(R.string.device_settings_up_to_date_status)
-                buttonEnabled = true
-            }
-            is DeviceOtaState.UpdateAvailable -> {
-                buttonTextRes = R.string.device_settings_review_update
+            is DeviceOtaState.UpdateAvailable -> FirmwareActionPresentation(
+                buttonText = getString(R.string.device_settings_view_update_action),
                 statusText = getString(
                     R.string.device_settings_update_available_status,
                     otaState.plan.targetVersion
-                )
-                buttonEnabled = true
-            }
-            is DeviceOtaState.Unsupported -> {
-                buttonTextRes = R.string.device_settings_check_updates_action
-                statusText = getString(R.string.device_settings_update_unsupported)
-                buttonEnabled = false
-            }
-            is DeviceOtaState.Failed -> {
-                buttonTextRes = R.string.device_settings_try_again
-                statusText = getString(R.string.device_settings_update_check_failed)
-                buttonEnabled = true
-            }
-            is DeviceOtaState.Starting -> {
-                buttonTextRes = R.string.device_settings_update_starting
-                statusText = getString(R.string.device_settings_update_starting)
-                buttonEnabled = false
-            }
+                ),
+                enabled = true
+            )
+            is DeviceOtaState.Unsupported -> FirmwareActionPresentation(
+                buttonText = getString(R.string.device_settings_check_updates_action),
+                statusText = getString(R.string.device_settings_update_unsupported),
+                enabled = false
+            )
+            is DeviceOtaState.Failed -> FirmwareActionPresentation(
+                buttonText = getString(R.string.device_settings_try_again),
+                statusText = getString(R.string.device_settings_update_check_failed),
+                enabled = true
+            )
+            is DeviceOtaState.Starting -> FirmwareActionPresentation(
+                buttonText = getString(R.string.device_settings_update_starting),
+                statusText = getString(R.string.device_settings_update_starting),
+                enabled = false
+            )
             is DeviceOtaState.InProgress -> {
                 val progress = otaState.progressPermille / PERMILLE_PER_PERCENT
-                buttonTextRes = R.string.device_settings_update_in_progress
-                statusText = getString(R.string.device_settings_update_in_progress, progress)
-                buttonEnabled = false
+                FirmwareActionPresentation(
+                    buttonText = getString(
+                        R.string.device_settings_update_in_progress,
+                        progress
+                    ),
+                    statusText = getString(
+                        R.string.device_settings_update_in_progress,
+                        progress
+                    ),
+                    enabled = false
+                )
             }
             is DeviceOtaState.Recovering -> {
                 val progress = otaState.progressPermille / PERMILLE_PER_PERCENT
-                buttonTextRes = R.string.device_settings_update_recovering
-                statusText = getString(R.string.device_settings_update_recovering, progress)
-                buttonEnabled = false
+                FirmwareActionPresentation(
+                    buttonText = getString(
+                        R.string.device_settings_update_recovering,
+                        progress
+                    ),
+                    statusText = getString(
+                        R.string.device_settings_update_recovering,
+                        progress
+                    ),
+                    enabled = false
+                )
             }
-            is DeviceOtaState.RestartRequired -> {
-                buttonTextRes = R.string.device_settings_restart_required
-                statusText = getString(R.string.device_settings_restart_required)
-                buttonEnabled = false
-            }
-            is DeviceOtaState.Succeeded -> {
-                buttonTextRes = R.string.device_settings_check_updates_action
-                statusText = getString(R.string.device_settings_update_complete)
-                buttonEnabled = true
-            }
+            is DeviceOtaState.RestartRequired -> FirmwareActionPresentation(
+                buttonText = getString(R.string.device_settings_restart_required),
+                statusText = getString(R.string.device_settings_restart_required),
+                enabled = false
+            )
+            is DeviceOtaState.Succeeded -> FirmwareActionPresentation(
+                buttonText = getString(R.string.device_settings_check_updates_action),
+                statusText = getString(R.string.device_settings_update_complete),
+                enabled = true
+            )
         }
 
+        binding.progressCheckForUpdates.isVisible = presentation.showProgress
         binding.btnCheckForUpdates.apply {
-            isEnabled = buttonEnabled
-            if (
-                state.otaState is DeviceOtaState.InProgress ||
-                state.otaState is DeviceOtaState.Recovering
-            ) {
-                text = statusText
-            } else {
-                setText(buttonTextRes)
-            }
+            isEnabled = presentation.enabled
+            text = if (presentation.showProgress) "" else presentation.buttonText
+            contentDescription = presentation.buttonText
         }
         binding.tvFirmwareUpdateStatus.apply {
-            isVisible = !statusText.isNullOrBlank()
-            text = statusText
+            isVisible = !presentation.statusText.isNullOrBlank()
+            text = presentation.statusText
         }
     }
 
     private fun renderLightInventory(
         show: Boolean,
-        copy: DeviceLightSettingsCopy?,
         unavailable: String
     ) {
-        if (copy == null) return
         if (!show) {
             lightSectionBinding?.root?.isVisible = false
             return
@@ -300,21 +312,29 @@ abstract class DeviceFamilySettingsFragment(
             binding.lightSettingsSectionStub.inflate()
         ).also { inflated ->
             lightSectionBinding = inflated
-            inflated.tvLightProtectionSectionTitle.setText(copy.sectionTitleRes)
-            inflated.tvCoolingAutoOffLabel.setText(copy.coolingAutoOffLabelRes)
-            inflated.tvOverTemperatureProtectionLabel.setText(
-                copy.overTemperatureProtectionLabelRes
+            inflated.tvLightProtectionSectionTitle.setText(
+                R.string.device_settings_light_protection_section
             )
-            inflated.tvTemperatureProtectionThresholdLabel.setText(copy.threshold.labelRes)
+            inflated.tvCoolingAutoOffLabel.setText(
+                R.string.device_settings_light_cooling_auto_off_label
+            )
+            inflated.tvOverTemperatureProtectionLabel.setText(
+                R.string.device_settings_light_over_temperature_protection_label
+            )
+            inflated.tvTemperatureProtectionThresholdLabel.setText(
+                R.string.device_settings_light_temperature_threshold_label
+            )
             inflated.btnEditTemperatureProtectionThreshold.contentDescription = getString(
-                copy.threshold.editDescriptionRes
+                R.string.device_settings_light_edit_temperature_threshold_description
             )
         }
 
         section.root.isVisible = true
         section.tvCoolingAutoOffValue.text = unavailable
         section.tvOverTemperatureProtectionValue.text = unavailable
-        section.tvTemperatureProtectionThresholdValue.setText(copy.threshold.pendingValueRes)
+        section.tvTemperatureProtectionThresholdValue.setText(
+            R.string.device_settings_light_temperature_threshold_pending_value
+        )
     }
 
     override fun onDestroyView() {
@@ -323,9 +343,18 @@ abstract class DeviceFamilySettingsFragment(
         super.onDestroyView()
     }
 
+    private data class FirmwareActionPresentation(
+        val buttonText: CharSequence,
+        val statusText: CharSequence? = null,
+        val enabled: Boolean,
+        val showProgress: Boolean = false
+    )
+
     private companion object {
         const val DEVICE_NAME_REQUEST_KEY = "device_settings_name_request"
         const val PERMILLE_PER_PERCENT = 10
+        const val ENABLED_ACTION_ALPHA = 1.0f
+        const val DISABLED_ACTION_ALPHA = 0.5f
         val SETTINGS_DESTINATIONS = setOf(
             R.id.deviceLightSettingsFragment,
             R.id.deviceDosingSettingsFragment,
@@ -334,21 +363,3 @@ abstract class DeviceFamilySettingsFragment(
         )
     }
 }
-
-data class DeviceFamilySettingsCopy(
-    @StringRes val screenTitleRes: Int,
-    val lightCopy: DeviceLightSettingsCopy? = null
-)
-
-data class DeviceLightSettingsCopy(
-    @StringRes val sectionTitleRes: Int,
-    @StringRes val coolingAutoOffLabelRes: Int,
-    @StringRes val overTemperatureProtectionLabelRes: Int,
-    val threshold: DeviceThresholdSettingsCopy
-)
-
-data class DeviceThresholdSettingsCopy(
-    @StringRes val labelRes: Int,
-    @StringRes val editDescriptionRes: Int,
-    @StringRes val pendingValueRes: Int
-)
