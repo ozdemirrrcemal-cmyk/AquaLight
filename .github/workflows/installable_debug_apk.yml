@@ -105,7 +105,22 @@ jobs:
           contract="config/signing/debug-certificate.properties"
           test -s "$apk"
 
-          apksigner verify --verbose --print-certs "$apk" | tee debug-apk-signing.txt
+          build_tools_dir="$(
+            find "$ANDROID_SDK_ROOT/build-tools" \
+              -mindepth 1 \
+              -maxdepth 1 \
+              -type d \
+              -print \
+              | sort -V \
+              | tail -n 1
+          )"
+          apksigner="$build_tools_dir/apksigner"
+          if [[ ! -x "$apksigner" ]]; then
+            echo "Android SDK apksigner was not found under $ANDROID_SDK_ROOT/build-tools." >&2
+            exit 1
+          fi
+
+          "$apksigner" verify --verbose --print-certs "$apk" | tee debug-apk-signing.txt
 
           expected_sha256="$(
             sed -n 's/^sha256=//p' "$contract" \
