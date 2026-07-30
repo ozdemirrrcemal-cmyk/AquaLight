@@ -160,7 +160,7 @@ class DeviceFamilySettingsViewModel(
     }
 
     private companion object {
-        const val UP_TO_DATE_ACTION_DURATION_MILLIS = 2_500L
+        const val UP_TO_DATE_ACTION_DURATION_MILLIS = 3_000L
     }
 }
 
