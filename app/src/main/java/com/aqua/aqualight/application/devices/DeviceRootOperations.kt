@@ -35,6 +35,8 @@ data class DeviceRootSnapshot(
     val timerChannelCount: Int = 0,
     val dosingChannelCount: Int = 0,
     val fanOutputCount: Int = 0,
+    val temperatureSensorCount: Int = 0,
+    val channelSlots: DeviceChannelSlots = DeviceChannelSlots.EMPTY,
     val capabilities: Set<DeviceRootCapability> = emptySet(),
     val supportedFeatures: List<String> = emptyList(),
     val supportedScreens: List<String> = emptyList(),
