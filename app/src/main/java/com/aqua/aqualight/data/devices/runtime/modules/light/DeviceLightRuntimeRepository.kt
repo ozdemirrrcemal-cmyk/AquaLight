@@ -14,24 +14,6 @@ class DeviceLightRuntimeRepository(
         )
     }
 
-    fun requestTemperatureProtectionStatus(deviceUid: DeviceUid): DeviceLightCommandResult {
-        return send(
-            deviceUid = deviceUid,
-            action = DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_STATUS_GET
-        )
-    }
-
-    fun setTemperatureProtection(
-        deviceUid: DeviceUid,
-        payload: DeviceLightTemperatureProtectionSetPayload
-    ): DeviceLightCommandResult {
-        return send(
-            deviceUid = deviceUid,
-            action = DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_SET,
-            data = payload.toJson()
-        )
-    }
-
     fun setManual(
         deviceUid: DeviceUid,
         payload: DeviceLightManualSetPayload
