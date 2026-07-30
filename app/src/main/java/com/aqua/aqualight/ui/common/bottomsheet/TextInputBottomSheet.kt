@@ -2,12 +2,16 @@ package com.aqua.aqualight.ui.common.bottomsheet
 
 import android.content.DialogInterface
 import android.os.Bundle
+import android.text.InputFilter
 import android.view.View
+import android.view.WindowManager
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.FragmentManager
 import com.aqua.aqualight.R
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 
@@ -29,14 +33,22 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
         val secondaryValue = view.findViewById<android.widget.TextView>(
             R.id.tvTextInputSecondaryValue
         )
+        val initialValue = args.getString(ARG_INITIAL_VALUE).orEmpty()
+        val required = args.getBoolean(ARG_REQUIRED)
+        val disableSaveWhenUnchanged = args.getBoolean(ARG_DISABLE_SAVE_WHEN_UNCHANGED)
 
         view.findViewById<android.widget.TextView>(R.id.tvTextInputTitle).text =
             args.getString(ARG_TITLE).orEmpty()
         view.findViewById<android.widget.TextView>(R.id.tvTextInputLabel).text =
             args.getString(ARG_LABEL).orEmpty()
         inputLayout.hint = args.getString(ARG_HINT).orEmpty()
-        input.setText(args.getString(ARG_INITIAL_VALUE).orEmpty())
+        input.setText(initialValue)
         input.setSelection(input.text?.length ?: 0)
+        args.getInt(ARG_MAX_LENGTH)
+            .takeIf { maxLength -> maxLength > 0 }
+            ?.let { maxLength ->
+                input.filters = input.filters + InputFilter.LengthFilter(maxLength)
+            }
 
         val secondaryText = args.getString(ARG_SECONDARY_VALUE).orEmpty()
         val showSecondary = secondaryText.isNotBlank()
@@ -45,28 +57,48 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
         secondaryLabel.text = args.getString(ARG_SECONDARY_LABEL).orEmpty()
         secondaryValue.text = secondaryText
 
-        view.findViewById<com.google.android.material.button.MaterialButton>(
-            R.id.btnTextInputCancel
-        ).apply {
+        view.findViewById<MaterialButton>(R.id.btnTextInputCancel).apply {
             text = args.getString(ARG_CANCEL_TEXT).orEmpty()
             setOnClickListener {
                 publish(RESULT_CANCELLED, "")
                 dismiss()
             }
         }
-        view.findViewById<com.google.android.material.button.MaterialButton>(
-            R.id.btnTextInputSave
-        ).apply {
+
+        val saveButton = view.findViewById<MaterialButton>(R.id.btnTextInputSave).apply {
             text = args.getString(ARG_SAVE_TEXT).orEmpty()
             setOnClickListener {
                 val value = input.text?.toString()?.trim().orEmpty()
-                if (args.getBoolean(ARG_REQUIRED) && value.isBlank()) {
+                if (required && value.isBlank()) {
                     inputLayout.error = args.getString(ARG_REQUIRED_MESSAGE).orEmpty()
                     return@setOnClickListener
                 }
                 inputLayout.error = null
                 publish(RESULT_SAVED, value)
                 dismiss()
+            }
+        }
+
+        fun updateSaveEnabled() {
+            val value = input.text?.toString()?.trim().orEmpty()
+            val hasRequiredValue = !required || value.isNotBlank()
+            val hasChanged = !disableSaveWhenUnchanged || value != initialValue.trim()
+            saveButton.isEnabled = hasRequiredValue && hasChanged
+        }
+
+        input.doAfterTextChanged {
+            inputLayout.error = null
+            updateSaveEnabled()
+        }
+        updateSaveEnabled()
+
+        if (args.getBoolean(ARG_REQUEST_FOCUS)) {
+            input.post {
+                if (!isAdded) return@post
+                input.requestFocus()
+                dialog?.window?.setSoftInputMode(
+                    WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE
+                )
             }
         }
     }
@@ -109,8 +141,13 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
         private const val ARG_REQUIRED_MESSAGE = "arg_required_message"
         private const val ARG_REQUEST_KEY = "arg_request_key"
         private const val ARG_PAYLOAD_ID = "arg_payload_id"
+        private const val ARG_MAX_LENGTH = "arg_max_length"
+        private const val ARG_DISABLE_SAVE_WHEN_UNCHANGED =
+            "arg_disable_save_when_unchanged"
+        private const val ARG_REQUEST_FOCUS = "arg_request_focus"
         private const val TAG_PREFIX = "TextInputBottomSheet:"
 
+        @Suppress("LongParameterList")
         fun show(
             fragmentManager: FragmentManager,
             title: String,
@@ -124,7 +161,10 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
             required: Boolean,
             requiredMessage: String,
             requestKey: String,
-            payloadId: String = ""
+            payloadId: String = "",
+            maxLength: Int = 0,
+            disableSaveWhenUnchanged: Boolean = false,
+            requestFocus: Boolean = false
         ) {
             val tag = TAG_PREFIX + requestKey
             if (fragmentManager.findFragmentByTag(tag) != null || fragmentManager.isStateSaved) return
@@ -141,7 +181,10 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
                     ARG_REQUIRED to required,
                     ARG_REQUIRED_MESSAGE to requiredMessage,
                     ARG_REQUEST_KEY to requestKey,
-                    ARG_PAYLOAD_ID to payloadId
+                    ARG_PAYLOAD_ID to payloadId,
+                    ARG_MAX_LENGTH to maxLength,
+                    ARG_DISABLE_SAVE_WHEN_UNCHANGED to disableSaveWhenUnchanged,
+                    ARG_REQUEST_FOCUS to requestFocus
                 )
             }.show(fragmentManager, tag)
         }
