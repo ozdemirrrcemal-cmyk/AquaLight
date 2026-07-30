@@ -110,6 +110,8 @@
     <string name="device_settings_firmware_version_label">Yüklü firmware sürümü</string>
     <string name="device_settings_check_updates_action">Güncellemeleri denetle</string>
     <string name="device_settings_change_name_title">Cihaz adını değiştir</string>
+    <string name="device_settings_save_action">Kaydet</string>
+    <string name="device_settings_cancel_action">İptal</string>
     <string name="device_settings_device_name_required">Bir cihaz adı girin.</string>
     <string name="device_settings_device_name_updated">Cihaz adı güncellendi</string>
     <string name="device_settings_device_name_update_failed">Cihaz adı güncellenemedi. Tekrar deneyin.</string>
