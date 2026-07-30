@@ -58,14 +58,18 @@ abstract class DeviceFamilySettingsFragment(
     }
 
     private fun applyStaticCopy() {
-        binding.tvDeviceInformationSectionTitle.setText(copy.deviceInformationTitleRes)
-        binding.tvDeviceNameLabel.setText(copy.deviceNameLabelRes)
-        binding.btnEditDeviceName.contentDescription = getString(copy.editDeviceNameDescriptionRes)
-        binding.tvSerialNumberLabel.setText(copy.serialNumberLabelRes)
-        binding.tvHardwareRevisionLabel.setText(copy.hardwareRevisionLabelRes)
-        binding.tvSoftwareSectionTitle.setText(copy.softwareTitleRes)
-        binding.tvFirmwareVersionLabel.setText(copy.firmwareVersionLabelRes)
-        binding.btnCheckForUpdates.setText(copy.checkForUpdatesActionRes)
+        val information = copy.information
+        val software = copy.software
+        binding.tvDeviceInformationSectionTitle.setText(information.sectionTitleRes)
+        binding.tvDeviceNameLabel.setText(information.deviceNameLabelRes)
+        binding.btnEditDeviceName.contentDescription = getString(
+            information.editDeviceNameDescriptionRes
+        )
+        binding.tvSerialNumberLabel.setText(information.serialNumberLabelRes)
+        binding.tvHardwareRevisionLabel.setText(information.hardwareRevisionLabelRes)
+        binding.tvSoftwareSectionTitle.setText(software.sectionTitleRes)
+        binding.tvFirmwareVersionLabel.setText(software.firmwareVersionLabelRes)
+        binding.btnCheckForUpdates.setText(software.checkForUpdatesActionRes)
     }
 
     private fun observeSettings() {
@@ -112,16 +116,16 @@ abstract class DeviceFamilySettingsFragment(
             inflated.tvOverTemperatureProtectionLabel.setText(
                 copy.overTemperatureProtectionLabelRes
             )
-            inflated.tvTemperatureProtectionThresholdLabel.setText(copy.thresholdLabelRes)
+            inflated.tvTemperatureProtectionThresholdLabel.setText(copy.threshold.labelRes)
             inflated.btnEditTemperatureProtectionThreshold.contentDescription = getString(
-                copy.editThresholdDescriptionRes
+                copy.threshold.editDescriptionRes
             )
         }
 
         section.root.isVisible = true
         section.tvCoolingAutoOffValue.text = unavailable
         section.tvOverTemperatureProtectionValue.text = unavailable
-        section.tvTemperatureProtectionThresholdValue.setText(copy.thresholdPendingValueRes)
+        section.tvTemperatureProtectionThresholdValue.setText(copy.threshold.pendingValueRes)
     }
 
     override fun onDestroyView() {
@@ -133,23 +137,35 @@ abstract class DeviceFamilySettingsFragment(
 
 data class DeviceFamilySettingsCopy(
     @StringRes val screenTitleRes: Int,
-    @StringRes val deviceInformationTitleRes: Int,
+    val information: DeviceInformationSettingsCopy,
+    val software: DeviceSoftwareSettingsCopy,
+    @StringRes val unavailableValueRes: Int,
+    val lightCopy: DeviceLightSettingsCopy? = null
+)
+
+data class DeviceInformationSettingsCopy(
+    @StringRes val sectionTitleRes: Int,
     @StringRes val deviceNameLabelRes: Int,
     @StringRes val editDeviceNameDescriptionRes: Int,
     @StringRes val serialNumberLabelRes: Int,
-    @StringRes val hardwareRevisionLabelRes: Int,
-    @StringRes val softwareTitleRes: Int,
+    @StringRes val hardwareRevisionLabelRes: Int
+)
+
+data class DeviceSoftwareSettingsCopy(
+    @StringRes val sectionTitleRes: Int,
     @StringRes val firmwareVersionLabelRes: Int,
-    @StringRes val checkForUpdatesActionRes: Int,
-    @StringRes val unavailableValueRes: Int,
-    val lightCopy: DeviceLightSettingsCopy? = null
+    @StringRes val checkForUpdatesActionRes: Int
 )
 
 data class DeviceLightSettingsCopy(
     @StringRes val sectionTitleRes: Int,
     @StringRes val coolingAutoOffLabelRes: Int,
     @StringRes val overTemperatureProtectionLabelRes: Int,
-    @StringRes val thresholdLabelRes: Int,
-    @StringRes val editThresholdDescriptionRes: Int,
-    @StringRes val thresholdPendingValueRes: Int
+    val threshold: DeviceThresholdSettingsCopy
+)
+
+data class DeviceThresholdSettingsCopy(
+    @StringRes val labelRes: Int,
+    @StringRes val editDescriptionRes: Int,
+    @StringRes val pendingValueRes: Int
 )
