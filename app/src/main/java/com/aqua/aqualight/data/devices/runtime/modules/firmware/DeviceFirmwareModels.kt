@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
+import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import org.json.JSONObject
 
@@ -20,18 +21,22 @@ enum class DeviceFirmwareOtaPhase(
         get() = this == SUCCEEDED || this == FAILED
 
     companion object {
-        fun fromWire(value: String?): DeviceFirmwareOtaPhase {
-            return when (value?.trim()) {
-                IDLE.wireValue -> IDLE
-                STARTING.wireValue -> STARTING
-                SAFE_MODE.wireValue -> SAFE_MODE
-                DOWNLOADING.wireValue -> DOWNLOADING
-                WRITING.wireValue -> WRITING
-                VERIFYING.wireValue -> VERIFYING
-                SUCCEEDED.wireValue -> SUCCEEDED
-                FAILED.wireValue -> FAILED
-                else -> UNKNOWN
-            }
+        private val exactValues = entries
+            .filterNot { phase -> phase == UNKNOWN }
+            .associateBy(DeviceFirmwareOtaPhase::wireValue)
+
+        fun fromWireExact(value: String): DeviceFirmwareOtaPhase? = exactValues[value]
+
+        fun fromWire(value: String?): DeviceFirmwareOtaPhase = when (value?.trim()) {
+            IDLE.wireValue -> IDLE
+            STARTING.wireValue -> STARTING
+            SAFE_MODE.wireValue -> SAFE_MODE
+            DOWNLOADING.wireValue -> DOWNLOADING
+            WRITING.wireValue -> WRITING
+            VERIFYING.wireValue -> VERIFYING
+            SUCCEEDED.wireValue -> SUCCEEDED
+            FAILED.wireValue -> FAILED
+            else -> UNKNOWN
         }
     }
 }
@@ -114,6 +119,7 @@ data class DeviceFirmwareOtaStartPayload(
     val expectedSize: Int,
     val productKey: String,
     val productId: String,
+    val model: String,
     val hardwareRevision: String,
     val applyNow: Boolean = true,
     val allowInsecureHttp: Boolean = false
@@ -132,6 +138,7 @@ data class DeviceFirmwareOtaStartPayload(
         require(expectedSize > 0) { "expectedSize must be greater than zero." }
         require(productKey.isNotBlank()) { "productKey must not be blank." }
         require(productId.isNotBlank()) { "productId must not be blank." }
+        require(model.isNotBlank()) { "model must not be blank." }
         require(hardwareRevision.isNotBlank()) { "hardwareRevision must not be blank." }
         require(!allowInsecureHttp) { "allowInsecureHttp must stay false in production Android." }
     }
@@ -145,14 +152,27 @@ data class DeviceFirmwareOtaStartPayload(
             .put(DeviceFirmwareRuntimeContract.Field.APPLY_NOW, applyNow)
             .put(DeviceFirmwareRuntimeContract.Field.PRODUCT_KEY, productKey)
             .put(DeviceFirmwareRuntimeContract.Field.PRODUCT_ID, productId)
+            .put(DeviceFirmwareRuntimeContract.Field.MODEL, model)
             .put(DeviceFirmwareRuntimeContract.Field.HARDWARE_REVISION, hardwareRevision)
             .put(DeviceFirmwareRuntimeContract.Field.ALLOW_INSECURE_HTTP, false)
     }
 }
 
+data class DeviceFirmwareOtaStartRequestEcho(
+    val urlScheme: String,
+    val version: String,
+    val expectedSize: Int,
+    val applyNow: Boolean,
+    val allowInsecureHttp: Boolean,
+    val productKey: String,
+    val productId: String,
+    val model: String,
+    val hardwareRevision: String
+)
+
 data class DeviceFirmwareOtaStartAccepted(
     val accepted: Boolean,
-    val request: DeviceFirmwareOtaStartPayload?,
+    val request: DeviceFirmwareOtaStartRequestEcho?,
     val ota: DeviceFirmwareOtaSnapshot
 )
 
@@ -182,11 +202,13 @@ data class DeviceFirmwareManifest(
     val releaseRepo: String,
     val generatedAt: String,
     val artifacts: List<DeviceFirmwareManifestArtifact>,
-    val signature: DeviceFirmwareManifestSignature
+    val signature: DeviceFirmwareManifestSignature,
+    val releaseNotes: DeviceFirmwareReleaseNotes = DeviceFirmwareReleaseNotes.EMPTY
 ) {
     val isSupportedSchema: Boolean
         get() = schema == DeviceFirmwareRuntimeContract.Manifest.SCHEMA &&
-            brand == DeviceFirmwareRuntimeContract.Manifest.BRAND
+            brand == DeviceFirmwareRuntimeContract.Manifest.BRAND &&
+            releaseRepo == DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY
 }
 
 data class DeviceFirmwareManifestSignature(
@@ -195,6 +217,78 @@ data class DeviceFirmwareManifestSignature(
     val payloadHash: String,
     val value: String
 )
+
+data class DeviceFirmwareLocalizedReleaseNotes(
+    val title: String,
+    val summary: String,
+    val changes: List<String>,
+    val warnings: List<String>
+)
+
+data class DeviceFirmwareReleaseNotes(
+    val defaultLocale: String,
+    val mandatory: Boolean,
+    val locales: Map<String, DeviceFirmwareLocalizedReleaseNotes>
+) {
+    init {
+        if (locales.isNotEmpty()) {
+            require(defaultLocale in locales) {
+                "OTA release notes defaultLocale must exist in locales."
+            }
+        } else {
+            require(defaultLocale.isEmpty()) {
+                "Empty OTA release notes must not declare a default locale."
+            }
+        }
+    }
+
+    fun resolve(preferredLocaleTags: List<String>): DeviceFirmwareReleaseContent {
+        if (locales.isEmpty()) return DeviceFirmwareReleaseContent.EMPTY
+
+        val exact = preferredLocaleTags.firstNotNullOfOrNull(locales::get)
+        val languageMatch = preferredLocaleTags.firstNotNullOfOrNull { preferred ->
+            val language = preferred.substringBefore('-')
+            locales.entries.firstOrNull { (locale, _) ->
+                locale == language || locale.startsWith("$language-")
+            }?.value?.let { notes -> localeFor(notes) to notes }
+        }
+        val selectedLocale: String
+        val selectedNotes: DeviceFirmwareLocalizedReleaseNotes
+        when {
+            exact != null -> {
+                selectedLocale = locales.entries.single { (_, notes) -> notes === exact }.key
+                selectedNotes = exact
+            }
+            languageMatch != null -> {
+                selectedLocale = languageMatch.first
+                selectedNotes = languageMatch.second
+            }
+            else -> {
+                selectedLocale = defaultLocale
+                selectedNotes = checkNotNull(locales[defaultLocale])
+            }
+        }
+        return DeviceFirmwareReleaseContent(
+            localeTag = selectedLocale,
+            title = selectedNotes.title,
+            summary = selectedNotes.summary,
+            changes = selectedNotes.changes,
+            warnings = selectedNotes.warnings,
+            mandatory = mandatory
+        )
+    }
+
+    private fun localeFor(notes: DeviceFirmwareLocalizedReleaseNotes): String =
+        locales.entries.single { (_, candidate) -> candidate === notes }.key
+
+    companion object {
+        val EMPTY = DeviceFirmwareReleaseNotes(
+            defaultLocale = "",
+            mandatory = false,
+            locales = emptyMap()
+        )
+    }
+}
 
 data class DeviceFirmwareManifestArtifact(
     val env: String,
@@ -234,6 +328,18 @@ data class DeviceFirmwareAsset(
     val otaSlotCompatible: Boolean = false
 )
 
+sealed interface DeviceFirmwareAvailability {
+    data class UpToDate(
+        val currentVersion: String,
+        val latestVersion: String,
+        val releaseContent: DeviceFirmwareReleaseContent
+    ) : DeviceFirmwareAvailability
+
+    data class UpdateAvailable(
+        val plan: DeviceFirmwareUpdatePlan
+    ) : DeviceFirmwareAvailability
+}
+
 data class DeviceFirmwareUpdatePlan(
     val deviceUid: DeviceUid,
     val currentVersion: String,
@@ -246,7 +352,10 @@ data class DeviceFirmwareUpdatePlan(
     val hardwareRevision: String,
     val displayName: String,
     val firmware: DeviceFirmwareAsset,
-    val payload: DeviceFirmwareOtaStartPayload
+    val payload: DeviceFirmwareOtaStartPayload,
+    val runtimeMetadataGeneration: Long = 0L,
+    val manifestTag: String = "",
+    val releaseContent: DeviceFirmwareReleaseContent = DeviceFirmwareReleaseContent.EMPTY
 )
 
 internal fun String.isSha256Hex(): Boolean {
