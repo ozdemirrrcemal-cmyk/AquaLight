@@ -12,7 +12,7 @@ import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-@Suppress("LongMethod", "MagicNumber")
+@Suppress("LongMethod", "LongParameterList", "MagicNumber")
 class DeviceChannelSlotResolverTest {
 
     @Test
