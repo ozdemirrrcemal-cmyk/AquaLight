@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Widget.Aqua.Card.Device.Section"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/aqua_size_14">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/aqua_size_18">
+
+        <TextView
+            android:id="@+id/tvLightProtectionSectionTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/white"
+            android:textSize="@dimen/aqua_text_size_title_small"
+            android:textStyle="bold"
+            tools:text="Light protection" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/aqua_size_16"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvCoolingAutoOffLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/aqua_content_secondary"
+                android:textSize="@dimen/aqua_text_size_caption"
+                tools:text="Cooling Auto Off" />
+
+            <TextView
+                android:id="@+id/tvCoolingAutoOffValue"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_4"
+                android:textColor="@color/aqua_content_primary_soft"
+                android:textSize="@dimen/aqua_text_size_body_large"
+                tools:text="—" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/aqua_size_16"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvOverTemperatureProtectionLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/aqua_content_secondary"
+                android:textSize="@dimen/aqua_text_size_caption"
+                tools:text="Over-temperature protection" />
+
+            <TextView
+                android:id="@+id/tvOverTemperatureProtectionValue"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_4"
+                android:textColor="@color/aqua_content_primary_soft"
+                android:textSize="@dimen/aqua_text_size_body_large"
+                tools:text="—" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/aqua_size_16"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="@dimen/aqua_size_0"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvTemperatureProtectionThresholdLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/aqua_content_secondary"
+                    android:textSize="@dimen/aqua_text_size_caption"
+                    tools:text="Temperature protection threshold" />
+
+                <TextView
+                    android:id="@+id/tvTemperatureProtectionThresholdValue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/aqua_size_4"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/aqua_text_size_body_large"
+                    android:textStyle="bold"
+                    tools:text="60 °C" />
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnEditTemperatureProtectionThreshold"
+                style="@style/Widget.Aqua.Button.IconToggle"
+                android:layout_width="@dimen/aqua_button_height_compact"
+                android:layout_height="@dimen/aqua_button_height_compact"
+                android:layout_marginStart="@dimen/aqua_size_12"
+                android:enabled="false"
+                android:text=""
+                app:icon="@drawable/ic_edit_24"
+                tools:enabled="true" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
