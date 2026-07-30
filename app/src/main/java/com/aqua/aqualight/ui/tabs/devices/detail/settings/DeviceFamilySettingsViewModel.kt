@@ -3,12 +3,12 @@ package com.aqua.aqualight.ui.tabs.devices.detail.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.application.devices.DEVICE_FIRMWARE_MANIFEST_URL
+import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.DeviceSettingsOperations
-import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -82,14 +82,10 @@ class DeviceFamilySettingsViewModel(
         val deviceUid = boundDeviceUid
         val normalized = value.trim()
         val currentName = _uiState.value.deviceName.trim()
-        if (
-            deviceUid.isBlank() ||
-            normalized.isBlank() ||
-            normalized == currentName ||
-            nameUpdateJob?.isActive == true
-        ) {
-            return
-        }
+        if (deviceUid.isBlank()) return
+        if (normalized.isBlank()) return
+        if (normalized == currentName) return
+        if (nameUpdateJob?.isActive == true) return
 
         nameUpdateJob = viewModelScope.launch {
             _uiState.update { state -> state.copy(isSavingDeviceName = true) }
