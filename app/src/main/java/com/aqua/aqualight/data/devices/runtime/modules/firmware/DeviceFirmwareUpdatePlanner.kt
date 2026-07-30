@@ -6,6 +6,7 @@ import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import java.util.Locale
 
+@Suppress("ComplexCondition", "ReturnCount")
 class DeviceFirmwareUpdatePlanner(
     private val preferredLocaleTags: () -> List<String> = {
         listOf(Locale.getDefault().toLanguageTag())
