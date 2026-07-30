@@ -20,7 +20,7 @@ object DeviceLightTemperatureProtectionParser {
             )
             require(
                 data.requiredExactString(DeviceLightRuntimeContract.Field.COMMAND) ==
-                    DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_SET
+                    DeviceLightRuntimeContract.QualifiedCommand.TEMPERATURE_PROTECTION_SET
             )
             require(
                 data.requiredExactString(DeviceLightRuntimeContract.Field.EVENT) ==
