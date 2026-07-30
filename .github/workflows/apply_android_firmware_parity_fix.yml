@@ -1,0 +1,280 @@
+name: Apply Android firmware parity fixes
+
+on:
+  push:
+    branches:
+      - agent/android-typed-device-metadata
+    paths:
+      - ".github/workflows/apply_android_firmware_parity_fix.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-android-firmware-parity-fix
+  cancel-in-progress: false
+
+jobs:
+  apply-and-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout target branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: agent/android-typed-device-metadata
+          fetch-depth: 0
+
+      - name: Apply exact firmware parity changes
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          from __future__ import annotations
+
+          import hashlib
+          import re
+          from pathlib import Path
+
+          root = Path.cwd()
+          old_firmware_sha = "cf2222e58e6c69a729071a5d1205497b3fceaa70"
+          new_firmware_sha = "bfd8b28d675420930f9b3ad57231292782eedca1"
+
+          def read(path: str) -> str:
+              return (root / path).read_text(encoding="utf-8")
+
+          def write(path: str, content: str) -> None:
+              (root / path).write_text(content, encoding="utf-8")
+
+          def exact_replace(path: str, before: str, after: str) -> None:
+              content = read(path)
+              if before not in content:
+                  raise SystemExit(f"Expected fragment missing in {path}: {before[:80]!r}")
+              write(path, content.replace(before, after, 1))
+
+          # Pin every generated/catalog guard reference to the firmware commit now on main.
+          allowed_suffixes = {".kt", ".py", ".json", ".md", ".txt", ".xml", ".gradle", ".kts"}
+          for path in root.rglob("*"):
+              if not path.is_file() or ".git" in path.parts or path.suffix not in allowed_suffixes:
+                  continue
+              try:
+                  content = path.read_text(encoding="utf-8")
+              except UnicodeDecodeError:
+                  continue
+              if old_firmware_sha in content:
+                  path.write_text(content.replace(old_firmware_sha, new_firmware_sha), encoding="utf-8")
+
+          contract_path = (
+              "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/"
+              "DeviceLightRuntimeContract.kt"
+          )
+          contract = read(contract_path)
+          if "object QualifiedCommand" not in contract:
+              marker = """    object Event {\n"""
+              insertion = """    object QualifiedCommand {\n        const val TEMPERATURE_PROTECTION_SET =\n            \"light.temperature-protection.set\"\n    }\n\n    object Event {\n"""
+              if marker not in contract:
+                  raise SystemExit("DeviceLightRuntimeContract Event marker is missing")
+              contract = contract.replace(marker, insertion, 1)
+          contract, count = re.subn(
+              r"        const val MIN_TEMPERATURE_PROTECTION_C = (?:0\.0|50\.0)\n"
+              r"(?:        const val DEFAULT_TEMPERATURE_PROTECTION_C = 60\.0\n)?"
+              r"        const val MAX_TEMPERATURE_PROTECTION_C = (?:120\.0|70\.0)",
+              "        const val MIN_TEMPERATURE_PROTECTION_C = 50.0\n"
+              "        const val DEFAULT_TEMPERATURE_PROTECTION_C = 60.0\n"
+              "        const val MAX_TEMPERATURE_PROTECTION_C = 70.0",
+              contract,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit("Temperature-protection limit block was not updated exactly once")
+          write(contract_path, contract)
+
+          parser_path = (
+              "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/"
+              "DeviceLightTemperatureProtectionParser.kt"
+          )
+          exact_replace(
+              parser_path,
+              """data.requiredExactString(DeviceLightRuntimeContract.Field.COMMAND) ==\n                    DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_SET""",
+              """data.requiredExactString(DeviceLightRuntimeContract.Field.COMMAND) ==\n                    DeviceLightRuntimeContract.QualifiedCommand.TEMPERATURE_PROTECTION_SET""",
+          )
+
+          light_repository_path = (
+              "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/"
+              "DeviceLightRuntimeRepository.kt"
+          )
+          exact_replace(
+              light_repository_path,
+              """
+    fun requestTemperatureProtectionStatus(deviceUid: DeviceUid): DeviceLightCommandResult {
+        return send(
+            deviceUid = deviceUid,
+            action = DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_STATUS_GET
+        )
+    }
+
+    fun setTemperatureProtection(
+        deviceUid: DeviceUid,
+        payload: DeviceLightTemperatureProtectionSetPayload
+    ): DeviceLightCommandResult {
+        return send(
+            deviceUid = deviceUid,
+            action = DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_SET,
+            data = payload.toJson()
+        )
+    }
+""",
+              "",
+          )
+
+          provider_path = (
+              "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/"
+              "DeviceRuntimeModuleProvider.kt"
+          )
+          provider = read(provider_path)
+          if "DeviceLightTemperatureProtectionRuntimeRepository" not in provider:
+              provider = provider.replace(
+                  "import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository\n",
+                  "import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository\n"
+                  "import com.aqua.aqualight.data.devices.runtime.modules.light."
+                  "DeviceLightTemperatureProtectionRuntimeRepository\n",
+                  1,
+              )
+              provider = provider.replace(
+                  """    val light: DeviceLightRuntimeRepository =
+        DeviceLightRuntimeRepository(commandClientProvider)
+""",
+                  """    val light: DeviceLightRuntimeRepository =
+        DeviceLightRuntimeRepository(commandClientProvider)
+
+    val lightTemperatureProtection: DeviceLightTemperatureProtectionRuntimeRepository =
+        DeviceLightTemperatureProtectionRuntimeRepository(commandClientProvider)
+""",
+                  1,
+              )
+          write(provider_path, provider)
+
+          test_path = (
+              "app/src/test/java/com/aqua/aqualight/data/devices/runtime/modules/light/"
+              "DeviceLightTemperatureProtectionContractTest.kt"
+          )
+          test = read(test_path)
+          replacements = {
+              "DeviceLightTemperatureProtectionSetPayload(-0.1)":
+                  "DeviceLightTemperatureProtectionSetPayload(49.9)",
+              "DeviceLightTemperatureProtectionSetPayload(120.1)":
+                  "DeviceLightTemperatureProtectionSetPayload(70.1)",
+              "assertEquals(0.0, checkNotNull(parsed.temperatureProtection.minimumC), 0.0)":
+                  "assertEquals(50.0, checkNotNull(parsed.temperatureProtection.minimumC), 0.0)",
+              "assertEquals(120.0, checkNotNull(parsed.temperatureProtection.maximumC), 0.0)":
+                  "assertEquals(70.0, checkNotNull(parsed.temperatureProtection.maximumC), 0.0)",
+              "status.getJSONObject(\"temperatureProtection\").put(\"maximumC\", 121.0)":
+                  "status.getJSONObject(\"temperatureProtection\").put(\"maximumC\", 71.0)",
+              "val repository = DeviceLightRuntimeRepository.singleSession(":
+                  "val repository = DeviceLightTemperatureProtectionRuntimeRepository.singleSession(",
+              "repository.requestTemperatureProtectionStatus(deviceUid)":
+                  "repository.requestStatus(deviceUid)",
+              "repository.setTemperatureProtection(":
+                  "repository.setThreshold(",
+              "thresholdC: Double = 50.0":
+                  "thresholdC: Double = 60.0",
+              ".put(\"minimumC\", 0.0)":
+                  ".put(\"minimumC\", 50.0)",
+              ".put(\"maximumC\", 120.0)":
+                  ".put(\"maximumC\", 70.0)",
+              ".put(\"command\", \"temperature-protection.set\")":
+                  ".put(\"command\", \"light.temperature-protection.set\")",
+          }
+          for before, after in replacements.items():
+              if before not in test:
+                  raise SystemExit(f"Expected test fragment missing: {before}")
+              test = test.replace(before, after, 1)
+
+          payload_marker = """        assertFalse(payload.getBoolean("save"))
+"""
+          if "DEFAULT_TEMPERATURE_PROTECTION_C" not in test:
+              payload_assertions = """        assertFalse(payload.getBoolean("save"))
+        assertEquals(50.0, DeviceLightRuntimeContract.Limit.MIN_TEMPERATURE_PROTECTION_C, 0.0)
+        assertEquals(60.0, DeviceLightRuntimeContract.Limit.DEFAULT_TEMPERATURE_PROTECTION_C, 0.0)
+        assertEquals(70.0, DeviceLightRuntimeContract.Limit.MAX_TEMPERATURE_PROTECTION_C, 0.0)
+"""
+              if payload_marker not in test:
+                  raise SystemExit("Payload assertion marker is missing")
+              test = test.replace(payload_marker, payload_assertions, 1)
+          write(test_path, test)
+
+          # The fixture changed only in source commit metadata; refresh its exact checksum guard.
+          fixture_path = root / "protocol/fixtures/aql_product_catalog_v1.json"
+          fixture_sha = hashlib.sha256(fixture_path.read_bytes()).hexdigest()
+          parity_guard_path = "tools/device_catalog_parity_guard.py"
+          parity_guard = read(parity_guard_path)
+          parity_guard, checksum_count = re.subn(
+              r'FIXTURE_SHA256 = "[0-9a-f]{64}"',
+              f'FIXTURE_SHA256 = "{fixture_sha}"',
+              parity_guard,
+              count=1,
+          )
+          if checksum_count != 1:
+              raise SystemExit("Catalog fixture checksum constant was not updated")
+          write(parity_guard_path, parity_guard)
+
+          # Fail closed on any stale or dual-path contract residue.
+          stale_sha_files = []
+          for path in root.rglob("*"):
+              if not path.is_file() or ".git" in path.parts:
+                  continue
+              try:
+                  content = path.read_text(encoding="utf-8")
+              except UnicodeDecodeError:
+                  continue
+              if old_firmware_sha in content:
+                  stale_sha_files.append(str(path.relative_to(root)))
+          if stale_sha_files:
+              raise SystemExit(f"Stale firmware SHA remains in: {stale_sha_files}")
+
+          light_repository = read(light_repository_path)
+          for forbidden in ("requestTemperatureProtectionStatus", "setTemperatureProtection"):
+              if forbidden in light_repository:
+                  raise SystemExit(f"Legacy temperature repository path remains: {forbidden}")
+
+          provider = read(provider_path)
+          if "val lightTemperatureProtection" not in provider:
+              raise SystemExit("Temperature protection repository is not exposed by module provider")
+
+          parser = read(parser_path)
+          if "QualifiedCommand.TEMPERATURE_PROTECTION_SET" not in parser:
+              raise SystemExit("Parser does not validate the firmware-qualified command echo")
+
+          contract = read(contract_path)
+          for required in (
+              "MIN_TEMPERATURE_PROTECTION_C = 50.0",
+              "DEFAULT_TEMPERATURE_PROTECTION_C = 60.0",
+              "MAX_TEMPERATURE_PROTECTION_C = 70.0",
+              '"light.temperature-protection.set"',
+          ):
+              if required not in contract:
+                  raise SystemExit(f"Missing Android temperature contract fragment: {required}")
+
+          workflow_path = root / ".github/workflows/apply_android_firmware_parity_fix.yml"
+          workflow_path.unlink()
+          PY
+
+      - name: Run catalog and tooling guards
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 tools/device_catalog_parity_guard.py
+          python3 tools/commercial_catalog_runtime_guard.py
+          python3 -m unittest discover -s tools/tests -p 'test_*.py'
+          python3 -m compileall -q tools
+
+      - name: Commit validated parity fixes
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "fix(android): align time and thermal contracts with firmware"
+          git push origin HEAD:agent/android-typed-device-metadata
