@@ -1,11 +1,11 @@
 package com.aqua.aqualight.data.devices.contract
 
 /**
- * Authoritative Android mirror of the first commercial AquaLight WebSocket contract.
+ * Authoritative Android mirror of the commercial AquaLight WebSocket v1 union contract.
  *
- * The application is unreleased, so this is its single v1 baseline. Runtime
- * credentials are used only as input to the HMAC handshake and are never
- * serialized to the wire.
+ * Product firmware registers only the module commands compiled for that product, while this
+ * Android union must contain every authenticated command that any commercial product can expose.
+ * Runtime credentials are used only by the HMAC handshake and are never serialized to the wire.
  */
 object AqlWsContract {
     const val SCHEMA = "aql.ws.v1"
@@ -41,6 +41,7 @@ object AqlWsContract {
     const val ACTION_DEVICE_IDENTITY_GET = "identity.get"
     const val ACTION_DEVICE_STATUS_GET = ACTION_STATUS_GET
     const val ACTION_DEVICE_CAPABILITIES_GET = "capabilities.get"
+    const val ACTION_DEVICE_NAME_SET = "name.set"
 
     const val ACTION_SECURITY_STATUS_GET = ACTION_STATUS_GET
     const val ACTION_SECURITY_PAIR = "pair"
@@ -65,6 +66,9 @@ object AqlWsContract {
     const val ACTION_LIGHT_CHANNEL_REGIME_SET = "channel.regime.set"
     const val ACTION_LIGHT_PROGRAM_APPLY = "program.apply"
     const val ACTION_LIGHT_PROGRAM_DELETE = "program.delete"
+    const val ACTION_LIGHT_TEMPERATURE_PROTECTION_STATUS_GET =
+        "temperature-protection.status.get"
+    const val ACTION_LIGHT_TEMPERATURE_PROTECTION_SET = "temperature-protection.set"
 
     const val ACTION_COOLING_STATUS_GET = ACTION_STATUS_GET
     const val ACTION_COOLING_CONFIG_APPLY = ACTION_CONFIG_APPLY
@@ -84,6 +88,20 @@ object AqlWsContract {
     const val ACTION_DOSING_DOSE_NOW = "dose.now"
     const val ACTION_DOSING_DOSE_STOP = "dose.stop"
     const val ACTION_DOSING_RESERVOIR_REFILL = "reservoir.refill"
+
+    object Event {
+        const val DEVICE_STATUS_CHANGED = "device.status.changed"
+        const val NETWORK_STATE_CHANGED = "network.state.changed"
+        const val LIGHT_STATUS_CHANGED = "light.status.changed"
+        const val COOLING_STATUS_CHANGED = "cooling.status.changed"
+        const val TIMER_STATUS_CHANGED = "timer.status.changed"
+        const val DOSING_STATUS_CHANGED = "dosing.status.changed"
+        const val TEMPERATURE_CHANGED = "temperature.changed"
+        const val TIME_STATUS_CHANGED = "time.status.changed"
+        const val FIRMWARE_OTA_PROGRESS = "firmware.ota.progress"
+        const val FIRMWARE_OTA_COMPLETED = "firmware.ota.completed"
+        const val SYSTEM_RESTARTING = "system.restarting"
+    }
 
     object Field {
         const val ID = "id"
@@ -132,17 +150,17 @@ object AqlWsContract {
         const val NONCE_HEX_CHARS = 64
         const val MAC_HEX_CHARS = 64
         const val MAX_SEQUENCE = 9_007_199_254_740_991L
+        const val AUTHENTICATED_COMMAND_UNION_COUNT = 41
     }
 
-    // The commercial WebSocket contract has no unauthenticated application
-    // command surface. Public onboarding metadata remains on the bounded UDP/BLE
-    // provisioning contracts.
+    // Public onboarding metadata remains on bounded UDP/BLE provisioning contracts.
     private val publicCommands = emptySet<String>()
 
     private val authenticatedCommands = setOf(
         commandKey(MODULE_DEVICE, ACTION_DEVICE_IDENTITY_GET),
         commandKey(MODULE_DEVICE, ACTION_DEVICE_STATUS_GET),
         commandKey(MODULE_DEVICE, ACTION_DEVICE_CAPABILITIES_GET),
+        commandKey(MODULE_DEVICE, ACTION_DEVICE_NAME_SET),
         commandKey(MODULE_SECURITY, ACTION_SECURITY_STATUS_GET),
         commandKey(MODULE_SECURITY, ACTION_SECURITY_PAIR),
         commandKey(MODULE_SECURITY, ACTION_SECURITY_UNPAIR),
@@ -153,22 +171,24 @@ object AqlWsContract {
         commandKey(MODULE_TIME, ACTION_TIME_PHONE_SYNC),
         commandKey(MODULE_TIME, ACTION_TIME_NTP_SYNC),
         commandKey(MODULE_TIME, ACTION_TIME_RTC_SET),
+        commandKey(MODULE_FIRMWARE, ACTION_FIRMWARE_STATUS_GET),
         commandKey(MODULE_FIRMWARE, ACTION_FIRMWARE_OTA_STATUS),
         commandKey(MODULE_FIRMWARE, ACTION_FIRMWARE_OTA_START),
         commandKey(MODULE_FIRMWARE, ACTION_FIRMWARE_OTA_CLEAR),
-        commandKey(MODULE_FIRMWARE, ACTION_FIRMWARE_STATUS_GET),
         commandKey(MODULE_LIGHT, ACTION_LIGHT_STATUS_GET),
         commandKey(MODULE_LIGHT, ACTION_LIGHT_MANUAL_SET),
         commandKey(MODULE_LIGHT, ACTION_LIGHT_CHANNEL_REGIME_SET),
         commandKey(MODULE_LIGHT, ACTION_LIGHT_PROGRAM_APPLY),
         commandKey(MODULE_LIGHT, ACTION_LIGHT_PROGRAM_DELETE),
-        commandKey(MODULE_COOLING, ACTION_COOLING_CONFIG_APPLY),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_TEMPERATURE_PROTECTION_STATUS_GET),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_TEMPERATURE_PROTECTION_SET),
         commandKey(MODULE_COOLING, ACTION_COOLING_STATUS_GET),
+        commandKey(MODULE_COOLING, ACTION_COOLING_CONFIG_APPLY),
         commandKey(MODULE_TIMER, ACTION_TIMER_STATUS_GET),
         commandKey(MODULE_TIMER, ACTION_TIMER_CONFIG_APPLY),
         commandKey(MODULE_TIMER, ACTION_TIMER_CHANNEL_SET),
-        commandKey(MODULE_DOSING, ACTION_DOSING_CONFIG_APPLY),
         commandKey(MODULE_DOSING, ACTION_DOSING_STATUS_GET),
+        commandKey(MODULE_DOSING, ACTION_DOSING_CONFIG_APPLY),
         commandKey(MODULE_DOSING, ACTION_DOSING_PRIME_START),
         commandKey(MODULE_DOSING, ACTION_DOSING_PRIME_STOP),
         commandKey(MODULE_DOSING, ACTION_DOSING_CALIBRATION_START),
@@ -179,6 +199,12 @@ object AqlWsContract {
         commandKey(MODULE_DOSING, ACTION_DOSING_DOSE_STOP),
         commandKey(MODULE_DOSING, ACTION_DOSING_RESERVOIR_REFILL)
     )
+
+    init {
+        check(authenticatedCommands.size == Limit.AUTHENTICATED_COMMAND_UNION_COUNT) {
+            "Android WebSocket command union differs from the firmware commercial contract."
+        }
+    }
 
     fun isRegisteredCommand(module: String, action: String): Boolean =
         isPublicCommand(module, action) || isAuthenticatedCommand(module, action)
