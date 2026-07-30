@@ -5,6 +5,14 @@
     android:id="@+id/nav_devices"
     app:startDestination="@id/devicesFragment">
 
+    <action
+        android:id="@+id/action_global_deviceFirmwareUpdateFragment"
+        app:destination="@id/deviceFirmwareUpdateFragment"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
+
     <fragment
         android:id="@+id/devicesFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.DevicesFragment"
@@ -265,6 +273,16 @@
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceCoolingSettingsFragment"
         android:label="@string/device_cooling_settings_title"
         tools:layout="@layout/fragment_device_family_settings">
+        <argument
+            android:name="deviceUid"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceFirmwareUpdateFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateFragment"
+        android:label="@string/device_firmware_update_title"
+        tools:layout="@layout/fragment_device_firmware_update">
         <argument
             android:name="deviceUid"
             app:argType="string" />
