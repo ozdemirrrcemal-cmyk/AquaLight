@@ -123,20 +123,31 @@ data class DeviceRuntimeState(
         dosing = dosing.stale()
     )
 
-    fun beginBootstrap(generation: Long): DeviceRuntimeState = copy(
-        authenticated = true,
-        metadataGeneration = generation,
-        device = device.loading(),
-        security = security.loading(),
-        network = network.loading(),
-        time = time.loading(),
-        firmware = firmware.loading(),
-        ota = ota.loading(),
-        light = light.loading(),
-        lightTemperatureProtection = lightTemperatureProtection.loading(),
-        cooling = cooling.loading(),
-        timer = timer.loading(),
-        dosing = dosing.loading(),
-        lastFault = null
-    )
+    fun beginBootstrap(
+        generation: Long,
+        targets: Set<DeviceRuntimeRefreshTarget>
+    ): DeviceRuntimeState {
+        require(generation > 0L) { "Validated metadata generation must be positive." }
+        return copy(
+            authenticated = true,
+            metadataGeneration = generation,
+            device = device.loadingIf(DeviceRuntimeRefreshTarget.DEVICE in targets),
+            security = security.loadingIf(DeviceRuntimeRefreshTarget.SECURITY in targets),
+            network = network.loadingIf(DeviceRuntimeRefreshTarget.NETWORK in targets),
+            time = time.loadingIf(DeviceRuntimeRefreshTarget.TIME in targets),
+            firmware = firmware.loadingIf(DeviceRuntimeRefreshTarget.FIRMWARE in targets),
+            ota = ota.loadingIf(DeviceRuntimeRefreshTarget.OTA in targets),
+            light = light.loadingIf(DeviceRuntimeRefreshTarget.LIGHT in targets),
+            lightTemperatureProtection = lightTemperatureProtection.loadingIf(
+                DeviceRuntimeRefreshTarget.LIGHT_TEMPERATURE_PROTECTION in targets
+            ),
+            cooling = cooling.loadingIf(DeviceRuntimeRefreshTarget.COOLING in targets),
+            timer = timer.loadingIf(DeviceRuntimeRefreshTarget.TIMER in targets),
+            dosing = dosing.loadingIf(DeviceRuntimeRefreshTarget.DOSING in targets),
+            lastFault = null
+        )
+    }
 }
+
+private fun <T> DeviceRuntimeValue<T>.loadingIf(enabled: Boolean): DeviceRuntimeValue<T> =
+    if (enabled) loading() else this
