@@ -35,6 +35,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewMo
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
@@ -195,6 +196,9 @@ internal class OwnerViewModelFactory(
             DeviceRootOverviewViewModel::class.java ->
                 DeviceRootOverviewViewModel(DefaultDeviceRootOperations(repository))
 
+            DeviceFamilySettingsViewModel::class.java ->
+                DeviceFamilySettingsViewModel(DefaultDeviceRootOperations(repository))
+
             TankDetailDevicesViewModel::class.java ->
                 TankDetailDevicesViewModel(
                     assignmentOperations = DefaultTankDeviceAssignmentOperations(
@@ -235,6 +239,7 @@ internal class OwnerViewModelFactory(
             DeviceTimerRootViewModel::class.java,
             DeviceDosingRootViewModel::class.java,
             DeviceRootOverviewViewModel::class.java,
+            DeviceFamilySettingsViewModel::class.java,
             TankDetailDevicesViewModel::class.java,
             TankDeviceSelectViewModel::class.java
         )
