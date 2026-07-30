@@ -14,23 +14,13 @@
     <string name="device_settings_check_updates_action">Güncellemeleri denetle</string>
     <string name="device_settings_checking_updates">Güncellemeler denetleniyor…</string>
     <string name="device_settings_firmware_up_to_date">Cihaz yazılımı güncel</string>
-    <string name="device_settings_try_again">Tekrar dene</string>
     <string name="device_settings_update_available_status">%1$s sürümü kullanılabilir</string>
     <string name="device_settings_view_update_action">Güncellemeyi görüntüle</string>
-    <string name="device_settings_update_check_failed">Güncellemeler denetlenemedi.</string>
-    <string name="device_settings_update_unsupported">Bu cihaz için yazılım güncellemesi kullanılamıyor.</string>
-    <string name="device_settings_update_starting">Güncelleme başlatılıyor…</string>
-    <string name="device_settings_update_in_progress">Güncelleniyor… %1$d%%</string>
-    <string name="device_settings_update_recovering">Yeniden bağlanılıyor… %1$d%%</string>
-    <string name="device_settings_restart_required">Yeniden başlatma gerekli</string>
-    <string name="device_settings_update_complete">Güncelleme tamamlandı</string>
 
     <string name="device_settings_change_name_title">Cihaz adını değiştir</string>
     <string name="device_settings_save_action">Kaydet</string>
     <string name="device_settings_cancel_action">İptal</string>
     <string name="device_settings_device_name_required">Bir cihaz adı girin.</string>
-    <string name="device_settings_device_name_updated">Cihaz adı güncellendi</string>
-    <string name="device_settings_device_name_update_failed">Cihaz adı güncellenemedi. Tekrar deneyin.</string>
 
     <string name="device_settings_firmware_update_title">Yazılım Güncellemesi</string>
 
