@@ -78,6 +78,10 @@ require_tokens(
         "parseOtaProgressEventExact",
         "Firmware OTA request echo differs from the selected plan.",
         "DeviceOtaState.Recovering",
+        "private val startLocks = ConcurrentHashMap<DeviceUid, Any>()",
+        "synchronized(startLock(deviceUid))",
+        "private fun startUpdateLocked(",
+        "startLocks.putIfAbsent(deviceUid, candidate)",
     ),
 )
 require_tokens(
@@ -86,7 +90,9 @@ require_tokens(
         "fun evaluateUpdate(",
         "compatible.size == 1",
         "return compatible.single()",
-        "artifact.env == expectedEnvironment",
+        "artifact.env == environment",
+        "artifact.compatibility.family == family",
+        "artifact.compatibility.line == line",
         "model = snapshot.product.model",
         "runtimeMetadataGeneration = snapshot.runtimeMetadataGeneration",
         "manifest.releaseNotes.resolve",
@@ -106,9 +112,15 @@ require_tokens(
 require_tokens(
     "manifest",
     (
+        "root.requireKnownKeys(",
         "parseReleaseNotes",
         "releaseNotes.locales",
         "requiredReleaseNoteArray",
+        "json.requireExactKeys(SIGNATURE_KEYS",
+        "json.requireKnownKeys(",
+        "json.requireExactKeys(PRODUCT_KEYS",
+        "json.requireExactKeys(COMPATIBILITY_KEYS",
+        "json.requireExactKeys(ASSET_KEYS",
         "artifact.product.family == artifact.compatibility.family",
         "artifact.product.line == artifact.compatibility.line",
     ),

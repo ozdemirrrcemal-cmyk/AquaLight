@@ -83,21 +83,30 @@ class DeviceFirmwareUpdatePlanner(
     ): List<DeviceFirmwareManifestArtifact> {
         val productKey = snapshot.product.productKey
         val productId = snapshot.product.productId
+        val family = snapshot.product.family.wireValue
+        val line = snapshot.product.line
         val model = snapshot.product.model
         val hardwareRevision = snapshot.product.hardwareRevision
+        val environment = productKey.lowercase(Locale.ROOT)
 
         if (
             productKey.isBlank() ||
             productId.isBlank() ||
+            family.isBlank() ||
+            line.isBlank() ||
             model.isBlank() ||
-            hardwareRevision.isBlank()
+            hardwareRevision.isBlank() ||
+            environment.isBlank()
         ) {
             return emptyList()
         }
 
         return manifest.artifacts.filter { artifact ->
-            artifact.compatibility.productKey == productKey &&
+            artifact.env == environment &&
+                artifact.compatibility.productKey == productKey &&
                 artifact.compatibility.productId == productId &&
+                artifact.compatibility.family == family &&
+                artifact.compatibility.line == line &&
                 artifact.compatibility.model == model &&
                 artifact.compatibility.hardwareRevision == hardwareRevision
         }

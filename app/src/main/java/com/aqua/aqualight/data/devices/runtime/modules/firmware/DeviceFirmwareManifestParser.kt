@@ -9,6 +9,11 @@ object DeviceFirmwareManifestParser {
     fun parse(raw: String): Result<DeviceFirmwareManifest> {
         return runCatching {
             val root = JSONObject(raw)
+            root.requireKnownKeys(
+                required = ROOT_REQUIRED_KEYS,
+                optional = ROOT_OPTIONAL_KEYS,
+                label = "manifest"
+            )
             val manifest = DeviceFirmwareManifest(
                 schema = root.requiredString("schema"),
                 brand = root.requiredString("brand"),
@@ -19,7 +24,7 @@ object DeviceFirmwareManifestParser {
                 generatedAt = root.optExactString("generatedAt"),
                 artifacts = parseArtifacts(root.requiredArray("artifacts")),
                 signature = parseSignature(root.requiredObject("signature")),
-                releaseNotes = root.optJSONObject(
+                releaseNotes = root.optionalObject(
                     DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTES
                 )?.let(::parseReleaseNotes) ?: DeviceFirmwareReleaseNotes.EMPTY
             )
@@ -107,6 +112,7 @@ object DeviceFirmwareManifestParser {
     }
 
     private fun parseSignature(json: JSONObject): DeviceFirmwareManifestSignature {
+        json.requireExactKeys(SIGNATURE_KEYS, "signature")
         return DeviceFirmwareManifestSignature(
             scheme = json.requiredString("scheme"),
             keyId = json.requiredString("keyId"),
@@ -120,24 +126,42 @@ object DeviceFirmwareManifestParser {
             repeat(array.length()) { index ->
                 val item = array.get(index) as? JSONObject
                     ?: error("OTA manifest artifact[$index] must be an object.")
-                val artifact = parseArtifact(item)
+                val artifact = parseArtifact(item, index)
                 validateArtifact(artifact)
                 add(artifact)
             }
         }
     }
 
-    private fun parseArtifact(json: JSONObject): DeviceFirmwareManifestArtifact {
+    private fun parseArtifact(
+        json: JSONObject,
+        index: Int
+    ): DeviceFirmwareManifestArtifact {
+        val label = "artifact[$index]"
+        json.requireKnownKeys(
+            required = ARTIFACT_REQUIRED_KEYS,
+            optional = ARTIFACT_OPTIONAL_KEYS,
+            label = label
+        )
         return DeviceFirmwareManifestArtifact(
             env = json.requiredString("env"),
-            product = parseProduct(json.requiredObject("product")),
-            compatibility = parseCompatibility(json.requiredObject("compatibility")),
-            firmware = parseAsset(json.requiredObject("firmware")),
-            factory = json.optJSONObject("factory")?.let { parseAsset(it) }
+            product = parseProduct(json.requiredObject("product"), "$label.product"),
+            compatibility = parseCompatibility(
+                json.requiredObject("compatibility"),
+                "$label.compatibility"
+            ),
+            firmware = parseAsset(json.requiredObject("firmware"), "$label.firmware"),
+            factory = json.optionalObject("factory")?.let { factory ->
+                parseAsset(factory, "$label.factory")
+            }
         )
     }
 
-    private fun parseProduct(json: JSONObject): DeviceFirmwareManifestProduct {
+    private fun parseProduct(
+        json: JSONObject,
+        label: String
+    ): DeviceFirmwareManifestProduct {
+        json.requireExactKeys(PRODUCT_KEYS, label)
         return DeviceFirmwareManifestProduct(
             productKey = json.requiredString("productKey"),
             productId = json.requiredString("productId"),
@@ -151,7 +175,11 @@ object DeviceFirmwareManifestParser {
         )
     }
 
-    private fun parseCompatibility(json: JSONObject): DeviceFirmwareCompatibility {
+    private fun parseCompatibility(
+        json: JSONObject,
+        label: String
+    ): DeviceFirmwareCompatibility {
+        json.requireExactKeys(COMPATIBILITY_KEYS, label)
         return DeviceFirmwareCompatibility(
             productKey = json.requiredString("productKey"),
             productId = json.requiredString("productId"),
@@ -162,7 +190,11 @@ object DeviceFirmwareManifestParser {
         )
     }
 
-    private fun parseAsset(json: JSONObject): DeviceFirmwareAsset {
+    private fun parseAsset(
+        json: JSONObject,
+        label: String
+    ): DeviceFirmwareAsset {
+        json.requireExactKeys(ASSET_KEYS, label)
         return DeviceFirmwareAsset(
             filename = json.requiredString("filename"),
             url = json.requiredString("url"),
@@ -214,14 +246,23 @@ object DeviceFirmwareManifestParser {
     }
 
     private fun JSONObject.requiredObject(key: String): JSONObject {
-        return get(key) as? JSONObject ?: error("OTA manifest object '$key' is missing.")
+        require(has(key) && !isNull(key)) { "OTA manifest object '$key' is missing." }
+        return get(key) as? JSONObject ?: error("OTA manifest field '$key' must be an object.")
+    }
+
+    private fun JSONObject.optionalObject(key: String): JSONObject? {
+        if (!has(key)) return null
+        require(!isNull(key)) { "OTA manifest optional object '$key' must not be null." }
+        return get(key) as? JSONObject ?: error("OTA manifest field '$key' must be an object.")
     }
 
     private fun JSONObject.requiredArray(key: String): JSONArray {
-        return get(key) as? JSONArray ?: error("OTA manifest array '$key' is missing.")
+        require(has(key) && !isNull(key)) { "OTA manifest array '$key' is missing." }
+        return get(key) as? JSONArray ?: error("OTA manifest field '$key' must be an array.")
     }
 
     private fun JSONObject.requiredString(key: String): String {
+        require(has(key) && !isNull(key)) { "OTA manifest field '$key' is missing." }
         val value = get(key) as? String ?: error("OTA manifest field '$key' must be a string.")
         require(value.isNotEmpty()) { "OTA manifest field '$key' is missing." }
         require(!value.first().isWhitespace() && !value.last().isWhitespace()) {
@@ -234,15 +275,18 @@ object DeviceFirmwareManifestParser {
     }
 
     private fun JSONObject.optExactString(key: String): String {
-        if (!has(key) || isNull(key)) return ""
+        if (!has(key)) return ""
+        require(!isNull(key)) { "OTA manifest optional field '$key' must not be null." }
         return requiredString(key)
     }
 
     private fun JSONObject.requiredBoolean(key: String): Boolean {
+        require(has(key) && !isNull(key)) { "OTA manifest field '$key' is missing." }
         return get(key) as? Boolean ?: error("OTA manifest field '$key' must be a boolean.")
     }
 
     private fun JSONObject.requiredPositiveInt(key: String): Int {
+        require(has(key) && !isNull(key)) { "OTA manifest field '$key' is missing." }
         val value = get(key) as? Number
             ?: error("OTA manifest field '$key' must be an integer.")
         val asLong = value.toLong()
@@ -298,14 +342,44 @@ object DeviceFirmwareManifestParser {
     }
 
     private fun JSONObject.requireExactKeys(expected: Set<String>, label: String) {
+        requireKnownKeys(required = expected, optional = emptySet(), label = label)
+    }
+
+    private fun JSONObject.requireKnownKeys(
+        required: Set<String>,
+        optional: Set<String>,
+        label: String
+    ) {
         val actual = buildSet {
             val iterator = keys()
             while (iterator.hasNext()) add(iterator.next())
         }
-        require(actual == expected) {
-            "$label keys differ from the signed OTA manifest contract."
+        val missing = required - actual
+        val unknown = actual - required - optional
+        require(missing.isEmpty() && unknown.isEmpty()) {
+            "$label keys differ from the signed OTA manifest contract; " +
+                "missing=${missing.sorted()} unknown=${unknown.sorted()}"
         }
     }
 
+    private val ROOT_REQUIRED_KEYS = setOf(
+        "schema", "brand", "channel", "version", "tag", "releaseRepo", "artifacts", "signature"
+    )
+    private val ROOT_OPTIONAL_KEYS = setOf(
+        "generatedAt", DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTES
+    )
+    private val SIGNATURE_KEYS = setOf("scheme", "keyId", "payloadHash", "value")
+    private val ARTIFACT_REQUIRED_KEYS = setOf("env", "product", "compatibility", "firmware")
+    private val ARTIFACT_OPTIONAL_KEYS = setOf("factory")
+    private val PRODUCT_KEYS = setOf(
+        "productKey", "productId", "brand", "family", "line", "model", "displayName",
+        "skuCode", "hardwareRevision"
+    )
+    private val COMPATIBILITY_KEYS = setOf(
+        "productKey", "productId", "family", "line", "model", "hardwareRevision"
+    )
+    private val ASSET_KEYS = setOf(
+        "filename", "url", "sha256", "size", "format", "otaSlotCompatible"
+    )
     private val LOCALE_TAG_PATTERN = Regex("^[a-z]{2,3}(?:-[A-Z]{2})?$")
 }

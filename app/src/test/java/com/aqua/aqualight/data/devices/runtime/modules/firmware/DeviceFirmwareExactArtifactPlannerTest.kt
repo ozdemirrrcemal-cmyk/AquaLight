@@ -72,7 +72,7 @@ class DeviceFirmwareExactArtifactPlannerTest {
             manifest(artifacts = listOf(wrongEnv))
         ).exceptionOrNull()
 
-        assertTrue(failure?.message.orEmpty().contains("environment"))
+        assertTrue(failure?.message.orEmpty().contains("No compatible OTA artifact"))
     }
 
     @Test

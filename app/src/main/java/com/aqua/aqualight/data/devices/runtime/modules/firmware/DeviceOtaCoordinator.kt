@@ -54,6 +54,7 @@ internal class DeviceOtaCoordinator(
     private val states = ConcurrentHashMap<DeviceUid, MutableStateFlow<DeviceOtaState>>()
     private val selectedPlans = ConcurrentHashMap<DeviceUid, SelectedPlan>()
     private val pendingRequests = ConcurrentHashMap<String, PendingRequest>()
+    private val startLocks = ConcurrentHashMap<DeviceUid, Any>()
 
     init {
         if (runtimeEvents != null) {
@@ -136,14 +137,32 @@ internal class DeviceOtaCoordinator(
         val deviceUid = runCatching { DeviceUid(plan.deviceUid) }.getOrElse { error ->
             return AppCommandResult(false, errorMessage = error.message.orEmpty())
         }
+        return synchronized(startLock(deviceUid)) {
+            startUpdateLocked(deviceUid, plan)
+        }
+    }
+
+    private fun startUpdateLocked(
+        deviceUid: DeviceUid,
+        plan: PreparedDeviceFirmwareUpdate
+    ): AppCommandResult {
         val selected = selectedPlans[deviceUid]
-            ?: return AppCommandResult(false, errorMessage = "No prepared OTA plan exists for this device.")
+            ?: return AppCommandResult(
+                false,
+                errorMessage = "No prepared OTA plan exists for this device."
+            )
         if (selected.applicationPlan != plan) {
-            return AppCommandResult(false, errorMessage = "OTA plan differs from the selected exact artifact.")
+            return AppCommandResult(
+                false,
+                errorMessage = "OTA plan differs from the selected exact artifact."
+            )
         }
         val currentState = stateFlow(deviceUid).value
         if (currentState.isActiveOtaState) {
-            return AppCommandResult(false, errorMessage = "An OTA operation is already active for this device.")
+            return AppCommandResult(
+                false,
+                errorMessage = "An OTA operation is already active for this device."
+            )
         }
         val snapshot = snapshotProvider(deviceUid)
             ?: return AppCommandResult(false, errorMessage = "Device snapshot is not available.")
@@ -158,7 +177,10 @@ internal class DeviceOtaCoordinator(
             return AppCommandResult(false, errorMessage = validationError)
         }
         val updater = updaterProvider()
-            ?: return AppCommandResult(false, errorMessage = "Firmware update runtime is not configured.")
+            ?: return AppCommandResult(
+                false,
+                errorMessage = "Firmware update runtime is not configured."
+            )
         val command = runCatching {
             connectRuntime(deviceUid).getOrThrow()
             updater.startUpdate(selected.dataPlan)
@@ -427,12 +449,18 @@ internal class DeviceOtaCoordinator(
         )
     }
 
+    private fun startLock(deviceUid: DeviceUid): Any {
+        val candidate = Any()
+        return startLocks.putIfAbsent(deviceUid, candidate) ?: candidate
+    }
+
     private fun stateFlow(deviceUid: DeviceUid): MutableStateFlow<DeviceOtaState> =
         states.getOrPut(deviceUid) { MutableStateFlow(DeviceOtaState.Idle(deviceUid.value)) }
 
     override fun close() {
         pendingRequests.clear()
         selectedPlans.clear()
+        startLocks.clear()
         scope.cancel()
     }
 }
