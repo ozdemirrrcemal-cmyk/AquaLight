@@ -101,34 +101,6 @@
     <string name="device_menu_light_manual_unavailable">Aygıt yazılımı henüz manuel aydınlatma kontrollerini sunmadı.</string>
     <string name="device_menu_light_programs_unavailable">Aygıt yazılımı henüz aydınlatma programlarını, ön ayarları veya ayarları sunmadı.</string>
 
-    <string name="device_settings_device_information_section">Cihaz bilgileri</string>
-    <string name="device_settings_device_name_label">Cihaz adı</string>
-    <string name="device_settings_edit_device_name_description">Cihaz adını düzenle</string>
-    <string name="device_settings_serial_number_label">Seri numarası</string>
-    <string name="device_settings_hardware_revision_label">Donanım revizyonu</string>
-    <string name="device_settings_software_section">Yazılım</string>
-    <string name="device_settings_firmware_version_label">Yüklü firmware sürümü</string>
-    <string name="device_settings_check_updates_action">Güncellemeleri denetle</string>
-    <string name="device_settings_change_name_title">Cihaz adını değiştir</string>
-    <string name="device_settings_save_action">Kaydet</string>
-    <string name="device_settings_cancel_action">İptal</string>
-    <string name="device_settings_device_name_required">Bir cihaz adı girin.</string>
-    <string name="device_settings_device_name_updated">Cihaz adı güncellendi</string>
-    <string name="device_settings_device_name_update_failed">Cihaz adı güncellenemedi. Tekrar deneyin.</string>
-    <string name="device_settings_checking_updates">Denetleniyor…</string>
-    <string name="device_settings_up_to_date_action">Cihazınız güncel</string>
-    <string name="device_settings_up_to_date_status">Güncel · Az önce denetlendi</string>
-    <string name="device_settings_try_again">Tekrar dene</string>
-    <string name="device_settings_update_available_status">Yeni firmware mevcut · Sürüm %1$s</string>
-    <string name="device_settings_review_update">Güncellemeyi incele</string>
-    <string name="device_settings_update_check_failed">Güncellemeler denetlenemedi.</string>
-    <string name="device_settings_update_unsupported">Bu cihaz için firmware güncellemesi kullanılamıyor.</string>
-    <string name="device_settings_update_starting">Güncelleme başlatılıyor…</string>
-    <string name="device_settings_update_in_progress">Güncelleniyor… %1$d%%</string>
-    <string name="device_settings_update_recovering">Yeniden bağlanılıyor… %1$d%%</string>
-    <string name="device_settings_restart_required">Yeniden başlatma gerekli</string>
-    <string name="device_settings_update_complete">Güncelleme tamamlandı</string>
-
     <string name="device_light_channels_label">Aydınlatma kanalları</string>
     <string name="device_dosing_channels_label">Dozajlama kanalları</string>
     <string name="device_fan_outputs_label">Fan çıkışları</string>
