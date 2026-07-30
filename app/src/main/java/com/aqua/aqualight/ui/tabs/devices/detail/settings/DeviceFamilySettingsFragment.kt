@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.settings
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -9,7 +10,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import com.aqua.aqualight.NavDevicesDirections
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DEVICE_CUSTOM_NAME_MAX_LENGTH
 import com.aqua.aqualight.application.devices.DeviceOtaState
@@ -62,7 +62,9 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
             fragment = this,
             config = AquaHeaderConfig(
                 titleOverride = getString(R.string.device_settings_title),
-                onBackClick = findNavController()::navigateUp
+                onBackClick = {
+                    findNavController().navigateUp()
+                }
             )
         )
     }
@@ -147,7 +149,8 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
         val navController = findNavController()
         if (navController.currentDestination?.id !in SETTINGS_DESTINATIONS) return
         navController.navigate(
-            NavDevicesDirections.actionGlobalDeviceFirmwareUpdateFragment(deviceUid)
+            R.id.action_global_deviceFirmwareUpdateFragment,
+            bundleOf(DEVICE_UID_ARGUMENT to deviceUid)
         )
     }
 
@@ -352,6 +355,7 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
 
     private companion object {
         const val DEVICE_NAME_REQUEST_KEY = "device_settings_name_request"
+        const val DEVICE_UID_ARGUMENT = "deviceUid"
         const val PERMILLE_PER_PERCENT = 10
         const val ENABLED_ACTION_ALPHA = 1.0f
         const val DISABLED_ACTION_ALPHA = 0.5f
