@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_timer_settings_title">Zamanlayıcı Ayarları</string>
+    <string name="device_timer_open_settings_description">Zamanlayıcı ayarlarını aç</string>
+</resources>

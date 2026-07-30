@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_timer_settings_title">Timer Settings</string>
+    <string name="device_timer_open_settings_description">Open timer settings</string>
+</resources>

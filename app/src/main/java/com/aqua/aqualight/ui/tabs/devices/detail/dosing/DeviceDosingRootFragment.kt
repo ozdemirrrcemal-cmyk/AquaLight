@@ -15,6 +15,7 @@ import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceDosingRootBinding
+import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import kotlinx.coroutines.launch
@@ -51,8 +52,28 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
                 titleOverride = title,
                 onBackClick = {
                     findNavController().navigateUp()
-                }
+                },
+                actions = listOf(
+                    AquaHeaderAction(
+                        iconRes = R.drawable.ic_settings,
+                        contentDescription = getString(
+                            R.string.device_dosing_open_settings_description
+                        ),
+                        onClick = ::openSettings
+                    )
+                )
             )
+        )
+    }
+
+    private fun openSettings() {
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.deviceDosingRootFragment) return
+        navController.navigate(
+            DeviceDosingRootFragmentDirections
+                .actionDeviceDosingRootFragmentToDeviceDosingSettingsFragment(
+                    deviceUid = args.deviceUid
+                )
         )
     }
 
