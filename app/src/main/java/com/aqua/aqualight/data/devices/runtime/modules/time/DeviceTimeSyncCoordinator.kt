@@ -1,48 +1,66 @@
 package com.aqua.aqualight.data.devices.runtime.modules.time
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import java.util.Collections
 
 /**
  * One app-session coordinator.
  *
- * Call after WebSocket auth/provisioning handoff succeeds.
- * It prevents spamming phone.sync on every screen redraw.
+ * It is called only after authenticated runtime metadata has been validated. The phone's current
+ * epoch and timezone are applied to the live device session without writing persistent storage.
+ * Provisioning owns persistent timezone setup, while firmware NTP keeps the clock corrected.
  */
-class DeviceTimeSyncCoordinator(
-    private val repository: DeviceTimeRuntimeRepository
+class DeviceTimeSyncCoordinator internal constructor(
+    private val syncPhoneNow: (DeviceUid) -> DeviceTimeCommandResult
 ) {
-    private val syncedDeviceUids = Collections.synchronizedSet(mutableSetOf<String>())
+    constructor(repository: DeviceTimeRuntimeRepository) : this(
+        syncPhoneNow = { deviceUid ->
+            repository.syncPhoneNow(
+                deviceUid = deviceUid,
+                save = false
+            )
+        }
+    )
+
+    private val lock = Any()
+    private val syncedDeviceUids = mutableSetOf<String>()
+    private val syncingDeviceUids = mutableSetOf<String>()
 
     fun syncPhoneNowIfNeeded(
         deviceUid: DeviceUid,
         force: Boolean = false
     ): DeviceTimeCommandResult {
         val key = deviceUid.value
-
-        if (!force && syncedDeviceUids.contains(key)) {
-            return DeviceTimeCommandResult(
-                sent = false,
-                skipped = true,
-                action = DeviceTimeRuntimeContract.Action.PHONE_SYNC
-            )
+        synchronized(lock) {
+            if (key in syncingDeviceUids || (!force && key in syncedDeviceUids)) {
+                return skippedResult()
+            }
+            syncingDeviceUids += key
         }
 
-        val result = repository.syncPhoneNow(
-            deviceUid = deviceUid,
-            save = true
-        )
-
-        if (result.isSuccess) {
-            syncedDeviceUids.add(key)
+        var result: DeviceTimeCommandResult? = null
+        try {
+            result = syncPhoneNow(deviceUid)
+            return checkNotNull(result)
+        } finally {
+            synchronized(lock) {
+                syncingDeviceUids -= key
+                if (result?.isSuccess == true) {
+                    syncedDeviceUids += key
+                }
+            }
         }
-
-        return result
     }
 
-    fun clearSessionMemory(
-        deviceUid: DeviceUid
-    ) {
-        syncedDeviceUids.remove(deviceUid.value)
+    fun clearSessionMemory(deviceUid: DeviceUid) {
+        synchronized(lock) {
+            syncedDeviceUids -= deviceUid.value
+            syncingDeviceUids -= deviceUid.value
+        }
     }
+
+    private fun skippedResult(): DeviceTimeCommandResult = DeviceTimeCommandResult(
+        sent = false,
+        skipped = true,
+        action = DeviceTimeRuntimeContract.Action.PHONE_SYNC
+    )
 }

@@ -345,7 +345,10 @@ class DeviceRuntimeRepository(
         state: DeviceRuntimeMetadataGenerationState.Ready
     ): DeviceRuntimeMetadataUpdate {
         return when (val validation = AqlCommercialDeviceCatalog.validate(state.metadata)) {
-            is AqlCommercialCatalogValidation.Valid -> DeviceRuntimeMetadataUpdate.Ready(state)
+            is AqlCommercialCatalogValidation.Valid -> {
+                timeSyncCoordinator.syncPhoneNowIfNeeded(state.deviceUid)
+                DeviceRuntimeMetadataUpdate.Ready(state)
+            }
             is AqlCommercialCatalogValidation.Invalid -> {
                 val rejected = checkNotNull(
                     metadataBootstrapCoordinator.reject(
