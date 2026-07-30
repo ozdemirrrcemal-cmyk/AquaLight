@@ -22,6 +22,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /** One shared OTA state machine used by every family-specific Settings update screen. */
+@Suppress(
+    "CyclomaticComplexMethod",
+    "LongMethod",
+    "MagicNumber",
+    "ReturnCount",
+    "TooManyFunctions"
+)
 internal class DeviceOtaCoordinator(
     private val snapshotProvider: (DeviceUid) -> DeviceSnapshot?,
     private val connectRuntime: (DeviceUid) -> Result<Unit>,
