@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.devices.runtime.modules.firmware
 import kotlin.math.abs
 import org.json.JSONObject
 
+@Suppress("TooManyFunctions", "LongMethod", "MagicNumber")
 object DeviceFirmwareStatusParser {
 
     fun parseFirmwareStatus(data: JSONObject): DeviceFirmwareStatus {
