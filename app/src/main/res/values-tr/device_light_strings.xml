@@ -1,11 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="device_light_settings_title">Işık Ayarları</string>
-    <string name="device_light_open_settings_description">Işık ayarlarını aç</string>
-    <string name="device_light_settings_protection_section">Işık koruması</string>
-    <string name="device_light_settings_cooling_auto_off_label">Soğutmayı otomatik kapat</string>
-    <string name="device_light_settings_over_temperature_protection_label">Aşırı sıcaklık koruması</string>
-    <string name="device_light_settings_temperature_threshold_label">Sıcaklık koruma eşiği</string>
-    <string name="device_light_settings_edit_temperature_threshold_description">Sıcaklık koruma eşiğini düzenle</string>
-    <string name="device_light_settings_temperature_threshold_pending_value">— °C</string>
+    <string name="device_light_open_settings_description">Cihaz ayarlarını aç</string>
 </resources>
