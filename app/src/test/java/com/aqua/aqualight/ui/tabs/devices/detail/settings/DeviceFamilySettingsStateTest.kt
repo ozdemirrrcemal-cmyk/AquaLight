@@ -12,7 +12,7 @@ import org.junit.Test
 class DeviceFamilySettingsStateTest {
 
     @Test
-    fun `projects common device information into Settings state`() {
+    fun `projects common device information into ready Settings state`() {
         val state = wrgbSnapshot().toDeviceFamilySettingsUiState()
 
         assertEquals("Living room light", state.deviceName)
@@ -20,6 +20,24 @@ class DeviceFamilySettingsStateTest {
         assertEquals("2.0", state.hardwareRevision)
         assertEquals("1.2.3 / build 42", state.firmwareVersion)
         assertEquals(OwnerDeviceFamily.LIGHT, state.family)
+        assertEquals(
+            DeviceSettingsInformationLoadState.READY,
+            state.informationLoadState
+        )
+    }
+
+    @Test
+    fun `keeps hardware revision loading until exact catalog proof exists`() {
+        val state = wrgbSnapshot().copy(
+            catalogState = DeviceRootCatalogState.INVALID,
+            hardwareRevision = ""
+        ).toDeviceFamilySettingsUiState()
+
+        assertEquals("", state.hardwareRevision)
+        assertEquals(
+            DeviceSettingsInformationLoadState.LOADING,
+            state.informationLoadState
+        )
     }
 
     @Test
