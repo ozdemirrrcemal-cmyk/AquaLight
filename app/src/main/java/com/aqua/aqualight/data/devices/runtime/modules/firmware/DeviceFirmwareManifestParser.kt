@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.devices.runtime.modules.firmware
 import org.json.JSONArray
 import org.json.JSONObject
 
+@Suppress("TooManyFunctions")
 object DeviceFirmwareManifestParser {
 
     fun parse(raw: String): Result<DeviceFirmwareManifest> {
