@@ -29,6 +29,7 @@ private fun DeviceSnapshot.toValidatedDeviceRootSnapshot(
         productKey = product.productKey.value,
         productId = product.productId.value,
         model = product.model.value,
+        serialNumber = identity.serialNumber,
         hardwareRevision = product.hardwareRevision.value,
         ipAddress = endpoint.ip.trim(),
         firmwareLabel = firmwareLabel(),
@@ -52,6 +53,7 @@ private fun DeviceSnapshot.toInvalidDeviceRootSnapshot(): DeviceRootSnapshot = D
     title = title,
     availability = connectionState.onlineState.toOwnerDeviceAvailability(),
     catalogState = DeviceRootCatalogState.INVALID,
+    serialNumber = identity.serialNumber,
     ipAddress = endpoint.ip.trim(),
     firmwareLabel = firmwareLabel()
 )
