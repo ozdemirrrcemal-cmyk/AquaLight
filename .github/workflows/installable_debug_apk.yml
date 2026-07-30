@@ -14,6 +14,7 @@ on:
       - "gradlew.bat"
       - "config/signing/**"
       - "tools/provision_persistent_debug_keystore.sh"
+      - "tools/tests/test_persistent_debug_signing.py"
       - ".github/workflows/installable_debug_apk.yml"
 
 concurrency:
