@@ -32,20 +32,6 @@ class DeviceLightRuntimeRepository(
         )
     }
 
-    fun setTemperatureProtectionThreshold(
-        deviceUid: DeviceUid,
-        thresholdC: Double,
-        save: Boolean = true
-    ): DeviceLightCommandResult {
-        return setTemperatureProtection(
-            deviceUid = deviceUid,
-            payload = DeviceLightTemperatureProtectionSetPayload(
-                thresholdC = thresholdC,
-                save = save
-            )
-        )
-    }
-
     fun setManual(
         deviceUid: DeviceUid,
         payload: DeviceLightManualSetPayload
