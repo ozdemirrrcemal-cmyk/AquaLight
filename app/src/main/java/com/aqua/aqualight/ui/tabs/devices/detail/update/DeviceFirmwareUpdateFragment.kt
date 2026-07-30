@@ -10,7 +10,7 @@ import com.aqua.aqualight.databinding.FragmentDeviceFirmwareUpdateBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
-/** Central full-screen firmware update route. Content will be designed separately. */
+/** Central full-screen software update route. Content will be designed separately. */
 class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_update) {
 
     private val args: DeviceFirmwareUpdateFragmentArgs by navArgs()
@@ -21,14 +21,14 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         require(args.deviceUid.isNotBlank()) {
-            "Firmware update requires a non-blank device UID."
+            "Software update requires a non-blank device UID."
         }
 
         _binding = FragmentDeviceFirmwareUpdateBinding.bind(view)
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = getString(R.string.device_firmware_update_title),
+                titleOverride = getString(R.string.device_settings_firmware_update_title),
                 onBackClick = {
                     findNavController().navigateUp()
                 }
