@@ -14,12 +14,18 @@ object DeviceLightTemperatureProtectionParser {
                 data.requiredExactString(DeviceLightRuntimeContract.Field.OPERATION) ==
                     DeviceLightRuntimeContract.Operation.TEMPERATURE_PROTECTION_SET
             )
-            require(data.requiredExactString(DeviceLightRuntimeContract.Field.RUNTIME_TRANSPORT) ==
-                DeviceLightRuntimeContract.Transport.WEBSOCKET)
-            require(data.requiredExactString(DeviceLightRuntimeContract.Field.COMMAND) ==
-                DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_SET)
-            require(data.requiredExactString(DeviceLightRuntimeContract.Field.EVENT) ==
-                DeviceLightRuntimeContract.Event.STATUS_CHANGED)
+            require(
+                data.requiredExactString(DeviceLightRuntimeContract.Field.RUNTIME_TRANSPORT) ==
+                    DeviceLightRuntimeContract.Transport.WEBSOCKET
+            )
+            require(
+                data.requiredExactString(DeviceLightRuntimeContract.Field.COMMAND) ==
+                    DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_SET
+            )
+            require(
+                data.requiredExactString(DeviceLightRuntimeContract.Field.EVENT) ==
+                    DeviceLightRuntimeContract.Event.STATUS_CHANGED
+            )
 
             val changed = data.requiredExactBoolean(DeviceLightRuntimeContract.Field.CHANGED)
             val saved = data.requiredExactBoolean(DeviceLightRuntimeContract.Field.SAVED)
@@ -131,35 +137,6 @@ object DeviceLightTemperatureProtectionParser {
         require(thresholdC in minimumC..maximumC)
     }
 
-    private fun JSONObject.requireExactKeys(expected: Set<String>, label: String) {
-        val actual = buildSet {
-            val iterator = keys()
-            while (iterator.hasNext()) add(iterator.next())
-        }
-        require(actual == expected) { "$label keys differ from the firmware contract." }
-    }
-
-    private fun JSONObject.requiredObject(key: String): JSONObject =
-        get(key) as? JSONObject ?: error("$key must be an object.")
-
-    private fun JSONObject.requiredExactString(key: String): String {
-        val value = get(key) as? String ?: error("$key must be a string.")
-        require(value.isNotEmpty()) { "$key must not be empty." }
-        require(!value.first().isWhitespace() && !value.last().isWhitespace())
-        require(value.none(Char::isISOControl))
-        return value
-    }
-
-    private fun JSONObject.requiredExactBoolean(key: String): Boolean =
-        get(key) as? Boolean ?: error("$key must be a boolean.")
-
-    private fun JSONObject.requiredNullableExactDouble(key: String): Double? {
-        val value = get(key)
-        if (value == JSONObject.NULL) return null
-        val number = value as? Number ?: error("$key must be numeric or null.")
-        return number.toDouble().also { require(it.isFinite()) }
-    }
-
     private val STATUS_KEYS = setOf(
         DeviceLightRuntimeContract.Field.SUPPORTED,
         DeviceLightRuntimeContract.Field.TEMPERATURE_PROTECTION,
@@ -190,4 +167,33 @@ object DeviceLightTemperatureProtectionParser {
         DeviceLightRuntimeContract.Field.EVENT,
         DeviceLightRuntimeContract.Field.STATUS
     )
+}
+
+private fun JSONObject.requireExactKeys(expected: Set<String>, label: String) {
+    val actual = buildSet {
+        val iterator = keys()
+        while (iterator.hasNext()) add(iterator.next())
+    }
+    require(actual == expected) { "$label keys differ from the firmware contract." }
+}
+
+private fun JSONObject.requiredObject(key: String): JSONObject =
+    get(key) as? JSONObject ?: error("$key must be an object.")
+
+private fun JSONObject.requiredExactString(key: String): String {
+    val value = get(key) as? String ?: error("$key must be a string.")
+    require(value.isNotEmpty()) { "$key must not be empty." }
+    require(!value.first().isWhitespace() && !value.last().isWhitespace())
+    require(value.none(Char::isISOControl))
+    return value
+}
+
+private fun JSONObject.requiredExactBoolean(key: String): Boolean =
+    get(key) as? Boolean ?: error("$key must be a boolean.")
+
+private fun JSONObject.requiredNullableExactDouble(key: String): Double? {
+    val value = get(key)
+    if (value == JSONObject.NULL) return null
+    val number = value as? Number ?: error("$key must be numeric or null.")
+    return number.toDouble().also { require(it.isFinite()) }
 }
