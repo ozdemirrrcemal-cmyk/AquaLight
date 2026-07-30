@@ -14,23 +14,13 @@
     <string name="device_settings_check_updates_action">Check for updates</string>
     <string name="device_settings_checking_updates">Checking for updates…</string>
     <string name="device_settings_firmware_up_to_date">Device software is up to date</string>
-    <string name="device_settings_try_again">Try again</string>
     <string name="device_settings_update_available_status">Version %1$s is available</string>
     <string name="device_settings_view_update_action">View update</string>
-    <string name="device_settings_update_check_failed">Couldn’t check for updates.</string>
-    <string name="device_settings_update_unsupported">Software updates aren’t available for this device.</string>
-    <string name="device_settings_update_starting">Starting update…</string>
-    <string name="device_settings_update_in_progress">Updating… %1$d%%</string>
-    <string name="device_settings_update_recovering">Reconnecting… %1$d%%</string>
-    <string name="device_settings_restart_required">Restart required</string>
-    <string name="device_settings_update_complete">Update complete</string>
 
     <string name="device_settings_change_name_title">Change device name</string>
     <string name="device_settings_save_action">Save</string>
     <string name="device_settings_cancel_action">Cancel</string>
     <string name="device_settings_device_name_required">Enter a device name.</string>
-    <string name="device_settings_device_name_updated">Device name updated</string>
-    <string name="device_settings_device_name_update_failed">Device name could not be updated. Try again.</string>
 
     <string name="device_settings_firmware_update_title">Software Update</string>
 
