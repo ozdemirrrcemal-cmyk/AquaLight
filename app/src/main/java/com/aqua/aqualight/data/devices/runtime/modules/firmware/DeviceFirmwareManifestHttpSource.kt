@@ -5,12 +5,12 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
-class DeviceFirmwareManifestHttpSource(
+open class DeviceFirmwareManifestHttpSource(
     private val client: OkHttpClient = OkHttpClient(),
-    private val signatureVerifier: DeviceFirmwareManifestSignatureVerifier = DeviceFirmwareManifestSignatureVerifier()
+    private val signatureVerifier: DeviceFirmwareManifestSignatureVerifier =
+        DeviceFirmwareManifestSignatureVerifier()
 ) {
-
-    suspend fun load(url: String): Result<DeviceFirmwareManifest> {
+    open suspend fun load(url: String): Result<DeviceFirmwareManifest> {
         return runCatching {
             val sourceUrl = url.trim()
             require(sourceUrl.startsWith("https://")) { "Manifest URL must use HTTPS." }
