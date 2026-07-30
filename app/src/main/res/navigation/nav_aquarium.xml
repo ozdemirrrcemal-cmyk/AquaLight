@@ -5,6 +5,14 @@
     android:id="@+id/nav_aquarium"
     app:startDestination="@id/aquariumFragment">
 
+    <action
+        android:id="@+id/action_global_deviceFirmwareUpdateFragment"
+        app:destination="@id/deviceFirmwareUpdateFragment"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
+
     <!-- 🐠 Aquarium Tab -->
     <fragment
         android:id="@+id/aquariumFragment"
@@ -292,6 +300,13 @@
             android:name="deviceTitle"
             app:argType="string"
             android:defaultValue="" />
+        <action
+            android:id="@+id/action_deviceLightRootFragment_to_deviceLightSettingsFragment"
+            app:destination="@id/deviceLightSettingsFragment"
+            app:enterAnim="@anim/nav_slide_in_left"
+            app:exitAnim="@anim/nav_slide_out_right"
+            app:popEnterAnim="@anim/nav_slide_in_right"
+            app:popExitAnim="@anim/nav_slide_out_left" />
     </fragment>
 
     <fragment
@@ -306,6 +321,13 @@
             android:name="deviceTitle"
             app:argType="string"
             android:defaultValue="" />
+        <action
+            android:id="@+id/action_deviceDosingRootFragment_to_deviceDosingSettingsFragment"
+            app:destination="@id/deviceDosingSettingsFragment"
+            app:enterAnim="@anim/nav_slide_in_left"
+            app:exitAnim="@anim/nav_slide_out_right"
+            app:popEnterAnim="@anim/nav_slide_in_right"
+            app:popExitAnim="@anim/nav_slide_out_left" />
     </fragment>
 
     <fragment
@@ -320,6 +342,13 @@
             android:name="deviceTitle"
             app:argType="string"
             android:defaultValue="" />
+        <action
+            android:id="@+id/action_deviceTimerRootFragment_to_deviceTimerSettingsFragment"
+            app:destination="@id/deviceTimerSettingsFragment"
+            app:enterAnim="@anim/nav_slide_in_left"
+            app:exitAnim="@anim/nav_slide_out_right"
+            app:popEnterAnim="@anim/nav_slide_in_right"
+            app:popExitAnim="@anim/nav_slide_out_left" />
     </fragment>
 
     <fragment
@@ -334,6 +363,63 @@
             android:name="deviceTitle"
             app:argType="string"
             android:defaultValue="" />
+        <action
+            android:id="@+id/action_deviceCoolingRootFragment_to_deviceCoolingSettingsFragment"
+            app:destination="@id/deviceCoolingSettingsFragment"
+            app:enterAnim="@anim/nav_slide_in_left"
+            app:exitAnim="@anim/nav_slide_out_right"
+            app:popEnterAnim="@anim/nav_slide_in_right"
+            app:popExitAnim="@anim/nav_slide_out_left" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceLightSettingsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.settings.DeviceLightSettingsFragment"
+        android:label="@string/device_settings_title"
+        tools:layout="@layout/fragment_device_family_settings">
+        <argument
+            android:name="deviceUid"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceDosingSettingsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.settings.DeviceDosingSettingsFragment"
+        android:label="@string/device_settings_title"
+        tools:layout="@layout/fragment_device_family_settings">
+        <argument
+            android:name="deviceUid"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceTimerSettingsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.timer.settings.DeviceTimerSettingsFragment"
+        android:label="@string/device_settings_title"
+        tools:layout="@layout/fragment_device_family_settings">
+        <argument
+            android:name="deviceUid"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceCoolingSettingsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings.DeviceCoolingSettingsFragment"
+        android:label="@string/device_settings_title"
+        tools:layout="@layout/fragment_device_family_settings">
+        <argument
+            android:name="deviceUid"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceFirmwareUpdateFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateFragment"
+        android:label="@string/device_settings_firmware_update_title"
+        tools:layout="@layout/fragment_device_firmware_update">
+        <argument
+            android:name="deviceUid"
+            app:argType="string" />
     </fragment>
 
     <fragment

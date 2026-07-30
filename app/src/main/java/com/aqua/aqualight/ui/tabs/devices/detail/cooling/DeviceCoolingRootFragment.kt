@@ -12,6 +12,7 @@ import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceCoolingRootBinding
+import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.text.resolve
@@ -43,8 +44,28 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
             fragment = this,
             config = AquaHeaderConfig(
                 titleOverride = title,
-                onBackClick = { findNavController().navigateUp() }
+                onBackClick = { findNavController().navigateUp() },
+                actions = listOf(
+                    AquaHeaderAction(
+                        iconRes = R.drawable.ic_settings,
+                        contentDescription = getString(
+                            R.string.device_cooling_open_settings_description
+                        ),
+                        onClick = ::openSettings
+                    )
+                )
             )
+        )
+    }
+
+    private fun openSettings() {
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.deviceCoolingRootFragment) return
+        navController.navigate(
+            DeviceCoolingRootFragmentDirections
+                .actionDeviceCoolingRootFragmentToDeviceCoolingSettingsFragment(
+                    deviceUid = args.deviceUid
+                )
         )
     }
 
@@ -97,5 +118,4 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
         _binding = null
         super.onDestroyView()
     }
-
 }

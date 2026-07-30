@@ -4,16 +4,17 @@ import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 
 /**
- * Shared production OTA orchestration boundary.
+ * Shared production OTA data boundary.
  *
- * Feature screens should call this repository instead of implementing product-specific OTA logic.
- * Product-specific behavior is decided only by firmware identity and OTA manifest compatibility.
+ * Family-specific Settings screens must use the common application coordinator built on this
+ * repository. Product matching and OTA safety never belong to presentation code.
  */
 class DeviceFirmwareUpdateRepository(
     private val runtime: DeviceFirmwareRuntimeRepository,
     private val manifestSource: DeviceFirmwareManifestHttpSource = DeviceFirmwareManifestHttpSource(),
     private val planner: DeviceFirmwareUpdatePlanner = DeviceFirmwareUpdatePlanner(),
-    private val signatureVerifier: DeviceFirmwareManifestSignatureVerifier = DeviceFirmwareManifestSignatureVerifier()
+    private val signatureVerifier: DeviceFirmwareManifestSignatureVerifier =
+        DeviceFirmwareManifestSignatureVerifier()
 ) {
 
     suspend fun fetchManifest(manifestUrl: String): Result<DeviceFirmwareManifest> {
@@ -24,16 +25,27 @@ class DeviceFirmwareUpdateRepository(
         return signatureVerifier.verifyAndParse(rawManifest)
     }
 
+    fun evaluateUpdate(
+        snapshot: DeviceSnapshot,
+        manifest: DeviceFirmwareManifest,
+        applyNow: Boolean = true
+    ): Result<DeviceFirmwareAvailability> = planner.evaluateUpdate(snapshot, manifest, applyNow)
+
     fun planUpdate(
         snapshot: DeviceSnapshot,
         manifest: DeviceFirmwareManifest,
         applyNow: Boolean = true
-    ): Result<DeviceFirmwareUpdatePlan> {
-        return planner.planUpdate(
-            snapshot = snapshot,
-            manifest = manifest,
-            applyNow = applyNow
-        )
+    ): Result<DeviceFirmwareUpdatePlan> = planner.planUpdate(snapshot, manifest, applyNow)
+
+    suspend fun fetchAndEvaluateUpdate(
+        snapshot: DeviceSnapshot,
+        manifestUrl: String,
+        applyNow: Boolean = true
+    ): Result<DeviceFirmwareAvailability> {
+        return runCatching {
+            val manifest = fetchManifest(manifestUrl).getOrThrow()
+            evaluateUpdate(snapshot, manifest, applyNow).getOrThrow()
+        }
     }
 
     suspend fun fetchAndPlanUpdate(
@@ -42,12 +54,13 @@ class DeviceFirmwareUpdateRepository(
         applyNow: Boolean = true
     ): Result<DeviceFirmwareUpdatePlan> {
         return runCatching {
-            val manifest = fetchManifest(manifestUrl).getOrThrow()
-            planUpdate(
-                snapshot = snapshot,
-                manifest = manifest,
-                applyNow = applyNow
-            ).getOrThrow()
+            val availability = fetchAndEvaluateUpdate(snapshot, manifestUrl, applyNow).getOrThrow()
+            when (availability) {
+                is DeviceFirmwareAvailability.UpdateAvailable -> availability.plan
+                is DeviceFirmwareAvailability.UpToDate -> error(
+                    "No newer compatible OTA artifact found."
+                )
+            }
         }
     }
 

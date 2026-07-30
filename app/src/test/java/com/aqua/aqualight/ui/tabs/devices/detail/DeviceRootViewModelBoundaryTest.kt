@@ -4,15 +4,18 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceFirmwareCommandResult
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.DeviceRootCapability
+import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootMenuFeature
 import com.aqua.aqualight.application.devices.DeviceRootOperations
+import com.aqua.aqualight.application.devices.DeviceRootRouteResolver
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
+import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
+import com.aqua.aqualight.ui.common.text.AquaUiText
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
-import com.aqua.aqualight.ui.common.text.AquaUiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -47,10 +50,7 @@ class DeviceRootViewModelBoundaryTest {
 
         val state = viewModel.uiState.value
         assertEquals(AquaUiText.Dynamic("AquaLight Dosing"), state.title)
-        assertEquals(
-            AquaUiText.Resource(R.string.device_online),
-            state.connectionStatus
-        )
+        assertEquals(AquaUiText.Resource(R.string.device_online), state.connectionStatus)
         assertEquals(AquaUiText.Dynamic("4"), state.primaryCountText)
         assertTrue(
             (state.featuresText as AquaUiText.Joined).parts.contains(
@@ -111,18 +111,31 @@ class DeviceRootViewModelBoundaryTest {
             DeviceRootMenuFeature.DOSING_CHANNELS,
             DeviceRootMenuFeature.DOSING_SCHEDULES
         )
-    ) = DeviceRootSnapshot(
-        deviceUid = "device-1",
-        title = "AquaLight Dosing",
-        availability = OwnerDeviceAvailability.REACHABLE,
-        ipAddress = "192.168.1.20",
-        firmwareLabel = "1.0.0 / 100",
-        modelLabel = "AQL-DOSING / rev-a",
-        lightChannelCount = 6,
-        dosingChannelCount = 4,
-        capabilities = capabilities,
-        menuFeatures = menuFeatures
-    )
+    ): DeviceRootSnapshot {
+        val family = if (DeviceRootCapability.DOSING in capabilities) {
+            OwnerDeviceFamily.DOSING
+        } else {
+            OwnerDeviceFamily.LIGHT
+        }
+        val routes = menuFeatures.mapNotNullTo(linkedSetOf()) { feature ->
+            DeviceRootRouteResolver.resolve(family, feature)
+        }
+        return DeviceRootSnapshot(
+            deviceUid = "device-1",
+            title = "AquaLight Dosing",
+            availability = OwnerDeviceAvailability.REACHABLE,
+            family = family,
+            catalogState = DeviceRootCatalogState.VALID,
+            ipAddress = "192.168.1.20",
+            firmwareLabel = "1.0.0 / 100",
+            modelLabel = "AQL-DOSING / rev-a",
+            lightChannelCount = 6,
+            dosingChannelCount = 4,
+            capabilities = capabilities,
+            menuFeatures = menuFeatures,
+            allowedRoutes = routes
+        )
+    }
 
     private class FakeDeviceRootOperations(
         initialSnapshot: DeviceRootSnapshot?
@@ -159,9 +172,7 @@ class DeviceRootViewModelBoundaryTest {
             return Result.success(preparedPlan())
         }
 
-        override fun startUpdate(
-            plan: PreparedDeviceFirmwareUpdate
-        ): DeviceFirmwareCommandResult {
+        override fun startUpdate(plan: PreparedDeviceFirmwareUpdate): DeviceFirmwareCommandResult {
             startCalls += 1
             return DeviceFirmwareCommandResult(sent = true, messageId = "start-message")
         }

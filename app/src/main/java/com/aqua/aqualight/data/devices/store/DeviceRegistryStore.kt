@@ -11,13 +11,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
-/**
- * In-memory registry for Devices V2.
- *
- * This is intentionally not a persistence layer yet. The first commercial-grade runtime step is a
- * single canonical in-process registry that UI, discovery and future WebSocket/BLE layers can share.
- * Durable DataStore/Keystore-backed stores will be added after runtime token handling lands.
- */
+/** In-memory canonical registry for Devices V2. */
 class DeviceRegistryStore {
 
     private val _snapshots = MutableStateFlow<Map<DeviceUid, DeviceSnapshot>>(emptyMap())
@@ -54,6 +48,29 @@ class DeviceRegistryStore {
         return mergedSnapshot
     }
 
+    /**
+     * Applies one authoritative atomic replacement for an already registered device.
+     *
+     * Runtime metadata publication and invalidation use this path intentionally so the generic merge
+     * policy cannot retain fields that the authenticated generation explicitly withdrew.
+     */
+    fun updateSnapshot(
+        deviceUid: DeviceUid,
+        transform: (DeviceSnapshot) -> DeviceSnapshot
+    ): DeviceSnapshot? {
+        var updatedSnapshot: DeviceSnapshot? = null
+        _snapshots.update { current ->
+            val snapshot = current[deviceUid] ?: return@update current
+            val updated = transform(snapshot)
+            require(updated.deviceUid == deviceUid) {
+                "Authoritative snapshot replacement cannot change deviceUid."
+            }
+            updatedSnapshot = updated
+            current + (deviceUid to updated)
+        }
+        return updatedSnapshot
+    }
+
     fun upsertAll(devices: Iterable<DeviceSnapshot>) {
         _snapshots.update { current ->
             devices.fold(current) { acc, incoming ->
@@ -66,21 +83,11 @@ class DeviceRegistryStore {
         }
     }
 
-    /**
-     * Applies LAN discovery data only to devices already present in the registry.
-     *
-     * The membership check and merge happen inside one StateFlow update so an
-     * unknown LAN device cannot become registered and a concurrent deletion
-     * cannot be undone by a late UDP announcement.
-     */
     fun updateExistingAll(devices: Iterable<DeviceSnapshot>) {
         _snapshots.update { current ->
             devices.fold(current) { acc, incoming ->
                 val previous = acc[incoming.deviceUid] ?: return@fold acc
-                val merged = DeviceSnapshotMerger.merge(
-                    previous = previous,
-                    incoming = incoming
-                )
+                val merged = DeviceSnapshotMerger.merge(previous, incoming)
                 acc + (incoming.deviceUid to merged)
             }
         }
@@ -89,15 +96,8 @@ class DeviceRegistryStore {
     fun updateConnectionState(
         deviceUid: DeviceUid,
         update: (DeviceConnectionState) -> DeviceConnectionState
-    ): DeviceSnapshot? {
-        var updatedSnapshot: DeviceSnapshot? = null
-        _snapshots.update { current ->
-            val snapshot = current[deviceUid] ?: return@update current
-            val updated = snapshot.copy(connectionState = update(snapshot.connectionState))
-            updatedSnapshot = updated
-            current + (deviceUid to updated)
-        }
-        return updatedSnapshot
+    ): DeviceSnapshot? = updateSnapshot(deviceUid) { snapshot ->
+        snapshot.copy(connectionState = update(snapshot.connectionState))
     }
 
     fun remove(deviceUid: DeviceUid): Boolean {

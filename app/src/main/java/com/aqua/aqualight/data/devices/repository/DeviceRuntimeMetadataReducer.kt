@@ -1,259 +1,194 @@
 package com.aqua.aqualight.data.devices.repository
 
-import com.aqua.aqualight.data.devices.contract.AqlWsContract
-import com.aqua.aqualight.data.devices.model.DeviceCapabilities
-import com.aqua.aqualight.data.devices.model.DeviceFamily
-import com.aqua.aqualight.data.devices.model.DeviceLimits
-import com.aqua.aqualight.data.devices.model.DeviceProduct
-import com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
-import com.aqua.aqualight.data.devices.model.DeviceSnapshot
-import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareStatusParser
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
-import org.json.JSONArray
-import org.json.JSONObject
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeCapabilities
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeIdentityEnvelope
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadata
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataFailure
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataFailureCode
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataFragment
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataGeneration
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataGenerationState
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataReduction
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeModuleStatus
+import com.aqua.aqualight.data.devices.model.DeviceUid
 
-/**
- * Canonical reducer for metadata reported through the WebSocket runtime.
- *
- * Runtime responses are authoritative for firmware identity, hardware revision, capabilities and
- * feature/screen lists. UDP discovery is intentionally excluded from this reducer because UDP only
- * proves LAN presence and endpoint location.
- */
+/** Pure reducer for one authenticated runtime-metadata generation. */
 class DeviceRuntimeMetadataReducer {
 
+    fun begin(
+        deviceUid: DeviceUid,
+        previous: DeviceRuntimeMetadataGenerationState?
+    ): DeviceRuntimeMetadataGenerationState.Collecting {
+        require(previous == null || previous.deviceUid == deviceUid) {
+            "Runtime metadata generation cannot move between devices."
+        }
+        val generation = previous?.generation?.next() ?: DeviceRuntimeMetadataGeneration.FIRST
+        return DeviceRuntimeMetadataGenerationState.Collecting(
+            deviceUid = deviceUid,
+            generation = generation,
+            identity = null,
+            capabilities = null,
+            moduleStatus = null
+        )
+    }
+
     fun reduce(
-        snapshot: DeviceSnapshot,
-        response: AqlWsIncomingMessage.Response
-    ): DeviceSnapshot? {
-        if (!response.ok) return null
+        current: DeviceRuntimeMetadataGenerationState,
+        fragment: DeviceRuntimeMetadataFragment
+    ): DeviceRuntimeMetadataReduction = when {
+        fragment.generation != current.generation -> DeviceRuntimeMetadataReduction.IgnoredStale(
+            state = current,
+            staleGeneration = fragment.generation
+        )
+        current is DeviceRuntimeMetadataGenerationState.Rejected ->
+            DeviceRuntimeMetadataReduction.Rejected(current)
+        else -> reduceCurrent(current, fragment)
+    }
 
-        val data = response.data
+    fun reject(
+        current: DeviceRuntimeMetadataGenerationState,
+        code: DeviceRuntimeMetadataFailureCode,
+        field: String?
+    ): DeviceRuntimeMetadataReduction.Rejected = DeviceRuntimeMetadataReduction.Rejected(
+        DeviceRuntimeMetadataGenerationState.Rejected(
+            deviceUid = current.deviceUid,
+            generation = current.generation,
+            failure = DeviceRuntimeMetadataFailure(code = code, field = field)
+        )
+    )
+
+    private fun reduceCurrent(
+        current: DeviceRuntimeMetadataGenerationState,
+        fragment: DeviceRuntimeMetadataFragment
+    ): DeviceRuntimeMetadataReduction {
+        return when (val merge = current.fragments().merge(current.deviceUid, fragment)) {
+            is FragmentMerge.Accepted -> DeviceRuntimeMetadataReduction.Accepted(
+                merge.fragments.toState(current.deviceUid, current.generation)
+            )
+            is FragmentMerge.Conflict -> reject(current, merge.code, merge.field)
+        }
+    }
+
+    private fun Fragments.merge(
+        deviceUid: DeviceUid,
+        fragment: DeviceRuntimeMetadataFragment
+    ): FragmentMerge = when (fragment) {
+        is DeviceRuntimeMetadataFragment.Identity -> mergeIdentity(deviceUid, fragment.value)
+        is DeviceRuntimeMetadataFragment.Capabilities -> mergeCapabilities(fragment.value)
+        is DeviceRuntimeMetadataFragment.Modules -> mergeModuleStatus(fragment.value)
+    }
+
+    private fun Fragments.mergeIdentity(
+        deviceUid: DeviceUid,
+        incoming: DeviceRuntimeIdentityEnvelope
+    ): FragmentMerge {
+        val statusMismatch = moduleStatus?.mismatchField(incoming.identity)
         return when {
-            response.isDeviceAction(AqlWsContract.ACTION_DEVICE_IDENTITY_GET) ->
-                applyDeviceIdentity(snapshot, data)
-
-            response.isDeviceAction(AqlWsContract.ACTION_DEVICE_CAPABILITIES_GET) ->
-                applyDeviceCapabilities(snapshot, data)
-
-            response.isFirmwareAction(AqlWsContract.ACTION_FIRMWARE_STATUS_GET) ->
-                applyFirmwareStatus(snapshot, data)
-
-            else -> null
+            incoming.identity.deviceUid != deviceUid -> FragmentMerge.Conflict(
+                DeviceRuntimeMetadataFailureCode.DEVICE_UID_MISMATCH,
+                "deviceUid"
+            )
+            statusMismatch != null -> FragmentMerge.Conflict(
+                DeviceRuntimeMetadataFailureCode.STATUS_IDENTITY_MISMATCH,
+                statusMismatch
+            )
+            identity == null || identity == incoming -> FragmentMerge.Accepted(
+                copy(identity = incoming)
+            )
+            else -> FragmentMerge.Conflict(
+                DeviceRuntimeMetadataFailureCode.CONFLICTING_IDENTITY,
+                "identity"
+            )
         }
     }
 
-    fun applyDeviceIdentity(
-        snapshot: DeviceSnapshot,
-        identityData: JSONObject
-    ): DeviceSnapshot {
-        val runtime = identityData.optJSONObject("runtime") ?: JSONObject()
-        val familyRaw = identityData.optString("family")
-            .trim()
-            .ifBlank {
-                snapshot.product.familyRaw.ifBlank { snapshot.product.family.wireValue }
-            }
-
-        val reportedDeviceUid = identityData.optString("deviceUid").trim()
-        require(reportedDeviceUid.isBlank() || reportedDeviceUid == snapshot.deviceUid.value) {
-            "Runtime identity deviceUid does not match registered device uid."
-        }
-
-        val reportedFamily = DeviceFamily.fromWire(familyRaw)
-        val family = when {
-            reportedFamily != DeviceFamily.UNKNOWN -> reportedFamily
-            snapshot.product.family != DeviceFamily.UNKNOWN -> snapshot.product.family
-            else -> DeviceFamily.UNKNOWN
-        }
-
-        return snapshot.copy(
-            identity = snapshot.identity.copy(
-                shortId = identityData.optString("shortId").trim()
-                    .ifBlank { snapshot.identity.shortId },
-                macAddress = identityData.optString("macAddress").trim()
-                    .ifBlank { snapshot.identity.macAddress },
-                serialNumber = identityData.optString("serialNumber").trim()
-                    .ifBlank { snapshot.identity.serialNumber },
-                firmwareSerial = identityData.optString("firmwareSerial").trim()
-                    .ifBlank { snapshot.identity.firmwareSerial },
-                displayName = identityData.optString("displayName").trim()
-                    .ifBlank { snapshot.identity.displayName },
-                setupCode = identityData.optString("setupCode").trim()
-                    .ifBlank { snapshot.identity.setupCode }
-            ),
-            product = DeviceProduct(
-                brand = identityData.optString("brand").trim()
-                    .ifBlank { snapshot.product.brand },
-                productId = identityData.optString("productId").trim()
-                    .ifBlank { snapshot.product.productId },
-                productKey = identityData.optString("productKey").trim()
-                    .ifBlank { snapshot.product.productKey },
-                family = family,
-                familyRaw = familyRaw,
-                line = identityData.optString("line").trim()
-                    .ifBlank { snapshot.product.line },
-                model = identityData.optString("model").trim()
-                    .ifBlank { snapshot.product.model },
-                displayName = identityData.optString("displayName").trim()
-                    .ifBlank { snapshot.product.displayName },
-                skuId = identityData.optString("skuId").trim()
-                    .ifBlank { snapshot.product.skuId },
-                skuCode = identityData.optString("skuCode").trim()
-                    .ifBlank { snapshot.product.skuCode },
-                setupCode = identityData.optString("setupCode").trim()
-                    .ifBlank { snapshot.product.setupCode },
-                hardwareRevision = identityData.optString("hardwareRevision").trim()
-                    .ifBlank { snapshot.product.hardwareRevision }
-            ),
-            firmwareVersion = identityData.optString("firmwareVersion").trim()
-                .ifBlank { snapshot.firmwareVersion },
-            firmwareBuild = identityData.optString("firmwareBuild").trim()
-                .ifBlank { snapshot.firmwareBuild },
-            apiVersion = identityData.optString("apiVersion").trim()
-                .ifBlank { snapshot.apiVersion },
-            protocolVersion = identityData.optString("protocolVersion").trim()
-                .ifBlank { snapshot.protocolVersion },
-            endpoint = snapshot.endpoint.withRuntimeMetadata(runtime)
+    private fun Fragments.mergeCapabilities(
+        incoming: DeviceRuntimeCapabilities
+    ): FragmentMerge = if (capabilities == null || capabilities == incoming) {
+        FragmentMerge.Accepted(copy(capabilities = incoming))
+    } else {
+        FragmentMerge.Conflict(
+            DeviceRuntimeMetadataFailureCode.CONFLICTING_CAPABILITIES,
+            "capabilities"
         )
     }
 
-    fun applyDeviceCapabilities(
-        snapshot: DeviceSnapshot,
-        capabilitiesData: JSONObject
-    ): DeviceSnapshot {
-        val capabilitiesJson = capabilitiesData.optJSONObject("capabilities") ?: JSONObject()
-        val limitsJson = capabilitiesData.optJSONObject("limits") ?: JSONObject()
+    private fun Fragments.mergeModuleStatus(
+        incoming: DeviceRuntimeModuleStatus
+    ): FragmentMerge {
+        val identityMismatch = identity?.identity?.let(incoming::mismatchField)
+        return when {
+            identityMismatch != null -> FragmentMerge.Conflict(
+                DeviceRuntimeMetadataFailureCode.STATUS_IDENTITY_MISMATCH,
+                identityMismatch
+            )
+            moduleStatus == null || moduleStatus == incoming -> FragmentMerge.Accepted(
+                copy(moduleStatus = incoming)
+            )
+            else -> FragmentMerge.Conflict(
+                DeviceRuntimeMetadataFailureCode.CONFLICTING_MODULES,
+                "modules"
+            )
+        }
+    }
 
-        return snapshot.copy(
-            capabilities = capabilitiesJson.toDeviceCapabilities(snapshot.capabilities),
-            limits = limitsJson.toDeviceLimits(snapshot.limits),
-            supportedFeatures = capabilitiesData.optStringArray("supportedFeatures")
-                .ifEmpty { snapshot.supportedFeatures },
-            supportedScreens = capabilitiesData.optStringArray("supportedScreens")
-                .ifEmpty { snapshot.supportedScreens },
-            modules = capabilitiesData.optStringArray("modules")
-                .ifEmpty { snapshot.modules }
+    private fun DeviceRuntimeMetadataGenerationState.fragments(): Fragments = when (this) {
+        is DeviceRuntimeMetadataGenerationState.Collecting -> Fragments(
+            identity = identity,
+            capabilities = capabilities,
+            moduleStatus = moduleStatus
+        )
+        is DeviceRuntimeMetadataGenerationState.Ready -> Fragments(
+            identity = identityEnvelope,
+            capabilities = metadata.capabilities,
+            moduleStatus = moduleStatus
+        )
+        is DeviceRuntimeMetadataGenerationState.Rejected -> error(
+            "Rejected metadata generations do not expose reusable fragments."
         )
     }
 
-    fun applyFirmwareStatus(
-        snapshot: DeviceSnapshot,
-        firmwareData: JSONObject
-    ): DeviceSnapshot {
-        val status = DeviceFirmwareStatusParser.parseFirmwareStatus(firmwareData)
-        val familyRaw = status.family.ifBlank { snapshot.product.familyRaw }
-        val reportedFamily = if (status.family.isNotBlank()) {
-            DeviceFamily.fromWire(status.family)
+    private fun Fragments.toState(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeMetadataGeneration
+    ): DeviceRuntimeMetadataGenerationState {
+        val readyIdentity = identity
+        val readyCapabilities = capabilities
+        val readyModuleStatus = moduleStatus
+        return if (readyIdentity != null && readyCapabilities != null && readyModuleStatus != null) {
+            DeviceRuntimeMetadataGenerationState.Ready(
+                deviceUid = deviceUid,
+                generation = generation,
+                identityEnvelope = readyIdentity,
+                moduleStatus = readyModuleStatus,
+                metadata = DeviceRuntimeMetadata(
+                    identity = readyIdentity.identity,
+                    capabilities = readyCapabilities,
+                    modules = readyModuleStatus.modules
+                )
+            )
         } else {
-            DeviceFamily.UNKNOWN
-        }
-        val family = when {
-            reportedFamily != DeviceFamily.UNKNOWN -> reportedFamily
-            snapshot.product.family != DeviceFamily.UNKNOWN -> snapshot.product.family
-            else -> DeviceFamily.fromWire(familyRaw)
-        }
-
-        return snapshot.copy(
-            product = snapshot.product.copy(
-                productKey = status.productKey.ifBlank { snapshot.product.productKey },
-                productId = status.productId.ifBlank { snapshot.product.productId },
-                family = family,
-                familyRaw = familyRaw,
-                model = status.model.ifBlank { snapshot.product.model },
-                displayName = status.displayName.ifBlank { snapshot.product.displayName },
-                skuCode = status.skuCode.ifBlank { snapshot.product.skuCode },
-                hardwareRevision = status.hardwareRevision.ifBlank { snapshot.product.hardwareRevision }
-            ),
-            firmwareVersion = status.version.ifBlank { snapshot.firmwareVersion },
-            firmwareBuild = status.build.ifBlank { snapshot.firmwareBuild },
-            capabilities = if (status.otaSupported) {
-                snapshot.capabilities.copy(ota = true)
-            } else {
-                snapshot.capabilities
-            }
-        )
-    }
-
-    private fun DeviceRuntimeEndpoint.withRuntimeMetadata(
-        runtime: JSONObject
-    ): DeviceRuntimeEndpoint {
-        return copy(
-            runtimeTransport = runtime.optString("transport")
-                .trim()
-                .ifBlank { runtimeTransport },
-            wsPath = runtime.optString("wsPath")
-                .trim()
-                .ifBlank { wsPath },
-            wsPort = runtime.optInt("wsPort", wsPort),
-            wsProtocol = runtime.optString("wsSchema")
-                .trim()
-                .ifBlank { runtime.optString("wsProtocol").trim() }
-                .ifBlank { wsProtocol },
-            wsProtocolVersion = runtime.optInt("wsProtocolVersion", wsProtocolVersion)
-        )
-    }
-
-    private fun JSONObject.toDeviceCapabilities(previous: DeviceCapabilities): DeviceCapabilities {
-        return previous.copy(
-            light = optBooleanOrPrevious("light", previous.light),
-            manualLight = optBooleanOrPrevious("manualLight", previous.manualLight),
-            lightProgram = optBooleanOrPrevious("lightProgram", previous.lightProgram),
-            lightPresets = optBooleanOrPrevious("lightPresets", previous.lightPresets),
-            lightSimulation = optBooleanOrPrevious("lightSimulation", previous.lightSimulation),
-            fan = optBooleanOrPrevious("fan", previous.fan),
-            cooling = optBooleanOrPrevious("cooling", previous.cooling),
-            temperature = optBooleanOrPrevious("temperature", previous.temperature),
-            standaloneTimer = optBooleanOrPrevious("standaloneTimer", previous.standaloneTimer),
-            dosing = optBooleanOrPrevious("dosing", previous.dosing),
-            timeSync = optBooleanOrPrevious("timeSync", previous.timeSync),
-            ota = optBooleanOrPrevious("ota", previous.ota)
-        )
-    }
-
-    private fun JSONObject.toDeviceLimits(previous: DeviceLimits): DeviceLimits {
-        return previous.copy(
-            lightChannelCount = optIntOrPrevious("lightChannelCount", previous.lightChannelCount),
-            fanOutputCount = optIntOrPrevious("fanOutputCount", previous.fanOutputCount),
-            temperatureSensorCount = optIntOrPrevious("temperatureSensorCount", previous.temperatureSensorCount),
-            timerChannelCount = optIntOrPrevious("timerChannelCount", previous.timerChannelCount),
-            dosingChannelCount = optIntOrPrevious("dosingChannelCount", previous.dosingChannelCount)
-        )
-    }
-
-    private fun JSONObject.optBooleanOrPrevious(
-        key: String,
-        previous: Boolean
-    ): Boolean {
-        return if (has(key)) optBoolean(key, previous) else previous
-    }
-
-    private fun JSONObject.optIntOrPrevious(
-        key: String,
-        previous: Int
-    ): Int {
-        return if (has(key)) optInt(key, previous) else previous
-    }
-
-    private fun JSONObject.optStringArray(key: String): List<String> {
-        val array = optJSONArray(key) ?: return emptyList()
-        return array.toStringList()
-    }
-
-    private fun JSONArray.toStringList(): List<String> {
-        return buildList {
-            for (index in 0 until length()) {
-                val value = optString(index).trim()
-                if (value.isNotBlank()) {
-                    add(value)
-                }
-            }
+            DeviceRuntimeMetadataGenerationState.Collecting(
+                deviceUid = deviceUid,
+                generation = generation,
+                identity = readyIdentity,
+                capabilities = readyCapabilities,
+                moduleStatus = readyModuleStatus
+            )
         }
     }
 
-    private fun AqlWsIncomingMessage.Response.isDeviceAction(actionName: String): Boolean {
-        return module == AqlWsContract.MODULE_DEVICE && action == actionName
+    private sealed interface FragmentMerge {
+        data class Accepted(val fragments: Fragments) : FragmentMerge
+        data class Conflict(
+            val code: DeviceRuntimeMetadataFailureCode,
+            val field: String
+        ) : FragmentMerge
     }
 
-    private fun AqlWsIncomingMessage.Response.isFirmwareAction(actionName: String): Boolean {
-        return module == AqlWsContract.MODULE_FIRMWARE && action == actionName
-    }
+    private data class Fragments(
+        val identity: DeviceRuntimeIdentityEnvelope?,
+        val capabilities: DeviceRuntimeCapabilities?,
+        val moduleStatus: DeviceRuntimeModuleStatus?
+    )
 }

@@ -23,6 +23,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
+@Suppress("LongMethod")
 class AqlProvisioningHandoffSaver(
     context: Context
 ) {
@@ -141,12 +142,7 @@ class AqlProvisioningHandoffSaver(
                     "Runtime device identity did not include a supported product family."
                 }
 
-                repository.stageProvisioningSnapshot(
-                    DeviceSnapshotMerger.merge(
-                        previous = previousSnapshot,
-                        incoming = resolved
-                    )
-                )
+                resolved
             } catch (error: Throwable) {
                 val rollbackError = withContext(NonCancellable) {
                     rollbackRegistration(

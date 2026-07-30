@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.devices.runtime.ws
 
 import org.json.JSONObject
 
+@Suppress("TooManyFunctions")
 class AqlWsCommandClient(
     private val wsClient: AqlWsTransport
 ) {

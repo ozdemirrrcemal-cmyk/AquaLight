@@ -5,20 +5,19 @@ import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 object DeviceFirmwareOtaEventMapper {
 
     fun parse(message: AqlWsIncomingMessage?): DeviceFirmwareOtaSnapshot? {
-        val event = message as? AqlWsIncomingMessage.Event ?: return null
-        if (event.action != DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS &&
-            event.action != DeviceFirmwareRuntimeContract.Event.OTA_COMPLETED
-        ) {
-            return null
+        val event = message as? AqlWsIncomingMessage.Event
+        return if (event != null && isOtaEvent(event)) {
+            DeviceFirmwareStatusParser.parseOtaProgressEvent(event.data)
+        } else {
+            null
         }
-
-        val data = event.data
-        return DeviceFirmwareStatusParser.parseOtaProgressEvent(data)
     }
 
     fun isOtaEvent(message: AqlWsIncomingMessage?): Boolean {
-        val event = message as? AqlWsIncomingMessage.Event ?: return false
-        return event.action == DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS ||
-            event.action == DeviceFirmwareRuntimeContract.Event.OTA_COMPLETED
+        val event = message as? AqlWsIncomingMessage.Event
+        return event != null && (
+            event.action == DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS ||
+                event.action == DeviceFirmwareRuntimeContract.Event.OTA_COMPLETED
+            )
     }
 }

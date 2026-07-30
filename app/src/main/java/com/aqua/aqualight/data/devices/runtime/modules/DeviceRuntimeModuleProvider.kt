@@ -6,6 +6,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingRuntim
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareUpdateRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
@@ -33,4 +34,7 @@ class DeviceRuntimeModuleProvider(
 
     val light: DeviceLightRuntimeRepository =
         DeviceLightRuntimeRepository(commandClientProvider)
+
+    val lightTemperatureProtection: DeviceLightTemperatureProtectionRuntimeRepository =
+        DeviceLightTemperatureProtectionRuntimeRepository(commandClientProvider)
 }

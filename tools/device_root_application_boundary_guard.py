@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Protect the device-root and firmware-update application boundaries."""
+"""Protect the device-root and shared firmware-update application boundaries."""
 from pathlib import Path
 import re
 import sys
@@ -11,7 +11,11 @@ ROOT_CONTRACT = SOURCE / "application/devices/DeviceRootOperations.kt"
 FIRMWARE_CONTRACT = SOURCE / "application/devices/DeviceFirmwareUpdateOperations.kt"
 ROOT_ADAPTER = SOURCE / "data/devices/DefaultDeviceRootOperations.kt"
 FIRMWARE_ADAPTER = SOURCE / "data/devices/DefaultDeviceFirmwareUpdateOperations.kt"
-MAPPING = SOURCE / "data/devices/DeviceApplicationMapping.kt"
+OTA_COORDINATOR = SOURCE / "data/devices/runtime/modules/firmware/DeviceOtaCoordinator.kt"
+MAPPING = SOURCE / "data/devices/DeviceRootSnapshotMapping.kt"
+CAPABILITY_MAPPING = SOURCE / "data/devices/DeviceRootCapabilityMapping.kt"
+MENU_RESOLVER = SOURCE / "data/devices/DeviceRootMenuFeatureResolver.kt"
+ROUTE_POLICY = SOURCE / "data/devices/DeviceRootRoutePolicy.kt"
 MENU_MAPPER = SOURCE / "ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt"
 PRESENTATION_MAPPER = SOURCE / "ui/tabs/devices/detail/common/DeviceRootPresentationMapper.kt"
 FACTORY = SOURCE / "composition/OwnerViewModelFactory.kt"
@@ -39,7 +43,11 @@ root_contract = read(ROOT_CONTRACT)
 firmware_contract = read(FIRMWARE_CONTRACT)
 root_adapter = read(ROOT_ADAPTER)
 firmware_adapter = read(FIRMWARE_ADAPTER)
+ota_coordinator = read(OTA_COORDINATOR)
 mapping = read(MAPPING)
+capability_mapping = read(CAPABILITY_MAPPING)
+menu_resolver = read(MENU_RESOLVER)
+route_policy = read(ROUTE_POLICY)
 menu_mapper = read(MENU_MAPPER)
 presentation_mapper = read(PRESENTATION_MAPPER)
 factory = read(FACTORY)
@@ -64,8 +72,12 @@ for path, text, tokens in (
         firmware_contract,
         (
             "interface DeviceFirmwareUpdateOperations",
+            "sealed interface DeviceOtaState",
+            "data class DeviceFirmwareReleaseContent",
             "data class PreparedDeviceFirmwareUpdate",
             "data class DeviceFirmwareCommandResult",
+            "fun observe(deviceUid: String): StateFlow<DeviceOtaState>",
+            "suspend fun checkAvailability",
             "suspend fun prepareUpdate",
             "fun startUpdate",
         ),
@@ -97,11 +109,11 @@ for path, text, tokens in (
         firmware_adapter,
         (
             "class DefaultDeviceFirmwareUpdateOperations",
-            "fetchAndPlanUpdate",
-            "toApplicationPlan",
-            "toDataPlan",
-            "requestOtaStatus",
-            "clearOtaStatus",
+            "DeviceOtaCoordinator(",
+            "coordinator.checkAvailability",
+            "coordinator.startUpdate",
+            "coordinator.requestStatus",
+            "coordinator.clearStatus",
         ),
     ),
 ):
@@ -110,15 +122,72 @@ for path, text, tokens in (
             errors.append(f"{path.relative_to(ROOT)}: data adapter token is missing: {token}")
 
 for token in (
+    "class DeviceOtaCoordinator",
+    "fun observe(deviceUid: DeviceUid)",
+    "suspend fun checkAvailability(",
+    "fun startUpdate(plan: PreparedDeviceFirmwareUpdate)",
+    "runtimeEvents.collect(::processEvent)",
+    "parseOtaStartAcceptedExact",
+    "parseOtaStatusResponseExact",
+    "parseOtaProgressEventExact",
+    "runtimeMetadataGeneration != selected.dataPlan.runtimeMetadataGeneration",
+):
+    if token not in ota_coordinator:
+        errors.append(f"{OTA_COORDINATOR.relative_to(ROOT)}: shared OTA coordinator token is missing: {token}")
+
+for token in (
     "fun DeviceSnapshot.toDeviceRootSnapshot",
+    "AqlCommercialDeviceCatalog.validateSnapshot(this)",
+    "DeviceRootMenuFeatureResolver.resolve(product)",
+    "DeviceRootRoutePolicy.allowedRoutes(product)",
+):
+    if token not in mapping:
+        errors.append(f"{MAPPING.relative_to(ROOT)}: root mapping token is missing: {token}")
+
+for token in (
+    "fun DeviceCapabilitySet.toRootCapabilities",
     "DeviceRootCapability.MANUAL_LIGHT",
+    "DeviceRootCapability.OTA",
+):
+    if token not in capability_mapping:
+        errors.append(
+            f"{CAPABILITY_MAPPING.relative_to(ROOT)}: root capability mapping token is missing: {token}"
+        )
+
+for token in (
     "DeviceRootMenuFeature.LIGHT_MANUAL",
     "DeviceRootMenuFeature.DOSING_CHANNELS",
     "DeviceRootMenuFeature.TIMER_CHANNELS",
     "DeviceRootMenuFeature.COOLING_FANS",
+    "fun resolve(product: AqlCommercialCatalogProduct)",
+    "when (product.family)",
+    "DeviceFamily.UNKNOWN -> emptySet()",
 ):
-    if token not in mapping:
-        errors.append(f"{MAPPING.relative_to(ROOT)}: root mapping token is missing: {token}")
+    if token not in menu_resolver:
+        errors.append(
+            f"{MENU_RESOLVER.relative_to(ROOT)}: root menu resolution token is missing: {token}"
+        )
+
+for token in (
+    "fun allowedRoutes(product: AqlCommercialCatalogProduct)",
+    "fun authorize(",
+    "route in allowedRoutes(product)",
+):
+    if token not in route_policy:
+        errors.append(f"{ROUTE_POLICY.relative_to(ROOT)}: route authorization token is missing: {token}")
+
+for forbidden in (
+    '"channels"',
+    '"settings"',
+    '"quick_setup"',
+    ".lowercase()",
+    "DeviceSnapshot",
+    "product.model",
+):
+    if forbidden in menu_resolver:
+        errors.append(
+            f"{MENU_RESOLVER.relative_to(ROOT)}: permissive/model-specific menu resolution is forbidden: {forbidden}"
+        )
 
 for path, text in view_models.items():
     for forbidden in (

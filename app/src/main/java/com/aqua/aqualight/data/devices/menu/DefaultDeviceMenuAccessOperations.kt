@@ -449,9 +449,13 @@ internal class DefaultDeviceMenuAccessOperations(
     }
 
     companion object {
-        fun create(devicesRepository: DevicesRepository): DefaultDeviceMenuAccessOperations {
-            return DefaultDeviceMenuAccessOperations(
+        fun create(devicesRepository: DevicesRepository): DeviceMenuAccessOperations {
+            val livenessOperations = DefaultDeviceMenuAccessOperations(
                 runtimePort = RepositoryDeviceMenuRuntimePort(devicesRepository)
+            )
+            return CommercialDeviceMenuAccessOperations(
+                livenessOperations = livenessOperations,
+                currentSnapshot = devicesRepository::currentDevice
             )
         }
 

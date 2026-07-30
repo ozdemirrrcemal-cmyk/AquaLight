@@ -13,6 +13,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceLightRootBinding
+import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.text.resolve
@@ -50,8 +51,28 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
                 titleOverride = title,
                 onBackClick = {
                     findNavController().navigateUp()
-                }
+                },
+                actions = listOf(
+                    AquaHeaderAction(
+                        iconRes = R.drawable.ic_settings,
+                        contentDescription = getString(
+                            R.string.device_light_open_settings_description
+                        ),
+                        onClick = ::openSettings
+                    )
+                )
             )
+        )
+    }
+
+    private fun openSettings() {
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.deviceLightRootFragment) return
+        navController.navigate(
+            DeviceLightRootFragmentDirections
+                .actionDeviceLightRootFragmentToDeviceLightSettingsFragment(
+                    deviceUid = args.deviceUid
+                )
         )
     }
 
@@ -139,5 +160,4 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
         _binding = null
         super.onDestroyView()
     }
-
 }
