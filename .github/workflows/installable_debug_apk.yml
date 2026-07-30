@@ -139,7 +139,7 @@ jobs:
               | tr -d '[:space:]'
           )"
           actual_sha256="$(
-            sed -n 's/^[^:]*certificate SHA-256 digest: //p' debug-apk-signing.txt \
+            sed -n 's/^.*certificate SHA-256 digest: //p' debug-apk-signing.txt \
               | head -n 1 \
               | tr '[:upper:]' '[:lower:]' \
               | tr -d ':' \
