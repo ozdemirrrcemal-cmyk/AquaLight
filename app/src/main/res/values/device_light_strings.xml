@@ -1,11 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="device_light_settings_title">Light Settings</string>
-    <string name="device_light_open_settings_description">Open light settings</string>
-    <string name="device_light_settings_protection_section">Light protection</string>
-    <string name="device_light_settings_cooling_auto_off_label">Cooling Auto Off</string>
-    <string name="device_light_settings_over_temperature_protection_label">Over-temperature protection</string>
-    <string name="device_light_settings_temperature_threshold_label">Temperature protection threshold</string>
-    <string name="device_light_settings_edit_temperature_threshold_description">Edit temperature protection threshold</string>
-    <string name="device_light_settings_temperature_threshold_pending_value">— °C</string>
+    <string name="device_light_open_settings_description">Open device settings</string>
 </resources>
