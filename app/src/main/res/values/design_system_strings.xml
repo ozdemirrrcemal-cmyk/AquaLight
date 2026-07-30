@@ -124,6 +124,8 @@
     <string name="device_settings_firmware_version_label">Installed firmware version</string>
     <string name="device_settings_check_updates_action">Check for updates</string>
     <string name="device_settings_change_name_title">Change device name</string>
+    <string name="device_settings_save_action">Save</string>
+    <string name="device_settings_cancel_action">Cancel</string>
     <string name="device_settings_device_name_required">Enter a device name.</string>
     <string name="device_settings_device_name_updated">Device name updated</string>
     <string name="device_settings_device_name_update_failed">Device name could not be updated. Try again.</string>
