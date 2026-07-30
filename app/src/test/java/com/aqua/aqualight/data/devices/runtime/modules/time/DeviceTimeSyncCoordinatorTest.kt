@@ -36,6 +36,7 @@ class DeviceTimeSyncCoordinatorTest {
     fun forceRerunsCompletedSynchronizationButNeverDuplicatesAnInFlightCommand() {
         val enteredSync = CountDownLatch(1)
         val releaseSync = CountDownLatch(1)
+        val secondCompleted = CountDownLatch(1)
         val calls = AtomicInteger(0)
         val coordinator = DeviceTimeSyncCoordinator(
             syncPhoneNow = {
@@ -51,7 +52,11 @@ class DeviceTimeSyncCoordinatorTest {
 
         workers.execute { results += coordinator.syncPhoneNowIfNeeded(deviceUid) }
         assertTrue(enteredSync.await(5, TimeUnit.SECONDS))
-        workers.execute { results += coordinator.syncPhoneNowIfNeeded(deviceUid, force = true) }
+        workers.execute {
+            results += coordinator.syncPhoneNowIfNeeded(deviceUid, force = true)
+            secondCompleted.countDown()
+        }
+        assertTrue(secondCompleted.await(5, TimeUnit.SECONDS))
         releaseSync.countDown()
         workers.shutdown()
         assertTrue(workers.awaitTermination(5, TimeUnit.SECONDS))
@@ -90,6 +95,7 @@ class DeviceTimeSyncCoordinatorTest {
     fun concurrentRequestsRunOnlyOneSynchronizationCommand() {
         val enteredSync = CountDownLatch(1)
         val releaseSync = CountDownLatch(1)
+        val secondCompleted = CountDownLatch(1)
         val calls = AtomicInteger(0)
         val coordinator = DeviceTimeSyncCoordinator(
             syncPhoneNow = {
@@ -105,7 +111,11 @@ class DeviceTimeSyncCoordinatorTest {
 
         workers.execute { results += coordinator.syncPhoneNowIfNeeded(deviceUid) }
         assertTrue(enteredSync.await(5, TimeUnit.SECONDS))
-        workers.execute { results += coordinator.syncPhoneNowIfNeeded(deviceUid) }
+        workers.execute {
+            results += coordinator.syncPhoneNowIfNeeded(deviceUid)
+            secondCompleted.countDown()
+        }
+        assertTrue(secondCompleted.await(5, TimeUnit.SECONDS))
         releaseSync.countDown()
         workers.shutdown()
         assertTrue(workers.awaitTermination(5, TimeUnit.SECONDS))
