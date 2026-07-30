@@ -23,9 +23,15 @@ internal class DefaultDeviceSettingsOperations(
             "Device name exceeds the supported length."
         }
 
-        devicesRepository.updateCustomName(
-            deviceUid = DeviceUid(normalizedUid),
-            customName = normalizedName
+        val uid = DeviceUid(normalizedUid)
+        val current = requireNotNull(devicesRepository.currentDevice(uid)) {
+            "Device is not registered."
+        }
+        devicesRepository.commitProvisioningSnapshot(
+            current.copy(
+                identity = current.identity.copy(customName = normalizedName)
+            )
         )
+        Unit
     }
 }
