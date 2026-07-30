@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="device_cooling_settings_title">Cooling Settings</string>
-    <string name="device_cooling_open_settings_description">Open cooling settings</string>
+    <string name="device_cooling_open_settings_description">Open device settings</string>
 </resources>
