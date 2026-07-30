@@ -195,7 +195,7 @@ abstract class DeviceFamilySettingsFragment(
         )
     }
 
-    @Suppress("CyclomaticComplexMethod")
+    @Suppress("CyclomaticComplexMethod", "LongMethod")
     private fun renderFirmwareState(state: DeviceFamilySettingsUiState) {
         val statusText: CharSequence?
         val buttonTextRes: Int
