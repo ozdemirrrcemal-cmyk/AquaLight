@@ -25,19 +25,22 @@ class DeviceLightTemperatureProtectionContractTest {
     @Test
     fun payloadUsesExactFirmwareFieldsAndRejectsInvalidThresholds() {
         val payload = DeviceLightTemperatureProtectionSetPayload(
-            thresholdC = 50.0,
+            thresholdC = DeviceLightRuntimeContract.Limit.DEFAULT_TEMPERATURE_PROTECTION_C,
             save = false
         ).toJson()
 
         assertEquals(setOf("thresholdC", "save"), payload.keySet())
-        assertEquals(50.0, payload.getDouble("thresholdC"), 0.0)
+        assertEquals(60.0, payload.getDouble("thresholdC"), 0.0)
         assertFalse(payload.getBoolean("save"))
+        assertEquals(50.0, DeviceLightRuntimeContract.Limit.MIN_TEMPERATURE_PROTECTION_C, 0.0)
+        assertEquals(60.0, DeviceLightRuntimeContract.Limit.DEFAULT_TEMPERATURE_PROTECTION_C, 0.0)
+        assertEquals(70.0, DeviceLightRuntimeContract.Limit.MAX_TEMPERATURE_PROTECTION_C, 0.0)
 
         assertThrows(IllegalArgumentException::class.java) {
-            DeviceLightTemperatureProtectionSetPayload(-0.1)
+            DeviceLightTemperatureProtectionSetPayload(49.9)
         }
         assertThrows(IllegalArgumentException::class.java) {
-            DeviceLightTemperatureProtectionSetPayload(120.1)
+            DeviceLightTemperatureProtectionSetPayload(70.1)
         }
         assertThrows(IllegalArgumentException::class.java) {
             DeviceLightTemperatureProtectionSetPayload(Double.NaN)
@@ -50,16 +53,16 @@ class DeviceLightTemperatureProtectionContractTest {
     @Test
     fun parsesSupportedStatusWithExactRuntimeAndLimits() {
         val parsed = DeviceLightTemperatureProtectionParser.parseStatus(
-            supportedStatus(thresholdC = 52.5, active = true)
+            supportedStatus(thresholdC = 62.5, active = true)
         ).getOrThrow()
 
         assertTrue(parsed.supported)
         assertTrue(parsed.temperatureProtection.supported)
         assertTrue(parsed.temperatureProtection.active)
         assertTrue(parsed.temperatureProtection.thresholdEditable)
-        assertEquals(52.5, checkNotNull(parsed.temperatureProtection.thresholdC), 0.0)
-        assertEquals(0.0, checkNotNull(parsed.temperatureProtection.minimumC), 0.0)
-        assertEquals(120.0, checkNotNull(parsed.temperatureProtection.maximumC), 0.0)
+        assertEquals(62.5, checkNotNull(parsed.temperatureProtection.thresholdC), 0.0)
+        assertEquals(50.0, checkNotNull(parsed.temperatureProtection.minimumC), 0.0)
+        assertEquals(70.0, checkNotNull(parsed.temperatureProtection.maximumC), 0.0)
         assertTrue(parsed.runtime.supportsStatusGet)
         assertTrue(parsed.runtime.supportsSet)
     }
@@ -79,7 +82,7 @@ class DeviceLightTemperatureProtectionContractTest {
         assertFalse(parsed.runtime.supportsSet)
 
         val invalid = unsupportedStatus().also { status ->
-            status.getJSONObject("temperatureProtection").put("thresholdC", 50.0)
+            status.getJSONObject("temperatureProtection").put("thresholdC", 60.0)
         }
         assertTrue(DeviceLightTemperatureProtectionParser.parseStatus(invalid).isFailure)
     }
@@ -93,7 +96,7 @@ class DeviceLightTemperatureProtectionContractTest {
         assertTrue(result.changed)
         assertTrue(result.saved)
         assertTrue(result.saveRequested)
-        assertEquals(48.0, checkNotNull(result.status.temperatureProtection.thresholdC), 0.0)
+        assertEquals(60.0, checkNotNull(result.status.temperatureProtection.thresholdC), 0.0)
 
         assertTrue(
             DeviceLightTemperatureProtectionParser.parseSetResult(
@@ -113,7 +116,7 @@ class DeviceLightTemperatureProtectionContractTest {
         assertTrue(DeviceLightTemperatureProtectionParser.parseStatus(runtimeDrift).isFailure)
 
         val rangeDrift = supportedStatus().also { status ->
-            status.getJSONObject("temperatureProtection").put("maximumC", 121.0)
+            status.getJSONObject("temperatureProtection").put("maximumC", 71.0)
         }
         assertTrue(DeviceLightTemperatureProtectionParser.parseStatus(rangeDrift).isFailure)
     }
@@ -121,17 +124,17 @@ class DeviceLightTemperatureProtectionContractTest {
     @Test
     fun repositorySendsExactTemperatureProtectionActions() {
         val transport = RecordingTransport()
-        val repository = DeviceLightRuntimeRepository.singleSession(
+        val repository = DeviceLightTemperatureProtectionRuntimeRepository.singleSession(
             AqlWsCommandClient(transport)
         )
         val deviceUid = DeviceUid("device-light-temperature")
 
-        assertTrue(repository.requestTemperatureProtectionStatus(deviceUid).isSuccess)
+        assertTrue(repository.requestStatus(deviceUid).isSuccess)
         assertTrue(
-            repository.setTemperatureProtection(
+            repository.setThreshold(
                 deviceUid = deviceUid,
                 payload = DeviceLightTemperatureProtectionSetPayload(
-                    thresholdC = 47.5,
+                    thresholdC = 62.5,
                     save = true
                 )
             ).isSuccess
@@ -152,12 +155,12 @@ class DeviceLightTemperatureProtectionContractTest {
             setCommand.action
         )
         assertEquals(setOf("thresholdC", "save"), setCommand.data.keySet())
-        assertEquals(47.5, setCommand.data.getDouble("thresholdC"), 0.0)
+        assertEquals(62.5, setCommand.data.getDouble("thresholdC"), 0.0)
         assertTrue(setCommand.data.getBoolean("save"))
     }
 
     private fun supportedStatus(
-        thresholdC: Double = 50.0,
+        thresholdC: Double = DeviceLightRuntimeContract.Limit.DEFAULT_TEMPERATURE_PROTECTION_C,
         active: Boolean = false
     ): JSONObject = JSONObject()
         .put("supported", true)
@@ -168,8 +171,8 @@ class DeviceLightTemperatureProtectionContractTest {
                 .put("active", active)
                 .put("thresholdEditable", true)
                 .put("thresholdC", thresholdC)
-                .put("minimumC", 0.0)
-                .put("maximumC", 120.0)
+                .put("minimumC", 50.0)
+                .put("maximumC", 70.0)
         )
         .put("runtime", runtime(supportsSet = true))
 
@@ -196,9 +199,9 @@ class DeviceLightTemperatureProtectionContractTest {
         .put("saved", saved)
         .put("saveRequested", saveRequested)
         .put("runtimeTransport", "websocket")
-        .put("command", "temperature-protection.set")
+        .put("command", "light.temperature-protection.set")
         .put("event", "light.status.changed")
-        .put("status", supportedStatus(thresholdC = 48.0))
+        .put("status", supportedStatus(thresholdC = 60.0))
 
     private fun runtime(supportsSet: Boolean): JSONObject = JSONObject()
         .put("module", "light")
