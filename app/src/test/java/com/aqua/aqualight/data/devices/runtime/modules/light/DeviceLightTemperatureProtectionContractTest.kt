@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -72,9 +73,9 @@ class DeviceLightTemperatureProtectionContractTest {
         assertFalse(parsed.supported)
         assertFalse(parsed.temperatureProtection.active)
         assertFalse(parsed.temperatureProtection.thresholdEditable)
-        assertEquals(null, parsed.temperatureProtection.thresholdC)
-        assertEquals(null, parsed.temperatureProtection.minimumC)
-        assertEquals(null, parsed.temperatureProtection.maximumC)
+        assertNull(parsed.temperatureProtection.thresholdC)
+        assertNull(parsed.temperatureProtection.minimumC)
+        assertNull(parsed.temperatureProtection.maximumC)
         assertFalse(parsed.runtime.supportsSet)
 
         val invalid = unsupportedStatus().also { status ->
@@ -127,10 +128,12 @@ class DeviceLightTemperatureProtectionContractTest {
 
         assertTrue(repository.requestTemperatureProtectionStatus(deviceUid).isSuccess)
         assertTrue(
-            repository.setTemperatureProtectionThreshold(
+            repository.setTemperatureProtection(
                 deviceUid = deviceUid,
-                thresholdC = 47.5,
-                save = true
+                payload = DeviceLightTemperatureProtectionSetPayload(
+                    thresholdC = 47.5,
+                    save = true
+                )
             ).isSuccess
         )
 
