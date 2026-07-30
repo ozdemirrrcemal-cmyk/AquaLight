@@ -82,10 +82,13 @@ class DeviceFamilySettingsViewModel(
         val deviceUid = boundDeviceUid
         val normalized = value.trim()
         val currentName = _uiState.value.deviceName.trim()
-        if (deviceUid.isBlank()) return
-        if (normalized.isBlank()) return
-        if (normalized == currentName) return
-        if (nameUpdateJob?.isActive == true) return
+        val canUpdate = listOf(
+            deviceUid.isNotBlank(),
+            normalized.isNotBlank(),
+            normalized != currentName,
+            nameUpdateJob?.isActive != true
+        ).all { condition -> condition }
+        if (!canUpdate) return
 
         nameUpdateJob = viewModelScope.launch {
             _uiState.update { state -> state.copy(isSavingDeviceName = true) }
