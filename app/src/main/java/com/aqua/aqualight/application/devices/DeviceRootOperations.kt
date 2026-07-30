@@ -27,6 +27,7 @@ data class DeviceRootSnapshot(
     val productKey: String = "",
     val productId: String = "",
     val model: String = "",
+    val serialNumber: String = "",
     val hardwareRevision: String = "",
     val ipAddress: String = "",
     val firmwareLabel: String = "",
