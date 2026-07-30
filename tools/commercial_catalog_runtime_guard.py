@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Protect exact catalog identity and family-scoped Android routing."""
+"""Protect exact catalog identity, dynamic channel slots and family-scoped routing."""
 
 from __future__ import annotations
 
@@ -14,6 +14,8 @@ GENERATED_CATALOG = SOURCE / "data/devices/catalog/AqlGeneratedCommercialCatalog
 CATALOG = SOURCE / "data/devices/catalog/AqlCommercialDeviceCatalog.kt"
 RESOLVER = SOURCE / "data/devices/DeviceRootMenuFeatureResolver.kt"
 ROUTE_POLICY = SOURCE / "data/devices/DeviceRootRoutePolicy.kt"
+SLOT_MODELS = SOURCE / "application/devices/DeviceChannelSlots.kt"
+SLOT_RESOLVER = SOURCE / "data/devices/DeviceChannelSlotResolver.kt"
 MAPPING = SOURCE / "data/devices/DeviceRootSnapshotMapping.kt"
 ROOT_CONTRACT = SOURCE / "application/devices/DeviceRootOperations.kt"
 ROOT_ROUTING = SOURCE / "application/devices/DeviceRootRouting.kt"
@@ -44,6 +46,8 @@ generated_catalog = read(GENERATED_CATALOG)
 catalog = read(CATALOG)
 resolver = read(RESOLVER)
 route_policy = read(ROUTE_POLICY)
+slot_models = read(SLOT_MODELS)
+slot_resolver = read(SLOT_RESOLVER)
 mapping = read(MAPPING)
 root_contract = read(ROOT_CONTRACT)
 root_routing = read(ROOT_ROUTING)
@@ -133,6 +137,58 @@ for forbidden in (
     require(forbidden not in resolver, f"menu resolver contains forbidden coupling: {forbidden}")
 
 for token in (
+    "value class DeviceSlotIndex",
+    "value class DeviceChannelWireKey",
+    "sealed interface DeviceChannelSlot",
+    "sealed interface DeviceAddressableChannelSlot",
+    "data class DeviceLightChannelSlot",
+    "data class DeviceTimerChannelSlot",
+    "data class DeviceDosingChannelSlot",
+    "data class DeviceFanOutputSlot",
+    "data class DeviceTemperatureSensorSlot",
+    "data class DeviceChannelSlots",
+    "Addressable channel wire keys must be unique inside one product.",
+):
+    require(token in slot_models, f"typed channel-slot model token is missing: {token}")
+require("sensorKey" not in slot_models, "temperature slots must not fabricate a firmware sensorKey")
+
+for token in (
+    "fun resolve(product: AqlCommercialCatalogProduct)",
+    "SLOT_SHAPES[product.productKey.value]",
+    "product.limits == shape.limits",
+    "DeviceRootRoutePolicy.authorize(product, route)",
+    "TIMER_CHANNEL_DISPLAY_NAME",
+    "DOSING_CHANNEL_DISPLAY_NAME",
+    "COOLING_FAN_DISPLAY_NAME",
+    'DeviceChannelWireKey("channel${slotIndex.position}")',
+    'DeviceChannelWireKey("fan${slotIndex.position}")',
+    'FixedAddressableSlot("white", "White")',
+    'FixedAddressableSlot("red", "Red")',
+    'FixedAddressableSlot("green", "Green")',
+    'FixedAddressableSlot("blue", "Blue")',
+):
+    require(token in slot_resolver, f"exact channel-slot resolver token is missing: {token}")
+for product_key in (
+    "LIGHT_WRGB_PRO_ELITE",
+    "LIGHT_RGB_PRO_SLIM",
+    "TIMER_RELAY_PRO_2",
+    "TIMER_RELAY_PRO_4",
+    "DOSING_DOSE_PRO_2",
+    "DOSING_DOSE_PRO_4",
+    "COOLING_COOL_PRO_1F",
+    "COOLING_COOL_PRO_2F",
+    "COOLING_COOL_PRO_3F",
+):
+    require(product_key in slot_resolver, f"channel-slot shape is missing: {product_key}")
+for forbidden in (
+    "product.model",
+    ".trim()",
+    ".lowercase()",
+    "sensorKey",
+):
+    require(forbidden not in slot_resolver, f"channel-slot resolver contains forbidden inference: {forbidden}")
+
+for token in (
     "fun allowedRoutes(product: AqlCommercialCatalogProduct)",
     "fun authorize(",
     "route in allowedRoutes(product)",
@@ -141,6 +197,8 @@ for token in (
 require("enum class DeviceRootRoute" in root_routing, "typed root routes are missing")
 require("DeviceRootCatalogState" in root_contract, "root catalog state is missing")
 require("val allowedRoutes: Set<DeviceRootRoute>" in root_contract, "root allowed routes are missing")
+require("val channelSlots: DeviceChannelSlots" in root_contract, "root typed channel slots are missing")
+require("val temperatureSensorCount: Int" in root_contract, "root temperature sensor count is missing")
 
 for token in (
     "AqlCommercialDeviceCatalog.validateSnapshot(this)",
@@ -148,6 +206,13 @@ for token in (
     "DeviceRootCatalogState.INVALID",
     "DeviceRootMenuFeatureResolver.resolve(product)",
     "DeviceRootRoutePolicy.allowedRoutes(product)",
+    "DeviceChannelSlotResolver.resolve(product)",
+    "channelSlots = channelSlots",
+    "lightChannelCount = channelSlots.lightChannels.size",
+    "timerChannelCount = channelSlots.timerChannels.size",
+    "dosingChannelCount = channelSlots.dosingChannels.size",
+    "fanOutputCount = channelSlots.fanOutputs.size",
+    "temperatureSensorCount = channelSlots.temperatureSensors.size",
 ):
     require(token in mapping, f"fail-closed root projection token is missing: {token}")
 
