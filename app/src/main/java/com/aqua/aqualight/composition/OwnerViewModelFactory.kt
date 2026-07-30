@@ -64,6 +64,7 @@ internal class OwnerViewModelFactory(
         return modelClass in OWNER_BINDINGS
     }
 
+    @Suppress("LongMethod", "CyclomaticComplexMethod")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         check(supports(modelClass)) {
             "No owner-scoped ViewModel binding for ${modelClass.name}."
