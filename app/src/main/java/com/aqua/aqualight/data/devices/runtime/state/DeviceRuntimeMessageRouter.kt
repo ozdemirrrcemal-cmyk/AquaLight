@@ -109,7 +109,7 @@ object DeviceRuntimeMessageRouter {
             AqlWsContract.MODULE_FIRMWARE to AqlWsContract.ACTION_FIRMWARE_STATUS_GET ->
                 routeParsed(
                     previous,
-                    runCatching { DeviceFirmwareStatusParser.parseFirmwareStatus(message.data) },
+                    DeviceRuntimeFirmwareStatusParser.parse(message.data),
                     message,
                     nowMillis,
                     { state, value -> state.copy(firmware = value) },
