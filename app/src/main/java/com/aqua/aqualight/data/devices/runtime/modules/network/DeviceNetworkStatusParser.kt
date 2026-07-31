@@ -38,8 +38,12 @@ internal object DeviceNetworkStatusParser {
         require(!clientConnected || stationEnabled)
 
         val ip = data.requiredIpv4("ip")
-        require(ip == discovery.currentIp) {
-            "Network root IP differs from discovery currentIp."
+        if (discovery.ready) {
+            require(ip == discovery.currentIp) {
+                "Ready discovery currentIp differs from the active network IP."
+            }
+        } else {
+            require(discovery.currentIp == UNSPECIFIED_IPV4)
         }
         if (clientConnected) {
             require(ip == client.ip)
@@ -121,7 +125,7 @@ internal object DeviceNetworkStatusParser {
             broadcastIp = json.requiredIpv4("broadcastIp"),
             currentIp = json.requiredIpv4("currentIp"),
             payloadSize = json.requiredInt("payloadSize").also {
-                require(it in 0..AqlDiscoveryContract.MAX_DATAGRAM_BYTES)
+                require(it in 0..AqlDiscoveryContract.MAX_PACKET_SIZE_BYTES)
             },
             lastRefreshMs = json.requiredUnsigned32("lastRefreshMs"),
             lastPacketRejectedMs = json.requiredUnsigned32("lastPacketRejectedMs"),
@@ -235,6 +239,7 @@ internal object DeviceNetworkStatusParser {
     private const val MAX_SSID_BYTES = 32
     private const val MAX_WIFI_CHANNEL = 14
     private const val MIN_RSSI = -127
+    private const val UNSPECIFIED_IPV4 = "0.0.0.0"
     private val MAC_ADDRESS_REGEX = Regex("^[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5}$")
 
     private val ROOT_KEYS = setOf(
