@@ -52,62 +52,64 @@ object DeviceFirmwareManifestParser {
         }
     }
 
+    /**
+     * Firmware release tooling signs `aql.ota.release-notes.v1` before manifest finalization.
+     * The application model is populated as two locales so existing presentation state can consume
+     * the exact item list without inventing unsigned titles, summaries, warnings or mandatory flags.
+     */
     private fun parseReleaseNotes(json: JSONObject): DeviceFirmwareReleaseNotes {
-        json.requireExactKeys(
-            expected = setOf(
-                DeviceFirmwareRuntimeContract.Manifest.DEFAULT_LOCALE,
-                DeviceFirmwareRuntimeContract.Manifest.MANDATORY,
-                DeviceFirmwareRuntimeContract.Manifest.LOCALES
-            ),
-            label = "releaseNotes"
-        )
-        val defaultLocale = json.requiredLocaleTag(
+        json.requireExactKeys(RELEASE_NOTES_KEYS, "releaseNotes")
+        require(
+            json.requiredString(
+                DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTES_SCHEMA_FIELD
+            ) == DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTES_SCHEMA
+        ) { "Unsupported OTA release-notes schema." }
+        val defaultLocale = json.requiredString(
             DeviceFirmwareRuntimeContract.Manifest.DEFAULT_LOCALE
         )
-        val mandatory = json.requiredBoolean(DeviceFirmwareRuntimeContract.Manifest.MANDATORY)
-        val localesObject = json.requiredObject(DeviceFirmwareRuntimeContract.Manifest.LOCALES)
-        val locales = linkedMapOf<String, DeviceFirmwareLocalizedReleaseNotes>()
-        val keys = localesObject.keys()
-        while (keys.hasNext()) {
-            val localeTag = keys.next()
-            require(LOCALE_TAG_PATTERN.matches(localeTag)) {
-                "OTA release notes locale has an invalid exact tag: $localeTag"
-            }
-            require(localeTag !in locales) { "Duplicate OTA release notes locale: $localeTag" }
-            locales[localeTag] = parseLocalizedReleaseNotes(
-                localesObject.requiredObject(localeTag),
-                localeTag
+        require(defaultLocale == DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTE_TR) {
+            "OTA release notes defaultLocale must be tr."
+        }
+        val items = json.requiredArray(
+            DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTE_ITEMS
+        )
+        require(items.length() in 1..DeviceFirmwareRuntimeContract.Limit.MAX_RELEASE_NOTE_ITEMS) {
+            "OTA release notes must contain 1-${DeviceFirmwareRuntimeContract.Limit.MAX_RELEASE_NOTE_ITEMS} items."
+        }
+
+        val turkish = ArrayList<String>(items.length())
+        val english = ArrayList<String>(items.length())
+        repeat(items.length()) { index ->
+            val item = items.get(index) as? JSONObject
+                ?: error("releaseNotes.items[$index] must be an object.")
+            item.requireExactKeys(RELEASE_NOTE_ITEM_KEYS, "releaseNotes.items[$index]")
+            turkish += item.requiredReleaseNoteText(
+                DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTE_TR
+            )
+            english += item.requiredReleaseNoteText(
+                DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTE_EN
             )
         }
-        require(locales.isNotEmpty()) { "OTA release notes must contain at least one locale." }
-        require(defaultLocale in locales) {
-            "OTA release notes defaultLocale must exist in locales."
-        }
+
         return DeviceFirmwareReleaseNotes(
             defaultLocale = defaultLocale,
-            mandatory = mandatory,
-            locales = locales
-        )
-    }
-
-    private fun parseLocalizedReleaseNotes(
-        json: JSONObject,
-        localeTag: String
-    ): DeviceFirmwareLocalizedReleaseNotes {
-        json.requireExactKeys(
-            expected = setOf(
-                DeviceFirmwareRuntimeContract.Manifest.TITLE,
-                DeviceFirmwareRuntimeContract.Manifest.SUMMARY,
-                DeviceFirmwareRuntimeContract.Manifest.CHANGES,
-                DeviceFirmwareRuntimeContract.Manifest.WARNINGS
-            ),
-            label = "releaseNotes.locales.$localeTag"
-        )
-        return DeviceFirmwareLocalizedReleaseNotes(
-            title = json.requiredReleaseNoteText(DeviceFirmwareRuntimeContract.Manifest.TITLE),
-            summary = json.requiredReleaseNoteText(DeviceFirmwareRuntimeContract.Manifest.SUMMARY),
-            changes = json.requiredReleaseNoteArray(DeviceFirmwareRuntimeContract.Manifest.CHANGES),
-            warnings = json.requiredReleaseNoteArray(DeviceFirmwareRuntimeContract.Manifest.WARNINGS)
+            mandatory = false,
+            locales = linkedMapOf(
+                DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTE_TR to
+                    DeviceFirmwareLocalizedReleaseNotes(
+                        title = "",
+                        summary = "",
+                        changes = turkish,
+                        warnings = emptyList()
+                    ),
+                DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTE_EN to
+                    DeviceFirmwareLocalizedReleaseNotes(
+                        title = "",
+                        summary = "",
+                        changes = english,
+                        warnings = emptyList()
+                    )
+            )
         )
     }
 
@@ -299,46 +301,12 @@ object DeviceFirmwareManifestParser {
         return asLong.toInt()
     }
 
-    private fun JSONObject.requiredLocaleTag(key: String): String {
-        val localeTag = requiredString(key)
-        require(LOCALE_TAG_PATTERN.matches(localeTag)) {
-            "OTA manifest field '$key' must use an exact locale tag."
-        }
-        return localeTag
-    }
-
     private fun JSONObject.requiredReleaseNoteText(key: String): String {
         val value = requiredString(key)
         require(value.length <= DeviceFirmwareRuntimeContract.Limit.MAX_RELEASE_NOTE_TEXT_LENGTH) {
             "OTA release note '$key' exceeds the supported length."
         }
         return value
-    }
-
-    private fun JSONObject.requiredReleaseNoteArray(key: String): List<String> {
-        val array = requiredArray(key)
-        require(array.length() <= DeviceFirmwareRuntimeContract.Limit.MAX_RELEASE_NOTE_ITEMS) {
-            "OTA release note '$key' contains too many items."
-        }
-        return buildList {
-            repeat(array.length()) { index ->
-                val item = array.get(index) as? String
-                    ?: error("OTA release note '$key[$index]' must be a string.")
-                require(item.isNotEmpty()) { "OTA release note '$key[$index]' must not be empty." }
-                require(!item.first().isWhitespace() && !item.last().isWhitespace()) {
-                    "OTA release note '$key[$index]' must not contain surrounding whitespace."
-                }
-                require(item.none(Char::isISOControl)) {
-                    "OTA release note '$key[$index]' must not contain control characters."
-                }
-                require(
-                    item.length <= DeviceFirmwareRuntimeContract.Limit.MAX_RELEASE_NOTE_TEXT_LENGTH
-                ) {
-                    "OTA release note '$key[$index]' exceeds the supported length."
-                }
-                add(item)
-            }
-        }
     }
 
     private fun JSONObject.requireExactKeys(expected: Set<String>, label: String) {
@@ -368,6 +336,15 @@ object DeviceFirmwareManifestParser {
     private val ROOT_OPTIONAL_KEYS = setOf(
         "generatedAt", DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTES
     )
+    private val RELEASE_NOTES_KEYS = setOf(
+        DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTES_SCHEMA_FIELD,
+        DeviceFirmwareRuntimeContract.Manifest.DEFAULT_LOCALE,
+        DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTE_ITEMS
+    )
+    private val RELEASE_NOTE_ITEM_KEYS = setOf(
+        DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTE_TR,
+        DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTE_EN
+    )
     private val SIGNATURE_KEYS = setOf("scheme", "keyId", "payloadHash", "value")
     private val ARTIFACT_REQUIRED_KEYS = setOf("env", "product", "compatibility", "firmware")
     private val ARTIFACT_OPTIONAL_KEYS = setOf("factory")
@@ -381,5 +358,4 @@ object DeviceFirmwareManifestParser {
     private val ASSET_KEYS = setOf(
         "filename", "url", "sha256", "size", "format", "otaSlotCompatible"
     )
-    private val LOCALE_TAG_PATTERN = Regex("^[a-z]{2,3}(?:-[A-Z]{2})?$")
 }
