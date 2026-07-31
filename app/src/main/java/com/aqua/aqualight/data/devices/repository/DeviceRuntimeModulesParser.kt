@@ -36,7 +36,11 @@ object DeviceRuntimeModulesParser {
         val customName = device.requireStatusOptionalString("customName")
         val effectiveDisplayName = device.requireStatusString("effectiveDisplayName")
         val editable = device.requireStatusBoolean("editable")
-        val maxBytes = device.requireStatusNonNegativeLong("maxBytes").toInt()
+        val maxBytesLong = device.requireStatusNonNegativeLong("maxBytes")
+        require(maxBytesLong <= Int.MAX_VALUE.toLong()) {
+            "device.status.get device.maxBytes is outside the Android integer range."
+        }
+        val maxBytes = maxBytesLong.toInt()
         require(editable) { "device.status.get must advertise editable device names." }
         require(maxBytes == DEVICE_CUSTOM_NAME_MAX_BYTES) {
             "device.status.get device.maxBytes is incompatible."
