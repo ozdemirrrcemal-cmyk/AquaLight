@@ -127,9 +127,10 @@ data class DeviceTimerChannelConfig(
             .put(DeviceTimerRuntimeContract.Field.CHANNEL_KEY, normalizedChannelKey)
 
         if (displayName != null) {
+            val value = normalizedDisplayName.orEmpty()
             json.put(
                 DeviceTimerRuntimeContract.Field.DISPLAY_NAME,
-                normalizedDisplayName?.ifEmpty { null } ?: JSONObject.NULL
+                if (value.isEmpty()) JSONObject.NULL else value
             )
         }
 
