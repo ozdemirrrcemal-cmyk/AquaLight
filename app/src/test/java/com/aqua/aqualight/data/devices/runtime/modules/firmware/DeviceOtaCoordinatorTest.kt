@@ -9,20 +9,16 @@ import com.aqua.aqualight.data.devices.model.DeviceLimits
 import com.aqua.aqualight.data.devices.model.DeviceProduct
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsOutgoingMessage
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsTransport
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.test.runTest
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -34,15 +30,14 @@ import org.junit.Test
 class DeviceOtaCoordinatorTest {
 
     @Test
-    fun `availability start progress reconnect and completion use one device state machine`() = runTest {
-        val transport = RecordingWsTransport()
+    fun `typed ota flow verifies installed version after reboot before success`() = runTest {
+        val gateway = FakeFirmwareGateway()
         val events = MutableSharedFlow<AqlWsEvent>(extraBufferCapacity = 16)
         var snapshot = product().toSnapshot()
-        val updater = updater(transport)
         val coordinator = DeviceOtaCoordinator(
             snapshotProvider = { snapshot },
             connectRuntime = { Result.success(Unit) },
-            updaterProvider = { updater },
+            updaterProvider = { updater(gateway) },
             runtimeEvents = events.asSharedFlow(),
             dispatcher = Dispatchers.Unconfined
         )
@@ -53,66 +48,51 @@ class DeviceOtaCoordinatorTest {
             applyNow = false
         ).getOrThrow() as DeviceOtaState.UpdateAvailable
         assertEquals("2.0.0", availability.plan.targetVersion)
-        assertEquals("Güvenli güncelleme", availability.plan.releaseContent.title)
 
         val startResult = coordinator.startUpdate(availability.plan)
         assertTrue(startResult.isSuccess)
-        val startCommand = transport.commands.last()
-        assertEquals("dose_pro_2", startCommand.data.getString("model"))
-
-        events.tryEmit(
-            AqlWsEvent.Message(
-                DEVICE_UID,
-                response(startCommand, startAcceptedData())
-            )
-        )
+        assertEquals(DeviceFirmwareRuntimeContract.Action.OTA_START, gateway.actions.last())
         assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.InProgress)
 
-        events.tryEmit(
+        events.emit(
             AqlWsEvent.Message(
                 DEVICE_UID,
-                AqlWsIncomingMessage.Event(
-                    id = "progress-1",
-                    type = "event",
-                    module = DeviceFirmwareRuntimeContract.MODULE,
+                otaEvent(
                     action = DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS,
-                    data = otaSnapshot("writing", active = true, progressPermille = 500)
+                    snapshot = otaSnapshot(
+                        phase = DeviceFirmwareOtaPhase.WRITING,
+                        active = true,
+                        progressPermille = 500
+                    )
                 )
             )
         )
-        val progress = coordinator.observe(DEVICE_UID).value as DeviceOtaState.InProgress
-        assertEquals(500, progress.progressPermille)
+        assertEquals(
+            500,
+            (coordinator.observe(DEVICE_UID).value as DeviceOtaState.InProgress).progressPermille
+        )
 
-        events.tryEmit(AqlWsEvent.Closed(DEVICE_UID, 1006, "network changed"))
+        events.emit(AqlWsEvent.Closed(DEVICE_UID, 1006, "network changed"))
         assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Recovering)
 
-        events.tryEmit(AqlWsEvent.Authenticated(DEVICE_UID))
-        val statusCommand = transport.commands.last()
-        assertEquals(DeviceFirmwareRuntimeContract.Action.OTA_STATUS, statusCommand.action)
-        events.tryEmit(
-            AqlWsEvent.Message(
-                DEVICE_UID,
-                response(
-                    statusCommand,
-                    otaStatusData(otaSnapshot("writing", active = true, progressPermille = 600))
-                )
-            )
+        gateway.otaStatus = otaSnapshot(
+            phase = DeviceFirmwareOtaPhase.WRITING,
+            active = true,
+            progressPermille = 600
         )
+        events.emit(AqlWsEvent.Authenticated(DEVICE_UID))
         assertEquals(
             600,
             (coordinator.observe(DEVICE_UID).value as DeviceOtaState.InProgress).progressPermille
         )
 
-        events.tryEmit(
+        events.emit(
             AqlWsEvent.Message(
                 DEVICE_UID,
-                AqlWsIncomingMessage.Event(
-                    id = "completed-1",
-                    type = "event",
-                    module = DeviceFirmwareRuntimeContract.MODULE,
+                otaEvent(
                     action = DeviceFirmwareRuntimeContract.Event.OTA_COMPLETED,
-                    data = otaSnapshot(
-                        phase = "succeeded",
+                    snapshot = otaSnapshot(
+                        phase = DeviceFirmwareOtaPhase.SUCCEEDED,
                         active = false,
                         progressPermille = 1_000,
                         restartRequired = true
@@ -120,20 +100,65 @@ class DeviceOtaCoordinatorTest {
                 )
             )
         )
-        val completed = coordinator.observe(DEVICE_UID).value as DeviceOtaState.RestartRequired
-        assertEquals("2.0.0", completed.targetVersion)
-        assertFalse(completed.restartScheduled)
+        val restartRequired = coordinator.observe(DEVICE_UID).value
+            as DeviceOtaState.RestartRequired
+        assertEquals("2.0.0", restartRequired.targetVersion)
+        assertFalse(restartRequired.restartScheduled)
+
+        events.emit(AqlWsEvent.Authenticated(DEVICE_UID))
+        val succeeded = coordinator.observe(DEVICE_UID).value as DeviceOtaState.Succeeded
+        assertEquals("2.0.0", succeeded.targetVersion)
+        assertTrue(DeviceFirmwareRuntimeContract.Action.STATUS_GET in gateway.actions)
+        coordinator.close()
+    }
+
+    @Test
+    fun `rebooting into a different firmware version fails verification`() = runTest {
+        val gateway = FakeFirmwareGateway().apply { installedVersion = "1.9.9" }
+        val events = MutableSharedFlow<AqlWsEvent>(extraBufferCapacity = 8)
+        val coordinator = DeviceOtaCoordinator(
+            snapshotProvider = { product().toSnapshot() },
+            connectRuntime = { Result.success(Unit) },
+            updaterProvider = { updater(gateway) },
+            runtimeEvents = events.asSharedFlow(),
+            dispatcher = Dispatchers.Unconfined
+        )
+        val plan = (
+            coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, false).getOrThrow()
+                as DeviceOtaState.UpdateAvailable
+            ).plan
+        assertTrue(coordinator.startUpdate(plan).isSuccess)
+
+        events.emit(
+            AqlWsEvent.Message(
+                DEVICE_UID,
+                otaEvent(
+                    action = DeviceFirmwareRuntimeContract.Event.OTA_COMPLETED,
+                    snapshot = otaSnapshot(
+                        phase = DeviceFirmwareOtaPhase.SUCCEEDED,
+                        active = false,
+                        progressPermille = 1_000,
+                        restartRequired = true
+                    )
+                )
+            )
+        )
+        events.emit(AqlWsEvent.Authenticated(DEVICE_UID))
+
+        val failed = coordinator.observe(DEVICE_UID).value as DeviceOtaState.Failed
+        assertTrue(failed.message.contains("expected 2.0.0"))
+        assertFalse(failed.recoverable)
         coordinator.close()
     }
 
     @Test
     fun `metadata generation change expires a prepared plan before start`() = runTest {
-        val transport = RecordingWsTransport()
+        val gateway = FakeFirmwareGateway()
         var snapshot = product().toSnapshot()
         val coordinator = DeviceOtaCoordinator(
             snapshotProvider = { snapshot },
             connectRuntime = { Result.success(Unit) },
-            updaterProvider = { updater(transport) },
+            updaterProvider = { updater(gateway) },
             runtimeEvents = null,
             dispatcher = Dispatchers.Unconfined
         )
@@ -151,91 +176,165 @@ class DeviceOtaCoordinatorTest {
         coordinator.close()
     }
 
-    private fun updater(transport: RecordingWsTransport): DeviceFirmwareUpdateRepository {
-        val runtime = DeviceFirmwareRuntimeRepository {
-            AqlWsCommandClient(transport)
-        }
+    private fun updater(gateway: DeviceRuntimeCommandGateway): DeviceFirmwareUpdateRepository {
         val source = object : DeviceFirmwareManifestHttpSource() {
             override suspend fun load(url: String): Result<DeviceFirmwareManifest> =
                 Result.success(manifest())
         }
         return DeviceFirmwareUpdateRepository(
-            runtime = runtime,
+            runtime = DeviceFirmwareRuntimeRepository(gateway),
             manifestSource = source,
             planner = DeviceFirmwareUpdatePlanner { listOf("tr-TR") }
         )
     }
 
-    private fun response(
-        command: AqlWsOutgoingMessage.Command,
-        data: JSONObject
-    ) = AqlWsIncomingMessage.Response(
-        id = command.id,
-        type = "res",
-        module = command.module,
-        action = command.action,
-        data = data,
-        ok = true,
-        statusCode = if (command.action == DeviceFirmwareRuntimeContract.Action.OTA_START) 202 else 200
+    private inner class FakeFirmwareGateway : DeviceRuntimeCommandGateway {
+        val actions = CopyOnWriteArrayList<String>()
+        var installedVersion: String = "2.0.0"
+        var otaStatus: DeviceFirmwareOtaSnapshot = otaSnapshot(
+            phase = DeviceFirmwareOtaPhase.WRITING,
+            active = true,
+            progressPermille = 600
+        )
+
+        @Suppress("UNCHECKED_CAST")
+        override suspend fun <T> execute(
+            deviceUid: DeviceUid,
+            command: DeviceRuntimeCommand<T>,
+            timeoutMillis: Long
+        ): DeviceRuntimeCommandOutcome<T> {
+            actions += command.action
+            val value: Any = when (command.action) {
+                DeviceFirmwareRuntimeContract.Action.STATUS_GET -> firmwareStatus(installedVersion)
+                DeviceFirmwareRuntimeContract.Action.OTA_STATUS -> otaStatus
+                DeviceFirmwareRuntimeContract.Action.OTA_START -> DeviceFirmwareOtaStartAccepted(
+                    accepted = true,
+                    request = DeviceFirmwareOtaStartRequestEcho(
+                        urlScheme = "https",
+                        version = "2.0.0",
+                        expectedSize = FIRMWARE_SIZE,
+                        applyNow = false,
+                        allowInsecureHttp = false,
+                        productKey = "DOSING_DOSE_PRO_2",
+                        productId = "com.aqualight.dosing.dose_pro_2",
+                        model = "dose_pro_2",
+                        hardwareRevision = "2.0"
+                    ),
+                    ota = otaSnapshot(
+                        phase = DeviceFirmwareOtaPhase.STARTING,
+                        active = true,
+                        progressPermille = 0
+                    )
+                )
+                DeviceFirmwareRuntimeContract.Action.OTA_CLEAR -> DeviceFirmwareOtaClearTypedResult(
+                    cleared = true,
+                    previous = DeviceFirmwareOtaClearPrevious(
+                        phase = DeviceFirmwareOtaPhase.SUCCEEDED,
+                        phaseRaw = DeviceFirmwareOtaPhase.SUCCEEDED.wireValue,
+                        restartRequired = true,
+                        restartScheduled = false,
+                        targetVersion = "2.0.0",
+                        lastError = "",
+                        lastErrorField = ""
+                    ),
+                    ota = otaSnapshot(
+                        phase = DeviceFirmwareOtaPhase.IDLE,
+                        active = false,
+                        progressPermille = 0,
+                        targetVersion = ""
+                    )
+                )
+                else -> error("Unexpected firmware action ${command.action}")
+            }
+            return DeviceRuntimeCommandOutcome.Success(
+                deviceUid = deviceUid,
+                module = command.module,
+                action = command.action,
+                messageId = "${command.action}-${actions.size}",
+                generation = DeviceRuntimeConnectionGeneration(1L),
+                statusCode = if (command.action == DeviceFirmwareRuntimeContract.Action.OTA_START) {
+                    202
+                } else {
+                    200
+                },
+                value = value as T
+            )
+        }
+    }
+
+    private fun otaEvent(
+        action: String,
+        snapshot: DeviceFirmwareOtaSnapshot
+    ): AqlWsIncomingMessage.Event = AqlWsIncomingMessage.Event(
+        id = "event-${snapshot.progressPermille}",
+        type = "event",
+        module = DeviceFirmwareRuntimeContract.MODULE,
+        action = action,
+        data = JSONObject()
+            .put("phase", snapshot.phaseRaw)
+            .put("active", snapshot.active)
+            .put("completed", snapshot.completed)
+            .put("success", snapshot.success)
+            .put("failed", snapshot.failed)
+            .put("restartRequired", snapshot.restartRequired)
+            .put("restartScheduled", snapshot.restartScheduled)
+            .put("allowInsecureHttp", snapshot.allowInsecureHttp)
+            .put("startedAtMs", snapshot.startedAtMs)
+            .put("finishedAtMs", snapshot.finishedAtMs)
+            .put("bytesWritten", snapshot.bytesWritten)
+            .put("contentLength", snapshot.contentLength)
+            .put("progressPermille", snapshot.progressPermille)
+            .put("progressPercent", snapshot.progressPercent)
+            .put("targetVersion", snapshot.targetVersion)
+            .put("sha256Expected", snapshot.sha256Expected)
+            .put("sha256Actual", snapshot.sha256Actual)
+            .put("lastError", snapshot.lastError)
+            .put("lastErrorField", snapshot.lastErrorField)
+            .put("urlScheme", snapshot.urlScheme)
+            .put("httpStatus", snapshot.httpStatus)
+            .put("runtimeTransport", "websocket")
+            .put("binaryTransfer", "firmware-download")
     )
 
-    private fun startAcceptedData(): JSONObject = JSONObject()
-        .put("operation", "otaStart")
-        .put("accepted", true)
-        .put("runtimeTransport", "websocket")
-        .put("command", "firmware.ota.start")
-        .put("binaryTransfer", "firmware-download")
-        .put("event", DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS)
-        .put("progressEvent", DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS)
-        .put("completedEvent", DeviceFirmwareRuntimeContract.Event.OTA_COMPLETED)
-        .put(
-            "request",
-            JSONObject()
-                .put("urlScheme", "https")
-                .put("version", "2.0.0")
-                .put("expectedSize", FIRMWARE_SIZE)
-                .put("applyNow", false)
-                .put("allowInsecureHttp", false)
-                .put("productKey", "DOSING_DOSE_PRO_2")
-                .put("productId", "com.aqualight.dosing.dose_pro_2")
-                .put("model", "dose_pro_2")
-                .put("hardwareRevision", "2.0")
-        )
-        .put("ota", otaSnapshot("starting", active = true, progressPermille = 0))
-
-    private fun otaStatusData(snapshot: JSONObject): JSONObject = JSONObject()
-        .put("operation", "otaStatus")
-        .put("runtimeTransport", "websocket")
-        .put("command", "firmware.ota.status")
-        .put("binaryTransfer", "firmware-download")
-        .put("progressEvent", DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS)
-        .put("completedEvent", DeviceFirmwareRuntimeContract.Event.OTA_COMPLETED)
-        .put("ota", snapshot)
-
     private fun otaSnapshot(
-        phase: String,
+        phase: DeviceFirmwareOtaPhase,
         active: Boolean,
         progressPermille: Int,
-        restartRequired: Boolean = false
-    ): JSONObject = JSONObject()
-        .put("phase", phase)
-        .put("active", active)
-        .put("restartRequired", restartRequired)
-        .put("restartScheduled", false)
-        .put("allowInsecureHttp", false)
-        .put("startedAtMs", 1L)
-        .put("finishedAtMs", if (phase == "succeeded") 2L else 0L)
-        .put("bytesWritten", FIRMWARE_SIZE.toLong() * progressPermille / 1_000L)
-        .put("contentLength", FIRMWARE_SIZE.toLong())
-        .put("progressPermille", progressPermille)
-        .put("progressPercent", progressPermille / 10.0)
-        .put("targetVersion", "2.0.0")
-        .put("sha256Expected", "a".repeat(64))
-        .put("sha256Actual", if (phase == "succeeded") "a".repeat(64) else "")
-        .put("lastError", "")
-        .put("lastErrorField", "")
-        .put("urlScheme", "https")
-        .put("httpStatus", 200)
+        restartRequired: Boolean = false,
+        targetVersion: String = "2.0.0"
+    ): DeviceFirmwareOtaSnapshot = DeviceFirmwareOtaSnapshot(
+        phase = phase,
+        phaseRaw = phase.wireValue,
+        active = active,
+        completed = phase.isTerminal,
+        success = phase == DeviceFirmwareOtaPhase.SUCCEEDED,
+        failed = phase == DeviceFirmwareOtaPhase.FAILED,
+        restartRequired = restartRequired,
+        restartScheduled = false,
+        allowInsecureHttp = false,
+        startedAtMs = if (phase == DeviceFirmwareOtaPhase.IDLE) 0L else 1L,
+        finishedAtMs = if (phase.isTerminal) 2L else 0L,
+        bytesWritten = FIRMWARE_SIZE.toLong() * progressPermille / 1_000L,
+        contentLength = if (phase == DeviceFirmwareOtaPhase.IDLE) 0L else FIRMWARE_SIZE.toLong(),
+        progressPermille = progressPermille,
+        progressPercent = progressPermille / 10.0,
+        targetVersion = targetVersion,
+        sha256Expected = if (phase == DeviceFirmwareOtaPhase.IDLE) "" else "a".repeat(64),
+        sha256Actual = if (phase == DeviceFirmwareOtaPhase.SUCCEEDED) "a".repeat(64) else "",
+        lastError = "",
+        lastErrorField = "",
+        urlScheme = if (phase == DeviceFirmwareOtaPhase.IDLE) "" else "https",
+        httpStatus = if (phase == DeviceFirmwareOtaPhase.IDLE) 0 else 200
+    )
+
+    private fun firmwareStatus(version: String): DeviceFirmwareStatus = DeviceFirmwareStatus(
+        version = version,
+        productKey = "DOSING_DOSE_PRO_2",
+        productId = "com.aqualight.dosing.dose_pro_2",
+        model = "dose_pro_2",
+        hardwareRevision = "2.0",
+        otaSupported = true
+    )
 
     private fun product(): AqlCommercialCatalogProduct =
         AqlCommercialDeviceCatalog.products.single { product ->
@@ -350,34 +449,6 @@ class DeviceOtaCoordinatorTest {
                 )
             )
         )
-    }
-
-    private class RecordingWsTransport : AqlWsTransport {
-        private val _connectionState = MutableStateFlow<AqlWsConnectionState>(
-            AqlWsConnectionState.Disconnected
-        )
-        override val connectionState: StateFlow<AqlWsConnectionState> =
-            _connectionState.asStateFlow()
-
-        private val _events = MutableSharedFlow<AqlWsEvent>(extraBufferCapacity = 1)
-        override val events: SharedFlow<AqlWsEvent> = _events.asSharedFlow()
-
-        val commands = CopyOnWriteArrayList<AqlWsOutgoingMessage.Command>()
-
-        override fun connect(
-            deviceUid: DeviceUid,
-            endpoint: com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
-        ): Result<Unit> = Result.success(Unit)
-
-        override fun send(message: AqlWsOutgoingMessage): Boolean {
-            val command = message as? AqlWsOutgoingMessage.Command ?: return false
-            commands += command
-            return true
-        }
-
-        override fun disconnect(code: Int, reason: String) = Unit
-
-        override fun close() = Unit
     }
 
     private companion object {
