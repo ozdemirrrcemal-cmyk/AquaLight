@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.runtime.modules.cooling
 
+import org.json.JSONArray
 import org.json.JSONObject
 
 enum class DeviceCoolingMode(
@@ -10,12 +11,14 @@ enum class DeviceCoolingMode(
     OFF("Off");
 
     companion object {
-        fun fromWire(value: String): DeviceCoolingMode {
-            return when (value.trim().lowercase()) {
-                "auto", "schedule", "program" -> AUTO
-                "on", "manual_on" -> ON
-                else -> OFF
-            }
+        private val exactValues = entries.associateBy(DeviceCoolingMode::wireValue)
+
+        fun fromWireExact(value: String): DeviceCoolingMode? = exactValues[value]
+
+        fun fromWire(value: String): DeviceCoolingMode = when (value.trim().lowercase()) {
+            "auto", "schedule", "program" -> AUTO
+            "on", "manual_on" -> ON
+            else -> OFF
         }
     }
 }
@@ -26,6 +29,7 @@ data class DeviceCoolingRuntimeCapabilities(
     val supportsConfigApply: Boolean,
     val supportsModeSet: Boolean,
     val supportsTemperatureRange: Boolean,
+    val supportsFanDisplayName: Boolean,
     val hardwareEditable: Boolean,
     val fanMappingEditable: Boolean,
     val sensorMappingEditable: Boolean,
@@ -95,29 +99,77 @@ data class DeviceCoolingStatus(
     val runtime: DeviceCoolingRuntimeCapabilities
 )
 
+data class DeviceCoolingFanDisplayNameConfig(
+    val fanKey: String,
+    val displayName: String?
+) {
+    init {
+        require(fanKey.isNotBlank()) { "fanKey must not be blank." }
+        require(fanKey == fanKey.trim().lowercase()) {
+            "fanKey must use the canonical lowercase firmware key."
+        }
+        if (displayName != null) {
+            require(displayName == displayName.trim()) {
+                "displayName must not contain surrounding whitespace."
+            }
+            require(
+                displayName.toByteArray(Charsets.UTF_8).size <=
+                    DeviceCoolingRuntimeContract.Limit.MAX_DISPLAY_NAME_BYTES
+            ) {
+                "displayName exceeds the firmware UTF-8 byte limit."
+            }
+        }
+    }
+
+    fun toJson(): JSONObject = JSONObject()
+        .put(DeviceCoolingRuntimeContract.Field.FAN_KEY, fanKey)
+        .put(
+            DeviceCoolingRuntimeContract.Field.DISPLAY_NAME,
+            displayName ?: JSONObject.NULL
+        )
+}
+
 data class DeviceCoolingConfigApplyPayload(
     val mode: DeviceCoolingMode? = null,
     val minTemperatureC: Double? = null,
     val maxTemperatureC: Double? = null,
+    val fans: List<DeviceCoolingFanDisplayNameConfig> = emptyList(),
     val save: Boolean = true
 ) {
     init {
-        require(mode != null || minTemperatureC != null || maxTemperatureC != null) {
-            "cooling.config.apply requires mode and/or temperature range."
+        require(
+            mode != null ||
+                minTemperatureC != null ||
+                maxTemperatureC != null ||
+                fans.isNotEmpty()
+        ) {
+            "cooling.config.apply requires mode, temperature range and/or fan display names."
+        }
+        require(fans.size <= DeviceCoolingRuntimeContract.Limit.MAX_FANS_PER_REQUEST) {
+            "Too many cooling fan display-name updates."
+        }
+        require(fans.map(DeviceCoolingFanDisplayNameConfig::fanKey).distinct().size == fans.size) {
+            "fanKey must be unique in a cooling config request."
         }
 
         if (minTemperatureC != null) {
-            require(minTemperatureC in DeviceCoolingRuntimeContract.Limit.LOWEST_MIN_C..DeviceCoolingRuntimeContract.Limit.HIGHEST_MIN_C) {
-                "minTemperatureC must be between ${DeviceCoolingRuntimeContract.Limit.LOWEST_MIN_C} and ${DeviceCoolingRuntimeContract.Limit.HIGHEST_MIN_C}."
+            require(
+                minTemperatureC in
+                    DeviceCoolingRuntimeContract.Limit.LOWEST_MIN_C..
+                        DeviceCoolingRuntimeContract.Limit.HIGHEST_MIN_C
+            ) {
+                "minTemperatureC is outside the firmware range."
             }
         }
-
         if (maxTemperatureC != null) {
-            require(maxTemperatureC in DeviceCoolingRuntimeContract.Limit.LOWEST_MAX_C..DeviceCoolingRuntimeContract.Limit.HIGHEST_MAX_C) {
-                "maxTemperatureC must be between ${DeviceCoolingRuntimeContract.Limit.LOWEST_MAX_C} and ${DeviceCoolingRuntimeContract.Limit.HIGHEST_MAX_C}."
+            require(
+                maxTemperatureC in
+                    DeviceCoolingRuntimeContract.Limit.LOWEST_MAX_C..
+                        DeviceCoolingRuntimeContract.Limit.HIGHEST_MAX_C
+            ) {
+                "maxTemperatureC is outside the firmware range."
             }
         }
-
         if (minTemperatureC != null && maxTemperatureC != null) {
             require(maxTemperatureC > minTemperatureC) {
                 "maxTemperatureC must be greater than minTemperatureC."
@@ -126,21 +178,22 @@ data class DeviceCoolingConfigApplyPayload(
     }
 
     fun toJson(): JSONObject {
-        val json = JSONObject()
-            .put(DeviceCoolingRuntimeContract.Field.SAVE, save)
-
+        val json = JSONObject().put(DeviceCoolingRuntimeContract.Field.SAVE, save)
         if (mode != null) {
             json.put(DeviceCoolingRuntimeContract.Field.MODE, mode.wireValue)
         }
-
         if (minTemperatureC != null) {
             json.put(DeviceCoolingRuntimeContract.Field.MIN_TEMPERATURE_C, minTemperatureC)
         }
-
         if (maxTemperatureC != null) {
             json.put(DeviceCoolingRuntimeContract.Field.MAX_TEMPERATURE_C, maxTemperatureC)
         }
-
+        if (fans.isNotEmpty()) {
+            json.put(
+                DeviceCoolingRuntimeContract.Field.FANS,
+                JSONArray(fans.map(DeviceCoolingFanDisplayNameConfig::toJson))
+            )
+        }
         return json
     }
 }
