@@ -28,10 +28,6 @@ class DeviceRuntimeStateStore(
         update(deviceUid, DeviceRuntimeState::markAuthenticated)
     }
 
-    fun markDisconnected(deviceUid: DeviceUid) {
-        update(deviceUid, DeviceRuntimeState::markDisconnected)
-    }
-
     fun beginBootstrap(
         deviceUid: DeviceUid,
         metadataGeneration: Long,
@@ -60,21 +56,17 @@ class DeviceRuntimeStateStore(
 
     fun applyCommandFault(
         deviceUid: DeviceUid,
-        code: String,
-        message: String,
-        module: String,
-        action: String,
-        messageId: String = ""
+        report: DeviceRuntimeCommandFaultReport
     ) {
         val now = wallClockMillis()
         update(deviceUid) { previous ->
             previous.copy(
                 lastFault = DeviceRuntimeFault(
-                    code = code,
-                    message = message,
-                    module = module,
-                    action = action,
-                    messageId = messageId,
+                    code = report.code,
+                    message = report.message,
+                    module = report.module,
+                    action = report.action,
+                    messageId = report.messageId,
                     occurredAtMillis = now
                 )
             )
