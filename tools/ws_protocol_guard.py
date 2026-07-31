@@ -130,7 +130,9 @@ codec_path = "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWs
 codec = read(codec_path)
 for token, reason in (
     ("requireExactKeys", "wire envelopes must reject unknown or missing fields"),
-    ("rejectDuplicateKeys", "duplicate JSON fields must fail closed"),
+    ("val names = mutableSetOf<String>()", "each JSON object must track field names"),
+    ("if (!names.add(name))", "duplicate JSON fields must fail closed"),
+    ("fail(AqlWsProtocolError.DUPLICATE_FIELD)", "duplicate JSON fields must map to a protocol fault"),
     ("verifyDevice", "runtime frames must verify MAC and sequence"),
     ("MESSAGE_TOO_LARGE", "wire messages must enforce a byte limit"),
     ("DEVICE_IDENTITY_MISMATCH", "hello must bind the selected device identity"),
