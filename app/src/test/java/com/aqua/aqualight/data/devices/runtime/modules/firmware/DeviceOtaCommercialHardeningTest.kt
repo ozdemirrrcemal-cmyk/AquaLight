@@ -7,25 +7,17 @@ import com.aqua.aqualight.data.devices.model.DeviceCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceIdentity
 import com.aqua.aqualight.data.devices.model.DeviceLimits
 import com.aqua.aqualight.data.devices.model.DeviceProduct
-import com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsOutgoingMessage
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsTransport
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
+import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import org.json.JSONArray
 import org.json.JSONObject
@@ -37,50 +29,29 @@ import org.junit.Test
 class DeviceOtaCommercialHardeningTest {
 
     @Test
-    fun `concurrent start requests dispatch exactly one ota command per device`() = runTest {
-        val transport = RecordingWsTransport(startDelayMillis = START_SEND_DELAY_MILLIS)
+    fun `concurrent start requests dispatch exactly one typed ota command per device`() = runTest {
+        val gateway = DelayingFirmwareGateway()
         val coordinator = DeviceOtaCoordinator(
             snapshotProvider = { product().toSnapshot() },
             connectRuntime = { Result.success(Unit) },
-            updaterProvider = { updater(transport) },
-            runtimeEvents = null,
-            dispatcher = Dispatchers.Unconfined
+            updaterProvider = { updater(gateway) },
+            runtimeEvents = null
         )
         val plan = (
             coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, applyNow = true).getOrThrow()
                 as DeviceOtaState.UpdateAvailable
             ).plan
-        val executor = Executors.newFixedThreadPool(WORKER_COUNT)
-        val ready = CountDownLatch(WORKER_COUNT)
-        val start = CountDownLatch(1)
 
-        try {
-            val futures = List(WORKER_COUNT) {
-                executor.submit<Boolean> {
-                    ready.countDown()
-                    check(start.await(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS))
-                    coordinator.startUpdate(plan).isSuccess
-                }
-            }
-
-            assertTrue(ready.await(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS))
-            start.countDown()
-            val successfulStarts = futures.count { future ->
-                future.get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            }
-
-            assertEquals(1, successfulStarts)
-            assertEquals(
-                1,
-                transport.commands.count { command ->
-                    command.action == DeviceFirmwareRuntimeContract.Action.OTA_START
-                }
-            )
-            assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Starting)
-        } finally {
-            executor.shutdownNow()
-            coordinator.close()
+        val successfulStarts = coroutineScope {
+            List(WORKER_COUNT) {
+                async { coordinator.startUpdate(plan).isSuccess }
+            }.awaitAll().count(Boolean::not).let { failed -> WORKER_COUNT - failed }
         }
+
+        assertEquals(1, successfulStarts)
+        assertEquals(1, gateway.startExecutions.get())
+        assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.InProgress)
+        coordinator.close()
     }
 
     @Test
@@ -90,12 +61,8 @@ class DeviceOtaCommercialHardeningTest {
             artifacts = listOf(
                 exact,
                 exact.copy(env = "dosing_dose_pro_4"),
-                exact.copy(
-                    compatibility = exact.compatibility.copy(family = "timer")
-                ),
-                exact.copy(
-                    compatibility = exact.compatibility.copy(line = "legacy_dose")
-                )
+                exact.copy(compatibility = exact.compatibility.copy(family = "timer")),
+                exact.copy(compatibility = exact.compatibility.copy(line = "legacy_dose"))
             )
         )
         val planner = DeviceFirmwareUpdatePlanner { listOf("en") }
@@ -116,9 +83,7 @@ class DeviceOtaCommercialHardeningTest {
 
         val invalidManifests = listOf(
             manifestJson().put("legacyRoot", true),
-            manifestJson().apply {
-                artifactJson().put("legacyArtifact", true)
-            },
+            manifestJson().apply { artifactJson().put("legacyArtifact", true) },
             manifestJson().apply {
                 artifactJson().getJSONObject("product").put("legacyProduct", true)
             },
@@ -148,19 +113,65 @@ class DeviceOtaCommercialHardeningTest {
         }
     }
 
-    private fun updater(transport: RecordingWsTransport): DeviceFirmwareUpdateRepository {
-        val runtime = DeviceFirmwareRuntimeRepository {
-            AqlWsCommandClient(transport)
-        }
+    private fun updater(gateway: DeviceRuntimeCommandGateway): DeviceFirmwareUpdateRepository {
         val source = object : DeviceFirmwareManifestHttpSource() {
             override suspend fun load(url: String): Result<DeviceFirmwareManifest> =
                 Result.success(manifest())
         }
         return DeviceFirmwareUpdateRepository(
-            runtime = runtime,
+            runtime = DeviceFirmwareRuntimeRepository(gateway),
             manifestSource = source,
             planner = DeviceFirmwareUpdatePlanner { listOf("en") }
         )
+    }
+
+    private inner class DelayingFirmwareGateway : DeviceRuntimeCommandGateway {
+        val startExecutions = AtomicInteger(0)
+
+        @Suppress("UNCHECKED_CAST")
+        override suspend fun <T> execute(
+            deviceUid: DeviceUid,
+            command: DeviceRuntimeCommand<T>,
+            timeoutMillis: Long
+        ): DeviceRuntimeCommandOutcome<T> {
+            require(command.action == DeviceFirmwareRuntimeContract.Action.OTA_START)
+            startExecutions.incrementAndGet()
+            delay(START_SEND_DELAY_MILLIS)
+            val accepted = DeviceFirmwareOtaStartAccepted(
+                accepted = true,
+                request = DeviceFirmwareOtaStartRequestEcho(
+                    urlScheme = "https",
+                    version = TARGET_VERSION,
+                    expectedSize = FIRMWARE_SIZE,
+                    applyNow = true,
+                    allowInsecureHttp = false,
+                    productKey = PRODUCT_KEY,
+                    productId = "com.aqualight.dosing.dose_pro_2",
+                    model = "dose_pro_2",
+                    hardwareRevision = "2.0"
+                ),
+                ota = DeviceFirmwareOtaSnapshot(
+                    phase = DeviceFirmwareOtaPhase.STARTING,
+                    phaseRaw = DeviceFirmwareOtaPhase.STARTING.wireValue,
+                    active = true,
+                    startedAtMs = 1L,
+                    contentLength = FIRMWARE_SIZE.toLong(),
+                    targetVersion = TARGET_VERSION,
+                    sha256Expected = "a".repeat(64),
+                    urlScheme = "https",
+                    httpStatus = 200
+                )
+            )
+            return DeviceRuntimeCommandOutcome.Success(
+                deviceUid = deviceUid,
+                module = command.module,
+                action = command.action,
+                messageId = "ota-start-1",
+                generation = DeviceRuntimeConnectionGeneration(1L),
+                statusCode = 202,
+                value = accepted as T
+            )
+        }
     }
 
     private fun product(): AqlCommercialCatalogProduct =
@@ -355,39 +366,6 @@ class DeviceOtaCommercialHardeningTest {
                 .put("otaSlotCompatible", firmware.otaSlotCompatible)
         )
 
-    private class RecordingWsTransport(
-        private val startDelayMillis: Long
-    ) : AqlWsTransport {
-        private val _connectionState = MutableStateFlow<AqlWsConnectionState>(
-            AqlWsConnectionState.Disconnected
-        )
-        override val connectionState: StateFlow<AqlWsConnectionState> =
-            _connectionState.asStateFlow()
-
-        private val _events = MutableSharedFlow<AqlWsEvent>(extraBufferCapacity = 1)
-        override val events: SharedFlow<AqlWsEvent> = _events.asSharedFlow()
-
-        val commands = CopyOnWriteArrayList<AqlWsOutgoingMessage.Command>()
-
-        override fun connect(
-            deviceUid: DeviceUid,
-            endpoint: DeviceRuntimeEndpoint
-        ): Result<Unit> = Result.success(Unit)
-
-        override fun send(message: AqlWsOutgoingMessage): Boolean {
-            val command = message as? AqlWsOutgoingMessage.Command ?: return false
-            if (command.action == DeviceFirmwareRuntimeContract.Action.OTA_START) {
-                Thread.sleep(startDelayMillis)
-            }
-            commands += command
-            return true
-        }
-
-        override fun disconnect(code: Int, reason: String) = Unit
-
-        override fun close() = Unit
-    }
-
     private companion object {
         val DEVICE_UID = DeviceUid("AQL-DP2-OTA-HARDENING")
         const val PRODUCT_KEY = "DOSING_DOSE_PRO_2"
@@ -400,7 +378,6 @@ class DeviceOtaCommercialHardeningTest {
         const val RUNTIME_GENERATION = 7L
         const val WORKER_COUNT = 8
         const val START_SEND_DELAY_MILLIS = 75L
-        const val TEST_TIMEOUT_SECONDS = 10L
         const val MANIFEST_URL =
             "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/releases/download/v2.0.0/manifest-stable.json"
     }
