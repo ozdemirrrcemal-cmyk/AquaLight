@@ -68,8 +68,8 @@ internal class DeviceRuntimeRefreshJobRegistry {
 
     fun cancelAll() {
         synchronized(lock) {
-            bootstrapJobs.values.forEach(Job::cancel)
-            refreshJobs.values.forEach(Job::cancel)
+            bootstrapJobs.values.forEach { job -> job.cancel() }
+            refreshJobs.values.forEach { job -> job.cancel() }
             bootstrapJobs.clear()
             refreshJobs.clear()
             queuedTargets.clear()
