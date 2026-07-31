@@ -19,6 +19,13 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandSession
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeSyncCoordinator
+import com.aqua.aqualight.data.devices.runtime.state.DeviceRuntimeEventRoute
+import com.aqua.aqualight.data.devices.runtime.state.DeviceRuntimeMessageRouter
+import com.aqua.aqualight.data.devices.runtime.state.DeviceRuntimeRefreshCoordinator
+import com.aqua.aqualight.data.devices.runtime.state.DeviceRuntimeState
+import com.aqua.aqualight.data.devices.runtime.state.DeviceRuntimeStateReducer
+import com.aqua.aqualight.data.devices.runtime.state.DeviceRuntimeStateStore
+import com.aqua.aqualight.data.devices.runtime.state.DeviceRuntimeStateTarget
 import com.aqua.aqualight.data.devices.runtime.ws.AqlPrivateLanEndpoint
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsClient
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
@@ -40,8 +47,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -64,8 +73,9 @@ internal sealed interface DeviceRuntimeMetadataUpdate {
 /**
  * Owner-scoped runtime session orchestrator and the single production command execution boundary.
  *
- * Session ownership, authenticated bootstrap, exact command correlation, token lifecycle and
- * socket teardown intentionally share one lock domain. A second runtime repository is forbidden.
+ * Session ownership, authenticated bootstrap, exact command correlation, runtime state, refresh,
+ * token lifecycle and socket teardown intentionally share one lock domain. A second runtime
+ * repository or state system is forbidden.
  */
 @Suppress("TooManyFunctions")
 class DeviceRuntimeRepository(
@@ -133,6 +143,12 @@ class DeviceRuntimeRepository(
 
     internal val metadataBootstrapCoordinator = DeviceRuntimeMetadataBootstrapCoordinator()
 
+    val runtimeStateStore = DeviceRuntimeStateStore()
+    val runtimeStates: StateFlow<Map<DeviceUid, DeviceRuntimeState>> = runtimeStateStore.states
+
+    private val runtimeStateReducer = DeviceRuntimeStateReducer(runtimeStateStore)
+    private val runtimeMessageRouter = DeviceRuntimeMessageRouter(runtimeStateReducer)
+
     private val commandExecutor = DeviceRuntimeCommandExecutor(
         sessionProvider = ::currentCommandSession,
         supportChecker = ::supportsCommand
@@ -145,6 +161,13 @@ class DeviceRuntimeRepository(
     )
 
     private val timeSyncCoordinator = DeviceTimeSyncCoordinator(repository = runtimeModules.time)
+
+    private val runtimeRefreshCoordinator = DeviceRuntimeRefreshCoordinator(
+        scopeProvider = ::currentSessionScope,
+        generationProvider = ::currentConnectionGeneration,
+        stateProvider = runtimeStateStore::current,
+        refreshAction = ::performRuntimeRefresh
+    )
 
     private val _connectionState = MutableSharedFlow<AqlWsConnectionState>(
         extraBufferCapacity = EVENT_BUFFER_CAPACITY
@@ -160,6 +183,12 @@ class DeviceRuntimeRepository(
     @Volatile
     private var closed: Boolean = false
 
+    fun observeRuntimeState(deviceUid: DeviceUid): Flow<DeviceRuntimeState?> =
+        runtimeStateStore.observe(deviceUid)
+
+    fun currentRuntimeState(deviceUid: DeviceUid): DeviceRuntimeState? =
+        runtimeStateStore.current(deviceUid)
+
     fun connect(snapshot: DeviceSnapshot): Result<Unit> {
         val deviceUid = snapshot.deviceUid
         val session = runCatching {
@@ -170,6 +199,11 @@ class DeviceRuntimeRepository(
                 }
                 sessions[deviceUid] ?: createSession(deviceUid).also { created ->
                     sessions[deviceUid] = created
+                    runtimeStateStore.beginGeneration(
+                        deviceUid = deviceUid,
+                        generation = created.generation,
+                        authenticated = false
+                    )
                     observeSession(created)
                 }.also { lastActiveDeviceUid = deviceUid }
             }
@@ -200,7 +234,14 @@ class DeviceRuntimeRepository(
                     generation = previousGeneration,
                     reason = COMMAND_CANCELLED_CONNECTION_REPLACED
                 )
+                runtimeRefreshCoordinator.cancelGeneration(deviceUid, previousGeneration)
+                runtimeStateStore.markGenerationStale(deviceUid, previousGeneration)
                 session.generation = nextRuntimeGeneration()
+                runtimeStateStore.beginGeneration(
+                    deviceUid = deviceUid,
+                    generation = session.generation,
+                    authenticated = false
+                )
             } else {
                 session.connectionStarted = true
             }
@@ -223,6 +264,8 @@ class DeviceRuntimeRepository(
                 generation = session.generation,
                 reason = COMMAND_CANCELLED_NETWORK_ROUTE_CHANGED
             )
+            runtimeRefreshCoordinator.cancelGeneration(session.deviceUid, session.generation)
+            runtimeStateStore.markGenerationStale(session.deviceUid, session.generation)
             session.close()
         }
         metadataBootstrapCoordinator.clear(snapshot.deviceUid)
@@ -247,15 +290,36 @@ class DeviceRuntimeRepository(
 
     internal fun pendingCommandCount(): Int = commandExecutor.pendingCount()
 
+    internal fun pendingRefreshCount(): Int = runtimeRefreshCoordinator.pendingCount()
+
     override suspend fun <T> execute(
         deviceUid: DeviceUid,
         command: DeviceRuntimeCommand<T>,
         timeoutMillis: Long
-    ): DeviceRuntimeCommandOutcome<T> = commandExecutor.execute(
-        deviceUid = deviceUid,
-        command = command,
-        timeoutMillis = timeoutMillis
-    )
+    ): DeviceRuntimeCommandOutcome<T> {
+        currentConnectionGeneration(deviceUid)?.let { generation ->
+            runtimeStateReducer.commandStarted(
+                deviceUid = deviceUid,
+                generation = generation,
+                module = command.module,
+                action = command.action
+            )
+        }
+        val outcome = commandExecutor.execute(
+            deviceUid = deviceUid,
+            command = command,
+            timeoutMillis = timeoutMillis
+        )
+        val refreshTarget = runtimeStateReducer.commandCompleted(outcome)
+        if (outcome is DeviceRuntimeCommandOutcome.Success && refreshTarget != null) {
+            runtimeRefreshCoordinator.schedule(
+                deviceUid = deviceUid,
+                generation = outcome.generation,
+                target = refreshTarget
+            )
+        }
+        return outcome
+    }
 
     suspend fun <T> executeCommand(
         deviceUid: DeviceUid,
@@ -311,6 +375,8 @@ class DeviceRuntimeRepository(
                 generation = session.generation,
                 reason = COMMAND_CANCELLED_LOCAL_NETWORK_LOSS
             )
+            runtimeRefreshCoordinator.cancelGeneration(session.deviceUid, session.generation)
+            runtimeStateStore.markGenerationStale(session.deviceUid, session.generation)
             synchronized(session) {
                 session.wsClient.disconnect(reason = LOCAL_NETWORK_UNAVAILABLE_REASON)
             }
@@ -365,6 +431,8 @@ class DeviceRuntimeRepository(
             generation = generation,
             reason = COMMAND_CANCELLED_OWNERSHIP_RESET
         )
+        runtimeRefreshCoordinator.cancelDevice(deviceUid)
+        runtimeStateStore.remove(deviceUid)
         cancelMetadataTimeout(deviceUid)
         metadataBootstrapCoordinator.clear(deviceUid)
         timeSyncCoordinator.clearSessionMemory(deviceUid)
@@ -392,6 +460,8 @@ class DeviceRuntimeRepository(
     suspend fun retire(deviceUid: DeviceUid) {
         val session = detachSessionForRetirement(deviceUid)
         commandExecutor.cancelDevice(deviceUid, COMMAND_CANCELLED_DEVICE_RETIRED)
+        runtimeRefreshCoordinator.cancelDevice(deviceUid)
+        runtimeStateStore.remove(deviceUid)
         cancelMetadataTimeout(deviceUid)
         metadataBootstrapCoordinator.clear(deviceUid)
         timeSyncCoordinator.clearSessionMemory(deviceUid)
@@ -401,6 +471,8 @@ class DeviceRuntimeRepository(
     fun close(deviceUid: DeviceUid) {
         val session = detachSessionForRetirement(deviceUid)
         commandExecutor.cancelDevice(deviceUid, COMMAND_CANCELLED_DEVICE_CLOSED)
+        runtimeRefreshCoordinator.cancelDevice(deviceUid)
+        runtimeStateStore.remove(deviceUid)
         cancelMetadataTimeout(deviceUid)
         metadataBootstrapCoordinator.clear(deviceUid)
         timeSyncCoordinator.clearSessionMemory(deviceUid)
@@ -410,6 +482,8 @@ class DeviceRuntimeRepository(
     override fun close() {
         val activeSessions = beginRepositoryClose() ?: return
         commandExecutor.cancelAll(COMMAND_CANCELLED_REPOSITORY_CLOSED)
+        runtimeRefreshCoordinator.clear()
+        runtimeStateStore.clear()
         cancelAllMetadataTimeouts()
         metadataBootstrapCoordinator.clearAll()
         repositoryJob.cancel()
@@ -422,6 +496,8 @@ class DeviceRuntimeRepository(
     suspend fun shutdown() {
         val activeSessions = beginRepositoryClose()
         commandExecutor.cancelAll(COMMAND_CANCELLED_REPOSITORY_SHUTDOWN)
+        runtimeRefreshCoordinator.clear()
+        runtimeStateStore.clear()
         cancelAllMetadataTimeouts()
         metadataBootstrapCoordinator.clearAll()
         repositoryJob.cancel()
@@ -463,6 +539,20 @@ class DeviceRuntimeRepository(
     ): DeviceRuntimeMetadataUpdate {
         return when (val validation = AqlCommercialDeviceCatalog.validate(state.metadata)) {
             is AqlCommercialCatalogValidation.Valid -> {
+                val generation = currentConnectionGeneration(state.deviceUid)
+                if (generation != null && runtimeStateReducer.publishMetadata(
+                        deviceUid = state.deviceUid,
+                        generation = generation,
+                        metadata = state.metadata,
+                        moduleStatus = state.moduleStatus
+                    )
+                ) {
+                    runtimeRefreshCoordinator.refreshBootstrap(
+                        deviceUid = state.deviceUid,
+                        generation = generation,
+                        support = DeviceRuntimeStateTargetSupport.from(state.metadata)
+                    )
+                }
                 timeSyncCoordinator.syncPhoneNowIfNeeded(state.deviceUid)
                 DeviceRuntimeMetadataUpdate.Ready(state)
             }
@@ -488,6 +578,8 @@ class DeviceRuntimeRepository(
             generation = session.generation,
             reason = COMMAND_CANCELLED_METADATA_FAILURE
         )
+        runtimeRefreshCoordinator.cancelGeneration(deviceUid, session.generation)
+        runtimeStateStore.markGenerationStale(deviceUid, session.generation)
         synchronized(session) {
             if (isCurrentSession(session)) {
                 session.wsClient.disconnect(reason = METADATA_BOOTSTRAP_FAILED_REASON)
@@ -578,6 +670,14 @@ class DeviceRuntimeRepository(
                             generation = session.generation,
                             reason = COMMAND_CANCELLED_TRANSPORT_UNAVAILABLE
                         )
+                        runtimeRefreshCoordinator.cancelGeneration(
+                            session.deviceUid,
+                            session.generation
+                        )
+                        runtimeStateStore.markGenerationStale(
+                            session.deviceUid,
+                            session.generation
+                        )
                     }
                     _connectionState.emit(state)
                 }
@@ -598,6 +698,11 @@ class DeviceRuntimeRepository(
         !closed &&
             session.deviceUid !in retiredDeviceUids &&
             sessions[session.deviceUid] === session
+    }
+
+    private fun currentSessionScope(deviceUid: DeviceUid): CoroutineScope? {
+        val session = sessions[deviceUid] ?: return null
+        return session.takeIf(::isCurrentSession)?.sessionScope
     }
 
     private fun currentCommandSession(deviceUid: DeviceUid): DeviceRuntimeCommandSession? {
@@ -664,6 +769,11 @@ class DeviceRuntimeRepository(
         when (event) {
             is AqlWsEvent.Opened -> Unit
             is AqlWsEvent.Authenticated -> {
+                runtimeStateStore.setAuthenticated(
+                    deviceUid = session.deviceUid,
+                    generation = session.generation,
+                    authenticated = true
+                )
                 if (!sendAuthenticatedBootstrap(session)) {
                     session.wsClient.disconnect(reason = METADATA_BOOTSTRAP_FAILED_REASON)
                 }
@@ -674,12 +784,22 @@ class DeviceRuntimeRepository(
                     generation = session.generation,
                     message = event.parsed
                 )
+                val runtimeEvent = event.parsed as? AqlWsIncomingMessage.Event
+                if (runtimeEvent != null) handleRuntimeEvent(session, runtimeEvent)
             }
             is AqlWsEvent.Closed -> {
                 commandExecutor.cancelGeneration(
                     deviceUid = session.deviceUid,
                     generation = session.generation,
                     reason = COMMAND_CANCELLED_SOCKET_CLOSED
+                )
+                runtimeRefreshCoordinator.cancelGeneration(
+                    session.deviceUid,
+                    session.generation
+                )
+                runtimeStateStore.markGenerationStale(
+                    session.deviceUid,
+                    session.generation
                 )
                 rejectActiveGeneration(event.deviceUid, "closed")
             }
@@ -689,8 +809,75 @@ class DeviceRuntimeRepository(
                     generation = session.generation,
                     reason = COMMAND_CANCELLED_SOCKET_FAILURE
                 )
+                runtimeRefreshCoordinator.cancelGeneration(
+                    session.deviceUid,
+                    session.generation
+                )
+                runtimeStateStore.markGenerationStale(
+                    session.deviceUid,
+                    session.generation
+                )
                 rejectActiveGeneration(event.deviceUid, "failure")
             }
+        }
+    }
+
+    private fun handleRuntimeEvent(
+        session: RuntimeSession,
+        event: AqlWsIncomingMessage.Event
+    ) {
+        when (val route = runtimeMessageRouter.route(event)) {
+            is DeviceRuntimeEventRoute.Refresh -> {
+                runtimeRefreshCoordinator.scheduleEventRefresh(
+                    deviceUid = session.deviceUid,
+                    generation = session.generation,
+                    target = route.target
+                )
+            }
+            is DeviceRuntimeEventRoute.Ota -> {
+                runtimeStateReducer.reduceOtaEvent(
+                    deviceUid = session.deviceUid,
+                    generation = session.generation,
+                    sourceMessageId = route.sourceMessageId,
+                    snapshot = route.snapshot
+                )
+            }
+            is DeviceRuntimeEventRoute.ProtocolFault -> {
+                runtimeStateReducer.recordProtocolFault(
+                    deviceUid = session.deviceUid,
+                    generation = session.generation,
+                    module = event.module,
+                    action = event.action,
+                    reason = route.reason
+                )
+                session.wsClient.disconnect(reason = RUNTIME_EVENT_PROTOCOL_FAULT_REASON)
+            }
+            DeviceRuntimeEventRoute.Ignored -> Unit
+        }
+    }
+
+    private suspend fun performRuntimeRefresh(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration,
+        target: DeviceRuntimeStateTarget
+    ) {
+        if (currentConnectionGeneration(deviceUid) != generation) return
+        when (target) {
+            DeviceRuntimeStateTarget.METADATA -> {
+                val session = sessions[deviceUid]?.takeIf(::isCurrentSession) ?: return
+                if (session.generation == generation) sendAuthenticatedBootstrap(session)
+            }
+            DeviceRuntimeStateTarget.SECURITY -> runtimeModules.security.requestStatus(deviceUid)
+            DeviceRuntimeStateTarget.NETWORK -> runtimeModules.network.requestStatus(deviceUid)
+            DeviceRuntimeStateTarget.TIME -> runtimeModules.time.requestStatus(deviceUid)
+            DeviceRuntimeStateTarget.LIGHT -> runtimeModules.light.requestStatus(deviceUid)
+            DeviceRuntimeStateTarget.LIGHT_TEMPERATURE_PROTECTION ->
+                runtimeModules.lightTemperatureProtection.requestStatus(deviceUid)
+            DeviceRuntimeStateTarget.TIMER -> runtimeModules.timer.requestStatus(deviceUid)
+            DeviceRuntimeStateTarget.DOSING -> runtimeModules.dosing.requestStatus(deviceUid)
+            DeviceRuntimeStateTarget.COOLING -> runtimeModules.cooling.requestStatus(deviceUid)
+            DeviceRuntimeStateTarget.FIRMWARE -> runtimeModules.firmware.requestStatus(deviceUid)
+            DeviceRuntimeStateTarget.OTA -> runtimeModules.firmware.requestOtaStatus(deviceUid)
         }
     }
 
@@ -707,6 +894,7 @@ class DeviceRuntimeRepository(
         private const val EVENT_BUFFER_CAPACITY = 256
         private const val LOCAL_NETWORK_UNAVAILABLE_REASON = "local network unavailable"
         private const val METADATA_BOOTSTRAP_FAILED_REASON = "metadata bootstrap failed"
+        private const val RUNTIME_EVENT_PROTOCOL_FAULT_REASON = "runtime event protocol fault"
         private const val METADATA_BOOTSTRAP_TIMEOUT_MILLIS = 10_000L
         private const val OWNERSHIP_REQUIRED_MESSAGE =
             "Encrypted BLE ownership provisioning is required again."
@@ -728,6 +916,11 @@ class DeviceRuntimeRepository(
                 tokenProvider = DeviceCredentialStore(context = context, ownerUid = ownerUid)
             )
     }
+}
+
+private object DeviceRuntimeStateTargetSupport {
+    fun from(metadata: com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadata) =
+        com.aqua.aqualight.data.devices.runtime.state.DeviceRuntimeSupport.from(metadata)
 }
 
 private fun AqlWsConnectionState.isTerminalForPendingCommands(): Boolean = when (this) {
