@@ -233,8 +233,8 @@ class DeviceRuntimeStateReducer(
         }
     }
 
-    private fun reduceLight(outcome: DeviceRuntimeCommandOutcome.Success<*>): Boolean =
-        when (outcome.action) {
+    private fun reduceLight(outcome: DeviceRuntimeCommandOutcome.Success<*>): Boolean {
+        return when (outcome.action) {
             AqlWsContract.ACTION_LIGHT_STATUS_GET -> {
                 val value = outcome.value as? DeviceLightStatus ?: return false
                 store.reduce(outcome.deviceUid, outcome.generation) { state ->
@@ -252,6 +252,7 @@ class DeviceRuntimeStateReducer(
             }
             else -> false
         }
+    }
 
     private fun reduceTimer(outcome: DeviceRuntimeCommandOutcome.Success<*>): Boolean {
         if (outcome.action != AqlWsContract.ACTION_TIMER_STATUS_GET) return false
@@ -277,8 +278,8 @@ class DeviceRuntimeStateReducer(
         }
     }
 
-    private fun reduceFirmware(outcome: DeviceRuntimeCommandOutcome.Success<*>): Boolean =
-        when (outcome.action) {
+    private fun reduceFirmware(outcome: DeviceRuntimeCommandOutcome.Success<*>): Boolean {
+        return when (outcome.action) {
             AqlWsContract.ACTION_FIRMWARE_STATUS_GET -> {
                 val value = outcome.value as? DeviceFirmwareStatus ?: return false
                 store.reduce(outcome.deviceUid, outcome.generation) { state ->
@@ -308,6 +309,7 @@ class DeviceRuntimeStateReducer(
             }
             else -> false
         }
+    }
 
     private fun reduceFault(
         deviceUid: DeviceUid,
