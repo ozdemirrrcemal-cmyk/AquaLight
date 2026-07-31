@@ -8,7 +8,7 @@ import org.json.JSONObject
 
 sealed interface DeviceRuntimeEventRoute {
     data class Refresh(
-        val target: DeviceRuntimeStateTarget<*>,
+        val target: DeviceRuntimeStateTarget,
         val sourceMessageId: String
     ) : DeviceRuntimeEventRoute
 
