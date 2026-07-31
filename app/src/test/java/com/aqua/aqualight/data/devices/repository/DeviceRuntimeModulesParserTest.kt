@@ -20,6 +20,9 @@ class DeviceRuntimeModulesParserTest {
 
             assertEquals(fixture.family, parsed.family)
             assertEquals(fixture.modules, parsed.modules)
+            assertEquals(fixture.displayName, parsed.deviceName.productDisplayName)
+            assertEquals(fixture.customName, parsed.deviceName.customName)
+            assertEquals(fixture.effectiveDisplayName, parsed.deviceName.effectiveDisplayName)
             assertEquals(fixture.modules.timerApi, parsed.modules.exposesStandaloneTimerApi)
             assertEquals(fixture.modules.timerEngine, parsed.modules.usesInternalTimerEngine)
         }
@@ -30,7 +33,7 @@ class DeviceRuntimeModulesParserTest {
     }
 
     @Test
-    fun `rejects missing or unknown status and module keys`() {
+    fun `rejects missing or unknown status module and device keys`() {
         val missingRoot = validStatus(DEFAULT_FIXTURE).apply { remove("runtime") }
         val unknownRoot = validStatus(DEFAULT_FIXTURE).put("legacy", true)
         val missingModule = validStatus(DEFAULT_FIXTURE).apply {
@@ -39,15 +42,27 @@ class DeviceRuntimeModulesParserTest {
         val unknownModule = validStatus(DEFAULT_FIXTURE).apply {
             getJSONObject("modules").put("timer", true)
         }
+        val missingDeviceField = validStatus(DEFAULT_FIXTURE).apply {
+            getJSONObject("device").remove("maxBytes")
+        }
+        val unknownDeviceField = validStatus(DEFAULT_FIXTURE).apply {
+            getJSONObject("device").put("localName", "legacy")
+        }
 
-        assertTrue(DeviceRuntimeModulesParser.parseDeviceStatus(missingRoot).isFailure)
-        assertTrue(DeviceRuntimeModulesParser.parseDeviceStatus(unknownRoot).isFailure)
-        assertTrue(DeviceRuntimeModulesParser.parseDeviceStatus(missingModule).isFailure)
-        assertTrue(DeviceRuntimeModulesParser.parseDeviceStatus(unknownModule).isFailure)
+        listOf(
+            missingRoot,
+            unknownRoot,
+            missingModule,
+            unknownModule,
+            missingDeviceField,
+            unknownDeviceField
+        ).forEach { invalid ->
+            assertTrue(DeviceRuntimeModulesParser.parseDeviceStatus(invalid).isFailure)
+        }
     }
 
     @Test
-    fun `rejects type coercion and non integral uptime`() {
+    fun `rejects type coercion non integral uptime and invalid name policy`() {
         val stringBoolean = validStatus(DEFAULT_FIXTURE).apply {
             getJSONObject("modules").put("light", "true")
         }
@@ -56,11 +71,27 @@ class DeviceRuntimeModulesParserTest {
         }
         val stringUptime = validStatus(DEFAULT_FIXTURE).put("uptimeMs", "100")
         val fractionalUptime = validStatus(DEFAULT_FIXTURE).put("uptimeMs", 1.5)
+        val stringEditable = validStatus(DEFAULT_FIXTURE).apply {
+            getJSONObject("device").put("editable", "true")
+        }
+        val wrongMaxBytes = validStatus(DEFAULT_FIXTURE).apply {
+            getJSONObject("device").put("maxBytes", 32)
+        }
+        val inconsistentEffectiveName = validStatus(DEFAULT_FIXTURE).apply {
+            getJSONObject("device").put("effectiveDisplayName", "Another name")
+        }
 
-        assertTrue(DeviceRuntimeModulesParser.parseDeviceStatus(stringBoolean).isFailure)
-        assertTrue(DeviceRuntimeModulesParser.parseDeviceStatus(numericBoolean).isFailure)
-        assertTrue(DeviceRuntimeModulesParser.parseDeviceStatus(stringUptime).isFailure)
-        assertTrue(DeviceRuntimeModulesParser.parseDeviceStatus(fractionalUptime).isFailure)
+        listOf(
+            stringBoolean,
+            numericBoolean,
+            stringUptime,
+            fractionalUptime,
+            stringEditable,
+            wrongMaxBytes,
+            inconsistentEffectiveName
+        ).forEach { invalid ->
+            assertTrue(DeviceRuntimeModulesParser.parseDeviceStatus(invalid).isFailure)
+        }
     }
 
     @Test
@@ -103,16 +134,33 @@ class DeviceRuntimeModulesParserTest {
         val emptyDisplayName = validStatus(DEFAULT_FIXTURE).apply {
             getJSONObject("product").put("displayName", "")
         }
+        val productDeviceNameMismatch = validStatus(DEFAULT_FIXTURE).apply {
+            getJSONObject("device").put("productDisplayName", "Different Product")
+        }
 
-        assertTrue(DeviceRuntimeModulesParser.parseDeviceStatus(unknownFamily).isFailure)
-        assertTrue(DeviceRuntimeModulesParser.parseDeviceStatus(paddedModel).isFailure)
-        assertTrue(DeviceRuntimeModulesParser.parseDeviceStatus(emptyDisplayName).isFailure)
+        listOf(
+            unknownFamily,
+            paddedModel,
+            emptyDisplayName,
+            productDeviceNameMismatch
+        ).forEach { invalid ->
+            assertTrue(DeviceRuntimeModulesParser.parseDeviceStatus(invalid).isFailure)
+        }
     }
 
     private fun validStatus(fixture: ModuleFixture): JSONObject = JSONObject()
         .put("state", "booted")
         .put("authenticated", true)
         .put("uptimeMs", UPTIME_MS)
+        .put(
+            "device",
+            JSONObject()
+                .put("productDisplayName", fixture.displayName)
+                .put("customName", fixture.customName)
+                .put("effectiveDisplayName", fixture.effectiveDisplayName)
+                .put("editable", true)
+                .put("maxBytes", 64)
+        )
         .put(
             "product",
             JSONObject()
@@ -148,7 +196,9 @@ class DeviceRuntimeModulesParserTest {
         val family: DeviceFamily,
         val model: String,
         val displayName: String,
-        val modules: DeviceRuntimeModules
+        val modules: DeviceRuntimeModules,
+        val customName: String = "",
+        val effectiveDisplayName: String = customName.ifEmpty { displayName }
     )
 
     private companion object {
@@ -181,7 +231,8 @@ class DeviceRuntimeModulesParserTest {
                 family = DeviceFamily.LIGHT,
                 model = "wrgb_pro_elite_120",
                 displayName = "WRGB Pro Elite 120",
-                modules = DEFAULT_FIXTURE.modules.copy(cooling = true, temperature = true)
+                modules = DEFAULT_FIXTURE.modules.copy(cooling = true, temperature = true),
+                customName = "Salon Işığı"
             ),
             ModuleFixture(
                 productKey = "TIMER_RELAY_PRO_2",
