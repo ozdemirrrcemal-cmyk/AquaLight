@@ -9,6 +9,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareRu
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareUpdateRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionRuntimeRepository
+import com.aqua.aqualight.data.devices.runtime.modules.network.DeviceNetworkRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.security.DeviceSecurityRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeRepository
@@ -24,6 +25,9 @@ class DeviceRuntimeModuleProvider(
         commandGateway = commandGateway,
         onOwnershipCredentialInvalidated = onOwnershipCredentialInvalidated
     )
+
+    val network: DeviceNetworkRuntimeRepository =
+        DeviceNetworkRuntimeRepository(commandGateway)
 
     val firmware: DeviceFirmwareRuntimeRepository =
         DeviceFirmwareRuntimeRepository(commandClientProvider)
