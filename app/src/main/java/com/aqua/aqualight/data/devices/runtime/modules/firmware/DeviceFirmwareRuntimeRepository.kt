@@ -1,84 +1,91 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import org.json.JSONObject
 
 class DeviceFirmwareRuntimeRepository(
-    private val commandClientProvider: (DeviceUid) -> AqlWsCommandClient?
+    private val commandGateway: DeviceRuntimeCommandGateway
 ) {
+    suspend fun requestStatus(
+        deviceUid: DeviceUid
+    ): DeviceRuntimeCommandOutcome<DeviceFirmwareStatus> =
+        commandGateway.execute(deviceUid, DeviceFirmwareStatusGetCommand)
 
-    fun requestStatus(deviceUid: DeviceUid): DeviceFirmwareCommandResult {
-        return send(
-            deviceUid = deviceUid,
-            action = DeviceFirmwareRuntimeContract.Action.STATUS_GET
-        )
-    }
+    suspend fun requestOtaStatus(
+        deviceUid: DeviceUid
+    ): DeviceRuntimeCommandOutcome<DeviceFirmwareOtaSnapshot> =
+        commandGateway.execute(deviceUid, DeviceFirmwareOtaStatusCommand)
 
-    fun requestOtaStatus(deviceUid: DeviceUid): DeviceFirmwareCommandResult {
-        return send(
-            deviceUid = deviceUid,
-            action = DeviceFirmwareRuntimeContract.Action.OTA_STATUS
-        )
-    }
-
-    fun startOta(
+    suspend fun startOta(
         deviceUid: DeviceUid,
         payload: DeviceFirmwareOtaStartPayload
-    ): DeviceFirmwareCommandResult {
-        return send(
-            deviceUid = deviceUid,
-            action = DeviceFirmwareRuntimeContract.Action.OTA_START,
-            data = payload.toJson()
-        )
-    }
+    ): DeviceRuntimeCommandOutcome<DeviceFirmwareOtaStartAccepted> =
+        commandGateway.execute(deviceUid, DeviceFirmwareOtaStartCommand(payload))
 
-    fun startUpdate(plan: DeviceFirmwareUpdatePlan): DeviceFirmwareCommandResult {
-        return startOta(
-            deviceUid = plan.deviceUid,
-            payload = plan.payload
-        )
-    }
+    suspend fun startUpdate(
+        plan: DeviceFirmwareUpdatePlan
+    ): DeviceRuntimeCommandOutcome<DeviceFirmwareOtaStartAccepted> =
+        startOta(plan.deviceUid, plan.payload)
 
-    fun clearOtaStatus(deviceUid: DeviceUid): DeviceFirmwareCommandResult {
-        return send(
-            deviceUid = deviceUid,
-            action = DeviceFirmwareRuntimeContract.Action.OTA_CLEAR
-        )
-    }
+    suspend fun clearOtaStatus(
+        deviceUid: DeviceUid
+    ): DeviceRuntimeCommandOutcome<DeviceFirmwareOtaClearTypedResult> =
+        commandGateway.execute(deviceUid, DeviceFirmwareOtaClearCommand)
+}
 
-    private fun send(
-        deviceUid: DeviceUid,
-        action: String,
-        data: JSONObject = JSONObject()
-    ): DeviceFirmwareCommandResult {
-        val commandClient = commandClientProvider(deviceUid)
+private data object DeviceFirmwareStatusGetCommand : DeviceRuntimeCommand<DeviceFirmwareStatus> {
+    override val module: String = DeviceFirmwareRuntimeContract.MODULE
+    override val action: String = DeviceFirmwareRuntimeContract.Action.STATUS_GET
+    override fun encodeData(): JSONObject = JSONObject()
 
-        if (commandClient == null) {
-            return DeviceFirmwareCommandResult(
-                sent = false,
-                action = action,
-                errorMessage = "No WebSocket command client for ${deviceUid.value}"
-            )
-        }
-
-        val messageId = commandClient.command(
-            module = DeviceFirmwareRuntimeContract.MODULE,
-            action = action,
-            data = data
-        )
-
-        return DeviceFirmwareCommandResult(
-            sent = messageId != null,
-            action = action,
-            messageId = messageId.orEmpty(),
-            errorMessage = if (messageId != null) "" else "WebSocket send failed"
-        )
-    }
-
-    companion object {
-        fun singleSession(commandClient: AqlWsCommandClient): DeviceFirmwareRuntimeRepository {
-            return DeviceFirmwareRuntimeRepository { commandClient }
-        }
+    override fun parseSuccess(response: AqlWsIncomingMessage.Response): DeviceFirmwareStatus {
+        require(response.statusCode == HTTP_OK)
+        return DeviceFirmwareCommandParsers.parseFirmwareStatus(response.data)
     }
 }
+
+private data object DeviceFirmwareOtaStatusCommand :
+    DeviceRuntimeCommand<DeviceFirmwareOtaSnapshot> {
+    override val module: String = DeviceFirmwareRuntimeContract.MODULE
+    override val action: String = DeviceFirmwareRuntimeContract.Action.OTA_STATUS
+    override fun encodeData(): JSONObject = JSONObject()
+
+    override fun parseSuccess(response: AqlWsIncomingMessage.Response): DeviceFirmwareOtaSnapshot {
+        require(response.statusCode == HTTP_OK)
+        return DeviceFirmwareCommandParsers.parseOtaStatus(response.data)
+    }
+}
+
+private class DeviceFirmwareOtaStartCommand(
+    private val payload: DeviceFirmwareOtaStartPayload
+) : DeviceRuntimeCommand<DeviceFirmwareOtaStartAccepted> {
+    override val module: String = DeviceFirmwareRuntimeContract.MODULE
+    override val action: String = DeviceFirmwareRuntimeContract.Action.OTA_START
+    override fun encodeData(): JSONObject = payload.toJson()
+
+    override fun parseSuccess(response: AqlWsIncomingMessage.Response): DeviceFirmwareOtaStartAccepted {
+        require(response.statusCode == HTTP_ACCEPTED)
+        return DeviceFirmwareCommandParsers.parseOtaStart(response.data)
+    }
+}
+
+private data object DeviceFirmwareOtaClearCommand :
+    DeviceRuntimeCommand<DeviceFirmwareOtaClearTypedResult> {
+    override val module: String = DeviceFirmwareRuntimeContract.MODULE
+    override val action: String = DeviceFirmwareRuntimeContract.Action.OTA_CLEAR
+    override fun encodeData(): JSONObject = JSONObject()
+
+    override fun parseSuccess(
+        response: AqlWsIncomingMessage.Response
+    ): DeviceFirmwareOtaClearTypedResult {
+        require(response.statusCode == HTTP_OK)
+        return DeviceFirmwareCommandParsers.parseOtaClear(response.data)
+    }
+}
+
+private const val HTTP_OK = 200
+private const val HTTP_ACCEPTED = 202
