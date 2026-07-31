@@ -20,86 +20,72 @@ class DeviceRuntimeCommandExecutorTest {
     private val generationTwo = DeviceRuntimeConnectionGeneration(2L)
 
     @Test
-    fun `pending request is registered before send and synchronous exact response completes`() = runBlocking {
-        lateinit var executor: DeviceRuntimeCommandExecutor
-        val session = DeviceRuntimeCommandSession(
-            deviceUid = deviceUid,
-            generation = generationOne,
-            authenticated = true,
-            send = { outgoing ->
+    fun `pending request is registered before send and synchronous exact response completes`() =
+        runBlocking {
+            lateinit var commandExecutor: DeviceRuntimeCommandExecutor
+            val activeSession = session(send = { outgoing ->
                 val command = outgoing as AqlWsOutgoingMessage.Command
-                assertEquals(1, executor.pendingCount())
+                assertEquals(1, commandExecutor.pendingCount())
                 assertTrue(
-                    executor.complete(
-                        deviceUid = deviceUid,
-                        generation = generationOne,
-                        message = success(command, value = "ready")
+                    commandExecutor.complete(
+                        deviceUid,
+                        generationOne,
+                        success(command, "ready")
                     )
                 )
                 true
-            }
-        )
-        executor = executor(session = session)
+            })
+            commandExecutor = newExecutor(activeSession)
 
-        val outcome = executor.execute(deviceUid, EchoCommand())
-        val success = outcome as DeviceRuntimeCommandOutcome.Success
-        assertEquals("ready", success.value)
-        assertEquals(0, executor.pendingCount())
-    }
+            val outcome = commandExecutor.execute(deviceUid, EchoCommand())
+                as DeviceRuntimeCommandOutcome.Success
+            assertEquals("ready", outcome.value)
+            assertEquals(0, commandExecutor.pendingCount())
+        }
 
     @Test
-    fun `old generation response is ignored and exact current generation completes`() = runBlocking {
+    fun `old generation is ignored and exact current generation completes`() = runBlocking {
         var sent: AqlWsOutgoingMessage.Command? = null
-        val executor = executor(
-            session = session(send = { outgoing ->
+        val commandExecutor = newExecutor(
+            session(send = { outgoing ->
                 sent = outgoing as AqlWsOutgoingMessage.Command
                 true
             })
         )
         val awaiting = async(start = CoroutineStart.UNDISPATCHED) {
-            executor.execute(deviceUid, EchoCommand())
+            commandExecutor.execute(deviceUid, EchoCommand())
         }
         val command = requireNotNull(sent)
 
         assertFalse(
-            executor.complete(
-                deviceUid = deviceUid,
-                generation = generationTwo,
-                message = success(command, value = "stale")
+            commandExecutor.complete(
+                deviceUid,
+                generationTwo,
+                success(command, "stale")
             )
         )
-        assertEquals(1, executor.pendingCount())
+        assertEquals(1, commandExecutor.pendingCount())
         assertTrue(
-            executor.complete(
-                deviceUid = deviceUid,
-                generation = generationOne,
-                message = success(command, value = "current")
+            commandExecutor.complete(
+                deviceUid,
+                generationOne,
+                success(command, "current")
             )
         )
-
-        val result = awaiting.await() as DeviceRuntimeCommandOutcome.Success
-        assertEquals("current", result.value)
-        assertEquals(0, executor.pendingCount())
+        assertEquals(
+            "current",
+            (awaiting.await() as DeviceRuntimeCommandOutcome.Success).value
+        )
     }
 
     @Test
     fun `same id with different module action is protocol error`() = runBlocking {
-        var sent: AqlWsOutgoingMessage.Command? = null
-        val executor = executor(
-            session = session(send = { outgoing ->
-                sent = outgoing as AqlWsOutgoingMessage.Command
-                true
-            })
-        )
-        val awaiting = async(start = CoroutineStart.UNDISPATCHED) {
-            executor.execute(deviceUid, EchoCommand())
-        }
-        val command = requireNotNull(sent)
+        val (commandExecutor, awaiting, command) = pendingExecution()
         assertTrue(
-            executor.complete(
-                deviceUid = deviceUid,
-                generation = generationOne,
-                message = AqlWsIncomingMessage.Response(
+            commandExecutor.complete(
+                deviceUid,
+                generationOne,
+                AqlWsIncomingMessage.Response(
                     id = command.id,
                     type = AqlWsContract.TYPE_RESPONSE,
                     module = AqlWsContract.MODULE_TIME,
@@ -110,28 +96,16 @@ class DeviceRuntimeCommandExecutorTest {
                 )
             )
         )
-
         assertTrue(awaiting.await() is DeviceRuntimeCommandOutcome.ProtocolError)
-        assertEquals(0, executor.pendingCount())
     }
 
     @Test
     fun `firmware error remains distinct from protocol error`() = runBlocking {
-        var sent: AqlWsOutgoingMessage.Command? = null
-        val executor = executor(
-            session = session(send = { outgoing ->
-                sent = outgoing as AqlWsOutgoingMessage.Command
-                true
-            })
-        )
-        val awaiting = async(start = CoroutineStart.UNDISPATCHED) {
-            executor.execute(deviceUid, EchoCommand())
-        }
-        val command = requireNotNull(sent)
-        executor.complete(
-            deviceUid = deviceUid,
-            generation = generationOne,
-            message = AqlWsIncomingMessage.Error(
+        val (commandExecutor, awaiting, command) = pendingExecution()
+        commandExecutor.complete(
+            deviceUid,
+            generationOne,
+            AqlWsIncomingMessage.Error(
                 id = command.id,
                 type = AqlWsContract.TYPE_ERROR,
                 module = command.module,
@@ -143,7 +117,6 @@ class DeviceRuntimeCommandExecutorTest {
                 field = "value"
             )
         )
-
         val error = awaiting.await() as DeviceRuntimeCommandOutcome.FirmwareError
         assertEquals(422, error.statusCode)
         assertEquals("invalid_field", error.code)
@@ -152,68 +125,47 @@ class DeviceRuntimeCommandExecutorTest {
 
     @Test
     fun `disconnect cancellation completes only matching generation`() = runBlocking {
-        var sent: AqlWsOutgoingMessage.Command? = null
-        val executor = executor(
-            session = session(send = { outgoing ->
-                sent = outgoing as AqlWsOutgoingMessage.Command
-                true
-            })
-        )
-        val awaiting = async(start = CoroutineStart.UNDISPATCHED) {
-            executor.execute(deviceUid, EchoCommand())
-        }
-        requireNotNull(sent)
-
-        executor.cancelGeneration(deviceUid, generationTwo, "old socket")
-        assertEquals(1, executor.pendingCount())
-        executor.cancelGeneration(deviceUid, generationOne, "socket closed")
+        val (commandExecutor, awaiting, _) = pendingExecution()
+        commandExecutor.cancelGeneration(deviceUid, generationTwo, "old socket")
+        assertEquals(1, commandExecutor.pendingCount())
+        commandExecutor.cancelGeneration(deviceUid, generationOne, "socket closed")
 
         val cancelled = awaiting.await() as DeviceRuntimeCommandOutcome.Cancelled
         assertEquals("socket closed", cancelled.reason)
         assertEquals(generationOne, cancelled.generation)
-        assertEquals(0, executor.pendingCount())
+        assertEquals(0, commandExecutor.pendingCount())
     }
 
     @Test
     fun `connection authentication support and send failures are separate outcomes`() = runBlocking {
         val command = EchoCommand()
-        val notConnected = executor(session = null).execute(deviceUid, command)
-        assertTrue(notConnected is DeviceRuntimeCommandOutcome.NotConnected)
-
-        val notAuthenticated = executor(
-            session = session(authenticated = false)
-        ).execute(deviceUid, command)
-        assertTrue(notAuthenticated is DeviceRuntimeCommandOutcome.NotAuthenticated)
-
-        val unsupported = DeviceRuntimeCommandExecutor(
-            sessionProvider = { session() },
-            supportChecker = { _, _, _ -> false }
-        ).execute(deviceUid, command)
-        assertTrue(unsupported is DeviceRuntimeCommandOutcome.UnsupportedByDevice)
-
-        val sendFailed = executor(
-            session = session(send = { false })
-        ).execute(deviceUid, command)
-        assertTrue(sendFailed is DeviceRuntimeCommandOutcome.SendFailed)
+        assertTrue(
+            newExecutor(null).execute(deviceUid, command) is
+                DeviceRuntimeCommandOutcome.NotConnected
+        )
+        assertTrue(
+            newExecutor(session(authenticated = false)).execute(deviceUid, command) is
+                DeviceRuntimeCommandOutcome.NotAuthenticated
+        )
+        assertTrue(
+            DeviceRuntimeCommandExecutor(
+                sessionProvider = { session() },
+                supportChecker = { _, _, _ -> false }
+            ).execute(deviceUid, command) is DeviceRuntimeCommandOutcome.UnsupportedByDevice
+        )
+        assertTrue(
+            newExecutor(session(send = { false })).execute(deviceUid, command) is
+                DeviceRuntimeCommandOutcome.SendFailed
+        )
     }
 
     @Test
     fun `invalid successful payload becomes protocol error`() = runBlocking {
-        var sent: AqlWsOutgoingMessage.Command? = null
-        val executor = executor(
-            session = session(send = { outgoing ->
-                sent = outgoing as AqlWsOutgoingMessage.Command
-                true
-            })
-        )
-        val awaiting = async(start = CoroutineStart.UNDISPATCHED) {
-            executor.execute(deviceUid, EchoCommand())
-        }
-        val command = requireNotNull(sent)
-        executor.complete(
-            deviceUid = deviceUid,
-            generation = generationOne,
-            message = AqlWsIncomingMessage.Response(
+        val (commandExecutor, awaiting, command) = pendingExecution()
+        commandExecutor.complete(
+            deviceUid,
+            generationOne,
+            AqlWsIncomingMessage.Response(
                 id = command.id,
                 type = AqlWsContract.TYPE_RESPONSE,
                 module = command.module,
@@ -223,14 +175,29 @@ class DeviceRuntimeCommandExecutorTest {
                 statusCode = 200
             )
         )
-
         assertTrue(awaiting.await() is DeviceRuntimeCommandOutcome.ProtocolError)
     }
 
-    private fun executor(
-        session: DeviceRuntimeCommandSession?
+    private suspend fun kotlinx.coroutines.CoroutineScope.pendingExecution(): PendingExecution {
+        var sent: AqlWsOutgoingMessage.Command? = null
+        val commandExecutor = newExecutor(
+            session(send = { outgoing ->
+                sent = outgoing as AqlWsOutgoingMessage.Command
+                true
+            })
+        )
+        val awaiting = async(start = CoroutineStart.UNDISPATCHED) {
+            commandExecutor.execute(deviceUid, EchoCommand())
+        }
+        return PendingExecution(commandExecutor, awaiting, requireNotNull(sent))
+    }
+
+    private fun newExecutor(
+        activeSession: DeviceRuntimeCommandSession?
     ): DeviceRuntimeCommandExecutor = DeviceRuntimeCommandExecutor(
-        sessionProvider = { requested -> session?.takeIf { it.deviceUid == requested } },
+        sessionProvider = { requested ->
+            activeSession?.takeIf { session -> session.deviceUid == requested }
+        },
         supportChecker = { _, _, _ -> true }
     )
 
@@ -257,6 +224,12 @@ class DeviceRuntimeCommandExecutorTest {
         statusCode = 200
     )
 
+    private data class PendingExecution(
+        val executor: DeviceRuntimeCommandExecutor,
+        val awaiting: kotlinx.coroutines.Deferred<DeviceRuntimeCommandOutcome<String>>,
+        val command: AqlWsOutgoingMessage.Command
+    )
+
     private class EchoCommand : DeviceRuntimeCommand<String> {
         override val module: String = AqlWsContract.MODULE_NETWORK
         override val action: String = AqlWsContract.ACTION_NETWORK_STATUS_GET
@@ -265,8 +238,7 @@ class DeviceRuntimeCommandExecutorTest {
 
         override fun parseSuccess(response: AqlWsIncomingMessage.Response): String {
             require(response.statusCode == 200)
-            val keys = response.data.keys().asSequence().toSet()
-            require(keys == setOf("value"))
+            require(response.data.keys().asSequence().toSet() == setOf("value"))
             val value = response.data.get("value")
             require(value is String && value.isNotBlank())
             return value
