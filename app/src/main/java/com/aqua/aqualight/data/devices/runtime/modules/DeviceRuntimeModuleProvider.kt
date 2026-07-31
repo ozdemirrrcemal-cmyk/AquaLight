@@ -16,6 +16,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeR
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
 
 class DeviceRuntimeModuleProvider(
+    @Suppress("UNUSED_PARAMETER")
     commandClientProvider: (DeviceUid) -> AqlWsCommandClient?,
     commandGateway: DeviceRuntimeCommandGateway,
     onOwnershipCredentialInvalidated:
@@ -33,7 +34,7 @@ class DeviceRuntimeModuleProvider(
         DeviceLightTemperatureProtectionRuntimeRepository(commandGateway)
 
     val firmware: DeviceFirmwareRuntimeRepository =
-        DeviceFirmwareRuntimeRepository(commandClientProvider)
+        DeviceFirmwareRuntimeRepository(commandGateway)
     val firmwareUpdate: DeviceFirmwareUpdateRepository =
         DeviceFirmwareUpdateRepository(firmware)
     val timer: DeviceTimerRuntimeRepository =
