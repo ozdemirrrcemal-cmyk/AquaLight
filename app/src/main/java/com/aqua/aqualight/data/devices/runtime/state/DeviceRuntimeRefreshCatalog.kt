@@ -34,53 +34,10 @@ internal object DeviceRuntimeRefreshCatalog {
         if (snapshot.capabilities.dosing) add(DeviceRuntimeRefreshTarget.DOSING)
     }
 
-    fun command(target: DeviceRuntimeRefreshTarget): DeviceRuntimeRefreshCommand = when (target) {
-        DeviceRuntimeRefreshTarget.DEVICE -> DeviceRuntimeRefreshCommand(
-            AqlWsContract.MODULE_DEVICE,
-            AqlWsContract.ACTION_DEVICE_STATUS_GET
-        )
-        DeviceRuntimeRefreshTarget.SECURITY -> DeviceRuntimeRefreshCommand(
-            AqlWsContract.MODULE_SECURITY,
-            AqlWsContract.ACTION_SECURITY_STATUS_GET
-        )
-        DeviceRuntimeRefreshTarget.NETWORK -> DeviceRuntimeRefreshCommand(
-            AqlWsContract.MODULE_NETWORK,
-            AqlWsContract.ACTION_NETWORK_STATUS_GET
-        )
-        DeviceRuntimeRefreshTarget.TIME -> DeviceRuntimeRefreshCommand(
-            AqlWsContract.MODULE_TIME,
-            AqlWsContract.ACTION_TIME_STATUS_GET
-        )
-        DeviceRuntimeRefreshTarget.FIRMWARE -> DeviceRuntimeRefreshCommand(
-            AqlWsContract.MODULE_FIRMWARE,
-            AqlWsContract.ACTION_FIRMWARE_STATUS_GET
-        )
-        DeviceRuntimeRefreshTarget.OTA -> DeviceRuntimeRefreshCommand(
-            AqlWsContract.MODULE_FIRMWARE,
-            AqlWsContract.ACTION_FIRMWARE_OTA_STATUS
-        )
-        DeviceRuntimeRefreshTarget.LIGHT -> DeviceRuntimeRefreshCommand(
-            AqlWsContract.MODULE_LIGHT,
-            AqlWsContract.ACTION_LIGHT_STATUS_GET
-        )
-        DeviceRuntimeRefreshTarget.LIGHT_TEMPERATURE_PROTECTION ->
-            DeviceRuntimeRefreshCommand(
-                AqlWsContract.MODULE_LIGHT,
-                AqlWsContract.ACTION_LIGHT_TEMPERATURE_PROTECTION_STATUS_GET
-            )
-        DeviceRuntimeRefreshTarget.COOLING -> DeviceRuntimeRefreshCommand(
-            AqlWsContract.MODULE_COOLING,
-            AqlWsContract.ACTION_COOLING_STATUS_GET
-        )
-        DeviceRuntimeRefreshTarget.TIMER -> DeviceRuntimeRefreshCommand(
-            AqlWsContract.MODULE_TIMER,
-            AqlWsContract.ACTION_TIMER_STATUS_GET
-        )
-        DeviceRuntimeRefreshTarget.DOSING -> DeviceRuntimeRefreshCommand(
-            AqlWsContract.MODULE_DOSING,
-            AqlWsContract.ACTION_DOSING_STATUS_GET
-        )
-    }
+    fun command(target: DeviceRuntimeRefreshTarget): DeviceRuntimeRefreshCommand =
+        checkNotNull(COMMANDS[target]) {
+            "No firmware status command registered for $target."
+        }
 
     fun isReadCommand(module: String, action: String): Boolean =
         action == AqlWsContract.ACTION_STATUS_GET ||
@@ -90,6 +47,53 @@ internal object DeviceRuntimeRefreshCatalog {
             action == AqlWsContract.ACTION_LIGHT_TEMPERATURE_PROTECTION_STATUS_GET ||
             module == AqlWsContract.MODULE_DEVICE && action in DEVICE_METADATA_READ_ACTIONS
 
+    private val COMMANDS = mapOf(
+        DeviceRuntimeRefreshTarget.DEVICE to DeviceRuntimeRefreshCommand(
+            AqlWsContract.MODULE_DEVICE,
+            AqlWsContract.ACTION_DEVICE_STATUS_GET
+        ),
+        DeviceRuntimeRefreshTarget.SECURITY to DeviceRuntimeRefreshCommand(
+            AqlWsContract.MODULE_SECURITY,
+            AqlWsContract.ACTION_SECURITY_STATUS_GET
+        ),
+        DeviceRuntimeRefreshTarget.NETWORK to DeviceRuntimeRefreshCommand(
+            AqlWsContract.MODULE_NETWORK,
+            AqlWsContract.ACTION_NETWORK_STATUS_GET
+        ),
+        DeviceRuntimeRefreshTarget.TIME to DeviceRuntimeRefreshCommand(
+            AqlWsContract.MODULE_TIME,
+            AqlWsContract.ACTION_TIME_STATUS_GET
+        ),
+        DeviceRuntimeRefreshTarget.FIRMWARE to DeviceRuntimeRefreshCommand(
+            AqlWsContract.MODULE_FIRMWARE,
+            AqlWsContract.ACTION_FIRMWARE_STATUS_GET
+        ),
+        DeviceRuntimeRefreshTarget.OTA to DeviceRuntimeRefreshCommand(
+            AqlWsContract.MODULE_FIRMWARE,
+            AqlWsContract.ACTION_FIRMWARE_OTA_STATUS
+        ),
+        DeviceRuntimeRefreshTarget.LIGHT to DeviceRuntimeRefreshCommand(
+            AqlWsContract.MODULE_LIGHT,
+            AqlWsContract.ACTION_LIGHT_STATUS_GET
+        ),
+        DeviceRuntimeRefreshTarget.LIGHT_TEMPERATURE_PROTECTION to
+            DeviceRuntimeRefreshCommand(
+                AqlWsContract.MODULE_LIGHT,
+                AqlWsContract.ACTION_LIGHT_TEMPERATURE_PROTECTION_STATUS_GET
+            ),
+        DeviceRuntimeRefreshTarget.COOLING to DeviceRuntimeRefreshCommand(
+            AqlWsContract.MODULE_COOLING,
+            AqlWsContract.ACTION_COOLING_STATUS_GET
+        ),
+        DeviceRuntimeRefreshTarget.TIMER to DeviceRuntimeRefreshCommand(
+            AqlWsContract.MODULE_TIMER,
+            AqlWsContract.ACTION_TIMER_STATUS_GET
+        ),
+        DeviceRuntimeRefreshTarget.DOSING to DeviceRuntimeRefreshCommand(
+            AqlWsContract.MODULE_DOSING,
+            AqlWsContract.ACTION_DOSING_STATUS_GET
+        )
+    )
     private val DEVICE_METADATA_READ_ACTIONS = setOf(
         AqlWsContract.ACTION_DEVICE_IDENTITY_GET,
         AqlWsContract.ACTION_DEVICE_CAPABILITIES_GET
