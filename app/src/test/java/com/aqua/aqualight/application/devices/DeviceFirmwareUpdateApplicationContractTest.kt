@@ -3,6 +3,7 @@ package com.aqua.aqualight.application.devices
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -21,16 +22,16 @@ class DeviceFirmwareUpdateApplicationContractTest {
 
             override suspend fun startUpdate(
                 plan: PreparedDeviceFirmwareUpdate
-            ): DeviceFirmwareCommandResult = DeviceFirmwareCommandResult(
-                sent = true,
-                messageId = "start-1"
+            ): DeviceFirmwareOperationResult = DeviceFirmwareOperationResult(
+                successful = true,
+                correlationId = "start-1"
             )
 
-            override suspend fun requestStatus(deviceUid: String): DeviceFirmwareCommandResult =
-                DeviceFirmwareCommandResult(sent = true, messageId = "status-1")
+            override suspend fun requestStatus(deviceUid: String): DeviceFirmwareOperationResult =
+                DeviceFirmwareOperationResult(successful = true, correlationId = "status-1")
 
-            override suspend fun clearStatus(deviceUid: String): DeviceFirmwareCommandResult =
-                DeviceFirmwareCommandResult(sent = true, messageId = "clear-1")
+            override suspend fun clearStatus(deviceUid: String): DeviceFirmwareOperationResult =
+                DeviceFirmwareOperationResult(successful = true, correlationId = "clear-1")
         }
 
         assertEquals(DeviceOtaState.Idle(DEVICE_UID), operations.observe(DEVICE_UID).value)
@@ -87,9 +88,16 @@ class DeviceFirmwareUpdateApplicationContractTest {
         assertTrue((states[8] as DeviceOtaState.RestartRequired).restartScheduled)
         assertEquals("ota", (states[10] as DeviceOtaState.Failed).field)
 
-        assertTrue(DeviceFirmwareCommandResult(sent = true, messageId = "ok").isSuccess)
-        assertFalse(DeviceFirmwareCommandResult(sent = false).isSuccess)
-        assertFalse(DeviceFirmwareCommandResult(sent = true, errorMessage = "rejected").isSuccess)
+        assertTrue(DeviceFirmwareOperationResult(successful = true, correlationId = "ok").successful)
+        assertFalse(
+            DeviceFirmwareOperationResult(
+                successful = false,
+                errorMessage = "rejected"
+            ).successful
+        )
+        assertThrows(IllegalArgumentException::class.java) {
+            DeviceFirmwareOperationResult(successful = false, errorMessage = "")
+        }
     }
 
     private fun preparedUpdate(): PreparedDeviceFirmwareUpdate = PreparedDeviceFirmwareUpdate(
