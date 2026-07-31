@@ -35,6 +35,7 @@ class DeviceRuntimeMetadataModelsTest {
             val family = checkNotNull(DeviceFamily.fromWireExact(product.getString("family")))
             val capabilitiesJson = profile.getJSONObject("capabilities")
             val limitsJson = product.getJSONObject("limits")
+            val displayName = product.getString("displayName")
 
             val identity = DeviceRuntimeIdentity(
                 deviceUid = DeviceUid("typed-fixture-${product.getString("model")}"),
@@ -44,7 +45,11 @@ class DeviceRuntimeMetadataModelsTest {
                 line = DeviceProductLine(product.getString("line")),
                 model = DeviceProductModel(product.getString("model")),
                 brand = "AquaLight",
-                displayName = product.getString("displayName"),
+                displayName = displayName,
+                customName = "",
+                effectiveDisplayName = displayName,
+                nameEditable = true,
+                customNameMaxBytes = 64,
                 skuId = DeviceSkuId(product.getString("skuId")),
                 skuCode = DeviceSkuCode(product.getString("skuCode")),
                 hardwareRevision = DeviceHardwareRevision(product.getString("hardwareRevision")),
