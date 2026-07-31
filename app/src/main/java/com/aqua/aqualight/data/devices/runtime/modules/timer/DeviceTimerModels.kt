@@ -97,12 +97,40 @@ data class DeviceTimerChannelConfig(
     val displayName: String? = null,
     val regime: DeviceTimerRegime? = null
 ) {
+    val normalizedChannelKey: String = channelKey.trim()
+    val normalizedDisplayName: String? = displayName?.trim()
+
+    init {
+        require(normalizedChannelKey.isNotEmpty() &&
+            normalizedChannelKey.none(Char::isISOControl)) {
+            "channelKey must identify a configured timer channel."
+        }
+        require(displayName != null || regime != null) {
+            "A timer channel update requires displayName and/or regime."
+        }
+        normalizedDisplayName?.let { value ->
+            require(value.none(Char::isISOControl)) {
+                "displayName must not contain control characters."
+            }
+            require(
+                value.toByteArray(Charsets.UTF_8).size <=
+                    DeviceTimerRuntimeContract.Limit.DISPLAY_NAME_BYTES
+            ) {
+                "displayName must not exceed " +
+                    "${DeviceTimerRuntimeContract.Limit.DISPLAY_NAME_BYTES} UTF-8 bytes."
+            }
+        }
+    }
+
     fun toJson(): JSONObject {
         val json = JSONObject()
-            .put(DeviceTimerRuntimeContract.Field.CHANNEL_KEY, channelKey)
+            .put(DeviceTimerRuntimeContract.Field.CHANNEL_KEY, normalizedChannelKey)
 
         if (displayName != null) {
-            json.put(DeviceTimerRuntimeContract.Field.DISPLAY_NAME, displayName)
+            json.put(
+                DeviceTimerRuntimeContract.Field.DISPLAY_NAME,
+                normalizedDisplayName?.ifEmpty { null } ?: JSONObject.NULL
+            )
         }
 
         if (regime != null) {
@@ -156,6 +184,12 @@ data class DeviceTimerConfigApplyPayload(
         require(schedules.size <= DeviceTimerRuntimeContract.Limit.MAX_SCHEDULES) {
             "Timer supports at most ${DeviceTimerRuntimeContract.Limit.MAX_SCHEDULES} schedules."
         }
+        require(
+            channels.map(DeviceTimerChannelConfig::normalizedChannelKey).distinct().size ==
+                channels.size
+        ) {
+            "timer.config.apply must not contain duplicate channelKey values."
+        }
     }
 
     fun toJson(): JSONObject {
@@ -185,9 +219,18 @@ data class DeviceTimerChannelSetPayload(
     val regime: DeviceTimerRegime,
     val save: Boolean = true
 ) {
+    private val normalizedChannelKey = channelKey.trim()
+
+    init {
+        require(normalizedChannelKey.isNotEmpty() &&
+            normalizedChannelKey.none(Char::isISOControl)) {
+            "channelKey must identify a configured timer channel."
+        }
+    }
+
     fun toJson(): JSONObject {
         return JSONObject()
-            .put(DeviceTimerRuntimeContract.Field.CHANNEL_KEY, channelKey)
+            .put(DeviceTimerRuntimeContract.Field.CHANNEL_KEY, normalizedChannelKey)
             .put(DeviceTimerRuntimeContract.Field.REGIME, regime.wireValue)
             .put(DeviceTimerRuntimeContract.Field.SAVE, save)
     }
