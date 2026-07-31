@@ -10,23 +10,40 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
+internal data class DeviceRuntimeRefreshTiming(
+    val commandTimeoutMillis: Long,
+    val debounceMillis: Long = DEFAULT_STATUS_REFRESH_DEBOUNCE_MS
+) {
+    init {
+        require(
+            commandTimeoutMillis in
+                DeviceRuntimeCommandExecutor.MIN_COMMAND_TIMEOUT_MS..
+                DeviceRuntimeCommandExecutor.MAX_COMMAND_TIMEOUT_MS
+        ) {
+            "commandTimeoutMillis is outside the commercial runtime range."
+        }
+        require(debounceMillis in MIN_REFRESH_DEBOUNCE_MS..MAX_REFRESH_DEBOUNCE_MS) {
+            "debounceMillis is outside the runtime coordination range."
+        }
+    }
+
+    companion object {
+        const val DEFAULT_STATUS_REFRESH_DEBOUNCE_MS = 120L
+        private const val MIN_REFRESH_DEBOUNCE_MS = 50L
+        private const val MAX_REFRESH_DEBOUNCE_MS = 5_000L
+    }
+}
+
 internal class DeviceRuntimeRefreshCoordinator(
     private val stateStore: DeviceRuntimeStateStore,
     private val commandExecutor: DeviceRuntimeCommandExecutor,
     private val scopeProvider: () -> CoroutineScope?,
-    private val commandTimeoutMillis: Long,
-    private val refreshDebounceMillis: Long = DEFAULT_STATUS_REFRESH_DEBOUNCE_MS,
-    private val jobs: DeviceRuntimeRefreshJobRegistry = DeviceRuntimeRefreshJobRegistry()
+    private val timing: DeviceRuntimeRefreshTiming
 ) {
     private val knownDevicesLock = Any()
     private val knownDeviceUids = mutableSetOf<DeviceUid>()
     private val bootstrappedGenerations = ConcurrentHashMap<DeviceUid, Long>()
-
-    init {
-        require(refreshDebounceMillis in MIN_REFRESH_DEBOUNCE_MS..MAX_REFRESH_DEBOUNCE_MS) {
-            "refreshDebounceMillis is outside the runtime coordination range."
-        }
-    }
+    private val jobs = DeviceRuntimeRefreshJobRegistry()
 
     fun reconcile(snapshots: Map<DeviceUid, DeviceSnapshot>) {
         val retired = synchronized(knownDevicesLock) {
@@ -90,7 +107,7 @@ internal class DeviceRuntimeRefreshCoordinator(
                 module = command.module,
                 action = command.action,
                 data = JSONObject(),
-                timeoutMillis = commandTimeoutMillis
+                timeoutMillis = timing.commandTimeoutMillis
             )
         )
     }
@@ -133,7 +150,7 @@ internal class DeviceRuntimeRefreshCoordinator(
         jobs.enqueueAndStartRefresh(deviceUid, targets) {
             scope.launch(start = CoroutineStart.LAZY) {
                 try {
-                    delay(refreshDebounceMillis)
+                    delay(timing.debounceMillis)
                     val batch = jobs.takeTargets(deviceUid)
                     if (batch.isNotEmpty()) {
                         refreshTargets(deviceUid, batch)
@@ -156,9 +173,6 @@ internal class DeviceRuntimeRefreshCoordinator(
     }
 
     companion object {
-        const val DEFAULT_STATUS_REFRESH_DEBOUNCE_MS = 120L
-        private const val MIN_REFRESH_DEBOUNCE_MS = 50L
-        private const val MAX_REFRESH_DEBOUNCE_MS = 5_000L
         private const val DEVICE_RETIRED_REASON = "device retired"
     }
 }
