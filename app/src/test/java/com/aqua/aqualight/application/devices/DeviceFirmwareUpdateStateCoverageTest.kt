@@ -68,12 +68,14 @@ class DeviceFirmwareUpdateStateCoverageTest {
             applyNow: Boolean
         ): Result<PreparedDeviceFirmwareUpdate> = Result.success(plan.copy(applyNow = applyNow))
 
-        override fun startUpdate(plan: PreparedDeviceFirmwareUpdate) =
+        override suspend fun startUpdate(plan: PreparedDeviceFirmwareUpdate) =
             DeviceFirmwareCommandResult(sent = true, messageId = "request-1")
 
-        override fun requestStatus(deviceUid: String) = DeviceFirmwareCommandResult(sent = true)
+        override suspend fun requestStatus(deviceUid: String) =
+            DeviceFirmwareCommandResult(sent = true)
 
-        override fun clearStatus(deviceUid: String) = DeviceFirmwareCommandResult(sent = true)
+        override suspend fun clearStatus(deviceUid: String) =
+            DeviceFirmwareCommandResult(sent = true)
     }
 
     private fun releaseContent() = DeviceFirmwareReleaseContent(
