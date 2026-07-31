@@ -13,6 +13,7 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -44,8 +45,8 @@ class DeviceOtaCommercialHardeningTest {
 
         val successfulStarts = coroutineScope {
             List(WORKER_COUNT) {
-                async { coordinator.startUpdate(plan).isSuccess }
-            }.awaitAll().count(Boolean::not).let { failed -> WORKER_COUNT - failed }
+                async { coordinator.startUpdate(plan).successful }
+            }.awaitAll().count { successful -> successful }
         }
 
         assertEquals(1, successfulStarts)
@@ -125,10 +126,9 @@ class DeviceOtaCommercialHardeningTest {
         )
     }
 
-    private inner class DelayingFirmwareGateway : DeviceRuntimeCommandGateway {
+    private class DelayingFirmwareGateway : DeviceRuntimeCommandGateway {
         val startExecutions = AtomicInteger(0)
 
-        @Suppress("UNCHECKED_CAST")
         override suspend fun <T> execute(
             deviceUid: DeviceUid,
             command: DeviceRuntimeCommand<T>,
@@ -137,29 +137,15 @@ class DeviceOtaCommercialHardeningTest {
             require(command.action == DeviceFirmwareRuntimeContract.Action.OTA_START)
             startExecutions.incrementAndGet()
             delay(START_SEND_DELAY_MILLIS)
-            val accepted = DeviceFirmwareOtaStartAccepted(
-                accepted = true,
-                request = DeviceFirmwareOtaStartRequestEcho(
-                    urlScheme = "https",
-                    version = TARGET_VERSION,
-                    expectedSize = FIRMWARE_SIZE,
-                    applyNow = true,
-                    allowInsecureHttp = false,
-                    productKey = PRODUCT_KEY,
-                    productId = "com.aqualight.dosing.dose_pro_2",
-                    model = "dose_pro_2",
-                    hardwareRevision = "2.0"
-                ),
-                ota = DeviceFirmwareOtaSnapshot(
-                    phase = DeviceFirmwareOtaPhase.STARTING,
-                    phaseRaw = DeviceFirmwareOtaPhase.STARTING.wireValue,
-                    active = true,
-                    startedAtMs = 1L,
-                    contentLength = FIRMWARE_SIZE.toLong(),
-                    targetVersion = TARGET_VERSION,
-                    sha256Expected = "a".repeat(64),
-                    urlScheme = "https",
-                    httpStatus = 200
+            val value = command.parseSuccess(
+                AqlWsIncomingMessage.Response(
+                    id = "ota-start-1",
+                    type = "res",
+                    module = command.module,
+                    action = command.action,
+                    data = otaStartAcceptedJson(),
+                    ok = true,
+                    statusCode = 202
                 )
             )
             return DeviceRuntimeCommandOutcome.Success(
@@ -169,7 +155,7 @@ class DeviceOtaCommercialHardeningTest {
                 messageId = "ota-start-1",
                 generation = DeviceRuntimeConnectionGeneration(1L),
                 statusCode = 202,
-                value = accepted as T
+                value = value
             )
         }
     }
@@ -289,6 +275,50 @@ class DeviceOtaCommercialHardeningTest {
             )
         )
     }
+
+    private fun otaStartAcceptedJson(): JSONObject = JSONObject()
+        .put("operation", "otaStart")
+        .put("accepted", true)
+        .put("runtimeTransport", "websocket")
+        .put("command", "firmware.ota.start")
+        .put("binaryTransfer", "firmware-download")
+        .put("event", DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS)
+        .put("progressEvent", DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS)
+        .put("completedEvent", DeviceFirmwareRuntimeContract.Event.OTA_COMPLETED)
+        .put(
+            "request",
+            JSONObject()
+                .put("urlScheme", "https")
+                .put("version", TARGET_VERSION)
+                .put("expectedSize", FIRMWARE_SIZE)
+                .put("applyNow", true)
+                .put("allowInsecureHttp", false)
+                .put("productKey", PRODUCT_KEY)
+                .put("productId", "com.aqualight.dosing.dose_pro_2")
+                .put("model", "dose_pro_2")
+                .put("hardwareRevision", "2.0")
+        )
+        .put("ota", otaSnapshotJson())
+
+    private fun otaSnapshotJson(): JSONObject = JSONObject()
+        .put("phase", "starting")
+        .put("active", true)
+        .put("restartRequired", false)
+        .put("restartScheduled", false)
+        .put("allowInsecureHttp", false)
+        .put("startedAtMs", 1L)
+        .put("finishedAtMs", 0L)
+        .put("bytesWritten", 0L)
+        .put("contentLength", FIRMWARE_SIZE.toLong())
+        .put("progressPermille", 0)
+        .put("progressPercent", 0.0)
+        .put("targetVersion", TARGET_VERSION)
+        .put("sha256Expected", "a".repeat(64))
+        .put("sha256Actual", "")
+        .put("lastError", "")
+        .put("lastErrorField", "")
+        .put("urlScheme", "https")
+        .put("httpStatus", 200)
 
     private fun manifestJson(): JSONObject {
         val artifact = artifact()
