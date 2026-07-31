@@ -4,6 +4,7 @@ import com.aqua.aqualight.data.devices.contract.AqlWsContract
 import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceProductKey
 import com.aqua.aqualight.data.devices.model.DeviceProductModel
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeDeviceNameStatus
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeModuleStatus
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeModules
 import org.json.JSONObject
@@ -19,6 +20,9 @@ object DeviceRuntimeModulesParser {
         require(data.requireStatusBoolean("authenticated")) {
             "device.status.get.data.authenticated must be true after runtime authentication."
         }
+
+        val device = data.requireStatusObject("device")
+        device.requireStatusKeys(DEVICE_KEYS, "device.status.get.data.device")
 
         val product = data.requireStatusObject("product")
         product.requireStatusKeys(PRODUCT_KEYS, "device.status.get.data.product")
@@ -50,6 +54,13 @@ object DeviceRuntimeModulesParser {
                 discovery = modules.requireStatusBoolean("discovery"),
                 firmware = modules.requireStatusBoolean("firmware"),
                 system = modules.requireStatusBoolean("system")
+            ),
+            deviceName = DeviceRuntimeDeviceNameStatus(
+                productDisplayName = device.requireStatusString("productDisplayName"),
+                customName = device.requireStatusOptionalString("customName"),
+                effectiveDisplayName = device.requireStatusString("effectiveDisplayName"),
+                editable = device.requireStatusBoolean("editable"),
+                maxBytes = device.requireStatusNonNegativeInt("maxBytes")
             )
         )
     }
@@ -75,9 +86,15 @@ private fun JSONObject.requireStatusObject(key: String): JSONObject {
 }
 
 private fun JSONObject.requireStatusString(key: String): String {
+    val value = requireStatusOptionalString(key)
+    require(value.isNotEmpty()) { "$key must not be empty." }
+    return value
+}
+
+private fun JSONObject.requireStatusOptionalString(key: String): String {
     require(has(key) && !isNull(key)) { "$key is required." }
     val value = get(key) as? String ?: error("$key must be a string.")
-    require(value.isNotEmpty()) { "$key must not be empty." }
+    if (value.isEmpty()) return value
     require(!value.first().isWhitespace() && !value.last().isWhitespace()) {
         "$key must not contain surrounding whitespace."
     }
@@ -88,6 +105,12 @@ private fun JSONObject.requireStatusString(key: String): String {
 private fun JSONObject.requireStatusBoolean(key: String): Boolean {
     require(has(key) && !isNull(key)) { "$key is required." }
     return get(key) as? Boolean ?: error("$key must be a boolean.")
+}
+
+private fun JSONObject.requireStatusNonNegativeInt(key: String): Int {
+    val value = requireStatusNonNegativeLong(key)
+    require(value <= Int.MAX_VALUE.toLong()) { "$key exceeds the supported integer range." }
+    return value.toInt()
 }
 
 private fun JSONObject.requireStatusNonNegativeLong(key: String): Long {
@@ -118,7 +141,12 @@ private fun JSONObject.requireExactRuntimeContract() {
 private const val BOOTED_STATE = "booted"
 private const val STATUS_TRANSPORT = "websocket"
 private const val STATUS_WS_PORT = 80
-private val STATUS_KEYS = setOf("state", "authenticated", "uptimeMs", "product", "runtime", "modules")
+private val STATUS_KEYS = setOf(
+    "state", "authenticated", "uptimeMs", "device", "product", "runtime", "modules"
+)
+private val DEVICE_KEYS = setOf(
+    "productDisplayName", "customName", "effectiveDisplayName", "editable", "maxBytes"
+)
 private val PRODUCT_KEYS = setOf("productKey", "family", "model", "displayName")
 private val RUNTIME_KEYS = setOf("transport", "wsSchema", "wsPath", "wsPort")
 private val MODULE_KEYS = setOf(
