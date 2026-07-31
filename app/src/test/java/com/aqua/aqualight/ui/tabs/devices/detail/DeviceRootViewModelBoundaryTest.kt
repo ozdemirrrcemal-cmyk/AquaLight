@@ -172,17 +172,19 @@ class DeviceRootViewModelBoundaryTest {
             return Result.success(preparedPlan())
         }
 
-        override fun startUpdate(plan: PreparedDeviceFirmwareUpdate): DeviceFirmwareCommandResult {
+        override suspend fun startUpdate(
+            plan: PreparedDeviceFirmwareUpdate
+        ): DeviceFirmwareCommandResult {
             startCalls += 1
             return DeviceFirmwareCommandResult(sent = true, messageId = "start-message")
         }
 
-        override fun requestStatus(deviceUid: String): DeviceFirmwareCommandResult {
+        override suspend fun requestStatus(deviceUid: String): DeviceFirmwareCommandResult {
             statusDeviceUid = deviceUid
             return DeviceFirmwareCommandResult(sent = true, messageId = "status-message")
         }
 
-        override fun clearStatus(deviceUid: String): DeviceFirmwareCommandResult {
+        override suspend fun clearStatus(deviceUid: String): DeviceFirmwareCommandResult {
             clearDeviceUid = deviceUid
             return DeviceFirmwareCommandResult(sent = true, messageId = "clear-message")
         }
