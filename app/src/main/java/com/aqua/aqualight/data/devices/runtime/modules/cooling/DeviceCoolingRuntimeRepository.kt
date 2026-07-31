@@ -1,101 +1,105 @@
 package com.aqua.aqualight.data.devices.runtime.modules.cooling
 
+import com.aqua.aqualight.data.devices.contract.AqlWsContract
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import org.json.JSONObject
 
 class DeviceCoolingRuntimeRepository(
-    private val commandClientProvider: (DeviceUid) -> AqlWsCommandClient?
+    private val commandGateway: DeviceRuntimeCommandGateway
 ) {
-    fun requestStatus(deviceUid: DeviceUid): DeviceCoolingCommandResult {
-        return send(
-            deviceUid = deviceUid,
-            action = DeviceCoolingRuntimeContract.Action.STATUS_GET
-        )
-    }
+    suspend fun requestStatus(
+        deviceUid: DeviceUid
+    ): DeviceRuntimeCommandOutcome<DeviceCoolingStatus> =
+        commandGateway.execute(deviceUid, DeviceCoolingStatusGetCommand)
 
-    fun applyConfig(
+    suspend fun applyConfig(
         deviceUid: DeviceUid,
         payload: DeviceCoolingConfigApplyPayload
-    ): DeviceCoolingCommandResult {
-        return send(
-            deviceUid = deviceUid,
-            action = DeviceCoolingRuntimeContract.Action.CONFIG_APPLY,
-            data = payload.toJson()
-        )
-    }
+    ): DeviceRuntimeCommandOutcome<DeviceCoolingConfigApplyResult> =
+        commandGateway.execute(deviceUid, DeviceCoolingConfigApplyCommand(payload))
 
-    fun setMode(
+    suspend fun setMode(
         deviceUid: DeviceUid,
         mode: DeviceCoolingMode,
         save: Boolean = true
-    ): DeviceCoolingCommandResult {
-        return applyConfig(
-            deviceUid = deviceUid,
-            payload = DeviceCoolingConfigApplyPayload(mode = mode, save = save)
-        )
-    }
+    ): DeviceRuntimeCommandOutcome<DeviceCoolingConfigApplyResult> = applyConfig(
+        deviceUid = deviceUid,
+        payload = DeviceCoolingConfigApplyPayload(mode = mode, save = save)
+    )
 
-    fun setTemperatureRange(
+    suspend fun setTemperatureRange(
         deviceUid: DeviceUid,
         minTemperatureC: Double,
         maxTemperatureC: Double,
         save: Boolean = true
-    ): DeviceCoolingCommandResult {
-        return applyConfig(
-            deviceUid = deviceUid,
-            payload = DeviceCoolingConfigApplyPayload(
-                minTemperatureC = minTemperatureC,
-                maxTemperatureC = maxTemperatureC,
-                save = save
-            )
+    ): DeviceRuntimeCommandOutcome<DeviceCoolingConfigApplyResult> = applyConfig(
+        deviceUid = deviceUid,
+        payload = DeviceCoolingConfigApplyPayload(
+            minTemperatureC = minTemperatureC,
+            maxTemperatureC = maxTemperatureC,
+            save = save
         )
-    }
+    )
 
-    fun setAuto(deviceUid: DeviceUid, save: Boolean = true): DeviceCoolingCommandResult {
-        return setMode(deviceUid, DeviceCoolingMode.AUTO, save)
-    }
-
-    fun setOn(deviceUid: DeviceUid, save: Boolean = true): DeviceCoolingCommandResult {
-        return setMode(deviceUid, DeviceCoolingMode.ON, save)
-    }
-
-    fun setOff(deviceUid: DeviceUid, save: Boolean = true): DeviceCoolingCommandResult {
-        return setMode(deviceUid, DeviceCoolingMode.OFF, save)
-    }
-
-    private fun send(
+    suspend fun setFanDisplayNames(
         deviceUid: DeviceUid,
-        action: String,
-        data: JSONObject = JSONObject()
-    ): DeviceCoolingCommandResult {
-        val commandClient = commandClientProvider(deviceUid)
-
-        if (commandClient == null) {
-            return DeviceCoolingCommandResult(
-                sent = false,
-                action = action,
-                errorMessage = "No WebSocket command client for ${deviceUid.value}"
-            )
-        }
-
-        val messageId = commandClient.command(
-            module = DeviceCoolingRuntimeContract.MODULE,
-            action = action,
-            data = data
+        fans: List<DeviceCoolingFanConfig>,
+        save: Boolean = true
+    ): DeviceRuntimeCommandOutcome<DeviceCoolingConfigApplyResult> = applyConfig(
+        deviceUid = deviceUid,
+        payload = DeviceCoolingConfigApplyPayload(
+            fans = fans,
+            save = save
         )
+    )
 
-        return DeviceCoolingCommandResult(
-            sent = messageId != null,
-            action = action,
-            messageId = messageId.orEmpty(),
-            errorMessage = if (messageId != null) "" else "WebSocket send failed"
-        )
-    }
+    suspend fun setAuto(
+        deviceUid: DeviceUid,
+        save: Boolean = true
+    ): DeviceRuntimeCommandOutcome<DeviceCoolingConfigApplyResult> =
+        setMode(deviceUid, DeviceCoolingMode.AUTO, save)
 
-    companion object {
-        fun singleSession(commandClient: AqlWsCommandClient): DeviceCoolingRuntimeRepository {
-            return DeviceCoolingRuntimeRepository { commandClient }
-        }
+    suspend fun setOn(
+        deviceUid: DeviceUid,
+        save: Boolean = true
+    ): DeviceRuntimeCommandOutcome<DeviceCoolingConfigApplyResult> =
+        setMode(deviceUid, DeviceCoolingMode.ON, save)
+
+    suspend fun setOff(
+        deviceUid: DeviceUid,
+        save: Boolean = true
+    ): DeviceRuntimeCommandOutcome<DeviceCoolingConfigApplyResult> =
+        setMode(deviceUid, DeviceCoolingMode.OFF, save)
+}
+
+private data object DeviceCoolingStatusGetCommand : DeviceRuntimeCommand<DeviceCoolingStatus> {
+    override val module: String = AqlWsContract.MODULE_COOLING
+    override val action: String = AqlWsContract.ACTION_COOLING_STATUS_GET
+    override fun encodeData(): JSONObject = JSONObject()
+
+    override fun parseSuccess(response: AqlWsIncomingMessage.Response): DeviceCoolingStatus {
+        require(response.statusCode == HTTP_OK)
+        return DeviceCoolingStatusParser.parse(response.data)
     }
 }
+
+private class DeviceCoolingConfigApplyCommand(
+    private val payload: DeviceCoolingConfigApplyPayload
+) : DeviceRuntimeCommand<DeviceCoolingConfigApplyResult> {
+    override val module: String = AqlWsContract.MODULE_COOLING
+    override val action: String = AqlWsContract.ACTION_COOLING_CONFIG_APPLY
+    override fun encodeData(): JSONObject = payload.toJson()
+
+    override fun parseSuccess(
+        response: AqlWsIncomingMessage.Response
+    ): DeviceCoolingConfigApplyResult {
+        require(response.statusCode == HTTP_OK)
+        return DeviceCoolingStatusParser.parseConfigApply(response.data)
+    }
+}
+
+private const val HTTP_OK = 200
