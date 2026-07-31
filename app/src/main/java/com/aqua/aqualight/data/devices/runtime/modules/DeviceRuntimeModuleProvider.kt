@@ -29,14 +29,14 @@ class DeviceRuntimeModuleProvider(
     val network: DeviceNetworkRuntimeRepository =
         DeviceNetworkRuntimeRepository(commandGateway)
 
+    val time: DeviceTimeRuntimeRepository =
+        DeviceTimeRuntimeRepository(commandGateway)
+
     val firmware: DeviceFirmwareRuntimeRepository =
         DeviceFirmwareRuntimeRepository(commandClientProvider)
 
     val firmwareUpdate: DeviceFirmwareUpdateRepository =
         DeviceFirmwareUpdateRepository(firmware)
-
-    val time: DeviceTimeRuntimeRepository =
-        DeviceTimeRuntimeRepository(commandClientProvider)
 
     val timer: DeviceTimerRuntimeRepository =
         DeviceTimerRuntimeRepository(commandClientProvider)
