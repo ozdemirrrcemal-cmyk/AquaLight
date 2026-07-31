@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.devices.repository
 
 import com.aqua.aqualight.data.devices.contract.AqlWsContract
+import com.aqua.aqualight.data.devices.model.DEVICE_CUSTOM_NAME_MAX_BYTES
 import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceProductKey
 import com.aqua.aqualight.data.devices.model.DeviceProductModel
@@ -25,6 +26,27 @@ object DeviceRuntimeModulesParser {
         val family = requireNotNull(
             DeviceFamily.fromWireExact(product.requireStatusString("family"))
         ) { "device.status.get.data.product.family is not an exact commercial family." }
+        val productDisplayName = product.requireStatusString("displayName")
+
+        val device = data.requireStatusObject("device")
+        device.requireStatusKeys(DEVICE_KEYS, "device.status.get.data.device")
+        require(device.requireStatusString("productDisplayName") == productDisplayName) {
+            "device.status.get product/device display names disagree."
+        }
+        val customName = device.requireStatusOptionalString("customName")
+        val effectiveDisplayName = device.requireStatusString("effectiveDisplayName")
+        val editable = device.requireStatusBoolean("editable")
+        val maxBytes = device.requireStatusNonNegativeLong("maxBytes").toInt()
+        require(editable) { "device.status.get must advertise editable device names." }
+        require(maxBytes == DEVICE_CUSTOM_NAME_MAX_BYTES) {
+            "device.status.get device.maxBytes is incompatible."
+        }
+        require(customName.toByteArray(Charsets.UTF_8).size <= maxBytes) {
+            "device.status.get customName exceeds its UTF-8 byte limit."
+        }
+        require(effectiveDisplayName == customName.ifBlank { productDisplayName }) {
+            "device.status.get effectiveDisplayName violates the fallback contract."
+        }
 
         val runtime = data.requireStatusObject("runtime")
         runtime.requireStatusKeys(RUNTIME_KEYS, "device.status.get.data.runtime")
@@ -37,7 +59,7 @@ object DeviceRuntimeModulesParser {
             productKey = DeviceProductKey(product.requireStatusString("productKey")),
             family = family,
             model = DeviceProductModel(product.requireStatusString("model")),
-            displayName = product.requireStatusString("displayName"),
+            displayName = productDisplayName,
             uptimeMs = data.requireStatusNonNegativeLong("uptimeMs"),
             modules = DeviceRuntimeModules(
                 light = modules.requireStatusBoolean("light"),
@@ -50,7 +72,11 @@ object DeviceRuntimeModulesParser {
                 discovery = modules.requireStatusBoolean("discovery"),
                 firmware = modules.requireStatusBoolean("firmware"),
                 system = modules.requireStatusBoolean("system")
-            )
+            ),
+            customName = customName,
+            effectiveDisplayName = effectiveDisplayName,
+            nameEditable = editable,
+            customNameMaxBytes = maxBytes
         )
     }
 }
@@ -75,10 +101,15 @@ private fun JSONObject.requireStatusObject(key: String): JSONObject {
 }
 
 private fun JSONObject.requireStatusString(key: String): String {
+    val value = requireStatusOptionalString(key)
+    require(value.isNotEmpty()) { "$key must not be empty." }
+    return value
+}
+
+private fun JSONObject.requireStatusOptionalString(key: String): String {
     require(has(key) && !isNull(key)) { "$key is required." }
     val value = get(key) as? String ?: error("$key must be a string.")
-    require(value.isNotEmpty()) { "$key must not be empty." }
-    require(!value.first().isWhitespace() && !value.last().isWhitespace()) {
+    require(value.isEmpty() || (!value.first().isWhitespace() && !value.last().isWhitespace())) {
         "$key must not contain surrounding whitespace."
     }
     require(value.none(Char::isISOControl)) { "$key must not contain control characters." }
@@ -110,15 +141,19 @@ private fun JSONObject.requireExactRuntimeContract() {
     require(requireStatusString("wsPath") == AqlWsContract.DEFAULT_PATH) {
         "device.status.get.data.runtime.wsPath is incompatible."
     }
-    require(requireStatusNonNegativeLong("wsPort") == STATUS_WS_PORT.toLong()) {
+    require(requireStatusNonNegativeLong("wsPort") == AqlWsContract.DEFAULT_PORT.toLong()) {
         "device.status.get.data.runtime.wsPort is incompatible."
     }
 }
 
 private const val BOOTED_STATE = "booted"
 private const val STATUS_TRANSPORT = "websocket"
-private const val STATUS_WS_PORT = 80
-private val STATUS_KEYS = setOf("state", "authenticated", "uptimeMs", "product", "runtime", "modules")
+private val STATUS_KEYS = setOf(
+    "state", "authenticated", "uptimeMs", "device", "product", "runtime", "modules"
+)
+private val DEVICE_KEYS = setOf(
+    "productDisplayName", "customName", "effectiveDisplayName", "editable", "maxBytes"
+)
 private val PRODUCT_KEYS = setOf("productKey", "family", "model", "displayName")
 private val RUNTIME_KEYS = setOf("transport", "wsSchema", "wsPath", "wsPort")
 private val MODULE_KEYS = setOf(
