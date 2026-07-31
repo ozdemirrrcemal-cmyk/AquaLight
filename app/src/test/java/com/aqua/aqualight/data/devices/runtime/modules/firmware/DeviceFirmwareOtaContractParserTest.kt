@@ -11,9 +11,7 @@ class DeviceFirmwareOtaContractParserTest {
 
     @Test
     fun `start acceptance requires and parses exact model echo`() {
-        val parsed = DeviceFirmwareStatusParser.parseOtaStartAcceptedExact(
-            startAcceptedJson()
-        ).getOrThrow()
+        val parsed = DeviceFirmwareCommandParsers.parseOtaStart(startAcceptedJson())
 
         assertTrue(parsed.accepted)
         assertEquals("dose_pro_2", parsed.request?.model)
@@ -26,14 +24,53 @@ class DeviceFirmwareOtaContractParserTest {
             getJSONObject("request").remove("model")
         }
 
-        assertTrue(DeviceFirmwareStatusParser.parseOtaStartAcceptedExact(invalid).isFailure)
+        assertTrue(runCatching { DeviceFirmwareCommandParsers.parseOtaStart(invalid) }.isFailure)
     }
 
     @Test
-    fun `progress parser rejects phase and active flag disagreement`() {
-        val invalid = otaSnapshot().put("phase", "downloading").put("active", false)
+    fun `periodic event rejects phase and active flag disagreement`() {
+        val invalid = otaTickEvent(
+            otaSnapshot().put("phase", "downloading").put("active", false)
+        )
 
-        assertTrue(DeviceFirmwareStatusParser.parseOtaProgressEventExact(invalid).isFailure)
+        assertTrue(runCatching { DeviceFirmwareCommandParsers.parseOtaEvent(invalid) }.isFailure)
+    }
+
+    @Test
+    fun `clear parser accepts firmware previous summary instead of full snapshot`() {
+        val parsed = DeviceFirmwareCommandParsers.parseOtaClear(clearJson())
+
+        assertTrue(parsed.cleared)
+        assertEquals(DeviceFirmwareOtaPhase.SUCCEEDED, parsed.previous.phase)
+        assertEquals("2.0.0", parsed.previous.targetVersion)
+        assertEquals(DeviceFirmwareOtaPhase.IDLE, parsed.ota.phase)
+    }
+
+    @Test
+    fun `ota event rejects wrappers coercion and unknown fields`() {
+        val wrapper = JSONObject().put("ota", otaTickEvent(otaSnapshot()))
+        val coercion = otaTickEvent(otaSnapshot()).put("active", "false")
+        val unknown = otaTickEvent(otaSnapshot()).put("legacy", true)
+
+        assertTrue(runCatching { DeviceFirmwareCommandParsers.parseOtaEvent(wrapper) }.isFailure)
+        assertTrue(runCatching { DeviceFirmwareCommandParsers.parseOtaEvent(coercion) }.isFailure)
+        assertTrue(runCatching { DeviceFirmwareCommandParsers.parseOtaEvent(unknown) }.isFailure)
+    }
+
+    @Test
+    fun `staged ota start event parses exact command result wrapper`() {
+        val staged = JSONObject()
+            .put("commandId", "firmware-1")
+            .put("module", DeviceFirmwareRuntimeContract.MODULE)
+            .put("action", DeviceFirmwareRuntimeContract.Action.OTA_START)
+            .put("sessionId", "session-1")
+            .put("publishedAtMs", 10L)
+            .put("result", startAcceptedJson())
+
+        assertEquals(
+            DeviceFirmwareOtaPhase.STARTING,
+            DeviceFirmwareCommandParsers.parseOtaEvent(staged).phase
+        )
     }
 
     @Test
@@ -82,6 +119,38 @@ class DeviceFirmwareOtaContractParserTest {
                 .put("hardwareRevision", "2.0")
         )
         .put("ota", otaSnapshot().put("phase", "starting").put("active", true))
+
+    private fun clearJson(): JSONObject = JSONObject()
+        .put("operation", "otaClear")
+        .put("cleared", true)
+        .put("runtimeTransport", "websocket")
+        .put("command", "firmware.ota.clear")
+        .put(
+            "previous",
+            JSONObject()
+                .put("phase", "succeeded")
+                .put("restartRequired", true)
+                .put("restartScheduled", false)
+                .put("targetVersion", "2.0.0")
+                .put("lastError", "")
+                .put("lastErrorField", "")
+        )
+        .put(
+            "ota",
+            otaSnapshot()
+                .put("startedAtMs", 0L)
+                .put("contentLength", 0L)
+                .put("targetVersion", "")
+                .put("sha256Expected", "")
+                .put("urlScheme", "")
+        )
+
+    private fun otaTickEvent(snapshot: JSONObject): JSONObject = JSONObject(snapshot.toString())
+        .put("completed", snapshot.getString("phase") in setOf("succeeded", "failed"))
+        .put("success", snapshot.getString("phase") == "succeeded")
+        .put("failed", snapshot.getString("phase") == "failed")
+        .put("runtimeTransport", "websocket")
+        .put("binaryTransfer", "firmware-download")
 
     private fun otaSnapshot(): JSONObject = JSONObject()
         .put("phase", "idle")
