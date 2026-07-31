@@ -13,7 +13,50 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE_PATH = ROOT / "protocol/fixtures/aql_ws_v1_golden.json"
-FIXTURE_SHA256 = "5fd72666b4f744f0556edfb97bde13c3d1b3688da349dc11b56abd542e4ab48d"
+FIXTURE_SHA256 = "765cd113b848d4b17c173e513b714b806466ec994483a34c19970e7a1b984591"
+EXPECTED_AUTHENTICATED_COMMANDS = (
+    "cooling.config.apply",
+    "cooling.status.get",
+    "device.capabilities.get",
+    "device.identity.get",
+    "device.name.set",
+    "device.status.get",
+    "dosing.calibration.cancel",
+    "dosing.calibration.confirm",
+    "dosing.calibration.finish",
+    "dosing.calibration.start",
+    "dosing.config.apply",
+    "dosing.dose.now",
+    "dosing.dose.stop",
+    "dosing.prime.start",
+    "dosing.prime.stop",
+    "dosing.reservoir.refill",
+    "dosing.status.get",
+    "firmware.ota.clear",
+    "firmware.ota.start",
+    "firmware.ota.status",
+    "firmware.status.get",
+    "light.channel.regime.set",
+    "light.manual.set",
+    "light.program.apply",
+    "light.program.delete",
+    "light.status.get",
+    "light.temperature-protection.set",
+    "light.temperature-protection.status.get",
+    "network.status.get",
+    "security.pair",
+    "security.reset",
+    "security.status.get",
+    "security.unpair",
+    "time.config.apply",
+    "time.ntp.sync",
+    "time.phone.sync",
+    "time.rtc.set",
+    "time.status.get",
+    "timer.channel.set",
+    "timer.config.apply",
+    "timer.status.get",
+)
 errors: list[str] = []
 
 
@@ -55,7 +98,15 @@ for token, reason in (
     ('const val AUTH_SCHEME = "hmac-sha256"', "challenge-response algorithm must remain explicit"),
     ('const val MESSAGE_BYTES = 8_192', "wire size limit must remain explicit"),
     ('const val DATA_BYTES = 4_096', "data size limit must remain explicit"),
+    ('const val JSON_DEPTH = 12', "firmware JSON depth limit must remain explicit"),
+    ('const val JSON_KEYS = 128', "firmware JSON key-count limit must remain explicit"),
+    ('const val JSON_KEY_BYTES = 64', "firmware JSON key-byte limit must remain explicit"),
+    ('const val AUTHENTICATED_COMMAND_COUNT = 41', "command-union count must remain explicit"),
+    ('const val ACTION_DEVICE_NAME_SET = "name.set"', "device-name command must be registered"),
+    ('"temperature-protection.status.get"', "temperature-protection status must be registered"),
+    ('"temperature-protection.set"', "temperature-protection mutation must be registered"),
     ('commandKey(MODULE_NETWORK, ACTION_NETWORK_STATUS_GET)', "network status must be registered"),
+    ('fun isActiveEvent(module: String, action: String)', "active event routes must be explicit"),
 ):
     require(contract_path, contract, token, reason)
 for token in ('"aql.ws.v2"', '"/aql/v2/ws"', 'const val TOKEN = "token"'):
@@ -208,8 +259,8 @@ try:
     access = fixture["commandAccess"]
     if access["public"]:
         errors.append("WebSocket must not expose unauthenticated application commands")
-    if len(access["authenticated"]) != 38 or len(set(access["authenticated"])) != 38:
-        errors.append("golden authenticated command matrix must contain 38 unique commands")
+    if tuple(access["authenticated"]) != EXPECTED_AUTHENTICATED_COMMANDS:
+        errors.append("golden authenticated command matrix differs from the pinned 41-command union")
 except (KeyError, TypeError, ValueError, UnicodeError, json.JSONDecodeError) as exc:
     errors.append(f"golden fixture could not be validated: {exc}")
 
