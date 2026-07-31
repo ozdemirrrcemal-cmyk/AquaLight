@@ -10,7 +10,6 @@ import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOpera
 import com.aqua.aqualight.data.care.DefaultMaintenanceOperations
 import com.aqua.aqualight.data.care.integrity.restoreTaskSnapshotsForIntegrity
 import com.aqua.aqualight.data.care.integrity.snapshotTasksForIntegrity
-import com.aqua.aqualight.data.devices.DefaultDeviceFirmwareUpdateOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
@@ -181,8 +180,7 @@ internal class OwnerViewModelFactory(
 
             DeviceLightRootViewModel::class.java ->
                 DeviceLightRootViewModel(
-                    rootOperations = DefaultDeviceRootOperations(repository),
-                    firmwareUpdateOperations = DefaultDeviceFirmwareUpdateOperations(repository)
+                    rootOperations = DefaultDeviceRootOperations(repository)
                 )
 
             DeviceCoolingRootViewModel::class.java ->
