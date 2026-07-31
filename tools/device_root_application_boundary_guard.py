@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Protect the device-root and shared firmware-update application boundaries."""
+"""Protect the device-root application boundaries and shared firmware-update core."""
 from pathlib import Path
 import re
 import sys
@@ -203,15 +203,21 @@ for path, text in view_models.items():
         errors.append(f"{path.relative_to(ROOT)}: ViewModel must receive DeviceRootOperations")
 
 light_view_model = view_models[ROOT_VIEW_MODELS[1]]
-for token in (
-    "private val firmwareUpdateOperations: DeviceFirmwareUpdateOperations",
-    "firmwareUpdateOperations.prepareUpdate",
-    "firmwareUpdateOperations.startUpdate",
-    "firmwareUpdateOperations.requestStatus",
-    "firmwareUpdateOperations.clearStatus",
+for forbidden in (
+    "DeviceFirmwareUpdateOperations",
+    "PreparedDeviceFirmwareUpdate",
+    "firmwareUpdateOperations",
+    "checkBetaOtaManifest",
+    "startOtaTestUpdate",
+    "requestOtaTestStatus",
+    "clearOtaTestStatus",
+    "otaTest",
+    "OTA_TEST",
 ):
-    if token not in light_view_model:
-        errors.append(f"{ROOT_VIEW_MODELS[1].relative_to(ROOT)}: firmware boundary wiring is missing: {token}")
+    if forbidden in light_view_model:
+        errors.append(
+            f"{ROOT_VIEW_MODELS[1].relative_to(ROOT)}: temporary OTA wiring must stay out of the Light root: {forbidden}"
+        )
 
 for path, text in ((MENU_MAPPER, menu_mapper), (PRESENTATION_MAPPER, presentation_mapper)):
     if re.search(r"^import\s+com\.aqua\.aqualight\.data\.", text, re.MULTILINE):
@@ -220,7 +226,6 @@ for path, text in ((MENU_MAPPER, menu_mapper), (PRESENTATION_MAPPER, presentatio
 for path, text in ((FACTORY, factory), (SMOKE_FACTORY, smoke_factory)):
     for token in (
         "DefaultDeviceRootOperations(",
-        "DefaultDeviceFirmwareUpdateOperations(",
         "DeviceLightRootViewModel(",
         "DeviceCoolingRootViewModel(",
         "DeviceTimerRootViewModel(",
@@ -232,9 +237,8 @@ for path, text in ((FACTORY, factory), (SMOKE_FACTORY, smoke_factory)):
 
 for token in (
     "FakeDeviceRootOperations",
-    "FakeFirmwareUpdateOperations",
     "overview renders application root snapshot without repository models",
-    "light root delegates ota preparation and commands through firmware boundary",
+    "light root exposes only the device title state",
 ):
     if token not in test:
         errors.append(f"{TEST.relative_to(ROOT)}: fake-backed root coverage is missing: {token}")
