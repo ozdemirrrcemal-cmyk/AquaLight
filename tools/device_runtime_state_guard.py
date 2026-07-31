@@ -176,7 +176,8 @@ require_tokens(
         "reducer records loading error and rejects old generation completion",
         "message router accepts exact active wrapper and rejects unknown fields",
         "refresh coordinator deduplicates targets isolates devices and cancels generations",
-        "assertFalse(store.reduce(DEVICE_A, firstGeneration)",
+        "store.reduce(DEVICE_A, firstGeneration) { state ->",
+        "assertFalse(requireNotNull(store.current(DEVICE_A)).authenticated)",
     ),
 )
 
