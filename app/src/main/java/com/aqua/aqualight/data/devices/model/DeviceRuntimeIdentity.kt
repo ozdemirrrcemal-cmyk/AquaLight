@@ -74,7 +74,14 @@ data class DeviceRuntimeIdentity(
     val line: DeviceProductLine,
     val model: DeviceProductModel,
     val brand: String,
+    /** Immutable compiled product name. */
     val displayName: String,
+    /** User-owned persisted/runtime override. Empty means use [displayName]. */
+    val customName: String = "",
+    /** Firmware-resolved presentation name; must match the identity split exactly. */
+    val effectiveDisplayName: String = customName.ifBlank { displayName },
+    val nameEditable: Boolean = true,
+    val customNameMaxBytes: Int = DEVICE_CUSTOM_NAME_MAX_BYTES,
     val skuId: DeviceSkuId,
     val skuCode: DeviceSkuCode,
     val hardwareRevision: DeviceHardwareRevision,
@@ -89,6 +96,18 @@ data class DeviceRuntimeIdentity(
         requireExactText(deviceUid.value, "deviceUid")
         requireExactText(brand, "brand")
         requireExactText(displayName, "displayName")
+        requireOptionalExactText(customName, "customName")
+        requireExactText(effectiveDisplayName, "effectiveDisplayName")
+        require(nameEditable) { "Commercial firmware must advertise editable device names." }
+        require(customNameMaxBytes == DEVICE_CUSTOM_NAME_MAX_BYTES) {
+            "customNameMaxBytes is incompatible with the firmware contract."
+        }
+        require(customName.toByteArray(Charsets.UTF_8).size <= customNameMaxBytes) {
+            "customName exceeds the firmware UTF-8 byte limit."
+        }
+        require(effectiveDisplayName == customName.ifBlank { displayName }) {
+            "effectiveDisplayName does not match customName/displayName fallback rules."
+        }
     }
 
     val compatibilityIdentity: DeviceCompatibilityIdentity
@@ -118,7 +137,7 @@ data class DeviceRuntimeTransportMetadata(
         require(wsPath == AqlWsContract.DEFAULT_PATH) {
             "device.identity.get runtime path is incompatible."
         }
-        require(wsPort == RUNTIME_WS_PORT) {
+        require(wsPort == AqlWsContract.DEFAULT_PORT) {
             "device.identity.get runtime port is incompatible."
         }
         require(wsProtocolVersion == AqlWsContract.PROTOCOL_VERSION) {
@@ -161,11 +180,17 @@ private fun requireExact(value: String, field: String, pattern: Regex) {
 
 private fun requireExactText(value: String, field: String) {
     require(value.isNotEmpty()) { "$field must not be empty." }
-    require(!value.first().isWhitespace() && !value.last().isWhitespace()) {
+    requireOptionalExactText(value, field)
+}
+
+private fun requireOptionalExactText(value: String, field: String) {
+    require(value.isEmpty() || (!value.first().isWhitespace() && !value.last().isWhitespace())) {
         "$field must not contain surrounding whitespace."
     }
     require(value.none(Char::isISOControl)) { "$field must not contain control characters." }
 }
+
+const val DEVICE_CUSTOM_NAME_MAX_BYTES = 64
 
 private val PRODUCT_KEY_PATTERN = Regex("^[A-Z][A-Z0-9_]*$")
 private val PRODUCT_ID_PATTERN = Regex("^[a-z0-9]+(?:[._-][a-z0-9]+)+$")
@@ -175,4 +200,3 @@ private val HARDWARE_REVISION_PATTERN = Regex("^[0-9]+(?:\\.[0-9]+)*$")
 private const val AQUALIGHT_PRODUCT_ID_PREFIX = "com.aqualight."
 private const val SUPPORTED_DEVICE_API_VERSION = 1
 private const val RUNTIME_TRANSPORT = "websocket"
-private const val RUNTIME_WS_PORT = 80
