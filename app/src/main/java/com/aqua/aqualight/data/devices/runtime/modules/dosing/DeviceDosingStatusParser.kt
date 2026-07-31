@@ -1,18 +1,25 @@
 package com.aqua.aqualight.data.devices.runtime.modules.dosing
 
+import com.aqua.aqualight.data.devices.runtime.parsing.requireExactKeys
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredArray
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredBoolean
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredBooleans
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredFiniteDouble
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredInt
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredNonNegativeInt
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredNonNegativeLong
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredObject
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredString
 import org.json.JSONArray
 import org.json.JSONObject
 
-@Suppress("TooManyFunctions")
 object DeviceDosingStatusParser {
 
     fun parse(data: JSONObject): DeviceDosingStatus {
         val status = data.optJSONObject("status") ?: data
         status.requireExactKeys(STATUS_KEYS, "dosing.status.get.data")
-        val channelsJson = status.requiredArray("channels")
-        val schedulesJson = status.requiredArray("schedules")
-        val channels = parseChannels(channelsJson)
-        val schedules = parseSchedules(schedulesJson)
+        val channels = parseChannels(status.requiredArray("channels"))
+        val schedules = parseSchedules(status.requiredArray("schedules"))
         val channelCount = status.requiredNonNegativeInt("channelCount")
         val scheduleCount = status.requiredNonNegativeInt("scheduleCount")
         require(channelCount == channels.size) {
@@ -29,7 +36,7 @@ object DeviceDosingStatusParser {
             lockLoop = status.requiredBoolean("lockLoop"),
             schema = status.requiredString("schema"),
             rootName = status.requiredString("rootName"),
-            unit = status.requiredString("unit").also { require(it == "ml") },
+            unit = status.requiredString("unit").also { require(it == DOSING_UNIT) },
             uptimeMs = status.requiredNonNegativeLong("uptimeMs"),
             channels = channels,
             schedules = schedules,
@@ -117,14 +124,14 @@ object DeviceDosingStatusParser {
         if (tracking) {
             require(capacity > 0.0)
             require(remaining in 0.0..capacity)
-            require(percent in 0.0..100.0)
+            require(percent in 0.0..RESERVOIR_PERCENT_MAX)
         } else {
-            require(remaining == -1.0)
-            require(percent == -1.0)
+            require(remaining == UNAVAILABLE_MEASUREMENT)
+            require(percent == UNAVAILABLE_MEASUREMENT)
         }
 
         return DeviceDosingPumpStatus(
-            unit = dosing.requiredString("unit").also { require(it == "ml") },
+            unit = dosing.requiredString("unit").also { require(it == DOSING_UNIT) },
             doseMsPerMl = doseMsPerMl,
             lastCalibratedAt = dosing.requiredNonNegativeLong("lastCalibratedAt"),
             calibrated = calibrated,
@@ -150,9 +157,12 @@ object DeviceDosingStatusParser {
             channelKey = item.requiredString("channelKey"),
             bound = item.requiredBoolean("bound"),
             group = item.requiredInt("group").also { require(it >= -1) },
-            weekdays = item.requiredArray("weekdays").requiredBooleanWeek(),
+            weekdays = item.requiredArray("weekdays").requiredBooleans(
+                expectedSize = WEEKDAY_COUNT,
+                label = "dosing schedule weekdays"
+            ),
             startTimeMs = item.requiredNonNegativeLong("startTimeMs").also {
-                require(it <= 86_399_999L)
+                require(it < MILLIS_PER_DAY)
             },
             startTime = item.requiredString("startTime"),
             intervalOnMs = item.requiredNonNegativeLong("intervalOnMs"),
@@ -203,63 +213,10 @@ object DeviceDosingStatusParser {
         "pulseOffPending", "pulseRemainingMs"
     )
 
+    private const val DOSING_UNIT = "ml"
+    private const val WEEKDAY_COUNT = 7
+    private const val MILLIS_PER_DAY = 86_400_000L
+    private const val RESERVOIR_PERCENT_MAX = 100.0
+    private const val UNAVAILABLE_MEASUREMENT = -1.0
     private const val MAX_DISPLAY_NAME_BYTES = 32
 }
-
-private fun JSONObject.requireExactKeys(expected: Set<String>, label: String) {
-    val actual = buildSet {
-        val iterator = keys()
-        while (iterator.hasNext()) add(iterator.next())
-    }
-    require(actual == expected) { "$label keys differ from firmware contract: $actual" }
-}
-
-private fun JSONObject.requiredObject(key: String): JSONObject =
-    get(key) as? JSONObject ?: error("$key must be an object.")
-
-private fun JSONObject.requiredArray(key: String): JSONArray =
-    get(key) as? JSONArray ?: error("$key must be an array.")
-
-private fun JSONArray.requiredObject(index: Int): JSONObject =
-    get(index) as? JSONObject ?: error("Array item $index must be an object.")
-
-private fun JSONArray.requiredBooleanWeek(): List<Boolean> {
-    require(length() == 7) { "weekdays must contain exactly seven booleans." }
-    return List(length()) { index ->
-        get(index) as? Boolean ?: error("weekdays[$index] must be a boolean.")
-    }
-}
-
-private fun JSONObject.requiredString(key: String): String {
-    val value = get(key) as? String ?: error("$key must be a string.")
-    require(value.isNotEmpty()) { "$key must not be empty." }
-    require(!value.first().isWhitespace() && !value.last().isWhitespace())
-    require(value.none(Char::isISOControl))
-    return value
-}
-
-private fun JSONObject.requiredBoolean(key: String): Boolean =
-    get(key) as? Boolean ?: error("$key must be a boolean.")
-
-private fun JSONObject.requiredInt(key: String): Int {
-    val number = get(key) as? Number ?: error("$key must be numeric.")
-    val longValue = number.toLong()
-    require(number.toDouble().isFinite() && number.toDouble() == longValue.toDouble())
-    require(longValue in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong())
-    return longValue.toInt()
-}
-
-private fun JSONObject.requiredNonNegativeInt(key: String): Int =
-    requiredInt(key).also { require(it >= 0) { "$key must be non-negative." } }
-
-private fun JSONObject.requiredNonNegativeLong(key: String): Long {
-    val number = get(key) as? Number ?: error("$key must be numeric.")
-    val longValue = number.toLong()
-    require(number.toDouble().isFinite() && number.toDouble() == longValue.toDouble())
-    require(longValue >= 0L)
-    return longValue
-}
-
-private fun JSONObject.requiredFiniteDouble(key: String): Double =
-    (get(key) as? Number)?.toDouble()?.also { require(it.isFinite()) }
-        ?: error("$key must be a finite number.")
