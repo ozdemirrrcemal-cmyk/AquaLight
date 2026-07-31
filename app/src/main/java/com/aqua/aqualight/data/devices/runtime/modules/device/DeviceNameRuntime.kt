@@ -8,7 +8,7 @@ import org.json.JSONObject
 object DeviceNameRuntimeContract {
     const val MODULE = AqlWsContract.MODULE_DEVICE
     const val ACTION_SET = AqlWsContract.ACTION_DEVICE_NAME_SET
-    const val STATUS_CHANGED_EVENT = "status.changed"
+    const val STATUS_CHANGED_EVENT = "device.status.changed"
 
     object Field {
         const val CUSTOM_NAME = "customName"
