@@ -1,10 +1,11 @@
 package com.aqua.aqualight.data.devices.contract
 
 /**
- * Authoritative Android mirror of the first commercial AquaLight WebSocket contract.
+ * Authoritative Android mirror of the pinned commercial AquaLight WebSocket v1 union contract.
  *
- * The application is unreleased, so this is its single v1 baseline. Runtime
- * credentials are used only as input to the HMAC handshake and are never
+ * Product firmware registers only the module commands compiled for that exact product. Android
+ * keeps the complete commercial union and applies authenticated capability/module gates before a
+ * command can be executed. Runtime credentials are used only by the HMAC handshake and are never
  * serialized to the wire.
  */
 object AqlWsContract {
@@ -41,6 +42,7 @@ object AqlWsContract {
     const val ACTION_DEVICE_IDENTITY_GET = "identity.get"
     const val ACTION_DEVICE_STATUS_GET = ACTION_STATUS_GET
     const val ACTION_DEVICE_CAPABILITIES_GET = "capabilities.get"
+    const val ACTION_DEVICE_NAME_SET = "name.set"
 
     const val ACTION_SECURITY_STATUS_GET = ACTION_STATUS_GET
     const val ACTION_SECURITY_PAIR = "pair"
@@ -65,6 +67,9 @@ object AqlWsContract {
     const val ACTION_LIGHT_CHANNEL_REGIME_SET = "channel.regime.set"
     const val ACTION_LIGHT_PROGRAM_APPLY = "program.apply"
     const val ACTION_LIGHT_PROGRAM_DELETE = "program.delete"
+    const val ACTION_LIGHT_TEMPERATURE_PROTECTION_STATUS_GET =
+        "temperature-protection.status.get"
+    const val ACTION_LIGHT_TEMPERATURE_PROTECTION_SET = "temperature-protection.set"
 
     const val ACTION_COOLING_STATUS_GET = ACTION_STATUS_GET
     const val ACTION_COOLING_CONFIG_APPLY = ACTION_CONFIG_APPLY
@@ -84,6 +89,12 @@ object AqlWsContract {
     const val ACTION_DOSING_DOSE_NOW = "dose.now"
     const val ACTION_DOSING_DOSE_STOP = "dose.stop"
     const val ACTION_DOSING_RESERVOIR_REFILL = "reservoir.refill"
+
+    object Event {
+        const val STATUS_CHANGED = "status.changed"
+        const val OTA_PROGRESS = "ota.progress"
+        const val OTA_COMPLETED = "ota.completed"
+    }
 
     object Field {
         const val ID = "id"
@@ -119,6 +130,9 @@ object AqlWsContract {
     object Limit {
         const val MESSAGE_BYTES = 8_192
         const val DATA_BYTES = 4_096
+        const val JSON_DEPTH = 12
+        const val JSON_KEYS = 128
+        const val JSON_KEY_BYTES = 64
         const val ID_CHARS = 96
         const val TYPE_CHARS = 16
         const val MODULE_CHARS = 32
@@ -132,53 +146,72 @@ object AqlWsContract {
         const val NONCE_HEX_CHARS = 64
         const val MAC_HEX_CHARS = 64
         const val MAX_SEQUENCE = 9_007_199_254_740_991L
+        const val AUTHENTICATED_COMMAND_COUNT = 41
     }
 
-    // The commercial WebSocket contract has no unauthenticated application
-    // command surface. Public onboarding metadata remains on the bounded UDP/BLE
-    // provisioning contracts.
+    // Public onboarding metadata remains on the bounded UDP/BLE provisioning contracts.
     private val publicCommands = emptySet<String>()
 
     private val authenticatedCommands = setOf(
-        commandKey(MODULE_DEVICE, ACTION_DEVICE_IDENTITY_GET),
-        commandKey(MODULE_DEVICE, ACTION_DEVICE_STATUS_GET),
-        commandKey(MODULE_DEVICE, ACTION_DEVICE_CAPABILITIES_GET),
-        commandKey(MODULE_SECURITY, ACTION_SECURITY_STATUS_GET),
-        commandKey(MODULE_SECURITY, ACTION_SECURITY_PAIR),
-        commandKey(MODULE_SECURITY, ACTION_SECURITY_UNPAIR),
-        commandKey(MODULE_SECURITY, ACTION_SECURITY_RESET),
-        commandKey(MODULE_NETWORK, ACTION_NETWORK_STATUS_GET),
-        commandKey(MODULE_TIME, ACTION_TIME_STATUS_GET),
-        commandKey(MODULE_TIME, ACTION_TIME_CONFIG_APPLY),
-        commandKey(MODULE_TIME, ACTION_TIME_PHONE_SYNC),
-        commandKey(MODULE_TIME, ACTION_TIME_NTP_SYNC),
-        commandKey(MODULE_TIME, ACTION_TIME_RTC_SET),
-        commandKey(MODULE_FIRMWARE, ACTION_FIRMWARE_OTA_STATUS),
-        commandKey(MODULE_FIRMWARE, ACTION_FIRMWARE_OTA_START),
-        commandKey(MODULE_FIRMWARE, ACTION_FIRMWARE_OTA_CLEAR),
-        commandKey(MODULE_FIRMWARE, ACTION_FIRMWARE_STATUS_GET),
-        commandKey(MODULE_LIGHT, ACTION_LIGHT_STATUS_GET),
-        commandKey(MODULE_LIGHT, ACTION_LIGHT_MANUAL_SET),
-        commandKey(MODULE_LIGHT, ACTION_LIGHT_CHANNEL_REGIME_SET),
-        commandKey(MODULE_LIGHT, ACTION_LIGHT_PROGRAM_APPLY),
-        commandKey(MODULE_LIGHT, ACTION_LIGHT_PROGRAM_DELETE),
         commandKey(MODULE_COOLING, ACTION_COOLING_CONFIG_APPLY),
         commandKey(MODULE_COOLING, ACTION_COOLING_STATUS_GET),
-        commandKey(MODULE_TIMER, ACTION_TIMER_STATUS_GET),
-        commandKey(MODULE_TIMER, ACTION_TIMER_CONFIG_APPLY),
-        commandKey(MODULE_TIMER, ACTION_TIMER_CHANNEL_SET),
-        commandKey(MODULE_DOSING, ACTION_DOSING_CONFIG_APPLY),
-        commandKey(MODULE_DOSING, ACTION_DOSING_STATUS_GET),
-        commandKey(MODULE_DOSING, ACTION_DOSING_PRIME_START),
-        commandKey(MODULE_DOSING, ACTION_DOSING_PRIME_STOP),
-        commandKey(MODULE_DOSING, ACTION_DOSING_CALIBRATION_START),
-        commandKey(MODULE_DOSING, ACTION_DOSING_CALIBRATION_FINISH),
-        commandKey(MODULE_DOSING, ACTION_DOSING_CALIBRATION_CONFIRM),
+        commandKey(MODULE_DEVICE, ACTION_DEVICE_CAPABILITIES_GET),
+        commandKey(MODULE_DEVICE, ACTION_DEVICE_IDENTITY_GET),
+        commandKey(MODULE_DEVICE, ACTION_DEVICE_NAME_SET),
+        commandKey(MODULE_DEVICE, ACTION_DEVICE_STATUS_GET),
         commandKey(MODULE_DOSING, ACTION_DOSING_CALIBRATION_CANCEL),
+        commandKey(MODULE_DOSING, ACTION_DOSING_CALIBRATION_CONFIRM),
+        commandKey(MODULE_DOSING, ACTION_DOSING_CALIBRATION_FINISH),
+        commandKey(MODULE_DOSING, ACTION_DOSING_CALIBRATION_START),
+        commandKey(MODULE_DOSING, ACTION_DOSING_CONFIG_APPLY),
         commandKey(MODULE_DOSING, ACTION_DOSING_DOSE_NOW),
         commandKey(MODULE_DOSING, ACTION_DOSING_DOSE_STOP),
-        commandKey(MODULE_DOSING, ACTION_DOSING_RESERVOIR_REFILL)
+        commandKey(MODULE_DOSING, ACTION_DOSING_PRIME_START),
+        commandKey(MODULE_DOSING, ACTION_DOSING_PRIME_STOP),
+        commandKey(MODULE_DOSING, ACTION_DOSING_RESERVOIR_REFILL),
+        commandKey(MODULE_DOSING, ACTION_DOSING_STATUS_GET),
+        commandKey(MODULE_FIRMWARE, ACTION_FIRMWARE_OTA_CLEAR),
+        commandKey(MODULE_FIRMWARE, ACTION_FIRMWARE_OTA_START),
+        commandKey(MODULE_FIRMWARE, ACTION_FIRMWARE_OTA_STATUS),
+        commandKey(MODULE_FIRMWARE, ACTION_FIRMWARE_STATUS_GET),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_CHANNEL_REGIME_SET),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_MANUAL_SET),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_PROGRAM_APPLY),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_PROGRAM_DELETE),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_STATUS_GET),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_TEMPERATURE_PROTECTION_SET),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_TEMPERATURE_PROTECTION_STATUS_GET),
+        commandKey(MODULE_NETWORK, ACTION_NETWORK_STATUS_GET),
+        commandKey(MODULE_SECURITY, ACTION_SECURITY_PAIR),
+        commandKey(MODULE_SECURITY, ACTION_SECURITY_RESET),
+        commandKey(MODULE_SECURITY, ACTION_SECURITY_STATUS_GET),
+        commandKey(MODULE_SECURITY, ACTION_SECURITY_UNPAIR),
+        commandKey(MODULE_TIME, ACTION_TIME_CONFIG_APPLY),
+        commandKey(MODULE_TIME, ACTION_TIME_NTP_SYNC),
+        commandKey(MODULE_TIME, ACTION_TIME_PHONE_SYNC),
+        commandKey(MODULE_TIME, ACTION_TIME_RTC_SET),
+        commandKey(MODULE_TIME, ACTION_TIME_STATUS_GET),
+        commandKey(MODULE_TIMER, ACTION_TIMER_CHANNEL_SET),
+        commandKey(MODULE_TIMER, ACTION_TIMER_CONFIG_APPLY),
+        commandKey(MODULE_TIMER, ACTION_TIMER_STATUS_GET)
     )
+
+    private val activeEvents = setOf(
+        commandKey(MODULE_DEVICE, Event.STATUS_CHANGED),
+        commandKey(MODULE_LIGHT, Event.STATUS_CHANGED),
+        commandKey(MODULE_TIMER, Event.STATUS_CHANGED),
+        commandKey(MODULE_DOSING, Event.STATUS_CHANGED),
+        commandKey(MODULE_COOLING, Event.STATUS_CHANGED),
+        commandKey(MODULE_TIME, Event.STATUS_CHANGED),
+        commandKey(MODULE_FIRMWARE, Event.OTA_PROGRESS),
+        commandKey(MODULE_FIRMWARE, Event.OTA_COMPLETED)
+    )
+
+    init {
+        check(authenticatedCommands.size == Limit.AUTHENTICATED_COMMAND_COUNT) {
+            "Android WebSocket command union differs from the pinned firmware contract."
+        }
+    }
 
     fun isRegisteredCommand(module: String, action: String): Boolean =
         isPublicCommand(module, action) || isAuthenticatedCommand(module, action)
@@ -189,9 +222,14 @@ object AqlWsContract {
     fun isAuthenticatedCommand(module: String, action: String): Boolean =
         commandKey(module, action) in authenticatedCommands
 
+    fun isActiveEvent(module: String, action: String): Boolean =
+        commandKey(module, action) in activeEvents
+
     fun publicCommandKeys(): Set<String> = publicCommands.toSet()
 
     fun authenticatedCommandKeys(): Set<String> = authenticatedCommands.toSet()
+
+    fun activeEventKeys(): Set<String> = activeEvents.toSet()
 
     private fun commandKey(module: String, action: String): String =
         "${module.trim()}.${action.trim()}"
