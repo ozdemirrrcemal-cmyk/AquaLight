@@ -33,6 +33,14 @@ object AqlWsCommandFactory {
         )
     }
 
+    fun deviceNameSet(data: JSONObject): AqlWsOutgoingMessage.Command {
+        return command(
+            module = AqlWsContract.MODULE_DEVICE,
+            action = AqlWsContract.ACTION_DEVICE_NAME_SET,
+            data = data
+        )
+    }
+
     fun networkStatus(): AqlWsOutgoingMessage.Command {
         return command(
             module = AqlWsContract.MODULE_NETWORK,
