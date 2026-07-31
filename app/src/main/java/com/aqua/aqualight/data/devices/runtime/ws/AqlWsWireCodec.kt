@@ -4,6 +4,8 @@ import com.aqua.aqualight.data.devices.contract.AqlWsContract
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import java.io.StringReader
+import java.nio.ByteBuffer
+import java.nio.charset.CodingErrorAction
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 import org.json.JSONException
@@ -20,6 +22,7 @@ internal enum class AqlWsProtocolError(val safeMessage: String) {
     MESSAGE_TOO_LARGE("WebSocket message exceeds the protocol limit."),
     MALFORMED_JSON("WebSocket message is not valid JSON."),
     DUPLICATE_FIELD("WebSocket message contains a duplicate field."),
+    JSON_LIMIT_EXCEEDED("WebSocket JSON exceeds the protocol limits."),
     UNEXPECTED_FIELD("WebSocket message contains an unexpected field."),
     MISSING_FIELD("WebSocket message is missing a required field."),
     INVALID_FIELD("WebSocket message contains an invalid field."),
@@ -38,10 +41,11 @@ internal class AqlWsProtocolException(
 ) : Exception(protocolError.safeMessage)
 
 /**
- * The sole JSON wire encoder/decoder for the AquaLight WebSocket runtime.
+ * Sole JSON wire encoder/decoder for the AquaLight WebSocket runtime.
  *
- * It rejects unknown message types, duplicate/unexpected envelope fields, invalid
- * protocol metadata, oversize data and any signed frame with a wrong MAC/sequence.
+ * The codec mirrors the pinned firmware transport boundary: exact envelopes, duplicate/unknown
+ * field rejection, bounded JSON structure, strict UTF-8, exact active event routes, HMAC and
+ * monotonic sequence verification.
  */
 internal class AqlWsWireCodec {
 
@@ -174,7 +178,9 @@ internal class AqlWsWireCodec {
                 AqlWsContract.Field.META
             )
         )
-        val id = checkedId(requiredText(root, AqlWsContract.Field.ID, AqlWsContract.Limit.ID_CHARS))
+        val id = checkedId(
+            requiredText(root, AqlWsContract.Field.ID, AqlWsContract.Limit.ID_CHARS)
+        )
         requireEquals(
             requiredText(root, AqlWsContract.Field.MODULE, AqlWsContract.Limit.MODULE_CHARS),
             AqlWsContract.MODULE_SECURITY
@@ -267,11 +273,20 @@ internal class AqlWsWireCodec {
                 AqlWsContract.Field.META
             )
         )
-        requireEquals(checkedId(requiredText(root, AqlWsContract.Field.ID, AqlWsContract.Limit.ID_CHARS)), expected.requestId)
+        requireEquals(
+            checkedId(
+                requiredText(root, AqlWsContract.Field.ID, AqlWsContract.Limit.ID_CHARS)
+            ),
+            expected.requestId
+        )
         if (!requiredBoolean(root, AqlWsContract.Field.OK)) {
             fail(AqlWsProtocolError.AUTHENTICATION_FAILED)
         }
-        requireEquals(requiredInt(root, AqlWsContract.Field.STATUS), 200, AqlWsProtocolError.AUTHENTICATION_FAILED)
+        requireEquals(
+            requiredInt(root, AqlWsContract.Field.STATUS),
+            200,
+            AqlWsProtocolError.AUTHENTICATION_FAILED
+        )
         validateMeta(requiredObject(root, AqlWsContract.Field.META))
 
         val data = requiredObject(root, AqlWsContract.Field.DATA)
@@ -286,11 +301,42 @@ internal class AqlWsWireCodec {
                 AqlWsContract.Field.SERVER_PROOF
             )
         )
-        requireEquals(requiredText(data, AqlWsContract.Field.AUTH_SCHEME, 32), AqlWsContract.AUTH_SCHEME)
-        requireEquals(requiredText(data, AqlWsContract.Field.DEVICE_UID, AqlWsContract.Limit.DEVICE_UID_CHARS), expected.hello.deviceUid)
-        requireEquals(requiredText(data, AqlWsContract.Field.SESSION_ID, AqlWsContract.Limit.SESSION_ID_CHARS), expected.hello.sessionId)
-        requireEquals(requiredText(data, AqlWsContract.Field.SERVER_NONCE, AqlWsContract.Limit.NONCE_HEX_CHARS), expected.hello.serverNonce)
-        requireEquals(requiredText(data, AqlWsContract.Field.CLIENT_NONCE, AqlWsContract.Limit.NONCE_HEX_CHARS), expected.clientNonce)
+        requireEquals(
+            requiredText(data, AqlWsContract.Field.AUTH_SCHEME, 32),
+            AqlWsContract.AUTH_SCHEME
+        )
+        requireEquals(
+            requiredText(
+                data,
+                AqlWsContract.Field.DEVICE_UID,
+                AqlWsContract.Limit.DEVICE_UID_CHARS
+            ),
+            expected.hello.deviceUid
+        )
+        requireEquals(
+            requiredText(
+                data,
+                AqlWsContract.Field.SESSION_ID,
+                AqlWsContract.Limit.SESSION_ID_CHARS
+            ),
+            expected.hello.sessionId
+        )
+        requireEquals(
+            requiredText(
+                data,
+                AqlWsContract.Field.SERVER_NONCE,
+                AqlWsContract.Limit.NONCE_HEX_CHARS
+            ),
+            expected.hello.serverNonce
+        )
+        requireEquals(
+            requiredText(
+                data,
+                AqlWsContract.Field.CLIENT_NONCE,
+                AqlWsContract.Limit.NONCE_HEX_CHARS
+            ),
+            expected.clientNonce
+        )
         val serverProof = requiredText(
             data,
             AqlWsContract.Field.SERVER_PROOF,
@@ -320,12 +366,19 @@ internal class AqlWsWireCodec {
                 AqlWsContract.Field.META
             )
         )
-        requireEquals(checkedId(requiredText(root, AqlWsContract.Field.ID, AqlWsContract.Limit.ID_CHARS)), expected.requestId)
+        requireEquals(
+            checkedId(
+                requiredText(root, AqlWsContract.Field.ID, AqlWsContract.Limit.ID_CHARS)
+            ),
+            expected.requestId
+        )
         requireEquals(requiredBoolean(root, AqlWsContract.Field.OK), false)
         validateStatus(requiredInt(root, AqlWsContract.Field.STATUS))
         validateMeta(requiredObject(root, AqlWsContract.Field.META))
         decodeError(requiredObject(root, AqlWsContract.Field.ERROR))
-        return AqlWsDecodedFrame.AuthRejected(AqlWsProtocolError.AUTHENTICATION_FAILED.safeMessage)
+        return AqlWsDecodedFrame.AuthRejected(
+            AqlWsProtocolError.AUTHENTICATION_FAILED.safeMessage
+        )
     }
 
     private fun decodeRuntimeResponse(
@@ -334,15 +387,35 @@ internal class AqlWsWireCodec {
     ): AqlWsDecodedFrame.Runtime {
         requireExactKeys(root, RUNTIME_RESPONSE_KEYS)
         validateMeta(requiredObject(root, AqlWsContract.Field.META))
-        val id = checkedId(requiredText(root, AqlWsContract.Field.ID, AqlWsContract.Limit.ID_CHARS))
-        val module = checkedModule(requiredText(root, AqlWsContract.Field.MODULE, AqlWsContract.Limit.MODULE_CHARS))
-        val action = checkedAction(requiredText(root, AqlWsContract.Field.ACTION, AqlWsContract.Limit.ACTION_CHARS))
-        if (!AqlWsContract.isRegisteredCommand(module, action)) fail(AqlWsProtocolError.INVALID_FIELD)
-        val encodedData = requiredText(root, AqlWsContract.Field.DATA, MAX_ENCODED_DATA_CHARS)
+        val id = checkedId(
+            requiredText(root, AqlWsContract.Field.ID, AqlWsContract.Limit.ID_CHARS)
+        )
+        val module = checkedModule(
+            requiredText(root, AqlWsContract.Field.MODULE, AqlWsContract.Limit.MODULE_CHARS)
+        )
+        val action = checkedAction(
+            requiredText(root, AqlWsContract.Field.ACTION, AqlWsContract.Limit.ACTION_CHARS)
+        )
+        if (!AqlWsContract.isRegisteredCommand(module, action)) {
+            fail(AqlWsProtocolError.INVALID_FIELD)
+        }
+        val encodedData = requiredText(
+            root,
+            AqlWsContract.Field.DATA,
+            MAX_ENCODED_DATA_CHARS
+        )
         val ok = requiredBoolean(root, AqlWsContract.Field.OK)
         requireEquals(ok, true)
         val status = requiredInt(root, AqlWsContract.Field.STATUS).also(::validateStatus)
-        val frame = AqlWsMacFrame(id, AqlWsContract.TYPE_RESPONSE, module, action, encodedData, status, ok)
+        val frame = AqlWsMacFrame(
+            id,
+            AqlWsContract.TYPE_RESPONSE,
+            module,
+            action,
+            encodedData,
+            status,
+            ok
+        )
         verifySecurity(root, secureSession, frame)
         return AqlWsDecodedFrame.Runtime(
             AqlWsIncomingMessage.Response(
@@ -363,11 +436,30 @@ internal class AqlWsWireCodec {
     ): AqlWsDecodedFrame.Runtime {
         requireExactKeys(root, RUNTIME_EVENT_KEYS)
         validateMeta(requiredObject(root, AqlWsContract.Field.META))
-        val id = checkedId(requiredText(root, AqlWsContract.Field.ID, AqlWsContract.Limit.ID_CHARS))
-        val module = checkedModule(requiredText(root, AqlWsContract.Field.MODULE, AqlWsContract.Limit.MODULE_CHARS))
-        val action = checkedAction(requiredText(root, AqlWsContract.Field.ACTION, AqlWsContract.Limit.ACTION_CHARS))
-        val encodedData = requiredText(root, AqlWsContract.Field.DATA, MAX_ENCODED_DATA_CHARS)
-        val frame = AqlWsMacFrame(id, AqlWsContract.TYPE_EVENT, module, action, encodedData)
+        val id = checkedId(
+            requiredText(root, AqlWsContract.Field.ID, AqlWsContract.Limit.ID_CHARS)
+        )
+        val module = checkedModule(
+            requiredText(root, AqlWsContract.Field.MODULE, AqlWsContract.Limit.MODULE_CHARS)
+        )
+        val action = checkedAction(
+            requiredText(root, AqlWsContract.Field.ACTION, AqlWsContract.Limit.ACTION_CHARS)
+        )
+        if (!AqlWsContract.isActiveEvent(module, action)) {
+            fail(AqlWsProtocolError.INVALID_FIELD)
+        }
+        val encodedData = requiredText(
+            root,
+            AqlWsContract.Field.DATA,
+            MAX_ENCODED_DATA_CHARS
+        )
+        val frame = AqlWsMacFrame(
+            id,
+            AqlWsContract.TYPE_EVENT,
+            module,
+            action,
+            encodedData
+        )
         verifySecurity(root, secureSession, frame)
         return AqlWsDecodedFrame.Runtime(
             AqlWsIncomingMessage.Event(
@@ -386,10 +478,23 @@ internal class AqlWsWireCodec {
     ): AqlWsDecodedFrame.Runtime {
         requireExactKeys(root, RUNTIME_ERROR_KEYS)
         validateMeta(requiredObject(root, AqlWsContract.Field.META))
-        val id = checkedId(requiredText(root, AqlWsContract.Field.ID, AqlWsContract.Limit.ID_CHARS))
-        val module = checkedModule(requiredText(root, AqlWsContract.Field.MODULE, AqlWsContract.Limit.MODULE_CHARS))
-        val action = checkedAction(requiredText(root, AqlWsContract.Field.ACTION, AqlWsContract.Limit.ACTION_CHARS))
-        val encodedData = requiredText(root, AqlWsContract.Field.DATA, MAX_ENCODED_DATA_CHARS)
+        val id = checkedId(
+            requiredText(root, AqlWsContract.Field.ID, AqlWsContract.Limit.ID_CHARS)
+        )
+        val module = checkedModule(
+            requiredText(root, AqlWsContract.Field.MODULE, AqlWsContract.Limit.MODULE_CHARS)
+        )
+        val action = checkedAction(
+            requiredText(root, AqlWsContract.Field.ACTION, AqlWsContract.Limit.ACTION_CHARS)
+        )
+        if (!AqlWsContract.isRegisteredCommand(module, action)) {
+            fail(AqlWsProtocolError.INVALID_FIELD)
+        }
+        val encodedData = requiredText(
+            root,
+            AqlWsContract.Field.DATA,
+            MAX_ENCODED_DATA_CHARS
+        )
         val status = requiredInt(root, AqlWsContract.Field.STATUS).also(::validateStatus)
         requireEquals(requiredBoolean(root, AqlWsContract.Field.OK), false)
         val error = decodeError(requiredObject(root, AqlWsContract.Field.ERROR))
@@ -490,9 +595,9 @@ internal class AqlWsWireCodec {
         if (raw.toByteArray(StandardCharsets.UTF_8).size > AqlWsContract.Limit.MESSAGE_BYTES) {
             fail(AqlWsProtocolError.MESSAGE_TOO_LARGE)
         }
-        try {
-            rejectDuplicateKeys(raw)
-            return JSONObject(raw)
+        return try {
+            validateJsonStructure(raw)
+            JSONObject(raw)
         } catch (error: AqlWsProtocolException) {
             throw error
         } catch (_: JSONException) {
@@ -502,11 +607,15 @@ internal class AqlWsWireCodec {
         }
     }
 
-    private fun rejectDuplicateKeys(raw: String) {
+    private fun validateJsonStructure(raw: String) {
         try {
             JsonReader(StringReader(raw)).use { reader ->
                 reader.isLenient = false
-                readStrictValue(reader)
+                readStrictValue(
+                    reader = reader,
+                    depth = 1,
+                    counter = JsonStructureCounter()
+                )
                 if (reader.peek() != JsonToken.END_DOCUMENT) {
                     fail(AqlWsProtocolError.MALFORMED_JSON)
                 }
@@ -518,21 +627,41 @@ internal class AqlWsWireCodec {
         }
     }
 
-    private fun readStrictValue(reader: JsonReader) {
+    private fun readStrictValue(
+        reader: JsonReader,
+        depth: Int,
+        counter: JsonStructureCounter
+    ) {
+        if (depth > AqlWsContract.Limit.JSON_DEPTH) {
+            fail(AqlWsProtocolError.JSON_LIMIT_EXCEEDED)
+        }
         when (reader.peek()) {
             JsonToken.BEGIN_OBJECT -> {
                 reader.beginObject()
                 val names = mutableSetOf<String>()
                 while (reader.hasNext()) {
                     val name = reader.nextName()
-                    if (!names.add(name)) fail(AqlWsProtocolError.DUPLICATE_FIELD)
-                    readStrictValue(reader)
+                    if (!names.add(name)) {
+                        fail(AqlWsProtocolError.DUPLICATE_FIELD)
+                    }
+                    if (name.toByteArray(StandardCharsets.UTF_8).size >
+                        AqlWsContract.Limit.JSON_KEY_BYTES
+                    ) {
+                        fail(AqlWsProtocolError.JSON_LIMIT_EXCEEDED)
+                    }
+                    counter.keyCount += 1
+                    if (counter.keyCount > AqlWsContract.Limit.JSON_KEYS) {
+                        fail(AqlWsProtocolError.JSON_LIMIT_EXCEEDED)
+                    }
+                    readStrictValue(reader, depth + 1, counter)
                 }
                 reader.endObject()
             }
             JsonToken.BEGIN_ARRAY -> {
                 reader.beginArray()
-                while (reader.hasNext()) readStrictValue(reader)
+                while (reader.hasNext()) {
+                    readStrictValue(reader, depth + 1, counter)
+                }
                 reader.endArray()
             }
             JsonToken.STRING, JsonToken.NUMBER -> reader.nextString()
@@ -543,8 +672,12 @@ internal class AqlWsWireCodec {
     }
 
     private fun encodeData(data: JSONObject): String {
-        val bytes = data.toString().toByteArray(StandardCharsets.UTF_8)
-        if (bytes.size > AqlWsContract.Limit.DATA_BYTES) fail(AqlWsProtocolError.INVALID_DATA)
+        val raw = data.toString()
+        validateJsonStructure(raw)
+        val bytes = raw.toByteArray(StandardCharsets.UTF_8)
+        if (bytes.size > AqlWsContract.Limit.DATA_BYTES) {
+            fail(AqlWsProtocolError.INVALID_DATA)
+        }
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
     }
 
@@ -557,10 +690,12 @@ internal class AqlWsWireCodec {
         } catch (_: IllegalArgumentException) {
             fail(AqlWsProtocolError.INVALID_DATA)
         }
-        if (decoded.size > AqlWsContract.Limit.DATA_BYTES) fail(AqlWsProtocolError.INVALID_DATA)
-        val raw = decoded.toString(StandardCharsets.UTF_8)
+        if (decoded.size > AqlWsContract.Limit.DATA_BYTES) {
+            fail(AqlWsProtocolError.INVALID_DATA)
+        }
+        val raw = decodeStrictUtf8(decoded)
         return try {
-            rejectDuplicateKeys(raw)
+            validateJsonStructure(raw)
             JSONObject(raw)
         } catch (error: AqlWsProtocolException) {
             throw error
@@ -569,8 +704,20 @@ internal class AqlWsWireCodec {
         }
     }
 
+    private fun decodeStrictUtf8(bytes: ByteArray): String = try {
+        StandardCharsets.UTF_8
+            .newDecoder()
+            .onMalformedInput(CodingErrorAction.REPORT)
+            .onUnmappableCharacter(CodingErrorAction.REPORT)
+            .decode(ByteBuffer.wrap(bytes))
+            .toString()
+    } catch (_: Throwable) {
+        fail(AqlWsProtocolError.INVALID_DATA)
+    }
+
     private fun checkedWireJson(json: JSONObject): String {
         val raw = json.toString()
+        validateJsonStructure(raw)
         if (raw.toByteArray(StandardCharsets.UTF_8).size > AqlWsContract.Limit.MESSAGE_BYTES) {
             fail(AqlWsProtocolError.MESSAGE_TOO_LARGE)
         }
@@ -601,7 +748,12 @@ internal class AqlWsWireCodec {
 
     private fun requiredText(json: JSONObject, name: String, maxChars: Int): String {
         val value = json.opt(name) as? String ?: fail(AqlWsProtocolError.MISSING_FIELD)
-        if (value.isBlank() || value != value.trim() || value.length > maxChars || value.hasControlCharacter()) {
+        if (
+            value.isBlank() ||
+            value != value.trim() ||
+            value.length > maxChars ||
+            value.hasControlCharacter()
+        ) {
             fail(AqlWsProtocolError.INVALID_FIELD)
         }
         return value
@@ -613,7 +765,10 @@ internal class AqlWsWireCodec {
     private fun requiredInt(json: JSONObject, name: String): Int {
         val number = json.opt(name) as? Number ?: fail(AqlWsProtocolError.MISSING_FIELD)
         val longValue = number.toLong()
-        if (number.toDouble() != longValue.toDouble() || longValue !in Int.MIN_VALUE..Int.MAX_VALUE) {
+        if (
+            number.toDouble() != longValue.toDouble() ||
+            longValue !in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong()
+        ) {
             fail(AqlWsProtocolError.INVALID_FIELD)
         }
         return longValue.toInt()
@@ -622,7 +777,9 @@ internal class AqlWsWireCodec {
     private fun requiredLong(json: JSONObject, name: String): Long {
         val number = json.opt(name) as? Number ?: fail(AqlWsProtocolError.MISSING_FIELD)
         val longValue = number.toLong()
-        if (number.toDouble() != longValue.toDouble()) fail(AqlWsProtocolError.INVALID_FIELD)
+        if (number.toDouble() != longValue.toDouble()) {
+            fail(AqlWsProtocolError.INVALID_FIELD)
+        }
         return longValue
     }
 
@@ -631,11 +788,15 @@ internal class AqlWsWireCodec {
     }
 
     private fun checkedModule(value: String): String = value.also {
-        if (!MODULE_REGEX.matches(it)) fail(AqlWsProtocolError.INVALID_FIELD)
+        if (!MODULE_REGEX.matches(it)) {
+            fail(AqlWsProtocolError.INVALID_FIELD)
+        }
     }
 
     private fun checkedAction(value: String): String = value.also {
-        if (!ACTION_REGEX.matches(it)) fail(AqlWsProtocolError.INVALID_FIELD)
+        if (!ACTION_REGEX.matches(it)) {
+            fail(AqlWsProtocolError.INVALID_FIELD)
+        }
     }
 
     private fun validateIdentifier(value: String) {
@@ -655,24 +816,38 @@ internal class AqlWsWireCodec {
     }
 
     private fun validateStatus(status: Int) {
-        if (status !in 100..599) fail(AqlWsProtocolError.INVALID_FIELD)
+        if (status !in 100..599) {
+            fail(AqlWsProtocolError.INVALID_FIELD)
+        }
     }
 
     private fun decodeError(error: JSONObject): WireError {
         val keys = error.keys().asSequence().toSet()
         if (keys !in ERROR_KEY_SETS) {
             fail(
-                if (keys.containsAll(REQUIRED_ERROR_KEYS)) AqlWsProtocolError.UNEXPECTED_FIELD
-                else AqlWsProtocolError.MISSING_FIELD
+                if (keys.containsAll(REQUIRED_ERROR_KEYS)) {
+                    AqlWsProtocolError.UNEXPECTED_FIELD
+                } else {
+                    AqlWsProtocolError.MISSING_FIELD
+                }
             )
         }
         return WireError(
-            code = requiredText(error, AqlWsContract.Field.CODE, AqlWsContract.Limit.ERROR_CODE_CHARS),
-            field = (error.opt(AqlWsContract.Field.ERROR_FIELD) as? String).orEmpty().also { value ->
-                if (value.length > AqlWsContract.Limit.ERROR_FIELD_CHARS || value.hasControlCharacter()) {
-                    fail(AqlWsProtocolError.INVALID_FIELD)
-                }
-            },
+            code = requiredText(
+                error,
+                AqlWsContract.Field.CODE,
+                AqlWsContract.Limit.ERROR_CODE_CHARS
+            ),
+            field = (error.opt(AqlWsContract.Field.ERROR_FIELD) as? String)
+                .orEmpty()
+                .also { value ->
+                    if (
+                        value.length > AqlWsContract.Limit.ERROR_FIELD_CHARS ||
+                        value.hasControlCharacter()
+                    ) {
+                        fail(AqlWsProtocolError.INVALID_FIELD)
+                    }
+                },
             message = requiredText(
                 error,
                 AqlWsContract.Field.MESSAGE,
@@ -690,11 +865,17 @@ internal class AqlWsWireCodec {
         expected: T,
         error: AqlWsProtocolError = AqlWsProtocolError.INVALID_FIELD
     ) {
-        if (actual != expected) fail(error)
+        if (actual != expected) {
+            fail(error)
+        }
     }
 
     private fun requireSecureSession(session: AqlWsSecureSession?): AqlWsSecureSession =
         session ?: fail(AqlWsProtocolError.SECURITY_SESSION_REQUIRED)
+
+    private data class JsonStructureCounter(
+        var keyCount: Int = 0
+    )
 
     private data class WireError(
         val code: String,
