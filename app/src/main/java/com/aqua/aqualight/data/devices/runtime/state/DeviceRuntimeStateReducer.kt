@@ -62,102 +62,77 @@ class DeviceRuntimeStateReducer(
         action: String
     ) {
         val target = refreshTarget(module, action) ?: return
-        store.reduce(deviceUid, generation) { state ->
-            state.updateTarget(target) { current ->
-                current.copy(phase = DeviceRuntimeFreshness.LOADING, fault = null)
-            }
-        }
+        store.reduce(deviceUid, generation, target::markLoading)
     }
 
     /** Returns the canonical status refresh required after a successful mutation, if any. */
-    fun commandCompleted(outcome: DeviceRuntimeCommandOutcome<*>): DeviceRuntimeStateTarget? {
-        return when (outcome) {
+    fun commandCompleted(outcome: DeviceRuntimeCommandOutcome<*>): DeviceRuntimeStateTarget<*>? =
+        when (outcome) {
             is DeviceRuntimeCommandOutcome.Success<*> -> reduceSuccess(outcome)
-            is DeviceRuntimeCommandOutcome.NotConnected -> null
-            is DeviceRuntimeCommandOutcome.UnsupportedByDevice -> {
-                reduceUnsupported(outcome.deviceUid, outcome.module, outcome.action)
-                null
-            }
-            is DeviceRuntimeCommandOutcome.NotAuthenticated -> {
-                reduceFault(
-                    outcome.deviceUid,
-                    outcome.generation,
-                    outcome.module,
-                    outcome.action,
-                    "",
-                    "Runtime command requires an authenticated generation."
-                )
-                null
-            }
+
+            // These outcomes do not prove a new module value and must not overwrite READY/STALE data.
+            is DeviceRuntimeCommandOutcome.NotConnected,
+            is DeviceRuntimeCommandOutcome.NotAuthenticated,
+            is DeviceRuntimeCommandOutcome.UnsupportedByDevice,
+            is DeviceRuntimeCommandOutcome.Cancelled -> null
+
             is DeviceRuntimeCommandOutcome.SendFailed -> {
                 reduceFault(
-                    outcome.deviceUid,
-                    outcome.generation,
-                    outcome.module,
-                    outcome.action,
-                    outcome.messageId,
-                    "Runtime command could not be sent."
+                    deviceUid = outcome.deviceUid,
+                    generation = outcome.generation,
+                    module = outcome.module,
+                    action = outcome.action,
+                    messageId = outcome.messageId,
+                    reason = "Runtime command could not be sent."
                 )
                 null
             }
             is DeviceRuntimeCommandOutcome.Timeout -> {
                 reduceFault(
-                    outcome.deviceUid,
-                    outcome.generation,
-                    outcome.module,
-                    outcome.action,
-                    outcome.messageId,
-                    "Runtime command timed out after ${outcome.timeoutMillis} ms."
+                    deviceUid = outcome.deviceUid,
+                    generation = outcome.generation,
+                    module = outcome.module,
+                    action = outcome.action,
+                    messageId = outcome.messageId,
+                    reason = "Runtime command timed out after ${outcome.timeoutMillis} ms."
                 )
                 null
             }
             is DeviceRuntimeCommandOutcome.FirmwareError -> {
                 reduceFault(
-                    outcome.deviceUid,
-                    outcome.generation,
-                    outcome.module,
-                    outcome.action,
-                    outcome.messageId,
-                    outcome.message.ifBlank { outcome.code }
+                    deviceUid = outcome.deviceUid,
+                    generation = outcome.generation,
+                    module = outcome.module,
+                    action = outcome.action,
+                    messageId = outcome.messageId,
+                    reason = outcome.message.ifBlank { outcome.code }
                 )
                 null
             }
             is DeviceRuntimeCommandOutcome.ProtocolError -> {
                 reduceFault(
-                    outcome.deviceUid,
-                    outcome.generation,
-                    outcome.module,
-                    outcome.action,
-                    outcome.messageId,
-                    outcome.reason,
+                    deviceUid = outcome.deviceUid,
+                    generation = outcome.generation,
+                    module = outcome.module,
+                    action = outcome.action,
+                    messageId = outcome.messageId,
+                    reason = outcome.reason,
                     protocolFault = true
                 )
                 null
             }
             is DeviceRuntimeCommandOutcome.LocalStateError -> {
                 reduceFault(
-                    outcome.deviceUid,
-                    outcome.generation,
-                    outcome.module,
-                    outcome.action,
-                    outcome.messageId,
-                    outcome.reason
-                )
-                null
-            }
-            is DeviceRuntimeCommandOutcome.Cancelled -> {
-                reduceFault(
-                    outcome.deviceUid,
-                    outcome.generation,
-                    outcome.module,
-                    outcome.action,
-                    outcome.messageId,
-                    outcome.reason
+                    deviceUid = outcome.deviceUid,
+                    generation = outcome.generation,
+                    module = outcome.module,
+                    action = outcome.action,
+                    messageId = outcome.messageId,
+                    reason = outcome.reason
                 )
                 null
             }
         }
-    }
 
     fun reduceOtaEvent(
         deviceUid: DeviceUid,
@@ -186,39 +161,40 @@ class DeviceRuntimeStateReducer(
         )
     }
 
-    fun refreshTarget(module: String, action: String): DeviceRuntimeStateTarget? = when (module) {
-        AqlWsContract.MODULE_DEVICE -> DeviceRuntimeStateTarget.METADATA
-        AqlWsContract.MODULE_SECURITY -> when (action) {
-            AqlWsContract.ACTION_SECURITY_UNPAIR,
-            AqlWsContract.ACTION_SECURITY_RESET -> null
-            else -> DeviceRuntimeStateTarget.SECURITY
+    fun refreshTarget(module: String, action: String): DeviceRuntimeStateTarget<*>? =
+        when (module) {
+            AqlWsContract.MODULE_DEVICE -> DeviceRuntimeStateTarget.Metadata
+            AqlWsContract.MODULE_SECURITY -> when (action) {
+                AqlWsContract.ACTION_SECURITY_UNPAIR,
+                AqlWsContract.ACTION_SECURITY_RESET -> null
+                else -> DeviceRuntimeStateTarget.Security
+            }
+            AqlWsContract.MODULE_NETWORK -> DeviceRuntimeStateTarget.Network
+            AqlWsContract.MODULE_TIME -> DeviceRuntimeStateTarget.Time
+            AqlWsContract.MODULE_LIGHT -> if (
+                action == AqlWsContract.ACTION_LIGHT_TEMPERATURE_PROTECTION_STATUS_GET ||
+                action == AqlWsContract.ACTION_LIGHT_TEMPERATURE_PROTECTION_SET
+            ) {
+                DeviceRuntimeStateTarget.LightTemperatureProtection
+            } else {
+                DeviceRuntimeStateTarget.Light
+            }
+            AqlWsContract.MODULE_TIMER -> DeviceRuntimeStateTarget.Timer
+            AqlWsContract.MODULE_DOSING -> DeviceRuntimeStateTarget.Dosing
+            AqlWsContract.MODULE_COOLING -> DeviceRuntimeStateTarget.Cooling
+            AqlWsContract.MODULE_FIRMWARE -> if (
+                action == AqlWsContract.ACTION_FIRMWARE_STATUS_GET
+            ) {
+                DeviceRuntimeStateTarget.Firmware
+            } else {
+                DeviceRuntimeStateTarget.Ota
+            }
+            else -> null
         }
-        AqlWsContract.MODULE_NETWORK -> DeviceRuntimeStateTarget.NETWORK
-        AqlWsContract.MODULE_TIME -> DeviceRuntimeStateTarget.TIME
-        AqlWsContract.MODULE_LIGHT -> if (
-            action == AqlWsContract.ACTION_LIGHT_TEMPERATURE_PROTECTION_STATUS_GET ||
-            action == AqlWsContract.ACTION_LIGHT_TEMPERATURE_PROTECTION_SET
-        ) {
-            DeviceRuntimeStateTarget.LIGHT_TEMPERATURE_PROTECTION
-        } else {
-            DeviceRuntimeStateTarget.LIGHT
-        }
-        AqlWsContract.MODULE_TIMER -> DeviceRuntimeStateTarget.TIMER
-        AqlWsContract.MODULE_DOSING -> DeviceRuntimeStateTarget.DOSING
-        AqlWsContract.MODULE_COOLING -> DeviceRuntimeStateTarget.COOLING
-        AqlWsContract.MODULE_FIRMWARE -> if (
-            action == AqlWsContract.ACTION_FIRMWARE_STATUS_GET
-        ) {
-            DeviceRuntimeStateTarget.FIRMWARE
-        } else {
-            DeviceRuntimeStateTarget.OTA
-        }
-        else -> null
-    }
 
     private fun reduceSuccess(
         outcome: DeviceRuntimeCommandOutcome.Success<*>
-    ): DeviceRuntimeStateTarget? {
+    ): DeviceRuntimeStateTarget<*>? {
         val reduced = when (outcome.module) {
             AqlWsContract.MODULE_SECURITY -> reduceSecurity(outcome)
             AqlWsContract.MODULE_NETWORK -> reduceNetwork(outcome)
@@ -333,14 +309,6 @@ class DeviceRuntimeStateReducer(
             else -> false
         }
 
-    private fun reduceUnsupported(deviceUid: DeviceUid, module: String, action: String) {
-        val generation = store.current(deviceUid)?.generation ?: return
-        val target = refreshTarget(module, action) ?: return
-        store.reduce(deviceUid, generation) { state ->
-            state.updateTarget(target) { DeviceRuntimeValue.unavailable() }
-        }
-    }
-
     private fun reduceFault(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration,
@@ -351,18 +319,14 @@ class DeviceRuntimeStateReducer(
         protocolFault: Boolean = false
     ) {
         val target = refreshTarget(module, action) ?: return
+        val fault = DeviceRuntimeModuleFault(
+            module = module,
+            action = action,
+            messageId = messageId,
+            reason = reason
+        )
         store.reduce(deviceUid, generation) { state ->
-            val updated = state.updateTarget(target) { current ->
-                current.copy(
-                    phase = DeviceRuntimeFreshness.ERROR,
-                    fault = DeviceRuntimeModuleFault(
-                        module = module,
-                        action = action,
-                        messageId = messageId,
-                        reason = reason
-                    )
-                )
-            }
+            val updated = target.markError(state, fault)
             if (!protocolFault) {
                 updated
             } else {
@@ -392,54 +356,3 @@ class DeviceRuntimeStateReducer(
 
 private fun <T> DeviceRuntimeValue<T>.availableWhen(supported: Boolean): DeviceRuntimeValue<T> =
     if (supported) this else DeviceRuntimeValue.unavailable()
-
-@Suppress("UNCHECKED_CAST")
-private fun DeviceRuntimeState.updateTarget(
-    target: DeviceRuntimeStateTarget,
-    transform: (DeviceRuntimeValue<Any?>) -> DeviceRuntimeValue<Any?>
-): DeviceRuntimeState = when (target) {
-    DeviceRuntimeStateTarget.METADATA -> copy(
-        metadata = transform(metadata as DeviceRuntimeValue<Any?>) as
-            DeviceRuntimeValue<DeviceRuntimeMetadata>
-    )
-    DeviceRuntimeStateTarget.SECURITY -> copy(
-        security = transform(security as DeviceRuntimeValue<Any?>) as
-            DeviceRuntimeValue<DeviceSecurityStatusResponse>
-    )
-    DeviceRuntimeStateTarget.NETWORK -> copy(
-        network = transform(network as DeviceRuntimeValue<Any?>) as
-            DeviceRuntimeValue<DeviceNetworkStatus>
-    )
-    DeviceRuntimeStateTarget.TIME -> copy(
-        time = transform(time as DeviceRuntimeValue<Any?>) as DeviceRuntimeValue<DeviceTimeStatus>
-    )
-    DeviceRuntimeStateTarget.LIGHT -> copy(
-        light = transform(light as DeviceRuntimeValue<Any?>) as
-            DeviceRuntimeValue<DeviceLightStatus>
-    )
-    DeviceRuntimeStateTarget.LIGHT_TEMPERATURE_PROTECTION -> copy(
-        lightTemperatureProtection = transform(
-            lightTemperatureProtection as DeviceRuntimeValue<Any?>
-        ) as DeviceRuntimeValue<DeviceLightTemperatureProtectionStatus>
-    )
-    DeviceRuntimeStateTarget.TIMER -> copy(
-        timer = transform(timer as DeviceRuntimeValue<Any?>) as
-            DeviceRuntimeValue<DeviceTimerStatus>
-    )
-    DeviceRuntimeStateTarget.DOSING -> copy(
-        dosing = transform(dosing as DeviceRuntimeValue<Any?>) as
-            DeviceRuntimeValue<DeviceDosingStatus>
-    )
-    DeviceRuntimeStateTarget.COOLING -> copy(
-        cooling = transform(cooling as DeviceRuntimeValue<Any?>) as
-            DeviceRuntimeValue<DeviceCoolingStatus>
-    )
-    DeviceRuntimeStateTarget.FIRMWARE -> copy(
-        firmware = transform(firmware as DeviceRuntimeValue<Any?>) as
-            DeviceRuntimeValue<DeviceFirmwareStatus>
-    )
-    DeviceRuntimeStateTarget.OTA -> copy(
-        ota = transform(ota as DeviceRuntimeValue<Any?>) as
-            DeviceRuntimeValue<DeviceFirmwareOtaSnapshot>
-    )
-}
