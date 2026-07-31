@@ -50,7 +50,7 @@ class DeviceOtaCoordinatorTest {
         assertEquals("2.0.0", availability.plan.targetVersion)
 
         val startResult = coordinator.startUpdate(availability.plan)
-        assertTrue(startResult.isSuccess)
+        assertTrue(startResult.successful)
         assertEquals(DeviceFirmwareRuntimeContract.Action.OTA_START, gateway.actions.last())
         assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.InProgress)
 
@@ -127,7 +127,7 @@ class DeviceOtaCoordinatorTest {
             coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, false).getOrThrow()
                 as DeviceOtaState.UpdateAvailable
             ).plan
-        assertTrue(coordinator.startUpdate(plan).isSuccess)
+        assertTrue(coordinator.startUpdate(plan).successful)
 
         events.emit(
             AqlWsEvent.Message(
@@ -170,7 +170,7 @@ class DeviceOtaCoordinatorTest {
         snapshot = snapshot.copy(runtimeMetadataGeneration = 8L)
         val result = coordinator.startUpdate(plan)
 
-        assertFalse(result.isSuccess)
+        assertFalse(result.successful)
         assertTrue(result.errorMessage.contains("generation changed"))
         assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Failed)
         coordinator.close()
