@@ -12,11 +12,8 @@ enum class DeviceTimerRegime(
 
     companion object {
         fun fromWire(value: String): DeviceTimerRegime {
-            return when (value.trim().lowercase()) {
-                "auto", "schedule" -> AUTO
-                "on" -> ON
-                else -> OFF
-            }
+            return values().singleOrNull { it.wireValue == value }
+                ?: error("Unknown firmware timer regime: $value")
         }
     }
 }
@@ -97,6 +94,13 @@ data class DeviceTimerChannelConfig(
     val displayName: String? = null,
     val regime: DeviceTimerRegime? = null
 ) {
+    init {
+        requireTimerChannelKey(channelKey)
+        displayName?.let {
+            requireCanonicalTimerText(it, "displayName", allowEmpty = true)
+        }
+    }
+
     fun toJson(): JSONObject {
         val json = JSONObject()
             .put(DeviceTimerRuntimeContract.Field.CHANNEL_KEY, channelKey)
@@ -124,6 +128,8 @@ data class DeviceTimerScheduleConfig(
     val repeatCount: Int
 ) {
     init {
+        requireCanonicalTimerText(name, "name", allowEmpty = true)
+        requireCanonicalTimerText(channelKey, "channelKey", allowEmpty = true)
         require(weekdays.size == 7) { "Timer weekdays must contain exactly 7 values." }
         require(startTimeMs in 0L..86_399_999L) { "startTimeMs must be inside one day." }
         require(intervalOnMs >= 0L) { "intervalOnMs must be zero or greater." }
@@ -185,6 +191,10 @@ data class DeviceTimerChannelSetPayload(
     val regime: DeviceTimerRegime,
     val save: Boolean = true
 ) {
+    init {
+        requireTimerChannelKey(channelKey)
+    }
+
     fun toJson(): JSONObject {
         return JSONObject()
             .put(DeviceTimerRuntimeContract.Field.CHANNEL_KEY, channelKey)
@@ -193,14 +203,81 @@ data class DeviceTimerChannelSetPayload(
     }
 }
 
-data class DeviceTimerCommandResult(
-    val sent: Boolean,
-    val skipped: Boolean = false,
-    val module: String = DeviceTimerRuntimeContract.MODULE,
-    val action: String,
-    val messageId: String = "",
-    val errorMessage: String = ""
+data class DeviceTimerChannelDosingConfigSnapshot(
+    val doseMsPerMl: Long?,
+    val lastCalibratedAt: Long?,
+    val reservoirTrackingEnabled: Boolean?,
+    val reservoirCapacityMl: Double?
+)
+
+data class DeviceTimerChannelConfigSnapshot(
+    val channelKey: String,
+    val displayName: String?,
+    val regime: DeviceTimerRegime,
+    val dosing: DeviceTimerChannelDosingConfigSnapshot?
+)
+
+data class DeviceTimerScheduleConfigSnapshot(
+    val enabled: Boolean,
+    val name: String,
+    val channelKey: String,
+    val weekdays: List<Boolean>,
+    val startTimeMs: Long,
+    val intervalOnMs: Long,
+    val intervalOffMs: Long,
+    val repeatCount: Int,
+    val amountMl: Double
+)
+
+data class DeviceTimerConfigSnapshot(
+    val channels: List<DeviceTimerChannelConfigSnapshot>,
+    val schedules: List<DeviceTimerScheduleConfigSnapshot>
+)
+
+data class DeviceTimerConfigApplyResult(
+    val operation: String,
+    val changed: Boolean,
+    val saved: Boolean,
+    val saveRequested: Boolean,
+    val runtimeTransport: String,
+    val command: String,
+    val event: String,
+    val appliedChannels: Boolean,
+    val appliedSchedules: Boolean,
+    val config: DeviceTimerConfigSnapshot
+)
+
+data class DeviceTimerChannelSetSnapshot(
+    val listIndex: Int,
+    val channel: DeviceTimerChannelStatus
+)
+
+data class DeviceTimerChannelSetResult(
+    val operation: String,
+    val changed: Boolean,
+    val saved: Boolean,
+    val saveRequested: Boolean,
+    val channelKey: String,
+    val regime: DeviceTimerRegime,
+    val runtimeTransport: String,
+    val command: String,
+    val event: String,
+    val channel: DeviceTimerChannelSetSnapshot
+)
+
+private fun requireTimerChannelKey(value: String) {
+    requireCanonicalTimerText(value, "channelKey", allowEmpty = false)
+    require(value != "-" && !value.equals("none", ignoreCase = true)) {
+        "channelKey must target a configured timer channel."
+    }
+}
+
+private fun requireCanonicalTimerText(
+    value: String,
+    field: String,
+    allowEmpty: Boolean
 ) {
-    val isSuccess: Boolean
-        get() = sent && errorMessage.isBlank()
+    require(allowEmpty || value.isNotEmpty()) { "$field must not be empty." }
+    require(value == value.trim()) { "$field must not contain surrounding whitespace." }
+    require(value.none(Char::isISOControl)) { "$field must not contain control characters." }
 }
