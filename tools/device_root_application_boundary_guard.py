@@ -79,7 +79,9 @@ for path, text, tokens in (
             "fun observe(deviceUid: String): StateFlow<DeviceOtaState>",
             "suspend fun checkAvailability",
             "suspend fun prepareUpdate",
-            "fun startUpdate",
+            "suspend fun startUpdate(",
+            "suspend fun requestStatus(",
+            "suspend fun clearStatus(",
         ),
     ),
 ):
@@ -111,9 +113,9 @@ for path, text, tokens in (
             "class DefaultDeviceFirmwareUpdateOperations",
             "DeviceOtaCoordinator(",
             "coordinator.checkAvailability",
-            "coordinator.startUpdate",
-            "coordinator.requestStatus",
-            "coordinator.clearStatus",
+            "override suspend fun startUpdate(",
+            "override suspend fun requestStatus(",
+            "override suspend fun clearStatus(",
         ),
     ),
 ):
@@ -125,15 +127,28 @@ for token in (
     "class DeviceOtaCoordinator",
     "fun observe(deviceUid: DeviceUid)",
     "suspend fun checkAvailability(",
-    "fun startUpdate(plan: PreparedDeviceFirmwareUpdate)",
-    "runtimeEvents.collect(::processEvent)",
-    "parseOtaStartAcceptedExact",
-    "parseOtaStatusResponseExact",
-    "parseOtaProgressEventExact",
+    "suspend fun startUpdate(plan: PreparedDeviceFirmwareUpdate)",
+    "runtimeEvents.collect { event -> processEvent(event) }",
+    "DeviceFirmwareCommandParsers.parseOtaEvent",
+    "updater.requestFirmwareStatus(deviceUid)",
+    "private suspend fun verifyInstalledVersion(",
+    "Firmware rebooted with version",
     "runtimeMetadataGeneration != selected.dataPlan.runtimeMetadataGeneration",
 ):
     if token not in ota_coordinator:
         errors.append(f"{OTA_COORDINATOR.relative_to(ROOT)}: shared OTA coordinator token is missing: {token}")
+
+for forbidden in (
+    "pendingRequests",
+    "PendingRequest",
+    "parseOtaStartAcceptedExact",
+    "parseOtaStatusResponseExact",
+    "parseOtaProgressEventExact",
+):
+    if forbidden in ota_coordinator:
+        errors.append(
+            f"{OTA_COORDINATOR.relative_to(ROOT)}: legacy OTA correlation is forbidden: {forbidden}"
+        )
 
 for token in (
     "fun DeviceSnapshot.toDeviceRootSnapshot",
@@ -205,6 +220,7 @@ for path, text in view_models.items():
 light_view_model = view_models[ROOT_VIEW_MODELS[1]]
 for token in (
     "private val firmwareUpdateOperations: DeviceFirmwareUpdateOperations",
+    "viewModelScope.launch",
     "firmwareUpdateOperations.prepareUpdate",
     "firmwareUpdateOperations.startUpdate",
     "firmwareUpdateOperations.requestStatus",
@@ -212,6 +228,13 @@ for token in (
 ):
     if token not in light_view_model:
         errors.append(f"{ROOT_VIEW_MODELS[1].relative_to(ROOT)}: firmware boundary wiring is missing: {token}")
+for forbidden in (
+    "pendingOtaStatusRequestId",
+    "pendingOtaStartRequestId",
+    "pendingOtaClearRequestId",
+):
+    if forbidden in light_view_model:
+        errors.append(f"{ROOT_VIEW_MODELS[1].relative_to(ROOT)}: send-only OTA state remains: {forbidden}")
 
 for path, text in ((MENU_MAPPER, menu_mapper), (PRESENTATION_MAPPER, presentation_mapper)):
     if re.search(r"^import\s+com\.aqua\.aqualight\.data\.", text, re.MULTILINE):
@@ -233,6 +256,9 @@ for path, text in ((FACTORY, factory), (SMOKE_FACTORY, smoke_factory)):
 for token in (
     "FakeDeviceRootOperations",
     "FakeFirmwareUpdateOperations",
+    "override suspend fun startUpdate(",
+    "override suspend fun requestStatus(",
+    "override suspend fun clearStatus(",
     "overview renders application root snapshot without repository models",
     "light root delegates ota preparation and commands through firmware boundary",
 ):
