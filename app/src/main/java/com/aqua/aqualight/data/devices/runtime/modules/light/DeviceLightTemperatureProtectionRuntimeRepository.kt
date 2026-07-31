@@ -1,55 +1,57 @@
 package com.aqua.aqualight.data.devices.runtime.modules.light
 
+import com.aqua.aqualight.data.devices.contract.AqlWsContract
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import org.json.JSONObject
 
 class DeviceLightTemperatureProtectionRuntimeRepository(
-    private val commandClientProvider: (DeviceUid) -> AqlWsCommandClient?
+    private val commandGateway: DeviceRuntimeCommandGateway
 ) {
-    fun requestStatus(deviceUid: DeviceUid): DeviceLightCommandResult = send(
-        deviceUid = deviceUid,
-        action = DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_STATUS_GET
-    )
+    suspend fun requestStatus(
+        deviceUid: DeviceUid
+    ): DeviceRuntimeCommandOutcome<DeviceLightTemperatureProtectionStatus> =
+        commandGateway.execute(deviceUid, DeviceLightTemperatureProtectionStatusGetCommand)
 
-    fun setThreshold(
+    suspend fun setThreshold(
         deviceUid: DeviceUid,
         payload: DeviceLightTemperatureProtectionSetPayload
-    ): DeviceLightCommandResult = send(
-        deviceUid = deviceUid,
-        action = DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_SET,
-        data = payload.toJson()
-    )
-
-    private fun send(
-        deviceUid: DeviceUid,
-        action: String,
-        data: JSONObject = JSONObject()
-    ): DeviceLightCommandResult {
-        val commandClient = commandClientProvider(deviceUid)
-            ?: return DeviceLightCommandResult(
-                sent = false,
-                action = action,
-                errorMessage = "No WebSocket command client for ${deviceUid.value}"
-            )
-
-        val messageId = commandClient.command(
-            module = DeviceLightRuntimeContract.MODULE,
-            action = action,
-            data = data
+    ): DeviceRuntimeCommandOutcome<DeviceLightTemperatureProtectionSetResult> =
+        commandGateway.execute(
+            deviceUid,
+            DeviceLightTemperatureProtectionSetCommand(payload)
         )
-        return DeviceLightCommandResult(
-            sent = messageId != null,
-            action = action,
-            messageId = messageId.orEmpty(),
-            errorMessage = if (messageId != null) "" else "WebSocket send failed"
-        )
+}
+
+private data object DeviceLightTemperatureProtectionStatusGetCommand :
+    DeviceRuntimeCommand<DeviceLightTemperatureProtectionStatus> {
+    override val module: String = AqlWsContract.MODULE_LIGHT
+    override val action: String =
+        AqlWsContract.ACTION_LIGHT_TEMPERATURE_PROTECTION_STATUS_GET
+    override fun encodeData(): JSONObject = JSONObject()
+
+    override fun parseSuccess(
+        response: AqlWsIncomingMessage.Response
+    ): DeviceLightTemperatureProtectionStatus {
+        require(response.statusCode == 200)
+        return DeviceLightTemperatureProtectionParser.parseStatus(response.data).getOrThrow()
     }
+}
 
-    companion object {
-        fun singleSession(
-            commandClient: AqlWsCommandClient
-        ): DeviceLightTemperatureProtectionRuntimeRepository =
-            DeviceLightTemperatureProtectionRuntimeRepository { commandClient }
+private class DeviceLightTemperatureProtectionSetCommand(
+    private val payload: DeviceLightTemperatureProtectionSetPayload
+) : DeviceRuntimeCommand<DeviceLightTemperatureProtectionSetResult> {
+    override val module: String = AqlWsContract.MODULE_LIGHT
+    override val action: String = AqlWsContract.ACTION_LIGHT_TEMPERATURE_PROTECTION_SET
+    override fun encodeData(): JSONObject = payload.toJson()
+
+    override fun parseSuccess(
+        response: AqlWsIncomingMessage.Response
+    ): DeviceLightTemperatureProtectionSetResult {
+        require(response.statusCode == 200)
+        return DeviceLightTemperatureProtectionParser.parseSetResult(response.data).getOrThrow()
     }
 }
