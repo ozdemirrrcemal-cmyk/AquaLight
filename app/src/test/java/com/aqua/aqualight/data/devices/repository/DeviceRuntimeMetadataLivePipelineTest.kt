@@ -72,6 +72,11 @@ class DeviceRuntimeMetadataLivePipelineTest {
 
         val projected = DeviceRuntimeMetadataProjector.applyReady(initial, ready)
         assertTrue(projected.hasValidatedRuntimeMetadata)
+        assertEquals(CUSTOM_NAME, projected.identity.customName)
+        assertEquals(CUSTOM_NAME, projected.identity.effectiveDisplayName)
+        assertEquals("Dose Pro 2", projected.identity.displayName)
+        assertEquals(64, projected.identity.customNameMaxBytes)
+        assertEquals(CUSTOM_NAME, projected.title)
         assertEquals(2, projected.limits.dosingChannelCount)
         assertFalse(projected.modules.contains("timerApi"))
         assertTrue(projected.modules.contains("timerEngine"))
@@ -145,8 +150,44 @@ class DeviceRuntimeMetadataLivePipelineTest {
         repository.close()
     }
 
+    @Test
+    fun `identity and status custom name mismatch rejects the generation`() {
+        val transport = RecordingWsTransport()
+        val repository = DeviceRuntimeRepository(
+            wsClientFactory = { transport },
+            dispatcher = Dispatchers.Unconfined
+        )
+        repository.connect(snapshot()).getOrThrow()
+        transport.emit(AqlWsEvent.Authenticated(DEVICE_UID))
+        val commands = transport.commands().associateBy { it.action }
+
+        repository.processMetadataResponse(
+            DEVICE_UID,
+            response(commands.getValue("identity.get"), identityJson())
+        )
+        repository.processMetadataResponse(
+            DEVICE_UID,
+            response(commands.getValue("capabilities.get"), capabilitiesJson())
+        )
+        val rejected = repository.processMetadataResponse(
+            DEVICE_UID,
+            response(
+                commands.getValue("status.get"),
+                statusJson().apply {
+                    getJSONObject("device")
+                        .put("customName", "Different name")
+                        .put("effectiveDisplayName", "Different name")
+                }
+            )
+        )
+
+        assertTrue(rejected is DeviceRuntimeMetadataUpdate.Rejected)
+        assertEquals("metadata bootstrap failed", transport.lastDisconnectReason)
+        repository.close()
+    }
+
     private fun snapshot(): DeviceSnapshot = DeviceSnapshot(
-        identity = DeviceIdentity(uid = DEVICE_UID, customName = "My Dose Pro"),
+        identity = DeviceIdentity(uid = DEVICE_UID, customName = CUSTOM_NAME),
         product = DeviceProduct(),
         endpoint = DeviceRuntimeEndpoint(ip = "192.168.1.20", wsPort = 80)
     )
@@ -178,6 +219,10 @@ class DeviceRuntimeMetadataLivePipelineTest {
         .put("line", "dose_pro")
         .put("model", "dose_pro_2")
         .put("displayName", "Dose Pro 2")
+        .put("customName", CUSTOM_NAME)
+        .put("effectiveDisplayName", CUSTOM_NAME)
+        .put("nameEditable", true)
+        .put("customNameMaxBytes", 64)
         .put("skuId", "com.aqualight.dosing.dose_pro_2.global.black")
         .put("skuCode", "AQL-D-DP2-GLB-BLK")
         .put("firmwareVersion", "6.0.0")
@@ -254,6 +299,15 @@ class DeviceRuntimeMetadataLivePipelineTest {
         .put("state", "booted")
         .put("authenticated", true)
         .put("uptimeMs", 123_456L)
+        .put(
+            "device",
+            JSONObject()
+                .put("productDisplayName", "Dose Pro 2")
+                .put("customName", CUSTOM_NAME)
+                .put("effectiveDisplayName", CUSTOM_NAME)
+                .put("editable", true)
+                .put("maxBytes", 64)
+        )
         .put(
             "product",
             JSONObject()
@@ -335,6 +389,7 @@ class DeviceRuntimeMetadataLivePipelineTest {
 
     private companion object {
         val DEVICE_UID = DeviceUid("AQL-DP2-000001")
+        const val CUSTOM_NAME = "My Dose Pro"
         val EXPECTED_ACTIONS = setOf("identity.get", "capabilities.get", "status.get")
     }
 }
