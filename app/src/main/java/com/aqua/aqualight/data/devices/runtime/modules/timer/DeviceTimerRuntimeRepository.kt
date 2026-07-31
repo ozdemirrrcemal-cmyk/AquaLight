@@ -1,93 +1,87 @@
 package com.aqua.aqualight.data.devices.runtime.modules.timer
 
+import com.aqua.aqualight.data.devices.contract.AqlWsContract
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import org.json.JSONObject
 
 class DeviceTimerRuntimeRepository(
-    private val commandClientProvider: (DeviceUid) -> AqlWsCommandClient?
+    private val commandGateway: DeviceRuntimeCommandGateway
 ) {
-    fun requestStatus(
+    suspend fun requestStatus(
         deviceUid: DeviceUid
-    ): DeviceTimerCommandResult {
-        return send(
-            deviceUid = deviceUid,
-            action = DeviceTimerRuntimeContract.Action.STATUS_GET
-        )
-    }
+    ): DeviceRuntimeCommandOutcome<DeviceTimerStatus> =
+        commandGateway.execute(deviceUid, DeviceTimerStatusGetCommand)
 
-    fun applyConfig(
+    suspend fun applyConfig(
         deviceUid: DeviceUid,
         payload: DeviceTimerConfigApplyPayload
-    ): DeviceTimerCommandResult {
-        return send(
-            deviceUid = deviceUid,
-            action = DeviceTimerRuntimeContract.Action.CONFIG_APPLY,
-            data = payload.toJson()
-        )
-    }
+    ): DeviceRuntimeCommandOutcome<DeviceTimerConfigApplyResult> =
+        commandGateway.execute(deviceUid, DeviceTimerConfigApplyCommand(payload))
 
-    fun setChannel(
+    suspend fun setChannel(
         deviceUid: DeviceUid,
         payload: DeviceTimerChannelSetPayload
-    ): DeviceTimerCommandResult {
-        return send(
-            deviceUid = deviceUid,
-            action = DeviceTimerRuntimeContract.Action.CHANNEL_SET,
-            data = payload.toJson()
-        )
-    }
+    ): DeviceRuntimeCommandOutcome<DeviceTimerChannelSetResult> =
+        commandGateway.execute(deviceUid, DeviceTimerChannelSetCommand(payload))
 
-    fun setChannelRegime(
+    suspend fun setChannelRegime(
         deviceUid: DeviceUid,
         channelKey: String,
         regime: DeviceTimerRegime,
         save: Boolean = true
-    ): DeviceTimerCommandResult {
-        return setChannel(
-            deviceUid = deviceUid,
-            payload = DeviceTimerChannelSetPayload(
-                channelKey = channelKey,
-                regime = regime,
-                save = save
-            )
+    ): DeviceRuntimeCommandOutcome<DeviceTimerChannelSetResult> = setChannel(
+        deviceUid = deviceUid,
+        payload = DeviceTimerChannelSetPayload(
+            channelKey = channelKey,
+            regime = regime,
+            save = save
         )
-    }
+    )
+}
 
-    private fun send(
-        deviceUid: DeviceUid,
-        action: String,
-        data: JSONObject = JSONObject()
-    ): DeviceTimerCommandResult {
-        val commandClient = commandClientProvider(deviceUid)
+private data object DeviceTimerStatusGetCommand : DeviceRuntimeCommand<DeviceTimerStatus> {
+    override val module: String = AqlWsContract.MODULE_TIMER
+    override val action: String = AqlWsContract.ACTION_TIMER_STATUS_GET
+    override fun encodeData(): JSONObject = JSONObject()
 
-        if (commandClient == null) {
-            return DeviceTimerCommandResult(
-                sent = false,
-                action = action,
-                errorMessage = "No WebSocket command client for ${deviceUid.value}"
-            )
-        }
-
-        val messageId = commandClient.command(
-            module = DeviceTimerRuntimeContract.MODULE,
-            action = action,
-            data = data
-        )
-
-        return DeviceTimerCommandResult(
-            sent = messageId != null,
-            action = action,
-            messageId = messageId.orEmpty(),
-            errorMessage = if (messageId != null) "" else "WebSocket send failed"
-        )
-    }
-
-    companion object {
-        fun singleSession(
-            commandClient: AqlWsCommandClient
-        ): DeviceTimerRuntimeRepository {
-            return DeviceTimerRuntimeRepository { commandClient }
-        }
+    override fun parseSuccess(response: AqlWsIncomingMessage.Response): DeviceTimerStatus {
+        require(response.statusCode == HTTP_OK)
+        return DeviceTimerStatusParser.parse(response.data)
     }
 }
+
+private class DeviceTimerConfigApplyCommand(
+    private val payload: DeviceTimerConfigApplyPayload
+) : DeviceRuntimeCommand<DeviceTimerConfigApplyResult> {
+    override val module: String = AqlWsContract.MODULE_TIMER
+    override val action: String = AqlWsContract.ACTION_TIMER_CONFIG_APPLY
+    override fun encodeData(): JSONObject = payload.toJson()
+
+    override fun parseSuccess(
+        response: AqlWsIncomingMessage.Response
+    ): DeviceTimerConfigApplyResult {
+        require(response.statusCode == HTTP_OK)
+        return DeviceTimerStatusParser.parseConfigApply(response.data)
+    }
+}
+
+private class DeviceTimerChannelSetCommand(
+    private val payload: DeviceTimerChannelSetPayload
+) : DeviceRuntimeCommand<DeviceTimerChannelSetResult> {
+    override val module: String = AqlWsContract.MODULE_TIMER
+    override val action: String = AqlWsContract.ACTION_TIMER_CHANNEL_SET
+    override fun encodeData(): JSONObject = payload.toJson()
+
+    override fun parseSuccess(
+        response: AqlWsIncomingMessage.Response
+    ): DeviceTimerChannelSetResult {
+        require(response.statusCode == HTTP_OK)
+        return DeviceTimerStatusParser.parseChannelSet(response.data)
+    }
+}
+
+private const val HTTP_OK = 200
