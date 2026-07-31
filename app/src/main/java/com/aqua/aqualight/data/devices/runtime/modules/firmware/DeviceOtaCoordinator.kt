@@ -1,6 +1,6 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
-import com.aqua.aqualight.application.devices.DeviceFirmwareCommandResult as AppCommandResult
+import com.aqua.aqualight.application.devices.DeviceFirmwareOperationResult as AppOperationResult
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceOtaProgressPhase
 import com.aqua.aqualight.application.devices.DeviceOtaState
@@ -124,15 +124,18 @@ internal class DeviceOtaCoordinator(
         }.onFailure { error ->
             state.value = DeviceOtaState.Failed(
                 deviceUid = deviceUid.value,
-                message = error.message ?: error::class.java.simpleName,
+                message = error.safeMessage("OTA availability check failed."),
                 recoverable = true
             )
         }
     }
 
-    suspend fun startUpdate(plan: PreparedDeviceFirmwareUpdate): AppCommandResult {
+    suspend fun startUpdate(plan: PreparedDeviceFirmwareUpdate): AppOperationResult {
         val deviceUid = runCatching { DeviceUid(plan.deviceUid) }.getOrElse { error ->
-            return AppCommandResult(false, errorMessage = error.message.orEmpty())
+            return AppOperationResult(
+                successful = false,
+                errorMessage = error.safeMessage("OTA plan contains an invalid device uid.")
+            )
         }
         return startLock(deviceUid).withLock {
             startUpdateLocked(deviceUid, plan)
@@ -142,26 +145,29 @@ internal class DeviceOtaCoordinator(
     private suspend fun startUpdateLocked(
         deviceUid: DeviceUid,
         plan: PreparedDeviceFirmwareUpdate
-    ): AppCommandResult {
+    ): AppOperationResult {
         val selected = selectedPlans[deviceUid]
-            ?: return AppCommandResult(
-                false,
+            ?: return AppOperationResult(
+                successful = false,
                 errorMessage = "No prepared OTA plan exists for this device."
             )
         if (selected.applicationPlan != plan) {
-            return AppCommandResult(
-                false,
+            return AppOperationResult(
+                successful = false,
                 errorMessage = "OTA plan differs from the selected exact artifact."
             )
         }
         if (stateFlow(deviceUid).value.isActiveOtaState) {
-            return AppCommandResult(
-                false,
+            return AppOperationResult(
+                successful = false,
                 errorMessage = "An OTA operation is already active for this device."
             )
         }
         val snapshot = snapshotProvider(deviceUid)
-            ?: return AppCommandResult(false, errorMessage = "Device snapshot is not available.")
+            ?: return AppOperationResult(
+                successful = false,
+                errorMessage = "Device snapshot is not available."
+            )
         val validationError = validatePlanAgainstCurrentSnapshot(selected, snapshot)
         if (validationError != null) {
             selectedPlans.remove(deviceUid)
@@ -170,11 +176,11 @@ internal class DeviceOtaCoordinator(
                 message = validationError,
                 recoverable = true
             )
-            return AppCommandResult(false, errorMessage = validationError)
+            return AppOperationResult(successful = false, errorMessage = validationError)
         }
         val updater = updaterProvider()
-            ?: return AppCommandResult(
-                false,
+            ?: return AppOperationResult(
+                successful = false,
                 errorMessage = "Firmware update runtime is not configured."
             )
 
@@ -182,16 +188,18 @@ internal class DeviceOtaCoordinator(
             connectRuntime(deviceUid).getOrThrow()
             updater.startUpdate(selected.dataPlan)
         }.getOrElse { error ->
-            return AppCommandResult(false, errorMessage = error.message.orEmpty())
+            return AppOperationResult(
+                successful = false,
+                errorMessage = error.safeMessage("Firmware OTA start failed.")
+            )
         }
 
         if (outcome is DeviceRuntimeCommandOutcome.Success) {
             val echo = outcome.value.request
             if (echo == null || !echo.matches(selected.dataPlan.payload)) {
                 fail(deviceUid, "Firmware OTA request echo differs from the selected plan.")
-                return AppCommandResult(
-                    sent = false,
-                    messageId = outcome.messageId,
+                return AppOperationResult(
+                    successful = false,
                     errorMessage = "Firmware OTA request echo differs from the selected plan."
                 )
             }
@@ -201,14 +209,20 @@ internal class DeviceOtaCoordinator(
         return outcome.toApplicationResult()
     }
 
-    suspend fun requestStatus(deviceUid: DeviceUid): AppCommandResult {
+    suspend fun requestStatus(deviceUid: DeviceUid): AppOperationResult {
         val updater = updaterProvider()
-            ?: return AppCommandResult(false, errorMessage = "Firmware update runtime is not configured.")
+            ?: return AppOperationResult(
+                successful = false,
+                errorMessage = "Firmware update runtime is not configured."
+            )
         val outcome = runCatching {
             connectRuntime(deviceUid).getOrThrow()
             updater.requestOtaStatus(deviceUid)
         }.getOrElse { error ->
-            return AppCommandResult(false, errorMessage = error.message.orEmpty())
+            return AppOperationResult(
+                successful = false,
+                errorMessage = error.safeMessage("Firmware OTA status request failed.")
+            )
         }
         if (outcome is DeviceRuntimeCommandOutcome.Success) {
             val current = stateFlow(deviceUid).value
@@ -230,14 +244,20 @@ internal class DeviceOtaCoordinator(
         return outcome.toApplicationResult()
     }
 
-    suspend fun clearStatus(deviceUid: DeviceUid): AppCommandResult {
+    suspend fun clearStatus(deviceUid: DeviceUid): AppOperationResult {
         val updater = updaterProvider()
-            ?: return AppCommandResult(false, errorMessage = "Firmware update runtime is not configured.")
+            ?: return AppOperationResult(
+                successful = false,
+                errorMessage = "Firmware update runtime is not configured."
+            )
         val outcome = runCatching {
             connectRuntime(deviceUid).getOrThrow()
             updater.clearOtaStatus(deviceUid)
         }.getOrElse { error ->
-            return AppCommandResult(false, errorMessage = error.message.orEmpty())
+            return AppOperationResult(
+                successful = false,
+                errorMessage = error.safeMessage("Firmware OTA clear failed.")
+            )
         }
         if (outcome is DeviceRuntimeCommandOutcome.Success) {
             selectedPlans.remove(deviceUid)
@@ -275,7 +295,7 @@ internal class DeviceOtaCoordinator(
         }
         runCatching { DeviceFirmwareCommandParsers.parseOtaEvent(event.data) }.fold(
             onSuccess = { snapshot -> applySnapshot(deviceUid, snapshot, selectedPlans[deviceUid]) },
-            onFailure = { error -> fail(deviceUid, error.message.orEmpty()) }
+            onFailure = { error -> fail(deviceUid, error.safeMessage("Invalid firmware OTA event.")) }
         )
     }
 
@@ -341,11 +361,6 @@ internal class DeviceOtaCoordinator(
                 field = snapshot.lastErrorField,
                 recoverable = false
             )
-            DeviceFirmwareOtaPhase.UNKNOWN -> DeviceOtaState.Failed(
-                deviceUid = deviceUid.value,
-                message = "Firmware reported an unknown OTA phase.",
-                recoverable = false
-            )
         }
     }
 
@@ -386,7 +401,11 @@ internal class DeviceOtaCoordinator(
                 connectRuntime(deviceUid).getOrThrow()
                 updater.requestFirmwareStatus(deviceUid)
             }.getOrElse { error ->
-                fail(deviceUid, error.message.orEmpty(), recoverable = true)
+                fail(
+                    deviceUid,
+                    error.safeMessage("Installed firmware verification failed."),
+                    recoverable = true
+                )
                 return@withLock
             }
             when (outcome) {
@@ -473,6 +492,7 @@ internal class DeviceOtaCoordinator(
         selectedPlans.clear()
         startLocks.clear()
         versionVerificationLocks.clear()
+        states.clear()
         scope.cancel()
     }
 }
@@ -499,14 +519,14 @@ private fun DeviceFirmwareUpdatePlan.toApplicationPlan(): PreparedDeviceFirmware
         releaseContent = releaseContent
     )
 
-private fun DeviceRuntimeCommandOutcome<*>.toApplicationResult(): AppCommandResult =
+private fun DeviceRuntimeCommandOutcome<*>.toApplicationResult(): AppOperationResult =
     when (this) {
-        is DeviceRuntimeCommandOutcome.Success -> AppCommandResult(
-            sent = true,
-            messageId = messageId
+        is DeviceRuntimeCommandOutcome.Success -> AppOperationResult(
+            successful = true,
+            correlationId = messageId
         )
-        else -> AppCommandResult(
-            sent = false,
+        else -> AppOperationResult(
+            successful = false,
             errorMessage = errorMessage()
         )
     }
@@ -519,11 +539,14 @@ private fun DeviceRuntimeCommandOutcome<*>.errorMessage(): String = when (this) 
         "Firmware command is not supported by this device."
     is DeviceRuntimeCommandOutcome.SendFailed -> "WebSocket send failed."
     is DeviceRuntimeCommandOutcome.Timeout -> "Firmware command timed out."
-    is DeviceRuntimeCommandOutcome.FirmwareError -> message.ifBlank { code }
-    is DeviceRuntimeCommandOutcome.ProtocolError -> reason
-    is DeviceRuntimeCommandOutcome.LocalStateError -> reason
+    is DeviceRuntimeCommandOutcome.FirmwareError -> message.ifBlank { code.ifBlank { "Firmware rejected the operation." } }
+    is DeviceRuntimeCommandOutcome.ProtocolError -> reason.ifBlank { "Firmware response violated the runtime contract." }
+    is DeviceRuntimeCommandOutcome.LocalStateError -> reason.ifBlank { "Local OTA state update failed." }
     is DeviceRuntimeCommandOutcome.Cancelled -> reason.ifBlank { "Firmware command was cancelled." }
 }
+
+private fun Throwable.safeMessage(fallback: String): String =
+    message?.takeIf(String::isNotBlank) ?: fallback
 
 private fun DeviceFirmwareOtaStartRequestEcho.matches(
     payload: DeviceFirmwareOtaStartPayload
@@ -549,7 +572,9 @@ private fun DeviceFirmwareOtaPhase.toApplicationPhase(): DeviceOtaProgressPhase 
     DeviceFirmwareOtaPhase.DOWNLOADING -> DeviceOtaProgressPhase.DOWNLOADING
     DeviceFirmwareOtaPhase.WRITING -> DeviceOtaProgressPhase.WRITING
     DeviceFirmwareOtaPhase.VERIFYING -> DeviceOtaProgressPhase.VERIFYING
-    else -> error("Terminal/unknown OTA phase cannot map to progress.")
+    DeviceFirmwareOtaPhase.IDLE,
+    DeviceFirmwareOtaPhase.SUCCEEDED,
+    DeviceFirmwareOtaPhase.FAILED -> error("Non-progress OTA phase cannot map to progress.")
 }
 
 private val DeviceOtaState.isActiveOtaState: Boolean
