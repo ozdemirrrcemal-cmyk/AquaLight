@@ -573,14 +573,15 @@ class DeviceRuntimeRepository(
                 else -> ready?.metadata?.capabilities?.capabilities?.ota == true
             }
             AqlWsContract.MODULE_LIGHT -> {
-                val supportsLight = ready?.metadata?.modules?.light == true
+                val metadata = ready?.metadata ?: return false
+                val supportsLight = metadata.modules.light
                 if (action == AqlWsContract.ACTION_LIGHT_TEMPERATURE_PROTECTION_STATUS_GET ||
                     action == AqlWsContract.ACTION_LIGHT_TEMPERATURE_PROTECTION_SET
                 ) {
                     supportsLight &&
-                        ready.metadata.modules.temperature &&
+                        metadata.modules.temperature &&
                         AqlDeviceFeatureKey.LIGHT_TEMPERATURE_PROTECTION in
-                        ready.metadata.capabilities.supportedFeatures
+                        metadata.capabilities.supportedFeatures
                 } else {
                     supportsLight
                 }
