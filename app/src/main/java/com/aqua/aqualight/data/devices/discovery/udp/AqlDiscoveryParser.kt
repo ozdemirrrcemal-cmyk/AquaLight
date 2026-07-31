@@ -84,6 +84,12 @@ object AqlDiscoveryParser {
             val model = product.requireString("model")
             val productDisplayName = product.requireString("name")
 
+            val networkMode = network.requireString("mode")
+            requireWire(networkMode in NETWORK_MODES) {
+                ParseError.UNSUPPORTED_NETWORK_MODE
+            }
+            val networkConnected = network.requireBoolean("connected")
+
             val runtimeTransport = runtime.requireString("transport")
             requireWire(runtimeTransport == AqlDiscoveryContract.RUNTIME_TRANSPORT_WEBSOCKET) {
                 ParseError.UNSUPPORTED_RUNTIME_TRANSPORT
@@ -110,8 +116,8 @@ object AqlDiscoveryParser {
 
             val endpoint = DeviceRuntimeEndpoint(
                 ip = endpointIp,
-                wifiMode = network.requireString("mode"),
-                wifiConnected = network.requireBoolean("connected"),
+                wifiMode = networkMode,
+                wifiConnected = networkConnected,
                 setupApActive = false,
                 runtimeTransport = runtimeTransport,
                 wsPort = wsPort,
@@ -187,6 +193,7 @@ object AqlDiscoveryParser {
         MISSING_RUNTIME,
         MISSING_DEVICE_UID,
         UNSUPPORTED_PRODUCT_FAMILY,
+        UNSUPPORTED_NETWORK_MODE,
         UNSUPPORTED_RUNTIME_TRANSPORT,
         UNSUPPORTED_WS_PROTOCOL,
         UNSUPPORTED_WS_PROTOCOL_VERSION,
@@ -201,6 +208,7 @@ object AqlDiscoveryParser {
     private val DEVICE_KEYS = setOf("uid", "shortId", "name")
     private val PRODUCT_KEYS = setOf("family", "model", "name")
     private val NETWORK_KEYS = setOf("mode", "connected")
+    private val NETWORK_MODES = setOf("off", "sta", "ap", "ap_sta", "unknown")
     private val RUNTIME_KEYS = setOf(
         "transport", "host", "port", "path", "protocol", "protocolVersion"
     )
