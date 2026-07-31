@@ -116,149 +116,94 @@ data class DeviceRuntimeState(
     val protocolFault: DeviceRuntimeProtocolFault? = null
 )
 
-/**
- * A closed, type-safe pointer to one runtime value inside [DeviceRuntimeState].
- *
- * The typed getter/setter implementation is private. Repository and reducer code cannot use
- * `Any`, unchecked casts, reflection or string field names to mutate runtime values.
- */
-sealed class DeviceRuntimeStateTarget private constructor(
-    private val field: DeviceRuntimeStateField
-) {
-    fun isSupported(state: DeviceRuntimeState): Boolean = field.isSupported(state)
+/** Closed set of canonical runtime values that can be refreshed or faulted. */
+enum class DeviceRuntimeStateTarget {
+    METADATA,
+    SECURITY,
+    NETWORK,
+    TIME,
+    LIGHT,
+    LIGHT_TEMPERATURE_PROTECTION,
+    TIMER,
+    DOSING,
+    COOLING,
+    FIRMWARE,
+    OTA;
 
-    fun markLoading(state: DeviceRuntimeState): DeviceRuntimeState = field.markLoading(state)
+    fun isSupported(state: DeviceRuntimeState): Boolean = when (this) {
+        METADATA -> state.authenticated
+        SECURITY -> state.support.security
+        NETWORK -> state.support.network
+        TIME -> state.support.time
+        LIGHT -> state.support.light
+        LIGHT_TEMPERATURE_PROTECTION -> state.support.lightTemperatureProtection
+        TIMER -> state.support.timer
+        DOSING -> state.support.dosing
+        COOLING -> state.support.cooling
+        FIRMWARE -> state.support.firmware
+        OTA -> state.support.ota
+    }
 
-    fun markUnavailable(state: DeviceRuntimeState): DeviceRuntimeState =
-        field.markUnavailable(state)
+    fun markLoading(state: DeviceRuntimeState): DeviceRuntimeState = when (this) {
+        METADATA -> state.copy(metadata = state.metadata.loading())
+        SECURITY -> state.copy(security = state.security.loading())
+        NETWORK -> state.copy(network = state.network.loading())
+        TIME -> state.copy(time = state.time.loading())
+        LIGHT -> state.copy(light = state.light.loading())
+        LIGHT_TEMPERATURE_PROTECTION -> state.copy(
+            lightTemperatureProtection = state.lightTemperatureProtection.loading()
+        )
+        TIMER -> state.copy(timer = state.timer.loading())
+        DOSING -> state.copy(dosing = state.dosing.loading())
+        COOLING -> state.copy(cooling = state.cooling.loading())
+        FIRMWARE -> state.copy(firmware = state.firmware.loading())
+        OTA -> state.copy(ota = state.ota.loading())
+    }
+
+    fun markUnavailable(state: DeviceRuntimeState): DeviceRuntimeState = when (this) {
+        METADATA -> state.copy(metadata = DeviceRuntimeValue.unavailable())
+        SECURITY -> state.copy(security = DeviceRuntimeValue.unavailable())
+        NETWORK -> state.copy(network = DeviceRuntimeValue.unavailable())
+        TIME -> state.copy(time = DeviceRuntimeValue.unavailable())
+        LIGHT -> state.copy(light = DeviceRuntimeValue.unavailable())
+        LIGHT_TEMPERATURE_PROTECTION -> state.copy(
+            lightTemperatureProtection = DeviceRuntimeValue.unavailable()
+        )
+        TIMER -> state.copy(timer = DeviceRuntimeValue.unavailable())
+        DOSING -> state.copy(dosing = DeviceRuntimeValue.unavailable())
+        COOLING -> state.copy(cooling = DeviceRuntimeValue.unavailable())
+        FIRMWARE -> state.copy(firmware = DeviceRuntimeValue.unavailable())
+        OTA -> state.copy(ota = DeviceRuntimeValue.unavailable())
+    }
 
     fun markError(
         state: DeviceRuntimeState,
         fault: DeviceRuntimeModuleFault
-    ): DeviceRuntimeState = field.markError(state, fault)
-
-    data object METADATA : DeviceRuntimeStateTarget(
-        typedField(
-            supportPredicate = { state -> state.authenticated },
-            read = { state -> state.metadata },
-            write = { state, value -> state.copy(metadata = value) }
+    ): DeviceRuntimeState = when (this) {
+        METADATA -> state.copy(metadata = state.metadata.error(fault))
+        SECURITY -> state.copy(security = state.security.error(fault))
+        NETWORK -> state.copy(network = state.network.error(fault))
+        TIME -> state.copy(time = state.time.error(fault))
+        LIGHT -> state.copy(light = state.light.error(fault))
+        LIGHT_TEMPERATURE_PROTECTION -> state.copy(
+            lightTemperatureProtection = state.lightTemperatureProtection.error(fault)
         )
-    )
-
-    data object SECURITY : DeviceRuntimeStateTarget(
-        typedField(
-            supportPredicate = { state -> state.support.security },
-            read = { state -> state.security },
-            write = { state, value -> state.copy(security = value) }
-        )
-    )
-
-    data object NETWORK : DeviceRuntimeStateTarget(
-        typedField(
-            supportPredicate = { state -> state.support.network },
-            read = { state -> state.network },
-            write = { state, value -> state.copy(network = value) }
-        )
-    )
-
-    data object TIME : DeviceRuntimeStateTarget(
-        typedField(
-            supportPredicate = { state -> state.support.time },
-            read = { state -> state.time },
-            write = { state, value -> state.copy(time = value) }
-        )
-    )
-
-    data object LIGHT : DeviceRuntimeStateTarget(
-        typedField(
-            supportPredicate = { state -> state.support.light },
-            read = { state -> state.light },
-            write = { state, value -> state.copy(light = value) }
-        )
-    )
-
-    data object LIGHT_TEMPERATURE_PROTECTION : DeviceRuntimeStateTarget(
-        typedField(
-            supportPredicate = { state -> state.support.lightTemperatureProtection },
-            read = { state -> state.lightTemperatureProtection },
-            write = { state, value -> state.copy(lightTemperatureProtection = value) }
-        )
-    )
-
-    data object TIMER : DeviceRuntimeStateTarget(
-        typedField(
-            supportPredicate = { state -> state.support.timer },
-            read = { state -> state.timer },
-            write = { state, value -> state.copy(timer = value) }
-        )
-    )
-
-    data object DOSING : DeviceRuntimeStateTarget(
-        typedField(
-            supportPredicate = { state -> state.support.dosing },
-            read = { state -> state.dosing },
-            write = { state, value -> state.copy(dosing = value) }
-        )
-    )
-
-    data object COOLING : DeviceRuntimeStateTarget(
-        typedField(
-            supportPredicate = { state -> state.support.cooling },
-            read = { state -> state.cooling },
-            write = { state, value -> state.copy(cooling = value) }
-        )
-    )
-
-    data object FIRMWARE : DeviceRuntimeStateTarget(
-        typedField(
-            supportPredicate = { state -> state.support.firmware },
-            read = { state -> state.firmware },
-            write = { state, value -> state.copy(firmware = value) }
-        )
-    )
-
-    data object OTA : DeviceRuntimeStateTarget(
-        typedField(
-            supportPredicate = { state -> state.support.ota },
-            read = { state -> state.ota },
-            write = { state, value -> state.copy(ota = value) }
-        )
-    )
+        TIMER -> state.copy(timer = state.timer.error(fault))
+        DOSING -> state.copy(dosing = state.dosing.error(fault))
+        COOLING -> state.copy(cooling = state.cooling.error(fault))
+        FIRMWARE -> state.copy(firmware = state.firmware.error(fault))
+        OTA -> state.copy(ota = state.ota.error(fault))
+    }
 }
 
-private interface DeviceRuntimeStateField {
-    fun isSupported(state: DeviceRuntimeState): Boolean
-    fun markLoading(state: DeviceRuntimeState): DeviceRuntimeState
-    fun markUnavailable(state: DeviceRuntimeState): DeviceRuntimeState
-    fun markError(state: DeviceRuntimeState, fault: DeviceRuntimeModuleFault): DeviceRuntimeState
-}
+private fun <T> DeviceRuntimeValue<T>.loading(): DeviceRuntimeValue<T> = copy(
+    phase = DeviceRuntimeFreshness.LOADING,
+    fault = null
+)
 
-private fun <T> typedField(
-    supportPredicate: (DeviceRuntimeState) -> Boolean,
-    read: (DeviceRuntimeState) -> DeviceRuntimeValue<T>,
-    write: (DeviceRuntimeState, DeviceRuntimeValue<T>) -> DeviceRuntimeState
-): DeviceRuntimeStateField = object : DeviceRuntimeStateField {
-    override fun isSupported(state: DeviceRuntimeState): Boolean = supportPredicate(state)
-
-    override fun markLoading(state: DeviceRuntimeState): DeviceRuntimeState = write(
-        state,
-        read(state).copy(
-            phase = DeviceRuntimeFreshness.LOADING,
-            fault = null
-        )
-    )
-
-    override fun markUnavailable(state: DeviceRuntimeState): DeviceRuntimeState =
-        write(state, DeviceRuntimeValue.unavailable())
-
-    override fun markError(
-        state: DeviceRuntimeState,
-        fault: DeviceRuntimeModuleFault
-    ): DeviceRuntimeState = write(
-        state,
-        read(state).copy(
-            phase = DeviceRuntimeFreshness.ERROR,
-            fault = fault
-        )
-    )
-}
+private fun <T> DeviceRuntimeValue<T>.error(
+    fault: DeviceRuntimeModuleFault
+): DeviceRuntimeValue<T> = copy(
+    phase = DeviceRuntimeFreshness.ERROR,
+    fault = fault
+)
