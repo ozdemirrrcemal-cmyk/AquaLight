@@ -32,9 +32,13 @@ class DeviceRuntimeStateStore(
         update(deviceUid, DeviceRuntimeState::markDisconnected)
     }
 
-    fun beginBootstrap(deviceUid: DeviceUid, metadataGeneration: Long) {
+    fun beginBootstrap(
+        deviceUid: DeviceUid,
+        metadataGeneration: Long,
+        targets: Set<DeviceRuntimeRefreshTarget>
+    ) {
         require(metadataGeneration > 0L) { "Validated metadata generation must be positive." }
-        update(deviceUid) { state -> state.beginBootstrap(metadataGeneration) }
+        update(deviceUid) { state -> state.beginBootstrap(metadataGeneration, targets) }
     }
 
     fun applyMessage(
@@ -52,6 +56,29 @@ class DeviceRuntimeStateStore(
             result.state
         }
         return targets
+    }
+
+    fun applyCommandFault(
+        deviceUid: DeviceUid,
+        code: String,
+        message: String,
+        module: String,
+        action: String,
+        messageId: String = ""
+    ) {
+        val now = wallClockMillis()
+        update(deviceUid) { previous ->
+            previous.copy(
+                lastFault = DeviceRuntimeFault(
+                    code = code,
+                    message = message,
+                    module = module,
+                    action = action,
+                    messageId = messageId,
+                    occurredAtMillis = now
+                )
+            )
+        }
     }
 
     fun applyTransportFault(
