@@ -15,7 +15,9 @@ import com.aqua.aqualight.data.devices.runtime.ws.AqlWsOutgoingMessage
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -133,9 +135,9 @@ internal class DefaultDeviceSettingsOperations(
         )
     }
 
-    private fun kotlinx.coroutines.flow.Flow<AqlWsEvent.Message>.filterDevice(
+    private fun Flow<AqlWsEvent.Message>.filterDevice(
         deviceUid: DeviceUid
-    ) = kotlinx.coroutines.flow.filter { event -> event.deviceUid == deviceUid }
+    ): Flow<AqlWsEvent.Message> = filter { event -> event.deviceUid == deviceUid }
 
     private class DeviceNameUpdateException(
         code: String,
