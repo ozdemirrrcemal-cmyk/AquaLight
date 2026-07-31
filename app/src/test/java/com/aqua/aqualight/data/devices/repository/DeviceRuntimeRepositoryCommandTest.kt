@@ -177,7 +177,6 @@ class DeviceRuntimeRepositoryCommandTest {
         fun authenticate() {
             _connectionState.value = AqlWsConnectionState.Authenticated(
                 deviceUid = DEVICE_UID,
-                sessionId = "session-test",
                 authenticatedAtMillis = 2L
             )
             emit(AqlWsEvent.Authenticated(DEVICE_UID))
