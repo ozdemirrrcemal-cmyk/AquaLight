@@ -72,6 +72,9 @@ class DeviceRuntimeMetadataLivePipelineTest {
 
         val projected = DeviceRuntimeMetadataProjector.applyReady(initial, ready)
         assertTrue(projected.hasValidatedRuntimeMetadata)
+        assertEquals("My Dose Pro", projected.identity.customName)
+        assertEquals("Dose Pro 2", projected.identity.displayName)
+        assertEquals("My Dose Pro", projected.identity.effectiveDisplayName)
         assertEquals(2, projected.limits.dosingChannelCount)
         assertFalse(projected.modules.contains("timerApi"))
         assertTrue(projected.modules.contains("timerEngine"))
@@ -146,7 +149,7 @@ class DeviceRuntimeMetadataLivePipelineTest {
     }
 
     private fun snapshot(): DeviceSnapshot = DeviceSnapshot(
-        identity = DeviceIdentity(uid = DEVICE_UID, customName = "My Dose Pro"),
+        identity = DeviceIdentity(uid = DEVICE_UID, customName = "Stale local name"),
         product = DeviceProduct(),
         endpoint = DeviceRuntimeEndpoint(ip = "192.168.1.20", wsPort = 80)
     )
@@ -178,6 +181,10 @@ class DeviceRuntimeMetadataLivePipelineTest {
         .put("line", "dose_pro")
         .put("model", "dose_pro_2")
         .put("displayName", "Dose Pro 2")
+        .put("customName", "My Dose Pro")
+        .put("effectiveDisplayName", "My Dose Pro")
+        .put("nameEditable", true)
+        .put("customNameMaxBytes", 64)
         .put("skuId", "com.aqualight.dosing.dose_pro_2.global.black")
         .put("skuCode", "AQL-D-DP2-GLB-BLK")
         .put("firmwareVersion", "6.0.0")
@@ -254,6 +261,15 @@ class DeviceRuntimeMetadataLivePipelineTest {
         .put("state", "booted")
         .put("authenticated", true)
         .put("uptimeMs", 123_456L)
+        .put(
+            "device",
+            JSONObject()
+                .put("productDisplayName", "Dose Pro 2")
+                .put("customName", "My Dose Pro")
+                .put("effectiveDisplayName", "My Dose Pro")
+                .put("editable", true)
+                .put("maxBytes", 64)
+        )
         .put(
             "product",
             JSONObject()
