@@ -13,7 +13,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE_PATH = ROOT / "protocol/fixtures/aql_ws_v1_golden.json"
-FIXTURE_SHA256 = "5fd72666b4f744f0556edfb97bde13c3d1b3688da349dc11b56abd542e4ab48d"
+FIXTURE_SHA256 = "765cd113b848d4b17c173e513b714b806466ec994483a34c19970e7a1b984591"
 errors: list[str] = []
 
 
@@ -50,12 +50,22 @@ contract_path = "app/src/main/java/com/aqua/aqualight/data/devices/contract/AqlW
 contract = read(contract_path)
 for token, reason in (
     ('const val SCHEMA = "aql.ws.v1"', "first commercial schema must remain explicit"),
+    ('const val DEFAULT_PORT = 80', "commercial socket port must remain explicit"),
     ('const val DEFAULT_PATH = "/aql/v1/ws"', "commercial socket path must remain explicit"),
     ('const val PROTOCOL_VERSION = 1', "protocol version must remain explicit"),
     ('const val AUTH_SCHEME = "hmac-sha256"', "challenge-response algorithm must remain explicit"),
     ('const val MESSAGE_BYTES = 8_192', "wire size limit must remain explicit"),
     ('const val DATA_BYTES = 4_096', "data size limit must remain explicit"),
     ('commandKey(MODULE_NETWORK, ACTION_NETWORK_STATUS_GET)', "network status must be registered"),
+    ('commandKey(MODULE_DEVICE, ACTION_DEVICE_NAME_SET)', "device-name writes must be registered"),
+    (
+        'commandKey(MODULE_LIGHT, ACTION_LIGHT_TEMPERATURE_PROTECTION_STATUS_GET)',
+        "light temperature-protection status must be registered",
+    ),
+    (
+        'commandKey(MODULE_LIGHT, ACTION_LIGHT_TEMPERATURE_PROTECTION_SET)',
+        "light temperature-protection writes must be registered",
+    ),
 ):
     require(contract_path, contract, token, reason)
 for token in ('"aql.ws.v2"', '"/aql/v2/ws"', 'const val TOKEN = "token"'):
@@ -208,8 +218,8 @@ try:
     access = fixture["commandAccess"]
     if access["public"]:
         errors.append("WebSocket must not expose unauthenticated application commands")
-    if len(access["authenticated"]) != 38 or len(set(access["authenticated"])) != 38:
-        errors.append("golden authenticated command matrix must contain 38 unique commands")
+    if len(access["authenticated"]) != 41 or len(set(access["authenticated"])) != 41:
+        errors.append("golden authenticated command matrix must contain 41 unique commands")
 except (KeyError, TypeError, ValueError, UnicodeError, json.JSONDecodeError) as exc:
     errors.append(f"golden fixture could not be validated: {exc}")
 
