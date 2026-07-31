@@ -28,6 +28,10 @@ object DeviceRuntimeMetadataProjector {
                 serialNumber = envelope.serialNumber,
                 firmwareSerial = envelope.firmwareSerial,
                 displayName = identity.displayName,
+                customName = identity.customName,
+                effectiveDisplayName = identity.effectiveDisplayName,
+                nameEditable = identity.nameEditable,
+                customNameMaxBytes = identity.customNameMaxBytes,
                 setupCode = envelope.setupCode
             ),
             product = DeviceProduct(
