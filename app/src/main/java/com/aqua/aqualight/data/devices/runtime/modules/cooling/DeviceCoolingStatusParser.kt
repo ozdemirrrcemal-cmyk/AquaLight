@@ -1,9 +1,19 @@
 package com.aqua.aqualight.data.devices.runtime.modules.cooling
 
+import com.aqua.aqualight.data.devices.runtime.parsing.requireExactKeys
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredArray
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredBoolean
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredFiniteDouble
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredInt
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredNonNegativeInt
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredNonNegativeInts
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredNonNegativeLong
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredObject
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredString
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredStringAllowEmpty
 import org.json.JSONArray
 import org.json.JSONObject
 
-@Suppress("TooManyFunctions")
 object DeviceCoolingStatusParser {
 
     fun parse(data: JSONObject): DeviceCoolingStatus {
@@ -172,64 +182,3 @@ object DeviceCoolingStatusParser {
         "minTemperatureC", "maxTemperatureC", "group", "sensorBindings"
     )
 }
-
-private fun JSONObject.requireExactKeys(expected: Set<String>, label: String) {
-    val actual = buildSet {
-        val iterator = keys()
-        while (iterator.hasNext()) add(iterator.next())
-    }
-    require(actual == expected) { "$label keys differ from firmware contract: $actual" }
-}
-
-private fun JSONObject.requiredObject(key: String): JSONObject =
-    get(key) as? JSONObject ?: error("$key must be an object.")
-
-private fun JSONObject.requiredArray(key: String): JSONArray =
-    get(key) as? JSONArray ?: error("$key must be an array.")
-
-private fun JSONArray.requiredObject(index: Int): JSONObject =
-    get(index) as? JSONObject ?: error("Array item $index must be an object.")
-
-private fun JSONArray.requiredNonNegativeInts(): List<Int> = List(length()) { index ->
-    val number = get(index) as? Number ?: error("Array item $index must be numeric.")
-    val longValue = number.toLong()
-    require(number.toDouble().isFinite() && number.toDouble() == longValue.toDouble())
-    require(longValue in 0L..Int.MAX_VALUE.toLong())
-    longValue.toInt()
-}
-
-private fun JSONObject.requiredString(key: String): String =
-    requiredStringAllowEmpty(key).also { require(it.isNotEmpty()) { "$key must not be empty." } }
-
-private fun JSONObject.requiredStringAllowEmpty(key: String): String {
-    val value = get(key) as? String ?: error("$key must be a string.")
-    require(value.none(Char::isISOControl))
-    require(value.isEmpty() || (!value.first().isWhitespace() && !value.last().isWhitespace()))
-    return value
-}
-
-private fun JSONObject.requiredBoolean(key: String): Boolean =
-    get(key) as? Boolean ?: error("$key must be a boolean.")
-
-private fun JSONObject.requiredInt(key: String): Int {
-    val number = get(key) as? Number ?: error("$key must be numeric.")
-    val longValue = number.toLong()
-    require(number.toDouble().isFinite() && number.toDouble() == longValue.toDouble())
-    require(longValue in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong())
-    return longValue.toInt()
-}
-
-private fun JSONObject.requiredNonNegativeInt(key: String): Int =
-    requiredInt(key).also { require(it >= 0) }
-
-private fun JSONObject.requiredNonNegativeLong(key: String): Long {
-    val number = get(key) as? Number ?: error("$key must be numeric.")
-    val longValue = number.toLong()
-    require(number.toDouble().isFinite() && number.toDouble() == longValue.toDouble())
-    require(longValue >= 0L)
-    return longValue
-}
-
-private fun JSONObject.requiredFiniteDouble(key: String): Double =
-    (get(key) as? Number)?.toDouble()?.also { require(it.isFinite()) }
-        ?: error("$key must be a finite number.")
