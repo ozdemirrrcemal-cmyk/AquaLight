@@ -8,7 +8,7 @@ import org.json.JSONObject
 
 sealed interface DeviceRuntimeEventRoute {
     data class Refresh(
-        val target: DeviceRuntimeStateTarget,
+        val target: DeviceRuntimeStateTarget<*>,
         val sourceMessageId: String
     ) : DeviceRuntimeEventRoute
 
@@ -18,8 +18,6 @@ sealed interface DeviceRuntimeEventRoute {
     ) : DeviceRuntimeEventRoute
 
     data class ProtocolFault(val reason: String) : DeviceRuntimeEventRoute
-
-    data object Ignored : DeviceRuntimeEventRoute
 }
 
 /** Routes only the exact active firmware event union to a typed reducer or refresh target. */
