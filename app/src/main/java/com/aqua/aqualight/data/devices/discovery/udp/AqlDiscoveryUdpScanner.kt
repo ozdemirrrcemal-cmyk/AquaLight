@@ -7,6 +7,9 @@ import java.net.DatagramSocket
 import java.net.InetSocketAddress
 import java.net.SocketException
 import java.net.SocketTimeoutException
+import java.nio.ByteBuffer
+import java.nio.charset.CodingErrorAction
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
@@ -16,10 +19,10 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
- * UDP v1 discovery scanner.
+ * UDP v1 discovery scanner bound to Android's canonical Wi-Fi/Ethernet Network.
  *
- * The socket is bound to the canonical Android Wi-Fi/Ethernet Network when available, preventing
- * VPN or cellular default-route changes from silently moving local discovery traffic elsewhere.
+ * One sentinel byte beyond the contract maximum makes oversized datagrams observable instead of
+ * silently accepting a truncated 768-byte prefix. Payload decoding is strict UTF-8.
  */
 class AqlDiscoveryUdpScanner(
     private val listenPort: Int = AqlDiscoveryContract.PORT,
@@ -29,15 +32,17 @@ class AqlDiscoveryUdpScanner(
     private val networkProvider: () -> Network? = { null },
     private val requireLocalNetwork: Boolean = false
 ) {
+    init {
+        require(packetSizeBytes in 1..AqlDiscoveryContract.MAX_PACKET_SIZE_BYTES)
+        require(receiveTimeoutMillis > 0)
+    }
 
     fun scan(): Flow<AqlDiscoveredDevice> = callbackFlow {
         val socketRef = AtomicReference<DatagramSocket?>()
 
         val job = launch(Dispatchers.IO) {
             val network = networkProvider()
-            if (requireLocalNetwork && network == null) {
-                return@launch
-            }
+            if (requireLocalNetwork && network == null) return@launch
 
             val socket = DatagramSocket(null).also { datagramSocket ->
                 network?.bindSocket(datagramSocket)
@@ -47,7 +52,7 @@ class AqlDiscoveryUdpScanner(
             }
             socketRef.set(socket)
 
-            val buffer = ByteArray(packetSizeBytes)
+            val buffer = ByteArray(packetSizeBytes + OVERSIZE_SENTINEL_BYTES)
 
             try {
                 while (isActive && !socket.isClosed) {
@@ -60,8 +65,13 @@ class AqlDiscoveryUdpScanner(
                         break
                     }
 
-                    val rawPayload = packet.toPayloadString()
-                    val sourceIp = packet.address?.hostAddress.orEmpty()
+                    val rawPayload = AqlDiscoveryDatagramDecoder.decode(
+                        data = packet.data,
+                        offset = packet.offset,
+                        length = packet.length,
+                        maximumBytes = packetSizeBytes
+                    ) ?: continue
+                    val sourceIp = packet.address?.hostAddress ?: continue
                     val receivedAt = clockMillis()
 
                     when (
@@ -86,10 +96,31 @@ class AqlDiscoveryUdpScanner(
         }
     }
 
-    private fun DatagramPacket.toPayloadString(): String =
-        String(data, offset, length, Charsets.UTF_8)
-
     companion object {
         private const val DEFAULT_RECEIVE_TIMEOUT_MS = 1_000
+        private const val OVERSIZE_SENTINEL_BYTES = 1
+    }
+}
+
+internal object AqlDiscoveryDatagramDecoder {
+    fun decode(
+        data: ByteArray,
+        offset: Int,
+        length: Int,
+        maximumBytes: Int = AqlDiscoveryContract.MAX_PACKET_SIZE_BYTES
+    ): String? {
+        if (maximumBytes <= 0 || length <= 0 || length > maximumBytes) return null
+        if (offset < 0 || offset > data.size || length > data.size - offset) return null
+
+        return try {
+            StandardCharsets.UTF_8
+                .newDecoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT)
+                .decode(ByteBuffer.wrap(data, offset, length))
+                .toString()
+        } catch (_: Throwable) {
+            null
+        }
     }
 }
