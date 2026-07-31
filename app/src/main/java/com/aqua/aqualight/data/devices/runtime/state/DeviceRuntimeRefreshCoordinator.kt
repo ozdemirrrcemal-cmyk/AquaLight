@@ -15,7 +15,7 @@ class DeviceRuntimeRefreshCoordinator(
     private val generationProvider: (DeviceUid) -> DeviceRuntimeConnectionGeneration?,
     private val stateProvider: (DeviceUid) -> DeviceRuntimeState?,
     private val refreshAction:
-        suspend (DeviceUid, DeviceRuntimeConnectionGeneration, DeviceRuntimeStateTarget) -> Unit,
+        suspend (DeviceUid, DeviceRuntimeConnectionGeneration, DeviceRuntimeStateTarget<*>) -> Unit,
     private val eventDebounceMillis: Long = DEFAULT_EVENT_DEBOUNCE_MILLIS
 ) {
     init {
@@ -25,7 +25,7 @@ class DeviceRuntimeRefreshCoordinator(
     private data class RefreshKey(
         val deviceUid: DeviceUid,
         val generation: DeviceRuntimeConnectionGeneration,
-        val target: DeviceRuntimeStateTarget
+        val target: DeviceRuntimeStateTarget<*>
     )
 
     private val jobs = ConcurrentHashMap<RefreshKey, Job>()
@@ -35,18 +35,18 @@ class DeviceRuntimeRefreshCoordinator(
         generation: DeviceRuntimeConnectionGeneration,
         support: DeviceRuntimeSupport
     ) {
-        buildList {
-            if (support.security) add(DeviceRuntimeStateTarget.SECURITY)
-            if (support.network) add(DeviceRuntimeStateTarget.NETWORK)
-            if (support.time) add(DeviceRuntimeStateTarget.TIME)
-            if (support.firmware) add(DeviceRuntimeStateTarget.FIRMWARE)
-            if (support.light) add(DeviceRuntimeStateTarget.LIGHT)
+        buildList<DeviceRuntimeStateTarget<*>> {
+            if (support.security) add(DeviceRuntimeStateTarget.Security)
+            if (support.network) add(DeviceRuntimeStateTarget.Network)
+            if (support.time) add(DeviceRuntimeStateTarget.Time)
+            if (support.firmware) add(DeviceRuntimeStateTarget.Firmware)
+            if (support.light) add(DeviceRuntimeStateTarget.Light)
             if (support.lightTemperatureProtection) {
-                add(DeviceRuntimeStateTarget.LIGHT_TEMPERATURE_PROTECTION)
+                add(DeviceRuntimeStateTarget.LightTemperatureProtection)
             }
-            if (support.timer) add(DeviceRuntimeStateTarget.TIMER)
-            if (support.dosing) add(DeviceRuntimeStateTarget.DOSING)
-            if (support.cooling) add(DeviceRuntimeStateTarget.COOLING)
+            if (support.timer) add(DeviceRuntimeStateTarget.Timer)
+            if (support.dosing) add(DeviceRuntimeStateTarget.Dosing)
+            if (support.cooling) add(DeviceRuntimeStateTarget.Cooling)
         }.forEach { target ->
             schedule(deviceUid, generation, target, delayMillis = 0L)
         }
@@ -55,7 +55,7 @@ class DeviceRuntimeRefreshCoordinator(
     fun scheduleEventRefresh(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration,
-        target: DeviceRuntimeStateTarget
+        target: DeviceRuntimeStateTarget<*>
     ): Boolean = schedule(
         deviceUid = deviceUid,
         generation = generation,
@@ -66,19 +66,21 @@ class DeviceRuntimeRefreshCoordinator(
     fun schedule(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration,
-        target: DeviceRuntimeStateTarget,
+        target: DeviceRuntimeStateTarget<*>,
         delayMillis: Long = 0L
     ): Boolean {
         require(delayMillis >= 0L)
         if (generationProvider(deviceUid) != generation) return false
-        if (!stateProvider(deviceUid).supports(target)) return false
+        val currentState = stateProvider(deviceUid) ?: return false
+        if (!target.isSupported(currentState)) return false
         val scope = scopeProvider(deviceUid) ?: return false
         val key = RefreshKey(deviceUid, generation, target)
 
         val candidate = scope.launch(start = CoroutineStart.LAZY) {
             if (delayMillis > 0L) delay(delayMillis)
             if (generationProvider(deviceUid) != generation) return@launch
-            if (!stateProvider(deviceUid).supports(target)) return@launch
+            val refreshedState = stateProvider(deviceUid) ?: return@launch
+            if (!target.isSupported(refreshedState)) return@launch
             refreshAction(deviceUid, generation, target)
         }
         val existing = jobs.putIfAbsent(key, candidate)
@@ -116,24 +118,6 @@ class DeviceRuntimeRefreshCoordinator(
     }
 
     internal fun pendingCount(): Int = jobs.size
-
-    private fun DeviceRuntimeState?.supports(target: DeviceRuntimeStateTarget): Boolean {
-        val state = this ?: return false
-        return when (target) {
-            DeviceRuntimeStateTarget.METADATA -> state.authenticated
-            DeviceRuntimeStateTarget.SECURITY -> state.support.security
-            DeviceRuntimeStateTarget.NETWORK -> state.support.network
-            DeviceRuntimeStateTarget.TIME -> state.support.time
-            DeviceRuntimeStateTarget.LIGHT -> state.support.light
-            DeviceRuntimeStateTarget.LIGHT_TEMPERATURE_PROTECTION ->
-                state.support.lightTemperatureProtection
-            DeviceRuntimeStateTarget.TIMER -> state.support.timer
-            DeviceRuntimeStateTarget.DOSING -> state.support.dosing
-            DeviceRuntimeStateTarget.COOLING -> state.support.cooling
-            DeviceRuntimeStateTarget.FIRMWARE -> state.support.firmware
-            DeviceRuntimeStateTarget.OTA -> state.support.ota
-        }
-    }
 
     companion object {
         private const val DEFAULT_EVENT_DEBOUNCE_MILLIS = 150L
